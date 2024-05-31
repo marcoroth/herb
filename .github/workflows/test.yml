@@ -1,0 +1,22 @@
+name: C Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install check
+
+      - name: make
+        run: make
+
+      - name: make test
+        run: make test
+
+      - name: run tests
+        run: ./run_erbx_tests

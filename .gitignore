@@ -4,6 +4,7 @@
 
 # ERBx output
 /erbx
+/run_erbx_tests
 
 # Prerequisites
 *.d
