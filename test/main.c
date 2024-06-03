@@ -1,7 +1,17 @@
 #include <check.h>
 #include <stdlib.h>
 
-Suite *erbx_suite(void);
+TCase *tags_tests(void);
+TCase *token_tests(void);
+
+Suite *erbx_suite(void) {
+  Suite *suite = suite_create("ERBX Suite");
+
+  suite_add_tcase(suite, token_tests());
+  suite_add_tcase(suite, tags_tests());
+
+  return suite;
+}
 
 int main(void) {
   int number_failed;
