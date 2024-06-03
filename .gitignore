@@ -6,6 +6,12 @@
 /erbx
 /run_erbx_tests
 
+# ERBx Ruby extension
+/ext/erbx/extconf.h
+/ext/erbx/erbx.bundle
+/ext/erbx/Makefile
+/lib/erbx/erbx.bundle
+
 # Prerequisites
 *.d
 

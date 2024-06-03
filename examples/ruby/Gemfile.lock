@@ -1,0 +1,18 @@
+PATH
+  remote: ../..
+  specs:
+    erbx (0.0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+
+PLATFORMS
+  ruby
+  x86_64-darwin-23
+
+DEPENDENCIES
+  erbx!
+
+BUNDLED WITH
+   2.5.10
