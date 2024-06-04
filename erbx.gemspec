@@ -26,6 +26,7 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/erbx"
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
 
-  spec.add_development_dependency "rake", "~> 1.9"
-  spec.add_development_dependency "rake-compiler", "~> 0.8"
+  spec.add_development_dependency "rake", "~> 13.2"
+  spec.add_development_dependency "rake-compiler", "~> 1.2"
+  spec.add_development_dependency "maxitest"
 end

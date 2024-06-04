@@ -1,0 +1,27 @@
+PATH
+  remote: .
+  specs:
+    erbx (0.0.1)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    maxitest (5.5.0)
+      minitest (>= 5.14.0, < 5.24.0)
+    minitest (5.23.1)
+    rake (13.2.1)
+    rake-compiler (1.2.7)
+      rake
+
+PLATFORMS
+  ruby
+  x86_64-darwin-23
+
+DEPENDENCIES
+  erbx!
+  maxitest
+  rake (~> 13.2)
+  rake-compiler (~> 1.2)
+
+BUNDLED WITH
+   2.5.11
