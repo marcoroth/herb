@@ -1,7 +1,5 @@
 exec = erbx
 test_exec = run_erbx_tests
-lib_name = lib$(exec).so
-ruby_extension = ext/erbx/$(lib_name)
 
 sources = $(wildcard src/*.c)
 objects = $(sources:.c=.o)
@@ -17,11 +15,15 @@ flags = -g -Wall -fPIC
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
+  lib_name = $(exec).so
+  ruby_extension = ext/erbx/$(lib_name)
 endif
 
 ifeq ($(os),Darwin)
   test_cflags = $(flags) -I/usr/local/include
   test_ldflags = -L/usr/local/lib -lcheck -lm
+  lib_name = lib$(exec).so
+  ruby_extension = ext/erbx/$(lib_name)
 endif
 
 all: $(exec) $(lib_name) test
