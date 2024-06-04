@@ -1,4 +1,5 @@
 #include "include/erbx.h"
+#include "include/buffer.h"
 
 #include <stdio.h>
 
@@ -9,7 +10,13 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  erbx_compile_file(argv[1]);
+  buffer output;
+
+  erbx_compile_file(argv[1], &output);
+
+  printf("%s", output.value);
+
+  buffer_free(&output);
 
   return 0;
 }

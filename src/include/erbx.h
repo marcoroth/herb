@@ -1,7 +1,9 @@
 #ifndef ERBX_H
 #define ERBX_H
 
-void erbx_compile(char* source);
-void erbx_compile_file(const char* filename);
+#include "buffer.h"
+
+void erbx_compile(char* source, buffer* output);
+void erbx_compile_file(const char* filename, buffer* output);
 
 #endif

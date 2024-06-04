@@ -3,8 +3,11 @@
 
 TEST(test_basic_tag)
   char* html = "";
+  buffer output;
 
-  erbx_compile(html);
+  erbx_compile(html, &output);
+
+  buffer_free(&output);
 END
 
 TCase *tags_tests(void) {
