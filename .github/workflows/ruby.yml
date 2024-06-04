@@ -31,3 +31,6 @@ jobs:
       - name: Test extension
         working-directory: ./ext/erbx
         run: ruby test.rb
+
+      - name: Ruby tests
+        run: rake test

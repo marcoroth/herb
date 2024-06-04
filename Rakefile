@@ -1,5 +1,6 @@
 require "bundler/gem_tasks"
 require "rake/extensiontask"
+require "rake/testtask"
 
 Rake::ExtensionTask.new do |ext|
   ext.name = "erbx"
@@ -9,4 +10,10 @@ Rake::ExtensionTask.new do |ext|
   ext.gem_spec = Gem::Specification.load("erbx.gemspec")
 end
 
-task default: [:compile]
+Rake::TestTask.new(:test) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = FileList["ext/erbx/test/**/*_test.rb"]
+end
+
+task default: [:test, :compile]
