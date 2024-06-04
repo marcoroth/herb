@@ -1,5 +1,7 @@
 exec = erbx
 test_exec = run_erbx_tests
+lib_name = lib$(exec).so
+ruby_extension = ext/erbx/$(lib_name)
 
 sources = $(wildcard src/*.c)
 objects = $(sources:.c=.o)
@@ -22,10 +24,14 @@ ifeq ($(os),Darwin)
   test_ldflags = -L/usr/local/lib -lcheck -lm
 endif
 
-all: $(exec) test
+all: $(exec) $(lib_name) test
 
 $(exec): $(objects)
 	gcc $(objects) $(flags) -o $(exec)
+
+$(lib_name): $(objects)
+	gcc -shared $(objects) $(flags) -o $(lib_name)
+	cp $(lib_name) $(ruby_extension)
 
 %.o: %.c include/%.h
 	gcc -c $(flags) $< -o $@
@@ -37,5 +43,5 @@ test: $(test_objects) $(non_main_objects)
 	gcc $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
 
 clean:
-	rm -f $(exec) $(test_exec)
+	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
 	rm -f src/*.o test/*.o
