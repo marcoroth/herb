@@ -9,8 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: make shared library
-        run: make liberbx.so
+      - name: Install dependencies
+        run: sudo apt-get install check
+
+      - name: make
+        run: make
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
