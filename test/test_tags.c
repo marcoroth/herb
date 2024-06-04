@@ -3,7 +3,7 @@
 
 TEST(test_empty_file)
   char* html = "";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -14,7 +14,7 @@ END
 
 TEST(test_basic_tag)
   char* html = "<html></html>";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -34,7 +34,7 @@ END
 
 TEST(test_basic_void_tag)
   char* html = "<img />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -51,7 +51,7 @@ END
 
 TEST(test_namespaced_tag)
   char* html = "<ns:table></ns:table>";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -71,7 +71,7 @@ END
 
 TEST(test_text_content)
   char* html = "<h1>Hello World</h1>";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -92,7 +92,7 @@ END
 
 TEST(test_attribute_value_double_quotes)
   char* html = "<img value=\"hello world\" />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -114,7 +114,7 @@ END
 
 TEST(test_attribute_value_single_quotes)
   char* html = "<img value='hello world' />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -136,7 +136,7 @@ END
 
 // TEST(test_attribute_value_no_quotes)
 //   char* html = "<img value=hello />";
-//   buffer output;
+//   buffer_T output;
 //
 //   erbx_compile(html, &output);
 //
@@ -156,7 +156,7 @@ END
 
 TEST(test_attribute_value_empty_double_quotes)
   char* html = "<img value=\"\" />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -178,7 +178,7 @@ END
 
 TEST(test_attribute_value_empty_single_quotes)
   char* html = "<img value='' />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 
@@ -200,7 +200,7 @@ END
 
 TEST(test_boolean_attribute)
   char* html = "<img required />";
-  buffer output;
+  buffer_T output;
 
   erbx_compile(html, &output);
 

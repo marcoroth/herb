@@ -4,9 +4,9 @@
 
 #include "include/buffer.h"
 
-void init_buffer(buffer* buffer) {
+void buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
-  buffer->size = 0;
+  buffer->length = 0;
   buffer->value = malloc(buffer->capacity * sizeof(char));
 
   if (buffer->value) {
@@ -14,11 +14,27 @@ void init_buffer(buffer* buffer) {
   }
 }
 
-void buffer_append(buffer* buffer, const char* text) {
+char* buffer_value(buffer_T* buffer) {
+  return buffer->value;
+}
+
+size_t buffer_length(buffer_T* buffer) {
+  return buffer->length;
+}
+
+size_t buffer_capacity(buffer_T* buffer) {
+  return buffer->capacity;
+}
+
+size_t buffer_sizeof(void) {
+  return sizeof(buffer_T);
+}
+
+void buffer_append(buffer_T* buffer, const char* text) {
   size_t text_length = strlen(text);
 
-  if (buffer->size + text_length >= buffer->capacity) {
-    size_t new_capacity = (buffer->size + text_length) * 2;
+  if (buffer->length + text_length >= buffer->capacity) {
+    size_t new_capacity = (buffer->length + text_length) * 2;
     char* new_buffer = realloc(buffer->value, new_capacity);
 
     if (new_buffer) {
@@ -30,47 +46,47 @@ void buffer_append(buffer* buffer, const char* text) {
     }
   }
 
-  strcat(buffer->value + buffer->size, text);
-  buffer->size += text_length;
+  strcat(buffer->value + buffer->length, text);
+  buffer->length += text_length;
 }
 
-void buffer_prepend(buffer* buffer, const char* text) {
+void buffer_prepend(buffer_T* buffer, const char* text) {
   if (text == NULL || text[0] == '\0') return;
 
   size_t text_length = strlen(text);
-  size_t new_size = buffer->size + text_length;
+  size_t new_length = buffer->length + text_length;
 
-  if (new_size >= buffer->capacity) {
-    size_t new_capacity = new_size * 2;
+  if (new_length >= buffer->capacity) {
+    size_t new_capacity = new_length * 2;
     buffer->value = realloc(buffer->value, new_capacity);
     buffer->capacity = new_capacity;
   }
 
-  memmove(buffer->value + text_length, buffer->value, buffer->size + 1);
+  memmove(buffer->value + text_length, buffer->value, buffer->length + 1);
   memcpy(buffer->value, text, text_length);
 
-  buffer->size = new_size;
-  buffer->value[buffer->size] = '\0';
+  buffer->length = new_length;
+  buffer->value[buffer->length] = '\0';
 }
 
-void buffer_concat(buffer* destination, buffer* source) {
-  if (source->size == 0) return;
+void buffer_concat(buffer_T* destination, buffer_T* source) {
+  if (source->length == 0) return;
 
-  size_t new_size = destination->size + source->size;
+  size_t new_length = destination->length + source->length;
 
-  if (new_size >= destination->capacity) {
-    size_t new_capacity = new_size * 2;
+  if (new_length >= destination->capacity) {
+    size_t new_capacity = new_length * 2;
     destination->value = realloc(destination->value, new_capacity);
     destination->capacity = new_capacity;
   }
 
-  strcat(destination->value + destination->size, source->value);
+  strcat(destination->value + destination->length, source->value);
 
-  destination->size = new_size;
+  destination->length = new_length;
 }
 
-void buffer_free(buffer* buffer) {
+void buffer_free(buffer_T* buffer) {
   free(buffer->value);
   buffer->value = NULL;
-  buffer->size = buffer->capacity = 0;
+  buffer->length = buffer->capacity = 0;
 }

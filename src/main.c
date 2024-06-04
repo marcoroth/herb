@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  buffer output;
+  buffer_T output;
 
   erbx_compile_file(argv[1], &output);
 

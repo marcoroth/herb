@@ -7,11 +7,11 @@
 
 #include <stdlib.h>
 
-void erbx_compile(char* source, buffer* output) {
+void erbx_compile(char* source, buffer_T* output) {
   lexer_T* lexer = init_lexer(source);
   token_T* token = 0;
 
-  init_buffer(output);
+  buffer_init(output);
 
   while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
     buffer_append(output, token_to_string(token));
@@ -26,7 +26,7 @@ void erbx_compile(char* source, buffer* output) {
   // printf("%zu\n", root->children->size);
 }
 
-void erbx_compile_file(const char* filename, buffer* output) {
+void erbx_compile_file(const char* filename, buffer_T* output) {
   char* source = erbx_read_file(filename);
   erbx_compile(source, output);
   free(source);
