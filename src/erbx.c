@@ -3,6 +3,7 @@
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/buffer.h"
+#include "include/version.h"
 
 #include <stdlib.h>
 
@@ -29,4 +30,8 @@ void erbx_compile_file(const char* filename, buffer* output) {
   char* source = erbx_read_file(filename);
   erbx_compile(source, output);
   free(source);
+}
+
+const char* erbx_version(void) {
+  return ERBX_VERSION;
 }

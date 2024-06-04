@@ -5,5 +5,6 @@
 
 void erbx_compile(char* source, buffer* output);
 void erbx_compile_file(const char* filename, buffer* output);
+const char * erbx_version(void);
 
 #endif
