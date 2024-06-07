@@ -1,7 +1,7 @@
 #ifndef ERBX_AST_H
 #define ERBX_AST_H
 
-#include "list.h"
+#include "array.h"
 
 typedef struct AST_STRUCT {
   enum {
@@ -17,7 +17,7 @@ typedef struct AST_STRUCT {
     AST_NOOP,
   } type;
 
-  list_T* children;
+  array_T* children;
   char* name;
   struct AST_STRUCT* value;
   int data_type;
