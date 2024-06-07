@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-parser_T* init_parser(lexer_T* lexer) {
+parser_T* parser_init(lexer_T* lexer) {
   parser_T * parser = calloc(1, sizeof(struct PARSER_STRUCT));
   parser->lexer = lexer;
   parser->token = lexer_next_token(lexer);
@@ -31,5 +31,5 @@ AST_T* parser_parse(parser_T* parser) {
     }
   }
 
-  return init_ast(AST_NOOP);
+  return ast_init(AST_NOOP);
 }

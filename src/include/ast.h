@@ -24,6 +24,6 @@ typedef struct AST_STRUCT {
   int int_value;
 } AST_T;
 
-AST_T* init_ast(int type);
+AST_T* ast_init(int type);
 
 #endif

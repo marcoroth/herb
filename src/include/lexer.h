@@ -26,7 +26,7 @@ typedef struct LEXER_STRUCT {
   } state;
 } lexer_T;
 
-lexer_T* init_lexer(char* src);
+lexer_T* lexer_init(char* src);
 
 void lexer_skip_whitespace(lexer_T* lexer);
 void lexer_advance(lexer_T* lexer);

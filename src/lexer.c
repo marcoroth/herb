@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-lexer_T* init_lexer(char* source) {
+lexer_T* lexer_init(char* source) {
   lexer_T* lexer = calloc(1, sizeof(struct LEXER_STRUCT));
 
   lexer->state = STATE_NONE;
@@ -51,7 +51,7 @@ token_T* lexer_advance_current(lexer_T* lexer, int type) {
   value[0] = lexer->current_character;
   value[1] = '\0';
 
-  token_T* token = init_token(value, type);
+  token_T* token = token_init(value, type);
   lexer_advance(lexer);
 
   return token;
@@ -70,7 +70,7 @@ token_T* lexer_parse_newline(lexer_T* lexer) {
 
   lexer_advance(lexer);
 
-  return init_token(value, TOKEN_NEWLINE);
+  return token_init(value, TOKEN_NEWLINE);
 }
 
 token_T* lexer_parse_whitespace(lexer_T* lexer) {
@@ -82,7 +82,7 @@ token_T* lexer_parse_whitespace(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return init_token(value, TOKEN_WHITESPACE);
+  return token_init(value, TOKEN_WHITESPACE);
 }
 
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
@@ -94,7 +94,7 @@ token_T* lexer_parse_tag_name(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return init_token(value, TOKEN_TAG_NAME);
+  return token_init(value, TOKEN_TAG_NAME);
 }
 
 token_T* lexer_parse_attribute_name(lexer_T* lexer) {
@@ -115,7 +115,7 @@ token_T* lexer_parse_attribute_name(lexer_T* lexer) {
     lexer->state = STATE_ATTRIBUTE_START;
   }
 
-  return init_token(value, TOKEN_ATTRIBUTE_NAME);
+  return token_init(value, TOKEN_ATTRIBUTE_NAME);
 }
 
 token_T* lexer_parse_attribute_value(lexer_T* lexer) {
@@ -128,7 +128,7 @@ token_T* lexer_parse_attribute_value(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return init_token(value, TOKEN_ATTRIBUTE_VALUE);
+  return token_init(value, TOKEN_ATTRIBUTE_VALUE);
 }
 
 token_T* lexer_parse_text_content(lexer_T* lexer) {
@@ -140,7 +140,7 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return init_token(value, TOKEN_TEXT_CONTENT);
+  return token_init(value, TOKEN_TEXT_CONTENT);
 }
 
 token_T* lexer_next_token(lexer_T* lexer) {
@@ -159,11 +159,11 @@ token_T* lexer_next_token(lexer_T* lexer) {
           case '<': {
             if (lexer_peek(lexer, 1) == '/') {
               lexer->state = STATE_START_TAG_START;
-              return lexer_advance_with(lexer, lexer_advance_with(lexer, init_token("</", TOKEN_END_TAG_START)));
+              return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("</", TOKEN_END_TAG_START)));
             }
 
             lexer->state = STATE_START_TAG_START;
-            return lexer_advance_with(lexer, init_token("<", TOKEN_START_TAG_START));
+            return lexer_advance_with(lexer, token_init("<", TOKEN_START_TAG_START));
           } break;
 
 
@@ -224,7 +224,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
           case '/': {
             if (lexer_peek(lexer, 1) == '>') {
               lexer->state = STATE_NONE;
-              return lexer_advance_with(lexer, lexer_advance_with(lexer, init_token("/>", TOKEN_START_TAG_END_VOID)));
+              return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("/>", TOKEN_START_TAG_END_VOID)));
             } else {
               // TODO: raise
             }
@@ -245,10 +245,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
         if (lexer->current_character == '<') {
           if (lexer_peek(lexer, 1) == '/') {
             lexer->state = STATE_END_TAG_START;
-            return lexer_advance_with(lexer, lexer_advance_with(lexer, init_token("</", TOKEN_END_TAG_START)));
+            return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("</", TOKEN_END_TAG_START)));
           } else {
             lexer->state = STATE_START_TAG_START;
-            return lexer_advance_with(lexer, init_token("<", TOKEN_START_TAG_START));
+            return lexer_advance_with(lexer, token_init("<", TOKEN_START_TAG_START));
           }
         } else {
           return lexer_parse_text_content(lexer);
@@ -273,7 +273,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
       case STATE_ATTRIBUTE_VALUE: {
         if (lexer->current_character == '"' || lexer->current_character == '\'') {
           lexer->state = STATE_ATTRIBUTE_VALUE_END;
-          return init_token("\0", TOKEN_ATTRIBUTE_VALUE);
+          return token_init("\0", TOKEN_ATTRIBUTE_VALUE);
         }
 
         if (isalpha(lexer->current_character) || iswhitespace(lexer->current_character)) {
@@ -301,7 +301,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
           }
         }
 
-        return init_token(0, TOKEN_ATTRIBUTE_VALUE);
+        return token_init(0, TOKEN_ATTRIBUTE_VALUE);
       } break;
       default: {
         if (iswhitespace(lexer->current_character) || isnewline(lexer->current_character)) {
@@ -311,5 +311,5 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
   }
 
-  return init_token("\0", TOKEN_EOF);
+  return token_init("\0", TOKEN_EOF);
 }

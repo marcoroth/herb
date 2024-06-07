@@ -1,6 +1,6 @@
 #include "include/list.h"
 
-list_T* init_list(size_t item_size) {
+list_T* list_init(size_t item_size) {
   list_T* list = calloc(1, sizeof(struct LIST_STRUCT));
   list->size = 0;
   list->item_size = item_size;

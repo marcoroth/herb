@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 void erbx_compile(char* source, buffer_T* output) {
-  lexer_T* lexer = init_lexer(source);
+  lexer_T* lexer = lexer_init(source);
   token_T* token = 0;
 
   buffer_init(output);
@@ -21,7 +21,7 @@ void erbx_compile(char* source, buffer_T* output) {
   buffer_append(output, token_to_string(token));
   buffer_append(output, "\n");
 
-  // parser_T* parser = init_parser(lexer);
+  // parser_T* parser = parser_init(lexer);
   // AST_T* root = parser_parse(parser);
   // printf("%zu\n", root->children->size);
 }
