@@ -1,3 +1,3 @@
 require "erbx"
 
-puts ERBX::Lexer.lex("<html><html>")
+puts ERBX.lex("<html><html>")

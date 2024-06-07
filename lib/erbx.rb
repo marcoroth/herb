@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "erbx/liberbx"
 require "erbx/liberbx/buffer"
 require "erbx/liberbx/array"
