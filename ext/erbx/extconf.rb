@@ -10,8 +10,8 @@ unless find_header("#{extension_name}.h", include_path)
 end
 
 expected_functions = [
-  "erbx_compile",
-  "erbx_compile_file",
+  "erbx_lex",
+  "erbx_lex_file",
 ]
 
 expected_functions.each do |expected_function|

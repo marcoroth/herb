@@ -1,3 +1,3 @@
 require "erbx"
 
-puts ERBX::Compiler.new.compile("<html><html>")
+puts ERBX::Lexer.lex("<html><html>")

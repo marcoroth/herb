@@ -4,7 +4,7 @@
 
 #include "include/buffer.h"
 
-void buffer_init(buffer_T* buffer) {
+bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
   buffer->value = malloc(buffer->capacity * sizeof(char));
@@ -12,6 +12,8 @@ void buffer_init(buffer_T* buffer) {
   if (buffer->value) {
     buffer->value[0] = '\0';
   }
+
+  return buffer != NULL;
 }
 
 char* buffer_value(buffer_T* buffer) {

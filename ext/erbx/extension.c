@@ -16,17 +16,17 @@ static const char *check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
-VALUE rb_erbx_compile(VALUE self, VALUE source) {
+VALUE rb_erbx_lex(VALUE self, VALUE source) {
   const char *string = check_string(source);
 
-  erbx_compile((char *) string);
+  erbx_lex((char *) string);
 
   return Qnil;
 }
 
 void Init_erbx() {
-  VALUE ERBX = rb_define_module("ERBX");
-  VALUE Compiler = rb_define_class_under(ERBX, "Compiler", rb_cObject);
+  VALUE ERBX = rb_define_module("LibERBX");
+  VALUE Lexer = rb_define_class_under(ERBX, "Lexer", rb_cObject);
 
-  rb_define_method(Compiler, "compile", rb_erbx_compile, 1);
+  rb_define_method(Lexer, "lex", rb_erbx_lex, 1);
 }

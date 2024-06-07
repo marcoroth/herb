@@ -2,7 +2,7 @@
 #include "../src/include/token.h"
 
 TEST(test_token)
-  ck_assert_str_eq(token_type_to_string(TOKEN_ATTRIBUTE_NAME), "TOKEN_ATTRIBUTE_NAME");
+  ck_assert_str_eq(token_type_string(TOKEN_ATTRIBUTE_NAME), "TOKEN_ATTRIBUTE_NAME");
 END
 
 TCase *token_tests(void) {

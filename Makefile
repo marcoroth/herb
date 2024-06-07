@@ -8,6 +8,10 @@ test_sources = $(wildcard test/*.c)
 test_objects = $(test_sources:.c=.o)
 non_main_objects = $(filter-out src/main.o, $(objects))
 
+soext ?= $(shell ruby -e 'puts RbConfig::CONFIG["SOEXT"]')
+lib_name = lib$(exec).$(soext)
+ruby_extension = ext/erbx/$(lib_name)
+
 os := $(shell uname -s)
 
 flags = -g -Wall -fPIC
@@ -15,15 +19,11 @@ flags = -g -Wall -fPIC
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
-  lib_name = $(exec).so
-  ruby_extension = ext/erbx/$(lib_name)
 endif
 
 ifeq ($(os),Darwin)
   test_cflags = $(flags) -I/usr/local/include
   test_ldflags = -L/usr/local/lib -lcheck -lm
-  lib_name = lib$(exec).so
-  ruby_extension = ext/erbx/$(lib_name)
 endif
 
 all: $(exec) $(lib_name) test
@@ -33,7 +33,7 @@ $(exec): $(objects)
 
 $(lib_name): $(objects)
 	gcc -shared $(objects) $(flags) -o $(lib_name)
-	cp $(lib_name) $(ruby_extension)
+	# cp $(lib_name) $(ruby_extension)
 
 %.o: %.c include/%.h
 	gcc -c $(flags) $< -o $@

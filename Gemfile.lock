@@ -2,10 +2,13 @@ PATH
   remote: .
   specs:
     erbx (0.0.1)
+      ffi
 
 GEM
   remote: https://rubygems.org/
   specs:
+    ffi (1.17.0)
+    ffi (1.17.0-x86_64-darwin)
     maxitest (5.5.0)
       minitest (>= 5.14.0, < 5.24.0)
     minitest (5.23.1)

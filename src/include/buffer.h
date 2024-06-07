@@ -2,6 +2,7 @@
 #define ERBX_BUFFER_H
 
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef struct BUFFER_STRUCT {
   char* value;
@@ -9,7 +10,7 @@ typedef struct BUFFER_STRUCT {
   size_t capacity;
 } buffer_T;
 
-void buffer_init(buffer_T* buffer);
+bool buffer_init(buffer_T* buffer);
 
 void buffer_append(buffer_T* buffer, const char* text);
 void buffer_prepend(buffer_T* buffer, const char* text);

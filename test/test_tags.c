@@ -5,7 +5,7 @@ TEST(test_empty_file)
   char* html = "";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(output.value, "<type='TOKEN_EOF', int_type='5', value=''>\n");
 
@@ -16,7 +16,7 @@ TEST(test_basic_tag)
   char* html = "<html></html>";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -36,7 +36,7 @@ TEST(test_basic_void_tag)
   char* html = "<img />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -53,7 +53,7 @@ TEST(test_namespaced_tag)
   char* html = "<ns:table></ns:table>";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -73,7 +73,7 @@ TEST(test_text_content)
   char* html = "<h1>Hello World</h1>";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -94,7 +94,7 @@ TEST(test_attribute_value_double_quotes)
   char* html = "<img value=\"hello world\" />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -116,7 +116,7 @@ TEST(test_attribute_value_single_quotes)
   char* html = "<img value='hello world' />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -138,7 +138,7 @@ END
 //   char* html = "<img value=hello />";
 //   buffer_T output;
 //
-//   erbx_compile(html, &output);
+//   erbx_lex_to_buffer(html, &output);
 //
 //   ck_assert_str_eq(
 //     output.value,
@@ -158,7 +158,7 @@ TEST(test_attribute_value_empty_double_quotes)
   char* html = "<img value=\"\" />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -180,7 +180,7 @@ TEST(test_attribute_value_empty_single_quotes)
   char* html = "<img value='' />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,
@@ -202,7 +202,7 @@ TEST(test_boolean_attribute)
   char* html = "<img required />";
   buffer_T output;
 
-  erbx_compile(html, &output);
+  erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
     output.value,

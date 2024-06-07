@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "lib/erbx/version"
-
 Gem::Specification.new do |spec|
   spec.name = "erbx"
-  spec.version = ERBX::VERSION
+  spec.version = "0.0.1"
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
@@ -25,6 +23,8 @@ Gem::Specification.new do |spec|
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/erbx"
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
+
+  spec.add_dependency "ffi"
 
   spec.add_development_dependency "rake", "~> 13.2"
   spec.add_development_dependency "rake-compiler", "~> 1.2"

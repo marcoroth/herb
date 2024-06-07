@@ -1,3 +1,4 @@
+#include "include/io.h"
 #include "include/erbx.h"
 #include "include/buffer.h"
 
@@ -10,13 +11,15 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  char* source = erbx_read_file(argv[1]);
   buffer_T output;
 
-  erbx_compile_file(argv[1], &output);
+  erbx_lex_to_buffer(source, &output);
 
   printf("%s", output.value);
 
   buffer_free(&output);
+  free(source);
 
   return 0;
 }

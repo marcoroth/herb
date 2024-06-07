@@ -29,7 +29,10 @@ typedef struct TOKEN_STRUCT {
 
 token_T* token_init(char* value, int type);
 char* token_to_string(token_T* token);
-const char* token_type_to_string(int type);
+const char* token_type_string(int type);
+
+char* token_value(token_T* token);
+int token_type(token_T* token);
 
 size_t token_sizeof(void);
 
