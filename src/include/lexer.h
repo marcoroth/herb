@@ -2,7 +2,7 @@
 #define ERBX_LEXER_H
 
 #include "token.h"
-#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct LEXER_STRUCT {
   char* source;
@@ -43,5 +43,7 @@ token_T* lexer_parse_newline(lexer_T* lexer);
 token_T* lexer_parse_single_quoted_id(lexer_T* lexer);
 token_T* lexer_parse_tag_name(lexer_T* lexer);
 token_T* lexer_parse_whitespace(lexer_T* lexer);
+
+size_t lexer_sizeof(void);
 
 #endif

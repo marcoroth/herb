@@ -2,11 +2,15 @@
 #include "include/macros.h"
 
 #include <string.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 
+size_t lexer_sizeof(void) {
+  return sizeof(struct LEXER_STRUCT);
+}
+
 lexer_T* lexer_init(char* source) {
-  lexer_T* lexer = calloc(1, sizeof(struct LEXER_STRUCT));
+  lexer_T* lexer = calloc(1, lexer_sizeof());
 
   lexer->state = STATE_NONE;
   lexer->source = source;

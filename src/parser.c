@@ -5,8 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+size_t parser_sizeof(void) {
+  return sizeof(struct PARSER_STRUCT);
+}
+
 parser_T* parser_init(lexer_T* lexer) {
-  parser_T * parser = calloc(1, sizeof(struct PARSER_STRUCT));
+  parser_T * parser = calloc(1, parser_sizeof());
   parser->lexer = lexer;
   parser->token = lexer_next_token(lexer);
 

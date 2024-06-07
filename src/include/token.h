@@ -1,6 +1,8 @@
 #ifndef ERBX_TOKEN_H
 #define ERBX_TOKEN_H
 
+#include <stdlib.h>
+
 typedef struct TOKEN_STRUCT {
   char* value;
   enum {
@@ -28,5 +30,7 @@ typedef struct TOKEN_STRUCT {
 token_T* token_init(char* value, int type);
 char* token_to_string(token_T* token);
 const char* token_type_to_string(int type);
+
+size_t token_sizeof(void);
 
 #endif

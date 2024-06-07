@@ -4,8 +4,12 @@
 #include <string.h>
 #include <stdio.h>
 
+size_t token_sizeof(void) {
+  return sizeof(struct TOKEN_STRUCT);
+}
+
 token_T* token_init(char* value, int type) {
-  token_T* token = calloc(1, sizeof(struct TOKEN_STRUCT));
+  token_T* token = calloc(1, token_sizeof());
   token->value = value;
   token->type = type;
 

@@ -10,6 +10,7 @@ typedef struct BUFFER_STRUCT {
 } buffer_T;
 
 void buffer_init(buffer_T* buffer);
+
 void buffer_append(buffer_T* buffer, const char* text);
 void buffer_prepend(buffer_T* buffer, const char* text);
 void buffer_concat(buffer_T* destination, buffer_T* source);
