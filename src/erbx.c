@@ -1,6 +1,7 @@
 #include "include/erbx.h"
 #include "include/io.h"
 #include "include/lexer.h"
+#include "include/token.h"
 #include "include/parser.h"
 #include "include/buffer.h"
 #include "include/version.h"
