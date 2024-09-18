@@ -18,8 +18,9 @@ ifeq ($(os),Linux)
 endif
 
 ifeq ($(os),Darwin)
-  test_cflags = $(flags) -I/usr/local/include
-  test_ldflags = -L/usr/local/lib -lcheck -lm
+  brew_prefix := $(shell brew --prefix check)
+  test_cflags = $(flags) -I$(brew_prefix)/include
+  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm
 endif
 
 all: $(exec) test
