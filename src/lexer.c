@@ -1,5 +1,7 @@
+#include "include/token.h"
 #include "include/lexer.h"
 #include "include/macros.h"
+#include "include/util.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -16,17 +18,11 @@ lexer_T* lexer_init(char* source) {
   lexer->source = source;
   lexer->source_length = strlen(source);
   lexer->current_position = 0;
+  lexer->current_column = 0;
+  lexer->current_line = 1;
   lexer->current_character = source[lexer->current_position];
 
   return lexer;
-}
-
-int iswhitespace(int character) {
-  return character == ' ' || character == '\t';
-}
-
-int isnewline(int character) {
-  return character == 13 || character == 10;
 }
 
 char lexer_peek(lexer_T* lexer, int offset) {
@@ -39,15 +35,17 @@ char lexer_backtrack(lexer_T* lexer, int offset) {
 
 void lexer_advance(lexer_T* lexer) {
   if (lexer->current_position < lexer->source_length && lexer->current_character != '\0') {
+
+    if (isnewline(lexer->current_character)) {
+      lexer->current_line += 1;
+      lexer->current_column = 1;
+    } else {
+      lexer->current_column += 1;
+    }
+
     lexer->current_position += 1;
     lexer->current_character = lexer->source[lexer->current_position];
   }
-}
-
-token_T* lexer_advance_with(lexer_T* lexer, token_T* token) {
-  lexer_advance(lexer);
-
-  return token;
 }
 
 token_T* lexer_advance_current(lexer_T* lexer, int type) {
@@ -55,8 +53,8 @@ token_T* lexer_advance_current(lexer_T* lexer, int type) {
   value[0] = lexer->current_character;
   value[1] = '\0';
 
-  token_T* token = token_init(value, type);
   lexer_advance(lexer);
+  token_T* token = token_init(value, type, lexer);
 
   return token;
 }
@@ -74,7 +72,7 @@ token_T* lexer_parse_newline(lexer_T* lexer) {
 
   lexer_advance(lexer);
 
-  return token_init(value, TOKEN_NEWLINE);
+  return token_init(value, TOKEN_NEWLINE, lexer);
 }
 
 token_T* lexer_parse_whitespace(lexer_T* lexer) {
@@ -86,7 +84,7 @@ token_T* lexer_parse_whitespace(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(value, TOKEN_WHITESPACE);
+  return token_init(value, TOKEN_WHITESPACE, lexer);
 }
 
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
@@ -98,7 +96,7 @@ token_T* lexer_parse_tag_name(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(value, TOKEN_TAG_NAME);
+  return token_init(value, TOKEN_TAG_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_name(lexer_T* lexer) {
@@ -119,7 +117,7 @@ token_T* lexer_parse_attribute_name(lexer_T* lexer) {
     lexer->state = STATE_ATTRIBUTE_START;
   }
 
-  return token_init(value, TOKEN_ATTRIBUTE_NAME);
+  return token_init(value, TOKEN_ATTRIBUTE_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_value(lexer_T* lexer) {
@@ -132,7 +130,7 @@ token_T* lexer_parse_attribute_value(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(value, TOKEN_ATTRIBUTE_VALUE);
+  return token_init(value, TOKEN_ATTRIBUTE_VALUE, lexer);
 }
 
 token_T* lexer_parse_text_content(lexer_T* lexer) {
@@ -144,7 +142,7 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(value, TOKEN_TEXT_CONTENT);
+  return token_init(value, TOKEN_TEXT_CONTENT, lexer);
 }
 
 token_T* lexer_next_token(lexer_T* lexer) {
@@ -163,11 +161,16 @@ token_T* lexer_next_token(lexer_T* lexer) {
           case '<': {
             if (lexer_peek(lexer, 1) == '/') {
               lexer->state = STATE_START_TAG_START;
-              return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("</", TOKEN_END_TAG_START)));
+              lexer_advance(lexer);
+              lexer_advance(lexer);
+
+              return token_init("</", TOKEN_END_TAG_START, lexer);
             }
 
             lexer->state = STATE_START_TAG_START;
-            return lexer_advance_with(lexer, token_init("<", TOKEN_START_TAG_START));
+            lexer_advance(lexer);
+
+            return token_init("<", TOKEN_START_TAG_START, lexer);
           } break;
 
 
@@ -228,7 +231,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
           case '/': {
             if (lexer_peek(lexer, 1) == '>') {
               lexer->state = STATE_NONE;
-              return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("/>", TOKEN_START_TAG_END_VOID)));
+              lexer_advance(lexer);
+              lexer_advance(lexer);
+
+              return token_init("/>", TOKEN_START_TAG_END_VOID, lexer);
             } else {
               // TODO: raise
             }
@@ -249,10 +255,15 @@ token_T* lexer_next_token(lexer_T* lexer) {
         if (lexer->current_character == '<') {
           if (lexer_peek(lexer, 1) == '/') {
             lexer->state = STATE_END_TAG_START;
-            return lexer_advance_with(lexer, lexer_advance_with(lexer, token_init("</", TOKEN_END_TAG_START)));
+            lexer_advance(lexer);
+            lexer_advance(lexer);
+
+            return token_init("</", TOKEN_END_TAG_START, lexer);
           } else {
             lexer->state = STATE_START_TAG_START;
-            return lexer_advance_with(lexer, token_init("<", TOKEN_START_TAG_START));
+            lexer_advance(lexer);
+
+            return token_init("<", TOKEN_START_TAG_START, lexer);
           }
         } else {
           return lexer_parse_text_content(lexer);
@@ -277,7 +288,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
       case STATE_ATTRIBUTE_VALUE: {
         if (lexer->current_character == '"' || lexer->current_character == '\'') {
           lexer->state = STATE_ATTRIBUTE_VALUE_END;
-          return token_init("\0", TOKEN_ATTRIBUTE_VALUE);
+          return token_init("\0", TOKEN_ATTRIBUTE_VALUE, lexer);
         }
 
         if (isalpha(lexer->current_character) || iswhitespace(lexer->current_character)) {
@@ -305,7 +316,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
           }
         }
 
-        return token_init(0, TOKEN_ATTRIBUTE_VALUE);
+        return token_init(0, TOKEN_ATTRIBUTE_VALUE, lexer);
       } break;
       default: {
         if (iswhitespace(lexer->current_character) || isnewline(lexer->current_character)) {
@@ -315,5 +326,5 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
   }
 
-  return token_init("\0", TOKEN_EOF);
+  return token_init("\0", TOKEN_EOF, lexer);
 }
