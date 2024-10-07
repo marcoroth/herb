@@ -16,4 +16,24 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList["ext/erbx/test/**/*_test.rb"]
 end
 
-task default: [:test, :compile]
+Rake::Task[:compile].enhance do
+   IO.popen("make") do |output|
+     output.each_line do |line|
+       puts "#{line}"
+     end
+   end
+
+   if $?.exitstatus != 0
+     raise "src/* could not be compiled #{$?.exitstatus}"
+   end
+ end
+
+ Rake::Task[:clean].enhance do
+   IO.popen("make clean") do |output|
+     output.each_line do |line|
+       puts "#{line}"
+     end
+   end
+ end
+
+ task default: [:compile, :test]
