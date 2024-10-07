@@ -13,11 +13,14 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.require_paths = ["lib"]
-  spec.files = [
-    "ext/erbx/extension.c",
-    "lib/erbx.rb",
-    # "lib/erbx/version.rb"
-  ]
+
+  gemspec = File.basename(__FILE__)
+  spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
+    ls.readlines("\x0", chomp: true).reject do |f|
+      (f == gemspec) ||
+        f.start_with?(*%w[bin/ test/ spec/ features/ .git .github appveyor Gemfile])
+    end
+  end
 
   spec.extensions = ["ext/erbx/extconf.rb"]
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
