@@ -8,7 +8,7 @@ test_sources = $(wildcard test/*.c)
 test_objects = $(test_sources:.c=.o)
 non_main_objects = $(filter-out src/main.o, $(objects))
 
-soext ?= $(shell ruby -e 'puts RbConfig::CONFIG["SOEXT"]')
+soext ?= $(shell ruby -e 'puts RbConfig::CONFIG["DLEXT"]')
 lib_name = lib$(exec).$(soext)
 ruby_extension = ext/erbx/$(lib_name)
 
@@ -47,4 +47,4 @@ test: $(test_objects) $(non_main_objects)
 
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
-	rm -f src/*.o test/*.o
+	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp

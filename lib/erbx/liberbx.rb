@@ -8,7 +8,7 @@ module ERBX
     extend FFI::Library
 
     def self.library_extension
-      RbConfig::CONFIG["SOEXT"]
+      RbConfig::CONFIG["DLEXT"]
     end
 
     def self.library_name
