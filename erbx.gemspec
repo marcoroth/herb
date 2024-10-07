@@ -16,7 +16,7 @@ Gem::Specification.new do |spec|
   spec.files = [
     "ext/erbx/extension.c",
     "lib/erbx.rb",
-    "lib/erbx/version.rb"
+    # "lib/erbx/version.rb"
   ]
 
   spec.extensions = ["ext/erbx/extconf.rb"]

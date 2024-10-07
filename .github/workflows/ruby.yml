@@ -22,15 +22,11 @@ jobs:
 
       - name: Setup extension
         working-directory: ./ext/erbx
-        run: ruby extconf.rb
+        run: bundle install
 
       - name: Build extension
         working-directory: ./ext/erbx
-        run: make
+        run: bundle exec rake
 
       - name: Test extension
-        working-directory: ./ext/erbx
-        run: ruby test.rb
-
-      - name: Ruby tests
-        run: rake test
+        run: bundle exec ruby ext/erbx/test.rb
