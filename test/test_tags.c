@@ -5,6 +5,8 @@ TEST(test_empty_file)
   char* html = "";
   buffer_T output;
 
+  buffer_init(&output);
+
   erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(output.value, "#<Token type=TOKEN_EOF value='' range=[0, 0] start=1:0 end=1:0>\n");
@@ -15,6 +17,8 @@ END
 TEST(test_basic_tag)
   char* html = "<html></html>";
   buffer_T output;
+
+  buffer_init(&output);
 
   erbx_lex_to_buffer(html, &output);
 
@@ -36,6 +40,8 @@ TEST(test_basic_void_tag)
   char* html = "<img />";
   buffer_T output;
 
+  buffer_init(&output);
+
   erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
@@ -52,6 +58,8 @@ END
 TEST(test_namespaced_tag)
   char* html = "<ns:table></ns:table>";
   buffer_T output;
+
+  buffer_init(&output);
 
   erbx_lex_to_buffer(html, &output);
 
@@ -73,6 +81,8 @@ TEST(test_text_content)
   char* html = "<h1>Hello World</h1>";
   buffer_T output;
 
+  buffer_init(&output);
+
   erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
@@ -93,6 +103,8 @@ END
 TEST(test_attribute_value_double_quotes)
   char* html = "<img value=\"hello world\" />";
   buffer_T output;
+
+  buffer_init(&output);
 
   erbx_lex_to_buffer(html, &output);
 
@@ -116,6 +128,8 @@ TEST(test_attribute_value_single_quotes)
   char* html = "<img value='hello world' />";
   buffer_T output;
 
+  buffer_init(&output);
+
   erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
@@ -138,6 +152,8 @@ END
 //   char* html = "<img value=hello />";
 //   buffer_T output;
 //
+//   buffer_init(&output);
+//
 //   erbx_lex_to_buffer(html, &output);
 //
 //   ck_assert_str_eq(
@@ -157,6 +173,8 @@ END
 TEST(test_attribute_value_empty_double_quotes)
   char* html = "<img value=\"\" />";
   buffer_T output;
+
+  buffer_init(&output);
 
   erbx_lex_to_buffer(html, &output);
 
@@ -180,6 +198,8 @@ TEST(test_attribute_value_empty_single_quotes)
   char* html = "<img value='' />";
   buffer_T output;
 
+  buffer_init(&output);
+
   erbx_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(
@@ -201,6 +221,8 @@ END
 TEST(test_boolean_attribute)
   char* html = "<img required />";
   buffer_T output;
+
+  buffer_init(&output);
 
   erbx_lex_to_buffer(html, &output);
 
