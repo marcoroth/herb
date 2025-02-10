@@ -16,13 +16,13 @@ token_T *token_init(char *value, int type, lexer_T *lexer) {
   token->value = value;
   token->type = type;
 
-  token->range = range_init(lexer->current_position - strlen(value),
-                            lexer->current_position);
+  token->range =
+      range_init(lexer->current_position - strlen(value), lexer->current_position);
 
   int start_line = lexer->current_line - count_newlines(value);
-  int start_column = lexer->current_column -
-                     strlen(value); // TODO: fix start_column calculation if
-                                    // value contains newlines
+  int start_column =
+      lexer->current_column - strlen(value); // TODO: fix start_column calculation if
+                                             // value contains newlines
   int end_line = lexer->current_line;
   int end_column = lexer->current_column;
 
@@ -85,14 +85,12 @@ char *token_to_string(token_T *token) {
   const char *template =
       "#<Token type=%s value='%s' range=[%d, %d] start=%d:%d end=%d:%d>";
 
-  char *string =
-      calloc(strlen(type_string) + strlen(template) + 8, sizeof(char));
+  char *string = calloc(strlen(type_string) + strlen(template) + 8, sizeof(char));
 
   char *escaped = escape_newlines(token->value);
 
-  sprintf(string, template, type_string, escaped, token->range->start,
-          token->range->end, token->start->line, token->start->column,
-          token->end->line, token->end->column);
+  sprintf(string, template, type_string, escaped, token->range->start, token->range->end,
+          token->start->line, token->start->column, token->end->line, token->end->column);
 
   free(escaped);
 

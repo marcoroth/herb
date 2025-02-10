@@ -10,8 +10,7 @@ static const char *check_string(VALUE value) {
   }
 
   if (!RB_TYPE_P(value, T_STRING)) {
-    rb_raise(rb_eTypeError,
-             "wrong argument type %" PRIsVALUE " (expected String)",
+    rb_raise(rb_eTypeError, "wrong argument type %" PRIsVALUE " (expected String)",
              rb_obj_class(value));
   }
 

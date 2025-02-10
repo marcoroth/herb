@@ -20,8 +20,7 @@ char *erbx_read_file(const char *filename) {
   buffer[0] = '\0';
 
   while ((read = getline(&line, &len, fp)) != -1) {
-    buffer = (char *)realloc(buffer, (strlen(buffer) + strlen(line) + 1) *
-                                         sizeof(char));
+    buffer = (char *)realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
     strcat(buffer, line);
   }
 

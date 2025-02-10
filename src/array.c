@@ -15,8 +15,7 @@ array_T *array_init(int capacity) {
 void array_append(array_T *array, void *item) {
   if (array->size >= array->capacity) {
     array->capacity *= 2;
-    array->items =
-        (void **)realloc(array->items, sizeof(void *) * array->capacity);
+    array->items = (void **)realloc(array->items, sizeof(void *) * array->capacity);
   }
 
   array->items[array->size] = item;

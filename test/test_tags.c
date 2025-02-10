@@ -9,9 +9,8 @@ buffer_init(&output);
 
 erbx_lex_to_buffer(html, &output);
 
-ck_assert_str_eq(
-    output.value,
-    "#<Token type=TOKEN_EOF value='' range=[0, 0] start=1:0 end=1:0>\n");
+ck_assert_str_eq(output.value,
+                 "#<Token type=TOKEN_EOF value='' range=[0, 0] start=1:0 end=1:0>\n");
 
 buffer_free(&output);
 END
@@ -70,21 +69,20 @@ buffer_init(&output);
 
 erbx_lex_to_buffer(html, &output);
 
-ck_assert_str_eq(
-    output.value,
-    "#<Token type=TOKEN_START_TAG_START value='<' range=[0, 1] start=1:0 "
-    "end=1:1>\n"
-    "#<Token type=TOKEN_TAG_NAME value='ns:table' range=[1, 9] start=1:1 "
-    "end=1:9>\n"
-    "#<Token type=TOKEN_START_TAG_END value='>' range=[9, 10] start=1:9 "
-    "end=1:10>\n"
-    "#<Token type=TOKEN_END_TAG_START value='</' range=[10, 12] start=1:10 "
-    "end=1:12>\n"
-    "#<Token type=TOKEN_TAG_NAME value='ns:table' range=[12, 20] start=1:12 "
-    "end=1:20>\n"
-    "#<Token type=TOKEN_END_TAG_END value='>' range=[20, 21] start=1:20 "
-    "end=1:21>\n"
-    "#<Token type=TOKEN_EOF value='' range=[21, 21] start=1:21 end=1:21>\n");
+ck_assert_str_eq(output.value,
+                 "#<Token type=TOKEN_START_TAG_START value='<' range=[0, 1] start=1:0 "
+                 "end=1:1>\n"
+                 "#<Token type=TOKEN_TAG_NAME value='ns:table' range=[1, 9] start=1:1 "
+                 "end=1:9>\n"
+                 "#<Token type=TOKEN_START_TAG_END value='>' range=[9, 10] start=1:9 "
+                 "end=1:10>\n"
+                 "#<Token type=TOKEN_END_TAG_START value='</' range=[10, 12] start=1:10 "
+                 "end=1:12>\n"
+                 "#<Token type=TOKEN_TAG_NAME value='ns:table' range=[12, 20] start=1:12 "
+                 "end=1:20>\n"
+                 "#<Token type=TOKEN_END_TAG_END value='>' range=[20, 21] start=1:20 "
+                 "end=1:21>\n"
+                 "#<Token type=TOKEN_EOF value='' range=[21, 21] start=1:21 end=1:21>\n");
 
 buffer_free(&output);
 END

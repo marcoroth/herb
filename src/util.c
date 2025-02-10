@@ -3,9 +3,7 @@
 
 #include "include/util.h"
 
-int iswhitespace(int character) {
-  return character == ' ' || character == '\t';
-}
+int iswhitespace(int character) { return character == ' ' || character == '\t'; }
 
 int isnewline(int character) { return character == 13 || character == 10; }
 
