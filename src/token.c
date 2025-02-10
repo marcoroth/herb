@@ -70,8 +70,16 @@ char* token_to_string(token_T* token) {
 
   char* escaped = escape_newlines(token->value);
 
-  sprintf(string, template, type_string, escaped, token->range->start, token->range->end, token->start->line,
-          token->start->column, token->end->line, token->end->column);
+  sprintf(string,
+      template,
+      type_string,
+      escaped,
+      token->range->start,
+      token->range->end,
+      token->start->line,
+      token->start->column,
+      token->end->line,
+      token->end->column);
 
   free(escaped);
 
