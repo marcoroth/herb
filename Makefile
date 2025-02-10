@@ -58,4 +58,4 @@ prism/bundle_install:
 	bundle install
 
 prism: prism/bundle_install
-	cd $(prism_path) && make && cd -
+	cd $(prism_path) && rake compile && cd -
