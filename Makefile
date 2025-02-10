@@ -19,12 +19,14 @@ flags = -g -Wall -fPIC
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
+  clang_format = clang-format-19
 endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(flags) -I$(brew_prefix)/include
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm
+  clang_format = clang-format
 endif
 
 all: $(exec) $(lib_name) test
@@ -50,7 +52,7 @@ clean:
 	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp
 
 format:
-	clang-format -i $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/*.h) $(wildcard src/**/*.h) $(wildcard ext/**/*.c) $(wildcard ext/**/*.h)
+	$(clang_format) -i $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/*.h) $(wildcard src/**/*.h) $(wildcard ext/**/*.c) $(wildcard ext/**/*.h)
 
 lint:
-	clang-format --dry-run --Werror $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/*.h) $(wildcard src/**/*.h) $(wildcard ext/**/*.c) $(wildcard ext/**/*.h)
+	$(clang_format) --dry-run --Werror $(wildcard src/*.c) $(wildcard src/**/*.c) $(wildcard src/*.h) $(wildcard src/**/*.h) $(wildcard ext/**/*.c) $(wildcard ext/**/*.h)
