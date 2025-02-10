@@ -1,1 +1,11 @@
-ColumnLimit: 90
+---
+BasedOnStyle: LLVM
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: true
+ColumnLimit: 120
+IndentWidth: 2
+PointerAlignment: Left
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: Never
+SpacesInAngles: true
