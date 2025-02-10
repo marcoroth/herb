@@ -2,6 +2,8 @@
 #include "include/erbx.h"
 #include "include/buffer.h"
 
+#include <string.h>
+#include <stdint.h>
 #include <stdio.h>
 
 int main(int argc, char* argv[]) {
@@ -13,6 +15,10 @@ int main(int argc, char* argv[]) {
 
   char* source = erbx_read_file(argv[1]);
   buffer_T output;
+  const char *ruby_code = "def hello\n  puts 'Hello, World!'\nend\n";
+  const uint8_t *sourcee = (const uint8_t *)ruby_code;
+  size_t length = strlen(ruby_code);
+  erbx_parse(sourcee, length);
 
   buffer_init(&output);
 

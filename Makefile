@@ -14,27 +14,35 @@ ruby_extension = ext/erbx/$(lib_name)
 
 os := $(shell uname -s)
 
-flags = -g -Wall -fPIC
+# Add Prism-related flags
+PRISM_PATH = $(shell bundle show prism)
+PRISM_PATH = /Users/send/files/hub/ruby/prism
+
+PRISM_INCLUDE = $(PRISM_PATH)/include
+
+PRISM_LIB = $(PRISM_PATH)/build
+
+flags = -g -Wall -fPIC -I$(PRISM_INCLUDE)
+ldflags = -L$(PRISM_LIB) -lprism
 
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
-  test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
+  test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(ldflags)
 endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(flags) -I$(brew_prefix)/include
-  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm
+  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(ldflags)
 endif
 
 all: $(exec) $(lib_name) test
 
 $(exec): $(objects)
-	gcc $(objects) $(flags) -o $(exec)
+	gcc $(objects) $(flags) $(ldflags) -o $(exec)
 
 $(lib_name): $(objects)
-	gcc -shared $(objects) $(flags) -o $(lib_name)
-	# cp $(lib_name) $(ruby_extension)
+	gcc -shared $(objects) $(flags) $(ldflags) -o $(lib_name)
 
 %.o: %.c include/%.h
 	gcc -c $(flags) $< -o $@
