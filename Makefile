@@ -35,7 +35,7 @@ endif
 all: prism $(exec) $(lib_name) test
 
 $(exec): $(objects)
-	gcc $(objects) $(flags) $(ldflags) -o $(exec) -Wl,-dead_strip_dylibs
+	gcc $(objects) $(flags) $(ldflags) -o $(exec)
 
 $(lib_name): $(objects)
 	gcc -shared $(objects) $(flags) $(ldflags) -o $(lib_name)
