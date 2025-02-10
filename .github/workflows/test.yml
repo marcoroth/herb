@@ -12,6 +12,11 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install check
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
       - name: make
         run: make
 

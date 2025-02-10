@@ -12,13 +12,13 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install check
 
-      - name: make
-        run: make
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+
+      - name: make
+        run: make
 
       - name: Setup extension
         working-directory: ./ext/erbx
