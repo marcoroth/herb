@@ -7,10 +7,10 @@
 #include "range.h"
 
 typedef struct TOKEN_STRUCT {
-  char* value;
-  range_T* range;
-  location_T* start;
-  location_T* end;
+  char *value;
+  range_T *range;
+  location_T *start;
+  location_T *end;
   enum {
     TOKEN_ATTRIBUTE_NAME,
     TOKEN_ATTRIBUTE_VALUE,

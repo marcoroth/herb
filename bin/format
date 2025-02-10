@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Format all C/C++ files in the repository
+find . \( -name '*.c' -o -name '*.h' -o -name '*.cpp' -o -name '*.hpp' \) \
+  -not -path "./build/*" \
+  -not -path "./vendor/*" \
+  -exec clang-format -i {} +
+
+echo "Formatting complete!"

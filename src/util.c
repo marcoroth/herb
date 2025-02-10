@@ -7,9 +7,7 @@ int iswhitespace(int character) {
   return character == ' ' || character == '\t';
 }
 
-int isnewline(int character) {
-  return character == 13 || character == 10;
-}
+int isnewline(int character) { return character == 13 || character == 10; }
 
 int count_in_string(const char *string, char character) {
   int count = 0;
@@ -25,11 +23,9 @@ int count_in_string(const char *string, char character) {
   return count;
 }
 
-int count_newlines(const char *string) {
-  return count_in_string(string, '\n');
-}
+int count_newlines(const char *string) { return count_in_string(string, '\n'); }
 
-char* replace_char(char *string, char find, char replace) {
+char *replace_char(char *string, char find, char replace) {
   while (*string != '\0') {
     if (*string == find) {
       *string = replace;
@@ -41,9 +37,9 @@ char* replace_char(char *string, char find, char replace) {
   return string;
 }
 
-char* escape_newlines(const char* input) {
-  char* output = (char*) calloc(strlen(input) * 2 + 1, sizeof(char));
-  char* orig_output = output;
+char *escape_newlines(const char *input) {
+  char *output = (char *)calloc(strlen(input) * 2 + 1, sizeof(char));
+  char *orig_output = output;
 
   while (*input) {
     if (*input == '\n') {

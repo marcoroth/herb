@@ -4,6 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char* erbx_read_file(const char* filename);
+char *erbx_read_file(const char *filename);
 
 #endif

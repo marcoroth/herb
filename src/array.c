@@ -1,30 +1,29 @@
 #include "include/array.h"
 
-size_t array_sizeof(void) {
-  return sizeof(array_T);
-}
+size_t array_sizeof(void) { return sizeof(array_T); }
 
-array_T* array_init(int capacity) {
-  array_T* array = (array_T*) malloc(sizeof(array_T));
+array_T *array_init(int capacity) {
+  array_T *array = (array_T *)malloc(sizeof(array_T));
 
   array->size = 0;
   array->capacity = capacity;
-  array->items = (void**) malloc(sizeof(void*) * capacity);
+  array->items = (void **)malloc(sizeof(void *) * capacity);
 
   return array;
 }
 
-void array_append(array_T* array, void* item) {
+void array_append(array_T *array, void *item) {
   if (array->size >= array->capacity) {
     array->capacity *= 2;
-    array->items = (void**) realloc(array->items, sizeof(void*) * array->capacity);
+    array->items =
+        (void **)realloc(array->items, sizeof(void *) * array->capacity);
   }
 
   array->items[array->size] = item;
   array->size++;
 }
 
-void* array_get(array_T* array, int index) {
+void *array_get(array_T *array, int index) {
   if (index >= array->size || index < 0) {
     return NULL;
   }
@@ -32,7 +31,7 @@ void* array_get(array_T* array, int index) {
   return array->items[index];
 }
 
-void array_set(array_T* array, int index, void* item) {
+void array_set(array_T *array, int index, void *item) {
   if (index >= array->size || index < 0) {
     return;
   }
@@ -40,7 +39,7 @@ void array_set(array_T* array, int index, void* item) {
   array->items[index] = item;
 }
 
-void array_remove(array_T* array, int index) {
+void array_remove(array_T *array, int index) {
   if (index >= array->size || index < 0) {
     return;
   }
@@ -52,15 +51,11 @@ void array_remove(array_T* array, int index) {
   array->size--;
 }
 
-size_t array_size(array_T* array) {
-  return array->size;
-}
+size_t array_size(array_T *array) { return array->size; }
 
-size_t array_capacity(array_T* array) {
-  return array->capacity;
-}
+size_t array_capacity(array_T *array) { return array->capacity; }
 
-void array_free(array_T* array) {
+void array_free(array_T *array) {
   free(array->items);
   free(array);
 }

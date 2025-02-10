@@ -20,3 +20,16 @@ jobs:
 
       - name: run tests
         run: ./run_erbx_tests
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          find . -name '*.[ch]' -not -path './vendor/*' | xargs clang-format -i
+          git diff --exit-code || (echo "❌ Code formatting check failed! Run clang-format locally and commit changes." && exit 1)

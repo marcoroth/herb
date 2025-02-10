@@ -4,7 +4,7 @@
 
 #include "include/buffer.h"
 
-bool buffer_init(buffer_T* buffer) {
+bool buffer_init(buffer_T *buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
   buffer->value = malloc(buffer->capacity * sizeof(char));
@@ -16,28 +16,20 @@ bool buffer_init(buffer_T* buffer) {
   return buffer != NULL;
 }
 
-char* buffer_value(buffer_T* buffer) {
-  return buffer->value;
-}
+char *buffer_value(buffer_T *buffer) { return buffer->value; }
 
-size_t buffer_length(buffer_T* buffer) {
-  return buffer->length;
-}
+size_t buffer_length(buffer_T *buffer) { return buffer->length; }
 
-size_t buffer_capacity(buffer_T* buffer) {
-  return buffer->capacity;
-}
+size_t buffer_capacity(buffer_T *buffer) { return buffer->capacity; }
 
-size_t buffer_sizeof(void) {
-  return sizeof(buffer_T);
-}
+size_t buffer_sizeof(void) { return sizeof(buffer_T); }
 
-void buffer_append(buffer_T* buffer, const char* text) {
+void buffer_append(buffer_T *buffer, const char *text) {
   size_t text_length = strlen(text);
 
   if (buffer->length + text_length >= buffer->capacity) {
     size_t new_capacity = (buffer->length + text_length) * 2;
-    char* new_buffer = realloc(buffer->value, new_capacity);
+    char *new_buffer = realloc(buffer->value, new_capacity);
 
     if (new_buffer) {
       buffer->value = new_buffer;
@@ -52,8 +44,9 @@ void buffer_append(buffer_T* buffer, const char* text) {
   buffer->length += text_length;
 }
 
-void buffer_prepend(buffer_T* buffer, const char* text) {
-  if (text == NULL || text[0] == '\0') return;
+void buffer_prepend(buffer_T *buffer, const char *text) {
+  if (text == NULL || text[0] == '\0')
+    return;
 
   size_t text_length = strlen(text);
   size_t new_length = buffer->length + text_length;
@@ -71,8 +64,9 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
   buffer->value[buffer->length] = '\0';
 }
 
-void buffer_concat(buffer_T* destination, buffer_T* source) {
-  if (source->length == 0) return;
+void buffer_concat(buffer_T *destination, buffer_T *source) {
+  if (source->length == 0)
+    return;
 
   size_t new_length = destination->length + source->length;
 
@@ -87,7 +81,7 @@ void buffer_concat(buffer_T* destination, buffer_T* source) {
   destination->length = new_length;
 }
 
-void buffer_free(buffer_T* buffer) {
+void buffer_free(buffer_T *buffer) {
   free(buffer->value);
   buffer->value = NULL;
   buffer->length = buffer->capacity = 0;
