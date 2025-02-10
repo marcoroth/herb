@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 typedef struct LEXER_STRUCT {
-  char *source;
+  char* source;
   size_t source_length;
   char current_character;
   unsigned int current_position;

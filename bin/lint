@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+clang-format --dry-run --Werror src/*.c src/**/*.c src/*.h src/**/*.h ext/**/*.c ext/**/*.h
+
+echo "Linting complete!"

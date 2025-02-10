@@ -19,14 +19,14 @@ typedef struct AST_STRUCT {
     AST_NOOP,
   } type;
 
-  array_T *children;
-  char *name;
-  struct AST_STRUCT *value;
+  array_T* children;
+  char* name;
+  struct AST_STRUCT* value;
   int data_type;
   int int_value;
 } AST_T;
 
-AST_T *ast_init(int type);
+AST_T* ast_init(int type);
 
 size_t ast_sizeof(void);
 

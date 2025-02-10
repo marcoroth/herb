@@ -4,10 +4,10 @@
 int iswhitespace(int character);
 int isnewline(int character);
 
-int count_in_string(const char *string, char character);
-int count_newlines(const char *string);
+int count_in_string(const char* string, char character);
+int count_newlines(const char* string);
 
-char *replace_char(char *string, char find, char replace);
-char *escape_newlines(const char *input);
+char* replace_char(char* string, char find, char replace);
+char* escape_newlines(const char* input);
 
 #endif
