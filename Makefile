@@ -52,6 +52,7 @@ test: $(test_objects) $(non_main_objects)
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
 	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp
+	rm -rf $(prism_path)
 
 prism/bundle_install:
 	bundle install
