@@ -7,5 +7,5 @@ ColumnLimit: 120
 IndentWidth: 2
 PointerAlignment: Left
 SpaceAfterCStyleCast: true
-SpaceBeforeParens: Never
+SpaceBeforeParens: ControlStatements
 SpacesInAngles: true

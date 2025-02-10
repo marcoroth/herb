@@ -15,7 +15,7 @@ array_T* array_init(int capacity) {
 }
 
 void array_append(array_T* array, void* item) {
-  if(array->size >= array->capacity) {
+  if (array->size >= array->capacity) {
     array->capacity *= 2;
     array->items = (void**) realloc(array->items, sizeof(void*) * array->capacity);
   }
@@ -25,7 +25,7 @@ void array_append(array_T* array, void* item) {
 }
 
 void* array_get(array_T* array, int index) {
-  if(index >= array->size || index < 0) {
+  if (index >= array->size || index < 0) {
     return NULL;
   }
 
@@ -33,7 +33,7 @@ void* array_get(array_T* array, int index) {
 }
 
 void array_set(array_T* array, int index, void* item) {
-  if(index >= array->size || index < 0) {
+  if (index >= array->size || index < 0) {
     return;
   }
 
@@ -41,11 +41,11 @@ void array_set(array_T* array, int index, void* item) {
 }
 
 void array_remove(array_T* array, int index) {
-  if(index >= array->size || index < 0) {
+  if (index >= array->size || index < 0) {
     return;
   }
 
-  for(int i = index; i < array->size - 1; i++) {
+  for (int i = index; i < array->size - 1; i++) {
     array->items[i] = array->items[i + 1];
   }
 

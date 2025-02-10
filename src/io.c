@@ -11,7 +11,7 @@ char* erbx_read_file(const char* filename) {
 
   fp = fopen(filename, "rb");
 
-  if(fp == NULL) {
+  if (fp == NULL) {
     printf("Could not read file '%s'\n", filename);
     exit(1);
   }
@@ -19,14 +19,14 @@ char* erbx_read_file(const char* filename) {
   char* buffer = (char*) calloc(1, sizeof(char));
   buffer[0] = '\0';
 
-  while((read = getline(&line, &len, fp)) != -1) {
+  while ((read = getline(&line, &len, fp)) != -1) {
     buffer = (char*) realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
     strcat(buffer, line);
   }
 
   fclose(fp);
 
-  if(line) {
+  if (line) {
     free(line);
   }
 

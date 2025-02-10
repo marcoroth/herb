@@ -9,7 +9,7 @@ bool buffer_init(buffer_T* buffer) {
   buffer->length = 0;
   buffer->value = malloc(buffer->capacity * sizeof(char));
 
-  if(buffer->value) {
+  if (buffer->value) {
     buffer->value[0] = '\0';
   }
 
@@ -35,11 +35,11 @@ size_t buffer_sizeof(void) {
 void buffer_append(buffer_T* buffer, const char* text) {
   size_t text_length = strlen(text);
 
-  if(buffer->length + text_length >= buffer->capacity) {
+  if (buffer->length + text_length >= buffer->capacity) {
     size_t new_capacity = (buffer->length + text_length) * 2;
     char* new_buffer = realloc(buffer->value, new_capacity);
 
-    if(new_buffer) {
+    if (new_buffer) {
       buffer->value = new_buffer;
       buffer->capacity = new_capacity;
     } else {
@@ -53,12 +53,12 @@ void buffer_append(buffer_T* buffer, const char* text) {
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {
-  if(text == NULL || text[0] == '\0') return;
+  if (text == NULL || text[0] == '\0') return;
 
   size_t text_length = strlen(text);
   size_t new_length = buffer->length + text_length;
 
-  if(new_length >= buffer->capacity) {
+  if (new_length >= buffer->capacity) {
     size_t new_capacity = new_length * 2;
     buffer->value = realloc(buffer->value, new_capacity);
     buffer->capacity = new_capacity;
@@ -72,11 +72,11 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
 }
 
 void buffer_concat(buffer_T* destination, buffer_T* source) {
-  if(source->length == 0) return;
+  if (source->length == 0) return;
 
   size_t new_length = destination->length + source->length;
 
-  if(new_length >= destination->capacity) {
+  if (new_length >= destination->capacity) {
     size_t new_capacity = new_length * 2;
     destination->value = realloc(destination->value, new_capacity);
     destination->capacity = new_capacity;

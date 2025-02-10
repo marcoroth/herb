@@ -33,7 +33,7 @@ token_T* token_init(char* value, int type, lexer_T* lexer) {
 }
 
 const char* token_type_string(int type) {
-  switch(type) {
+  switch (type) {
   case TOKEN_ATTRIBUTE_NAME: return "TOKEN_ATTRIBUTE_NAME";
   case TOKEN_ATTRIBUTE_VALUE: return "TOKEN_ATTRIBUTE_VALUE";
   case TOKEN_DOUBLE_QUOTE: return "TOKEN_DOUBLE_QUOTE";

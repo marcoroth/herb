@@ -19,7 +19,7 @@ parser_T* parser_init(lexer_T* lexer) {
 }
 
 token_T* parser_consume(parser_T* parser, int type) {
-  if(parser->token->type != type) {
+  if (parser->token->type != type) {
     printf("[Parser]: Unexpected token: '%s', was expected: '%s'\n", token_to_string(parser->token),
            token_type_string(type));
     exit(1);
@@ -31,7 +31,7 @@ token_T* parser_consume(parser_T* parser, int type) {
 }
 
 AST_T* parser_parse(parser_T* parser) {
-  switch(parser->token->type) {
+  switch (parser->token->type) {
   default: {
   }
   }

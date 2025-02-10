@@ -5,11 +5,11 @@
 #include "../../src/include/erbx.h"
 
 static const char* check_string(VALUE value) {
-  if(NIL_P(value)) {
+  if (NIL_P(value)) {
     return NULL;
   }
 
-  if(!RB_TYPE_P(value, T_STRING)) {
+  if (!RB_TYPE_P(value, T_STRING)) {
     rb_raise(rb_eTypeError, "wrong argument type %" PRIsVALUE " (expected String)", rb_obj_class(value));
   }
 

@@ -15,7 +15,7 @@ array_T* erbx_lex(char* source) {
 
   array_T* tokens = array_init(1);
 
-  while((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
+  while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
     array_append(tokens, token);
   }
 
@@ -36,7 +36,7 @@ array_T* erbx_lex_file(const char* path) {
 void erbx_lex_to_buffer(char* source, buffer_T* output) {
   array_T* tokens = erbx_lex(source);
 
-  for(int i = 0; i < array_size(tokens); i++) {
+  for (int i = 0; i < array_size(tokens); i++) {
     token_T* token = array_get(tokens, i);
     buffer_append(output, token_to_string(token));
     buffer_append(output, "\n");

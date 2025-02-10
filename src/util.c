@@ -14,8 +14,8 @@ int isnewline(int character) {
 int count_in_string(const char* string, char character) {
   int count = 0;
 
-  while(*string != '\0') {
-    if(*string == character) {
+  while (*string != '\0') {
+    if (*string == character) {
       count++;
     }
 
@@ -30,8 +30,8 @@ int count_newlines(const char* string) {
 }
 
 char* replace_char(char* string, char find, char replace) {
-  while(*string != '\0') {
-    if(*string == find) {
+  while (*string != '\0') {
+    if (*string == find) {
       *string = replace;
     }
 
@@ -45,8 +45,8 @@ char* escape_newlines(const char* input) {
   char* output = (char*) calloc(strlen(input) * 2 + 1, sizeof(char));
   char* orig_output = output;
 
-  while(*input) {
-    if(*input == '\n') {
+  while (*input) {
+    if (*input == '\n') {
       *output++ = '\\';
       *output++ = 'n';
     } else {
