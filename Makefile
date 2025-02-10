@@ -54,8 +54,9 @@ clean:
 	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp
 	rm -rf $(prism_path)
 
-prism/bundle_install:
+bundle_install:
 	bundle install
+	cd $(prism_path) && bundle install && cd -
 
-prism: prism/bundle_install
-	cd $(prism_path) && rake compile && cd -
+prism: bundle_install
+	cd $(prism_path) && bundle exec rake compile && cd -
