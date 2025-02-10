@@ -30,7 +30,5 @@ jobs:
       - name: Install clang-format
         run: sudo apt-get install -y clang-format
 
-      - name: Check formatting
-        run: |
-          find . -name '*.[ch]' -not -path './vendor/*' | xargs clang-format -i
-          git diff --exit-code || (echo "❌ Code formatting check failed! Run clang-format locally and commit changes." && exit 1)
+      - name: Lint
+        run: bin/lint
