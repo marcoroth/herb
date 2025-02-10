@@ -21,7 +21,7 @@ PRISM_LIB = $(PRISM_PATH)/lib
 PRISM_BUILD = $(PRISM_PATH)/build
 
 flags = -g -Wall -fPIC -I$(PRISM_INCLUDE)
-ldflags = -L$(PRISM_BUILD) -lprism
+ldflags = $(PRISM_BUILD)/libprism.a
 
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
@@ -37,7 +37,7 @@ endif
 all: prism $(exec) $(lib_name) test
 
 $(exec): $(objects)
-	gcc $(objects) $(flags) $(ldflags) -o $(exec)
+	gcc $(objects) $(flags) $(ldflags) -o $(exec) -Wl,-dead_strip_dylibs
 
 $(lib_name): $(objects)
 	gcc -shared $(objects) $(flags) $(ldflags) -o $(lib_name)
