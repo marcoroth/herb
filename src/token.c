@@ -34,29 +34,29 @@ token_T* token_init(char* value, int type, lexer_T* lexer) {
 
 const char* token_type_string(int type) {
   switch (type) {
-  case TOKEN_ATTRIBUTE_NAME: return "TOKEN_ATTRIBUTE_NAME";
-  case TOKEN_ATTRIBUTE_VALUE: return "TOKEN_ATTRIBUTE_VALUE";
-  case TOKEN_DOUBLE_QUOTE: return "TOKEN_DOUBLE_QUOTE";
-  case TOKEN_END_TAG_END: return "TOKEN_END_TAG_END";
-  case TOKEN_END_TAG_START: return "TOKEN_END_TAG_START";
-  case TOKEN_EOF: return "TOKEN_EOF";
-  case TOKEN_EQUALS: return "TOKEN_EQUALS";
-  case TOKEN_ID: return "TOKEN_ID";
-  case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
-  case TOKEN_SINGLE_QUOTE: return "TOKEN_SINGLE_QUOTE";
-  case TOKEN_SPACE: return "TOKEN_SPACE";
-  case TOKEN_START_TAG_END_VOID: return "TOKEN_START_TAG_END_VOID";
-  case TOKEN_START_TAG_END: return "TOKEN_START_TAG_END";
-  case TOKEN_START_TAG_START: return "TOKEN_START_TAG_START";
-  case TOKEN_TAG_END: return "TOKEN_TAG_END";
-  case TOKEN_TAG_NAME: return "TOKEN_TAG_NAME";
-  case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
-  case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
+    case TOKEN_ATTRIBUTE_NAME: return "TOKEN_ATTRIBUTE_NAME";
+    case TOKEN_ATTRIBUTE_VALUE: return "TOKEN_ATTRIBUTE_VALUE";
+    case TOKEN_DOUBLE_QUOTE: return "TOKEN_DOUBLE_QUOTE";
+    case TOKEN_END_TAG_END: return "TOKEN_END_TAG_END";
+    case TOKEN_END_TAG_START: return "TOKEN_END_TAG_START";
+    case TOKEN_EOF: return "TOKEN_EOF";
+    case TOKEN_EQUALS: return "TOKEN_EQUALS";
+    case TOKEN_ID: return "TOKEN_ID";
+    case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
+    case TOKEN_SINGLE_QUOTE: return "TOKEN_SINGLE_QUOTE";
+    case TOKEN_SPACE: return "TOKEN_SPACE";
+    case TOKEN_START_TAG_END_VOID: return "TOKEN_START_TAG_END_VOID";
+    case TOKEN_START_TAG_END: return "TOKEN_START_TAG_END";
+    case TOKEN_START_TAG_START: return "TOKEN_START_TAG_START";
+    case TOKEN_TAG_END: return "TOKEN_TAG_END";
+    case TOKEN_TAG_NAME: return "TOKEN_TAG_NAME";
+    case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
+    case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
 
-  default: {
-    printf("Unknown token type: %d\n", type);
-    exit(1);
-  }
+    default: {
+      printf("Unknown token type: %d\n", type);
+      exit(1);
+    }
   }
 
   return "don't know token";

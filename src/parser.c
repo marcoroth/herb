@@ -32,8 +32,8 @@ token_T* parser_consume(parser_T* parser, int type) {
 
 AST_T* parser_parse(parser_T* parser) {
   switch (parser->token->type) {
-  default: {
-  }
+    default: {
+    }
   }
 
   return ast_init(AST_NOOP);

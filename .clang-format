@@ -5,6 +5,7 @@ AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: true
 ColumnLimit: 120
 IndentWidth: 2
+IndentCaseLabels: true
 PointerAlignment: Left
 SpaceAfterCStyleCast: true
 SpaceBeforeParens: ControlStatements
