@@ -14,14 +14,12 @@ ruby_extension = ext/erbx/$(lib_name)
 
 os := $(shell uname -s)
 
-# Add Prism-related flags
-PRISM_PATH = $(shell bundle show prism)
-PRISM_INCLUDE = $(PRISM_PATH)/include
-PRISM_LIB = $(PRISM_PATH)/lib
-PRISM_BUILD = $(PRISM_PATH)/build
+prism_path = $(shell bundle show prism)
+prism_include = $(prism_path)/include
+prism_build = $(prism_path)/build
 
-flags = -g -Wall -fPIC -I$(PRISM_INCLUDE)
-ldflags = $(PRISM_BUILD)/libprism.a
+flags = -g -Wall -fPIC -I$(prism_include)
+ldflags = $(prism_build)/libprism.a
 
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
@@ -59,4 +57,4 @@ prism/bundle_install:
 	bundle install
 
 prism: prism/bundle_install
-	cd $(PRISM_PATH) && make && cd -
+	cd $(prism_path) && make && cd -
