@@ -16,14 +16,12 @@ os := $(shell uname -s)
 
 # Add Prism-related flags
 PRISM_PATH = $(shell bundle show prism)
-PRISM_PATH = /Users/send/files/hub/ruby/prism
-
 PRISM_INCLUDE = $(PRISM_PATH)/include
-
-PRISM_LIB = $(PRISM_PATH)/build
+PRISM_LIB = $(PRISM_PATH)/lib
+PRISM_BUILD = $(PRISM_PATH)/build
 
 flags = -g -Wall -fPIC -I$(PRISM_INCLUDE)
-ldflags = -L$(PRISM_LIB) -lprism
+ldflags = -L$(PRISM_BUILD) -lprism
 
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
@@ -36,7 +34,7 @@ ifeq ($(os),Darwin)
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(ldflags)
 endif
 
-all: $(exec) $(lib_name) test
+all: prism $(exec) $(lib_name) test
 
 $(exec): $(objects)
 	gcc $(objects) $(flags) $(ldflags) -o $(exec)
@@ -48,7 +46,7 @@ $(lib_name): $(objects)
 	gcc -c $(flags) $< -o $@
 
 test/%.o: test/%.c
-	gcc -c $(test_cflags) $< -o $@
+	gcc -c $(test_cflags) $(flags) $< -o $@
 
 test: $(test_objects) $(non_main_objects)
 	gcc $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
@@ -56,3 +54,9 @@ test: $(test_objects) $(non_main_objects)
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
 	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp
+
+prism/bundle_install:
+	bundle install
+
+prism: prism/bundle_install
+	cd $(PRISM_PATH) && make && cd -

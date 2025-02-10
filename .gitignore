@@ -68,3 +68,6 @@ dkms.conf
 
 # Temporary files
 tmp/*
+
+vendor/bundle/*
+!/.bundle/config
