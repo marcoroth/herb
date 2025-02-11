@@ -207,9 +207,7 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
     } break;
 
     default: {
-      char value[2] = {lexer->current_character, '\0'};
-      lexer_advance(lexer);
-      return token_init(value, TOKEN_TEXT_CONTENT, lexer);
+      return lexer_parse_text_content(lexer);
     }
   }
 }

@@ -60,7 +60,7 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "text content" do
+    test "text content" do
       result = ERBX.lex("<h1>Hello World</h1>")
 
       expected = %w[
@@ -68,7 +68,7 @@ module Lexer
         TOKEN_HTML_TAG_NAME
         TOKEN_HTML_TAG_END
         TOKEN_TEXT_CONTENT
-        TOKEN_HTML_START_CLOSE_TAG
+        TOKEN_HTML_CLOSE_TAG_START
         TOKEN_HTML_TAG_NAME
         TOKEN_HTML_TAG_END
         TOKEN_EOF
