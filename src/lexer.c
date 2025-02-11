@@ -5,8 +5,8 @@
 
 #include <ctype.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdnoreturn.h>
+#include <string.h>
 
 char* lexer_state_to_string(lexer_T* lexer) {
   switch (lexer->state) {
@@ -43,7 +43,12 @@ lexer_T* lexer_init(char* source) {
 }
 
 noreturn void lexer_error(lexer_T* lexer, const char* message) {
-  fprintf(stderr, "Lexer Error [character '%c', line %d, col %d]: %s\n", lexer->current_character, lexer->current_line, lexer->current_column, message);
+  fprintf(stderr,
+      "Lexer Error [character '%c', line %d, col %d]: %s\n",
+      lexer->current_character,
+      lexer->current_line,
+      lexer->current_column,
+      message);
   exit(1);
 }
 
