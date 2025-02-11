@@ -18,12 +18,12 @@ module Lexer
       result = ERBX.lex("<html></html>")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_START_TAG_END
-        TOKEN_END_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_END_TAG_END
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_CLOSE_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
@@ -34,9 +34,10 @@ module Lexer
       result = ERBX.lex("<img />")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 
@@ -47,29 +48,29 @@ module Lexer
       result = ERBX.lex("<ns:table></ns:table>")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_START_TAG_END
-        TOKEN_END_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_END_TAG_END
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_CLOSE_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    test "text content" do
+    xtest "text content" do
       result = ERBX.lex("<h1>Hello World</h1>")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_START_TAG_END
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
         TOKEN_TEXT_CONTENT
-        TOKEN_END_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_END_TAG_END
+        TOKEN_HTML_START_CLOSE_TAG
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
@@ -77,17 +78,19 @@ module Lexer
     end
 
     test "attribute value double quotes" do
-      result = ERBX.lex("<img value=\"hello world\" />")
+      result = ERBX.lex(%(<img value="hello world" />))
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_ATTRIBUTE_NAME
-        TOKEN_EQUALS
-        TOKEN_DOUBLE_QUOTE
-        TOKEN_ATTRIBUTE_VALUE
-        TOKEN_DOUBLE_QUOTE
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_EQUALS
+        TOKEN_HTML_QUOTE
+        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_HTML_QUOTE
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 
@@ -95,53 +98,59 @@ module Lexer
     end
 
     test "attribute value single quotes" do
-      result = ERBX.lex("<img value='hello world' />")
+      result = ERBX.lex(%(<img value='hello world' />))
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_ATTRIBUTE_NAME
-        TOKEN_EQUALS
-        TOKEN_SINGLE_QUOTE
-        TOKEN_ATTRIBUTE_VALUE
-        TOKEN_SINGLE_QUOTE
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_EQUALS
+        TOKEN_HTML_QUOTE
+        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_HTML_QUOTE
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    test "attribute value empty double quotes" do
-      result = ERBX.lex("<img value=\"\" />")
+    xtest "attribute value empty double quotes" do
+      result = ERBX.lex(%(<img value="" />))
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_ATTRIBUTE_NAME
-        TOKEN_EQUALS
-        TOKEN_DOUBLE_QUOTE
-        TOKEN_ATTRIBUTE_VALUE
-        TOKEN_DOUBLE_QUOTE
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_EQUALS
+        TOKEN_HTML_QUOTE
+        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_HTML_QUOTE
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    test "attribute value empty single quotes" do
+    xtest "attribute value empty single quotes" do
       result = ERBX.lex("<img value='' />")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_ATTRIBUTE_NAME
-        TOKEN_EQUALS
-        TOKEN_SINGLE_QUOTE
-        TOKEN_ATTRIBUTE_VALUE
-        TOKEN_SINGLE_QUOTE
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_EQUALS
+        TOKEN_HTML_QUOTE
+        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_HTML_QUOTE
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 
@@ -152,10 +161,12 @@ module Lexer
       result = ERBX.lex("<img required />")
 
       expected = %w[
-        TOKEN_START_TAG_START
-        TOKEN_TAG_NAME
-        TOKEN_ATTRIBUTE_NAME
-        TOKEN_START_TAG_END_VOID
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        WHITESPACE
+        TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
 

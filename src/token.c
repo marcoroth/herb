@@ -12,7 +12,7 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(char* value, int type, lexer_T* lexer) {
+token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
   token->value = value;
   token->type = type;
@@ -31,26 +31,28 @@ token_T* token_init(char* value, int type, lexer_T* lexer) {
   return token;
 }
 
-const char* token_type_string(int type) {
+const char* token_type_string(token_type_T type) {
   switch (type) {
-    case TOKEN_ATTRIBUTE_NAME: return "TOKEN_ATTRIBUTE_NAME";
-    case TOKEN_ATTRIBUTE_VALUE: return "TOKEN_ATTRIBUTE_VALUE";
-    case TOKEN_DOUBLE_QUOTE: return "TOKEN_DOUBLE_QUOTE";
-    case TOKEN_END_TAG_END: return "TOKEN_END_TAG_END";
-    case TOKEN_END_TAG_START: return "TOKEN_END_TAG_START";
-    case TOKEN_EOF: return "TOKEN_EOF";
-    case TOKEN_EQUALS: return "TOKEN_EQUALS";
-    case TOKEN_ID: return "TOKEN_ID";
+    case TOKEN_WHITESPACE: return "WHITESPACE";
     case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
-    case TOKEN_SINGLE_QUOTE: return "TOKEN_SINGLE_QUOTE";
-    case TOKEN_SPACE: return "TOKEN_SPACE";
-    case TOKEN_START_TAG_END_VOID: return "TOKEN_START_TAG_END_VOID";
-    case TOKEN_START_TAG_END: return "TOKEN_START_TAG_END";
-    case TOKEN_START_TAG_START: return "TOKEN_START_TAG_START";
-    case TOKEN_TAG_END: return "TOKEN_TAG_END";
-    case TOKEN_TAG_NAME: return "TOKEN_TAG_NAME";
     case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
-    case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
+    case TOKEN_HTML_DOCTYPE: return "TOKEN_HTML_DOCTYPE";
+    case TOKEN_HTML_TAG_NAME: return "TOKEN_HTML_TAG_NAME";
+    case TOKEN_HTML_TAG_START: return "TOKEN_HTML_TAG_START";
+    case TOKEN_HTML_TAG_END: return "TOKEN_HTML_TAG_END";
+    case TOKEN_HTML_CLOSE_TAG_START: return "TOKEN_HTML_CLOSE_TAG_START";
+    case TOKEN_HTML_TAG_SELF_CLOSE: return "TOKEN_HTML_TAG_SELF_CLOSE";
+    case TOKEN_HTML_COMMENT_START: return "TOKEN_HTML_COMMENT_START";
+    case TOKEN_HTML_COMMENT_CONTENT: return "TOKEN_HTML_COMMENT_CONTENT";
+    case TOKEN_HTML_COMMENT_END: return "TOKEN_HTML_COMMENT_END";
+    case TOKEN_HTML_ATTRIBUTE_NAME: return "TOKEN_HTML_ATTRIBUTE_NAME";
+    case TOKEN_HTML_ATTRIBUTE_VALUE: return "TOKEN_HTML_ATTRIBUTE_VALUE";
+    case TOKEN_HTML_EQUALS: return "TOKEN_HTML_EQUALS";
+    case TOKEN_HTML_QUOTE: return "TOKEN_HTML_QUOTE";
+    case TOKEN_ERB_START: return "TOKEN_ERB_START";
+    case TOKEN_ERB_CONTENT: return "TOKEN_ERB_CONTENT";
+    case TOKEN_ERB_END: return "TOKEN_ERB_END";
+    case TOKEN_EOF: return "TOKEN_EOF";
 
     default: {
       printf("Unknown token type: %d\n", type);

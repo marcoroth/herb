@@ -4,9 +4,9 @@
 #include "lexer_struct.h"
 #include "token_struct.h"
 
-token_T* token_init(char* value, int type, lexer_T* lexer);
+token_T* token_init(char* value, token_type_T type, lexer_T* lexer);
 char* token_to_string(token_T* token);
-const char* token_type_string(int type);
+const char* token_type_string(token_type_T type);
 
 char* token_value(token_T* token);
 int token_type(token_T* token);
