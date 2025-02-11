@@ -107,7 +107,7 @@ token_T* lexer_parse_whitespace(lexer_T* lexer) {
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
   char* value = calloc(1, sizeof(char));
 
-  while (lexer->current_character != ' ' && lexer->current_character != '>') {
+  while (lexer->current_character != ' ' && lexer->current_character != '>' && lexer->current_character != '/') {
     value = realloc(value, (strlen(value) + 2) * sizeof(char));
     strcat(value, (char[]) {lexer->current_character, 0});
     lexer_advance(lexer);
@@ -120,7 +120,7 @@ token_T* lexer_parse_attribute_name(lexer_T* lexer) {
   char* value = calloc(1, sizeof(char));
   char character = 0;
 
-  while ((character = lexer->current_character) != '=' && character != ' ' && character != '>') {
+  while ((character = lexer->current_character) != '=' && character != ' ' && character != '>' && character != '/') {
     value = realloc(value, (strlen(value) + 2) * sizeof(char));
     strcat(value, (char[]) {character, 0});
     lexer_advance(lexer);

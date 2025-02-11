@@ -44,6 +44,19 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
+    test "basic void tag without whitespace" do
+      result = ERBX.lex("<img/>")
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
     test "namespaced tag" do
       result = ERBX.lex("<ns:table></ns:table>")
 
@@ -186,6 +199,36 @@ module Lexer
         TOKEN_HTML_ATTRIBUTE_NAME
         WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "boolean attribute without whitespace" do
+      result = ERBX.lex("<img required/>")
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "boolean attribute without whitespace and without self-closing tag" do
+      result = ERBX.lex("<img required>")
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_HTML_TAG_NAME
+        WHITESPACE
+        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
