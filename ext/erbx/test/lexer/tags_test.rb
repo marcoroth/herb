@@ -36,7 +36,7 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -96,13 +96,13 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_EQUALS
         TOKEN_HTML_QUOTE
         TOKEN_HTML_ATTRIBUTE_VALUE
         TOKEN_HTML_QUOTE
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -116,13 +116,13 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_EQUALS
         TOKEN_HTML_QUOTE
         TOKEN_HTML_ATTRIBUTE_VALUE
         TOKEN_HTML_QUOTE
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -136,12 +136,12 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_EQUALS
         TOKEN_HTML_QUOTE
         TOKEN_HTML_QUOTE
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -155,12 +155,12 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_EQUALS
         TOKEN_HTML_QUOTE
         TOKEN_HTML_QUOTE
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -174,14 +174,14 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_EQUALS
         TOKEN_HTML_QUOTE
         TOKEN_HTML_QUOTE
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -195,9 +195,9 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -211,7 +211,7 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -226,7 +226,7 @@ module Lexer
       expected = %w[
         TOKEN_HTML_TAG_START
         TOKEN_HTML_TAG_NAME
-        WHITESPACE
+        TOKEN_WHITESPACE
         TOKEN_HTML_ATTRIBUTE_NAME
         TOKEN_HTML_TAG_END
         TOKEN_EOF

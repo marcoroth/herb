@@ -33,7 +33,7 @@ token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
 
 const char* token_type_string(token_type_T type) {
   switch (type) {
-    case TOKEN_WHITESPACE: return "WHITESPACE";
+    case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
     case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
     case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
     case TOKEN_HTML_DOCTYPE: return "TOKEN_HTML_DOCTYPE";
