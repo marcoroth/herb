@@ -201,9 +201,8 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
         return token_init("%>", TOKEN_ERB_END, lexer);
       }
 
-      char value[2] = {lexer->current_character, '\0'};
-      lexer_advance(lexer);
-      return token_init(value, TOKEN_TEXT_CONTENT, lexer);
+      printf("lexer_handle_html_attributes_state in '%%': '%c'\n", lexer_peek(lexer, 1));
+      exit(1);
     } break;
 
     default: {
@@ -251,6 +250,10 @@ token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
         lexer_advance(lexer);
         return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
       }
+
+      // TODO: handle this case
+      printf("lexer_handle_html_attributes_state in '/': '%c'\n", lexer_peek(lexer, 1));
+      exit(1);
     } break;
 
     default: {
@@ -258,10 +261,6 @@ token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
       return lexer_parse_attribute_name(lexer);
     }
   }
-
-  // TODO: let's see if we can merge this with the default case in the switch above
-  lexer->state = STATE_HTML_ATTRIBUTE_NAME;
-  return lexer_parse_attribute_name(lexer);
 }
 
 // <div class="hello"></div>
@@ -316,6 +315,10 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
         lexer_advance(lexer);
         return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
       }
+
+      // TODO: handle this case
+      printf("lexer_handle_html_attribute_name_state in '/': '%c'\n", lexer_peek(lexer, 1));
+      exit(1);
     } break;
 
     case '>': {
