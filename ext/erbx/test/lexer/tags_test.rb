@@ -191,5 +191,31 @@ module Lexer
 
       assert_equal expected, result.array.items.map(&:type)
     end
+
+    test "HTML comment with padding whitespace" do
+      result = ERBX.lex(%(<!-- Hello World -->))
+
+      expected = %w[
+        TOKEN_HTML_COMMENT_START
+        TOKEN_HTML_COMMENT_CONTENT
+        TOKEN_HTML_COMMENT_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "HTML comment with no whitespace" do
+      result = ERBX.lex(%(<!--Hello World-->))
+
+      expected = %w[
+        TOKEN_HTML_COMMENT_START
+        TOKEN_HTML_COMMENT_CONTENT
+        TOKEN_HTML_COMMENT_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
   end
 end

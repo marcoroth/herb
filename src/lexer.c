@@ -16,7 +16,8 @@ char* lexer_state_to_string(lexer_T* lexer) {
     case STATE_HTML_ATTRIBUTE_EQUALS: return "STATE_HTML_ATTRIBUTE_EQUALS";
     case STATE_HTML_ATTRIBUTE_VALUE: return "STATE_HTML_ATTRIBUTE_VALUE";
     case STATE_ERB_OPEN: return "STATE_ERB_OPEN";
-    case STATE_HTML_COMMENT: return "STATE_HTML_COMMENT";
+    case STATE_HTML_COMMENT_OPEN: return "STATE_HTML_COMMENT_OPEN";
+    case STATE_HTML_COMMENT_CLOSE: return "STATE_HTML_COMMENT_CLOSE";
     case STATE_HTML_TAG_NAME: return "STATE_HTML_TAG_NAME";
     case STATE_HTML_TAG_CLOSE: return "STATE_HTML_TAG_CLOSE";
   }
@@ -159,6 +160,22 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
   return token_init(value, TOKEN_TEXT_CONTENT, lexer);
 }
 
+token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
+  char* value = calloc(1, sizeof(char));
+
+  while (lexer->current_character != '-' && lexer_peek(lexer, 1) != '-' && lexer_peek(lexer, 2) != '>') {
+    value = realloc(value, (strlen(value) + 2) * sizeof(char));
+    strcat(value, (char[]) {lexer->current_character, 0});
+    lexer_advance(lexer);
+  }
+
+  lexer_advance(lexer);
+
+  lexer->state = STATE_HTML_COMMENT_CLOSE;
+
+  return token_init(value, TOKEN_HTML_COMMENT_CONTENT, lexer);
+}
+
 token_T* lexer_handle_data_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '\n': {
@@ -183,6 +200,21 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
           lexer_advance(lexer);
           return token_init("</", TOKEN_HTML_CLOSE_TAG_START, lexer);
         } break;
+
+        case '!': {
+          if (lexer_peek(lexer, 2) == '-' && lexer_peek(lexer, 3) == '-') {
+            lexer_advance(lexer);
+            lexer_advance(lexer);
+            lexer_advance(lexer);
+            lexer_advance(lexer);
+            lexer->state = STATE_HTML_COMMENT_OPEN;
+            return token_init("<!--", TOKEN_HTML_COMMENT_START, lexer);
+          }
+
+          // TODO: handle this case
+          printf("lexer_handle_data_state: '%c'\n", lexer->current_character);
+          exit(1);
+        }
 
         default: {
           lexer->state = STATE_HTML_TAG_OPEN;
@@ -418,6 +450,34 @@ token_T* lexer_handle_html_tag_close_state(lexer_T* lexer) {
   }
 }
 
+token_T* lexer_handle_html_comment_open_state(lexer_T* lexer) {
+  return lexer_parse_html_comment_content(lexer);
+}
+
+token_T* lexer_handle_html_comment_close_state(lexer_T* lexer) {
+  switch (lexer->current_character) {
+    case '-': {
+      if (lexer_peek(lexer, 1) == '-' && lexer_peek(lexer, 2) == '>') {
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        return token_init("-->", TOKEN_HTML_COMMENT_END, lexer);
+      }
+
+      // TODO: handle this case
+      printf("lexer_handle_html_comment_close_state in '-': '%c' and '%c'\n",
+          lexer_peek(lexer, 1),
+          lexer_peek(lexer, 2));
+      exit(1);
+    }
+
+    default: {
+      printf("lexer_handle_html_comment_close_state: '%c'\n", lexer->current_character);
+      exit(1);
+    }
+  }
+}
+
 token_T* lexer_next_token(lexer_T* lexer) {
   while (lexer->current_character != '\0') {
     switch (lexer->state) {
@@ -429,7 +489,8 @@ token_T* lexer_next_token(lexer_T* lexer) {
       case STATE_HTML_ATTRIBUTE_EQUALS: return lexer_handle_html_attribute_equals_state(lexer);
       case STATE_HTML_ATTRIBUTE_VALUE: return lexer_handle_html_attribute_value_state(lexer);
       case STATE_HTML_TAG_CLOSE: return lexer_handle_html_tag_close_state(lexer);
-      case STATE_HTML_COMMENT: return lexer_handle_data_state(lexer);
+      case STATE_HTML_COMMENT_OPEN: return lexer_handle_html_comment_open_state(lexer);
+      case STATE_HTML_COMMENT_CLOSE: return lexer_handle_html_comment_close_state(lexer);
       case STATE_ERB_OPEN: return lexer_handle_erb_open_state(lexer);
     }
   }
