@@ -261,8 +261,6 @@ token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
 //    ^
 //
 token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
-  printf("lexer_handle_html_attributes_state '%c'\n", lexer->current_character);
-
   switch (lexer->current_character) {
     case ' ': {
       lexer_advance(lexer);
