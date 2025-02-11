@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdnoreturn.h>
 
 char* lexer_state_to_string(lexer_T* lexer) {
   switch (lexer->state) {
@@ -39,6 +40,11 @@ lexer_T* lexer_init(char* source) {
   lexer->current_character = source[lexer->current_position];
 
   return lexer;
+}
+
+noreturn void lexer_error(lexer_T* lexer, const char* message) {
+  fprintf(stderr, "Lexer Error [character '%c', line %d, col %d]: %s\n", lexer->current_character, lexer->current_line, lexer->current_column, message);
+  exit(1);
 }
 
 char lexer_peek(lexer_T* lexer, int offset) {
@@ -212,8 +218,7 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
           }
 
           // TODO: handle this case
-          printf("lexer_handle_data_state: '%c'\n", lexer->current_character);
-          exit(1);
+          lexer_error(lexer, "Unexpected character in lexer_handle_data_state");
         }
 
         default: {
@@ -233,8 +238,7 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
         return token_init("%>", TOKEN_ERB_END, lexer);
       }
 
-      printf("lexer_handle_html_attributes_state in '%%': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attributes_state");
     } break;
 
     default: {
@@ -282,8 +286,7 @@ token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
       }
 
       // TODO: handle this case
-      printf("lexer_handle_html_attributes_state in '/': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attributes_state");
     } break;
 
     default: {
@@ -312,8 +315,7 @@ token_T* lexer_handle_tag_name_state(lexer_T* lexer) {
     } break;
 
     default: {
-      printf("lexer_handle_tag_name_state ELSE: '%c'\n", lexer->current_character);
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_tag_name_state");
     }
   }
 }
@@ -347,8 +349,7 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
       }
 
       // TODO: handle this case
-      printf("lexer_handle_html_attribute_name_state in '/': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_name_state");
     } break;
 
     case '>': {
@@ -358,8 +359,7 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
     } break;
 
     default: {
-      printf("lexer_handle_html_attribute_name_state: '%c'\n", lexer->current_character);
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_name_state");
     }
   }
 }
@@ -415,8 +415,7 @@ token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
     }
 
     default: {
-      printf("lexer_handle_html_attribute_value_state: '%c'\n", lexer->current_character);
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_value_state");
     }
   }
 }
@@ -424,7 +423,7 @@ token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
 token_T* lexer_handle_html_tag_open_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case ' ': {
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_tag_open_state");
     } break;
 
     default: {
@@ -463,15 +462,11 @@ token_T* lexer_handle_html_comment_close_state(lexer_T* lexer) {
       }
 
       // TODO: handle this case
-      printf("lexer_handle_html_comment_close_state in '-': '%c' and '%c'\n",
-          lexer_peek(lexer, 1),
-          lexer_peek(lexer, 2));
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_comment_close_state");
     }
 
     default: {
-      printf("lexer_handle_html_comment_close_state: '%c'\n", lexer->current_character);
-      exit(1);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_comment_close_state");
     }
   }
 }
