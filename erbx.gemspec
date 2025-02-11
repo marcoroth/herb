@@ -31,5 +31,4 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "rake", "~> 13.2"
   spec.add_development_dependency "rake-compiler", "~> 1.2"
-  spec.add_development_dependency "maxitest"
 end

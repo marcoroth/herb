@@ -7,22 +7,36 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    difftastic (0.5.1)
+      pretty_please
+    difftastic (0.5.1-arm64-darwin)
+      pretty_please
+    difftastic (0.5.1-x86_64-darwin)
+      pretty_please
+    dispersion (0.2.0)
+      prism
     ffi (1.17.0)
-    ffi (1.17.0-x86_64-darwin)
     maxitest (5.5.0)
       minitest (>= 5.14.0, < 5.24.0)
     minitest (5.23.1)
+    minitest-difftastic (0.1.2)
+      difftastic (~> 0.2)
+    pretty_please (0.1.1)
+      dispersion (~> 0.2)
+    prism (1.3.0)
     rake (13.2.1)
     rake-compiler (1.2.7)
       rake
 
 PLATFORMS
+  arm64-darwin
   ruby
   x86_64-darwin-23
 
 DEPENDENCIES
   erbx!
   maxitest
+  minitest-difftastic
   rake (~> 13.2)
   rake-compiler (~> 1.2)
 
