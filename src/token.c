@@ -52,6 +52,10 @@ const char* token_type_string(int type) {
     case TOKEN_TAG_NAME: return "TOKEN_TAG_NAME";
     case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
     case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
+    case TOKEN_ERB_SILENT_OPEN: return "TOKEN_ERB_SILENT_OPEN";
+    case TOKEN_ERB_LOUD_OPEN: return "TOKEN_ERB_LOUD_OPEN";
+    case TOKEN_ERB_RUBY: return "TOKEN_ERB_RUBY";
+    case TOKEN_ERB_CLOSE: return "TOKEN_ERB_CLOSE";
 
     default: {
       printf("Unknown token type: %d\n", type);

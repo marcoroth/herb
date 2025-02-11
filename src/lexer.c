@@ -11,10 +11,49 @@ size_t lexer_sizeof(void) {
   return sizeof(struct LEXER_STRUCT);
 }
 
+const char* lexer_state_string(lexer_state_t type) {
+  switch (type) {
+    case STATE_NONE: return "STATE_NONE";
+    case STATE_SINGLE_QUOTE: return "STATE_SINGLE_QUOTE";
+    case STATE_DOUBLE_QUOTE: return "STATE_DOUBLE_QUOTE";
+    case STATE_START_TAG_START: return "STATE_START_TAG_START";
+    case STATE_END_TAG_START: return "STATE_END_TAG_START";
+    case STATE_END_TAG_END: return "STATE_END_TAG_END";
+    case STATE_TAG_ATTRIBUTES: return "STATE_TAG_ATTRIBUTES";
+    case STATE_ATTRIBUTE_START: return "STATE_ATTRIBUTE_START";
+    case STATE_ATTRIBUTE_VALUE_START: return "STATE_ATTRIBUTE_VALUE_START";
+    case STATE_ATTRIBUTE_VALUE: return "STATE_ATTRIBUTE_VALUE";
+    case STATE_ATTRIBUTE_VALUE_END: return "STATE_ATTRIBUTE_VALUE_END";
+    case STATE_ELEMENT_CHILDREN: return "STATE_ELEMENT_CHILDREN";
+
+    default: {
+      printf("Unknown token type: %d\n", type);
+      exit(1);
+    }
+  }
+
+  return "don't know token";
+}
+
+const char* lexer_erb_state_string(lexer_erb_state_t type) {
+  switch (type) {
+    case STATE_ERB_NONE: return "STATE_ERB_NONE";
+    case STATE_ERB_OPEN: return "STATE_ERB_OPEN";
+
+    default: {
+      printf("Unknown token type: %d\n", type);
+      exit(1);
+    }
+  }
+
+  return "don't know token";
+}
+
 lexer_T* lexer_init(char* source) {
   lexer_T* lexer = calloc(1, lexer_sizeof());
 
-  lexer->state = STATE_NONE;
+  lexer->state = STATE_NONE; // rename to HTML state
+  lexer->erb_state = STATE_ERB_NONE;
   lexer->source = source;
   lexer->source_length = strlen(source);
   lexer->current_position = 0;
@@ -146,11 +185,54 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
   return token_init(value, TOKEN_TEXT_CONTENT, lexer);
 }
 
+token_T* lexer_parse_erb_ruby_content(lexer_T* lexer) {
+  char* value = calloc(1, sizeof(char));
+
+  // printf("ERB RUBY CONTENT\n");
+
+  while (lexer->current_character != '%' && lexer_peek(lexer, 1) != '>') {
+    value = realloc(value, (strlen(value) + 2) * sizeof(char));
+    strcat(value, (char[]) {lexer->current_character, 0});
+    lexer_advance(lexer);
+  }
+
+  return token_init(value, TOKEN_ERB_RUBY, lexer);
+}
+
 token_T* lexer_next_token(lexer_T* lexer) {
   while (lexer->current_character != '\0') {
 
-    // printf("STATE: %u\n", lexer->state);
+    // printf("ERB STATE: %s\n", lexer_erb_state_string(lexer->erb_state));
+    // printf("STATE: %s\n", lexer_state_string(lexer->state));
     // printf("Current character: %c\n", lexer->current_character);
+    // printf("-----------------\n");
+
+    if (lexer->erb_state == STATE_ERB_NONE) {
+      // printf("PEEK, '%c'. '%c'\n", lexer->current_character, lexer_peek(lexer, 1));
+
+      if (lexer->current_character == '<' && lexer_peek(lexer, 1) == '%') {
+        lexer->erb_state = STATE_ERB_OPEN;
+
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+
+        return token_init("<%", TOKEN_ERB_SILENT_OPEN, lexer);
+      } else {
+        // continue parsing HTML content
+      }
+
+    } else if (lexer->erb_state == STATE_ERB_OPEN) {
+      if (lexer->current_character == '%' && lexer_peek(lexer, 1) == '>') {
+        lexer->erb_state = STATE_ERB_NONE;
+
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+
+        return token_init("%>", TOKEN_ERB_CLOSE, lexer);
+      }
+
+      return lexer_parse_erb_ruby_content(lexer);
+    }
 
     switch (lexer->state) {
       case STATE_NONE: {
