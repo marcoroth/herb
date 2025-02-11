@@ -345,6 +345,18 @@ token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
       return token_init("'", TOKEN_HTML_QUOTE, lexer);
     } break;
 
+    case ' ': {
+      lexer_advance(lexer);
+      lexer->state = STATE_HTML_ATTRIBUTES;
+      return token_init(" ", TOKEN_WHITESPACE, lexer);
+    } break;
+
+    case '>': {
+      lexer_advance(lexer);
+      lexer->state = STATE_DATA;
+      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+    } break;
+
     default: {
       return lexer_parse_attribute_value(lexer);
     }
