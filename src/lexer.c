@@ -190,8 +190,7 @@ token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
 token_T* lexer_handle_data_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '\n': {
-      lexer_advance(lexer);
-      return token_init("\n", TOKEN_NEWLINE, lexer);
+      return lexer_advance_current(lexer, TOKEN_NEWLINE);
     } break;
 
     case '<': {
@@ -272,14 +271,12 @@ token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case ' ': {
-      lexer_advance(lexer);
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     } break;
 
     case '>': {
       lexer->state = STATE_DATA;
-      lexer_advance(lexer);
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     } break;
 
     case '/': {
@@ -308,15 +305,13 @@ token_T* lexer_handle_tag_name_state(lexer_T* lexer) {
 
   switch (lexer->current_character) {
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     } break;
 
     case '>': {
       lexer->state = STATE_DATA;
-      lexer_advance(lexer);
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     } break;
 
     default: {
@@ -334,15 +329,13 @@ token_T* lexer_handle_tag_name_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '=': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTE_EQUALS;
-      return token_init("=", TOKEN_HTML_EQUALS, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_EQUALS);
     } break;
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     } break;
 
     case '/': {
@@ -358,9 +351,8 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
     } break;
 
     case '>': {
-      lexer_advance(lexer);
       lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     } break;
 
     default: {
@@ -372,25 +364,21 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '"': {
-      lexer_advance(lexer);
-      return token_init("\"", TOKEN_HTML_QUOTE, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
     } break;
 
     case '\'': {
-      lexer_advance(lexer);
-      return token_init("'", TOKEN_HTML_QUOTE, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
     } break;
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     } break;
 
     case '>': {
-      lexer_advance(lexer);
       lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     } break;
 
     default: {
@@ -402,21 +390,18 @@ token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '"': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init("\"", TOKEN_HTML_QUOTE, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
     } break;
 
     case '\'': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init("'", TOKEN_HTML_QUOTE, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
     } break;
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     }
 
     default: {
@@ -441,9 +426,8 @@ token_T* lexer_handle_html_tag_open_state(lexer_T* lexer) {
 token_T* lexer_handle_html_tag_close_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '>': {
-      lexer_advance(lexer);
       lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
 
     default: {
