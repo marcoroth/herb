@@ -3,6 +3,7 @@
 
 #include "array.h"
 #include "buffer.h"
+#include "extract.h"
 
 void erbx_lex_to_buffer(char* source, buffer_T* output);
 array_T* erbx_lex(char* source);
