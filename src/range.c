@@ -13,6 +13,10 @@ range_T* range_init(int start, int end) {
   return range;
 }
 
+int range_length(range_T* range) {
+  return range_end(range) - range_start(range);
+}
+
 int range_start(range_T* range) {
   return range->start;
 }

@@ -13,6 +13,8 @@ typedef struct BUFFER_STRUCT {
 bool buffer_init(buffer_T* buffer);
 
 void buffer_append(buffer_T* buffer, const char* text);
+void buffer_append_repeated(buffer_T* buffer, char character, int length);
+void buffer_append_whitespace(buffer_T* buffer, int length);
 void buffer_prepend(buffer_T* buffer, const char* text);
 void buffer_concat(buffer_T* destination, buffer_T* source);
 void buffer_free(buffer_T* buffer);

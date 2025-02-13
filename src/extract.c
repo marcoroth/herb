@@ -1,6 +1,6 @@
-#include "include/erbx.h"
 #include "include/array.h"
 #include "include/buffer.h"
+#include "include/erbx.h"
 #include "include/io.h"
 #include "include/lexer.h"
 #include "include/parser.h"
@@ -16,18 +16,9 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
     token_T* token = array_get(tokens, i);
 
     switch (token->type) {
-      case TOKEN_ERB_CONTENT: {
-        buffer_append(output, token->value);
-      } break;
-
-      default: {
-        range_T* range = token->range;
-        int length = range->end - range->start;
-
-        for (int i = 0; i < length; i++) {
-          buffer_append(output, " ");
-        }
-      } break;
+      case TOKEN_ERB_CONTENT: buffer_append(output, token->value); break;
+      case TOKEN_NEWLINE: buffer_append(output, token->value); break;
+      default: buffer_append_whitespace(output, range_length(token->range));
     }
   }
 }

@@ -7,7 +7,17 @@ module Extractor
     test "basic" do
       ruby = ERBX.extract_ruby_to_buffer("<h1><% RUBY_VERSION %></h1>")
 
-      assert_equal " RUBY_VERSION ", ruby
+      assert_equal "       RUBY_VERSION        ", ruby
+    end
+
+    test "basic with newlines" do
+      actual = ERBX.extract_ruby_to_buffer(<<~HTML)
+        <h1>
+          <% RUBY_VERSION %>
+        </h1>
+      HTML
+
+      assert_equal "    \n     RUBY_VERSION   \n     \n", actual
     end
 
     xtest "nested" do
@@ -30,7 +40,6 @@ module Extractor
              end
 
       RUBY
-
 
       assert_equal expected, actual
     end

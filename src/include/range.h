@@ -10,6 +10,7 @@ typedef struct RANGE_STRUCT {
 
 range_T* range_init(int start, int end);
 
+int range_length(range_T* range);
 int range_start(range_T* range);
 int range_end(range_T* range);
 
