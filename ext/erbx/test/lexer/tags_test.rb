@@ -159,7 +159,7 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value empty double quotes without whitespace" do
+    test "attribute value empty double quotes without whitespace" do
       result = ERBX.lex(%(<img value=""/>))
 
       expected = %w[
@@ -196,7 +196,7 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value empty single quotes without whitespace" do
+    test "attribute value empty single quotes without whitespace" do
       result = ERBX.lex("<img value=''/>")
 
       expected = %w[
@@ -451,7 +451,7 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute with no quotes value, no whitespace and self-closing tag" do
+    test "attribute with no quotes value, no whitespace and self-closing tag" do
       result = ERBX.lex("<img value=hello/>")
 
       expected = %w[
@@ -468,7 +468,7 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute with no quotes value, no whitespace, and non self-closing tag" do
+    test "attribute with no quotes value, no whitespace, and non self-closing tag" do
       result = ERBX.lex("<div value=hello>")
 
       expected = %w[

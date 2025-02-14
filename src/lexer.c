@@ -1,4 +1,5 @@
 #include "include/lexer.h"
+#include "include/buffer.h"
 #include "include/macros.h"
 #include "include/token.h"
 #include "include/util.h"
@@ -104,84 +105,96 @@ token_T* lexer_parse_newline(lexer_T* lexer) {
 }
 
 token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (is_whitespace(lexer->current_character) && lexer->current_character != '\0') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_WHITESPACE, lexer);
 }
 
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != ' ' && lexer->current_character != '>' && lexer->current_character != '/') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_TAG_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_name(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
   char character = 0;
 
   while ((character = lexer->current_character) != '=' && character != ' ' && character != '>' && character != '/') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {character, 0});
+    buffer_append_char(&buffer, character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_ATTRIBUTE_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_value(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
   char quote = lexer_backtrack(lexer, 1);
 
   if (quote != '"' && quote != '\'') {
     quote = ' ';
   }
 
-  while (lexer->current_character != quote) {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+  while (lexer->current_character != quote && lexer->current_character != '/' && lexer->current_character != '>') {
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer->state = STATE_HTML_ATTRIBUTE_VALUE;
 
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
+
   return token_init(value, TOKEN_HTML_ATTRIBUTE_VALUE, lexer);
 }
 
 token_T* lexer_parse_text_content(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '<') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_TEXT_CONTENT, lexer);
 }
 
 token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '-' && lexer_peek(lexer, 1) != '-' && lexer_peek(lexer, 2) != '>') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer_advance(lexer);
   lexer->state = STATE_HTML_COMMENT_CLOSE;
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_COMMENT_CONTENT, lexer);
 }
@@ -250,15 +263,17 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
 }
 
 token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '%' && lexer_peek(lexer, 1) != '>') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer->state = STATE_DATA;
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_ERB_CONTENT, lexer);
 }
@@ -362,6 +377,17 @@ token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
       return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     }
 
+    case '/': {
+      if (lexer_peek(lexer, 1) == '>') {
+        lexer->state = STATE_HTML_TAG_CLOSE;
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
+      }
+
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_equals_state");
+    }
+
     case '>': {
       lexer->state = STATE_DATA;
       return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
@@ -382,6 +408,20 @@ token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
     case ' ': {
       lexer->state = STATE_HTML_ATTRIBUTES;
       return lexer_advance_current(lexer, TOKEN_WHITESPACE);
+    }
+
+    case '/': {
+      if (lexer_peek(lexer, 1) == '>') {
+        lexer->state = STATE_HTML_TAG_CLOSE;
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
+      }
+    }
+
+    case '>': {
+      lexer->state = STATE_DATA;
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
   }
 
