@@ -2,17 +2,28 @@
 #include <string.h>
 
 #include "include/buffer.h"
+#include "include/macros.h"
+#include "include/memory.h"
 
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
-  buffer->value = malloc(buffer->capacity * sizeof(char));
+  buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
 
-  if (buffer->value) {
-    buffer->value[0] = '\0';
+  if (!buffer->value) {
+    fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
+    return false;
   }
 
-  return buffer != NULL;
+  buffer->value[0] = '\0';
+
+  return true;
+}
+
+buffer_T buffer_new(void) {
+  buffer_T buffer;
+  buffer_init(&buffer);
+  return buffer;
 }
 
 char* buffer_value(buffer_T* buffer) {

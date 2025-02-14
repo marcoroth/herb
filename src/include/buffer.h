@@ -11,6 +11,7 @@ typedef struct BUFFER_STRUCT {
 } buffer_T;
 
 bool buffer_init(buffer_T* buffer);
+buffer_T buffer_new(void);
 
 void buffer_append(buffer_T* buffer, const char* text);
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length);
