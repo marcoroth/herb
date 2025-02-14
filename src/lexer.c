@@ -112,10 +112,7 @@ token_T* lexer_parse_whitespace(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_WHITESPACE, lexer);
+  return token_init(buffer.value, TOKEN_WHITESPACE, lexer);
 }
 
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
@@ -126,10 +123,7 @@ token_T* lexer_parse_tag_name(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_HTML_TAG_NAME, lexer);
+  return token_init(buffer.value, TOKEN_HTML_TAG_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_name(lexer_T* lexer) {
@@ -141,10 +135,7 @@ token_T* lexer_parse_attribute_name(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_HTML_ATTRIBUTE_NAME, lexer);
+  return token_init(buffer.value, TOKEN_HTML_ATTRIBUTE_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_value(lexer_T* lexer) {
@@ -162,10 +153,7 @@ token_T* lexer_parse_attribute_value(lexer_T* lexer) {
 
   lexer->state = STATE_HTML_ATTRIBUTE_VALUE;
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_HTML_ATTRIBUTE_VALUE, lexer);
+  return token_init(buffer.value, TOKEN_HTML_ATTRIBUTE_VALUE, lexer);
 }
 
 token_T* lexer_parse_text_content(lexer_T* lexer) {
@@ -176,10 +164,7 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_TEXT_CONTENT, lexer);
+  return token_init(buffer.value, TOKEN_TEXT_CONTENT, lexer);
 }
 
 token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
@@ -193,10 +178,7 @@ token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
   lexer_advance(lexer);
   lexer->state = STATE_HTML_COMMENT_CLOSE;
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_HTML_COMMENT_CONTENT, lexer);
+  return token_init(buffer.value, TOKEN_HTML_COMMENT_CONTENT, lexer);
 }
 
 token_T* lexer_handle_data_state(lexer_T* lexer) {
@@ -272,10 +254,7 @@ token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
 
   lexer->state = STATE_DATA;
 
-  char* value = buffer_value(&buffer);
-  buffer_free(&buffer);
-
-  return token_init(value, TOKEN_ERB_CONTENT, lexer);
+  return token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
 }
 
 // <div class="abc"></div>
