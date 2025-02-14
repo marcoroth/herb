@@ -86,19 +86,6 @@ void buffer_append_char(buffer_T* buffer, char character) {
   buffer->value[buffer->length] = '\0';
 }
 
-void buffer_prepend(buffer_T* buffer, const char* text) {
-  if (!text || text[0] == '\0') return;
-
-  size_t text_length = strlen(text);
-
-  if (!buffer_increase_capacity(buffer, text_length)) return;
-
-  memmove(buffer->value + text_length, buffer->value, buffer->length + 1);
-  memcpy(buffer->value, text, text_length);
-
-  buffer->length += text_length;
-}
-
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   if (length == 0) return;
 
@@ -111,6 +98,19 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   buffer_append(buffer, spaces);
 
   free(spaces);
+}
+
+void buffer_prepend(buffer_T* buffer, const char* text) {
+  if (!text || text[0] == '\0') return;
+
+  size_t text_length = strlen(text);
+
+  if (!buffer_increase_capacity(buffer, text_length)) return;
+
+  memmove(buffer->value + text_length, buffer->value, buffer->length + 1);
+  memcpy(buffer->value, text, text_length);
+
+  buffer->length += text_length;
 }
 
 void buffer_append_whitespace(buffer_T* buffer, size_t length) {
