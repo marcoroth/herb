@@ -69,14 +69,6 @@ void buffer_append(buffer_T* buffer, const char* text) {
   buffer->length += text_length;
 }
 
-void buffer_append_char(buffer_T* buffer, char character) {
-  if (!buffer_increase_capacity(buffer, 1)) return;
-
-  buffer->value[buffer->length] = character;
-  buffer->length++;
-  buffer->value[buffer->length] = '\0';
-}
-
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   if (length == 0) return;
 

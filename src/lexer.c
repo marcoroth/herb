@@ -108,7 +108,7 @@ token_T* lexer_parse_whitespace(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
   while (is_whitespace(lexer->current_character) && lexer->current_character != '\0') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -122,7 +122,7 @@ token_T* lexer_parse_tag_name(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
   while (lexer->current_character != ' ' && lexer->current_character != '>' && lexer->current_character != '/') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -137,7 +137,7 @@ token_T* lexer_parse_attribute_name(lexer_T* lexer) {
   char character = 0;
 
   while ((character = lexer->current_character) != '=' && character != ' ' && character != '>' && character != '/') {
-    buffer_append_char(&buffer, character);
+    buffer_append(&buffer, &character);
     lexer_advance(lexer);
   }
 
@@ -156,7 +156,7 @@ token_T* lexer_parse_attribute_value(lexer_T* lexer) {
   }
 
   while (lexer->current_character != quote && lexer->current_character != '/' && lexer->current_character != '>') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -172,7 +172,7 @@ token_T* lexer_parse_text_content(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '<') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -186,7 +186,7 @@ token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '-' && lexer_peek(lexer, 1) != '-' && lexer_peek(lexer, 2) != '>') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -266,7 +266,7 @@ token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '%' && lexer_peek(lexer, 1) != '>') {
-    buffer_append_char(&buffer, lexer->current_character);
+    buffer_append(&buffer, &lexer->current_character);
     lexer_advance(lexer);
   }
 
