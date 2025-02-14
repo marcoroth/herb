@@ -2,6 +2,8 @@
 
 puts "Using fork_helper"
 
+require "timeout"
+
 class Minitest::Spec
   TIMEOUT_THRESHOLD = 0.1 # seconds
 
