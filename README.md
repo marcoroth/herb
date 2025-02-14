@@ -15,12 +15,16 @@ This project builds the ERBX program and its associated unit tests using a Makef
 - [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
 - [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
 
-**For Linux:**
+**For Linux:**  
+
 ```bash
+xargs sudo apt-get install < Aptfile
+# or
 sudo apt-get install check clang-19 clang-tidy-19 clang-format-19
 ```
 
 **For macOS (using Homebrew):**
+
 ```bash
 brew bundle
 # or
