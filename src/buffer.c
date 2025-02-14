@@ -66,8 +66,7 @@ void buffer_append(buffer_T* buffer, const char* text) {
 
   if (!buffer_increase_capacity(buffer, text_length)) return;
 
-  memmove(buffer->value + buffer->length, text, text_length);
-
+  memcpy(buffer->value + buffer->length, text, text_length);
   buffer->length += text_length;
   buffer->value[buffer->length] = '\0';
 }
