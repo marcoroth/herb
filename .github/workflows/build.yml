@@ -25,6 +25,15 @@ jobs:
       - name: make bundle_install
         run: make bundle_install
 
+      - name: make prism
+        run: make prism
+
+      - name: bundle show prism
+        run: bundle show prism
+
+      - name: make erbx_prism
+        run: make erbx_prism
+
       - name: make
         run: make
 

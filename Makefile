@@ -1,6 +1,6 @@
 exec = erbx
+erbx_prism_exec = erbx_prism
 test_exec = run_erbx_tests
-prism_exec = erbx_prism
 
 sources = $(wildcard src/*.c) $(wildcard src/**/*.c)$
 sources := $(filter-out src/erbx_prism.c, $(sources))
@@ -51,7 +51,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: prism $(prism_exec) $(exec) $(lib_name) test
+all: prism $(erbx_prism_exec) $(exec) $(lib_name) test
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) -o $(exec)
@@ -73,7 +73,7 @@ clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
 	rm -rf src/*.o test/*.o lib/erbx/*.bundle tmp
 	rm -rf $(prism_path)
-	rm -r $(prism_exec)
+	rm -r $(erbx_prism_exec)
 
 bundle_install:
 	bundle install
@@ -82,8 +82,8 @@ bundle_install:
 prism: bundle_install
 	cd $(prism_path) && bundle exec rake compile && cd -
 
-$(prism_exec): bundle_install prism src/erbx_prism.c $(prism_objects)
-	$(cc) src/erbx_prism.c $(prism_objects) $(flags) $(ldflags) -o $(prism_exec)
+$(erbx_prism_exec): bundle_install prism src/erbx_prism.c $(prism_objects)
+	$(cc) src/erbx_prism.c $(prism_objects) $(flags) $(ldflags) -o $(erbx_prism_exec)
 
 format:
 	$(clang_format) -i $(project_and_extension_files)
