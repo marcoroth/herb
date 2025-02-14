@@ -7,8 +7,7 @@ module ERBX
     attach_function :array_size, [:pointer], :size_t
 
     class Array
-      attr_reader :pointer
-      attr_reader :item_class
+      attr_reader :pointer, :item_class
 
       def initialize(pointer, item_class)
         @pointer = pointer

@@ -11,7 +11,6 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
 
   spec.required_ruby_version = ">= 3.0.0"
-
   spec.require_paths = ["lib"]
 
   gemspec = File.basename(__FILE__)
@@ -23,12 +22,11 @@ Gem::Specification.new do |spec|
   end
 
   spec.extensions = ["ext/erbx/extconf.rb"]
+
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/erbx"
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.add_dependency "ffi"
-
-  spec.add_development_dependency "rake", "~> 13.2"
-  spec.add_development_dependency "rake-compiler", "~> 1.2"
 end
