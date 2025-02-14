@@ -2,7 +2,7 @@ exec = erbx
 erbx_prism_exec = erbx_prism
 test_exec = run_erbx_tests
 
-sources = $(wildcard src/*.c) $(wildcard src/**/*.c)$
+sources = $(wildcard src/*.c) $(wildcard src/**/*.c)
 sources := $(filter-out src/erbx_prism.c, $(sources))
 headers = $(wildcard src/*.h) $(wildcard src/**/*.h)
 objects = $(sources:.c=.o)
