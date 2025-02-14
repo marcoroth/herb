@@ -14,6 +14,17 @@ jobs:
       - name: Install APT dependencies
         run: xargs sudo apt-get install -y < Aptfile
 
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: bundle install
+        run: bundle install
+
+      - name: make bundle_install
+        run: make bundle_install
+
       - name: make
         run: make
 
