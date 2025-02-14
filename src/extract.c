@@ -17,13 +17,8 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
 
     switch (token->type) {
       case TOKEN_NEWLINE:
-      case TOKEN_ERB_CONTENT: {
-        buffer_append(output, token->value);
-      } break;
-
-      default: {
-        buffer_append_whitespace(output, range_length(token->range));
-      } break;
+      case TOKEN_ERB_CONTENT: buffer_append(output, token->value); break;
+      default: buffer_append_whitespace(output, range_length(token->range));
     }
   }
 }
@@ -37,10 +32,7 @@ void erbx_extract_html_to_buffer(char* source, buffer_T* output) {
     switch (token->type) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
-      case TOKEN_ERB_END: {
-        buffer_append_whitespace(output, range_length(token->range));
-      } break;
-
+      case TOKEN_ERB_END: buffer_append_whitespace(output, range_length(token->range)); break;
       default: buffer_append(output, token->value);
     }
   }
