@@ -24,7 +24,7 @@ module ERBX
     )
   end
 
-  def self.extract_ruby_to_buffer(source)
+  def self.extract_ruby(source)
     LibERBX::Buffer.with do |output|
       LibERBX.erbx_extract_ruby_to_buffer(source, output.pointer)
 
@@ -32,7 +32,7 @@ module ERBX
     end
   end
 
-  def self.extract_html_to_buffer(source)
+  def self.extract_html(source)
     LibERBX::Buffer.with do |output|
       LibERBX.erbx_extract_html_to_buffer(source, output.pointer)
 
