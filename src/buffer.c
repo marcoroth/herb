@@ -72,7 +72,9 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
 }
 
 void buffer_append_whitespace(buffer_T* buffer, size_t length) {
-  buffer_append_repeated(buffer, ' ', length);
+  for (int i = 0; i < length; i++) {
+    buffer_append(buffer, " ");
+  }
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {

@@ -22,12 +22,7 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
       } break;
 
       default: {
-        range_T* range = token->range;
-        size_t length = range->end - range->start;
-
-        for (int i = 0; i < length; i++) {
-          buffer_append(output, " ");
-        }
+        buffer_append_whitespace(output, range_length(token->range));
       } break;
     }
   }
@@ -43,12 +38,7 @@ void erbx_extract_html_to_buffer(char* source, buffer_T* output) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
       case TOKEN_ERB_END: {
-        range_T* range = token->range;
-        size_t length = range->end - range->start;
-
-        for (int i = 0; i < length; i++) {
-          buffer_append(output, " ");
-        }
+        buffer_append_whitespace(output, range_length(token->range));
       } break;
 
       default: buffer_append(output, token->value);
