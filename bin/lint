@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+make lint
+
+echo "Linting complete!"

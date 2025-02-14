@@ -1,10 +1,9 @@
-#include "ruby.h"
-#include "extconf.h"
 #include "extension.h"
+#include <ruby.h>
 
 #include "../../src/include/erbx.h"
 
-static const char *check_string(VALUE value) {
+static const char* check_string(VALUE value) {
   if (NIL_P(value)) {
     return NULL;
   }
@@ -17,9 +16,9 @@ static const char *check_string(VALUE value) {
 }
 
 VALUE rb_erbx_lex(VALUE self, VALUE source) {
-  const char *string = check_string(source);
+  const char* string = check_string(source);
 
-  erbx_lex((char *) string);
+  erbx_lex((char*) string);
 
   return Qnil;
 }

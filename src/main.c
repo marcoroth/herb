@@ -1,6 +1,6 @@
-#include "include/io.h"
-#include "include/erbx.h"
 #include "include/buffer.h"
+#include "include/erbx.h"
+#include "include/io.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
   size_t length = strlen(ruby_code);
   erbx_parse(sourcee, length);
 
-  buffer_init(&output);
+  if (!buffer_init(&output)) return 1;
 
   erbx_lex_to_buffer(source, &output);
 

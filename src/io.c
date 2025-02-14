@@ -1,34 +1,30 @@
 #include "include/io.h"
+#include "include/buffer.h"
 
 #include <errno.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define FILE_READ_CHUNK 4096
 
 char* erbx_read_file(const char* filename) {
-  FILE * fp;
-  char * line = NULL;
-  size_t len = 0;
-  ssize_t read;
-
-  fp = fopen(filename, "rb");
+  FILE* fp = fopen(filename, "rb");
 
   if (fp == NULL) {
-    printf("Could not read file '%s'\n", filename);
-    exit (1);
+    fprintf(stderr, "Could not read file '%s'\n", filename);
+    exit(1);
   }
 
-  char* buffer = (char*) calloc(1, sizeof (char));
-  buffer [0] = '\0';
+  buffer_T buffer = buffer_new();
 
-  while ((read = getline(&line, &len, fp)) != -1) {
-    buffer = (char*) realloc(buffer, (strlen(buffer) + strlen(line) + 1) * sizeof(char));
-    strcat(buffer, line);
+  char chunk[FILE_READ_CHUNK];
+  size_t bytes_read;
+
+  while ((bytes_read = fread(chunk, 1, FILE_READ_CHUNK, fp)) > 0) {
+    buffer_append(&buffer, chunk);
   }
 
   fclose(fp);
 
-  if (line) {
-    free(line);
-  }
-
-  return buffer;
+  return buffer_value(&buffer);
 }

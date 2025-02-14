@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+make clean
+rake clean
+
+make
+rake compile
+
+./run_erbx_tests
+rake test
+
+./erbx examples/test.html.erb
+
+bin/lint
+bin/tidy
+
+echo ""
+echo "TLDR successful!"

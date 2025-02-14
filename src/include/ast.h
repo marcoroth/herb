@@ -1,8 +1,6 @@
 #ifndef ERBX_AST_H
 #define ERBX_AST_H
 
-#include <stdlib.h>
-
 #include "array.h"
 
 typedef struct AST_STRUCT {

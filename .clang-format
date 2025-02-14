@@ -1,0 +1,18 @@
+---
+BasedOnStyle: LLVM
+
+AlignAfterOpenBracket: DontAlign
+AllowAllArgumentsOnNextLine: false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: true
+BinPackArguments: false
+ColumnLimit: 120
+IndentCaseLabels: true
+IndentWidth: 2
+PenaltyBreakBeforeFirstCallParameter: 0
+PointerAlignment: Left
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+SpacesInAngles: true

@@ -1,12 +1,10 @@
 #ifndef ERBX_LEXER_H
 #define ERBX_LEXER_H
 
-#include <stdlib.h>
-
 #include "lexer_struct.h"
 #include "token_struct.h"
 
-lexer_T* lexer_init(char* src);
+lexer_T* lexer_init(char* source);
 
 void lexer_skip_whitespace(lexer_T* lexer);
 void lexer_advance(lexer_T* lexer);
