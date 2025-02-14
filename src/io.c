@@ -15,8 +15,7 @@ char* erbx_read_file(const char* filename) {
     exit(1);
   }
 
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   char chunk[FILE_READ_CHUNK];
   size_t bytes_read;

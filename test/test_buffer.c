@@ -16,8 +16,7 @@ END
 
 // Test appending text to buffer
 TEST(test_buffer_append)
-  buffer_T buffer;
-    buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   ck_assert_str_eq(buffer.value, "");
 
@@ -34,8 +33,7 @@ END
 
 // Test prepending text to buffer
 TEST(test_buffer_prepend)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   buffer_append(&buffer, "World");
   buffer_prepend(&buffer, "Hello ");
@@ -47,11 +45,8 @@ END
 
 // Test concatenating two buffers
 TEST(test_buffer_concat)
-  buffer_T buffer1;
-  buffer_init(&buffer1);
-
-  buffer_T buffer2;
-  buffer_init(&buffer2);
+  buffer_T buffer1 = buffer_new();
+  buffer_T buffer2 = buffer_new();
 
   buffer_append(&buffer1, "Hello");
   buffer_append(&buffer2, " World");
@@ -65,8 +60,7 @@ TEST(test_buffer_concat)
 END
 
 TEST(test_buffer_increase_capacity)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   size_t initial_capacity = buffer.capacity;
   ck_assert_int_ge(initial_capacity, 1024); // Ensure initial capacity is at least 1024
@@ -84,8 +78,7 @@ END
 
 // Test buffer reservation (preallocating memory)
 TEST(test_buffer_reserve)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   ck_assert(buffer_reserve(&buffer, 2048)); // Ensure space for 4096 bytes
   ck_assert_int_eq(buffer.capacity, 4096);
@@ -95,8 +88,7 @@ END
 
 // Test clearing buffer without freeing memory
 TEST(test_buffer_clear)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   buffer_append(&buffer, "Hello");
   ck_assert_str_eq(buffer.value, "Hello");
@@ -112,8 +104,7 @@ END
 
 // Test freeing buffer
 TEST(test_buffer_free)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   buffer_append(&buffer, "Test");
   ck_assert_int_eq(buffer.length, 4);
@@ -127,8 +118,7 @@ END
 
 // Test buffer UTF-8 integrity
 TEST(test_buffer_utf8_integrity)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   // UTF-8 String
   const char *utf8_text = "こんにちは";
@@ -144,8 +134,7 @@ END
 
 // Test: Buffer Appending UTF-8 Characters
 TEST(test_buffer_append_utf8)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   // Append UTF-8 string
   buffer_append(&buffer, "こんにちは"); // "Hello" in Japanese
@@ -158,8 +147,7 @@ END
 
 // Test buffer length correctness
 TEST(test_buffer_length_correctness)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   buffer_append(&buffer, "Short");
   size_t length = buffer_length(&buffer);
@@ -174,8 +162,7 @@ END
 
 // Test: Buffer Null-Termination
 TEST(test_buffer_null_termination)
-  buffer_T buffer;
-  buffer_init(&buffer);
+  buffer_T buffer = buffer_new();
 
   buffer_append(&buffer, "Test");
   ck_assert(buffer_value(&buffer)[buffer_length(&buffer)] == '\0'); // Ensure null termination
