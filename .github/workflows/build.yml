@@ -12,12 +12,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install APT dependencies
-        run: xargs sudo apt-get install -y < Aptfile
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
+
+      - name: bundle install
+        run: bundle install
 
       - name: make
         run: make
