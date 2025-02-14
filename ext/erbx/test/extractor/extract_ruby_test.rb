@@ -37,8 +37,8 @@ module Extractor
         </ul>
       HTML
 
-      expected = ERBX.extract_ruby_to_buffer(<<~RUBY)
-        array = [1, 2, 3]
+      expected = ERBX.extract_ruby(<<~RUBY)
+          array = [1, 2, 3]
 
 
           array.each do |item|
