@@ -4,11 +4,12 @@
 #include "include/buffer.h"
 #include "include/macros.h"
 #include "include/memory.h"
+#include "include/util.h"
 
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
-  buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
+  buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -48,7 +49,7 @@ bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
   if (buffer->capacity >= required_capacity) return true;
 
   size_t new_capacity = required_capacity * 2;
-  char* new_value = safe_realloc(buffer->value, new_capacity);
+  char* new_value = safe_realloc(buffer->value, new_capacity + 1);
 
   if (unlikely(new_value == NULL)) return false;
 
@@ -65,8 +66,14 @@ void buffer_append(buffer_T* buffer, const char* text) {
 
   if (!buffer_increase_capacity(buffer, text_length)) return;
 
-  strcat(buffer->value + buffer->length, text);
+  memmove(buffer->value + buffer->length, text, text_length);
+
   buffer->length += text_length;
+  buffer->value[buffer->length] = '\0';
+}
+
+void buffer_append_char(buffer_T* buffer, char character) {
+  buffer_append(buffer, string_from_char(character));
 }
 
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
