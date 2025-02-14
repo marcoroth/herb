@@ -1,4 +1,4 @@
-name: Ruby Tests
+name: Ruby
 
 on: [push, pull_request]
 
