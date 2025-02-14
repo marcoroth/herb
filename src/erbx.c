@@ -6,26 +6,8 @@
 #include "include/parser.h"
 #include "include/token.h"
 #include "include/version.h"
-#include <prism.h>
 
 #include <stdlib.h>
-
-void erbx_parse(const uint8_t *source, size_t length) {
-    pm_parser_t parser;
-    pm_parser_init(&parser, source, length, NULL);
- 
-    pm_node_t *root = pm_parse(&parser);
-    const char *hh = pm_token_type_name(root->type);
-    pm_buffer_t buffer;
-    pm_buffer_init(&buffer);
- 
-    pm_prettyprint(&buffer, &parser, root);
-    printf("%*.s\n", (int) buffer.length, buffer.value);
- 
-    pm_buffer_free(&buffer);
-    pm_node_destroy(&parser, root);
-    pm_parser_free(&parser);
-}
 
 array_T* erbx_lex(char* source) {
   lexer_T* lexer = lexer_init(source);
