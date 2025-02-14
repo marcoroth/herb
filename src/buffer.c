@@ -2,8 +2,6 @@
 #include <string.h>
 
 #include "include/buffer.h"
-#include "include/macros.h"
-#include "include/memory.h"
 
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
@@ -15,12 +13,6 @@ bool buffer_init(buffer_T* buffer) {
   }
 
   return buffer != NULL;
-}
-
-buffer_T buffer_new(void) {
-  buffer_T buffer;
-  buffer_init(&buffer);
-  return buffer;
 }
 
 char* buffer_value(buffer_T* buffer) {
@@ -37,22 +29,6 @@ size_t buffer_capacity(buffer_T* buffer) {
 
 size_t buffer_sizeof(void) {
   return sizeof(buffer_T);
-}
-
-bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
-  size_t required_capacity = buffer->length + required_length;
-
-  if (buffer->capacity >= required_capacity) return true;
-
-  size_t new_capacity = required_capacity * 2;
-  char* new_value = safe_realloc(buffer->value, new_capacity);
-
-  if (unlikely(new_value == NULL)) return false;
-
-  buffer->value = new_value;
-  buffer->capacity = new_capacity;
-
-  return true;
 }
 
 void buffer_append(buffer_T* buffer, const char* text) {
@@ -75,26 +51,22 @@ void buffer_append(buffer_T* buffer, const char* text) {
   buffer->length += text_length;
 }
 
-void buffer_append_char(buffer_T* buffer, char character) {
-  if (!buffer_increase_capacity(buffer, 1)) return;
-
-  buffer->value[buffer->length] = character;
-  buffer->length++;
-  buffer->value[buffer->length] = '\0';
-}
-
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   if (length <= 0) return;
+
   if (buffer->length + length >= buffer->capacity) {
     size_t new_capacity = (buffer->length + length) * 2;
     char* new_buffer = realloc(buffer->value, new_capacity);
+
     if (!new_buffer) {
       printf("Couldn't allocate memory for new_buffer in buffer_append_repeated\n");
       return;
     }
+
     buffer->value = new_buffer;
     buffer->capacity = new_capacity;
   }
+
   memset(buffer->value + buffer->length, character, length);
   buffer->length += length;
   buffer->value[buffer->length] = '\0';
@@ -137,17 +109,6 @@ void buffer_concat(buffer_T* destination, buffer_T* source) {
   strcat(destination->value + destination->length, source->value);
 
   destination->length = new_length;
-}
-
-bool buffer_reserve(buffer_T* buffer, size_t min_capacity) {
-  size_t required_length = min_capacity - buffer->length;
-
-  return buffer_increase_capacity(buffer, required_length);
-}
-
-void buffer_clear(buffer_T* buffer) {
-  buffer->length = 0;
-  buffer->value[0] = '\0';
 }
 
 void buffer_free(buffer_T* buffer) {
