@@ -76,8 +76,7 @@ clean:
 	rm -r $(erbx_prism_exec)
 
 bundle_install:
-	bundle install
-	cd $(prism_path) && bundle install && cd -
+	bundle install --gemfile Gemfile.build
 
 prism: bundle_install
 	cd $(prism_path) && bundle exec rake compile && cd -
