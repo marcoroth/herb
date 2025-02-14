@@ -42,9 +42,22 @@ void erbx_lex_to_buffer(char* source, buffer_T* output) {
     buffer_append(output, "\n");
   }
 
+  erbx_free_tokens(&tokens);
+
   // parser_T* parser = parser_init(lexer);
   // AST_T* root = parser_parse(parser);
   // printf("%zu\n", root->children->size);
+}
+
+void erbx_free_tokens(array_T** tokens) {
+  if (!tokens || !(*tokens)) return;
+
+  for (size_t i = 0; i < array_size(*tokens); i++) {
+    token_T* token = array_get(*tokens, i);
+    if (token) token_free(token);
+  }
+
+  array_free(tokens);
 }
 
 const char* erbx_version(void) {

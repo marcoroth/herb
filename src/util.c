@@ -1,7 +1,10 @@
+#include "include/util.h"
+#include "include/macros.h"
+
+#include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "include/util.h"
 
 int is_whitespace(int character) {
   return character == ' ' || character == '\t';

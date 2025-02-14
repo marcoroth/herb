@@ -14,9 +14,14 @@ size_t token_sizeof(void) {
 
 token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
-  token->value = value;
-  token->type = type;
 
+  if (value) {
+    token->value = strdup(value);
+  } else {
+    token->value = NULL;
+  }
+
+  token->type = type;
   token->range = range_init(lexer->current_position - strlen(value), lexer->current_position);
 
   size_t start_line = lexer->current_line - count_newlines(value);
@@ -93,4 +98,15 @@ char* token_value(token_T* token) {
 
 int token_type(token_T* token) {
   return token->type;
+}
+
+void token_free(token_T* token) {
+  if (!token) return;
+
+  if (token->value) {
+    free(token->value);
+    token->value = NULL;
+  }
+
+  free(token);
 }

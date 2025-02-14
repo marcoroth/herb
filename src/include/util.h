@@ -1,6 +1,8 @@
 #ifndef ERBX_UTIL_H
 #define ERBX_UTIL_H
 
+#include <stdlib.h>
+
 int is_whitespace(int character);
 int is_newline(int character);
 

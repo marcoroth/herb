@@ -15,7 +15,7 @@ void* array_get(array_T* array, size_t index);
 
 void array_append(array_T* array, void* item);
 void array_set(array_T* array, size_t index, void* item);
-void array_free(array_T* array);
+void array_free(array_T** array);
 void array_remove(array_T* array, size_t index);
 
 size_t array_capacity(array_T* array);
