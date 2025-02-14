@@ -9,7 +9,7 @@
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
-  buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
+  buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -49,7 +49,7 @@ bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
   if (buffer->capacity >= required_capacity) return true;
 
   size_t new_capacity = required_capacity * 2;
-  char* new_value = safe_realloc(buffer->value, new_capacity + 1);
+  char* new_value = safe_realloc(buffer->value, new_capacity);
 
   if (unlikely(new_value == NULL)) return false;
 
