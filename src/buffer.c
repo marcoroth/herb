@@ -59,20 +59,11 @@ bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
 }
 
 void buffer_append(buffer_T* buffer, const char* text) {
+  if (!text || text[0] == '\0') return;
+
   size_t text_length = strlen(text);
 
-  if (buffer->length + text_length >= buffer->capacity) {
-    size_t new_capacity = (buffer->length + text_length) * 2;
-    char* new_buffer = realloc(buffer->value, new_capacity);
-
-    if (new_buffer) {
-      buffer->value = new_buffer;
-      buffer->capacity = new_capacity;
-    } else {
-      printf("Couldn't allocate memory for new_buffer in buffer_append");
-      return;
-    }
-  }
+  if (!buffer_increase_capacity(buffer, text_length)) return;
 
   strcat(buffer->value + buffer->length, text);
   buffer->length += text_length;
