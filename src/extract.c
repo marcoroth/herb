@@ -57,8 +57,6 @@ char* erbx_extract(char* source, erbx_extract_language_T language) {
 
   char* value = output.value;
 
-  buffer_free(&output);
-
   return value;
 }
 
