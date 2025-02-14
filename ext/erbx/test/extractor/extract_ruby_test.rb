@@ -4,13 +4,19 @@ require_relative "../test_helper"
 
 module Extractor
   class ExtractRubyTest < Minitest::Spec
-    test "basic" do
+    test "basic silent" do
       ruby = ERBX.extract_ruby_to_buffer("<h1><% RUBY_VERSION %></h1>")
 
       assert_equal "       RUBY_VERSION        ", ruby
     end
 
-    test "basic with newlines" do
+    test "basic load" do
+      ruby = ERBX.extract_ruby_to_buffer("<h1><%= RUBY_VERSION %></h1>")
+
+      assert_equal "      = RUBY_VERSION        ", ruby
+    end
+
+    test "with newlines" do
       actual = ERBX.extract_ruby_to_buffer(<<~HTML)
         <h1>
           <% RUBY_VERSION %>
