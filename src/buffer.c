@@ -95,6 +95,10 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   free(spaces);
 }
 
+void buffer_append_whitespace(buffer_T* buffer, size_t length) {
+  buffer_append_repeated(buffer, ' ', length);
+}
+
 void buffer_prepend(buffer_T* buffer, const char* text) {
   if (!text || text[0] == '\0') return;
 
@@ -106,10 +110,6 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
   memcpy(buffer->value, text, text_length);
 
   buffer->length += text_length;
-}
-
-void buffer_append_whitespace(buffer_T* buffer, size_t length) {
-  buffer_append_repeated(buffer, ' ', length);
 }
 
 void buffer_concat(buffer_T* destination, buffer_T* source) {
