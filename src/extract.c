@@ -16,19 +16,42 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
     token_T* token = array_get(tokens, i);
 
     switch (token->type) {
-      case TOKEN_ERB_CONTENT: buffer_append(output, token->value); break;
-      case TOKEN_NEWLINE: buffer_append(output, token->value); break;
+      case TOKEN_ERB_CONTENT:
+      case TOKEN_NEWLINE: {
+        buffer_append(output, token->value);
+      } break;
+
       default: buffer_append_whitespace(output, range_length(token->range));
     }
   }
 }
 
-char* erbx_extract_ruby(char* source) {
-  buffer_T output;
+void erbx_extract_html_to_buffer(char* source, buffer_T* output) {
+  array_T* tokens = erbx_lex(source);
 
+  for (int i = 0; i < array_size(tokens); i++) {
+    token_T* token = array_get(tokens, i);
+    switch (token->type) {
+      case TOKEN_ERB_START:
+      case TOKEN_ERB_CONTENT:
+      case TOKEN_ERB_END: {
+        buffer_append_whitespace(output, range_length(token->range));
+      } break;
+
+      default: buffer_append(output, token->value);
+    }
+  }
+}
+
+char* erbx_extract(char* source, erbx_extract_language_T language) {
+  buffer_T output;
   buffer_init(&output);
 
-  erbx_extract_ruby_to_buffer(source, &output);
+  switch (language) {
+    case ERBX_EXTRACT_LANGUAGE_RUBY: erbx_extract_ruby_to_buffer(source, &output); break;
+    case ERBX_EXTRACT_LANGUAGE_HTML: erbx_extract_html_to_buffer(source, &output); break;
+  }
+
   char* value = output.value;
 
   buffer_free(&output);
@@ -36,9 +59,9 @@ char* erbx_extract_ruby(char* source) {
   return value;
 }
 
-char* erbx_extract_ruby_from_file(const char* path) {
+char* erbx_extract_from_file(const char* path, erbx_extract_language_T language) {
   char* source = erbx_read_file(path);
-  char* output = erbx_extract_ruby(source);
+  char* output = erbx_extract(source, language);
 
   free(source);
 

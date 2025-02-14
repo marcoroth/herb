@@ -32,6 +32,14 @@ module ERBX
     end
   end
 
+  def self.extract_html_to_buffer(source)
+    LibERBX::Buffer.with do |output|
+      LibERBX.erbx_extract_html_to_buffer(source, output.pointer)
+
+      output.read
+    end
+  end
+
   def self.lex_file(path)
     lex(File.read(path))
   end

@@ -3,7 +3,7 @@
 require_relative "../test_helper"
 
 module Extractor
-  class ExtractorTest < Minitest::Spec
+  class ExtractRubyTest < Minitest::Spec
     test "basic" do
       ruby = ERBX.extract_ruby_to_buffer("<h1><% RUBY_VERSION %></h1>")
 
@@ -32,12 +32,12 @@ module Extractor
       HTML
 
       expected = ERBX.extract_ruby_to_buffer(<<~RUBY)
-           array = [1, 2, 3]
+        array = [1, 2, 3]
 
 
-             array.each do |item|
-                  = item
-             end
+          array.each do |item|
+               = item
+          end
 
       RUBY
 
