@@ -4,15 +4,15 @@
 #include <stdlib.h>
 
 typedef struct RANGE_STRUCT {
-  int start;
-  int end;
+  size_t start;
+  size_t end;
 } range_T;
 
-range_T* range_init(int start, int end);
+range_T* range_init(size_t start, size_t end);
 
-int range_length(range_T* range);
-int range_start(range_T* range);
-int range_end(range_T* range);
+size_t range_start(range_T* range);
+size_t range_end(range_T* range);
+size_t range_length(range_T* range);
 
 size_t range_sizeof(void);
 

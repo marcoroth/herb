@@ -4,7 +4,7 @@ size_t range_sizeof(void) {
   return sizeof(range_T);
 }
 
-range_T* range_init(int start, int end) {
+range_T* range_init(size_t start, size_t end) {
   range_T* range = calloc(1, range_sizeof());
 
   range->start = start;
@@ -13,14 +13,14 @@ range_T* range_init(int start, int end) {
   return range;
 }
 
-int range_length(range_T* range) {
-  return range_end(range) - range_start(range);
-}
-
-int range_start(range_T* range) {
+size_t range_start(range_T* range) {
   return range->start;
 }
 
-int range_end(range_T* range) {
+size_t range_end(range_T* range) {
   return range->end;
+}
+
+size_t range_length(range_T* range) {
+  return range_end(range) - range_start(range);
 }

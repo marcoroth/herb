@@ -1,2 +1,4 @@
+# frozen_string_literal: true
+
 brew "check"
-brew "clang-format"
+brew "llvm@19" # for clang, clang-format and clang-tidy
