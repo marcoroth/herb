@@ -12,6 +12,7 @@ range_T* range_init(size_t start, size_t end);
 
 size_t range_start(range_T* range);
 size_t range_end(range_T* range);
+size_t range_length(range_T* range);
 
 size_t range_sizeof(void);
 

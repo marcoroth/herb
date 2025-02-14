@@ -21,11 +21,14 @@ GEM
       pretty_please
     difftastic (0.6.0-x86_64-darwin)
       pretty_please
+    difftastic (0.6.0-x86_64-linux)
+      pretty_please
     dispersion (0.2.0)
       prism
     ffi (1.17.1)
     ffi (1.17.1-arm64-darwin)
     ffi (1.17.1-x86_64-darwin)
+    ffi (1.17.1-x86_64-linux-gnu)
     json (2.10.1)
     language_server-protocol (3.17.0.4)
     maxitest (5.8.0)
@@ -66,6 +69,7 @@ PLATFORMS
   arm64-darwin
   ruby
   x86_64-darwin-23
+  x86_64-linux
 
 DEPENDENCIES
   erbx!

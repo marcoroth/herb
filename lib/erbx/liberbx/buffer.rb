@@ -8,6 +8,7 @@ module ERBX
     attach_function :buffer_length, [:pointer], :size_t
     attach_function :buffer_capacity, [:pointer], :size_t
     attach_function :buffer_sizeof, [], :size_t
+    attach_function :buffer_append, [:pointer, :pointer], :void
 
     class Buffer
       SIZEOF = LibERBX.buffer_sizeof
@@ -16,6 +17,10 @@ module ERBX
 
       def initialize(pointer)
         @pointer = pointer
+      end
+
+      def append(string)
+        LibERBX.buffer_append(pointer, string)
       end
 
       def value

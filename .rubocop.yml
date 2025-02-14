@@ -41,6 +41,8 @@ Metrics/ClassLength:
 
 Layout/LineLength:
   Max: 120
+  Exclude:
+    - ext/erbx/test/**/*_test.rb
 
 Security/MarshalLoad:
   Exclude:

@@ -3,6 +3,7 @@
 
 #include "array.h"
 #include "buffer.h"
+#include "extract.h"
 
 #include <stdint.h>
 

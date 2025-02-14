@@ -5,12 +5,13 @@
 #include <stdlib.h>
 
 static void* safe_malloc_internal(size_t size, bool fail_fast) {
-  if (size == 0) size = 1;
+  if (size == 0) return NULL;
 
   void* pointer = malloc(size);
 
   if (!pointer) {
     fprintf(stderr, "Error: Failed to allocate %zu bytes.\n", size);
+    fflush(stderr);
     if (fail_fast) exit(1);
     return NULL;
   }
@@ -19,7 +20,7 @@ static void* safe_malloc_internal(size_t size, bool fail_fast) {
 }
 
 static void* safe_realloc_internal(void* pointer, size_t new_size, bool fail_fast) {
-  if (new_size == 0) new_size = 1;
+  if (new_size == 0) return NULL;
 
   if (!pointer) return safe_malloc_internal(new_size, fail_fast);
 
@@ -27,6 +28,7 @@ static void* safe_realloc_internal(void* pointer, size_t new_size, bool fail_fas
 
   if (!new_pointer) {
     fprintf(stderr, "Error: Memory reallocation failed (size: %zu bytes).\n", new_size);
+    fflush(stderr);
     if (fail_fast) exit(1);
     return NULL;
   }

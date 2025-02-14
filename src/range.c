@@ -20,3 +20,7 @@ size_t range_start(range_T* range) {
 size_t range_end(range_T* range) {
   return range->end;
 }
+
+size_t range_length(range_T* range) {
+  return range_end(range) - range_start(range);
+}

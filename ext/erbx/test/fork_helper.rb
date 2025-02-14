@@ -38,7 +38,7 @@ class Minitest::Spec
         nil
       end
 
-      self.fail "Test exceeded timeout of #{TIMEOUT_THRESHOLD} seconds"
+      self.fail "Test '#{name}' exceeded timeout of #{TIMEOUT_THRESHOLD} seconds"
     ensure
       reader.close
     end

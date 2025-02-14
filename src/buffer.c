@@ -4,6 +4,7 @@
 #include "include/buffer.h"
 #include "include/macros.h"
 #include "include/memory.h"
+#include "include/util.h"
 
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
@@ -71,11 +72,30 @@ void buffer_append(buffer_T* buffer, const char* text) {
 }
 
 void buffer_append_char(buffer_T* buffer, char character) {
-  if (!buffer_increase_capacity(buffer, 1)) return;
+  static char string[2];
 
-  buffer->value[buffer->length] = character;
-  buffer->length++;
-  buffer->value[buffer->length] = '\0';
+  string[0] = character;
+  string[1] = '\0';
+
+  buffer_append(buffer, string);
+}
+
+void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
+  if (length == 0) return;
+
+  char* spaces = malloc(length + 1);
+  if (!spaces) return;
+
+  memset(spaces, character, length);
+  spaces[length] = '\0';
+
+  buffer_append(buffer, spaces);
+
+  free(spaces);
+}
+
+void buffer_append_whitespace(buffer_T* buffer, size_t length) {
+  buffer_append_repeated(buffer, ' ', length);
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {

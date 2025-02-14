@@ -15,6 +15,7 @@ rake test
 
 bin/lint
 bin/tidy
+bundle exec rubocop
 
 echo ""
-echo "TLDR successful!"
+echo "Integration successful!"
