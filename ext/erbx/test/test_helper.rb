@@ -5,7 +5,7 @@ require "maxitest/autorun"
 require "timeout"
 
 class Minitest::Spec
-  TIMEOUT_THRESHOLD = 0.5 # seconds
+  TIMEOUT_THRESHOLD = 0.1 # seconds
 
   class << self
     alias_method :test, :it
@@ -36,7 +36,7 @@ class Minitest::Spec
     rescue Timeout::Error, Timeout::ExitException
       Process.kill("TERM", pid) # Gracefully terminate
 
-      sleep 0.5 # Give it time to exit
+      sleep TIMEOUT_THRESHOLD # Give it time to exit
 
       Process.kill("KILL", pid) rescue nil # Force kill if needed
 
