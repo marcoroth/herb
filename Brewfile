@@ -1,3 +1,2 @@
 brew "check"
-brew "clang-format"
-brew "llvm" # for clang and clang-tidy
+brew "llvm@19" # for clang, clang-format and clang-tidy

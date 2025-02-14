@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install check
+        run: sudo apt-get install check clang-19
 
       - name: make
         run: make

@@ -6,23 +6,25 @@ Seamless Parsing for HTML, ERB, and more.
 
 This project builds the ERBX program and its associated unit tests using a Makefile for automation. The Makefile provides several useful commands for compiling, running tests, and cleaning the project.
 
-### Requirements
+### Building
 
-- **GCC**
-- **Check**: The project uses the [Check](https://libcheck.github.io/check/) library for unit testing.
-- **Clang Format**: The project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) for formatting.
-- **Clang Tidy**: The project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) for formatting.
+#### Requirements
 
-For Linux:
+- [**Check**](https://libcheck.github.io/check/): For unit testing.
+- [**Clang 19**](https://clang.llvm.org): The compiler used to build this project.
+- [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
+- [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
+
+**For Linux:**
 ```bash
-sudo apt-get install check clang-format-19 clang-tidy
+sudo apt-get install check clang-19 clang-tidy-19 clang-format-19
 ```
 
-For macOS (using Homebrew):
+**For macOS (using Homebrew):**
 ```bash
-brew install check clang-format llvm
-# or
 brew bundle
+# or
+brew install check llvm@19
 ```
 
 ### Commands

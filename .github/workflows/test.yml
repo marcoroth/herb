@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt-get install check
+        run: sudo apt-get install check clang-19
 
       - name: make
         run: make
@@ -44,10 +44,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install clang-tidy
-        run: sudo apt-get install -y clang-tidy
+        run: sudo apt-get install -y clang-tidy-19
 
       - name: clang-tidy version
-        run: clang-tidy --version
+        run: clang-tidy-19 --version
 
       - name: Tidy
         run: bin/tidy

@@ -27,39 +27,38 @@ flags = -g -Wall -fPIC
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
-  llvm_path = TODO
-  cc = clang
+  cc = clang-19
   clang_format = clang-format-19
-  clang_tidy = clang-tidy
+  clang_tidy = clang-tidy-19
 endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(flags) -I$(brew_prefix)/include
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm
-  llvm_path = /opt/homebrew/opt/llvm
+  llvm_path = $(shell brew --prefix llvm@19)
   cc = $(llvm_path)/bin/clang
-  clang_format = clang-format
+  clang_format = $(llvm_path)/bin/clang-format
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
 all: $(exec) $(lib_name) test
 
 $(exec): $(objects)
-	gcc $(objects) $(flags) -o $(exec)
+	$(cc) $(objects) $(flags) -o $(exec)
 
 $(lib_name): $(objects)
-	gcc -shared $(objects) $(flags) -o $(lib_name)
+	$(cc) -shared $(objects) $(flags) -o $(lib_name)
 	# cp $(lib_name) $(ruby_extension)
 
 %.o: %.c include/%.h
-	gcc -c $(flags) $< -o $@
+	$(cc) -c $(flags) $< -o $@
 
 test/%.o: test/%.c
-	gcc -c $(test_cflags) $< -o $@
+	$(cc) -c $(test_cflags) $< -o $@
 
 test: $(test_objects) $(non_main_objects)
-	gcc $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
+	$(cc) $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
 
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
