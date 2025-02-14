@@ -72,9 +72,17 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
 }
 
 void buffer_append_whitespace(buffer_T* buffer, size_t length) {
-  for (int i = 0; i < length; i++) {
-    buffer_append(buffer, " ");
-  }
+  if (length == 0) return;
+
+  char* spaces = malloc(length + 1);
+  if (!spaces) return;
+
+  memset(spaces, ' ', length);
+  spaces[length] = '\0';
+
+  buffer_append(buffer, spaces);
+
+  free(spaces);
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {
