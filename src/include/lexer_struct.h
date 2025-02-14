@@ -20,10 +20,10 @@ typedef enum {
 typedef struct LEXER_STRUCT {
   char* source;
   size_t source_length;
+  size_t current_position;
+  size_t current_line;
+  size_t current_column;
   char current_character;
-  unsigned int current_position;
-  unsigned int current_line;
-  unsigned int current_column;
   lexer_state_T state;
 } lexer_T;
 

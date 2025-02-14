@@ -4,14 +4,14 @@
 #include <stdlib.h>
 
 typedef struct LOCATION_STRUCT {
-  int line;
-  int column;
+  size_t line;
+  size_t column;
 } location_T;
 
-location_T* location_init(int line, int column);
+location_T* location_init(size_t line, size_t column);
 
-int location_line(location_T* location);
-int location_column(location_T* location);
+size_t location_line(location_T* location);
+size_t location_column(location_T* location);
 
 size_t location_sizeof(void);
 

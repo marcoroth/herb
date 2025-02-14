@@ -1,6 +1,5 @@
 #include "extension.h"
-#include "extconf.h"
-#include "ruby.h"
+#include <ruby.h>
 
 #include "../../src/include/erbx.h"
 

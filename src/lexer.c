@@ -1,10 +1,12 @@
 #include "include/lexer.h"
+#include "include/buffer.h"
 #include "include/macros.h"
 #include "include/token.h"
 #include "include/util.h"
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdnoreturn.h>
 #include <string.h>
 
 char* lexer_state_to_string(lexer_T* lexer) {
@@ -39,6 +41,16 @@ lexer_T* lexer_init(char* source) {
   lexer->current_character = source[lexer->current_position];
 
   return lexer;
+}
+
+noreturn void lexer_error(lexer_T* lexer, const char* message) {
+  fprintf(stderr,
+      "Lexer Error [character '%c', line %zu, col %zu]: %s\n",
+      lexer->current_character,
+      lexer->current_line,
+      lexer->current_column,
+      message);
+  exit(1);
 }
 
 char lexer_peek(lexer_T* lexer, int offset) {
@@ -93,85 +105,96 @@ token_T* lexer_parse_newline(lexer_T* lexer) {
 }
 
 token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (is_whitespace(lexer->current_character) && lexer->current_character != '\0') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_WHITESPACE, lexer);
 }
 
 token_T* lexer_parse_tag_name(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != ' ' && lexer->current_character != '>' && lexer->current_character != '/') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_TAG_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_name(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
   char character = 0;
 
   while ((character = lexer->current_character) != '=' && character != ' ' && character != '>' && character != '/') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {character, 0});
+    buffer_append_char(&buffer, character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_ATTRIBUTE_NAME, lexer);
 }
 
 token_T* lexer_parse_attribute_value(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
   char quote = lexer_backtrack(lexer, 1);
 
   if (quote != '"' && quote != '\'') {
     quote = ' ';
   }
 
-  while (lexer->current_character != quote) {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+  while (lexer->current_character != quote && lexer->current_character != '/' && lexer->current_character != '>') {
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer->state = STATE_HTML_ATTRIBUTE_VALUE;
 
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
+
   return token_init(value, TOKEN_HTML_ATTRIBUTE_VALUE, lexer);
 }
 
 token_T* lexer_parse_text_content(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '<') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_TEXT_CONTENT, lexer);
 }
 
 token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '-' && lexer_peek(lexer, 1) != '-' && lexer_peek(lexer, 2) != '>') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer_advance(lexer);
-
   lexer->state = STATE_HTML_COMMENT_CLOSE;
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_HTML_COMMENT_CONTENT, lexer);
 }
@@ -179,9 +202,8 @@ token_T* lexer_parse_html_comment_content(lexer_T* lexer) {
 token_T* lexer_handle_data_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '\n': {
-      lexer_advance(lexer);
-      return token_init("\n", TOKEN_NEWLINE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_NEWLINE);
+    }
 
     case '<': {
       const char next_character = lexer_peek(lexer, 1);
@@ -192,14 +214,14 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
           lexer_advance(lexer);
           lexer_advance(lexer);
           return token_init("<%", TOKEN_ERB_START, lexer);
-        } break;
+        }
 
         case '/': {
           lexer->state = STATE_HTML_TAG_CLOSE;
           lexer_advance(lexer);
           lexer_advance(lexer);
           return token_init("</", TOKEN_HTML_CLOSE_TAG_START, lexer);
-        } break;
+        }
 
         case '!': {
           if (lexer_peek(lexer, 2) == '-' && lexer_peek(lexer, 3) == '-') {
@@ -212,17 +234,17 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
           }
 
           // TODO: handle this case
-          printf("lexer_handle_data_state: '%c'\n", lexer->current_character);
-          exit(1);
+          lexer_error(lexer, "Unexpected character in lexer_handle_data_state");
         }
 
         default: {
-          lexer->state = STATE_HTML_TAG_OPEN;
-          lexer_advance(lexer);
-          return token_init("<", TOKEN_HTML_TAG_START, lexer);
+          // no-op
         }
       }
-    } break;
+
+      lexer->state = STATE_HTML_TAG_OPEN;
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_START);
+    }
 
     case '%': {
       if (lexer_peek(lexer, 1) == '>') {
@@ -233,26 +255,25 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
         return token_init("%>", TOKEN_ERB_END, lexer);
       }
 
-      printf("lexer_handle_html_attributes_state in '%%': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
-    } break;
-
-    default: {
-      return lexer_parse_text_content(lexer);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attributes_state");
     }
   }
+
+  return lexer_parse_text_content(lexer);
 }
 
 token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
-  char* value = calloc(1, sizeof(char));
+  buffer_T buffer = buffer_new();
 
   while (lexer->current_character != '%' && lexer_peek(lexer, 1) != '>') {
-    value = realloc(value, (strlen(value) + 2) * sizeof(char));
-    strcat(value, (char[]) {lexer->current_character, 0});
+    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   lexer->state = STATE_DATA;
+
+  char* value = buffer_value(&buffer);
+  buffer_free(&buffer);
 
   return token_init(value, TOKEN_ERB_CONTENT, lexer);
 }
@@ -263,15 +284,13 @@ token_T* lexer_handle_erb_open_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case ' ': {
-      lexer_advance(lexer);
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
+    }
 
     case '>': {
       lexer->state = STATE_DATA;
-      lexer_advance(lexer);
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
+    }
 
     case '/': {
       if (lexer_peek(lexer, 1) == '>') {
@@ -282,40 +301,31 @@ token_T* lexer_handle_html_attributes_state(lexer_T* lexer) {
       }
 
       // TODO: handle this case
-      printf("lexer_handle_html_attributes_state in '/': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
-    } break;
-
-    default: {
-      lexer->state = STATE_HTML_ATTRIBUTE_NAME;
-      return lexer_parse_attribute_name(lexer);
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attributes_state");
     }
   }
+
+  lexer->state = STATE_HTML_ATTRIBUTE_NAME;
+  return lexer_parse_attribute_name(lexer);
 }
 
 // <div class="hello"></div>
 //    ^
 //
 token_T* lexer_handle_tag_name_state(lexer_T* lexer) {
-
   switch (lexer->current_character) {
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
+    }
 
     case '>': {
       lexer->state = STATE_DATA;
-      lexer_advance(lexer);
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
-    } break;
-
-    default: {
-      printf("lexer_handle_tag_name_state ELSE: '%c'\n", lexer->current_character);
-      exit(1);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
   }
+
+  lexer_error(lexer, "Unexpected character in lexer_handle_tag_name_state");
 }
 
 // <div class="hello"></div>
@@ -327,16 +337,14 @@ token_T* lexer_handle_tag_name_state(lexer_T* lexer) {
 token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '=': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTE_EQUALS;
-      return token_init("=", TOKEN_HTML_EQUALS, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_HTML_EQUALS);
+    }
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
+    }
 
     case '/': {
       if (lexer_peek(lexer, 1) == '>') {
@@ -347,105 +355,95 @@ token_T* lexer_handle_html_attribute_name_state(lexer_T* lexer) {
       }
 
       // TODO: handle this case
-      printf("lexer_handle_html_attribute_name_state in '/': '%c'\n", lexer_peek(lexer, 1));
-      exit(1);
-    } break;
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_name_state");
+    }
 
     case '>': {
-      lexer_advance(lexer);
       lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
-    } break;
-
-    default: {
-      printf("lexer_handle_html_attribute_name_state: '%c'\n", lexer->current_character);
-      exit(1);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
   }
+
+  lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_name_state");
 }
 
 token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
   switch (lexer->current_character) {
-    case '"': {
-      lexer_advance(lexer);
-      return token_init("\"", TOKEN_HTML_QUOTE, lexer);
-    } break;
-
-    case '\'': {
-      lexer_advance(lexer);
-      return token_init("'", TOKEN_HTML_QUOTE, lexer);
-    } break;
+    case '"':
+    case '\'': return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
+    }
+
+    case '/': {
+      if (lexer_peek(lexer, 1) == '>') {
+        lexer->state = STATE_HTML_TAG_CLOSE;
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
+      }
+
+      lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_equals_state");
+    }
 
     case '>': {
-      lexer_advance(lexer);
       lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
-    } break;
-
-    default: {
-      return lexer_parse_attribute_value(lexer);
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
   }
+
+  return lexer_parse_attribute_value(lexer);
 }
 
 token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
   switch (lexer->current_character) {
-    case '"': {
-      lexer_advance(lexer);
-      lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init("\"", TOKEN_HTML_QUOTE, lexer);
-    } break;
-
+    case '"':
     case '\'': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init("'", TOKEN_HTML_QUOTE, lexer);
-    } break;
+      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
+    }
 
     case ' ': {
-      lexer_advance(lexer);
       lexer->state = STATE_HTML_ATTRIBUTES;
-      return token_init(" ", TOKEN_WHITESPACE, lexer);
+      return lexer_advance_current(lexer, TOKEN_WHITESPACE);
     }
 
-    default: {
-      printf("lexer_handle_html_attribute_value_state: '%c'\n", lexer->current_character);
-      exit(1);
+    case '/': {
+      if (lexer_peek(lexer, 1) == '>') {
+        lexer->state = STATE_HTML_TAG_CLOSE;
+        lexer_advance(lexer);
+        lexer_advance(lexer);
+        return token_init("/>", TOKEN_HTML_TAG_SELF_CLOSE, lexer);
+      }
+    }
+
+    case '>': {
+      lexer->state = STATE_DATA;
+      return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     }
   }
+
+  lexer_error(lexer, "Unexpected character in lexer_handle_html_attribute_value_state");
 }
 
 token_T* lexer_handle_html_tag_open_state(lexer_T* lexer) {
-  switch (lexer->current_character) {
-    case ' ': {
-      exit(1);
-    } break;
-
-    default: {
-      lexer->state = STATE_HTML_ATTRIBUTES;
-      return lexer_parse_tag_name(lexer);
-    }
+  if (lexer->current_character == ' ') {
+    lexer_error(lexer, "Unexpected character in lexer_handle_html_tag_open_state");
   }
+
+  lexer->state = STATE_HTML_ATTRIBUTES;
+  return lexer_parse_tag_name(lexer);
 }
 
 token_T* lexer_handle_html_tag_close_state(lexer_T* lexer) {
-  switch (lexer->current_character) {
-    case '>': {
-      lexer_advance(lexer);
-      lexer->state = STATE_DATA;
-      return token_init(">", TOKEN_HTML_TAG_END, lexer);
-    }
-
-    default: {
-      return lexer_parse_tag_name(lexer);
-    }
+  if (lexer->current_character == '>') {
+    lexer->state = STATE_DATA;
+    return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
   }
+
+  return lexer_parse_tag_name(lexer);
 }
 
 token_T* lexer_handle_html_comment_open_state(lexer_T* lexer) {
@@ -453,27 +451,14 @@ token_T* lexer_handle_html_comment_open_state(lexer_T* lexer) {
 }
 
 token_T* lexer_handle_html_comment_close_state(lexer_T* lexer) {
-  switch (lexer->current_character) {
-    case '-': {
-      if (lexer_peek(lexer, 1) == '-' && lexer_peek(lexer, 2) == '>') {
-        lexer_advance(lexer);
-        lexer_advance(lexer);
-        lexer_advance(lexer);
-        return token_init("-->", TOKEN_HTML_COMMENT_END, lexer);
-      }
-
-      // TODO: handle this case
-      printf("lexer_handle_html_comment_close_state in '-': '%c' and '%c'\n",
-          lexer_peek(lexer, 1),
-          lexer_peek(lexer, 2));
-      exit(1);
-    }
-
-    default: {
-      printf("lexer_handle_html_comment_close_state: '%c'\n", lexer->current_character);
-      exit(1);
-    }
+  if (lexer->current_character == '-' && lexer_peek(lexer, 1) == '-' && lexer_peek(lexer, 2) == '>') {
+    lexer_advance(lexer);
+    lexer_advance(lexer);
+    lexer_advance(lexer);
+    return token_init("-->", TOKEN_HTML_COMMENT_END, lexer);
   }
+
+  lexer_error(lexer, "Unexpected character in lexer_handle_html_comment_close_state");
 }
 
 token_T* lexer_next_token(lexer_T* lexer) {
