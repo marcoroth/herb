@@ -12,6 +12,4 @@ int count_newlines(const char* string);
 char* replace_char(char* string, char find, char replace);
 char* escape_newlines(const char* input);
 
-const char* string_from_char(char character);
-
 #endif

@@ -63,12 +63,3 @@ char* escape_newlines(const char* input) {
 
   return orig_output;
 }
-
-const char* string_from_char(char character) {
-  static char buffer[2];
-
-  buffer[0] = character;
-  buffer[1] = '\0';
-
-  return buffer;
-}

@@ -73,7 +73,12 @@ void buffer_append(buffer_T* buffer, const char* text) {
 }
 
 void buffer_append_char(buffer_T* buffer, char character) {
-  buffer_append(buffer, string_from_char(character));
+  static char string[2];
+
+  string[0] = character;
+  string[1] = '\0';
+
+  buffer_append(buffer, &string);
 }
 
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
