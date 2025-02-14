@@ -52,37 +52,21 @@ void buffer_append(buffer_T* buffer, const char* text) {
 }
 
 void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
-  if (length <= 0) return;
-
-  if (buffer->length + length >= buffer->capacity) {
-    size_t new_capacity = (buffer->length + length) * 2;
-    char* new_buffer = realloc(buffer->value, new_capacity);
-
-    if (!new_buffer) {
-      printf("Couldn't allocate memory for new_buffer in buffer_append_repeated\n");
-      return;
-    }
-
-    buffer->value = new_buffer;
-    buffer->capacity = new_capacity;
-  }
-
-  strcat(buffer->value + buffer->length, &character);
-  buffer->length += length;
-}
-
-void buffer_append_whitespace(buffer_T* buffer, size_t length) {
   if (length == 0) return;
 
   char* spaces = malloc(length + 1);
   if (!spaces) return;
 
-  memset(spaces, ' ', length);
+  memset(spaces, character, length);
   spaces[length] = '\0';
 
   buffer_append(buffer, spaces);
 
   free(spaces);
+}
+
+void buffer_append_whitespace(buffer_T* buffer, size_t length) {
+  buffer_append_repeated(buffer, ' ', length);
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {
