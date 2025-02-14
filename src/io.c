@@ -10,7 +10,7 @@
 char* erbx_read_file(const char* filename) {
   FILE* fp = fopen(filename, "rb");
 
-  if (fp == NULL) {
+  if (fp == nullptr) {
     fprintf(stderr, "Could not read file '%s'\n", filename);
     exit(1);
   }

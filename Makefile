@@ -22,7 +22,7 @@ ruby_extension = ext/erbx/$(lib_name)
 
 os := $(shell uname -s)
 
-flags = -g -Wall -fPIC
+flags = -std=c23 -g -Wall -fPIC
 
 ifeq ($(os),Linux)
   test_cflags = $(flags) -I/usr/include/check

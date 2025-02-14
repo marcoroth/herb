@@ -18,7 +18,7 @@ token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
   if (value) {
     token->value = strdup(value);
   } else {
-    token->value = NULL;
+    token->value = nullptr;
   }
 
   token->type = type;
@@ -105,7 +105,7 @@ void token_free(token_T* token) {
 
   if (token->value) {
     free(token->value);
-    token->value = NULL;
+    token->value = nullptr;
   }
 
   free(token);

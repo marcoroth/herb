@@ -17,7 +17,7 @@ array_T* array_init(size_t capacity) {
 
   if (!array->items) {
     free(array);
-    return NULL;
+    return nullptr;
   }
 
   return array;
@@ -28,7 +28,7 @@ void array_append(array_T* array, void* item) {
     size_t new_capacity = (array->capacity > 0) ? array->capacity * 2 : 1;
     void* new_items = safe_realloc(array->items, sizeof(void*) * new_capacity);
 
-    if (unlikely(new_items == NULL)) return;
+    if (unlikely(new_items == nullptr)) return;
 
     array->items = (void**) new_items;
     array->capacity = new_capacity;
@@ -40,7 +40,7 @@ void array_append(array_T* array, void* item) {
 
 void* array_get(array_T* array, size_t index) {
   if (index >= array->size || index < 0) {
-    return NULL;
+    return nullptr;
   }
 
   return array->items[index];
@@ -80,5 +80,5 @@ void array_free(array_T** array) {
   free((*array)->items);
   free(*array);
 
-  *array = NULL;
+  *array = nullptr;
 }

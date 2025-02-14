@@ -50,7 +50,7 @@ bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
   size_t new_capacity = required_capacity * 2;
   char* new_value = safe_realloc(buffer->value, new_capacity);
 
-  if (unlikely(new_value == NULL)) return false;
+  if (unlikely(new_value == nullptr)) return false;
 
   buffer->value = new_value;
   buffer->capacity = new_capacity;
@@ -116,6 +116,6 @@ void buffer_free(buffer_T* buffer) {
 
   free(buffer->value);
 
-  buffer->value = NULL;
+  buffer->value = nullptr;
   buffer->length = buffer->capacity = 0;
 }

@@ -12,7 +12,7 @@ static void* safe_malloc_internal(size_t size, bool fail_fast) {
   if (!pointer) {
     fprintf(stderr, "Error: Failed to allocate %zu bytes.\n", size);
     if (fail_fast) exit(1);
-    return NULL;
+    return nullptr;
   }
 
   return pointer;
@@ -28,7 +28,7 @@ static void* safe_realloc_internal(void* pointer, size_t new_size, bool fail_fas
   if (!new_pointer) {
     fprintf(stderr, "Error: Memory reallocation failed (size: %zu bytes).\n", new_size);
     if (fail_fast) exit(1);
-    return NULL;
+    return nullptr;
   }
 
   return new_pointer;
