@@ -14,6 +14,8 @@ This project builds the ERBX program and its associated unit tests using a Makef
 - [**Clang 19**](https://clang.llvm.org): The compiler used to build this project.
 - [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
 - [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
+- [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
+- [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `erbx` against it.
 
 **For Linux:**  
 
