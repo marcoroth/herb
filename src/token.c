@@ -19,11 +19,11 @@ token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
 
   token->range = range_init(lexer->current_position - strlen(value), lexer->current_position);
 
-  int start_line = lexer->current_line - count_newlines(value);
-  int start_column = lexer->current_column - strlen(value); // TODO: fix start_column calculation if
-                                                            // value contains newlines
-  int end_line = lexer->current_line;
-  int end_column = lexer->current_column;
+  size_t start_line = lexer->current_line - count_newlines(value);
+  size_t start_column = lexer->current_column - strlen(value); // TODO: fix start_column calculation if
+                                                               // value contains newlines
+  size_t end_line = lexer->current_line;
+  size_t end_column = lexer->current_column;
 
   token->start = location_init(start_line, start_column);
   token->end = location_init(end_line, end_column);

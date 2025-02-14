@@ -9,14 +9,14 @@ typedef struct ARRAY_STRUCT {
   size_t capacity;
 } array_T;
 
-array_T* array_init(int capacity);
+array_T* array_init(size_t capacity);
 
-void* array_get(array_T* array, int index);
+void* array_get(array_T* array, size_t index);
 
 void array_append(array_T* array, void* item);
-void array_set(array_T* array, int index, void* item);
+void array_set(array_T* array, size_t index, void* item);
 void array_free(array_T* array);
-void array_remove(array_T* array, int index);
+void array_remove(array_T* array, size_t index);
 
 size_t array_capacity(array_T* array);
 size_t array_size(array_T* array);

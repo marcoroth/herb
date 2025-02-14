@@ -4,7 +4,7 @@ size_t array_sizeof(void) {
   return sizeof(array_T);
 }
 
-array_T* array_init(int capacity) {
+array_T* array_init(size_t capacity) {
   array_T* array = (array_T*) malloc(sizeof(array_T));
 
   array->size = 0;
@@ -24,7 +24,7 @@ void array_append(array_T* array, void* item) {
   array->size++;
 }
 
-void* array_get(array_T* array, int index) {
+void* array_get(array_T* array, size_t index) {
   if (index >= array->size || index < 0) {
     return NULL;
   }
@@ -32,20 +32,20 @@ void* array_get(array_T* array, int index) {
   return array->items[index];
 }
 
-void array_set(array_T* array, int index, void* item) {
-  if (index >= array->size || index < 0) {
+void array_set(array_T* array, size_t index, void* item) {
+  if (index >= array->size) {
     return;
   }
 
   array->items[index] = item;
 }
 
-void array_remove(array_T* array, int index) {
-  if (index >= array->size || index < 0) {
+void array_remove(array_T* array, size_t index) {
+  if (index >= array->size) {
     return;
   }
 
-  for (int i = index; i < array->size - 1; i++) {
+  for (size_t i = index; i < array->size - 1; i++) {
     array->items[i] = array->items[i + 1];
   }
 

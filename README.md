@@ -11,15 +11,16 @@ This project builds the ERBX program and its associated unit tests using a Makef
 - **GCC**
 - **Check**: The project uses the [Check](https://libcheck.github.io/check/) library for unit testing.
 - **Clang Format**: The project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) for formatting.
+- **Clang Tidy**: The project uses [Clang Format](https://clang.llvm.org/docs/ClangFormat.html) for formatting.
 
 For Linux:
 ```bash
-sudo apt-get install check clang-format-19
+sudo apt-get install check clang-format-19 clang-tidy
 ```
 
 For macOS (using Homebrew):
 ```bash
-brew install check clang-format
+brew install check clang-format llvm
 # or
 brew bundle
 ```

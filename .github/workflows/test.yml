@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -35,3 +36,18 @@ jobs:
 
       - name: Lint
         run: bin/lint
+
+  tidy:
+    name: Tidy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-tidy
+        run: sudo apt-get install -y clang-tidy
+
+      - name: clang-tidy version
+        run: clang-tidy --version
+
+      - name: Tidy
+        run: bin/tidy

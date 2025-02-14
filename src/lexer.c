@@ -44,7 +44,7 @@ lexer_T* lexer_init(char* source) {
 
 noreturn void lexer_error(lexer_T* lexer, const char* message) {
   fprintf(stderr,
-      "Lexer Error [character '%c', line %d, col %d]: %s\n",
+      "Lexer Error [character '%c', line %zu, col %zu]: %s\n",
       lexer->current_character,
       lexer->current_line,
       lexer->current_column,
@@ -223,6 +223,10 @@ token_T* lexer_handle_data_state(lexer_T* lexer) {
           // TODO: handle this case
           lexer_error(lexer, "Unexpected character in lexer_handle_data_state");
         }
+
+        default: {
+          // no-op
+        }
       }
 
       lexer->state = STATE_HTML_TAG_OPEN;
@@ -369,13 +373,8 @@ token_T* lexer_handle_html_attribute_equals_state(lexer_T* lexer) {
 
 token_T* lexer_handle_html_attribute_value_state(lexer_T* lexer) {
   switch (lexer->current_character) {
-    case '"': {
-      lexer->state = STATE_HTML_ATTRIBUTES;
-      return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
-    }
-
+    case '"':
     case '\'': {
-      lexer->state = STATE_HTML_ATTRIBUTES;
       return lexer_advance_current(lexer, TOKEN_HTML_QUOTE);
     }
 
