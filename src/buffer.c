@@ -67,9 +67,8 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
     buffer->capacity = new_capacity;
   }
 
-  memset(buffer->value + buffer->length, character, length);
+  strcat(buffer->value + buffer->length, &character);
   buffer->length += length;
-  buffer->value[buffer->length] = '\0';
 }
 
 void buffer_append_whitespace(buffer_T* buffer, size_t length) {

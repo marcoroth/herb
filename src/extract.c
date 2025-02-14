@@ -16,12 +16,19 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
     token_T* token = array_get(tokens, i);
 
     switch (token->type) {
-      case TOKEN_ERB_CONTENT:
-      case TOKEN_NEWLINE: {
+      case TOKEN_NEWLINE:
+      case TOKEN_ERB_CONTENT: {
         buffer_append(output, token->value);
       } break;
 
-      default: buffer_append_whitespace(output, range_length(token->range));
+      default: {
+        range_T* range = token->range;
+        size_t length = range->end - range->start;
+
+        for (int i = 0; i < length; i++) {
+          buffer_append(output, " ");
+        }
+      } break;
     }
   }
 }
@@ -31,11 +38,17 @@ void erbx_extract_html_to_buffer(char* source, buffer_T* output) {
 
   for (int i = 0; i < array_size(tokens); i++) {
     token_T* token = array_get(tokens, i);
+
     switch (token->type) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
       case TOKEN_ERB_END: {
-        buffer_append_whitespace(output, range_length(token->range));
+        range_T* range = token->range;
+        size_t length = range->end - range->start;
+
+        for (int i = 0; i < length; i++) {
+          buffer_append(output, " ");
+        }
       } break;
 
       default: buffer_append(output, token->value);
