@@ -4,6 +4,7 @@
 #include "include/buffer.h"
 #include "include/lexer.h"
 #include "include/token.h"
+#include "include/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,8 @@ parser_T* parser_init(lexer_T* lexer) {
 #include <stdlib.h>
 
 char* format_parser_error(const char* message, const char* expected, const char* actual) {
-  int needed = snprintf(NULL, 0, "[Parser]: Unexpected Token: '%s': expected '%s', got: '%s'\n", message, expected, actual);
+  int needed =
+      snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
 
   if (needed < 0) {
     return NULL;
@@ -36,14 +38,20 @@ char* format_parser_error(const char* message, const char* expected, const char*
     return NULL;
   }
 
-  snprintf(buffer, needed + 1, "[Parser]: Unexpected Token: '%s': expected '%s', got: '%s'\n", message, expected, actual);
+  snprintf(buffer,
+      needed + 1,
+      "[Parser]: Unexpected Token %s (expected '%s', got: '%s')",
+      message,
+      expected,
+      actual);
 
   return buffer;
 }
 
-AST_NODE_T* parser_append_unexpected_token(parser_T* parser, char* message, char* expected, char* actual, AST_NODE_T* node) {
+AST_NODE_T* parser_append_unexpected_token(
+    parser_T* parser, char* message, char* expected, char* actual, AST_NODE_T* node) {
   AST_NODE_T* unexpected_token = ast_node_init(AST_UNEXCPECTED_TOKEN_NODE);
-  unexpected_token->name = format_parser_error(message, expected, actual);
+  unexpected_token->name = escape_newlines(format_parser_error(message, expected, actual));
   array_append(node->children, unexpected_token);
   printf("%zu", parser->current_token->range->start);
 
@@ -53,7 +61,11 @@ AST_NODE_T* parser_append_unexpected_token(parser_T* parser, char* message, char
 AST_NODE_T* parser_append_unexpected_token_from_token(parser_T* parser, token_type_T type, AST_NODE_T* node) {
   token_T* token = parser_consume(parser, type, node);
 
-  return parser_append_unexpected_token(parser, token->value, (char*) token_type_to_string(type), (char*) token_type_to_string(parser->current_token->type), node);
+  return parser_append_unexpected_token(parser,
+      token->value,
+      (char*) token_type_to_string(parser->current_token->type),
+      (char*) token_type_to_string(type),
+      node);
 }
 
 token_T* parser_consume(parser_T* parser, token_type_T type, AST_NODE_T* node) {
@@ -154,7 +166,7 @@ AST_NODE_T* parser_parse_html_attribute_set(parser_T* parser) {
     switch (parser->current_token->type) {
       case TOKEN_WHITESPACE: parser_consume(parser, TOKEN_WHITESPACE, attribute_list); break;
       case TOKEN_IDENTIFIER: parser_parse_html_attribute(parser, attribute_list); break;
-      default: parser_append_unexpected_token_from_token(parser, TOKEN_COLON, attribute_list); break;
+      default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, attribute_list); break;
     }
   }
 
@@ -212,15 +224,7 @@ AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* parent) {
     AST_NODE_T* close_tag = parser_parse_html_close_tag(parser, element_node);
 
     if (strcmp(open_tag->name, close_tag->name) != 0) {
-      parser_append_unexpected_token(parser,
-          "Mismatched closing tag",
-          open_tag->name,
-          close_tag->name,
-          element_node);
-
-      AST_NODE_T* mismatch = ast_node_init(AST_NOOP_NODE);
-      mismatch->name = close_tag->name;
-      array_append(element_node->children, mismatch);
+      parser_append_unexpected_token(parser, "mismatched closing tag", open_tag->name, close_tag->name, element_node);
     }
   } else if (open_tag->type == AST_HTML_SELF_CLOSE_TAG_NODE) {
     // no-op

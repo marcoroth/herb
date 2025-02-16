@@ -1,0 +1,44 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (4)
+    @ Element (location: (0,0)-(0,0))
+    ├── name: ∅
+    └── children: (3)
+        @ OpenTag (location: (0,0)-(0,0))
+        ├── name: h1
+        └── children: (1)
+            @ AttributeSet (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: []
+
+        @ CloseTag (location: (0,0)-(0,0))
+        ├── name:  
+        └── children: (3)
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_IDENTIFIER')
+            └── children: []
+
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_IDENTIFIER', got: 'TOKEN_WHITESPACE')
+            └── children: []
+
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_END', got: 'TOKEN_IDENTIFIER')
+            └── children: []
+
+        @ UnexcpectedToken (location: (0,0)-(0,0))
+        ├── name: [Parser]: Unexpected Token mismatched closing tag (expected 'h1', got: ' ')
+        └── children: []
+
+    @ UnexcpectedToken (location: (0,0)-(0,0))
+    ├── name: [Parser]: Unexpected Token </ (expected 'TOKEN_IDENTIFIER', got: 'TOKEN_HTML_TAG_START_CLOSE')
+    └── children: []
+
+    @ UnexcpectedToken (location: (0,0)-(0,0))
+    ├── name: [Parser]: Unexpected Token h1 (expected 'TOKEN_HTML_TAG_END', got: 'TOKEN_IDENTIFIER')
+    └── children: []
+
+    @ UnexcpectedToken (location: (0,0)-(0,0))
+    ├── name: [Parser]: Unexpected Token > (expected 'TOKEN_EOF', got: 'TOKEN_HTML_TAG_END')
+    └── children: []
+

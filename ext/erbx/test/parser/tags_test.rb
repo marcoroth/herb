@@ -61,9 +61,9 @@ module Parser
       assert_equal 1, result.root_node.child_count
 
       assert_equal "AST_HTML_ELEMENT_NODE", result.root_node.children.first.type
-      assert_equal 4, result.root_node.children.first.child_count
+      assert_equal 3, result.root_node.children.first.child_count
 
-      assert_equal(["AST_HTML_OPEN_TAG_NODE", "AST_HTML_CLOSE_TAG_NODE", "AST_UNEXCPECTED_TOKEN_NODE", "AST_NOOP_NODE"], result.root_node.children.first.children.items.map(&:type))
+      assert_equal(["AST_HTML_OPEN_TAG_NODE", "AST_HTML_CLOSE_TAG_NODE", "AST_UNEXCPECTED_TOKEN_NODE"], result.root_node.children.first.children.items.map(&:type))
     end
 
     test "attributes" do
@@ -109,19 +109,19 @@ module Parser
       assert_parsed_snapshot(%(<div : class=""></div>))
     end
 
-    xtest "text content" do
+    test "text content" do
       assert_parsed_snapshot("<h1>Hello World</h1>")
     end
 
-    xtest "attribute with no quotes value and whitespace and self-closing tag" do
+    test "attribute with no quotes value and whitespace and self-closing tag" do
       assert_parsed_snapshot("<img value=hello />")
     end
 
-    xtest "attribute with no quotes value, no whitespace and self-closing tag" do
+    test "attribute with no quotes value, no whitespace and self-closing tag" do
       assert_parsed_snapshot("<img value=hello/>")
     end
 
-    xtest "attribute with no quotes value, no whitespace, and non self-closing tag" do
+    test "attribute with no quotes value, no whitespace, and non self-closing tag" do
       assert_parsed_snapshot("<div value=hello>")
     end
   end

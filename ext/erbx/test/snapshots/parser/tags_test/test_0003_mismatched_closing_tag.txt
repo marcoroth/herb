@@ -3,7 +3,7 @@
 └── children: (1)
     @ Element (location: (0,0)-(0,0))
     ├── name: ∅
-    └── children: (4)
+    └── children: (3)
         @ OpenTag (location: (0,0)-(0,0))
         ├── name: html
         └── children: (1)
@@ -16,10 +16,6 @@
         └── children: []
 
         @ UnexcpectedToken (location: (0,0)-(0,0))
-        ├── name: Error - Mismatched closing tag
-        └── children: []
-
-        @ Noop (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: [Parser]: Unexpected Token mismatched closing tag (expected 'html', got: 'div')
         └── children: []
 
