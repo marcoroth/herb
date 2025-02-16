@@ -12,7 +12,7 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(char* value, token_type_T type, lexer_T* lexer) {
+token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
 
   if (value) {

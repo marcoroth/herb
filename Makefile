@@ -22,10 +22,29 @@ ruby_extension = ext/erbx/$(lib_name)
 
 os := $(shell uname -s)
 
-flags = -g -Wall -fPIC
+# Enable strict warnings
+warning_flags = -Wall -Wextra -Werror -pedantic
+
+# Debug build (no optimizations, debug symbols)
+debug_flags = -g -O0
+
+# Production build (optimized)
+production_flags = $(warning_flags) -O3 -march=native -flto
+
+# Shared library flags (only for `.so`/`.dylib`/`.bundle`)
+shared_library_flags = -fPIC
+
+# Default build mode (change this as needed)
+flags = $(warning_flags) $(debug_flags) -std=c99
+
+# Separate test compilation flags
+test_flags = $(debug_flags) -std=gnu99
+
+# Shared library build (if needed)
+shared_flags = $(production_flags) $(shared_library_flags)
 
 ifeq ($(os),Linux)
-  test_cflags = $(flags) -I/usr/include/check
+  test_cflags = $(test_flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit
   cc = clang-19
   clang_format = clang-format-19
@@ -34,7 +53,7 @@ endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
-  test_cflags = $(flags) -I$(brew_prefix)/include
+  test_cflags = $(test_flags) -I$(brew_prefix)/include
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm
   llvm_path = $(shell brew --prefix llvm@19)
   cc = $(llvm_path)/bin/clang
@@ -48,7 +67,7 @@ $(exec): $(objects)
 	$(cc) $(objects) $(flags) -o $(exec)
 
 $(lib_name): $(objects)
-	$(cc) -shared $(objects) $(flags) -o $(lib_name)
+	$(cc) -shared $(objects) $(shared_flags) -o $(lib_name)
 	# cp $(lib_name) $(ruby_extension)
 
 %.o: %.c include/%.h

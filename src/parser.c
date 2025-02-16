@@ -17,7 +17,7 @@ parser_T* parser_init(lexer_T* lexer) {
   return parser;
 }
 
-token_T* parser_consume(parser_T* parser, int type) {
+token_T* parser_consume(parser_T* parser, token_type_T type) {
   if (parser->current_token->type != type) {
     printf("[Parser]: Unexpected token: '%s', expected: '%s'\n",
         token_to_string(parser->current_token),
