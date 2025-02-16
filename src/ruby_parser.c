@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool erbx_prism_visit(const pm_node_t* node, void* data) {
+static bool erbx_prism_visit(const pm_node_t* node, void* data) {
   size_t* indent = (size_t*) data;
 
   for (size_t i = 0; i < *indent * 2; i++) {
