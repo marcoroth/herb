@@ -1,14 +1,23 @@
 # frozen_string_literal: true
 
 require "erbx/liberbx"
+
+require "erbx/liberbx/ast_node"
 require "erbx/liberbx/buffer"
 require "erbx/liberbx/array"
 require "erbx/liberbx/token"
 
 require "erbx/lex_result"
+require "erbx/parse_result"
 
 module ERBX
   VERSION = LibERBX.erbx_version.read_string
+
+  def self.parse(source)
+    ParseResult.new(
+      LibERBX.erbx_parse(source)
+    )
+  end
 
   def self.lex(source)
     LexResult.new(

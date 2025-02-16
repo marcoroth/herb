@@ -61,4 +61,10 @@ AST_NODE_T* ast_node_init(ast_node_type_T type);
 
 size_t ast_node_sizeof(void);
 
+ast_node_type_T ast_node_type(AST_NODE_T* node);
+size_t ast_node_children_count(AST_NODE_T* node);
+
+char* ast_node_type_to_string(AST_NODE_T* node);
+char* ast_node_name(AST_NODE_T* node);
+
 #endif
