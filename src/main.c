@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
+
 #include "include/buffer.h"
 #include "include/erbx.h"
 #include "include/io.h"
