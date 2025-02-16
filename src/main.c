@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
+#include "include/ast_node.h"
 #include "include/buffer.h"
 #include "include/erbx.h"
 #include "include/io.h"
@@ -69,8 +70,18 @@ int main(int argc, char* argv[]) {
   }
 
   if (strcmp(argv[1], "parse") == 0) {
-    printf("Not implemented yet.\n");
-    return 1;
+    AST_NODE_T* root = erbx_parse(source);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    ast_node_pretty_print(root, 0, &output);
+    printf("%s", output.value);
+
+    print_time_diff(start, end, "parsing");
+
+    buffer_free(&output);
+    free(source);
+
+    return 0;
   }
 
   if (strcmp(argv[1], "ruby") == 0) {
