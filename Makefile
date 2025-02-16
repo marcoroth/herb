@@ -100,7 +100,7 @@ bundle_install:
 	bundle install
 
 prism: bundle_install
-	cd $(prism_path) && bundle exec rake compile && cd -
+	cd $(prism_path) && bundle install && bundle exec rake compile && cd -
 
 $(erbx_prism_exec): bundle_install prism src/erbx_prism.c $(prism_objects)
 	$(cc) src/erbx_prism.c $(prism_objects) $(flags) $(ldflags) $(prism_ldflags) -o $(erbx_prism_exec)
