@@ -13,7 +13,7 @@ module Extractor
     test "basic loud" do
       ruby = ERBX.extract_ruby("<h1><%= RUBY_VERSION %></h1>")
 
-      assert_equal "      = RUBY_VERSION        ", ruby
+      assert_equal "        RUBY_VERSION        ", ruby
     end
 
     test "with newlines" do
@@ -26,7 +26,7 @@ module Extractor
       assert_equal "    \n     RUBY_VERSION   \n     \n", actual
     end
 
-    xtest "nested" do
+    test "nested" do
       actual = ERBX.extract_ruby(<<~HTML)
         <% array = [1, 2, 3] %>
 
@@ -37,15 +37,7 @@ module Extractor
         </ul>
       HTML
 
-      expected = ERBX.extract_ruby(<<-RUBY)
-           array = [1, 2, 3]
-
-
-             array.each do |item|
-                  = item
-             end
-
-      RUBY
+      expected = "   array = [1, 2, 3]   \n\n    \n     array.each do |item|   \n            item        \n     end   \n     \n"
 
       assert_equal expected, actual
     end

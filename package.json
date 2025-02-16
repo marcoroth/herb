@@ -2,7 +2,7 @@
   "name": "erbx",
   "license": "MIT",
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "vitepress": "^2.0.0-alpha.2"
   },
   "scripts": {
     "docs:dev": "vitepress dev",

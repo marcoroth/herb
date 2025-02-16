@@ -12,7 +12,7 @@
 void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
   array_T* tokens = erbx_lex(source);
 
-  for (int i = 0; i < array_size(tokens); i++) {
+  for (size_t i = 0; i < array_size(tokens); i++) {
     token_T* token = array_get(tokens, i);
 
     switch (token->type) {
@@ -26,7 +26,7 @@ void erbx_extract_ruby_to_buffer(char* source, buffer_T* output) {
 void erbx_extract_html_to_buffer(char* source, buffer_T* output) {
   array_T* tokens = erbx_lex(source);
 
-  for (int i = 0; i < array_size(tokens); i++) {
+  for (size_t i = 0; i < array_size(tokens); i++) {
     token_T* token = array_get(tokens, i);
 
     switch (token->type) {

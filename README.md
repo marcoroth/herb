@@ -1,6 +1,6 @@
-# ERBx
+# ERBX
 
-Seamless Parsing for HTML, ERB, and more.
+Seamless and powerful HTML+ERB parsing.
 
 ## Contributing
 

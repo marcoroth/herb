@@ -4,6 +4,16 @@ require_relative "../test_helper"
 
 module Lexer
   class TagsTest < Minitest::Spec
+    test "nil" do
+      result = ERBX.lex(nil)
+
+      expected = %w[
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
     test "empty file" do
       result = ERBX.lex("")
 
@@ -14,10 +24,69 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "whitespace" do
-      result = ERBX.lex(" ")
+    test "doctype" do
+      result = ERBX.lex("<!DOCTYPE>")
 
       expected = %w[
+        TOKEN_HTML_DOCTYPE
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "doctype with space" do
+      result = ERBX.lex("<!DOCTYPE >")
+
+      expected = %w[
+        TOKEN_HTML_DOCTYPE
+        TOKEN_WHITESPACE
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "doctype with html" do
+      result = ERBX.lex("<!DOCTYPE html>")
+
+      expected = %w[
+        TOKEN_HTML_DOCTYPE
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "html4 doctype" do
+      result = ERBX.lex(%(<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">))
+
+      expected = %w[
+        TOKEN_HTML_DOCTYPE
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_QUOTE
+        TOKEN_DASH
+        TOKEN_SLASH
+        TOKEN_SLASH
+        TOKEN_IDENTIFIER
+        TOKEN_SLASH
+        TOKEN_SLASH
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_TEXT_CONTENT
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
@@ -29,10 +98,10 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
@@ -45,7 +114,7 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -59,7 +128,7 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -72,10 +141,33 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "colon inside html " do
+      result = ERBX.lex(%(<div : class=""></div>))
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_COLON
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
@@ -88,11 +180,13 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
-        TOKEN_TEXT_CONTENT
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
@@ -105,13 +199,15 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_QUOTE
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -125,13 +221,15 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_QUOTE
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -145,12 +243,12 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -164,12 +262,12 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -182,12 +280,12 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -201,12 +299,12 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -214,18 +312,18 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value single quotes with />" do
+    test "attribute value single quotes with />" do
       result = ERBX.lex("<img value='/>'/>")
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -233,18 +331,19 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value double quotes with />" do
+    test "attribute value double quotes with />" do
       result = ERBX.lex(%(<img value="/>"/>))
 
+      # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -252,18 +351,77 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value single quotes with > value" do
+    test "attribute value single quotes with > value" do
+      result = ERBX.lex(%(<img value='>'/>))
+
+      # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "attribute value double quotes with /" do
+      result = ERBX.lex(%(<img value="/"/>))
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_SLASH
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "attribute value double quotes with > value" do
+      result = ERBX.lex(%(<img value=">"/>))
+
+      # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_SELF_CLOSE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "attribute value single quotes with / value" do
       result = ERBX.lex(%(<img value='>'/>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -271,18 +429,18 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value double quotes with > value" do
+    test "attribute value double quotes with / value" do
       result = ERBX.lex(%(<img value=">"/>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -290,56 +448,19 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value single quotes with / value" do
-      result = ERBX.lex(%(<img value='>'/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
-    end
-
-    xtest "attribute value double quotes with / value" do
-      result = ERBX.lex(%(<img value=">"/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
-    end
-
-    xtest "attribute value double quotes with single quote value" do
+    test "attribute value double quotes with single quote value" do
       result = ERBX.lex(%(<img value="''"/>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -347,18 +468,19 @@ module Lexer
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "attribute value single quotes with double quote value" do
+    test "attribute value single quotes with double quote value" do
       result = ERBX.lex(%(<img value='""'/>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -371,14 +493,14 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_QUOTE
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -392,9 +514,9 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -408,9 +530,9 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -423,9 +545,9 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
@@ -438,11 +560,11 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
@@ -456,11 +578,11 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -473,11 +595,11 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
@@ -490,9 +612,9 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
+        TOKEN_IDENTIFIER
         TOKEN_HTML_TAG_SELF_CLOSE
         TOKEN_EOF
       ]
@@ -505,7 +627,11 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_COMMENT_START
-        TOKEN_HTML_COMMENT_CONTENT
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
         TOKEN_HTML_COMMENT_END
         TOKEN_EOF
       ]
@@ -518,12 +644,80 @@ module Lexer
 
       expected = %w[
         TOKEN_HTML_COMMENT_START
-        TOKEN_HTML_COMMENT_CONTENT
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
         TOKEN_HTML_COMMENT_END
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "HTML comment followed by html tag" do
+      result = ERBX.lex(%(<!--Hello World--><h1>Hello</h1>))
+
+      expected = %w[
+        TOKEN_HTML_COMMENT_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_COMMENT_END
+
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "HTML comment followed by html tag with nested comment" do
+      result = ERBX.lex(%(
+        <!--Hello World-->
+        <h1><!-- Hello World --></h1>
+      ))
+
+      expected = %w[
+        TOKEN_NEWLINE
+        TOKEN_WHITESPACE
+
+        TOKEN_HTML_COMMENT_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_COMMENT_END
+
+        TOKEN_NEWLINE
+
+        TOKEN_WHITESPACE
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+
+        TOKEN_HTML_COMMENT_START
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_HTML_COMMENT_END
+
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_NEWLINE
+        TOKEN_WHITESPACE
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+      assert_equal [8, 1, 8, 1, 1, 1, 6], result.array.items.select { |token| token.type == "TOKEN_WHITESPACE" }.map(&:value).map(&:length)
     end
   end
 end

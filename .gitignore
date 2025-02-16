@@ -2,12 +2,12 @@
 .vitepress/dist
 .vitepress/cache
 
-# ERBx output
+# ERBX output
 /erbx
 /erbx_prism
 /run_erbx_tests
 
-# ERBx Ruby extension
+# ERBX Ruby extension
 /ext/erbx/extconf.h
 /ext/erbx/erbx.bundle
 /ext/erbx/Makefile

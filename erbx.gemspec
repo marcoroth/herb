@@ -6,7 +6,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
-  spec.summary = "HTML-aware ERB parser"
+  spec.summary = "Seamless and powerful HTML+ERB parsing."
+  spec.description = spec.summary
   spec.homepage = "https://github.com/marcoroth/erbx"
   spec.license = "MIT"
 

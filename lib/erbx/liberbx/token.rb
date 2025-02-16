@@ -2,7 +2,7 @@
 
 module ERBX
   module LibERBX
-    attach_function :token_type_string, [:int], :pointer
+    attach_function :token_type_to_string, [:int], :pointer
     attach_function :token_value, [:pointer], :pointer
     attach_function :token_type, [:pointer], :int
 
@@ -18,7 +18,7 @@ module ERBX
       end
 
       def type
-        @type ||= LibERBX.token_type_string(type_int).read_string
+        @type ||= LibERBX.token_type_to_string(type_int).read_string
       end
 
       def type_int
