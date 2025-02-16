@@ -4,7 +4,7 @@ require_relative "../test_helper"
 
 module Lexer
   class ERBTest < Minitest::Spec
-    test "erb silent" do
+    test "erb <% %>" do
       result = ERBX.lex(%(<% 'hello world' %>))
 
       expected = %w[
@@ -15,9 +15,11 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
-    test "erb loud" do
+    test "erb <%= %>" do
       result = ERBX.lex(%(<%= "hello world" %>))
 
       expected = %w[
@@ -28,9 +30,11 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%=", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
-    test "erb <%-" do
+    test "erb <%- %>" do
       result = ERBX.lex(%(<%- "Test" %>))
 
       expected = %w[
@@ -41,6 +45,8 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%-", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
     test "erb <%- -%>" do
@@ -54,6 +60,8 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%-", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "-%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
     test "erb <%# %>" do
@@ -67,9 +75,11 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%#", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
-    xtest "erb <%% %%>" do
+    test "erb <%% %%>" do
       result = ERBX.lex(%(<%% "Test" %%>))
 
       expected = %w[
@@ -80,102 +90,106 @@ module Lexer
       ]
 
       assert_equal expected, result.array.items.map(&:type)
+      assert_equal "<%%", result.array.items.find { |token| token.type == "TOKEN_ERB_START" }&.value
+      assert_equal "%%>", result.array.items.find { |token| token.type == "TOKEN_ERB_END" }&.value
     end
 
-    xtest "erb output inside HTML attribute value" do
+    test "erb output inside HTML attribute value" do
       result = ERBX.lex(%(<article id="<%= dom_id(article) %>"></article>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
         TOKEN_ERB_START
         TOKEN_ERB_CONTENT
         TOKEN_ERB_END
-        TOKEN_HTML_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_ERB_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "erb output inside HTML attribute value with value before" do
+    test "erb output inside HTML attribute value with value before" do
       result = ERBX.lex(%(<div class="bg-black <%= "text-white" %>"></div>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
         TOKEN_ERB_START
         TOKEN_ERB_CONTENT
         TOKEN_ERB_END
-        TOKEN_HTML_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_ERB_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "erb output inside HTML attribute value with value before and after" do
+    test "erb output inside HTML attribute value with value before and after" do
       result = ERBX.lex(%(<div class="bg-black <%= "text-white" %>"></div>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
-        TOKEN_HTML_ATTRIBUTE_VALUE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
         TOKEN_ERB_START
         TOKEN_ERB_CONTENT
         TOKEN_ERB_END
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_ERB_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 
       assert_equal expected, result.array.items.map(&:type)
     end
 
-    xtest "erb output inside HTML attribute value with value and after" do
+    test "erb output inside HTML attribute value with value and after" do
       result = ERBX.lex(%(<div class="bg-black <%= "text-white" %>"></div>))
 
       expected = %w[
         TOKEN_HTML_TAG_START
-        TOKEN_HTML_TAG_NAME
+        TOKEN_IDENTIFIER
         TOKEN_WHITESPACE
-        TOKEN_HTML_ATTRIBUTE_NAME
-        TOKEN_HTML_EQUALS
-        TOKEN_HTML_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
         TOKEN_ERB_START
         TOKEN_ERB_CONTENT
         TOKEN_ERB_END
-        TOKEN_HTML_ATTRIBUTE_VALUE
-        TOKEN_HTML_QUOTE
+        TOKEN_QUOTE
         TOKEN_HTML_TAG_END
-        TOKEN_HTML_CLOSE_TAG_START
-        TOKEN_HTML_TAG_NAME
-        TOKEN_ERB_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
         TOKEN_EOF
       ]
 

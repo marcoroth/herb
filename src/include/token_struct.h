@@ -5,32 +5,36 @@
 #include "range.h"
 
 typedef enum {
-  TOKEN_WHITESPACE,
-  TOKEN_NEWLINE,
+  TOKEN_WHITESPACE, // ' '
+  TOKEN_NEWLINE,    // \n
+  TOKEN_IDENTIFIER,
   TOKEN_TEXT_CONTENT,
 
-  TOKEN_HTML_DOCTYPE,
+  TOKEN_HTML_DOCTYPE, // <!DOCTYPE, <!doctype, <!DoCtYpE, <!dOcTyPe
 
-  TOKEN_HTML_TAG_NAME,
   TOKEN_HTML_TAG_START,       // <
+  TOKEN_HTML_TAG_START_CLOSE, // </
   TOKEN_HTML_TAG_END,         // >
-  TOKEN_HTML_CLOSE_TAG_START, // </
   TOKEN_HTML_TAG_SELF_CLOSE,  // />
 
-  TOKEN_HTML_COMMENT_START,
-  TOKEN_HTML_COMMENT_CONTENT,
-  TOKEN_HTML_COMMENT_END,
+  TOKEN_HTML_COMMENT_START, // <!--
+  TOKEN_HTML_COMMENT_END,   // -->
 
-  TOKEN_HTML_ATTRIBUTE_NAME,
-  TOKEN_HTML_ATTRIBUTE_VALUE,
+  TOKEN_ERB_START,   // <%, <%=, <%#, <%-, <%==, <%%
+  TOKEN_ERB_CONTENT, // Ruby Code
+  TOKEN_ERB_END,     // %>, -%>, %%>
 
-  TOKEN_HTML_EQUALS,
-  TOKEN_HTML_QUOTE,
+  TOKEN_LT,          // <
+  TOKEN_SLASH,       // /
+  TOKEN_EQUALS,      // =
+  TOKEN_QUOTE,       // ", '
+  TOKEN_DASH,        // -
+  TOKEN_UNDERSCORE,  // _
+  TOKEN_EXCLAMATION, // !
+  TOKEN_COLON,       // :
+  TOKEN_PERCENT,     // %
 
-  TOKEN_ERB_START,
-  TOKEN_ERB_CONTENT,
-  TOKEN_ERB_END,
-
+  TOKEN_ERROR,
   TOKEN_EOF,
 } token_type_T;
 

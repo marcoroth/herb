@@ -37,8 +37,10 @@ module Extractor
         </ul>
       HTML
 
-      assert_equal "                       \n\n<ul>\n                            \n    <li>           </li>\n           \n</ul>\n",
-                   actual
+      assert_equal(
+        "                       \n\n<ul>\n                            \n    <li>           </li>\n           \n</ul>\n",
+        actual
+      )
     end
   end
 end

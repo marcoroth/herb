@@ -39,6 +39,10 @@ Metrics/ClassLength:
   Exclude:
     - ext/erbx/test/**/*_test.rb
 
+Metrics/BlockLength:
+  Exclude:
+    - ext/erbx/test/**/*_test.rb
+
 Layout/LineLength:
   Max: 120
   Exclude:

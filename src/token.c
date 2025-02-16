@@ -40,32 +40,30 @@ const char* token_type_to_string(token_type_T type) {
   switch (type) {
     case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
     case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
+    case TOKEN_IDENTIFIER: return "TOKEN_IDENTIFIER";
     case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
     case TOKEN_HTML_DOCTYPE: return "TOKEN_HTML_DOCTYPE";
-    case TOKEN_HTML_TAG_NAME: return "TOKEN_HTML_TAG_NAME";
     case TOKEN_HTML_TAG_START: return "TOKEN_HTML_TAG_START";
     case TOKEN_HTML_TAG_END: return "TOKEN_HTML_TAG_END";
-    case TOKEN_HTML_CLOSE_TAG_START: return "TOKEN_HTML_CLOSE_TAG_START";
+    case TOKEN_HTML_TAG_START_CLOSE: return "TOKEN_HTML_TAG_START_CLOSE";
     case TOKEN_HTML_TAG_SELF_CLOSE: return "TOKEN_HTML_TAG_SELF_CLOSE";
     case TOKEN_HTML_COMMENT_START: return "TOKEN_HTML_COMMENT_START";
-    case TOKEN_HTML_COMMENT_CONTENT: return "TOKEN_HTML_COMMENT_CONTENT";
     case TOKEN_HTML_COMMENT_END: return "TOKEN_HTML_COMMENT_END";
-    case TOKEN_HTML_ATTRIBUTE_NAME: return "TOKEN_HTML_ATTRIBUTE_NAME";
-    case TOKEN_HTML_ATTRIBUTE_VALUE: return "TOKEN_HTML_ATTRIBUTE_VALUE";
-    case TOKEN_HTML_EQUALS: return "TOKEN_HTML_EQUALS";
-    case TOKEN_HTML_QUOTE: return "TOKEN_HTML_QUOTE";
+    case TOKEN_EQUALS: return "TOKEN_EQUALS";
+    case TOKEN_QUOTE: return "TOKEN_QUOTE";
+    case TOKEN_DASH: return "TOKEN_DASH";
+    case TOKEN_UNDERSCORE: return "TOKEN_UNDERSCORE";
+    case TOKEN_EXCLAMATION: return "TOKEN_EXCLAMATION";
+    case TOKEN_SLASH: return "TOKEN_SLASH";
+    case TOKEN_COLON: return "TOKEN_COLON";
+    case TOKEN_LT: return "TOKEN_LT";
+    case TOKEN_PERCENT: return "TOKEN_PERCENT";
     case TOKEN_ERB_START: return "TOKEN_ERB_START";
     case TOKEN_ERB_CONTENT: return "TOKEN_ERB_CONTENT";
     case TOKEN_ERB_END: return "TOKEN_ERB_END";
+    case TOKEN_ERROR: return "TOKEN_ERROR";
     case TOKEN_EOF: return "TOKEN_EOF";
-
-    default: {
-      printf("Unknown token type: %d\n", type);
-      exit(1);
-    }
   }
-
-  return "don't know token";
 }
 
 char* token_to_string(token_T* token) {
