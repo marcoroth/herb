@@ -37,6 +37,7 @@ char* ast_node_type_to_string(AST_NODE_T* node) {
   switch (node->type) {
     case AST_LITERAL_NODE: return "AST_LITERAL_NODE";
     case AST_STRING_COMPOUND_NODE: return "AST_STRING_COMPOUND_NODE";
+    case AST_UNEXCPECTED_TOKEN_NODE: return "AST_UNEXCPECTED_TOKEN_NODE";
 
     case AST_HTML_DOCUMENT_NODE: return "AST_HTML_DOCUMENT_NODE";
     case AST_HTML_DOCTYPE_NODE: return "AST_HTML_DOCTYPE_NODE";
@@ -46,6 +47,7 @@ char* ast_node_type_to_string(AST_NODE_T* node) {
 
     case AST_HTML_OPEN_TAG_NODE: return "AST_HTML_OPEN_TAG_NODE";
     case AST_HTML_CLOSE_TAG_NODE: return "AST_HTML_CLOSE_TAG_NODE";
+    case AST_HTML_SELF_CLOSE_TAG_NODE: return "AST_HTML_SELF_CLOSE_TAG_NODE";
 
     case AST_HTML_ATTRIBUTE_SET_NODE: return "AST_HTML_ATTRIBUTE_SET_NODE";
     case AST_HTML_ATTRIBUTE_NODE: return "AST_HTML_ATTRIBUTE_NODE";
@@ -81,6 +83,7 @@ char* ast_node_human_type(AST_NODE_T* node) {
   switch (node->type) {
     case AST_LITERAL_NODE: return "Literal";
     case AST_STRING_COMPOUND_NODE: return "StringCompound";
+    case AST_UNEXCPECTED_TOKEN_NODE: return "UnexcpectedToken";
 
     case AST_HTML_DOCUMENT_NODE: return "DocumentNode";
     case AST_HTML_DOCTYPE_NODE: return "Doctype";
@@ -90,6 +93,7 @@ char* ast_node_human_type(AST_NODE_T* node) {
 
     case AST_HTML_OPEN_TAG_NODE: return "OpenTag";
     case AST_HTML_CLOSE_TAG_NODE: return "CloseTag";
+    case AST_HTML_SELF_CLOSE_TAG_NODE: return "SelfCloseTag";
 
     case AST_HTML_ATTRIBUTE_SET_NODE: return "AttributeSet";
     case AST_HTML_ATTRIBUTE_NODE: return "Attribute";

@@ -3,19 +3,15 @@
 └── children: (1)
     @ Element (location: (0,0)-(0,0))
     ├── name: ∅
-    └── children: (3)
+    └── children: (2)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: html
+        ├── name: ns:table
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
             └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: div
-        └── children: []
-
-        @ Noop (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: ns:table
         └── children: []
 

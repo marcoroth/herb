@@ -19,7 +19,7 @@ module SnapshotUtils
   def snapshot_file
     test_class_name = underscore(self.class.name)
 
-    @snapshot_file ||= Pathname.new("ext/erbx/test/snapshots/#{test_class_name}/#{name}.txt")
+    @snapshot_file ||= Pathname.new("ext/erbx/test/snapshots/#{test_class_name}/#{name.gsub(" ", "_")}.txt")
   end
 
   private

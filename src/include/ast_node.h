@@ -7,6 +7,7 @@
 typedef enum {
   AST_LITERAL_NODE,
   AST_STRING_COMPOUND_NODE,
+  AST_UNEXCPECTED_TOKEN_NODE,
 
   // AST_HTML_ROOT_NODE,
   AST_HTML_DOCUMENT_NODE, // maybe document makes more sense instead of root?
@@ -18,6 +19,7 @@ typedef enum {
 
   AST_HTML_OPEN_TAG_NODE,
   AST_HTML_CLOSE_TAG_NODE,
+  AST_HTML_SELF_CLOSE_TAG_NODE,
 
   // AST_HTML_PROPERTY_NODE,
   // AST_HTML_PROPERTY_NAME,
