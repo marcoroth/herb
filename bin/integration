@@ -12,6 +12,7 @@ rake compile
 rake test
 
 ./erbx examples/test.html.erb
+./erbx_prism examples/test.html.erb
 
 bin/lint
 bin/tidy
