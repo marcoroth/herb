@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool visit(const pm_node_t* node, void* data) {
+bool erbx_prism_visit(const pm_node_t* node, void* data) {
   size_t* indent = (size_t*) data;
 
   for (size_t i = 0; i < *indent * 2; i++) {
@@ -16,7 +16,7 @@ bool visit(const pm_node_t* node, void* data) {
 
   size_t next_indent = *indent + 1;
   size_t* next_data = &next_indent;
-  pm_visit_child_nodes(node, visit, next_data);
+  pm_visit_child_nodes(node, erbx_prism_visit, next_data);
 
   return false;
 }
@@ -37,7 +37,7 @@ void erbx_parse_ruby(char* source) {
   const char* root_type = pm_node_type_to_str(root->type);
   printf("Root Type: %s\n", root_type);
 
-  pm_visit_node(root, visit, data);
+  pm_visit_node(root, erbx_prism_visit, data);
 
   pm_prettyprint(&buffer, &parser, root);
   printf("%s\n", buffer.value);
