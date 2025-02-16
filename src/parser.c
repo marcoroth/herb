@@ -26,8 +26,7 @@ parser_T* parser_init(lexer_T* lexer) {
 #include <stdlib.h>
 
 char* format_parser_error(const char* message, const char* expected, const char* actual) {
-  int needed =
-      snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
+  int needed = snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
 
   if (needed < 0) {
     return NULL;
@@ -38,12 +37,7 @@ char* format_parser_error(const char* message, const char* expected, const char*
     return NULL;
   }
 
-  snprintf(buffer,
-      needed + 1,
-      "[Parser]: Unexpected Token %s (expected '%s', got: '%s')",
-      message,
-      expected,
-      actual);
+  snprintf(buffer, needed + 1, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
 
   return buffer;
 }
