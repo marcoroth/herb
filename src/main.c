@@ -4,6 +4,25 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+void print_time_diff(struct timespec start, struct timespec end, char* verb) {
+  long seconds = end.tv_sec - start.tv_sec;
+  long nanoseconds = end.tv_nsec - start.tv_nsec;
+  long total_ns = seconds * 1e9 + nanoseconds;
+
+  double us = total_ns / 1e3;
+  double ms = total_ns / 1e6;
+  double s = total_ns / 1e9;
+
+  printf("Finished");
+  printf(" %s ", verb);
+  printf("in:\n");
+
+  printf("  - %.3f µs\n", us);
+  printf("  - %.6f ms\n", ms);
+  printf("  - %.9f s\n", s);
+}
 
 int main(int argc, char* argv[]) {
   if (argc < 2) {
@@ -31,10 +50,15 @@ int main(int argc, char* argv[]) {
 
   char* source = erbx_read_file(argv[2]);
 
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
   if (strcmp(argv[1], "lex") == 0) {
     erbx_lex_to_buffer(source, &output);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s", output.value);
+    printf("%s\n", output.value);
+    print_time_diff(start, end, "lexing");
 
     buffer_free(&output);
     free(source);
@@ -49,8 +73,10 @@ int main(int argc, char* argv[]) {
 
   if (strcmp(argv[1], "ruby") == 0) {
     erbx_extract_ruby_to_buffer(source, &output);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s", output.value);
+    printf("%s\n", output.value);
+    print_time_diff(start, end, "extracting Ruby");
 
     buffer_free(&output);
     free(source);
@@ -60,8 +86,10 @@ int main(int argc, char* argv[]) {
 
   if (strcmp(argv[1], "html") == 0) {
     erbx_extract_html_to_buffer(source, &output);
+    clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s", output.value);
+    printf("%s\n", output.value);
+    print_time_diff(start, end, "extracting HTML");
 
     buffer_free(&output);
     free(source);
