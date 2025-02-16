@@ -16,7 +16,7 @@ token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
 
   if (value) {
-    token->value = strdup(value);
+    token->value = erbx_strdup(value);
   } else {
     token->value = NULL;
   }

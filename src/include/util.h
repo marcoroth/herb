@@ -12,4 +12,6 @@ int count_newlines(const char* string);
 char* replace_char(char* string, char find, char replace);
 char* escape_newlines(const char* input);
 
+char* erbx_strdup(const char* s);
+
 #endif

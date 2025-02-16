@@ -38,7 +38,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
       lexer->current_line,
       lexer->current_column);
 
-  return token_init(strdup(error_message), TOKEN_ERROR, lexer);
+  return token_init(erbx_strdup(error_message), TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
