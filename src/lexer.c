@@ -28,16 +28,17 @@ lexer_T* lexer_init(char* source) {
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
-  char* error_message;
+  char error_message[128];
 
-  asprintf(&error_message,
+  snprintf(error_message,
+      sizeof(error_message),
       "[Lexer] Error: %s (character '%c', line %zu, col %zu)\n",
       message,
       lexer->current_character,
       lexer->current_line,
       lexer->current_column);
 
-  return token_init(error_message, TOKEN_ERROR, lexer);
+  return token_init(strdup(error_message), TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
