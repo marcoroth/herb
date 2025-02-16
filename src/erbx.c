@@ -49,31 +49,9 @@ array_T* erbx_lex(char* source) {
 
 AST_NODE_T* erbx_parse(char* source) {
   lexer_T* lexer = lexer_init(source);
-  token_T* token = NULL;
-
-  array_T* tokens = array_init(1);
-
-  size_t last_position = lexer->current_position;
-  size_t stall_counter = 0;
-  const size_t STALL_COUNTER_LIMIT = 5;
-
-  while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
-    array_append(tokens, token);
-
-    if (is_lexer_stuck(lexer, &last_position, &stall_counter, STALL_COUNTER_LIMIT)) {
-      printf("Lexer stalled\n");
-      exit(0);
-    }
-  }
-
-  array_append(tokens, token);
-
   parser_T* parser = parser_init(lexer);
-  AST_NODE_T* root = parser_parse(parser);
 
-  array_free(&tokens);
-
-  return root;
+  return parser_parse(parser);
 }
 
 array_T* erbx_lex_file(const char* path) {

@@ -5,7 +5,9 @@ module ERBX
     attach_function :ast_node_name, [:pointer], :string
     attach_function :ast_node_type, [:pointer], :int
     attach_function :ast_node_type_to_string, [:pointer], :string
-    attach_function :ast_node_children_count, [:pointer], :size_t
+    attach_function :ast_node_children, [:pointer], :pointer
+    attach_function :ast_node_child_count, [:pointer], :size_t
+    attach_function :ast_node_pretty_print, [:pointer, :size_t, :pointer], :void
 
     class ASTNode
       attr_reader :pointer
@@ -27,11 +29,22 @@ module ERBX
       end
 
       def child_count
-        LibERBX.ast_node_children_count(pointer)
+        LibERBX.ast_node_child_count(pointer)
+      end
+
+      def children
+        LibERBX::Array.new(
+          LibERBX.ast_node_children(pointer),
+          ASTNode
+        )
       end
 
       def inspect
-        %(#<#{self.class} name=#{name} type=#{type} type_int=#{type_int} child_count=#{child_count} pointer=#{pointer}>)
+        LibERBX::Buffer.with do |output|
+          LibERBX.ast_node_pretty_print(pointer, 0, output.pointer)
+
+          output.read.force_encoding("utf-8") # TODO: remove force_encoding
+        end
       end
     end
   end
