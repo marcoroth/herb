@@ -7,9 +7,9 @@
 #include <time.h>
 
 void print_time_diff(struct timespec start, struct timespec end, char* verb) {
-  long seconds = end.tv_sec - start.tv_sec;
-  long nanoseconds = end.tv_nsec - start.tv_nsec;
-  long total_ns = seconds * 1e9 + nanoseconds;
+  double seconds = (double) end.tv_sec - (double) start.tv_sec;
+  double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;
+  double total_ns = seconds * 1e9 + nanoseconds;
 
   double us = total_ns / 1e3;
   double ms = total_ns / 1e6;
