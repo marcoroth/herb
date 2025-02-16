@@ -1,5 +1,5 @@
 #include "include/buffer.h"
-#include "include/lexer_peek.h"
+#include "include/lexer_peek_helpers.h"
 #include "include/token.h"
 #include "include/util.h"
 
