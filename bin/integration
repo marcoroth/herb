@@ -11,7 +11,9 @@ rake compile
 ./run_erbx_tests
 rake test
 
-./erbx examples/test.html.erb
+./erbx lex examples/test.html.erb
+./erbx ruby examples/test.html.erb
+./erbx html examples/test.html.erb
 
 bin/lint
 bin/tidy
