@@ -5,7 +5,7 @@
     ├── name: ∅
     └── children: (1)
         @ SelfCloseTag (location: (0,0)-(0,0))
-        ├── name: img
+        ├── name: "img"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
@@ -14,10 +14,10 @@
                 ├── name: ∅
                 └── children: (2)
                     @ AttributeName (location: (0,0)-(0,0))
-                    ├── name: value
+                    ├── name: "value"
                     └── children: []
 
                     @ AttributeValue (location: (0,0)-(0,0))
-                    ├── name: hello
+                    ├── name: "hello"
                     └── children: []
 

@@ -1,5 +1,6 @@
 #include "include/ast_node.h"
 #include "include/buffer.h"
+#include "include/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,9 +141,9 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, buffer_T* buffer) {
   buffer_append(buffer, "├── ");
 
   if (node->name != NULL) {
-    buffer_append(buffer, "name: ");
-    buffer_append(buffer, node->name);
-    buffer_append(buffer, "\n");
+    buffer_append(buffer, "name: \"");
+    buffer_append(buffer, escape_newlines(node->name));
+    buffer_append(buffer, "\"\n");
   } else {
     buffer_append(buffer, "name: ∅\n");
   }

@@ -5,7 +5,7 @@
     ├── name: ∅
     └── children: (3)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: html
+        ├── name: "html"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
@@ -16,6 +16,6 @@
         └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: html
+        ├── name: "html"
         └── children: []
 

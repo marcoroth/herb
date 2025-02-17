@@ -5,7 +5,7 @@
     ├── name: ∅
     └── children: (4)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: html
+        ├── name: "html"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
@@ -16,10 +16,10 @@
         └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: "div"
         └── children: []
 
         @ UnexcpectedToken (location: (0,0)-(0,0))
-        ├── name: [Parser]: Unexpected Token mismatched closing tag (expected 'html', got: 'div')
+        ├── name: "[Parser]: Unexpected Token mismatched closing tag (expected 'html', got: 'div')"
         └── children: []
 

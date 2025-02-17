@@ -5,7 +5,7 @@
     ├── name: ∅
     └── children: (4)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: "div"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
@@ -14,11 +14,11 @@
                 ├── name: ∅
                 └── children: (2)
                     @ AttributeName (location: (0,0)-(0,0))
-                    ├── name: value
+                    ├── name: "value"
                     └── children: []
 
                     @ AttributeValue (location: (0,0)-(0,0))
-                    ├── name: hello
+                    ├── name: "hello"
                     └── children: []
 
         @ ElementBody (location: (0,0)-(0,0))
@@ -26,21 +26,21 @@
         └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: 
+        ├── name: ""
         └── children: (3)
             @ UnexcpectedToken (location: (0,0)-(0,0))
-            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_EOF')
+            ├── name: "[Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_EOF')"
             └── children: []
 
             @ UnexcpectedToken (location: (0,0)-(0,0))
-            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_IDENTIFIER', got: 'TOKEN_EOF')
+            ├── name: "[Parser]: Unexpected Token in parser_consume (expected 'TOKEN_IDENTIFIER', got: 'TOKEN_EOF')"
             └── children: []
 
             @ UnexcpectedToken (location: (0,0)-(0,0))
-            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_END', got: 'TOKEN_EOF')
+            ├── name: "[Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_END', got: 'TOKEN_EOF')"
             └── children: []
 
         @ UnexcpectedToken (location: (0,0)-(0,0))
-        ├── name: [Parser]: Unexpected Token mismatched closing tag (expected 'div', got: '')
+        ├── name: "[Parser]: Unexpected Token mismatched closing tag (expected 'div', got: '')"
         └── children: []
 

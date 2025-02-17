@@ -2,14 +2,14 @@
 ├── name: ∅
 └── children: (2)
     @ TextContent (location: (0,0)-(0,0))
-    ├── name: Hello
+    ├── name: "Hello"
     └── children: []
 
     @ Element (location: (0,0)-(0,0))
     ├── name: ∅
     └── children: (3)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: span
+        ├── name: "span"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
@@ -19,10 +19,10 @@
         ├── name: ∅
         └── children: (1)
             @ TextContent (location: (0,0)-(0,0))
-            ├── name: World
+            ├── name: "World"
             └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: span
+        ├── name: "span"
         └── children: []
 

@@ -5,24 +5,24 @@
     ├── name: ∅
     └── children: (3)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: "div"
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
             └── children: (2)
                 @ UnexcpectedToken (location: (0,0)-(0,0))
-                ├── name: [Parser]: Unexpected Token : (expected 'TOKEN_WHITESPACE', got: 'TOKEN_COLON')
+                ├── name: "[Parser]: Unexpected Token : (expected 'TOKEN_WHITESPACE', got: 'TOKEN_COLON')"
                 └── children: []
 
                 @ Attribute (location: (0,0)-(0,0))
                 ├── name: ∅
                 └── children: (2)
                     @ AttributeName (location: (0,0)-(0,0))
-                    ├── name: class
+                    ├── name: "class"
                     └── children: []
 
                     @ AttributeValue (location: (0,0)-(0,0))
-                    ├── name: 
+                    ├── name: ""
                     └── children: []
 
         @ ElementBody (location: (0,0)-(0,0))
@@ -30,6 +30,6 @@
         └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: "div"
         └── children: []
 
