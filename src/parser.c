@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
