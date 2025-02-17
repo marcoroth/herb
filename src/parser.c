@@ -2,6 +2,7 @@
 #include "include/array.h"
 #include "include/ast_node.h"
 #include "include/buffer.h"
+#include "include/html_util.h"
 #include "include/lexer.h"
 #include "include/token.h"
 #include "include/util.h"
@@ -21,9 +22,6 @@ parser_T* parser_init(lexer_T* lexer) {
 
   return parser;
 }
-
-#include <stdio.h>
-#include <stdlib.h>
 
 static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element);
 static AST_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element);
@@ -301,16 +299,23 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* paren
 
   AST_NODE_T* open_tag = parser_parse_html_open_tag(parser, element_node);
 
-  if (open_tag->type == AST_HTML_OPEN_TAG_NODE) {
+  // TODO: attach information if the open tag should have a close tag based on the is_void_element value.
+  // open_tag->should_have_close_tag = is_void_element(open_tag->name);
+
+  if (open_tag->type == AST_HTML_SELF_CLOSE_TAG_NODE || is_void_element(open_tag->name)) {
+    // no-op: since we don't expected a close tag
+
+    // To make sure we always set it for the is_void_element cases
+    open_tag->type = AST_HTML_SELF_CLOSE_TAG_NODE;
+
+  } else if (open_tag->type == AST_HTML_OPEN_TAG_NODE) {
     parser_parse_html_element_body(parser, element_node);
 
     AST_NODE_T* close_tag = parser_parse_html_close_tag(parser, element_node);
 
-    if (strcmp(open_tag->name, close_tag->name) != 0) {
+    if (strcasecmp(open_tag->name, close_tag->name) != 0) {
       parser_append_unexpected_token(parser, "mismatched closing tag", open_tag->name, close_tag->name, element_node);
     }
-  } else if (open_tag->type == AST_HTML_SELF_CLOSE_TAG_NODE) {
-    // no-op
   } else {
     parser_append_unexpected_token(parser,
         "open_tag type",
