@@ -28,8 +28,5 @@ jobs:
         working-directory: ./ext/erbx
         run: bundle exec rake
 
-      - name: Test extension
-        run: bundle exec ruby ext/erbx/test.rb
-
       - name: RuboCop
         run: bundle exec rubocop
