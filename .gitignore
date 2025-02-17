@@ -4,7 +4,6 @@
 
 # ERBX output
 /erbx
-/erbx_prism
 /run_erbx_tests
 
 # ERBX Ruby extension

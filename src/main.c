@@ -3,7 +3,9 @@
 #include "include/ast_node.h"
 #include "include/buffer.h"
 #include "include/erbx.h"
+#include "include/extract.h"
 #include "include/io.h"
+#include "include/ruby_parser.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -111,7 +113,13 @@ int main(int argc, char* argv[]) {
   }
 
   if (strcmp(argv[1], "prism") == 0) {
-    printf("Not implemented yet.\n");
+    printf("HTML+ERB File: \n%s\n", source);
+
+    char* ruby_source = erbx_extract(source, ERBX_EXTRACT_LANGUAGE_RUBY);
+    printf("Extracted Ruby: \n%s\n", ruby_source);
+
+    erbx_parse_ruby(ruby_source);
+
     return 1;
   }
 
