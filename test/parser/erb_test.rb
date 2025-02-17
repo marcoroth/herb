@@ -14,6 +14,18 @@ module Parser
       assert_parsed_snapshot(%(<h1><%= hello %></h1>))
     end
 
+    test "interpolate in element body followed by text content" do
+      assert_parsed_snapshot(%(<h1><%= Hello %> World</h1>))
+    end
+
+    test "interpolate in element body after text content" do
+      assert_parsed_snapshot(%(<h1>Hello <%= World %></h1>))
+    end
+
+    test "interpolate in element body surrounded by text content" do
+      assert_parsed_snapshot(%(<h1>Hello <%= World %> Hello</h1>))
+    end
+
     test "interpolate inside tag" do
       assert_parsed_snapshot(%(<h1 <%= "id=test" %>></h1>))
     end

@@ -26,6 +26,7 @@ parser_T* parser_init(lexer_T* lexer) {
 
 static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element);
 static AST_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element);
+static AST_NODE_T* parser_build_node(parser_T* parser, ast_node_type_T type, char* name, AST_NODE_T* element);
 
 static char* format_parser_error(const char* message, const char* expected, const char* actual) {
   int needed = snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
@@ -132,6 +133,15 @@ static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* eleme
          parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE &&
          parser->current_token->type != TOKEN_HTML_COMMENT_START) {
     switch (parser->current_token->type) {
+      case TOKEN_ERB_START: {
+        if (buffer_length(&content) > 0) {
+          parser_build_node(parser, AST_HTML_TEXT_NODE, buffer_value(&content), element);
+          content = buffer_new();
+        }
+
+        parser_parse_erb_tag(parser, element);
+      } break;
+
       case TOKEN_IDENTIFIER: {
         token_T* identifier = parser_consume(parser, TOKEN_IDENTIFIER, text_content_node);
 
@@ -159,10 +169,13 @@ static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* eleme
       }
     }
   }
-
-  text_content_node->name = buffer_value(&content);
-
-  array_append(element->children, text_content_node);
+  if (buffer_length(&content) > 0) {
+    text_content_node->name = buffer_value(&content);
+    array_append(element->children, text_content_node);
+  } else {
+    // TODO: implement ast_node_free()
+    // ast_node_free(text_content_node);
+  }
 
   return text_content_node;
 }
@@ -181,8 +194,8 @@ static AST_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T
   return attribute_name;
 }
 
-static AST_NODE_T* parser_parse_literal(parser_T* parser, char* name, AST_NODE_T* element) {
-  AST_NODE_T* literal_node = ast_node_init(AST_LITERAL_NODE);
+static AST_NODE_T* parser_build_node(parser_T* parser, ast_node_type_T type, char* name, AST_NODE_T* element) {
+  AST_NODE_T* literal_node = ast_node_init(type);
 
   literal_node->name = name;
   array_append(element->children, literal_node);
@@ -207,7 +220,7 @@ static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_
         switch (parser->current_token->type) {
           case TOKEN_ERB_START: {
             if (buffer_length(&buffer) > 0) {
-              parser_parse_literal(parser, buffer_value(&buffer), attribute_value);
+              parser_build_node(parser, AST_LITERAL_NODE, buffer_value(&buffer), attribute_value);
               buffer = buffer_new();
             }
 
@@ -222,7 +235,7 @@ static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_
       }
 
       if (buffer_length(&buffer) > 0) {
-        parser_parse_literal(parser, buffer_value(&buffer), attribute_value);
+        parser_build_node(parser, AST_LITERAL_NODE, buffer_value(&buffer), attribute_value);
       }
 
       token_T* close_quote = parser_consume(parser, TOKEN_QUOTE, attribute_value);

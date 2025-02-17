@@ -1,0 +1,32 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (1)
+    @ Element (location: (0,0)-(0,0))
+    ├── name: ∅
+    └── children: (3)
+        @ OpenTag (location: (0,0)-(0,0))
+        ├── name: "h1"
+        └── children: (1)
+            @ AttributeSet (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: []
+
+        @ ElementBody (location: (0,0)-(0,0))
+        ├── name: ∅
+        └── children: (3)
+            @ TextContent (location: (0,0)-(0,0))
+            ├── name: "Hello "
+            └── children: []
+
+            @ ERBContent (location: (0,0)-(0,0))
+            ├── name: " World "
+            └── children: []
+
+            @ TextContent (location: (0,0)-(0,0))
+            ├── name: " Hello"
+            └── children: []
+
+        @ CloseTag (location: (0,0)-(0,0))
+        ├── name: "h1"
+        └── children: []
+
