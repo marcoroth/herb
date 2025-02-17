@@ -26,7 +26,7 @@ os := $(shell uname -s)
 warning_flags = -Wall -Wextra -Werror -pedantic
 
 # Debug build (no optimizations, debug symbols)
-debug_flags = -g -O0
+debug_flags = -g -O0 -Wno-unused-parameter
 
 # Production build (optimized)
 production_flags = $(warning_flags) -O3 -march=native -flto
