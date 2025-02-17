@@ -103,6 +103,26 @@ static AST_NODE_T* parser_parse_html_comment(parser_T* parser, AST_NODE_T* eleme
   return comment_node;
 }
 
+static AST_NODE_T* parser_parser_html_doctype(parser_T* parser, AST_NODE_T* element) {
+  AST_NODE_T* doctype = ast_node_init(AST_HTML_DOCTYPE_NODE);
+  buffer_T content = buffer_new();
+
+  parser_consume(parser, TOKEN_HTML_DOCTYPE, element);
+
+  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_END) {
+    token_T* token = parser_consume(parser, parser->current_token->type, element);
+    buffer_append(&content, token->value);
+  }
+
+  parser_consume(parser, TOKEN_HTML_TAG_END, element);
+
+  doctype->name = buffer_value(&content);
+
+  array_append(element->children, doctype);
+
+  return doctype;
+}
+
 static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* element) {
   AST_NODE_T* text_content_node = ast_node_init(AST_HTML_TEXT_NODE);
 
@@ -369,6 +389,11 @@ static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         parser_parse_erb_tag(parser, element);
+        break;
+      }
+
+      case TOKEN_HTML_DOCTYPE: {
+        parser_parser_html_doctype(parser, element);
         break;
       }
 

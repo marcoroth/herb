@@ -1,0 +1,7 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (1)
+    @ Doctype (location: (0,0)-(0,0))
+    ├── name: " html"
+    └── children: []
+
