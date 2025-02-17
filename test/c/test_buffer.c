@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../src/include/buffer.h"
+#include "../../src/include/buffer.h"
 
 // Test buffer initialization
 TEST(test_buffer_init)

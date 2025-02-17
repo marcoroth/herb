@@ -12,7 +12,7 @@ project_files = $(sources) $(headers)
 extension_files = $(extension_sources) $(extension_headers)
 project_and_extension_files = $(project_files) $(extension_files)
 
-test_sources = $(wildcard test/*.c)
+test_sources = $(wildcard test/**/*.c)
 test_objects = $(test_sources:.c=.o)
 non_main_objects = $(filter-out src/main.o, $(objects))
 

@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../src/include/array.h"
+#include "../../src/include/array.h"
 
 // Test array initialization
 TEST(test_array_init)

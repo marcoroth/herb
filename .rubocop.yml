@@ -29,26 +29,26 @@ Style/BlockDelimiters:
 Metrics/MethodLength:
   Max: 20
   Exclude:
-    - ext/erbx/test/fork_helper.rb
+    - test/fork_helper.rb
 
 Metrics/AbcSize:
   Exclude:
-    - ext/erbx/test/fork_helper.rb
-    - ext/erbx/test/snapshot_utils.rb
+    - test/fork_helper.rb
+    - test/snapshot_utils.rb
 
 Metrics/ClassLength:
   Exclude:
-    - ext/erbx/test/**/*_test.rb
+    - test/**/*_test.rb
 
 Metrics/BlockLength:
   Exclude:
-    - ext/erbx/test/**/*_test.rb
+    - test/**/*_test.rb
 
 Layout/LineLength:
   Max: 120
   Exclude:
-    - ext/erbx/test/**/*_test.rb
+    - test/**/*_test.rb
 
 Security/MarshalLoad:
   Exclude:
-    - ext/erbx/test/fork_helper.rb
+    - test/fork_helper.rb

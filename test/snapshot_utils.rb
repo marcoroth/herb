@@ -95,7 +95,7 @@ module SnapshotUtils
     test_name = name.gsub(" ", "_")
     expected_snapshot_filename = "#{test_name}_#{md5}.txt"
 
-    base_path = Pathname.new("ext/erbx/test/snapshots/") / test_class_name
+    base_path = Pathname.new("test/snapshots/") / test_class_name
     expected_snapshot_path = base_path / expected_snapshot_filename
 
     return expected_snapshot_path if expected_snapshot_path.exist?

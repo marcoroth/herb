@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../src/include/io.h"
+#include "../../src/include/io.h"
 
 // Create a temporary file for testing
 void create_test_file(const char* filename, const char* content) {
