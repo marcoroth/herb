@@ -6,8 +6,11 @@
     └── children: []
 
     @ Comment (location: (0,0)-(0,0))
-    ├── name: "Hello World"
-    └── children: []
+    ├── name: ∅
+    └── children: (1)
+        @ Literal (location: (0,0)-(0,0))
+        ├── name: "Hello World"
+        └── children: []
 
     @ TextContent (location: (0,0)-(0,0))
     ├── name: "\n        "
@@ -27,8 +30,11 @@
         ├── name: ∅
         └── children: (1)
             @ Comment (location: (0,0)-(0,0))
-            ├── name: " Hello World "
-            └── children: []
+            ├── name: ∅
+            └── children: (1)
+                @ Literal (location: (0,0)-(0,0))
+                ├── name: " Hello World "
+                └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
         ├── name: "h1"

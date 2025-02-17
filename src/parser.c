@@ -92,14 +92,26 @@ static AST_NODE_T* parser_parse_html_comment(parser_T* parser, AST_NODE_T* eleme
   buffer_T comment = buffer_new();
 
   while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_COMMENT_END) {
-    token_T* token = parser_consume(parser, parser->current_token->type, comment_node);
-    buffer_append(&comment, token->value);
+    switch (parser->current_token->type) {
+      case TOKEN_ERB_START: {
+        parser_build_node(parser, AST_LITERAL_NODE, buffer_value(&comment), comment_node);
+        comment = buffer_new();
+        parser_parse_erb_tag(parser, comment_node);
+        break;
+      }
+
+      default: {
+        token_T* token = parser_consume(parser, parser->current_token->type, comment_node);
+        buffer_append(&comment, token->value);
+      }
+    }
+  }
+
+  if (buffer_length(&comment) >= 0) {
+    parser_build_node(parser, AST_LITERAL_NODE, buffer_value(&comment), comment_node);
   }
 
   parser_consume(parser, TOKEN_HTML_COMMENT_END, comment_node);
-
-  comment_node->name = buffer_value(&comment);
-
   array_append(element->children, comment_node);
 
   return comment_node;

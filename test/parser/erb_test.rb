@@ -49,5 +49,9 @@ module Parser
     test "interpolate inside attribute value with static content around" do
       assert_parsed_snapshot(%(<h1 class="text-white <%= "bg-black" %> title"></h1>))
     end
+
+    test "interpolate inside comment" do
+      assert_parsed_snapshot(%(<!-- <%= "Comment" %> -->))
+    end
   end
 end
