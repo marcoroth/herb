@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
 
     erbx_parse_ruby(ruby_source);
 
-    return 1;
+    return 0;
   }
 
   printf("Unknown Command: %s\n", argv[1]);

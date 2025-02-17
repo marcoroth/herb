@@ -2,7 +2,7 @@
 
 set -e  # Exit on error
 
-make clean
+make prism_clean
 rake clean
 
 make prism
