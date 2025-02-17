@@ -25,6 +25,10 @@ module Parser
       assert_parsed_snapshot(%(<html></div>))
     end
 
+    test "nested tags" do
+      assert_parsed_snapshot(%(<div><h1>Hello<span>World</span></h1></div>))
+    end
+
     test "attributes" do
       assert_parsed_snapshot(%(<div id="hello" class="container p-3"></div>))
     end

@@ -3,13 +3,17 @@
 └── children: (1)
     @ Element (location: (0,0)-(0,0))
     ├── name: ∅
-    └── children: (3)
+    └── children: (4)
         @ OpenTag (location: (0,0)-(0,0))
         ├── name: html
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
             └── children: []
+
+        @ ElementBody (location: (0,0)-(0,0))
+        ├── name: ∅
+        └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
         ├── name: div

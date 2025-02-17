@@ -2,18 +2,19 @@
 
 require "fileutils"
 require "readline"
+require "digest"
 
 def ask?(prompt = "")
   Readline.readline("===> #{prompt}? (y/N) ", true).squeeze(" ").strip == "y"
 end
 
 module SnapshotUtils
-  def snapshot_changed?(content)
-    if snapshot_file.exist?
+  def snapshot_changed?(content, source)
+    if snapshot_file(source).exist?
       previous_content = snapshot_file.read
 
       if previous_content == content
-        puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file}\n"
+        puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file(source)}\n"
         false
       else
         puts "\n\nSnapshot for '#{class_name} #{name}' changed:\n"
@@ -23,38 +24,38 @@ module SnapshotUtils
         true
       end
     else
-      puts "\n\nSnapshot for '#{class_name} #{name}' doesn't exist at: \n#{snapshot_file}\n"
+      puts "\n\nSnapshot for '#{class_name} #{name}' doesn't exist at: \n#{snapshot_file(source)}\n"
       true
     end
   end
 
   def save_failures_to_snapshot(content, source)
-    return unless snapshot_changed?(content)
+    return unless snapshot_changed?(content, source)
 
     puts "\n==== [ Input for '#{class_name} #{name}' ] ====="
     puts source
     puts "\n\n"
 
-    if ask?("Do you want to update the snapshot for '#{class_name} #{name}'?")
-      puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file}...\n"
+    if ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+      puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source)}...\n"
 
-      FileUtils.mkdir_p(snapshot_file.dirname)
-      snapshot_file.write(content)
+      FileUtils.mkdir_p(snapshot_file(source).dirname)
+      snapshot_file(source).write(content)
 
-      puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file}\n"
+      puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file(source)}\n"
     else
-      puts "\nNot updating snapshot for '#{class_name} #{name}' at: \n#{snapshot_file}.\n"
+      puts "\nNot updating snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source)}.\n"
     end
   end
 
   def assert_snapshot_matches(actual, source)
-    assert snapshot_file.exist?, "Expected snapshot file to exist: \n#{snapshot_file.to_path}"
+    assert snapshot_file(source).exist?, "Expected snapshot file to exist: \n#{snapshot_file(source).to_path}"
 
-    assert_equal snapshot_file.read, actual
+    assert_equal snapshot_file(source).read, actual
   rescue Minitest::Assertion => e
     save_failures_to_snapshot(actual, source) if ENV["UPDATE_SNAPSHOTS"]
 
-    if snapshot_file.read != actual
+    if snapshot_file(source).read != actual
       puts
 
       divider = "=" * `tput cols`.strip.to_i
@@ -62,7 +63,7 @@ module SnapshotUtils
       flunk(<<~MESSAGE)
         \e[0m
         #{divider}
-        #{Difftastic::Differ.new(color: :always).diff_strings(snapshot_file.read, actual)}
+        #{Difftastic::Differ.new(color: :always).diff_strings(snapshot_file(source).read, actual)}
         \e[31m#{divider}
 
         Snapshots for "#{class_name} #{name}" didn't match.
@@ -77,10 +78,29 @@ module SnapshotUtils
     end
   end
 
-  def snapshot_file
+  def snapshot_file(source)
     test_class_name = underscore(self.class.name)
+    md5 = Digest::MD5.hexdigest(source)
+    test_name = name.gsub(" ", "_")
+    expected_snapshot_filename = "#{test_name}_#{md5}.txt"
 
-    @snapshot_file ||= Pathname.new("ext/erbx/test/snapshots/#{test_class_name}/#{name.gsub(" ", "_")}.txt")
+    base_path = Pathname.new("ext/erbx/test/snapshots/") / test_class_name
+    expected_snapshot_path = base_path / expected_snapshot_filename
+
+    return expected_snapshot_path if expected_snapshot_path.exist?
+
+    matching_md5_files = Dir[base_path / "*_#{md5}.txt"]
+
+    if matching_md5_files.any? && matching_md5_files.length == 1
+      old_file = Pathname.new(matching_md5_files.first)
+
+      return expected_snapshot_path if old_file.rename(expected_snapshot_path).zero?
+
+      return old_file
+
+    end
+
+    expected_snapshot_path
   end
 
   private

@@ -1,0 +1,32 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (1)
+    @ Element (location: (0,0)-(0,0))
+    ├── name: ∅
+    └── children: (3)
+        @ OpenTag (location: (0,0)-(0,0))
+        ├── name: h1
+        └── children: (1)
+            @ AttributeSet (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: []
+
+        @ ElementBody (location: (0,0)-(0,0))
+        ├── name: ∅
+        └── children: (3)
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_IDENTIFIER')
+            └── children: []
+
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_WHITESPACE')
+            └── children: []
+
+            @ UnexcpectedToken (location: (0,0)-(0,0))
+            ├── name: [Parser]: Unexpected Token in parser_consume (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_IDENTIFIER')
+            └── children: []
+
+        @ CloseTag (location: (0,0)-(0,0))
+        ├── name: h1
+        └── children: []
+

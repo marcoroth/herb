@@ -34,6 +34,7 @@ Metrics/MethodLength:
 Metrics/AbcSize:
   Exclude:
     - ext/erbx/test/fork_helper.rb
+    - ext/erbx/test/snapshot_utils.rb
 
 Metrics/ClassLength:
   Exclude:
