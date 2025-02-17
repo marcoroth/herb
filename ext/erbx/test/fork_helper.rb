@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-puts "Using fork_helper"
-
 require "timeout"
 
 class Minitest::Spec
-  TIMEOUT_THRESHOLD = 0.1 # seconds
+  TIMEOUT_THRESHOLD = ENV["UPDATE_SNAPSHOTS"].nil? ? 0.1 : 5 # seconds
+
+  puts "Using fork_helper with timeout: #{TIMEOUT_THRESHOLD} seconds"
 
   def run
     reader, writer = IO.pipe
@@ -30,7 +30,7 @@ class Minitest::Spec
     rescue Timeout::Error, Timeout::ExitException
       Process.kill("TERM", pid) # Gracefully terminate
 
-      sleep TIMEOUT_THRESHOLD # Give it time to exit
+      sleep 1 # Give it time to exit
 
       begin
         Process.kill("KILL", pid)

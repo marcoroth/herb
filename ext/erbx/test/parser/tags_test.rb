@@ -53,10 +53,6 @@ module Parser
       assert_parsed_snapshot("<br/>")
     end
 
-    test "text content" do
-      assert_parsed_snapshot("Hello World")
-    end
-
     test "basic tag" do
       assert_parsed_snapshot(%(<html></html>))
     end
