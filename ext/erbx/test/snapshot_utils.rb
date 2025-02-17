@@ -13,17 +13,17 @@ module SnapshotUtils
       previous_content = snapshot_file.read
 
       if previous_content == content
-        puts "Snapshot for #{name} didn't change: #{snapshot_file}"
+        puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file}\n"
         false
       else
-        puts "Snapshot for '#{class_name} #{name}' changed:\n"
+        puts "\n\nSnapshot for '#{class_name} #{name}' changed:\n"
 
         puts Difftastic::Differ.new(color: :always).diff_strings(previous_content, content)
         puts "==============="
         true
       end
     else
-      puts "Snapshot for #{name} doesn't exist at: #{snapshot_file}"
+      puts "\n\nSnapshot for '#{class_name} #{name}' doesn't exist at: \n#{snapshot_file}\n"
       true
     end
   end
@@ -36,20 +36,19 @@ module SnapshotUtils
     puts "\n\n"
 
     if ask?("Do you want to update the snapshot for '#{class_name} #{name}'?")
-
-      puts "Updating Snapshot for #{name} at: #{snapshot_file}..."
+      puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file}...\n"
 
       FileUtils.mkdir_p(snapshot_file.dirname)
       snapshot_file.write(content)
 
-      puts "Snapshot for #{name} written: #{snapshot_file}"
+      puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file}\n"
     else
-      puts "Not updating snapshot for #{name} at #{snapshot_file}."
+      puts "\nNot updating snapshot for '#{class_name} #{name}' at: \n#{snapshot_file}.\n"
     end
   end
 
   def assert_snapshot_matches(actual, source)
-    assert snapshot_file.exist?, "Expected snapshot file to exist: #{snapshot_file.to_path}"
+    assert snapshot_file.exist?, "Expected snapshot file to exist: \n#{snapshot_file.to_path}"
 
     assert_equal snapshot_file.read, actual
   rescue Minitest::Assertion => e
@@ -68,7 +67,7 @@ module SnapshotUtils
 
         Snapshots for "#{class_name} #{name}" didn't match.
 
-        Run the test using UPDATE_SNAPSHOTS=true to update the snapshot file for "#{name}"
+        Run the test using UPDATE_SNAPSHOTS=true to update (or create) the snapshot file for "#{class_name} #{name}"
 
         UPDATE_SNAPSHOTS=true mtest #{e.location}
 
