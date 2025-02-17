@@ -83,13 +83,34 @@ token_T* parser_consume(parser_T* parser, token_type_T type, AST_NODE_T* node) {
   return token;
 }
 
+static AST_NODE_T* parser_parse_html_comment(parser_T* parser, AST_NODE_T* element) {
+  AST_NODE_T* comment_node = ast_node_init(AST_HTML_COMMENT_NODE);
+
+  parser_consume(parser, TOKEN_HTML_COMMENT_START, comment_node);
+  buffer_T comment = buffer_new();
+
+  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_COMMENT_END) {
+    token_T* token = parser_consume(parser, parser->current_token->type, comment_node);
+    buffer_append(&comment, token->value);
+  }
+
+  parser_consume(parser, TOKEN_HTML_COMMENT_END, comment_node);
+
+  comment_node->name = buffer_value(&comment);
+
+  array_append(element->children, comment_node);
+
+  return comment_node;
+}
+
 static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* element) {
   AST_NODE_T* text_content_node = ast_node_init(AST_HTML_TEXT_NODE);
 
   buffer_T content = buffer_new();
 
   while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START &&
-         parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
+         parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE &&
+         parser->current_token->type != TOKEN_HTML_COMMENT_START) {
     switch (parser->current_token->type) {
       case TOKEN_IDENTIFIER: {
         token_T* identifier = parser_consume(parser, TOKEN_IDENTIFIER, text_content_node);
@@ -348,6 +369,11 @@ static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         parser_parse_erb_tag(parser, element);
+        break;
+      }
+
+      case TOKEN_HTML_COMMENT_START: {
+        parser_parse_html_comment(parser, element);
         break;
       }
 
