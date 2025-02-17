@@ -26,6 +26,7 @@ parser_T* parser_init(lexer_T* lexer) {
 #include <stdlib.h>
 
 static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element);
+static AST_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element);
 
 static char* format_parser_error(const char* message, const char* expected, const char* actual) {
   int needed = snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
@@ -140,6 +141,15 @@ static AST_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T
   return attribute_name;
 }
 
+static AST_NODE_T* parser_parse_literal(parser_T* parser, char* name, AST_NODE_T* element) {
+  AST_NODE_T* literal_node = ast_node_init(AST_LITERAL_NODE);
+
+  literal_node->name = name;
+  array_append(element->children, literal_node);
+
+  return literal_node;
+}
+
 static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_T* attribute) {
   AST_NODE_T* attribute_value = ast_node_init(AST_HTML_ATTRIBUTE_VALUE_NODE);
 
@@ -149,8 +159,25 @@ static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_
       buffer_T buffer = buffer_new();
 
       while (parser->current_token->type != TOKEN_QUOTE && parser->current_token->type != TOKEN_EOF) {
-        buffer_append(&buffer, parser->current_token->value);
-        parser->current_token = lexer_next_token(parser->lexer);
+        switch (parser->current_token->type) {
+          case TOKEN_ERB_START: {
+            if (buffer_length(&buffer) > 0) {
+              parser_parse_literal(parser, buffer_value(&buffer), attribute_value);
+              buffer = buffer_new();
+            }
+
+            parser_parse_erb_tag(parser, attribute_value);
+          } break;
+
+          default: {
+            buffer_append(&buffer, parser->current_token->value);
+            parser->current_token = lexer_next_token(parser->lexer);
+          }
+        }
+      }
+
+      if (buffer_length(&buffer) > 0) {
+        parser_parse_literal(parser, buffer_value(&buffer), attribute_value);
       }
 
       token_T* close_quote = parser_consume(parser, TOKEN_QUOTE, attribute_value);
@@ -202,6 +229,7 @@ static AST_NODE_T* parser_parse_html_attribute_set(parser_T* parser) {
   while (parser->current_token->type != TOKEN_HTML_TAG_END &&
          parser->current_token->type != TOKEN_HTML_TAG_SELF_CLOSE && parser->current_token->type != TOKEN_EOF) {
     switch (parser->current_token->type) {
+      case TOKEN_ERB_START: parser_parse_erb_tag(parser, attribute_list); break;
       case TOKEN_WHITESPACE: parser_consume(parser, TOKEN_WHITESPACE, attribute_list); break;
       case TOKEN_IDENTIFIER: parser_parse_html_attribute(parser, attribute_list); break;
       default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, attribute_list); break;
@@ -294,18 +322,40 @@ static AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* paren
   return element_node;
 }
 
+static AST_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element) {
+  AST_NODE_T* erb_tag = ast_node_init(AST_ERB_CONTENT_NODE);
+
+  parser_consume(parser, TOKEN_ERB_START, element);
+
+  token_T* content = parser_consume(parser, TOKEN_ERB_CONTENT, element);
+  erb_tag->name = content->value;
+
+  parser_consume(parser, TOKEN_ERB_END, element);
+
+  array_append(element->children, erb_tag);
+
+  return erb_tag;
+}
+
 static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
   while (parser->current_token->type != TOKEN_EOF) {
     switch (parser->current_token->type) {
+      case TOKEN_ERB_START: {
+        parser_parse_erb_tag(parser, element);
+        break;
+      }
+
       case TOKEN_HTML_TAG_START: {
         parser_parse_html_element(parser, element);
-      } break;
+        break;
+      }
 
       case TOKEN_IDENTIFIER:
       case TOKEN_WHITESPACE:
       case TOKEN_NEWLINE: {
         parser_parse_text_content(parser, element);
-      } break;
+        break;
+      }
 
       case TOKEN_EOF: {
         break;

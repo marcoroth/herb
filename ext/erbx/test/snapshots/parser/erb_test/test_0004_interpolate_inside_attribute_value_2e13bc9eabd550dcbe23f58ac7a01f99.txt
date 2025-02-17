@@ -5,11 +5,11 @@
     ├── name: ∅
     └── children: (3)
         @ OpenTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: h1
         └── children: (1)
             @ AttributeSet (location: (0,0)-(0,0))
             ├── name: ∅
-            └── children: (2)
+            └── children: (1)
                 @ Attribute (location: (0,0)-(0,0))
                 ├── name: ∅
                 └── children: (2)
@@ -18,24 +18,10 @@
                     └── children: []
 
                     @ AttributeValue (location: (0,0)-(0,0))
-                    ├── name: hello
+                    ├── name: 
                     └── children: (1)
-                        @ Literal (location: (0,0)-(0,0))
-                        ├── name: hello
-                        └── children: []
-
-                @ Attribute (location: (0,0)-(0,0))
-                ├── name: ∅
-                └── children: (2)
-                    @ AttributeName (location: (0,0)-(0,0))
-                    ├── name: class
-                    └── children: []
-
-                    @ AttributeValue (location: (0,0)-(0,0))
-                    ├── name: container p-3
-                    └── children: (1)
-                        @ Literal (location: (0,0)-(0,0))
-                        ├── name: container p-3
+                        @ ERBContent (location: (0,0)-(0,0))
+                        ├── name:  "test" 
                         └── children: []
 
         @ ElementBody (location: (0,0)-(0,0))
@@ -43,6 +29,6 @@
         └── children: []
 
         @ CloseTag (location: (0,0)-(0,0))
-        ├── name: div
+        ├── name: h1
         └── children: []
 
