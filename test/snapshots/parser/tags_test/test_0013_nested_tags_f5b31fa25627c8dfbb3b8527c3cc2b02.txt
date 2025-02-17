@@ -1,0 +1,62 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (1)
+    @ Element (location: (0,0)-(0,0))
+    ├── name: ∅
+    └── children: (3)
+        @ OpenTag (location: (0,0)-(0,0))
+        ├── name: "div"
+        └── children: (1)
+            @ AttributeSet (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: []
+
+        @ ElementBody (location: (0,0)-(0,0))
+        ├── name: ∅
+        └── children: (1)
+            @ Element (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: (3)
+                @ OpenTag (location: (0,0)-(0,0))
+                ├── name: "h1"
+                └── children: (1)
+                    @ AttributeSet (location: (0,0)-(0,0))
+                    ├── name: ∅
+                    └── children: []
+
+                @ ElementBody (location: (0,0)-(0,0))
+                ├── name: ∅
+                └── children: (2)
+                    @ TextContent (location: (0,0)-(0,0))
+                    ├── name: "Hello"
+                    └── children: []
+
+                    @ Element (location: (0,0)-(0,0))
+                    ├── name: ∅
+                    └── children: (3)
+                        @ OpenTag (location: (0,0)-(0,0))
+                        ├── name: "span"
+                        └── children: (1)
+                            @ AttributeSet (location: (0,0)-(0,0))
+                            ├── name: ∅
+                            └── children: []
+
+                        @ ElementBody (location: (0,0)-(0,0))
+                        ├── name: ∅
+                        └── children: (1)
+                            @ TextContent (location: (0,0)-(0,0))
+                            ├── name: "World"
+                            └── children: []
+
+                        @ CloseTag (location: (0,0)-(0,0))
+                        ├── name: "span"
+                        └── children: []
+
+                @ CloseTag (location: (0,0)-(0,0))
+                ├── name: "h1"
+                └── children: []
+
+        @ CloseTag (location: (0,0)-(0,0))
+        ├── name: "div"
+        └── children: []
+

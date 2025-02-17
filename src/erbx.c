@@ -47,6 +47,13 @@ array_T* erbx_lex(char* source) {
   return tokens;
 }
 
+AST_NODE_T* erbx_parse(char* source) {
+  lexer_T* lexer = lexer_init(source);
+  parser_T* parser = parser_init(lexer);
+
+  return parser_parse(parser);
+}
+
 array_T* erbx_lex_file(const char* path) {
   char* source = erbx_read_file(path);
   array_T* tokens = erbx_lex(source);
@@ -66,10 +73,6 @@ void erbx_lex_to_buffer(char* source, buffer_T* output) {
   }
 
   erbx_free_tokens(&tokens);
-
-  // parser_T* parser = parser_init(lexer);
-  // AST_NODE_T* root = parser_parse(parser);
-  // printf("%zu\n", root->children->size);
 }
 
 void erbx_free_tokens(array_T** tokens) {

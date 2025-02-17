@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../src/include/erbx.h"
+#include "../../src/include/erbx.h"
 
 TEST(test_erbx_version)
   ck_assert_str_eq(erbx_version(), "0.0.1");

@@ -1,0 +1,38 @@
+@ DocumentNode (location: (0,0)-(0,0))
+├── name: ∅
+└── children: (1)
+    @ Element (location: (0,0)-(0,0))
+    ├── name: ∅
+    └── children: (3)
+        @ OpenTag (location: (0,0)-(0,0))
+        ├── name: "h1"
+        └── children: (1)
+            @ AttributeSet (location: (0,0)-(0,0))
+            ├── name: ∅
+            └── children: (1)
+                @ Attribute (location: (0,0)-(0,0))
+                ├── name: ∅
+                └── children: (2)
+                    @ AttributeName (location: (0,0)-(0,0))
+                    ├── name: "class"
+                    └── children: []
+
+                    @ AttributeValue (location: (0,0)-(0,0))
+                    ├── name: ""
+                    └── children: (2)
+                        @ Literal (location: (0,0)-(0,0))
+                        ├── name: "text-white "
+                        └── children: []
+
+                        @ ERBContent (location: (0,0)-(0,0))
+                        ├── name: " "bg-black" "
+                        └── children: []
+
+        @ ElementBody (location: (0,0)-(0,0))
+        ├── name: ∅
+        └── children: []
+
+        @ CloseTag (location: (0,0)-(0,0))
+        ├── name: "h1"
+        └── children: []
+

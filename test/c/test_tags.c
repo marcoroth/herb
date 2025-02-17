@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../src/include/erbx.h"
+#include "../../src/include/erbx.h"
 
 TEST(test_empty_file)
   char* html = "";

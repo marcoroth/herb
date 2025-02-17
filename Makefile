@@ -16,7 +16,7 @@ project_files = $(sources) $(headers)
 extension_files = $(extension_sources) $(extension_headers)
 project_and_extension_files = $(project_files) $(extension_files)
 
-test_sources = $(wildcard test/*.c)
+test_sources = $(wildcard test/**/*.c)
 test_objects = $(test_sources:.c=.o)
 non_main_objects = $(filter-out src/main.o, $(objects))
 
@@ -37,7 +37,7 @@ prism_ldflags = $(prism_build)/libprism.a
 warning_flags = -Wall -Wextra -Werror -pedantic
 
 # Debug build (no optimizations, debug symbols)
-debug_flags = -g -O0
+debug_flags = -g -O0 -Wno-unused-parameter
 
 # Production build (optimized)
 production_flags = $(warning_flags) -O3 -march=native -flto

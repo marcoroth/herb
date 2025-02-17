@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "forwardable"
+
 module ERBX
   module LibERBX
     attach_function :array_get, [:pointer, :int], :pointer
@@ -7,7 +9,11 @@ module ERBX
     attach_function :array_size, [:pointer], :size_t
 
     class Array
+      extend Forwardable
+
       attr_reader :pointer, :item_class
+
+      def_delegators :items, :first, :last, :[]
 
       def initialize(pointer, item_class)
         @pointer = pointer
