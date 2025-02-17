@@ -43,7 +43,9 @@ module SnapshotUtils
     puts source
     puts "\n\n"
 
-    if !ENV["UPDATE_ALL_SNAPSHOTS"].nil? || ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+    if !ENV["UPDATE_ALL_SNAPSHOTS"].nil? ||
+       ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source).dirname)
