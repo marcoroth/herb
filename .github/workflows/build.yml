@@ -22,6 +22,9 @@ jobs:
       - name: bundle install
         run: bundle install
 
+      - name: make prism
+        run: make prism
+
       - name: make
         run: make
 

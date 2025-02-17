@@ -17,6 +17,9 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: make prism
+        run: make prism
+
       - name: make
         run: make
 
