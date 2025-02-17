@@ -103,7 +103,7 @@ static AST_NODE_T* parser_parse_html_comment(parser_T* parser, AST_NODE_T* eleme
   return comment_node;
 }
 
-static AST_NODE_T* parser_parser_html_doctype(parser_T* parser, AST_NODE_T* element) {
+static AST_NODE_T* parser_parse_html_doctype(parser_T* parser, AST_NODE_T* element) {
   AST_NODE_T* doctype = ast_node_init(AST_HTML_DOCTYPE_NODE);
   buffer_T content = buffer_new();
 
@@ -393,7 +393,7 @@ static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
       }
 
       case TOKEN_HTML_DOCTYPE: {
-        parser_parser_html_doctype(parser, element);
+        parser_parse_html_doctype(parser, element);
         break;
       }
 
