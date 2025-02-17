@@ -276,12 +276,7 @@ static AST_NODE_T* parser_parse_html_open_tag(parser_T* parser, AST_NODE_T* elem
 static AST_NODE_T* parser_parse_html_element_body(parser_T* parser, AST_NODE_T* element) {
   AST_NODE_T* element_body = ast_node_init(AST_HTML_ELEMENT_BODY_NODE);
 
-  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
-    parser_parse_in_data_state(parser, element_body);
-    switch (parser->current_token->type) {
-      default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, element_body); break;
-    }
-  }
+  parser_parse_in_data_state(parser, element_body);
 
   array_append(element->children, element_body);
 
@@ -343,7 +338,7 @@ static AST_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element) {
 }
 
 static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
-  while (parser->current_token->type != TOKEN_EOF) {
+  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         parser_parse_erb_tag(parser, element);
@@ -362,6 +357,7 @@ static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
         break;
       }
 
+      case TOKEN_HTML_TAG_START_CLOSE:
       case TOKEN_EOF: {
         break;
       }
