@@ -9,9 +9,16 @@ def ask?(prompt = "")
 end
 
 module SnapshotUtils
+  def assert_parsed_snapshot(source)
+    parsed = ERBX.parse(source)
+    expected = parsed.root_node.inspect
+
+    assert_snapshot_matches(expected, source)
+  end
+
   def snapshot_changed?(content, source)
     if snapshot_file(source).exist?
-      previous_content = snapshot_file.read
+      previous_content = snapshot_file(source).read
 
       if previous_content == content
         puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file(source)}\n"
@@ -37,7 +44,7 @@ module SnapshotUtils
     puts "\n\n"
 
     if ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
-      puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source)}...\n"
+      puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source).dirname)
       snapshot_file(source).write(content)

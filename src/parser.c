@@ -25,7 +25,9 @@ parser_T* parser_init(lexer_T* lexer) {
 #include <stdio.h>
 #include <stdlib.h>
 
-char* format_parser_error(const char* message, const char* expected, const char* actual) {
+static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element);
+
+static char* format_parser_error(const char* message, const char* expected, const char* actual) {
   int needed = snprintf(NULL, 0, "[Parser]: Unexpected Token %s (expected '%s', got: '%s')", message, expected, actual);
 
   if (needed < 0) {
@@ -42,17 +44,16 @@ char* format_parser_error(const char* message, const char* expected, const char*
   return buffer;
 }
 
-AST_NODE_T* parser_append_unexpected_token(
+static AST_NODE_T* parser_append_unexpected_token(
     parser_T* parser, char* message, char* expected, char* actual, AST_NODE_T* node) {
   AST_NODE_T* unexpected_token = ast_node_init(AST_UNEXCPECTED_TOKEN_NODE);
   unexpected_token->name = escape_newlines(format_parser_error(message, expected, actual));
   array_append(node->children, unexpected_token);
-  printf("%zu", parser->current_token->range->start);
 
   return unexpected_token;
 }
 
-AST_NODE_T* parser_append_unexpected_token_from_token(parser_T* parser, token_type_T type, AST_NODE_T* node) {
+static AST_NODE_T* parser_append_unexpected_token_from_token(parser_T* parser, token_type_T type, AST_NODE_T* node) {
   token_T* token = parser_consume(parser, type, node);
 
   return parser_append_unexpected_token(parser,
@@ -82,7 +83,50 @@ token_T* parser_consume(parser_T* parser, token_type_T type, AST_NODE_T* node) {
   return token;
 }
 
-AST_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T* attribute) {
+static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* element) {
+  AST_NODE_T* text_content_node = ast_node_init(AST_HTML_TEXT_NODE);
+
+  buffer_T content = buffer_new();
+
+  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START &&
+         parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
+    switch (parser->current_token->type) {
+      case TOKEN_IDENTIFIER: {
+        token_T* identifier = parser_consume(parser, TOKEN_IDENTIFIER, text_content_node);
+
+        buffer_append(&content, identifier->value);
+      } break;
+
+      case TOKEN_WHITESPACE: {
+        token_T* whitespace = parser_consume(parser, TOKEN_WHITESPACE, text_content_node);
+        buffer_append(&content, whitespace->value);
+      } break;
+
+      case TOKEN_NEWLINE: {
+        token_T* newline = parser_consume(parser, TOKEN_NEWLINE, text_content_node);
+        buffer_append(&content, newline->value);
+      } break;
+
+      case TOKEN_EOF:
+      case TOKEN_HTML_TAG_START:
+      case TOKEN_HTML_TAG_START_CLOSE: {
+        break;
+      }
+
+      default: {
+        parser_append_unexpected_token_from_token(parser, parser->current_token->type, text_content_node);
+      }
+    }
+  }
+
+  text_content_node->name = buffer_value(&content);
+
+  array_append(element->children, text_content_node);
+
+  return text_content_node;
+}
+
+static AST_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T* attribute) {
   AST_NODE_T* attribute_name = ast_node_init(AST_HTML_ATTRIBUTE_NAME_NODE);
 
   if (parser->current_token->type != TOKEN_IDENTIFIER) {
@@ -96,7 +140,7 @@ AST_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T* attri
   return attribute_name;
 }
 
-AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_T* attribute) {
+static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_T* attribute) {
   AST_NODE_T* attribute_value = ast_node_init(AST_HTML_ATTRIBUTE_VALUE_NODE);
 
   switch (parser->current_token->type) {
@@ -134,7 +178,7 @@ AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_T* attr
   return attribute_value;
 }
 
-AST_NODE_T* parser_parse_html_attribute(parser_T* parser, AST_NODE_T* attribute_list) {
+static AST_NODE_T* parser_parse_html_attribute(parser_T* parser, AST_NODE_T* attribute_list) {
   AST_NODE_T* attribute = ast_node_init(AST_HTML_ATTRIBUTE_NODE);
 
   switch (parser->current_token->type) {
@@ -152,7 +196,7 @@ AST_NODE_T* parser_parse_html_attribute(parser_T* parser, AST_NODE_T* attribute_
   return attribute;
 }
 
-AST_NODE_T* parser_parse_html_attribute_set(parser_T* parser) {
+static AST_NODE_T* parser_parse_html_attribute_set(parser_T* parser) {
   AST_NODE_T* attribute_list = ast_node_init(AST_HTML_ATTRIBUTE_SET_NODE);
 
   while (parser->current_token->type != TOKEN_HTML_TAG_END &&
@@ -167,7 +211,7 @@ AST_NODE_T* parser_parse_html_attribute_set(parser_T* parser) {
   return attribute_list;
 }
 
-AST_NODE_T* parser_parse_html_open_tag(parser_T* parser, AST_NODE_T* element) {
+static AST_NODE_T* parser_parse_html_open_tag(parser_T* parser, AST_NODE_T* element) {
   parser_consume(parser, TOKEN_HTML_TAG_START, element);
   token_T* tagName = parser_consume(parser, TOKEN_IDENTIFIER, element);
 
@@ -196,7 +240,22 @@ AST_NODE_T* parser_parse_html_open_tag(parser_T* parser, AST_NODE_T* element) {
   }
 }
 
-AST_NODE_T* parser_parse_html_close_tag(parser_T* parser, AST_NODE_T* element) {
+static AST_NODE_T* parser_parse_html_element_body(parser_T* parser, AST_NODE_T* element) {
+  AST_NODE_T* element_body = ast_node_init(AST_HTML_ELEMENT_BODY_NODE);
+
+  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
+    parser_parse_in_data_state(parser, element_body);
+    switch (parser->current_token->type) {
+      default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, element_body); break;
+    }
+  }
+
+  array_append(element->children, element_body);
+
+  return element_body;
+}
+
+static AST_NODE_T* parser_parse_html_close_tag(parser_T* parser, AST_NODE_T* element) {
   AST_NODE_T* close_tag = ast_node_init(AST_HTML_CLOSE_TAG_NODE);
 
   parser_consume(parser, TOKEN_HTML_TAG_START_CLOSE, close_tag);
@@ -208,13 +267,15 @@ AST_NODE_T* parser_parse_html_close_tag(parser_T* parser, AST_NODE_T* element) {
   return close_tag;
 }
 
-AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* parent) {
+static AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* parent) {
   AST_NODE_T* element_node = ast_node_init(AST_HTML_ELEMENT_NODE);
   array_append(parent->children, element_node);
 
   AST_NODE_T* open_tag = parser_parse_html_open_tag(parser, element_node);
 
   if (open_tag->type == AST_HTML_OPEN_TAG_NODE) {
+    parser_parse_html_element_body(parser, element_node);
+
     AST_NODE_T* close_tag = parser_parse_html_close_tag(parser, element_node);
 
     if (strcmp(open_tag->name, close_tag->name) != 0) {
@@ -233,16 +294,32 @@ AST_NODE_T* parser_parse_html_element(parser_T* parser, AST_NODE_T* parent) {
   return element_node;
 }
 
-AST_NODE_T* parser_parse_document(parser_T* parser) {
-  AST_NODE_T* document_node = ast_node_init(AST_HTML_DOCUMENT_NODE);
-
+static void parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element) {
   while (parser->current_token->type != TOKEN_EOF) {
     switch (parser->current_token->type) {
-      case TOKEN_HTML_TAG_START: parser_parse_html_element(parser, document_node); break;
-      case TOKEN_EOF: break;
-      default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, document_node); break;
+      case TOKEN_HTML_TAG_START: {
+        parser_parse_html_element(parser, element);
+      } break;
+
+      case TOKEN_IDENTIFIER:
+      case TOKEN_WHITESPACE:
+      case TOKEN_NEWLINE: {
+        parser_parse_text_content(parser, element);
+      } break;
+
+      case TOKEN_EOF: {
+        break;
+      }
+
+      default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, element); break;
     }
   }
+}
+
+static AST_NODE_T* parser_parse_document(parser_T* parser) {
+  AST_NODE_T* document_node = ast_node_init(AST_HTML_DOCUMENT_NODE);
+
+  parser_parse_in_data_state(parser, document_node);
 
   return document_node;
 }

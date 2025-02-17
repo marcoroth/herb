@@ -45,6 +45,8 @@ char* ast_node_type_to_string(AST_NODE_T* node) {
     case AST_HTML_ELEMENT_NODE: return "AST_HTML_ELEMENT_NODE";
     case AST_HTML_TEXT_NODE: return "AST_HTML_TEXT_NODE";
 
+    case AST_HTML_ELEMENT_BODY_NODE: return "AST_HTML_ELEMENT_BODY_NODE";
+
     case AST_HTML_OPEN_TAG_NODE: return "AST_HTML_OPEN_TAG_NODE";
     case AST_HTML_CLOSE_TAG_NODE: return "AST_HTML_CLOSE_TAG_NODE";
     case AST_HTML_SELF_CLOSE_TAG_NODE: return "AST_HTML_SELF_CLOSE_TAG_NODE";
@@ -90,6 +92,8 @@ char* ast_node_human_type(AST_NODE_T* node) {
     case AST_HTML_COMMENT_NODE: return "Comment";
     case AST_HTML_ELEMENT_NODE: return "Element";
     case AST_HTML_TEXT_NODE: return "TextContent";
+
+    case AST_HTML_ELEMENT_BODY_NODE: return "ElementBody";
 
     case AST_HTML_OPEN_TAG_NODE: return "OpenTag";
     case AST_HTML_CLOSE_TAG_NODE: return "CloseTag";
