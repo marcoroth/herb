@@ -154,6 +154,11 @@ static AST_NODE_T* parser_parse_html_attribute_value(parser_T* parser, AST_NODE_
   AST_NODE_T* attribute_value = ast_node_init(AST_HTML_ATTRIBUTE_VALUE_NODE);
 
   switch (parser->current_token->type) {
+    case TOKEN_ERB_START: {
+      parser_parse_erb_tag(parser, attribute_value);
+      break;
+    }
+
     case TOKEN_QUOTE: {
       token_T* open_quote = parser_consume(parser, TOKEN_QUOTE, attribute_value);
       buffer_T buffer = buffer_new();
