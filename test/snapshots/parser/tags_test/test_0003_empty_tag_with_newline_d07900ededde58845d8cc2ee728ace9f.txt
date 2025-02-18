@@ -1,24 +1,24 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(2,8))
 ├── name: ∅
 └── children: (1)
-    @ Element (location: (0,0)-(0,0))
+    @ Element (location: (1,0)-(2,8))
     ├── name: ∅
     └── children: (3)
-        @ OpenTag (location: (0,0)-(0,0))
+        @ OpenTag (location: (1,0)-(1,6))
         ├── name: "span"
         └── children: (1)
-            @ AttributeSet (location: (0,0)-(0,0))
+            @ AttributeSet (location: (1,5)-(1,5))
             ├── name: ∅
             └── children: []
 
-        @ ElementBody (location: (0,0)-(0,0))
+        @ ElementBody (location: (1,0)-(2,1))
         ├── name: ∅
         └── children: (1)
-            @ TextContent (location: (0,0)-(0,0))
+            @ TextContent (location: (1,0)-(2,1))
             ├── name: "\n"
             └── children: []
 
-        @ CloseTag (location: (0,0)-(0,0))
+        @ CloseTag (location: (2,1)-(2,8))
         ├── name: "span"
         └── children: []
 

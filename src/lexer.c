@@ -21,7 +21,7 @@ lexer_T* lexer_init(char* source) {
   lexer->source_length = strlen(source);
   lexer->current_position = 0;
   lexer->current_line = 1;
-  lexer->current_column = 1;
+  lexer->current_column = 0;
   lexer->current_character = source[0];
 
   return lexer;

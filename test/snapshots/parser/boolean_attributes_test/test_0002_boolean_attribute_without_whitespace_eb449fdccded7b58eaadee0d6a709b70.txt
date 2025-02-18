@@ -1,19 +1,19 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,17))
 ├── name: ∅
 └── children: (1)
-    @ Element (location: (0,0)-(0,0))
+    @ Element (location: (1,0)-(1,17))
     ├── name: ∅
     └── children: (1)
-        @ SelfCloseTag (location: (0,0)-(0,0))
+        @ SelfCloseTag (location: (1,0)-(1,17))
         ├── name: "input"
         └── children: (1)
-            @ AttributeSet (location: (0,0)-(0,0))
+            @ AttributeSet (location: (1,6)-(1,15))
             ├── name: ∅
             └── children: (1)
-                @ Attribute (location: (0,0)-(0,0))
+                @ Attribute (location: (1,7)-(1,15))
                 ├── name: ∅
                 └── children: (1)
-                    @ AttributeName (location: (0,0)-(0,0))
+                    @ AttributeName (location: (1,7)-(1,15))
                     ├── name: "required"
                     └── children: []
 

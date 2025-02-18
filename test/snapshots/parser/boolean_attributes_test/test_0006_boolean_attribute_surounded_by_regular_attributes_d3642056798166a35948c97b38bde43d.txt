@@ -1,47 +1,47 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,42))
 ├── name: ∅
 └── children: (1)
-    @ Element (location: (0,0)-(0,0))
+    @ Element (location: (1,0)-(1,42))
     ├── name: ∅
     └── children: (1)
-        @ SelfCloseTag (location: (0,0)-(0,0))
+        @ SelfCloseTag (location: (1,0)-(1,42))
         ├── name: "input"
         └── children: (1)
-            @ AttributeSet (location: (0,0)-(0,0))
+            @ AttributeSet (location: (1,6)-(1,40))
             ├── name: ∅
             └── children: (3)
-                @ Attribute (location: (0,0)-(0,0))
+                @ Attribute (location: (1,7)-(1,22))
                 ├── name: ∅
                 └── children: (2)
-                    @ AttributeName (location: (0,0)-(0,0))
+                    @ AttributeName (location: (1,7)-(1,12))
                     ├── name: "class"
                     └── children: []
 
-                    @ AttributeValue (location: (0,0)-(0,0))
+                    @ AttributeValue (location: (1,13)-(1,22))
                     ├── name: "classes"
                     └── children: (1)
-                        @ Literal (location: (0,0)-(0,0))
+                        @ Literal (location: (1,14)-(1,21))
                         ├── name: "classes"
                         └── children: []
 
-                @ Attribute (location: (0,0)-(0,0))
+                @ Attribute (location: (1,23)-(1,31))
                 ├── name: ∅
                 └── children: (1)
-                    @ AttributeName (location: (0,0)-(0,0))
+                    @ AttributeName (location: (1,23)-(1,31))
                     ├── name: "required"
                     └── children: []
 
-                @ Attribute (location: (0,0)-(0,0))
+                @ Attribute (location: (1,32)-(1,40))
                 ├── name: ∅
                 └── children: (2)
-                    @ AttributeName (location: (0,0)-(0,0))
+                    @ AttributeName (location: (1,32)-(1,34))
                     ├── name: "id"
                     └── children: []
 
-                    @ AttributeValue (location: (0,0)-(0,0))
+                    @ AttributeValue (location: (1,35)-(1,40))
                     ├── name: "ids"
                     └── children: (1)
-                        @ Literal (location: (0,0)-(0,0))
+                        @ Literal (location: (1,36)-(1,39))
                         ├── name: "ids"
                         └── children: []
 

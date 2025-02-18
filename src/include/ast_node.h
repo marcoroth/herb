@@ -3,6 +3,8 @@
 
 #include "array.h"
 #include "buffer.h"
+#include "location.h"
+#include "token_struct.h"
 
 typedef enum {
   AST_LITERAL_NODE,
@@ -61,6 +63,8 @@ typedef struct AST_NODE_STRUCT {
   array_T* children;
   char* name;
   struct AST_STRUCT* value;
+  location_T* start;
+  location_T* end;
   int data_type;
   int int_value;
 } AST_NODE_T;
@@ -74,6 +78,14 @@ size_t ast_node_child_count(AST_NODE_T* node);
 
 char* ast_node_type_to_string(AST_NODE_T* node);
 char* ast_node_name(AST_NODE_T* node);
+
+void ast_node_set_start(AST_NODE_T* node, location_T* location);
+void ast_node_set_end(AST_NODE_T* node, location_T* location);
+
+void ast_node_set_start_from_token(AST_NODE_T* node, token_T* token);
+void ast_node_set_end_from_token(AST_NODE_T* node, token_T* token);
+
+void ast_node_set_locations_from_token(AST_NODE_T* node, token_T* token);
 
 void ast_node_pretty_print(AST_NODE_T* node, size_t indent, buffer_T* buffer);
 

@@ -1,7 +1,7 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,10))
 ├── name: ∅
 └── children: (1)
-    @ Doctype (location: (0,0)-(0,0))
+    @ Doctype (location: (1,0)-(1,10))
     ├── name: ""
     └── children: []
 

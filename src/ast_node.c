@@ -1,5 +1,6 @@
 #include "include/ast_node.h"
 #include "include/buffer.h"
+#include "include/token_struct.h"
 #include "include/util.h"
 
 #include <stdio.h>
@@ -14,6 +15,8 @@ AST_NODE_T* ast_node_init(ast_node_type_T type) {
 
   node->type = type;
   node->children = array_init(ast_node_sizeof());
+  node->start = location_init(0, 0);
+  node->end = location_init(0, 0);
 
   return node;
 }
@@ -32,6 +35,26 @@ size_t ast_node_child_count(AST_NODE_T* node) {
 
 array_T* ast_node_children(AST_NODE_T* node) {
   return node->children;
+}
+
+void ast_node_set_start(AST_NODE_T* node, location_T* location) {
+  node->start = location;
+}
+void ast_node_set_end(AST_NODE_T* node, location_T* location) {
+  node->end = location;
+}
+
+void ast_node_set_start_from_token(AST_NODE_T* node, token_T* token) {
+  ast_node_set_start(node, token->start);
+}
+
+void ast_node_set_end_from_token(AST_NODE_T* node, token_T* token) {
+  ast_node_set_end(node, token->end);
+}
+
+void ast_node_set_locations_from_token(AST_NODE_T* node, token_T* token) {
+  ast_node_set_start_from_token(node, token);
+  ast_node_set_end_from_token(node, token);
 }
 
 char* ast_node_type_to_string(AST_NODE_T* node) {
@@ -135,7 +158,12 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, buffer_T* buffer) {
 
   buffer_append(buffer, "@ ");
   buffer_append(buffer, ast_node_human_type(node));
-  buffer_append(buffer, " (location: (0,0)-(0,0))\n");
+
+  buffer_append(buffer, " (location: (");
+  char location[64];
+  sprintf(location, "%zu,%zu)-(%zu,%zu", node->start->line, node->start->column, node->end->line, node->end->column);
+  buffer_append(buffer, location);
+  buffer_append(buffer, "))\n");
 
   buffer_append_whitespace(buffer, indent * 2);
   buffer_append(buffer, "├── ");

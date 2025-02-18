@@ -1,18 +1,18 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,25))
 ├── name: ∅
 └── children: (1)
-    @ Comment (location: (0,0)-(0,0))
+    @ Comment (location: (1,0)-(1,25))
     ├── name: ∅
     └── children: (3)
-        @ Literal (location: (0,0)-(0,0))
+        @ Literal (location: (1,4)-(1,5))
         ├── name: " "
         └── children: []
 
-        @ ERBContent (location: (0,0)-(0,0))
+        @ ERBContent (location: (1,5)-(1,21))
         ├── name: " "Comment" "
         └── children: []
 
-        @ Literal (location: (0,0)-(0,0))
+        @ Literal (location: (1,21)-(1,22))
         ├── name: " "
         └── children: []
 

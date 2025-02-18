@@ -1,7 +1,7 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,12))
 ├── name: ∅
 └── children: (1)
-    @ ERBContent (location: (0,0)-(0,0))
+    @ ERBContent (location: (1,0)-(1,12))
     ├── name: " hello "
     └── children: []
 

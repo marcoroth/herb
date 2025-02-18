@@ -1,24 +1,24 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,26))
 ├── name: ∅
 └── children: (1)
-    @ Element (location: (0,0)-(0,0))
+    @ Element (location: (1,0)-(1,26))
     ├── name: ∅
     └── children: (3)
-        @ OpenTag (location: (0,0)-(0,0))
+        @ OpenTag (location: (1,0)-(1,21))
         ├── name: "h1"
         └── children: (1)
-            @ AttributeSet (location: (0,0)-(0,0))
+            @ AttributeSet (location: (1,3)-(1,20))
             ├── name: ∅
             └── children: (1)
-                @ ERBContent (location: (0,0)-(0,0))
+                @ ERBContent (location: (1,4)-(1,20))
                 ├── name: " "id=test" "
                 └── children: []
 
-        @ ElementBody (location: (0,0)-(0,0))
+        @ ElementBody (location: (1,21)-(1,21))
         ├── name: ∅
         └── children: []
 
-        @ CloseTag (location: (0,0)-(0,0))
+        @ CloseTag (location: (1,21)-(1,26))
         ├── name: "h1"
         └── children: []
 

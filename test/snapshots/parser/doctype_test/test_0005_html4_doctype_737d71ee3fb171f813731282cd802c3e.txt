@@ -1,7 +1,7 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,90))
 ├── name: ∅
 └── children: (1)
-    @ Doctype (location: (0,0)-(0,0))
+    @ Doctype (location: (1,0)-(1,90))
     ├── name: " HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd""
     └── children: []
 

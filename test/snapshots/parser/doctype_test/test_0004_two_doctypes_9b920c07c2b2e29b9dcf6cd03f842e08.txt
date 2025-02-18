@@ -1,11 +1,11 @@
-@ DocumentNode (location: (0,0)-(0,0))
+@ DocumentNode (location: (1,0)-(1,30))
 ├── name: ∅
 └── children: (2)
-    @ Doctype (location: (0,0)-(0,0))
+    @ Doctype (location: (1,0)-(1,15))
     ├── name: " html"
     └── children: []
 
-    @ Doctype (location: (0,0)-(0,0))
+    @ Doctype (location: (1,15)-(1,30))
     ├── name: " html"
     └── children: []
 
