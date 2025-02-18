@@ -47,6 +47,7 @@ GEM
     rake (13.2.1)
     rake-compiler (1.2.9)
       rake
+    rake-compiler-dock (1.9.1)
     regexp_parser (2.10.0)
     rubocop (1.71.2)
       json (~> 2.3)
@@ -78,6 +79,7 @@ DEPENDENCIES
   prism!
   rake (~> 13.2)
   rake-compiler (~> 1.2)
+  rake-compiler-dock (~> 1.9)
   rubocop (~> 1.71)
 
 BUNDLED WITH

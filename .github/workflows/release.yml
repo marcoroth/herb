@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Native Gems with Rake-Compiler-Dock
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        target:
+          - default
+          - aarch64-linux-gnu
+          - x86_64-linux-gnu
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - x86_64-darwin
+          - arm64-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: false
+
+      - name: Install gems
+        run: bundle install
+
+      - name: Install dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Precompile gem
+        run: |
+          if [ "${{ matrix.target }}" = "default" ]; then
+            bundle exec rake build
+          else
+            bundle exec rake gem:${{ matrix.target }}
+          fi
