@@ -203,22 +203,6 @@ static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* eleme
         start_location = parser->current_token->start;
       } break;
 
-      case TOKEN_IDENTIFIER: {
-        token_T* identifier = parser_consume(parser, TOKEN_IDENTIFIER, text_content_node);
-
-        buffer_append(&content, identifier->value);
-      } break;
-
-      case TOKEN_WHITESPACE: {
-        token_T* whitespace = parser_consume(parser, TOKEN_WHITESPACE, text_content_node);
-        buffer_append(&content, whitespace->value);
-      } break;
-
-      case TOKEN_NEWLINE: {
-        token_T* newline = parser_consume(parser, TOKEN_NEWLINE, text_content_node);
-        buffer_append(&content, newline->value);
-      } break;
-
       case TOKEN_EOF:
       case TOKEN_HTML_TAG_START:
       case TOKEN_HTML_TAG_START_CLOSE: {
@@ -226,7 +210,8 @@ static AST_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* eleme
       }
 
       default: {
-        parser_append_unexpected_token_from_token(parser, parser->current_token->type, text_content_node);
+        token_T* token = parser_consume(parser, parser->current_token->type, text_content_node);
+        buffer_append(&content, token->value);
       }
     }
   }

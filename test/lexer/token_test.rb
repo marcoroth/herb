@@ -47,7 +47,7 @@ module Lexer
       result = ERBX.lex(" ")
 
       expected = %w[
-        TOKEN_TEXT_CONTENT
+        TOKEN_NBSP
         TOKEN_EOF
       ]
 

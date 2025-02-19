@@ -318,5 +318,84 @@ module Lexer
 
       assert_equal expected, result.array.items.map(&:type)
     end
+
+    test "attribute value with a period" do
+      result = ERBX.lex(%(<div value="hello. world."></div>))
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_CHARACTER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_CHARACTER
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "attribute value with a slash" do
+      result = ERBX.lex(%(<div value="hello/ world/"></div>))
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_SLASH
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_SLASH
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
+
+    test "attribute value with an URL" do
+      result = ERBX.lex(%(<a href="https://example.com"></div>))
+
+      expected = %w[
+        TOKEN_HTML_TAG_START
+        TOKEN_IDENTIFIER
+        TOKEN_WHITESPACE
+        TOKEN_IDENTIFIER
+        TOKEN_EQUALS
+        TOKEN_QUOTE
+        TOKEN_IDENTIFIER
+        TOKEN_SLASH
+        TOKEN_SLASH
+        TOKEN_IDENTIFIER
+        TOKEN_CHARACTER
+        TOKEN_IDENTIFIER
+        TOKEN_QUOTE
+        TOKEN_HTML_TAG_END
+        TOKEN_HTML_TAG_START_CLOSE
+        TOKEN_IDENTIFIER
+        TOKEN_HTML_TAG_END
+        TOKEN_EOF
+      ]
+
+      assert_equal expected, result.array.items.map(&:type)
+    end
   end
 end

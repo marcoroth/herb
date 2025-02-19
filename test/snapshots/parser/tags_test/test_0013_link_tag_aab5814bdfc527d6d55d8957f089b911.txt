@@ -1,0 +1,40 @@
+@ DocumentNode (location: (1,0)-(1,62))
+├── name: ∅
+└── children: (1)
+    @ Element (location: (1,0)-(1,62))
+    ├── name: ∅
+    └── children: (1)
+        @ SelfCloseTag (location: (1,0)-(1,62))
+        ├── name: "link"
+        └── children: (1)
+            @ AttributeSet (location: (1,5)-(1,61))
+            ├── name: ∅
+            └── children: (2)
+                @ Attribute (location: (1,6)-(1,44))
+                ├── name: ∅
+                └── children: (2)
+                    @ AttributeName (location: (1,6)-(1,10))
+                    ├── name: "href"
+                    └── children: []
+
+                    @ AttributeValue (location: (1,11)-(1,44))
+                    ├── name: "https://mywebsite.com/style.css"
+                    └── children: (1)
+                        @ Literal (location: (1,12)-(1,43))
+                        ├── name: "https://mywebsite.com/style.css"
+                        └── children: []
+
+                @ Attribute (location: (1,45)-(1,61))
+                ├── name: ∅
+                └── children: (2)
+                    @ AttributeName (location: (1,45)-(1,48))
+                    ├── name: "rel"
+                    └── children: []
+
+                    @ AttributeValue (location: (1,49)-(1,61))
+                    ├── name: "stylesheet"
+                    └── children: (1)
+                        @ Literal (location: (1,50)-(1,60))
+                        ├── name: "stylesheet"
+                        └── children: []
+

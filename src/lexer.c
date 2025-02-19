@@ -96,7 +96,8 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, token
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
-  while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r') {
+  while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
+         && !lexer_eof(lexer)) {
     buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
@@ -109,24 +110,13 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
-         && !lexer_peek_for_html_comment_end(lexer, 0)) {
+         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
 
     buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
   return token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
-}
-
-static token_T* lexer_parse_text_content(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
-
-  while (lexer->current_character != '<' && lexer->current_character != '>' && !lexer_eof(lexer)) {
-    buffer_append_char(&buffer, lexer->current_character);
-    lexer_advance(lexer);
-  }
-
-  return token_init(buffer.value, TOKEN_TEXT_CONTENT, lexer);
 }
 
 // ===== ERB Parsing
@@ -180,6 +170,9 @@ token_T* lexer_next_token(lexer_T* lexer) {
 
   if (lexer->current_character == '\n') { return lexer_advance_current(lexer, TOKEN_NEWLINE); }
   if (isspace(lexer->current_character)) { return lexer_parse_whitespace(lexer); }
+  if (lexer->current_character == '\xC2' && lexer_peek(lexer, 1) == '\xA0') {
+    return lexer_advance_with(lexer, "\xC2\xA0", TOKEN_NBSP);
+  }
 
   switch (lexer->current_character) {
     case '<': {
@@ -211,6 +204,8 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     case '_': return lexer_advance_current(lexer, TOKEN_UNDERSCORE);
     case ':': return lexer_advance_current(lexer, TOKEN_COLON);
+    case ';': return lexer_advance_current(lexer, TOKEN_SEMICOLON);
+    case '&': return lexer_advance_current(lexer, TOKEN_AMPERSAND);
     case '!': return lexer_advance_current(lexer, TOKEN_EXCLAMATION);
     case '=': return lexer_advance_current(lexer, TOKEN_EQUALS);
     case '%': return lexer_advance_current(lexer, TOKEN_PERCENT);
@@ -219,11 +214,9 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '\'': return lexer_advance_current(lexer, TOKEN_QUOTE);
 
     default: {
-      if (isalnum(lexer->current_character) || lexer->current_character == '_') {
-        return lexer_parse_identifier(lexer);
-      }
+      if (isalnum(lexer->current_character)) { return lexer_parse_identifier(lexer); }
 
-      return lexer_parse_text_content(lexer);
+      return lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
   }
 }

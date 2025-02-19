@@ -53,5 +53,9 @@ module Parser
     test "colon inside html tag" do
       assert_parsed_snapshot(%(<div : class=""></div>))
     end
+
+    test "link tag" do
+      assert_parsed_snapshot(%(<link href="https://mywebsite.com/style.css" rel="stylesheet">))
+    end
   end
 end

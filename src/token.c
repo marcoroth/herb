@@ -39,9 +39,9 @@ token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
 const char* token_type_to_string(token_type_T type) {
   switch (type) {
     case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
+    case TOKEN_NBSP: return "TOKEN_NBSP";
     case TOKEN_NEWLINE: return "TOKEN_NEWLINE";
     case TOKEN_IDENTIFIER: return "TOKEN_IDENTIFIER";
-    case TOKEN_TEXT_CONTENT: return "TOKEN_TEXT_CONTENT";
     case TOKEN_HTML_DOCTYPE: return "TOKEN_HTML_DOCTYPE";
     case TOKEN_HTML_TAG_START: return "TOKEN_HTML_TAG_START";
     case TOKEN_HTML_TAG_END: return "TOKEN_HTML_TAG_END";
@@ -55,12 +55,15 @@ const char* token_type_to_string(token_type_T type) {
     case TOKEN_UNDERSCORE: return "TOKEN_UNDERSCORE";
     case TOKEN_EXCLAMATION: return "TOKEN_EXCLAMATION";
     case TOKEN_SLASH: return "TOKEN_SLASH";
+    case TOKEN_SEMICOLON: return "TOKEN_SEMICOLON";
     case TOKEN_COLON: return "TOKEN_COLON";
     case TOKEN_LT: return "TOKEN_LT";
     case TOKEN_PERCENT: return "TOKEN_PERCENT";
+    case TOKEN_AMPERSAND: return "TOKEN_AMPERSAND";
     case TOKEN_ERB_START: return "TOKEN_ERB_START";
     case TOKEN_ERB_CONTENT: return "TOKEN_ERB_CONTENT";
     case TOKEN_ERB_END: return "TOKEN_ERB_END";
+    case TOKEN_CHARACTER: return "TOKEN_CHARACTER";
     case TOKEN_ERROR: return "TOKEN_ERROR";
     case TOKEN_EOF: return "TOKEN_EOF";
   }
