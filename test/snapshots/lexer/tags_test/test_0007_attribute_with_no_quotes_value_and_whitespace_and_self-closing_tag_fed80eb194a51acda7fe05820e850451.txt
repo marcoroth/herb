@@ -1,0 +1,9 @@
+#<Token type=TOKEN_HTML_TAG_START value='<' range=[0, 1] start=1:0 end=1:1>
+#<Token type=TOKEN_IDENTIFIER value='img' range=[1, 4] start=1:1 end=1:4>
+#<Token type=TOKEN_WHITESPACE value=' ' range=[4, 5] start=1:4 end=1:5>
+#<Token type=TOKEN_IDENTIFIER value='value' range=[5, 10] start=1:5 end=1:10>
+#<Token type=TOKEN_EQUALS value='=' range=[10, 11] start=1:10 end=1:11>
+#<Token type=TOKEN_IDENTIFIER value='hello' range=[11, 16] start=1:11 end=1:16>
+#<Token type=TOKEN_WHITESPACE value=' ' range=[16, 17] start=1:16 end=1:17>
+#<Token type=TOKEN_HTML_TAG_SELF_CLOSE value='/>' range=[17, 19] start=1:17 end=1:19>
+#<Token type=TOKEN_EOF value='' range=[19, 19] start=1:19 end=1:19>

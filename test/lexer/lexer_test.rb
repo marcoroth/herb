@@ -4,24 +4,14 @@ require_relative "../test_helper"
 
 module Lexer
   class LexerTest < Minitest::Spec
+    include SnapshotUtils
+
     test "nil" do
-      result = ERBX.lex(nil)
-
-      expected = %w[
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(nil)
     end
 
     test "empty file" do
-      result = ERBX.lex("")
-
-      expected = %w[
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("")
     end
   end
 end

@@ -2,6 +2,7 @@
 
 module ERBX
   module LibERBX
+    attach_function :token_to_string, [:pointer], :string
     attach_function :token_type_to_string, [:int], :pointer
     attach_function :token_value, [:pointer], :pointer
     attach_function :token_type, [:pointer], :int
@@ -26,7 +27,7 @@ module ERBX
       end
 
       def inspect
-        %(#<#{self.class} type="#{type}" value="#{value}">)
+        LibERBX.token_to_string(pointer).force_encoding("utf-8")
       end
     end
   end

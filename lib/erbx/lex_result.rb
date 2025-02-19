@@ -13,5 +13,9 @@ module ERBX
     def initialize(pointer)
       @array = LibERBX::Array.new(pointer, LibERBX::Token)
     end
+
+    def inspect
+      @array.items.map(&:inspect).join("\n")
+    end
   end
 end

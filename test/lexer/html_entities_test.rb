@@ -4,93 +4,34 @@ require_relative "../test_helper"
 
 module Lexer
   class HTMLEntitiesTest < Minitest::Spec
+    include SnapshotUtils
+
     test "&lt;" do
-      result = ERBX.lex("&lt;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&lt;")
     end
 
     test "&gt;" do
-      result = ERBX.lex("&gt;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&gt;")
     end
 
     test "&nbsp;" do
-      result = ERBX.lex("&nbsp;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&nbsp;")
     end
 
     test "&quot;" do
-      result = ERBX.lex("&quot;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&quot;")
     end
 
     test "&apos;" do
-      result = ERBX.lex("&apos;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&apos;")
     end
 
     test "ampersand" do
-      result = ERBX.lex("&amp;")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_IDENTIFIER
-        TOKEN_SEMICOLON
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&amp;")
     end
 
     test "literal ampersand" do
-      result = ERBX.lex("&")
-
-      expected = %w[
-        TOKEN_AMPERSAND
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("&")
     end
   end
 end
