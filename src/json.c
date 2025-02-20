@@ -36,30 +36,30 @@ void json_escape_string(JSON* json, const char* string) {
   buffer_append(&json->buffer, "\"");
 }
 
-static void json_int_to_string(int value, char* buffer) {
-  char string[20]; // Enough for an int
-  int i = 0, sign = 0;
+void json_int_to_string(int value, char* buffer) {
+  char string[20]; // Enough to hold all possible int values
+  int i = 0;
 
-  if (value < 0) {
-    sign = 1;
-    value = -value;
-  }
+  // Handle negative numbers
+  unsigned int abs_value = (value < 0) ? -(unsigned int) value : value;
 
   do {
-    string[i++] = (char) ((value % 10) + '0');
-    value /= 10;
-  } while (value > 0);
+    string[i++] = (char) ((abs_value % 10) + '0');
+    abs_value /= 10;
+  } while (abs_value > 0);
 
-  if (sign) { string[i++] = '-'; }
+  if (value < 0) { string[i++] = '-'; }
 
   int j = 0;
+
   while (i > 0) {
     buffer[j++] = string[--i];
   }
+
   buffer[j] = '\0';
 }
 
-static void json_double_to_string(double value, char* buffer) {
+void json_double_to_string(double value, char* buffer) {
   int int_part = (int) value;
   double frac_part = value - (double) int_part;
   int frac_as_int = (int) (frac_part * 100); // Keep 2 decimal places

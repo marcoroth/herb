@@ -26,4 +26,7 @@ void json_end_object(JSON* parent, JSON* object);
 JSON* json_start_array(JSON* parent, const char* key);
 void json_end_array(JSON* parent, JSON* array);
 
+void json_double_to_string(double value, char* buffer);
+void json_int_to_string(int value, char* buffer);
+
 #endif

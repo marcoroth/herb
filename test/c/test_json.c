@@ -152,6 +152,62 @@ TEST(test_json_append_object_array)
   json_free(json);
 END
 
+TEST(test_json_double_to_string_precision)
+  char buffer[64];
+
+  json_double_to_string(1.234567890123456, buffer);
+  ck_assert_str_eq(buffer, "1.23");
+
+  json_double_to_string(123456.7890123456789, buffer);
+  ck_assert_str_eq(buffer, "123456.78");
+
+  json_double_to_string(0.000000000000001, buffer);
+  ck_assert_str_eq(buffer, "0.0");
+
+  json_double_to_string(-42.987654321098765, buffer);
+  ck_assert_str_eq(buffer, "-42.98");
+
+  json_double_to_string(3.141592653589793, buffer);
+  ck_assert_str_eq(buffer, "3.14");
+END
+
+TEST(test_json_int_to_string_positive)
+  char buffer[20];
+
+  json_int_to_string(12345, buffer);
+  ck_assert_str_eq(buffer, "12345");
+
+  json_int_to_string(987654321, buffer);
+  ck_assert_str_eq(buffer, "987654321");
+
+  json_int_to_string(0, buffer);
+  ck_assert_str_eq(buffer, "0");
+END
+
+TEST(test_json_int_to_string_negative)
+  char buffer[20];
+
+  json_int_to_string(-1, buffer);
+  ck_assert_str_eq(buffer, "-1");
+
+  json_int_to_string(-42, buffer);
+  ck_assert_str_eq(buffer, "-42");
+
+  json_int_to_string(-987654321, buffer);
+  ck_assert_str_eq(buffer, "-987654321");
+END
+
+TEST(test_json_int_to_string_min_max)
+  char buffer[20];
+
+  json_int_to_string(2147483647, buffer);
+  ck_assert_str_eq(buffer, "2147483647");
+
+  json_int_to_string(-2147483648, buffer);
+  ck_assert_str_eq(buffer, "-2147483648");
+END
+
+
 TCase* json_tests(void) {
   TCase* json = tcase_create("JSON");
 
@@ -164,6 +220,10 @@ TCase* json_tests(void) {
   tcase_add_test(json, test_json_root_array);
   tcase_add_test(json, test_json_append_array_to_object);
   tcase_add_test(json, test_json_append_object_array);
+  tcase_add_test(json, test_json_double_to_string_precision);
+  tcase_add_test(json, test_json_int_to_string_positive);
+  tcase_add_test(json, test_json_int_to_string_negative);
+  tcase_add_test(json, test_json_int_to_string_min_max);
 
   return json;
 }
