@@ -14,8 +14,12 @@ module ERBX
       @array = LibERBX::Array.new(pointer, LibERBX::Token)
     end
 
+    def as_json
+      JSON.parse(to_json)
+    end
+
     def to_json(*_args)
-      @array.items.map(&:inspect).join("\n")
+      "[#{@array.items.map(&:to_json).join(", ")}]"
     end
 
     def inspect

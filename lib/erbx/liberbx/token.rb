@@ -31,8 +31,12 @@ module ERBX
         LibERBX.token_to_string(pointer).force_encoding("utf-8")
       end
 
+      def as_json
+        JSON.parse(to_json)
+      end
+
       def to_json(*_args)
-        JSON.parse(LibERBX.token_to_json(pointer).force_encoding("utf-8"))
+        LibERBX.token_to_json(pointer).force_encoding("utf-8")
       end
     end
   end
