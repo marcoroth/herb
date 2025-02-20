@@ -4,36 +4,26 @@
 #include <stdarg.h>
 #include <string.h>
 
-void json_init(JSON* json) {
-  json->buffer = buffer_new();
-}
-
-void json_free(JSON* json) {
-  if (!json) { return; }
-  buffer_free(&json->buffer);
-  free(json);
-}
-
-void json_escape_string(JSON* json, const char* string) {
+void json_escape_string(buffer_T* json, const char* string) {
   if (!string) {
-    buffer_append(&json->buffer, "null");
+    buffer_append(json, "null");
     return;
   }
 
-  buffer_append(&json->buffer, "\"");
+  buffer_append(json, "\"");
 
   while (*string) {
     switch (*string) {
-      case '\"': buffer_append(&json->buffer, "\\\""); break;
-      case '\\': buffer_append(&json->buffer, "\\\\"); break;
-      case '\n': buffer_append(&json->buffer, "\\n"); break;
-      case '\t': buffer_append(&json->buffer, "\\t"); break;
-      default: buffer_append_char(&json->buffer, *string); break;
+      case '\"': buffer_append(json, "\\\""); break;
+      case '\\': buffer_append(json, "\\\\"); break;
+      case '\n': buffer_append(json, "\\n"); break;
+      case '\t': buffer_append(json, "\\t"); break;
+      default: buffer_append_char(json, *string); break;
     }
     string++;
   }
 
-  buffer_append(&json->buffer, "\"");
+  buffer_append(json, "\"");
 }
 
 void json_int_to_string(int value, char* buffer) {
@@ -84,132 +74,97 @@ void json_double_to_string(double value, char* buffer) {
   *pointer = '\0';
 }
 
-void json_add_string(JSON* json, const char* key, const char* value) {
+void json_add_string(buffer_T* json, const char* key, const char* value) {
   if (!json) { return; }
 
-  if (json->buffer.length > 1) { buffer_append(&json->buffer, ", "); }
+  if (json->length > 1) { buffer_append(json, ", "); }
 
   if (key) {
     json_escape_string(json, key);
-    buffer_append(&json->buffer, ": ");
+    buffer_append(json, ": ");
   }
 
   json_escape_string(json, value);
 }
 
-void json_add_double(JSON* json, const char* key, double value) {
+void json_add_double(buffer_T* json, const char* key, double value) {
   if (!json) { return; }
 
   char number[32];
   json_double_to_string(value, number);
 
-  if (json->buffer.length > 1) { buffer_append(&json->buffer, ", "); }
+  if (json->length > 1) { buffer_append(json, ", "); }
 
   if (key) {
     json_escape_string(json, key);
-    buffer_append(&json->buffer, ": ");
+    buffer_append(json, ": ");
   }
 
-  buffer_append(&json->buffer, number);
+  buffer_append(json, number);
 }
 
-void json_add_int(JSON* json, const char* key, int value) {
+void json_add_int(buffer_T* json, const char* key, int value) {
   if (!json) { return; }
 
   char number[20];
   json_int_to_string(value, number);
 
-  if (json->buffer.length > 1) { buffer_append(&json->buffer, ", "); }
+  if (json->length > 1) { buffer_append(json, ", "); }
 
   if (key) {
     json_escape_string(json, key);
-    buffer_append(&json->buffer, ": ");
+    buffer_append(json, ": ");
   }
 
-  buffer_append(&json->buffer, number);
+  buffer_append(json, number);
 }
 
-void json_add_bool(JSON* json, const char* key, int value) {
+void json_add_bool(buffer_T* json, const char* key, int value) {
   if (!json) { return; }
 
-  if (json->buffer.length > 1) { buffer_append(&json->buffer, ", "); }
+  if (json->length > 1) { buffer_append(json, ", "); }
 
   if (key) {
     json_escape_string(json, key);
-    buffer_append(&json->buffer, ": ");
+    buffer_append(json, ": ");
   }
 
-  buffer_append(&json->buffer, value ? "true" : "false");
+  buffer_append(json, value ? "true" : "false");
 }
 
-JSON* json_start_root_object(void) {
-  JSON* object = (JSON*) malloc(sizeof(JSON));
-  if (!object) { return NULL; }
-
-  json_init(object);
-
-  buffer_append(&object->buffer, "{");
-
-  return object;
+void json_start_root_object(buffer_T* json) {
+  if (json) { buffer_append(json, "{"); }
 }
 
-JSON* json_start_object(JSON* parent, const char* key) {
-  JSON* object = (JSON*) malloc(sizeof(JSON));
-  json_init(object);
+void json_start_object(buffer_T* json, const char* key) {
+  if (!json) { return; }
 
-  if (parent) {
-    if (parent->buffer.length > 1) { buffer_append(&parent->buffer, ", "); }
+  if (json->length > 1) { buffer_append(json, ", "); }
 
-    if (key) {
-      json_escape_string(parent, key);
-      buffer_append(&parent->buffer, ": ");
-    }
+  if (key) {
+    json_escape_string(json, key);
+    buffer_append(json, ": ");
   }
 
-  buffer_append(&object->buffer, "{");
-
-  return object;
+  buffer_append(json, "{");
 }
 
-void json_end_object(JSON* parent, JSON* object) {
-  if (!object) { return; }
-
-  buffer_append(&object->buffer, "}");
-
-  if (parent) {
-    buffer_concat(&parent->buffer, &object->buffer);
-    free(object);
-  }
+void json_end_object(buffer_T* json) {
+  if (json) { buffer_append(json, "}"); }
 }
 
-JSON* json_start_root_array(void) {
-  JSON* array = (JSON*) malloc(sizeof(JSON));
-  if (!array) { return NULL; }
-
-  json_init(array);
-  buffer_append(&array->buffer, "[");
-  return array;
+void json_start_root_array(buffer_T* json) {
+  if (json) { buffer_append(json, "["); }
 }
 
-JSON* json_start_array(JSON* parent, const char* key) {
-  if (!parent) { return NULL; }
+void json_start_array(buffer_T* json, const char* key) {
+  if (!json) { return; }
 
-  if (parent->buffer.length > 1) { buffer_append(&parent->buffer, ", "); }
-  json_escape_string(parent, key);
-  buffer_append(&parent->buffer, ": [");
-
-  JSON* array = (JSON*) malloc(sizeof(JSON));
-  json_init(array);
-  return array;
+  if (json->length > 1) { buffer_append(json, ", "); }
+  json_escape_string(json, key);
+  buffer_append(json, ": [");
 }
 
-void json_end_array(JSON* parent, JSON* array) {
-  if (!array) { return; }
-
-  buffer_append(&array->buffer, "]");
-
-  if (parent) {
-    buffer_concat(&parent->buffer, &array->buffer);
-    json_free(array);
-  }
+void json_end_array(buffer_T* json) {
+  if (json) { buffer_append(json, "]"); }
 }
