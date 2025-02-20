@@ -60,7 +60,8 @@ bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
 }
 
 void buffer_append(buffer_T* buffer, const char* text) {
-  if (!text || text[0] == '\0') { return; }
+  if (!buffer || !text) { return; }
+  if (text[0] == '\0') { return; }
 
   size_t text_length = strlen(text);
 
@@ -99,7 +100,8 @@ void buffer_append_whitespace(buffer_T* buffer, size_t length) {
 }
 
 void buffer_prepend(buffer_T* buffer, const char* text) {
-  if (!text || text[0] == '\0') { return; }
+  if (!buffer || !text) { return; }
+  if (text[0] == '\0') { return; }
 
   size_t text_length = strlen(text);
 
