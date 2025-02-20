@@ -25,6 +25,14 @@ module ERBX
     )
   end
 
+  def self.lex_to_json(source)
+    LibERBX::Buffer.with do |output|
+      LibERBX.erbx_lex_json_to_buffer(source, output.pointer)
+
+      JSON.parse(output.read.force_encoding("utf-8"))
+    end
+  end
+
   def self.extract_ruby(source)
     LibERBX::Buffer.with do |output|
       LibERBX.erbx_extract_ruby_to_buffer(source, output.pointer)

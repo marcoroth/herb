@@ -5,6 +5,7 @@
 #include "include/erbx.h"
 #include "include/extract.h"
 #include "include/io.h"
+#include "include/json.h"
 #include "include/ruby_parser.h"
 
 #include <stdio.h>
@@ -35,11 +36,12 @@ int main(int argc, char* argv[]) {
 
     printf("ERBX - Seamless and powerful HTML+ERB parsing.\n\n");
 
-    printf("./erbx lex [file]     -  Lex a file\n");
-    printf("./erbx parse [file]   -  Parse a file\n");
-    printf("./erbx ruby [file]    -  Extract Ruby from a file\n");
-    printf("./erbx html [file]    -  Extract HTML from a file\n");
-    printf("./erbx prism [file]   -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./erbx lex [file]      -  Lex a file\n");
+    printf("./erbx lex_json [file] -  Lex a file and return the result as json.\n");
+    printf("./erbx parse [file]    -  Parse a file\n");
+    printf("./erbx ruby [file]     -  Extract Ruby from a file\n");
+    printf("./erbx html [file]     -  Extract HTML from a file\n");
+    printf("./erbx prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
 
     return 1;
   }
@@ -64,6 +66,17 @@ int main(int argc, char* argv[]) {
 
     printf("%s\n", output.value);
     print_time_diff(start, end, "lexing");
+
+    buffer_free(&output);
+    free(source);
+
+    return 0;
+  }
+
+  if (strcmp(argv[1], "lex_json") == 0) {
+    erbx_lex_json_to_buffer(source, &output);
+
+    printf("%s\n", output.value);
 
     buffer_free(&output);
     free(source);

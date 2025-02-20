@@ -77,11 +77,12 @@ The `erbx` executable exposes a few commands for interacting with `.html.erb` fi
 
 ERBX - Seamless and powerful HTML+ERB parsing.
 
-./erbx lex [file]     -  Lex a file
-./erbx parse [file]   -  Parse a file
-./erbx ruby [file]    -  Extract Ruby from a file
-./erbx html [file]    -  Extract HTML from a file
-./erbx prism [file]   -  Extract Ruby from a file and parse the Ruby source with Prism
+./erbx lex [file]      -  Lex a file
+./erbx lex_json [file] -  Lex a file and return the result as json.
+./erbx parse [file]    -  Parse a file
+./erbx ruby [file]     -  Extract Ruby from a file
+./erbx html [file]     -  Extract HTML from a file
+./erbx prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism
 ```
 
 Running the executable shows a pretty-printed output for the respective command and the time it took to execute:

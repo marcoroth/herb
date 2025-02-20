@@ -1,4 +1,5 @@
 #include "include/token.h"
+#include "include/json.h"
 #include "include/lexer.h"
 #include "include/location.h"
 #include "include/token_struct.h"
@@ -93,6 +94,39 @@ char* token_to_string(token_T* token) {
   free(escaped);
 
   return string;
+}
+
+char* token_to_json(token_T* token) {
+  buffer_T json = buffer_new();
+
+  json_start_root_object(&json);
+  json_add_string(&json, "type", token_type_to_string(token->type));
+  json_add_string(&json, "value", token->value);
+
+  buffer_T range = buffer_new();
+  json_start_array(&json, "range");
+  json_add_size_t(&range, NULL, token->range->start);
+  json_add_size_t(&range, NULL, token->range->end);
+  buffer_concat(&json, &range);
+  json_end_array(&json);
+
+  buffer_T start = buffer_new();
+  json_start_object(&json, "start");
+  json_add_size_t(&start, "line", token->start->line);
+  json_add_size_t(&start, "column", token->start->column);
+  buffer_concat(&json, &start);
+  json_end_object(&json);
+
+  buffer_T end = buffer_new();
+  json_start_object(&json, "end");
+  json_add_size_t(&end, "line", token->start->line);
+  json_add_size_t(&end, "column", token->start->column);
+  buffer_concat(&json, &end);
+  json_end_object(&json);
+
+  json_end_object(&json);
+
+  return buffer_value(&json);
 }
 
 char* token_value(token_T* token) {

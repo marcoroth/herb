@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <limits.h>
 
 #include "include/test.h"
 #include "../../src/include/buffer.h"
@@ -247,6 +247,40 @@ TEST(test_json_int_to_string_min_max)
   ck_assert_str_eq(buffer, "-2147483648");
 END
 
+TEST(test_json_add_size_t_basic)
+  buffer_T json = buffer_new();
+
+  json_add_size_t(&json, "size", 42);
+  ck_assert_str_eq(buffer_value(&json), "\"size\": 42");
+
+  buffer_free(&json);
+END
+
+TEST(test_json_add_size_t_large_number)
+  buffer_T json = buffer_new();
+
+  json_add_size_t(&json, "size", 9876543210UL);
+  ck_assert_str_eq(buffer_value(&json), "\"size\": 9876543210");
+
+  buffer_clear(&json);
+  json_add_size_t(&json, "size", SIZE_MAX);
+  ck_assert_str_eq(buffer_value(&json), "\"size\": 18446744073709551615");
+
+  buffer_free(&json);
+END
+
+TEST(test_json_add_size_t_in_array)
+  buffer_T json = buffer_new();
+
+  json_add_size_t(&json, NULL, 1024);
+  json_add_size_t(&json, NULL, 2048);
+  json_add_size_t(&json, NULL, 4096);
+
+  ck_assert_str_eq(buffer_value(&json), "1024, 2048, 4096");
+
+  buffer_free(&json);
+END
+
 
 TCase* json_tests(void) {
   TCase* json = tcase_create("JSON");
@@ -264,6 +298,9 @@ TCase* json_tests(void) {
   tcase_add_test(json, test_json_int_to_string_positive);
   tcase_add_test(json, test_json_int_to_string_negative);
   tcase_add_test(json, test_json_int_to_string_min_max);
+  tcase_add_test(json, test_json_add_size_t_basic);
+  tcase_add_test(json, test_json_add_size_t_large_number);
+  tcase_add_test(json, test_json_add_size_t_in_array);
 
   return json;
 }

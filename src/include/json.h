@@ -10,8 +10,11 @@ void json_escape_string(buffer_T* json, const char* string);
 
 void json_add_string(buffer_T* json, const char* key, const char* value);
 void json_add_int(buffer_T* json, const char* key, int value);
+void json_add_size_t(buffer_T* json, const char* key, size_t value);
 void json_add_double(buffer_T* json, const char* key, double value);
 void json_add_bool(buffer_T* json, const char* key, int value);
+
+void json_add_raw_string(buffer_T* json, const char* string);
 
 void json_start_object(buffer_T* json, const char* key);
 void json_end_object(buffer_T* json);

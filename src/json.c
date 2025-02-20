@@ -117,6 +117,36 @@ void json_add_int(buffer_T* json, const char* key, int value) {
   }
 
   buffer_append(json, number);
+  if (json->length == 1) { buffer_append(json, " "); }
+}
+
+void json_add_size_t(buffer_T* json, const char* key, size_t value) {
+  if (!json) { return; }
+
+  char number[32];
+  char temp[32];
+  int i = 0;
+
+  do {
+    temp[i++] = (char) ((value % 10) + '0');
+    value /= 10;
+  } while (value > 0);
+
+  int j = 0;
+  while (i > 0) {
+    number[j++] = temp[--i];
+  }
+  number[j] = '\0';
+
+  if (json->length > 1) { buffer_append(json, ", "); }
+
+  if (key) {
+    json_escape_string(json, key);
+    buffer_append(json, ": ");
+  }
+
+  buffer_append(json, number);
+  if (json->length == 1) { buffer_append(json, " "); }
 }
 
 void json_add_bool(buffer_T* json, const char* key, int value) {
@@ -130,6 +160,14 @@ void json_add_bool(buffer_T* json, const char* key, int value) {
   }
 
   buffer_append(json, value ? "true" : "false");
+}
+
+void json_add_raw_string(buffer_T* json, const char* string) {
+  if (!json) { return; }
+
+  if (json->length > 1) { buffer_append(json, ", "); }
+
+  buffer_append(json, string);
 }
 
 void json_start_root_object(buffer_T* json) {

@@ -2,6 +2,7 @@
 #include "include/array.h"
 #include "include/buffer.h"
 #include "include/io.h"
+#include "include/json.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/token.h"
@@ -72,6 +73,24 @@ void erbx_lex_to_buffer(char* source, buffer_T* output) {
     buffer_append(output, "\n");
   }
 
+  erbx_free_tokens(&tokens);
+}
+
+void erbx_lex_json_to_buffer(char* source, buffer_T* output) {
+  array_T* tokens = erbx_lex(source);
+
+  buffer_T json = buffer_new();
+  json_start_root_array(&json);
+
+  for (size_t i = 0; i < array_size(tokens); i++) {
+    token_T* token = array_get(tokens, i);
+    json_add_raw_string(&json, token_to_json(token));
+  }
+
+  json_end_array(&json);
+  buffer_concat(output, &json);
+
+  buffer_free(&json);
   erbx_free_tokens(&tokens);
 }
 
