@@ -60,6 +60,26 @@ char* escape_newlines(const char* input) {
   return orig_output;
 }
 
+char* wrap_string(const char* input, char character) {
+  if (input == NULL) { return NULL; }
+
+  size_t length = strlen(input);
+  char* wrapped = (char*) malloc(length + 3);
+
+  if (wrapped == NULL) { return NULL; }
+
+  wrapped[0] = character;
+  strcpy(wrapped + 1, input);
+  wrapped[length + 1] = character;
+  wrapped[length + 2] = '\0';
+
+  return wrapped;
+}
+
+char* quoted_string(const char* input) {
+  return wrap_string(input, '"');
+}
+
 char* erbx_strdup(const char* s) {
   size_t len = strlen(s) + 1;
   char* copy = malloc(len);

@@ -48,7 +48,7 @@ array_T* erbx_lex(char* source) {
   return tokens;
 }
 
-AST_NODE_T* erbx_parse(char* source) {
+AST_HTML_DOCUMENT_NODE_T* erbx_parse(char* source) {
   lexer_T* lexer = lexer_init(source);
   parser_T* parser = parser_init(lexer);
 

@@ -2,7 +2,7 @@
 
 module ERBX
   module LibERBX
-    attach_function :ast_node_name, [:pointer], :string
+    # attach_function :ast_node_name, [:pointer], :string
     attach_function :ast_node_type, [:pointer], :int
     attach_function :ast_node_type_to_string, [:pointer], :string
     attach_function :ast_node_children, [:pointer], :pointer

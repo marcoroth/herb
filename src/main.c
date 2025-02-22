@@ -85,11 +85,11 @@ int main(int argc, char* argv[]) {
   }
 
   if (strcmp(argv[1], "parse") == 0) {
-    AST_NODE_T* root = erbx_parse(source);
+    AST_HTML_DOCUMENT_NODE_T* root = erbx_parse(source);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    ast_node_pretty_print(root, 0, &output);
-    printf("%s", output.value);
+    ast_node_pretty_print((AST_NODE_T*) root, 0, 0, &output);
+    printf("%s\n", output.value);
 
     print_time_diff(start, end, "parsing");
 

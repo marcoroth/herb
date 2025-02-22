@@ -10,20 +10,192 @@ size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }
 
-AST_NODE_T* ast_node_init(ast_node_type_T type) {
-  AST_NODE_T* node = calloc(1, ast_node_sizeof());
+void ast_node_init(AST_NODE_T* node, ast_node_type_T type) {
+  if (!node) { return; }
 
   node->type = type;
-  node->children = array_init(ast_node_sizeof());
   node->start = location_init(0, 0);
   node->end = location_init(0, 0);
-
-  return node;
+  node->children = array_init(ast_node_sizeof());
 }
 
-char* ast_node_name(AST_NODE_T* node) {
-  return node->name;
+AST_LITERAL_T* ast_literal_node_init(const char* content) {
+  AST_LITERAL_T* literal = malloc(sizeof(AST_LITERAL_T));
+
+  ast_node_init(&literal->base, AST_LITERAL_NODE);
+
+  literal->content = erbx_strdup(content);
+
+  return literal;
 }
+
+AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
+  token_T* tag_name, bool is_void, AST_HTML_OPEN_TAG_NODE_T* open_tag, AST_HTML_ELEMENT_BODY_NODE_T* body,
+  AST_HTML_CLOSE_TAG_NODE_T* close_tag
+) {
+  AST_HTML_ELEMENT_NODE_T* element = malloc(sizeof(AST_HTML_ELEMENT_NODE_T));
+
+  ast_node_init(&element->base, AST_HTML_ELEMENT_NODE);
+
+  element->tag_name = tag_name;
+  element->is_void = is_void;
+  element->open_tag = open_tag;
+  element->body = body;
+  element->close_tag = close_tag;
+
+  return element;
+}
+
+AST_HTML_ELEMENT_BODY_NODE_T* ast_html_element_body_node_init(void) {
+  AST_HTML_ELEMENT_BODY_NODE_T* element = malloc(sizeof(AST_HTML_ELEMENT_BODY_NODE_T));
+
+  ast_node_init(&element->base, AST_HTML_ELEMENT_BODY_NODE);
+
+  element->base.type = AST_HTML_ELEMENT_BODY_NODE;
+
+  return element;
+}
+
+AST_HTML_OPEN_TAG_NODE_T* ast_html_open_tag_node_init(
+  token_T* tag_name, AST_HTML_ATTRIBUTE_SET_NODE_T attributes, token_T* tag_opening, token_T* tag_closing
+) {
+  AST_HTML_OPEN_TAG_NODE_T* open_tag = malloc(sizeof(AST_HTML_OPEN_TAG_NODE_T));
+
+  ast_node_init(&open_tag->base, AST_HTML_OPEN_TAG_NODE);
+
+  open_tag->attributes = &attributes;
+  open_tag->tag_opening = tag_opening;
+  open_tag->tag_name = tag_name;
+  open_tag->tag_closing = tag_closing;
+
+  ast_node_set_start(&open_tag->base, open_tag->tag_opening->start);
+  ast_node_set_end(&open_tag->base, open_tag->tag_closing->end);
+
+  return open_tag;
+}
+
+// AST_HTML_SELF_CLOSE_TAG_NODE_T* ast_html_self_close_tag_node_init(AST_HTML_ATTRIBUTE_SET_NODE_T attributes, token_T*
+// tag_opening, token_T* tag_closing) {
+//   AST_HTML_SELF_CLOSE_TAG_NODE_T* open_tag =
+//   (AST_HTML_SELF_CLOSE_TAG_NODE_T*)ast_node_init(AST_HTML_SELF_CLOSE_TAG_NODE); open_tag->attributes = &attributes;
+//   open_tag->tag_opening = tag_opening;
+//   open_tag->tag_closing = tag_closing;
+//   return open_tag;
+// }
+
+AST_HTML_CLOSE_TAG_NODE_T* ast_html_close_tag_node_init(token_T* tag_opening, token_T* tag_name, token_T* tag_closing) {
+  AST_HTML_CLOSE_TAG_NODE_T* close_tag = malloc(sizeof(AST_HTML_CLOSE_TAG_NODE_T));
+
+  ast_node_init(&close_tag->base, AST_HTML_CLOSE_TAG_NODE);
+
+  close_tag->tag_opening = tag_opening;
+  close_tag->tag_name = tag_name;
+  close_tag->tag_closing = tag_closing;
+
+  return close_tag;
+}
+
+AST_HTML_COMMENT_T* ast_html_comment_node_init(token_T* comment_start, token_T* comment_end) {
+  AST_HTML_COMMENT_T* comment = malloc(sizeof(AST_HTML_COMMENT_T));
+
+  ast_node_init(&comment->base, AST_ERB_CONTENT_NODE);
+
+  comment->comment_start = comment_start;
+  comment->comment_end = comment_end;
+
+  return comment;
+}
+
+AST_ERB_CONTENT_NODE_T* ast_erb_content_node_init(token_T* tag_opening, token_T* tag_closing) {
+  AST_ERB_CONTENT_NODE_T* erb = malloc(sizeof(AST_ERB_CONTENT_NODE_T));
+
+  ast_node_init(&erb->base, AST_ERB_CONTENT_NODE);
+
+  erb->tag_opening = tag_opening;
+  erb->tag_closing = tag_closing;
+
+  return erb;
+}
+
+AST_HTML_TEXT_NODE_T* ast_html_text_node_init(void) {
+  AST_HTML_TEXT_NODE_T* text_node = malloc(sizeof(AST_HTML_TEXT_NODE_T));
+
+  ast_node_init(&text_node->base, AST_HTML_TEXT_NODE);
+
+  return text_node;
+}
+
+AST_HTML_DOCTYPE_NODE_T* ast_html_doctype_node_init(token_T* tag_opening, token_T* tag_closing) {
+  AST_HTML_DOCTYPE_NODE_T* doctype = malloc(sizeof(AST_HTML_DOCTYPE_NODE_T));
+
+  ast_node_init(&doctype->base, AST_HTML_DOCTYPE_NODE);
+
+  doctype->tag_opening = tag_opening;
+  doctype->tag_closing = tag_closing;
+
+  return doctype;
+}
+
+AST_HTML_DOCUMENT_NODE_T* ast_html_document_node_init(void) {
+  AST_HTML_DOCUMENT_NODE_T* document_node = malloc(sizeof(AST_HTML_DOCUMENT_NODE_T));
+
+  ast_node_init(&document_node->base, AST_HTML_DOCUMENT_NODE);
+
+  return document_node;
+}
+
+AST_HTML_ATTRIBUTE_SET_NODE_T* ast_html_attribute_set_node_init(void) {
+  AST_HTML_ATTRIBUTE_SET_NODE_T* attributes_set = malloc(sizeof(AST_HTML_ATTRIBUTE_SET_NODE_T));
+
+  ast_node_init(&attributes_set->base, AST_HTML_ATTRIBUTE_SET_NODE);
+  attributes_set->attributes = array_init(ast_node_sizeof());
+
+  return attributes_set;
+}
+
+AST_HTML_ATTRIBUTE_NODE_T* ast_html_attribute_node_init(
+  AST_HTML_ATTRIBUTE_NAME_NODE_T* name, token_T* equals, AST_HTML_ATTRIBUTE_VALUE_NODE_T* value
+) {
+  AST_HTML_ATTRIBUTE_NODE_T* attribute = malloc(sizeof(AST_HTML_ATTRIBUTE_NODE_T));
+
+  ast_node_init(&attribute->base, AST_HTML_ATTRIBUTE_NAME_NODE);
+
+  attribute->name = name;
+  attribute->equals = equals;
+  attribute->value = value;
+
+  return attribute;
+}
+
+AST_HTML_ATTRIBUTE_NAME_NODE_T* ast_html_attribute_name_node_init(void) {
+  AST_HTML_ATTRIBUTE_NAME_NODE_T* name = malloc(sizeof(AST_HTML_ATTRIBUTE_NAME_NODE_T));
+  ast_node_init(&name->base, AST_HTML_ATTRIBUTE_NAME_NODE);
+  return name;
+}
+
+AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* open_quote, token_T* close_quote) {
+  AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = malloc(sizeof(AST_HTML_ATTRIBUTE_VALUE_NODE));
+  ast_node_init(&value->base, AST_HTML_ATTRIBUTE_VALUE_NODE);
+  value->open_quote = open_quote;
+  value->close_quote = close_quote;
+  return value;
+}
+
+AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_node_init(const char* message, const char* expected, const char* got) {
+  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token = malloc(sizeof(AST_UNEXPECTED_TOKEN_NODE_T));
+
+  ast_node_init(&unexpected_token->base, AST_HTML_ATTRIBUTE_VALUE_NODE);
+
+  unexpected_token->message = message;
+  unexpected_token->expected = expected;
+  unexpected_token->got = got;
+
+  return unexpected_token;
+}
+
+// char* ast_node_name(AST_NODE_T* node) {
+//   return node->name;
+// }
 
 ast_node_type_T ast_node_type(AST_NODE_T* node) {
   return node->type;
@@ -40,6 +212,7 @@ array_T* ast_node_children(AST_NODE_T* node) {
 void ast_node_set_start(AST_NODE_T* node, location_T* location) {
   node->start = location;
 }
+
 void ast_node_set_end(AST_NODE_T* node, location_T* location) {
   node->end = location;
 }
@@ -61,7 +234,7 @@ char* ast_node_type_to_string(AST_NODE_T* node) {
   switch (node->type) {
     case AST_LITERAL_NODE: return "AST_LITERAL_NODE";
     case AST_STRING_COMPOUND_NODE: return "AST_STRING_COMPOUND_NODE";
-    case AST_UNEXCPECTED_TOKEN_NODE: return "AST_UNEXCPECTED_TOKEN_NODE";
+    case AST_UNEXCPECTED_TOKEN_NODE: return "AST_UNEXPECTED_TOKEN_NODE";
 
     case AST_HTML_DOCUMENT_NODE: return "AST_HTML_DOCUMENT_NODE";
     case AST_HTML_DOCTYPE_NODE: return "AST_HTML_DOCTYPE_NODE";
@@ -109,7 +282,7 @@ char* ast_node_human_type(AST_NODE_T* node) {
   switch (node->type) {
     case AST_LITERAL_NODE: return "Literal";
     case AST_STRING_COMPOUND_NODE: return "StringCompound";
-    case AST_UNEXCPECTED_TOKEN_NODE: return "UnexcpectedToken";
+    case AST_UNEXCPECTED_TOKEN_NODE: return "UnexpectedToken";
 
     case AST_HTML_DOCUMENT_NODE: return "DocumentNode";
     case AST_HTML_DOCTYPE_NODE: return "Doctype";
@@ -125,7 +298,7 @@ char* ast_node_human_type(AST_NODE_T* node) {
 
     case AST_HTML_ATTRIBUTE_SET_NODE: return "AttributeSet";
     case AST_HTML_ATTRIBUTE_NODE: return "Attribute";
-    case AST_HTML_ATTRIBUTE_CONDITIONAL_NODE: return "CondiationalAttribute";
+    case AST_HTML_ATTRIBUTE_CONDITIONAL_NODE: return "ConditionalAttribute";
     case AST_HTML_ATTRIBUTE_NAME_NODE: return "AttributeName";
     case AST_HTML_ATTRIBUTE_VALUE_NODE: return "AttributeValue";
     case AST_HTML_ATTRIBUTE_SPREAD_NODE: return "AttributeSpread";
@@ -153,48 +326,287 @@ char* ast_node_human_type(AST_NODE_T* node) {
   }
 }
 
-void ast_node_pretty_print(AST_NODE_T* node, size_t indent, buffer_T* buffer) {
-  buffer_append_whitespace(buffer, indent * 2);
+void ast_indent(buffer_T* buffer, size_t indent, bool child) {
+  if (child && indent >= 1) {
+    // buffer_append_whitespace(buffer, 4);
 
-  buffer_append(buffer, "@ ");
-  buffer_append(buffer, ast_node_human_type(node));
+    for (size_t i = 0; i < indent; i++) {
+      buffer_append(buffer, "│   ");
+    }
 
-  buffer_append(buffer, " (location: (");
-  char location[64];
-  sprintf(location, "%zu,%zu)-(%zu,%zu", node->start->line, node->start->column, node->end->line, node->end->column);
-  buffer_append(buffer, location);
-  buffer_append(buffer, "))\n");
-
-  buffer_append_whitespace(buffer, indent * 2);
-  buffer_append(buffer, "├── ");
-
-  if (node->name != NULL) {
-    buffer_append(buffer, "name: \"");
-    buffer_append(buffer, escape_newlines(node->name));
-    buffer_append(buffer, "\"\n");
+    // buffer_append_whitespace(buffer, 4);
   } else {
-    buffer_append(buffer, "name: ∅\n");
+    buffer_append_whitespace(buffer, indent * 4);
+  }
+}
+
+// void ast_indent(buffer_T* buffer, size_t indent) {
+//   if (indent >= 3) {
+//     buffer_append_whitespace(buffer, 4);
+//     buffer_append(buffer, "│   ");
+//     buffer_append(buffer, "│   ");
+//     buffer_append_whitespace(buffer, (indent - 3) * 4);
+//   } else if (indent >= 2) {
+//     buffer_append_whitespace(buffer, 4);
+//     buffer_append(buffer, "│   ");
+//     buffer_append_whitespace(buffer, (indent - 2) * 4);
+//   } else {
+//     buffer_append_whitespace(buffer, indent * 4);
+//   }
+// }
+
+bool should_print_children(AST_NODE_T* node, int indent) {
+  if (node == NULL) { return false; }
+  if (node->children == NULL) { return false; }
+
+  const ast_node_type_T node_types_with_children[] = {
+    AST_HTML_DOCUMENT_NODE,
+    AST_HTML_COMMENT_NODE,
+    AST_HTML_ELEMENT_NODE,
+  };
+
+  size_t num_types = sizeof(node_types_with_children) / sizeof(node_types_with_children[0]);
+
+  for (size_t i = 0; i < num_types; i++) {
+    if (node->type == node_types_with_children[i]) { return true; }
   }
 
-  buffer_append_whitespace(buffer, indent * 2);
-  buffer_append(buffer, "└── ");
+  return false;
+}
 
+void ast_node_pretty_print_newline(size_t indent, size_t relative_indent, buffer_T* buffer) {
+  ast_indent(buffer, indent, true);
+  ast_indent(buffer, relative_indent, false);
+  buffer_append(buffer, "\n");
+}
+
+void ast_node_pretty_print_label(
+  char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+) {
+  ast_indent(buffer, indent, true);
+  ast_indent(buffer, relative_indent, false);
+
+  if (last_property) {
+    buffer_append(buffer, "└── ");
+  } else {
+    buffer_append(buffer, "├── ");
+  }
+
+  buffer_append(buffer, name);
+  buffer_append(buffer, ": ");
+}
+
+void ast_node_pretty_print_property(
+  AST_NODE_T* node, char* name, char* value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+) {
+  ast_node_pretty_print_label(name, indent, relative_indent, last_property, buffer);
+  buffer_append(buffer, value);
+  buffer_append(buffer, "\n");
+}
+
+void ast_node_pretty_print_children(
+  AST_NODE_T* node, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+) {
   if (array_size(node->children) == 0) {
-    buffer_append(buffer, "children: []\n\n");
-  } else {
-    buffer_append(buffer, "children: (");
+    ast_node_pretty_print_property(node, "children", "[]", indent, relative_indent, last_property, buffer);
+    ast_node_pretty_print_newline(indent, relative_indent, buffer);
 
-    char count[16];
-    sprintf(count, "%zu", array_size(node->children));
-    buffer_append(buffer, count);
-
-    buffer_append(buffer, ")\n");
+    return;
   }
+
+  ast_node_pretty_print_label("children", indent, relative_indent, last_property, buffer);
+
+  buffer_append(buffer, "(");
+
+  char count[16];
+  sprintf(count, "%zu", array_size(node->children));
+  buffer_append(buffer, count);
+  buffer_append(buffer, ")\n");
 
   if (indent < 20) {
     for (size_t i = 0; i < array_size(node->children); i++) {
       AST_NODE_T* child = array_get(node->children, i);
-      ast_node_pretty_print(child, indent + 1 * 2, buffer);
+      ast_indent(buffer, indent + 1, true);
+      ast_indent(buffer, relative_indent, false);
+
+      if (i == array_size(node->children) - 1) {
+        buffer_append(buffer, "└── ");
+      } else {
+        buffer_append(buffer, "├── ");
+      }
+
+      ast_node_pretty_print(child, indent + 1, 1, buffer);
+
+      if (i != array_size(node->children) - 1) { ast_node_pretty_print_newline(indent + 2, 0, buffer); }
     }
+  }
+}
+
+void ast_node_pretty_print_location(location_T* start, location_T* end, buffer_T* buffer) {
+  buffer_append(buffer, "(location: (");
+  char location[128];
+  sprintf(
+    location,
+    "%zu,%zu)-(%zu,%zu",
+    (start && start->line) ? start->line : 0,
+    (start && start->column) ? start->column : 0,
+    (end && end->line) ? end->line : 0,
+    (end && end->column) ? end->column : 0
+  );
+  buffer_append(buffer, location);
+  buffer_append(buffer, "))");
+}
+
+void ast_node_pretty_print_token_property(
+  token_T* token, char* name, size_t indent, size_t relative_ident, bool last_property, buffer_T* buffer
+) {
+  ast_node_pretty_print_label(name, indent, relative_ident, last_property, buffer);
+  buffer_append(buffer, quoted_string(token->value));
+  buffer_append(buffer, " ");
+  ast_node_pretty_print_location(token->start, token->end, buffer);
+  buffer_append(buffer, "\n");
+}
+
+bool print_locations = true;
+
+void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_indent, buffer_T* buffer) {
+  if (!node) { return; }
+
+  buffer_append(buffer, "@ ");
+  buffer_append(buffer, ast_node_human_type(node));
+  buffer_append(buffer, " ");
+
+  if (print_locations) { ast_node_pretty_print_location(node->start, node->end, buffer); }
+
+  buffer_append(buffer, "\n");
+
+  switch (node->type) {
+    case AST_HTML_ELEMENT_NODE: {
+      AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
+
+      char* tag_name = element->open_tag->tag_name->value;
+      char* is_void = element->is_void ? "true" : "false";
+
+      ast_node_pretty_print_property(node, "tag_name", tag_name, indent + 1, 0, false, buffer);
+      ast_node_pretty_print_property(node, "is_void", is_void, indent + 1, 0, false, buffer);
+      ast_node_pretty_print_label("open_tag", indent + 1, 0, false, buffer);
+
+      if (element->open_tag) {
+        buffer_append(buffer, "\n");
+        ast_indent(buffer, indent + 2, true);
+        ast_indent(buffer, 0, false);
+
+        buffer_append(buffer, "└── ");
+        ast_node_pretty_print((AST_NODE_T*) element->open_tag, indent + 2, 1, buffer);
+      } else {
+        buffer_append(buffer, " ∅\n");
+      }
+
+      if (!element->is_void) {
+        ast_node_pretty_print_children(node, indent + 1, 0, false, buffer);
+        ast_node_pretty_print_label("close_tag", indent + 1, 0, true, buffer);
+
+        if (element->close_tag) {
+          buffer_append(buffer, "\n");
+          ast_indent(buffer, indent + 1, true);
+          ast_indent(buffer, relative_indent, false);
+
+          buffer_append(buffer, "└── ");
+          ast_node_pretty_print((AST_NODE_T*) element->close_tag, indent + 1, 2, buffer);
+        } else {
+          buffer_append(buffer, " ∅\n");
+        }
+      }
+      break;
+    }
+
+    case AST_HTML_OPEN_TAG_NODE: {
+      AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+
+      ast_node_pretty_print_token_property(
+        open_tag->tag_opening,
+        "tag_opening",
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      ast_node_pretty_print_property(
+        node,
+        "tag_name",
+        open_tag->tag_name->value,
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      ast_node_pretty_print_token_property(
+        open_tag->tag_closing,
+        "tag_closing",
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      ast_node_pretty_print_property(
+        node,
+        "is_void",
+        open_tag->is_void ? "true" : "false",
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      if (open_tag->attributes) {
+        ast_node_pretty_print_label("attributes", indent, relative_indent, false, buffer);
+
+        buffer_append(buffer, "[...]\n");
+        // ast_node_pretty_print_newline(indent, relative_indent, buffer);
+
+        // ast_node_pretty_print((AST_NODE_T*) open_tag->attributes->base.children, indent + 1, 0, buffer);
+
+      } else {
+        ast_node_pretty_print_property(node, "attributes", "∅", indent, relative_indent, true, buffer);
+      }
+
+      ast_node_pretty_print_children(node, indent, 1, true, buffer);
+
+      break;
+    }
+
+    case AST_HTML_CLOSE_TAG_NODE: {
+      const AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
+
+      char* value = close_tag->tag_name ? close_tag->tag_name->value : "∅";
+      ast_node_pretty_print_property(node, "tag_name", value, indent, relative_indent, true, buffer);
+
+      break;
+    }
+
+    case AST_HTML_TEXT_NODE: {
+      const AST_HTML_TEXT_NODE_T* text_node = (AST_HTML_TEXT_NODE_T*) node;
+
+      char* value = text_node->content ? quoted_string(escape_newlines(text_node->content)) : "∅";
+      ast_node_pretty_print_property(node, "content", value, indent + 1, 0, true, buffer);
+
+      break;
+    }
+
+    case AST_HTML_COMMENT_NODE: {
+      const AST_HTML_COMMENT_T* comment = (AST_HTML_COMMENT_T*) node;
+      char* value = comment->content ? escape_newlines(comment->content) : "∅";
+      ast_node_pretty_print_property(node, "content", value, indent, relative_indent, true, buffer);
+
+      break;
+    }
+
+    default: {
+
+      ast_node_pretty_print_children(node, indent, 0, false, buffer);
+    };
   }
 }
