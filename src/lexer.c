@@ -79,6 +79,23 @@ static token_T* lexer_advance_with(lexer_T* lexer, const char* value, token_type
   return token_init(value, type, lexer);
 }
 
+static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
+  char* collected = malloc(count + 1);
+  if (!collected) { return NULL; }
+
+  for (size_t i = 0; i < count; i++) {
+    collected[i] = lexer->current_character;
+    lexer_advance(lexer);
+  }
+
+  collected[count] = '\0';
+
+  token_T* token = lexer_advance_with(lexer, collected, type);
+  free(collected);
+
+  return token;
+}
+
 static token_T* lexer_advance_current(lexer_T* lexer, token_type_T type) {
   return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
 }
@@ -177,7 +194,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '<': {
       if (lexer_peek(lexer, 1) == '%') { return lexer_parse_erb_open(lexer); }
-      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with(lexer, "<!DOCTYPE", TOKEN_HTML_DOCTYPE); }
+      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with_next(lexer, 9, TOKEN_HTML_DOCTYPE); }
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {

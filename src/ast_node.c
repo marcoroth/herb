@@ -144,6 +144,9 @@ AST_HTML_DOCTYPE_NODE_T* ast_html_doctype_node_init(token_T* tag_opening, token_
   doctype->tag_opening = tag_opening;
   doctype->tag_closing = tag_closing;
 
+  ast_node_set_start(&doctype->base, doctype->tag_opening->start);
+  ast_node_set_end(&doctype->base, doctype->tag_closing->end);
+
   return doctype;
 }
 
@@ -696,6 +699,20 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
       ast_node_pretty_print_children(node, indent, 0, true, buffer);
     } break;
 
+    case AST_HTML_DOCTYPE_NODE: {
+      AST_HTML_DOCTYPE_NODE_T* doctype = (AST_HTML_DOCTYPE_NODE_T*) node;
+      ast_node_pretty_print_token_property(doctype->tag_opening, "tag_opening", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_property(
+        node,
+        "content",
+        quoted_string(doctype->content),
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+      ast_node_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
+    } break;
     default: {
       ast_node_pretty_print_children(node, indent, 0, true, buffer);
     };
