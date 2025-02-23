@@ -44,7 +44,12 @@ AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
   element->close_tag = close_tag;
 
   ast_node_set_start(&element->base, open_tag->base.start);
-  ast_node_set_end(&element->base, close_tag->base.end);
+
+  if (close_tag != NULL) {
+    ast_node_set_end(&element->base, close_tag->base.end);
+  } else {
+    // TODO: figure out what to do in this case
+  }
 
   return element;
 }
@@ -353,26 +358,8 @@ char* ast_node_human_type(AST_NODE_T* node) {
 }
 
 void ast_indent(buffer_T* buffer, size_t indent, bool child) {
-  if (child) {
-    if (indent >= 1) {
-      buffer_append_whitespace(buffer, indent * 4);
-      for (size_t i = 0; i < indent - 1; i++) {
-        buffer_append(buffer, "│   ");
-      }
-    } else {
-      buffer_append_whitespace(buffer, indent * 4);
-    }
-  } else {
-    if (indent >= 2) {
-      buffer_append(buffer, "│   ");
-      for (size_t i = 0; i < indent - 1; i++) {
-        buffer_append(buffer, "    ");
-      }
-    } else {
-      for (size_t i = 0; i < indent; i++) {
-        buffer_append(buffer, "    ");
-      }
-    }
+  for (size_t i = 0; i < indent; i++) {
+    buffer_append(buffer, "    ");
   }
 }
 
@@ -433,17 +420,17 @@ void ast_node_pretty_print_label(
 }
 
 void ast_node_pretty_print_property(
-  AST_NODE_T* node, char* name, char* value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+  AST_NODE_T* node, char* name, const char* value, size_t indent, size_t relative_indent, bool last_property,
+  buffer_T* buffer
 ) {
   ast_node_pretty_print_label(name, indent, relative_indent, last_property, buffer);
   buffer_append(buffer, value);
   buffer_append(buffer, "\n");
 }
 
-
-
 void ast_node_pretty_print_array(
-  AST_NODE_T* node, char* name, array_T* children, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+  AST_NODE_T* node, char* name, array_T* children, size_t indent, size_t relative_indent, bool last_property,
+  buffer_T* buffer
 ) {
   if (array_size(children) == 0) {
     ast_node_pretty_print_property(node, name, "[]", indent, relative_indent, last_property, buffer);
@@ -610,7 +597,15 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
       );
 
       if (open_tag->attributes) {
-        ast_node_pretty_print_array((AST_NODE_T *) open_tag, "attributes", open_tag->attributes, indent, relative_indent, false, buffer);
+        ast_node_pretty_print_array(
+          (AST_NODE_T*) open_tag,
+          "attributes",
+          open_tag->attributes,
+          indent,
+          relative_indent,
+          false,
+          buffer
+        );
       } else {
         ast_node_pretty_print_property(node, "attributes", "∅", indent, relative_indent, true, buffer);
       }
@@ -641,13 +636,34 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_ERB_CONTENT_NODE: {
       AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
-      ast_node_pretty_print_token_property(erb_content_node->tag_opening, "tag_opening", indent, relative_indent + 0, false, buffer);
-      ast_node_pretty_print_token_property(erb_content_node->content, "content", indent, relative_indent + 0, false, buffer);
-      ast_node_pretty_print_token_property(erb_content_node->tag_closing, "tag_closing", indent, relative_indent + 0, true, buffer);
+      ast_node_pretty_print_token_property(
+        erb_content_node->tag_opening,
+        "tag_opening",
+        indent,
+        relative_indent + 0,
+        false,
+        buffer
+      );
+      ast_node_pretty_print_token_property(
+        erb_content_node->content,
+        "content",
+        indent,
+        relative_indent + 0,
+        false,
+        buffer
+      );
+      ast_node_pretty_print_token_property(
+        erb_content_node->tag_closing,
+        "tag_closing",
+        indent,
+        relative_indent + 0,
+        true,
+        buffer
+      );
     } break;
 
     case AST_HTML_ATTRIBUTE_NODE: {
-      AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T *) node;
+      AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
 
       ast_node_pretty_print_label("name", indent, relative_indent, false, buffer);
 
@@ -661,7 +677,6 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
       } else {
         buffer_append(buffer, " ∅\n");
       }
-
 
       ast_node_pretty_print_label("value", indent, relative_indent, false, buffer);
 
@@ -679,7 +694,7 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     } break;
 
     case AST_HTML_ATTRIBUTE_NAME_NODE: {
-      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = (AST_HTML_ATTRIBUTE_NAME_NODE_T *) node;
+      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = (AST_HTML_ATTRIBUTE_NAME_NODE_T*) node;
 
       ast_node_pretty_print_token_property(attribute_name->name, "name", indent, relative_indent + 1, true, buffer);
     } break;
@@ -687,11 +702,24 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_ATTRIBUTE_VALUE_NODE: {
       AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
 
-      ast_node_pretty_print_token_property(attribute_value->open_quote, "open_quote", indent, relative_indent + 1, false, buffer);
-      ast_node_pretty_print_token_property(attribute_value->close_quote, "close_quote", indent, relative_indent + 1, false, buffer);
+      ast_node_pretty_print_token_property(
+        attribute_value->open_quote,
+        "open_quote",
+        indent,
+        relative_indent + 1,
+        false,
+        buffer
+      );
+      ast_node_pretty_print_token_property(
+        attribute_value->close_quote,
+        "close_quote",
+        indent,
+        relative_indent + 1,
+        false,
+        buffer
+      );
 
       ast_node_pretty_print_children(node, indent, relative_indent + 1, true, buffer);
-
 
     } break;
 
@@ -713,6 +741,7 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
       );
       ast_node_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
     } break;
+
     default: {
       ast_node_pretty_print_children(node, indent, 0, true, buffer);
     };
