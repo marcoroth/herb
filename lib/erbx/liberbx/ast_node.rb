@@ -2,7 +2,6 @@
 
 module ERBX
   module LibERBX
-    # attach_function :ast_node_name, [:pointer], :string
     attach_function :ast_node_type, [:pointer], :int
     attach_function :ast_node_type_to_string, [:pointer], :string
     attach_function :ast_node_children, [:pointer], :pointer
@@ -14,10 +13,6 @@ module ERBX
 
       def initialize(pointer)
         @pointer = pointer
-      end
-
-      def name
-        LibERBX.ast_node_type(pointer)
       end
 
       def type_int
