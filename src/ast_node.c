@@ -237,7 +237,7 @@ AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(
 AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_node_init(const char* message, const char* expected, const char* got) {
   AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token = malloc(sizeof(AST_UNEXPECTED_TOKEN_NODE_T));
 
-  ast_node_init(&unexpected_token->base, AST_HTML_ATTRIBUTE_VALUE_NODE);
+  ast_node_init(&unexpected_token->base, AST_UNEXCPECTED_TOKEN_NODE);
 
   unexpected_token->message = message;
   unexpected_token->expected = expected;
@@ -777,6 +777,32 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
         true,
         buffer
       );
+    } break;
+
+    case AST_UNEXCPECTED_TOKEN_NODE: {
+      AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = (AST_UNEXPECTED_TOKEN_NODE_T*) node;
+
+      ast_node_pretty_print_property(
+        node,
+        "message",
+        unexpected_token_node->message,
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      ast_node_pretty_print_property(
+        node,
+        "expected",
+        unexpected_token_node->expected,
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+
+      ast_node_pretty_print_property(node, "got", unexpected_token_node->got, indent, relative_indent, true, buffer);
     } break;
 
     default: {
