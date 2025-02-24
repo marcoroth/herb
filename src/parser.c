@@ -257,12 +257,12 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
         switch (parser->current_token->type) {
           case TOKEN_ERB_START: {
             if (buffer_length(&buffer) > 0) {
-              // AST_LITERAL_T* literal = ast_literal_node_init(buffer_value(&buffer));
-              // literal->base.start = start_location;
-              // literal->base.end = parser->current_token->start;
+              AST_LITERAL_T* literal = ast_literal_node_init(buffer_value(&buffer));
+              literal->base.start = start_location;
+              literal->base.end = parser->current_token->start;
 
               buffer = buffer_new();
-              // array_append(children, literal);
+              array_append(children, literal);
             }
 
             array_append(children, parser_parse_erb_tag(parser, attribute));
@@ -278,10 +278,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       }
 
       if (buffer_length(&buffer) > 0) {
-        // AST_LITERAL_T* literal = ast_literal_node_init(buffer_value(&buffer));
-        // literal->base.start = start_location;
-        // literal->base.end = parser->current_token->start;
-        // array_append(children, literal);
+        AST_LITERAL_T* literal = ast_literal_node_init(buffer_value(&buffer));
+        literal->base.start = start_location;
+        literal->base.end = parser->current_token->start;
+        array_append(children, literal);
       }
 
       close_quote = parser_consume(parser, TOKEN_QUOTE, attribute);
@@ -302,17 +302,15 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     } break;
 
     case TOKEN_IDENTIFIER: {
-      // array_append(children, ast_literal_node_init(parser_consume(parser, TOKEN_IDENTIFIER, attribute)->value));
+      array_append(children, ast_literal_node_init(parser_consume(parser, TOKEN_IDENTIFIER, attribute)->value));
     } break;
 
     default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, attribute);
   }
 
-  parser_set_end_from_current_token(parser, attribute);
+  //parser_set_end_from_current_token(parser, attribute);
 
-  AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(open_quote, close_quote);
-
-  attribute_value->base.children = children;
+  AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(open_quote, children, close_quote);
 
   /// array_append(attribute->children, attribute_value);
 

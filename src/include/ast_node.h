@@ -196,7 +196,7 @@ AST_HTML_ATTRIBUTE_NODE_T* ast_html_attribute_node_init(
   AST_HTML_ATTRIBUTE_NAME_NODE_T* name, token_T* equals, AST_HTML_ATTRIBUTE_VALUE_NODE_T* value
 );
 AST_HTML_ATTRIBUTE_NAME_NODE_T* ast_html_attribute_name_node_init(token_T* name);
-AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* open_quote, token_T* close_quote);
+AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* open_quote, array_T* children, token_T* close_quote);
 AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_node_init(const char* message, const char* expected, const char* got);
 
 size_t ast_node_sizeof(void);

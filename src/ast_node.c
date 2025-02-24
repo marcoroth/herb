@@ -198,7 +198,7 @@ AST_HTML_ATTRIBUTE_NAME_NODE_T* ast_html_attribute_name_node_init(token_T* name)
   return name_node;
 }
 
-AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* open_quote, token_T* close_quote) {
+AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* open_quote, array_T* children, token_T* close_quote) {
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = malloc(sizeof(AST_HTML_ATTRIBUTE_VALUE_NODE));
   ast_node_init(&value->base, AST_HTML_ATTRIBUTE_VALUE_NODE);
 
@@ -211,6 +211,10 @@ AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(token_T* ope
     ast_node_set_end(&value->base, value->close_quote->end);
   } else {
     // TODO: set location if attribute value is not quoted
+  }
+
+  if (children != NULL) {
+    value->base.children = children;
   }
 
   return value;
