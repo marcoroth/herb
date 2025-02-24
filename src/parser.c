@@ -308,9 +308,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     default: parser_append_unexpected_token_from_token(parser, parser->current_token->type, attribute);
   }
 
-  //parser_set_end_from_current_token(parser, attribute);
+  // parser_set_end_from_current_token(parser, attribute);
 
-  AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(open_quote, children, close_quote);
+  AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value =
+    ast_html_attribute_value_node_init(open_quote, children, close_quote);
 
   /// array_append(attribute->children, attribute_value);
 
