@@ -36,7 +36,7 @@ module ERBX
 
       def inspect
         LibERBX::Buffer.with do |output|
-          LibERBX.ast_node_pretty_print(pointer, 0, output.pointer)
+          LibERBX.ast_node_pretty_print(pointer, 0, 0, output.pointer)
 
           output.read.force_encoding("utf-8") # TODO: remove force_encoding
         end
