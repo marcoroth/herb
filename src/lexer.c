@@ -90,7 +90,7 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
 
   collected[count] = '\0';
 
-  token_T* token = lexer_advance_with(lexer, collected, type);
+  token_T* token = token_init(collected, type, lexer);
   free(collected);
 
   return token;
@@ -194,7 +194,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '<': {
       if (lexer_peek(lexer, 1) == '%') { return lexer_parse_erb_open(lexer); }
-      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with_next(lexer, 9, TOKEN_HTML_DOCTYPE); }
+      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with_next(lexer, strlen("<!DOCTYPE"), TOKEN_HTML_DOCTYPE); }
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
