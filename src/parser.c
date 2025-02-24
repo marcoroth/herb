@@ -330,10 +330,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     } break;
 
     case TOKEN_IDENTIFIER: {
-      array_append(
-        children,
-        ast_literal_node_init(parser_consume(parser, TOKEN_IDENTIFIER, attribute->children)->value)
-      );
+      token_T* identifier = parser_consume(parser, TOKEN_IDENTIFIER, attribute->children);
+      AST_LITERAL_T* literal_node = ast_literal_node_init_from_token(identifier);
+
+      array_append(children, literal_node);
     } break;
 
     default: {

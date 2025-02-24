@@ -44,6 +44,16 @@ void* array_get(array_T* array, size_t index) {
   return array->items[index];
 }
 
+void* array_first(array_T* array) {
+  if (!array || array->size == 0) { return NULL; }
+  return array->items[0];
+}
+
+void* array_last(array_T* array) {
+  if (!array || array->size == 0) { return NULL; }
+  return array->items[array->size - 1];
+}
+
 void array_set(array_T* array, size_t index, void* item) {
   if (index >= array->size) { return; }
 

@@ -174,6 +174,7 @@ typedef struct {
 void ast_node_init(AST_NODE_T* node, ast_node_type_T type);
 
 AST_LITERAL_T* ast_literal_node_init(const char* content);
+AST_LITERAL_T* ast_literal_node_init_from_token(token_T* token);
 AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
   token_T* tag_name, bool is_void, AST_HTML_OPEN_TAG_NODE_T* open_tag, AST_HTML_ELEMENT_BODY_NODE_T* body,
   AST_HTML_CLOSE_TAG_NODE_T* close_tag

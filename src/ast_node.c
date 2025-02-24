@@ -29,6 +29,18 @@ AST_LITERAL_T* ast_literal_node_init(const char* content) {
   return literal;
 }
 
+AST_LITERAL_T* ast_literal_node_init_from_token(token_T* token) {
+  AST_LITERAL_T* literal = malloc(sizeof(AST_LITERAL_T));
+
+  ast_node_init(&literal->base, AST_LITERAL_NODE);
+
+  literal->content = erbx_strdup(token->value);
+
+  ast_node_set_locations_from_token(&literal->base, token);
+
+  return literal;
+}
+
 AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
   token_T* tag_name, bool is_void, AST_HTML_OPEN_TAG_NODE_T* open_tag, AST_HTML_ELEMENT_BODY_NODE_T* body,
   AST_HTML_CLOSE_TAG_NODE_T* close_tag
@@ -222,14 +234,18 @@ AST_HTML_ATTRIBUTE_VALUE_NODE_T* ast_html_attribute_value_node_init(
   value->open_quote = open_quote;
   value->close_quote = close_quote;
 
+  if (children != NULL) { value->base.children = children; }
+
   if (value->quoted) {
     ast_node_set_start(&value->base, value->open_quote->start);
     ast_node_set_end(&value->base, value->close_quote->end);
-  } else {
-    // TODO: set location if attribute value is not quoted
-  }
+  } else if (array_size(children) > 0) {
+    AST_NODE_T* first = array_first(value->base.children);
+    AST_NODE_T* last = array_last(value->base.children);
 
-  if (children != NULL) { value->base.children = children; }
+    if (first != NULL) { ast_node_set_start(&value->base, first->start); };
+    if (last != NULL) { ast_node_set_end(&value->base, last->end); };
+  }
 
   return value;
 }
