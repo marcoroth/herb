@@ -43,6 +43,8 @@ AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
   element->body = body;
   element->close_tag = close_tag;
 
+  if (body != NULL && body->base.children != NULL) { element->base.children = body->base.children; }
+
   ast_node_set_start(&element->base, open_tag->base.start);
 
   if (close_tag != NULL) {
@@ -133,10 +135,12 @@ AST_ERB_CONTENT_NODE_T* ast_erb_content_node_init(token_T* tag_opening, token_T*
   return erb;
 }
 
-AST_HTML_TEXT_NODE_T* ast_html_text_node_init(void) {
+AST_HTML_TEXT_NODE_T* ast_html_text_node_init(const char* content) {
   AST_HTML_TEXT_NODE_T* text_node = malloc(sizeof(AST_HTML_TEXT_NODE_T));
 
   ast_node_init(&text_node->base, AST_HTML_TEXT_NODE);
+
+  text_node->content = content;
 
   return text_node;
 }
