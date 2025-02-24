@@ -146,12 +146,13 @@ AST_HTML_TEXT_NODE_T* ast_html_text_node_init(const char* content) {
   return text_node;
 }
 
-AST_HTML_DOCTYPE_NODE_T* ast_html_doctype_node_init(token_T* tag_opening, token_T* tag_closing) {
+AST_HTML_DOCTYPE_NODE_T* ast_html_doctype_node_init(token_T* tag_opening, array_T* children, token_T* tag_closing) {
   AST_HTML_DOCTYPE_NODE_T* doctype = malloc(sizeof(AST_HTML_DOCTYPE_NODE_T));
 
   ast_node_init(&doctype->base, AST_HTML_DOCTYPE_NODE);
 
   doctype->tag_opening = tag_opening;
+  doctype->base.children = children;
   doctype->tag_closing = tag_closing;
 
   ast_node_set_start(&doctype->base, doctype->tag_opening->start);
@@ -758,17 +759,11 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
 
     case AST_HTML_DOCTYPE_NODE: {
       AST_HTML_DOCTYPE_NODE_T* doctype = (AST_HTML_DOCTYPE_NODE_T*) node;
+
       ast_node_pretty_print_token_property(doctype->tag_opening, "tag_opening", indent, relative_indent, false, buffer);
-      ast_node_pretty_print_property(
-        node,
-        "content",
-        quoted_string(doctype->content),
-        indent,
-        relative_indent,
-        false,
-        buffer
-      );
-      ast_node_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
+      ast_node_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, false, buffer);
+
+      ast_node_pretty_print_children(node, indent, relative_indent, true, buffer);
     } break;
 
     case AST_LITERAL_NODE: {
