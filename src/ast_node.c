@@ -566,14 +566,7 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer
       );
 
-      ast_node_pretty_print_token_property(
-        open_tag->tag_name,
-        "tag_name",
-        indent,
-        relative_indent,
-        false,
-        buffer
-      );
+      ast_node_pretty_print_token_property(open_tag->tag_name, "tag_name", indent, relative_indent, false, buffer);
 
       ast_node_pretty_print_token_property(
         open_tag->tag_closing,
@@ -614,9 +607,23 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_CLOSE_TAG_NODE: {
       const AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      ast_node_pretty_print_token_property(close_tag->tag_opening, "tag_opening", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_token_property(
+        close_tag->tag_opening,
+        "tag_opening",
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
       ast_node_pretty_print_token_property(close_tag->tag_name, "tag_name", indent, relative_indent, false, buffer);
-      ast_node_pretty_print_token_property(close_tag->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
+      ast_node_pretty_print_token_property(
+        close_tag->tag_closing,
+        "tag_closing",
+        indent,
+        relative_indent,
+        true,
+        buffer
+      );
 
     } break;
 

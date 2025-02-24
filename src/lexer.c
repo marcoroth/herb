@@ -194,7 +194,11 @@ token_T* lexer_next_token(lexer_T* lexer) {
   switch (lexer->current_character) {
     case '<': {
       if (lexer_peek(lexer, 1) == '%') { return lexer_parse_erb_open(lexer); }
-      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with_next(lexer, strlen("<!DOCTYPE"), TOKEN_HTML_DOCTYPE); }
+
+      if (lexer_peek_for_doctype(lexer, 0)) {
+        return lexer_advance_with_next(lexer, strlen("<!DOCTYPE"), TOKEN_HTML_DOCTYPE);
+      }
+
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
