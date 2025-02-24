@@ -50,7 +50,7 @@ AST_HTML_ELEMENT_NODE_T* ast_html_element_node_init(
   if (close_tag != NULL) {
     ast_node_set_end(&element->base, close_tag->base.end);
   } else {
-    // TODO: figure out what to do in this case
+    ast_node_set_end(&element->base, open_tag->base.end);
   }
 
   return element;
@@ -109,12 +109,13 @@ AST_HTML_CLOSE_TAG_NODE_T* ast_html_close_tag_node_init(token_T* tag_opening, to
   return close_tag;
 }
 
-AST_HTML_COMMENT_T* ast_html_comment_node_init(token_T* comment_start, token_T* comment_end) {
+AST_HTML_COMMENT_T* ast_html_comment_node_init(token_T* comment_start, array_T* children, token_T* comment_end) {
   AST_HTML_COMMENT_T* comment = malloc(sizeof(AST_HTML_COMMENT_T));
 
-  ast_node_init(&comment->base, AST_ERB_CONTENT_NODE);
+  ast_node_init(&comment->base, AST_HTML_COMMENT_NODE);
 
   comment->comment_start = comment_start;
+  comment->base.children = children;
   comment->comment_end = comment_end;
 
   return comment;
@@ -187,6 +188,14 @@ AST_HTML_ATTRIBUTE_NODE_T* ast_html_attribute_node_init(
   attribute->equals = equals;
   attribute->value = value;
 
+  ast_node_set_start(&attribute->base, attribute->name->base.start);
+
+  if (value != NULL) {
+    ast_node_set_end(&attribute->base, attribute->value->base.end);
+  } else {
+    ast_node_set_end(&attribute->base, attribute->name->base.end);
+  }
+
   return attribute;
 }
 
@@ -195,6 +204,10 @@ AST_HTML_ATTRIBUTE_NAME_NODE_T* ast_html_attribute_name_node_init(token_T* name)
   ast_node_init(&name_node->base, AST_HTML_ATTRIBUTE_NAME_NODE);
 
   name_node->name = name;
+
+  ast_node_set_start(&name_node->base, name_node->name->start);
+  ast_node_set_end(&name_node->base, name_node->name->end);
+
   return name_node;
 }
 
@@ -644,8 +657,7 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
 
     case AST_HTML_COMMENT_NODE: {
       const AST_HTML_COMMENT_T* comment = (AST_HTML_COMMENT_T*) node;
-      char* value = comment->content ? escape_newlines(comment->content) : "∅";
-      ast_node_pretty_print_property(node, "content", value, indent, relative_indent, true, buffer);
+      ast_node_pretty_print_children(node, indent, relative_indent, true, buffer);
     } break;
 
     case AST_ERB_CONTENT_NODE: {
@@ -690,10 +702,12 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer_append(buffer, "└── ");
         ast_node_pretty_print((AST_NODE_T*) attribute->name, indent, relative_indent + 1, buffer);
       } else {
-        buffer_append(buffer, " ∅\n");
+        buffer_append(buffer, "∅\n");
       }
 
-      ast_node_pretty_print_label("value", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_token_property(attribute->equals, "equals", indent, relative_indent, false, buffer);
+
+      ast_node_pretty_print_label("value", indent, relative_indent, true, buffer);
 
       if (attribute->value) {
         buffer_append(buffer, "\n");
@@ -703,7 +717,7 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer_append(buffer, "└── ");
         ast_node_pretty_print((AST_NODE_T*) attribute->value, indent, relative_indent + 1, buffer);
       } else {
-        buffer_append(buffer, " ∅\n");
+        buffer_append(buffer, "∅\n");
       }
 
     } break;

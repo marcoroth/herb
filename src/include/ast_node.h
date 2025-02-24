@@ -139,7 +139,6 @@ typedef struct {
 typedef struct {
   AST_NODE_T base;
   token_T* comment_start;
-  const char* content;
   token_T* comment_end;
 } AST_HTML_COMMENT_T;
 
@@ -186,7 +185,7 @@ AST_HTML_OPEN_TAG_NODE_T* ast_html_open_tag_node_init(
 // tag_opening, token_T* tag_closing);
 AST_HTML_CLOSE_TAG_NODE_T* ast_html_close_tag_node_init(token_T* tag_opening, token_T* tag_name, token_T* tag_closing);
 AST_HTML_ELEMENT_BODY_NODE_T* ast_html_element_body_node_init(void);
-AST_HTML_COMMENT_T* ast_html_comment_node_init(token_T* comment_start, token_T* comment_end);
+AST_HTML_COMMENT_T* ast_html_comment_node_init(token_T* comment_start, array_T* children, token_T* comment_end);
 AST_ERB_CONTENT_NODE_T* ast_erb_content_node_init(token_T* tag_opening, token_T* content, token_T* tag_closing);
 AST_HTML_TEXT_NODE_T* ast_html_text_node_init(const char* content);
 AST_HTML_DOCTYPE_NODE_T* ast_html_doctype_node_init(token_T* tag_opening, token_T* tag_closing);
