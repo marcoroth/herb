@@ -492,7 +492,7 @@ void ast_node_pretty_print_token_property(
 ) {
   ast_node_pretty_print_label(name, indent, relative_ident, last_property, buffer);
 
-  if (token != NULL) {
+  if (token != NULL && token->value != NULL) {
     buffer_append(buffer, quoted_string(token->value));
     buffer_append(buffer, " ");
     ast_node_pretty_print_location(token->start, token->end, buffer);
@@ -520,12 +520,11 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_ELEMENT_NODE: {
       AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
 
-      char* tag_name = element->open_tag->tag_name->value;
       char* is_void = element->is_void ? "true" : "false";
 
-      ast_node_pretty_print_property(node, "tag_name", tag_name, indent, relative_indent + 0, false, buffer);
-      ast_node_pretty_print_property(node, "is_void", is_void, indent, relative_indent + 0, false, buffer);
-      ast_node_pretty_print_label("open_tag", indent, relative_indent + 0, false, buffer);
+      ast_node_pretty_print_token_property(element->tag_name, "tag_name", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_property(node, "is_void", is_void, indent, relative_indent, false, buffer);
+      ast_node_pretty_print_label("open_tag", indent, relative_indent, false, buffer);
 
       if (element->open_tag) {
         buffer_append(buffer, "\n");
@@ -567,10 +566,9 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer
       );
 
-      ast_node_pretty_print_property(
-        node,
+      ast_node_pretty_print_token_property(
+        open_tag->tag_name,
         "tag_name",
-        open_tag->tag_name->value,
         indent,
         relative_indent,
         false,
@@ -616,8 +614,10 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_CLOSE_TAG_NODE: {
       const AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      char* value = close_tag->tag_name ? close_tag->tag_name->value : "∅";
-      ast_node_pretty_print_property(node, "tag_name", value, indent, relative_indent, true, buffer);
+      ast_node_pretty_print_token_property(close_tag->tag_opening, "tag_opening", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_token_property(close_tag->tag_name, "tag_name", indent, relative_indent, false, buffer);
+      ast_node_pretty_print_token_property(close_tag->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
+
     } break;
 
     case AST_HTML_TEXT_NODE: {
