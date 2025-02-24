@@ -39,11 +39,11 @@ module Lexer
     end
 
     test "erb output inside HTML attribute value with value before and after" do
-      assert_lexed_snapshot(%(<div class="bg-black <%= "text-white" %>"></div>))
+      assert_lexed_snapshot(%(<div class="bg-black <%= "text-white" %> cursor-pointer"></div>))
     end
 
     test "erb output inside HTML attribute value with value and after" do
-      assert_lexed_snapshot(%(<div class="bg-black <%= "text-white" %>"></div>))
+      assert_lexed_snapshot(%(<div class="<%= "text-white" %> bg-black"></div>))
     end
   end
 end
