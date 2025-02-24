@@ -753,6 +753,11 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
       ast_node_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, true, buffer);
     } break;
 
+    case AST_LITERAL_NODE: {
+      AST_LITERAL_T* literal = (AST_LITERAL_T*) node;
+      ast_node_pretty_print_property(node, "content", quoted_string(literal->content), indent, relative_indent, true, buffer);
+    } break;
+
     default: {
       ast_node_pretty_print_children(node, indent, 0, true, buffer);
     };
