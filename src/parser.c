@@ -112,11 +112,11 @@ static token_T* parser_consume_as_end_token(parser_T* parser, token_type_T type,
   return token;
 }
 
-static token_T* parser_consume_token_with_location(parser_T* parser, token_type_T type, AST_NODE_T* node) {
-  token_T* token = parser_consume(parser, type, node->children);
-  ast_node_set_locations_from_token(node, token);
-  return token;
-}
+// static token_T* parser_consume_token_with_location(parser_T* parser, token_type_T type, AST_NODE_T* node) {
+//   token_T* token = parser_consume(parser, type, node->children);
+//   ast_node_set_locations_from_token(node, token);
+//   return token;
+// }
 
 static AST_HTML_COMMENT_T* parser_parse_html_comment(parser_T* parser, AST_NODE_T* element) {
   array_T* children = array_init(8);
