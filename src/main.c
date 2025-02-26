@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
 
     print_time_diff(start, end, "parsing");
 
+    ast_node_free((AST_NODE_T*) root);
     buffer_free(&output);
     free(source);
 

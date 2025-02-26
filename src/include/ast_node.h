@@ -172,6 +172,7 @@ typedef struct {
 } AST_UNEXPECTED_TOKEN_NODE_T;
 
 void ast_node_init(AST_NODE_T* node, ast_node_type_T type);
+void ast_node_free(AST_NODE_T* node);
 
 AST_LITERAL_T* ast_literal_node_init(const char* content);
 AST_LITERAL_T* ast_literal_node_init_from_token(token_T* token);

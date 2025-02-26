@@ -15,6 +15,8 @@ size_t location_column(location_T* location);
 
 size_t location_sizeof(void);
 
+location_T* location_clone(location_T* location);
+
 void location_free(location_T* location);
 
 #endif

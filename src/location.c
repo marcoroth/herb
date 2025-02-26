@@ -21,6 +21,12 @@ size_t location_column(location_T* location) {
   return location->column;
 }
 
+location_T* location_clone(location_T* location) {
+  if (!location) { return NULL; }
+
+  return location_init(location_line(location), location_column(location));
+}
+
 void location_free(location_T* location) {
   free(location);
 }

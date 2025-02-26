@@ -1,5 +1,6 @@
 #include "include/ast_node.h"
 #include "include/buffer.h"
+#include "include/token.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 
@@ -17,6 +18,110 @@ void ast_node_init(AST_NODE_T* node, ast_node_type_T type) {
   node->start = location_init(0, 0);
   node->end = location_init(0, 0);
   node->children = array_init(ast_node_sizeof());
+}
+
+void ast_node_free(AST_NODE_T* node) {
+  if (!node) { return; }
+
+  switch (node->type) {
+    case AST_HTML_DOCUMENT_NODE: {
+      // nothing specific to free here
+    } break;
+
+    case AST_HTML_TEXT_NODE: {
+      AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) node;
+
+      if (text->content != NULL) { free((char*) text->content); }
+    } break;
+
+    case AST_LITERAL_NODE: {
+      AST_LITERAL_T* literal = (AST_LITERAL_T*) node;
+
+      if (literal->content != NULL) { free((char*) literal->content); }
+    } break;
+
+    case AST_HTML_ELEMENT_NODE: {
+      AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
+
+      if (element->open_tag != NULL) { ast_node_free((AST_NODE_T*) element->open_tag); }
+      if (element->close_tag != NULL) { ast_node_free((AST_NODE_T*) element->close_tag); }
+    } break;
+
+    case AST_HTML_OPEN_TAG_NODE: {
+      AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+
+      if (open_tag->tag_opening != NULL) { token_free(open_tag->tag_opening); }
+      if (open_tag->tag_name != NULL) { token_free(open_tag->tag_name); }
+      if (open_tag->tag_closing != NULL) { token_free(open_tag->tag_closing); }
+
+      if (open_tag->attributes != NULL) {
+        for (size_t i = 0; i < array_size(open_tag->attributes); i++) {
+          AST_NODE_T* child = (AST_NODE_T*) array_get(open_tag->attributes, i);
+          if (child) { ast_node_free(child); }
+        }
+
+        array_free(&open_tag->attributes);
+      }
+
+    } break;
+
+    case AST_HTML_ATTRIBUTE_NODE: {
+      AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
+
+      if (attribute->name != NULL) { ast_node_free((AST_NODE_T*) attribute->name); }
+      if (attribute->equals != NULL) { token_free(attribute->equals); }
+      if (attribute->value != NULL) { ast_node_free((AST_NODE_T*) attribute->value); }
+    } break;
+
+    case AST_HTML_ATTRIBUTE_NAME_NODE: {
+      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = (AST_HTML_ATTRIBUTE_NAME_NODE_T*) node;
+
+      if (attribute_name->name != NULL) { token_free(attribute_name->name); }
+    } break;
+
+    case AST_HTML_ATTRIBUTE_VALUE_NODE: {
+      AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
+
+      if (attribute_value->open_quote != NULL) { token_free(attribute_value->open_quote); }
+      if (attribute_value->close_quote != NULL) { token_free(attribute_value->close_quote); }
+    } break;
+
+    case AST_HTML_CLOSE_TAG_NODE: {
+      AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
+
+      if (close_tag->tag_opening != NULL) { token_free(close_tag->tag_opening); }
+      if (close_tag->tag_name != NULL) { token_free(close_tag->tag_name); }
+      if (close_tag->tag_closing != NULL) { token_free(close_tag->tag_closing); }
+    } break;
+
+    case AST_ERB_CONTENT_NODE: {
+      AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) node;
+
+      if (erb_node->tag_opening != NULL) { token_free(erb_node->tag_opening); }
+      if (erb_node->content != NULL) { token_free(erb_node->content); }
+      if (erb_node->tag_closing != NULL) { token_free(erb_node->tag_closing); }
+    } break;
+
+    default: {
+      printf("Didn't know how to free extra properties of Node Type: %s\n", ast_node_type_to_string(node));
+    }
+  }
+
+  if (node->children) {
+    for (size_t i = 0; i < array_size(node->children); i++) {
+      AST_NODE_T* child = (AST_NODE_T*) array_get(node->children, i);
+      if (child) { ast_node_free(child); }
+    }
+
+    array_free(&node->children);
+  }
+
+  // printf("Freeing node: start=%p, end=%p\n", (void*) node->start, (void*) node->end);
+
+  if (node->start) { location_free(node->start); }
+  if (node->end) { location_free(node->end); }
+
+  free(node);
 }
 
 AST_LITERAL_T* ast_literal_node_init(const char* content) {
@@ -153,7 +258,7 @@ AST_HTML_TEXT_NODE_T* ast_html_text_node_init(const char* content) {
 
   ast_node_init(&text_node->base, AST_HTML_TEXT_NODE);
 
-  text_node->content = content;
+  text_node->content = erbx_strdup(content);
 
   return text_node;
 }
@@ -262,10 +367,6 @@ AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_node_init(const char* message, const
   return unexpected_token;
 }
 
-// char* ast_node_name(AST_NODE_T* node) {
-//   return node->name;
-// }
-
 ast_node_type_T ast_node_type(AST_NODE_T* node) {
   return node->type;
 }
@@ -279,11 +380,15 @@ array_T* ast_node_children(AST_NODE_T* node) {
 }
 
 void ast_node_set_start(AST_NODE_T* node, location_T* location) {
-  node->start = location;
+  // if (node->start != NULL) { location_free(node->start); }
+
+  node->start = location_clone(location);
 }
 
 void ast_node_set_end(AST_NODE_T* node, location_T* location) {
-  node->end = location;
+  // if (node->end != NULL) { location_free(node->end); }
+
+  node->end = location_clone(location);
 }
 
 void ast_node_set_start_from_token(AST_NODE_T* node, token_T* token) {
