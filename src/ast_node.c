@@ -40,6 +40,13 @@ void ast_node_free(AST_NODE_T* node) {
       if (literal->content != NULL) { free((char*) literal->content); }
     } break;
 
+    case AST_HTML_COMMENT_NODE: {
+      AST_HTML_COMMENT_T* comment = (AST_HTML_COMMENT_T*) node;
+
+      if (comment->comment_start != NULL) { token_free(comment->comment_start); }
+      if (comment->comment_end != NULL) { token_free(comment->comment_end); }
+    } break;
+
     case AST_HTML_ELEMENT_NODE: {
       AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
 
@@ -779,6 +786,17 @@ void ast_node_pretty_print(AST_NODE_T* node, size_t indent, size_t relative_inde
 
     case AST_HTML_COMMENT_NODE: {
       const AST_HTML_COMMENT_T* comment = (AST_HTML_COMMENT_T*) node;
+
+      ast_node_pretty_print_token_property(
+        comment->comment_start,
+        "comment_start",
+        indent,
+        relative_indent,
+        false,
+        buffer
+      );
+      ast_node_pretty_print_token_property(comment->comment_end, "comment_end", indent, relative_indent, false, buffer);
+
       ast_node_pretty_print_children(node, indent, relative_indent, true, buffer);
     } break;
 
