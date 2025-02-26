@@ -7,6 +7,7 @@ objects = $(sources:.c=.o)
 
 extension_sources = $(wildcard ext/**/*.c)
 extension_headers = $(wildcard ext/**/*.h)
+extension_objects = $(wildcard ext/**/*.o)
 
 prism_objects = $(filter-out src/main.c, $(sources))
 
@@ -90,7 +91,7 @@ test: $(test_objects) $(non_main_objects)
 
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
-	rm -rf $(objects) $(test_objects) lib/erbx/*.bundle tmp
+	rm -rf $(objects) $(test_objects) $(extension_objects) lib/erbx/*.bundle tmp
 
 bundle_install:
 	bundle install
