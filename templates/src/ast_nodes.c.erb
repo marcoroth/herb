@@ -56,16 +56,14 @@ char* ast_node_human_type(AST_NODE_T* node) {
 void ast_free_base_node(AST_NODE_T* node) {
   if (node == NULL) { return; }
 
-  // if (node->children) {
-  //   for (size_t i = 0; i < array_size(node->children); i++) {
-  //     AST_NODE_T* child = (AST_NODE_T*) array_get(node->children, i);
-  //     if (child != NULL) { ast_node_free(child); }
-  //   }
-  //
-  //   array_free(&node->children);
-  // }
+  if (node->errors) {
+    for (size_t i = 0; i < array_size(node->errors); i++) {
+      AST_NODE_T* child = (AST_NODE_T*) array_get(node->errors, i);
+      if (child != NULL) { ast_node_free(child); }
+    }
 
-  // printf("Freeing base node: start=%p, end=%p\n", (void*) node->start, (void*) node->end);
+    array_free(&node->errors);
+  }
 
   if (node->start) { location_free(node->start); }
   if (node->end) { location_free(node->end); }
