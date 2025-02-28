@@ -18,4 +18,6 @@ range_T* range_copy(range_T* range);
 
 size_t range_sizeof(void);
 
+void range_free(range_T* range);
+
 #endif

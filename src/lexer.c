@@ -119,7 +119,11 @@ static token_T* lexer_parse_whitespace(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(buffer.value, TOKEN_WHITESPACE, lexer);
+  token_T* token = token_init(buffer.value, TOKEN_WHITESPACE, lexer);
+
+  buffer_free(&buffer);
+
+  return token;
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
@@ -133,7 +137,11 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
     lexer_advance(lexer);
   }
 
-  return token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
+  token_T* token = token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
+
+  buffer_free(&buffer);
+
+  return token;
 }
 
 // ===== ERB Parsing
@@ -165,7 +173,11 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   lexer->state = STATE_ERB_CLOSE;
 
-  return token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
+  token_T* token = token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
+
+  buffer_free(&buffer);
+
+  return token;
 }
 
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
@@ -240,4 +252,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
       return lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
   }
+}
+
+void lexer_free(lexer_T* lexer) {
+  if (lexer == NULL) { return; }
+
+  free(lexer);
 }

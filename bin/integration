@@ -20,6 +20,9 @@ rake test
 ./erbx parse examples/test.html.erb
 ./erbx prism examples/test.html.erb
 
+bin/leaks_lex examples/test.html.erb
+bin/leaks_parse examples/test.html.erb
+
 bin/lint
 bin/tidy
 bundle exec rubocop

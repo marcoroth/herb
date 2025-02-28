@@ -15,4 +15,6 @@ AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser);
 
 size_t parser_sizeof(void);
 
+void parser_free(parser_T* parser);
+
 #endif

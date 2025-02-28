@@ -41,7 +41,22 @@
         │       │
         │       │
         │       ├── tag_closing: ">" (location: (1:68)-(1:69))
-        │       ├── children: []
+        │       ├── children: (3 items)
+        │       │   ├── @ ERBContentNode (location: (1:5)-(1:18))
+        │       │   │   ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │   │   ├── content: " if odd? " (location: (1:7)-(1:16))
+        │       │   │   └── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │   │
+        │       │   ├── @ ERBContentNode (location: (1:33)-(1:43))
+        │       │   │   ├── tag_opening: "<%" (location: (1:33)-(1:35))
+        │       │   │   ├── content: " else " (location: (1:35)-(1:41))
+        │       │   │   └── tag_closing: "%>" (location: (1:41)-(1:43))
+        │       │   │
+        │       │   └── @ ERBContentNode (location: (1:59)-(1:68))
+        │       │       ├── tag_opening: "<%" (location: (1:59)-(1:61))
+        │       │       ├── content: " end " (location: (1:61)-(1:66))
+        │       │       └── tag_closing: "%>" (location: (1:66)-(1:68))
+        │       │
         │       └── is_void: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))

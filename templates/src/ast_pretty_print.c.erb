@@ -114,7 +114,10 @@ void ast_pretty_print_token_property(
   ast_pretty_print_label(name, indent, relative_ident, last_property, buffer);
 
   if (token != NULL && token->value != NULL) {
-    buffer_append(buffer, quoted_string(token->value));
+    char* quoted = quoted_string(token->value);
+    buffer_append(buffer, quoted);
+    free(quoted);
+
     buffer_append(buffer, " ");
     ast_pretty_print_location(token->start, token->end, buffer);
   } else {
@@ -255,8 +258,23 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_TEXT_NODE: {
       const AST_HTML_TEXT_NODE_T* text_node = (AST_HTML_TEXT_NODE_T*) node;
 
-      char* value = text_node->content ? quoted_string(escape_newlines(text_node->content)) : "∅";
+      char* value = "∅";
+      char* escaped;
+      char* quoted;
+
+      if (text_node->content != NULL) {
+        escaped = escape_newlines(text_node->content);
+        quoted = quoted_string(escaped);
+        value = quoted;
+      }
+
       ast_pretty_print_property(node, "content", value, indent, relative_indent, true, buffer);
+
+      if (text_node->content != NULL) {
+        free(escaped);
+        free(quoted);
+      }
+
     } break;
 
     case AST_HTML_COMMENT_NODE: {
@@ -382,15 +400,17 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
 
     case AST_LITERAL_NODE: {
       AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) node;
+      char* quoted = quoted_string(literal->content);
       ast_pretty_print_property(
         node,
         "content",
-        quoted_string(literal->content),
+        quoted,
         indent,
         relative_indent,
         true,
         buffer
       );
+      free(quoted);
     } break;
 
     case AST_UNEXPECTED_TOKEN_NODE: {

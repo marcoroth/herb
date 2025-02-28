@@ -30,3 +30,9 @@ range_T* range_copy(range_T* range) {
 
   return range_init(range_start(range), range_end(range));
 }
+
+void range_free(range_T* range) {
+  if (range == NULL) { return; }
+
+  free(range);
+}

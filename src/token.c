@@ -108,6 +108,7 @@ char* token_to_json(token_T* token) {
   json_add_size_t(&range, NULL, token->range->start);
   json_add_size_t(&range, NULL, token->range->end);
   buffer_concat(&json, &range);
+  buffer_free(&range);
   json_end_array(&json);
 
   buffer_T start = buffer_new();
@@ -115,6 +116,7 @@ char* token_to_json(token_T* token) {
   json_add_size_t(&start, "line", token->start->line);
   json_add_size_t(&start, "column", token->start->column);
   buffer_concat(&json, &start);
+  buffer_free(&start);
   json_end_object(&json);
 
   buffer_T end = buffer_new();
@@ -122,6 +124,7 @@ char* token_to_json(token_T* token) {
   json_add_size_t(&end, "line", token->start->line);
   json_add_size_t(&end, "column", token->start->column);
   buffer_concat(&json, &end);
+  buffer_free(&end);
   json_end_object(&json);
 
   json_end_object(&json);
@@ -167,6 +170,9 @@ void token_free(token_T* token) {
   if (!token) { return; }
 
   if (token->value != NULL) { free(token->value); }
+  if (token->range != NULL) { range_free(token->range); }
+  if (token->start != NULL) { location_free(token->start); }
+  if (token->end != NULL) { location_free(token->end); }
 
   free(token);
 }
