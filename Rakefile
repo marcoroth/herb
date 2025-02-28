@@ -37,6 +37,7 @@ Rake::Task[:clean].enhance do
   end
 end
 
+desc "Render out template files"
 task :templates do
   require_relative "templates/template"
 
