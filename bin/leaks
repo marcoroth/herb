@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <command>"
+  exit 1
+fi
+
+if [[ "$(uname)" != "Darwin" ]]; then
+  echo "Not on macOS, skipping leaks check."
+  exit 0
+fi
+
+leaks --atExit -- "$@"
