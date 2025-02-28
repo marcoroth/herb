@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <strings.h>
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
