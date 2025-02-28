@@ -16,8 +16,8 @@ void ast_node_init(AST_NODE_T* node, ast_node_type_T type, location_T* start, lo
   if (!node) { return; }
 
   node->type = type;
-  node->start = start;
-  node->end = end;
+  node->start = location_copy(start);
+  node->end = location_copy(end);
   node->errors = array_init(1);
 }
 
