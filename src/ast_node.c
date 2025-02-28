@@ -28,8 +28,6 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(token_T* token) {
 
   literal->content = erbx_strdup(token->value);
 
-  ast_node_set_locations_from_token(&literal->base, token);
-
   return literal;
 }
 
