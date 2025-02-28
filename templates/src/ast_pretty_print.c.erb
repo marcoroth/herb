@@ -16,21 +16,6 @@ void ast_indent(buffer_T* buffer, size_t indent, bool child) {
   }
 }
 
-// void ast_indent(buffer_T* buffer, size_t indent) {
-//   if (indent >= 3) {
-//     buffer_append_whitespace(buffer, 4);
-//     buffer_append(buffer, "│   ");
-//     buffer_append(buffer, "│   ");
-//     buffer_append_whitespace(buffer, (indent - 3) * 4);
-//   } else if (indent >= 2) {
-//     buffer_append_whitespace(buffer, 4);
-//     buffer_append(buffer, "│   ");
-//     buffer_append_whitespace(buffer, (indent - 2) * 4);
-//   } else {
-//     buffer_append_whitespace(buffer, indent * 4);
-//   }
-// }
-
 void ast_pretty_print_newline(size_t indent, size_t relative_indent, buffer_T* buffer) {
   ast_indent(buffer, indent, true);
   ast_indent(buffer, relative_indent, false);
