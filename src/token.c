@@ -137,13 +137,36 @@ int token_type(token_T* token) {
   return token->type;
 }
 
+token_T* token_copy(token_T* token) {
+  if (!token) { return NULL; }
+
+  token_T* new_token = calloc(1, token_sizeof());
+
+  if (!new_token) { return NULL; }
+
+  if (token->value) {
+    new_token->value = erbx_strdup(token->value);
+
+    if (!new_token->value) {
+      free(new_token);
+      return NULL;
+    }
+  } else {
+    new_token->value = NULL;
+  }
+
+  new_token->type = token->type;
+  new_token->range = range_copy(token->range);
+  new_token->start = location_copy(token->start);
+  new_token->end = location_copy(token->end);
+
+  return new_token;
+}
+
 void token_free(token_T* token) {
   if (!token) { return; }
 
-  if (token->value) {
-    free(token->value);
-    token->value = NULL;
-  }
+  if (token->value != NULL) { free(token->value); }
 
   free(token);
 }

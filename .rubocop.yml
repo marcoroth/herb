@@ -26,15 +26,32 @@ Style/SymbolArray:
 Style/BlockDelimiters:
   Enabled: false
 
+Style/GlobalVars:
+  Exclude:
+    - ext/erbx/extconf.rb
+
+Style/AccessorGrouping:
+  Exclude:
+    - lib/erbx/ast/nodes.rb
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Exclude:
+    - lib/erbx/ast/nodes.rb
+
 Metrics/MethodLength:
   Max: 20
   Exclude:
     - test/fork_helper.rb
+    - lib/erbx/ast/nodes.rb
 
 Metrics/AbcSize:
   Exclude:
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - templates/template.rb
+    - lib/erbx/ast/node.rb
+    - lib/erbx/ast/nodes.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -42,12 +59,31 @@ Metrics/ClassLength:
 
 Metrics/BlockLength:
   Exclude:
+    - Rakefile
     - test/**/*_test.rb
+
+Metrics/ParameterLists:
+  Exclude:
+    - lib/erbx/ast/nodes.rb
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - lib/erbx/ast/nodes.rb
 
 Layout/LineLength:
   Max: 120
   Exclude:
     - test/**/*_test.rb
+    - lib/erbx/token.rb
+    - lib/erbx/ast/nodes.rb
+
+Layout/EmptyLines:
+  Exclude:
+    - lib/erbx/ast/nodes.rb
+
+Layout/EmptyLinesAroundModuleBody:
+  Exclude:
+    - lib/erbx/ast/nodes.rb
 
 Security/MarshalLoad:
   Exclude:

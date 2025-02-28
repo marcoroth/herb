@@ -7,6 +7,7 @@ size_t location_sizeof(void) {
 
 location_T* location_init(size_t line, size_t column) {
   location_T* location = safe_malloc(sizeof(location_T));
+
   location->line = line;
   location->column = column;
 
@@ -21,7 +22,7 @@ size_t location_column(location_T* location) {
   return location->column;
 }
 
-location_T* location_clone(location_T* location) {
+location_T* location_copy(location_T* location) {
   if (!location) { return NULL; }
 
   return location_init(location_line(location), location_column(location));

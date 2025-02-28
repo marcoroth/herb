@@ -1,0 +1,43 @@
+#ifndef ERBX_AST_NODES_H
+#define ERBX_AST_NODES_H
+
+#include <stdbool.h>
+
+#include "array.h"
+#include "buffer.h"
+#include "location.h"
+#include "token_struct.h"
+
+
+typedef enum {
+<%- nodes.each do |node| -%>
+  <%= node.type.upcase %>,
+<%- end -%>
+} ast_node_type_T;
+
+typedef struct AST_NODE_STRUCT {
+  ast_node_type_T type;
+  location_T* start;
+  location_T* end;
+  // maybe a range too?
+  array_T* errors;
+} AST_NODE_T;
+
+<%- nodes.each do |node| -%>
+<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name, ";"].join }.join("\n  ") : "/* no additional fields */" -%>
+
+typedef struct {
+  AST_NODE_T base;
+  <%= arguments %>
+} <%= node.struct_type %>;
+<%- end -%>
+
+<%- nodes.each do |node| -%>
+<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
+<%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments %>);
+<%- end -%>
+
+char* ast_node_type_to_string(AST_NODE_T* node);
+char* ast_node_human_type(AST_NODE_T* node);
+
+#endif

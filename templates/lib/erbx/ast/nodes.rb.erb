@@ -1,0 +1,72 @@
+module ERBX
+  module AST
+    <%- nodes.each do |node| -%>
+    class <%= node.name -%> < Node
+      <%- node.fields.each do |field| -%>
+      attr_reader :<%= field.name %>
+      <%- end -%>
+
+      def initialize(<%= ["type", "start_location", "end_location", "errors", *node.fields.map(&:name)].join(", ") %>)
+        super(type, start_location, end_location, errors)
+        <%- node.fields.each do |field| -%>
+        @<%= field.name %> = <%= field.name %>
+        <%- end -%>
+      end
+
+      def inspect
+        tree_inspect.rstrip.gsub(/\s+$/, "")
+      end
+
+      def tree_inspect(indent = 0)
+        output = +""
+
+        output += "@ #{node_name} "
+        output += "(location: (#{start_location.line}:#{start_location.column})-(#{end_location.line}:#{end_location.column}))"
+        output += "\n"
+
+        output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")
+
+        <%- node.fields.each do |field| -%>
+        <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
+        <%- name = "#{symbol} #{field.name}: " -%>
+        <%- case field -%>
+        <%- when ERBX::Template::StringField -%>
+        output += %(<%= name %>"#{<%= field.name %>}"\n)
+        <%- when ERBX::Template::TokenField -%>
+        output += "<%= name %>"
+        output += <%= field.name %> ? <%= field.name %>.tree_inspect : "∅"
+        output += "\n"
+        <%- when ERBX::Template::BooleanField -%>
+        output += "<%= name %>"
+        output += [true, false].include?(<%= field.name %>) ? <%= field.name %>.to_s : "∅"
+        output += "\n"
+        <%- when ERBX::Template::NodeField -%>
+        output += "<%= name %>"
+        if <%= field.name %>
+          <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
+          output += "\n"
+          <%- if (node.fields.last == field) -%>
+          output += "    └── "
+          <%- else -%>
+          output += "│   └── "
+          <%- end -%>
+          output += <%= field.name %>.tree_inspect(indent).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
+        else
+          output += "∅\n"
+        end
+        <%- when ERBX::Template::ArrayField -%>
+        output += "<%= name %>"
+        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>")
+        <%- else -%>
+        output += "<%= name %> <%= field.inspect %>\n"
+        <%- end -%>
+        <%- end -%>
+        output += "\n"
+
+        output.gsub(/^/, "    " * indent)
+      end
+    end
+
+    <%- end -%>
+  end
+end

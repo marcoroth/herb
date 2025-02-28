@@ -11,14 +11,14 @@ end
 module SnapshotUtils
   def assert_lexed_snapshot(source)
     result = ERBX.lex(source)
-    expected = result.inspect
+    expected = result.value.inspect
 
     assert_snapshot_matches(expected, source)
   end
 
   def assert_parsed_snapshot(source)
-    parsed = ERBX.parse(source)
-    expected = parsed.root_node.inspect
+    result = ERBX.parse(source)
+    expected = result.value.inspect
 
     assert_snapshot_matches(expected, source)
   end

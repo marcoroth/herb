@@ -2,13 +2,13 @@
 
 module ERBX
   class Token
-    attr_reader :value, :range, :start, :end, :type
+    attr_reader :value, :range, :start_location, :end_location, :type
 
-    def initialize(value, range, start, end_loc, type)
+    def initialize(value, range, start_location, end_location, type)
       @value = value
       @range = range
-      @start = start
-      @end = end_loc
+      @start_location = start_location
+      @end_location = end_location
       @type = type
     end
 
@@ -16,8 +16,8 @@ module ERBX
       {
         value: value,
         range: range&.to_hash,
-        start: start&.to_hash,
-        end: self.end&.to_hash,
+        start_location: start_location&.to_hash,
+        end_location: end_location&.to_hash,
         type: type
       }
     end
@@ -26,8 +26,12 @@ module ERBX
       to_hash.to_json(*args)
     end
 
+    def tree_inspect
+      %("#{value}" (location: #{start_location.tree_inspect}-#{end_location.tree_inspect}))
+    end
+
     def inspect
-      %(#<ERBX::Token type="#{type}" value="#{value}" range=[#{range.start_position}, #{range.start_position}] start=#{start.line}:#{start.column} end=#{self.end.line}:#{self.end.column}>)
+      %(#<ERBX::Token type="#{type}" value="#{value}" range=[#{range.start_position}, #{range.start_position}] start=#{start_location.line}:#{start_location.column} end=#{end_location.line}:#{end_location.column}>)
     end
   end
 end

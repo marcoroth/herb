@@ -17,8 +17,12 @@ module ERBX
       to_hash.to_json(*args)
     end
 
+    def tree_inspect
+      "(#{line}:#{column})"
+    end
+
     def inspect
-      %(#<ERBX::Location (#{line}:#{column})>)
+      %(#<ERBX::Location #{tree_inspect}>)
     end
   end
 end

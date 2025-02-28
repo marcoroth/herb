@@ -1,17 +1,12 @@
 # frozen_string_literal: true
 
-require "forwardable"
-
 module ERBX
-  class ParseResult
-    extend Forwardable
+  class ParseResult < Result
+    attr_reader :value
 
-    def_delegators :@root_node, :type, :child_count
-
-    attr_accessor :root_node
-
-    def initialize(pointer)
-      @root_node = LibERBX::ASTNode.new(pointer)
+    def initialize(value, source, warnings, errors)
+      @value = value
+      super(source, warnings, errors)
     end
   end
 end

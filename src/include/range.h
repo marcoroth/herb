@@ -14,6 +14,8 @@ size_t range_start(range_T* range);
 size_t range_end(range_T* range);
 size_t range_length(range_T* range);
 
+range_T* range_copy(range_T* range);
+
 size_t range_sizeof(void);
 
 #endif

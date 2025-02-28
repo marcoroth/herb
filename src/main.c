@@ -1,6 +1,8 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
 #include "include/ast_node.h"
+#include "include/ast_nodes.h"
+#include "include/ast_pretty_print.h"
 #include "include/buffer.h"
 #include "include/erbx.h"
 #include "include/extract.h"
@@ -85,10 +87,10 @@ int main(int argc, char* argv[]) {
   }
 
   if (strcmp(argv[1], "parse") == 0) {
-    AST_HTML_DOCUMENT_NODE_T* root = erbx_parse(source);
+    AST_DOCUMENT_NODE_T* root = erbx_parse(source);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    ast_node_pretty_print((AST_NODE_T*) root, 0, 0, &output);
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
     printf("%s\n", output.value);
 
     print_time_diff(start, end, "parsing");

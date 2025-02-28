@@ -14,6 +14,8 @@ int token_type(token_T* token);
 
 size_t token_sizeof(void);
 
+token_T* token_copy(token_T* token);
+
 void token_free(token_T* token);
 
 #endif

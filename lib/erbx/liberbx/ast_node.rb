@@ -6,7 +6,7 @@ module ERBX
     attach_function :ast_node_type_to_string, [:pointer], :string
     attach_function :ast_node_children, [:pointer], :pointer
     attach_function :ast_node_child_count, [:pointer], :size_t
-    attach_function :ast_node_pretty_print, [:pointer, :size_t, :size_t, :pointer], :void
+    attach_function :ast_pretty_print_node, [:pointer, :size_t, :size_t, :pointer], :void
     attach_function :ast_node_free, [:pointer], :void
 
     class ASTNode
@@ -37,7 +37,7 @@ module ERBX
 
       def inspect
         LibERBX::Buffer.with do |output|
-          LibERBX.ast_node_pretty_print(pointer, 0, 0, output.pointer)
+          LibERBX.ast_pretty_print_node(pointer, 0, 0, output.pointer)
 
           output.read.force_encoding("utf-8") # TODO: remove force_encoding
         end

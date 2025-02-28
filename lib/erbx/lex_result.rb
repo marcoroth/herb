@@ -1,29 +1,12 @@
 # frozen_string_literal: true
 
-require "forwardable"
-
 module ERBX
-  class LexResult
-    extend Forwardable
+  class LexResult < Result
+    attr_reader :value
 
-    def_delegators :@array, :items, :size, :capacity
-
-    attr_accessor :array
-
-    def initialize(pointer)
-      @array = LibERBX::Array.new(pointer, LibERBX::Token)
-    end
-
-    def as_json
-      JSON.parse(to_json)
-    end
-
-    def to_json(*_args)
-      "[#{@array.items.map(&:to_json).join(", ")}]"
-    end
-
-    def inspect
-      @array.items.map(&:inspect).join("\n")
+    def initialize(value, source, warnings, errors)
+      @value = TokenList.new(value)
+      super(source, warnings, errors)
     end
   end
 end

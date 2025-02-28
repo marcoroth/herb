@@ -72,7 +72,7 @@ export default defineConfig({
                 collapsed: true,
                 items: [
                   { text: "HTML_ROOT_NODE", link: "/ast/AST_HTML_ROOT_NODE" },
-                  { text: "HTML_DOCUMENT_NODE", link: "/ast/AST_HTML_DOCUMENT_NODE" },
+                  { text: "HTML_DOCUMENT_NODE", link: "/ast/AST_DOCUMENT_NODE" },
                 ]
               },
               {
