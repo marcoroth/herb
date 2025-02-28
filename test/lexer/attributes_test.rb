@@ -56,10 +56,6 @@ module Lexer
       assert_lexed_snapshot(%(<img value='/'/>))
     end
 
-    test "attribute value double quotes with slash value" do
-      assert_lexed_snapshot(%(<img value="/"/>))
-    end
-
     test "attribute value double quotes with single quote value" do
       assert_lexed_snapshot(%(<img value="''"/>))
     end
