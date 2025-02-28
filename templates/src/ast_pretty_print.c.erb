@@ -139,10 +139,10 @@ void ast_pretty_print_token_property(
   buffer_append(buffer, "\n");
 }
 
-bool print_locations = true;
-
 void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_indent, buffer_T* buffer) {
   if (!node) { return; }
+
+  bool print_locations = true;
 
   buffer_append(buffer, "@ ");
   buffer_append(buffer, ast_node_human_type(node));
