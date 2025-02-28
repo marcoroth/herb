@@ -23,12 +23,7 @@ jobs:
       - name: make
         run: make
 
-      - name: Setup extension
-        working-directory: ./ext/erbx
-        run: bundle install
-
-      - name: Build extension
-        working-directory: ./ext/erbx
+      - name: Generate Templates, Build extension, Run Tests
         run: bundle exec rake
 
       - name: RuboCop
