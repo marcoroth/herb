@@ -6,11 +6,13 @@ make prism_clean
 rake clean
 
 make prism
+rake templates
+
 make
 rake compile
 
 ./run_erbx_tests
-rake
+rake test
 
 ./erbx lex examples/test.html.erb
 ./erbx ruby examples/test.html.erb
