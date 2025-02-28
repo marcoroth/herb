@@ -10,8 +10,8 @@ typedef struct LOCATION_STRUCT {
 
 location_T* location_init(size_t line, size_t column);
 
-size_t location_line(location_T* location);
-size_t location_column(location_T* location);
+size_t location_line(const location_T* location);
+size_t location_column(const location_T* location);
 
 size_t location_sizeof(void);
 

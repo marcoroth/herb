@@ -4,22 +4,21 @@
 #include "include/util.h"
 
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
 
 static size_t lexer_sizeof(void) {
   return sizeof(struct LEXER_STRUCT);
 }
 
-static bool lexer_eof(lexer_T* lexer) {
+static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0';
 }
 
-static bool lexer_has_more_characters(lexer_T* lexer) {
+static bool lexer_has_more_characters(const lexer_T* lexer) {
   return lexer->current_position < lexer->source_length;
 }
 
-lexer_T* lexer_init(char* source) {
+lexer_T* lexer_init(const char* source) {
   if (source == NULL) { source = ""; }
 
   lexer_T* lexer = calloc(1, lexer_sizeof());
@@ -35,7 +34,7 @@ lexer_T* lexer_init(char* source) {
   return lexer;
 }
 
-token_T* lexer_error(lexer_T* lexer, const char* message) {
+token_T* lexer_error(const lexer_T* lexer, const char* message) {
   char error_message[128];
 
   snprintf(
@@ -68,13 +67,13 @@ static void lexer_advance(lexer_T* lexer) {
   }
 }
 
-static void lexer_advance_by(lexer_T* lexer, size_t count) {
+static void lexer_advance_by(lexer_T* lexer, const size_t count) {
   for (size_t i = 0; i < count; i++) {
     lexer_advance(lexer);
   }
 }
 
-static token_T* lexer_advance_with(lexer_T* lexer, const char* value, token_type_T type) {
+static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const token_type_T type) {
   lexer_advance_by(lexer, strlen(value));
   return token_init(value, type, lexer);
 }
@@ -96,11 +95,11 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
   return token;
 }
 
-static token_T* lexer_advance_current(lexer_T* lexer, token_type_T type) {
+static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
   return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
 }
 
-static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, token_type_T type) {
+static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
   if (strncmp(lexer->source + lexer->current_position, value, strlen(value)) == 0) {
     return lexer_advance_with(lexer, value, type);
   }

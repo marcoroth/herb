@@ -10,7 +10,7 @@ typedef enum {
 } lexer_state_T;
 
 typedef struct LEXER_STRUCT {
-  char* source;
+  const char* source;
   size_t source_length;
   size_t current_position;
   size_t current_line;

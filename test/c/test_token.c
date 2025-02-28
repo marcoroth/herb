@@ -24,7 +24,7 @@ TEST(test_token_to_json)
   buffer_T output = buffer_new();
   erbx_lex_json_to_buffer("hello", &output);
 
-  char* expected = "["
+  const char* expected = "["
   "{\"type\": \"TOKEN_IDENTIFIER\", \"value\": \"hello\", \"range\": [0 , 5], \"start\": {\"line\": 1, \"column\": 0}, \"end\": {\"line\": 1, \"column\": 0}}, "
   "{\"type\": \"TOKEN_EOF\", \"value\": \"\", \"range\": [5 , 5], \"start\": {\"line\": 1, \"column\": 5}, \"end\": {\"line\": 1, \"column\": 5}}"
   "]";

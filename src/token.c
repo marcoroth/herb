@@ -13,7 +13,7 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
+token_T* token_init(const char* value, const token_type_T type, const lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
 
   if (value) {
@@ -25,11 +25,11 @@ token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
   token->type = type;
   token->range = range_init(lexer->current_position - strlen(value), lexer->current_position);
 
-  size_t start_line = lexer->current_line - count_newlines(value);
-  size_t start_column = lexer->current_column - strlen(value); // TODO: fix start_column calculation if
-                                                               // value contains newlines
-  size_t end_line = lexer->current_line;
-  size_t end_column = lexer->current_column;
+  const size_t start_line = lexer->current_line - count_newlines(value);
+  const size_t start_column = lexer->current_column - strlen(value); // TODO: fix start_column calculation if
+                                                                     // value contains newlines
+  const size_t end_line = lexer->current_line;
+  const size_t end_column = lexer->current_column;
 
   token->start = location_init(start_line, start_column);
   token->end = location_init(end_line, end_column);
@@ -37,7 +37,7 @@ token_T* token_init(const char* value, token_type_T type, lexer_T* lexer) {
   return token;
 }
 
-const char* token_type_to_string(token_type_T type) {
+const char* token_type_to_string(const token_type_T type) {
   switch (type) {
     case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
     case TOKEN_NBSP: return "TOKEN_NBSP";
@@ -70,7 +70,7 @@ const char* token_type_to_string(token_type_T type) {
   }
 }
 
-char* token_to_string(token_T* token) {
+char* token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Token type=%s value='%s' range=[%d, %d] start=%d:%d end=%d:%d>";
 
@@ -96,7 +96,7 @@ char* token_to_string(token_T* token) {
   return string;
 }
 
-char* token_to_json(token_T* token) {
+char* token_to_json(const token_T* token) {
   buffer_T json = buffer_new();
 
   json_start_root_object(&json);
@@ -132,11 +132,11 @@ char* token_to_json(token_T* token) {
   return buffer_value(&json);
 }
 
-char* token_value(token_T* token) {
+char* token_value(const token_T* token) {
   return token->value;
 }
 
-int token_type(token_T* token) {
+int token_type(const token_T* token) {
   return token->type;
 }
 

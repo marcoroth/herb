@@ -10,7 +10,7 @@
 
 #include <stdlib.h>
 
-bool is_lexer_stuck(lexer_T* lexer, size_t* last_position, size_t* stall_counter, size_t limit) {
+bool is_lexer_stuck(const lexer_T* lexer, size_t* last_position, size_t* stall_counter, const size_t limit) {
   if (*last_position == lexer->current_position) {
     (*stall_counter)++;
     return *stall_counter > limit;
@@ -30,14 +30,14 @@ array_T* erbx_lex(char* source) {
 
   size_t last_position = lexer->current_position;
   size_t stall_counter = 0;
-  const size_t STALL_COUNTER_LIMIT = 5;
 
   while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
+    const size_t stall_counter_limit = 5;
     array_append(tokens, token);
 
-    if (is_lexer_stuck(lexer, &last_position, &stall_counter, STALL_COUNTER_LIMIT)) {
+    if (is_lexer_stuck(lexer, &last_position, &stall_counter, stall_counter_limit)) {
       char lex_error[64];
-      snprintf(lex_error, sizeof(lex_error), "Lexer stuck: no progress after %zu iterations.", STALL_COUNTER_LIMIT);
+      snprintf(lex_error, sizeof(lex_error), "Lexer stuck: no progress after %zu iterations.", stall_counter_limit);
       array_append(tokens, lexer_error(lexer, lex_error));
       return tokens;
     }
@@ -107,7 +107,7 @@ void erbx_lex_json_to_buffer(char* source, buffer_T* output) {
 }
 
 void erbx_free_tokens(array_T** tokens) {
-  if (!tokens || !(*tokens)) { return; }
+  if (!tokens || !*tokens) { return; }
 
   for (size_t i = 0; i < array_size(*tokens); i++) {
     token_T* token = array_get(*tokens, i);

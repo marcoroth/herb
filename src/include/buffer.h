@@ -23,10 +23,10 @@ void buffer_append_whitespace(buffer_T* buffer, size_t length);
 void buffer_prepend(buffer_T* buffer, const char* text);
 void buffer_concat(buffer_T* destination, buffer_T* source);
 
-char* buffer_value(buffer_T* buffer);
+char* buffer_value(const buffer_T* buffer);
 
-size_t buffer_length(buffer_T* buffer);
-size_t buffer_capacity(buffer_T* buffer);
+size_t buffer_length(const buffer_T* buffer);
+size_t buffer_capacity(const buffer_T* buffer);
 size_t buffer_sizeof(void);
 
 void buffer_clear(buffer_T* buffer);

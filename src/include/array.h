@@ -11,17 +11,17 @@ typedef struct ARRAY_STRUCT {
 
 array_T* array_init(size_t capacity);
 
-void* array_get(array_T* array, size_t index);
+void* array_get(const array_T* array, size_t index);
 void* array_first(array_T* array);
 void* array_last(array_T* array);
 
 void array_append(array_T* array, void* item);
-void array_set(array_T* array, size_t index, void* item);
+void array_set(const array_T* array, size_t index, void* item);
 void array_free(array_T** array);
 void array_remove(array_T* array, size_t index);
 
-size_t array_capacity(array_T* array);
-size_t array_size(array_T* array);
+size_t array_capacity(const array_T* array);
+size_t array_size(const array_T* array);
 size_t array_sizeof(void);
 
 #endif

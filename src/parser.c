@@ -14,7 +14,7 @@
 #include <strings.h>
 
 static array_T* parser_parse_in_data_state(parser_T* parser, AST_NODE_T* element, array_T* children);
-static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element);
+static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser, const AST_NODE_T* element);
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -29,7 +29,7 @@ parser_T* parser_init(lexer_T* lexer) {
 }
 
 static char* format_parser_error(const char* message, const char* expected, const char* got) {
-  char* template = "[Parser]: Unexpected Token %s (expected '%s', got: '%s')";
+  const char* template = "[Parser]: Unexpected Token %s (expected '%s', got: '%s')";
   int needed = snprintf(NULL, 0, template, message, expected, got);
 
   if (needed < 0) { return NULL; }
@@ -43,7 +43,7 @@ static char* format_parser_error(const char* message, const char* expected, cons
 }
 
 static AST_UNEXPECTED_TOKEN_NODE_T* parser_unexpected_token(
-  location_T* start, location_T* end, char* message, char* expected, char* actual
+  location_T* start, location_T* end, const char* message, const char* expected, const char* actual
 ) {
   char* error_message = format_parser_error(message, expected, actual);
   char* escaped_message = escape_newlines(error_message);
@@ -58,7 +58,7 @@ static AST_UNEXPECTED_TOKEN_NODE_T* parser_unexpected_token(
 }
 
 static AST_UNEXPECTED_TOKEN_NODE_T* parser_append_unexpected_token_from_token(
-  parser_T* parser, token_type_T type, AST_NODE_T* node
+  parser_T* parser, const token_type_T type, const AST_NODE_T* node
 ) {
   token_T* token = parser_consume(parser, type, node->errors);
 
@@ -75,7 +75,7 @@ static AST_UNEXPECTED_TOKEN_NODE_T* parser_append_unexpected_token_from_token(
   return unexpected_token;
 }
 
-token_T* parser_consume(parser_T* parser, token_type_T type, array_T* array) {
+token_T* parser_consume(parser_T* parser, const token_type_T type, array_T* array) {
   if (parser->current_token->type != type) {
     AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
       parser->current_token->start,
@@ -207,7 +207,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser, AST_
   return doctype;
 }
 
-static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, AST_NODE_T* element) {
+static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, const AST_NODE_T* element) {
   location_T* start_location = location_copy(parser->current_token->start);
 
   buffer_T content = buffer_new();
@@ -250,7 +250,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, AST_NOD
   return text_node;
 }
 
-static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser, AST_NODE_T* attribute) {
+static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser, const AST_NODE_T* attribute) {
   if (parser->current_token->type != TOKEN_IDENTIFIER) {
     AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
       parser_append_unexpected_token_from_token(parser, TOKEN_IDENTIFIER, attribute);
@@ -360,22 +360,22 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     token_free(close_quote);
 
     return value_node;
-  } else {
-    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = ast_html_attribute_value_node_init(
-      open_quote,
-      children,
-      close_quote,
-      false,
-      start_location,
-      parser->current_token->start
-    );
-
-    location_free(start_location);
-    token_free(open_quote);
-    token_free(close_quote);
-
-    return value_node;
   }
+
+  AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = ast_html_attribute_value_node_init(
+    open_quote,
+    children,
+    close_quote,
+    false,
+    start_location,
+    parser->current_token->start
+  );
+
+  location_free(start_location);
+  token_free(open_quote);
+  token_free(close_quote);
+
+  return value_node;
 }
 
 static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser, array_T* array, AST_NODE_T* element) {
@@ -455,7 +455,9 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser, AS
     token_free(tag_end);
 
     return open_tag_node;
-  } else if (parser->current_token->type == TOKEN_HTML_TAG_SELF_CLOSE) {
+  }
+
+  if (parser->current_token->type == TOKEN_HTML_TAG_SELF_CLOSE) {
     token_T* tag_end = parser_consume(parser, TOKEN_HTML_TAG_SELF_CLOSE, element->base.errors);
 
     AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
@@ -474,17 +476,19 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser, AS
     token_free(tag_end);
 
     return open_tag_node;
-  } else {
-    token_free(tag_start);
-    token_free(tag_name);
-
-    parser_append_unexpected_token_from_token(parser, parser->current_token->type, (AST_NODE_T*) element);
-
-    return NULL;
   }
+
+  token_free(tag_start);
+  token_free(tag_name);
+
+  parser_append_unexpected_token_from_token(parser, parser->current_token->type, (AST_NODE_T*) element);
+
+  return NULL;
 }
 
-static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser, AST_HTML_ELEMENT_NODE_T* element) {
+static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(
+  parser_T* parser, const AST_HTML_ELEMENT_NODE_T* element
+) {
   token_T* tag_opening = parser_consume(parser, TOKEN_HTML_TAG_START_CLOSE, element->base.errors);
   token_T* tag_name = parser_consume(parser, TOKEN_IDENTIFIER, element->base.errors);
   token_T* tag_closing = parser_consume(parser, TOKEN_HTML_TAG_END, element->base.errors);
@@ -515,8 +519,9 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser, AST_
       open_tag->base.start,
       open_tag->base.end
     );
+  }
 
-  } else if (open_tag->base.type == AST_HTML_OPEN_TAG_NODE) {
+  if (open_tag->base.type == AST_HTML_OPEN_TAG_NODE) {
     array_T* body = array_init(8);
 
     // open_tag isn't right here
@@ -547,32 +552,32 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser, AST_
     }
 
     return element_node;
-  } else {
-    AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
-      open_tag,
-      open_tag->tag_name,
-      NULL,
-      NULL,
-      false,
-      open_tag->base.start,
-      open_tag->base.end
-    );
-
-    AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
-      open_tag->base.start,
-      open_tag->base.end,
-      "open_tag type",
-      "AST_HTML_OPEN_TAG_NODE, AST_HTML_SELF_CLOSE_TAG_NODE",
-      open_tag->tag_name->value
-    );
-
-    array_append(element_node->body, unexpected_token_node);
-
-    return element_node;
   }
+
+  AST_HTML_ELEMENT_NODE_T* element_node = ast_html_element_node_init(
+    open_tag,
+    open_tag->tag_name,
+    NULL,
+    NULL,
+    false,
+    open_tag->base.start,
+    open_tag->base.end
+  );
+
+  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
+    open_tag->base.start,
+    open_tag->base.end,
+    "open_tag type",
+    "AST_HTML_OPEN_TAG_NODE, AST_HTML_SELF_CLOSE_TAG_NODE",
+    open_tag->tag_name->value
+  );
+
+  array_append(element_node->body, unexpected_token_node);
+
+  return element_node;
 }
 
-static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser, AST_NODE_T* element) {
+static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser, const AST_NODE_T* element) {
   token_T* opening_tag = parser_consume(parser, TOKEN_ERB_START, element->errors);
   token_T* content = parser_consume(parser, TOKEN_ERB_CONTENT, element->errors);
   token_T* closing_tag = parser_consume(parser, TOKEN_ERB_END, element->errors);

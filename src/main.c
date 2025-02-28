@@ -7,21 +7,20 @@
 #include "include/erbx.h"
 #include "include/extract.h"
 #include "include/io.h"
-#include "include/json.h"
 #include "include/ruby_parser.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 
-void print_time_diff(struct timespec start, struct timespec end, char* verb) {
-  double seconds = (double) end.tv_sec - (double) start.tv_sec;
-  double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;
-  double total_ns = seconds * 1e9 + nanoseconds;
+void print_time_diff(const struct timespec start, const struct timespec end, const char* verb) {
+  const double seconds = (double) end.tv_sec - (double) start.tv_sec;
+  const double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;
+  const double total_ns = seconds * 1e9 + nanoseconds;
 
-  double us = total_ns / 1e3;
-  double ms = total_ns / 1e6;
-  double s = total_ns / 1e9;
+  const double us = total_ns / 1e3;
+  const double ms = total_ns / 1e6;
+  const double s = total_ns / 1e9;
 
   printf("Finished");
   printf(" %s ", verb);
@@ -32,7 +31,7 @@ void print_time_diff(struct timespec start, struct timespec end, char* verb) {
   printf("  %8.6f  s\n\n", s);
 }
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
   if (argc < 2) {
     printf("./erbx [command] [options]\n\n");
 

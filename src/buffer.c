@@ -27,15 +27,15 @@ buffer_T buffer_new(void) {
   return buffer;
 }
 
-char* buffer_value(buffer_T* buffer) {
+char* buffer_value(const buffer_T* buffer) {
   return buffer->value;
 }
 
-size_t buffer_length(buffer_T* buffer) {
+size_t buffer_length(const buffer_T* buffer) {
   return buffer->length;
 }
 
-size_t buffer_capacity(buffer_T* buffer) {
+size_t buffer_capacity(const buffer_T* buffer) {
   return buffer->capacity;
 }
 
@@ -43,12 +43,12 @@ size_t buffer_sizeof(void) {
   return sizeof(buffer_T);
 }
 
-bool buffer_increase_capacity(buffer_T* buffer, size_t required_length) {
-  size_t required_capacity = buffer->length + required_length;
+bool buffer_increase_capacity(buffer_T* buffer, const size_t required_length) {
+  const size_t required_capacity = buffer->length + required_length;
 
   if (buffer->capacity >= required_capacity) { return true; }
 
-  size_t new_capacity = required_capacity * 2;
+  const size_t new_capacity = required_capacity * 2;
   char* new_value = safe_realloc(buffer->value, new_capacity);
 
   if (unlikely(new_value == NULL)) { return false; }
@@ -72,7 +72,7 @@ void buffer_append(buffer_T* buffer, const char* text) {
   buffer->value[buffer->length] = '\0';
 }
 
-void buffer_append_char(buffer_T* buffer, char character) {
+void buffer_append_char(buffer_T* buffer, const char character) {
   static char string[2];
 
   string[0] = character;
@@ -81,7 +81,7 @@ void buffer_append_char(buffer_T* buffer, char character) {
   buffer_append(buffer, string);
 }
 
-void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
+void buffer_append_repeated(buffer_T* buffer, const char character, size_t length) {
   if (length == 0) { return; }
 
   char* spaces = malloc(length + 1);
@@ -95,7 +95,7 @@ void buffer_append_repeated(buffer_T* buffer, char character, size_t length) {
   free(spaces);
 }
 
-void buffer_append_whitespace(buffer_T* buffer, size_t length) {
+void buffer_append_whitespace(buffer_T* buffer, const size_t length) {
   buffer_append_repeated(buffer, ' ', length);
 }
 
@@ -122,8 +122,8 @@ void buffer_concat(buffer_T* destination, buffer_T* source) {
   destination->value[destination->length] = '\0';
 }
 
-bool buffer_reserve(buffer_T* buffer, size_t min_capacity) {
-  size_t required_length = min_capacity - buffer->length;
+bool buffer_reserve(buffer_T* buffer, const size_t min_capacity) {
+  const size_t required_length = min_capacity - buffer->length;
 
   return buffer_increase_capacity(buffer, required_length);
 }

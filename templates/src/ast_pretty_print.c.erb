@@ -2,7 +2,6 @@
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
 #include "include/buffer.h"
-#include "include/token.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 
@@ -10,23 +9,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-void ast_indent(buffer_T* buffer, size_t indent, bool child) {
+void ast_indent(buffer_T* buffer, const size_t indent) {
   for (size_t i = 0; i < indent; i++) {
     buffer_append(buffer, "    ");
   }
 }
 
-void ast_pretty_print_newline(size_t indent, size_t relative_indent, buffer_T* buffer) {
-  ast_indent(buffer, indent, true);
-  ast_indent(buffer, relative_indent, false);
+void ast_pretty_print_newline(const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+  ast_indent(buffer, indent);
+  ast_indent(buffer, relative_indent);
   buffer_append(buffer, "\n");
 }
 
 void ast_pretty_print_label(
-  char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+  const char* name, const size_t indent, const size_t relative_indent, const bool last_property, buffer_T* buffer
 ) {
-  ast_indent(buffer, indent, true);
-  ast_indent(buffer, relative_indent, false);
+  ast_indent(buffer, indent);
+  ast_indent(buffer, relative_indent);
 
   if (last_property) {
     buffer_append(buffer, "└── ");
@@ -39,7 +38,7 @@ void ast_pretty_print_label(
 }
 
 void ast_pretty_print_property(
-  AST_NODE_T* node, char* name, const char* value, size_t indent, size_t relative_indent, bool last_property,
+  const char* name, const char* value, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer
 ) {
   ast_pretty_print_label(name, indent, relative_indent, last_property, buffer);
@@ -48,11 +47,11 @@ void ast_pretty_print_property(
 }
 
 void ast_pretty_print_array(
-  AST_NODE_T* node, char* name, array_T* children, size_t indent, size_t relative_indent, bool last_property,
+  const char* name, array_T* children, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer
 ) {
   if (array_size(children) == 0) {
-    ast_pretty_print_property(node, name, "[]", indent, relative_indent, last_property, buffer);
+    ast_pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
 
     return;
   }
@@ -69,8 +68,8 @@ void ast_pretty_print_array(
   if (indent < 20) {
     for (size_t i = 0; i < array_size(children); i++) {
       AST_NODE_T* child = array_get(children, i);
-      ast_indent(buffer, indent, true);
-      ast_indent(buffer, relative_indent + 1, false);
+      ast_indent(buffer, indent);
+      ast_indent(buffer, relative_indent + 1);
 
       if (i == array_size(children) - 1) {
         buffer_append(buffer, "└── ");
@@ -86,10 +85,10 @@ void ast_pretty_print_array(
 }
 
 void ast_pretty_print_errors(
-  AST_NODE_T* node, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+  AST_NODE_T* node, const size_t indent, const size_t relative_indent, const bool last_property, buffer_T* buffer
 ) {
   if (node->errors != NULL && array_size(node->errors) > 0) {
-    ast_pretty_print_array(node, "errors", node->errors, indent, relative_indent, last_property, buffer);
+    ast_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
   }
 }
 
@@ -109,7 +108,7 @@ void ast_pretty_print_location(location_T* start, location_T* end, buffer_T* buf
 }
 
 void ast_pretty_print_token_property(
-  token_T* token, char* name, size_t indent, size_t relative_ident, bool last_property, buffer_T* buffer
+  token_T* token, const char* name, const size_t indent, const size_t relative_ident, const bool last_property, buffer_T* buffer
 ) {
   ast_pretty_print_label(name, indent, relative_ident, last_property, buffer);
 
@@ -127,7 +126,7 @@ void ast_pretty_print_token_property(
   buffer_append(buffer, "\n");
 }
 
-void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_indent, buffer_T* buffer) {
+void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
   if (!node) { return; }
 
   bool print_locations = true;
@@ -146,18 +145,18 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     <%- end -%>
 
     case AST_HTML_ELEMENT_NODE: {
-      AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
+      const AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
 
-      char* is_void = element->is_void ? "true" : "false";
+      const char* is_void = element->is_void ? "true" : "false";
 
       ast_pretty_print_token_property(element->tag_name, "tag_name", indent, relative_indent, false, buffer);
-      ast_pretty_print_property(node, "is_void", is_void, indent, relative_indent, false, buffer);
+      ast_pretty_print_property("is_void", is_void, indent, relative_indent, false, buffer);
       ast_pretty_print_label("open_tag", indent, relative_indent, false, buffer);
 
       if (element->open_tag) {
         buffer_append(buffer, "\n");
-        ast_indent(buffer, indent, true);
-        ast_indent(buffer, relative_indent + 1, false);
+        ast_indent(buffer, indent);
+        ast_indent(buffer, relative_indent + 1);
 
         buffer_append(buffer, "└── ");
         ast_pretty_print_node((AST_NODE_T*) element->open_tag, indent, relative_indent + 2, buffer);
@@ -166,13 +165,13 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
       }
 
       if (!element->is_void) {
-        ast_pretty_print_array(node, "body", element->body, indent, relative_indent, false, buffer);
+        ast_pretty_print_array("body", element->body, indent, relative_indent, false, buffer);
         ast_pretty_print_label("close_tag", indent, relative_indent, true, buffer);
 
         if (element->close_tag) {
           buffer_append(buffer, "\n");
-          ast_indent(buffer, indent, true);
-          ast_indent(buffer, relative_indent + 1, false);
+          ast_indent(buffer, indent);
+          ast_indent(buffer, relative_indent + 1);
 
           buffer_append(buffer, "└── ");
           ast_pretty_print_node((AST_NODE_T*) element->close_tag, indent, relative_indent + 2, buffer);
@@ -183,7 +182,7 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     } break;
 
     case AST_HTML_OPEN_TAG_NODE: {
-      AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+      const AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
 
       ast_pretty_print_token_property(
         open_tag->tag_opening,
@@ -206,7 +205,6 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
       );
 
       ast_pretty_print_property(
-        node,
         "is_void",
         open_tag->is_void ? "true" : "false",
         indent,
@@ -217,7 +215,6 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
 
       if (open_tag->attributes) {
         ast_pretty_print_array(
-          (AST_NODE_T*) open_tag,
           "attributes",
           open_tag->attributes,
           indent,
@@ -226,10 +223,10 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
           buffer
         );
       } else {
-        ast_pretty_print_property(node, "attributes", "∅", indent, relative_indent, true, buffer);
+        ast_pretty_print_property("attributes", "∅", indent, relative_indent, true, buffer);
       }
 
-      ast_pretty_print_array(node, "children", open_tag->children, indent, relative_indent, true, buffer);
+      ast_pretty_print_array("children", open_tag->children, indent, relative_indent, true, buffer);
     } break;
 
     case AST_HTML_CLOSE_TAG_NODE: {
@@ -258,7 +255,7 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     case AST_HTML_TEXT_NODE: {
       const AST_HTML_TEXT_NODE_T* text_node = (AST_HTML_TEXT_NODE_T*) node;
 
-      char* value = "∅";
+      const char* value = "∅";
       char* escaped;
       char* quoted;
 
@@ -268,7 +265,7 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
         value = quoted;
       }
 
-      ast_pretty_print_property(node, "content", value, indent, relative_indent, true, buffer);
+      ast_pretty_print_property("content", value, indent, relative_indent, true, buffer);
 
       if (text_node->content != NULL) {
         free(escaped);
@@ -290,11 +287,11 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
       );
       ast_pretty_print_token_property(comment->comment_end, "comment_end", indent, relative_indent, false, buffer);
 
-      ast_pretty_print_array(node, "children", comment->children, indent, relative_indent, true, buffer);
+      ast_pretty_print_array("children", comment->children, indent, relative_indent, true, buffer);
     } break;
 
     case AST_ERB_CONTENT_NODE: {
-      AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
+      const AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
       ast_pretty_print_token_property(
         erb_content_node->tag_opening,
@@ -323,14 +320,14 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     } break;
 
     case AST_HTML_ATTRIBUTE_NODE: {
-      AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
+      const AST_HTML_ATTRIBUTE_NODE_T* attribute = (AST_HTML_ATTRIBUTE_NODE_T*) node;
 
       ast_pretty_print_label("name", indent, relative_indent, false, buffer);
 
       if (attribute->name) {
         buffer_append(buffer, "\n");
-        ast_indent(buffer, indent, true);
-        ast_indent(buffer, relative_indent + 1, false);
+        ast_indent(buffer, indent);
+        ast_indent(buffer, relative_indent + 1);
 
         buffer_append(buffer, "└── ");
         ast_pretty_print_node((AST_NODE_T*) attribute->name, indent, relative_indent + 1, buffer);
@@ -344,8 +341,8 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
 
       if (attribute->value) {
         buffer_append(buffer, "\n");
-        ast_indent(buffer, indent, true);
-        ast_indent(buffer, relative_indent + 1, false);
+        ast_indent(buffer, indent);
+        ast_indent(buffer, relative_indent + 1);
 
         buffer_append(buffer, "└── ");
         ast_pretty_print_node((AST_NODE_T*) attribute->value, indent, relative_indent + 1, buffer);
@@ -356,13 +353,13 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     } break;
 
     case AST_HTML_ATTRIBUTE_NAME_NODE: {
-      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = (AST_HTML_ATTRIBUTE_NAME_NODE_T*) node;
+      const AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = (AST_HTML_ATTRIBUTE_NAME_NODE_T*) node;
 
       ast_pretty_print_token_property(attribute_name->name, "name", indent, relative_indent + 1, true, buffer);
     } break;
 
     case AST_HTML_ATTRIBUTE_VALUE_NODE: {
-      AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
+      const AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
 
       ast_pretty_print_token_property(
         attribute_value->open_quote,
@@ -381,12 +378,12 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer
       );
 
-      ast_pretty_print_array(node, "children", attribute_value->children, indent, relative_indent + 1, true, buffer);
+      ast_pretty_print_array("children", attribute_value->children, indent, relative_indent + 1, true, buffer);
     } break;
 
     case AST_DOCUMENT_NODE: {
-      AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
-      ast_pretty_print_array(node, "children", document_node->children, indent, 0, true, buffer);
+      const AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
+      ast_pretty_print_array("children", document_node->children, indent, 0, true, buffer);
     } break;
 
     case AST_HTML_DOCTYPE_NODE: {
@@ -395,14 +392,13 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
       ast_pretty_print_token_property(doctype->tag_opening, "tag_opening", indent, relative_indent, false, buffer);
       ast_pretty_print_token_property(doctype->tag_closing, "tag_closing", indent, relative_indent, false, buffer);
 
-      ast_pretty_print_array(node, "children", doctype->children, indent, relative_indent, true, buffer);
+      ast_pretty_print_array("children", doctype->children, indent, relative_indent, true, buffer);
     } break;
 
     case AST_LITERAL_NODE: {
-      AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) node;
+      const AST_LITERAL_NODE_T* literal = (AST_LITERAL_NODE_T*) node;
       char* quoted = quoted_string(literal->content);
       ast_pretty_print_property(
-        node,
         "content",
         quoted,
         indent,
@@ -414,10 +410,9 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
     } break;
 
     case AST_UNEXPECTED_TOKEN_NODE: {
-      AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = (AST_UNEXPECTED_TOKEN_NODE_T*) node;
+      const AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = (AST_UNEXPECTED_TOKEN_NODE_T*) node;
 
       ast_pretty_print_property(
-        node,
         "message",
         unexpected_token_node->message,
         indent,
@@ -427,7 +422,6 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
       );
 
       ast_pretty_print_property(
-        node,
         "expected",
         unexpected_token_node->expected,
         indent,
@@ -436,7 +430,7 @@ void ast_pretty_print_node(AST_NODE_T* node, size_t indent, size_t relative_inde
         buffer
       );
 
-      ast_pretty_print_property(node, "got", unexpected_token_node->got, indent, relative_indent, true, buffer);
+      ast_pretty_print_property("got", unexpected_token_node->got, indent, relative_indent, true, buffer);
     } break;
 
     case AST_HTML_SELF_CLOSE_TAG_NODE:

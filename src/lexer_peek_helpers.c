@@ -5,17 +5,17 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-char lexer_backtrack(lexer_T* lexer, int offset) {
+char lexer_backtrack(const lexer_T* lexer, const int offset) {
   return lexer->source[MAX(lexer->current_position - offset, 0)];
 }
 
-char lexer_peek(lexer_T* lexer, int offset) {
+char lexer_peek(const lexer_T* lexer, const int offset) {
   return lexer->source[MIN(lexer->current_position + offset, lexer->source_length)];
 }
 
-bool lexer_peek_for(lexer_T* lexer, int offset, const char* pattern, bool case_insensitive) {
+bool lexer_peek_for(const lexer_T* lexer, const int offset, const char* pattern, const bool case_insensitive) {
   for (int index = 0; pattern[index]; index++) {
-    char character = lexer_peek(lexer, offset + index);
+    const char character = lexer_peek(lexer, offset + index);
 
     if (case_insensitive) {
       if (tolower(character) != tolower(pattern[index])) { return false; }
@@ -27,31 +27,31 @@ bool lexer_peek_for(lexer_T* lexer, int offset, const char* pattern, bool case_i
   return true;
 }
 
-bool lexer_peek_for_doctype(lexer_T* lexer, int offset) {
+bool lexer_peek_for_doctype(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<!DOCTYPE", true);
 }
 
-bool lexer_peek_for_html_comment_start(lexer_T* lexer, int offset) {
+bool lexer_peek_for_html_comment_start(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<!--", false);
 }
 
-bool lexer_peek_for_html_comment_end(lexer_T* lexer, int offset) {
+bool lexer_peek_for_html_comment_end(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "-->", false);
 }
 
-bool lexer_peek_erb_close_tag(lexer_T* lexer, int offset) {
+bool lexer_peek_erb_close_tag(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "%>", false);
 }
 
-bool lexer_peek_erb_dash_close_tag(lexer_T* lexer, int offset) {
+bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "-%>", false);
 }
 
-bool lexer_peek_erb_percent_close_tag(lexer_T* lexer, int offset) {
+bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "%%>", false);
 }
 
-bool lexer_peek_erb_end(lexer_T* lexer, int offset) {
+bool lexer_peek_erb_end(const lexer_T* lexer, const int offset) {
   return (
     lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
     || lexer_peek_erb_percent_close_tag(lexer, offset)

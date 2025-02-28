@@ -32,7 +32,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when ERBX::Template::StringField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_str_new_cstr(<%= node.human %>-><%= field.name %>);
   <%- when ERBX::Template::NodeField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct(<%= node.human %>-><%= field.name %>);
+  VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when ERBX::Template::TokenField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_token_from_c_struct(<%= node.human %>-><%= field.name %>);
   <%- when ERBX::Template::BooleanField -%>

@@ -38,7 +38,7 @@ typedef struct {
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>);
 <%- end -%>
 
-char* ast_node_type_to_string(AST_NODE_T* node);
-char* ast_node_human_type(AST_NODE_T* node);
+const char* ast_node_type_to_string(AST_NODE_T* node);
+const char* ast_node_human_type(AST_NODE_T* node);
 
 #endif

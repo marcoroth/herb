@@ -3,6 +3,6 @@
 
 #include <stdbool.h>
 
-bool is_void_element(const char* tagName);
+bool is_void_element(const char* tag_name);
 
 #endif

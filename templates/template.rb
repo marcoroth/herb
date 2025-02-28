@@ -93,7 +93,7 @@ module ERBX
       end
 
       def c_type
-        "char*"
+        "const char*"
       end
     end
 
@@ -113,7 +113,7 @@ module ERBX
       end
 
       def c_type
-        "int"
+        "const int"
       end
     end
 
@@ -123,13 +123,13 @@ module ERBX
       end
 
       def c_type
-        "size_t"
+        "const size_t"
       end
     end
 
     class BooleanField < Field
       def ruby_type
-        "TrueClass | FalseClass"
+        "TrueClass | FalseClass"
       end
 
       def c_type

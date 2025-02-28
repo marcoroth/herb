@@ -1,9 +1,6 @@
 #include "include/json.h"
 #include "include/buffer.h"
 
-#include <stdarg.h>
-#include <string.h>
-
 void json_escape_string(buffer_T* json, const char* string) {
   if (!string) {
     buffer_append(json, "null");
@@ -26,7 +23,7 @@ void json_escape_string(buffer_T* json, const char* string) {
   buffer_append(json, "\"");
 }
 
-void json_int_to_string(int value, char* buffer) {
+void json_int_to_string(const int value, char* buffer) {
   char string[20]; // Enough to hold all possible int values
   int i = 0;
 
@@ -49,10 +46,10 @@ void json_int_to_string(int value, char* buffer) {
   buffer[j] = '\0';
 }
 
-void json_double_to_string(double value, char* buffer) {
-  int int_part = (int) value;
-  double frac_part = value - (double) int_part;
-  int frac_as_int = (int) (frac_part * 100); // Keep 2 decimal places
+void json_double_to_string(const double value, char* buffer) {
+  const int int_part = (int) value;
+  const double frac_part = value - (double) int_part;
+  const int frac_as_int = (int) (frac_part * 100); // Keep 2 decimal places
 
   char int_buffer[20];
   char frac_buffer[5];
@@ -87,7 +84,7 @@ void json_add_string(buffer_T* json, const char* key, const char* value) {
   json_escape_string(json, value);
 }
 
-void json_add_double(buffer_T* json, const char* key, double value) {
+void json_add_double(buffer_T* json, const char* key, const double value) {
   if (!json) { return; }
 
   char number[32];
@@ -103,7 +100,7 @@ void json_add_double(buffer_T* json, const char* key, double value) {
   buffer_append(json, number);
 }
 
-void json_add_int(buffer_T* json, const char* key, int value) {
+void json_add_int(buffer_T* json, const char* key, const int value) {
   if (!json) { return; }
 
   char number[20];
@@ -149,7 +146,7 @@ void json_add_size_t(buffer_T* json, const char* key, size_t value) {
   if (json->length == 1) { buffer_append(json, " "); }
 }
 
-void json_add_bool(buffer_T* json, const char* key, int value) {
+void json_add_bool(buffer_T* json, const char* key, const int value) {
   if (!json) { return; }
 
   if (json->length > 1) { buffer_append(json, ", "); }
