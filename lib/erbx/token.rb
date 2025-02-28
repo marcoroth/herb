@@ -31,7 +31,7 @@ module ERBX
     end
 
     def inspect
-      %(#<ERBX::Token type="#{type}" value="#{value}" range=[#{range.start_position}, #{range.end_position}] start=#{start_location.line}:#{start_location.column} end=#{end_location.line}:#{end_location.column}>)
+      %(#<ERBX::Token type="#{type}" value="#{value.gsub("\n", "\\n")}" range=[#{range.start_position}, #{range.end_position}] start=#{start_location.line}:#{start_location.column} end=#{end_location.line}:#{end_location.column}>)
     end
   end
 end
