@@ -1,5 +1,5 @@
-#<ERBX::Token type="TOKEN_HTML_DOCTYPE" value="<!DOCTYPE" range=[0, 0] start=1:0 end=1:9>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 9] start=1:9 end=1:10>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="html" range=[10, 10] start=1:10 end=1:14>
-#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[14, 14] start=1:14 end=1:15>
+#<ERBX::Token type="TOKEN_HTML_DOCTYPE" value="<!DOCTYPE" range=[0, 9] start=1:0 end=1:9>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 10] start=1:9 end=1:10>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="html" range=[10, 14] start=1:10 end=1:14>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[14, 15] start=1:14 end=1:15>
 #<ERBX::Token type="TOKEN_EOF" value="" range=[15, 15] start=1:15 end=1:15>

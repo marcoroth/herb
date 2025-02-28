@@ -1,2 +1,2 @@
-#<ERBX::Token type="TOKEN_NBSP" value=" " range=[0, 0] start=1:0 end=1:2>
+#<ERBX::Token type="TOKEN_NBSP" value=" " range=[0, 2] start=1:0 end=1:2>
 #<ERBX::Token type="TOKEN_EOF" value="" range=[2, 2] start=1:2 end=1:2>

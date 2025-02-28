@@ -1,10 +1,10 @@
-#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 0] start=1:0 end=1:1>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="img" range=[1, 1] start=1:1 end=1:4>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[4, 4] start=1:4 end=1:5>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="value" range=[5, 5] start=1:5 end=1:10>
-#<ERBX::Token type="TOKEN_EQUALS" value="=" range=[10, 10] start=1:10 end=1:11>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[11, 11] start=1:11 end=1:12>
-#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[12, 12] start=1:12 end=1:13>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[13, 13] start=1:13 end=1:14>
-#<ERBX::Token type="TOKEN_HTML_TAG_SELF_CLOSE" value="/>" range=[14, 14] start=1:14 end=1:16>
+#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=1:0 end=1:1>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="img" range=[1, 4] start=1:1 end=1:4>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=1:4 end=1:5>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="value" range=[5, 10] start=1:5 end=1:10>
+#<ERBX::Token type="TOKEN_EQUALS" value="=" range=[10, 11] start=1:10 end=1:11>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[11, 12] start=1:11 end=1:12>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[12, 13] start=1:12 end=1:13>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[13, 14] start=1:13 end=1:14>
+#<ERBX::Token type="TOKEN_HTML_TAG_SELF_CLOSE" value="/>" range=[14, 16] start=1:14 end=1:16>
 #<ERBX::Token type="TOKEN_EOF" value="" range=[16, 16] start=1:16 end=1:16>

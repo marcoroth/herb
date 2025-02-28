@@ -1,45 +1,45 @@
-#<ERBX::Token type="TOKEN_HTML_DOCTYPE" value="<!DOCTYPE" range=[0, 0] start=1:0 end=1:9>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 9] start=1:9 end=1:10>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="HTML" range=[10, 10] start=1:10 end=1:14>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[14, 14] start=1:14 end=1:15>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="PUBLIC" range=[15, 15] start=1:15 end=1:21>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[21, 21] start=1:21 end=1:22>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[22, 22] start=1:22 end=1:23>
-#<ERBX::Token type="TOKEN_DASH" value="-" range=[23, 23] start=1:23 end=1:24>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[24, 24] start=1:24 end=1:25>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[25, 25] start=1:25 end=1:26>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="W3C" range=[26, 26] start=1:26 end=1:29>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[29, 29] start=1:29 end=1:30>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[30, 30] start=1:30 end=1:31>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="DTD" range=[31, 31] start=1:31 end=1:34>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[34, 34] start=1:34 end=1:35>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="HTML" range=[35, 35] start=1:35 end=1:39>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[39, 39] start=1:39 end=1:40>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="4" range=[40, 40] start=1:40 end=1:41>
-#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[41, 41] start=1:41 end=1:42>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="01" range=[42, 42] start=1:42 end=1:44>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[44, 44] start=1:44 end=1:45>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[45, 45] start=1:45 end=1:46>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="EN" range=[46, 46] start=1:46 end=1:48>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[48, 48] start=1:48 end=1:49>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[49, 49] start=1:49 end=1:50>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[50, 50] start=1:50 end=1:51>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="http:" range=[51, 51] start=1:51 end=1:56>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[56, 56] start=1:56 end=1:57>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[57, 57] start=1:57 end=1:58>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="www" range=[58, 58] start=1:58 end=1:61>
-#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[61, 61] start=1:61 end=1:62>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="w3" range=[62, 62] start=1:62 end=1:64>
-#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[64, 64] start=1:64 end=1:65>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="org" range=[65, 65] start=1:65 end=1:68>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[68, 68] start=1:68 end=1:69>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="TR" range=[69, 69] start=1:69 end=1:71>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[71, 71] start=1:71 end=1:72>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="html4" range=[72, 72] start=1:72 end=1:77>
-#<ERBX::Token type="TOKEN_SLASH" value="/" range=[77, 77] start=1:77 end=1:78>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="strict" range=[78, 78] start=1:78 end=1:84>
-#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[84, 84] start=1:84 end=1:85>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="dtd" range=[85, 85] start=1:85 end=1:88>
-#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[88, 88] start=1:88 end=1:89>
-#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[89, 89] start=1:89 end=1:90>
+#<ERBX::Token type="TOKEN_HTML_DOCTYPE" value="<!DOCTYPE" range=[0, 9] start=1:0 end=1:9>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 10] start=1:9 end=1:10>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="HTML" range=[10, 14] start=1:10 end=1:14>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[14, 15] start=1:14 end=1:15>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="PUBLIC" range=[15, 21] start=1:15 end=1:21>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[21, 22] start=1:21 end=1:22>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[22, 23] start=1:22 end=1:23>
+#<ERBX::Token type="TOKEN_DASH" value="-" range=[23, 24] start=1:23 end=1:24>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[24, 25] start=1:24 end=1:25>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[25, 26] start=1:25 end=1:26>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="W3C" range=[26, 29] start=1:26 end=1:29>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[29, 30] start=1:29 end=1:30>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[30, 31] start=1:30 end=1:31>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="DTD" range=[31, 34] start=1:31 end=1:34>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[34, 35] start=1:34 end=1:35>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="HTML" range=[35, 39] start=1:35 end=1:39>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[39, 40] start=1:39 end=1:40>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="4" range=[40, 41] start=1:40 end=1:41>
+#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[41, 42] start=1:41 end=1:42>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="01" range=[42, 44] start=1:42 end=1:44>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[44, 45] start=1:44 end=1:45>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[45, 46] start=1:45 end=1:46>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="EN" range=[46, 48] start=1:46 end=1:48>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[48, 49] start=1:48 end=1:49>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[49, 50] start=1:49 end=1:50>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[50, 51] start=1:50 end=1:51>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="http:" range=[51, 56] start=1:51 end=1:56>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[56, 57] start=1:56 end=1:57>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[57, 58] start=1:57 end=1:58>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="www" range=[58, 61] start=1:58 end=1:61>
+#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[61, 62] start=1:61 end=1:62>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="w3" range=[62, 64] start=1:62 end=1:64>
+#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[64, 65] start=1:64 end=1:65>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="org" range=[65, 68] start=1:65 end=1:68>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[68, 69] start=1:68 end=1:69>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="TR" range=[69, 71] start=1:69 end=1:71>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[71, 72] start=1:71 end=1:72>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="html4" range=[72, 77] start=1:72 end=1:77>
+#<ERBX::Token type="TOKEN_SLASH" value="/" range=[77, 78] start=1:77 end=1:78>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="strict" range=[78, 84] start=1:78 end=1:84>
+#<ERBX::Token type="TOKEN_CHARACTER" value="." range=[84, 85] start=1:84 end=1:85>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="dtd" range=[85, 88] start=1:85 end=1:88>
+#<ERBX::Token type="TOKEN_QUOTE" value=""" range=[88, 89] start=1:88 end=1:89>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[89, 90] start=1:89 end=1:90>
 #<ERBX::Token type="TOKEN_EOF" value="" range=[90, 90] start=1:90 end=1:90>

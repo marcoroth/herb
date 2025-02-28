@@ -1,13 +1,13 @@
-#<ERBX::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[0, 0] start=1:0 end=1:4>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[4, 4] start=1:4 end=1:9>
-#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 9] start=1:9 end=1:10>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="World" range=[10, 10] start=1:10 end=1:15>
-#<ERBX::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[15, 15] start=1:15 end=1:18>
-#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[18, 18] start=1:18 end=1:19>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[19, 19] start=1:19 end=1:21>
-#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[21, 21] start=1:21 end=1:22>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[22, 22] start=1:22 end=1:27>
-#<ERBX::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[27, 27] start=1:27 end=1:29>
-#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[29, 29] start=1:29 end=1:31>
-#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[31, 31] start=1:31 end=1:32>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[0, 4] start=1:0 end=1:4>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[4, 9] start=1:4 end=1:9>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[9, 10] start=1:9 end=1:10>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="World" range=[10, 15] start=1:10 end=1:15>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[15, 18] start=1:15 end=1:18>
+#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[18, 19] start=1:18 end=1:19>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[19, 21] start=1:19 end=1:21>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[21, 22] start=1:21 end=1:22>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[22, 27] start=1:22 end=1:27>
+#<ERBX::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[27, 29] start=1:27 end=1:29>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[29, 31] start=1:29 end=1:31>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[31, 32] start=1:31 end=1:32>
 #<ERBX::Token type="TOKEN_EOF" value="" range=[32, 32] start=1:32 end=1:32>
