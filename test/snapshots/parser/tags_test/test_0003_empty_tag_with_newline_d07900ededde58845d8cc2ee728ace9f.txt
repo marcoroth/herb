@@ -1,8 +1,8 @@
 @ DocumentNode (location: (1:0)-(2:8))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(2:8))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "span" (location: (1:1)-(1:5))
         │       ├── attributes: []
@@ -17,7 +17,7 @@
         │       "
         │
         ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLCloseTagNode (location: (2:1)-(2:8))
         │       ├── tag_opening: "</" (location: (2:1)-(2:3))
         │       ├── tag_name: "span" (location: (2:3)-(2:7))
         │       └── tag_closing: ">" (location: (2:7)-(2:8))

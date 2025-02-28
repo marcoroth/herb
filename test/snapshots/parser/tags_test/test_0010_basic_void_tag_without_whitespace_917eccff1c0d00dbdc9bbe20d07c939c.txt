@@ -1,8 +1,8 @@
 @ DocumentNode (location: (1:0)-(1:6))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(1:6))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "img" (location: (1:1)-(1:4))
         │       ├── attributes: []

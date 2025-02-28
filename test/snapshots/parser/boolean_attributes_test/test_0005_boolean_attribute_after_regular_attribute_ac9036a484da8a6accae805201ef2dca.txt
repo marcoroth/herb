@@ -1,19 +1,19 @@
 @ DocumentNode (location: (1:0)-(1:29))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(1:29))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:29))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "input" (location: (1:1)-(1:6))
         │       ├── attributes: (2 items)
-        │       │   ├── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:17))
         │       │   │   ├── name:
-        │       │   │   │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:9))
         │       │   │   │       └── name: "id" (location: (1:7)-(1:9))
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:9)-(1:10))
         │       │   │   └── value:
-        │       │   │       └── @ HTMLAttributeValueNode (location: (0:0)-(0:0))
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:10)-(1:17))
         │       │   │           ├── open_quote: """ (location: (1:10)-(1:11))
         │       │   │           ├── children: (1 item)
         │       │   │           │   └── @ LiteralNode (location: (1:11)-(1:16))
@@ -23,9 +23,9 @@
         │       │   │           └── quoted: true
         │       │   │
         │       │   │
-        │       │   └── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLAttributeNode (location: (1:18)-(1:26))
         │       │       ├── name:
-        │       │       │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:18)-(1:26))
         │       │       │       └── name: "required" (location: (1:18)-(1:26))
         │       │       │
         │       │       ├── equals: ∅

@@ -3,9 +3,9 @@
     ├── @ HTMLTextNode (location: (1:0)-(1:5))
     │   └── content: "Hello"
     │
-    ├── @ HTMLElementNode (location: (0:0)-(0:0))
+    ├── @ HTMLElementNode (location: (1:5)-(1:18))
     │   ├── open_tag:
-    │   │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+    │   │   └── @ HTMLOpenTagNode (location: (1:5)-(1:11))
     │   │       ├── tag_opening: "<" (location: (1:5)-(1:6))
     │   │       ├── tag_name: "span" (location: (1:6)-(1:10))
     │   │       ├── attributes: []
@@ -16,7 +16,7 @@
     │   ├── tag_name: "span" (location: (1:6)-(1:10))
     │   ├── body: []
     │   ├── close_tag:
-    │   │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+    │   │   └── @ HTMLCloseTagNode (location: (1:11)-(1:18))
     │   │       ├── tag_opening: "</" (location: (1:11)-(1:13))
     │   │       ├── tag_name: "span" (location: (1:13)-(1:17))
     │   │       └── tag_closing: ">" (location: (1:17)-(1:18))

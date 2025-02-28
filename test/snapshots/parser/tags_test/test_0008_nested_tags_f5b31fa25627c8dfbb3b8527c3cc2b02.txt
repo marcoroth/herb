@@ -1,8 +1,8 @@
 @ DocumentNode (location: (1:0)-(1:43))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(1:43))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── attributes: []
@@ -12,9 +12,9 @@
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
         ├── body: (1 item)
-        │   └── @ HTMLElementNode (location: (0:0)-(0:0))
+        │   └── @ HTMLElementNode (location: (1:5)-(1:37))
         │       ├── open_tag:
-        │       │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:9))
         │       │       ├── tag_opening: "<" (location: (1:5)-(1:6))
         │       │       ├── tag_name: "h1" (location: (1:6)-(1:8))
         │       │       ├── attributes: []
@@ -27,9 +27,9 @@
         │       │   ├── @ HTMLTextNode (location: (1:9)-(1:14))
         │       │   │   └── content: "Hello"
         │       │   │
-        │       │   └── @ HTMLElementNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLElementNode (location: (1:14)-(1:32))
         │       │       ├── open_tag:
-        │       │       │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │       │       │   └── @ HTMLOpenTagNode (location: (1:14)-(1:20))
         │       │       │       ├── tag_opening: "<" (location: (1:14)-(1:15))
         │       │       │       ├── tag_name: "span" (location: (1:15)-(1:19))
         │       │       │       ├── attributes: []
@@ -43,7 +43,7 @@
         │       │       │       └── content: "World"
         │       │       │
         │       │       ├── close_tag:
-        │       │       │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │       │       │   └── @ HTMLCloseTagNode (location: (1:25)-(1:32))
         │       │       │       ├── tag_opening: "</" (location: (1:25)-(1:27))
         │       │       │       ├── tag_name: "span" (location: (1:27)-(1:31))
         │       │       │       └── tag_closing: ">" (location: (1:31)-(1:32))
@@ -51,7 +51,7 @@
         │       │       └── is_void: false
         │       │
         │       ├── close_tag:
-        │       │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLCloseTagNode (location: (1:32)-(1:37))
         │       │       ├── tag_opening: "</" (location: (1:32)-(1:34))
         │       │       ├── tag_name: "h1" (location: (1:34)-(1:36))
         │       │       └── tag_closing: ">" (location: (1:36)-(1:37))
@@ -59,7 +59,7 @@
         │       └── is_void: false
         │
         ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLCloseTagNode (location: (1:37)-(1:43))
         │       ├── tag_opening: "</" (location: (1:37)-(1:39))
         │       ├── tag_name: "div" (location: (1:39)-(1:42))
         │       └── tag_closing: ">" (location: (1:42)-(1:43))

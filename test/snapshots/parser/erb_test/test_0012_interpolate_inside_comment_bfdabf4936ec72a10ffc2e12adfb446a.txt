@@ -1,12 +1,12 @@
 @ DocumentNode (location: (1:0)-(1:25))
 └── children: (1 item)
-    └── @ HTMLCommentNode (location: (0:0)-(0:0))
+    └── @ HTMLCommentNode (location: (1:0)-(1:25))
         ├── comment_start: "<!--" (location: (1:0)-(1:4))
         ├── children: (3 items)
         │   ├── @ LiteralNode (location: (1:4)-(1:5))
         │   │   └── content: " "
         │   │
-        │   ├── @ ERBContentNode (location: (0:0)-(0:0))
+        │   ├── @ ERBContentNode (location: (1:5)-(1:21))
         │   │   ├── tag_opening: "<%=" (location: (1:5)-(1:8))
         │   │   ├── content: " "Comment" " (location: (1:8)-(1:19))
         │   │   └── tag_closing: "%>" (location: (1:19)-(1:21))

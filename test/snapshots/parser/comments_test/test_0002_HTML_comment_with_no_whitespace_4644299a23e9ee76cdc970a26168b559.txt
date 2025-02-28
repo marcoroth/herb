@@ -1,6 +1,6 @@
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
-    └── @ HTMLCommentNode (location: (0:0)-(0:0))
+    └── @ HTMLCommentNode (location: (1:0)-(1:18))
         ├── comment_start: "<!--" (location: (1:0)-(1:4))
         ├── children: (1 item)
         │   └── @ LiteralNode (location: (1:4)-(1:15))

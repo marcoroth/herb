@@ -33,8 +33,9 @@ typedef struct {
 <%- end -%>
 
 <%- nodes.each do |node| -%>
-<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
-<%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments %>);
+<%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
+<%- arguments = node_arguments + ["location_T* start", "location_T* end"] -%>
+<%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>);
 <%- end -%>
 
 char* ast_node_type_to_string(AST_NODE_T* node);

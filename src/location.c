@@ -23,7 +23,7 @@ size_t location_column(location_T* location) {
 }
 
 location_T* location_copy(location_T* location) {
-  if (!location) { return NULL; }
+  if (location == NULL) { return NULL; }
 
   return location_init(location_line(location), location_column(location));
 }

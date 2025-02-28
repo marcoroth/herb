@@ -1,19 +1,19 @@
 @ DocumentNode (location: (1:0)-(1:62))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(1:62))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:62))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "link" (location: (1:1)-(1:5))
         │       ├── attributes: (2 items)
-        │       │   ├── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │   ├── @ HTMLAttributeNode (location: (1:6)-(1:44))
         │       │   │   ├── name:
-        │       │   │   │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:6)-(1:10))
         │       │   │   │       └── name: "href" (location: (1:6)-(1:10))
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
         │       │   │   └── value:
-        │       │   │       └── @ HTMLAttributeValueNode (location: (0:0)-(0:0))
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:44))
         │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
         │       │   │           ├── children: (1 item)
         │       │   │           │   └── @ LiteralNode (location: (1:12)-(1:43))
@@ -23,14 +23,14 @@
         │       │   │           └── quoted: true
         │       │   │
         │       │   │
-        │       │   └── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLAttributeNode (location: (1:45)-(1:61))
         │       │       ├── name:
-        │       │       │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:45)-(1:48))
         │       │       │       └── name: "rel" (location: (1:45)-(1:48))
         │       │       │
         │       │       ├── equals: "=" (location: (1:48)-(1:49))
         │       │       └── value:
-        │       │           └── @ HTMLAttributeValueNode (location: (0:0)-(0:0))
+        │       │           └── @ HTMLAttributeValueNode (location: (1:49)-(1:61))
         │       │               ├── open_quote: """ (location: (1:49)-(1:50))
         │       │               ├── children: (1 item)
         │       │               │   └── @ LiteralNode (location: (1:50)-(1:60))

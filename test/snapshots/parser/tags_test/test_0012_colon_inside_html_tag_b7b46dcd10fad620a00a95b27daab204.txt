@@ -1,19 +1,19 @@
 @ DocumentNode (location: (1:0)-(1:22))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (0:0)-(0:0))
+    └── @ HTMLElementNode (location: (1:0)-(1:22))
         ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:16))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── attributes: (1 item)
-        │       │   └── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:15))
         │       │       ├── name:
-        │       │       │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:12))
         │       │       │       └── name: "class" (location: (1:7)-(1:12))
         │       │       │
         │       │       ├── equals: "=" (location: (1:12)-(1:13))
         │       │       └── value:
-        │       │           └── @ HTMLAttributeValueNode (location: (0:0)-(0:0))
+        │       │           └── @ HTMLAttributeValueNode (location: (1:13)-(1:15))
         │       │               ├── open_quote: """ (location: (1:13)-(1:14))
         │       │               ├── children: []
         │       │               ├── close_quote: """ (location: (1:14)-(1:15))
@@ -32,7 +32,7 @@
         ├── tag_name: "div" (location: (1:1)-(1:4))
         ├── body: []
         ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:22))
         │       ├── tag_opening: "</" (location: (1:16)-(1:18))
         │       ├── tag_name: "div" (location: (1:18)-(1:21))
         │       └── tag_closing: ">" (location: (1:21)-(1:22))
