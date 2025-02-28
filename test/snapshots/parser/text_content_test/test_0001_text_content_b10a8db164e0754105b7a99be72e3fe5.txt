@@ -1,7 +1,4 @@
-@ DocumentNode (location: (1,0)-(1,11))
-├── name: ∅
-└── children: (1)
-    @ TextContent (location: (1,0)-(1,11))
-    ├── name: "Hello World"
-    └── children: []
-
+@ DocumentNode (location: (1:0)-(1:11))
+└── children: (1 item)
+    └── @ HTMLTextNode (location: (1:0)-(1:11))
+        └── content: "Hello World"

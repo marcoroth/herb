@@ -1,7 +1,9 @@
-@ DocumentNode (location: (1,0)-(1,11))
-├── name: ∅
-└── children: (1)
-    @ Doctype (location: (1,0)-(1,11))
-    ├── name: " "
-    └── children: []
-
+@ DocumentNode (location: (1:0)-(1:11))
+└── children: (1 item)
+    └── @ HTMLDoctypeNode (location: (0:0)-(0:0))
+        ├── tag_opening: "<!DOCTYPE" (location: (1:0)-(1:9))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:9)-(1:10))
+        │       └── content: " "
+        │
+        └── tag_closing: ">" (location: (1:10)-(1:11))

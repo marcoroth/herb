@@ -1,32 +1,32 @@
-@ DocumentNode (location: (1,0)-(1,33))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,33))
-    ├── name: ∅
-    └── children: (3)
-        @ OpenTag (location: (1,0)-(1,4))
-        ├── name: "h1"
-        └── children: (1)
-            @ AttributeSet (location: (1,3)-(1,3))
-            ├── name: ∅
-            └── children: []
-
-        @ ElementBody (location: (1,4)-(1,28))
-        ├── name: ∅
-        └── children: (3)
-            @ TextContent (location: (1,4)-(1,10))
-            ├── name: "Hello "
-            └── children: []
-
-            @ ERBContent (location: (1,10)-(1,22))
-            ├── name: " World "
-            └── children: []
-
-            @ TextContent (location: (1,22)-(1,28))
-            ├── name: " Hello"
-            └── children: []
-
-        @ CloseTag (location: (1,28)-(1,33))
-        ├── name: "h1"
-        └── children: []
-
+@ DocumentNode (location: (1:0)-(1:33))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (0:0)-(0:0))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "h1" (location: (1:1)-(1:3))
+        │       ├── attributes: []
+        │       ├── tag_closing: ">" (location: (1:3)-(1:4))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "h1" (location: (1:1)-(1:3))
+        ├── body: (3 items)
+        │   ├── @ HTMLTextNode (location: (1:4)-(1:10))
+        │   │   └── content: "Hello "
+        │   │
+        │   ├── @ ERBContentNode (location: (0:0)-(0:0))
+        │   │   ├── tag_opening: "<%=" (location: (1:10)-(1:13))
+        │   │   ├── content: " World " (location: (1:13)-(1:20))
+        │   │   └── tag_closing: "%>" (location: (1:20)-(1:22))
+        │   │
+        │   └── @ HTMLTextNode (location: (1:22)-(1:28))
+        │       └── content: " Hello"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+        │       ├── tag_opening: "</" (location: (1:28)-(1:30))
+        │       ├── tag_name: "h1" (location: (1:30)-(1:32))
+        │       └── tag_closing: ">" (location: (1:32)-(1:33))
+        │
+        └── is_void: false

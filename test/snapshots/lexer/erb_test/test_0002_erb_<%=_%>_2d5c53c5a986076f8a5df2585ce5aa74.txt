@@ -1,4 +1,4 @@
-#<Token type=TOKEN_ERB_START value='<%=' range=[0, 3] start=1:0 end=1:3>
-#<Token type=TOKEN_ERB_CONTENT value=' "hello world" ' range=[3, 18] start=1:3 end=1:18>
-#<Token type=TOKEN_ERB_END value='%>' range=[18, 20] start=1:18 end=1:20>
-#<Token type=TOKEN_EOF value='' range=[20, 20] start=1:20 end=1:20>
+#<ERBX::Token type="TOKEN_ERB_START" value="<%=" range=[0, 0] start=1:0 end=1:3>
+#<ERBX::Token type="TOKEN_ERB_CONTENT" value=" "hello world" " range=[3, 3] start=1:3 end=1:18>
+#<ERBX::Token type="TOKEN_ERB_END" value="%>" range=[18, 18] start=1:18 end=1:20>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[20, 20] start=1:20 end=1:20>

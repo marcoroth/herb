@@ -1,23 +1,33 @@
-@ DocumentNode (location: (1,0)-(1,19))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,19))
-    ├── name: ∅
-    └── children: (1)
-        @ SelfCloseTag (location: (1,0)-(1,19))
-        ├── name: "img"
-        └── children: (1)
-            @ AttributeSet (location: (1,4)-(1,17))
-            ├── name: ∅
-            └── children: (1)
-                @ Attribute (location: (1,5)-(1,16))
-                ├── name: ∅
-                └── children: (2)
-                    @ AttributeName (location: (1,5)-(1,10))
-                    ├── name: "value"
-                    └── children: []
-
-                    @ AttributeValue (location: (1,11)-(1,16))
-                    ├── name: "hello"
-                    └── children: []
-
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (0:0)-(0:0))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── attributes: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (0:0)-(0:0))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (0:0)-(0:0))
+        │       │       │       └── name: "value" (location: (1:5)-(1:10))
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (0:0)-(0:0))
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:11)-(1:16))
+        │       │               │       └── content: "hello"
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       ├── tag_closing: "/>" (location: (1:17)-(1:19))
+        │       ├── children: []
+        │       └── is_void: true
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

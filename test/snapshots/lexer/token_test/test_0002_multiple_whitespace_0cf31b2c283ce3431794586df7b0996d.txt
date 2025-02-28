@@ -1,2 +1,2 @@
-#<Token type=TOKEN_WHITESPACE value='    ' range=[0, 4] start=1:0 end=1:4>
-#<Token type=TOKEN_EOF value='' range=[4, 4] start=1:4 end=1:4>
+#<ERBX::Token type="TOKEN_WHITESPACE" value="    " range=[0, 0] start=1:0 end=1:4>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[4, 4] start=1:4 end=1:4>

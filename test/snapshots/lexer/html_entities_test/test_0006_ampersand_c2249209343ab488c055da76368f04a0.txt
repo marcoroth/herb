@@ -1,4 +1,4 @@
-#<Token type=TOKEN_AMPERSAND value='&' range=[0, 1] start=1:0 end=1:1>
-#<Token type=TOKEN_IDENTIFIER value='amp' range=[1, 4] start=1:1 end=1:4>
-#<Token type=TOKEN_SEMICOLON value=';' range=[4, 5] start=1:4 end=1:5>
-#<Token type=TOKEN_EOF value='' range=[5, 5] start=1:5 end=1:5>
+#<ERBX::Token type="TOKEN_AMPERSAND" value="&" range=[0, 0] start=1:0 end=1:1>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="amp" range=[1, 1] start=1:1 end=1:4>
+#<ERBX::Token type="TOKEN_SEMICOLON" value=";" range=[4, 4] start=1:4 end=1:5>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[5, 5] start=1:5 end=1:5>

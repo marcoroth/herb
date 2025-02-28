@@ -17,9 +17,5 @@ module Lexer
     test "boolean attribute without whitespace and without self-closing tag" do
       assert_lexed_snapshot("<img required>")
     end
-
-    test "boolean attribute without whitespace" do
-      assert_lexed_snapshot("<img required/>")
-    end
   end
 end

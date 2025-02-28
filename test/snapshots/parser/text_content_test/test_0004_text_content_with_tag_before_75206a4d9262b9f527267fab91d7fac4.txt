@@ -1,28 +1,27 @@
-@ DocumentNode (location: (1,0)-(1,23))
-├── name: ∅
-└── children: (2)
-    @ Element (location: (1,0)-(1,18))
-    ├── name: ∅
-    └── children: (3)
-        @ OpenTag (location: (1,0)-(1,6))
-        ├── name: "span"
-        └── children: (1)
-            @ AttributeSet (location: (1,5)-(1,5))
-            ├── name: ∅
-            └── children: []
-
-        @ ElementBody (location: (1,6)-(1,11))
-        ├── name: ∅
-        └── children: (1)
-            @ TextContent (location: (1,6)-(1,11))
-            ├── name: "Hello"
-            └── children: []
-
-        @ CloseTag (location: (1,11)-(1,18))
-        ├── name: "span"
-        └── children: []
-
-    @ TextContent (location: (1,18)-(1,23))
-    ├── name: "World"
-    └── children: []
-
+@ DocumentNode (location: (1:0)-(1:23))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (0:0)-(0:0))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (0:0)-(0:0))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "span" (location: (1:1)-(1:5))
+    │   │       ├── attributes: []
+    │   │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "span" (location: (1:1)-(1:5))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:6)-(1:11))
+    │   │       └── content: "Hello"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (0:0)-(0:0))
+    │   │       ├── tag_opening: "</" (location: (1:11)-(1:13))
+    │   │       ├── tag_name: "span" (location: (1:13)-(1:17))
+    │   │       └── tag_closing: ">" (location: (1:17)-(1:18))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (1:18)-(1:23))
+        └── content: "World"

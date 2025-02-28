@@ -1,25 +1,28 @@
-#<Token type=TOKEN_NEWLINE value='\n' range=[0, 1] start=1:0 end=2:1>
-#<Token type=TOKEN_WHITESPACE value='        ' range=[1, 9] start=2:1 end=2:9>
-#<Token type=TOKEN_HTML_COMMENT_START value='<!--' range=[9, 13] start=2:9 end=2:13>
-#<Token type=TOKEN_IDENTIFIER value='Hello' range=[13, 18] start=2:13 end=2:18>
-#<Token type=TOKEN_WHITESPACE value=' ' range=[18, 19] start=2:18 end=2:19>
-#<Token type=TOKEN_IDENTIFIER value='World' range=[19, 24] start=2:19 end=2:24>
-#<Token type=TOKEN_HTML_COMMENT_END value='-->' range=[24, 27] start=2:24 end=2:27>
-#<Token type=TOKEN_NEWLINE value='\n' range=[27, 28] start=2:0 end=3:1>
-#<Token type=TOKEN_WHITESPACE value='        ' range=[28, 36] start=3:1 end=3:9>
-#<Token type=TOKEN_HTML_TAG_START value='<' range=[36, 37] start=3:9 end=3:10>
-#<Token type=TOKEN_IDENTIFIER value='h1' range=[37, 39] start=3:10 end=3:12>
-#<Token type=TOKEN_HTML_TAG_END value='>' range=[39, 40] start=3:12 end=3:13>
-#<Token type=TOKEN_HTML_COMMENT_START value='<!--' range=[40, 44] start=3:13 end=3:17>
-#<Token type=TOKEN_WHITESPACE value=' ' range=[44, 45] start=3:17 end=3:18>
-#<Token type=TOKEN_IDENTIFIER value='Hello' range=[45, 50] start=3:18 end=3:23>
-#<Token type=TOKEN_WHITESPACE value=' ' range=[50, 51] start=3:23 end=3:24>
-#<Token type=TOKEN_IDENTIFIER value='World' range=[51, 56] start=3:24 end=3:29>
-#<Token type=TOKEN_WHITESPACE value=' ' range=[56, 57] start=3:29 end=3:30>
-#<Token type=TOKEN_HTML_COMMENT_END value='-->' range=[57, 60] start=3:30 end=3:33>
-#<Token type=TOKEN_HTML_TAG_START_CLOSE value='</' range=[60, 62] start=3:33 end=3:35>
-#<Token type=TOKEN_IDENTIFIER value='h1' range=[62, 64] start=3:35 end=3:37>
-#<Token type=TOKEN_HTML_TAG_END value='>' range=[64, 65] start=3:37 end=3:38>
-#<Token type=TOKEN_NEWLINE value='\n' range=[65, 66] start=3:0 end=4:1>
-#<Token type=TOKEN_WHITESPACE value='      ' range=[66, 72] start=4:1 end=4:7>
-#<Token type=TOKEN_EOF value='' range=[72, 72] start=4:7 end=4:7>
+#<ERBX::Token type="TOKEN_NEWLINE" value="
+" range=[0, 0] start=1:0 end=2:1>
+#<ERBX::Token type="TOKEN_WHITESPACE" value="        " range=[1, 1] start=2:1 end=2:9>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[9, 9] start=2:9 end=2:13>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[13, 13] start=2:13 end=2:18>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[18, 18] start=2:18 end=2:19>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="World" range=[19, 19] start=2:19 end=2:24>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[24, 24] start=2:24 end=2:27>
+#<ERBX::Token type="TOKEN_NEWLINE" value="
+" range=[27, 27] start=2:0 end=3:1>
+#<ERBX::Token type="TOKEN_WHITESPACE" value="        " range=[28, 28] start=3:1 end=3:9>
+#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[36, 36] start=3:9 end=3:10>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[37, 37] start=3:10 end=3:12>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[39, 39] start=3:12 end=3:13>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[40, 40] start=3:13 end=3:17>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[44, 44] start=3:17 end=3:18>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Hello" range=[45, 45] start=3:18 end=3:23>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[50, 50] start=3:23 end=3:24>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="World" range=[51, 51] start=3:24 end=3:29>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[56, 56] start=3:29 end=3:30>
+#<ERBX::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[57, 57] start=3:30 end=3:33>
+#<ERBX::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[60, 60] start=3:33 end=3:35>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[62, 62] start=3:35 end=3:37>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[64, 64] start=3:37 end=3:38>
+#<ERBX::Token type="TOKEN_NEWLINE" value="
+" range=[65, 65] start=3:0 end=4:1>
+#<ERBX::Token type="TOKEN_WHITESPACE" value="      " range=[66, 66] start=4:1 end=4:7>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[72, 72] start=4:7 end=4:7>
