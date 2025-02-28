@@ -97,9 +97,9 @@ static void parser_set_start_from_current_token(parser_T* parser, AST_NODE_T* no
   ast_node_set_start(node, parser->current_token->start);
 }
 
-static void parser_set_end_from_current_token(parser_T* parser, AST_NODE_T* node) {
-  ast_node_set_end(node, parser->current_token->start);
-}
+// static void parser_set_end_from_current_token(parser_T* parser, AST_NODE_T* node) {
+//   ast_node_set_end(node, parser->current_token->start);
+// }
 
 static token_T* parser_consume_as_start_token(parser_T* parser, token_type_T type, AST_NODE_T* node) {
   token_T* token = parser_consume(parser, type, node->errors);
