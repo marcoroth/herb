@@ -1,6 +1,6 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
-#include "include/token_struct.h"
+#include "include/token.h"
 #include "include/util.h"
 
 #include <stdio.h>
@@ -32,6 +32,45 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
   literal->content = erbx_strdup(token->value);
 
   return literal;
+}
+
+char* unexpected_token_message(const char* message, const char* expected, const char* got) {
+  const char* template = "[Parser]: Unexpected Token '%s' (expected '%s', got: '%s')";
+  int needed = snprintf(NULL, 0, template, message, expected, got);
+
+  if (needed < 0) { return NULL; }
+
+  char* buffer = malloc(needed + 1);
+  if (!buffer) { return NULL; }
+
+  snprintf(buffer, needed + 1, template, message, expected, got);
+
+  return buffer;
+}
+
+AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_token_node_init_from_raw_message(
+  location_T* start, location_T* end, const char* message, const char* expected, const char* actual
+) {
+  char* error_message = unexpected_token_message(message, expected, actual);
+  char* escaped_message = escape_newlines(error_message);
+
+  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token =
+    ast_unexpected_token_node_init(escaped_message, expected, actual, start, end, NULL);
+
+  free(error_message);
+  free(escaped_message);
+
+  return unexpected_token;
+}
+
+AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_token_node_init_from_token(const token_T* token, const char* expected) {
+  return ast_unexpected_token_node_init_from_raw_message(
+    token->start,
+    token->end,
+    token->value,
+    expected,
+    token_type_to_string(token->type)
+  );
 }
 
 ast_node_type_T ast_node_type(const AST_NODE_T* node) {

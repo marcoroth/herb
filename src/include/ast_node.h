@@ -10,6 +10,12 @@ void ast_node_free(AST_NODE_T* node);
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token);
 
+char* unexpected_token_message(const char* message, const char* expected, const char* got);
+AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_token_node_init_from_token(const token_T* token, const char* expected);
+AST_UNEXPECTED_TOKEN_NODE_T* ast_unexpected_token_node_init_from_raw_message(
+  location_T* start, location_T* end, const char* message, const char* expected, const char* actual
+);
+
 size_t ast_node_sizeof(void);
 size_t ast_node_child_count(AST_NODE_T* node);
 

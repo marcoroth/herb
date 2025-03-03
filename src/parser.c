@@ -31,63 +31,22 @@ parser_T* parser_init(lexer_T* lexer) {
   return parser;
 }
 
-static char* format_parser_error(const char* message, const char* expected, const char* got) {
-  const char* template = "[Parser]: Unexpected Token '%s' (expected '%s', got: '%s')";
-  int needed = snprintf(NULL, 0, template, message, expected, got);
-
-  if (needed < 0) { return NULL; }
-
-  char* buffer = malloc(needed + 1);
-  if (!buffer) { return NULL; }
-
-  snprintf(buffer, needed + 1, template, message, expected, got);
-
-  return buffer;
-}
-
-static AST_UNEXPECTED_TOKEN_NODE_T* parser_unexpected_token(
-  location_T* start, location_T* end, const char* message, const char* expected, const char* actual
-) {
-  char* error_message = format_parser_error(message, expected, actual);
-  char* escaped_message = escape_newlines(error_message);
-
-  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token =
-    ast_unexpected_token_node_init(escaped_message, expected, actual, start, end, NULL);
-
-  free(error_message);
-  free(escaped_message);
-
-  return unexpected_token;
-}
-
 static AST_UNEXPECTED_TOKEN_NODE_T* parser_init_unexpected_token_from_current_token(
-  parser_T* parser, const token_type_T type
+  parser_T* parser, const token_type_T expected_type
 ) {
   token_T* token = parser_advance(parser);
 
-  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token = parser_unexpected_token(
+  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token = ast_unexpected_token_node_init_from_raw_message(
     token->start,
     token->end,
     token->value,
     (char*) token_type_to_string(token->type),
-    (char*) token_type_to_string(type)
+    (char*) token_type_to_string(expected_type)
   );
 
   token_free(token);
 
   return unexpected_token;
-}
-
-static AST_UNEXPECTED_TOKEN_NODE_T* parser_init_unexpected_token_from_token(
-  parser_T* parser, const token_T* token, const char* expected
-) {
-  return parser_unexpected_token(
-    token->start,
-    token->end,
-    token->value,
-    expected,
-    (char*) token_type_to_string(token->type)
-  );
 }
 
 static token_T* parser_advance(parser_T* parser) {
@@ -107,7 +66,7 @@ static token_T* parser_consume_expected(parser_T* parser, const token_type_T typ
   if (token == NULL) {
     token = parser_advance(parser);
 
-    AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
+    AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = ast_unexpected_token_node_init_from_raw_message(
       token->start,
       token->end,
       "in parser_consume_expected",
@@ -259,8 +218,11 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
       case TOKEN_ERROR: {
         buffer_free(&content);
 
+        token_T* token = parser_consume_expected(parser, TOKEN_ERROR, errors);
         AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
-          parser_init_unexpected_token_from_current_token(parser, parser->current_token->type);
+          ast_unexpected_token_node_init_from_token(token, "not TOKEN_ERROR");
+        token_free(token);
+
         array_append(errors, unexpected_token_node);
 
         return NULL;
@@ -368,7 +330,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       close_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
 
       if (open_quote != NULL && close_quote != NULL && strcmp(open_quote->value, close_quote->value) != 0) {
-        AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
+        AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = ast_unexpected_token_node_init_from_raw_message(
           close_quote->start,
           close_quote->end,
           "Unexpected quote",
@@ -389,8 +351,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     } break;
 
     default: {
+      token_T* token = parser_advance(parser);
       AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
-        parser_init_unexpected_token_from_current_token(parser, parser->current_token->type);
+        ast_unexpected_token_node_init_from_token(token, "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START");
+      token_free(token);
 
       array_append(errors, unexpected_token_node);
     } break;
@@ -492,11 +456,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
       default: {
         token_T* token = parser_advance(parser);
-        AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_init_unexpected_token_from_token(
-          parser,
-          token,
-          "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE"
-        );
+        AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
+          ast_unexpected_token_node_init_from_token(token, "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE");
         token_free(token);
 
         array_append(errors, unexpected_token_node);
@@ -585,15 +546,9 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
 
     AST_HTML_CLOSE_TAG_NODE_T* close_tag = parser_parse_html_close_tag(parser);
 
-    buffer_T buffer = buffer_new();
-
-    ast_pretty_print_node((AST_NODE_T*) close_tag, 0, 0, &buffer);
-
-    printf("%s\n", buffer_value(&buffer));
-
     if (strcasecmp(open_tag->tag_name->value, close_tag->tag_name->value) != 0
         && string_present(open_tag->tag_name->value) && string_present(close_tag->tag_name->value)) {
-      AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
+      AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = ast_unexpected_token_node_init_from_raw_message(
         close_tag->base.start,
         close_tag->base.end,
         "mismatched closing tag",
@@ -627,11 +582,11 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
     errors
   );
 
-  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = parser_unexpected_token(
+  AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = ast_unexpected_token_node_init_from_raw_message(
     open_tag->base.start,
     open_tag->base.end,
     "open_tag type",
-    "AST_HTML_OPEN_TAG_NODE, AST_HTML_SELF_CLOSE_TAG_NODE",
+    "AST_HTML_OPEN_TAG_NODE or AST_HTML_SELF_CLOSE_TAG_NODE",
     open_tag->tag_name->value
   );
 
@@ -698,9 +653,25 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
       }
 
       default: {
-        AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
-          parser_init_unexpected_token_from_current_token(parser, parser->current_token->type);
-        array_append(errors, unexpected_token_node);
+        token_T* token = parser_advance(parser);
+        const char* actual_type = token_type_to_string(token->type);
+
+        size_t length = snprintf(NULL, 0, "not %s", actual_type) + 1;
+        char* expected = malloc(length);
+
+        if (expected != NULL) {
+          snprintf(expected, length, "not %s", actual_type);
+
+          AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node =
+            ast_unexpected_token_node_init_from_token(token, expected);
+
+          array_append(errors, unexpected_token_node);
+          free(expected);
+        } else {
+          printf("unexpected token type: %s\n", token_type_to_string(token->type));
+        }
+
+        token_free(token);
       } break;
     }
   }

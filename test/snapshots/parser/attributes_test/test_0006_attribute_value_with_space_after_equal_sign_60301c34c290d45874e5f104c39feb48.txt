@@ -27,8 +27,8 @@
         │       │   │       └── @ HTMLAttributeValueNode (location: (1:13)-(1:14))
         │       │   │           ├── errors: (1 error)
         │       │   │           │   └── @ UnexpectedTokenNode (location: (1:13)-(1:14))
-        │       │   │           │       ├── message: "[Parser]: Unexpected Token ' ' (expected 'TOKEN_WHITESPACE', got: 'TOKEN_WHITESPACE')"
-        │       │   │           │       ├── expected: "TOKEN_WHITESPACE"
+        │       │   │           │       ├── message: "[Parser]: Unexpected Token ' ' (expected 'TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START', got: 'TOKEN_WHITESPACE')"
+        │       │   │           │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
         │       │   │           │       └── got: "TOKEN_WHITESPACE"
         │       │   │           │
         │       │   │           ├── open_quote: ∅
