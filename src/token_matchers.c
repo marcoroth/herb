@@ -5,6 +5,14 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
+bool token_is(parser_T* parser, token_type_T expected_type) {
+  return parser->current_token->type == expected_type;
+}
+
+bool token_is_not(parser_T* parser, token_type_T type) {
+  return parser->current_token->type != type;
+}
+
 bool token_matches_any(token_type_T current_token, token_type_T first_token, ...) {
   if (current_token == first_token) { return true; }
 
