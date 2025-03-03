@@ -11,9 +11,6 @@ typedef struct PARSER_STRUCT {
 
 parser_T* parser_init(lexer_T* lexer);
 
-token_T* parser_consume_if_present(parser_T* parser, token_type_T type);
-token_T* parser_consume_expected(parser_T* parser, token_type_T type, array_T* array);
-
 AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser);
 
 size_t parser_sizeof(void);

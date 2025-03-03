@@ -3,6 +3,12 @@
     └── @ HTMLElementNode (location: (1:0)-(1:22))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:16))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:6))
+        │       │       ├── message: "[Parser]: Unexpected Token ':' (expected 'TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE', got: 'TOKEN_COLON')"
+        │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE"
+        │       │       └── got: "TOKEN_COLON"
+        │       │
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── attributes: (1 item)
@@ -21,12 +27,7 @@
         │       │
         │       │
         │       ├── tag_closing: ">" (location: (1:15)-(1:16))
-        │       ├── children: (1 item)
-        │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:6))
-        │       │       ├── message: "[Parser]: Unexpected Token : (expected 'TOKEN_WHITESPACE', got: 'TOKEN_COLON')"
-        │       │       ├── expected: "TOKEN_WHITESPACE"
-        │       │       └── got: "TOKEN_COLON"
-        │       │
+        │       ├── children: []
         │       └── is_void: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))

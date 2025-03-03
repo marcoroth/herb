@@ -10,19 +10,24 @@ size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }
 
-void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, location_T* start, location_T* end) {
+void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, location_T* start, location_T* end, array_T* errors) {
   if (!node) { return; }
 
   node->type = type;
   node->start = location_copy(start);
   node->end = location_copy(end);
-  node->errors = array_init(1);
+
+  if (errors == NULL) {
+    node->errors = array_init(1);
+  } else {
+    node->errors = errors;
+  }
 }
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
   AST_LITERAL_NODE_T* literal = malloc(sizeof(AST_LITERAL_NODE_T));
 
-  ast_node_init(&literal->base, AST_LITERAL_NODE, token->start, token->end);
+  ast_node_init(&literal->base, AST_LITERAL_NODE, token->start, token->end, NULL);
 
   literal->content = erbx_strdup(token->value);
 
@@ -39,6 +44,10 @@ size_t ast_node_errors_count(const AST_NODE_T* node) {
 
 array_T* ast_node_errors(const AST_NODE_T* node) {
   return node->errors;
+}
+
+void ast_node_append_error(const AST_NODE_T* node, AST_NODE_T* error) {
+  array_append(node->errors, error);
 }
 
 void ast_node_set_start(AST_NODE_T* node, location_T* location) {

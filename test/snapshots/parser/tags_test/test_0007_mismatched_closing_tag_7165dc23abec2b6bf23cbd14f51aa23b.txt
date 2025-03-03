@@ -3,7 +3,7 @@
     └── @ HTMLElementNode (location: (1:0)-(1:12))
         ├── errors: (1 error)
         │   └── @ UnexpectedTokenNode (location: (1:6)-(1:12))
-        │       ├── message: "[Parser]: Unexpected Token mismatched closing tag (expected 'html', got: 'div')"
+        │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag' (expected 'html', got: 'div')"
         │       ├── expected: "html"
         │       └── got: "div"
         │

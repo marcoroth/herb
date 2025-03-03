@@ -1,6 +1,7 @@
 #ifndef ERBX_UTIL_H
 #define ERBX_UTIL_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 int is_whitespace(int character);
@@ -13,6 +14,9 @@ char* replace_char(char* string, char find, char replace);
 char* escape_newlines(const char* input);
 char* quoted_string(const char* input);
 char* wrap_string(const char* input, char character);
+
+bool string_blank(const char* input);
+bool string_present(const char* input);
 
 char* erbx_strdup(const char* s);
 

@@ -1,5 +1,6 @@
 #include "include/util.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +93,22 @@ char* wrap_string(const char* input, const char character) {
 
 char* quoted_string(const char* input) {
   return wrap_string(input, '"');
+}
+
+// Check if a string is blank (NULL, empty, or only contains whitespace)
+bool string_blank(const char* input) {
+  if (input == NULL || input[0] == '\0') { return true; }
+
+  for (const char* p = input; *p != '\0'; p++) {
+    if (!isspace(*p)) { return false; }
+  }
+
+  return true;
+}
+
+// Check if a string is present (not blank)
+bool string_present(const char* input) {
+  return !string_blank(input);
 }
 
 char* erbx_strdup(const char* s) {
