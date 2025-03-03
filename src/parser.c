@@ -7,6 +7,7 @@
 #include "include/html_util.h"
 #include "include/lexer.h"
 #include "include/token.h"
+#include "include/token_matchers.h"
 #include "include/util.h"
 
 #include <stdio.h>
@@ -93,7 +94,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 
   buffer_T comment = buffer_new();
 
-  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_COMMENT_END) {
+  while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_EOF)) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         if (buffer_length(&comment) > 0) {
@@ -148,7 +149,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
 
   location_T* start_location = location_copy(parser->current_token->start);
 
-  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_END) {
+  while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_EOF)) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         if (buffer_length(&content) > 0) {
@@ -201,10 +202,15 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
   array_T* errors = array_init(1);
   buffer_T content = buffer_new();
 
-  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START
-         && parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE
-         && parser->current_token->type != TOKEN_HTML_DOCTYPE && parser->current_token->type != TOKEN_HTML_COMMENT_START
-         && parser->current_token->type != TOKEN_ERB_START) {
+  while (token_is_none_of(
+    parser,
+    TOKEN_HTML_TAG_START,
+    TOKEN_HTML_TAG_START_CLOSE,
+    TOKEN_HTML_DOCTYPE,
+    TOKEN_HTML_COMMENT_START,
+    TOKEN_ERB_START,
+    TOKEN_EOF
+  )) {
     switch (parser->current_token->type) {
       case TOKEN_EOF:
       case TOKEN_HTML_TAG_START:
@@ -294,7 +300,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       location_free(start_location);
       start_location = location_copy(parser->current_token->start);
 
-      while (parser->current_token->type != TOKEN_QUOTE && parser->current_token->type != TOKEN_EOF) {
+      while (token_is_none_of(parser, TOKEN_QUOTE, TOKEN_EOF)) {
         switch (parser->current_token->type) {
           case TOKEN_ERB_START: {
             if (buffer_length(&buffer) > 0) {
@@ -435,8 +441,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   token_T* tag_start = parser_consume_expected(parser, TOKEN_HTML_TAG_START, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
 
-  while (parser->current_token->type != TOKEN_HTML_TAG_END && parser->current_token->type != TOKEN_HTML_TAG_SELF_CLOSE
-         && parser->current_token->type != TOKEN_EOF) {
+  while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -613,7 +618,7 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
 }
 
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors) {
-  while (parser->current_token->type != TOKEN_EOF && parser->current_token->type != TOKEN_HTML_TAG_START_CLOSE) {
+  while (token_is_none_of(parser, TOKEN_HTML_TAG_START_CLOSE, TOKEN_EOF)) {
     switch (parser->current_token->type) {
       case TOKEN_ERB_START: {
         AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
