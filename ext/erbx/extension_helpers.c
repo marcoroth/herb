@@ -6,6 +6,7 @@
 
 #include "../../src/include/ast_pretty_print.h"
 #include "../../src/include/erbx.h"
+#include "../../src/include/io.h"
 #include "../../src/include/token.h"
 
 const char* check_string(VALUE value) {
@@ -60,4 +61,54 @@ VALUE rb_token_from_c_struct(token_T* token) {
   VALUE Token = rb_define_class_under(ERBX, "Token", rb_cObject);
 
   return rb_class_new_instance(5, args, Token);
+}
+
+VALUE create_lex_result(array_T* tokens, VALUE source) {
+  VALUE value = rb_ary_new();
+  VALUE warnings = rb_ary_new();
+  VALUE errors = rb_ary_new();
+
+  for (size_t i = 0; i < array_size(tokens); i++) {
+    token_T* token = array_get(tokens, i);
+    if (token != NULL) { rb_ary_push(value, rb_token_from_c_struct(token)); }
+  }
+
+  VALUE ERBX = rb_define_module("ERBX");
+  VALUE Result = rb_define_class_under(ERBX, "Result", rb_cObject);
+  VALUE LexResult = rb_define_class_under(ERBX, "LexResult", Result);
+
+  erbx_free_tokens(&tokens);
+  VALUE args[4] = { value, source, warnings, errors };
+  return rb_class_new_instance(4, args, LexResult);
+}
+
+VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
+  buffer_T output;
+  if (!buffer_init(&output)) { return Qnil; }
+
+  VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
+  VALUE warnings = rb_ary_new();
+  VALUE errors = rb_ary_new();
+
+  if (root) {
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+    ast_node_free((AST_NODE_T*) root);
+  }
+
+  VALUE ERBX = rb_define_module("ERBX");
+  VALUE Result = rb_define_class_under(ERBX, "Result", rb_cObject);
+  VALUE ParseResult = rb_define_class_under(ERBX, "ParseResult", Result);
+
+  buffer_free(&output);
+  VALUE args[4] = { value, source, warnings, errors };
+  return rb_class_new_instance(4, args, ParseResult);
+}
+
+VALUE read_file_to_ruby_string(const char* file_path) {
+  char* source = erbx_read_file(file_path);
+  VALUE source_value = rb_str_new_cstr(source);
+
+  free(source);
+
+  return source_value;
 }
