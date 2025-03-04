@@ -28,7 +28,7 @@ task "set-version-to-identifier" do
       "%<current_version>s.#{label}.%<identifier>s",
       current_version: current_version,
       identifier: identifier
-    ).gsub("-", ".")
+    ).gsub("-", ".").gsub("_", ".")
   )
 
   unless version_file_contents.gsub!(version_constant_re, "  VERSION = \"#{fake_version}\"")
