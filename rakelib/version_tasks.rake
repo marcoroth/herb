@@ -5,8 +5,8 @@
 # https://github.com/flavorjones/ruby-c-extensions-explained/blob/8d5cdae81bbde48ab572c3963c972c3bf9bd37ef/precompiled/Rakefile#L76-L97
 #
 
-desc "Temporarily set VERSION to a unique timestamp"
-task "set-version-to-timestamp" do
+desc "Temporarily set VERSION to a unique identifier"
+task "set-version-to-identifier" do
   # this task is used by bin/test-gem-build
   # to test building, packaging, and installing a precompiled gem
   version_constant_re = /^\s*VERSION\s*=\s*["'](.*)["']$/
@@ -14,14 +14,20 @@ task "set-version-to-timestamp" do
   version_file_path = File.join(__dir__, "../lib/erbx/version.rb")
   version_file_contents = File.read(version_file_path)
 
-  current_version_string = version_constant_re.match(version_file_contents)[1].split(".test.").first
+  commit_sha = ENV["GITHUB_SHA"] # Available in GitHub Actions
+
+  timestamp = Time.now.strftime("%Y%m%d%H%M%S")
+  identifier = commit_sha ? "#{timestamp}.#{commit_sha[0...7]}" : timestamp
+  label = commit_sha ? "dev" : "local"
+
+  current_version_string = version_constant_re.match(version_file_contents)[1].split(".#{label}.").first
   current_version = Gem::Version.new(current_version_string)
 
   fake_version = Gem::Version.new(
     format(
-      "%<current_version>s.test.%<timestamp>s",
+      "%<current_version>s.#{label}.%<identifier>s",
       current_version: current_version,
-      timestamp: Time.now.strftime("%Y%m%d%H%M%S")
+      identifier: identifier
     )
   )
 

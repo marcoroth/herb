@@ -3,6 +3,7 @@ name: Release
 on:
   workflow_dispatch:
   push:
+    branches: ["main"]
     tags: ["v*"]
   pull_request:
 
@@ -12,7 +13,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Native Gems with Rake-Compiler-Dock
+    name: Build Native Gems with rake-compiler-dock
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -24,7 +25,9 @@ jobs:
           - aarch64-linux-musl
           - x86_64-darwin
           - arm64-darwin
+
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +42,9 @@ jobs:
       - name: Install dependencies
         run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
 
+      - name: Update version
+        run: bundle exec rake set-version-to-identifier
+
       - name: Precompile gem
         run: |
           if [ "${{ matrix.target }}" = "default" ]; then
@@ -46,3 +52,9 @@ jobs:
           else
             bundle exec rake gem:${{ matrix.target }}
           fi
+
+      - name: Publish dev-build on GitHub RubyGems Registry
+        run: |
+          GEM_FILE=$(ls pkg/*.gem | head -n 1)
+          echo "Pushing $GEM_FILE"
+          gem push --key github --host https://rubygems.pkg.github.com/marcoroth "$GEM_FILE"

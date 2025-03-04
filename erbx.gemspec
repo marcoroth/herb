@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/erbx"
+  spec.metadata["github_repo"] = "https://github.com/marcoroth/erbx"
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
   spec.metadata["rubygems_mfa_required"] = "true"
 

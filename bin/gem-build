@@ -19,7 +19,7 @@ test -e /etc/os-release && cat /etc/os-release
 set -x
 
 bundle install --local || bundle install
-bundle exec rake set-version-to-timestamp
+bundle exec rake set-version-to-identifier
 
 if [[ "${BUILD_NATIVE_GEM}" == "ruby" ]] ; then
   bundle exec rake clean compile
