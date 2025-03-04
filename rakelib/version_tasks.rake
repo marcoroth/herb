@@ -14,7 +14,7 @@ task "set-version-to-identifier" do
   version_file_path = File.join(__dir__, "../lib/erbx/version.rb")
   version_file_contents = File.read(version_file_path)
 
-  commit_sha = ENV["GITHUB_SHA"] # Available in GitHub Actions
+  commit_sha = ENV.fetch("GITHUB_SHA", nil) # Available in GitHub Actions
 
   timestamp = Time.now.strftime("%Y%m%d%H%M%S")
   identifier = commit_sha ? "#{timestamp}.#{commit_sha[0...7]}" : timestamp
