@@ -49,6 +49,11 @@ jobs:
       - name: Update version
         run: bundle exec rake set-version-to-identifier
 
+      - name: Update gemspec allowed_push_host
+        run: bundle exec rake update-allowed-push-host[https://rubygems.pkg.github.com/${OWNER}]
+        env:
+          OWNER: ${{ github.repository_owner }}
+
       - name: Precompile gem
         run: |
           if [ "${{ matrix.target }}" = "default" ]; then
@@ -68,4 +73,4 @@ jobs:
           gem push --KEY github --host https://rubygems.pkg.github.com/${OWNER} "$GEM_FILE"
         env:
           GEM_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OWNER: marcoroth
+          OWNER: ${{ github.repository_owner }}

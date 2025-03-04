@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
 
   spec.extensions = ["ext/erbx/extconf.rb"]
 
-  spec.metadata["allowed_push_host"] = "https://rubygems.org"
+  spec.metadata["allowed_push_host"] = "https://rubygems.org,https://rubygems.pkg.github.com/marcoroth"
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/erbx"
   spec.metadata["github_repo"] = "https://github.com/marcoroth/erbx"
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
