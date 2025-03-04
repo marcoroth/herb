@@ -11,7 +11,9 @@ module ERBX
     attr_accessor :project_path, :output_file
 
     def initialize(project_path, output_file: nil)
-      @project_path = Pathname.new(project_path || File.expand_path("../..", __dir__))
+      @project_path = Pathname.new(
+        project_path ? File.expand_path(".", project_path) : File.expand_path("../..", __dir__)
+      )
 
       date = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
       @output_file = output_file || "#{date}_erb_parsing_result_#{@project_path.basename}.log"
@@ -21,30 +23,16 @@ module ERBX
       "**/*.html.erb"
     end
 
+    def full_path_glob
+      project_path + glob
+    end
+
     def absolute_path
       File.expand_path(@project_path, File.expand_path("../..", __dir__))
     end
 
-    def progress_bar(current, total, width = IO.console.winsize[1] - "[] 100% (#{total}/#{total})".length)
-      progress = current.to_f / total
-      completed_length = (progress * width).to_i
-      completed = "█" * completed_length
-
-      partial_index = ((progress * width) % 1 * 8).to_i
-      partial_chars = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"]
-      partial = partial_index.zero? ? "" : partial_chars[partial_index]
-
-      remaining = " " * (width - completed_length - (partial.empty? ? 0 : 1))
-      percentage = (progress * 100).to_i
-
-      # Format as [███████▋       ] 42% (123/292)
-      "[#{completed}#{partial}#{remaining}] #{percentage}% (#{current}/#{total})"
-    end
-
-    def heading(text)
-      prefix = "--- #{text.upcase} "
-
-      prefix + ("-" * (80 - prefix.length))
+    def files
+      @files ||= Dir[full_path_glob]
     end
 
     def parse!
@@ -59,10 +47,8 @@ module ERBX
 
         log.puts heading("PROCESSED FILES")
 
-        files = Dir[project_path + glob]
-
         if files.empty?
-          message = "No .html.erb files found in #{absolute_path}"
+          message = "No .html.erb files found using #{full_path_glob}"
           log.puts message
           puts message
           next
@@ -180,7 +166,6 @@ module ERBX
               else
                 message = "❌ Parsing #{file_path} failed"
                 log.puts message
-                puts "\n#{message}"
 
                 error_outputs[file_path] = {
                   exit_code: $CHILD_STATUS.exitstatus,
@@ -203,7 +188,6 @@ module ERBX
           rescue Timeout::Error
             message = "⏱️ Parsing #{file_path} timed out after 1 second"
             log.puts message
-            puts "\n#{message}"
 
             begin
               Process.kill("TERM", pid)
@@ -216,8 +200,9 @@ module ERBX
           rescue StandardError => e
             message = "⚠️ Error processing #{file_path}: #{e.message}"
             log.puts message
-            puts "\n#{message}"
+
             failed_files << file_path
+
             begin
               file_contents[file_path] = File.read(file_path)
             rescue StandardError => read_error
@@ -347,6 +332,30 @@ module ERBX
 
         puts "\nResults saved to #{output_file}"
       end
+    end
+
+    private
+
+    def progress_bar(current, total, width = IO.console.winsize[1] - "[] 100% (#{total}/#{total})".length)
+      progress = current.to_f / total
+      completed_length = (progress * width).to_i
+      completed = "█" * completed_length
+
+      partial_index = ((progress * width) % 1 * 8).to_i
+      partial_chars = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"]
+      partial = partial_index.zero? ? "" : partial_chars[partial_index]
+
+      remaining = " " * (width - completed_length - (partial.empty? ? 0 : 1))
+      percentage = (progress * 100).to_i
+
+      # Format as [███████▋       ] 42% (123/292)
+      "[#{completed}#{partial}#{remaining}] #{percentage}% (#{current}/#{total})"
+    end
+
+    def heading(text)
+      prefix = "--- #{text.upcase} "
+
+      prefix + ("-" * (80 - prefix.length))
     end
   end
 end
