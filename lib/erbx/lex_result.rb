@@ -8,5 +8,13 @@ module ERBX
       @value = TokenList.new(value)
       super(source, warnings, errors)
     end
+
+    def success?
+      errors.empty?
+    end
+
+    def failed?
+      errors.any?
+    end
   end
 end

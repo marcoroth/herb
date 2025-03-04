@@ -42,18 +42,21 @@ Style/AccessorGrouping:
 Metrics/CyclomaticComplexity:
   Max: 10
   Exclude:
+    - lib/erbx/project.rb
     - lib/erbx/ast/nodes.rb
 
 Metrics/MethodLength:
   Max: 20
   Exclude:
     - test/fork_helper.rb
+    - lib/erbx/project.rb
     - lib/erbx/ast/nodes.rb
     - templates/template.rb
 
 Metrics/AbcSize:
   Exclude:
-    - Rakefile
+    - lib/erbx/cli.rb
+    - lib/erbx/project.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
     - templates/template.rb
@@ -62,12 +65,15 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Exclude:
+    - lib/erbx/project.rb
     - test/**/*_test.rb
 
 Metrics/BlockLength:
+  Max: 30
   Exclude:
     - Rakefile
     - "*.gemspec"
+    - lib/erbx/project.rb
     - test/**/*_test.rb
 
 Metrics/ParameterLists:
@@ -76,6 +82,7 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Exclude:
+    - lib/erbx/project.rb
     - lib/erbx/ast/nodes.rb
 
 Layout/LineLength:

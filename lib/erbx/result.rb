@@ -9,5 +9,13 @@ module ERBX
       @warnings = warnings
       @errors = errors
     end
+
+    def success?
+      false
+    end
+
+    def failed?
+      true
+    end
   end
 end
