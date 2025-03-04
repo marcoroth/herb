@@ -9,7 +9,6 @@ PATH
   remote: .
   specs:
     erbx (0.0.1)
-      ffi
 
 GEM
   remote: https://rubygems.org/
@@ -25,17 +24,6 @@ GEM
       pretty_please
     dispersion (0.2.0)
       prism
-    ffi (1.17.1)
-    ffi (1.17.1-aarch64-linux-gnu)
-    ffi (1.17.1-aarch64-linux-musl)
-    ffi (1.17.1-arm-linux-gnu)
-    ffi (1.17.1-arm-linux-musl)
-    ffi (1.17.1-arm64-darwin)
-    ffi (1.17.1-x86-linux-gnu)
-    ffi (1.17.1-x86-linux-musl)
-    ffi (1.17.1-x86_64-darwin)
-    ffi (1.17.1-x86_64-linux-gnu)
-    ffi (1.17.1-x86_64-linux-musl)
     json (2.10.1)
     language_server-protocol (3.17.0.4)
     maxitest (5.8.0)

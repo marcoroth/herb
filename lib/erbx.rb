@@ -14,8 +14,13 @@ require "erbx/ast"
 require "erbx/ast/node"
 require "erbx/ast/nodes"
 
-require "erbx/erbx"
+require_relative "erbx/version"
+
+begin
+  require_relative "erbx/#{RUBY_VERSION.split(".")[...2].join(".")}/erbx"
+rescue LoadError
+  require "erbx/erbx"
+end
 
 module ERBX
-  VERSION = "0.0.1"
 end

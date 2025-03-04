@@ -2,6 +2,10 @@
 
 require "mkmf"
 
+Dir.chdir(File.expand_path("../..", __dir__)) do
+  system("rake templates", exception: true)
+end
+
 extension_name = "erbx"
 
 include_path = File.expand_path("../../src/include", __dir__)

@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "rbconfig"
+
+host_cpu = RbConfig::CONFIG["host_cpu"]
+host_os  = RbConfig::CONFIG["host_os"]
+
+arch_map = {
+  "x86_64" => "x86_64",
+  "aarch64" => "arm64",
+  "arm64" => "arm64",
+  "armv7l" => "arm",
+  "i686" => "x86",
+  "i386" => "x86"
+}
+
+arch = arch_map[host_cpu] || host_cpu
+
+if host_os =~ /darwin/
+  os = "darwin"
+  platform = "#{arch}-#{os}"
+else
+  libc = File.exist?("/lib/libc.musl-x86_64.so.1") || `ldd --version 2>&1`.include?("musl") ? "musl" : "gnu"
+  os = "linux"
+  platform = "#{arch}-#{os}-#{libc}"
+end
+
+puts platform

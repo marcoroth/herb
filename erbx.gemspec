@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
+begin
+  require_relative "lib/erbx/version"
+rescue LoadError
+  puts "WARNING: Could not load ERBX::VERSION"
+end
+
 Gem::Specification.new do |spec|
   spec.name = "erbx"
-  spec.version = "0.0.1"
+  spec.version = defined?(ERBX::VERSION) ? ERBX::VERSION : "0.0.0"
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
@@ -14,13 +20,17 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.0.0"
   spec.require_paths = ["lib"]
 
-  gemspec = File.basename(__FILE__)
-  spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
-    ls.readlines("\x0", chomp: true).reject do |f|
-      (f == gemspec) ||
-        f.start_with?(*%w[bin/ test/ spec/ docs/ examples/ features/ .git .github appveyor Gemfile])
-    end
-  end
+  spec.files = Dir[
+    "erbx.gemspec",
+    "License.txt",
+    "Makefile",
+    "Rakefile",
+    "README.md",
+    "lib/**/*.rb",
+    "src/**/*.{c,h}",
+    "ext/**/*.{c,h}",
+    "exe/*"
+  ]
 
   spec.extensions = ["ext/erbx/extconf.rb"]
 
@@ -29,5 +39,5 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"] = "https://github.com/marcoroth/erbx/releases"
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.add_dependency "ffi"
+  # spec.add_dependency "ffi"
 end

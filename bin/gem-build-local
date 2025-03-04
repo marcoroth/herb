@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+PLATFORM="$(bin/gem-platform)"
+
+echo "Platform: '${PLATFORM}'"
+
+if [[ -z "$PLATFORM" ]]; then
+  echo "Error: PLATFORM is empty." >&2
+  exit 1
+else
+  echo "Building gem for '${PLATFORM}'..."
+  sleep 1
+fi
+
+bin/gem-build pkg/ "$PLATFORM"

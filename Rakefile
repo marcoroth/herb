@@ -54,10 +54,10 @@ end
 
 task "gem:native" do
   require "rake_compiler_dock"
-  sh "bundle package --all"
+  sh "bundle config set cache_all true"
 
-  PLATFORMS.each do |plat|
-    RakeCompilerDock.sh "bundle --local && rake native:#{plat} gem", platform: plat
+  PLATFORMS.each do |platform|
+    RakeCompilerDock.sh "bundle --local && rake native:#{platform} gem", platform: platform
   end
 
   RakeCompilerDock.sh "bundle --local && rake java gem", rubyvm: :jruby
@@ -68,24 +68,33 @@ namespace "gem" do
     require "rake_compiler_dock"
     require "io/console"
 
-    sh "bundle package --all"
+    sh "bundle config set cache_all true"
     sh "cp ~/.gem/gem-*.pem build/gem/ || true"
+
+    gemspec_path = File.expand_path("./erbx.gemspec", __dir__)
+    spec = eval(File.read(gemspec_path), binding, gemspec_path)
+
+    RakeCompilerDock.set_ruby_cc_version(spec.required_ruby_version.as_list)
 
     # ENV["GEM_PRIVATE_KEY_PASSPHRASE"] = STDIN.getpass("Enter passphrase of gem signature key: ")
   end
 
-  exttask.cross_platform.each do |plat|
+  exttask.cross_platform.each do |platform|
     desc "Build all native binary gems in parallel"
-    multitask "native" => plat
+    multitask "native" => platform
 
-    desc "Build the native gem for #{plat}"
-    task plat => "prepare" do
+    desc "Build the native gem for #{platform}"
+    task platform => "prepare" do
       # RakeCompilerDock.sh <<-EOT, platform: plat
       #   (cp build/gem/gem-*.pem ~/.gem/ || true) &&
       #   bundle --local &&
       #   rake native:#{plat} pkg/#{exttask.gem_spec.full_name}-#{plat}.gem
       # EOT
-      RakeCompilerDock.sh "bundle --local && rake native:#{plat} gem", platform: plat
+
+      RakeCompilerDock.sh(
+        "bundle --local && rake native:#{platform} gem RUBY_CC_VERSION='#{ENV.fetch("RUBY_CC_VERSION", nil)}'",
+        platform: platform
+      )
     end
   end
 end
@@ -94,9 +103,7 @@ desc "Render out template files"
 task :templates do
   require_relative "templates/template"
 
-  Dir.glob("templates/**/*.erb").each do |template|
-    puts "Rendering template #{template} ..."
-
+  Dir.glob("#{__dir__}/templates/**/*.erb").each do |template|
     ERBX::Template.render(template)
   end
 end
@@ -122,6 +129,7 @@ namespace :templates do
     end
 
     template_listener = Listen.to("templates", only: /\.erb$/) do |modified, added, removed|
+      puts
       (added + modified).each do |template|
         template_file = template.delete_prefix("#{__dir__}/")
 

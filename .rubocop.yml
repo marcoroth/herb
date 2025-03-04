@@ -2,6 +2,11 @@ AllCops:
   NewCops: enable
   SuggestExtensions: false
   TargetRubyVersion: 3.0
+  Exclude:
+    - 'pkg/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'node_modules/**/*'
 
 Style/StringLiterals:
   Enabled: true
@@ -44,6 +49,7 @@ Metrics/MethodLength:
   Exclude:
     - test/fork_helper.rb
     - lib/erbx/ast/nodes.rb
+    - templates/template.rb
 
 Metrics/AbcSize:
   Exclude:
@@ -61,6 +67,7 @@ Metrics/ClassLength:
 Metrics/BlockLength:
   Exclude:
     - Rakefile
+    - "*.gemspec"
     - test/**/*_test.rb
 
 Metrics/ParameterLists:
@@ -85,6 +92,10 @@ Layout/EmptyLines:
 Layout/EmptyLinesAroundModuleBody:
   Exclude:
     - lib/erbx/ast/nodes.rb
+
+Security/Eval:
+  Exclude:
+    - Rakefile
 
 Security/MarshalLoad:
   Exclude:

@@ -1,0 +1,35 @@
+#! /usr/bin/env bash
+#
+# Credit:
+# https://github.com/flavorjones/ruby-c-extensions-explained/blob/8d5cdae81bbde48ab572c3963c972c3bf9bd37ef/precompiled/bin/test-gem-build
+#
+
+if [[ $# -lt 2 ]] ; then
+  echo "usage: $(basename $0) <output_dir> <platform>"
+  exit 1
+fi
+
+set -e -u
+
+OUTPUT_DIR=$1
+BUILD_NATIVE_GEM=$2
+
+test -e /etc/os-release && cat /etc/os-release
+
+set -x
+
+bundle install --local || bundle install
+bundle exec rake set-version-to-timestamp
+
+if [[ "${BUILD_NATIVE_GEM}" == "ruby" ]] ; then
+  bundle exec rake clean compile
+  bundle exec rake gem
+elif [[ "${BUILD_NATIVE_GEM}" == "java" ]] ; then
+  bundle exec rake java gem
+else
+  bundle exec rake gem:${BUILD_NATIVE_GEM}
+fi
+
+mkdir -p ${OUTPUT_DIR}
+cp -v pkg/*.gem ${OUTPUT_DIR}
+ls -l ${OUTPUT_DIR}/*

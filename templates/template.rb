@@ -207,18 +207,47 @@ module ERBX
     end
 
     def self.check_gitignore(name)
-      return if gitignore_lines.include?(name)
+      file = Pathname.new(name)
+      file = file.absolute? ? file.relative_path_from(File.expand_path("../", __dir__)).to_s : file.to_s
+      return if gitignore_lines.include?(file)
 
-      puts "[WARNING]: make sure to add `#{name}` to the `.gitignore`"
+      puts "[WARNING]: make sure to add `#{file}` to the `.gitignore`"
       puts
     end
 
     def self.render(template_file)
-      name = template_file.delete_prefix("templates/").delete_suffix(".erb")
-      template_path = File.expand_path("../#{template_file}", __dir__)
-      destination = File.expand_path("../#{name}", __dir__)
+      name = Pathname.new(template_file)
+      name = if name.absolute?
+               template_file.gsub(
+                 "#{__dir__}/",
+                 __dir__.delete_suffix("templates").to_s
+               )
+             else
+               name.to_s.delete_prefix("templates/")
+             end
 
-      rendered_template = read_template(template_path).result_with_hash({ nodes: nodes })
+      name = name.delete_suffix(".erb")
+
+      destination = if Pathname.new(name).absolute?
+                      Pathname.new(name)
+                    else
+                      Pathname.new(
+                        File.expand_path("../#{name}", __dir__)
+                      )
+                    end
+
+      puts "Rendering #{template_file.delete_prefix("#{File.expand_path("../", __dir__)}/")} → #{destination}"
+
+      template_file = Pathname.new(template_file)
+      template_path = if template_file.absolute?
+                        template_file
+                      else
+                        Pathname(
+                          File.expand_path("../#{template_file}", __dir__)
+                        )
+                      end
+
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
