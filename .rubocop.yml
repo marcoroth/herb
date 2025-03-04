@@ -48,10 +48,11 @@ Metrics/CyclomaticComplexity:
 Metrics/MethodLength:
   Max: 20
   Exclude:
-    - test/fork_helper.rb
-    - lib/erbx/project.rb
     - lib/erbx/ast/nodes.rb
+    - lib/erbx/cli.rb
+    - lib/erbx/project.rb
     - templates/template.rb
+    - test/fork_helper.rb
 
 Metrics/AbcSize:
   Exclude:
@@ -65,6 +66,7 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Exclude:
+    - lib/erbx/cli.rb
     - lib/erbx/project.rb
     - test/**/*_test.rb
 

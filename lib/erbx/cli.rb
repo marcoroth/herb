@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "optparse"
-require_relative "erbx"
 
 class ERBX::CLI
   attr_accessor :json, :silent
@@ -30,36 +29,87 @@ class ERBX::CLI
   end
 
   def file_content
-    if File.exist?(@file)
+    if @file && File.exist?(@file)
       File.read(@file)
-    else
+    elsif @file
       puts "File doesn't exist: #{@file}"
+      exit(1)
+    else
+      puts "No file provided."
+      puts
+      puts "Usage: bundle exec erbx #{@command} [file] [options]"
       exit(1)
     end
   end
 
+  def help(exit_code = 0)
+    message = <<~HELP
+      ▗▄▄▄▖▗▄▄▖ ▗▄▄▖ ▗▖  ▗▖
+      ▐▌   ▐▌ ▐▌▐▌ ▐▌ ▝▚▞▘
+      ▐▛▀▀▘▐▛▀▚▖▐▛▀▚▖  ▐▌
+      ▐▙▄▄▖▐▌ ▐▌▐▙▄▞▘▗▞▘▝▚▖
+
+      ERBX - Seamless and powerful HTML+ERB parsing.
+
+      Usage:
+        bundle exec erbx [command] [options]
+
+      Commands:
+        bundle exec erbx lex [file]      Lex a file.
+        bundle exec erbx parse [file]    Parse a file.
+        bundle exec erbx analyze [path]  Analyze a project by passing a directory to the root of the project
+        bundle exec erbx ruby [file]     Extract Ruby from a file.
+        bundle exec erbx html [file]     Extract HTML from a file.
+        bundle exec erbx prism [file]    Extract Ruby from a file and parse the Ruby source with Prism.
+        bundle exec erbx version         Prints the versions of the ERBX gem and the liberbx library.
+
+      Options:
+        #{option_parser.to_s.strip.gsub(/^    /, "  ")}
+
+    HELP
+
+    puts message
+
+    exit(exit_code)
+  end
+
   def result
     @result ||= case @command
-                when "analyze_project"
+                when "analyze"
                   ERBX::Project.new(@file).parse!
                   exit(0)
                 when "parse"
                   ERBX.parse(file_content)
                 when "lex"
                   ERBX.lex(file_content)
-                else
+                when "ruby"
+                  puts ERBX.extract_ruby(file_content)
+                  exit(0)
+                when "html"
+                  puts ERBX.extract_html(file_content)
+                  exit(0)
+                when "help", "-h", "--help"
+                  help
+                when "version", "-v", "--version"
+                  puts ERBX.version
+                  exit(0)
+                when String
                   puts "Unkown command: '#{@command}'"
-                  exit(1)
+                  puts
+
+                  help(1)
+                else
+                  help(1)
                 end
   end
 
-  def options
-    option_parser = OptionParser.new do |parser|
-      parser.banner = "Usage: bundle exec erbx [command] [file] [options]"
+  def option_parser
+    @option_parser ||= OptionParser.new do |parser|
+      parser.banner = ""
 
       parser.on_tail("-h", "--help", "Show this message") do
-        puts parser
-        exit
+        help
+        exit(0)
       end
 
       parser.on("-j", "--json", "Return result in the JSON format") do
@@ -70,7 +120,9 @@ class ERBX::CLI
         self.silent = true
       end
     end
+  end
 
+  def options
     option_parser.parse!(@args)
   end
 end
