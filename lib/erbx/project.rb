@@ -11,7 +11,7 @@ module ERBX
     attr_accessor :project_path, :output_file
 
     def initialize(project_path, output_file: nil)
-      @project_path = Pathname.new(project_path || __dir__)
+      @project_path = Pathname.new(project_path || File.expand_path("../..", __dir__))
 
       date = Time.now.strftime("%Y-%m-%d_%H-%M-%S")
       @output_file = output_file || "#{date}_erb_parsing_result_#{@project_path.basename}.log"
@@ -22,7 +22,7 @@ module ERBX
     end
 
     def absolute_path
-      File.expand_path(@project_path, __dir__)
+      File.expand_path(@project_path, File.expand_path("../..", __dir__))
     end
 
     def progress_bar(current, total, width = IO.console.winsize[1] - "[] 100% (#{total}/#{total})".length)
@@ -50,7 +50,7 @@ module ERBX
     def parse!
       File.open(output_file, "w") do |log|
         log.puts heading("METADATA")
-        log.puts "ERBX Version: #{ERBX::VERSION}"
+        log.puts "ERBX Version: #{ERBX.version}"
         log.puts "Reported at: #{Time.now.strftime("%Y-%m-%dT%H:%M:%S")}\n\n"
 
         log.puts heading("PROJECT")
@@ -59,7 +59,7 @@ module ERBX
 
         log.puts heading("PROCESSED FILES")
 
-        files = Dir["#{project_path}#{glob}"]
+        files = Dir[project_path + glob]
 
         if files.empty?
           message = "No .html.erb files found in #{absolute_path}"

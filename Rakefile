@@ -153,7 +153,9 @@ end
 namespace :parse do
   desc "Parse ERB files in a project directory"
   task :project, [:path, :output_file] do |_t, args|
-    ERBX::Project.new(args[:path], args[:output_file]).parse!
+    require_relative "lib/erbx"
+
+    ERBX::Project.new(args[:path], output_file: args[:output_file]).parse!
   end
 end
 

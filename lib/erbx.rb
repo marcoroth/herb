@@ -22,7 +22,7 @@ require_relative "erbx/version"
 begin
   require_relative "erbx/#{RUBY_VERSION.split(".")[...2].join(".")}/erbx"
 rescue LoadError
-  require "erbx/erbx"
+  require_relative "erbx/erbx"
 end
 
 module ERBX
