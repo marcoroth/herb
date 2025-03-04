@@ -48,6 +48,8 @@ jobs:
 
       - name: Update version
         run: bundle exec rake set-version-to-identifier
+        env:
+          GEM_PLATFORM: ${{ matrix.target }}
 
       - name: Update gemspec allowed_push_host
         run: bundle exec rake update-allowed-push-host[https://rubygems.pkg.github.com/${OWNER}]

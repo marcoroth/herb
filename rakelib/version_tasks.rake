@@ -15,9 +15,10 @@ task "set-version-to-identifier" do
   version_file_contents = File.read(version_file_path)
 
   commit_sha = ENV.fetch("GITHUB_SHA", nil) # Available in GitHub Actions
+  gem_platform = ENV.fetch("GEM_PLATFORM", nil) # Available in GitHub Actions
 
   timestamp = Time.now.strftime("%Y%m%d%H%M%S")
-  identifier = commit_sha ? "#{`bin/gem-platform`.chomp}.#{timestamp}.#{commit_sha[0...7]}" : timestamp
+  identifier = commit_sha ? "#{gem_platform}.#{timestamp}.#{commit_sha[0...7]}" : timestamp
   label = commit_sha ? "dev" : "local"
 
   current_version_string = version_constant_re.match(version_file_contents)[1].split(".#{label}.").first
