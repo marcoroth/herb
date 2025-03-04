@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Credit:
 # https://github.com/flavorjones/ruby-c-extensions-explained/blob/8d5cdae81bbde48ab572c3963c972c3bf9bd37ef/precompiled/Rakefile#L76-L97
