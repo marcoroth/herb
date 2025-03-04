@@ -1,11 +1,7 @@
 #include <ruby.h>
 
-#include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
-
-#include "../../src/include/erbx.h"
-#include "../../src/include/token.h"
 
 static VALUE ERBX_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);

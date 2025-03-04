@@ -1,6 +1,5 @@
 #include <ruby.h>
 
-#include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
 
