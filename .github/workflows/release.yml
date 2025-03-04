@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build:
     name: Build Native Gems with rake-compiler-dock
@@ -55,6 +59,13 @@ jobs:
 
       - name: Publish dev-build on GitHub RubyGems Registry
         run: |
+          mkdir -p $HOME/.gem
+          touch $HOME/.gem/credentials
+          chmod 0600 $HOME/.gem/credentials
+          printf -- "---\n:github: Bearer ${GEM_PUBLISH_TOKEN}\n" > $HOME/.gem/credentials
           GEM_FILE=$(ls pkg/*.gem | head -n 1)
           echo "Pushing $GEM_FILE"
-          gem push --key github --host https://rubygems.pkg.github.com/marcoroth "$GEM_FILE"
+          gem push --KEY github --host https://rubygems.pkg.github.com/${OWNER} "$GEM_FILE"
+        env:
+          GEM_PUBLISH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: marcoroth
