@@ -69,6 +69,22 @@ dkms.conf
 # Temporary files
 tmp/*
 
+# Bundler Config
+!/.bundle/config
+
+# Bundler
 vendor/*
 vendor/bundle/*
-!/.bundle/config
+vendor/cache/*
+
+# Bundled .gem files
+pkg/*
+
+# Templated Files
+ext/erbx/nodes.c
+ext/erbx/nodes.h
+lib/erbx/ast/nodes.rb
+src/ast_nodes.c
+src/ast_pretty_print.c
+src/include/ast_nodes.h
+src/include/ast_pretty_print.h

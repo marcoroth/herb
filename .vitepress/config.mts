@@ -72,7 +72,7 @@ export default defineConfig({
                 collapsed: true,
                 items: [
                   { text: "HTML_ROOT_NODE", link: "/ast/AST_HTML_ROOT_NODE" },
-                  { text: "HTML_DOCUMENT_NODE", link: "/ast/AST_HTML_DOCUMENT_NODE" },
+                  { text: "HTML_DOCUMENT_NODE", link: "/ast/AST_DOCUMENT_NODE" },
                 ]
               },
               {
@@ -138,7 +138,6 @@ export default defineConfig({
             collapsed: true,
             items: [
               { text: "TOKEN_NEWLINE", link: "/tokens/TOKEN_NEWLINE" },
-              { text: "TOKEN_TEXT_CONTENT", link: "/tokens/TOKEN_TEXT_CONTENT" },
               { text: "TOKEN_WHITESPACE", link: "/tokens/TOKEN_WHITESPACE" },
             ]
           }

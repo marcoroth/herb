@@ -1,0 +1,13 @@
+#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=1:0 end=1:1>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="img" range=[1, 4] start=1:1 end=1:4>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=1:4 end=1:5>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="value" range=[5, 10] start=1:5 end=1:10>
+#<ERBX::Token type="TOKEN_EQUALS" value="=" range=[10, 11] start=1:10 end=1:11>
+#<ERBX::Token type="TOKEN_QUOTE" value="\"" range=[11, 12] start=1:11 end=1:12>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="hello" range=[12, 17] start=1:12 end=1:17>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[17, 18] start=1:17 end=1:18>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="world" range=[18, 23] start=1:18 end=1:23>
+#<ERBX::Token type="TOKEN_QUOTE" value="\"" range=[23, 24] start=1:23 end=1:24>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[24, 25] start=1:24 end=1:25>
+#<ERBX::Token type="TOKEN_HTML_TAG_SELF_CLOSE" value="/>" range=[25, 27] start=1:25 end=1:27>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[27, 27] start=1:27 end=1:27>

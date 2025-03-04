@@ -1,13 +1,16 @@
-@ DocumentNode (location: (1,0)-(1,7))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,7))
-    ├── name: ∅
-    └── children: (1)
-        @ SelfCloseTag (location: (1,0)-(1,7))
-        ├── name: "img"
-        └── children: (1)
-            @ AttributeSet (location: (1,4)-(1,5))
-            ├── name: ∅
-            └── children: []
-
+@ DocumentNode (location: (1:0)-(1:7))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:7))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── attributes: []
+        │       ├── tag_closing: "/>" (location: (1:5)-(1:7))
+        │       ├── children: []
+        │       └── is_void: true
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

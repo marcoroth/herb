@@ -4,22 +4,36 @@
 #include "include/util.h"
 
 #include <ctype.h>
-#include <stdio.h>
 #include <string.h>
+
+#define LEXER_STALL_LIMIT 5
 
 static size_t lexer_sizeof(void) {
   return sizeof(struct LEXER_STRUCT);
 }
 
-static bool lexer_eof(lexer_T* lexer) {
-  return lexer->current_character == '\0';
+static bool lexer_eof(const lexer_T* lexer) {
+  return lexer->current_character == '\0' || lexer->stalled;
 }
 
-static bool lexer_has_more_characters(lexer_T* lexer) {
+static bool lexer_has_more_characters(const lexer_T* lexer) {
   return lexer->current_position < lexer->source_length;
 }
 
-lexer_T* lexer_init(char* source) {
+static bool lexer_stalled(lexer_T* lexer) {
+  if (lexer->last_position == lexer->current_position) {
+    lexer->stall_counter++;
+
+    if (lexer->stall_counter > LEXER_STALL_LIMIT) { lexer->stalled = true; }
+  } else {
+    lexer->stall_counter = 0;
+    lexer->last_position = lexer->current_position;
+  }
+
+  return lexer->stalled;
+}
+
+lexer_T* lexer_init(const char* source) {
   if (source == NULL) { source = ""; }
 
   lexer_T* lexer = calloc(1, lexer_sizeof());
@@ -31,11 +45,14 @@ lexer_T* lexer_init(char* source) {
   lexer->current_line = 1;
   lexer->current_column = 0;
   lexer->current_character = source[0];
+  lexer->stall_counter = 0;
+  lexer->last_position = 0;
+  lexer->stalled = false;
 
   return lexer;
 }
 
-token_T* lexer_error(lexer_T* lexer, const char* message) {
+token_T* lexer_error(const lexer_T* lexer, const char* message) {
   char error_message[128];
 
   snprintf(
@@ -52,6 +69,11 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
 }
 
 static void lexer_handle_newline(lexer_T* lexer) {
+  if (lexer->current_character == '\r' && lexer_peek(lexer, 1) == '\n') {
+    lexer->current_column = 1;
+    return;
+  }
+
   if (is_newline(lexer->current_character)) {
     lexer->current_line++;
     lexer->current_column = 1;
@@ -68,22 +90,39 @@ static void lexer_advance(lexer_T* lexer) {
   }
 }
 
-static void lexer_advance_by(lexer_T* lexer, size_t count) {
+static void lexer_advance_by(lexer_T* lexer, const size_t count) {
   for (size_t i = 0; i < count; i++) {
     lexer_advance(lexer);
   }
 }
 
-static token_T* lexer_advance_with(lexer_T* lexer, const char* value, token_type_T type) {
+static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const token_type_T type) {
   lexer_advance_by(lexer, strlen(value));
   return token_init(value, type, lexer);
 }
 
-static token_T* lexer_advance_current(lexer_T* lexer, token_type_T type) {
+static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
+  char* collected = malloc(count + 1);
+  if (!collected) { return NULL; }
+
+  for (size_t i = 0; i < count; i++) {
+    collected[i] = lexer->current_character;
+    lexer_advance(lexer);
+  }
+
+  collected[count] = '\0';
+
+  token_T* token = token_init(collected, type, lexer);
+  free(collected);
+
+  return token;
+}
+
+static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
   return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
 }
 
-static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, token_type_T type) {
+static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
   if (strncmp(lexer->source + lexer->current_position, value, strlen(value)) == 0) {
     return lexer_advance_with(lexer, value, type);
   }
@@ -96,12 +135,17 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, token
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
   buffer_T buffer = buffer_new();
 
-  while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r') {
+  while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
+         && !lexer_eof(lexer)) {
     buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  return token_init(buffer.value, TOKEN_WHITESPACE, lexer);
+  token_T* token = token_init(buffer.value, TOKEN_WHITESPACE, lexer);
+
+  buffer_free(&buffer);
+
+  return token;
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
@@ -109,24 +153,17 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
-         && !lexer_peek_for_html_comment_end(lexer, 0)) {
+         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
 
     buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  return token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
-}
+  token_T* token = token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
 
-static token_T* lexer_parse_text_content(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  buffer_free(&buffer);
 
-  while (lexer->current_character != '<' && lexer->current_character != '>' && !lexer_eof(lexer)) {
-    buffer_append_char(&buffer, lexer->current_character);
-    lexer_advance(lexer);
-  }
-
-  return token_init(buffer.value, TOKEN_TEXT_CONTENT, lexer);
+  return token;
 }
 
 // ===== ERB Parsing
@@ -158,7 +195,11 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   lexer->state = STATE_ERB_CLOSE;
 
-  return token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
+  token_T* token = token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
+
+  buffer_free(&buffer);
+
+  return token;
 }
 
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
@@ -174,17 +215,31 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
 
 token_T* lexer_next_token(lexer_T* lexer) {
   if (lexer_eof(lexer)) { return token_init("", TOKEN_EOF, lexer); }
+  if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }
   if (lexer->state == STATE_ERB_CLOSE) { return lexer_parse_erb_close(lexer); }
 
+  if (lexer->current_character == '\r' && lexer_peek(lexer, 1) == '\n') {
+    return lexer_advance_with_next(lexer, 2, TOKEN_NEWLINE);
+  }
   if (lexer->current_character == '\n') { return lexer_advance_current(lexer, TOKEN_NEWLINE); }
+  if (lexer->current_character == '\r') { return lexer_advance_current(lexer, TOKEN_NEWLINE); }
+
   if (isspace(lexer->current_character)) { return lexer_parse_whitespace(lexer); }
+
+  if (lexer->current_character == '\xC2' && lexer_peek(lexer, 1) == '\xA0') {
+    return lexer_advance_with(lexer, "\xC2\xA0", TOKEN_NBSP);
+  }
 
   switch (lexer->current_character) {
     case '<': {
       if (lexer_peek(lexer, 1) == '%') { return lexer_parse_erb_open(lexer); }
-      if (lexer_peek_for_doctype(lexer, 0)) { return lexer_advance_with(lexer, "<!DOCTYPE", TOKEN_HTML_DOCTYPE); }
+
+      if (lexer_peek_for_doctype(lexer, 0)) {
+        return lexer_advance_with_next(lexer, strlen("<!DOCTYPE"), TOKEN_HTML_DOCTYPE);
+      }
+
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
@@ -211,6 +266,8 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     case '_': return lexer_advance_current(lexer, TOKEN_UNDERSCORE);
     case ':': return lexer_advance_current(lexer, TOKEN_COLON);
+    case ';': return lexer_advance_current(lexer, TOKEN_SEMICOLON);
+    case '&': return lexer_advance_current(lexer, TOKEN_AMPERSAND);
     case '!': return lexer_advance_current(lexer, TOKEN_EXCLAMATION);
     case '=': return lexer_advance_current(lexer, TOKEN_EQUALS);
     case '%': return lexer_advance_current(lexer, TOKEN_PERCENT);
@@ -219,11 +276,15 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '\'': return lexer_advance_current(lexer, TOKEN_QUOTE);
 
     default: {
-      if (isalnum(lexer->current_character) || lexer->current_character == '_') {
-        return lexer_parse_identifier(lexer);
-      }
+      if (isalnum(lexer->current_character)) { return lexer_parse_identifier(lexer); }
 
-      return lexer_parse_text_content(lexer);
+      return lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
   }
+}
+
+void lexer_free(lexer_T* lexer) {
+  if (lexer == NULL) { return; }
+
+  free(lexer);
 }

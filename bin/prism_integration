@@ -6,6 +6,8 @@ make prism_clean
 rake clean
 
 make prism
+rake templates
+
 make
 rake compile
 
@@ -17,6 +19,9 @@ rake test
 ./erbx html examples/test.html.erb
 ./erbx parse examples/test.html.erb
 ./erbx prism examples/test.html.erb
+
+bin/leaks_lex examples/test.html.erb
+bin/leaks_parse examples/test.html.erb
 
 bin/lint
 bin/tidy

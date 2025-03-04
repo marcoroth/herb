@@ -25,5 +25,9 @@ module Parser
     test "attribute with no quotes value, no whitespace, and non self-closing tag" do
       assert_parsed_snapshot("<div value=hello>")
     end
+
+    test "attribute value with space after equal sign" do
+      assert_parsed_snapshot(%(<input value= "value" />))
+    end
   end
 end

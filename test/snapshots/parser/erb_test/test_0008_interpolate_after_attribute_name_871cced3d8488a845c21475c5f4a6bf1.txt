@@ -1,34 +1,40 @@
-@ DocumentNode (location: (1,0)-(1,26))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,26))
-    ├── name: ∅
-    └── children: (3)
-        @ OpenTag (location: (1,0)-(1,21))
-        ├── name: "h1"
-        └── children: (1)
-            @ AttributeSet (location: (1,3)-(1,20))
-            ├── name: ∅
-            └── children: (1)
-                @ Attribute (location: (1,4)-(1,20))
-                ├── name: ∅
-                └── children: (2)
-                    @ AttributeName (location: (1,4)-(1,6))
-                    ├── name: "id"
-                    └── children: []
-
-                    @ AttributeValue (location: (1,7)-(1,20))
-                    ├── name: ∅
-                    └── children: (1)
-                        @ ERBContent (location: (1,7)-(1,20))
-                        ├── name: " "test" "
-                        └── children: []
-
-        @ ElementBody (location: (1,21)-(1,21))
-        ├── name: ∅
-        └── children: []
-
-        @ CloseTag (location: (1,21)-(1,26))
-        ├── name: "h1"
-        └── children: []
-
+@ DocumentNode (location: (1:0)-(1:26))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:26))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:21))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "h1" (location: (1:1)-(1:3))
+        │       ├── attributes: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:4)-(1:20))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:4)-(1:6))
+        │       │       │       └── name: "id" (location: (1:4)-(1:6))
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:6)-(1:7))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:7)-(1:20))
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ ERBContentNode (location: (1:7)-(1:20))
+        │       │               │       ├── tag_opening: "<%=" (location: (1:7)-(1:10))
+        │       │               │       ├── content: " "test" " (location: (1:10)-(1:18))
+        │       │               │       └── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       ├── tag_closing: ">" (location: (1:20)-(1:21))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "h1" (location: (1:1)-(1:3))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:21)-(1:26))
+        │       ├── tag_opening: "</" (location: (1:21)-(1:23))
+        │       ├── tag_name: "h1" (location: (1:23)-(1:25))
+        │       └── tag_closing: ">" (location: (1:25)-(1:26))
+        │
+        └── is_void: false

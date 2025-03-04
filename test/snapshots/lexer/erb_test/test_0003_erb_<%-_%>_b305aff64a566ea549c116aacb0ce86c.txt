@@ -1,0 +1,4 @@
+#<ERBX::Token type="TOKEN_ERB_START" value="<%-" range=[0, 3] start=1:0 end=1:3>
+#<ERBX::Token type="TOKEN_ERB_CONTENT" value=" \"Test\" " range=[3, 11] start=1:3 end=1:11>
+#<ERBX::Token type="TOKEN_ERB_END" value="%>" range=[11, 13] start=1:11 end=1:13>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[13, 13] start=1:13 end=1:13>

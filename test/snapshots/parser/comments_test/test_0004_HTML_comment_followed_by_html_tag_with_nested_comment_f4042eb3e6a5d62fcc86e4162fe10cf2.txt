@@ -1,46 +1,46 @@
-@ DocumentNode (location: (1,0)-(4,7))
-├── name: ∅
-└── children: (5)
-    @ TextContent (location: (1,0)-(2,9))
-    ├── name: "\n        "
-    └── children: []
-
-    @ Comment (location: (2,9)-(2,27))
-    ├── name: ∅
-    └── children: (1)
-        @ Literal (location: (2,13)-(2,24))
-        ├── name: "Hello World"
-        └── children: []
-
-    @ TextContent (location: (2,0)-(3,9))
-    ├── name: "\n        "
-    └── children: []
-
-    @ Element (location: (3,9)-(3,38))
-    ├── name: ∅
-    └── children: (3)
-        @ OpenTag (location: (3,9)-(3,13))
-        ├── name: "h1"
-        └── children: (1)
-            @ AttributeSet (location: (3,12)-(3,12))
-            ├── name: ∅
-            └── children: []
-
-        @ ElementBody (location: (3,13)-(3,33))
-        ├── name: ∅
-        └── children: (1)
-            @ Comment (location: (3,13)-(3,33))
-            ├── name: ∅
-            └── children: (1)
-                @ Literal (location: (3,17)-(3,30))
-                ├── name: " Hello World "
-                └── children: []
-
-        @ CloseTag (location: (3,33)-(3,38))
-        ├── name: "h1"
-        └── children: []
-
-    @ TextContent (location: (3,0)-(4,7))
-    ├── name: "\n      "
-    └── children: []
-
+@ DocumentNode (location: (1:0)-(4:7))
+└── children: (5 items)
+    ├── @ HTMLTextNode (location: (1:0)-(2:9))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLCommentNode (location: (2:9)-(2:27))
+    │   ├── comment_start: "<!--" (location: (2:9)-(2:13))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (2:13)-(2:24))
+    │   │       └── content: "Hello World"
+    │   │
+    │   └── comment_end: "-->" (location: (2:24)-(2:27))
+    │
+    ├── @ HTMLTextNode (location: (2:0)-(3:9))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLElementNode (location: (3:9)-(3:38))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (3:9)-(3:13))
+    │   │       ├── tag_opening: "<" (location: (3:9)-(3:10))
+    │   │       ├── tag_name: "h1" (location: (3:10)-(3:12))
+    │   │       ├── attributes: []
+    │   │       ├── tag_closing: ">" (location: (3:12)-(3:13))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "h1" (location: (3:10)-(3:12))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLCommentNode (location: (3:13)-(3:33))
+    │   │       ├── comment_start: "<!--" (location: (3:13)-(3:17))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ LiteralNode (location: (3:17)-(3:30))
+    │   │       │       └── content: " Hello World "
+    │   │       │
+    │   │       └── comment_end: "-->" (location: (3:30)-(3:33))
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:33)-(3:38))
+    │   │       ├── tag_opening: "</" (location: (3:33)-(3:35))
+    │   │       ├── tag_name: "h1" (location: (3:35)-(3:37))
+    │   │       └── tag_closing: ">" (location: (3:37)-(3:38))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (3:0)-(4:7))
+        └── content: "\n      "

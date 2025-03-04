@@ -1,6 +1,7 @@
 #ifndef ERBX_LEXER_STRUCT_H
 #define ERBX_LEXER_STRUCT_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 
 typedef enum {
@@ -10,13 +11,16 @@ typedef enum {
 } lexer_state_T;
 
 typedef struct LEXER_STRUCT {
-  char* source;
+  const char* source;
   size_t source_length;
   size_t current_position;
   size_t current_line;
   size_t current_column;
   char current_character;
   lexer_state_T state;
+  size_t stall_counter;
+  size_t last_position;
+  bool stalled;
 } lexer_T;
 
 #endif

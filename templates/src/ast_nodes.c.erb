@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdbool.h>
+
+#include "include/ast_node.h"
+#include "include/ast_nodes.h"
+#include "include/util.h"
+#include "include/token.h"
+#include "include/array.h"
+
+<%- nodes.each do |node| -%>
+<%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
+<%- arguments = node_arguments + ["location_T* start", "location_T* end", "array_T* errors"] -%>
+
+<%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>) {
+  <%= node.struct_type %>* <%= node.human %> = malloc(sizeof(<%= node.struct_type %>));
+
+  ast_node_init(&<%= node.human %>->base, <%= node.type %>, start, end, errors);
+
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::TokenField -%>
+  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%- when ERBX::Template::NodeField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when ERBX::Template::ArrayField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when ERBX::Template::BooleanField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when ERBX::Template::StringField -%>
+  <%= node.human %>-><%= field.name %> = erbx_strdup(<%= field.name %>);
+  <%- else -%>
+  <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+
+  return <%= node.human %>;
+}
+<%- end -%>
+
+const char* ast_node_type_to_string(AST_NODE_T* node) {
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    case <%= node.type %>: return "<%= node.type %>";
+    <%- end -%>
+  }
+}
+
+const char* ast_node_human_type(AST_NODE_T* node) {
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    case <%= node.type %>: return "<%= node.name %>";
+    <%- end -%>
+  }
+}
+
+void ast_free_base_node(AST_NODE_T* node) {
+  if (node == NULL) { return; }
+
+  if (node->errors) {
+    for (size_t i = 0; i < array_size(node->errors); i++) {
+      AST_NODE_T* child = array_get(node->errors, i);
+      if (child != NULL) { ast_node_free(child); }
+    }
+
+    array_free(&node->errors);
+  }
+
+  if (node->start) { location_free(node->start); }
+  if (node->end) { location_free(node->end); }
+
+  free(node);
+}
+
+<%- nodes.each do |node| -%>
+<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
+
+static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>) {
+  <%- if node.fields.none? -%>
+  /* no <%= node.struct_type %> specific fields to free up */
+  <%- end -%>
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::TokenField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>); }
+  <%- when ERBX::Template::NodeField -%>
+  ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
+  <%- when ERBX::Template::ArrayField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    for (size_t i = 0; i < array_size(<%= node.human %>-><%= field.name %>); i++) {
+      AST_NODE_T* child = array_get(<%= node.human %>-><%= field.name %>, i);
+      if (child) { ast_node_free(child); }
+    }
+
+    array_free(&<%= node.human %>-><%= field.name %>);
+  }
+  <%- when ERBX::Template::StringField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) { free((char*) <%= node.human %>-><%= field.name %>); }
+  <%- when ERBX::Template::BooleanField -%>
+  <%- else -%>
+  <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+
+  ast_free_base_node(&<%= node.human %>->base);
+}
+<%- end -%>
+
+void ast_node_free(AST_NODE_T* node) {
+  if (!node) { return; }
+
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    case <%= node.type %>: ast_free_<%= node.human %>((<%= node.struct_type %>*) node); break;
+    <%- end -%>
+  }
+}

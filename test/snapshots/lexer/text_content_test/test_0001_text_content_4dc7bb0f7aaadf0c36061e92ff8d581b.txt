@@ -1,0 +1,10 @@
+#<ERBX::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=1:0 end=1:1>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[1, 3] start=1:1 end=1:3>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[3, 4] start=1:3 end=1:4>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Some" range=[4, 8] start=1:4 end=1:8>
+#<ERBX::Token type="TOKEN_WHITESPACE" value=" " range=[8, 9] start=1:8 end=1:9>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="Text" range=[9, 13] start=1:9 end=1:13>
+#<ERBX::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[13, 15] start=1:13 end=1:15>
+#<ERBX::Token type="TOKEN_IDENTIFIER" value="h1" range=[15, 17] start=1:15 end=1:17>
+#<ERBX::Token type="TOKEN_HTML_TAG_END" value=">" range=[17, 18] start=1:17 end=1:18>
+#<ERBX::Token type="TOKEN_EOF" value="" range=[18, 18] start=1:18 end=1:18>

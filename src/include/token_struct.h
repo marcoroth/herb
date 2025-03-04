@@ -6,9 +6,9 @@
 
 typedef enum {
   TOKEN_WHITESPACE, // ' '
+  TOKEN_NBSP,       // \xC2\xA0
   TOKEN_NEWLINE,    // \n
   TOKEN_IDENTIFIER,
-  TOKEN_TEXT_CONTENT,
 
   TOKEN_HTML_DOCTYPE, // <!DOCTYPE, <!doctype, <!DoCtYpE, <!dOcTyPe
 
@@ -31,9 +31,12 @@ typedef enum {
   TOKEN_DASH,        // -
   TOKEN_UNDERSCORE,  // _
   TOKEN_EXCLAMATION, // !
+  TOKEN_SEMICOLON,   // ;
   TOKEN_COLON,       // :
   TOKEN_PERCENT,     // %
+  TOKEN_AMPERSAND,   // &
 
+  TOKEN_CHARACTER,
   TOKEN_ERROR,
   TOKEN_EOF,
 } token_type_T;

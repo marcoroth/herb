@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void* safe_malloc_internal(size_t size, bool fail_fast) {
+static void* safe_malloc_internal(const size_t size, const bool fail_fast) {
   if (size == 0) { return NULL; }
 
   void* pointer = malloc(size);
@@ -19,7 +19,7 @@ static void* safe_malloc_internal(size_t size, bool fail_fast) {
   return pointer;
 }
 
-static void* safe_realloc_internal(void* pointer, size_t new_size, bool fail_fast) {
+static void* safe_realloc_internal(void* pointer, const size_t new_size, const bool fail_fast) {
   if (new_size == 0) { return NULL; }
 
   if (!pointer) { return safe_malloc_internal(new_size, fail_fast); }
@@ -36,18 +36,18 @@ static void* safe_realloc_internal(void* pointer, size_t new_size, bool fail_fas
   return new_pointer;
 }
 
-void* safe_malloc(size_t size) {
+void* safe_malloc(const size_t size) {
   return safe_malloc_internal(size, true);
 }
 
-void* nullable_safe_malloc(size_t size) {
+void* nullable_safe_malloc(const size_t size) {
   return safe_malloc_internal(size, false);
 }
 
-void* safe_realloc(void* pointer, size_t new_size) {
+void* safe_realloc(void* pointer, const size_t new_size) {
   return safe_realloc_internal(pointer, new_size, true);
 }
 
-void* nullable_safe_realloc(void* pointer, size_t new_size) {
+void* nullable_safe_realloc(void* pointer, const size_t new_size) {
   return safe_realloc_internal(pointer, new_size, false);
 }

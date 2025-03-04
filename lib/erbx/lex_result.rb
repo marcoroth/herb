@@ -1,17 +1,12 @@
 # frozen_string_literal: true
 
-require "forwardable"
-
 module ERBX
-  class LexResult
-    extend Forwardable
+  class LexResult < Result
+    attr_reader :value
 
-    def_delegators :@array, :items, :size, :capacity
-
-    attr_accessor :array
-
-    def initialize(pointer)
-      @array = LibERBX::Array.new(pointer, LibERBX::Token)
+    def initialize(value, source, warnings, errors)
+      @value = TokenList.new(value)
+      super(source, warnings, errors)
     end
   end
 end

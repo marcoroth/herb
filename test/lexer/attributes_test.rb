@@ -4,319 +4,80 @@ require_relative "../test_helper"
 
 module Lexer
   class AttributesTest < Minitest::Spec
+    include SnapshotUtils
+
     test "attribute value double quotes" do
-      result = ERBX.lex(%(<img value="hello world" />))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_QUOTE
-        TOKEN_WHITESPACE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value="hello world" />))
     end
 
     test "attribute value single quotes" do
-      result = ERBX.lex(%(<img value='hello world' />))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_QUOTE
-        TOKEN_WHITESPACE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value='hello world' />))
     end
 
     test "attribute value empty double quotes with whitespace" do
-      result = ERBX.lex(%(<img value="" />))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_WHITESPACE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value="" />))
     end
 
     test "attribute value empty double quotes without whitespace" do
-      result = ERBX.lex(%(<img value=""/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value=""/>))
     end
 
     test "attribute value empty single quotes with whitespace" do
-      result = ERBX.lex("<img value='' />")
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_WHITESPACE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("<img value='' />")
     end
 
     test "attribute value empty single quotes without whitespace" do
-      result = ERBX.lex("<img value=''/>")
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot("<img value=''/>")
     end
 
-    test "attribute value single quotes with />" do
-      result = ERBX.lex("<img value='/>'/>")
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+    test "attribute value single quotes with slash gt" do
+      assert_lexed_snapshot("<img value='/>'/>")
     end
 
-    test "attribute value double quotes with />" do
-      result = ERBX.lex(%(<img value="/>"/>))
-
+    test "attribute value double quotes with slash gt" do
       # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value="/>"/>))
     end
 
     test "attribute value single quotes with > value" do
-      result = ERBX.lex(%(<img value='>'/>))
-
       # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_END
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value='>'/>))
     end
 
-    test "attribute value double quotes with /" do
-      result = ERBX.lex(%(<img value="/"/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_SLASH
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+    test "attribute value double quotes with slash" do
+      assert_lexed_snapshot(%(<img value="/"/>))
     end
 
     test "attribute value double quotes with > value" do
-      result = ERBX.lex(%(<img value=">"/>))
-
-      # `>` is not valid as an attribute value, it should be &lt; which is why we parse it as TOKEN_HTML_TAG_END
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_END
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value=">"/>))
     end
 
-    test "attribute value single quotes with / value" do
-      result = ERBX.lex(%(<img value='>'/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_END
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
-    end
-
-    test "attribute value double quotes with / value" do
-      result = ERBX.lex(%(<img value=">"/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_END
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+    test "attribute value single quotes with slash value" do
+      assert_lexed_snapshot(%(<img value='/'/>))
     end
 
     test "attribute value double quotes with single quote value" do
-      result = ERBX.lex(%(<img value="''"/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value="''"/>))
     end
 
     test "attribute value single quotes with double quote value" do
-      result = ERBX.lex(%(<img value='""'/>))
-
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
-
-      assert_equal expected, result.array.items.map(&:type)
+      assert_lexed_snapshot(%(<img value='""'/>))
     end
 
     test "attribute value empty quotes followed by another attribute" do
-      result = ERBX.lex(%(<img value="" required />))
+      assert_lexed_snapshot(%(<img value="" required />))
+    end
 
-      expected = %w[
-        TOKEN_HTML_TAG_START
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_EQUALS
-        TOKEN_QUOTE
-        TOKEN_QUOTE
-        TOKEN_WHITESPACE
-        TOKEN_IDENTIFIER
-        TOKEN_WHITESPACE
-        TOKEN_HTML_TAG_SELF_CLOSE
-        TOKEN_EOF
-      ]
+    test "attribute value with a period" do
+      assert_lexed_snapshot(%(<div value="hello. world."></div>))
+    end
 
-      assert_equal expected, result.array.items.map(&:type)
+    test "attribute value with a slash" do
+      assert_lexed_snapshot(%(<div value="hello/ world/"></div>))
+    end
+
+    test "attribute value with an URL" do
+      assert_lexed_snapshot(%(<a href="https://example.com"></div>))
     end
   end
 end

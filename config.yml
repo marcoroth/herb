@@ -1,0 +1,165 @@
+nodes:
+  - name: DocumentNode
+    fields:
+      - name: children
+        type: array
+
+  - name: LiteralNode
+    fields:
+      - name: content
+        type: string
+
+  - name: HTMLOpenTagNode
+    fields:
+      - name: tag_opening
+        type: token
+
+      - name: tag_name
+        type: token
+
+      - name: attributes
+        type: array
+        kind: HTMLAttributeNode
+
+      - name: tag_closing
+        type: token
+
+      - name: children
+        type: array
+
+      - name: is_void
+        type: boolean
+
+  - name: HTMLCloseTagNode
+    fields:
+      - name: tag_opening
+        type: token
+
+      - name: tag_name
+        type: token
+
+      - name: tag_closing
+        type: token
+
+  - name: HTMLSelfCloseTagNode
+    fields:
+      - name: tag_opening
+        type: token
+
+      - name: tag_name
+        type: token
+
+      - name: attributes
+        type: array
+        kind: HTMLAttributeNode
+
+      - name: tag_closing
+        type: token
+
+      - name: is_void
+        type: boolean
+
+  - name: HTMLElementNode
+    fields:
+      - name: open_tag
+        type: node
+        kind: HTMLOpenTagNode
+
+      - name: tag_name
+        type: token
+
+      - name: body
+        type: array
+
+      - name: close_tag
+        type: node
+        kind: HTMLCloseTagNode
+
+      - name: is_void
+        type: boolean
+
+  - name: HTMLAttributeValueNode
+    fields:
+      - name: open_quote
+        type: token
+
+      - name: children
+        type: array
+
+      - name: close_quote
+        type: token
+
+      - name: quoted
+        type: boolean
+
+  - name: HTMLAttributeNameNode
+    fields:
+      - name: name
+        type: token
+
+  - name: HTMLAttributeNode
+    fields:
+      - name: name
+        type: node
+        kind: HTMLAttributeNameNode
+
+      - name: equals
+        type: token
+
+      - name: value
+        type: node
+        kind: HTMLAttributeValueNode
+
+  - name: HTMLTextNode
+    fields:
+      - name: content
+        type: string
+
+  - name: HTMLCommentNode
+    fields:
+      - name: comment_start
+        type: token
+
+      - name: children
+        type: array
+
+      - name: comment_end
+        type: token
+
+  - name: HTMLDoctypeNode
+    fields:
+      - name: tag_opening
+        type: token
+
+      - name: children
+        type: array
+
+      - name: tag_closing
+        type: token
+
+  - name: WhitespaceNode
+    fields:
+      - name: value
+        type: token
+
+  - name: ERBContentNode
+    fields:
+      - name: tag_opening
+        type: token
+
+      - name: content
+        type: token
+
+      - name: tag_closing
+        type: token
+
+  - name: UnexpectedTokenNode
+    fields:
+      - name: message
+        type: string
+
+      - name: expected
+        type: string
+
+      - name: got
+        type: string

@@ -62,7 +62,7 @@ END
 TEST(test_buffer_increase_capacity)
   buffer_T buffer = buffer_new();
 
-  size_t initial_capacity = buffer.capacity;
+  const size_t initial_capacity = buffer.capacity;
   ck_assert_int_ge(initial_capacity, 1024); // Ensure initial capacity is at least 1024
 
   // Increase capacity by a small amount, should NOT trigger reallocation

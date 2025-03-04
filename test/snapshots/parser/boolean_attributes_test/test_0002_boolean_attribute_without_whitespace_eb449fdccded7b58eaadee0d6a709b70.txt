@@ -1,19 +1,24 @@
-@ DocumentNode (location: (1,0)-(1,17))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,17))
-    ├── name: ∅
-    └── children: (1)
-        @ SelfCloseTag (location: (1,0)-(1,17))
-        ├── name: "input"
-        └── children: (1)
-            @ AttributeSet (location: (1,6)-(1,15))
-            ├── name: ∅
-            └── children: (1)
-                @ Attribute (location: (1,7)-(1,15))
-                ├── name: ∅
-                └── children: (1)
-                    @ AttributeName (location: (1,7)-(1,15))
-                    ├── name: "required"
-                    └── children: []
-
+@ DocumentNode (location: (1:0)-(1:17))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:17))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "input" (location: (1:1)-(1:6))
+        │       ├── attributes: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:15))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:15))
+        │       │       │       └── name: "required" (location: (1:7)-(1:15))
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       ├── tag_closing: "/>" (location: (1:15)-(1:17))
+        │       ├── children: []
+        │       └── is_void: true
+        │
+        ├── tag_name: "input" (location: (1:1)-(1:6))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

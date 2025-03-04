@@ -1,24 +1,26 @@
-@ DocumentNode (location: (1,0)-(1,21))
-├── name: ∅
-└── children: (1)
-    @ Element (location: (1,0)-(1,21))
-    ├── name: ∅
-    └── children: (3)
-        @ OpenTag (location: (1,0)-(1,4))
-        ├── name: "h1"
-        └── children: (1)
-            @ AttributeSet (location: (1,3)-(1,3))
-            ├── name: ∅
-            └── children: []
-
-        @ ElementBody (location: (1,4)-(1,16))
-        ├── name: ∅
-        └── children: (1)
-            @ ERBContent (location: (1,4)-(1,16))
-            ├── name: " hello "
-            └── children: []
-
-        @ CloseTag (location: (1,16)-(1,21))
-        ├── name: "h1"
-        └── children: []
-
+@ DocumentNode (location: (1:0)-(1:21))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:21))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:4))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "h1" (location: (1:1)-(1:3))
+        │       ├── attributes: []
+        │       ├── tag_closing: ">" (location: (1:3)-(1:4))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "h1" (location: (1:1)-(1:3))
+        ├── body: (1 item)
+        │   └── @ ERBContentNode (location: (1:4)-(1:16))
+        │       ├── tag_opening: "<%=" (location: (1:4)-(1:7))
+        │       ├── content: " hello " (location: (1:7)-(1:14))
+        │       └── tag_closing: "%>" (location: (1:14)-(1:16))
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:21))
+        │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+        │       ├── tag_name: "h1" (location: (1:18)-(1:20))
+        │       └── tag_closing: ">" (location: (1:20)-(1:21))
+        │
+        └── is_void: false

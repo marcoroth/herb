@@ -22,6 +22,7 @@ module ERBX
     ffi_lib(library_path)
 
     attach_function :erbx_lex_to_buffer, [:pointer, :pointer], :void
+    attach_function :erbx_lex_json_to_buffer, [:pointer, :pointer], :void
     attach_function :erbx_lex, [:pointer], :pointer
     attach_function :erbx_parse, [:pointer], :pointer
     attach_function :erbx_extract_ruby_to_buffer, [:pointer, :pointer], :void

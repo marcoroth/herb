@@ -1,17 +1,26 @@
 # frozen_string_literal: true
 
-require "forwardable"
+require "json"
 
 module ERBX
-  class ParseResult
-    extend Forwardable
+  class ParseResult < Result
+    attr_reader :value
 
-    def_delegators :@root_node, :type, :child_count
+    def initialize(value, source, warnings, errors)
+      @value = value
+      super(source, warnings, errors)
+    end
 
-    attr_accessor :root_node
+    def failed?
+      errors.any? || value.errors.any? # TODO: this should probably be recursive
+    end
 
-    def initialize(pointer)
-      @root_node = LibERBX::ASTNode.new(pointer)
+    def success?
+      !failed?
+    end
+
+    def pretty_errors
+      JSON.pretty_generate(errors + value.errors)
     end
   end
 end

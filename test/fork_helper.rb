@@ -8,25 +8,23 @@ class Minitest::Spec
   puts "Using fork_helper with timeout: #{TIMEOUT_THRESHOLD} seconds"
 
   def run
-    reader, writer = IO.pipe
+    result = Tempfile.new
 
     pid = fork do
-      reader.close
-      result = super
-      writer.write(Marshal.dump(result)) # Serialize result back to parent
-      writer.close
-      exit! # Avoid running at_exit hooks
-    end
+      data = Marshal.dump(super)
 
-    writer.close
+      result.write(data)
+      result.rewind
+
+      exit!
+    end
 
     begin
       Timeout.timeout(TIMEOUT_THRESHOLD) do
         Process.wait(pid) # Wait for the test to finish
       end
 
-      result = Marshal.load(reader.read) # Retrieve test result
-      result
+      Marshal.load(result.read) # Retrieve test result
     rescue Timeout::Error, Timeout::ExitException
       Process.kill("TERM", pid) # Gracefully terminate
 
@@ -40,7 +38,7 @@ class Minitest::Spec
 
       self.fail "Test '#{name}' exceeded timeout of #{TIMEOUT_THRESHOLD} seconds"
     ensure
-      reader.close
+      result.unlink
     end
   end
 end

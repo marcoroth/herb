@@ -26,15 +26,22 @@ GEM
     dispersion (0.2.0)
       prism
     ffi (1.17.1)
+    ffi (1.17.1-aarch64-linux-gnu)
+    ffi (1.17.1-aarch64-linux-musl)
+    ffi (1.17.1-arm-linux-gnu)
+    ffi (1.17.1-arm-linux-musl)
     ffi (1.17.1-arm64-darwin)
+    ffi (1.17.1-x86-linux-gnu)
+    ffi (1.17.1-x86-linux-musl)
     ffi (1.17.1-x86_64-darwin)
     ffi (1.17.1-x86_64-linux-gnu)
+    ffi (1.17.1-x86_64-linux-musl)
     json (2.10.1)
     language_server-protocol (3.17.0.4)
     maxitest (5.8.0)
       minitest (>= 5.14.0, < 5.26.0)
     minitest (5.25.4)
-    minitest-difftastic (0.2.0)
+    minitest-difftastic (0.2.1)
       difftastic (~> 0.6)
     parallel (1.26.3)
     parser (3.3.7.1)
@@ -67,10 +74,18 @@ GEM
     unicode-emoji (4.0.4)
 
 PLATFORMS
+  aarch64-linux-gnu
+  aarch64-linux-musl
+  arm-linux-gnu
+  arm-linux-musl
   arm64-darwin
   ruby
-  x86_64-darwin-23
+  x86-linux-gnu
+  x86-linux-musl
+  x86_64-darwin
   x86_64-linux
+  x86_64-linux-gnu
+  x86_64-linux-musl
 
 DEPENDENCIES
   erbx!

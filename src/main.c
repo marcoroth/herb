@@ -1,6 +1,8 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
 #include "include/ast_node.h"
+#include "include/ast_nodes.h"
+#include "include/ast_pretty_print.h"
 #include "include/buffer.h"
 #include "include/erbx.h"
 #include "include/extract.h"
@@ -11,14 +13,14 @@
 #include <string.h>
 #include <time.h>
 
-void print_time_diff(struct timespec start, struct timespec end, char* verb) {
-  double seconds = (double) end.tv_sec - (double) start.tv_sec;
-  double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;
-  double total_ns = seconds * 1e9 + nanoseconds;
+void print_time_diff(const struct timespec start, const struct timespec end, const char* verb) {
+  const double seconds = (double) end.tv_sec - (double) start.tv_sec;
+  const double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;
+  const double total_ns = seconds * 1e9 + nanoseconds;
 
-  double us = total_ns / 1e3;
-  double ms = total_ns / 1e6;
-  double s = total_ns / 1e9;
+  const double us = total_ns / 1e3;
+  const double ms = total_ns / 1e6;
+  const double s = total_ns / 1e9;
 
   printf("Finished");
   printf(" %s ", verb);
@@ -29,17 +31,18 @@ void print_time_diff(struct timespec start, struct timespec end, char* verb) {
   printf("  %8.6f  s\n\n", s);
 }
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
   if (argc < 2) {
     printf("./erbx [command] [options]\n\n");
 
     printf("ERBX - Seamless and powerful HTML+ERB parsing.\n\n");
 
-    printf("./erbx lex [file]     -  Lex a file\n");
-    printf("./erbx parse [file]   -  Parse a file\n");
-    printf("./erbx ruby [file]    -  Extract Ruby from a file\n");
-    printf("./erbx html [file]    -  Extract HTML from a file\n");
-    printf("./erbx prism [file]   -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./erbx lex [file]      -  Lex a file\n");
+    printf("./erbx lex_json [file] -  Lex a file and return the result as json.\n");
+    printf("./erbx parse [file]    -  Parse a file\n");
+    printf("./erbx ruby [file]     -  Extract Ruby from a file\n");
+    printf("./erbx html [file]     -  Extract HTML from a file\n");
+    printf("./erbx prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
 
     return 1;
   }
@@ -71,15 +74,27 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
+  if (strcmp(argv[1], "lex_json") == 0) {
+    erbx_lex_json_to_buffer(source, &output);
+
+    printf("%s\n", output.value);
+
+    buffer_free(&output);
+    free(source);
+
+    return 0;
+  }
+
   if (strcmp(argv[1], "parse") == 0) {
-    AST_NODE_T* root = erbx_parse(source);
+    AST_DOCUMENT_NODE_T* root = erbx_parse(source);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    ast_node_pretty_print(root, 0, &output);
-    printf("%s", output.value);
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+    printf("%s\n", output.value);
 
     print_time_diff(start, end, "parsing");
 
+    ast_node_free((AST_NODE_T*) root);
     buffer_free(&output);
     free(source);
 
