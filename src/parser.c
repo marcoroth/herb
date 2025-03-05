@@ -32,8 +32,8 @@ parser_T* parser_init(lexer_T* lexer) {
   return parser;
 }
 
-static void parser_push_open_tag(parser_T* parser, token_T* tag_name_token) {
-  token_T* copy = token_copy(tag_name_token);
+static void parser_push_open_tag(parser_T* parser, token_T* tag_name) {
+  token_T* copy = token_copy(tag_name);
   array_push(parser->open_tags_stack, copy);
 }
 
