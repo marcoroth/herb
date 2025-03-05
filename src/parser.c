@@ -599,7 +599,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
             close_tag->base.end,
             "closing tag with no matching open tag",
             expected,
-            "."
+            ""
           );
 
           free(expected);
@@ -626,7 +626,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
         open_tag->base.end,
         "expected element to have a close tag",
         expected,
-        "."
+        ""
       );
 
       free(expected);
