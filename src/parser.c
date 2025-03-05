@@ -127,7 +127,7 @@ static token_T* parser_consume_expected(parser_T* parser, const token_type_T typ
 }
 
 static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   array_T* children = array_init(8);
   token_T* comment_start = parser_consume_expected(parser, TOKEN_HTML_COMMENT_START, errors);
   location_T* start_location = location_copy(parser->current_token->start);
@@ -168,7 +168,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 }
 
 static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   array_T* children = array_init(8);
   buffer_T content = buffer_new();
 
@@ -209,7 +209,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
 static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
   location_T* start_location = location_copy(parser->current_token->start);
 
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   buffer_T content = buffer_new();
 
   while (token_is_none_of(
@@ -258,7 +258,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
 }
 
 static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   token_T* identifier = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
 
   if (identifier == NULL) {
@@ -333,7 +333,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser_T* parser) {
   array_T* children = array_init(8);
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
 
   // <div id=<%= "home" %>>
   if (token_is(parser, TOKEN_ERB_START)) {
@@ -424,7 +424,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 }
 
 static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   array_T* children = array_init(8);
   array_T* attributes = array_init(8);
 
@@ -494,7 +494,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 }
 
 static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
@@ -529,7 +529,7 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 }
 
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
   AST_HTML_OPEN_TAG_NODE_T* open_tag = parser_parse_html_open_tag(parser);
 
   if (open_tag->base.type == AST_HTML_SELF_CLOSE_TAG_NODE || is_void_element(open_tag->tag_name->value)) {
@@ -673,7 +673,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
 }
 
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
 
   token_T* opening_tag = parser_consume_expected(parser, TOKEN_ERB_START, errors);
   token_T* content = parser_consume_expected(parser, TOKEN_ERB_CONTENT, errors);
