@@ -14,9 +14,9 @@
     └── @ HTMLElementNode (location: (1:0)-(1:5))
         ├── errors: (1 error)
         │   └── @ UnexpectedTokenNode (location: (1:0)-(1:5))
-        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</div>', got: '')"
+        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</div>', got: '.')"
         │       ├── expected: "</div>"
-        │       └── got: ""
+        │       └── got: "."
         │
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
@@ -32,9 +32,9 @@
         │   └── @ HTMLElementNode (location: (1:5)-(1:11))
         │       ├── errors: (1 error)
         │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:11))
-        │       │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</span>', got: '')"
+        │       │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</span>', got: '.')"
         │       │       ├── expected: "</span>"
-        │       │       └── got: ""
+        │       │       └── got: "."
         │       │
         │       ├── open_tag:
         │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:11))
