@@ -1,0 +1,82 @@
+@ DocumentNode (location: (1:0)-(7:7))
+├── errors: (1 error)
+│   └── @ UnexpectedTokenNode (location: (6:9)-(6:11))
+│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 2:10)' (expected '</main>', got: 'EOF')"
+│       ├── expected: "</main>"
+│       └── got: "EOF"
+│
+└── children: (5 items)
+    ├── @ HTMLTextNode (location: (1:0)-(2:9))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLElementNode (location: (2:9)-(5:17))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:9)-(2:15))
+    │   │       ├── tag_opening: "<" (location: (2:9)-(2:10))
+    │   │       ├── tag_name: "main" (location: (2:10)-(2:14))
+    │   │       ├── attributes: []
+    │   │       ├── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "main" (location: (2:10)-(2:14))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (2:0)-(3:11))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:11)-(4:20))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ UnexpectedTokenNode (location: (4:13)-(4:20))
+    │   │   │   │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag, expected closing tag for 'div' (opened at 3:12)' (expected 'div', got: 'span')"
+    │   │   │   │       ├── expected: "div"
+    │   │   │   │       └── got: "span"
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:11)-(3:16))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:11)-(3:12))
+    │   │   │   │       ├── tag_name: "div" (location: (3:12)-(3:15))
+    │   │   │   │       ├── attributes: []
+    │   │   │   │       ├── tag_closing: ">" (location: (3:15)-(3:16))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (3:12)-(3:15))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:0)-(4:13))
+    │   │   │   │       └── content: "\n            "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:13)-(4:20))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:13)-(4:15))
+    │   │   │   │       ├── tag_name: "span" (location: (4:15)-(4:19))
+    │   │   │   │       └── tag_closing: ">" (location: (4:19)-(4:20))
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:0)-(5:11))
+    │   │       └── content: "\n          "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:11)-(5:17))
+    │   │       ├── tag_opening: "</" (location: (5:11)-(5:13))
+    │   │       ├── tag_name: "div" (location: (5:13)-(5:16))
+    │   │       └── tag_closing: ">" (location: (5:16)-(5:17))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (5:0)-(6:9))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLCloseTagNode (location: (6:9)-(6:16))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnexpectedTokenNode (location: (6:9)-(6:16))
+    │   │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<main>', got: '')"
+    │   │       ├── expected: "<main>"
+    │   │       └── got: ""
+    │   │
+    │   ├── tag_opening: "</" (location: (6:9)-(6:11))
+    │   ├── tag_name: "main" (location: (6:11)-(6:15))
+    │   └── tag_closing: ">" (location: (6:15)-(6:16))
+    │
+    └── @ HTMLTextNode (location: (6:0)-(7:7))
+        └── content: "\n      "

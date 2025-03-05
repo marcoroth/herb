@@ -1,0 +1,12 @@
+@ DocumentNode (location: (1:0)-(1:5))
+└── children: (1 item)
+    └── @ HTMLCloseTagNode (location: (1:0)-(1:5))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:5))
+        │       ├── message: "[Parser]: Unexpected Token 'Void elements shouldn't be used as closing tags.' (expected '<br />', got: '</br>')"
+        │       ├── expected: "<br />"
+        │       └── got: "</br>"
+        │
+        ├── tag_opening: "</" (location: (1:0)-(1:2))
+        ├── tag_name: "br" (location: (1:2)-(1:4))
+        └── tag_closing: ">" (location: (1:4)-(1:5))

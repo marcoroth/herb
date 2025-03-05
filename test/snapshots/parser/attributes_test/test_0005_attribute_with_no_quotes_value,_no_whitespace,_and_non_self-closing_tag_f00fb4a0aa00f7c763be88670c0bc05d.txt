@@ -1,6 +1,18 @@
 @ DocumentNode (location: (1:0)-(1:17))
+├── errors: (1 error)
+│   └── @ UnexpectedTokenNode (location: (1:17)-(1:17))
+│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 1:1)' (expected '</div>', got: 'EOF')"
+│       ├── expected: "</div>"
+│       └── got: "EOF"
+│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:17))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:17))
+        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</div>', got: '')"
+        │       ├── expected: "</div>"
+        │       └── got: ""
+        │
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
@@ -29,26 +41,5 @@
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
         ├── body: []
-        ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (1:17)-(1:17))
-        │       ├── errors: (3 errors)
-        │       │   ├── @ UnexpectedTokenNode (location: (1:17)-(1:17))
-        │       │   │   ├── message: "[Parser]: Unexpected Token 'in parser_consume_expected' (expected 'TOKEN_HTML_TAG_START_CLOSE', got: 'TOKEN_EOF')"
-        │       │   │   ├── expected: "TOKEN_HTML_TAG_START_CLOSE"
-        │       │   │   └── got: "TOKEN_EOF"
-        │       │   │
-        │       │   ├── @ UnexpectedTokenNode (location: (1:17)-(1:17))
-        │       │   │   ├── message: "[Parser]: Unexpected Token 'in parser_consume_expected' (expected 'TOKEN_IDENTIFIER', got: 'TOKEN_EOF')"
-        │       │   │   ├── expected: "TOKEN_IDENTIFIER"
-        │       │   │   └── got: "TOKEN_EOF"
-        │       │   │
-        │       │   └── @ UnexpectedTokenNode (location: (1:17)-(1:17))
-        │       │       ├── message: "[Parser]: Unexpected Token 'in parser_consume_expected' (expected 'TOKEN_HTML_TAG_END', got: 'TOKEN_EOF')"
-        │       │       ├── expected: "TOKEN_HTML_TAG_END"
-        │       │       └── got: "TOKEN_EOF"
-        │       │
-        │       ├── tag_opening: "" (location: (1:17)-(1:17))
-        │       ├── tag_name: "" (location: (1:17)-(1:17))
-        │       └── tag_closing: "" (location: (1:17)-(1:17))
-        │
+        ├── close_tag: ∅
         └── is_void: false

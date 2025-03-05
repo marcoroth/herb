@@ -70,6 +70,20 @@ void array_remove(array_T* array, const size_t index) {
   array->size--;
 }
 
+// Alias for array_append
+void array_push(array_T* array, void* item) {
+  array_append(array, item);
+}
+
+void* array_pop(array_T* array) {
+  if (!array || array->size == 0) { return NULL; }
+
+  void* last_item = array_last(array);
+  array->size--;
+
+  return last_item;
+}
+
 size_t array_size(const array_T* array) {
   return array->size;
 }

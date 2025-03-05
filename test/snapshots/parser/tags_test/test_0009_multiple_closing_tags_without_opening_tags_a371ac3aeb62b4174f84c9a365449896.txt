@@ -1,0 +1,34 @@
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (3 items)
+    ├── @ HTMLCloseTagNode (location: (1:0)-(1:6))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnexpectedTokenNode (location: (1:0)-(1:6))
+    │   │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<div>', got: '')"
+    │   │       ├── expected: "<div>"
+    │   │       └── got: ""
+    │   │
+    │   ├── tag_opening: "</" (location: (1:0)-(1:2))
+    │   ├── tag_name: "div" (location: (1:2)-(1:5))
+    │   └── tag_closing: ">" (location: (1:5)-(1:6))
+    │
+    ├── @ HTMLCloseTagNode (location: (1:6)-(1:12))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnexpectedTokenNode (location: (1:6)-(1:12))
+    │   │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<div>', got: '')"
+    │   │       ├── expected: "<div>"
+    │   │       └── got: ""
+    │   │
+    │   ├── tag_opening: "</" (location: (1:6)-(1:8))
+    │   ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   └── tag_closing: ">" (location: (1:11)-(1:12))
+    │
+    └── @ HTMLCloseTagNode (location: (1:12)-(1:19))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenNode (location: (1:12)-(1:19))
+        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<span>', got: '')"
+        │       ├── expected: "<span>"
+        │       └── got: ""
+        │
+        ├── tag_opening: "</" (location: (1:12)-(1:14))
+        ├── tag_name: "span" (location: (1:14)-(1:18))
+        └── tag_closing: ">" (location: (1:18)-(1:19))

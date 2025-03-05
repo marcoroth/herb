@@ -47,10 +47,16 @@ void ast_pretty_print_property(
 }
 
 void ast_pretty_print_array(
-  const char* name, array_T* children, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer
 ) {
-  if (array_size(children) == 0) {
+  if (array == NULL) {
+    ast_pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
+
+    return;
+  }
+
+  if (array_size(array) == 0) {
     ast_pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
 
     return;
@@ -61,17 +67,17 @@ void ast_pretty_print_array(
   buffer_append(buffer, "(");
 
   char count[16];
-  sprintf(count, "%zu", array_size(children));
+  sprintf(count, "%zu", array_size(array));
   buffer_append(buffer, count);
   buffer_append(buffer, ")\n");
 
   if (indent < 20) {
-    for (size_t i = 0; i < array_size(children); i++) {
-      AST_NODE_T* child = array_get(children, i);
+    for (size_t i = 0; i < array_size(array); i++) {
+      AST_NODE_T* child = array_get(array, i);
       ast_indent(buffer, indent);
       ast_indent(buffer, relative_indent + 1);
 
-      if (i == array_size(children) - 1) {
+      if (i == array_size(array) - 1) {
         buffer_append(buffer, "└── ");
       } else {
         buffer_append(buffer, "├── ");
@@ -79,7 +85,7 @@ void ast_pretty_print_array(
 
       ast_pretty_print_node(child, indent + 1, relative_indent + 1, buffer);
 
-      if (i != array_size(children) - 1) { ast_pretty_print_newline(indent + 1, relative_indent, buffer); }
+      if (i != array_size(array) - 1) { ast_pretty_print_newline(indent + 1, relative_indent, buffer); }
     }
   }
 }

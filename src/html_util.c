@@ -22,6 +22,38 @@ bool is_void_element(const char* tag_name) {
 }
 
 /**
+ * @brief Creates an opening HTML tag string like "<tag_name>"
+ *
+ * @param tag_name The name of the HTML tag to be enclosed in a opening tag
+ * @return A newly allocated string containing the opening tag, or NULL if memory allocation fails
+ * @note The caller is responsible for freeing the returned string
+ *
+ * Example:
+ * @code
+ * char* tag = html_opening_tag_string("div");
+ * if (tag) {
+ *   printf("%s\n", tag); // Prints: <div>
+ *   free(tag);
+ * }
+ * @endcode
+ */
+char* html_opening_tag_string(const char* tag_name) {
+  size_t length = strlen(tag_name);
+  char* result = (char*) malloc(length + 3); // +4 for '<', '>', and '\0'
+
+  if (result == NULL) { return NULL; }
+
+  result[0] = '<';
+
+  memcpy(result + 1, tag_name, length);
+
+  result[length + 1] = '>';
+  result[length + 2] = '\0';
+
+  return result;
+}
+
+/**
  * @brief Creates a closing HTML tag string like "</tag_name>"
  *
  * @param tag_name The name of the HTML tag to be enclosed in a closing tag
@@ -65,8 +97,8 @@ char* html_closing_tag_string(const char* tag_name) {
  * @code
  * char* tag = html_self_closing_tag_string("br");
  * if (tag) {
- *     printf("%s\n", tag); // Prints: <br />
- *     free(tag);
+ *   printf("%s\n", tag); // Prints: <br />
+ *   free(tag);
  * }
  * @endcode
  */

@@ -1,18 +1,6 @@
-@ DocumentNode (location: (1:0)-(1:12))
-├── errors: (1 error)
-│   └── @ UnexpectedTokenNode (location: (1:10)-(1:12))
-│       ├── message: "[Parser]: Unexpected Token 'in parser_consume_expected' (expected 'TOKEN_EOF', got: 'TOKEN_HTML_TAG_START_CLOSE')"
-│       ├── expected: "TOKEN_EOF"
-│       └── got: "TOKEN_HTML_TAG_START_CLOSE"
-│
+@ DocumentNode (location: (1:0)-(1:16))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:10))
-        ├── errors: (1 error)
-        │   └── @ UnexpectedTokenNode (location: (1:5)-(1:10))
-        │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag' (expected 'div', got: 'br')"
-        │       ├── expected: "div"
-        │       └── got: "br"
-        │
+    └── @ HTMLElementNode (location: (1:0)-(1:16))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
@@ -23,17 +11,22 @@
         │       └── is_void: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
-        ├── body: []
-        ├── close_tag:
+        ├── body: (1 item)
         │   └── @ HTMLCloseTagNode (location: (1:5)-(1:10))
         │       ├── errors: (1 error)
         │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:10))
-        │       │       ├── message: "[Parser]: Unexpected Token 'element is a void element and shouldn't be closed as a closing tag' (expected '<br />', got: '</br>')"
+        │       │       ├── message: "[Parser]: Unexpected Token 'Void elements shouldn't be used as closing tags.' (expected '<br />', got: '</br>')"
         │       │       ├── expected: "<br />"
         │       │       └── got: "</br>"
         │       │
         │       ├── tag_opening: "</" (location: (1:5)-(1:7))
         │       ├── tag_name: "br" (location: (1:7)-(1:9))
         │       └── tag_closing: ">" (location: (1:9)-(1:10))
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:10)-(1:16))
+        │       ├── tag_opening: "</" (location: (1:10)-(1:12))
+        │       ├── tag_name: "div" (location: (1:12)-(1:15))
+        │       └── tag_closing: ">" (location: (1:15)-(1:16))
         │
         └── is_void: false

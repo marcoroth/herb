@@ -1,9 +1,15 @@
 @ DocumentNode (location: (1:0)-(1:12))
+├── errors: (1 error)
+│   └── @ UnexpectedTokenNode (location: (1:12)-(1:12))
+│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 1:1)' (expected '</html>', got: 'EOF')"
+│       ├── expected: "</html>"
+│       └── got: "EOF"
+│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:12))
         ├── errors: (1 error)
         │   └── @ UnexpectedTokenNode (location: (1:6)-(1:12))
-        │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag' (expected 'html', got: 'div')"
+        │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag, expected closing tag for 'html' (opened at 1:1)' (expected 'html', got: 'div')"
         │       ├── expected: "html"
         │       └── got: "div"
         │

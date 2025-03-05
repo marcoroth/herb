@@ -1,0 +1,12 @@
+@ DocumentNode (location: (1:0)-(1:6))
+└── children: (1 item)
+    └── @ HTMLCloseTagNode (location: (1:0)-(1:6))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:6))
+        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<div>', got: '')"
+        │       ├── expected: "<div>"
+        │       └── got: ""
+        │
+        ├── tag_opening: "</" (location: (1:0)-(1:2))
+        ├── tag_name: "div" (location: (1:2)-(1:5))
+        └── tag_closing: ">" (location: (1:5)-(1:6))

@@ -20,6 +20,9 @@ void array_set(const array_T* array, size_t index, void* item);
 void array_free(array_T** array);
 void array_remove(array_T* array, size_t index);
 
+void array_push(array_T* array, void* item);
+void* array_pop(array_T* array);
+
 size_t array_capacity(const array_T* array);
 size_t array_size(const array_T* array);
 size_t array_sizeof(void);

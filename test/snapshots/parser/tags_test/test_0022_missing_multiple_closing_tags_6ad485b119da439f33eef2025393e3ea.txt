@@ -1,0 +1,74 @@
+@ DocumentNode (location: (1:0)-(1:18))
+├── errors: (2 errors)
+│   ├── @ UnexpectedTokenNode (location: (1:18)-(1:18))
+│   │   ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 1:6)' (expected '</span>', got: 'EOF')"
+│   │   ├── expected: "</span>"
+│   │   └── got: "EOF"
+│   │
+│   └── @ UnexpectedTokenNode (location: (1:18)-(1:18))
+│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 1:1)' (expected '</div>', got: 'EOF')"
+│       ├── expected: "</div>"
+│       └── got: "EOF"
+│
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:5))
+        ├── errors: (1 error)
+        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:5))
+        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</div>', got: '')"
+        │       ├── expected: "</div>"
+        │       └── got: ""
+        │
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── attributes: []
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLElementNode (location: (1:5)-(1:11))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:11))
+        │       │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</span>', got: '')"
+        │       │       ├── expected: "</span>"
+        │       │       └── got: ""
+        │       │
+        │       ├── open_tag:
+        │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:11))
+        │       │       ├── tag_opening: "<" (location: (1:5)-(1:6))
+        │       │       ├── tag_name: "span" (location: (1:6)-(1:10))
+        │       │       ├── attributes: []
+        │       │       ├── tag_closing: ">" (location: (1:10)-(1:11))
+        │       │       ├── children: []
+        │       │       └── is_void: false
+        │       │
+        │       ├── tag_name: "span" (location: (1:6)-(1:10))
+        │       ├── body: (1 item)
+        │       │   └── @ HTMLElementNode (location: (1:11)-(1:18))
+        │       │       ├── open_tag:
+        │       │       │   └── @ HTMLOpenTagNode (location: (1:11)-(1:14))
+        │       │       │       ├── tag_opening: "<" (location: (1:11)-(1:12))
+        │       │       │       ├── tag_name: "p" (location: (1:12)-(1:13))
+        │       │       │       ├── attributes: []
+        │       │       │       ├── tag_closing: ">" (location: (1:13)-(1:14))
+        │       │       │       ├── children: []
+        │       │       │       └── is_void: false
+        │       │       │
+        │       │       ├── tag_name: "p" (location: (1:12)-(1:13))
+        │       │       ├── body: []
+        │       │       ├── close_tag:
+        │       │       │   └── @ HTMLCloseTagNode (location: (1:14)-(1:18))
+        │       │       │       ├── tag_opening: "</" (location: (1:14)-(1:16))
+        │       │       │       ├── tag_name: "p" (location: (1:16)-(1:17))
+        │       │       │       └── tag_closing: ">" (location: (1:17)-(1:18))
+        │       │       │
+        │       │       └── is_void: false
+        │       │
+        │       ├── close_tag: ∅
+        │       └── is_void: false
+        │
+        ├── close_tag: ∅
+        └── is_void: false
