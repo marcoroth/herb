@@ -49,12 +49,7 @@ static bool parser_check_matching_tag(parser_T* parser, const char* tag_name) {
 static token_T* parser_pop_open_tag(parser_T* parser) {
   if (array_size(parser->open_tags_stack) == 0) { return NULL; }
 
-  token_T* top_token = array_last(parser->open_tags_stack);
-  if (top_token == NULL) { return NULL; };
-
-  array_remove(parser->open_tags_stack, array_size(parser->open_tags_stack) - 1);
-
-  return top_token;
+  return array_pop(parser->open_tags_stack);
 }
 
 static AST_UNEXPECTED_TOKEN_NODE_T* parser_init_unexpected_token(parser_T* parser) {
