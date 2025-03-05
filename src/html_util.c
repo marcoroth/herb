@@ -39,8 +39,10 @@ bool is_void_element(const char* tag_name) {
  * @endcode
  */
 char* html_opening_tag_string(const char* tag_name) {
+  if (tag_name == NULL) { return strdup("<>"); }
+
   size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 3); // +4 for '<', '>', and '\0'
+  char* result = (char*) malloc(length + 3); // +3 for '<', '>', and '\0'
 
   if (result == NULL) { return NULL; }
 
@@ -71,6 +73,8 @@ char* html_opening_tag_string(const char* tag_name) {
  * @endcode
  */
 char* html_closing_tag_string(const char* tag_name) {
+  if (tag_name == NULL) { return strdup("</>"); }
+
   size_t length = strlen(tag_name);
   char* result = (char*) malloc(length + 4); // +4 for '<', '/', '>', and '\0'
 
@@ -104,6 +108,8 @@ char* html_closing_tag_string(const char* tag_name) {
  * @endcode
  */
 char* html_self_closing_tag_string(const char* tag_name) {
+  if (tag_name == NULL) { return strdup("< />"); }
+
   size_t length = strlen(tag_name);
   char* result = (char*) malloc(length + 5); // +5 for '<', ' ', '/', '>', and '\0'
 
