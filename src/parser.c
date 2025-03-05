@@ -621,13 +621,17 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
       );
 
     } else {
+      char* expected = html_closing_tag_string(open_tag->tag_name->value);
+
       AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = ast_unexpected_token_node_init_from_raw_message(
         open_tag->base.start,
         open_tag->base.end,
         "expected element to have a close tag",
-        html_closing_tag_string(open_tag->tag_name->value),
+        expected,
         ""
       );
+
+      free(expected);
 
       array_append(errors, unexpected_token_node);
 
