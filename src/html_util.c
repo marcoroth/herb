@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
