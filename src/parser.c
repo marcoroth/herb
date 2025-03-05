@@ -27,20 +27,21 @@ parser_T* parser_init(lexer_T* lexer) {
 
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
-  parser->open_tags_stack = array_init(8);
+  parser->open_tags_stack = array_init(16);
 
   return parser;
 }
 
 static void parser_push_open_tag(parser_T* parser, token_T* tag_name_token) {
-  token_T* token_copy_ptr = token_copy(tag_name_token);
-  array_push(parser->open_tags_stack, token_copy_ptr);
+  token_T* copy = token_copy(tag_name_token);
+  array_push(parser->open_tags_stack, copy);
 }
 
 static bool parser_check_matching_tag(parser_T* parser, const char* tag_name) {
   if (array_size(parser->open_tags_stack) == 0) { return false; }
 
   token_T* top_token = array_last(parser->open_tags_stack);
+  if (top_token == NULL || top_token->value == NULL) { return false; };
 
   return (strcasecmp(top_token->value, tag_name) == 0);
 }
@@ -49,6 +50,8 @@ static token_T* parser_pop_open_tag(parser_T* parser) {
   if (array_size(parser->open_tags_stack) == 0) { return NULL; }
 
   token_T* top_token = array_last(parser->open_tags_stack);
+  if (top_token == NULL) { return NULL; };
+
   array_remove(parser->open_tags_stack, array_size(parser->open_tags_stack) - 1);
 
   return top_token;
