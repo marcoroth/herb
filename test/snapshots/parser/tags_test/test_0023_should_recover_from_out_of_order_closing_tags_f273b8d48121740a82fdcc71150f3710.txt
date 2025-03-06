@@ -1,9 +1,8 @@
 @ DocumentNode (location: (1:0)-(7:7))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (6:9)-(6:11))
-│       ├── message: "Unclosed `<main>` tag at the end of the document (`<main>` tag was opened at (2:10))"
-│       ├── opening_tag: "main"
-│       └── tag_opened_at: (2:10)
+│       ├── message: "Tag `<main>` opened at (2:10) was never closed before the end of document."
+│       └── opening_tag: "main" (location: (2:10)-(2:14))
 │
 └── children: (5 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:9))
@@ -26,11 +25,10 @@
     │   │   │
     │   │   ├── @ HTMLElementNode (location: (3:11)-(4:20))
     │   │   │   ├── errors: (1 error)
-    │   │   │   │   └── @ MismatchedTagNameError (location: (4:15)-(4:19))
-    │   │   │   │       ├── message: "mismatched tag name, expected a closing tag for `<div>` (tag was opened at (3:12)). Instead got closing tag `</span>` at (4:15)."
-    │   │   │   │       ├── expected_tag: "div"
-    │   │   │   │       ├── tag_opened_at: (3:12)
-    │   │   │   │       └── actual_tag: "span" (location: (4:15)-(4:19))
+    │   │   │   │   └── @ TagNamesMismatchError (location: (4:15)-(4:19))
+    │   │   │   │       ├── message: "Opening tag `<div>` at (3:12) closed with `</span>` at (4:15)."
+    │   │   │   │       ├── opening_tag: "div" (location: (3:12)-(3:15))
+    │   │   │   │       └── closing_tag: "span" (location: (4:15)-(4:19))
     │   │   │   │
     │   │   │   ├── open_tag:
     │   │   │   │   └── @ HTMLOpenTagNode (location: (3:11)-(3:16))
@@ -71,7 +69,7 @@
     ├── @ HTMLCloseTagNode (location: (6:9)-(6:16))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (6:9)-(6:16))
-    │   │       ├── message: "Expected `</main>` (at (6:11)) to have a matching `<main>` opening tag."
+    │   │       ├── message: "Found closing tag `</main>` at (6:11) without a matching opening tag."
     │   │       └── closing_tag: "main" (location: (6:11)-(6:15))
     │   │
     │   ├── tag_opening: "</" (location: (6:9)-(6:11))

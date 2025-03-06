@@ -205,7 +205,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   token_T* closing_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
 
   if (opening_quote != NULL && closing_quote != NULL && strcmp(opening_quote->value, closing_quote->value) != 0) {
-    append_mismatched_quote_error(opening_quote, closing_quote, closing_quote->start, closing_quote->end, errors);
+    append_quotes_mismatch_error(opening_quote, closing_quote, closing_quote->start, closing_quote->end, errors);
   }
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(
@@ -398,7 +398,7 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
     char* expected = html_self_closing_tag_string(tag_name->value);
     char* got = html_closing_tag_string(tag_name->value);
 
-    append_invalid_closing_tag_error(tag_name, expected, got, tag_opening->start, tag_closing->end, errors);
+    append_void_element_closing_tag_error(tag_name, expected, got, tag_opening->start, tag_closing->end, errors);
 
     free(expected);
     free(got);
@@ -558,13 +558,7 @@ static void parser_parse_unclosed_html_tags(const parser_T* parser, array_T* err
   while (array_size(parser->open_tags_stack) > 0) {
     token_T* unclosed_tag = parser_pop_open_tag(parser);
 
-    append_unclosed_element_error(
-      unclosed_tag->value,
-      unclosed_tag->start,
-      parser->current_token->start,
-      parser->current_token->end,
-      errors
-    );
+    append_unclosed_element_error(unclosed_tag, parser->current_token->start, parser->current_token->end, errors);
 
     token_free(unclosed_tag);
   }

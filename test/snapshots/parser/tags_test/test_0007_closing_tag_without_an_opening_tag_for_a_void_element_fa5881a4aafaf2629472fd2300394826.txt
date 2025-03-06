@@ -2,11 +2,11 @@
 └── children: (1 item)
     └── @ HTMLCloseTagNode (location: (1:0)-(1:5))
         ├── errors: (1 error)
-        │   └── @ InvalidClosingTagError (location: (1:0)-(1:5))
-        │       ├── message: "Void element `<br>` shouldn't be used as a closing tag. (expected: `<br>` or `<br />`, got: `</br>`)"
+        │   └── @ VoidElementClosingTagError (location: (1:0)-(1:5))
+        │       ├── message: "`br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`."
         │       ├── tag_name: "br" (location: (1:2)-(1:4))
         │       ├── expected: "<br />"
-        │       └── got: "</br>"
+        │       └── found: "</br>"
         │
         ├── tag_opening: "</" (location: (1:0)-(1:2))
         ├── tag_name: "br" (location: (1:2)-(1:4))

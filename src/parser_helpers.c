@@ -109,14 +109,7 @@ void parser_handle_mismatched_tags(
     token_T* expected_tag = array_last(parser->open_tags_stack);
     token_T* actual_tag = close_tag->tag_name;
 
-    append_mismatched_tag_name_error(
-      expected_tag->value,
-      expected_tag->start,
-      actual_tag,
-      actual_tag->start,
-      actual_tag->end,
-      errors
-    );
+    append_tag_names_mismatch_error(expected_tag, actual_tag, actual_tag->start, actual_tag->end, errors);
   } else {
     append_missing_opening_tag_error(close_tag->tag_name, close_tag->tag_name->start, close_tag->tag_name->end, errors);
   }

@@ -5,10 +5,10 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:16))
         │       ├── errors: (1 error)
         │       │   └── @ UnexpectedError (location: (1:5)-(1:6))
-        │       │       ├── message: "Unexpected Error: Unexpected Token (expected: `TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE`, got: `TOKEN_COLON`)"
+        │       │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE`, found: `TOKEN_COLON`."
         │       │       ├── description: "Unexpected Token"
         │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE"
-        │       │       └── got: "TOKEN_COLON"
+        │       │       └── found: "TOKEN_COLON"
         │       │
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "div" (location: (1:1)-(1:4))

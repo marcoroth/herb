@@ -12,11 +12,11 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "Unexpected Error: %s (expected: `%s`, got: `%s`)"
+        template: "%s. Expected: `%s`, found: `%s`."
         arguments:
           - description
           - expected
-          - got
+          - found
 
       fields:
         - name: description
@@ -25,32 +25,32 @@ errors:
         - name: expected
           type: string
 
-        - name: got
+        - name: found
           type: string
 
     - name: UnexpectedTokenError
       message:
-        template: "Unexpected Token: `%s` (expected: `%s`, got: `%s`)"
+        template: "Found `%s` when expecting `%s` at (%zu:%zu)."
         arguments:
-          - got->value
+          - token_type_to_string(found->type)
           - token_type_to_string(expected_type)
-          - token_type_to_string(got->type)
+          - found->start->line
+          - found->start->column
 
       fields:
         - name: expected_type
           type: token_type
 
-        - name: got
+        - name: found
           type: token
 
     - name: MissingOpeningTagError
       message:
-        template: "Expected `</%s>` (at (%zu:%zu)) to have a matching `<%s>` opening tag."
+        template: "Found closing tag `</%s>` at (%zu:%zu) without a matching opening tag."
         arguments:
           - closing_tag->value
           - closing_tag->start->line
           - closing_tag->start->column
-          - closing_tag->value
 
       fields:
         - name: closing_tag
@@ -58,7 +58,7 @@ errors:
 
     - name: MissingClosingTagError
       message:
-        template: "Expected `<%s>` (opened at (%zu:%zu)) to have a matching `</%s>` closing tag."
+        template: "Opening tag `<%s>` at (%zu:%zu) doesn't have a matching closing tag `</%s>`."
         arguments:
           - opening_tag->value
           - opening_tag->start->line
@@ -69,33 +69,32 @@ errors:
         - name: opening_tag
           type: token
 
-    - name: MismatchedTagNameError
+    - name: TagNamesMismatchError
       message:
-        template: "mismatched tag name, expected a closing tag for `<%s>` (tag was opened at (%zu:%zu)). Instead got closing tag `</%s>` at (%zu:%zu)."
+        template: "Opening tag `<%s>` at (%zu:%zu) closed with `</%s>` at (%zu:%zu)."
         arguments:
-          - expected_tag
-          - tag_opened_at->line
-          - tag_opened_at->column
-          - actual_tag->value
-          - actual_tag->start->line
-          - actual_tag->start->column
+          - opening_tag->value
+          - opening_tag->start->line
+          - opening_tag->start->column
+          - closing_tag->value
+          - closing_tag->start->line
+          - closing_tag->start->column
 
       fields:
-        - name: expected_tag
-          type: string
-
-        - name: tag_opened_at
-          type: location
-
-        - name: actual_tag
+        - name: opening_tag
           type: token
 
-    - name: MismatchedQuoteError
+        - name: closing_tag
+          type: token
+
+    - name: QuotesMismatchError
       message:
-        template: "mismatched quote, opened quoted string with `%s` but was closed with `%s`."
+        template: "String opened with %s but closed with %s at (%zu:%zu)."
         arguments:
           - opening_quote->value
           - closing_quote->value
+          - closing_quote->start->line
+          - closing_quote->start->column
 
       fields:
         - name: opening_quote
@@ -104,14 +103,15 @@ errors:
         - name: closing_quote
           type: token
 
-    - name: InvalidClosingTagError
+    - name: VoidElementClosingTagError
       message:
-        template: "Void element `<%s>` shouldn't be used as a closing tag. (expected: `<%s>` or `<%s />`, got: `</%s>`)"
+        template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."
         arguments:
           - tag_name->value
           - tag_name->value
           - tag_name->value
           - tag_name->value
+
       fields:
         - name: tag_name
           type: token
@@ -119,24 +119,20 @@ errors:
         - name: expected
           type: string
 
-        - name: got
+        - name: found
           type: string
 
     - name: UnclosedElementError
       message:
-        template: "Unclosed `<%s>` tag at the end of the document (`<%s>` tag was opened at (%zu:%zu))"
+        template: "Tag `<%s>` opened at (%zu:%zu) was never closed before the end of document."
         arguments:
-          - opening_tag
-          - opening_tag
-          - tag_opened_at->line
-          - tag_opened_at->column
+          - opening_tag->value
+          - opening_tag->start->line
+          - opening_tag->start->column
 
       fields:
         - name: opening_tag
-          type: string
-
-        - name: tag_opened_at
-          type: location
+          type: token
 
 nodes:
   types:

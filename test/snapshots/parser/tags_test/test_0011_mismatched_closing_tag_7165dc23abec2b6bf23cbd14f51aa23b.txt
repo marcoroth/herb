@@ -1,18 +1,16 @@
 @ DocumentNode (location: (1:0)-(1:12))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (1:12)-(1:12))
-│       ├── message: "Unclosed `<html>` tag at the end of the document (`<html>` tag was opened at (1:1))"
-│       ├── opening_tag: "html"
-│       └── tag_opened_at: (1:1)
+│       ├── message: "Tag `<html>` opened at (1:1) was never closed before the end of document."
+│       └── opening_tag: "html" (location: (1:1)-(1:5))
 │
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:12))
         ├── errors: (1 error)
-        │   └── @ MismatchedTagNameError (location: (1:8)-(1:11))
-        │       ├── message: "mismatched tag name, expected a closing tag for `<html>` (tag was opened at (1:1)). Instead got closing tag `</div>` at (1:8)."
-        │       ├── expected_tag: "html"
-        │       ├── tag_opened_at: (1:1)
-        │       └── actual_tag: "div" (location: (1:8)-(1:11))
+        │   └── @ TagNamesMismatchError (location: (1:8)-(1:11))
+        │       ├── message: "Opening tag `<html>` at (1:1) closed with `</div>` at (1:8)."
+        │       ├── opening_tag: "html" (location: (1:1)-(1:5))
+        │       └── closing_tag: "div" (location: (1:8)-(1:11))
         │
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
