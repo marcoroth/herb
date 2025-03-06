@@ -394,7 +394,7 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
   token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
 
-  if (tag_name != NULL && is_void_element(tag_name->value)) {
+  if (tag_name != NULL && is_void_element(tag_name->value) && parser_in_svg_context(parser) == false) {
     char* expected = html_self_closing_tag_string(tag_name->value);
     char* got = html_closing_tag_string(tag_name->value);
 
@@ -415,11 +415,9 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 }
 
 // TODO: this should probably be AST_HTML_ELEMENT_NODE_T with a AST_HTML_SELF_CLOSING_TAG_NODE_T
-static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(AST_HTML_OPEN_TAG_NODE_T* open_tag) {
-  if (open_tag->base.type != AST_HTML_SELF_CLOSE_TAG_NODE) {
-    if (!is_void_element(open_tag->tag_name->value)) { return NULL; }
-  }
-
+static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
+  const parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+) {
   return ast_html_element_node_init(
     open_tag,
     open_tag->tag_name,
@@ -435,8 +433,6 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(AST_HTML_
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
-  if (open_tag->base.type != AST_HTML_OPEN_TAG_NODE) { return NULL; }
-
   array_T* errors = array_init(8);
   array_T* body = array_init(8);
 
@@ -448,7 +444,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 
   AST_HTML_CLOSE_TAG_NODE_T* close_tag = parser_parse_html_close_tag(parser);
 
-  if (is_void_element(close_tag->tag_name->value)) {
+  if (parser_in_svg_context(parser) == false && is_void_element(close_tag->tag_name->value)) {
     array_push(body, close_tag);
     parser_parse_in_data_state(parser, body, errors);
     close_tag = parser_parse_html_close_tag(parser);
@@ -478,8 +474,15 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   AST_HTML_OPEN_TAG_NODE_T* open_tag = parser_parse_html_open_tag(parser);
 
-  AST_HTML_ELEMENT_NODE_T* self_closing_element = parser_parse_html_self_closing_element(open_tag);
-  if (self_closing_element != NULL) { return self_closing_element; }
+  // <tag />
+  if (open_tag->is_void || ast_node_is((AST_NODE_T*) open_tag, AST_HTML_SELF_CLOSE_TAG_NODE)) {
+    return parser_parse_html_self_closing_element(parser, open_tag);
+  }
+
+  // <tag>, in void element list, and not in inside an <svg> element
+  if (!open_tag->is_void && is_void_element(open_tag->tag_name->value) && !parser_in_svg_context(parser)) {
+    return parser_parse_html_self_closing_element(parser, open_tag);
+  }
 
   AST_HTML_ELEMENT_NODE_T* regular_element = parser_parse_html_regular_element(parser, open_tag);
   if (regular_element != NULL) { return regular_element; }

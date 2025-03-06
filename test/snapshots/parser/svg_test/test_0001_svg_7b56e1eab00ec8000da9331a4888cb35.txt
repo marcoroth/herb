@@ -1,0 +1,21 @@
+@ DocumentNode (location: (1:0)-(1:11))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:11))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "svg" (location: (1:1)-(1:4))
+        │       ├── attributes: []
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "svg" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:5)-(1:11))
+        │       ├── tag_opening: "</" (location: (1:5)-(1:7))
+        │       ├── tag_name: "svg" (location: (1:7)-(1:10))
+        │       └── tag_closing: ">" (location: (1:10)-(1:11))
+        │
+        └── is_void: false

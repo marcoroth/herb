@@ -19,6 +19,8 @@ void parser_append_literal_node_from_buffer(
   const parser_T* parser, buffer_T* buffer, array_T* children, location_T* start_location
 );
 
+bool parser_in_svg_context(const parser_T* parser);
+
 token_T* parser_advance(parser_T* parser);
 token_T* parser_consume_if_present(parser_T* parser, token_type_T type);
 token_T* parser_consume_expected(parser_T* parser, token_type_T type, array_T* array);

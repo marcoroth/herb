@@ -75,3 +75,7 @@ void ast_node_set_locations_from_token(AST_NODE_T* node, const token_T* token) {
   ast_node_set_start_from_token(node, token);
   ast_node_set_end_from_token(node, token);
 }
+
+bool ast_node_is(const AST_NODE_T* node, const ast_node_type_T type) {
+  return node->type == type;
+}

@@ -30,4 +30,6 @@ void ast_node_set_end_from_token(AST_NODE_T* node, const token_T* token);
 
 void ast_node_set_locations_from_token(AST_NODE_T* node, const token_T* token);
 
+bool ast_node_is(const AST_NODE_T* node, ast_node_type_T type);
+
 #endif

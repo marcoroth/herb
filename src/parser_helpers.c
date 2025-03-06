@@ -32,6 +32,28 @@ token_T* parser_pop_open_tag(const parser_T* parser) {
   return array_pop(parser->open_tags_stack);
 }
 
+/**
+ * Checks if any element in the open tags stack is an SVG element.
+ *
+ * @param parser The parser containing the open tags stack.
+ * @return true if an SVG tag is found in the stack, false otherwise.
+ */
+bool parser_in_svg_context(const parser_T* parser) {
+  if (!parser || !parser->open_tags_stack) { return false; }
+
+  size_t stack_size = array_size(parser->open_tags_stack);
+
+  for (size_t i = 0; i < stack_size; i++) {
+    token_T* tag = (token_T*) array_get(parser->open_tags_stack, i);
+
+    if (tag && tag->value) {
+      if (strcasecmp(tag->value, "svg") == 0) { return true; }
+    }
+  }
+
+  return false;
+}
+
 void parser_append_unexpected_error(parser_T* parser, const char* description, const char* expected, array_T* errors) {
   token_T* token = parser_advance(parser);
 
