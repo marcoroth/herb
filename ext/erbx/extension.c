@@ -1,5 +1,6 @@
 #include <ruby.h>
 
+#include "error_helpers.h"
 #include "extension_helpers.h"
 #include "nodes.h"
 

@@ -81,10 +81,15 @@ vendor/cache/*
 pkg/*
 
 # Templated Files
+ext/erbx/error_helpers.c
+ext/erbx/error_helpers.h
 ext/erbx/nodes.c
 ext/erbx/nodes.h
 lib/erbx/ast/nodes.rb
+lib/erbx/errors.rb
 src/ast_nodes.c
 src/ast_pretty_print.c
+src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
+src/include/errors.h

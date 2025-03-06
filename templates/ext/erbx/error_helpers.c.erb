@@ -1,0 +1,88 @@
+#include <ruby.h>
+
+#include "extension.h"
+#include "extension_helpers.h"
+#include "error_helpers.h"
+
+#include "../../src/include/ast_pretty_print.h"
+#include "../../src/include/errors.h"
+#include "../../src/include/erbx.h"
+#include "../../src/include/token.h"
+
+VALUE rb_error_from_c_struct(ERROR_T* error);
+
+<%- errors.each do |error| -%>
+static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= error.human %>) {
+  if (<%= error.human %> == NULL) { return Qnil; }
+
+  ERROR_T* error = &<%= error.human %>->base;
+
+  VALUE ERBX = rb_define_module("ERBX");
+  VALUE Errors = rb_define_module_under(ERBX, "Errors");
+  VALUE Error = rb_define_class_under(Errors, "Error", rb_cObject);
+  VALUE <%= error.name %> = rb_define_class_under(Errors, "<%= error.name %>", Error);
+
+  VALUE type = rb_str_new_cstr(error_type_to_string(error));
+  VALUE start_location = rb_location_from_c_struct(error->start);
+  VALUE end_location = rb_location_from_c_struct(error->end);
+  VALUE message = rb_str_new_cstr(error->message);
+
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::LocationField -%>
+  VALUE <%= error.human %>_<%= field.name %> = rb_location_from_c_struct(<%= error.human %>-><%= field.name %>);
+  <%- when ERBX::Template::TokenField -%>
+  VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>);
+  <%- when ERBX::Template::TokenTypeField -%>
+  VALUE <%= error.human %>_<%= field.name %> = rb_str_new_cstr(token_type_to_string(<%= error.human %>-><%= field.name %>));
+  <%- when ERBX::Template::StringField -%>
+  VALUE <%= error.human %>_<%= field.name %> = rb_str_new_cstr(<%= error.human %>-><%= field.name %>);
+  <%- else -%>
+  /* <%= field.inspect %> */
+  VALUE <%= error.human %>_<%= field.name %> = Qnil;
+  <%- end -%>
+  <%- end -%>
+
+  VALUE args[<%= 4 + error.fields.count %>] = {
+    type,
+    start_location,
+    end_location,
+    message<% if error.fields.any? %>,<% end %>
+    <%- error.fields.each do |field| -%>
+    <%= error.human %>_<%= field.name %><% if error.fields.last != field %>,<% end %>
+    <%- end -%>
+  };
+
+  return rb_class_new_instance(<%= 4 + error.fields.count %>, args, <%= error.name %>);
+};
+
+<%- end -%>
+
+VALUE rb_error_from_c_struct(ERROR_T* error) {
+  if (!error) { return Qnil; }
+
+  switch (error->type) {
+  <%- errors.each do |error| -%>
+    case <%= error.type %>: return rb_<%= error.human %>_from_c_struct((<%= error.struct_type %>*) error); break;
+  <%- end -%>
+  }
+
+  return Qnil;
+}
+
+VALUE rb_errors_array_from_c_array(array_T* array) {
+  VALUE rb_array = rb_ary_new();
+
+  if (array) {
+    for (size_t i = 0; i < array_size(array); i++) {
+      ERROR_T* child_node = (ERROR_T*) array_get(array, i);
+
+      if (child_node) {
+        VALUE rb_child = rb_error_from_c_struct(child_node);
+        rb_ary_push(rb_array, rb_child);
+      }
+    }
+  }
+
+  return rb_array;
+}

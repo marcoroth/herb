@@ -1,0 +1,240 @@
+#include "include/array.h"
+#include "include/location.h"
+#include "include/token.h"
+#include "include/errors.h"
+#include "include/util.h"
+#include "include/ast_pretty_print.h"
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ERROR_MESSAGES_TRUNCATED_LENGTH <%= ERBX::Template::PrintfMessageTemplate::MAX_STRING_SIZE %>
+
+size_t error_sizeof(void) {
+  return sizeof(struct ERROR_STRUCT);
+}
+
+void error_init(ERROR_T* error, const error_type_T type, location_T* start, location_T* end) {
+  if (!error) { return; }
+
+  error->type = type;
+  error->start = location_copy(start);
+  error->end = location_copy(end);
+}
+<%- errors.each do |error| -%>
+<%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
+<%- arguments = error_arguments + ["location_T* start", "location_T* end"] -%>
+
+<%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
+  <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
+
+  error_init(&<%= error.human %>->base, <%= error.type %>, start, end);
+
+  <%- if error.message_arguments.any? -%>
+  const char* message_template = "<%= error.message_template %>";
+
+  size_t message_size = <%= ERBX::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
+  char* message = (char*) malloc(message_size);
+
+  if (message) {
+    <%- error.message_arguments.each_with_index do |argument, i| -%>
+    <%- if error.message_template.scan(/%[sdulfz]/)[i] == "%s" -%>
+    char truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH + 1];
+    strncpy(truncated_argument_<%= i %>, <%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
+    truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH] = '\0';
+
+    <%- end -%>
+    <%- end -%>
+    snprintf(
+      message,
+      message_size,
+      message_template,
+      <%- error.message_arguments.each_with_index do |argument, index| -%>
+      <%- if error.message_template.scan(/%[sdulfz]/)[index] == "%s" -%>
+      truncated_argument_<%= index %><% if index != error.message_arguments.length - 1 %>,<% end %>
+      <%- else -%>
+      <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
+      <%- end -%>
+      <%- end -%>
+    );
+
+    <%= error.human %>->base.message = erbx_strdup(message);
+    free(message);
+  } else {
+    <%= error.human %>->base.message = erbx_strdup("<%= error.message_template %>");
+  }
+  <%- else -%>
+  <%= error.human %>->base.message = erbx_strdup("<%= error.message_template %>");
+  <%- end -%>
+
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::LocationField -%>
+  <%= error.human %>-><%= field.name %> = location_copy(<%= field.name %>);
+  <%- when ERBX::Template::TokenField -%>
+  <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%- when ERBX::Template::TokenTypeField -%>
+  <%= error.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when ERBX::Template::StringField -%>
+  <%= error.human %>-><%= field.name %> = erbx_strdup(<%= field.name %>);
+  <%- else -%>
+  <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+  return <%= error.human %>;
+}
+
+void append_<%= error.human %>(<%= (arguments + ["array_T* errors"]).join(", ") %>) {
+  array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+}
+<%- end -%>
+
+const char* error_type_to_string(ERROR_T* error) {
+  switch (error->type) {
+    <%- errors.each do |error| -%>
+    case <%= error.type %>: return "<%= error.type %>";
+    <%- end -%>
+  }
+
+  return "Unknown error_type_T";
+}
+
+const char* error_human_type(ERROR_T* error) {
+  switch (error->type) {
+    <%- errors.each do |error| -%>
+    case <%= error.type %>: return "<%= error.name %>";
+    <%- end -%>
+  }
+
+  return "Unknown error_type_T";
+}
+
+void error_free_base_error(ERROR_T* error) {
+  if (error == NULL) { return; }
+
+  if (error->start != NULL) { location_free(error->start); }
+  if (error->end != NULL) { location_free(error->end); }
+  if (error->message != NULL) { free(error->message); }
+
+  free(error);
+}
+<%- errors.each do |error| -%>
+<%- arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
+
+static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.human %>) {
+  <%- if error.fields.none? -%>
+  /* no <%= error.struct_type %> specific fields to free up */
+  <%- end -%>
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::LocationField -%>
+  if (<%= error.human %>-><%= field.name %> != NULL) { location_free(<%= error.human %>-><%= field.name %>); }
+  <%- when ERBX::Template::TokenField -%>
+  if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>); }
+  <%- when ERBX::Template::TokenTypeField -%>
+  // token_type_T is part of struct
+  <%- when ERBX::Template::StringField -%>
+  if (<%= error.human %>-><%= field.name %> != NULL) { free((char*) <%= error.human %>-><%= field.name %>); }
+  <%- else -%>
+  <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+
+  error_free_base_error(&<%= error.human %>->base);
+}
+<%- end -%>
+
+void error_free(ERROR_T* error) {
+  if (!error) { return; }
+
+  switch (error->type) {
+    <%- errors.each do |error| -%>
+    case <%= error.type %>: error_free_<%= error.human %>((<%= error.struct_type %>*) error); break;
+    <%- end -%>
+  }
+}
+
+void error_pretty_print_array(
+  const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
+  buffer_T* buffer
+) {
+  if (array == NULL) {
+    ast_pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
+
+    return;
+  }
+
+  if (array_size(array) == 0) {
+    ast_pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
+
+    return;
+  }
+
+  ast_pretty_print_label(name, indent, relative_indent, last_property, buffer);
+
+  buffer_append(buffer, "(");
+
+  char count[16];
+  sprintf(count, "%zu", array_size(array));
+  buffer_append(buffer, count);
+  buffer_append(buffer, ")\n");
+
+  if (indent < 20) {
+    for (size_t i = 0; i < array_size(array); i++) {
+      ERROR_T* child = array_get(array, i);
+      ast_indent(buffer, indent);
+      ast_indent(buffer, relative_indent + 1);
+
+      if (i == array_size(array) - 1) {
+        buffer_append(buffer, "└── ");
+      } else {
+        buffer_append(buffer, "├── ");
+      }
+
+      error_pretty_print(child, indent + 1, relative_indent + 1, buffer);
+
+      if (i != array_size(array) - 1) { ast_pretty_print_newline(indent + 1, relative_indent, buffer); }
+    }
+  }
+}
+
+<%- errors.each do |error| -%>
+static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+  if (!error) { return; }
+
+  buffer_append(buffer, "@ ");
+  buffer_append(buffer, error_human_type((ERROR_T*) error));
+  buffer_append(buffer, " ");
+
+  ast_pretty_print_locations(error->base.start, error->base.end, buffer);
+  buffer_append(buffer, "\n");
+
+  ast_pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
+  <%- error.fields.each_with_index do |field, index| -%>
+  <%- case field -%>
+  <%- when ERBX::Template::LocationField -%>
+  ast_pretty_print_location_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  <%- when ERBX::Template::TokenField -%>
+  ast_pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  <%- when ERBX::Template::TokenTypeField -%>
+  ast_pretty_print_property(token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  <%- when ERBX::Template::StringField -%>
+  ast_pretty_print_quoted_property("<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  <%- else -%>
+  <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+}
+
+<%- end -%>
+void error_pretty_print(ERROR_T* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+  if (!error) { return; }
+
+  switch (error->type) {
+    <%- errors.each do |error| -%>
+    case <%= error.type %>: error_pretty_print_<%= error.human %>((<%= error.struct_type %>*) error, indent, relative_indent, buffer); break;
+    <%- end -%>
+  }
+}

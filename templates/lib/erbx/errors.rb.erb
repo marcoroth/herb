@@ -1,0 +1,89 @@
+<%- base_arguments = ["type", "start_location", "end_location", "message"] -%>
+module ERBX
+  module Errors
+    class Error
+      <%- base_arguments.each do |argument| -%>
+      attr_reader :<%= argument %>
+      <%- end -%>
+
+      def initialize(<%= base_arguments.join(", ") %>)
+        <%- base_arguments.each do |argument| -%>
+        @<%= argument %> = <%= argument %>
+        <%- end -%>
+      end
+
+      def to_hash
+        {
+          type: type,
+          start_location: start_location&.to_hash,
+          end_location: end_location&.to_hash,
+          message: message,
+        }
+      end
+
+      def error_name
+        self.class.name.split("::").last
+      end
+
+      def to_json(*args)
+        to_hash.to_json(*args)
+      end
+    end
+
+    <%- errors.each do |error| -%>
+    class <%= error.name -%> < Error
+      <%- error.fields.each do |field| -%>
+      attr_reader :<%= field.name %>
+      <%- end -%>
+
+      def initialize(<%= [*base_arguments, *error.fields.map(&:name)].join(", ") %>)
+        super(<%= base_arguments.join(", ") %>)
+
+        <%- error.fields.each do |field| -%>
+        @<%= field.name %> = <%= field.name %>
+        <%- end -%>
+      end
+
+      def inspect
+        tree_inspect.rstrip.gsub(/\s+$/, "")
+      end
+
+      def to_hash
+        super.merge({
+          <%- error.fields.each do |field| -%>
+          <%= field.name %>: <%= field.name %>,
+          <%- end -%>
+        })
+      end
+
+      def tree_inspect(indent = 0)
+        output = +""
+
+        output += %(@ #{error_name} (location: #{start_location.tree_inspect}-#{end_location.tree_inspect})\n)
+        <%- symbol = error.fields.none? ? "└──" : "├──" -%>
+        output += %(<%= symbol %> message: #{message.inspect}\n)
+        <%- error.fields.each do |field| -%>
+        <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
+        <%- name = "#{symbol} #{field.name}: " -%>
+        <%- case field -%>
+        <%- when ERBX::Template::LocationField -%>
+        output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)
+        <%- when ERBX::Template::TokenField -%>
+        output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)
+        <%- when ERBX::Template::TokenTypeField -%>
+        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        <%- when ERBX::Template::StringField -%>
+        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        <%- else -%>
+        output += "<%= name %>'#{<%= field.name %>.class}'\n"
+        <%- end -%>
+        <%- end -%>
+        output += %(\n)
+
+        output.gsub(/^/, "    " * indent)
+      end
+    end
+
+    <%- end -%>
+  end
+end

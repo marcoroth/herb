@@ -17,7 +17,7 @@ module ERBX
           type: type,
           start_location: start_location&.to_hash,
           end_location: end_location&.to_hash,
-          errors: errors.map(&:to_hash)
+          errors: errors.map(&:to_hash),
         }
       end
 

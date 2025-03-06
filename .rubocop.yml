@@ -37,7 +37,11 @@ Style/GlobalVars:
 
 Style/AccessorGrouping:
   Exclude:
+    - lib/erbx/errors.rb
     - lib/erbx/ast/nodes.rb
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: diff_comma
 
 Metrics/CyclomaticComplexity:
   Max: 10
@@ -56,13 +60,14 @@ Metrics/MethodLength:
 
 Metrics/AbcSize:
   Exclude:
-    - lib/erbx/cli.rb
-    - lib/erbx/project.rb
-    - test/fork_helper.rb
-    - test/snapshot_utils.rb
-    - templates/template.rb
     - lib/erbx/ast/node.rb
     - lib/erbx/ast/nodes.rb
+    - lib/erbx/cli.rb
+    - lib/erbx/errors.rb
+    - lib/erbx/project.rb
+    - templates/template.rb
+    - test/fork_helper.rb
+    - test/snapshot_utils.rb
 
 Metrics/ClassLength:
   Exclude:
@@ -81,6 +86,7 @@ Metrics/BlockLength:
 Metrics/ParameterLists:
   Exclude:
     - lib/erbx/ast/nodes.rb
+    - lib/erbx/errors.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
@@ -97,10 +103,15 @@ Layout/LineLength:
 Layout/EmptyLines:
   Exclude:
     - lib/erbx/ast/nodes.rb
+    - lib/erbx/errors.rb
 
 Layout/EmptyLinesAroundModuleBody:
   Exclude:
     - lib/erbx/ast/nodes.rb
+    - lib/erbx/errors.rb
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
 
 Security/Eval:
   Exclude:

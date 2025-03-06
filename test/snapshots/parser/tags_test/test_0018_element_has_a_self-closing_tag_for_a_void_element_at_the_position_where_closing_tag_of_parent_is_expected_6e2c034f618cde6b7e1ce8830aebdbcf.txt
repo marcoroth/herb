@@ -14,8 +14,9 @@
         ├── body: (1 item)
         │   └── @ HTMLCloseTagNode (location: (1:5)-(1:10))
         │       ├── errors: (1 error)
-        │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:10))
-        │       │       ├── message: "[Parser]: Unexpected Token 'Void elements shouldn't be used as closing tags.' (expected '<br />', got: '</br>')"
+        │       │   └── @ InvalidClosingTagError (location: (1:5)-(1:10))
+        │       │       ├── message: "Void element `<br>` shouldn`t be used as a closing tag. (expected: `<br>` or `<br />`, got: `</br>`)"
+        │       │       ├── tag_name: "br" (location: (1:7)-(1:9))
         │       │       ├── expected: "<br />"
         │       │       └── got: "</br>"
         │       │

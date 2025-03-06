@@ -1,4 +1,8 @@
+ext/erbx/error_helpers.c
 ext/erbx/nodes.c
 src/ast_nodes.c
 src/ast_pretty_print.c
+src/errors.c
 src/include/ast_nodes.h
+src/include/ast_pretty_print.h
+src/include/errors.h

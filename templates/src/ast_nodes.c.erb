@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "include/array.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
-#include "include/util.h"
+#include "include/errors.h"
 #include "include/token.h"
-#include "include/array.h"
+#include "include/util.h"
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
@@ -62,8 +63,8 @@ void ast_free_base_node(AST_NODE_T* node) {
 
   if (node->errors) {
     for (size_t i = 0; i < array_size(node->errors); i++) {
-      AST_NODE_T* child = array_get(node->errors, i);
-      if (child != NULL) { ast_node_free(child); }
+      ERROR_T* child = array_get(node->errors, i);
+      if (child != NULL) { error_free(child); }
     }
 
     array_free(&node->errors);

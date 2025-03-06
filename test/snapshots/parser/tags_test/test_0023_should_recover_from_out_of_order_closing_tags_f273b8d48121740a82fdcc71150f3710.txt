@@ -1,9 +1,9 @@
 @ DocumentNode (location: (1:0)-(7:7))
 ├── errors: (1 error)
-│   └── @ UnexpectedTokenNode (location: (6:9)-(6:11))
-│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 2:10)' (expected '</main>', got: 'EOF')"
-│       ├── expected: "</main>"
-│       └── got: "EOF"
+│   └── @ UnclosedElementError (location: (6:9)-(6:11))
+│       ├── message: "Unclosed `<main>` tag at the end of the document (`<main>` tag was opened at (2:10))"
+│       ├── opening_tag: "main"
+│       └── tag_opened_at: (2:10)
 │
 └── children: (5 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:9))
@@ -26,10 +26,11 @@
     │   │   │
     │   │   ├── @ HTMLElementNode (location: (3:11)-(4:20))
     │   │   │   ├── errors: (1 error)
-    │   │   │   │   └── @ UnexpectedTokenNode (location: (4:13)-(4:20))
-    │   │   │   │       ├── message: "[Parser]: Unexpected Token 'mismatched closing tag, expected closing tag for 'div' (opened at 3:12)' (expected 'div', got: 'span')"
-    │   │   │   │       ├── expected: "div"
-    │   │   │   │       └── got: "span"
+    │   │   │   │   └── @ MismatchedTagNameError (location: (4:15)-(4:19))
+    │   │   │   │       ├── message: "mismatched tag name, expected a closing tag for `<div>` (tag was opened at (3:12)). Instead got closing tag `</span>` at (4:15)."
+    │   │   │   │       ├── expected_tag: "div"
+    │   │   │   │       ├── tag_opened_at: (3:12)
+    │   │   │   │       └── actual_tag: "span" (location: (4:15)-(4:19))
     │   │   │   │
     │   │   │   ├── open_tag:
     │   │   │   │   └── @ HTMLOpenTagNode (location: (3:11)-(3:16))
@@ -69,10 +70,9 @@
     │
     ├── @ HTMLCloseTagNode (location: (6:9)-(6:16))
     │   ├── errors: (1 error)
-    │   │   └── @ UnexpectedTokenNode (location: (6:9)-(6:16))
-    │   │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<main>', got: '')"
-    │   │       ├── expected: "<main>"
-    │   │       └── got: ""
+    │   │   └── @ MissingOpeningTagError (location: (6:9)-(6:16))
+    │   │       ├── message: "Expected `</main>` (at (6:11)) to have a matching `<main>` opening tag."
+    │   │       └── closing_tag: "main" (location: (6:11)-(6:15))
     │   │
     │   ├── tag_opening: "</" (location: (6:9)-(6:11))
     │   ├── tag_name: "main" (location: (6:11)-(6:15))

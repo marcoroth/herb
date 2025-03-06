@@ -14,6 +14,8 @@ require_relative "erbx/ast"
 require_relative "erbx/ast/node"
 require_relative "erbx/ast/nodes"
 
+require_relative "erbx/errors"
+
 require_relative "erbx/cli"
 require_relative "erbx/project"
 

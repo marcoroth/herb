@@ -4,8 +4,9 @@
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:16))
         │       ├── errors: (1 error)
-        │       │   └── @ UnexpectedTokenNode (location: (1:5)-(1:6))
-        │       │       ├── message: "[Parser]: Unexpected Token ':' (expected 'TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE', got: 'TOKEN_COLON')"
+        │       │   └── @ UnexpectedError (location: (1:5)-(1:6))
+        │       │       ├── message: "Unexpected Error: Unexpected Token (expected: `TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE`, got: `TOKEN_COLON`)"
+        │       │       ├── description: "Unexpected Token"
         │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE"
         │       │       └── got: "TOKEN_COLON"
         │       │

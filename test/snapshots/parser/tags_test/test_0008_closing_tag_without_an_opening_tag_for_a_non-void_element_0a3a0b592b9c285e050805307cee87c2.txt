@@ -2,10 +2,9 @@
 └── children: (1 item)
     └── @ HTMLCloseTagNode (location: (1:0)-(1:6))
         ├── errors: (1 error)
-        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:6))
-        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a start tag' (expected '<div>', got: '')"
-        │       ├── expected: "<div>"
-        │       └── got: ""
+        │   └── @ MissingOpeningTagError (location: (1:0)-(1:6))
+        │       ├── message: "Expected `</div>` (at (1:2)) to have a matching `<div>` opening tag."
+        │       └── closing_tag: "div" (location: (1:2)-(1:5))
         │
         ├── tag_opening: "</" (location: (1:0)-(1:2))
         ├── tag_name: "div" (location: (1:2)-(1:5))

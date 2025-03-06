@@ -1,7 +1,8 @@
 #include <ruby.h>
 
-#include "extension.h"
+#include "error_helpers.h"
 #include "extension_helpers.h"
+#include "extension.h"
 #include "nodes.h"
 
 #include "../../src/include/ast_pretty_print.h"
@@ -9,7 +10,7 @@
 #include "../../src/include/token.h"
 
 VALUE rb_node_from_c_struct(AST_NODE_T* node);
-static VALUE rb_array_from_c_array(array_T* array);
+static VALUE rb_nodes_array_from_c_array(array_T* array);
 
 <%- nodes.each do |node| -%>
 static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>) {
@@ -25,7 +26,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   VALUE type = rb_str_new_cstr(ast_node_type_to_string(node));
   VALUE start_location = rb_location_from_c_struct(node->start);
   VALUE end_location = rb_location_from_c_struct(node->end);
-  VALUE errors = rb_array_from_c_array(node->errors);
+  VALUE errors = rb_errors_array_from_c_array(node->errors);
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
@@ -38,7 +39,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when ERBX::Template::BooleanField -%>
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %>) ? Qtrue : Qfalse;
   <%- when ERBX::Template::ArrayField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_array_from_c_array(<%= node.human %>-><%= field.name %>);
+  VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>);
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;
@@ -72,7 +73,7 @@ VALUE rb_node_from_c_struct(AST_NODE_T* node) {
   return Qnil;
 }
 
-static VALUE rb_array_from_c_array(array_T* array) {
+static VALUE rb_nodes_array_from_c_array(array_T* array) {
   VALUE rb_array = rb_ary_new();
 
   if (array) {

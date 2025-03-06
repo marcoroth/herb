@@ -15,10 +15,10 @@ module ERBX
     def to_hash
       {
         value: value,
-        range: range&.to_hash,
+        range: range&.to_a,
         start_location: start_location&.to_hash,
         end_location: end_location&.to_hash,
-        type: type
+        type: type,
       }
     end
 
@@ -31,7 +31,10 @@ module ERBX
     end
 
     def inspect
-      %(#<ERBX::Token type="#{type}" value=#{value.inspect} range=[#{range.start_position}, #{range.end_position}] start=#{start_location.line}:#{start_location.column} end=#{end_location.line}:#{end_location.column}>)
+      # TODO: locations should use the same tree_inspect format as everywhere else:
+      # %(#<ERBX::Token type="#{type}" value=#{value.inspect} range=#{range.tree_inspect} start=#{start_location.tree_inspect} end=#{end_location.tree_inspect}>)
+
+      %(#<ERBX::Token type="#{type}" value=#{value.inspect} range=#{range.tree_inspect} start=#{start_location.line}:#{start_location.column} end=#{end_location.line}:#{end_location.column}>)
     end
   end
 end

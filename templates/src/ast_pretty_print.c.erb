@@ -1,6 +1,7 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
+#include "include/errors.h"
 #include "include/buffer.h"
 #include "include/token_struct.h"
 #include "include/util.h"
@@ -35,6 +36,15 @@ void ast_pretty_print_label(
 
   buffer_append(buffer, name);
   buffer_append(buffer, ": ");
+}
+
+void ast_pretty_print_quoted_property(
+  const char* name, const char* value, const size_t indent, const size_t relative_indent, const bool last_property,
+  buffer_T* buffer
+) {
+  char* quoted = quoted_string(value);
+  ast_pretty_print_property(name, quoted, indent, relative_indent, last_property, buffer);
+  free(quoted);
 }
 
 void ast_pretty_print_property(
@@ -94,11 +104,11 @@ void ast_pretty_print_errors(
   AST_NODE_T* node, const size_t indent, const size_t relative_indent, const bool last_property, buffer_T* buffer
 ) {
   if (node->errors != NULL && array_size(node->errors) > 0) {
-    ast_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
+    error_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
   }
 }
 
-void ast_pretty_print_location(location_T* start, location_T* end, buffer_T* buffer) {
+void ast_pretty_print_locations(location_T* start, location_T* end, buffer_T* buffer) {
   buffer_append(buffer, "(location: (");
   char location[128];
   sprintf(
@@ -113,6 +123,32 @@ void ast_pretty_print_location(location_T* start, location_T* end, buffer_T* buf
   buffer_append(buffer, "))");
 }
 
+void ast_pretty_print_location_property(
+  location_T* location, const char* name, const size_t indent, const size_t relative_ident, const bool last_property, buffer_T* buffer
+) {
+  ast_pretty_print_label(name, indent, relative_ident, last_property, buffer);
+
+  if (location != NULL) {
+    buffer_append(buffer, "(");
+
+    char location_string[128];
+
+    sprintf(
+      location_string,
+      "%zu:%zu",
+      (location->line) ? location->line : 0,
+      (location->column) ? location->column : 0
+    );
+
+    buffer_append(buffer, location_string);
+    buffer_append(buffer, ")");
+  } else {
+    buffer_append(buffer, "∅");
+  }
+
+  buffer_append(buffer, "\n");
+}
+
 void ast_pretty_print_token_property(
   token_T* token, const char* name, const size_t indent, const size_t relative_ident, const bool last_property, buffer_T* buffer
 ) {
@@ -124,7 +160,7 @@ void ast_pretty_print_token_property(
     free(quoted);
 
     buffer_append(buffer, " ");
-    ast_pretty_print_location(token->start, token->end, buffer);
+    ast_pretty_print_locations(token->start, token->end, buffer);
   } else {
     buffer_append(buffer, "∅");
   }
@@ -141,7 +177,7 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
   buffer_append(buffer, ast_node_human_type(node));
   buffer_append(buffer, " ");
 
-  if (print_locations) { ast_pretty_print_location(node->start, node->end, buffer); }
+  if (print_locations) { ast_pretty_print_locations(node->start, node->end, buffer); }
 
   buffer_append(buffer, "\n");
 
@@ -413,30 +449,6 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
         buffer
       );
       free(quoted);
-    } break;
-
-    case AST_UNEXPECTED_TOKEN_NODE: {
-      const AST_UNEXPECTED_TOKEN_NODE_T* unexpected_token_node = (AST_UNEXPECTED_TOKEN_NODE_T*) node;
-
-      ast_pretty_print_property(
-        "message",
-        unexpected_token_node->message,
-        indent,
-        relative_indent,
-        false,
-        buffer
-      );
-
-      ast_pretty_print_property(
-        "expected",
-        unexpected_token_node->expected,
-        indent,
-        relative_indent,
-        false,
-        buffer
-      );
-
-      ast_pretty_print_property("got", unexpected_token_node->got, indent, relative_indent, true, buffer);
     } break;
 
     case AST_HTML_SELF_CLOSE_TAG_NODE:

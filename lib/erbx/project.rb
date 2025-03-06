@@ -157,7 +157,7 @@ module ERBX
                 parse_errors[file_path] = {
                   ast: ast,
                   stdout: stdout_content,
-                  stderr: stderr_content
+                  stderr: stderr_content,
                 }
 
                 file_contents[file_path] = file_content
@@ -170,7 +170,7 @@ module ERBX
                 error_outputs[file_path] = {
                   exit_code: $CHILD_STATUS.exitstatus,
                   stdout: stdout_content,
-                  stderr: stderr_content
+                  stderr: stderr_content,
                 }
 
                 file_contents[file_path] = file_content

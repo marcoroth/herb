@@ -12,7 +12,7 @@ arch_map = {
   "arm64" => "arm64",
   "armv7l" => "arm",
   "i686" => "x86",
-  "i386" => "x86"
+  "i386" => "x86",
 }
 
 arch = arch_map[host_cpu] || host_cpu

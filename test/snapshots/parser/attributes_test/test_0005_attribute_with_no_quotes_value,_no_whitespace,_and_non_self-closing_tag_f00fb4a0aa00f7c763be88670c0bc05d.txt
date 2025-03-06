@@ -1,17 +1,16 @@
 @ DocumentNode (location: (1:0)-(1:17))
 ├── errors: (1 error)
-│   └── @ UnexpectedTokenNode (location: (1:17)-(1:17))
-│       ├── message: "[Parser]: Unexpected Token 'unclosed HTML tag at end of document (opened at 1:1)' (expected '</div>', got: 'EOF')"
-│       ├── expected: "</div>"
-│       └── got: "EOF"
+│   └── @ UnclosedElementError (location: (1:17)-(1:17))
+│       ├── message: "Unclosed `<div>` tag at the end of the document (`<div>` tag was opened at (1:1))"
+│       ├── opening_tag: "div"
+│       └── tag_opened_at: (1:1)
 │
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:17))
         ├── errors: (1 error)
-        │   └── @ UnexpectedTokenNode (location: (1:0)-(1:17))
-        │       ├── message: "[Parser]: Unexpected Token 'expected element to have a close tag' (expected '</div>', got: '')"
-        │       ├── expected: "</div>"
-        │       └── got: ""
+        │   └── @ MissingClosingTagError (location: (1:1)-(1:4))
+        │       ├── message: "Expected `<div>` (opened at (1:1)) to have a matching `</div>` closing tag."
+        │       └── opening_tag: "div" (location: (1:1)-(1:4))
         │
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))

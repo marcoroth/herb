@@ -13,8 +13,8 @@ prism_path = `bundle show prism`.chomp
 
 $VPATH << "$(srcdir)/../../src"
 
-src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |n| File.basename(n) }.sort
-$srcs = ["extension.c", "nodes.c", "extension_helpers.c"] + src_files
+src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/erbx/") }.sort
+$srcs = ["extension.c", "nodes.c", "error_helpers.c", "extension_helpers.c"] + src_files
 
 append_cppflags("-I#{prism_path}/include")
 append_cppflags("-I#{include_path}")
