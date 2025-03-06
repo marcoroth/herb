@@ -106,7 +106,7 @@ errors:
 
     - name: InvalidClosingTagError
       message:
-        template: "Void element `<%s>` shouldn`t be used as a closing tag. (expected: `<%s>` or `<%s />`, got: `</%s>`)"
+        template: "Void element `<%s>` shouldn't be used as a closing tag. (expected: `<%s>` or `<%s />`, got: `</%s>`)"
         arguments:
           - tag_name->value
           - tag_name->value

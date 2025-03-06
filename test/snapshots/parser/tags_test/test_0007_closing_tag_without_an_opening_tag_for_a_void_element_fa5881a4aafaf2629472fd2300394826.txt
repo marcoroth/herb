@@ -3,7 +3,7 @@
     └── @ HTMLCloseTagNode (location: (1:0)-(1:5))
         ├── errors: (1 error)
         │   └── @ InvalidClosingTagError (location: (1:0)-(1:5))
-        │       ├── message: "Void element `<br>` shouldn`t be used as a closing tag. (expected: `<br>` or `<br />`, got: `</br>`)"
+        │       ├── message: "Void element `<br>` shouldn't be used as a closing tag. (expected: `<br>` or `<br />`, got: `</br>`)"
         │       ├── tag_name: "br" (location: (1:2)-(1:4))
         │       ├── expected: "<br />"
         │       └── got: "</br>"
