@@ -25,8 +25,26 @@ array_T* array_init(const size_t capacity) {
 
 void array_append(array_T* array, void* item) {
   if (array->size >= array->capacity) {
-    const size_t new_capacity = (array->capacity > 0) ? array->capacity * 2 : 1;
-    void* new_items = safe_realloc(array->items, sizeof(void*) * new_capacity);
+    size_t new_capacity;
+
+    if (array->capacity == 0) {
+      new_capacity = 1;
+    } else if (array->capacity > SIZE_MAX / (2 * sizeof(void*))) {
+      fprintf(stderr, "Warning: Approaching array size limits, using conservative growth.\n");
+      new_capacity = array->capacity + 1024 / sizeof(void*);
+
+      if (new_capacity < array->capacity) { new_capacity = SIZE_MAX / sizeof(void*); }
+    } else {
+      new_capacity = array->capacity * 2;
+    }
+
+    if (new_capacity > SIZE_MAX / sizeof(void*)) {
+      fprintf(stderr, "Error: Array allocation would exceed system limits.\n");
+      return;
+    }
+
+    size_t new_size_bytes = new_capacity * sizeof(void*);
+    void* new_items = safe_realloc(array->items, new_size_bytes);
 
     if (unlikely(new_items == NULL)) { return; }
 

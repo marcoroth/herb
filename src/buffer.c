@@ -54,11 +54,24 @@ size_t buffer_sizeof(void) {
  *         false if reallocation failed
  */
 bool buffer_increase_capacity(buffer_T* buffer, const size_t required_length) {
+  if (SIZE_MAX - buffer->length < required_length) {
+    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+    return false;
+  }
+
   const size_t required_capacity = buffer->length + required_length;
 
   if (buffer->capacity >= required_capacity) { return true; }
 
-  const size_t new_capacity = required_capacity * 2;
+  size_t new_capacity;
+  if (required_capacity > SIZE_MAX / 2) {
+    new_capacity = required_capacity + 1024;
+
+    if (new_capacity < required_capacity) { new_capacity = SIZE_MAX; }
+  } else {
+    new_capacity = required_capacity * 2;
+  }
+
   char* new_value = safe_realloc(buffer->value, new_capacity);
 
   if (unlikely(new_value == NULL)) { return false; }
