@@ -48,17 +48,9 @@ Clone the Git Repository:
 git clone https://github.com/marcoroth/herb && cd herb/
 ```
 
-#### Build Prism
-
-Before we can compile Herb we need to compile Prism from source:
-
-```bash
-make prism
-```
-
 #### Build Herb
 
-After compiling `prism` we can now compile all source files in `src/` and generate the `herb` executable.
+We can now compile all source files in `src/` and generate the `herb` executable.
 
 ```bash
 make all
@@ -103,6 +95,26 @@ Finished lexing in:
   0.000012  s
 ```
 
+### Building the Ruby extension
+
+We use `rake` and `rake-compiler` to compile the Ruby extension. Running rake will generate the needed templates, run make, build the needed artifacts, and run the Ruby tests.
+
+```bash
+rake
+```
+
+If `rake` was successful you can use `bundle console` to interact with `Herb`:
+
+```bash
+bundle console
+```
+
+```
+irb(main):001> Herb.parse("<div></div>")
+
+# => #<Herb::ParseResult:0x0000000 ... >
+```
+
 ### Test
 
 Builds the test suite from files in `test/` and creates the `run_herb_tests` executable to run the tests:
@@ -121,16 +133,10 @@ rake test
 
 ### Clean
 
-Removes the `herb`, `run_herb_tests`, and all `.o` files.
+Removes the `herb`, `run_herb_tests`, `prism` installation, and all `.o` files.
 
 ```bash
 make clean
-```
-
-If you want to also clean prism you can run:
-
-```bash
-make prism_clean
 ```
 
 ### Local Integration Testing
@@ -150,10 +156,6 @@ The integration was successful if you see:
 
 Integration successful!
 ```
-
-Optionally there is also the `bin/prism_integration` script to run a full E2E build integration.
-
-The difference is that the `bin/prism_integration` script also cleans out prism before building prism and herb from scratch.
 
 ## License
 

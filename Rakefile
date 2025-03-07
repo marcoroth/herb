@@ -52,6 +52,15 @@ Rake::Task[:clean].enhance do
   end
 end
 
+task "make" do
+  puts "Running make..."
+  IO.popen("make") do |output|
+    output.each_line do |line|
+      puts line
+    end
+  end
+end
+
 task "gem:native" do
   require "rake_compiler_dock"
   sh "bundle config set cache_all true"
@@ -159,4 +168,4 @@ namespace :parse do
   end
 end
 
-task default: [:templates, :compile, :test]
+task default: [:templates, :make, :compile, :test]
