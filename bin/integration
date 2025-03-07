@@ -3,16 +3,9 @@
 set -e  # Exit on error
 
 make clean
-rake clean
-
-make prism
-rake templates
-
-make
-rake compile
+rake
 
 ./run_herb_tests
-rake test
 
 ./herb lex examples/test.html.erb
 ./herb ruby examples/test.html.erb

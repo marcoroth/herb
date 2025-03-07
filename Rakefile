@@ -34,27 +34,21 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList["test/**/*_test.rb"]
 end
 
-Rake::Task[:compile].enhance do
+task "make" do
+  puts "Running make..."
   IO.popen("make") do |output|
     output.each_line do |line|
       puts line
     end
   end
+end
 
+Rake::Task[:compile].enhance do
   raise "src/* could not be compiled #{$CHILD_STATUS.exitstatus}" if $CHILD_STATUS.exitstatus != 0
 end
 
 Rake::Task[:clean].enhance do
   IO.popen("make clean") do |output|
-    output.each_line do |line|
-      puts line
-    end
-  end
-end
-
-task "make" do
-  puts "Running make..."
-  IO.popen("make") do |output|
     output.each_line do |line|
       puts line
     end
