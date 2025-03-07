@@ -487,7 +487,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   AST_HTML_ELEMENT_NODE_T* regular_element = parser_parse_html_regular_element(parser, open_tag);
   if (regular_element != NULL) { return regular_element; }
 
-  array_T* errors = array_init(1);
+  array_T* errors = array_init(8);
 
   parser_append_unexpected_error(parser, "Unknown HTML open tag type", "HTMLOpenTag or HTMLSelfCloseTag", errors);
 

@@ -19,7 +19,7 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, location_T* sta
   node->end = location_copy(end);
 
   if (errors == NULL) {
-    node->errors = array_init(1);
+    node->errors = array_init(8);
   } else {
     node->errors = errors;
   }

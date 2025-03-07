@@ -13,7 +13,7 @@
 array_T* herb_lex(char* source) {
   lexer_T* lexer = lexer_init(source);
   token_T* token = NULL;
-  array_T* tokens = array_init(1);
+  array_T* tokens = array_init(128);
 
   while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
     array_append(tokens, token);
