@@ -3,7 +3,7 @@
 #include "include/token.h"
 #include "include/errors.h"
 #include "include/util.h"
-#include "include/ast_pretty_print.h"
+#include "include/pretty_print.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -161,18 +161,18 @@ void error_pretty_print_array(
   buffer_T* buffer
 ) {
   if (array == NULL) {
-    ast_pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
+    pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
 
     return;
   }
 
   if (array_size(array) == 0) {
-    ast_pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
+    pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
 
     return;
   }
 
-  ast_pretty_print_label(name, indent, relative_indent, last_property, buffer);
+  pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
   buffer_append(buffer, "(");
 
@@ -184,8 +184,8 @@ void error_pretty_print_array(
   if (indent < 20) {
     for (size_t i = 0; i < array_size(array); i++) {
       ERROR_T* child = array_get(array, i);
-      ast_indent(buffer, indent);
-      ast_indent(buffer, relative_indent + 1);
+      pretty_print_indent(buffer, indent);
+      pretty_print_indent(buffer, relative_indent + 1);
 
       if (i == array_size(array) - 1) {
         buffer_append(buffer, "└── ");
@@ -195,7 +195,7 @@ void error_pretty_print_array(
 
       error_pretty_print(child, indent + 1, relative_indent + 1, buffer);
 
-      if (i != array_size(array) - 1) { ast_pretty_print_newline(indent + 1, relative_indent, buffer); }
+      if (i != array_size(array) - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
     }
   }
 }
@@ -208,20 +208,20 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   buffer_append(buffer, error_human_type((ERROR_T*) error));
   buffer_append(buffer, " ");
 
-  ast_pretty_print_locations(error->base.start, error->base.end, buffer);
+  pretty_print_locations(error->base.start, error->base.end, buffer);
   buffer_append(buffer, "\n");
 
-  ast_pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
+  pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
   <%- when Herb::Template::LocationField -%>
-  ast_pretty_print_location_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_location_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenField -%>
-  ast_pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>
-  ast_pretty_print_property(token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_property(token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::StringField -%>
-  ast_pretty_print_quoted_property("<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_quoted_property("<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
