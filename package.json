@@ -5,6 +5,8 @@
     "vitepress": "^2.0.0-alpha.3"
   },
   "scripts": {
+    "dev": "yarn playground",
+    "playground": "cd playground && yarn install && yarn dev",
     "docs:dev": "vitepress dev",
     "docs:build": "vitepress build",
     "docs:preview": "vitepress preview"
