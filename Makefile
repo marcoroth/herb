@@ -98,7 +98,7 @@ bundle_install:
 	bundle install
 
 prism: bundle_install
-	cd $(prism_path) && bundle install && bundle exec rake templates && make static && cd -
+	cd $(prism_path) && ruby templates/template.rb && make static && cd -
 
 format:
 	$(clang_format) -i $(project_and_extension_files)
