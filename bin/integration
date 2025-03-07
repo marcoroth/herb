@@ -2,7 +2,7 @@
 
 set -e  # Exit on error
 
-make clean
+rake clean
 rake
 
 ./run_herb_tests
