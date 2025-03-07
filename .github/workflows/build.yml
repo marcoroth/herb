@@ -22,9 +22,6 @@ jobs:
       - name: bundle install
         run: bundle install
 
-      - name: make prism
-        run: make prism
-
       - name: Render Templates
         run: bundle exec rake templates
 
