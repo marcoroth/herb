@@ -107,13 +107,13 @@ module Herb
       end
     end
 
-    class LocationField < Field
+    class PositionField < Field
       def ruby_type
-        "Herb::Location"
+        "Herb::Position"
       end
 
       def c_type
-        "location_T*"
+        "position_T*"
       end
     end
 
@@ -172,7 +172,7 @@ module Herb
         when "token"      then TokenField
         when "token_type" then TokenTypeField
         when "string"     then StringField
-        when "location"   then LocationField
+        when "position"   then PositionField
         when "size_t"     then SizeTField
         when "boolean"    then BooleanField
         else raise("Unknown field type: #{name.inspect}")

@@ -2,13 +2,12 @@
 
 module Herb
   class Token
-    attr_reader :value, :range, :start_location, :end_location, :type
+    attr_reader :value, :range, :location, :type
 
-    def initialize(value, range, start_location, end_location, type)
+    def initialize(value, range, location, type)
       @value = value
       @range = range
-      @start_location = start_location
-      @end_location = end_location
+      @location = location
       @type = type
     end
 
@@ -16,8 +15,7 @@ module Herb
       {
         value: value,
         range: range&.to_a,
-        start_location: start_location&.to_hash,
-        end_location: end_location&.to_hash,
+        location: location&.to_hash,
         type: type,
       }
     end
@@ -27,11 +25,11 @@ module Herb
     end
 
     def tree_inspect
-      %("#{value}" (location: #{start_location.tree_inspect}-#{end_location.tree_inspect}))
+      %("#{value}" #{location.tree_inspect})
     end
 
     def inspect
-      %(#<Herb::Token type="#{type}" value=#{value.inspect} range=#{range.tree_inspect} start=#{start_location.tree_inspect} end=#{end_location.tree_inspect}>)
+      %(#<Herb::Token type="#{type}" value=#{value.inspect} range=#{range.tree_inspect} start=#{location.start.tree_inspect} end=#{location.end.tree_inspect}>)
     end
   end
 end

@@ -16,7 +16,7 @@ void parser_append_unexpected_error(parser_T* parser, const char* description, c
 void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, array_T* errors);
 
 void parser_append_literal_node_from_buffer(
-  const parser_T* parser, buffer_T* buffer, array_T* children, location_T* start_location
+  const parser_T* parser, buffer_T* buffer, array_T* children, position_T* start
 );
 
 bool parser_in_svg_context(const parser_T* parser);

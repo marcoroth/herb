@@ -2,15 +2,29 @@
 
 module Herb
   class Location
-    attr_reader :line, :column
+    attr_reader :start, :end
 
-    def initialize(line, column)
-      @line = line
-      @column = column
+    def initialize(start_position, end_position)
+      @start = start_position
+      @end = end_position
+    end
+
+    def self.from(start_line, start_column, end_line, end_column)
+      new(
+        Position.new(start_line, start_column),
+        Position.new(end_line, end_column)
+      )
+    end
+
+    def self.[](...)
+      from(...)
     end
 
     def to_hash
-      { line: line, column: column }
+      {
+        start: start,
+        end: self.end,
+      }
     end
 
     def to_json(*args)
@@ -18,7 +32,7 @@ module Herb
     end
 
     def tree_inspect
-      "(#{line}:#{column})"
+      %((location: #{start.tree_inspect}-#{self.end.tree_inspect}))
     end
 
     def inspect

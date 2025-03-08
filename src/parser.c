@@ -36,19 +36,19 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   array_T* errors = array_init(8);
   array_T* children = array_init(8);
   token_T* comment_start = parser_consume_expected(parser, TOKEN_HTML_COMMENT_START, errors);
-  location_T* start_location = location_copy(parser->current_token->start);
+  position_T* start = position_copy(parser->current_token->location->start);
 
   buffer_T comment = buffer_new();
 
   while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      parser_append_literal_node_from_buffer(parser, &comment, children, start_location);
+      parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
       array_append(children, erb_node);
 
-      location_free(start_location);
-      start_location = location_copy(parser->current_token->start);
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
 
       continue;
     }
@@ -58,15 +58,21 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
     token_free(token);
   }
 
-  parser_append_literal_node_from_buffer(parser, &comment, children, start_location);
+  parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
   token_T* comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, errors);
 
-  AST_HTML_COMMENT_NODE_T* comment_node =
-    ast_html_comment_node_init(comment_start, children, comment_end, comment_start->start, comment_end->end, errors);
+  AST_HTML_COMMENT_NODE_T* comment_node = ast_html_comment_node_init(
+    comment_start,
+    children,
+    comment_end,
+    comment_start->location->start,
+    comment_end->location->end,
+    errors
+  );
 
   buffer_free(&comment);
-  location_free(start_location);
+  position_free(start);
   token_free(comment_start);
   token_free(comment_end);
 
@@ -80,11 +86,11 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_DOCTYPE, errors);
 
-  location_T* start_location = location_copy(parser->current_token->start);
+  position_T* start = position_copy(parser->current_token->location->start);
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      parser_append_literal_node_from_buffer(parser, &content, children, start_location);
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
       array_append(children, erb_node);
@@ -97,14 +103,20 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
     token_free(token);
   }
 
-  parser_append_literal_node_from_buffer(parser, &content, children, start_location);
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
 
   token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
 
-  AST_HTML_DOCTYPE_NODE_T* doctype =
-    ast_html_doctype_node_init(tag_opening, children, tag_closing, tag_opening->start, tag_closing->end, errors);
+  AST_HTML_DOCTYPE_NODE_T* doctype = ast_html_doctype_node_init(
+    tag_opening,
+    children,
+    tag_closing,
+    tag_opening->location->start,
+    tag_closing->location->end,
+    errors
+  );
 
-  location_free(start_location);
+  position_free(start);
   token_free(tag_opening);
   token_free(tag_closing);
   buffer_free(&content);
@@ -113,7 +125,7 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
 }
 
 static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
-  location_T* start_location = location_copy(parser->current_token->start);
+  position_T* start = position_copy(parser->current_token->location->start);
 
   array_T* errors = array_init(8);
   buffer_T content = buffer_new();
@@ -131,7 +143,14 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
       buffer_free(&content);
 
       token_T* token = parser_consume_expected(parser, TOKEN_ERROR, errors);
-      append_unexpected_error("Token Error", "not TOKEN_ERROR", token->value, token->start, token->end, errors);
+      append_unexpected_error(
+        "Token Error",
+        "not TOKEN_ERROR",
+        token->value,
+        token->location->start,
+        token->location->end,
+        errors
+      );
       token_free(token);
 
       return NULL;
@@ -144,17 +163,17 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
 
   if (buffer_length(&content) > 0) {
     AST_HTML_TEXT_NODE_T* text_node =
-      ast_html_text_node_init(buffer_value(&content), start_location, parser->current_token->start, errors);
+      ast_html_text_node_init(buffer_value(&content), start, parser->current_token->location->start, errors);
 
-    location_free(start_location);
+    position_free(start);
     buffer_free(&content);
 
     return text_node;
   }
 
-  AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init("", start_location, parser->current_token->start, errors);
+  AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init("", start, parser->current_token->location->start, errors);
 
-  location_free(start_location);
+  position_free(start);
   buffer_free(&content);
 
   return text_node;
@@ -167,7 +186,7 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   if (identifier == NULL) { parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors); }
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name =
-    ast_html_attribute_name_node_init(identifier, identifier->start, identifier->end, errors);
+    ast_html_attribute_name_node_init(identifier, identifier->location->start, identifier->location->end, errors);
 
   token_free(identifier);
 
@@ -179,16 +198,16 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 ) {
   buffer_T buffer = buffer_new();
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
-  location_T* start_location = location_copy(parser->current_token->start);
+  position_T* start = position_copy(parser->current_token->location->start);
 
   while (token_is_none_of(parser, TOKEN_QUOTE, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      parser_append_literal_node_from_buffer(parser, &buffer, children, start_location);
+      parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
       array_append(children, parser_parse_erb_tag(parser));
 
-      location_free(start_location);
-      start_location = location_copy(parser->current_token->start);
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
 
       continue;
     }
@@ -198,14 +217,20 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
     parser->current_token = lexer_next_token(parser->lexer);
   }
 
-  parser_append_literal_node_from_buffer(parser, &buffer, children, start_location);
-  location_free(start_location);
+  parser_append_literal_node_from_buffer(parser, &buffer, children, start);
+  position_free(start);
   buffer_free(&buffer);
 
   token_T* closing_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
 
   if (opening_quote != NULL && closing_quote != NULL && strcmp(opening_quote->value, closing_quote->value) != 0) {
-    append_quotes_mismatch_error(opening_quote, closing_quote, closing_quote->start, closing_quote->end, errors);
+    append_quotes_mismatch_error(
+      opening_quote,
+      closing_quote,
+      closing_quote->location->start,
+      closing_quote->location->end,
+      errors
+    );
   }
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(
@@ -213,8 +238,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
     children,
     closing_quote,
     true,
-    opening_quote->start,
-    closing_quote->end,
+    opening_quote->location->start,
+    closing_quote->location->end,
     errors
   );
 
@@ -238,8 +263,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       children,
       NULL,
       false,
-      erb_node->base.start,
-      erb_node->base.end,
+      erb_node->base.location->start,
+      erb_node->base.location->end,
       NULL
     );
   }
@@ -257,8 +282,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       children,
       NULL,
       false,
-      literal->base.start,
-      literal->base.end,
+      literal->base.location->start,
+      literal->base.location->end,
       NULL
     );
   }
@@ -272,13 +297,20 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     "Unexpected Token",
     "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START",
     token_type_to_string(token->type),
-    token->start,
-    token->end,
+    token->location->start,
+    token->location->end,
     errors
   );
 
-  AST_HTML_ATTRIBUTE_VALUE_NODE_T* value =
-    ast_html_attribute_value_node_init(NULL, children, NULL, false, token->start, token->end, errors);
+  AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = ast_html_attribute_value_node_init(
+    NULL,
+    children,
+    NULL,
+    false,
+    token->location->start,
+    token->location->end,
+    errors
+  );
 
   token_free(token);
 
@@ -297,8 +329,8 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       attribute_name,
       equals,
       attribute_value,
-      attribute_name->base.start,
-      attribute_value->base.end,
+      attribute_name->base.location->start,
+      attribute_value->base.location->end,
       NULL
     );
 
@@ -311,8 +343,8 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
     attribute_name,
     NULL,
     NULL,
-    attribute_name->base.start,
-    attribute_name->base.end,
+    attribute_name->base.location->start,
+    attribute_name->base.location->end,
     NULL
   );
 }
@@ -375,8 +407,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     tag_end,
     children,
     is_self_closing,
-    tag_start->start,
-    tag_end->end,
+    tag_start->location->start,
+    tag_end->location->end,
     errors
   );
 
@@ -398,14 +430,27 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
     char* expected = html_self_closing_tag_string(tag_name->value);
     char* got = html_closing_tag_string(tag_name->value);
 
-    append_void_element_closing_tag_error(tag_name, expected, got, tag_opening->start, tag_closing->end, errors);
+    append_void_element_closing_tag_error(
+      tag_name,
+      expected,
+      got,
+      tag_opening->location->start,
+      tag_closing->location->end,
+      errors
+    );
 
     free(expected);
     free(got);
   }
 
-  AST_HTML_CLOSE_TAG_NODE_T* close_tag =
-    ast_html_close_tag_node_init(tag_opening, tag_name, tag_closing, tag_opening->start, tag_closing->end, errors);
+  AST_HTML_CLOSE_TAG_NODE_T* close_tag = ast_html_close_tag_node_init(
+    tag_opening,
+    tag_name,
+    tag_closing,
+    tag_opening->location->start,
+    tag_closing->location->end,
+    errors
+  );
 
   token_free(tag_opening);
   token_free(tag_name);
@@ -424,8 +469,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
     NULL,
     NULL,
     true,
-    open_tag->base.start,
-    open_tag->base.end,
+    open_tag->base.location->start,
+    open_tag->base.location->end,
     NULL
   );
 }
@@ -465,8 +510,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
     body,
     close_tag,
     false,
-    open_tag->base.start,
-    close_tag->base.end,
+    open_tag->base.location->start,
+    close_tag->base.location->end,
     errors
   );
 }
@@ -497,8 +542,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
     NULL,
     NULL,
     false,
-    open_tag->base.start,
-    open_tag->base.end,
+    open_tag->base.location->start,
+    open_tag->base.location->end,
     errors
   );
 }
@@ -510,8 +555,14 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   token_T* content = parser_consume_expected(parser, TOKEN_ERB_CONTENT, errors);
   token_T* closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, errors);
 
-  AST_ERB_CONTENT_NODE_T* erb_node =
-    ast_erb_content_node_init(opening_tag, content, closing_tag, opening_tag->start, closing_tag->end, errors);
+  AST_ERB_CONTENT_NODE_T* erb_node = ast_erb_content_node_init(
+    opening_tag,
+    content,
+    closing_tag,
+    opening_tag->location->start,
+    closing_tag->location->end,
+    errors
+  );
 
   token_free(opening_tag);
   token_free(content);
@@ -561,7 +612,12 @@ static void parser_parse_unclosed_html_tags(const parser_T* parser, array_T* err
   while (array_size(parser->open_tags_stack) > 0) {
     token_T* unclosed_tag = parser_pop_open_tag(parser);
 
-    append_unclosed_element_error(unclosed_tag, parser->current_token->start, parser->current_token->end, errors);
+    append_unclosed_element_error(
+      unclosed_tag,
+      parser->current_token->location->start,
+      parser->current_token->location->end,
+      errors
+    );
 
     token_free(unclosed_tag);
   }
@@ -579,8 +635,8 @@ static void parser_parse_stray_closing_tags(parser_T* parser, array_T* children,
     if (!is_void_element(close_tag->tag_name->value)) {
       append_missing_opening_tag_error(
         close_tag->tag_name,
-        close_tag->base.start,
-        close_tag->base.end,
+        close_tag->base.location->start,
+        close_tag->base.location->end,
         close_tag->base.errors
       );
     }
@@ -594,7 +650,7 @@ static void parser_parse_stray_closing_tags(parser_T* parser, array_T* children,
 static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
   array_T* children = array_init(8);
   array_T* errors = array_init(8);
-  location_T* start_location = location_copy(parser->current_token->start);
+  position_T* start = position_copy(parser->current_token->location->start);
 
   parser_parse_in_data_state(parser, children, errors);
   parser_parse_unclosed_html_tags(parser, errors);
@@ -602,9 +658,9 @@ static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
 
   token_T* eof = parser_consume_expected(parser, TOKEN_EOF, errors);
 
-  AST_DOCUMENT_NODE_T* document_node = ast_document_node_init(children, start_location, eof->end, errors);
+  AST_DOCUMENT_NODE_T* document_node = ast_document_node_init(children, start, eof->location->end, errors);
 
-  location_free(start_location);
+  position_free(start);
   token_free(eof);
 
   return document_node;

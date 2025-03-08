@@ -3,6 +3,7 @@
 
 #include "ast_nodes.h"
 #include "buffer.h"
+#include "location.h"
 
 #include <stdbool.h>
 
@@ -10,11 +11,11 @@ void pretty_print_indent(buffer_T* buffer, size_t indent);
 void pretty_print_newline(size_t indent, size_t relative_indent, buffer_T* buffer);
 void pretty_print_label(const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer);
 
-void pretty_print_location_property(
-  location_T* location, const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+void pretty_print_position_property(
+  position_T* position, const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
 );
 
-void pretty_print_locations(location_T* start, location_T* end, buffer_T* buffer);
+void pretty_print_location(location_T* location, buffer_T* buffer);
 
 void pretty_print_property(
   const char* name, const char* value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer

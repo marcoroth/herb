@@ -1,5 +1,7 @@
 # 🌿 Herb
 
+#### HTML + ERB (HTML Embedded Ruby)
+
 Seamless and powerful HTML-aware ERB parsing.
 
 ## Contributing

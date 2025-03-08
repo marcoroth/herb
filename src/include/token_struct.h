@@ -44,8 +44,7 @@ typedef enum {
 typedef struct TOKEN_STRUCT {
   char* value;
   range_T* range;
-  location_T* start;
-  location_T* end;
+  location_T* location;
   token_type_T type;
 } token_T;
 

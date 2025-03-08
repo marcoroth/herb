@@ -16,8 +16,8 @@ module SnapshotUtils
     assert_snapshot_matches(expected, source)
 
     assert_equal "TOKEN_EOF", result.value.last.type
-    assert_equal source.to_s.bytesize, result.value.last.range.start_position
-    assert_equal source.to_s.bytesize, result.value.last.range.end_position
+    assert_equal source.to_s.bytesize, result.value.last.range.from
+    assert_equal source.to_s.bytesize, result.value.last.range.to
 
     result
   end

@@ -13,13 +13,13 @@
 void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
   if (!node) { return; }
 
-  bool print_locations = true;
+  bool print_location = true;
 
   buffer_append(buffer, "@ ");
   buffer_append(buffer, ast_node_human_type(node));
   buffer_append(buffer, " ");
 
-  if (print_locations) { pretty_print_locations(node->start, node->end, buffer); }
+  if (print_location) { pretty_print_location(node->location, buffer); }
 
   buffer_append(buffer, "\n");
 

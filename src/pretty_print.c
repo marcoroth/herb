@@ -111,40 +111,40 @@ void pretty_print_errors(
   }
 }
 
-void pretty_print_locations(location_T* start, location_T* end, buffer_T* buffer) {
+void pretty_print_location(location_T* location, buffer_T* buffer) {
   buffer_append(buffer, "(location: (");
-  char location[128];
+  char location_string[128];
   sprintf(
-    location,
+    location_string,
     "%zu,%zu)-(%zu,%zu",
-    (start && start->line) ? start->line : 0,
-    (start && start->column) ? start->column : 0,
-    (end && end->line) ? end->line : 0,
-    (end && end->column) ? end->column : 0
+    (location->start && location->start->line) ? location->start->line : 0,
+    (location->start && location->start->column) ? location->start->column : 0,
+    (location->end && location->end->line) ? location->end->line : 0,
+    (location->end && location->end->column) ? location->end->column : 0
   );
-  buffer_append(buffer, location);
+  buffer_append(buffer, location_string);
   buffer_append(buffer, "))");
 }
 
-void pretty_print_location_property(
-  location_T* location, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+void pretty_print_position_property(
+  position_T* position, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
-  if (location != NULL) {
+  if (position != NULL) {
     buffer_append(buffer, "(");
 
-    char location_string[128];
+    char position_string[128];
 
     sprintf(
-      location_string,
+      position_string,
       "%zu:%zu",
-      (location->line) ? location->line : 0,
-      (location->column) ? location->column : 0
+      (position->line) ? position->line : 0,
+      (position->column) ? position->column : 0
     );
 
-    buffer_append(buffer, location_string);
+    buffer_append(buffer, position_string);
     buffer_append(buffer, ")");
   } else {
     buffer_append(buffer, "∅");
@@ -165,7 +165,7 @@ void pretty_print_token_property(
     free(quoted);
 
     buffer_append(buffer, " ");
-    pretty_print_locations(token->start, token->end, buffer);
+    pretty_print_location(token->location, buffer);
   } else {
     buffer_append(buffer, "∅");
   }
