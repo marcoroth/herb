@@ -2,15 +2,15 @@
 
 module Herb
   class Range
-    attr_reader :start_position, :end_position
+    attr_reader :from, :to
 
-    def initialize(start_position, end_position)
-      @start_position = start_position
-      @end_position = end_position
+    def initialize(from, to)
+      @from = from
+      @to = to
     end
 
     def to_a
-      [start_position, end_position]
+      [from, to]
     end
 
     def to_json(*args)

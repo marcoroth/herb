@@ -1,5 +1,5 @@
 #include "include/array.h"
-#include "include/location.h"
+#include "include/position.h"
 #include "include/token.h"
 #include "include/errors.h"
 #include "include/util.h"
@@ -16,16 +16,16 @@ size_t error_sizeof(void) {
   return sizeof(struct ERROR_STRUCT);
 }
 
-void error_init(ERROR_T* error, const error_type_T type, location_T* start, location_T* end) {
+void error_init(ERROR_T* error, const error_type_T type, position_T* start, position_T* end) {
   if (!error) { return; }
 
   error->type = type;
-  error->start = location_copy(start);
-  error->end = location_copy(end);
+  error->start = position_copy(start);
+  error->end = position_copy(end);
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["location_T* start", "location_T* end"] -%>
+<%- arguments = error_arguments + ["position_T* start", "position_T* end"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
   <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
@@ -71,8 +71,8 @@ void error_init(ERROR_T* error, const error_type_T type, location_T* start, loca
 
   <%- error.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::LocationField -%>
-  <%= error.human %>-><%= field.name %> = location_copy(<%= field.name %>);
+  <%- when Herb::Template::PositionField -%>
+  <%= error.human %>-><%= field.name %> = position_copy(<%= field.name %>);
   <%- when Herb::Template::TokenField -%>
   <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
@@ -114,8 +114,8 @@ const char* error_human_type(ERROR_T* error) {
 void error_free_base_error(ERROR_T* error) {
   if (error == NULL) { return; }
 
-  if (error->start != NULL) { location_free(error->start); }
-  if (error->end != NULL) { location_free(error->end); }
+  if (error->start != NULL) { position_free(error->start); }
+  if (error->end != NULL) { position_free(error->end); }
   if (error->message != NULL) { free(error->message); }
 
   free(error);
@@ -129,8 +129,8 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- end -%>
   <%- error.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::LocationField -%>
-  if (<%= error.human %>-><%= field.name %> != NULL) { location_free(<%= error.human %>-><%= field.name %>); }
+  <%- when Herb::Template::PositionField -%>
+  if (<%= error.human %>-><%= field.name %> != NULL) { position_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenField -%>
   if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenTypeField -%>
@@ -208,14 +208,14 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   buffer_append(buffer, error_human_type((ERROR_T*) error));
   buffer_append(buffer, " ");
 
-  pretty_print_locations(error->base.start, error->base.end, buffer);
+  pretty_print_positions(error->base.start, error->base.end, buffer);
   buffer_append(buffer, "\n");
 
   pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
-  <%- when Herb::Template::LocationField -%>
-  pretty_print_location_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  <%- when Herb::Template::PositionField -%>
+  pretty_print_positions_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenField -%>
   pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>

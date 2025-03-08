@@ -11,12 +11,12 @@ size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }
 
-void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, location_T* start, location_T* end, array_T* errors) {
+void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T* start, position_T* end, array_T* errors) {
   if (!node) { return; }
 
   node->type = type;
-  node->start = location_copy(start);
-  node->end = location_copy(end);
+  node->start = position_copy(start);
+  node->end = position_copy(end);
 
   if (errors == NULL) {
     node->errors = array_init(8);
@@ -51,16 +51,16 @@ void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error) {
   array_append(node->errors, error);
 }
 
-void ast_node_set_start(AST_NODE_T* node, location_T* location) {
-  if (node->start != NULL) { location_free(node->start); }
+void ast_node_set_start(AST_NODE_T* node, position_T* position) {
+  if (node->start != NULL) { position_free(node->start); }
 
-  node->start = location_copy(location);
+  node->start = position_copy(position);
 }
 
-void ast_node_set_end(AST_NODE_T* node, location_T* location) {
-  if (node->end != NULL) { location_free(node->end); }
+void ast_node_set_end(AST_NODE_T* node, position_T* position) {
+  if (node->end != NULL) { position_free(node->end); }
 
-  node->end = location_copy(location);
+  node->end = position_copy(position);
 }
 
 void ast_node_set_start_from_token(AST_NODE_T* node, const token_T* token) {
@@ -71,7 +71,7 @@ void ast_node_set_end_from_token(AST_NODE_T* node, const token_T* token) {
   ast_node_set_end(node, token->end);
 }
 
-void ast_node_set_locations_from_token(AST_NODE_T* node, const token_T* token) {
+void ast_node_set_positions_from_token(AST_NODE_T* node, const token_T* token) {
   ast_node_set_start_from_token(node, token);
   ast_node_set_end_from_token(node, token);
 }

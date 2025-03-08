@@ -1,4 +1,5 @@
-<%- base_arguments = ["type", "start_location", "end_location", "message"] -%>
+# TODO: use single location
+<%- base_arguments = ["type", "start_position", "end_position", "message"] -%>
 module Herb
   module Errors
     class Error
@@ -15,8 +16,8 @@ module Herb
       def to_hash
         {
           type: type,
-          start_location: start_location&.to_hash,
-          end_location: end_location&.to_hash,
+          start_position: start_position&.to_hash,
+          end_position: end_position&.to_hash,
           message: message,
         }
       end
@@ -59,14 +60,14 @@ module Herb
       def tree_inspect(indent = 0)
         output = +""
 
-        output += %(@ #{error_name} (location: #{start_location.tree_inspect}-#{end_location.tree_inspect})\n)
+        output += %(@ #{error_name} (location: #{start_position.tree_inspect}-#{end_position.tree_inspect})\n)
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
         output += %(<%= symbol %> message: #{message.inspect}\n)
         <%- error.fields.each do |field| -%>
         <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
         <%- name = "#{symbol} #{field.name}: " -%>
         <%- case field -%>
-        <%- when Herb::Template::LocationField -%>
+        <%- when Herb::Template::PositionField -%>
         output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)
         <%- when Herb::Template::TokenField -%>
         output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)

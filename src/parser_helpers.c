@@ -73,12 +73,11 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
 }
 
 void parser_append_literal_node_from_buffer(
-  const parser_T* parser, buffer_T* buffer, array_T* children, location_T* start_location
+  const parser_T* parser, buffer_T* buffer, array_T* children, position_T* start
 ) {
   if (buffer_length(buffer) == 0) { return; }
 
-  AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(buffer_value(buffer), start_location, parser->current_token->start, NULL);
+  AST_LITERAL_NODE_T* literal = ast_literal_node_init(buffer_value(buffer), start, parser->current_token->start, NULL);
 
   if (children != NULL) { array_append(children, literal); }
   buffer_clear(buffer);

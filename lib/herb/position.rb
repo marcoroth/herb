@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Herb
-  class Location
+  class Position
     attr_reader :line, :column
 
     def initialize(line, column)
@@ -22,7 +22,7 @@ module Herb
     end
 
     def inspect
-      %(#<Herb::Location #{tree_inspect}>)
+      %(#<Herb::Position #{tree_inspect}>)
     end
   end
 end

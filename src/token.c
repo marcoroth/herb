@@ -1,7 +1,7 @@
 #include "include/token.h"
 #include "include/json.h"
 #include "include/lexer.h"
-#include "include/location.h"
+#include "include/position.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 
@@ -41,8 +41,9 @@ token_T* token_init(const char* value, const token_type_T type, const lexer_T* l
   size_t end_line = lexer->current_line;
   size_t end_column = lexer->current_column;
 
-  token->start = location_init(start_line, start_column);
-  token->end = location_init(end_line, end_column);
+  // TODO: update to use a single location
+  token->start = position_init(start_line, start_column);
+  token->end = position_init(end_line, end_column);
 
   return token;
 }
@@ -95,8 +96,8 @@ char* token_to_string(const token_T* token) {
     template,
     type_string,
     escaped,
-    token->range->start,
-    token->range->end,
+    token->range->from,
+    token->range->to,
     token->start->line,
     token->start->column,
     token->end->line,
@@ -117,8 +118,8 @@ char* token_to_json(const token_T* token) {
 
   buffer_T range = buffer_new();
   json_start_array(&json, "range");
-  json_add_size_t(&range, NULL, token->range->start);
-  json_add_size_t(&range, NULL, token->range->end);
+  json_add_size_t(&range, NULL, token->range->from);
+  json_add_size_t(&range, NULL, token->range->to);
   buffer_concat(&json, &range);
   buffer_free(&range);
   json_end_array(&json);
@@ -152,6 +153,16 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
+// TODO: introduce token_start_position
+// position_T* token_start_position(token_T*) {
+//   return token->location->start;
+// }
+
+// TODO: introduce token_end_position
+// position_T* token_end_position(token_T*) {
+//   return token->location->end;
+// }
+
 token_T* token_copy(token_T* token) {
   if (!token) { return NULL; }
 
@@ -172,8 +183,8 @@ token_T* token_copy(token_T* token) {
 
   new_token->type = token->type;
   new_token->range = range_copy(token->range);
-  new_token->start = location_copy(token->start);
-  new_token->end = location_copy(token->end);
+  new_token->start = position_copy(token->start);
+  new_token->end = position_copy(token->end);
 
   return new_token;
 }
@@ -183,8 +194,8 @@ void token_free(token_T* token) {
 
   if (token->value != NULL) { free(token->value); }
   if (token->range != NULL) { range_free(token->range); }
-  if (token->start != NULL) { location_free(token->start); }
-  if (token->end != NULL) { location_free(token->end); }
+  if (token->start != NULL) { position_free(token->start); }
+  if (token->end != NULL) { position_free(token->end); }
 
   free(token);
 }

@@ -22,14 +22,14 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   VALUE <%= error.name %> = rb_define_class_under(Errors, "<%= error.name %>", Error);
 
   VALUE type = rb_str_new_cstr(error_type_to_string(error));
-  VALUE start_location = rb_location_from_c_struct(error->start);
-  VALUE end_location = rb_location_from_c_struct(error->end);
+  VALUE start = rb_position_from_c_struct(error->start);
+  VALUE end = rb_position_from_c_struct(error->end);
   VALUE message = rb_str_new_cstr(error->message);
 
   <%- error.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::LocationField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_location_from_c_struct(<%= error.human %>-><%= field.name %>);
+  <%- when Herb::Template::PositionField -%>
+  VALUE <%= error.human %>_<%= field.name %> = rb_position_from_c_struct(<%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenField -%>
   VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
@@ -44,8 +44,8 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
 
   VALUE args[<%= 4 + error.fields.count %>] = {
     type,
-    start_location,
-    end_location,
+    start,
+    end,
     message<% if error.fields.any? %>,<% end %>
     <%- error.fields.each do |field| -%>
     <%= error.human %>_<%= field.name %><% if error.fields.last != field %>,<% end %>

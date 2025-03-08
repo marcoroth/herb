@@ -3,20 +3,21 @@
 module Herb
   module AST
     class Node
-      attr_reader :type, :start_location, :end_location, :errors
+      attr_reader :type, :start_position, :end_position, :errors
 
-      def initialize(type, start_location = nil, end_location = nil, errors = [])
+      # TODO: use a singe location
+      def initialize(type, start_position = nil, end_position = nil, errors = [])
         @type = type
-        @start_location = start_location
-        @end_location = end_location
+        @start_position = start_position
+        @end_position = end_position
         @errors = errors
       end
 
       def to_hash
         {
           type: type,
-          start_location: start_location&.to_hash,
-          end_location: end_location&.to_hash,
+          start_position: start_position&.to_hash,
+          end_position: end_position&.to_hash,
           errors: errors.map(&:to_hash),
         }
       end

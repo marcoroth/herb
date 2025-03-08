@@ -153,7 +153,7 @@ export default defineConfig({
             items: [
               { text: "array_T", link: "/structs/array" },
               { text: "buffer_T", link: "/structs/buffer" },
-              { text: "location_T", link: "/structs/location" },
+              { text: "position_T", link: "/structs/position" },
               { text: "range_T", link: "/structs/range" },
             ]
           }

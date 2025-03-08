@@ -1,7 +1,7 @@
 #ifndef HERB_TOKEN_STRUCT_H
 #define HERB_TOKEN_STRUCT_H
 
-#include "location.h"
+#include "position.h"
 #include "range.h"
 
 typedef enum {
@@ -44,8 +44,8 @@ typedef enum {
 typedef struct TOKEN_STRUCT {
   char* value;
   range_T* range;
-  location_T* start;
-  location_T* end;
+  position_T* start;
+  position_T* end;
   token_type_T type;
 } token_T;
 

@@ -4,10 +4,10 @@ errors:
       type: string
 
     - name: start
-      type: location
+      type: position
 
     - name: end
-      type: location
+      type: position
 
   types:
     - name: UnexpectedError
@@ -143,11 +143,11 @@ nodes:
   #   - name: type
   #     type: ast_node_type
   #
-  #   - name: start_location
-  #     type: location
+  #   - name: start
+  #     type: position
   #
-  #   - name: end_location
-  #     type: location
+  #   - name: end
+  #     type: position
   #
   #   - name: errors
   #     type: array

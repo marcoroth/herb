@@ -4,7 +4,7 @@
 #include "array.h"
 #include "buffer.h"
 #include "errors.h"
-#include "location.h"
+#include "position.h"
 #include "token.h"
 
 typedef enum {
@@ -15,8 +15,8 @@ typedef enum {
 
 typedef struct ERROR_STRUCT {
   error_type_T type;
-  location_T* start;
-  location_T* end;
+  position_T* start;
+  position_T* end;
   char* message;
 } ERROR_T;
 
@@ -31,12 +31,12 @@ typedef struct {
 
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["location_T* start", "location_T* end"] -%>
+<%- arguments = error_arguments + ["position_T* start", "position_T* end"] -%>
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>);
 void append_<%= error.human %>(<%= (arguments << "array_T* errors").join(", ") %>);
 <%- end -%>
 
-void error_init(ERROR_T* error, error_type_T type, location_T* start, location_T* end);
+void error_init(ERROR_T* error, error_type_T type, position_T* start, position_T* end);
 
 size_t error_sizeof(void);
 error_type_T error_type(ERROR_T* error);
