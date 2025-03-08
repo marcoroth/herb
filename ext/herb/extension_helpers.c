@@ -3,9 +3,10 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
-#include "../../src/include/ast_pretty_print.h"
 #include "../../src/include/herb.h"
 #include "../../src/include/io.h"
+#include "../../src/include/location.h"
+#include "../../src/include/position.h"
 #include "../../src/include/token.h"
 
 const char* check_string(VALUE value) {
@@ -31,6 +32,19 @@ VALUE rb_position_from_c_struct(position_T* position) {
   return rb_class_new_instance(2, args, Position);
 }
 
+VALUE rb_location_from_c_struct(location_T* location) {
+  if (!location) { return Qnil; }
+
+  VALUE args[2];
+  args[0] = rb_position_from_c_struct(location->start);
+  args[1] = rb_position_from_c_struct(location->end);
+
+  VALUE Herb = rb_define_module("Herb");
+  VALUE Location = rb_define_class_under(Herb, "Location", rb_cObject);
+
+  return rb_class_new_instance(2, args, Location);
+}
+
 VALUE rb_range_from_c_struct(range_T* range) {
   if (!range) { return Qnil; }
 
@@ -50,16 +64,15 @@ VALUE rb_token_from_c_struct(token_T* token) {
   VALUE value = token->value ? rb_str_new_cstr(token->value) : Qnil;
 
   VALUE range = rb_range_from_c_struct(token->range);
-  VALUE start = rb_position_from_c_struct(token->start);
-  VALUE end = rb_position_from_c_struct(token->end);
+  VALUE location = rb_location_from_c_struct(token->location);
   VALUE type = rb_str_new_cstr(token_type_to_string(token->type));
 
-  VALUE args[5] = { value, range, start, end, type };
+  VALUE args[4] = { value, range, location, type };
 
   VALUE Herb = rb_define_module("Herb");
   VALUE Token = rb_define_class_under(Herb, "Token", rb_cObject);
 
-  return rb_class_new_instance(5, args, Token);
+  return rb_class_new_instance(4, args, Token);
 }
 
 VALUE create_lex_result(array_T* tokens, VALUE source) {

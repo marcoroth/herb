@@ -41,9 +41,7 @@ token_T* token_init(const char* value, const token_type_T type, const lexer_T* l
   size_t end_line = lexer->current_line;
   size_t end_column = lexer->current_column;
 
-  // TODO: update to use a single location
-  token->start = position_init(start_line, start_column);
-  token->end = position_init(end_line, end_column);
+  token->location = location_from(start_line, start_column, end_line, end_column);
 
   return token;
 }
@@ -98,10 +96,10 @@ char* token_to_string(const token_T* token) {
     escaped,
     token->range->from,
     token->range->to,
-    token->start->line,
-    token->start->column,
-    token->end->line,
-    token->end->column
+    token->location->start->line,
+    token->location->start->column,
+    token->location->end->line,
+    token->location->end->column
   );
 
   free(escaped);
@@ -126,16 +124,16 @@ char* token_to_json(const token_T* token) {
 
   buffer_T start = buffer_new();
   json_start_object(&json, "start");
-  json_add_size_t(&start, "line", token->start->line);
-  json_add_size_t(&start, "column", token->start->column);
+  json_add_size_t(&start, "line", token->location->start->line);
+  json_add_size_t(&start, "column", token->location->start->column);
   buffer_concat(&json, &start);
   buffer_free(&start);
   json_end_object(&json);
 
   buffer_T end = buffer_new();
   json_start_object(&json, "end");
-  json_add_size_t(&end, "line", token->start->line);
-  json_add_size_t(&end, "column", token->start->column);
+  json_add_size_t(&end, "line", token->location->end->line);
+  json_add_size_t(&end, "column", token->location->end->column);
   buffer_concat(&json, &end);
   buffer_free(&end);
   json_end_object(&json);
@@ -153,15 +151,13 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
-// TODO: introduce token_start_position
-// position_T* token_start_position(token_T*) {
-//   return token->location->start;
-// }
+position_T* token_start_position(token_T* token) {
+  return token->location->start;
+}
 
-// TODO: introduce token_end_position
-// position_T* token_end_position(token_T*) {
-//   return token->location->end;
-// }
+position_T* token_end_position(token_T* token) {
+  return token->location->end;
+}
 
 token_T* token_copy(token_T* token) {
   if (!token) { return NULL; }
@@ -183,8 +179,7 @@ token_T* token_copy(token_T* token) {
 
   new_token->type = token->type;
   new_token->range = range_copy(token->range);
-  new_token->start = position_copy(token->start);
-  new_token->end = position_copy(token->end);
+  new_token->location = location_copy(token->location);
 
   return new_token;
 }
@@ -194,8 +189,7 @@ void token_free(token_T* token) {
 
   if (token->value != NULL) { free(token->value); }
   if (token->range != NULL) { range_free(token->range); }
-  if (token->start != NULL) { position_free(token->start); }
-  if (token->end != NULL) { position_free(token->end); }
+  if (token->location != NULL) { location_free(token->location); }
 
   free(token);
 }

@@ -19,8 +19,7 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
   buffer_append(buffer, ast_node_human_type(node));
   buffer_append(buffer, " ");
 
-  // TODO: update to use pretty_print_location
-  if (print_location) { pretty_print_positions(node->start, node->end, buffer); }
+  if (print_location) { pretty_print_location(node->location, buffer); }
 
   buffer_append(buffer, "\n");
 

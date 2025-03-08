@@ -4,6 +4,7 @@
 #include "array.h"
 #include "buffer.h"
 #include "errors.h"
+#include "location.h"
 #include "position.h"
 #include "token.h"
 
@@ -15,8 +16,7 @@ typedef enum {
 
 typedef struct ERROR_STRUCT {
   error_type_T type;
-  position_T* start;
-  position_T* end;
+  location_T* location;
   char* message;
 } ERROR_T;
 

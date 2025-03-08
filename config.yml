@@ -34,8 +34,8 @@ errors:
         arguments:
           - token_type_to_string(found->type)
           - token_type_to_string(expected_type)
-          - found->start->line
-          - found->start->column
+          - found->location->start->line
+          - found->location->start->column
 
       fields:
         - name: expected_type
@@ -49,8 +49,8 @@ errors:
         template: "Found closing tag `</%s>` at (%zu:%zu) without a matching opening tag."
         arguments:
           - closing_tag->value
-          - closing_tag->start->line
-          - closing_tag->start->column
+          - closing_tag->location->start->line
+          - closing_tag->location->start->column
 
       fields:
         - name: closing_tag
@@ -61,8 +61,8 @@ errors:
         template: "Opening tag `<%s>` at (%zu:%zu) doesn't have a matching closing tag `</%s>`."
         arguments:
           - opening_tag->value
-          - opening_tag->start->line
-          - opening_tag->start->column
+          - opening_tag->location->start->line
+          - opening_tag->location->start->column
           - opening_tag->value
 
       fields:
@@ -74,11 +74,11 @@ errors:
         template: "Opening tag `<%s>` at (%zu:%zu) closed with `</%s>` at (%zu:%zu)."
         arguments:
           - opening_tag->value
-          - opening_tag->start->line
-          - opening_tag->start->column
+          - opening_tag->location->start->line
+          - opening_tag->location->start->column
           - closing_tag->value
-          - closing_tag->start->line
-          - closing_tag->start->column
+          - closing_tag->location->start->line
+          - closing_tag->location->start->column
 
       fields:
         - name: opening_tag
@@ -93,8 +93,8 @@ errors:
         arguments:
           - opening_quote->value
           - closing_quote->value
-          - closing_quote->start->line
-          - closing_quote->start->column
+          - closing_quote->location->start->line
+          - closing_quote->location->start->column
 
       fields:
         - name: opening_quote
@@ -127,8 +127,8 @@ errors:
         template: "Tag `<%s>` opened at (%zu:%zu) was never closed before the end of document."
         arguments:
           - opening_tag->value
-          - opening_tag->start->line
-          - opening_tag->start->column
+          - opening_tag->location->start->line
+          - opening_tag->location->start->column
 
       fields:
         - name: opening_tag

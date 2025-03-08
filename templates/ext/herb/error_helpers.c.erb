@@ -22,8 +22,7 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   VALUE <%= error.name %> = rb_define_class_under(Errors, "<%= error.name %>", Error);
 
   VALUE type = rb_str_new_cstr(error_type_to_string(error));
-  VALUE start = rb_position_from_c_struct(error->start);
-  VALUE end = rb_position_from_c_struct(error->end);
+  VALUE location = rb_location_from_c_struct(error->location);
   VALUE message = rb_str_new_cstr(error->message);
 
   <%- error.fields.each do |field| -%>
@@ -42,17 +41,16 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   <%- end -%>
   <%- end -%>
 
-  VALUE args[<%= 4 + error.fields.count %>] = {
+  VALUE args[<%= 3 + error.fields.count %>] = {
     type,
-    start,
-    end,
+    location,
     message<% if error.fields.any? %>,<% end %>
     <%- error.fields.each do |field| -%>
     <%= error.human %>_<%= field.name %><% if error.fields.last != field %>,<% end %>
     <%- end -%>
   };
 
-  return rb_class_new_instance(<%= 4 + error.fields.count %>, args, <%= error.name %>);
+  return rb_class_new_instance(<%= 3 + error.fields.count %>, args, <%= error.name %>);
 };
 
 <%- end -%>

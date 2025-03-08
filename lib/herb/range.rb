@@ -9,6 +9,14 @@ module Herb
       @to = to
     end
 
+    def self.[](...)
+      new(...)
+    end
+
+    def self.from(...)
+      new(...)
+    end
+
     def to_a
       [from, to]
     end

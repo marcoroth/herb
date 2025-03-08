@@ -9,6 +9,14 @@ module Herb
       @column = column
     end
 
+    def self.[](...)
+      new(...)
+    end
+
+    def self.from(...)
+      new(...)
+    end
+
     def to_hash
       { line: line, column: column }
     end

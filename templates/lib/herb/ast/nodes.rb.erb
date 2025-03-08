@@ -6,9 +6,8 @@ module Herb
       attr_reader :<%= field.name %>
       <%- end -%>
 
-      # TODO: use single location
-      def initialize(<%= ["type", "start_position", "end_position", "errors", *node.fields.map(&:name)].join(", ") %>)
-        super(type, start_position, end_position, errors)
+      def initialize(<%= ["type", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
+        super(type, location, errors)
         <%- node.fields.each do |field| -%>
         @<%= field.name %> = <%= field.name %>
         <%- end -%>
@@ -30,7 +29,7 @@ module Herb
         output = +""
 
         output += "@ #{node_name} "
-        output += "(location: (#{start_position.line}:#{start_position.column})-(#{end_position.line}:#{end_position.column}))"
+        output += location.tree_inspect
         output += "\n"
 
         output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")

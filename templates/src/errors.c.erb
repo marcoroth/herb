@@ -1,9 +1,10 @@
 #include "include/array.h"
-#include "include/position.h"
-#include "include/token.h"
 #include "include/errors.h"
-#include "include/util.h"
+#include "include/location.h"
+#include "include/position.h"
 #include "include/pretty_print.h"
+#include "include/token.h"
+#include "include/util.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -20,8 +21,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T* start, posi
   if (!error) { return; }
 
   error->type = type;
-  error->start = position_copy(start);
-  error->end = position_copy(end);
+  error->location = location_init(position_copy(start), position_copy(end));
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
@@ -114,8 +114,7 @@ const char* error_human_type(ERROR_T* error) {
 void error_free_base_error(ERROR_T* error) {
   if (error == NULL) { return; }
 
-  if (error->start != NULL) { position_free(error->start); }
-  if (error->end != NULL) { position_free(error->end); }
+  if (error->location != NULL) { location_free(error->location); }
   if (error->message != NULL) { free(error->message); }
 
   free(error);
@@ -208,14 +207,14 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   buffer_append(buffer, error_human_type((ERROR_T*) error));
   buffer_append(buffer, " ");
 
-  pretty_print_positions(error->base.start, error->base.end, buffer);
+  pretty_print_location(error->base.location, buffer);
   buffer_append(buffer, "\n");
 
   pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>
-  pretty_print_positions_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_position_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenField -%>
   pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>

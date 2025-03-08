@@ -2,6 +2,7 @@
 
 require_relative "herb/range"
 require_relative "herb/position"
+require_relative "herb/location"
 
 require_relative "herb/token"
 require_relative "herb/token_list"
