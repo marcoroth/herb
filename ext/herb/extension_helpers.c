@@ -82,23 +82,14 @@ VALUE create_lex_result(array_T* tokens, VALUE source) {
 }
 
 VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
-  buffer_T output;
-  if (!buffer_init(&output)) { return Qnil; }
-
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
-
-  if (root) {
-    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
-    ast_node_free((AST_NODE_T*) root);
-  }
 
   VALUE Herb = rb_define_module("Herb");
   VALUE Result = rb_define_class_under(Herb, "Result", rb_cObject);
   VALUE ParseResult = rb_define_class_under(Herb, "ParseResult", Result);
 
-  buffer_free(&output);
   VALUE args[4] = { value, source, warnings, errors };
   return rb_class_new_instance(4, args, ParseResult);
 }

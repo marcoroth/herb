@@ -13,6 +13,14 @@ module Herb
         <%- end -%>
       end
 
+      def to_hash
+        super.merge({
+          <%- node.fields.each do |field| -%>
+          <%= field.name %>: <%= field.name %>,
+          <%- end -%>
+        })
+      end
+
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end

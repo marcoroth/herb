@@ -14,15 +14,12 @@ class Herb::CLI
   def call
     options
 
-    if !result || result.failed?
-      puts result.value.inspect
-
-      puts "\nFailed"
-      exit(1)
-    end
-
     if silent
-      puts "Success"
+      if result.failed?
+        puts "Failed"
+      else
+        puts "Success"
+      end
     elsif json
       puts result.value.to_json
     else

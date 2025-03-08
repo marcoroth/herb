@@ -1,0 +1,73 @@
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+json-viewer::part(key) {
+  margin-right: 10px;
+}
+
+.language-tree .token.node {
+  color: #E5C07B;
+  font-weight: bold;
+}
+
+.language-tree .token.location {
+  color: #ABB2BF;
+  font-style: italic;
+}
+
+.language-tree .token.tree-symbol {
+  color: #ABB2BF;
+}
+
+.language-tree .token.property {
+  color: white;
+}
+
+.language-tree .token.error-class {
+  color: #E06C75;
+  font-weight: bold;
+}
+
+.language-tree .token.number {
+  color: #D19A66;
+}
+
+.language-tree .token.string {
+  color: #90B874;
+}
+
+.language-tree .token.tree-null {
+  color: #C678DD;
+}
+
+.language-tree .token.count {
+  color: #607d8b;
+  font-style: italic;
+}
+
+.language-tree .token.boolean {
+  color: #D19A66;
+  font-weight: bold;
+}
+
+pre.language-tree {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow: auto;
+  line-height: 1.4;
+  background: #282D33;
+}
+
+code.language-tree {
+  font-size: 14px;
+  white-space: pre;
+}
+
+light-editor::part(base) {
+  border: none;
+  height: 100%;
+}

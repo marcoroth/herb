@@ -134,7 +134,32 @@ errors:
         - name: opening_tag
           type: token
 
+warnings:
+  fields: []
+  types: []
+
 nodes:
+  # fields:
+  #   - name: type
+  #     type: ast_node_type
+  #
+  #   - name: start_location
+  #     type: location
+  #
+  #   - name: end_location
+  #     type: location
+  #
+  #   - name: errors
+  #     type: array
+  #     kind: error
+  #
+  #   # - name: warnings
+  #   #  type: array
+  #   #  kind: warning
+  #
+  #   # - name: range
+  #   #   type: range
+
   types:
     - name: DocumentNode
       fields:

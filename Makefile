@@ -71,7 +71,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: $(exec) $(lib_name) test
+all: prism $(exec) $(lib_name) test
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -92,16 +92,13 @@ test: $(test_objects) $(non_main_objects)
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
+	rm -rf $(prism_path)
 
 bundle_install:
 	bundle install
 
 prism: bundle_install
-	cd $(prism_path) && bundle install && bundle exec rake compile && cd -
-
-prism_clean:
-	make clean
-	rm -rf $(prism_path)
+	cd $(prism_path) && ruby templates/template.rb && make static && cd -
 
 format:
 	$(clang_format) -i $(project_and_extension_files)

@@ -22,23 +22,20 @@ jobs:
       - name: bundle install
         run: bundle install
 
-      - name: make prism
-        run: make prism
-
       - name: Render Templates
         run: bundle exec rake templates
 
-      - name: make
-        run: make
-
-      - name: Run C tests
-        run: ./run_herb_tests
+      - name: Compile Herb
+        run: bundle exec rake make
 
       - name: Compile Ruby extension
         run: bundle exec rake compile
 
       - name: Run Ruby Tests
         run: bundle exec rake test
+
+      - name: Run C tests
+        run: ./run_herb_tests
 
       - name: clang-format version
         run: clang-format-19 --version
