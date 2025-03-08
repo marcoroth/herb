@@ -3,18 +3,27 @@
   "version": "0.0.1",
   "description": "Node.js bindings for Herb",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/node/index.js",
+  "browser": "dist/browser/index.js",
+  "types": "dist/node/index.d.ts",
   "exports": {
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs.js"
+    ".": {
+      "browser": "./dist/browser/index.js",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.cjs"
+    }
   },
   "scripts": {
     "install": "node-gyp rebuild",
-    "build": "node-gyp rebuild && tsc",
-    "clean": "node-gyp clean",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "build": "npm run build:node && npm run build:browser",
+    "build:node": "node-gyp rebuild && tsc -p tsconfig.node.json && node bin/build-node.js",
+    "build:wasm": "node bin/build-wasm.cjs",
+    "build:browser": "npm run build:wasm && tsc -p tsconfig.browser.json && node bin/build-browser.js",
+    "clean": "node-gyp clean && rimraf dist",
+    "test": "yarn test:node && yarn test:browser",
+    "test:node": "vitest run",
+    "test:browser": "vitest run --config vitest.browser.config.js",
+    "test:watch": "vitest --watch",
     "prepublishOnly": "yarn test"
   },
   "author": "Marco Roth",
@@ -24,7 +33,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.13.9",
+    "esbuild": "^0.25.0",
     "node-gyp": "^9.3.1",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.2",
     "vitest": "^3.0.8"
   },
@@ -36,7 +47,8 @@
     "lib/",
     "src/",
     "dist/",
-    "include/",
+    "node/",
+    "browser/",
     "binding.gyp",
     "build/Release/",
     "index.ts",

@@ -93,40 +93,42 @@ napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
       napi_value token_obj;
       napi_create_object(env, &token_obj);
 
-      // Token properties
-      napi_value value_prop, type_prop, range_arr, start_loc_obj, end_loc_obj;
-
       // Value
+      napi_value value_prop;
       napi_create_string_utf8(env, token->value, NAPI_AUTO_LENGTH, &value_prop);
       napi_set_named_property(env, token_obj, "value", value_prop);
 
       // Type
+      napi_value type_prop;
       napi_create_string_utf8(env, token_type_to_string(token->type), NAPI_AUTO_LENGTH, &type_prop);
       napi_set_named_property(env, token_obj, "type", type_prop);
 
       // Range
+      napi_value range_arr;
       napi_create_array(env, &range_arr);
       napi_value start_pos, end_pos;
-      napi_create_uint32(env, (uint32_t) token->range->start, &start_pos);
-      napi_create_uint32(env, (uint32_t) token->range->end, &end_pos);
+      napi_create_uint32(env, (uint32_t) token->range->from, &start_pos);
+      napi_create_uint32(env, (uint32_t) token->range->to, &end_pos);
       napi_set_element(env, range_arr, 0, start_pos);
       napi_set_element(env, range_arr, 1, end_pos);
       napi_set_named_property(env, token_obj, "range", range_arr);
 
       // Start location
+      napi_value start_loc_obj;
       napi_create_object(env, &start_loc_obj);
       napi_value start_line, start_col;
-      napi_create_uint32(env, (uint32_t) token->start->line, &start_line);
-      napi_create_uint32(env, (uint32_t) token->start->column, &start_col);
+      napi_create_uint32(env, (uint32_t) token->location->start->line, &start_line);
+      napi_create_uint32(env, (uint32_t) token->location->start->column, &start_col);
       napi_set_named_property(env, start_loc_obj, "line", start_line);
       napi_set_named_property(env, start_loc_obj, "column", start_col);
       napi_set_named_property(env, token_obj, "start", start_loc_obj);
 
       // End location
+      napi_value end_loc_obj;
       napi_create_object(env, &end_loc_obj);
       napi_value end_line, end_col;
-      napi_create_uint32(env, (uint32_t) token->end->line, &end_line);
-      napi_create_uint32(env, (uint32_t) token->end->column, &end_col);
+      napi_create_uint32(env, (uint32_t) token->location->end->line, &end_line);
+      napi_create_uint32(env, (uint32_t) token->location->end->column, &end_col);
       napi_set_named_property(env, end_loc_obj, "line", end_line);
       napi_set_named_property(env, end_loc_obj, "column", end_col);
       napi_set_named_property(env, token_obj, "end", end_loc_obj);
@@ -333,13 +335,9 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_version(napi_env env, napi_callback_info info) {
-  const char* native_version = herb_version();
-
-  char version_buf[256];
-  snprintf(version_buf, sizeof(version_buf), "v0.0.1 (via libherb v%s)", native_version);
-
   napi_value result;
-  napi_create_string_utf8(env, version_buf, NAPI_AUTO_LENGTH, &result);
+
+  napi_create_string_utf8(env, herb_version(), NAPI_AUTO_LENGTH, &result);
 
   return result;
 }

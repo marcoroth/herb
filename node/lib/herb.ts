@@ -1,20 +1,47 @@
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { ensureString } from "./util.js"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import type { LibHerbBackend } from "../lib/backend.js"
+import type { LexResult } from "../lib/lex-result.js"
+import type { ParseResult } from "../lib/parse-result.js"
 
-export interface HerbModule {
-  parse(source: string): { source: string };
-  lex(source: string): { source: string };
-  parseFile(path: string): { source: string };
-  lexFile(path: string): { source: string };
-  lexToJson(source: string): string;
-  extractRuby(source: string): string;
-  extractHtml(source: string): string;
-  version(): string;
+export class Herb {
+  readonly backend: LibHerbBackend
+
+  constructor(backend: LibHerbBackend) {
+    this.backend = backend
+  }
+
+  lex(source: string): LexResult {
+    return this.backend.lex(ensureString(source))
+  }
+
+  async lexFile(path: string): Promise<LexResult> {
+    return this.backend.lexFile(ensureString(path))
+  }
+
+  lexToJson(source: string): object {
+    return JSON.parse(this.backend.lexToJson(ensureString(source)))
+  }
+
+  parse(source: string): ParseResult {
+    return this.backend.parse(ensureString(source))
+  }
+
+  async parseFile(path: string): Promise<ParseResult> {
+    return this.backend.parseFile(ensureString(path))
+  }
+
+  extractRuby(source: string): string {
+    return this.backend.extractRuby(ensureString(source))
+  }
+
+  extractHtml(source: string): string {
+    return this.backend.extractHtml(ensureString(source))
+  }
+
+   get version(): string {
+    const libherbVersion = this.backend.version()
+
+    return `v${"TODO"} (via libherb v${libherbVersion})`
+  }
 }
-
-const require = createRequire(import.meta.url);
-export const herbNative = require(join(__dirname, '../../build/Release/herb.node'));

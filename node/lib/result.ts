@@ -1,19 +1,19 @@
 export class Result {
-  readonly source: string;
-  readonly warnings: any[]; // TODO: update
-  readonly errors: any[]; // TODO: update
+  readonly source: string
+  readonly warnings: any[] // TODO: update
+  readonly errors: any[] // TODO: update
 
   constructor(source: string, warnings: any[] = [], errors: any[] = []) {
-    this.source = source;
-    this.warnings = warnings;
-    this.errors = errors;
+    this.source = source
+    this.warnings = warnings
+    this.errors = errors
   }
 
   success(): boolean {
-    return false;
+    return false
   }
 
   failed(): boolean {
-    return true;
+    return true
   }
 }

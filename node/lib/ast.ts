@@ -1,3 +1,3 @@
 export interface ASTNode {
-  errors: any[];
+  errors: any[]
 }

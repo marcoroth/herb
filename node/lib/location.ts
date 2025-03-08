@@ -1,29 +1,47 @@
+import { Position } from "./position.js"
+import type { SerializedPosition } from "./position.js"
+
+export type SerializedLocation = {
+  start: SerializedPosition,
+  end: SerializedPosition
+}
+
 export class Location {
-  readonly line: number;
-  readonly column: number;
+  readonly start: Position
+  readonly end: Position
 
-  constructor(line: number, column: number) {
-    this.line = line;
-    this.column = column;
+  static fromSerialized(location: SerializedLocation) {
+    const start = Position.fromSerialized(location.start)
+    const end = Position.fromSerialized(location.end)
+
+    return new Location(start, end)
   }
 
-  toHash(): Record<string, number> {
-    return { line: this.line, column: this.column };
+  constructor(start: Position, end: Position) {
+    this.start = start
+    this.end = end
   }
 
-  toJSON(): Record<string, number> {
-    return this.toHash();
+  toHash(): SerializedLocation {
+    return {
+      start: this.start.toHash(),
+      end: this.end.toHash(),
+    }
+  }
+
+  toJSON(): SerializedLocation {
+    return this.toHash()
   }
 
   treeInspect(): string {
-    return `(${this.line}:${this.column})`;
+    return `(location: ${this.start.treeInspect()}:${this.end.treeInspect()})`
   }
 
   inspect(): string {
-    return `#<Location ${this.treeInspect()}>`;
+    return `#<Position ${this.treeInspect()}>`
   }
 
   toString(): string {
-    return this.inspect();
+    return this.inspect()
   }
 }
