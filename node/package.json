@@ -1,0 +1,49 @@
+{
+  "name": "@herb-tools/herb",
+  "version": "0.0.1",
+  "description": "Node.js bindings for Herb",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs.js"
+  },
+  "scripts": {
+    "install": "node-gyp rebuild",
+    "build": "node-gyp rebuild && tsc",
+    "clean": "node-gyp clean",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "yarn test"
+  },
+  "author": "Marco Roth",
+  "license": "MIT",
+  "dependencies": {
+    "node-addon-api": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "node-gyp": "^9.3.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  },
+  "engines": {
+    "node": ">= 20.0.0"
+  },
+  "gypfile": true,
+  "files": [
+    "lib/",
+    "src/",
+    "dist/",
+    "include/",
+    "binding.gyp",
+    "build/Release/",
+    "index.ts",
+    "index.d.ts",
+    "README.md",
+    "!**/*.o",
+    "!**/build/",
+    "!**/.git/"
+  ]
+}

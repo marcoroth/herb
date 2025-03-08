@@ -13,15 +13,20 @@ prism_objects = $(filter-out src/main.c, $(sources))
 
 project_files = $(sources) $(headers)
 extension_files = $(extension_sources) $(extension_headers)
-project_and_extension_files = $(project_files) $(extension_files)
+nodejs_extension_files = $(wildcard node/**/*.cpp) $(wildcard node/**/*.h) $(wildcard node/**/*.hpp)
+project_and_extension_files = $(project_files) $(extension_files) $(nodejs_extension_files)
 
 test_sources = $(wildcard test/**/*.c)
 test_objects = $(test_sources:.c=.o)
 non_main_objects = $(filter-out src/main.o, $(objects))
 
 soext ?= $(shell ruby -e 'puts RbConfig::CONFIG["DLEXT"]')
-lib_name = lib$(exec).$(soext)
+lib_name = $(build_dir)/lib$(exec).$(soext)
+static_lib_name = $(build_dir)/lib$(exec).a
 ruby_extension = ext/herb/$(lib_name)
+
+build_dir = build
+$(shell mkdir -p $(build_dir))
 
 os := $(shell uname -s)
 
@@ -71,7 +76,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: prism $(exec) $(lib_name) test
+all: prism $(exec) $(lib_name) $(static_lib_name) test
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -79,6 +84,9 @@ $(exec): $(objects)
 $(lib_name): $(objects)
 	$(cc) -shared $(objects) $(shared_flags) $(ldflags) $(prism_ldflags) -o $(lib_name)
 	# cp $(lib_name) $(ruby_extension)
+
+$(static_lib_name): $(objects)
+	ar rcs $(static_lib_name) $(objects)
 
 %.o: %.c include/%.h
 	$(cc) -c $(flags) $< -o $@
@@ -90,7 +98,7 @@ test: $(test_objects) $(non_main_objects)
 	$(cc) $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
 
 clean:
-	rm -f $(exec) $(test_exec) $(lib_name) $(ruby_extension)
+	rm -f $(exec) $(test_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
 
