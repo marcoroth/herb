@@ -93,3 +93,6 @@ src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
 src/include/errors.h
+
+# NX Monorepo
+.nx/

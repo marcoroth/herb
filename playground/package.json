@@ -1,5 +1,5 @@
 {
-  "name": "stimulus-parser-playground",
+  "name": "@herb-tools/playground",
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development node server.dev.mjs",
