@@ -16,16 +16,19 @@ describe("@herb-tools/node", () => {
       "extractRuby",
       "extractHtml",
       "version",
-      "backend",
     ]
 
-    for (const func of expectedFunctions) {
-      expect(typeof Herb[func]).toBe("function")
+    for (const expectedFunction of expectedFunctions) {
+      if (["version"].includes(expectedFunction)) {
+        expect(typeof Herb[expectedFunction]).toBe("string")
+      } else {
+        expect(typeof Herb[expectedFunction]).toBe("function")
+      }
     }
   })
 
   test("version() returns a string", () => {
-    const version = Herb.version()
+    const version = Herb.version
     expect(typeof version).toBe("string")
     expect(version.length).toBeGreaterThan(0)
   })
@@ -34,6 +37,10 @@ describe("@herb-tools/node", () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
     const result = Herb.parse(simpleHtml)
     expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.source).toBeDefined()
+    expect(result.errors).toHaveLength(0)
+    expect(result.warnings).toHaveLength(0)
   })
 
   test("extractRuby() extracts embedded Ruby code", () => {

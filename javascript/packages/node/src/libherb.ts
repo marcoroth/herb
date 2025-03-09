@@ -32,11 +32,11 @@ export function createBackend(libHerbBinary: any): LibHerbBackend {
       return libHerbBinary.extractHtml(source)
     },
 
-    version: () => {
+    version: (): string => {
       return libHerbBinary.version()
     },
 
-    backend: () => {
+    backend: (): string => {
       return `${packageJSON.name}@${packageJSON.version}`
     },
   }
