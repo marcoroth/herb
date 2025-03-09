@@ -23,6 +23,23 @@ jobs:
           node-version: 20
           cache: "yarn"
 
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: bundle install
+        run: bundle install
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
       - run: yarn install --frozen-lockfile
       - uses: nrwl/nx-set-shas@v4
 
