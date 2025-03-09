@@ -7,7 +7,7 @@ export class Position {
   readonly line: number
   readonly column: number
 
-  static fromSerialized(position: SerializedPosition) {
+  static from(position: SerializedPosition) {
     return new Position(position.line, position.column)
   }
 

@@ -10,9 +10,9 @@ export class Location {
   readonly start: Position
   readonly end: Position
 
-  static fromSerialized(location: SerializedLocation) {
-    const start = Position.fromSerialized(location.start)
-    const end = Position.fromSerialized(location.end)
+  static from(location: SerializedLocation) {
+    const start = Position.from(location.start)
+    const end = Position.from(location.end)
 
     return new Location(start, end)
   }
@@ -34,11 +34,11 @@ export class Location {
   }
 
   treeInspect(): string {
-    return `(location: ${this.start.treeInspect()}:${this.end.treeInspect()})`
+    return `${this.start.treeInspect()}:${this.end.treeInspect()}`
   }
 
   inspect(): string {
-    return `#<Position ${this.treeInspect()}>`
+    return `#<Location ${this.treeInspect()}>`
   }
 
   toString(): string {

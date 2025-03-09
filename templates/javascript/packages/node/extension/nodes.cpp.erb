@@ -1,0 +1,117 @@
+#include <node_api.h>
+#include "error_helpers.h"
+#include "extension_helpers.h"
+#include "nodes.h"
+
+extern "C" {
+#include "../../src/include/herb.h"
+#include "../../src/include/token.h"
+#include "../../src/include/array.h"
+#include "../../src/include/ast_node.h"
+#include "../../src/include/ast_nodes.h"
+}
+
+napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
+napi_value NodesArrayFromCArray(napi_env env, array_T* array);
+napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
+
+<%- nodes.each do |node| -%>
+napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>) {
+  if (!<%= node.human %>) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
+  napi_value result;
+  napi_create_object(env, &result);
+
+  napi_value type = CreateString(env, ast_node_type_to_string(&<%= node.human %>->base));
+  napi_set_named_property(env, result, "type", type);
+
+  napi_value location = CreateLocation(env, <%= node.human %>->base.location);
+  napi_set_named_property(env, result, "location", location);
+
+  napi_value errors = ErrorsArrayFromCArray(env, <%= node.human %>->base.errors);
+  napi_set_named_property(env, result, "errors", errors);
+
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  napi_value <%= field.name %> = CreateString(env, <%= node.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::NodeField -%>
+  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::TokenField -%>
+  napi_value <%= field.name %> = CreateToken(env, <%= node.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::BooleanField -%>
+  napi_value <%= field.name %>;
+  napi_get_boolean(env, <%= node.human %>-><%= field.name %>, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::ArrayField -%>
+  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- else -%>
+  napi_value <%= field.name %>;
+  napi_get_null(env, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- end -%>
+  <%- end -%>
+
+  return result;
+}
+<%- end -%>
+
+napi_value NodesArrayFromCArray(napi_env env, array_T* array) {
+  napi_value result;
+  napi_create_array(env, &result);
+
+  if (array) {
+    for (size_t i = 0; i < array_size(array); i++) {
+      AST_NODE_T* child_node = (AST_NODE_T*) array_get(array, i);
+      if (child_node) {
+        napi_value js_child = NodeFromCStruct(env, child_node);
+        napi_set_element(env, result, i, js_child);
+      }
+    }
+  }
+
+  return result;
+}
+
+napi_value ErrorsArrayFromCArray(napi_env env, array_T* array) {
+  napi_value result;
+  napi_create_array(env, &result);
+
+  // TODO: implement
+
+  return result;
+}
+
+napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node) {
+  if (!node) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
+  switch (node->type) {
+  <%- nodes.each do |node| -%>
+    case <%= node.type %>:
+      return <%= node.human %>NodeFromCStruct(env, (<%= node.struct_type %>*) node);
+      break;
+  <%- end -%>
+    default:
+      napi_value null_value;
+      napi_get_null(env, &null_value);
+      return null_value;
+  }
+}

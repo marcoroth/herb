@@ -1,13 +1,13 @@
-import type { ParseResult } from "./parse-result.js"
-import type { LexResult } from "./lex-result.js"
+import type { SerializedParseResult } from "./parse-result.js"
+import type { SerializedLexResult } from "./lex-result.js"
 
 interface LibHerbBackendFunctions {
-  lex: (source: string) => LexResult
-  lexFile: (path: string) => LexResult
+  lex: (source: string) => SerializedLexResult
+  lexFile: (path: string) => SerializedLexResult
   lexToJson: (source: string) => string
 
-  parse: (source: string) => ParseResult
-  parseFile: (path: string) => ParseResult
+  parse: (source: string) => SerializedParseResult
+  parseFile: (path: string) => SerializedParseResult
 
   extractRuby: (source: string) => string
   extractHtml: (source: string) => string

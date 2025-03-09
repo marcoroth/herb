@@ -5,8 +5,8 @@ import { isLibHerbBackend } from "./backend.js"
 import packageJSON from "../package.json" with { type: "json" }
 
 import type { LibHerbBackend } from "./backend.js"
-import type { LexResult } from "./lex-result.js"
-import type { ParseResult } from "./parse-result.js"
+import { LexResult } from "./lex-result.js"
+import { ParseResult } from "./parse-result.js"
 
 export class Herb {
   readonly backend: LibHerbBackend
@@ -24,11 +24,11 @@ export class Herb {
   }
 
   lex(source: string): LexResult {
-    return this.backend.lex(ensureString(source))
+    return LexResult.from(this.backend.lex(ensureString(source)))
   }
 
   async lexFile(path: string): Promise<LexResult> {
-    return this.backend.lexFile(ensureString(path))
+    return LexResult.from(this.backend.lexFile(ensureString(path)))
   }
 
   lexToJson(source: string): object {
@@ -36,11 +36,11 @@ export class Herb {
   }
 
   parse(source: string): ParseResult {
-    return this.backend.parse(ensureString(source))
+    return ParseResult.from(this.backend.parse(ensureString(source)))
   }
 
   async parseFile(path: string): Promise<ParseResult> {
-    return this.backend.parseFile(ensureString(path))
+    return ParseResult.from(this.backend.parseFile(ensureString(path)))
   }
 
   extractRuby(source: string): string {

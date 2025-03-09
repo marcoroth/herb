@@ -85,6 +85,9 @@ ext/herb/error_helpers.c
 ext/herb/error_helpers.h
 ext/herb/nodes.c
 ext/herb/nodes.h
+javascript/packages/core/src/nodes.ts
+javascript/packages/node/extension/nodes.cpp
+javascript/packages/node/extension/nodes.h
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 src/ast_nodes.c

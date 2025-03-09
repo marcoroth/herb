@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "main": "./dist/herb-core.esm.js",
+  "main": "./dist/herb-core.cjs",
   "module": "./dist/herb-core.esm.js",
   "types": "./dist/types/src/index.d.ts",
   "scripts": {
@@ -16,6 +16,7 @@
     ".": {
       "types": "./dist/types/src/index.d.ts",
       "import": "./dist/herb-core.esm.js",
+      "require": "./dist/herb-core.cjs",
       "default": "./dist/herb-core.esm.js"
     }
   },

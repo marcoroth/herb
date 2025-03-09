@@ -1,6 +1,12 @@
+export type SerializedRange = [number, number]
+
 export class Range {
   readonly start: number
   readonly end: number
+
+  static from(range: SerializedRange) {
+    return new Range(range[0], range[1])
+  }
 
   constructor(start: number, end: number) {
     this.start = start
@@ -16,7 +22,7 @@ export class Range {
   }
 
   treeInspect(): string {
-    return this.toArray().toString()
+    return `[${this.start}, ${this.end}]`
   }
 
   inspect(): string {

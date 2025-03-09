@@ -1,11 +1,24 @@
-import type { ASTNode } from "./ast.js"
+import { createNode } from "./nodes.js"
+import type { DocumentNode } from "./nodes.js"
 import { Result } from "./result.js"
 
+export type SerializedParseResult = {
+  value: any // TODO: should be SerializedNode or SerializedDocumentNode
+  source: string
+}
+
 export class ParseResult extends Result {
-  readonly value: ASTNode
+  readonly value: DocumentNode
+
+  static from(result: SerializedParseResult) {
+    return new ParseResult(
+      createNode(result.value) as DocumentNode,
+      result.source,
+    )
+  }
 
   constructor(
-    value: ASTNode,
+    value: DocumentNode,
     source: string,
     warnings: any[] = [],
     errors: any[] = [],

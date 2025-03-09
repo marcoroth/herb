@@ -22,6 +22,7 @@
         "../../../src/lexer.c",
         "../../../src/lexer_peek_helpers.c",
         "../../../src/location.c",
+        "../../../src/position.c",
         "../../../src/memory.c",
         "../../../src/parser.c",
         "../../../src/parser_helpers.c",

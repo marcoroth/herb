@@ -1,46 +1,54 @@
-import { Token } from "./token.js"
+import { Token, SerializedToken } from "./token.js"
+
+export type SerializedTokenList = SerializedToken[]
 
 export class TokenList implements Iterable<Token> {
-  private tokens: Token[]
+  private list: Token[]
 
-  constructor(tokens: Token[]) {
-    this.tokens = tokens
+  static from(list: SerializedTokenList) {
+    return new TokenList(
+      list.map((token: SerializedToken) => Token.from(token)),
+    )
+  }
+
+  constructor(list: Token[]) {
+    this.list = list
   }
 
   get length(): number {
-    return this.tokens.length
+    return this.list.length
   }
 
   [Symbol.iterator](): Iterator<Token> {
-    return this.tokens[Symbol.iterator]()
+    return this.list[Symbol.iterator]()
   }
 
   at(index: number): Token | undefined {
-    return this.tokens.at(index)
+    return this.list.at(index)
   }
 
   forEach(
     callback: (token: Token, index: number, array: Token[]) => void,
   ): void {
-    this.tokens.forEach(callback)
+    this.list.forEach(callback)
   }
 
   map<U>(callback: (token: Token, index: number, array: Token[]) => U): U[] {
-    return this.tokens.map(callback)
+    return this.list.map(callback)
   }
 
   filter(
     predicate: (token: Token, index: number, array: Token[]) => boolean,
   ): Token[] {
-    return this.tokens.filter(predicate)
+    return this.list.filter(predicate)
   }
 
   __getobj__(): Token[] {
-    return this.tokens
+    return this.list
   }
 
   inspect(): string {
-    return this.tokens.map((token) => token.inspect()).join("\n") + "\n"
+    return this.list.map((token) => token.inspect()).join("\n") + "\n"
   }
 
   toString(): string {

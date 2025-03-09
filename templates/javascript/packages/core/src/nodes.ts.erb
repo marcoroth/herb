@@ -1,0 +1,206 @@
+import { Location, SerializedLocation } from "./location.js"
+import { Position, SerializedPosition } from "./position.js"
+import { Token, SerializedToken } from "./token.js"
+
+export interface NodeError {
+  message: string;
+  location: Location;
+}
+
+export interface BaseNodeProps {
+  type: string;
+  location: Location;
+  errors: NodeError[];
+}
+
+export abstract class Node {
+  readonly type: string;
+  readonly location: Location;
+  readonly errors: NodeError[];
+
+  constructor(type: string, location: SerializedLocation, errors: NodeError[]) {
+    this.type = type;
+    this.location = Location.from(location);
+    this.errors = errors;
+  }
+
+  toJSON(): Record<string, any> {
+    return {
+      type: this.type,
+      location: this.location,
+      errors: this.errors
+    };
+  }
+
+  inspect(): string {
+    return this.treeInspect(0)
+  }
+
+  abstract treeInspect(indent?: number): string;
+
+  protected inspectErrors(options: { prefix: string } = { prefix: "" }): string {
+    if (!this.errors || this.errors.length === 0) return "";
+
+    let output = "";
+    this.errors.forEach((error, index) => {
+      const isLast = index === this.errors.length - 1;
+      const symbol = isLast ? "└──" : "├──";
+      output += `${options.prefix}${symbol} error: ${error.message}\n`;
+    });
+
+    return output;
+  }
+
+  protected inspectArray(
+    array: any[] | null | undefined,
+    options: { prefix: string } = { prefix: "" }
+  ): string {
+    if (!array || array.length === 0) return "∅\n";
+
+    let output = "\n";
+    array.forEach((item, index) => {
+      const isLast = index === array.length - 1;
+      const symbol = isLast ? "└──" : "├──";
+
+      if (item instanceof Node) {
+        output += `${options.prefix}${symbol} \n`;
+        const childPrefix = isLast ? "    " : "│   ";
+        output += item.treeInspect(1).replace(/^/gm, options.prefix + childPrefix).trimStart();
+      } else {
+        output += `${options.prefix}${symbol} ${item}\n`;
+      }
+    });
+
+    return output;
+  }
+}
+
+<%- nodes.each do |node| -%>
+export interface <%= node.name %>Props extends BaseNodeProps {
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  <%= field.name %>: string;
+  <%- when Herb::Template::TokenField -%>
+  <%= field.name %>: SerializedToken | null;
+  <%- when Herb::Template::BooleanField -%>
+  <%= field.name %>: boolean;
+  <%- when Herb::Template::NodeField -%>
+  <%= field.name %>: Node | null;
+  <%- when Herb::Template::ArrayField -%>
+  <%= field.name %>: Node[];
+  <%- else -%>
+  <%= field.name %>: any; // <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+}
+
+export class <%= node.name %> extends Node {
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  readonly <%= field.name %>: string;
+  <%- when Herb::Template::TokenField -%>
+  readonly <%= field.name %>: Token | null;
+  <%- when Herb::Template::BooleanField -%>
+  readonly <%= field.name %>: boolean;
+  <%- when Herb::Template::NodeField -%>
+  readonly <%= field.name %>: Node | null;
+  <%- when Herb::Template::ArrayField -%>
+  readonly <%= field.name %>: Node[];
+  <%- else -%>
+  readonly <%= field.name %>: any;
+  <%- end -%>
+  <%- end -%>
+
+  constructor(props: <%= node.name %>Props) {
+    super(props.type, props.location, props.errors);
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::ArrayField -%>
+    this.<%= field.name %> = props.<%= field.name %>.map(node => createNode(node));
+    <%- when Herb::Template::TokenField -%>
+    this.<%= field.name %> = (props.<%= field.name %>) ? Token.from(props.<%= field.name %>) : null;
+    <%- when Herb::Template::NodeField -%>
+
+    console.log("Node", props.<%= field.name %>)
+    // this.<%= field.name %> = createNode(props.<%= field.name %> as any); // TODO: fix any (should probably be SerializedNode)
+    this.<%= field.name %> = null
+    <%- else -%>
+    this.<%= field.name %> = props.<%= field.name %>;
+    <%- end -%>
+    <%- end -%>
+  }
+
+  toJSON(): Record<string, any> {
+    return {
+      ...super.toJSON(),
+      <%- node.fields.each do |field| -%>
+      <%= field.name %>: this.<%= field.name %>,
+      <%- end -%>
+    };
+  }
+
+  treeInspect(indent = 0): string {
+    let output = "";
+    output += `@ <%= node.name %> ${this.location.treeInspect()}\n`;
+    output += this.inspectErrors({ prefix: "<%= node.fields.any? ? "│   " : "    " %>" });
+
+    <%- node.fields.each do |field| -%>
+    <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
+    <%- name = "#{symbol} #{field.name}: " -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField -%>
+    output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
+    <%- when Herb::Template::TokenField -%>
+    output += "<%= name %>";
+    output += this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅";
+    output += "\n";
+    <%- when Herb::Template::BooleanField -%>
+    output += "<%= name %>";
+    output += typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅";
+    output += "\n";
+    <%- when Herb::Template::NodeField -%>
+    output += "<%= name %>";
+    if (this.<%= field.name %>) {
+      <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
+      output += "\n";
+      <%- if (node.fields.last == field) -%>
+      output += "    └── ";
+      <%- else -%>
+      output += "│   └── ";
+      <%- end -%>
+      const childOutput = this.<%= field.name %>.treeInspect(indent + 1);
+      output += childOutput.replace(/^/gm, "    ".repeat(indent + 1)).trimStart().replace(/^/gm, "<%= prefix %>").replace(new RegExp(`^<%= prefix %>`), "");
+    } else {
+      output += "∅\n";
+    }
+    <%- when Herb::Template::ArrayField -%>
+    output += "<%= name %>";
+    output += this.inspectArray(this.<%= field.name %>, { prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>" });
+    <%- else -%>
+    output += `<%= name %> ${this.<%= field.name %>}\n`;
+    <%- end -%>
+    <%- end -%>
+
+    output += "\n";
+    return output.replace(/^/gm, "    ".repeat(indent));
+  }
+}
+<%- end -%>
+
+export function createNode(data: Record<string, any>): Node {
+  switch (data.type) {
+    <%- nodes.each do |node| -%>
+    case "<%= node.type %>":
+      return new <%= node.name %>(data as <%= node.name %>Props);
+    <%- end -%>
+    default:
+      throw new Error(`Unknown node type: ${data.type}`);
+  }
+}
+
+export function parseJSON(json: string): Node {
+  const data = JSON.parse(json);
+  return createNode(data);
+}
