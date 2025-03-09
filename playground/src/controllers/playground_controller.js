@@ -15,6 +15,11 @@ import LightEditor from 'light-pen/exports/components/light-editor/light-editor.
 import { loader as ERBLoader } from 'prism-esm/components/prism-erb.js'
 LightEditor.define()
 
+import { Herb } from "@herb-tools/browser";
+
+window.Herb = Herb;
+
+
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
 
@@ -43,7 +48,13 @@ const exampleFile = dedent`
 `
 
 export default class extends Controller {
-  static targets = ['input', 'simpleViewer', 'fullViewer', 'viewerButton']
+  static targets = [
+    "input",
+    "simpleViewer",
+    "fullViewer",
+    "viewerButton",
+    "version",
+  ]
 
   connect () {
     this.restoreInput()
@@ -55,6 +66,10 @@ export default class extends Controller {
 
     this.inputTarget.setAttribute('language', 'erb')
     this.inputTarget.requestUpdate('highlighter')
+
+    if (this.hasVersionTarget) {
+      this.versionTarget.textContent = Herb.version;
+    }
   }
 
   updateURL () {
@@ -124,60 +139,64 @@ export default class extends Controller {
     }
   }
 
-  async analyze () {
-    this.updateURL()
+  async analyze() {
+    this.updateURL();
 
     if (this.timeout) {
-      clearTimeout(this.timeout)
+      clearTimeout(this.timeout);
     }
 
     this.timeout = setTimeout(() => {
-      this.simpleViewerTarget.textContent = '...'
-    }, 2000)
+      this.simpleViewerTarget.textContent = "...";
+    }, 2000);
 
-    let response
-    let json
+    let result;
 
     try {
-      response = await fetch('/api/analyze', {
-        method: 'POST',
-        body: this.inputTarget.value
-      })
+      result = Herb.parse(this.inputTarget.value);
     } catch (error) {
-      this.simpleViewerTarget.data = { error, message: error.message }
-      this.fullViewerTarget.data = { error, message: error.message }
-      return
+      this.simpleViewerTarget.data = { error, message: error.message };
+      this.fullViewerTarget.data = { error, message: error.message };
+      return;
     }
 
-    clearTimeout(this.timeout)
+    clearTimeout(this.timeout);
 
-    if (response.ok) {
+    if (result) {
       try {
-        json = await response.json()
-
         if (this.hasSimpleViewerTarget) {
-          this.simpleViewerTarget.classList.add('language-tree')
-          this.simpleViewerTarget.textContent = json.string
+          this.simpleViewerTarget.classList.add("language-tree");
+          this.simpleViewerTarget.textContent = result.source;
 
-          Prism.highlightElement(this.simpleViewerTarget)
+          Prism.highlightElement(this.simpleViewerTarget);
         }
 
         if (this.hasFullViewerTarget) {
-          const isEmpty = !this.fullViewerTarget.data
+          const isEmpty = !this.fullViewerTarget.data;
 
-          this.fullViewerTarget.data = { ast: json.ast }
+          this.fullViewerTarget.data = { ast: json.ast };
 
           if (isEmpty) {
-            this.fullViewerTarget.expand('ast')
+            this.fullViewerTarget.expand("ast");
           }
         }
       } catch (error) {
-        this.simpleViewerTarget.data = { error: "Server didn't return JSON", response: error.message }
-        this.fullViewerTarget.data = { error: "Server didn't return JSON", response: error.message }
+        this.simpleViewerTarget.data = {
+          error: "Server didn't return JSON",
+          response: error.message,
+        };
+        this.fullViewerTarget.data = {
+          error: "Server didn't return JSON",
+          response: error.message,
+        };
       }
     } else {
-      this.simpleViewerTarget.data = { error: "Server didn't respond with a 200 response" }
-      this.fullViewerTarget.data = { error: "Server didn't respond with a 200 response" }
+      this.simpleViewerTarget.data = {
+        error: "Server didn't respond with a 200 response",
+      };
+      this.fullViewerTarget.data = {
+        error: "Server didn't respond with a 200 response",
+      };
     }
   }
 

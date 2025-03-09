@@ -1,7 +1,7 @@
 {
   "name": "playground",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "playground/src",
+  "sourceRoot": "playground",
   "projectType": "application",
   "targets": {
     "dev": {

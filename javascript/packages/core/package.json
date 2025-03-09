@@ -1,0 +1,28 @@
+{
+  "name": "@herb-tools/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/herb-core.esm.js",
+  "module": "./dist/herb-core.esm.js",
+  "types": "./dist/types/src/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && tsc -p tsconfig.json && node bin/build.js",
+    "clean": "rimraf dist",
+    "test": "vitest run"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/herb-core.esm.js",
+      "default": "./dist/herb-core.esm.js"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "vitest": "^3.0.0",
+    "typescript": "^5.8.2"
+  }
+}

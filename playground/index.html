@@ -13,15 +13,22 @@
   <script type="module" src="/src/entry-client.ts"></script>
 
   <div class="w-full md:max-h-[100vh] overflow-hidden">
-    <nav class="mx-auto flex items-center justify-between p-4 px-8 border">
+    <nav class="mx-auto flex items-center justify-between p-1 px-8 border">
       <div class="flex flex-1">
         <div class="h-8 w-auto text-xl font-medium">
           🌿 Herb
         </div>
       </div>
 
-      <div class="flex lg:gap-x-12">
-        <div class="inline-flex items-center px-1 pt-1 text-lg font-medium text-gray-900">Playground</div>
+      <div class="flex">
+        <div class="text-center text-lg font-medium text-gray-900">
+          Playground
+
+          <div
+            data-playground-target="version"
+            class="text-gray-400 text-[8pt] hidden md:block"
+          ></div>
+        </div>
       </div>
 
       <div class="hidden lg:flex lg:flex-1 lg:justify-end">

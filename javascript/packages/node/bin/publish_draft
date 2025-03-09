@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+bin/build_extension
+
+yarn node-pre-gyp-github publish

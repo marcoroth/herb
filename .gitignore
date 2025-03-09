@@ -96,3 +96,5 @@ src/include/errors.h
 
 # NX Monorepo
 .nx/
+.nx/cache
+.nx/workspace-data

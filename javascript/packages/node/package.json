@@ -1,0 +1,46 @@
+{
+  "name": "@herb-tools/node",
+  "version": "0.0.1",
+  "type": "module",
+  "gypfile": true,
+  "main": "./dist/herb-node.esm.js",
+  "module": "./dist/herb-node.esm.js",
+  "types": "./dist/types/src/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/src/index.d.ts",
+      "import": "./dist/herb-node.esm.js",
+      "default": "./dist/herb-node.esm.js"
+    }
+  },
+  "scripts": {
+    "install": "node-pre-gyp install --fallback-to-build && tsc -p tsconfig.json && node bin/build.js",
+    "build": "yarn rebuild",
+    "rebuild": "yarn clean && node-pre-gyp rebuild && tsc -p tsconfig.json && node bin/build.js",
+    "configure": "node-pre-gyp configure",
+    "package": "node-pre-gyp package",
+    "clean": "node-pre-gyp clean && rimraf dist && rimraf build",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "yarn test"
+  },
+  "binary": {
+    "module_name": "herb",
+    "module_path": "./build/{configuration}/{node_abi}-{platform}-{arch}/",
+    "remote_path": "{version}",
+    "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}.tar.gz",
+    "host": "https://github.com/marcoroth/herb/releases/download/"
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.0.1",
+    "@mapbox/node-pre-gyp": "^2.0.0",
+    "node-addon-api": "^5.1.0"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "node-pre-gyp-github": "^2.0.0",
+    "vitest": "^3.0.0",
+    "typescript": "^5.8.2"
+  }
+}

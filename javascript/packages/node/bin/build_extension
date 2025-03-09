@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+yarn node-pre-gyp configure
+yarn node-pre-gyp build
+yarn node-pre-gyp package

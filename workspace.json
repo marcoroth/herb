@@ -1,6 +1,9 @@
 {
   "version": 2,
   "projects": {
+    "@herb-tools/browser": "javascript/packages/browser",
+    "@herb-tools/core": "javascript/packages/core",
+    "@herb-tools/node": "javascript/packages/node",
     "docs": "./docs",
     "playground": "./playground"
   }

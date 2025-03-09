@@ -1,5 +1,7 @@
 {
   "name": "@herb-tools/playground",
+  "version": "0.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "cross-env NODE_ENV=development node server.dev.mjs",
@@ -17,7 +19,8 @@
     "light-pen": "^4.2.3",
     "lz-string": "^1.5.0",
     "prism-esm": "^1.29.0-fix.6",
-    "prismjs": "^1.29.0"
+    "prismjs": "^1.29.0",
+    "@herb-tools/browser": "^0.0.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
