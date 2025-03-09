@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build && tsc -p tsconfig.json && node bin/build.js",
+    "install": "node-pre-gyp install --fallback-to-build",
     "build": "yarn rebuild",
     "rebuild": "yarn clean && node-pre-gyp rebuild && tsc -p tsconfig.json && node bin/build.js",
     "configure": "node-pre-gyp configure",
