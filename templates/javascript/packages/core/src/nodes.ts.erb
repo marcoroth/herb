@@ -123,7 +123,6 @@ export class <%= node.name %> extends Node {
     this.<%= field.name %> = (props.<%= field.name %>) ? Token.from(props.<%= field.name %>) : null;
     <%- when Herb::Template::NodeField -%>
 
-    console.log("Node", props.<%= field.name %>)
     // this.<%= field.name %> = createNode(props.<%= field.name %> as any); // TODO: fix any (should probably be SerializedNode)
     this.<%= field.name %> = null
     <%- else -%>

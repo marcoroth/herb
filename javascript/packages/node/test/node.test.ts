@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest"
-import { Herb } from "@herb-tools/node"
+import { Herb } from "../src/index-esm.mjs"
 
 describe("@herb-tools/node", () => {
   test("loads the native extension successfully", () => {
