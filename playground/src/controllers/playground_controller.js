@@ -15,9 +15,9 @@ import LightEditor from 'light-pen/exports/components/light-editor/light-editor.
 import { loader as ERBLoader } from 'prism-esm/components/prism-erb.js'
 LightEditor.define()
 
-// import { Herb } from "@herb-tools/browser";
+import { Herb } from "@herb-tools/browser";
 
-// window.Herb = Herb;
+window.Herb = Herb;
 
 
 const exampleFile = dedent`

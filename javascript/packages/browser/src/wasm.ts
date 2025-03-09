@@ -1,9 +1,15 @@
-import { ParseResult, LexResult, ASTNode } from "@herb-tools/core"
+import type { SerializedLexResult } from "@herb-tools/core"
 
 // TODO: this is just a stub, replace me with an actual WASM binary
 class WASMBinary {
   static lex(source: string) {
-    return new LexResult([], source)
+    const result: SerializedLexResult = {
+      tokens: [],
+      source: source,
+      warnings: [],
+      errors: [],
+    }
+    return result
   }
 
   static lexToJson(_source: string) {
@@ -11,7 +17,17 @@ class WASMBinary {
   }
 
   static parse(source: string) {
-    return new ParseResult(new ASTNode(), source, [], [])
+    return {
+      value: {
+        type: "AST_DOCUMENT_NODE",
+        location: {
+          start: { line: 1, column: 1 },
+          end: { line: 1, column: 1 },
+        },
+        children: [],
+      },
+      source: source,
+    }
   }
 
   static extractRuby(source: string) {
