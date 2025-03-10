@@ -4,6 +4,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 static bool herb_prism_visit(const pm_node_t* node, void* data) {
   const size_t* indent = (size_t*) data;
 

@@ -13,6 +13,10 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 void print_time_diff(const struct timespec start, const struct timespec end, const char* verb) {
   const double seconds = (double) end.tv_sec - (double) start.tv_sec;
   const double nanoseconds = (double) end.tv_nsec - (double) start.tv_nsec;

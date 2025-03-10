@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #define FILE_READ_CHUNK 4096
 
 char* herb_read_file(const char* filename) {

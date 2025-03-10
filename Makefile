@@ -7,7 +7,7 @@ objects = $(sources:.c=.o)
 
 extension_sources = $(wildcard ext/**/*.c)
 extension_headers = $(wildcard ext/**/*.h)
-extension_objects = $(wildcard ext/**/*.o)
+extension_objects = $(extension_sources:.o)
 
 prism_objects = $(filter-out src/main.c, $(sources))
 
@@ -58,6 +58,9 @@ test_flags = $(debug_flags) $(prism_flags) -std=gnu99
 # Shared library build (if needed)
 shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
 
+# Emscripten-specific flags
+emscripten_flags = -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME="libherb" -s EXPORTED_FUNCTIONS="['_herb_lex', '_herb_parse', '_herb_version']" -s EXTRA_EXPORTED_RUNTIME_METHODS='["cwrap"]'
+
 ifeq ($(os),Linux)
   test_cflags = $(test_flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags)
@@ -76,7 +79,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: prism $(exec) $(lib_name) $(static_lib_name) test
+all: prism $(exec) $(lib_name) $(static_lib_name) test wasm
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -116,3 +119,6 @@ lint:
 
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
+
+wasm: $(objects)
+	emcc $(objects) $(emscripten_flags) -o libherb.js

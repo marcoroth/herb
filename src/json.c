@@ -1,6 +1,10 @@
 #include "include/json.h"
 #include "include/buffer.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 void json_escape_string(buffer_T* json, const char* string) {
   if (!string) {
     buffer_append(json, "null");

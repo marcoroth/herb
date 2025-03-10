@@ -3,51 +3,31 @@ import type {
   SerializedParseResult,
 } from "@herb-tools/core"
 
-// TODO: this is just a stub, replace me with an actual WASM binary
+import libherb from "./libherb.js"
+
 class WASMBinary {
   static lex(source: string) {
-    const result: SerializedLexResult = {
-      tokens: [],
-      source: source,
-      warnings: [],
-      errors: [],
-    }
-    return result
+    return libherb.cwrap("herb_lex", "string", ["string"])(source)
   }
 
-  static lexToJson(_source: string) {
-    return "{}"
+  static lexToJson(source: string) {
+    return libherb.cwrap("herb_lex_json", "string", ["string"])(source)
   }
 
   static parse(source: string) {
-    const result: SerializedParseResult = {
-      value: {
-        type: "AST_DOCUMENT_NODE",
-        location: {
-          start: { line: 1, column: 1 },
-          end: { line: 1, column: 1 },
-        },
-        children: [],
-        errors: [],
-      },
-      source: source,
-      warnings: [],
-      errors: [],
-    }
-
-    return result
+    return libherb.cwrap("herb_parse", "string", ["string"])(source)
   }
 
   static extractRuby(source: string) {
-    return source
+    return libherb.cwrap("herb_extract_ruby", "string", ["string"])(source)
   }
 
   static extractHtml(source: string) {
-    return source
+    return libherb.cwrap("herb_extract_html", "string", ["string"])(source)
   }
 
   static version() {
-    return "libherb@0.0.1 (wasm)"
+    return libherb.cwrap("herb_version", "string", [])()
   }
 }
 

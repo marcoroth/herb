@@ -10,6 +10,10 @@
 
 #include <stdlib.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 array_T* herb_lex(char* source) {
   lexer_T* lexer = lexer_init(source);
   token_T* token = NULL;

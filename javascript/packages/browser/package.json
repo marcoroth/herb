@@ -6,7 +6,7 @@
   "module": "./dist/herb-browser.esm.js",
   "types": "./dist/types/src/index.d.ts",
   "scripts": {
-    "build": "yarn clean && tsc -p tsconfig.json && node bin/build.js",
+    "build": "yarn clean && tsc -p tsconfig.json && node bin/build.js && emcc src/herb.c -o dist/libherb.js -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME=\"libherb\" -s EXPORTED_FUNCTIONS=\"['_herb_lex', '_herb_parse', '_herb_version']\" -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"cwrap\"]'",
     "clean": "rimraf dist",
     "test": "vitest run"
   },
