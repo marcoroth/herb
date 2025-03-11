@@ -7,7 +7,7 @@
     "build": "vite build",
     "dev": "vite dev",
     "preview": " vite preview",
-    "serve": "vite serve"
+    "serve": "vite serve --host"
   },
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
