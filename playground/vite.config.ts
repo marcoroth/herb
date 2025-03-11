@@ -8,7 +8,8 @@ import type { Request, Response } from "express"
 
 export default defineConfig({
   server: {
-    port: process.env.PORT ? parseInt(process.env.PORT) : 3000
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    allowedHosts: ["playground.herb-tools.dev"],
   },
   plugins: [
     {
