@@ -35,8 +35,8 @@ export class Herb {
    * @param source - The source code to lex.
    * @returns A `LexResult` instance.
    */
-  lex(source: string): LexResult {
-    return LexResult.from(this.backend.lex(ensureString(source)))
+  async lex(source: string): Promise<LexResult> {
+    return LexResult.from(await this.backend.lex(ensureString(source)))
   }
 
   /**
@@ -45,7 +45,7 @@ export class Herb {
    * @returns A promise resolving to a `LexResult` instance.
    */
   async lexFile(path: string): Promise<LexResult> {
-    return LexResult.from(this.backend.lexFile(ensureString(path)))
+    return LexResult.from(await this.backend.lexFile(ensureString(path)))
   }
 
   /**
@@ -53,8 +53,8 @@ export class Herb {
    * @param source - The source code to lex.
    * @returns A parsed JSON object representing the lex result.
    */
-  lexToJson(source: string): object {
-    return JSON.parse(this.backend.lexToJson(ensureString(source)))
+  async lexToJson(source: string): Promise<object> {
+    return JSON.parse(await this.backend.lexToJson(ensureString(source)))
   }
 
   /**
@@ -62,8 +62,8 @@ export class Herb {
    * @param source - The source code to parse.
    * @returns A `ParseResult` instance.
    */
-  parse(source: string): ParseResult {
-    return ParseResult.from(this.backend.parse(ensureString(source)))
+  async parse(source: string): Promise<ParseResult> {
+    return ParseResult.from(await this.backend.parse(ensureString(source)))
   }
 
   /**
@@ -72,7 +72,7 @@ export class Herb {
    * @returns A promise resolving to a `ParseResult` instance.
    */
   async parseFile(path: string): Promise<ParseResult> {
-    return ParseResult.from(this.backend.parseFile(ensureString(path)))
+    return ParseResult.from(await this.backend.parseFile(ensureString(path)))
   }
 
   /**
@@ -80,8 +80,8 @@ export class Herb {
    * @param source - The source code to extract Ruby from.
    * @returns The extracted Ruby code as a string.
    */
-  extractRuby(source: string): string {
-    return this.backend.extractRuby(ensureString(source))
+  async extractRuby(source: string): Promise<string> {
+    return await this.backend.extractRuby(ensureString(source))
   }
 
   /**
@@ -89,18 +89,18 @@ export class Herb {
    * @param source - The source code to extract HTML from.
    * @returns The extracted HTML as a string.
    */
-  extractHtml(source: string): string {
-    return this.backend.extractHtml(ensureString(source))
+  async extractHtml(source: string): Promise<string> {
+    return await this.backend.extractHtml(ensureString(source))
   }
 
   /**
    * Gets the Herb version information, including the core and backend versions.
    * @returns A version string containing backend, core, and libherb versions.
    */
-  get version(): string {
+  async version(): Promise<string> {
     const backend = this.backend.backend()
     const core = `${packageJSON.name}@${packageJSON.version}`
-    const libherb = this.backend.version()
+    const libherb = await this.backend.version()
 
     return `${backend}, ${core}, ${libherb}`
   }

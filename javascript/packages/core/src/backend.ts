@@ -2,17 +2,17 @@ import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
 
 interface LibHerbBackendFunctions {
-  lex: (source: string) => SerializedLexResult
-  lexFile: (path: string) => SerializedLexResult
-  lexToJson: (source: string) => string
+  lex: (source: string) => Promise<SerializedLexResult>
+  lexFile: (path: string) => Promise<SerializedLexResult>
+  lexToJson: (source: string) => Promise<string>
 
-  parse: (source: string) => SerializedParseResult
-  parseFile: (path: string) => SerializedParseResult
+  parse: (source: string) => Promise<SerializedParseResult>
+  parseFile: (path: string) => Promise<SerializedParseResult>
 
-  extractRuby: (source: string) => string
-  extractHtml: (source: string) => string
+  extractRuby: (source: string) => Promise<string>
+  extractHtml: (source: string) => Promise<string>
 
-  version: () => string
+  version: () => Promise<string>
   backend: () => string
 }
 
