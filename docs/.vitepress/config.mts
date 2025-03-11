@@ -43,8 +43,8 @@ const themeConfig = {
   // https://vitepress.dev/reference/default-theme-config
   nav: [
     { text: "Home", link: "/" },
-    { text: "Specification", link: "/specification" },
-    { text: "Language Bindings", link: "/bindings/ruby/" },
+    { text: "Documentation", link: "/bindings/ruby/" },
+    { text: "Playground", link: "https://playground.herb-tools.dev" },
   ],
 
   search: {
