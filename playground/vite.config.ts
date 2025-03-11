@@ -7,6 +7,9 @@ import { analyze } from "./src/analyze"
 import type { Request, Response } from "express"
 
 export default defineConfig({
+  server: {
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3000
+  },
   plugins: [
     {
       name: "api-server",
