@@ -6,11 +6,11 @@
   "gypfile": true,
   "main": "./dist/herb-node.cjs",
   "module": "./dist/herb-node.esm.js",
-  "types": "./dist/types/src/index-esm.d.mts",
+  "types": "./dist/types/index-esm.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/src/index-esm.d.mts",
+      "types": "./dist/types/index-esm.d.ts",
       "import": "./dist/herb-node.esm.js",
       "require": "./dist/herb-node.cjs",
       "default": "./dist/herb-node.esm.js"
@@ -18,16 +18,17 @@
   },
   "scripts": {
     "install": "yarn libherb:vendor && node-pre-gyp install --fallback-to-build",
+    "dev": "rollup -c -w",
     "build": "yarn rebuild",
-    "build:javascript": "tsc -p tsconfig.json && node bin/build.js",
+    "build:javascript": "rollup -c",
     "libherb:vendor": "yarn clean && rake templates && cp -r ../../../src ./extension/libherb",
     "rebuild": "yarn clean && yarn libherb:vendor && node-pre-gyp rebuild && yarn build:javascript",
     "configure": "node-pre-gyp configure",
     "package": "node-pre-gyp package",
-    "clean": "node-pre-gyp clean && rimraf dist/ && rimraf src/herb/ && rimraf build/",
+    "clean": "node-pre-gyp clean && rimraf dist/ && rimraf extension/libherb/ && rimraf build/",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "prepublishOnly": "yarn build && yarn test"
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "binary": {
     "module_name": "herb",
@@ -41,11 +42,16 @@
     "@mapbox/node-pre-gyp": "^2.0.0"
   },
   "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
     "node-addon-api": "^5.1.0",
-    "rimraf": "^6.0.1",
     "node-pre-gyp-github": "^2.0.0",
-    "vitest": "^3.0.0",
-    "typescript": "^5.8.2"
+    "rimraf": "^6.0.1",
+    "rollup": "^4.35.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.0"
   },
   "files": [
     "package.json",

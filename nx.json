@@ -50,5 +50,8 @@
         "file": false
       }
     }
+  },
+  "affected": {
+    "defaultBase": "main"
   }
 }

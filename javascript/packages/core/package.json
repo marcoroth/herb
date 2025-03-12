@@ -5,17 +5,18 @@
   "license": "MIT",
   "main": "./dist/herb-core.cjs",
   "module": "./dist/herb-core.esm.js",
-  "types": "./dist/types/src/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && tsc -p tsconfig.json && node bin/build.js",
+    "build": "yarn clean && rollup -c",
+    "dev": "rollup -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
-    "prepublishOnly": "yarn build && yarn test"
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/src/index.d.ts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/herb-core.esm.js",
       "require": "./dist/herb-core.cjs",
       "default": "./dist/herb-core.esm.js"
@@ -23,9 +24,14 @@
   },
   "dependencies": {},
   "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
     "rimraf": "^6.0.1",
-    "vitest": "^3.0.0",
-    "typescript": "^5.8.2"
+    "rollup": "^4.35.0",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.0"
   },
   "files": [
     "package.json",

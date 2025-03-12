@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM"],
     "outDir": "./dist",
     "declaration": true,
@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "erasableSyntaxOnly": true
+    "sourceMap": true
   },
   "include": ["src/**/*", "types/**/*"],
   "exclude": ["node_modules", "dist", "build"]

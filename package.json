@@ -14,10 +14,13 @@
     "verdaccio": "^6.0.5"
   },
   "scripts": {
+    "dev": "nx run-many --target=dev --all --parallel",
+    "build": "nx run-many --target=build --all --parallel",
+    "test": "nx run-many --target=test --all --parallel",
+    "clean": "nx run-many --target=clean --all --parallel",
+    "playground": "nx run playground:dev",
     "docs": "nx dev docs",
-    "playground": "nx dev playground",
-    "build": "nx run-many --target=build",
-    "test": "nx run-many --target=test",
+    "watch:libs": "nx run-many --target=dev --projects=@herb-tools/browser,@herb-tools/core,@herb-tools/node --parallel",
     "lint": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --check",
     "format": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --write",
     "release": "tsx javascript/tools/scripts/release.ts",
