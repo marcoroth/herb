@@ -6,10 +6,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 #define LEXER_STALL_LIMIT 5
 
 static size_t lexer_sizeof(void) {

@@ -5,10 +5,6 @@
 #include "include/macros.h"
 #include "include/memory.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 size_t array_sizeof(void) {
   return sizeof(array_T);
 }

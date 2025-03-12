@@ -7,10 +7,6 @@
 #include "include/memory.h"
 #include "include/util.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;

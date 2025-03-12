@@ -1,9 +1,5 @@
 #include "include/range.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 size_t range_sizeof(void) {
   return sizeof(range_T);
 }

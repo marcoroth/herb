@@ -7,10 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }

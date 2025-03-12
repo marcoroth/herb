@@ -1,10 +1,8 @@
 #ifndef HERB_EXTENSION_NODES_H
 #define HERB_EXTENSION_NODES_H
 
-#include <node_api.h>
-
 extern "C" {
-#include "../extension/libherb/include/herb.h"
+#include "../src/include/herb.h"
 }
 
 emscripten::val NodeFromCStruct(AST_NODE_T* node);

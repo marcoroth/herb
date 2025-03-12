@@ -15,10 +15,6 @@
 #include <string.h>
 #include <strings.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 

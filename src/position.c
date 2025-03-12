@@ -1,10 +1,6 @@
 #include "include/position.h"
 #include "include/memory.h"
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 size_t position_sizeof(void) {
   return sizeof(position_T);
 }

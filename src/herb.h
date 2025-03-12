@@ -8,21 +8,17 @@
 
 #include <stdint.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-EMSCRIPTEN_KEEPALIVE void herb_lex_to_buffer(const char* source, buffer_T* output);
-EMSCRIPTEN_KEEPALIVE void herb_lex_json_to_buffer(const char* source, buffer_T* output);
-EMSCRIPTEN_KEEPALIVE array_T* herb_lex(const char* source);
-EMSCRIPTEN_KEEPALIVE array_T* herb_lex_file(const char* path);
-EMSCRIPTEN_KEEPALIVE AST_DOCUMENT_NODE_T* herb_parse(const char* source);
-EMSCRIPTEN_KEEPALIVE const char* herb_version(void);
-EMSCRIPTEN_KEEPALIVE void herb_free_tokens(array_T** tokens);
+void herb_lex_to_buffer(const char* source, buffer_T* output);
+void herb_lex_json_to_buffer(const char* source, buffer_T* output);
+array_T* herb_lex(const char* source);
+array_T* herb_lex_file(const char* path);
+AST_DOCUMENT_NODE_T* herb_parse(const char* source);
+const char* herb_version(void);
+void herb_free_tokens(array_T** tokens);
 
 #ifdef __cplusplus
 }

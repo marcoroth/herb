@@ -4,10 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 static void* safe_malloc_internal(const size_t size, const bool fail_fast) {
   if (size == 0) { return NULL; }
 

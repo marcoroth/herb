@@ -11,10 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 void pretty_print_indent(buffer_T* buffer, const size_t indent) {
   for (size_t i = 0; i < indent; i++) {
     buffer_append(buffer, "    ");

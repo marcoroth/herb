@@ -5,10 +5,6 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten.h>
-#endif
-
 char lexer_backtrack(const lexer_T* lexer, const int offset) {
   return lexer->source[MAX(lexer->current_position - offset, 0)];
 }
