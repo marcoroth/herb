@@ -1,17 +1,16 @@
 import { name, version } from "../package.json"
-import libHerbInit from "../build/libherb.js"
+import LibHerb from "../build/libherb.js"
+
 import type {
   LibHerbBackend,
   SerializedLexResult,
   SerializedParseResult,
 } from "@herb-tools/core"
 
-const modulePromise = libHerbInit()
-
 const backend: LibHerbBackend = {
   async lex(source: string): Promise<SerializedLexResult> {
-    const module = await modulePromise
-    return module.lex(source)
+    const libherb = await LibHerb()
+    return libherb.lex(source)
   },
 
   async lexFile(_path: string): Promise<SerializedLexResult> {
@@ -23,8 +22,8 @@ const backend: LibHerbBackend = {
   },
 
   async parse(source: string): Promise<SerializedParseResult> {
-    const module = await modulePromise
-    return module.parse(source)
+    const libherb = await LibHerb()
+    return libherb.parse(source)
   },
 
   async parseFile(_path: string): Promise<SerializedParseResult> {
@@ -32,19 +31,19 @@ const backend: LibHerbBackend = {
   },
 
   async extractRuby(source: string): Promise<string> {
-    const module = await modulePromise
-    return module.extractRuby(source)
+    const libherb = await LibHerb()
+    return libherb.extractRuby(source)
   },
 
   async extractHtml(source: string): Promise<string> {
-    const module = await modulePromise
-    return module.extractHTML(source)
+    const libherb = await LibHerb()
+    return libherb.extractHTML(source)
   },
 
   async version(): Promise<string> {
-    const module = await modulePromise
+    const libherb = await LibHerb()
 
-    return module.version()
+    return libherb.version()
   },
 
   backend(): string {

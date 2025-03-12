@@ -1,3 +1,4 @@
+exec = herb
 test_exec = run_herb_tests
 
 sources = $(wildcard src/*.c) $(wildcard src/**/*.c)
@@ -56,7 +57,6 @@ test_flags = $(debug_flags) $(prism_flags) -std=gnu99
 
 # Shared library build (if needed)
 shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
-
 
 ifeq ($(os),Linux)
   test_cflags = $(test_flags) -I/usr/include/check
