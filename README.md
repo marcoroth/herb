@@ -26,7 +26,7 @@ xargs sudo apt-get install < Aptfile
 or:
 
 ```bash
-sudo apt-get install check clang-19 clang-tidy-19 clang-format-19
+sudo apt-get install check clang-19 clang-tidy-19 clang-format-19 emscripten
 ```
 
 ##### For macOS (using Homebrew)
@@ -37,7 +37,7 @@ brew bundle
 or:
 
 ```bash
-brew install check llvm@19
+brew install check llvm@19 emscripten
 ```
 
 ### Building

@@ -2,3 +2,4 @@ check
 clang-19
 clang-format-19
 clang-tidy-19
+emscripten
