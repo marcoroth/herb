@@ -1,6 +1,7 @@
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 
+#include "error_helpers.h"
 #include "extension_helpers.h"
 
 #include "../src/include/herb.h"
@@ -22,8 +23,7 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   val result = val::object();
   result.set("type", CreateString(ast_node_type_to_string(&<%= node.human %>->base)));
   result.set("location", CreateLocation(<%= node.human %>->base.location));
-  // result.set("errors", ErrorsArrayFromCArray(<%= node.human %>->base.errors));
-  result.set("errors", val::array());
+  result.set("errors", ErrorsArrayFromCArray(<%= node.human %>->base.errors));
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>

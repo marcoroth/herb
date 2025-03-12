@@ -1,0 +1,93 @@
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "extension_helpers.h"
+
+extern "C" {
+#include "../src/include/herb.h"
+#include "../src/include/token.h"
+#include "../src/include/array.h"
+#include "../src/include/errors.h"
+#include "../src/include/ast_node.h"
+#include "../src/include/ast_nodes.h"
+}
+
+using namespace emscripten;
+
+val CreateLocation(location_T* location);
+val CreateToken(token_T* token);
+val NodeFromCStruct(AST_NODE_T* node);
+val NodesArrayFromCArray(array_T* array);
+val ErrorFromCStruct(ERROR_T* error);
+val ErrorsArrayFromCArray(array_T* array);
+
+<%- errors.each do |error| -%>
+val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
+  if (!<%= error.human %>) {
+    return val::null();
+  }
+
+  val Object = val::global("Object");
+  val result = Object.new_();
+
+  result.set("type", CreateString(error_type_to_string(&<%= error.human %>->base)));
+  result.set("message", CreateString(<%= error.human %>->base.message));
+  result.set("location", CreateLocation(<%= error.human %>->base.location));
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  result.set("<%= field.name %>", CreateString(<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::NodeField -%>
+  result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*)<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::TokenField -%>
+  result.set("<%= field.name %>", CreateToken(<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::TokenTypeField -%>
+  result.set("<%= field.name %>", CreateString(token_type_to_string(<%= error.human %>-><%= field.name %>)));
+  <%- when Herb::Template::BooleanField -%>
+  result.set("<%= field.name %>", <%= error.human %>-><%= field.name %>);
+  <%- when Herb::Template::ArrayField -%>
+  result.set("<%= field.name %>", NodesArrayFromCArray(<%= error.human %>-><%= field.name %>));
+  <%- else -%>
+  result.set("<%= field.name %>", val::null());
+  <%- end -%>
+  <%- end -%>
+
+  return result;
+}
+
+<%- end -%>
+
+val ErrorsArrayFromCArray(array_T* array) {
+  val Array = val::global("Array");
+  val result = Array.new_();
+
+  if (array) {
+    for (size_t i = 0; i < array_size(array); i++) {
+      ERROR_T* error = (ERROR_T*)array_get(array, i);
+      if (error) {
+        result.call<void>("push", ErrorFromCStruct(error));
+      }
+    }
+  }
+
+  return result;
+}
+
+val ErrorFromCStruct(ERROR_T* error) {
+  if (!error) {
+    return val::null();
+  }
+
+  switch (error->type) {
+  <%- errors.each do |error| -%>
+    case <%= error.type %>:
+      return <%= error.name %>FromCStruct((<%= error.struct_type %>*)error);
+  <%- end -%>
+    default:
+      return val::null();
+  }
+}

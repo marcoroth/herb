@@ -1,0 +1,15 @@
+#ifndef HERB_EXTENSION_ERRORS_H
+#define HERB_EXTENSION_ERRORS_H
+
+extern "C" {
+#include "../src/include/herb.h"
+}
+
+emscripten::val ErrorFromCStruct(ERROR_T* error);
+emscripten::val ErrorsArrayFromCArray(array_T* array);
+
+<%- errors.each do |error| -%>
+emscripten::val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>);
+<%- end -%>
+
+#endif

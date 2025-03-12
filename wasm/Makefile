@@ -3,12 +3,12 @@
 BROWSER_BUILD_DIR = ../javascript/packages/browser/build/
 WASM_OUTPUT = $(BROWSER_BUILD_DIR)libherb.js
 
-WASM_CPP_SRC = herb-wasm.cpp extension_helpers.cpp nodes.cpp
+WASM_CPP_SRC = herb-wasm.cpp error_helpers.cpp extension_helpers.cpp nodes.cpp
 C_SOURCES = $(wildcard ../src/*.c) $(wildcard ../src/**/*.c)
 OBJ_DIR = obj
 
 C_OBJECTS = $(patsubst ../src/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
-CPP_OBJECTS = $(OBJ_DIR)/herb-wasm.o $(OBJ_DIR)/extension_helpers.o $(OBJ_DIR)/nodes.o
+CPP_OBJECTS = $(OBJ_DIR)/herb-wasm.o $(OBJ_DIR)/error_helpers.o $(OBJ_DIR)/extension_helpers.o $(OBJ_DIR)/nodes.o
 
 ALL_OBJECTS = $(C_OBJECTS) $(CPP_OBJECTS)
 
@@ -38,6 +38,9 @@ $(OBJ_DIR)/%.o: ../src/%.c | $(OBJ_DIR)
 	emcc -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)/herb-wasm.o: herb-wasm.cpp | $(OBJ_DIR)
+	em++ -std=c++11 -c $< -o $@ $(CFLAGS)
+
+$(OBJ_DIR)/error_helpers.o: error_helpers.cpp | $(OBJ_DIR)
 	em++ -std=c++11 -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)/extension_helpers.o: extension_helpers.cpp | $(OBJ_DIR)
