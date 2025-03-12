@@ -11,9 +11,10 @@ const modulePromise = libHerbInit()
 const backend: LibHerbBackend = {
   async lex(source: string): Promise<SerializedLexResult> {
     const module = await modulePromise
-    const lexFunc = module.cwrap("herb_lex", "string", ["string"])
+    const lexFunc = module.cwrap("wasm_lex", "string", ["string"])
     const resultJson = lexFunc(source)
-    return JSON.parse(resultJson) as SerializedLexResult
+    console.log("resultJson", resultJson)
+    return { source: resultJson } as SerializedLexResult
   },
 
   async lexFile(_path: string): Promise<SerializedLexResult> {
@@ -28,9 +29,10 @@ const backend: LibHerbBackend = {
 
   async parse(source: string): Promise<SerializedParseResult> {
     const module = await modulePromise
-    const parseFunc = module.cwrap("herb_parse", "string", ["string"])
+    const parseFunc = module.cwrap("wasm_parse", "string", ["string"])
     const resultJson = parseFunc(source)
-    return JSON.parse(resultJson) as SerializedParseResult
+    console.log("resultJson", resultJson)
+    return {source: resultJson} as SerializedParseResult
   },
 
   async parseFile(_path: string): Promise<SerializedParseResult> {
@@ -39,7 +41,7 @@ const backend: LibHerbBackend = {
 
   async extractRuby(source: string): Promise<string> {
     const module = await modulePromise
-    const extractRubyFunc = module.cwrap("herb_extract_ruby", "string", [
+    const extractRubyFunc = module.cwrap("wasm_extract_ruby", "string", [
       "string",
     ])
     return extractRubyFunc(source)
@@ -47,7 +49,7 @@ const backend: LibHerbBackend = {
 
   async extractHtml(source: string): Promise<string> {
     const module = await modulePromise
-    const extractHtmlFunc = module.cwrap("herb_extract_html", "string", [
+    const extractHtmlFunc = module.cwrap("wasm_extract_html", "string", [
       "string",
     ])
     return extractHtmlFunc(source)

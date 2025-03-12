@@ -131,7 +131,7 @@ wasm:
 
 	emcc $(sources) $(emscripten_flags) $(prism_flags) \
 	-s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-	-s EXPORTED_FUNCTIONS="['_herb_lex', '_herb_parse', '_herb_version', '_main']" \
+	-s EXPORTED_FUNCTIONS="['_herb_lex', '_herb_parse', '_herb_version', '_main', '_wasm_extract_ruby', '_wasm_extract_html', '_wasm_lex', '_wasm_parse']" \
 	-s EXPORTED_RUNTIME_METHODS='["cwrap", "UTF8ToString", "stringToUTF8", "lengthBytesUTF8"]' \
 	-s ENVIRONMENT='web' \
 	-o $(BROWSER_BUILD_DIR)libherb.js
