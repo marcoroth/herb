@@ -7,7 +7,6 @@
   "module": "./dist/herb-browser.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "install": "yarn build",
     "build": "yarn clean && yarn build:wasm && yarn build:javascript",
     "build:wasm": "cd ../../../wasm && make && cd -",
     "build:javascript": "rollup -c",
