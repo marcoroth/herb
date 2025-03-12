@@ -1113,11 +1113,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bjorn3/browser_wasi_shim@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@bjorn3/browser_wasi_shim/-/browser_wasi_shim-0.4.1.tgz#2f9a4964a65edc9308e503b07e01a1c362bacae1"
-  integrity sha512-54kpBQX69TZ8I1zyDC8sziv/zPT1zoIadv3CmdIZNZ5WDF1houMjAzRZ3dwWvhXObiEBjOxXyS8Ja7vA0EfGEQ==
-
 "@bundled-es-modules/cookie@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@bundled-es-modules/cookie/-/cookie-2.0.1.tgz#b41376af6a06b3e32a15241d927b840a9b4de507"
@@ -2325,11 +2320,6 @@
   version "4.35.0"
   resolved "https://registry.yarnpkg.com/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.35.0.tgz#05f25dbc9981bee1ae6e713daab10397044a46ca"
   integrity sha512-PIQeY5XDkrOysbQblSW7v3l1MDZzkTEzAfTPkj5VAu3FW8fS4ynyLg2sINp0fp3SjZ8xkRYpLqoKcYqAkhU1dw==
-
-"@ruby/prism@^1.3.0":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@ruby/prism/-/prism-1.3.0.tgz#6bf3f8f46a671a9af44ab25155f7566fb76202f5"
-  integrity sha512-bEyrxuFiwvkXhzP1lI+urRstYHCoYx0eplrx352lAzfNyiQEGIopH37lznpsxfSpext5CRVohX/KsrHja0HJgw==
 
 "@shikijs/core@3.1.0", "@shikijs/core@^3.1.0":
   version "3.1.0"
