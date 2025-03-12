@@ -1,4 +1,4 @@
-import { Node } from "./nodes.js"
+import { Node } from "./node.js"
 
 /**
  * Represents a visitor that can traverse nodes.

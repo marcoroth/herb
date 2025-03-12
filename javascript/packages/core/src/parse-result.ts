@@ -1,14 +1,18 @@
 import { Result } from "./result.js"
 import { DocumentNode } from "./nodes.js"
+import { HerbError } from "./error.js"
+import { HerbWarning } from "./warning.js"
 
-import type { HerbError, HerbWarning, SerializedDocumentNode } from "./nodes.js"
+import type { SerializedHerbError } from "./error.js"
+import type { SerializedHerbWarning } from "./warning.js"
+import type { SerializedDocumentNode } from "./nodes.js"
 import type { Visitor } from "./visitor.js"
 
 export type SerializedParseResult = {
   value: SerializedDocumentNode
   source: string
-  warnings: HerbWarning[]
-  errors: HerbError[]
+  warnings: SerializedHerbWarning[]
+  errors: SerializedHerbError[]
 }
 
 /**
@@ -25,11 +29,12 @@ export class ParseResult extends Result {
    * @returns A new `ParseResult` instance.
    */
   static from(result: SerializedParseResult) {
+    console.log(result)
     return new ParseResult(
       DocumentNode.from(result.value),
       result.source,
-      result.warnings,
-      result.errors,
+      result.warnings.map((warning) => HerbWarning.from(warning)),
+      result.errors.map((error) => HerbError.from(error)),
     )
   }
 

@@ -1,0 +1,140 @@
+import { Location, SerializedLocation } from "./location.js"
+import { Token, SerializedToken } from "./token.js"
+import { HerbError, SerializedHerbError } from "./error.js"
+
+export type HerbErrorType =
+  <%- errors.each_with_index.map do |error, index| -%>
+  | "<%= error.type %>"
+  <%- end -%>
+
+export type SerializedErrorType = string
+
+export function fromSerializedError(error: SerializedHerbError): HerbError {
+  switch (error.type) {
+    <%- errors.each do |error| -%>
+    case "<%= error.type %>": return <%= error.name %>.from(error as Serialized<%= error.name %>);
+    <%- end -%>
+
+    default:
+      throw new Error(`Unknown node type: ${error.type}`);
+  }
+}
+
+<%- errors.each do |error| -%>
+export interface Serialized<%= error.name %> {
+  type: "<%= error.type %>";
+  message: string;
+  location: SerializedLocation;
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  <%= field.name %>: string;
+  <%- when Herb::Template::TokenField -%>
+  <%= field.name %>: SerializedToken | null;
+  <%- when Herb::Template::TokenTypeField -%>
+  <%= field.name %>: string | null;
+  <%- else -%>
+  <%= field.name %>: any; // <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+}
+
+export interface <%= error.name %>Props {
+  type: string;
+  message: string;
+  location: Location;
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  <%= field.name %>: string;
+  <%- when Herb::Template::TokenField -%>
+  <%= field.name %>: Token | null;
+  <%- when Herb::Template::TokenTypeField -%>
+  <%= field.name %>: string | null;
+  <%- else -%>
+  <%= field.name %>: any; // <%= field.inspect %>
+  <%- end -%>
+  <%- end -%>
+}
+
+export class <%= error.name %> extends HerbError {
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  readonly <%= field.name %>: string;
+  <%- when Herb::Template::TokenField -%>
+  readonly <%= field.name %>: Token | null;
+  <%- when Herb::Template::TokenTypeField -%>
+  readonly <%= field.name %>: string | null;
+  <%- else -%>
+  readonly <%= field.name %>: any;
+  <%- end -%>
+  <%- end -%>
+
+  static from(data: Serialized<%= error.name %>): <%= error.name %> {
+    return new <%= error.name %>({
+      type: data.type,
+      message: data.message,
+      location: Location.from(data.location),
+      <%- error.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+      <%= field.name %>: data.<%= field.name %>,
+      <%- when Herb::Template::TokenField -%>
+      <%= field.name %>: data.<%= field.name %> ? Token.from(data.<%= field.name %>) : null,
+      <%- else -%>
+      <% raise "Unexpetected type: #{field.class}" %>
+      <%- end -%>
+      <%- end -%>
+    })
+  }
+
+  constructor(props: <%= error.name %>Props) {
+    super(props.type, props.message, props.location);
+
+    <%- error.fields.each do |field| -%>
+    this.<%= field.name %> = props.<%= field.name %>;
+    <%- end -%>
+  }
+
+  toJSON(): Serialized<%= error.name %> {
+    return {
+      ...super.toJSON(),
+      type: "<%= error.type %>",
+      <%- error.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+      <%= field.name %>: this.<%= field.name %>,
+      <%- when Herb::Template::TokenField -%>
+      <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
+      <%- else -%>
+      <% raise "Unexpetected type: #{field.class}" %>
+      <%- end -%>
+      <%- end -%>
+    };
+  }
+
+  treeInspect(): string {
+    let output = "";
+
+    output += `@ <%= error.name %> ${this.location.treeInspectWithLabel()}\n`;
+    <%- symbol = error.fields.any? ? "├──" : "└──" -%>
+    output += `<%= symbol %> message: "${this.message}"\n`;
+    <%- error.fields.each do |field| -%>
+    <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
+    <%- name = "#{symbol} #{field.name}: " -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+    output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
+    <%- when Herb::Template::TokenField -%>
+    output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
+    <%- else -%>
+    <% raise "Unexpetected type: #{field.class}" %>
+    <%- end -%>
+    <%- end -%>
+
+    return output;
+  }
+}
+
+<%- end -%>

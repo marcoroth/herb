@@ -13,7 +13,6 @@ extern "C" {
 
 napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
 napi_value NodesArrayFromCArray(napi_env env, array_T* array);
-napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
 
 <%- nodes.each do |node| -%>
 napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>) {
@@ -83,15 +82,6 @@ napi_value NodesArrayFromCArray(napi_env env, array_T* array) {
       }
     }
   }
-
-  return result;
-}
-
-napi_value ErrorsArrayFromCArray(napi_env env, array_T* array) {
-  napi_value result;
-  napi_create_array(env, &result);
-
-  // TODO: implement
 
   return result;
 }

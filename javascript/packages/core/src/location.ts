@@ -34,11 +34,15 @@ export class Location {
   }
 
   treeInspect(): string {
-    return `${this.start.treeInspect()}:${this.end.treeInspect()}`
+    return `${this.start.treeInspect()}-${this.end.treeInspect()}`
+  }
+
+  treeInspectWithLabel(): string {
+    return `(location: ${this.treeInspect()})`
   }
 
   inspect(): string {
-    return `#<Location ${this.treeInspect()}>`
+    return `#<Herb::Location ${this.treeInspect()}>`
   }
 
   toString(): string {
