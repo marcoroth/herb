@@ -1,4 +1,5 @@
-import { HerbError, HerbWarning } from "./nodes.js"
+import { HerbError } from "./error.js"
+import { HerbWarning } from "./warning.js"
 
 export class Result {
   readonly source: string

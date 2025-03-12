@@ -14,8 +14,8 @@
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: -webkit-linear-gradient(
     120deg,
-    #4caf50 30%, /* Lush green */
-    #81c784 /* Light green */
+    #4caf50 30%,
+    #81c784
   );
 
   --vp-c-brand-1: green;
@@ -28,8 +28,8 @@
 
   --vp-home-hero-image-background-image: linear-gradient(
     -45deg,
-    #4caf50 50%, /* Main green */
-    #81c784 50% /* Softer green */
+    #4caf50 50%,
+    #81c784 50%
   );
 
   --vp-home-hero-image-filter: blur(144px);

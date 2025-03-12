@@ -1,127 +1,30 @@
+import { Node } from "./node.js"
 import { Location, SerializedLocation } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
+import { HerbError, SerializedHerbError } from "./error.js"
 
-export interface HerbError {
-  message: string;
-  location: Location;
-}
+import type { SerializedNode, BaseNodeProps } from "./node.js"
 
-export interface SerializedError {
-  message: string;
-  location: SerializedLocation;
-}
+export function fromSerializedNode(node: SerializedNode): Node {
+  switch (node.type) {
+    <%- nodes.each do |node| -%>
+    case "<%= node.type %>": return <%= node.name %>.from(node as Serialized<%= node.name %>);
+    <%- end -%>
 
-// TODO: implement
-export interface HerbWarning {
-  message: string;
-  location: Location;
+    default:
+      throw new Error(`Unknown node type: ${node.type}`);
+  }
 }
-
-// TODO: implement
-export interface SerializedWarning {
-  message: string;
-  location: SerializedLocation;
-}
+export type SerializedNodeType = string
 
 export type NodeType =
   <%- nodes.each_with_index.map do |node, index| -%>
   | "<%= node.type %>"
   <%- end -%>
 
-export type SerializedNodeType = string
-
-export interface SerializedNode {
-  type: SerializedNodeType;
-  location: SerializedLocation;
-  errors: SerializedError[];
-}
-
-export interface BaseNodeProps {
-  type: NodeType;
-  location: Location;
-  errors: HerbError[];
-}
-
-export abstract class Node {
-  readonly type: string;
-  readonly location: Location;
-  readonly errors: HerbError[];
-
-  static from(node: SerializedNode): Node {
-    switch (node.type) {
-      <%- nodes.each do |node| -%>
-      case "<%= node.type %>": return <%= node.name %>.from(node as Serialized<%= node.name %>);
-      <%- end -%>
-
-      default:
-        throw new Error(`Unknown node type: ${node.type}`);
-    }
-  }
-
-  constructor(type: string, location: Location, errors: HerbError[]) {
-    this.type = type;
-    this.location = location;
-    this.errors = errors;
-  }
-
-  toJSON(): SerializedNode {
-    return {
-      type: this.type,
-      location: this.location.toJSON(),
-      errors: this.errors
-    };
-  }
-
-  inspect(): string {
-    return this.treeInspect(0)
-  }
-
-  abstract treeInspect(indent?: number): string;
-
-  protected inspectErrors(options: { prefix: string } = { prefix: "" }): string {
-    if (!this.errors || this.errors.length === 0) return "";
-
-    let output = "";
-    this.errors.forEach((error, index) => {
-      const isLast = index === this.errors.length - 1;
-      const symbol = isLast ? "└──" : "├──";
-      output += `${options.prefix}${symbol} error: ${error.message}\n`;
-    });
-
-    return output;
-  }
-
-  protected inspectArray(
-    array: any[] | null | undefined,
-    options: { prefix: string } = { prefix: "" }
-  ): string {
-    if (!array) return "∅\n";
-    if (array.length === 0) return "[]\n";
-
-    let output = "\n";
-
-    array.forEach((item, index) => {
-      const isLast = index === array.length - 1;
-      const symbol = isLast ? "└──" : "├──";
-
-      if (item instanceof Node) {
-        output += `${options.prefix}${symbol} \n`;
-        const childPrefix = isLast ? "    " : "│   ";
-        output += item.treeInspect(1).replace(/^/gm, options.prefix + childPrefix).trimStart();
-      } else {
-        output += `${options.prefix}${symbol} ${item}\n`;
-      }
-    });
-
-    return output;
-  }
-}
 <%- nodes.each do |node| -%>
-
-export interface Serialized<%= node.name %> {
+export interface Serialized<%= node.name %> extends SerializedNode {
   type: "<%= node.type %>";
-  location: SerializedLocation;
-  errors: SerializedError[];
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
@@ -181,10 +84,7 @@ export class <%= node.name %> extends Node {
     return new <%= node.name %>({
       type: data.type,
       location: Location.from(data.location),
-      errors: data.errors.map(error => ({
-        message: error.message,
-        location: Location.from(error.location)
-      })),
+      errors: data.errors.map(error => HerbError.from(error)),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
       <%- when Herb::Template::StringField -%>
@@ -194,9 +94,9 @@ export class <%= node.name %> extends Node {
       <%- when Herb::Template::BooleanField -%>
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::NodeField -%>
-      <%= field.name %>: data.<%= field.name %> ? Node.from((data.<%= field.name %> as any)) : null,
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %> as any)) : null,
       <%- when Herb::Template::ArrayField -%>
-      <%= field.name %>: data.<%= field.name %>.map(node => Node.from(node)),
+      <%= field.name %>: data.<%= field.name %>.map(node => fromSerializedNode(node)),
       <%- else -%>
       <%= field.name %>: data.<%= field.name %>,
       <%- end -%>
@@ -243,12 +143,11 @@ export class <%= node.name %> extends Node {
     };
   }
 
-  treeInspect(indent = 0): string {
+  treeInspect(): string {
     let output = "";
 
-    output += `@ <%= node.name %> ${this.location.treeInspect()}\n`;
-    output += this.inspectErrors({ prefix: "<%= node.fields.any? ? "│   " : "    " %>" });
-
+    output += `@ <%= node.name %> ${this.location.treeInspectWithLabel()}\n`;
+    output += `├── errors: ${this.inspectArray(this.errors, "<%= node.fields.any? ? "│   " : "    " %>")}`;
     <%- node.fields.each do |field| -%>
     <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
     <%- name = "#{symbol} #{field.name}: " -%>
@@ -256,39 +155,22 @@ export class <%= node.name %> extends Node {
     <%- when Herb::Template::StringField -%>
     output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
     <%- when Herb::Template::TokenField -%>
-    output += "<%= name %>";
-    output += this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅";
-    output += "\n";
+    output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
     <%- when Herb::Template::BooleanField -%>
-    output += "<%= name %>";
-    output += typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅";
-    output += "\n";
+    output += `<%= name %>${typeof this.<%= field.name %> === 'boolean' ? String(this.<%= field.name %>) : "∅"}\n`;
     <%- when Herb::Template::NodeField -%>
-    output += "<%= name %>";
-    if (this.<%= field.name %>) {
-      <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
-      output += "\n";
-      <%- if (node.fields.last == field) -%>
-      output += "    └── ";
-      <%- else -%>
-      output += "│   └── ";
-      <%- end -%>
-      const childOutput = this.<%= field.name %>.treeInspect(indent + 1);
-      output += childOutput.replace(/^/gm, "    ".repeat(indent + 1)).trimStart().replace(/^/gm, "<%= prefix %>").replace(new RegExp(`^<%= prefix %>`), "");
-    } else {
-      output += "∅\n";
-    }
+    output += `<%= name %>${this.inspectNode(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
     <%- when Herb::Template::ArrayField -%>
-    output += "<%= name %>";
-    output += this.inspectArray(this.<%= field.name %>, { prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>" });
+    output += `<%= name %>${this.inspectArray(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
     <%- else -%>
     output += `<%= name %> ${this.<%= field.name %>}\n`;
     <%- end -%>
     <%- end -%>
 
-    output += "\n";
+    // output += "\n";
 
-    return output.replace(/^/gm, "    ".repeat(indent));
+    return output
   }
 }
+
 <%- end -%>

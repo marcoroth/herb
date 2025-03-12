@@ -17,8 +17,8 @@ hero:
       link: /bindings/ruby
 
     - theme: alt
-      text: Specification
-      link: /specification
+      text: Playground
+      link: https://playground.herb-tools.dev
 
     - theme: alt
       text: GitHub

@@ -26,7 +26,7 @@ export class Range {
   }
 
   inspect(): string {
-    return `#<Range ${this.toArray()}>`
+    return `#<Herb::Range ${this.toArray()}>`
   }
 
   toString(): string {

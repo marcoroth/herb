@@ -1,0 +1,113 @@
+#include <node_api.h>
+#include "error_helpers.h"
+#include "extension_helpers.h"
+#include "nodes.h"
+
+extern "C" {
+#include "../extension/libherb/include/herb.h"
+#include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/array.h"
+#include "../extension/libherb/include/errors.h"
+#include "../extension/libherb/include/ast_node.h"
+#include "../extension/libherb/include/ast_nodes.h"
+}
+
+napi_value ErrorFromCStruct(napi_env env, ERROR_T* error);
+napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
+
+<%- errors.each do |error| -%>
+napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* <%= error.human %>) {
+  if (!<%= error.human %>) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
+  napi_value result;
+  napi_create_object(env, &result);
+
+  napi_value type = CreateString(env, error_type_to_string(&<%= error.human %>->base));
+  napi_set_named_property(env, result, "type", type);
+
+  napi_value message = CreateString(env, <%= error.human %>->base.message);
+  napi_set_named_property(env, result, "message", message);
+
+  napi_value location = CreateLocation(env, <%= error.human %>->base.location);
+  napi_set_named_property(env, result, "location", location);
+
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  napi_value <%= field.name %> = CreateString(env, <%= error.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::NodeField -%>
+  napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= error.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::TokenField -%>
+  napi_value <%= field.name %> = CreateToken(env, <%= error.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::TokenTypeField -%>
+  napi_value <%= field.name %> = CreateString(env, token_type_to_string(<%= error.human %>-><%= field.name %>));
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::BooleanField -%>
+  napi_value <%= field.name %>;
+  napi_get_boolean(env, <%= error.human %>-><%= field.name %>, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::ArrayField -%>
+  napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= error.human %>-><%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- else -%>
+  napi_value <%= field.name %>;
+  napi_get_null(env, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- end -%>
+  <%- end -%>
+
+  return result;
+}
+
+<%- end -%>
+
+napi_value ErrorsArrayFromCArray(napi_env env, array_T* array) {
+  napi_value result;
+  napi_create_array(env, &result);
+
+  if (array) {
+    for (size_t i = 0; i < array_size(array); i++) {
+      ERROR_T* error = (ERROR_T*) array_get(array, i);
+      if (error) {
+        napi_value js_error = ErrorFromCStruct(env, error);
+        napi_set_element(env, result, i, js_error);
+      }
+    }
+  }
+
+  return result;
+}
+
+napi_value ErrorFromCStruct(napi_env env, ERROR_T* error) {
+  if (!error) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
+  switch (error->type) {
+  <%- errors.each do |error| -%>
+    case <%= error.type %>:
+      return <%= error.name %>FromCStruct(env, (<%= error.struct_type %>*) error);
+      break;
+  <%- end -%>
+    default:
+      napi_value null_value;
+      napi_get_null(env, &null_value);
+      return null_value;
+  }
+}

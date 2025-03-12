@@ -1,0 +1,17 @@
+#ifndef HERB_EXTENSION_ERRORS_H
+#define HERB_EXTENSION_ERRORS_H
+
+#include <node_api.h>
+
+extern "C" {
+#include "../extension/libherb/include/herb.h"
+}
+
+napi_value ErrorFromCStruct(napi_env env, ERROR_T* error);
+napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
+
+<%- errors.each do |error| -%>
+napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* <%= error.human %>);
+<%- end -%>
+
+#endif

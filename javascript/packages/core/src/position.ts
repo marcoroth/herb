@@ -29,7 +29,7 @@ export class Position {
   }
 
   inspect(): string {
-    return `#<Position ${this.treeInspect()}>`
+    return `#<Herb::Position ${this.treeInspect()}>`
   }
 
   toString(): string {

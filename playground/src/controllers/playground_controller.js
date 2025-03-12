@@ -69,9 +69,7 @@ export default class extends Controller {
     this.inputTarget.setAttribute("language", "erb")
     this.inputTarget.requestUpdate("highlighter")
 
-    if (this.hasVersionTarget) {
-      this.versionTarget.textContent = Herb.version
-    }
+    this.inputTarget.focus()
   }
 
   updateURL() {
@@ -223,6 +221,10 @@ export default class extends Controller {
       try {
         json = await response.json()
 
+        if (this.hasVersionTarget) {
+          this.versionTarget.textContent = json.version
+        }
+
         if (this.hasPrettyViewerTarget) {
           this.prettyViewerTarget.classList.add("language-tree")
           this.prettyViewerTarget.textContent = json.string
@@ -245,7 +247,7 @@ export default class extends Controller {
         }
 
         if (this.hasLexViewerTarget) {
-          this.lexViewerTarget.classList.add("language-javascript")
+          this.lexViewerTarget.classList.add("language-tree")
           this.lexViewerTarget.textContent = json.lex
 
           console.log(json)

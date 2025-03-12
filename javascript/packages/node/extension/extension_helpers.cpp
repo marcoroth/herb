@@ -4,15 +4,15 @@
 #include <string.h>
 
 extern "C" {
-#include "../../../../src/include/array.h"
-#include "../../../../src/include/ast_nodes.h"
-#include "../../../../src/include/buffer.h"
-#include "../../../../src/include/herb.h"
-#include "../../../../src/include/io.h"
-#include "../../../../src/include/location.h"
-#include "../../../../src/include/position.h"
-#include "../../../../src/include/range.h"
-#include "../../../../src/include/token.h"
+#include "../extension/libherb/include/array.h"
+#include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/buffer.h"
+#include "../extension/libherb/include/herb.h"
+#include "../extension/libherb/include/io.h"
+#include "../extension/libherb/include/location.h"
+#include "../extension/libherb/include/position.h"
+#include "../extension/libherb/include/range.h"
+#include "../extension/libherb/include/token.h"
 }
 
 #include "error_helpers.h"

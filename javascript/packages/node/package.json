@@ -1,7 +1,8 @@
 {
   "name": "@herb-tools/node",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
+  "license": "MIT",
   "gypfile": true,
   "main": "./dist/herb-node.cjs",
   "module": "./dist/herb-node.esm.js",
@@ -16,15 +17,17 @@
     }
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "yarn libherb:vendor && node-pre-gyp install --fallback-to-build",
     "build": "yarn rebuild",
-    "rebuild": "yarn clean && node-pre-gyp rebuild && tsc -p tsconfig.json && node bin/build.js",
+    "build:javascript": "tsc -p tsconfig.json && node bin/build.js",
+    "libherb:vendor": "yarn clean && rake templates && cp -r ../../../src ./extension/libherb",
+    "rebuild": "yarn clean && yarn libherb:vendor && node-pre-gyp rebuild && yarn build:javascript",
     "configure": "node-pre-gyp configure",
     "package": "node-pre-gyp package",
-    "clean": "node-pre-gyp clean && rimraf dist && rimraf build",
+    "clean": "node-pre-gyp clean && rimraf dist/ && rimraf src/herb/ && rimraf build/",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "prepublishOnly": "yarn test"
+    "prepublishOnly": "yarn build && yarn test"
   },
   "binary": {
     "module_name": "herb",
@@ -34,14 +37,24 @@
     "host": "https://github.com/marcoroth/herb/releases/download/"
   },
   "dependencies": {
-    "@herb-tools/core": "0.0.1",
-    "@mapbox/node-pre-gyp": "^2.0.0",
-    "node-addon-api": "^5.1.0"
+    "@herb-tools/core": "0.0.0",
+    "@mapbox/node-pre-gyp": "^2.0.0"
   },
   "devDependencies": {
+    "node-addon-api": "^5.1.0",
     "rimraf": "^6.0.1",
     "node-pre-gyp-github": "^2.0.0",
     "vitest": "^3.0.0",
     "typescript": "^5.8.2"
-  }
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "binding.gyp",
+    "dist/",
+    "src/",
+    "extension/**/*.c",
+    "extension/**/*.cpp",
+    "extension/**/*.h"
+  ]
 }

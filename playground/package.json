@@ -1,33 +1,31 @@
 {
   "name": "@herb-tools/playground",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development node server.dev.mjs",
-    "build": "npm run build:client",
-    "build:client": "vite build --outDir dist/client",
-    "preview": "cross-env NODE_ENV=production node server.prod.mjs",
-    "serve": "cross-env NODE_ENV=production node server.prod.mjs"
+    "build": "vite build",
+    "dev": "vite dev",
+    "preview": " vite preview",
+    "serve": "vite serve --host"
   },
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
+    "@herb-tools/browser": "^0.0.0",
+    "@herb-tools/node": "^0.0.0",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.5.1",
     "element-internals-polyfill": "^3.0.1",
     "express": "^4.20.0",
-    "light-pen": "^4.2.3",
+    "light-pen": "^4.2.5",
     "lz-string": "^1.5.0",
     "prism-esm": "^1.29.0-fix.6",
     "prismjs": "^1.29.0",
-    "@herb-tools/browser": "^0.0.1",
-    "@herb-tools/node": "^0.0.1"
+    "vite": "^6.2.1"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",
-    "cross-env": "^7.0.3",
-    "typescript": "^5.8.2",
-    "vite": "^6.2.1"
+    "typescript": "^5.8.2"
   }
 }

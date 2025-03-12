@@ -22,24 +22,33 @@
     <script type="module" src="/src/entry-client.ts"></script>
 
     <div class="w-full md:max-h-[100vh] overflow-hidden">
-      <nav class="mx-auto flex items-center justify-between p-1 px-8 border">
-        <div class="flex flex-1">
-          <div class="h-8 w-auto text-xl font-medium">🌿 Herb</div>
+      <nav
+        class="mx-auto flex items-center justify-between p-1 py-2 px-8 border"
+      >
+        <div class="flex font-medium items-center h-8 md:flex-1">
+          <div class="w-auto text-xl">🌿 Herb</div>
+          <span class="block md:hidden text-gray-500 ml-2">Playground</span>
         </div>
 
-        <div class="flex">
+        <div class="hidden md:flex">
           <div class="text-center text-lg font-medium text-gray-900">
             Playground
 
             <div
               data-playground-target="version"
-              class="text-gray-400 text-[8pt] hidden md:block"
+              class="text-gray-400 text-[8pt]"
             ></div>
           </div>
         </div>
 
         <div class="hidden lg:flex lg:flex-1 lg:justify-end">
-          <div class="flex flex-col flex-row-reserve space-x-4 py-0">
+          <div class="flex flex-row-reserve space-x-4 py-0 items-center">
+            <a
+              href="https://marcoroth.github.io/herb"
+              class="text-sm text-gray-500 hover:text-gray-500"
+              target="_blank"
+              >Documentation</a
+            >
             <a
               href="https://github.com/marcoroth/herb"
               target="_blank"
@@ -51,7 +60,7 @@
         </div>
       </nav>
 
-      <div class="px-8 h-screen">
+      <div class="px-3 lg:px-8 h-screen">
         <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mt-6">
             <div class="flex justify-between">
@@ -73,7 +82,10 @@
                     class="fas fa-circle-xmark text-red-600 hidden ease-in duration-300"
                   ></i>
 
-                  <span class="ml-1">Copy Share URL</span>
+                  <span class="ml-1"
+                    >Copy
+                    <span class="hidden lg:inline-block">Share</span> URL</span
+                  >
                 </button>
 
                 <button
@@ -86,7 +98,7 @@
                     class="fas fa-circle-check w-4 text-green-600 hidden ease-in duration-300"
                   ></i>
 
-                  <span class="ml-1">Example</span>
+                  <span class="ml-1 hidden lg:inline-block">Example</span>
                 </button>
               </div>
             </div>
@@ -105,17 +117,17 @@
           </div>
 
           <div class="mt-6" data-contoller="output">
-            <div class="flex justify-between">
+            <div class="md:flex justify-between">
               <div
                 class="text-gray-900 rounded-md px-0 py-1.5 text-sm font-medium"
               >
                 Herb Parse Result
               </div>
 
-              <div class="flex gap-3">
+              <div class="mt-1 md:mt-0 md:flex gap-3">
                 <button
                   data-action="playground#toggleViewer keydown.esc@window->playground#shrinkViewer"
-                  class="absolute opacity-50 hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
+                  class="hidden lg:block absolute opacity-50 hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                 >
                   <i class="fas fa-expand"></i>
                   <span class="ml-1">Fullscreen</span>
@@ -125,18 +137,32 @@
                   data-playground-target="viewerButton"
                   data-viewer="pretty"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
+                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                   data-active="true"
                 >
                   <i class="fas fa-folder-tree"></i>
-                  <span class="ml-1">Parse Pretty Print</span>
+                  <span class="ml-1"
+                    >Parse <span class="hidden lg:inline">Result</span></span
+                  >
+                </button>
+
+                <button
+                  data-playground-target="viewerButton"
+                  data-viewer="lex"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                >
+                  <i class="fas fa-bars"></i>
+                  <span class="ml-1"
+                    >Lex <span class="hidden lg:inline">Result</span></span
+                  >
                 </button>
 
                 <button
                   data-playground-target="viewerButton"
                   data-viewer="ruby"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
+                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                 >
                   <i class="fas fa-gem"></i>
                   <span class="ml-1">Ruby</span>
@@ -146,20 +172,10 @@
                   data-playground-target="viewerButton"
                   data-viewer="html"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
+                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                 >
                   <i class="fab fa-html5"></i>
                   <span class="ml-1">HTML</span>
-                </button>
-
-                <button
-                  data-playground-target="viewerButton"
-                  data-viewer="lex"
-                  data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
-                >
-                  <i class="fas fa-bars"></i>
-                  <span class="ml-1">Lex</span>
                 </button>
 
                 <button
@@ -167,7 +183,7 @@
                   data-playground-target="viewerButton"
                   data-viewer="full"
                   data-action="click->playground#selectViewer"
-                  class="cursor-not-allowed text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-blue-600 data-[active=true]:hover:bg-blue-700 data-[active=true]:text-white"
+                  class="hidden cursor-not-allowed text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                   data-active="false"
                 >
                   <i class="fas fa-code"></i>

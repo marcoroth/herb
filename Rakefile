@@ -2,31 +2,7 @@
 
 require "English"
 require "bundler/gem_tasks"
-require "rake/extensiontask"
 require "rake/testtask"
-
-PLATFORMS = %w[
-  aarch64-linux-gnu
-  aarch64-linux-musl
-  arm-linux-gnu
-  arm-linux-musl
-  arm64-darwin
-  x86_64-darwin
-  x86_64-linux-gnu
-  x86_64-linux-musl
-  x86-linux-gnu
-  x86-linux-musl
-].freeze
-
-exttask = Rake::ExtensionTask.new do |ext|
-  ext.name = "herb"
-  ext.source_pattern = "*.{c,h}"
-  ext.ext_dir = "ext/herb"
-  ext.lib_dir = "lib/herb"
-  ext.gem_spec = Gem::Specification.load("herb.gemspec")
-  ext.cross_compile = true
-  ext.cross_platform = PLATFORMS
-end
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -43,62 +19,103 @@ task "make" do
   end
 end
 
-Rake::Task[:compile].enhance do
-  raise "src/* could not be compiled #{$CHILD_STATUS.exitstatus}" if $CHILD_STATUS.exitstatus != 0
-end
+begin
+  require "rake/extensiontask"
 
-Rake::Task[:clean].enhance do
-  IO.popen("make clean") do |output|
-    output.each_line do |line|
-      puts line
+  PLATFORMS = %w[
+    aarch64-linux-gnu
+    aarch64-linux-musl
+    arm-linux-gnu
+    arm-linux-musl
+    arm64-darwin
+    x86_64-darwin
+    x86_64-linux-gnu
+    x86_64-linux-musl
+    x86-linux-gnu
+    x86-linux-musl
+  ].freeze
+
+  exttask = Rake::ExtensionTask.new do |ext|
+    ext.name = "herb"
+    ext.source_pattern = "*.{c,h}"
+    ext.ext_dir = "ext/herb"
+    ext.lib_dir = "lib/herb"
+    ext.gem_spec = Gem::Specification.load("herb.gemspec")
+    ext.cross_compile = true
+    ext.cross_platform = PLATFORMS
+  end
+
+  Rake::Task[:compile].enhance do
+    raise "src/* could not be compiled #{$CHILD_STATUS.exitstatus}" if $CHILD_STATUS.exitstatus != 0
+  end
+
+  Rake::Task[:clean].enhance do
+    IO.popen("make clean") do |output|
+      output.each_line do |line|
+        puts line
+      end
     end
   end
-end
 
-task "gem:native" do
-  require "rake_compiler_dock"
-  sh "bundle config set cache_all true"
-
-  PLATFORMS.each do |platform|
-    RakeCompilerDock.sh "bundle --local && rake native:#{platform} gem", platform: platform
-  end
-
-  RakeCompilerDock.sh "bundle --local && rake java gem", rubyvm: :jruby
-end
-
-namespace "gem" do
-  task "prepare" do
+  task "gem:native" do
     require "rake_compiler_dock"
-    require "io/console"
-
     sh "bundle config set cache_all true"
-    sh "cp ~/.gem/gem-*.pem build/gem/ || true"
 
-    gemspec_path = File.expand_path("./herb.gemspec", __dir__)
-    spec = eval(File.read(gemspec_path), binding, gemspec_path)
+    PLATFORMS.each do |platform|
+      RakeCompilerDock.sh "bundle --local && rake native:#{platform} gem", platform: platform
+    end
 
-    RakeCompilerDock.set_ruby_cc_version(spec.required_ruby_version.as_list)
-
-    # ENV["GEM_PRIVATE_KEY_PASSPHRASE"] = STDIN.getpass("Enter passphrase of gem signature key: ")
+    RakeCompilerDock.sh "bundle --local && rake java gem", rubyvm: :jruby
+  rescue LoadError
+    abort "rake_compiler_dock is required to build native gems"
   end
 
-  exttask.cross_platform.each do |platform|
-    desc "Build all native binary gems in parallel"
-    multitask "native" => platform
+  namespace "gem" do
+    task "prepare" do
+      require "rake_compiler_dock"
+      require "io/console"
 
-    desc "Build the native gem for #{platform}"
-    task platform => "prepare" do
-      # RakeCompilerDock.sh <<-EOT, platform: plat
-      #   (cp build/gem/gem-*.pem ~/.gem/ || true) &&
-      #   bundle --local &&
-      #   rake native:#{plat} pkg/#{exttask.gem_spec.full_name}-#{plat}.gem
-      # EOT
+      sh "bundle config set cache_all true"
+      sh "cp ~/.gem/gem-*.pem build/gem/ || true"
 
-      RakeCompilerDock.sh(
-        "bundle --local && rake native:#{platform} gem RUBY_CC_VERSION='#{ENV.fetch("RUBY_CC_VERSION", nil)}'",
-        platform: platform
-      )
+      gemspec_path = File.expand_path("./herb.gemspec", __dir__)
+      spec = eval(File.read(gemspec_path), binding, gemspec_path)
+
+      RakeCompilerDock.set_ruby_cc_version(spec.required_ruby_version.as_list)
+
+      # ENV["GEM_PRIVATE_KEY_PASSPHRASE"] = STDIN.getpass("Enter passphrase of gem signature key: ")
+    rescue LoadError
+      abort "rake_compiler_dock is required for this task"
     end
+
+    exttask.cross_platform.each do |platform|
+      desc "Build all native binary gems in parallel"
+      multitask "native" => platform
+
+      desc "Build the native gem for #{platform}"
+      task platform => "prepare" do
+        RakeCompilerDock.sh(
+          "bundle --local && rake native:#{platform} gem RUBY_CC_VERSION='#{ENV.fetch("RUBY_CC_VERSION", nil)}'",
+          platform: platform
+        )
+      end
+    end
+  end
+rescue LoadError => e
+  desc "Compile task not available (rake-compiler not installed)"
+  task :compile do
+    puts e
+    abort <<~MESSAGE
+
+      "rake-compiler is required for this task.
+
+      Are you running `rake` using `bundle exec rake`?
+
+      Otherwise
+        * try to run bundle install
+        * add it to your Gemfile
+        * or install it with: gem install rake-compiler
+    MESSAGE
   end
 end
 
@@ -150,6 +167,8 @@ namespace :templates do
     template_listener.start
 
     sleep
+  rescue LoadError
+    abort "listen gem is required for this task. Add it to your Gemfile or install it with: gem install listen"
   end
 end
 

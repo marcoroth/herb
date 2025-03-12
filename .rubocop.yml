@@ -80,6 +80,7 @@ Metrics/BlockLength:
   Exclude:
     - Rakefile
     - "*.gemspec"
+    - "**/*.rake"
     - lib/herb/project.rb
     - test/**/*_test.rb
 

@@ -86,7 +86,7 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
 static VALUE Herb_version(VALUE self) {
   VALUE gem_version = rb_const_get(self, rb_intern("VERSION"));
   VALUE libherb_version = rb_str_new_cstr(herb_version());
-  VALUE format_string = rb_str_new_cstr("herb gem v%s, libherb v%s (native)");
+  VALUE format_string = rb_str_new_cstr("herb gem v%s, libherb v%s (Ruby C native extension)");
 
   return rb_funcall(rb_mKernel, rb_intern("sprintf"), 3, format_string, gem_version, libherb_version);
 }

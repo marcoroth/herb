@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/docs",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "vitepress dev",
@@ -8,9 +8,9 @@
     "preview": "vitepress preview"
   },
   "dependencies": {
-    "@herb-tools/browser": "^0.0.1",
-    "@herb-tools/core": "^0.0.1",
-    "@herb-tools/node": "^0.0.1",
+    "@herb-tools/browser": "^0.0.0",
+    "@herb-tools/core": "^0.0.0",
+    "@herb-tools/node": "^0.0.0",
     "vitepress": "^2.0.0-alpha.4"
   },
   "devDependencies": {

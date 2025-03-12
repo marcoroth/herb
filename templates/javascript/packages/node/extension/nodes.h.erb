@@ -1,10 +1,10 @@
-#ifndef NODES_H
-#define NODES_H
+#ifndef HERB_EXTENSION_NODES_H
+#define HERB_EXTENSION_NODES_H
 
 #include <node_api.h>
 
 extern "C" {
-#include "../../src/include/herb.h"
+#include "../extension/libherb/include/herb.h"
 }
 
 napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
@@ -14,4 +14,4 @@ napi_value NodesArrayFromCArray(napi_env env, array_T* array);
 napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>);
 <%- end -%>
 
-#endif // NODES_H
+#endif

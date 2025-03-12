@@ -9,17 +9,21 @@ json-viewer::part(key) {
 }
 
 .language-tree .token.node {
-  color: #E5C07B;
+  color: #e5c07b;
   font-weight: bold;
 }
 
+.language-tree .token.namedspaced_class {
+  color: #e5c07b;
+}
+
 .language-tree .token.location {
-  color: #ABB2BF;
+  color: #abb2bf;
   font-style: italic;
 }
 
 .language-tree .token.tree-symbol {
-  color: #ABB2BF;
+  color: #abb2bf;
 }
 
 .language-tree .token.property {
@@ -27,20 +31,20 @@ json-viewer::part(key) {
 }
 
 .language-tree .token.error-class {
-  color: #E06C75;
+  color: #e06c75;
   font-weight: bold;
 }
 
 .language-tree .token.number {
-  color: #D19A66;
+  color: #d19a66;
 }
 
 .language-tree .token.string {
-  color: #90B874;
+  color: #90b874;
 }
 
 .language-tree .token.tree-null {
-  color: #C678DD;
+  color: #c678dd;
 }
 
 .language-tree .token.count {
@@ -49,17 +53,17 @@ json-viewer::part(key) {
 }
 
 .language-tree .token.boolean {
-  color: #D19A66;
+  color: #d19a66;
   font-weight: bold;
 }
 
 pre.language-tree {
-  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-family: "Menlo", "Monaco", "Courier New", monospace;
   padding: 1rem;
   border-radius: 4px;
   overflow: auto;
   line-height: 1.4;
-  background: #282D33;
+  background: #282d33;
 }
 
 code.language-tree {

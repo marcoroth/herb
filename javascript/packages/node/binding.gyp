@@ -8,41 +8,37 @@
         "./extension/error_helpers.cpp",
         "./extension/extension_helpers.cpp",
         "./extension/nodes.cpp",
-        "../../../src/array.c",
-        "../../../src/ast_node.c",
-        "../../../src/ast_nodes.c",
-        "../../../src/ast_pretty_print.c",
-        "../../../src/buffer.c",
-        "../../../src/errors.c",
-        "../../../src/extract.c",
-        "../../../src/herb.c",
-        "../../../src/html_util.c",
-        "../../../src/io.c",
-        "../../../src/json.c",
-        "../../../src/lexer.c",
-        "../../../src/lexer_peek_helpers.c",
-        "../../../src/location.c",
-        "../../../src/position.c",
-        "../../../src/memory.c",
-        "../../../src/parser.c",
-        "../../../src/parser_helpers.c",
-        "../../../src/pretty_print.c",
-        "../../../src/range.c",
-        "../../../src/token.c",
-        "../../../src/token_matchers.c",
-        "../../../src/util.c"
+        "./extension/libherb/array.c",
+        "./extension/libherb/ast_node.c",
+        "./extension/libherb/ast_nodes.c",
+        "./extension/libherb/ast_pretty_print.c",
+        "./extension/libherb/buffer.c",
+        "./extension/libherb/errors.c",
+        "./extension/libherb/extract.c",
+        "./extension/libherb/herb.c",
+        "./extension/libherb/html_util.c",
+        "./extension/libherb/io.c",
+        "./extension/libherb/json.c",
+        "./extension/libherb/lexer.c",
+        "./extension/libherb/lexer_peek_helpers.c",
+        "./extension/libherb/location.c",
+        "./extension/libherb/position.c",
+        "./extension/libherb/memory.c",
+        "./extension/libherb/parser.c",
+        "./extension/libherb/parser_helpers.c",
+        "./extension/libherb/pretty_print.c",
+        "./extension/libherb/range.c",
+        "./extension/libherb/token.c",
+        "./extension/libherb/token_matchers.c",
+        "./extension/libherb/util.c"
       ],
       "include_dirs": [
         "<!@(node -p \"require('node-addon-api').include\")",
-        "../../../src",
-        "../../../src/include",
-        "<!@(bundle show prism)/include"
+        "./extension/libherb",
+        "./extension/libherb/include"
       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
-      ],
-      "libraries": [
-        "<!@(bundle show prism)/build/libprism.a"
       ]
     }
   ]
