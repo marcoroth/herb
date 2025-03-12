@@ -41,18 +41,14 @@ $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	em++ -std=c++11 -c $< -o $@ $(CFLAGS)
 
 $(WASM_OUTPUT): $(ALL_OBJECTS)
+	# cd $(prism_path) && make wasm
+
 	mkdir -p $(BROWSER_BUILD_DIR)
 
 	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -o $(WASM_OUTPUT)
 
 	mkdir -p $(BROWSER_BUILD_DIR)prism/
 	cp $(PRISM_PATH)/javascript/src/* $(BROWSER_BUILD_DIR)prism/
-
-	if [ -d ../node_modules/@bjorn3/browser_wasi_shim ]; then \
-		cp ../node_modules/@bjorn3/browser_wasi_shim/dist/index.js $(BROWSER_BUILD_DIR)wasi-shim.js; \
-	else \
-		curl -o $(BROWSER_BUILD_DIR)wasi-shim.js https://unpkg.com/@bjorn3/browser_wasi_shim@latest/dist/index.js; \
-	fi
 
 clean:
 	rm -rf $(BROWSER_BUILD_DIR)

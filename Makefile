@@ -118,5 +118,4 @@ tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
 
 wasm:
-	# cd $(prism_path) && make wasm
 	cd wasm && make
