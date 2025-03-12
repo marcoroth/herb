@@ -196,95 +196,38 @@ export default class extends Controller {
   async analyze() {
     this.updateURL()
 
-    if (this.timeout) {
-      clearTimeout(this.timeout)
+    const result = await analyze(Herb, this.inputTarget.value)
+
+    if (this.hasVersionTarget) {
+      this.versionTarget.textContent = result.version
     }
 
-    this.timeout = setTimeout(() => {
-      this.prettyViewerTarget.textContent = "..."
-    }, 2000)
+    if (this.hasPrettyViewerTarget) {
+      this.prettyViewerTarget.classList.add("language-tree")
+      this.prettyViewerTarget.textContent = result.string
 
-    let response
-    let json
-
-    try {
-      response = await fetch("/api/analyze", {
-        method: "POST",
-        body: this.inputTarget.value,
-      })
-    } catch (error) {
-      this.prettyViewerTarget.data = { error, message: error.message }
-      this.fullViewerTarget.data = { error, message: error.message }
-      return
+      Prism.highlightElement(this.prettyViewerTarget)
     }
 
-    clearTimeout(this.timeout)
+    if (this.hasHtmlViewerTarget) {
+      this.htmlViewerTarget.classList.add("language-html")
+      this.htmlViewerTarget.textContent = result.html
 
-    if (response.ok) {
-      try {
-        json = await response.json()
-        json = await analyze(Herb, this.inputTarget.value)
+      Prism.highlightElement(this.htmlViewerTarget)
+    }
 
-        if (this.hasVersionTarget) {
-          this.versionTarget.textContent = json.version
-        }
+    if (this.hasRubyViewerTarget) {
+      this.rubyViewerTarget.classList.add("language-ruby")
+      this.rubyViewerTarget.textContent = result.ruby
 
-        if (this.hasPrettyViewerTarget) {
-          this.prettyViewerTarget.classList.add("language-tree")
-          this.prettyViewerTarget.textContent = json.string
+      Prism.highlightElement(this.rubyViewerTarget)
+    }
 
-          Prism.highlightElement(this.prettyViewerTarget)
-        }
+    if (this.hasLexViewerTarget) {
+      this.lexViewerTarget.classList.add("language-tree")
+      this.lexViewerTarget.textContent = result.lex
 
-        if (this.hasHtmlViewerTarget) {
-          this.htmlViewerTarget.classList.add("language-html")
-          this.htmlViewerTarget.textContent = json.html
-
-          Prism.highlightElement(this.htmlViewerTarget)
-        }
-
-        if (this.hasRubyViewerTarget) {
-          this.rubyViewerTarget.classList.add("language-ruby")
-          this.rubyViewerTarget.textContent = json.ruby
-
-          Prism.highlightElement(this.rubyViewerTarget)
-        }
-
-        if (this.hasLexViewerTarget) {
-          this.lexViewerTarget.classList.add("language-tree")
-          this.lexViewerTarget.textContent = json.lex
-
-          console.log(json)
-
-          Prism.highlightElement(this.lexViewerTarget)
-        }
-
-        if (this.hasFullViewerTarget) {
-          const isEmpty = !this.fullViewerTarget.data
-
-          this.fullViewerTarget.data = { ast: json.ast }
-
-          if (isEmpty) {
-            this.fullViewerTarget.expand("ast")
-          }
-        }
-      } catch (error) {
-        this.prettyViewerTarget.data = {
-          error: "Server didn't return JSON",
-          response: error.message,
-        }
-        this.fullViewerTarget.data = {
-          error: "Server didn't return JSON",
-          response: error.message,
-        }
-      }
-    } else {
-      this.prettyViewerTarget.data = {
-        error: "Server didn't respond with a 200 response",
-      }
-      this.fullViewerTarget.data = {
-        error: "Server didn't respond with a 200 response",
-      }
+      Prism.highlightElement(this.lexViewerTarget)
     }
   }
 

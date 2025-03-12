@@ -84,7 +84,7 @@ export class <%= node.name %> extends Node {
     return new <%= node.name %>({
       type: data.type,
       location: Location.from(data.location),
-      errors: data.errors.map(error => HerbError.from(error)),
+      errors: (data.errors || []).map(error => HerbError.from(error)),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
       <%- when Herb::Template::StringField -%>
@@ -96,7 +96,7 @@ export class <%= node.name %> extends Node {
       <%- when Herb::Template::NodeField -%>
       <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %> as any)) : null,
       <%- when Herb::Template::ArrayField -%>
-      <%= field.name %>: data.<%= field.name %>.map(node => fromSerializedNode(node)),
+      <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
       <%- else -%>
       <%= field.name %>: data.<%= field.name %>,
       <%- end -%>
@@ -153,7 +153,7 @@ export class <%= node.name %> extends Node {
     <%- name = "#{symbol} #{field.name}: " -%>
     <%- case field -%>
     <%- when Herb::Template::StringField -%>
-    output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
+    output += `<%= name %>${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
     <%- when Herb::Template::TokenField -%>
     output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;
     <%- when Herb::Template::BooleanField -%>

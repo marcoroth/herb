@@ -14,7 +14,7 @@
 #include <emscripten.h>
 #endif
 
-array_T* herb_lex(char* source) {
+array_T* herb_lex(const char* source) {
   lexer_T* lexer = lexer_init(source);
   token_T* token = NULL;
   array_T* tokens = array_init(128);
@@ -30,7 +30,7 @@ array_T* herb_lex(char* source) {
   return tokens;
 }
 
-AST_DOCUMENT_NODE_T* herb_parse(char* source) {
+AST_DOCUMENT_NODE_T* herb_parse(const char* source) {
   lexer_T* lexer = lexer_init(source);
   parser_T* parser = parser_init(lexer);
 
@@ -50,7 +50,7 @@ array_T* herb_lex_file(const char* path) {
   return tokens;
 }
 
-void herb_lex_to_buffer(char* source, buffer_T* output) {
+void herb_lex_to_buffer(const char* source, buffer_T* output) {
   array_T* tokens = herb_lex(source);
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -66,7 +66,7 @@ void herb_lex_to_buffer(char* source, buffer_T* output) {
   herb_free_tokens(&tokens);
 }
 
-void herb_lex_json_to_buffer(char* source, buffer_T* output) {
+void herb_lex_json_to_buffer(const char* source, buffer_T* output) {
   array_T* tokens = herb_lex(source);
 
   buffer_T json = buffer_new();

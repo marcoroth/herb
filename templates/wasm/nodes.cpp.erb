@@ -1,0 +1,77 @@
+#include <emscripten/bind.h>
+#include <emscripten/val.h>
+
+#include "extension_helpers.h"
+
+#include "../src/include/herb.h"
+#include "../src/include/token.h"
+#include "../src/include/array.h"
+#include "../src/include/ast_node.h"
+#include "../src/include/ast_nodes.h"
+#include "../src/include/location.h"
+
+using namespace emscripten;
+
+val NodeFromCStruct(AST_NODE_T* node);
+val NodesArrayFromCArray(array_T* array);
+
+<%- nodes.each do |node| -%>
+val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
+  if (!<%= node.human %>) return val::null();
+
+  val result = val::object();
+  result.set("type", CreateString(ast_node_type_to_string(&<%= node.human %>->base)));
+  result.set("location", CreateLocation(<%= node.human %>->base.location));
+  // result.set("errors", ErrorsArrayFromCArray(<%= node.human %>->base.errors));
+  result.set("errors", val::array());
+
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  result.set("<%= field.name %>", CreateString(<%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::NodeField -%>
+  result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*) <%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::TokenField -%>
+  result.set("<%= field.name %>", CreateToken(<%= node.human %>-><%= field.name %>));
+  <%- when Herb::Template::BooleanField -%>
+  result.set("<%= field.name %>", <%= node.human %>-><%= field.name %> ? true : false);
+  <%- when Herb::Template::ArrayField -%>
+  result.set("<%= field.name %>", NodesArrayFromCArray(<%= node.human %>-><%= field.name %>));
+  <%- else -%>
+  result.set("<%= field.name %>", val::null());
+  <%- end -%>
+  <%- end -%>
+
+  return result;
+}
+
+<%- end -%>
+
+val NodeFromCStruct(AST_NODE_T* node) {
+  if (!node) return val::null();
+
+  switch (node->type) {
+  <%- nodes.each do |node| -%>
+  case <%= node.type %>:
+    return <%= node.name %>FromCStruct((<%= node.struct_type %>*) node);
+  <%- end -%>
+  default:
+    return val::null();
+  }
+}
+
+val NodesArrayFromCArray(array_T* array) {
+  if (!array) return val::null();
+
+  val jsArray = val::array();
+
+  for (size_t i = 0; i < array_size(array); i++) {
+    AST_NODE_T* child_node = (AST_NODE_T*) array_get(array, i);
+
+    if (child_node) {
+      jsArray.set(i, NodeFromCStruct(child_node));
+    }
+  }
+
+  return jsArray;
+}

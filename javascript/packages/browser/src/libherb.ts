@@ -11,28 +11,20 @@ const modulePromise = libHerbInit()
 const backend: LibHerbBackend = {
   async lex(source: string): Promise<SerializedLexResult> {
     const module = await modulePromise
-    const lexFunc = module.cwrap("wasm_lex", "string", ["string"])
-    const resultJson = lexFunc(source)
-    console.log("resultJson", resultJson)
-    return { source: resultJson } as SerializedLexResult
+    return module.lex(source)
   },
 
   async lexFile(_path: string): Promise<SerializedLexResult> {
     throw new Error("File system operations are not supported in the browser.")
   },
 
-  async lexToJson(source: string): Promise<string> {
-    const module = await modulePromise
-    const lexToJsonFunc = module.cwrap("herb_lex_to_json", "string", ["string"])
-    return lexToJsonFunc(source)
+  async lexToJson(_source: string): Promise<string> {
+    throw new Error("not supported in the browser.")
   },
 
   async parse(source: string): Promise<SerializedParseResult> {
     const module = await modulePromise
-    const parseFunc = module.cwrap("wasm_parse", "string", ["string"])
-    const resultJson = parseFunc(source)
-    console.log("resultJson", resultJson)
-    return {source: resultJson} as SerializedParseResult
+    return module.parse(source)
   },
 
   async parseFile(_path: string): Promise<SerializedParseResult> {
@@ -41,35 +33,23 @@ const backend: LibHerbBackend = {
 
   async extractRuby(source: string): Promise<string> {
     const module = await modulePromise
-    const extractRubyFunc = module.cwrap("wasm_extract_ruby", "string", [
-      "string",
-    ])
-    return extractRubyFunc(source)
+    return module.extractRuby(source)
   },
 
   async extractHtml(source: string): Promise<string> {
     const module = await modulePromise
-    const extractHtmlFunc = module.cwrap("wasm_extract_html", "string", [
-      "string",
-    ])
-    return extractHtmlFunc(source)
+    return module.extractHTML(source)
   },
 
   async version(): Promise<string> {
     const module = await modulePromise
 
-    const versionPointer = module._herb_version()
-    const versionString = module.UTF8ToString(versionPointer)
-
-    return `libherb@${versionString} (WebAssembly)`
+    return module.version()
   },
 
   backend(): string {
     return `${name}@${version}`
   },
 }
-
-// @ts-ignore
-window.backend = backend
 
 export { backend }

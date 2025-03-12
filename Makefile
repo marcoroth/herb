@@ -1,4 +1,3 @@
-exec = herb
 test_exec = run_herb_tests
 
 sources = $(wildcard src/*.c) $(wildcard src/**/*.c)
@@ -58,8 +57,6 @@ test_flags = $(debug_flags) $(prism_flags) -std=gnu99
 # Shared library build (if needed)
 shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
 
-# Emscripten-specific flags
-emscripten_flags = -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME="libherb" -s EXPORTED_FUNCTIONS="['_herb_lex', '_herb_parse', '_herb_version']" -s EXPORTED_RUNTIME_METHODS='["cwrap"]' -s SINGLE_FILE=1 -s EXPORT_ES6=1
 
 ifeq ($(os),Linux)
   test_cflags = $(test_flags) -I/usr/include/check
@@ -120,23 +117,6 @@ lint:
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
 
-# Create a WASM build that doesn't include prism
-BROWSER_BUILD_DIR = ./javascript/packages/browser/build/
-
 wasm:
-	cd $(prism_path) && make wasm
-
-	mkdir -p $(BROWSER_BUILD_DIR)
-	mkdir -p $(BROWSER_BUILD_DIR)prism/
-
-	emcc $(sources) $(emscripten_flags) $(prism_flags) \
-	-s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-	-s EXPORTED_FUNCTIONS="['_herb_lex', '_herb_parse', '_herb_version', '_main', '_wasm_extract_ruby', '_wasm_extract_html', '_wasm_lex', '_wasm_parse']" \
-	-s EXPORTED_RUNTIME_METHODS='["cwrap", "UTF8ToString", "stringToUTF8", "lengthBytesUTF8"]' \
-	-s ENVIRONMENT='web' \
-	-o $(BROWSER_BUILD_DIR)libherb.js
-
-	cp $(prism_path)/javascript/src/* $(BROWSER_BUILD_DIR)prism/
-
-	curl -o ./javascript/packages/browser/build/wasi-shim.js https://unpkg.com/@bjorn3/browser_wasi_shim@latest/dist/index.js
-	cp ./node_modules/@bjorn3/browser_wasi_shim/dist/index.js ./javascript/packages/browser/build/wasi-shim.js
+	# cd $(prism_path) && make wasm
+	cd wasm && make

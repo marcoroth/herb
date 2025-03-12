@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 
-void herb_extract_ruby_to_buffer(char* source, buffer_T* output) {
+void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
   const array_T* tokens = herb_lex(source);
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -20,7 +20,7 @@ void herb_extract_ruby_to_buffer(char* source, buffer_T* output) {
   }
 }
 
-void herb_extract_html_to_buffer(char* source, buffer_T* output) {
+void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
   const array_T* tokens = herb_lex(source);
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -35,7 +35,7 @@ void herb_extract_html_to_buffer(char* source, buffer_T* output) {
   }
 }
 
-char* herb_extract(char* source, const herb_extract_language_T language) {
+char* herb_extract(const char* source, const herb_extract_language_T language) {
   buffer_T output;
   buffer_init(&output);
 

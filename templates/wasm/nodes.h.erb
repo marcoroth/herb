@@ -1,0 +1,17 @@
+#ifndef HERB_EXTENSION_NODES_H
+#define HERB_EXTENSION_NODES_H
+
+#include <node_api.h>
+
+extern "C" {
+#include "../extension/libherb/include/herb.h"
+}
+
+emscripten::val NodeFromCStruct(AST_NODE_T* node);
+emscripten::val NodesArrayFromCArray(array_T* array);
+
+<%- nodes.each do |node| -%>
+emscripten::val <%= node.human %>NodeFromCStruct(<%= node.struct_type %>* <%= node.human %>);
+<%- end -%>
+
+#endif

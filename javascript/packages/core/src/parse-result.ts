@@ -29,7 +29,6 @@ export class ParseResult extends Result {
    * @returns A new `ParseResult` instance.
    */
   static from(result: SerializedParseResult) {
-    console.log(result)
     return new ParseResult(
       DocumentNode.from(result.value),
       result.source,
