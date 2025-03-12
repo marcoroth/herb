@@ -19,6 +19,7 @@
     "test": "nx run-many --target=test --all --parallel",
     "clean": "nx run-many --target=clean --all --parallel",
     "playground": "nx run playground:dev",
+    "start": "concurrently \"nx run-many --target=dev --projects=@herb-tools/browser,@herb-tools/core,@herb-tools/node --parallel\" \"yarn playground\"",
     "docs": "nx dev docs",
     "watch:libs": "nx run-many --target=dev --projects=@herb-tools/browser,@herb-tools/core,@herb-tools/node --parallel",
     "lint": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --check",
