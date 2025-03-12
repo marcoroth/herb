@@ -19,23 +19,19 @@ describe("@herb-tools/node", () => {
     ]
 
     for (const expectedFunction of expectedFunctions) {
-      if (["version"].includes(expectedFunction)) {
-        expect(typeof Herb[expectedFunction]).toBe("string")
-      } else {
-        expect(typeof Herb[expectedFunction]).toBe("function")
-      }
+      expect(typeof Herb[expectedFunction]).toBe("function")
     }
   })
 
-  test("version() returns a string", () => {
-    const version = Herb.version
+  test("version() returns a string", async () => {
+    const version = await Herb.version()
     expect(typeof version).toBe("string")
     expect(version.length).toBeGreaterThan(0)
   })
 
-  test("parse() can process a simple template", () => {
+  test("parse() can process a simple template", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const result = Herb.parse(simpleHtml)
+    const result = await Herb.parse(simpleHtml)
     expect(result).toBeDefined()
     expect(result.value).toBeDefined()
     expect(result.source).toBeDefined()
@@ -43,16 +39,16 @@ describe("@herb-tools/node", () => {
     expect(result.warnings).toHaveLength(0)
   })
 
-  test("extractRuby() extracts embedded Ruby code", () => {
+  test("extractRuby() extracts embedded Ruby code", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const ruby = Herb.extractRuby(simpleHtml)
+    const ruby = await Herb.extractRuby(simpleHtml)
     expect(ruby).toBeDefined()
     expect(ruby).toBe('         "Hello World"         ')
   })
 
-  test("extractHtml() extracts HTML content", () => {
+  test("extractHtml() extracts HTML content", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const html = Herb.extractHtml(simpleHtml)
+    const html = await Herb.extractHtml(simpleHtml)
     expect(html).toBeDefined()
     expect(html).toBe("<div>                    </div>")
   })
