@@ -2,17 +2,11 @@ import * as esbuild from "esbuild"
 import { wasmLoader } from "esbuild-plugin-wasm"
 
 await esbuild.build({
-  entryPoints: ["./dist/src/index.js"],
+  entryPoints: ["./src/index.ts"],
   bundle: true,
   format: "esm",
   outfile: "./dist/herb-browser.esm.js",
   platform: "browser",
-  plugins: [
-    wasmLoader({
-      mode: "inline"
-    })
-  ],
-  external: ["env", "wasi_snapshot_preview1"],
 })
 
 // await esbuild.build({

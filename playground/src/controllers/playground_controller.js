@@ -17,6 +17,9 @@ LightEditor.define()
 
 import { Herb } from "@herb-tools/browser"
 
+import { analyze } from "../analyze"
+window.analyze = analyze
+
 window.Herb = Herb
 
 const exampleFile = dedent`
@@ -220,6 +223,7 @@ export default class extends Controller {
     if (response.ok) {
       try {
         json = await response.json()
+        json = await analyze(Herb, this.inputTarget.value)
 
         if (this.hasVersionTarget) {
           this.versionTarget.textContent = json.version

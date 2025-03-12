@@ -1,7 +1,7 @@
 import express from "express"
 
 import { defineConfig } from "vite"
-import { Herb } from "@herb-tools/node"
+// import { Herb } from "@herb-tools/node"
 import { analyze } from "./src/analyze"
 
 import type { Request, Response } from "express"
@@ -21,7 +21,8 @@ export default defineConfig({
 
         app.post("/api/analyze", (request: Request, response: Response) => {
           try {
-            return response.json(analyze(Herb, request.body))
+            // return response.json(analyze(Herb, request.body))
+            return response.json({})
           } catch (e) {
             console.error("Error in API route:", e)
             return response.status(500).json({
