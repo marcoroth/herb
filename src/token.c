@@ -13,8 +13,13 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(const char* value, const token_type_T type, const lexer_T* lexer) {
+token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, token_sizeof());
+
+  if (type == TOKEN_NEWLINE) {
+    lexer->current_line++;
+    lexer->current_column = 0;
+  }
 
   if (value) {
     token->value = herb_strdup(value);
@@ -23,25 +28,14 @@ token_T* token_init(const char* value, const token_type_T type, const lexer_T* l
   }
 
   token->type = type;
-  token->range = range_init(lexer->current_position - strlen(value), lexer->current_position);
+  token->range = range_init(lexer->previous_position, lexer->current_position);
 
-  size_t newlines = count_newlines(value);
-  size_t start_line = lexer->current_line - newlines;
-  size_t last_newline_position = 0;
+  token->location =
+    location_from(lexer->previous_line, lexer->previous_column, lexer->current_line, lexer->current_column);
 
-  if (newlines > 0) {
-    const char* last_newline = strrchr(value, '\n');
-    if (!last_newline) { last_newline = strrchr(value, '\r'); }
-    if (last_newline) { last_newline_position = strlen(last_newline + 1); }
-  } else {
-    last_newline_position = strlen(value);
-  }
-
-  size_t start_column = (newlines > 0) ? last_newline_position : (lexer->current_column - strlen(value));
-  size_t end_line = lexer->current_line;
-  size_t end_column = lexer->current_column;
-
-  token->location = location_from(start_line, start_column, end_line, end_column);
+  lexer->previous_line = lexer->current_line;
+  lexer->previous_column = lexer->current_column;
+  lexer->previous_position = lexer->current_position;
 
   return token;
 }
