@@ -16,11 +16,10 @@ import { loader as ERBLoader } from "prism-esm/components/prism-erb.js"
 LightEditor.define()
 
 import { Herb } from "@herb-tools/browser"
+window.Herb = Herb
 
 import { analyze } from "../analyze"
 window.analyze = analyze
-
-window.Herb = Herb
 
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
@@ -59,11 +58,11 @@ export default class extends Controller {
     "fullViewer",
     "viewerButton",
     "version",
+    "time",
   ]
 
   connect() {
     this.restoreInput()
-    this.analyze()
 
     this.highlighter = this.inputTarget.highlighter
 
@@ -73,6 +72,13 @@ export default class extends Controller {
     this.inputTarget.requestUpdate("highlighter")
 
     this.inputTarget.focus()
+
+    this.load()
+  }
+
+  async load() {
+    await Herb.load()
+    this.analyze()
   }
 
   updateURL() {
@@ -197,6 +203,14 @@ export default class extends Controller {
     this.updateURL()
 
     const result = await analyze(Herb, this.inputTarget.value)
+
+    if (this.hasTimeTarget) {
+      if (result.duration.toFixed(2) == 0.0) {
+        this.timeTarget.textContent = `(< 0.00 ms)`
+      } else {
+        this.timeTarget.textContent = `(${result.duration.toFixed(2)} ms)`
+      }
+    }
 
     if (this.hasVersionTarget) {
       this.versionTarget.textContent = result.version

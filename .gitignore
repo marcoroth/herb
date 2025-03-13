@@ -110,3 +110,6 @@ wasm/nodes.h
 .nx/workspace-data
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+
+# Vitest
+**/test/__screenshots__/**/*

@@ -174,6 +174,6 @@ This allows you to analyze the parsed HTML+ERB programmatically.
 :::code-group
 ```ruby
 Herb.version
-# => "herb gem v0.0.1, libherb v0.0.1 (native)"
+# => "herb gem v0.0.1, libherb v0.0.1 (Ruby C native extension)"
 ```
 :::

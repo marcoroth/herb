@@ -14,15 +14,23 @@ The API remains the same for both packages regardless of whether you imported `H
 :::code-group
 ```js twoslash [Browser]
 import { Herb } from "@herb-tools/browser"
+
+await Herb.load()
+
+Herb.parse("content")
 ```
 
 ```js twoslash [Node.js]
 import { Herb } from "@herb-tools/node"
+
+await Herb.load()
+
+Herb.parse("content")
 ```
 
 <br/>
 
-Learn more on [how to install the NPM packages](/bindings/javascript/){target="_self"}
+Learn more on [how to install and load the NPM packages](/bindings/javascript/#installation)
 
 :::
 
@@ -31,11 +39,11 @@ Learn more on [how to install the NPM packages](/bindings/javascript/){target="_
 `Herb` provides the following key methods:
 
 - **`Herb.lex(source: string): LexResult`**
-- **`Herb.lexFile(path: string): Promise<LexResult>`**
+- **`Herb.lexFile(path: string): LexResult`**
 - **`Herb.parse(source: string): ParseResult`**
-- **`Herb.parseFile(path: string): Promise<ParseResult>`**
+- **`Herb.parseFile(path: string): ParseResult`**
 - **`Herb.extractRuby(source: string): string`**
-- **`Herb.extractHtml(source: string): string`**
+- **`Herb.extractHTML(source: string): string`**
 - **`Herb.version: string`**
 
 
@@ -70,9 +78,10 @@ console.log(result)
 import { Herb } from "@herb-tools/node"
 
 // ---cut---
-const result = await Herb.lexFile("./index.html.erb")
+const result = Herb.lexFile("./index.html.erb")
 
 console.log(result)
+//           ^?
 ```
 ```erb [index.html.erb]
 <h1><%= "Hello World" %></h1>
@@ -110,9 +119,10 @@ console.log(result)
 import { Herb } from "@herb-tools/node"
 
 // ---cut---
-const result = await Herb.parseFile("./index.html.erb")
+const result = Herb.parseFile("./index.html.erb")
 
 console.log(result)
+//           ^?
 ```
 ```erb [index.html.erb]
 <h1><%= "Hello World" %></h1>
@@ -142,9 +152,9 @@ console.log(ruby);
 ```
 :::
 
-### `Herb.extractHtml(source)`
+### `Herb.extractHTML(source)`
 
-The `Herb.extractHtml` method allows you to extract only the HTML parts of an HTML document with embedded Ruby.
+The `Herb.extractHTML` method allows you to extract only the HTML parts of an HTML document with embedded Ruby.
 
 :::code-group
 ```js twoslash [javascript]
@@ -153,7 +163,7 @@ import { Herb } from "@herb-tools/node"
 // ---cut---
 const source = "<p>Hello <%= user.name %></p>"
 
-const html = Herb.extractHtml(source)
+const html = Herb.extractHTML(source)
 
 console.log(html)
 // Outputs: "<p>Hello                 </p>"
@@ -200,6 +210,6 @@ import { Herb } from "@herb-tools/node"
 
 // ---cut---
 console.log(Herb.version)
-// => "@herb-tools/node@0.0.1, @herb-tools/core@0.0.1, libherb@0.0.1 (native)"
+// => "@herb-tools/node@0.0.1, @herb-tools/core@0.0.1, libherb@0.0.1 (Node.js C++ native extension)"
 ```
 :::

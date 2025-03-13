@@ -1,37 +1,28 @@
-import { describe, test, expect } from "vitest"
-import { Herb } from "../src"
+import { describe, test, expect, beforeAll } from "vitest"
+import { Herb, HerbBackend } from "../src"
 
 describe("@herb-tools/browser", () => {
+  beforeAll(async () => {
+    await Herb.load()
+  })
+
   test("loads wasm successfully", () => {
     expect(Herb).toBeDefined()
   })
 
-  test("has all expected functions", () => {
-    const expectedFunctions = [
-      "lex",
-      "lexFile",
-      "parse",
-      "parseFile",
-      "lexToJson",
-      "extractRuby",
-      "extractHtml",
-      "version",
-    ]
-
-    for (const expectedFunction of expectedFunctions) {
-      expect(typeof Herb[expectedFunction]).toBe("function")
-    }
+  test("Herb export is of instance HerbBackend", () => {
+    expect(Herb instanceof HerbBackend).toBeTruthy()
   })
 
   test("version() returns a string", async () => {
-    const version = await Herb.version()
+    const version = Herb.version
     expect(typeof version).toBe("string")
     expect(version.length).toBeGreaterThan(0)
   })
 
   test("parse() can process a simple template", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const result = await Herb.parse(simpleHtml)
+    const result = Herb.parse(simpleHtml)
     expect(result).toBeDefined()
     expect(result.value).toBeDefined()
     expect(result.source).toBeDefined()
@@ -41,14 +32,14 @@ describe("@herb-tools/browser", () => {
 
   test("extractRuby() extracts embedded Ruby code", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const ruby = await Herb.extractRuby(simpleHtml)
+    const ruby = Herb.extractRuby(simpleHtml)
     expect(ruby).toBeDefined()
     expect(ruby).toBe('         "Hello World"         ')
   })
 
-  test("extractHtml() extracts HTML content", async () => {
+  test("extractHTML() extracts HTML content", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
-    const html = await Herb.extractHtml(simpleHtml)
+    const html = Herb.extractHTML(simpleHtml)
     expect(html).toBeDefined()
     expect(html).toBe("<div>                    </div>")
   })

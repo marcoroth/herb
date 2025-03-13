@@ -217,7 +217,7 @@ napi_value Init(napi_env env, napi_value exports) {
     { "lexFile", nullptr, Herb_lex_file, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lexToJson", nullptr, Herb_lex_to_json, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
-    { "extractHtml", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
   };
 

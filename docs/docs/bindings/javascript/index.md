@@ -38,8 +38,20 @@ bun add @herb-tools/browser
 Import the `Herb` object into your project:
 
 :::code-group
-```js twoslash [javascript]
+```js twoslash [async/await]
 import { Herb } from "@herb-tools/browser"
+
+await Herb.load()
+
+Herb.parse("content")
+```
+
+```js twoslash [Promise]
+import { Herb } from "@herb-tools/browser"
+
+Herb.load().then(() => {
+  Herb.parse("content")
+})
 ```
 :::
 
@@ -77,8 +89,20 @@ bun add @herb-tools/node
 Import the `Herb` object into your project:
 
 :::code-group
-```js twoslash [javascript]
+```js twoslash [async/await]
 import { Herb } from "@herb-tools/node"
+
+await Herb.load()
+
+Herb.parse("content")
+```
+
+```js twoslash [Promise]
+import { Herb } from "@herb-tools/node"
+
+Herb.load().then(() => {
+  Herb.parse("content")
+})
 ```
 :::
 
@@ -86,4 +110,4 @@ You are now ready to parse HTML+ERB in Node.js.
 
 ## Getting Started
 
-Regardless of whether you imported Herb from `@herb-tools/browser` or `@herb-tools/node`, the API remains the same for both packages.
+Regardless of whether you imported `Herb` from `@herb-tools/browser` or `@herb-tools/node`, the API remains the same for both packages.
