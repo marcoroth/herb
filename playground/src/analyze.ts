@@ -1,4 +1,4 @@
-import type { HerbBackend } from "@herb-tools/core"
+import type { HerbBackend, ParseResult, LexResult } from "@herb-tools/core"
 
 async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   try {
@@ -12,35 +12,45 @@ async function safeExecute<T>(promise: Promise<T>): Promise<T> {
 export async function analyze(herb: HerbBackend, source: string) {
   const startTime = performance.now()
 
-  const string = await safeExecute(
-    new Promise((resolve) => resolve(herb.parse(source).value.inspect())),
+  const parseResult = await safeExecute<ParseResult>(
+    new Promise((resolve) => resolve(herb.parse(source))),
   )
 
-  const json = await safeExecute(
+  const string = await safeExecute<string>(
+    new Promise((resolve) => resolve(parseResult.value.inspect())),
+  )
+
+  const json = await safeExecute<string>(
     new Promise((resolve) =>
-      resolve(JSON.stringify(herb.parse(source).value, null, 2)),
+      resolve(JSON.stringify(parseResult.value, null, 2)),
     ),
   )
 
-  const lex = await safeExecute(
-    new Promise((resolve) => resolve(herb.lex(source).value.inspect())),
+  const lexResult = await safeExecute<LexResult>(
+    new Promise((resolve) => resolve(herb.lex(source))),
   )
 
-  const ruby = await safeExecute(
+  const lex = await safeExecute<string>(
+    new Promise((resolve) => resolve(lexResult.value.inspect())),
+  )
+
+  const ruby = await safeExecute<string>(
     new Promise((resolve) => resolve(herb.extractRuby(source))),
   )
 
-  const html = await safeExecute(
+  const html = await safeExecute<string>(
     new Promise((resolve) => resolve(herb.extractHTML(source))),
   )
 
-  const version = await safeExecute(
+  const version = await safeExecute<string>(
     new Promise((resolve) => resolve(herb.version)),
   )
 
   const endTime = performance.now()
 
   return {
+    parseResult,
+    lexResult,
     string,
     json,
     lex,

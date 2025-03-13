@@ -79,6 +79,13 @@ export class ParseResult extends Result {
     return JSON.stringify([...this.errors, ...this.value.errors], null, 2)
   }
 
+  recursiveErrors(): HerbError[] {
+    return [
+      ...this.errors,
+      ...this.value.recursiveErrors(),
+    ]
+  }
+
   /**
    * Returns a pretty-printed string of the parse result.
    * @returns A string representation of the parse result.

@@ -9,16 +9,12 @@ import dedent from "dedent"
 import Prism from "prismjs"
 
 import { Controller } from "@hotwired/stimulus"
-
-import LightEditor from "light-pen/exports/components/light-editor/light-editor.js"
-
-import { loader as ERBLoader } from "prism-esm/components/prism-erb.js"
-LightEditor.define()
+import { replaceTextareaWithMonaco } from "../monaco"
 
 import { Herb } from "@herb-tools/browser"
-window.Herb = Herb
-
 import { analyze } from "../analyze"
+
+window.Herb = Herb
 window.analyze = analyze
 
 const exampleFile = dedent`
@@ -26,7 +22,7 @@ const exampleFile = dedent`
 
   <input required />
 
-  <h1 class="bg-gray-300 text-gray" id='' data-controller="example">
+  <h1 class='bg-gray-300 text-gray" id='' data-controller="example">
     Hello World <%= RUBY_VERSION %>
   </h1>
 
@@ -63,17 +59,15 @@ export default class extends Controller {
 
   connect() {
     this.restoreInput()
-
-    this.highlighter = this.inputTarget.highlighter
-
-    ERBLoader(this.highlighter)
-
-    this.inputTarget.setAttribute("language", "erb")
-    this.inputTarget.requestUpdate("highlighter")
-
     this.inputTarget.focus()
-
     this.load()
+
+    this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
+      language: "erb",
+      theme: "",
+      automaticLayout: true,
+      minimap: { enabled: false },
+    })
   }
 
   async load() {
@@ -93,7 +87,11 @@ export default class extends Controller {
       return
     }
 
-    this.inputTarget.value = exampleFile
+    if (this.editor) {
+      this.editor.setValue(exampleFile)
+    } else {
+      this.inputTarget.value = exampleFile
+    }
 
     const button = this.getClosestButton(event.target)
 
@@ -202,7 +200,18 @@ export default class extends Controller {
   async analyze() {
     this.updateURL()
 
-    const result = await analyze(Herb, this.inputTarget.value)
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+    const result = await analyze(Herb, value)
+
+    this.editor.clearDiagnostics()
+
+    if (result.parseResult) {
+      const errors = result.parseResult.recursiveErrors()
+
+      this.editor.addDiagnostics(
+        errors.flatMap((error) => error.toDiagnostics()),
+      )
+    }
 
     if (this.hasTimeTarget) {
       if (result.duration.toFixed(2) == 0.0) {
@@ -246,7 +255,8 @@ export default class extends Controller {
   }
 
   get compressedValue() {
-    return lz.compressToEncodedURIComponent(this.inputTarget.value)
+    const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+    return lz.compressToEncodedURIComponent(value)
   }
 
   get decompressedValue() {

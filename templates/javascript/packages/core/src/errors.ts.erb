@@ -2,6 +2,15 @@ import { Location, SerializedLocation } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError, SerializedHerbError } from "./error.js"
 
+type HerbDiagnostic = {
+  line: number
+  column: number
+  endLine: number
+  endColumn: number
+  message: string
+  severity: "error" | "warning" | "info"
+}
+
 export type HerbErrorType =
   <%- errors.each_with_index.map do |error, index| -%>
   | "<%= error.type %>"
@@ -112,6 +121,42 @@ export class <%= error.name %> extends HerbError {
       <%- end -%>
       <%- end -%>
     };
+  }
+
+  toDiagnostics(): HerbDiagnostic[] {
+    const diagnostics: HerbDiagnostic[] = [
+      {
+        line: this.location.start.line,
+        column: this.location.start.column,
+        endLine: this.location.end.line,
+        endColumn: this.location.end.column,
+        message: this.message,
+        severity: 'error'
+      }
+    ]
+
+    <%- error.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::TokenField -%>
+    if (this.<%= field.name %>) {
+      diagnostics.push({
+        line: this.<%= field.name %>.location.start.line,
+        column: this.<%= field.name %>.location.start.column,
+        endLine: this.<%= field.name %>.location.end.line,
+        endColumn: this.<%= field.name %>.location.end.column,
+        message: `<%= field.name %> "${(this.<%= field.name %>.value)}" is here`,
+        severity: 'info'
+      })
+    }
+
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+    // no-op for <%= field.name %>
+    <%- else -%>
+    <%- raise "Unhandled Type: #{field.class}" %>
+    <%- end -%>
+    <%- end -%>
+
+    return diagnostics
   }
 
   treeInspect(): string {

@@ -42,6 +42,8 @@ export abstract class Node implements BaseNodeProps {
   }
 
   abstract treeInspect(indent?: number): string
+  abstract recursiveErrors(): HerbError[]
+  abstract childNodes(): Node[]
 
   protected inspectArray(
     array: (Node | HerbError)[] | null | undefined,

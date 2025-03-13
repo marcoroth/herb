@@ -120,6 +120,33 @@ export class <%= node.name %> extends Node {
     <%- end -%>
   }
 
+  childNodes(): Node[] {
+    return [
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::NodeField -%>
+      this.<%= field.name %>,
+      <%- when Herb::Template::ArrayField -%>
+      ...this.<%= field.name %>,
+      <%- end -%>
+      <%- end -%>
+    ].filter(node => node !== null && node !== undefined) as Node[];
+  }
+
+  recursiveErrors(): HerbError[] {
+    return [
+      ...this.errors,
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::NodeField -%>
+      this.<%= field.name %> ? this.<%= field.name %>.recursiveErrors() : [],
+      <%- when Herb::Template::ArrayField -%>
+      ...this.<%= field.name %>.map(node => node.recursiveErrors()),
+      <%- end -%>
+      <%- end -%>
+    ].flat();
+  }
+
   toJSON(): Serialized<%= node.name %> {
     return {
       ...super.toJSON(),
