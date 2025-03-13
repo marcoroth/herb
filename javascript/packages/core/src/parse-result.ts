@@ -80,10 +80,7 @@ export class ParseResult extends Result {
   }
 
   recursiveErrors(): HerbError[] {
-    return [
-      ...this.errors,
-      ...this.value.recursiveErrors(),
-    ]
+    return [...this.errors, ...this.value.recursiveErrors()]
   }
 
   /**

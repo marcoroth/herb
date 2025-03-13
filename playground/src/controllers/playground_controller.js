@@ -10,6 +10,7 @@ import Prism from "prismjs"
 
 import { Controller } from "@hotwired/stimulus"
 import { replaceTextareaWithMonaco } from "../monaco"
+import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 
 import { Herb } from "@herb-tools/browser"
 import { analyze } from "../analyze"
@@ -68,6 +69,28 @@ export default class extends Controller {
       automaticLayout: true,
       minimap: { enabled: false },
     })
+
+    this.editor.onEditorClick((position) => {
+      this.editor.clearAllHighlights()
+      this.clearTreeLocationHighlights()
+
+      const range = findTreeLocationItemWithSmallestRangeFromPosition(
+        this.treeLocations,
+        position.lineNumber,
+        position.column - 1,
+      )
+
+      if (range) {
+        range.element.classList.add("tree-location-highlight")
+        range.element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        })
+      }
+    })
+
+    window.editor = this.editor
   }
 
   async load() {
@@ -197,6 +220,45 @@ export default class extends Controller {
     this.currentViewer.style.cursor = null
   }
 
+  setupHoverListener(element, location) {
+    element.addEventListener("mouseenter", () => {
+      this.clearTreeLocationHighlights()
+      this.editor.clearAllHighlights()
+      this.editor.highlightAndRevealSection(
+        ...location,
+        element.classList.contains("error-class")
+          ? "error-highlight"
+          : "info-highlight",
+      )
+    })
+
+    element.classList.add("hover-highlight")
+  }
+
+  clearTreeLocationHighlights() {
+    this.prettyViewerTarget
+      .querySelectorAll(".tree-location-highlight")
+      .forEach((element) => {
+        element.classList.remove("tree-location-highlight")
+      })
+  }
+
+  get treeLocations() {
+    return Array.from(
+      this.prettyViewerTarget?.querySelectorAll(".token.location") || [],
+    ).map((locationElement) => {
+      const element = locationElement.previousElementSibling
+      const location = Array.from(
+        locationElement.textContent.matchAll(/\d+/g),
+      ).map((i) => parseInt(i))
+
+      location[1] += 1
+      location[3] += 1
+
+      return { element, locationElement, location }
+    })
+  }
+
   async analyze() {
     this.updateURL()
 
@@ -230,6 +292,15 @@ export default class extends Controller {
       this.prettyViewerTarget.textContent = result.string
 
       Prism.highlightElement(this.prettyViewerTarget)
+
+      this.treeLocations.forEach(({ element, locationElement, location }) => {
+        this.setupHoverListener(locationElement, location)
+        this.setupHoverListener(element, location)
+
+        if (element.classList.contains("string")) {
+          this.setupHoverListener(element.previousElementSibling, location)
+        }
+      })
     }
 
     if (this.hasHtmlViewerTarget) {

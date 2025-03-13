@@ -13,6 +13,20 @@ json-viewer::part(key) {
   font-weight: bold;
 }
 
+.language-tree .token.hover-highlight:hover {
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.language-tree .tree-location-highlight {
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.85;
+  font-weight: bolder;
+  background: rgba(255, 255, 255, 0.2);
+}
+
 .language-tree .token.namedspaced_class {
   color: #e5c07b;
 }
@@ -118,4 +132,56 @@ code.language-tree {
 
 .margin-view-overlays {
   width: 10px !important;
+}
+
+/* Default error highlight - light red background */
+.error-highlight {
+  background-color: rgba(255, 0, 0, 0.2);
+  border-bottom: 2px wavy #f44336;
+}
+
+/* Warning highlight - light yellow background */
+.warning-highlight {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-bottom: 2px wavy #ff9800;
+}
+
+/* Info highlight - light blue background */
+.info-highlight {
+  background-color: rgba(33, 150, 243, 0.2);
+  border-bottom: 2px wavy #2196f3;
+}
+
+/* Success highlight - light green background */
+.success-highlight {
+  background-color: rgba(76, 175, 80, 0.2);
+  border-bottom: 2px wavy #4caf50;
+}
+
+/* Flash highlight with animation */
+.flash-highlight {
+  animation: flash-animation 1.5s ease-out;
+  background-color: rgba(255, 255, 0, 0.3);
+}
+
+@keyframes flash-animation {
+  0% {
+    background-color: rgba(255, 255, 0, 0.7);
+  }
+  100% {
+    background-color: rgba(255, 255, 0, 0);
+  }
+}
+
+/* Match highlight for search results */
+.match-highlight {
+  background-color: rgba(255, 213, 79, 0.4);
+  border-radius: 2px;
+}
+
+/* Active match highlight for current search result */
+.active-match-highlight {
+  background-color: rgba(255, 193, 7, 0.6);
+  border: 1px solid #ff9800;
+  border-radius: 2px;
 }

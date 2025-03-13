@@ -127,9 +127,9 @@ export class <%= error.name %> extends HerbError {
     const diagnostics: HerbDiagnostic[] = [
       {
         line: this.location.start.line,
-        column: this.location.start.column,
+        column: this.location.start.column + 1,
         endLine: this.location.end.line,
-        endColumn: this.location.end.column,
+        endColumn: this.location.end.column + 1,
         message: this.message,
         severity: 'error'
       }
