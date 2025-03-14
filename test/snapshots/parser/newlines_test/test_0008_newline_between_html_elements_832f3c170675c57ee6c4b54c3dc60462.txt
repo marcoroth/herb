@@ -1,4 +1,4 @@
-@ DocumentNode (location: (1:0)-(3:0))
+@ DocumentNode (location: (1:0)-(3:1))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:16))
     │   ├── open_tag:
@@ -23,31 +23,31 @@
     │   │
     │   └── is_void: false
     │
-    ├── @ HTMLTextNode (location: (1:16)-(2:0))
+    ├── @ HTMLTextNode (location: (1:16)-(2:1))
     │   └── content: "\n"
     │
-    ├── @ HTMLElementNode (location: (2:0)-(2:16))
+    ├── @ HTMLElementNode (location: (2:1)-(2:17))
     │   ├── open_tag:
-    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:4))
-    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
-    │   │       ├── tag_name: "h2" (location: (2:1)-(2:3))
+    │   │   └── @ HTMLOpenTagNode (location: (2:1)-(2:5))
+    │   │       ├── tag_opening: "<" (location: (2:1)-(2:2))
+    │   │       ├── tag_name: "h2" (location: (2:2)-(2:4))
     │   │       ├── attributes: []
-    │   │       ├── tag_closing: ">" (location: (2:3)-(2:4))
+    │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
     │   │       ├── children: []
     │   │       └── is_void: false
     │   │
-    │   ├── tag_name: "h2" (location: (2:1)-(2:3))
+    │   ├── tag_name: "h2" (location: (2:2)-(2:4))
     │   ├── body: (1 item)
-    │   │   └── @ HTMLTextNode (location: (2:4)-(2:11))
+    │   │   └── @ HTMLTextNode (location: (2:5)-(2:12))
     │   │       └── content: "Title 2"
     │   │
     │   ├── close_tag:
-    │   │   └── @ HTMLCloseTagNode (location: (2:11)-(2:16))
-    │   │       ├── tag_opening: "</" (location: (2:11)-(2:13))
-    │   │       ├── tag_name: "h2" (location: (2:13)-(2:15))
-    │   │       └── tag_closing: ">" (location: (2:15)-(2:16))
+    │   │   └── @ HTMLCloseTagNode (location: (2:12)-(2:17))
+    │   │       ├── tag_opening: "</" (location: (2:12)-(2:14))
+    │   │       ├── tag_name: "h2" (location: (2:14)-(2:16))
+    │   │       └── tag_closing: ">" (location: (2:16)-(2:17))
     │   │
     │   └── is_void: false
     │
-    └── @ HTMLTextNode (location: (2:16)-(3:0))
+    └── @ HTMLTextNode (location: (2:17)-(3:1))
         └── content: "\n"

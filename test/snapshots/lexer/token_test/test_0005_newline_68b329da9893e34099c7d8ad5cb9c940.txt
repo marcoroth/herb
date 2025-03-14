@@ -1,2 +1,2 @@
-#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[0, 1] start=(1:0) end=(2:0)>
-#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[1, 1] start=(2:0) end=(2:0)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[0, 1] start=(1:0) end=(2:1)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[1, 1] start=(2:1) end=(2:1)>

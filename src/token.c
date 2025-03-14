@@ -18,7 +18,7 @@ token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) 
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
-    lexer->current_column = 0;
+    lexer->current_column = 1;
   }
 
   if (value) {
