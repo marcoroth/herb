@@ -77,9 +77,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
 
 static void lexer_advance(lexer_T* lexer) {
   if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
-    if (!is_newline(lexer->current_character)) {
-      lexer->current_column++;
-    }
+    if (!is_newline(lexer->current_character)) { lexer->current_column++; }
 
     lexer->current_position++;
     lexer->current_character = lexer->source[lexer->current_position];
