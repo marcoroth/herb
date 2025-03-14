@@ -2,7 +2,6 @@ import "../style.css"
 import "../prism"
 
 // import "@alenaksu/json-viewer"
-import "element-internals-polyfill"
 
 import lz from "lz-string"
 import dedent from "dedent"

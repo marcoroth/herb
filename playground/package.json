@@ -22,10 +22,8 @@
     "@herb-tools/browser": "^0.0.0",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.5.1",
-    "element-internals-polyfill": "^3.0.1",
     "express": "^4.20.0",
     "lz-string": "^1.5.0",
-    "prism-esm": "^1.29.0-fix.6",
     "prismjs": "^1.29.0",
     "vite": "^6.2.1"
   },
