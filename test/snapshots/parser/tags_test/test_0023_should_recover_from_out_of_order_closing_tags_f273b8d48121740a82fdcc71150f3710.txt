@@ -1,80 +1,80 @@
-@ DocumentNode (location: (1:0)-(7:7))
+@ DocumentNode (location: (1:0)-(7:6))
 ├── errors: (1 error)
-│   └── @ UnclosedElementError (location: (6:9)-(6:11))
-│       ├── message: "Tag `<main>` opened at (2:10) was never closed before the end of document."
-│       └── opening_tag: "main" (location: (2:10)-(2:14))
+│   └── @ UnclosedElementError (location: (6:8)-(6:10))
+│       ├── message: "Tag `<main>` opened at (2:9) was never closed before the end of document."
+│       └── opening_tag: "main" (location: (2:9)-(2:13))
 │
 └── children: (5 items)
-    ├── @ HTMLTextNode (location: (1:0)-(2:9))
+    ├── @ HTMLTextNode (location: (1:0)-(2:8))
     │   └── content: "\n        "
     │
-    ├── @ HTMLElementNode (location: (2:9)-(5:17))
+    ├── @ HTMLElementNode (location: (2:8)-(5:16))
     │   ├── open_tag:
-    │   │   └── @ HTMLOpenTagNode (location: (2:9)-(2:15))
-    │   │       ├── tag_opening: "<" (location: (2:9)-(2:10))
-    │   │       ├── tag_name: "main" (location: (2:10)-(2:14))
+    │   │   └── @ HTMLOpenTagNode (location: (2:8)-(2:14))
+    │   │       ├── tag_opening: "<" (location: (2:8)-(2:9))
+    │   │       ├── tag_name: "main" (location: (2:9)-(2:13))
     │   │       ├── attributes: []
-    │   │       ├── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │       ├── tag_closing: ">" (location: (2:13)-(2:14))
     │   │       ├── children: []
     │   │       └── is_void: false
     │   │
-    │   ├── tag_name: "main" (location: (2:10)-(2:14))
+    │   ├── tag_name: "main" (location: (2:9)-(2:13))
     │   ├── body: (3 items)
-    │   │   ├── @ HTMLTextNode (location: (2:0)-(3:11))
+    │   │   ├── @ HTMLTextNode (location: (2:14)-(3:10))
     │   │   │   └── content: "\n          "
     │   │   │
-    │   │   ├── @ HTMLElementNode (location: (3:11)-(4:20))
+    │   │   ├── @ HTMLElementNode (location: (3:10)-(4:19))
     │   │   │   ├── errors: (1 error)
-    │   │   │   │   └── @ TagNamesMismatchError (location: (4:15)-(4:19))
-    │   │   │   │       ├── message: "Opening tag `<div>` at (3:12) closed with `</span>` at (4:15)."
-    │   │   │   │       ├── opening_tag: "div" (location: (3:12)-(3:15))
-    │   │   │   │       └── closing_tag: "span" (location: (4:15)-(4:19))
+    │   │   │   │   └── @ TagNamesMismatchError (location: (4:14)-(4:18))
+    │   │   │   │       ├── message: "Opening tag `<div>` at (3:11) closed with `</span>` at (4:14)."
+    │   │   │   │       ├── opening_tag: "div" (location: (3:11)-(3:14))
+    │   │   │   │       └── closing_tag: "span" (location: (4:14)-(4:18))
     │   │   │   │
     │   │   │   ├── open_tag:
-    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:11)-(3:16))
-    │   │   │   │       ├── tag_opening: "<" (location: (3:11)-(3:12))
-    │   │   │   │       ├── tag_name: "div" (location: (3:12)-(3:15))
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:10)-(3:15))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:10)-(3:11))
+    │   │   │   │       ├── tag_name: "div" (location: (3:11)-(3:14))
     │   │   │   │       ├── attributes: []
-    │   │   │   │       ├── tag_closing: ">" (location: (3:15)-(3:16))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:14)-(3:15))
     │   │   │   │       ├── children: []
     │   │   │   │       └── is_void: false
     │   │   │   │
-    │   │   │   ├── tag_name: "div" (location: (3:12)-(3:15))
+    │   │   │   ├── tag_name: "div" (location: (3:11)-(3:14))
     │   │   │   ├── body: (1 item)
-    │   │   │   │   └── @ HTMLTextNode (location: (3:0)-(4:13))
+    │   │   │   │   └── @ HTMLTextNode (location: (3:15)-(4:12))
     │   │   │   │       └── content: "\n            "
     │   │   │   │
     │   │   │   ├── close_tag:
-    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:13)-(4:20))
-    │   │   │   │       ├── tag_opening: "</" (location: (4:13)-(4:15))
-    │   │   │   │       ├── tag_name: "span" (location: (4:15)-(4:19))
-    │   │   │   │       └── tag_closing: ">" (location: (4:19)-(4:20))
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:12)-(4:19))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:12)-(4:14))
+    │   │   │   │       ├── tag_name: "span" (location: (4:14)-(4:18))
+    │   │   │   │       └── tag_closing: ">" (location: (4:18)-(4:19))
     │   │   │   │
     │   │   │   └── is_void: false
     │   │   │
-    │   │   └── @ HTMLTextNode (location: (4:0)-(5:11))
+    │   │   └── @ HTMLTextNode (location: (4:19)-(5:10))
     │   │       └── content: "\n          "
     │   │
     │   ├── close_tag:
-    │   │   └── @ HTMLCloseTagNode (location: (5:11)-(5:17))
-    │   │       ├── tag_opening: "</" (location: (5:11)-(5:13))
-    │   │       ├── tag_name: "div" (location: (5:13)-(5:16))
-    │   │       └── tag_closing: ">" (location: (5:16)-(5:17))
+    │   │   └── @ HTMLCloseTagNode (location: (5:10)-(5:16))
+    │   │       ├── tag_opening: "</" (location: (5:10)-(5:12))
+    │   │       ├── tag_name: "div" (location: (5:12)-(5:15))
+    │   │       └── tag_closing: ">" (location: (5:15)-(5:16))
     │   │
     │   └── is_void: false
     │
-    ├── @ HTMLTextNode (location: (5:0)-(6:9))
+    ├── @ HTMLTextNode (location: (5:16)-(6:8))
     │   └── content: "\n        "
     │
-    ├── @ HTMLCloseTagNode (location: (6:9)-(6:16))
+    ├── @ HTMLCloseTagNode (location: (6:8)-(6:15))
     │   ├── errors: (1 error)
-    │   │   └── @ MissingOpeningTagError (location: (6:9)-(6:16))
-    │   │       ├── message: "Found closing tag `</main>` at (6:11) without a matching opening tag."
-    │   │       └── closing_tag: "main" (location: (6:11)-(6:15))
+    │   │   └── @ MissingOpeningTagError (location: (6:8)-(6:15))
+    │   │       ├── message: "Found closing tag `</main>` at (6:10) without a matching opening tag."
+    │   │       └── closing_tag: "main" (location: (6:10)-(6:14))
     │   │
-    │   ├── tag_opening: "</" (location: (6:9)-(6:11))
-    │   ├── tag_name: "main" (location: (6:11)-(6:15))
-    │   └── tag_closing: ">" (location: (6:15)-(6:16))
+    │   ├── tag_opening: "</" (location: (6:8)-(6:10))
+    │   ├── tag_name: "main" (location: (6:10)-(6:14))
+    │   └── tag_closing: ">" (location: (6:14)-(6:15))
     │
-    └── @ HTMLTextNode (location: (6:0)-(7:7))
+    └── @ HTMLTextNode (location: (6:15)-(7:6))
         └── content: "\n      "

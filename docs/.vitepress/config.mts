@@ -273,7 +273,7 @@ export default defineConfig({
   title: "Herb",
   description: "Powerful and seamless HTML-aware ERB parsing.",
   srcDir: "./docs",
-  base: "/herb/",
+  // base: "/herb/",
   markdown,
   vite,
   themeConfig,

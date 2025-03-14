@@ -13,9 +13,15 @@ typedef enum {
 typedef struct LEXER_STRUCT {
   const char* source;
   size_t source_length;
-  size_t current_position;
+
   size_t current_line;
   size_t current_column;
+  size_t current_position;
+
+  size_t previous_line;
+  size_t previous_column;
+  size_t previous_position;
+
   char current_character;
   lexer_state_T state;
   size_t stall_counter;

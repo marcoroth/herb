@@ -39,12 +39,19 @@ lexer_T* lexer_init(const char* source) {
   lexer_T* lexer = calloc(1, lexer_sizeof());
 
   lexer->state = STATE_DATA;
+
   lexer->source = source;
   lexer->source_length = strlen(source);
-  lexer->current_position = 0;
+  lexer->current_character = source[0];
+
   lexer->current_line = 1;
   lexer->current_column = 0;
-  lexer->current_character = source[0];
+  lexer->current_position = 0;
+
+  lexer->previous_line = lexer->current_line;
+  lexer->previous_column = lexer->current_column;
+  lexer->previous_position = lexer->current_position;
+
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
@@ -52,7 +59,7 @@ lexer_T* lexer_init(const char* source) {
   return lexer;
 }
 
-token_T* lexer_error(const lexer_T* lexer, const char* message) {
+token_T* lexer_error(lexer_T* lexer, const char* message) {
   char error_message[128];
 
   snprintf(
@@ -68,23 +75,10 @@ token_T* lexer_error(const lexer_T* lexer, const char* message) {
   return token_init(herb_strdup(error_message), TOKEN_ERROR, lexer);
 }
 
-static void lexer_handle_newline(lexer_T* lexer) {
-  if (lexer->current_character == '\r' && lexer_peek(lexer, 1) == '\n') {
-    lexer->current_column = 1;
-    return;
-  }
-
-  if (is_newline(lexer->current_character)) {
-    lexer->current_line++;
-    lexer->current_column = 1;
-  } else {
-    lexer->current_column++;
-  }
-}
-
 static void lexer_advance(lexer_T* lexer) {
   if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
-    lexer_handle_newline(lexer);
+    if (!is_newline(lexer->current_character)) { lexer->current_column++; }
+
     lexer->current_position++;
     lexer->current_character = lexer->source[lexer->current_position];
   }

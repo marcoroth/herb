@@ -1,25 +1,25 @@
-#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[0, 1] start=(1:0) end=(2:1)>
-#<Herb::Token type="TOKEN_WHITESPACE" value="        " range=[1, 9] start=(2:1) end=(2:9)>
-#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[9, 13] start=(2:9) end=(2:13)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="Hello" range=[13, 18] start=(2:13) end=(2:18)>
-#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[18, 19] start=(2:18) end=(2:19)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="World" range=[19, 24] start=(2:19) end=(2:24)>
-#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[24, 27] start=(2:24) end=(2:27)>
-#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[27, 28] start=(2:0) end=(3:1)>
-#<Herb::Token type="TOKEN_WHITESPACE" value="        " range=[28, 36] start=(3:1) end=(3:9)>
-#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[36, 37] start=(3:9) end=(3:10)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="h1" range=[37, 39] start=(3:10) end=(3:12)>
-#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[39, 40] start=(3:12) end=(3:13)>
-#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[40, 44] start=(3:13) end=(3:17)>
-#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[44, 45] start=(3:17) end=(3:18)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="Hello" range=[45, 50] start=(3:18) end=(3:23)>
-#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[50, 51] start=(3:23) end=(3:24)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="World" range=[51, 56] start=(3:24) end=(3:29)>
-#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[56, 57] start=(3:29) end=(3:30)>
-#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[57, 60] start=(3:30) end=(3:33)>
-#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[60, 62] start=(3:33) end=(3:35)>
-#<Herb::Token type="TOKEN_IDENTIFIER" value="h1" range=[62, 64] start=(3:35) end=(3:37)>
-#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[64, 65] start=(3:37) end=(3:38)>
-#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[65, 66] start=(3:0) end=(4:1)>
-#<Herb::Token type="TOKEN_WHITESPACE" value="      " range=[66, 72] start=(4:1) end=(4:7)>
-#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[72, 72] start=(4:7) end=(4:7)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[0, 1] start=(1:0) end=(2:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="        " range=[1, 9] start=(2:0) end=(2:8)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[9, 13] start=(2:8) end=(2:12)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Hello" range=[13, 18] start=(2:12) end=(2:17)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[18, 19] start=(2:17) end=(2:18)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="World" range=[19, 24] start=(2:18) end=(2:23)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[24, 27] start=(2:23) end=(2:26)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[27, 28] start=(2:26) end=(3:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="        " range=[28, 36] start=(3:0) end=(3:8)>
+#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[36, 37] start=(3:8) end=(3:9)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="h1" range=[37, 39] start=(3:9) end=(3:11)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[39, 40] start=(3:11) end=(3:12)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[40, 44] start=(3:12) end=(3:16)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[44, 45] start=(3:16) end=(3:17)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Hello" range=[45, 50] start=(3:17) end=(3:22)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[50, 51] start=(3:22) end=(3:23)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="World" range=[51, 56] start=(3:23) end=(3:28)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[56, 57] start=(3:28) end=(3:29)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_END" value="-->" range=[57, 60] start=(3:29) end=(3:32)>
+#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[60, 62] start=(3:32) end=(3:34)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="h1" range=[62, 64] start=(3:34) end=(3:36)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[64, 65] start=(3:36) end=(3:37)>
+#<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[65, 66] start=(3:37) end=(4:0)>
+#<Herb::Token type="TOKEN_WHITESPACE" value="      " range=[66, 72] start=(4:0) end=(4:6)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[72, 72] start=(4:6) end=(4:6)>

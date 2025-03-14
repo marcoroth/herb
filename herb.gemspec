@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Powerful and seamless HTML-aware ERB parsing."
   spec.description = spec.summary
-  spec.homepage = "https://github.com/marcoroth/herb"
+  spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"
 
   spec.required_ruby_version = ">= 3.0.0"
@@ -37,9 +37,13 @@ Gem::Specification.new do |spec|
   spec.extensions = ["ext/herb/extconf.rb"]
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
-  spec.metadata["source_code_uri"] = "https://github.com/marcoroth/herb"
-  spec.metadata["changelog_uri"] = "https://github.com/marcoroth/herb/releases"
   spec.metadata["rubygems_mfa_required"] = "true"
+
+  spec.metadata["homepage_uri"] = "https://herb-tools.dev"
+  spec.metadata["changelog_uri"] = "https://github.com/marcoroth/herb/releases"
+  spec.metadata["source_code_uri"] = "https://github.com/marcoroth/herb"
+  spec.metadata["bug_tracker_uri"] = "https://github.com/marcoroth/herb/issues"
+  spec.metadata["documentation_uri"] = "https://docs.herb-tools.dev"
 
   # spec.add_dependency "ffi"
 end

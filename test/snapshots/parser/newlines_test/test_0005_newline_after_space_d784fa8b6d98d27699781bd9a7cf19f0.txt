@@ -1,4 +1,4 @@
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (1 item)
     └── @ HTMLTextNode (location: (1:0)-(2:0))
-        └── content: "\n"
+        └── content: " \n"

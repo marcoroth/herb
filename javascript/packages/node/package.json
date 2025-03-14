@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/node%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/node"
+  },
   "gypfile": true,
   "main": "./dist/herb-node.cjs",
   "module": "./dist/herb-node.esm.js",

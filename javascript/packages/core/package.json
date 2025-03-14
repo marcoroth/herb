@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/core%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/core"
+  },
   "main": "./dist/herb-core.cjs",
   "module": "./dist/herb-core.esm.js",
   "types": "./dist/types/index.d.ts",

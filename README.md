@@ -17,6 +17,7 @@ This project builds the Herb program and its associated unit tests using a Makef
 - [**Prism Ruby Parser v1.3.0**](https://github.com/ruby/prism/releases/tag/v1.3.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
+- [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
 
 ##### For Linux
 

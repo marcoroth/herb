@@ -3,6 +3,12 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git"
+  },
   "devDependencies": {
     "@nx/js": "20.5.0",
     "@nx/node": "^20.5.0",
