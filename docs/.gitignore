@@ -1,2 +1,4 @@
 dist/
 cache/
+docs/public/assets
+docs/public/playground-embed.html

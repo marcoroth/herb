@@ -44,7 +44,7 @@ const themeConfig = {
   nav: [
     { text: "Home", link: "/" },
     { text: "Documentation", link: "/bindings/ruby/" },
-    { text: "Playground", link: "https://playground.herb-tools.dev" },
+    { text: "Playground", link: "/playground" },
   ],
 
   search: {

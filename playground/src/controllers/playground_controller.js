@@ -55,6 +55,7 @@ export default class extends Controller {
     "viewerButton",
     "version",
     "time",
+    "position",
   ]
 
   connect() {
@@ -98,7 +99,7 @@ export default class extends Controller {
   }
 
   updateURL() {
-    window.location.hash = this.compressedValue
+    window.parent.location.hash = this.compressedValue
   }
 
   async insert(event) {
@@ -130,7 +131,7 @@ export default class extends Controller {
     const button = this.getClosestButton(event.target)
 
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(window.parent.location.href)
 
       button.querySelector(".fa-circle-check").classList.remove("hidden")
     } catch (error) {
@@ -147,7 +148,7 @@ export default class extends Controller {
   }
 
   restoreInput() {
-    if (window.location.hash && this.inputTarget.value === "") {
+    if (window.parent.location.hash && this.inputTarget.value === "") {
       this.inputTarget.value = this.decompressedValue
     }
   }
@@ -258,8 +259,22 @@ export default class extends Controller {
     })
   }
 
+  updatePosition() {
+    if (this.hasPositionTarget) {
+      const textarea = this.inputTarget
+
+      const textLines = textarea.value
+        .substr(0, textarea.selectionStart)
+        .split("\n")
+      const currentColumnIndex = textLines[textLines.length - 1].length
+
+      this.positionTarget.textContent = `Position: (${this.inputTarget.currentLineNumber}:${currentColumnIndex}), Length: ${this.inputTarget.value.length.toString().padStart(4)}`
+    }
+  }
+
   async analyze() {
     this.updateURL()
+    this.updatePosition()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     const result = await analyze(Herb, value)
@@ -276,9 +291,9 @@ export default class extends Controller {
 
     if (this.hasTimeTarget) {
       if (result.duration.toFixed(2) == 0.0) {
-        this.timeTarget.textContent = `(< 0.00 ms)`
+        this.timeTarget.textContent = `(in < 0.00 ms)`
       } else {
-        this.timeTarget.textContent = `(${result.duration.toFixed(2)} ms)`
+        this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
       }
     }
 
@@ -330,6 +345,8 @@ export default class extends Controller {
   }
 
   get decompressedValue() {
-    return lz.decompressFromEncodedURIComponent(window.location.hash.slice(1))
+    return lz.decompressFromEncodedURIComponent(
+      window.parent.location.hash.slice(1),
+    )
   }
 }
