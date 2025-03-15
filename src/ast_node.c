@@ -4,6 +4,7 @@
 #include "include/token.h"
 #include "include/util.h"
 
+#include <prism.h>
 #include <stdio.h>
 #include <stdlib.h>
 

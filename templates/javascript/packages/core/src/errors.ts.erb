@@ -87,7 +87,7 @@ export class <%= error.name %> extends HerbError {
       location: Location.from(data.location),
       <%- error.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField, Herb::Template::SizeTField -%>
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::TokenField -%>
       <%= field.name %>: data.<%= field.name %> ? Token.from(data.<%= field.name %>) : null,
@@ -112,7 +112,7 @@ export class <%= error.name %> extends HerbError {
       type: "<%= error.type %>",
       <%- error.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+      <%- when Herb::Template::StringField, Herb::Template::TokenTypeField, Herb::Template::SizeTField -%>
       <%= field.name %>: this.<%= field.name %>,
       <%- when Herb::Template::TokenField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
@@ -149,7 +149,7 @@ export class <%= error.name %> extends HerbError {
       })
     }
 
-    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField, Herb::Template::SizeTField -%>
     // no-op for <%= field.name %>
     <%- else -%>
     <%- raise "Unhandled Type: #{field.class}" %>
@@ -169,7 +169,7 @@ export class <%= error.name %> extends HerbError {
     <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
     <%- name = "#{symbol} #{field.name}: " -%>
     <%- case field -%>
-    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField, Herb::Template::SizeTField -%>
     output += `<%= name %>${JSON.stringify(this.<%= field.name %>)}\n`;
     <%- when Herb::Template::TokenField -%>
     output += `<%= name %>${this.<%= field.name %> ? this.<%= field.name %>.treeInspect() : "∅"}\n`;

@@ -134,6 +134,26 @@ errors:
         - name: opening_tag
           type: token
 
+    - name: RubyParseError
+      message:
+        template: "%s: %s"
+        arguments:
+          - diagnostic_id
+          - error_message
+
+      fields:
+        - name: error_message
+          type: string
+
+        - name: diagnostic_id
+          type: string
+
+        - name: level
+          type: size_t
+
+        - name: level_string
+          type: string
+
 warnings:
   fields: []
   types: []
@@ -314,3 +334,12 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: parsed
+          type: boolean
+
+        - name: parsed_node
+          type: prism_node
+
+        - name: valid
+          type: boolean

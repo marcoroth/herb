@@ -99,6 +99,7 @@ src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
 src/include/errors.h
+src/visitor.c
 wasm/error_helpers.cpp
 wasm/error_helpers.h
 wasm/nodes.cpp

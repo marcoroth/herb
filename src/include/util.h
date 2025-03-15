@@ -20,4 +20,6 @@ bool string_present(const char* input);
 
 char* herb_strdup(const char* s);
 
+char* size_t_to_string(size_t value);
+
 #endif

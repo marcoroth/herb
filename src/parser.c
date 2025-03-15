@@ -559,6 +559,9 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     opening_tag,
     content,
     closing_tag,
+    false,
+    NULL,
+    false,
     opening_tag->location->start,
     closing_tag->location->end,
     errors

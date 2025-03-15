@@ -1,5 +1,6 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
+#include "include/analyze.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
@@ -60,6 +61,24 @@ int main(const int argc, char* argv[]) {
 
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
+
+  if (strcmp(argv[1], "visit") == 0) {
+    AST_DOCUMENT_NODE_T* root = herb_parse(source);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    herb_analyze_parse_tree(root);
+
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+    printf("%s\n", output.value);
+
+    print_time_diff(start, end, "visiting");
+
+    ast_node_free((AST_NODE_T*) root);
+    buffer_free(&output);
+    free(source);
+
+    return 0;
+  }
 
   if (strcmp(argv[1], "lex") == 0) {
     herb_lex_to_buffer(source, &output);

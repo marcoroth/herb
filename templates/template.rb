@@ -133,7 +133,7 @@ module Herb
       end
 
       def c_type
-        "const size_t"
+        "size_t"
       end
     end
 
@@ -144,6 +144,16 @@ module Herb
 
       def c_type
         "bool"
+      end
+    end
+
+    class PrismNodeField < Field
+      def ruby_type
+        "Prism::Node"
+      end
+
+      def c_type
+        "pm_node_t*"
       end
     end
 
@@ -175,6 +185,7 @@ module Herb
         when "position"   then PositionField
         when "size_t"     then SizeTField
         when "boolean"    then BooleanField
+        when "prism_node" then PrismNodeField
         else raise("Unknown field type: #{name.inspect}")
         end
       end

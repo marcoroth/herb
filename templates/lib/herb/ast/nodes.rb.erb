@@ -48,6 +48,8 @@ module Herb
         output += "<%= name %>"
         output += [true, false].include?(<%= field.name %>) ? <%= field.name %>.to_s : "∅"
         output += "\n"
+        <%- when Herb::Template::PrismNodeField -%>
+        output += "<%= name %>PrismNodeField(...)\n"
         <%- when Herb::Template::NodeField -%>
         output += "<%= name %>"
         if <%= field.name %>

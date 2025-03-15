@@ -88,7 +88,7 @@ $(lib_name): $(objects)
 $(static_lib_name): $(objects)
 	ar rcs $(static_lib_name) $(objects)
 
-%.o: %.c include/%.h
+src/%.o: src/%.c
 	$(cc) -c $(flags) $< -o $@
 
 test/%.o: test/%.c

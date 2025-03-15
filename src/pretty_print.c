@@ -57,6 +57,17 @@ void pretty_print_property(
   buffer_append(buffer, "\n");
 }
 
+void pretty_print_size_t_property(
+  size_t value, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+  buffer_T* buffer
+) {
+  pretty_print_label(name, indent, relative_indent, last_property, buffer);
+  char* string = size_t_to_string(value);
+  buffer_append(buffer, string);
+  buffer_append(buffer, "\n");
+  free(string);
+}
+
 void pretty_print_array(
   const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer

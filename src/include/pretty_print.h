@@ -21,6 +21,10 @@ void pretty_print_property(
   const char* name, const char* value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
 );
 
+void pretty_print_size_t_property(
+  size_t value, const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+);
+
 void pretty_print_string_property(
   const char* string, const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
 );

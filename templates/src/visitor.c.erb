@@ -1,0 +1,51 @@
+#include <stdio.h>
+
+#include "include/array.h"
+#include "include/visitor.h"
+#include "include/ast_node.h"
+#include "include/ast_nodes.h"
+
+void herb_visit_node(const AST_NODE_T* node, bool (*visitor)(const AST_NODE_T*, void*), void* data) {
+  if (visitor(node, data) && node != NULL) {
+    herb_visit_child_nodes(node, visitor, data);
+  }
+}
+
+void herb_visit_child_nodes(const AST_NODE_T *node, bool (*visitor)(const AST_NODE_T *node, void *data), void *data) {
+  if (node == NULL) {
+    return;
+  }
+
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+      case <%= node.type %>: {
+        <%- if node.fields.count { |field| [Herb::Template::NodeField, Herb::Template::ArrayField].include?(field.class) }.positive? -%>
+        const <%= node.struct_type %>* <%= node.human %> = ((const <%= node.struct_type %> *) node);
+        <%- else -%>
+        // No children for <%= node.type %>
+        <%- end -%>
+        <%- node.fields.each do |field| -%>
+        <%- case field -%>
+        <%- when Herb::Template::NodeField -%>
+        if (<%= node.human %>-><%= field.name %> != NULL) {
+          herb_visit_node((AST_NODE_T *) <%= node.human %>-><%= field.name %>, visitor, data);
+        }
+
+        <%- when Herb::Template::ArrayField -%>
+        if (<%= node.human %>-><%= field.name %> != NULL) {
+          for (size_t index = 0; index < array_size(<%= node.human %>-><%= field.name %>); index++) {
+            herb_visit_node(array_get(<%= node.human %>-><%= field.name %>, index), visitor, data);
+          }
+        }
+
+        <%- end -%>
+        <%- end -%>
+      } break;
+
+    <%- end -%>
+
+    default:
+      printf("Unknown node type: %s\n", ast_node_type_to_string((AST_NODE_T*) node));
+      break;
+  }
+}
