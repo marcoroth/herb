@@ -1,0 +1,27 @@
+.inside-iframe {
+  #top {
+    display: none;
+  }
+
+  #main-nav {
+    display: none;
+  }
+
+  .sm.sm-dox {
+    display: none;
+  }
+
+  #nav-path ul {
+    border-top: none;
+  }
+
+  #side-nav {
+    display: none;
+  }
+
+  #doc-content {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+  }
+}

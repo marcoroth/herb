@@ -1,0 +1,59 @@
+# Doxyfile 1.13.2
+
+# This file describes the settings to be used by the documentation system
+# Doxygen (www.doxygen.org) for a project.
+#
+# All text after a double hash (##) is considered a comment and is placed in
+# front of the TAG it is preceding.
+#
+# All text after a single hash (#) is considered a comment and will be ignored.
+# The format is:
+# TAG = value [value, ...]
+# For lists, items can also be appended using:
+# TAG += value [value, ...]
+# Values that contain spaces should be placed between quotes (\" \").
+#
+# Note:
+#
+# Use Doxygen to compare the used configuration file with the template
+# configuration file:
+# doxygen -x [configFile]
+# Use Doxygen to compare the used configuration file with the template
+# configuration file without replacing the environment variables or CMake type
+# replacement variables:
+# doxygen -x_noenv [configFile]
+
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+
+PROJECT_NAME           = "Herb C Reference"
+PROJECT_LOGO           = docs/docs/public/herb.svg
+OUTPUT_DIRECTORY       = docs/docs/public
+HTML_OUTPUT            = c-reference
+INPUT                  = src/ src/include/
+
+DISABLE_INDEX          = NO
+EXTRACT_ALL            = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_STATIC         = YES
+FULL_SIDEBAR           = YES
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+JAVADOC_AUTOBRIEF      = YES
+MARKDOWN_ID_STYLE      = GITHUB
+OPTIMIZE_OUTPUT_FOR_C  = YES
+SEARCHENGINE           = YES
+SORT_MEMBER_DOCS       = NO
+TAB_SIZE               = 2
+WARN_IF_UNDOCUMENTED   = YES
+WARN_NO_PARAMDOC       = YES
+
+HTML_HEADER            = .doxygen/header.html
+HTML_COLORSTYLE        = LIGHT
+HTML_EXTRA_STYLESHEET  = node_modules/@jothepro/doxygen-awesome-css/doxygen-awesome.css \
+                         .doxygen/frame.css
+
+HTML_EXTRA_FILES       = node_modules/@jothepro/doxygen-awesome-css/doxygen-awesome-darkmode-toggle.js \
+                         node_modules/@jothepro/doxygen-awesome-css/doxygen-awesome-interactive-toc.js \
+                         .doxygen/frame.js
