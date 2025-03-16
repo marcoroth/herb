@@ -207,7 +207,7 @@ module Herb
         when "boolean"    then BooleanField
         when "prism_node" then PrismNodeField
         when "analyzed_ruby" then AnalyzedRubyField
-        when "void*"     then VoidPointerField
+        when "void*" then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end
