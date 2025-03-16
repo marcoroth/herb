@@ -7,18 +7,19 @@
 #include "extension_helpers.h"
 
 extern "C" {
+#include "../src/include/analyze.h"
 #include "../src/include/array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
-#include "../src/include/pretty_print.h"
 #include "../src/include/ast_pretty_print.h"
 #include "../src/include/buffer.h"
-#include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/position.h"
-#include "../src/include/location.h"
-#include "../src/include/range.h"
 #include "../src/include/extract.h"
+#include "../src/include/herb.h"
+#include "../src/include/location.h"
+#include "../src/include/position.h"
+#include "../src/include/pretty_print.h"
+#include "../src/include/range.h"
+#include "../src/include/token.h"
 }
 
 using namespace emscripten;
@@ -33,6 +34,8 @@ val Herb_lex(const std::string& source) {
 
 val Herb_parse(const std::string& source) {
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str());
+
+  herb_analyze_parse_tree(root, source.c_str());
 
   return CreateParseResult(root, source);
 }

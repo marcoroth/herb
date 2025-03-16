@@ -4,6 +4,8 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
+#include "../../src/include/analyze.h"
+
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
@@ -25,6 +27,8 @@ static VALUE Herb_parse(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
+
+  herb_analyze_parse_tree(root, source);
 
   return create_parse_result(root, source);
 }

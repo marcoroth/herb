@@ -66,7 +66,7 @@ int main(const int argc, char* argv[]) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    herb_analyze_parse_tree(root);
+    herb_analyze_parse_tree(root, source);
 
     ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
     printf("%s\n", output.value);

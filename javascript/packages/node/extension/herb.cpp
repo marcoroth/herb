@@ -1,8 +1,9 @@
 extern "C" {
-#include "../extension/libherb/include/herb.h"
+#include "../extension/libherb/include/analyze.h"
 #include "../extension/libherb/include/array.h"
 #include "../extension/libherb/include/ast_nodes.h"
 #include "../extension/libherb/include/buffer.h"
+#include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
@@ -72,6 +73,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
+  herb_analyze_parse_tree(root, string);
   napi_value result = CreateParseResult(env, root, args[0]);
 
   free(string);
