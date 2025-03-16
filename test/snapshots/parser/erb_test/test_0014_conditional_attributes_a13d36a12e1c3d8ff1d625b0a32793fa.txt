@@ -1,4 +1,11 @@
 @ DocumentNode (location: (1:0)-(1:75))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (1:36)-(1:40))
+│       ├── message: "conditional_predicate_term: expected `then` or `;` or '\\n'"
+│       ├── error_message: "expected `then` or `;` or '\\n'"
+│       ├── diagnostic_id: "conditional_predicate_term"
+│       └── level: "syntax"
+│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:75))
         ├── open_tag:
@@ -45,17 +52,23 @@
         │       │   ├── @ ERBContentNode (location: (1:5)-(1:18))
         │       │   │   ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │   │   ├── content: " if odd? " (location: (1:7)-(1:16))
-        │       │   │   └── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │   │   ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │   │   ├── parsed: true
+        │       │   │   └── valid: false
         │       │   │
         │       │   ├── @ ERBContentNode (location: (1:33)-(1:43))
         │       │   │   ├── tag_opening: "<%" (location: (1:33)-(1:35))
         │       │   │   ├── content: " else " (location: (1:35)-(1:41))
-        │       │   │   └── tag_closing: "%>" (location: (1:41)-(1:43))
+        │       │   │   ├── tag_closing: "%>" (location: (1:41)-(1:43))
+        │       │   │   ├── parsed: true
+        │       │   │   └── valid: false
         │       │   │
         │       │   └── @ ERBContentNode (location: (1:59)-(1:68))
         │       │       ├── tag_opening: "<%" (location: (1:59)-(1:61))
         │       │       ├── content: " end " (location: (1:61)-(1:66))
-        │       │       └── tag_closing: "%>" (location: (1:66)-(1:68))
+        │       │       ├── tag_closing: "%>" (location: (1:66)-(1:68))
+        │       │       ├── parsed: true
+        │       │       └── valid: false
         │       │
         │       └── is_void: false
         │

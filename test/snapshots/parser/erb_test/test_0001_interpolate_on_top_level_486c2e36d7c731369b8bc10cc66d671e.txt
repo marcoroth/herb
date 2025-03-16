@@ -3,4 +3,6 @@
     └── @ ERBContentNode (location: (1:0)-(1:12))
         ├── tag_opening: "<%=" (location: (1:0)-(1:3))
         ├── content: " hello " (location: (1:3)-(1:10))
-        └── tag_closing: "%>" (location: (1:10)-(1:12))
+        ├── tag_closing: "%>" (location: (1:10)-(1:12))
+        ├── parsed: true
+        └── valid: true

@@ -22,7 +22,9 @@
         │       │               │   ├── @ ERBContentNode (location: (1:22)-(1:39))
         │       │               │   │   ├── tag_opening: "<%=" (location: (1:22)-(1:25))
         │       │               │   │   ├── content: " "bg-black" " (location: (1:25)-(1:37))
-        │       │               │   │   └── tag_closing: "%>" (location: (1:37)-(1:39))
+        │       │               │   │   ├── tag_closing: "%>" (location: (1:37)-(1:39))
+        │       │               │   │   ├── parsed: true
+        │       │               │   │   └── valid: true
         │       │               │   │
         │       │               │   └── @ LiteralNode (location: (1:39)-(1:45))
         │       │               │       └── content: " title"

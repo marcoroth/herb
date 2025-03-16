@@ -15,7 +15,9 @@
         │   ├── @ ERBContentNode (location: (1:4)-(1:16))
         │   │   ├── tag_opening: "<%=" (location: (1:4)-(1:7))
         │   │   ├── content: " Hello " (location: (1:7)-(1:14))
-        │   │   └── tag_closing: "%>" (location: (1:14)-(1:16))
+        │   │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
         │   │
         │   └── @ HTMLTextNode (location: (1:16)-(1:22))
         │       └── content: " World"

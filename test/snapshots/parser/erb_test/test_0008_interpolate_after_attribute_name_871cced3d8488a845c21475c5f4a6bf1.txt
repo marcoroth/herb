@@ -19,7 +19,9 @@
         │       │               │   └── @ ERBContentNode (location: (1:7)-(1:20))
         │       │               │       ├── tag_opening: "<%=" (location: (1:7)-(1:10))
         │       │               │       ├── content: " "test" " (location: (1:10)-(1:18))
-        │       │               │       └── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │               │       ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │               │       ├── parsed: true
+        │       │               │       └── valid: true
         │       │               │
         │       │               ├── close_quote: ∅
         │       │               └── quoted: false

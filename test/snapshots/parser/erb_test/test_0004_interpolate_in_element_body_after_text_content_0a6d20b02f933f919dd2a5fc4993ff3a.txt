@@ -18,7 +18,9 @@
         │   └── @ ERBContentNode (location: (1:10)-(1:22))
         │       ├── tag_opening: "<%=" (location: (1:10)-(1:13))
         │       ├── content: " World " (location: (1:13)-(1:20))
-        │       └── tag_closing: "%>" (location: (1:20)-(1:22))
+        │       ├── tag_closing: "%>" (location: (1:20)-(1:22))
+        │       ├── parsed: true
+        │       └── valid: true
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:22)-(1:27))
