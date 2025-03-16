@@ -2,18 +2,34 @@
 #include "include/array.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
+#include "include/extract.h"
 #include "include/location.h"
 #include "include/parser.h"
 #include "include/position.h"
 #include "include/ruby_parser.h"
+#include "include/util.h"
 #include "include/visitor.h"
 
-// #include "/Users/marcoroth/Development/herb/vendor/bundle/ruby/3.4.0/bundler/gems/prism-01843caefd06/include/prism.h"
 #include <prism.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+position_T* position_from_source_with_offset(const char* source, size_t offset) {
+  position_T* position = position_init(1, 0);
+
+  for (size_t i = 0; i < offset; i++) {
+    if (is_newline(source[i])) {
+      position->line++;
+      position->column = 0;
+    } else {
+      position->column++;
+    }
+  }
+
+  return position;
+}
 
 static char* pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
@@ -24,69 +40,23 @@ static char* pm_error_level_to_string(pm_error_level_t level) {
   }
 }
 
-static RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(const pm_diagnostic_t* error, const AST_NODE_T* node) {
+static RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
+  const pm_diagnostic_t* error, const AST_NODE_T* node, const char* source, pm_parser_t* parser
+) {
+  size_t start_offset = (size_t) (error->location.start - parser->start);
+  size_t end_offset = (size_t) (error->location.end - parser->start);
+
+  position_T* start = position_from_source_with_offset(source, start_offset);
+  position_T* end = position_from_source_with_offset(source, end_offset);
+
   return ruby_parse_error_init(
     error->message,
     pm_diagnostic_id_human(error->diag_id),
-    error->level,
     pm_error_level_to_string(error->level),
-    node->location->start,
-    node->location->end
+    start,
+    end
   );
 }
-
-// for a document like this:
-//
-// <h1>
-//   <% if true %>
-//     Hello 1
-//   <% elsif true && false %>
-//     Hello 2
-//   <% else %>
-//     Hello 3
-//   <% end %>
-// </h1>
-//
-// have this structure in the three as:
-//
-// AST_DOCUMENT_NODE
-//   AST_ELEMENT_NODE
-//     |-> children:
-//       - AST_ERB_CONTENT_NODE (if true)
-//       - AST_HTML_TEXT_NODE (Hello 1)
-//       - AST_ERB_CONTENT_NODE (elsif true && false)
-//       - AST_HTML_TEXT_NODE (Hello 2)
-//       - AST_ERB_CONTENT_NODE (else)
-//       - AST_HTML_TEXT_NODE (Hello 3)
-//       - AST_ERB_CONTENT_NODE (end)
-
-// but it should be something like
-//
-// AST_DOCUMENT_NODE
-//   AST_ELEMENT_NODE
-//   |-> children:
-//     - AST_ERB_IF_NODE
-//       |-> predicate: true
-//       |-> children: [
-//         - AST_HTML_TEXT_NODE (Hello 1)
-//       ]
-//       |-> subsequent:
-//           |-> AST_ERB_IF_NODE
-//               |-> predicate: true && false
-//               |-> children: [
-//                 - AST_HTML_TEXT_NODE (Hello 2)
-//               ]
-//              |-> subsequent:
-//                |-> AST_ERB_ELSE_NODE
-//                   |-> children: [
-//                    - AST_HTML_TEXT_NODE (Hello 3)
-//                  ]
-//
-//
-//
-// so what we want to achieve is to group any ERB content nodes that are part of an if, elsif, else, or end block
-// into a single node that represents that block. This will make it easier to analyze the structure of the ERB content
-//
 
 static analyzed_ruby_T* init_analyzed_ruby_T(char* source) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
@@ -368,13 +338,6 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
       analyzed->has_ensure_node
     );
 
-    if (false) {
-      for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
-           error = (const pm_diagnostic_t*) error->node.next) {
-        array_append(node->errors, ruby_parse_error_from_prism_error(error, node));
-      }
-    }
-
     erb_content_node->parsed_node = analyzed->root;
     erb_content_node->parsed = true;
     erb_content_node->valid = analyzed->valid;
@@ -386,6 +349,195 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   return false;
 }
 
+static size_t process_block_children(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
+);
+
+static size_t process_if_block(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* new_array, analyze_ruby_context_T* context
+);
+
+static size_t process_elsif_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
+);
+
+static size_t process_else_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
+);
+
+static size_t process_block_children(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
+);
+
+static size_t process_if_block(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* new_array, analyze_ruby_context_T* context
+) {
+  printf("Processing if block\n");
+
+  AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
+
+  array_T* if_children = array_init(8);
+
+  index++;
+
+  index = process_block_children(node, array, index, if_children, context);
+
+  AST_NODE_T* subsequent = NULL;
+  AST_ERB_END_NODE_T* end_node = NULL;
+  AST_NODE_T* child = array_get(array, index);
+
+  if (child && child->type == AST_ERB_CONTENT_NODE) {
+    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (has_elsif_node(erb_content->analyzed_ruby)) {
+      index = process_elsif_block(node, array, index, &subsequent, context);
+    } else if (has_else_node(erb_content->analyzed_ruby)) {
+      index = process_else_block(node, array, index, &subsequent, context);
+    }
+  }
+
+  child = array_get(array, index);
+  if (child && child->type == AST_ERB_CONTENT_NODE) {
+    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (has_end(erb_content->analyzed_ruby)) {
+      printf("Has end node\n");
+      end_node = ast_erb_end_node_init(
+        erb_content->tag_opening,
+        erb_content->content,
+        erb_content->tag_closing,
+        erb_content->tag_opening->location->start,
+        erb_content->tag_closing->location->end,
+        erb_content->base.errors
+      );
+
+      index++;
+    }
+  }
+
+  array_T* errors = array_init(8);
+
+  location_T* end_location = (end_node != NULL) ? end_node->base.location : erb_node->tag_closing->location;
+
+  AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
+    erb_node->tag_opening,
+    erb_node->content,
+    erb_node->tag_closing,
+    if_children,
+    subsequent,
+    end_node,
+    erb_node->tag_opening->location->start,
+    end_location->end,
+    errors
+  );
+
+  array_append(new_array, (AST_NODE_T*) if_node);
+
+  return index;
+}
+
+static size_t process_elsif_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
+) {
+  printf("Processing elsif block\n");
+
+  AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
+
+  array_T* elsif_children = array_init(8);
+
+  index++;
+
+  index = process_block_children(node, array, index, elsif_children, context);
+
+  AST_NODE_T* last_child = array_last(elsif_children);
+  location_T* end_location = (last_child != NULL) ? last_child->location : erb_node->tag_closing->location;
+
+  AST_ERB_IF_NODE_T* elsif_node = ast_erb_if_node_init(
+    erb_node->tag_opening,
+    erb_node->content,
+    erb_node->tag_closing,
+    elsif_children,
+    NULL,
+    NULL,
+    erb_node->tag_opening->location->start,
+    end_location->end,
+    array_init(8)
+  );
+
+  AST_NODE_T* child = array_get(array, index);
+  if (child && child->type == AST_ERB_CONTENT_NODE) {
+    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (has_elsif_node(erb_content->analyzed_ruby)) {
+      index = process_elsif_block(node, array, index, &(elsif_node->subsequent), context);
+    } else if (has_else_node(erb_content->analyzed_ruby)) {
+      index = process_else_block(node, array, index, &(elsif_node->subsequent), context);
+    }
+  }
+
+  *subsequent_out = (AST_NODE_T*) elsif_node;
+  return index;
+}
+
+static size_t process_else_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
+) {
+  printf("Processing else block\n");
+
+  AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
+
+  array_T* else_children = array_init(8);
+
+  index++;
+
+  index = process_block_children(node, array, index, else_children, context);
+
+  AST_NODE_T* last_child = array_last(else_children);
+  location_T* end_location = (last_child != NULL) ? last_child->location : erb_node->tag_closing->location;
+
+  AST_ERB_ELSE_NODE_T* else_node = ast_erb_else_node_init(
+    erb_node->tag_opening,
+    erb_node->content,
+    erb_node->tag_closing,
+    else_children,
+    erb_node->tag_opening->location->start,
+    end_location->end,
+    array_init(8)
+  );
+
+  *subsequent_out = (AST_NODE_T*) else_node;
+  return index;
+}
+
+static size_t process_block_children(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
+) {
+  while (index < array_size(array)) {
+    AST_NODE_T* child = array_get(array, index);
+
+    if (!child) { break; }
+
+    if (child->type != AST_ERB_CONTENT_NODE) {
+      array_append(children_array, child);
+      index++;
+      continue;
+    }
+
+    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+
+    if (has_elsif_node(erb_content->analyzed_ruby) || has_else_node(erb_content->analyzed_ruby)
+        || has_end(erb_content->analyzed_ruby)) {
+      break;
+    }
+
+    array_append(children_array, child);
+
+    index++;
+  }
+
+  return index;
+}
+
 static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
   printf(
     "Transforming node: %s, parent: %s\n",
@@ -394,12 +546,12 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
   );
 
   array_T* new_array = array_init(array_size(array));
-
   size_t index = 0;
 
   while (index < array_size(array)) {
     AST_NODE_T* item = array_get(array, index);
-    printf("index: %zu, type: %s\n", index, ast_node_type_to_string(item));
+
+    if (!item) { break; }
 
     if (item->type != AST_ERB_CONTENT_NODE) {
       array_append(new_array, item);
@@ -412,194 +564,16 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     if (erb_node->analyzed_ruby->valid) {
       printf("Valid Ruby: '%s'\n", erb_node->content->value);
       array_append(new_array, item);
-      index++;
-      continue;
-    }
+    } else {
+      printf("Invalid Ruby: '%s'\n", erb_node->content->value);
 
-    printf("Invalid Ruby: '%s'\n", erb_node->content->value);
-
-    if (has_if_node(erb_node->analyzed_ruby)) {
-      printf("Has if node\n");
-
-      array_T* if_children = array_init(8);
-
-      index++;
-
-      AST_NODE_T* child = array_get(array, index);
-
-      while (child != NULL) {
-        if (child->type != AST_ERB_CONTENT_NODE) {
-          array_append(if_children, child);
-          index++;
-          child = array_get(array, index);
-          continue;
-        }
-
-        if (child->type == AST_ERB_CONTENT_NODE) {
-          AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) child;
-
-          if (erb_content_node->analyzed_ruby->valid && !has_elsif_node(erb_content_node->analyzed_ruby)
-              && !has_else_node(erb_content_node->analyzed_ruby) && !has_end(erb_content_node->analyzed_ruby)) {
-            array_append(if_children, child);
-            index++;
-            child = array_get(array, index);
-            continue;
-          }
-
-          // array_append(new_array, child);
-          child = NULL;
-        }
+      if (has_if_node(erb_node->analyzed_ruby)) {
+        printf("Has if node\n");
+        index = process_if_block(node, array, index, new_array, context);
+        continue;
       }
 
-      // ELSIF
-      child = array_get(array, index);
-
-      AST_ERB_IF_NODE_T* subsequent = NULL;
-
-      if (child->type == AST_ERB_CONTENT_NODE) {
-        AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
-
-        if (has_elsif_node(erb_node->analyzed_ruby)) {
-          printf("Has elsif node\n");
-
-          array_T* elsif_children = array_init(8);
-
-          index++;
-
-          AST_NODE_T* elsif_child = array_get(array, index);
-
-          while (elsif_child != NULL) {
-            if (elsif_child->type != AST_ERB_CONTENT_NODE) {
-              array_append(elsif_children, elsif_child);
-              index++;
-              elsif_child = array_get(array, index);
-              continue;
-            }
-
-            if (elsif_child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) elsif_child;
-
-              if (erb_content_node->analyzed_ruby->valid && !has_elsif_node(erb_content_node->analyzed_ruby)
-                  && !has_else_node(erb_content_node->analyzed_ruby) && !has_end(erb_content_node->analyzed_ruby)) {
-                array_append(elsif_children, elsif_child);
-                index++;
-                elsif_child = array_get(array, index);
-                continue;
-              }
-
-              elsif_child = NULL;
-            }
-          }
-
-          subsequent = ast_erb_if_node_init(
-            NULL,
-            NULL,
-            elsif_children,
-            NULL,
-            NULL,
-            node->location->start,
-            node->location->end,
-            array_init(8)
-          );
-        }
-      } else {
-        array_append(new_array, child);
-        index++;
-      }
-
-      // ELSE
-      child = array_get(array, index);
-
-      AST_ERB_ELSE_NODE_T* else_node = NULL;
-
-      if (child->type == AST_ERB_CONTENT_NODE) {
-        AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
-
-        if (has_else_node(erb_node->analyzed_ruby)) {
-          printf("Has else node\n");
-
-          array_T* else_children = array_init(8);
-
-          index++;
-
-          AST_NODE_T* else_child = array_get(array, index);
-
-          while (else_child != NULL) {
-            if (else_child->type != AST_ERB_CONTENT_NODE) {
-              array_append(else_children, else_child);
-              index++;
-              else_child = array_get(array, index);
-              continue;
-            }
-
-            if (else_child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) else_child;
-
-              if (erb_content_node->analyzed_ruby->valid && !has_elsif_node(erb_content_node->analyzed_ruby)
-                  && !has_else_node(erb_content_node->analyzed_ruby) && !has_end(erb_content_node->analyzed_ruby)) {
-                array_append(else_children, else_child);
-                index++;
-                else_child = array_get(array, index);
-                continue;
-              }
-
-              else_child = NULL;
-            }
-          }
-
-          else_node =
-            ast_erb_else_node_init(NULL, else_children, node->location->start, node->location->end, array_init(8));
-
-          subsequent->subsequent = (AST_NODE_T*) else_node;
-        }
-      } else {
-        array_append(new_array, child);
-        index++;
-      }
-
-      // END
-      child = array_get(array, index);
-
-      AST_ERB_END_NODE_T* end_node = NULL;
-
-      if (child->type == AST_ERB_CONTENT_NODE) {
-        AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) child;
-
-        if (has_end(erb_node->analyzed_ruby)) {
-          printf("Has end node\n");
-          end_node = ast_erb_end_node_init(
-            erb_node->tag_opening,
-            erb_node->content,
-            erb_node->tag_closing,
-            node->location->start,
-            node->location->end,
-            erb_node->base.errors
-          );
-
-          index++;
-        } else {
-          array_append(new_array, child);
-          index++;
-        }
-      } else {
-        array_append(new_array, child);
-        index++;
-      }
-
-      array_T* errors = array_init(8);
-
-      AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
-        NULL,
-        NULL,
-        if_children,
-        (AST_NODE_T*) subsequent,
-        end_node,
-        node->location->start,
-        node->location->end,
-        errors
-      );
-
-      array_append(new_array, if_node);
+      array_append(new_array, item);
     }
 
     index++;
@@ -612,9 +586,19 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
   context->parent = (AST_NODE_T*) node;
 
+  if (node->type == AST_DOCUMENT_NODE) {
+    AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
+    document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
+  }
+
   if (node->type == AST_HTML_ELEMENT_NODE) {
     AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
     element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
+  }
+
+  if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
+    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
+    value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
   }
 
   herb_visit_child_nodes(node, transform_erb_nodes, data);
@@ -622,7 +606,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
   return false;
 }
 
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document) {
+void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) {
   herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
 
   analyze_ruby_context_T* context = malloc(sizeof(analyze_ruby_context_T));
@@ -631,4 +615,22 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document) {
   context->ruby_context_stack = array_init(8);
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
+
+  herb_analyze_parse_errors(document, source);
+
+  free(context);
+}
+
+void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
+  char* extracted_ruby = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY);
+
+  pm_parser_t parser;
+  pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), NULL);
+
+  pm_parse(&parser);
+
+  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
+       error = (const pm_diagnostic_t*) error->node.next) {
+    array_append(document->base.errors, ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser));
+  }
 }

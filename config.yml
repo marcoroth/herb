@@ -149,9 +149,6 @@ errors:
           type: string
 
         - name: level
-          type: size_t
-
-        - name: level_string
           type: string
 
 warnings:
@@ -360,19 +357,37 @@ nodes:
 
     - name: ERBElseNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: node
+        #   type: prism_node
 
         - name: children
           type: array
 
     - name: ERBIfNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: predicate
-          type: prism_node
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: node
+        #   type: prism_node
+        #
+        # - name: predicate
+        #   type: prism_node
 
         - name: children
           type: array
@@ -381,7 +396,7 @@ nodes:
           type: node
           #kind: ERBIfNode # or ERBElseNode
 
-        - name: end_node
+        - name: end
           type: node
           kind: ERBEndNode
 

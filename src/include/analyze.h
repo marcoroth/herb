@@ -11,6 +11,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   array_T* ruby_context_stack;
 } analyze_ruby_context_T;
 
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document);
+void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
+void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source);
 
 #endif
