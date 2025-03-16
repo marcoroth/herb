@@ -63,6 +63,8 @@ export default class extends Controller {
     this.inputTarget.focus()
     this.load()
 
+    this.urlUpdatedFromChangeEvent = false
+
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: "erb",
       theme: "",
@@ -90,7 +92,18 @@ export default class extends Controller {
       }
     })
 
+    window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
+  }
+
+  disconnect() {
+    window.removeEventListener("popstate", this.handlePopState)
+  }
+
+  handlePopState = async (event) => {
+    if (this.urlUpdatedFromChangeEvent === false) {
+      this.editor.setValue(this.decompressedValue)
+    }
   }
 
   async load() {
@@ -270,6 +283,12 @@ export default class extends Controller {
 
       this.positionTarget.textContent = `Position: (${this.inputTarget.currentLineNumber}:${currentColumnIndex}), Length: ${this.inputTarget.value.length.toString().padStart(4)}`
     }
+  }
+
+  async input() {
+    this.urlUpdatedFromChangeEvent = true
+    await this.analyze()
+    this.urlUpdatedFromChangeEvent = false
   }
 
   async analyze() {
