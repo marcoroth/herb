@@ -378,7 +378,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     }
 
     if (parser->current_token->type == TOKEN_IDENTIFIER) {
-      array_append(attributes, parser_parse_html_attribute(parser));
+      array_append(children, parser_parse_html_attribute(parser));
       continue;
     }
 

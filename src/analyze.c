@@ -594,6 +594,12 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
   }
 
+  if (node->type == AST_HTML_OPEN_TAG_NODE) {
+    AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+    open_tag->attributes = rewrite_node_array((AST_NODE_T*) node, open_tag->attributes, context);
+    open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
+  }
+
   if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
     value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
