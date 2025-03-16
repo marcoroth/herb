@@ -378,9 +378,7 @@ module Herb
     end
 
     def self.nodes
-      (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }.tap do |node|
-        puts node.count
-      end
+      (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
     end
 
     def self.errors
