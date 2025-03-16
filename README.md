@@ -18,6 +18,7 @@ This project builds the Herb program and its associated unit tests using a Makef
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
 - [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
+- [**Doxygen**](https://www.doxygen.nl): For building the C-Reference documentation pages.
 
 ##### For Linux
 
@@ -27,7 +28,7 @@ xargs sudo apt-get install < Aptfile
 or:
 
 ```bash
-sudo apt-get install check clang-19 clang-tidy-19 clang-format-19 emscripten
+sudo apt-get install check clang-19 clang-tidy-19 clang-format-19 emscripten doxygen
 ```
 
 ##### For macOS (using Homebrew)
@@ -38,7 +39,7 @@ brew bundle
 or:
 
 ```bash
-brew install check llvm@19 emscripten
+brew install check llvm@19 emscripten doxygen
 ```
 
 ### Building

@@ -114,3 +114,6 @@ vitest.config.*.timestamp*
 
 # Vitest
 **/test/__screenshots__/**/*
+
+# Doxygen
+docs/docs/public/c-reference

@@ -1,5 +1,5 @@
 ---
-title: Lexer Token Documentation
+title: Playground
 layout: page
 sidebar: false
 footer: false
