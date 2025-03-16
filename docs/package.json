@@ -11,10 +11,11 @@
   },
   "scripts": {
     "dev": "vitepress dev",
-    "build": "yarn vendor:playground && vitepress build",
+    "build": "yarn vendor:playground && yarn vendor:c-reference && vitepress build",
+    "vendor:c-reference": "cd .. && doxygen Doxyfile",
     "vendor:playground": "cd ../playground && yarn build && cd - && cp ../playground/dist/index.html ./docs/public/playground-embed.html && cp -R ../playground/dist/assets ./docs/public",
     "preview": "vitepress preview",
-    "clean": "rimraf .vitepress/dist/ && rimraf .vitepress/cache/ && rimraf ./docs/public/assets && rimraf ./docs/public/playground-embed.html"
+    "clean": "rimraf .vitepress/dist/ && rimraf .vitepress/cache/ && rimraf ./docs/public/assets && rimraf ./docs/public/playground-embed.html&& rimraf ./docs/public/c-reference"
   },
   "dependencies": {
     "@herb-tools/browser": "^0.0.0",
