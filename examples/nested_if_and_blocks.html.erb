@@ -1,0 +1,30 @@
+<div id="output">
+  <%= tag.div class: "div" do %>
+    <% if Date.today.friday? %>
+      <h1>
+        Happy
+        <% current_hour = Time.now.hour %>
+
+        <% if current_hour < 12 %>
+          <b>Early Friday</b>
+        <% elsif current_hour >= 18 %>
+          <b>Late Friday</b>
+        <% else %>
+          <b>Friday</b>
+        <% end %>
+      </h1>
+    <% elsif Date.today.saturday? %>
+      <h1>
+        It's
+        <b>Saturday</b>
+        <%= " - Time to relax!" %>
+      </h1>
+    <% else %>
+      <h1>
+        Oh no, it's
+        <b>Not Friday</b>
+        <%= " - Keep going!" %>
+      </h1>
+    <% end %>
+  <% end %>
+</div>

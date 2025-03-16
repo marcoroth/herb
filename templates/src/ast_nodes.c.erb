@@ -3,6 +3,7 @@
 
 #include <prism.h>
 
+#include "include/analyzed_ruby_struct.h"
 #include "include/array.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
@@ -33,6 +34,10 @@
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
   <%= node.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%- when Herb::Template::AnalyzedRubyField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::VoidPointerField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -110,6 +115,10 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     //
     pm_node_destroy(NULL, <%= node.human %>-><%= field.name %>);
   }
+  <%- when Herb::Template::AnalyzedRubyField -%>
+  // TODO: free
+  <%- when Herb::Template::VoidPointerField -%>
+  free(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::BooleanField -%>
   <%- else -%>
   <%= field.inspect %>

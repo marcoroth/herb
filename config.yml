@@ -343,3 +343,178 @@ nodes:
 
         - name: valid
           type: boolean
+
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
+    - name: ERBEndNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+    - name: ERBElseNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: children
+          type: array
+
+    - name: ERBIfNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: predicate
+          type: prism_node
+
+        - name: children
+          type: array
+
+        - name: subsequent
+          type: node
+          #kind: ERBIfNode # or ERBElseNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
+    - name: ERBBlockNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: block_type
+          type: string
+
+        - name: opener
+          type: prism_node
+
+        - name: children
+          type: array
+
+    - name: ERBWhenNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: condition
+          type: prism_node
+
+        - name: children
+          type: array
+
+    - name: ERBCaseNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: predicate
+          type: prism_node
+
+        - name: conditions
+          type: array
+          kind: ERBWhenNode
+
+        - name: else_clause
+          type: prism_node
+          kind: ERBElseNode
+
+    - name: ERBWhileNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: predicate
+          type: prism_node
+
+        - name: statements
+          type: array
+
+    - name: ERBUntilNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: predicate
+          type: prism_node
+
+        - name: statements
+          type: array
+
+    - name: ERBForNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: index
+          type: prism_node
+
+        - name: collection
+          type: prism_node
+
+        - name: statements
+          type: array
+
+    - name: ERBRescueNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: exceptions
+          type: array
+
+        - name: statements
+          type: array
+
+        - name: subsequent
+          type: array
+
+    - name: ERBEnsureNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: statements
+          type: array
+
+    - name: ERBBeginNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: statements
+          type: array
+
+        - name: rescue_clause
+          type: prism_node
+          kind: ERBRescueNode
+
+        - name: else_clause
+          type: prism_node
+          kind: ERBElseNode
+
+        - name: ensure_clause
+          type: prism_node
+          kind: ERBEnsureNode
+
+    - name: ERBUnlessNode
+      fields:
+        - name: node
+          type: prism_node
+
+        - name: predicate
+          type: prism_node
+
+        - name: children
+          type: array
+
+        - name: else_clause
+          type: prism_node
+          kind: ERBElseNode

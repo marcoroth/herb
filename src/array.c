@@ -104,6 +104,8 @@ void* array_pop(array_T* array) {
 }
 
 size_t array_size(const array_T* array) {
+  if (array == NULL) { return 0; }
+
   return array->size;
 }
 

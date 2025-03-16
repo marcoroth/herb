@@ -157,6 +157,26 @@ module Herb
       end
     end
 
+    class VoidPointerField < Field
+      def ruby_type
+        "nil"
+      end
+
+      def c_type
+        "void*"
+      end
+    end
+
+    class AnalyzedRubyField < Field
+      def ruby_type
+        "nil"
+      end
+
+      def c_type
+        "analyzed_ruby_T*"
+      end
+    end
+
     module ConfigType
       private
 
@@ -186,6 +206,8 @@ module Herb
         when "size_t"     then SizeTField
         when "boolean"    then BooleanField
         when "prism_node" then PrismNodeField
+        when "analyzed_ruby" then AnalyzedRubyField
+        when "void*"     then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end
@@ -356,7 +378,9 @@ module Herb
     end
 
     def self.nodes
-      (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
+      (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }.tap do |node|
+        puts node.count
+      end
     end
 
     def self.errors

@@ -33,6 +33,10 @@ void pretty_print_quoted_property(
   const char* name, const char* value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
 );
 
+void pretty_print_boolean_property(
+  const char* name, bool value, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
+);
+
 void pretty_print_token_property(
   token_T* token, const char* name, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer
 );

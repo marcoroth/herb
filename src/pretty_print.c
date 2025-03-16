@@ -48,6 +48,13 @@ void pretty_print_quoted_property(
   free(quoted);
 }
 
+void pretty_print_boolean_property(
+  const char* name, bool value, const size_t indent, const size_t relative_indent, const bool last_property,
+  buffer_T* buffer
+) {
+  pretty_print_property(name, value ? "true" : "false", indent, relative_indent, last_property, buffer);
+}
+
 void pretty_print_property(
   const char* name, const char* value, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer

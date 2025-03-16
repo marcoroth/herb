@@ -1,0 +1,18 @@
+<% case Date.today.cwday %>
+<% when 0 %>
+  <p>Today is Sunday</p>
+<% when 1 %>
+  <p>Today is Monday</p>
+<% when 2 %>
+  <p>Today is Tuesday</p>
+<% when 3 %>
+  <p>Today is Wednesday</p>
+<% when 4 %>
+  <p>Today is Thursday</p>
+<% when 5 %>
+  <p>Today is Friday</p>
+<% when 6 %>
+  <p>Today is Saturday</p>
+<% else %>
+  <p>Today is not a day of the week</p>
+<% end %>
