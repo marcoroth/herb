@@ -1,0 +1,40 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if true " (location: (1:2)-(1:11))
+    │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:13)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBIfNode (location: (2:0)-(3:0))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " elsif false " (location: (2:2)-(2:15))
+    │   │       ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (2:17)-(3:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent:
+    │   │       │   └── @ ERBElseNode (location: (3:0)-(4:0))
+    │   │       │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       │       ├── content: " else " (location: (3:2)-(3:8))
+    │   │       │       ├── tag_closing: "%>" (location: (3:8)-(3:10))
+    │   │       │       └── children: (1 item)
+    │   │       │           └── @ HTMLTextNode (location: (3:10)-(4:0))
+    │   │       │               └── content: "\n"
+    │   │       │
+    │   │       │
+    │   │       └── end_node: ∅
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

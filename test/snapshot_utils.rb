@@ -107,7 +107,7 @@ module SnapshotUtils
   def snapshot_file(source)
     test_class_name = underscore(self.class.name)
     md5 = Digest::MD5.hexdigest(source || "#{source.class}-#{source.inspect}")
-    test_name = name.gsub(" ", "_")
+    test_name = name.gsub(" ", "_").gsub("/", "_")
     expected_snapshot_filename = "#{test_name}_#{md5}.txt"
 
     base_path = Pathname.new("test/snapshots/") / test_class_name
