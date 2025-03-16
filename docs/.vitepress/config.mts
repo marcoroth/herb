@@ -87,7 +87,7 @@ const themeConfig = {
       items: [
         {
           text: "Ruby",
-          collapsed: true,
+          collapsed: false,
           items: [
             { text: "Installation", link: "/bindings/ruby/" },
             { text: "Reference", link: "/bindings/ruby/reference" },
@@ -95,7 +95,7 @@ const themeConfig = {
         },
         {
           text: "JavaScript/Node.js",
-          collapsed: true,
+          collapsed: false,
           items: [
             { text: "Installation", link: "/bindings/javascript/" },
             { text: "Reference", link: "/bindings/javascript/reference" },
@@ -105,7 +105,7 @@ const themeConfig = {
     },
     {
       text: "C-Reference",
-      collapsed: true,
+      collapsed: false,
       items: [
         { text: "Index", link: "/c-reference/" },
         { text: "Structs", link: "/c-reference/structs" },
