@@ -59,5 +59,16 @@ module Parser
         </h1>
       HTML
     end
+
+    test "newlines inside open tags" do
+      assert_parsed_snapshot(<<~HTML)
+        <h1
+          id="header"
+          class="class1 class2"
+        >
+          Content
+        </h1>
+      HTML
+    end
   end
 end
