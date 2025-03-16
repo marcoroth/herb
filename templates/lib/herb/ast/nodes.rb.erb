@@ -49,9 +49,9 @@ module Herb
         output += [true, false].include?(<%= field.name %>) ? <%= field.name %>.to_s : "∅"
         output += "\n"
         <%- when Herb::Template::PrismNodeField -%>
-        output += "<%= name %>PrismNodeField(...)\n"
+        # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>
-        output += "<%= name %>AnalyzedRubyField(...)\n"
+        # no-op for <%= field.name %>
         <%- when Herb::Template::NodeField -%>
         output += "<%= name %>"
         if <%= field.name %>
@@ -70,7 +70,7 @@ module Herb
         output += "<%= name %>"
         output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>")
         <%- else -%>
-        output += "<%= name %> <%= field.inspect %>\n"
+        <%- raise "Unhandled type: #{field.class}" -%>
         <%- end -%>
         <%- end -%>
         output += "\n"

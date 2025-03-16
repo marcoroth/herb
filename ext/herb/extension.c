@@ -28,7 +28,7 @@ static VALUE Herb_parse(VALUE self, VALUE source) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
 
-  herb_analyze_parse_tree(root, source);
+  herb_analyze_parse_tree(root, string);
 
   return create_parse_result(root, source);
 }

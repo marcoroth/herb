@@ -332,17 +332,14 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: analyzed_ruby
+          type: analyzed_ruby
+
         - name: parsed
           type: boolean
 
-        - name: parsed_node
-          type: prism_node
-
         - name: valid
           type: boolean
-
-        - name: analyzed_ruby
-          type: analyzed_ruby
 
     - name: ERBEndNode
       fields:
@@ -396,7 +393,7 @@ nodes:
           type: node
           #kind: ERBIfNode # or ERBElseNode
 
-        - name: end
+        - name: end_node
           type: node
           kind: ERBEndNode
 

@@ -1,4 +1,5 @@
 #include "include/analyze.h"
+#include "include/analyzed_ruby_struct.h"
 #include "include/array.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
@@ -31,7 +32,7 @@ position_T* position_from_source_with_offset(const char* source, size_t offset) 
   return position;
 }
 
-static char* pm_error_level_to_string(pm_error_level_t level) {
+static const char* pm_error_level_to_string(pm_error_level_t level) {
   switch (level) {
     case PM_ERROR_LEVEL_SYNTAX: return "syntax";
     case PM_ERROR_LEVEL_ARGUMENT: return "argument";
@@ -310,35 +311,38 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   return analyzed;
 }
 
+static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
+  printf(
+    "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
+    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  case:   %i\n  when:   %i\n  for:    %i\n  while:  %i\n "
+    " until:  %i\n  begin:  %i\n  "
+    "rescue: %i\n  ensure: %i\n==================\n\n",
+    (void*) analyzed,
+    source,
+    analyzed->has_if_node,
+    analyzed->has_elsif_node,
+    analyzed->has_else_node,
+    analyzed->has_end,
+    analyzed->has_block_node,
+    analyzed->has_case_node,
+    analyzed->has_when_node,
+    analyzed->has_for_node,
+    analyzed->has_while_node,
+    analyzed->has_until_node,
+    analyzed->has_begin_node,
+    analyzed->has_rescue_node,
+    analyzed->has_ensure_node
+  );
+}
+
 static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
     analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
-    printf(
-      "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
-      " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  case:   %i\n  when:   %i\n  for:    %i\n  while:  %i\n "
-      " until:  %i\n  begin:  %i\n  "
-      "rescue: %i\n  ensure: %i\n==================\n\n",
-      (void*) analyzed,
-      erb_content_node->content->value,
-      analyzed->has_if_node,
-      analyzed->has_elsif_node,
-      analyzed->has_else_node,
-      analyzed->has_end,
-      analyzed->has_block_node,
-      analyzed->has_case_node,
-      analyzed->has_when_node,
-      analyzed->has_for_node,
-      analyzed->has_while_node,
-      analyzed->has_until_node,
-      analyzed->has_begin_node,
-      analyzed->has_rescue_node,
-      analyzed->has_ensure_node
-    );
+    if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
 
-    erb_content_node->parsed_node = analyzed->root;
     erb_content_node->parsed = true;
     erb_content_node->valid = analyzed->valid;
     erb_content_node->analyzed_ruby = analyzed;
@@ -372,8 +376,6 @@ static size_t process_block_children(
 static size_t process_if_block(
   AST_NODE_T* node, array_T* array, size_t index, array_T* new_array, analyze_ruby_context_T* context
 ) {
-  printf("Processing if block\n");
-
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
 
   array_T* if_children = array_init(8);
@@ -397,11 +399,11 @@ static size_t process_if_block(
   }
 
   child = array_get(array, index);
+
   if (child && child->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
 
     if (has_end(erb_content->analyzed_ruby)) {
-      printf("Has end node\n");
       end_node = ast_erb_end_node_init(
         erb_content->tag_opening,
         erb_content->content,
@@ -439,8 +441,6 @@ static size_t process_if_block(
 static size_t process_elsif_block(
   AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
 ) {
-  printf("Processing elsif block\n");
-
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
 
   array_T* elsif_children = array_init(8);
@@ -482,8 +482,6 @@ static size_t process_elsif_block(
 static size_t process_else_block(
   AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
 ) {
-  printf("Processing else block\n");
-
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
 
   array_T* else_children = array_init(8);
@@ -539,11 +537,11 @@ static size_t process_block_children(
 }
 
 static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
-  printf(
-    "Transforming node: %s, parent: %s\n",
-    ast_node_type_to_string((AST_NODE_T*) node),
-    ast_node_type_to_string(context->parent)
-  );
+  // printf(
+  //   "Transforming node: %s, parent: %s\n",
+  //   ast_node_type_to_string((AST_NODE_T*) node),
+  //   ast_node_type_to_string(context->parent)
+  // );
 
   array_T* new_array = array_init(array_size(array));
   size_t index = 0;
@@ -562,13 +560,13 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) item;
 
     if (erb_node->analyzed_ruby->valid) {
-      printf("Valid Ruby: '%s'\n", erb_node->content->value);
+      // printf("Valid Ruby: '%s'\n", erb_node->content->value);
       array_append(new_array, item);
     } else {
-      printf("Invalid Ruby: '%s'\n", erb_node->content->value);
+      // printf("Invalid Ruby: '%s'\n", erb_node->content->value);
 
       if (has_if_node(erb_node->analyzed_ruby)) {
-        printf("Has if node\n");
+        // printf("Has if node\n");
         index = process_if_block(node, array, index, new_array, context);
         continue;
       }
@@ -631,6 +629,9 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
-    array_append(document->base.errors, ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser));
+    array_append(
+      document->base.errors,
+      ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser)
+    );
   }
 }
