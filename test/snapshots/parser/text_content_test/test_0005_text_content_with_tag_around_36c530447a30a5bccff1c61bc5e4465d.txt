@@ -8,7 +8,6 @@
     │   │   └── @ HTMLOpenTagNode (location: (1:5)-(1:11))
     │   │       ├── tag_opening: "<" (location: (1:5)-(1:6))
     │   │       ├── tag_name: "span" (location: (1:6)-(1:10))
-    │   │       ├── attributes: []
     │   │       ├── tag_closing: ">" (location: (1:10)-(1:11))
     │   │       ├── children: []
     │   │       └── is_void: false

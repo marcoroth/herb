@@ -16,7 +16,6 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "html" (location: (1:1)-(1:5))
-        │       ├── attributes: []
         │       ├── tag_closing: ">" (location: (1:5)-(1:6))
         │       ├── children: []
         │       └── is_void: false

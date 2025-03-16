@@ -5,7 +5,8 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:16))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "input" (location: (1:1)-(1:6))
-        │       ├── attributes: (1 item)
+        │       ├── tag_closing: ">" (location: (1:15)-(1:16))
+        │       ├── children: (1 item)
         │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:15))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:15))
@@ -14,8 +15,6 @@
         │       │       ├── equals: ∅
         │       │       └── value: ∅
         │       │
-        │       ├── tag_closing: ">" (location: (1:15)-(1:16))
-        │       ├── children: []
         │       └── is_void: false
         │
         ├── tag_name: "input" (location: (1:1)-(1:6))

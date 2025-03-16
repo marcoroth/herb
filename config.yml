@@ -196,10 +196,6 @@ nodes:
         - name: tag_name
           type: token
 
-        - name: attributes
-          type: array
-          kind: HTMLAttributeNode
-
         - name: tag_closing
           type: token
 

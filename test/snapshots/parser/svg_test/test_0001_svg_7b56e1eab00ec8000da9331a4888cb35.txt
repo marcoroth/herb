@@ -5,7 +5,6 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "svg" (location: (1:1)-(1:4))
-        │       ├── attributes: []
         │       ├── tag_closing: ">" (location: (1:4)-(1:5))
         │       ├── children: []
         │       └── is_void: false

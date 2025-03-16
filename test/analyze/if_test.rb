@@ -81,8 +81,6 @@ module Analyze
     end
 
     test "if/else statement in opening tag value" do
-      skip "TODO: ERB nodes are just omitted for now"
-
       assert_parsed_snapshot(<<~HTML)
         <h1
           <% if id? %>

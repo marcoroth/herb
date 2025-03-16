@@ -352,7 +352,6 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   array_T* errors = array_init(8);
   array_T* children = array_init(8);
-  array_T* attributes = array_init(8);
 
   token_T* tag_start = parser_consume_expected(parser, TOKEN_HTML_TAG_START, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
@@ -410,7 +409,6 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
     tag_start,
     tag_name,
-    attributes,
     tag_end,
     children,
     is_self_closing,

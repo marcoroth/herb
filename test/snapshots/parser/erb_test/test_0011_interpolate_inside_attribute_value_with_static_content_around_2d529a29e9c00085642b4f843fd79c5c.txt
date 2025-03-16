@@ -5,7 +5,8 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:47))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "h1" (location: (1:1)-(1:3))
-        │       ├── attributes: (1 item)
+        │       ├── tag_closing: ">" (location: (1:46)-(1:47))
+        │       ├── children: (1 item)
         │       │   └── @ HTMLAttributeNode (location: (1:4)-(1:46))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:4)-(1:9))
@@ -33,8 +34,6 @@
         │       │               └── quoted: true
         │       │
         │       │
-        │       ├── tag_closing: ">" (location: (1:46)-(1:47))
-        │       ├── children: []
         │       └── is_void: false
         │
         ├── tag_name: "h1" (location: (1:1)-(1:3))

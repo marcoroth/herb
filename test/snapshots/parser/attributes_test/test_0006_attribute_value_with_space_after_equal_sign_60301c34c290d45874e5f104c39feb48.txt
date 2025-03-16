@@ -18,7 +18,8 @@
         │       │
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "input" (location: (1:1)-(1:6))
-        │       ├── attributes: (2 items)
+        │       ├── tag_closing: "/>" (location: (1:22)-(1:24))
+        │       ├── children: (2 items)
         │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:14))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:12))
@@ -48,8 +49,6 @@
         │       │       ├── equals: ∅
         │       │       └── value: ∅
         │       │
-        │       ├── tag_closing: "/>" (location: (1:22)-(1:24))
-        │       ├── children: []
         │       └── is_void: true
         │
         ├── tag_name: "input" (location: (1:1)-(1:6))
