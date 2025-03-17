@@ -6,7 +6,7 @@ import {
   KeyMod,
   KeyCode,
   languages,
-} from "monaco-editor/esm/vs/editor/editor.api.js"
+} from "monaco-editor/esm/vs/editor/edcore.main.js"
 
 /**
  * Replaces a textarea with a Monaco editor instance
