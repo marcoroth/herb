@@ -359,11 +359,12 @@ nodes:
         - name: tag_closing
           type: token
 
-        # - name: node
-        #   type: prism_node
-
-        - name: children
+        - name: statements
           type: array
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBIfNode
       fields:
@@ -376,13 +377,10 @@ nodes:
         - name: tag_closing
           type: token
 
-        # - name: node
-        #   type: prism_node
-        #
         # - name: predicate
         #   type: prism_node
 
-        - name: children
+        - name: statements
           type: array
 
         - name: subsequent
@@ -395,134 +393,239 @@ nodes:
 
     - name: ERBBlockNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: block_type
-          type: string
+        - name: content
+          type: token
 
-        - name: opener
-          type: prism_node
+        - name: tag_closing
+          type: token
 
-        - name: children
+        # - name: block_type
+        #   type: string
+
+        # - name: opener
+        #   type: prism_node
+
+        - name: body
           type: array
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBWhenNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: condition
-          type: prism_node
+        - name: content
+          type: token
 
-        - name: children
+        - name: tag_closing
+          type: token
+
+        # - name: conditions
+        #   type: array
+        #   kind: prism_node
+
+        - name: statements
           type: array
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBCaseNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: predicate
-          type: prism_node
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: predicate
+        #   type: prism_node
 
         - name: conditions
           type: array
           kind: ERBWhenNode
 
         - name: else_clause
-          type: prism_node
+          type: node
           kind: ERBElseNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBWhileNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: predicate
-          type: prism_node
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: predicate
+        #   type: prism_node
 
         - name: statements
           type: array
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBUntilNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: predicate
-          type: prism_node
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: predicate
+        #   type: prism_node
 
         - name: statements
           type: array
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBForNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: index
-          type: prism_node
+        - name: content
+          type: token
 
-        - name: collection
-          type: prism_node
+        - name: tag_closing
+          type: token
+
+        # - name: index
+        #   type: prism_node
+
+        # - name: collection
+        #   type: prism_node
 
         - name: statements
           type: array
 
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
     - name: ERBRescueNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: exceptions
-          type: array
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        # - name: exceptions
+        #   type: array
+
+        # - name: reference
+        #   type: prism_node
 
         - name: statements
           type: array
 
         - name: subsequent
           type: array
+          kind: ERBRescueNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBEnsureNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
 
         - name: statements
           type: array
 
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
     - name: ERBBeginNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
 
         - name: statements
           type: array
 
         - name: rescue_clause
-          type: prism_node
+          type: node
           kind: ERBRescueNode
 
         - name: else_clause
-          type: prism_node
+          type: node
           kind: ERBElseNode
 
         - name: ensure_clause
-          type: prism_node
+          type: node
           kind: ERBEnsureNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
 
     - name: ERBUnlessNode
       fields:
-        - name: node
-          type: prism_node
+        - name: tag_opening
+          type: token
 
-        - name: predicate
-          type: prism_node
+        - name: content
+          type: token
 
-        - name: children
+        - name: tag_closing
+          type: token
+
+        # - name: predicate
+        #   type: prism_node
+
+        - name: statements
           type: array
 
         - name: else_clause
           type: prism_node
           kind: ERBElseNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
