@@ -92,8 +92,22 @@ export default class extends Controller {
       }
     })
 
+    this.editor.onDidChangeCursorPosition(({ position }) => {
+      this.updatePosition(
+        position.lineNumber,
+        position.column - 1,
+        this.editor.getValue().length,
+      )
+    })
+
     window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
+  }
+
+  updatePosition(line, column, length) {
+    if (this.hasPositionTarget) {
+      this.positionTarget.textContent = `Position: ${`(${line}:${column})`.toString().padStart(8)}, Length: ${length.toString().padStart(4)}`
+    }
   }
 
   disconnect() {
@@ -272,19 +286,6 @@ export default class extends Controller {
     })
   }
 
-  updatePosition() {
-    if (this.hasPositionTarget) {
-      const textarea = this.inputTarget
-
-      const textLines = textarea.value
-        .substr(0, textarea.selectionStart)
-        .split("\n")
-      const currentColumnIndex = textLines[textLines.length - 1].length
-
-      this.positionTarget.textContent = `Position: (${this.inputTarget.currentLineNumber}:${currentColumnIndex}), Length: ${this.inputTarget.value.length.toString().padStart(4)}`
-    }
-  }
-
   async input() {
     this.urlUpdatedFromChangeEvent = true
     await this.analyze()
@@ -293,10 +294,11 @@ export default class extends Controller {
 
   async analyze() {
     this.updateURL()
-    this.updatePosition()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     const result = await analyze(Herb, value)
+
+    this.updatePosition(1, 0, value.length)
 
     this.editor.clearDiagnostics()
 
