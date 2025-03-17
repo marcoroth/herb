@@ -72,6 +72,7 @@ static analyzed_ruby_T* init_analyzed_ruby_T(char* source) {
   analyzed->has_else_node = false;
   analyzed->has_end = false;
   analyzed->has_block_node = false;
+  analyzed->has_block_closing = false;
   analyzed->has_case_node = false;
   analyzed->has_when_node = false;
   analyzed->has_for_node = false;
@@ -80,6 +81,7 @@ static analyzed_ruby_T* init_analyzed_ruby_T(char* source) {
   analyzed->has_begin_node = false;
   analyzed->has_rescue_node = false;
   analyzed->has_ensure_node = false;
+  analyzed->has_unless_node = false;
 
   return analyzed;
 }
@@ -132,8 +134,8 @@ static bool has_end(analyzed_ruby_T* analyzed) {
 //   return analyzed->has_rescue_node;
 // }
 
-// static bool has_ensure_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_ensure_node;
+// static bool has_block_closing(analyzed_ruby_T* analyzed) {
+//   return analyzed->has_block_closing;
 // }
 
 static bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
@@ -236,6 +238,19 @@ static bool search_begin_nodes(const pm_node_t* node, void* data) {
   return false;
 }
 
+static bool search_unless_nodes(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  if (node->type == PM_UNLESS_NODE) {
+    analyzed->has_unless_node = true;
+    return true;
+  } else {
+    pm_visit_child_nodes(node, search_unless_nodes, analyzed);
+  }
+
+  return false;
+}
+
 static bool search_elsif_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'elsif', ignoring it")) {
     analyzed->has_elsif_node = true;
@@ -257,6 +272,15 @@ static bool search_else_nodes(analyzed_ruby_T* analyzed) {
 static bool search_end_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'end', ignoring it")) {
     analyzed->has_end = true;
+    return true;
+  }
+
+  return false;
+}
+
+static bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
+  if (has_error_message(analyzed, "unexpected '}', ignoring it")) {
+    analyzed->has_block_closing_node = true;
     return true;
   }
 
@@ -300,6 +324,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   pm_visit_node(analyzed->root, search_for_nodes, analyzed);
   pm_visit_node(analyzed->root, search_until_nodes, analyzed);
   pm_visit_node(analyzed->root, search_begin_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_unless_nodes, analyzed);
 
   search_elsif_nodes(analyzed);
   search_else_nodes(analyzed);
@@ -307,6 +332,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   search_when_nodes(analyzed);
   search_rescue_nodes(analyzed);
   search_ensure_nodes(analyzed);
+  search_block_closing_nodes(analyzed);
 
   return analyzed;
 }
@@ -314,9 +340,9 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
 static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
   printf(
     "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
-    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  case:   %i\n  when:   %i\n  for:    %i\n  while:  %i\n "
+    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    %i\n  while:  %i\n "
     " until:  %i\n  begin:  %i\n  "
-    "rescue: %i\n  ensure: %i\n==================\n\n",
+    "rescue: %i\n  ensure: %i\n  unless: %i\n==================\n\n",
     (void*) analyzed,
     source,
     analyzed->has_if_node,
@@ -324,6 +350,7 @@ static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* sou
     analyzed->has_else_node,
     analyzed->has_end,
     analyzed->has_block_node,
+    analyzed->has_block_closing,
     analyzed->has_case_node,
     analyzed->has_when_node,
     analyzed->has_for_node,
@@ -331,7 +358,8 @@ static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* sou
     analyzed->has_until_node,
     analyzed->has_begin_node,
     analyzed->has_rescue_node,
-    analyzed->has_ensure_node
+    analyzed->has_ensure_node,
+    analyzed->has_unless_node
   );
 }
 

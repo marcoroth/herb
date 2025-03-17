@@ -14,6 +14,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_elsif_node;
   bool has_else_node;
   bool has_end;
+  bool has_block_closing;
   bool has_block_node;
   bool has_case_node;
   bool has_when_node;
@@ -23,6 +24,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_begin_node;
   bool has_rescue_node;
   bool has_ensure_node;
+  bool has_unless_node;
 } analyzed_ruby_T;
 
 #endif
