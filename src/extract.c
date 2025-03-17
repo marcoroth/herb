@@ -6,6 +6,25 @@
 
 #include <stdlib.h>
 
+void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* output) {
+  const array_T* tokens = herb_lex(source);
+
+  for (size_t i = 0; i < array_size(tokens); i++) {
+    const token_T* token = array_get(tokens, i);
+
+    switch (token->type) {
+      case TOKEN_NEWLINE:
+      case TOKEN_ERB_CONTENT: buffer_append(output, token->value); break;
+      case TOKEN_ERB_END: {
+        buffer_append_char(output, ';');
+        buffer_append_whitespace(output, range_length(token->range) - 1);
+        break;
+      }
+      default: buffer_append_whitespace(output, range_length(token->range));
+    }
+  }
+}
+
 void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
   const array_T* tokens = herb_lex(source);
 
@@ -35,6 +54,15 @@ void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
   }
 }
 
+char* herb_extract_ruby_with_semicolons(const char* source) {
+  buffer_T output;
+  buffer_init(&output);
+
+  herb_extract_ruby_to_buffer_with_semicolons(source, &output);
+
+  return output.value;
+}
+
 char* herb_extract(const char* source, const herb_extract_language_T language) {
   buffer_T output;
   buffer_init(&output);
@@ -44,9 +72,7 @@ char* herb_extract(const char* source, const herb_extract_language_T language) {
     case HERB_EXTRACT_LANGUAGE_HTML: herb_extract_html_to_buffer(source, &output); break;
   }
 
-  char* value = output.value;
-
-  return value;
+  return output.value;
 }
 
 char* herb_extract_from_file(const char* path, const herb_extract_language_T language) {

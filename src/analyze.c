@@ -627,7 +627,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 }
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
-  char* extracted_ruby = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY);
+  char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
   pm_parser_t parser;
   pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), NULL);

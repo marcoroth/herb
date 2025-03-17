@@ -1,11 +1,4 @@
 @ DocumentNode (location: (1:0)-(1:75))
-├── errors: (1 error)
-│   └── @ RubyParseError (location: (1:36)-(1:40))
-│       ├── message: "conditional_predicate_term: expected `then` or `;` or '\\n'"
-│       ├── error_message: "expected `then` or `;` or '\\n'"
-│       ├── diagnostic_id: "conditional_predicate_term"
-│       └── level: "syntax"
-│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:75))
         ├── open_tag:

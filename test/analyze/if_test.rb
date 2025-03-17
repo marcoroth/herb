@@ -89,8 +89,6 @@ module Analyze
     end
 
     test "if/else statement in attribute value" do
-      skip "TODO: Remove Ruby parse error, since if/else/end is on the same line after extracting the Ruby code"
-
       assert_parsed_snapshot(<<~HTML)
         <h1 class="<% if bold? %>bold<% else %>normal<% end %>"></h1>
       HTML
