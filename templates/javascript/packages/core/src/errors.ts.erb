@@ -127,9 +127,9 @@ export class <%= error.name %> extends HerbError {
     const diagnostics: HerbDiagnostic[] = [
       {
         line: this.location.start.line,
-        column: this.location.start.column + 1,
+        column: this.location.start.column,
         endLine: this.location.end.line,
-        endColumn: this.location.end.column + 1,
+        endColumn: this.location.end.column,
         message: this.message,
         severity: 'error'
       }
@@ -149,7 +149,7 @@ export class <%= error.name %> extends HerbError {
       })
     }
 
-    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField, Herb::Template::SizeTField -%>
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
     // no-op for <%= field.name %>
     <%- else -%>
     <%- raise "Unhandled Type: #{field.class}" %>

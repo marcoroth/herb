@@ -18,11 +18,7 @@
     />
   </head>
 
-  <body
-    class="bg-white flex flex-col"
-    data-controller="playground iframe"
-    data-action="keydown@window->playground#updatePosition"
-  >
+  <body class="bg-white flex flex-col" data-controller="playground iframe">
     <script type="module" src="/src/entry-client.ts"></script>
 
     <div class="w-full md:max-h-[100vh] overflow-hidden">
@@ -113,7 +109,7 @@
             >
               <textarea
                 data-playground-target="input"
-                data-action="input->playground#analyze"
+                data-action="input->playground#input"
                 id="input"
                 class="h-full border-none font-mono w-full text-sm"
                 placeholder="Your HTML+ERB content goes here"
