@@ -528,8 +528,20 @@ static size_t process_block_children(
       break;
     }
 
-    array_append(children_array, child);
+    if (!erb_content->analyzed_ruby->valid && has_if_node(erb_content->analyzed_ruby)) {
+      array_T* temp_array = array_init(1);
 
+      size_t new_index = process_if_block(node, array, index, temp_array, context);
+
+      if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
+
+      free(temp_array);
+
+      index = new_index;
+      continue;
+    }
+
+    array_append(children_array, child);
     index++;
   }
 
@@ -537,12 +549,6 @@ static size_t process_block_children(
 }
 
 static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
-  // printf(
-  //   "Transforming node: %s, parent: %s\n",
-  //   ast_node_type_to_string((AST_NODE_T*) node),
-  //   ast_node_type_to_string(context->parent)
-  // );
-
   array_T* new_array = array_init(array_size(array));
   size_t index = 0;
 
@@ -560,13 +566,9 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) item;
 
     if (erb_node->analyzed_ruby->valid) {
-      // printf("Valid Ruby: '%s'\n", erb_node->content->value);
       array_append(new_array, item);
     } else {
-      // printf("Invalid Ruby: '%s'\n", erb_node->content->value);
-
       if (has_if_node(erb_node->analyzed_ruby)) {
-        // printf("Has if node\n");
         index = process_if_block(node, array, index, new_array, context);
         continue;
       }

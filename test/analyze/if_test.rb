@@ -67,8 +67,6 @@ module Analyze
     end
 
     test "nested if statements" do
-      skip "TODO: if nodes are only constructed on the outer most layer"
-
       assert_parsed_snapshot(<<~HTML)
         <% if true %>
           <% if false %>
