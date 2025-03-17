@@ -18,7 +18,7 @@ hero:
 
     - theme: alt
       text: Playground
-      link: https://playground.herb-tools.dev
+      link: /playground
 
     - theme: alt
       text: GitHub

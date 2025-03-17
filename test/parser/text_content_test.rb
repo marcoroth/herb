@@ -41,5 +41,13 @@ module Parser
 
       assert_equal content, result.value.children.first.body.first.content
     end
+
+    test "exclamation point" do
+      assert_parsed_snapshot("Hello World!")
+    end
+
+    test "exclamation point in element" do
+      assert_parsed_snapshot("<h1>Hello World!</h1>")
+    end
   end
 end

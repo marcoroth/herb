@@ -365,6 +365,13 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       continue;
     }
 
+    token_T* newline = parser_consume_if_present(parser, TOKEN_NEWLINE);
+
+    if (newline != NULL) {
+      token_free(newline);
+      continue;
+    }
+
     if (parser->current_token->type == TOKEN_ERB_START) {
       array_append(children, parser_parse_erb_tag(parser));
       continue;
@@ -378,7 +385,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     parser_append_unexpected_error(
       parser,
       "Unexpected Token",
-      "TOKEN_IDENTIFIER, TOKEN_ERB_START, or TOKEN_WHITESPACE",
+      "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
       errors
     );
   }

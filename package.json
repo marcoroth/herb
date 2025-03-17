@@ -13,6 +13,7 @@
     "@nx/js": "20.5.0",
     "@nx/node": "^20.5.0",
     "@nx/web": "20.5.0",
+    "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4",
     "concurrently": "^9.1.2",
     "nx": "20.5.0",
     "prettier": "3.5.3",

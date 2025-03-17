@@ -18,3 +18,8 @@ def cyclic_string(length)
   sequence = ("a".."z").to_a + ("0".."9").to_a
   sequence.cycle.take(length).join
 end
+
+module Analyze
+  module ActionView
+  end
+end

@@ -29,5 +29,9 @@ module Parser
     test "attribute value with space after equal sign" do
       assert_parsed_snapshot(%(<input value= "value" />))
     end
+
+    test "attribute value with exclamation point" do
+      assert_parsed_snapshot(%(<input value="Hello!" />))
+    end
   end
 end
