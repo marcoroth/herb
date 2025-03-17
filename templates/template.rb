@@ -58,7 +58,7 @@ module Herb
 
       def c_type
         if specific_kind
-          "AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_T*"
+          "struct AST_#{specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").upcase}_STRUCT*"
         else
           "AST_NODE_T*"
         end
@@ -216,7 +216,7 @@ module Herb
     class ErrorType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :human, :fields, :message_template, :message_arguments
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :message_template, :message_arguments
 
       def initialize(config)
         @name = config.fetch("name")
@@ -226,6 +226,7 @@ module Herb
         camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
         @type = camelized.upcase
         @struct_type = "#{camelized.upcase}_T"
+        @struct_name = "#{camelized.upcase}_STRUCT"
         @human = camelized.downcase
 
         @fields = config.fetch("fields", []).map do |field|
@@ -241,13 +242,14 @@ module Herb
     class NodeType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :human, :fields
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
 
       def initialize(config)
         @name = config.fetch("name")
         camelized = @name.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_")
         @type = "AST_#{camelized.upcase}"
         @struct_type = "AST_#{camelized.upcase}_T"
+        @struct_name = "AST_#{camelized.upcase}_STRUCT"
         @human = camelized.downcase
 
         @fields = config.fetch("fields", []).map do |field|

@@ -27,7 +27,7 @@ typedef struct AST_NODE_STRUCT {
 <%- nodes.each do |node| -%>
 <%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name, ";"].join }.join("\n  ") : "/* no additional fields */" -%>
 
-typedef struct {
+typedef struct <%= node.struct_name %> {
   AST_NODE_T base;
   <%= arguments %>
 } <%= node.struct_type %>;

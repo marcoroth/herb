@@ -550,7 +550,7 @@ nodes:
           type: array
 
         - name: subsequent
-          type: array
+          type: node
           kind: ERBRescueNode
 
         - name: end_node
@@ -623,7 +623,7 @@ nodes:
           type: array
 
         - name: else_clause
-          type: prism_node
+          type: node
           kind: ERBElseNode
 
         - name: end_node

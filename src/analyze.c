@@ -5,9 +5,8 @@
 #include "include/errors.h"
 #include "include/extract.h"
 #include "include/location.h"
-#include "include/parser.h"
 #include "include/position.h"
-#include "include/ruby_parser.h"
+#include "include/token_struct.h"
 #include "include/util.h"
 #include "include/visitor.h"
 
@@ -106,37 +105,45 @@ static bool has_end(analyzed_ruby_T* analyzed) {
 //   return analyzed->has_block_node;
 // }
 
-// static bool has_case_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_case_node;
-// }
-
-// static bool has_when_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_when_node;
-// }
-
-// static bool has_for_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_for_node;
-// }
-
-// static bool has_while_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_while_node;
-// }
-
-// static bool has_until_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_until_node;
-// }
-
-// static bool has_begin_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_begin_node;
-// }
-
-// static bool has_rescue_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_rescue_node;
-// }
-
 // static bool has_block_closing(analyzed_ruby_T* analyzed) {
 //   return analyzed->has_block_closing;
 // }
+
+static bool has_case_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_case_node;
+}
+
+static bool has_when_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_when_node;
+}
+
+static bool has_for_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_for_node;
+}
+
+static bool has_while_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_while_node;
+}
+
+static bool has_until_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_until_node;
+}
+
+static bool has_begin_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_begin_node;
+}
+
+static bool has_rescue_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_rescue_node;
+}
+
+static bool has_ensure_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_ensure_node;
+}
+
+static bool has_unless_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_unless_node;
+}
 
 static bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
@@ -280,7 +287,7 @@ static bool search_end_nodes(analyzed_ruby_T* analyzed) {
 
 static bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected '}', ignoring it")) {
-    analyzed->has_block_closing_node = true;
+    analyzed->has_block_closing = true;
     return true;
   }
 
@@ -340,7 +347,8 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
 static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
   printf(
     "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
-    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    %i\n  while:  %i\n "
+    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    "
+    "%i\n  while:  %i\n "
     " until:  %i\n  begin:  %i\n  "
     "rescue: %i\n  ensure: %i\n  unless: %i\n==================\n\n",
     (void*) analyzed,
@@ -381,162 +389,395 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   return false;
 }
 
+typedef enum {
+  CONTROL_TYPE_IF,
+  CONTROL_TYPE_ELSIF,
+  CONTROL_TYPE_ELSE,
+  CONTROL_TYPE_END,
+  CONTROL_TYPE_CASE,
+  CONTROL_TYPE_WHEN,
+  CONTROL_TYPE_BEGIN,
+  CONTROL_TYPE_RESCUE,
+  CONTROL_TYPE_ENSURE,
+  CONTROL_TYPE_UNLESS,
+  CONTROL_TYPE_WHILE,
+  CONTROL_TYPE_UNTIL,
+  CONTROL_TYPE_FOR,
+  CONTROL_TYPE_UNKNOWN
+} control_type_t;
+
+static size_t process_control_structure(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* output_array, analyze_ruby_context_T* context,
+  control_type_t initial_type
+);
+
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
+  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  control_type_t parent_type
 );
 
-static size_t process_if_block(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* new_array, analyze_ruby_context_T* context
+static size_t process_subsequent_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  control_type_t parent_type
 );
 
-static size_t process_elsif_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
-);
+static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
 
-static size_t process_else_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
-);
+  analyzed_ruby_T* ruby = erb_node->analyzed_ruby;
 
-static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
-);
+  if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
-static size_t process_if_block(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* new_array, analyze_ruby_context_T* context
+  if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
+  if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
+  if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
+  if (has_end(ruby)) { return CONTROL_TYPE_END; }
+  if (has_case_node(ruby)) { return CONTROL_TYPE_CASE; }
+  if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
+  if (has_begin_node(ruby)) { return CONTROL_TYPE_BEGIN; }
+  if (has_rescue_node(ruby)) { return CONTROL_TYPE_RESCUE; }
+  if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
+  if (has_unless_node(ruby)) { return CONTROL_TYPE_UNLESS; }
+  if (has_while_node(ruby)) { return CONTROL_TYPE_WHILE; }
+  if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
+  if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
+
+  return CONTROL_TYPE_UNKNOWN;
+}
+
+static bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {
+  switch (parent_type) {
+    case CONTROL_TYPE_IF:
+    case CONTROL_TYPE_ELSIF: return child_type == CONTROL_TYPE_ELSIF || child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_CASE: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_BEGIN: return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ENSURE;
+    case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ENSURE;
+    case CONTROL_TYPE_UNLESS: return child_type == CONTROL_TYPE_ELSE;
+
+    default: return false;
+  }
+}
+
+static bool is_terminator_type(control_type_t parent_type, control_type_t child_type) {
+  if (child_type == CONTROL_TYPE_END) { return true; }
+
+  return is_subsequent_type(parent_type, child_type);
+}
+
+static AST_NODE_T* create_control_node(
+  AST_ERB_CONTENT_NODE_T* erb_node, array_T* children, AST_NODE_T* subsequent, AST_ERB_END_NODE_T* end_node,
+  control_type_t control_type
+) {
+  array_T* errors = array_init(8);
+  position_T* start_position = erb_node->tag_opening->location->start;
+  position_T* end_position = erb_node->tag_closing->location->end;
+
+  if (end_node) {
+    end_position = end_node->base.location->end;
+  } else if (children && array_size(children) > 0) {
+    AST_NODE_T* last_child = array_get(children, array_size(children) - 1);
+    end_position = last_child->location->end;
+  } else if (subsequent) {
+    end_position = subsequent->location->end;
+  }
+
+  token_T* tag_opening = erb_node->tag_opening;
+  token_T* content = erb_node->content;
+  token_T* tag_closing = erb_node->tag_closing;
+
+  switch (control_type) {
+    case CONTROL_TYPE_IF:
+    case CONTROL_TYPE_ELSIF:
+      return (AST_NODE_T*) ast_erb_if_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        subsequent,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+
+    case CONTROL_TYPE_ELSE:
+      return (AST_NODE_T*) ast_erb_else_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+
+    case CONTROL_TYPE_CASE: {
+      AST_ERB_ELSE_NODE_T* else_node = NULL;
+      if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_node = (AST_ERB_ELSE_NODE_T*) subsequent; }
+
+      return (AST_NODE_T*) ast_erb_case_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        else_node,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_WHEN: {
+      return (AST_NODE_T*) ast_erb_when_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_BEGIN: {
+      AST_ERB_RESCUE_NODE_T* rescue_clause = NULL;
+      AST_ERB_ELSE_NODE_T* else_clause = NULL;
+      AST_ERB_ENSURE_NODE_T* ensure_clause = NULL;
+
+      if (subsequent) {
+        if (subsequent->type == AST_ERB_RESCUE_NODE) {
+          rescue_clause = (AST_ERB_RESCUE_NODE_T*) subsequent;
+        } else if (subsequent->type == AST_ERB_ELSE_NODE) {
+          else_clause = (AST_ERB_ELSE_NODE_T*) subsequent;
+        } else if (subsequent->type == AST_ERB_ENSURE_NODE) {
+          ensure_clause = (AST_ERB_ENSURE_NODE_T*) subsequent;
+        }
+      }
+
+      return (AST_NODE_T*) ast_erb_begin_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        rescue_clause,
+        else_clause,
+        ensure_clause,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_RESCUE: {
+      AST_ERB_RESCUE_NODE_T* rescue_node = NULL;
+
+      if (rescue_node && subsequent->type == AST_ERB_RESCUE_NODE) { rescue_node = (AST_ERB_RESCUE_NODE_T*) subsequent; }
+
+      return (AST_NODE_T*) ast_erb_rescue_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        rescue_node,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_ENSURE: {
+      return (AST_NODE_T*) ast_erb_ensure_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_UNLESS: {
+      AST_ERB_ELSE_NODE_T* else_clause = NULL;
+
+      if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_clause = (AST_ERB_ELSE_NODE_T*) subsequent; }
+
+      return (AST_NODE_T*) ast_erb_unless_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        else_clause,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_WHILE: {
+      return (AST_NODE_T*) ast_erb_while_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_UNTIL: {
+      return (AST_NODE_T*) ast_erb_until_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_FOR: {
+      return (AST_NODE_T*) ast_erb_for_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    default: array_free(&errors); return NULL;
+  }
+}
+
+static size_t process_control_structure(
+  AST_NODE_T* node, array_T* array, size_t index, array_T* output_array, analyze_ruby_context_T* context,
+  control_type_t initial_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
-
-  array_T* if_children = array_init(8);
+  array_T* children = array_init(8);
 
   index++;
 
-  index = process_block_children(node, array, index, if_children, context);
+  index = process_block_children(node, array, index, children, context, initial_type);
 
   AST_NODE_T* subsequent = NULL;
   AST_ERB_END_NODE_T* end_node = NULL;
-  AST_NODE_T* child = array_get(array, index);
 
-  if (child && child->type == AST_ERB_CONTENT_NODE) {
-    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+  if (index < array_size(array)) {
+    AST_NODE_T* next_node = array_get(array, index);
 
-    if (has_elsif_node(erb_content->analyzed_ruby)) {
-      index = process_elsif_block(node, array, index, &subsequent, context);
-    } else if (has_else_node(erb_content->analyzed_ruby)) {
-      index = process_else_block(node, array, index, &subsequent, context);
+    if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
+      AST_ERB_CONTENT_NODE_T* next_erb = (AST_ERB_CONTENT_NODE_T*) next_node;
+      control_type_t next_type = detect_control_type(next_erb);
+
+      if (is_subsequent_type(initial_type, next_type)) {
+        index = process_subsequent_block(node, array, index, &subsequent, context, initial_type);
+      }
     }
   }
 
-  child = array_get(array, index);
+  if (index < array_size(array)) {
+    AST_NODE_T* potential_end = array_get(array, index);
 
-  if (child && child->type == AST_ERB_CONTENT_NODE) {
-    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+    if (potential_end && potential_end->type == AST_ERB_CONTENT_NODE) {
+      AST_ERB_CONTENT_NODE_T* end_erb = (AST_ERB_CONTENT_NODE_T*) potential_end;
 
-    if (has_end(erb_content->analyzed_ruby)) {
-      end_node = ast_erb_end_node_init(
-        erb_content->tag_opening,
-        erb_content->content,
-        erb_content->tag_closing,
-        erb_content->tag_opening->location->start,
-        erb_content->tag_closing->location->end,
-        erb_content->base.errors
-      );
+      if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
+        end_node = ast_erb_end_node_init(
+          end_erb->tag_opening,
+          end_erb->content,
+          end_erb->tag_closing,
+          end_erb->tag_opening->location->start,
+          end_erb->tag_closing->location->end,
+          end_erb->base.errors
+        );
 
-      index++;
+        index++;
+      }
     }
   }
 
-  array_T* errors = array_init(8);
+  AST_NODE_T* control_node = create_control_node(erb_node, children, subsequent, end_node, initial_type);
 
-  location_T* end_location = (end_node != NULL) ? end_node->base.location : erb_node->tag_closing->location;
-
-  AST_ERB_IF_NODE_T* if_node = ast_erb_if_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
-    if_children,
-    subsequent,
-    end_node,
-    erb_node->tag_opening->location->start,
-    end_location->end,
-    errors
-  );
-
-  array_append(new_array, (AST_NODE_T*) if_node);
+  if (control_node) { array_append(output_array, control_node); }
 
   return index;
 }
 
-static size_t process_elsif_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
+static size_t process_subsequent_block(
+  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  control_type_t parent_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
-
-  array_T* elsif_children = array_init(8);
+  control_type_t type = detect_control_type(erb_node);
+  array_T* children = array_init(8);
 
   index++;
 
-  index = process_block_children(node, array, index, elsif_children, context);
+  index = process_block_children(node, array, index, children, context, parent_type);
 
-  AST_NODE_T* last_child = array_last(elsif_children);
-  location_T* end_location = (last_child != NULL) ? last_child->location : erb_node->tag_closing->location;
+  AST_NODE_T* subsequent_node = create_control_node(erb_node, children, NULL, NULL, type);
 
-  AST_ERB_IF_NODE_T* elsif_node = ast_erb_if_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
-    elsif_children,
-    NULL,
-    NULL,
-    erb_node->tag_opening->location->start,
-    end_location->end,
-    array_init(8)
-  );
+  if (index < array_size(array)) {
+    AST_NODE_T* next_node = array_get(array, index);
 
-  AST_NODE_T* child = array_get(array, index);
-  if (child && child->type == AST_ERB_CONTENT_NODE) {
-    AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+    if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
+      AST_ERB_CONTENT_NODE_T* next_erb = (AST_ERB_CONTENT_NODE_T*) next_node;
+      control_type_t next_type = detect_control_type(next_erb);
 
-    if (has_elsif_node(erb_content->analyzed_ruby)) {
-      index = process_elsif_block(node, array, index, &(elsif_node->subsequent), context);
-    } else if (has_else_node(erb_content->analyzed_ruby)) {
-      index = process_else_block(node, array, index, &(elsif_node->subsequent), context);
+      if (is_subsequent_type(parent_type, next_type)) {
+        AST_NODE_T** next_subsequent = NULL;
+
+        switch (type) {
+          case CONTROL_TYPE_ELSIF:
+            if (subsequent_node->type == AST_ERB_IF_NODE) {
+              next_subsequent = &(((AST_ERB_IF_NODE_T*) subsequent_node)->subsequent);
+            }
+            break;
+
+          case CONTROL_TYPE_RESCUE:
+            if (subsequent_node->type == AST_ERB_RESCUE_NODE) {
+              AST_NODE_T* next_rescue_node = NULL;
+              index = process_subsequent_block(node, array, index, &next_rescue_node, context, parent_type);
+
+              if (next_rescue_node) { ((AST_ERB_RESCUE_NODE_T*) subsequent_node)->subsequent = next_rescue_node; }
+
+              next_subsequent = NULL;
+            }
+            break;
+
+          default: break;
+        }
+
+        if (next_subsequent) {
+          index = process_subsequent_block(node, array, index, next_subsequent, context, parent_type);
+        }
+      }
     }
   }
 
-  *subsequent_out = (AST_NODE_T*) elsif_node;
-  return index;
-}
-
-static size_t process_else_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context
-) {
-  AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
-
-  array_T* else_children = array_init(8);
-
-  index++;
-
-  index = process_block_children(node, array, index, else_children, context);
-
-  AST_NODE_T* last_child = array_last(else_children);
-  location_T* end_location = (last_child != NULL) ? last_child->location : erb_node->tag_closing->location;
-
-  AST_ERB_ELSE_NODE_T* else_node = ast_erb_else_node_init(
-    erb_node->tag_opening,
-    erb_node->content,
-    erb_node->tag_closing,
-    else_children,
-    erb_node->tag_opening->location->start,
-    end_location->end,
-    array_init(8)
-  );
-
-  *subsequent_out = (AST_NODE_T*) else_node;
+  *subsequent_out = subsequent_node;
   return index;
 }
 
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context
+  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  control_type_t parent_type
 ) {
   while (index < array_size(array)) {
     AST_NODE_T* child = array_get(array, index);
@@ -550,16 +791,15 @@ static size_t process_block_children(
     }
 
     AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) child;
+    control_type_t child_type = detect_control_type(erb_content);
 
-    if (has_elsif_node(erb_content->analyzed_ruby) || has_else_node(erb_content->analyzed_ruby)
-        || has_end(erb_content->analyzed_ruby)) {
-      break;
-    }
+    if (is_terminator_type(parent_type, child_type)) { break; }
 
-    if (!erb_content->analyzed_ruby->valid && has_if_node(erb_content->analyzed_ruby)) {
+    if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_BEGIN
+        || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE || child_type == CONTROL_TYPE_UNTIL
+        || child_type == CONTROL_TYPE_FOR) {
       array_T* temp_array = array_init(1);
-
-      size_t new_index = process_if_block(node, array, index, temp_array, context);
+      size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
       if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
 
@@ -592,19 +832,22 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     }
 
     AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) item;
+    control_type_t type = detect_control_type(erb_node);
 
-    if (erb_node->analyzed_ruby->valid) {
-      array_append(new_array, item);
-    } else {
-      if (has_if_node(erb_node->analyzed_ruby)) {
-        index = process_if_block(node, array, index, new_array, context);
-        continue;
-      }
+    switch (type) {
+      case CONTROL_TYPE_IF:
+      case CONTROL_TYPE_CASE:
+      case CONTROL_TYPE_BEGIN:
+      case CONTROL_TYPE_UNLESS:
+      case CONTROL_TYPE_WHILE:
+      case CONTROL_TYPE_UNTIL:
+      case CONTROL_TYPE_FOR: index = process_control_structure(node, array, index, new_array, context, type); continue;
 
-      array_append(new_array, item);
+      default:
+        array_append(new_array, item);
+        index++;
+        break;
     }
-
-    index++;
   }
 
   return new_array;
