@@ -430,9 +430,7 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (ruby->valid) {
-    return CONTROL_TYPE_UNKNOWN;
-  }
+  if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
 
   if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
@@ -461,6 +459,7 @@ static bool is_subsequent_type(control_type_t parent_type, control_type_t child_
     case CONTROL_TYPE_BEGIN:
       return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_ENSURE;
     case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE;
+    case CONTROL_TYPE_UNLESS: return child_type == CONTROL_TYPE_ELSE;
 
     default: return false;
   }
