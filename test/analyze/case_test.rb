@@ -78,5 +78,15 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "case with children before first when" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case variable %>
+          before when
+        <% when String %>
+          String
+        <% end %>
+      HTML
+    end
   end
 end

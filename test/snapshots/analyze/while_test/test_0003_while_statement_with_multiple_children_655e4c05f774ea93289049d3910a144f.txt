@@ -1,0 +1,69 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBWhileNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while true " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── statements: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:16)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:15))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "h1" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "h1" (location: (2:3)-(2:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:6)-(2:10))
+    │   │   │   │       └── content: "true"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:10)-(2:15))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:10)-(2:12))
+    │   │   │   │       ├── tag_name: "h1" (location: (2:12)-(2:14))
+    │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:15)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:15))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "h2" (location: (3:3)-(3:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "h2" (location: (3:3)-(3:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:6)-(3:10))
+    │   │   │   │       └── content: "true"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:10)-(3:15))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:10)-(3:12))
+    │   │   │   │       ├── tag_name: "h2" (location: (3:12)-(3:14))
+    │   │   │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:15)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

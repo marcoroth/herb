@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " [1, 2, 3].each_with_index do |item, index| " (location: (1:2)-(1:46))
+    │   ├── tag_closing: "%>" (location: (1:46)-(1:48))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:48)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:13))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " item " (location: (2:5)-(2:11))
+    │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:13)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:14))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │   ├── content: " index " (location: (3:5)-(3:12))
+    │   │   │   ├── tag_closing: "%>" (location: (3:12)-(3:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:14)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

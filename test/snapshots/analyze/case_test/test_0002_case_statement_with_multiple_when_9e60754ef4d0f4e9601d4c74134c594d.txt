@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case variable " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:19)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:17))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when String " (location: (2:2)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:17)-(4:0))
+    │   │   │           └── content: "\n  String\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (4:0)-(4:18))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " when Integer " (location: (4:2)-(4:16))
+    │   │       ├── tag_closing: "%>" (location: (4:16)-(4:18))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (4:18)-(6:0))
+    │   │               └── content: "\n  Integer\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

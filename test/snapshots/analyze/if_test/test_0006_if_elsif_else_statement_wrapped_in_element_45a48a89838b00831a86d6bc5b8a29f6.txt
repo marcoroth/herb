@@ -18,7 +18,7 @@
     │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │   │   ├── content: " if true " (location: (2:4)-(2:13))
     │   │   │   ├── tag_closing: "%>" (location: (2:13)-(2:15))
-    │   │   │   ├── children: (1 item)
+    │   │   │   ├── statements: (1 item)
     │   │   │   │   └── @ HTMLTextNode (location: (2:15)-(4:2))
     │   │   │   │       └── content: "\n    true\n  "
     │   │   │   │
@@ -27,7 +27,7 @@
     │   │   │   │       ├── tag_opening: "<%" (location: (4:2)-(4:4))
     │   │   │   │       ├── content: " elsif false " (location: (4:4)-(4:17))
     │   │   │   │       ├── tag_closing: "%>" (location: (4:17)-(4:19))
-    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       ├── statements: (1 item)
     │   │   │   │       │   └── @ HTMLTextNode (location: (4:19)-(6:2))
     │   │   │   │       │       └── content: "\n    false\n  "
     │   │   │   │       │
@@ -36,7 +36,7 @@
     │   │   │   │       │       ├── tag_opening: "<%" (location: (6:2)-(6:4))
     │   │   │   │       │       ├── content: " else " (location: (6:4)-(6:10))
     │   │   │   │       │       ├── tag_closing: "%>" (location: (6:10)-(6:12))
-    │   │   │   │       │       └── children: (1 item)
+    │   │   │   │       │       └── statements: (1 item)
     │   │   │   │       │           └── @ HTMLTextNode (location: (6:12)-(8:2))
     │   │   │   │       │               └── content: "\n    else\n  "
     │   │   │   │       │

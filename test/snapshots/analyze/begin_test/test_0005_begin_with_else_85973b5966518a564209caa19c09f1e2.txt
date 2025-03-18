@@ -1,0 +1,38 @@
+@ DocumentNode (location: (1:0)-(6:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (3:3)-(5:6))
+│       ├── message: "begin_lonely_else: unexpected `else` in `begin` block; else without rescue is useless"
+│       ├── error_message: "unexpected `else` in `begin` block; else without rescue is useless"
+│       ├── diagnostic_id: "begin_lonely_else"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBBeginNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " begin " (location: (1:2)-(1:9))
+    │   ├── tag_closing: "%>" (location: (1:9)-(1:11))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:11)-(3:0))
+    │   │       └── content: "\n  begin\n"
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (3:0)-(3:10))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " else " (location: (3:2)-(3:8))
+    │   │       ├── tag_closing: "%>" (location: (3:8)-(3:10))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (3:10)-(5:0))
+    │   │               └── content: "\n  else\n"
+    │   │
+    │   │
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

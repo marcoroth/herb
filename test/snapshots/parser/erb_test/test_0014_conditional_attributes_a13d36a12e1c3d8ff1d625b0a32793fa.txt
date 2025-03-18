@@ -11,7 +11,7 @@
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if odd? " (location: (1:7)-(1:16))
         │       │       ├── tag_closing: "%>" (location: (1:16)-(1:18))
-        │       │       ├── children: (1 item)
+        │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:19)-(1:32))
         │       │       │       ├── name:
         │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:27))
@@ -34,7 +34,7 @@
         │       │       │       ├── tag_opening: "<%" (location: (1:33)-(1:35))
         │       │       │       ├── content: " else " (location: (1:35)-(1:41))
         │       │       │       ├── tag_closing: "%>" (location: (1:41)-(1:43))
-        │       │       │       └── children: (1 item)
+        │       │       │       └── statements: (1 item)
         │       │       │           └── @ HTMLAttributeNode (location: (1:44)-(1:58))
         │       │       │               ├── name:
         │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:52))

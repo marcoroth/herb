@@ -15,7 +15,7 @@
         │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       ├── content: " if bold? " (location: (1:7)-(1:17))
         │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
-        │       ├── children: (1 item)
+        │       ├── statements: (1 item)
         │       │   └── @ HTMLElementNode (location: (1:19)-(1:38))
         │       │       ├── open_tag:
         │       │       │   └── @ HTMLOpenTagNode (location: (1:19)-(1:22))
@@ -47,7 +47,7 @@
         │       │       ├── tag_opening: "<%" (location: (1:38)-(1:40))
         │       │       ├── content: " else " (location: (1:40)-(1:46))
         │       │       ├── tag_closing: "%>" (location: (1:46)-(1:48))
-        │       │       └── children: (1 item)
+        │       │       └── statements: (1 item)
         │       │           └── @ HTMLElementNode (location: (1:48)-(1:67))
         │       │               ├── open_tag:
         │       │               │   └── @ HTMLOpenTagNode (location: (1:48)-(1:51))

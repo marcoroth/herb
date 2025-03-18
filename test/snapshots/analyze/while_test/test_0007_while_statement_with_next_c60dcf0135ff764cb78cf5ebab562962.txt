@@ -1,0 +1,29 @@
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBWhileNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while true " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:16)-(4:2))
+    │   │   │   └── content: "\n  true\n\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:2)-(4:12))
+    │   │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   ├── content: " next " (location: (4:4)-(4:10))
+    │   │   │   ├── tag_closing: "%>" (location: (4:10)-(4:12))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:12)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

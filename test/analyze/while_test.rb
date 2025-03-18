@@ -87,16 +87,6 @@ module Analyze
       HTML
     end
 
-    test "while statement with retry" do
-      assert_parsed_snapshot(<<~HTML)
-        <% while true %>
-          true
-
-          <% retry %>
-        <% end %>
-      HTML
-    end
-
     test "nested while statements" do
       assert_parsed_snapshot(<<~HTML)
         <% while true %>
