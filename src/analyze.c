@@ -430,6 +430,10 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
+  if (ruby->valid) {
+    return CONTROL_TYPE_UNKNOWN;
+  }
+
   if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }

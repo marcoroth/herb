@@ -1,0 +1,11 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:41))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " numbers.map { |number| number * 2 } " (location: (1:2)-(1:39))
+    │   ├── tag_closing: "%>" (location: (1:39)-(1:41))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:41)-(2:0))
+        └── content: "\n"

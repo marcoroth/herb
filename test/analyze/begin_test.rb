@@ -6,6 +6,12 @@ module Analyze
   class BeginTest < Minitest::Spec
     include SnapshotUtils
 
+    test "single-line begin" do
+      assert_parsed_snapshot(<<~HTML)
+        <% begin; end; %>
+      HTML
+    end
+
     test "begin statement" do
       assert_parsed_snapshot(<<~HTML)
         <% begin %>
