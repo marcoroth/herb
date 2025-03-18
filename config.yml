@@ -448,6 +448,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: children
+          type: array
+
         # - name: predicate
         #   type: prism_node
 
