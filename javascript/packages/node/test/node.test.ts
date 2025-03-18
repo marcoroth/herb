@@ -43,4 +43,17 @@ describe("@herb-tools/node", () => {
     expect(html).toBeDefined()
     expect(html).toBe("<div>                    </div>")
   })
+
+  test("parse and transform erb if node", async () => {
+    const erb = "<% if true %>true<% end %>"
+    const result = Herb.parse(erb)
+    expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.value.inspect()).toContain(
+      "@ ERBIfNode (location: (1:0)-(1:26))",
+    )
+    expect(result.value.inspect()).toContain(
+      "@ ERBEndNode (location: (1:17)-(1:26))",
+    )
+  })
 })
