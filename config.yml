@@ -362,10 +362,6 @@ nodes:
         - name: statements
           type: array
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
-
     - name: ERBIfNode
       fields:
         - name: tag_opening
@@ -432,10 +428,6 @@ nodes:
 
         - name: statements
           type: array
-
-        - name: end_node
-          type: node
-          kind: ERBEndNode
 
     - name: ERBCaseNode
       fields:
@@ -556,10 +548,6 @@ nodes:
           type: node
           kind: ERBRescueNode
 
-        - name: end_node
-          type: node
-          kind: ERBEndNode
-
     - name: ERBEnsureNode
       fields:
         - name: tag_opening
@@ -573,10 +561,6 @@ nodes:
 
         - name: statements
           type: array
-
-        - name: end_node
-          type: node
-          kind: ERBEndNode
 
     - name: ERBBeginNode
       fields:

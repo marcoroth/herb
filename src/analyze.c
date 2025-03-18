@@ -504,16 +504,8 @@ static AST_NODE_T* create_control_node(
       );
 
     case CONTROL_TYPE_ELSE:
-      return (AST_NODE_T*) ast_erb_else_node_init(
-        tag_opening,
-        content,
-        tag_closing,
-        children,
-        end_node,
-        start_position,
-        end_position,
-        errors
-      );
+      return (AST_NODE_T*)
+        ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
 
     case CONTROL_TYPE_CASE: {
       AST_ERB_ELSE_NODE_T* else_node = NULL;
@@ -546,16 +538,8 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_WHEN: {
-      return (AST_NODE_T*) ast_erb_when_node_init(
-        tag_opening,
-        content,
-        tag_closing,
-        children,
-        end_node,
-        start_position,
-        end_position,
-        errors
-      );
+      return (AST_NODE_T*)
+        ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -599,7 +583,6 @@ static AST_NODE_T* create_control_node(
         tag_closing,
         children,
         rescue_node,
-        end_node,
         start_position,
         end_position,
         errors
@@ -607,16 +590,8 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_ENSURE: {
-      return (AST_NODE_T*) ast_erb_ensure_node_init(
-        tag_opening,
-        content,
-        tag_closing,
-        children,
-        end_node,
-        start_position,
-        end_position,
-        errors
-      );
+      return (AST_NODE_T*)
+        ast_erb_ensure_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_UNLESS: {
@@ -763,7 +738,6 @@ static size_t process_control_structure(
           erb_content->content,
           erb_content->tag_closing,
           when_statements,
-          NULL,
           erb_content->tag_opening->location->start,
           erb_content->tag_closing->location->end,
           array_init(8)
@@ -817,7 +791,6 @@ static size_t process_control_structure(
             next_erb->content,
             next_erb->tag_closing,
             else_children,
-            NULL,
             next_erb->tag_opening->location->start,
             next_erb->tag_closing->location->end,
             array_init(8)
@@ -1012,7 +985,6 @@ static size_t process_block_children(
         erb_content->content,
         erb_content->tag_closing,
         when_statements,
-        NULL,
         erb_content->tag_opening->location->start,
         erb_content->tag_closing->location->end,
         array_init(8)
