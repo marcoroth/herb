@@ -2,6 +2,7 @@ import { Node } from "./node.js"
 import { Location, SerializedLocation } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
 import { HerbError, SerializedHerbError } from "./error.js"
+import { convertToUTF8 } from "./util.js"
 
 import type { SerializedNode, BaseNodeProps } from "./node.js"
 
@@ -123,7 +124,7 @@ export class <%= node.name %> extends Node {
     <%- when Herb::Template::NodeField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::StringField -%>
-    this.<%= field.name %> = props.<%= field.name %>;
+    this.<%= field.name %> = convertToUTF8(props.<%= field.name %>);
     <%- when Herb::Template::BooleanField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>

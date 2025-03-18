@@ -89,5 +89,21 @@ module Parser
     test "equals as only content" do
       assert_parsed_snapshot("<b>=</b>")
     end
+
+    test "a-umlaut as only content" do
+      assert_parsed_snapshot("<b>ä</b>")
+    end
+
+    test "o-umlaut as only content" do
+      assert_parsed_snapshot("<b>ö</b>")
+    end
+
+    test "u-umlaut as only content" do
+      assert_parsed_snapshot("<b>ü</b>")
+    end
+
+    test "emoji as only content" do
+      assert_parsed_snapshot("<b>🌿</b>")
+    end
   end
 end
