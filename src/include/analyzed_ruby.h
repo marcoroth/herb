@@ -1,5 +1,5 @@
-#ifndef HERB_ANALYZED_RUBY_STRUCT_H
-#define HERB_ANALYZED_RUBY_STRUCT_H
+#ifndef HERB_ANALYZED_RUBY_H
+#define HERB_ANALYZED_RUBY_H
 
 #include "array.h"
 
@@ -26,5 +26,8 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_ensure_node;
   bool has_unless_node;
 } analyzed_ruby_T;
+
+analyzed_ruby_T* init_analyzed_ruby(char* source);
+void free_analyzed_ruby(analyzed_ruby_T* analyzed);
 
 #endif

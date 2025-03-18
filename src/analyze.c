@@ -1,11 +1,14 @@
 #include "include/analyze.h"
-#include "include/analyzed_ruby_struct.h"
+#include "include/analyze_helpers.h"
+#include "include/analyzed_ruby.h"
 #include "include/array.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/extract.h"
 #include "include/location.h"
 #include "include/position.h"
+#include "include/pretty_print.h"
+#include "include/prism_helpers.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 #include "include/visitor.h"
@@ -16,313 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-position_T* position_from_source_with_offset(const char* source, size_t offset) {
-  position_T* position = position_init(1, 0);
-
-  for (size_t i = 0; i < offset; i++) {
-    if (is_newline(source[i])) {
-      position->line++;
-      position->column = 0;
-    } else {
-      position->column++;
-    }
-  }
-
-  return position;
-}
-
-static const char* pm_error_level_to_string(pm_error_level_t level) {
-  switch (level) {
-    case PM_ERROR_LEVEL_SYNTAX: return "syntax";
-    case PM_ERROR_LEVEL_ARGUMENT: return "argument";
-    case PM_ERROR_LEVEL_LOAD: return "load";
-    default: return "Unknown pm_error_level_t";
-  }
-}
-
-static RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
-  const pm_diagnostic_t* error, const AST_NODE_T* node, const char* source, pm_parser_t* parser
-) {
-  size_t start_offset = (size_t) (error->location.start - parser->start);
-  size_t end_offset = (size_t) (error->location.end - parser->start);
-
-  position_T* start = position_from_source_with_offset(source, start_offset);
-  position_T* end = position_from_source_with_offset(source, end_offset);
-
-  return ruby_parse_error_init(
-    error->message,
-    pm_diagnostic_id_human(error->diag_id),
-    pm_error_level_to_string(error->level),
-    start,
-    end
-  );
-}
-
-static analyzed_ruby_T* init_analyzed_ruby_T(char* source) {
-  analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
-
-  pm_parser_init(&analyzed->parser, (const uint8_t*) source, strlen(source), NULL);
-
-  analyzed->root = pm_parse(&analyzed->parser);
-  analyzed->valid = (analyzed->parser.error_list.size == 0);
-  analyzed->parsed = true;
-  analyzed->has_if_node = false;
-  analyzed->has_elsif_node = false;
-  analyzed->has_else_node = false;
-  analyzed->has_end = false;
-  analyzed->has_block_node = false;
-  analyzed->has_block_closing = false;
-  analyzed->has_case_node = false;
-  analyzed->has_when_node = false;
-  analyzed->has_for_node = false;
-  analyzed->has_while_node = false;
-  analyzed->has_until_node = false;
-  analyzed->has_begin_node = false;
-  analyzed->has_rescue_node = false;
-  analyzed->has_ensure_node = false;
-  analyzed->has_unless_node = false;
-
-  return analyzed;
-}
-
-static bool has_if_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_if_node;
-}
-
-static bool has_elsif_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_elsif_node;
-}
-
-static bool has_else_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_else_node;
-}
-
-static bool has_end(analyzed_ruby_T* analyzed) {
-  return analyzed->has_end;
-}
-
-static bool has_block_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_block_node;
-}
-
-static bool has_block_closing(analyzed_ruby_T* analyzed) {
-  return analyzed->has_block_closing;
-}
-
-static bool has_case_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_case_node;
-}
-
-static bool has_when_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_when_node;
-}
-
-static bool has_for_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_for_node;
-}
-
-static bool has_while_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_while_node;
-}
-
-static bool has_until_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_until_node;
-}
-
-static bool has_begin_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_begin_node;
-}
-
-static bool has_rescue_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_rescue_node;
-}
-
-static bool has_ensure_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_ensure_node;
-}
-
-static bool has_unless_node(analyzed_ruby_T* analyzed) {
-  return analyzed->has_unless_node;
-}
-
-static bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
-       error = (const pm_diagnostic_t*) error->node.next) {
-    if (strcmp(error->message, message) == 0) { return true; }
-  }
-
-  return false;
-}
-
-static bool search_if_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_IF_NODE) {
-    analyzed->has_if_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_if_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_block_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_BLOCK_NODE) {
-    analyzed->has_block_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_block_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_case_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_CASE_MATCH_NODE) {
-    analyzed->has_case_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_case_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_while_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_WHILE_NODE) {
-    analyzed->has_while_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_while_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_for_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_FOR_NODE) {
-    analyzed->has_for_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_for_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_until_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_UNTIL_NODE) {
-    analyzed->has_until_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_until_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_begin_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_BEGIN_NODE) {
-    analyzed->has_begin_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_begin_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_unless_nodes(const pm_node_t* node, void* data) {
-  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
-
-  if (node->type == PM_UNLESS_NODE) {
-    analyzed->has_unless_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_unless_nodes, analyzed);
-  }
-
-  return false;
-}
-
-static bool search_elsif_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'elsif', ignoring it")) {
-    analyzed->has_elsif_node = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_else_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'else', ignoring it")) {
-    analyzed->has_else_node = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_end_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'end', ignoring it")) {
-    analyzed->has_end = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected '}', ignoring it")) {
-    analyzed->has_block_closing = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_when_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'when', ignoring it")) {
-    analyzed->has_when_node = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_rescue_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'rescue', ignoring it")) {
-    analyzed->has_rescue_node = true;
-    return true;
-  }
-
-  return false;
-}
-
-static bool search_ensure_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "unexpected 'ensure', ignoring it")) {
-    analyzed->has_ensure_node = true;
-    return true;
-  }
-
-  return false;
-}
-
 static analyzed_ruby_T* herb_analyze_ruby(char* source) {
-  analyzed_ruby_T* analyzed = init_analyzed_ruby_T(source);
+  analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
 
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
   pm_visit_node(analyzed->root, search_block_nodes, analyzed);
@@ -344,33 +42,6 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   return analyzed;
 }
 
-static void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
-  printf(
-    "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
-    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    "
-    "%i\n  while:  %i\n "
-    " until:  %i\n  begin:  %i\n  "
-    "rescue: %i\n  ensure: %i\n  unless: %i\n==================\n\n",
-    (void*) analyzed,
-    source,
-    analyzed->has_if_node,
-    analyzed->has_elsif_node,
-    analyzed->has_else_node,
-    analyzed->has_end,
-    analyzed->has_block_node,
-    analyzed->has_block_closing,
-    analyzed->has_case_node,
-    analyzed->has_when_node,
-    analyzed->has_for_node,
-    analyzed->has_while_node,
-    analyzed->has_until_node,
-    analyzed->has_begin_node,
-    analyzed->has_rescue_node,
-    analyzed->has_ensure_node,
-    analyzed->has_unless_node
-  );
-}
-
 static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
@@ -388,30 +59,6 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
   return false;
 }
-
-typedef enum {
-  CONTROL_TYPE_IF,
-  CONTROL_TYPE_ELSIF,
-  CONTROL_TYPE_ELSE,
-  CONTROL_TYPE_END,
-  CONTROL_TYPE_CASE,
-  CONTROL_TYPE_WHEN,
-  CONTROL_TYPE_BEGIN,
-  CONTROL_TYPE_RESCUE,
-  CONTROL_TYPE_ENSURE,
-  CONTROL_TYPE_UNLESS,
-  CONTROL_TYPE_WHILE,
-  CONTROL_TYPE_UNTIL,
-  CONTROL_TYPE_FOR,
-  CONTROL_TYPE_BLOCK,
-  CONTROL_TYPE_BLOCK_CLOSE,
-  CONTROL_TYPE_UNKNOWN
-} control_type_t;
-
-static size_t process_control_structure(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* output_array, analyze_ruby_context_T* context,
-  control_type_t initial_type
-);
 
 static size_t process_block_children(
   AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
@@ -755,9 +402,7 @@ static size_t process_control_structure(
         array_append(when_conditions, (AST_NODE_T*) when_node);
 
         continue;
-      } else if (next_type == CONTROL_TYPE_ELSE) {
-        break;
-      } else if (next_type == CONTROL_TYPE_END) {
+      } else if (next_type == CONTROL_TYPE_ELSE || next_type == CONTROL_TYPE_END) {
         break;
       } else {
         array_append(non_when_children, next_node);

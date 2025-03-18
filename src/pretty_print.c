@@ -1,4 +1,5 @@
 #include "include/pretty_print.h"
+#include "include/analyzed_ruby.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
@@ -211,4 +212,31 @@ void pretty_print_string_property(
     if (escaped != NULL) { free(escaped); }
     if (quoted != NULL) { free(quoted); }
   }
+}
+
+void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
+  printf(
+    "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
+    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    "
+    "%i\n  while:  %i\n "
+    " until:  %i\n  begin:  %i\n  "
+    "rescue: %i\n  ensure: %i\n  unless: %i\n==================\n\n",
+    (void*) analyzed,
+    source,
+    analyzed->has_if_node,
+    analyzed->has_elsif_node,
+    analyzed->has_else_node,
+    analyzed->has_end,
+    analyzed->has_block_node,
+    analyzed->has_block_closing,
+    analyzed->has_case_node,
+    analyzed->has_when_node,
+    analyzed->has_for_node,
+    analyzed->has_while_node,
+    analyzed->has_until_node,
+    analyzed->has_begin_node,
+    analyzed->has_rescue_node,
+    analyzed->has_ensure_node,
+    analyzed->has_unless_node
+  );
 }

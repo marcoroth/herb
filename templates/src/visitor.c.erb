@@ -18,34 +18,30 @@ void herb_visit_child_nodes(const AST_NODE_T *node, bool (*visitor)(const AST_NO
 
   switch (node->type) {
     <%- nodes.each do |node| -%>
-      case <%= node.type %>: {
-        <%- if node.fields.count { |field| [Herb::Template::NodeField, Herb::Template::ArrayField].include?(field.class) }.positive? -%>
-        const <%= node.struct_type %>* <%= node.human %> = ((const <%= node.struct_type %> *) node);
-        <%- else -%>
-        // No children for <%= node.type %>
-        <%- end -%>
-        <%- node.fields.each do |field| -%>
-        <%- case field -%>
-        <%- when Herb::Template::NodeField -%>
-        if (<%= node.human %>-><%= field.name %> != NULL) {
-          herb_visit_node((AST_NODE_T *) <%= node.human %>-><%= field.name %>, visitor, data);
-        }
+    <%- if node.fields.count { |field| [Herb::Template::NodeField, Herb::Template::ArrayField].include?(field.class) }.positive? -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* <%= node.human %> = ((const <%= node.struct_type %> *) node);
 
-        <%- when Herb::Template::ArrayField -%>
-        if (<%= node.human %>-><%= field.name %> != NULL) {
-          for (size_t index = 0; index < array_size(<%= node.human %>-><%= field.name %>); index++) {
-            herb_visit_node(array_get(<%= node.human %>-><%= field.name %>, index), visitor, data);
-          }
-        }
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::NodeField -%>
+      if (<%= node.human %>-><%= field.name %> != NULL) {
+        herb_visit_node((AST_NODE_T *) <%= node.human %>-><%= field.name %>, visitor, data);
+      }
 
-        <%- end -%>
-        <%- end -%>
-      } break;
+      <%- when Herb::Template::ArrayField -%>
+      if (<%= node.human %>-><%= field.name %> != NULL) {
+        for (size_t index = 0; index < array_size(<%= node.human %>-><%= field.name %>); index++) {
+          herb_visit_node(array_get(<%= node.human %>-><%= field.name %>, index), visitor, data);
+        }
+      }
+
+      <%- end -%>
+      <%- end -%>
+    } break;
 
     <%- end -%>
-
-    default:
-      printf("Unknown node type: %s\n", ast_node_type_to_string((AST_NODE_T*) node));
-      break;
+    <%- end -%>
+    default: break;
   }
 }

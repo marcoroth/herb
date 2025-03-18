@@ -1,6 +1,7 @@
 #ifndef HERB_PRETTY_PRINT_H
 #define HERB_PRETTY_PRINT_H
 
+#include "analyzed_ruby.h"
 #include "ast_nodes.h"
 #include "buffer.h"
 #include "location.h"
@@ -46,5 +47,7 @@ void pretty_print_array(
 );
 
 void pretty_print_errors(AST_NODE_T* node, size_t indent, size_t relative_indent, bool last_property, buffer_T* buffer);
+
+void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source);
 
 #endif
