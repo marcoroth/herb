@@ -41,5 +41,15 @@ module Extractor
 
       assert_equal expected, actual
     end
+
+    test "erb comment" do
+      actual = Herb.extract_ruby(<<~HTML)
+        <%# comment ' %>
+      HTML
+
+      expected = "  # comment '   \n"
+
+      assert_equal expected, actual
+    end
   end
 end

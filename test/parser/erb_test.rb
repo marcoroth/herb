@@ -61,5 +61,9 @@ module Parser
     test "conditional attributes" do
       assert_parsed_snapshot(%(<div <% if odd? %> data-odd=true <% else %> data-odd=false <% end %>></div>))
     end
+
+    test "comment" do
+      assert_parsed_snapshot(%(<%# comment with a single qutote(') and double quote (") %>))
+    end
   end
 end

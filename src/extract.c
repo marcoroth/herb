@@ -20,6 +20,19 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
         buffer_append_whitespace(output, range_length(token->range) - 1);
         break;
       }
+
+      case TOKEN_ERB_START: {
+        if (strcmp(token->value, "<%#") == 0) {
+          buffer_append_char(output, ' ');
+          buffer_append_char(output, ' ');
+          buffer_append_char(output, '#');
+        } else {
+          buffer_append_whitespace(output, range_length(token->range));
+        }
+
+        break;
+      }
+
       default: buffer_append_whitespace(output, range_length(token->range));
     }
   }
@@ -34,6 +47,18 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
     switch (token->type) {
       case TOKEN_NEWLINE:
       case TOKEN_ERB_CONTENT: buffer_append(output, token->value); break;
+      case TOKEN_ERB_START: {
+        if (strcmp(token->value, "<%#") == 0) {
+          buffer_append_char(output, ' ');
+          buffer_append_char(output, ' ');
+          buffer_append_char(output, '#');
+        } else {
+          buffer_append_whitespace(output, range_length(token->range));
+        }
+
+        break;
+      }
+
       default: buffer_append_whitespace(output, range_length(token->range));
     }
   }

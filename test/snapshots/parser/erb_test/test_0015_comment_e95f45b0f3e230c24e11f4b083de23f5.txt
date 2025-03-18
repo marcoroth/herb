@@ -1,0 +1,8 @@
+@ DocumentNode (location: (1:0)-(1:59))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:59))
+        ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+        ├── content: " comment with a single qutote(') and double quote (") " (location: (1:3)-(1:57))
+        ├── tag_closing: "%>" (location: (1:57)-(1:59))
+        ├── parsed: true
+        └── valid: false
