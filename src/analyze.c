@@ -101,13 +101,13 @@ static bool has_end(analyzed_ruby_T* analyzed) {
   return analyzed->has_end;
 }
 
-// static bool has_block_node(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_block_node;
-// }
+static bool has_block_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_block_node;
+}
 
-// static bool has_block_closing(analyzed_ruby_T* analyzed) {
-//   return analyzed->has_block_closing;
-// }
+static bool has_block_closing(analyzed_ruby_T* analyzed) {
+  return analyzed->has_block_closing;
+}
 
 static bool has_case_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_case_node;
@@ -403,6 +403,7 @@ typedef enum {
   CONTROL_TYPE_WHILE,
   CONTROL_TYPE_UNTIL,
   CONTROL_TYPE_FOR,
+  CONTROL_TYPE_BLOCK,
   CONTROL_TYPE_UNKNOWN
 } control_type_t;
 
@@ -441,6 +442,7 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_while_node(ruby)) { return CONTROL_TYPE_WHILE; }
   if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
   if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
+  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
 
   return CONTROL_TYPE_UNKNOWN;
 }
@@ -663,6 +665,19 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_FOR: {
       return (AST_NODE_T*) ast_erb_for_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        end_node,
+        start_position,
+        end_position,
+        errors
+      );
+    }
+
+    case CONTROL_TYPE_BLOCK: {
+      return (AST_NODE_T*) ast_erb_block_node_init(
         tag_opening,
         content,
         tag_closing,
@@ -1009,7 +1024,7 @@ static size_t process_block_children(
 
     if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_BEGIN
         || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE || child_type == CONTROL_TYPE_UNTIL
-        || child_type == CONTROL_TYPE_FOR) {
+        || child_type == CONTROL_TYPE_FOR || child_type == CONTROL_TYPE_BLOCK) {
       array_T* temp_array = array_init(1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
@@ -1053,7 +1068,10 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
       case CONTROL_TYPE_UNLESS:
       case CONTROL_TYPE_WHILE:
       case CONTROL_TYPE_UNTIL:
-      case CONTROL_TYPE_FOR: index = process_control_structure(node, array, index, new_array, context, type); continue;
+      case CONTROL_TYPE_FOR:
+      case CONTROL_TYPE_BLOCK:
+        index = process_control_structure(node, array, index, new_array, context, type);
+        continue;
 
       default:
         array_append(new_array, item);
