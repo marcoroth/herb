@@ -601,7 +601,22 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
       continue;
     }
 
-    if (token_is_any_of(parser, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+    if (token_is_any_of(
+          parser,
+          TOKEN_AMPERSAND,
+          TOKEN_CHARACTER,
+          TOKEN_COLON,
+          TOKEN_DASH,
+          TOKEN_EQUALS,
+          TOKEN_EXCLAMATION,
+          TOKEN_IDENTIFIER,
+          TOKEN_NEWLINE,
+          TOKEN_PERCENT,
+          TOKEN_SEMICOLON,
+          TOKEN_SLASH,
+          TOKEN_UNDERSCORE,
+          TOKEN_WHITESPACE
+        )) {
       array_append(children, parser_parse_text_content(parser));
       continue;
     }
