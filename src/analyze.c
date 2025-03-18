@@ -404,6 +404,7 @@ typedef enum {
   CONTROL_TYPE_UNTIL,
   CONTROL_TYPE_FOR,
   CONTROL_TYPE_BLOCK,
+  CONTROL_TYPE_BLOCK_CLOSE,
   CONTROL_TYPE_UNKNOWN
 } control_type_t;
 
@@ -443,6 +444,7 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
   if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
   if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
+  if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
 
   return CONTROL_TYPE_UNKNOWN;
 }
@@ -465,6 +467,7 @@ static bool is_terminator_type(control_type_t parent_type, control_type_t child_
 
   switch (parent_type) {
     case CONTROL_TYPE_WHEN: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_BLOCK: return child_type == CONTROL_TYPE_BLOCK_CLOSE;
 
     default: return is_subsequent_type(parent_type, child_type);
   }
@@ -1009,6 +1012,58 @@ static size_t process_control_structure(
     );
 
     array_append(output_array, (AST_NODE_T*) begin_node);
+    return index;
+  }
+
+  if (initial_type == CONTROL_TYPE_BLOCK) {
+    index = process_block_children(node, array, index, children, context, initial_type);
+
+    AST_ERB_END_NODE_T* end_node = NULL;
+
+    if (index < array_size(array)) {
+      AST_NODE_T* potential_close = array_get(array, index);
+
+      if (potential_close && potential_close->type == AST_ERB_CONTENT_NODE) {
+        AST_ERB_CONTENT_NODE_T* close_erb = (AST_ERB_CONTENT_NODE_T*) potential_close;
+        control_type_t close_type = detect_control_type(close_erb);
+
+        if (close_type == CONTROL_TYPE_BLOCK_CLOSE || close_type == CONTROL_TYPE_END) {
+          end_node = ast_erb_end_node_init(
+            close_erb->tag_opening,
+            close_erb->content,
+            close_erb->tag_closing,
+            close_erb->tag_opening->location->start,
+            close_erb->tag_closing->location->end,
+            close_erb->base.errors
+          );
+
+          index++;
+        }
+      }
+    }
+
+    position_T* start_position = erb_node->tag_opening->location->start;
+    position_T* end_position = erb_node->tag_closing->location->end;
+
+    if (end_node) {
+      end_position = end_node->base.location->end;
+    } else if (children && array_size(children) > 0) {
+      AST_NODE_T* last_child = array_get(children, array_size(children) - 1);
+      end_position = last_child->location->end;
+    }
+
+    AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
+      erb_node->tag_opening,
+      erb_node->content,
+      erb_node->tag_closing,
+      children,
+      end_node,
+      start_position,
+      end_position,
+      array_init(8)
+    );
+
+    array_append(output_array, (AST_NODE_T*) block_node);
     return index;
   }
 
