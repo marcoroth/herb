@@ -89,7 +89,7 @@ $(static_lib_name): $(objects)
 	ar rcs $(static_lib_name) $(objects)
 
 src/%.o: src/%.c
-	$(cc) -c $(flags) $< -o $@
+	$(cc) -c $(flags) -fPIC $< -o $@
 
 test/%.o: test/%.c
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
