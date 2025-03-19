@@ -9,6 +9,7 @@
 #include "include/version.h"
 
 #include <stdlib.h>
+#include <prism.h>
 
 array_T* herb_lex(const char* source) {
   lexer_T* lexer = lexer_init(source);
@@ -95,4 +96,8 @@ void herb_free_tokens(array_T** tokens) {
 
 const char* herb_version(void) {
   return HERB_VERSION;
+}
+
+const char* herb_prism_version(void) {
+  return PRISM_VERSION;
 }

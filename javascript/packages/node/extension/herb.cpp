@@ -200,10 +200,11 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_version(napi_env env, napi_callback_info info) {
-  const char* native_version = herb_version();
+  const char* libherb_version = herb_version();
+  const char* libprism_version = herb_prism_version();
 
   char version_buf[256];
-  snprintf(version_buf, sizeof(version_buf), "libherb@%s (Node.js C++ native extension)", native_version);
+  snprintf(version_buf, sizeof(version_buf), "libprism@%s, libherb@%s (Node.js C++ native extension)", libprism_version, libherb_version);
 
   napi_value result;
   napi_create_string_utf8(env, version_buf, NAPI_AUTO_LENGTH, &result);

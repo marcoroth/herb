@@ -14,10 +14,15 @@ extern "C" {
 
 void herb_lex_to_buffer(const char* source, buffer_T* output);
 void herb_lex_json_to_buffer(const char* source, buffer_T* output);
+
 array_T* herb_lex(const char* source);
 array_T* herb_lex_file(const char* path);
+
 AST_DOCUMENT_NODE_T* herb_parse(const char* source);
+
 const char* herb_version(void);
+const char* herb_prism_version(void);
+
 void herb_free_tokens(array_T** tokens);
 
 #ifdef __cplusplus
