@@ -56,8 +56,10 @@ std::string Herb_extract_html(const std::string& source) {
 }
 
 std::string Herb_version() {
-  const char* native_version = herb_version();
-  std::string version = std::string("libherb@") + native_version + " (WebAssembly)";
+  const char* libherb_version = herb_version();
+  const char* libprism_version = herb_prism_version();
+
+  std::string version = std::string("libprism@") + libprism_version + ", libherb@" + libherb_version + " (WebAssembly)";
   return version;
 }
 

@@ -8,6 +8,7 @@
 #include "include/token.h"
 #include "include/version.h"
 
+#include <prism.h>
 #include <stdlib.h>
 
 array_T* herb_lex(const char* source) {
@@ -95,4 +96,8 @@ void herb_free_tokens(array_T** tokens) {
 
 const char* herb_version(void) {
   return HERB_VERSION;
+}
+
+const char* herb_prism_version(void) {
+  return PRISM_VERSION;
 }
