@@ -59,9 +59,6 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       buffer_append(buffer, "\n");
 
       <%- when Herb::Template::AnalyzedRubyField -%>
-      // TODO: implement me
-      // pretty_print_string_property("<%= field.name %>", "<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
-
       if (<%= node.human %>-><%= field.name %>) {
         pretty_print_boolean_property("if_node", <%= node.human %>-><%= field.name %>->has_if_node, indent, relative_indent, false, buffer);
         pretty_print_boolean_property("elsif_node", <%= node.human %>-><%= field.name %>->has_elsif_node, indent, relative_indent, false, buffer);
