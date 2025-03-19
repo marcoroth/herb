@@ -8,8 +8,8 @@
 #include "include/token.h"
 #include "include/version.h"
 
-#include <stdlib.h>
 #include <prism.h>
+#include <stdlib.h>
 
 array_T* herb_lex(const char* source) {
   lexer_T* lexer = lexer_init(source);
