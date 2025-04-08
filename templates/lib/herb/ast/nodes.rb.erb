@@ -81,6 +81,30 @@ module Herb
 
         output.gsub(/^/, "    " * indent)
       end
+
+      def accept(visitor)
+        visitor.visit_<%= node.human %>(self)
+      end
+
+      def child_nodes
+        [<%= node.fields.map { |field|
+          case field
+          when Herb::Template::NodeField then field.name
+          when Herb::Template::ArrayField then "*#{field.name}"
+          end
+        }.compact.join(", ") %>]
+      end
+
+      def compact_child_nodes
+        [<%= node.fields.map { |field|
+          case field
+          when Herb::Template::NodeField then field.name
+          when Herb::Template::ArrayField then "*#{field.name}"
+          end
+        }.compact.join(", ") %>].compact
+      end
+
+      alias deconstruct child_nodes
     end
 
     <%- end -%>
