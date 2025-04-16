@@ -146,6 +146,7 @@ export default defineConfig({
     ['meta', { property: 'og:url', content: 'https://herb-tools.dev' }],
     ['meta', { property: 'og:type', content: 'website' }],
   ],
+  cleanUrls: true,
   // base: "/herb/",
   markdown,
   vite,
