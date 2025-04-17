@@ -1,0 +1,19 @@
+module Herb
+  class Visitor
+    def visit(node)
+      node&.accept(self)
+    end
+
+    def visit_all(nodes)
+      nodes.each { |node| node&.accept(self) }
+    end
+
+    def visit_child_nodes(node)
+      node.compact_child_nodes.each { |node| node.accept(self) }
+    end
+
+    <%- nodes.each do |node| -%>
+    alias visit_<%= node.human %> visit_child_nodes
+    <%- end -%>
+  end
+end

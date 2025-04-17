@@ -88,6 +88,7 @@ class Herb::CLI
         bundle exec herb ruby [file]        Extract Ruby from a file.
         bundle exec herb html [file]        Extract HTML from a file.
         bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
+        bundle exec herb format [file]      Format a HTML+ERB file.
         bundle exec herb playground [file]  Open the content of the source file in the playground
         bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
 
@@ -115,6 +116,9 @@ class Herb::CLI
                   exit(0)
                 when "html"
                   puts Herb.extract_html(file_content)
+                  exit(0)
+                when "format"
+                  puts Herb::Formatter.format_file!(@file)
                   exit(0)
                 when "playground"
                   if Dir.pwd.include?("/herb")

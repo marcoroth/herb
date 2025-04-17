@@ -22,6 +22,9 @@ require_relative "herb/project"
 
 require_relative "herb/version"
 
+require_relative "herb/visitor"
+require_relative "herb/formatter"
+
 begin
   require_relative "herb/#{RUBY_VERSION.split(".")[...2].join(".")}/herb"
 rescue LoadError

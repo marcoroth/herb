@@ -56,6 +56,25 @@ module Herb
 
         output
       end
+
+      # Accepts a visitor and calls back into the specialized visit function.
+      def accept(visitor)
+        raise NoMethodError, "undefined method `accept' for #{inspect}"
+      end
+
+      # Returns an array of child nodes, including `nil`s in the place of optional
+      # nodes that were not present.
+      def child_nodes
+        raise NoMethodError, "undefined method `child_nodes' for #{inspect}"
+      end
+
+      alias deconstruct child_nodes
+
+      # Returns an array of child nodes, excluding any `nil`s in the place of
+      # optional nodes that were not present.
+      def compact_child_nodes
+        raise NoMethodError, "undefined method `compact_child_nodes' for #{inspect}"
+      end
     end
   end
 end
