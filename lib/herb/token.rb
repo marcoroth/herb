@@ -25,7 +25,7 @@ module Herb
     end
 
     def tree_inspect
-      %("#{value}" #{location.tree_inspect})
+      %("#{value.force_encoding("utf-8")}" #{location.tree_inspect})
     end
 
     def value_inspect
