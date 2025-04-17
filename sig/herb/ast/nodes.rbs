@@ -11,6 +11,12 @@ module Herb
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -26,6 +32,12 @@ module Herb
 
       # : () -> serialized_literal_node
       def to_hash: () -> serialized_literal_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -51,6 +63,12 @@ module Herb
       # : () -> serialized_html_open_tag_node
       def to_hash: () -> serialized_html_open_tag_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -70,6 +88,12 @@ module Herb
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -95,6 +119,12 @@ module Herb
       # : () -> serialized_html_self_close_tag_node
       def to_hash: () -> serialized_html_self_close_tag_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -119,6 +149,12 @@ module Herb
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -141,6 +177,12 @@ module Herb
       # : () -> serialized_html_attribute_value_node
       def to_hash: () -> serialized_html_attribute_value_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -156,6 +198,12 @@ module Herb
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -177,6 +225,12 @@ module Herb
       # : () -> serialized_html_attribute_node
       def to_hash: () -> serialized_html_attribute_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -192,6 +246,12 @@ module Herb
 
       # : () -> serialized_html_text_node
       def to_hash: () -> serialized_html_text_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -213,6 +273,12 @@ module Herb
       # : () -> serialized_html_comment_node
       def to_hash: () -> serialized_html_comment_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -233,6 +299,12 @@ module Herb
       # : () -> serialized_html_doctype_node
       def to_hash: () -> serialized_html_doctype_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -248,6 +320,12 @@ module Herb
 
       # : () -> serialized_whitespace_node
       def to_hash: () -> serialized_whitespace_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -275,6 +353,12 @@ module Herb
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -294,6 +378,12 @@ module Herb
 
       # : () -> serialized_erb_end_node
       def to_hash: () -> serialized_erb_end_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -316,6 +406,12 @@ module Herb
 
       # : () -> serialized_erb_else_node
       def to_hash: () -> serialized_erb_else_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -343,6 +439,12 @@ module Herb
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -367,6 +469,12 @@ module Herb
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -388,6 +496,12 @@ module Herb
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -417,6 +531,12 @@ module Herb
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -445,6 +565,12 @@ module Herb
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -468,6 +594,12 @@ module Herb
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -493,6 +625,12 @@ module Herb
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -516,6 +654,12 @@ module Herb
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -541,6 +685,12 @@ module Herb
       # : () -> serialized_erb_rescue_node
       def to_hash: () -> serialized_erb_rescue_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -562,6 +712,12 @@ module Herb
 
       # : () -> serialized_erb_ensure_node
       def to_hash: () -> serialized_erb_ensure_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -593,6 +749,12 @@ module Herb
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -619,6 +781,12 @@ module Herb
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
 
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
       # : () -> String
       def inspect: () -> String
 
@@ -638,6 +806,12 @@ module Herb
 
       # : () -> serialized_erb_yield_node
       def to_hash: () -> serialized_erb_yield_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String
@@ -660,6 +834,12 @@ module Herb
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       # : () -> String
       def inspect: () -> String

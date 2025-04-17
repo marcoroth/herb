@@ -1,0 +1,74 @@
+# Generated from lib/herb/visitor.rb with RBS::Inline
+
+module Herb
+  class Visitor
+    # : (Herb::AST::Node) -> void
+    def visit: (Herb::AST::Node) -> void
+
+    # : (Array[Herb::AST::Node]) -> void
+    def visit_all: (Array[Herb::AST::Node]) -> void
+
+    # : (Herb::AST::Node) -> void
+    def visit_child_nodes: (Herb::AST::Node) -> void
+
+    alias visit_document_node visit_child_nodes
+
+    alias visit_literal_node visit_child_nodes
+
+    alias visit_html_open_tag_node visit_child_nodes
+
+    alias visit_html_close_tag_node visit_child_nodes
+
+    alias visit_html_self_close_tag_node visit_child_nodes
+
+    alias visit_html_element_node visit_child_nodes
+
+    alias visit_html_attribute_value_node visit_child_nodes
+
+    alias visit_html_attribute_name_node visit_child_nodes
+
+    alias visit_html_attribute_node visit_child_nodes
+
+    alias visit_html_text_node visit_child_nodes
+
+    alias visit_html_comment_node visit_child_nodes
+
+    alias visit_html_doctype_node visit_child_nodes
+
+    alias visit_whitespace_node visit_child_nodes
+
+    alias visit_erb_content_node visit_child_nodes
+
+    alias visit_erb_end_node visit_child_nodes
+
+    alias visit_erb_else_node visit_child_nodes
+
+    alias visit_erb_if_node visit_child_nodes
+
+    alias visit_erb_block_node visit_child_nodes
+
+    alias visit_erb_when_node visit_child_nodes
+
+    alias visit_erb_case_node visit_child_nodes
+
+    alias visit_erb_case_match_node visit_child_nodes
+
+    alias visit_erb_while_node visit_child_nodes
+
+    alias visit_erb_until_node visit_child_nodes
+
+    alias visit_erb_for_node visit_child_nodes
+
+    alias visit_erb_rescue_node visit_child_nodes
+
+    alias visit_erb_ensure_node visit_child_nodes
+
+    alias visit_erb_begin_node visit_child_nodes
+
+    alias visit_erb_unless_node visit_child_nodes
+
+    alias visit_erb_yield_node visit_child_nodes
+
+    alias visit_erb_in_node visit_child_nodes
+  end
+end

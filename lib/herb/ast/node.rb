@@ -75,6 +75,18 @@ module Herb
       def tree_inspect(_indent = 0)
         raise NotImplementedError
       end
+
+      #: (Visitor) -> void
+      def accept(_visitor)
+        raise NoMethodError, "undefined method `accept' for #{inspect}"
+      end
+
+      #: () -> Array[Herb::AST::Node]
+      def child_nodes
+        raise NoMethodError, "undefined method `child_nodes' for #{inspect}"
+      end
+
+      alias deconstruct child_nodes
     end
   end
 end

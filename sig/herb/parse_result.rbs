@@ -15,5 +15,8 @@ module Herb
 
     # : () -> String
     def pretty_errors: () -> String
+
+    # : (Visitor) -> void
+    def visit: (Visitor) -> void
   end
 end

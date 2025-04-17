@@ -24,6 +24,8 @@ require_relative "herb/project"
 
 require_relative "herb/version"
 
+require_relative "herb/visitor"
+
 begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
   require_relative "herb/#{major}.#{minor}/herb"

@@ -27,6 +27,24 @@ module Herb
         }) #: Herb::serialized_<%= node.human %>
       end
 
+      #: (Visitor) -> void
+      def accept(visitor)
+        visitor.visit_<%= node.human %>(self)
+      end
+
+      #: () -> Array[Herb::AST::Node?]
+      def child_nodes
+        [<%= node.fields.map { |field|
+          if field.is_a?(Herb::Template::NodeField)
+            field.name
+          elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
+            "*#{field.name}"
+          else
+            nil
+          end
+        }.compact.join(", ") %>]
+      end
+
       #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")

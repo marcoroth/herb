@@ -32,6 +32,14 @@ module Herb
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node]
+      def child_nodes: () -> Array[Herb::AST::Node]
+
+      alias deconstruct child_nodes
     end
   end
 end

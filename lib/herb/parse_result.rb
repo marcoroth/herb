@@ -26,5 +26,10 @@ module Herb
     def pretty_errors
       JSON.pretty_generate(errors + value.errors)
     end
+
+    #: (Visitor) -> void
+    def visit(visitor)
+      value.accept(visitor)
+    end
   end
 end
