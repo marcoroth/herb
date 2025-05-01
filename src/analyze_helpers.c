@@ -64,6 +64,10 @@ bool has_unless_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_unless_node;
 }
 
+bool has_yield_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_yield_node;
+}
+
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
@@ -234,6 +238,15 @@ bool search_rescue_nodes(analyzed_ruby_T* analyzed) {
 bool search_ensure_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'ensure', ignoring it")) {
     analyzed->has_ensure_node = true;
+    return true;
+  }
+
+  return false;
+}
+
+bool search_yield_nodes(analyzed_ruby_T* analyzed) {
+  if (has_error_message(analyzed, "Invalid yield")) {
+    analyzed->has_yield_node = true;
     return true;
   }
 

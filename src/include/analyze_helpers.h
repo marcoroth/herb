@@ -21,6 +21,7 @@ bool has_begin_node(analyzed_ruby_T* analyzed);
 bool has_rescue_node(analyzed_ruby_T* analyzed);
 bool has_ensure_node(analyzed_ruby_T* analyzed);
 bool has_unless_node(analyzed_ruby_T* analyzed);
+bool has_yield_node(analyzed_ruby_T* analyzed);
 
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message);
 
@@ -39,5 +40,6 @@ bool search_block_closing_nodes(analyzed_ruby_T* analyzed);
 bool search_when_nodes(analyzed_ruby_T* analyzed);
 bool search_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_ensure_nodes(analyzed_ruby_T* analyzed);
+bool search_yield_nodes(analyzed_ruby_T* analyzed);
 
 #endif

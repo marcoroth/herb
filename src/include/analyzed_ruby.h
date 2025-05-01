@@ -25,6 +25,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_rescue_node;
   bool has_ensure_node;
   bool has_unless_node;
+  bool has_yield_node;
 } analyzed_ruby_T;
 
 analyzed_ruby_T* init_analyzed_ruby(char* source);

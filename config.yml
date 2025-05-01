@@ -616,3 +616,14 @@ nodes:
         - name: end_node
           type: node
           kind: ERBEndNode
+
+    - name: ERBYieldNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token

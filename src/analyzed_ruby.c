@@ -26,6 +26,7 @@ analyzed_ruby_T* init_analyzed_ruby(char* source) {
   analyzed->has_rescue_node = false;
   analyzed->has_ensure_node = false;
   analyzed->has_unless_node = false;
+  analyzed->has_yield_node = false;
 
   return analyzed;
 }
