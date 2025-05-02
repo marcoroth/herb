@@ -65,5 +65,21 @@ module Parser
     test "comment" do
       assert_parsed_snapshot(%(<%# comment with a single qutote(') and double quote (") %>))
     end
+
+    test "multi-line comment" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#
+          comment
+        %>
+      HTML
+    end
+
+    test "multi-line comment with Ruby keyword" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#
+          end
+        %>
+      HTML
+    end
   end
 end
