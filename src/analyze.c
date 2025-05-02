@@ -996,7 +996,6 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
     if (strcmp(parse_error->diagnostic_id, "invalid_yield") == 0) {
       // error_free(parse_error);
     } else {
-
       array_append(document->base.errors, parse_error);
     }
   }
