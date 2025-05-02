@@ -323,14 +323,8 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_YIELD: {
-      return (AST_NODE_T*) ast_erb_yield_node_init(
-        tag_opening,
-        content,
-        tag_closing,
-        start_position,
-        end_position,
-        errors
-      );
+      return (AST_NODE_T*)
+        ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors);
     }
 
     default: array_free(&errors); return NULL;
@@ -1001,11 +995,9 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
     // TODO: ideally this shouldn't be hard-coded
     if (strcmp(parse_error->diagnostic_id, "invalid_yield") == 0) {
       // error_free(parse_error);
-    } else {
-      array_append(
-        document->base.errors,
-        parse_error
-      );
+    } else {
+
+      array_append(document->base.errors, parse_error);
     }
   }
 }
