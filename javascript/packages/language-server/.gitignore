@@ -1,0 +1,11 @@
+dist/
+node_modules/
+
+.vscode-test/
+
+*.vsix
+*.tgz
+*~
+
+.DS_Store
+tsconfig.tsbuildinfo
