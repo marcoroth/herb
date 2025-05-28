@@ -1,0 +1,36 @@
+{
+  "name": "@herb-tools/language-server",
+  "description": "Powerful and seamless HTML-aware ERB parsing and tooling.",
+  "version": "0.1.1",
+  "author": "Marco Roth",
+  "license": "MIT",
+  "engines": {
+    "node": "*"
+  },
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
+  "repository": "https://github.com/marcoroth/herb",
+  "homepage": "https://herb-tools.dev",
+  "bin": {
+    "herb-language-server": "./dist/herb-language-server"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "yarn run clean",
+    "build": "tsc -b",
+    "postbuild": "node scripts/executable.mjs",
+    "watch": "tsc -b -w"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "dedent": "^1.6.0",
+    "typescript": "^5.8.3",
+    "vscode-html-languageservice": "^5.4.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1"
+  }
+}
