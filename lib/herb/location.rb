@@ -25,7 +25,7 @@ module Herb
       from(start_line, start_column, end_line, end_column)
     end
 
-    #: () -> { start: Position, end: Position }
+    #: () -> { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }
     def to_hash
       {
         start: start,

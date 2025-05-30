@@ -15,7 +15,8 @@ module Herb
         @errors = errors
       end
 
-      #: () -> { type: String, location: Location?, errors: Array[Herb::Errors::Error] }
+      # TODO: update error type
+      #: () -> { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }?, errors: Array }
       def to_hash
         {
           type: type,

@@ -16,7 +16,7 @@ module Herb
       @type = type
     end
 
-    #: () -> { value: String, range: Array[Position]?, location: Hash[Symbol, Position]?, type: String }
+    #: () -> { value: String, range: [Integer, Integer]?, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }?, type: String }
     def to_hash
       {
         value: value,

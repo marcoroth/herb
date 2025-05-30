@@ -3,26 +3,26 @@
 
 module Herb
   class Range
-    attr_reader :from #: Position
-    attr_reader :to #: Position
+    attr_reader :from #: Integer
+    attr_reader :to #: Integer
 
-    #: (from: Position, to: Position) -> void
+    #: (from: Integer, to: Integer) -> void
     def initialize(from, to)
       @from = from
       @to = to
     end
 
-    #: (from: Position, to: Position) -> Range
+    #: (from: Integer, to: Integer) -> Range
     def self.[](from, to)
       new(from, to)
     end
 
-    #: (from: Position, to: Position) -> Range
+    #: (from: Integer, to: Integer) -> Range
     def self.from(from, to)
       new(from, to)
     end
 
-    #: () -> Array[Position]
+    #: () -> [Integer, Integer]
     def to_a
       [from, to]
     end

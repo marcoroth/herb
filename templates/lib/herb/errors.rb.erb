@@ -13,7 +13,7 @@ module Herb
         <%- end -%>
       end
 
-      #: () -> { type: String, location: Location?, message: String }
+      #: () -> { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }?, message: String }
       def to_hash
         {
           type: type,
