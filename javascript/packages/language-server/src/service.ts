@@ -26,7 +26,7 @@ export class Service {
     this.connection = connection
     this.settings = new Settings(params, this.connection)
     this.documentService = new DocumentService(this.connection)
-    this.project = new Project(this.settings.projectPath.replace("file://", ""))
+    this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.codeActions = new CodeActions(this.documentService, this.project)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.project, this)
     this.definitions = new Definitions(this.documentService)

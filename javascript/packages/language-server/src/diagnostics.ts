@@ -7,6 +7,8 @@ import type { Service } from "./service"
 import type { SourceFile } from "./source_file"
 import type { Project } from "./project"
 
+import { Herb } from "@herb-tools/node"
+
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
@@ -82,6 +84,11 @@ export class Diagnostics {
   }
 
   validateHTMLDocument(textDocument: TextDocument) {
+    const content = textDocument.getText()
+    const result = Herb.parse(content)
+
+    console.error(result.inspect())
+
     const service = getLanguageService()
     const html = service.parseHTMLDocument(textDocument)
 

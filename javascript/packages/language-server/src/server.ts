@@ -72,6 +72,7 @@ connection.onDidChangeConfiguration((change) => {
 })
 
 connection.onDidOpenTextDocument((params) => {
+  console.error(params)
   const document = service.documentService.get(params.textDocument.uri)
 
   if (document) {

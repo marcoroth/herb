@@ -24,6 +24,7 @@
     "dist"
   ],
   "dependencies": {
+    "@herb-tools/node": "0.1.1",
     "dedent": "^1.6.0",
     "typescript": "^5.8.3",
     "vscode-html-languageservice": "^5.4.0",
