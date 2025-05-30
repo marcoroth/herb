@@ -13,3 +13,8 @@ gem "rake", "~> 13.2"
 gem "rake-compiler", "~> 1.2"
 gem "rake-compiler-dock", "~> 1.9"
 gem "rubocop", "~> 1.71"
+
+group :development do
+  gem "sorbet"
+  # gem "rbs-inline", require: false, github: "marcoroth/rbs-inline", branch: "prism"
+end

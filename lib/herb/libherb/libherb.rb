@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: ignore
 
 require "herb/libherb/ast_node"
 require "herb/libherb/buffer"

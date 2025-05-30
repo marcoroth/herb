@@ -1,17 +1,19 @@
-<%- base_arguments = ["type", "location", "message"] -%>
+<%- base_arguments = [["type", "String"], ["location", "Location"], ["message", "String"]] -%>
 module Herb
   module Errors
     class Error
-      <%- base_arguments.each do |argument| -%>
-      attr_reader :<%= argument %>
+      <%- base_arguments.each do |argument, type| -%>
+      attr_reader :<%= argument %> #: <%= type %>
       <%- end -%>
 
-      def initialize(<%= base_arguments.join(", ") %>)
-        <%- base_arguments.each do |argument| -%>
+      #: (<%= base_arguments.map { |argument, type| "#{argument}: #{type}" }.join(", ") %>) -> void
+      def initialize(<%= base_arguments.map(&:first).join(", ") %>)
+        <%- base_arguments.each do |argument, _type| -%>
         @<%= argument %> = <%= argument %>
         <%- end -%>
       end
 
+      #: () -> { type: String, location: Location?, message: String }
       def to_hash
         {
           type: type,
@@ -20,33 +22,43 @@ module Herb
         }
       end
 
-      def error_name
-        self.class.name.split("::").last
+      #: () -> String
+      def class_name
+        self.class.name || "Error"
       end
 
-      def to_json(*args)
-        to_hash.to_json(*args)
+      #: () -> String
+      def error_name
+        class_name.split("::").last || "Error"
+      end
+
+      #: (?untyped, ?untyped) -> String
+      def to_json(state = nil, options = nil)
+        to_hash.to_json(state, options)
       end
     end
 
     <%- errors.each do |error| -%>
     class <%= error.name -%> < Error
       <%- error.fields.each do |field| -%>
-      attr_reader :<%= field.name %>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
-      def initialize(<%= [*base_arguments, *error.fields.map(&:name)].join(", ") %>)
-        super(<%= base_arguments.join(", ") %>)
+      #: (<%= [*base_arguments.map { |name, type| "#{name}: #{type}" }, *error.fields.map { |field| "#{field.name}: #{field.ruby_type}" }].join(", ") %>) -> void
+      def initialize(<%= [*base_arguments.map(&:first), *error.fields.map(&:name)].join(", ") %>)
+        super(<%= base_arguments.map(&:first).join(", ") %>)
 
         <%- error.fields.each do |field| -%>
         @<%= field.name %> = <%= field.name %>
         <%- end -%>
       end
 
+      #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
+      #: () -> Hash
       def to_hash
         super.merge({
           <%- error.fields.each do |field| -%>
@@ -55,6 +67,7 @@ module Herb
         })
       end
 
+      #: (indent: Integer) -> String
       def tree_inspect(indent = 0)
         output = +""
 

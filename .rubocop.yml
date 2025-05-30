@@ -114,6 +114,9 @@ Layout/EmptyLinesAroundModuleBody:
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
+Layout/LeadingCommentSpace:
+  Enabled: false
+
 Security/Eval:
   Exclude:
     - Rakefile

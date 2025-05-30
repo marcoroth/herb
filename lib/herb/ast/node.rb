@@ -1,16 +1,21 @@
 # frozen_string_literal: true
+# typed: true
 
 module Herb
   module AST
     class Node
-      attr_reader :type, :location, :errors
+      attr_reader :type #: String
+      attr_reader :location #: Location
+      attr_reader :errors #: Array[Herb::Errors::Error]
 
+      #: (type: String, location: Location, errors: Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
         @errors = errors
       end
 
+      #: () -> { type: String, location: Location?, errors: Array[Herb::Errors::Error] }
       def to_hash
         {
           type: type,
@@ -19,20 +24,29 @@ module Herb
         }
       end
 
+      #: () -> String
+      def class_name
+        self.class.name || "Node"
+      end
+
+      #: () -> String
       def node_name
-        self.class.name.split("::").last
+        class_name.split("::").last || "Node"
       end
 
-      def to_json(*args)
-        to_hash.to_json(*args)
+      #: (?untyped, ?untyped) -> String
+      def to_json(state = nil, options = nil)
+        to_hash.to_json(state, options)
       end
 
+      #: (prefix: String) -> String
       def inspect_errors(prefix: "    ")
         return "" if errors.empty?
 
         "├── errors: #{inspect_array(errors, item_name: "error", prefix: prefix)}"
       end
 
+      #: (array: Array, item_name: String, prefix: String) -> String
       def inspect_array(array, item_name: "item", prefix: "    ")
         output = +""
 
