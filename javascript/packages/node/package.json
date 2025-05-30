@@ -24,10 +24,11 @@
     }
   },
   "scripts": {
-    "install": "yarn vendor:libherb && yarn vendor:prism && node-pre-gyp install --fallback-to-build",
+    "install": "node-pre-gyp install --fallback-to-build",
     "dev": "rollup -c -w",
-    "build": "yarn rebuild",
+    "build": "yarn vendor && yarn rebuild",
     "build:javascript": "rollup -c",
+    "vendor": "yarn vendor:libherb && yarn vendor:prism",
     "vendor:libherb": "yarn clean && rake templates && cp -r ../../../src ./extension/libherb",
     "vendor:prism": "node ./bin/vendor-prism.cjs",
     "rebuild": "yarn clean && yarn vendor:libherb && yarn vendor:prism && node-pre-gyp rebuild && yarn build:javascript",
