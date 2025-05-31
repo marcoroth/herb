@@ -1,0 +1,6 @@
+--dir
+lib/
+--ignore=/tmp/
+--ignore=/vendor/bundle
+--enable-experimental-rbs-signatures
+--enable-experimental-rbs-assertions

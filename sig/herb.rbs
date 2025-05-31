@@ -1,0 +1,7 @@
+module Herb
+  VERSION: String
+
+  type SerializedPosition = { line: Integer, column: Integer }
+  type SerializedLocation = { start: SerializedPosition, end: SerializedPosition }
+  type SerializedError = { type: String, location: SerializedLocation?, message: String }
+end

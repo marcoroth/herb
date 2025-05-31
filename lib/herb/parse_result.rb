@@ -4,21 +4,25 @@ require "json"
 
 module Herb
   class ParseResult < Result
-    attr_reader :value
+    attr_reader :value #: String
 
+    #: (value: Herb::AST::DocumentNode, source: String, warnings: Array, errors: Array[Herb::Errors::Error]) -> void
     def initialize(value, source, warnings, errors)
       @value = value
       super(source, warnings, errors)
     end
 
+    #: () -> bool
     def failed?
       errors.any? || value.errors.any? # TODO: this should probably be recursive
     end
 
+    #: () -> bool
     def success?
       !failed?
     end
 
+    #: () -> String
     def pretty_errors
       JSON.pretty_generate(errors + value.errors)
     end

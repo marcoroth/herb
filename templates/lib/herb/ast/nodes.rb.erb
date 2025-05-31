@@ -3,9 +3,10 @@ module Herb
     <%- nodes.each do |node| -%>
     class <%= node.name -%> < Node
       <%- node.fields.each do |field| -%>
-      attr_reader :<%= field.name %>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
+      #: (<%= ["type: String", "location: Location", "errors: Array[Herb::Errors::Error]", *node.fields.map { |field| "#{field.name}: #{field.ruby_type}" }].join(", ") %>) -> void
       def initialize(<%= ["type", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
         super(type, location, errors)
         <%- node.fields.each do |field| -%>
@@ -17,6 +18,7 @@ module Herb
         <%- end -%>
       end
 
+      #: () -> Hash
       def to_hash
         super.merge({
           <%- node.fields.each do |field| -%>
@@ -25,10 +27,12 @@ module Herb
         })
       end
 
+      #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
+      #: (indent: Integer) -> String
       def tree_inspect(indent = 0)
         output = +""
 
