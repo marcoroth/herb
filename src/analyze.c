@@ -25,6 +25,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
   pm_visit_node(analyzed->root, search_block_nodes, analyzed);
   pm_visit_node(analyzed->root, search_case_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_case_match_nodes, analyzed);
   pm_visit_node(analyzed->root, search_while_nodes, analyzed);
   pm_visit_node(analyzed->root, search_for_nodes, analyzed);
   pm_visit_node(analyzed->root, search_until_nodes, analyzed);
@@ -35,6 +36,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   search_else_nodes(analyzed);
   search_end_nodes(analyzed);
   search_when_nodes(analyzed);
+  search_in_nodes(analyzed);
   search_rescue_nodes(analyzed);
   search_ensure_nodes(analyzed);
   search_yield_nodes(analyzed);
@@ -85,7 +87,9 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
   if (has_end(ruby)) { return CONTROL_TYPE_END; }
   if (has_case_node(ruby)) { return CONTROL_TYPE_CASE; }
+  if (has_case_match_node(ruby)) { return CONTROL_TYPE_CASE_MATCH; }
   if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
+  if (has_in_node(ruby)) { return CONTROL_TYPE_IN; }
   if (has_begin_node(ruby)) { return CONTROL_TYPE_BEGIN; }
   if (has_rescue_node(ruby)) { return CONTROL_TYPE_RESCUE; }
   if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
@@ -104,7 +108,8 @@ static bool is_subsequent_type(control_type_t parent_type, control_type_t child_
   switch (parent_type) {
     case CONTROL_TYPE_IF:
     case CONTROL_TYPE_ELSIF: return child_type == CONTROL_TYPE_ELSIF || child_type == CONTROL_TYPE_ELSE;
-    case CONTROL_TYPE_CASE: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_CASE:
+    case CONTROL_TYPE_CASE_MATCH: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_BEGIN:
       return child_type == CONTROL_TYPE_RESCUE || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_ENSURE;
     case CONTROL_TYPE_RESCUE: return child_type == CONTROL_TYPE_RESCUE;
@@ -119,6 +124,7 @@ static bool is_terminator_type(control_type_t parent_type, control_type_t child_
 
   switch (parent_type) {
     case CONTROL_TYPE_WHEN: return child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE;
+    case CONTROL_TYPE_IN: return child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_ELSE;
     case CONTROL_TYPE_BLOCK: return child_type == CONTROL_TYPE_BLOCK_CLOSE;
 
     default: return is_subsequent_type(parent_type, child_type);
@@ -165,27 +171,46 @@ static AST_NODE_T* create_control_node(
       return (AST_NODE_T*)
         ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
 
-    case CONTROL_TYPE_CASE: {
+    case CONTROL_TYPE_CASE:
+    case CONTROL_TYPE_CASE_MATCH: {
       AST_ERB_ELSE_NODE_T* else_node = NULL;
       if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_node = (AST_ERB_ELSE_NODE_T*) subsequent; }
 
       array_T* when_conditions = array_init(8);
-      array_T* non_when_children = array_init(8);
+      array_T* in_conditions = array_init(8);
+      array_T* non_when_non_in_children = array_init(8);
 
       for (size_t i = 0; i < array_size(children); i++) {
         AST_NODE_T* child = array_get(children, i);
         if (child && child->type == AST_ERB_WHEN_NODE) {
           array_append(when_conditions, child);
+        } else if (child && child->type == AST_ERB_IN_NODE) {
+          array_append(in_conditions, child);
         } else {
-          array_append(non_when_children, child);
+          array_append(non_when_non_in_children, child);
         }
+      }
+
+      if (array_size(in_conditions) > 0) {
+        return (AST_NODE_T*) ast_erb_case_match_node_init(
+          tag_opening,
+          content,
+          tag_closing,
+          non_when_non_in_children,
+          in_conditions,
+          else_node,
+          end_node,
+          start_position,
+          end_position,
+          errors
+        );
       }
 
       return (AST_NODE_T*) ast_erb_case_node_init(
         tag_opening,
         content,
         tag_closing,
-        non_when_children,
+        non_when_non_in_children,
         when_conditions,
         else_node,
         end_node,
@@ -198,6 +223,11 @@ static AST_NODE_T* create_control_node(
     case CONTROL_TYPE_WHEN: {
       return (AST_NODE_T*)
         ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+    }
+
+    case CONTROL_TYPE_IN: {
+      return (AST_NODE_T*)
+        ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -340,9 +370,10 @@ static size_t process_control_structure(
 
   index++;
 
-  if (initial_type == CONTROL_TYPE_CASE) {
+  if (initial_type == CONTROL_TYPE_CASE || initial_type == CONTROL_TYPE_CASE_MATCH) {
     array_T* when_conditions = array_init(8);
-    array_T* non_when_children = array_init(8);
+    array_T* in_conditions = array_init(8);
+    array_T* non_when_non_in_children = array_init(8);
 
     while (index < array_size(array)) {
       AST_NODE_T* next_node = array_get(array, index);
@@ -353,10 +384,10 @@ static size_t process_control_structure(
         AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) next_node;
         control_type_t next_type = detect_control_type(erb_content);
 
-        if (next_type == CONTROL_TYPE_WHEN) { break; }
+        if (next_type == CONTROL_TYPE_WHEN || next_type == CONTROL_TYPE_IN) { break; }
       }
 
-      array_append(non_when_children, next_node);
+      array_append(non_when_non_in_children, next_node);
       index++;
     }
 
@@ -366,7 +397,7 @@ static size_t process_control_structure(
       if (!next_node) { break; }
 
       if (next_node->type != AST_ERB_CONTENT_NODE) {
-        array_append(non_when_children, next_node);
+        array_append(non_when_non_in_children, next_node);
         index++;
         continue;
       }
@@ -387,7 +418,8 @@ static size_t process_control_structure(
             AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
             control_type_t child_type = detect_control_type(child_erb);
 
-            if (child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE || child_type == CONTROL_TYPE_END) {
+            if (child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_ELSE
+                || child_type == CONTROL_TYPE_END) {
               break;
             }
           }
@@ -409,10 +441,46 @@ static size_t process_control_structure(
         array_append(when_conditions, (AST_NODE_T*) when_node);
 
         continue;
+      } else if (next_type == CONTROL_TYPE_IN) {
+        array_T* in_statements = array_init(8);
+        index++;
+
+        while (index < array_size(array)) {
+          AST_NODE_T* child = array_get(array, index);
+
+          if (!child) { break; }
+
+          if (child->type == AST_ERB_CONTENT_NODE) {
+            AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
+            control_type_t child_type = detect_control_type(child_erb);
+
+            if (child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE
+                || child_type == CONTROL_TYPE_END) {
+              break;
+            }
+          }
+
+          array_append(in_statements, child);
+          index++;
+        }
+
+        AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
+          erb_content->tag_opening,
+          erb_content->content,
+          erb_content->tag_closing,
+          in_statements,
+          erb_content->tag_opening->location->start,
+          erb_content->tag_closing->location->end,
+          array_init(8)
+        );
+
+        array_append(in_conditions, (AST_NODE_T*) in_node);
+
+        continue;
       } else if (next_type == CONTROL_TYPE_ELSE || next_type == CONTROL_TYPE_END) {
         break;
       } else {
-        array_append(non_when_children, next_node);
+        array_append(non_when_non_in_children, next_node);
         index++;
       }
     }
@@ -493,13 +561,34 @@ static size_t process_control_structure(
     } else if (array_size(when_conditions) > 0) {
       AST_NODE_T* last_when = array_get(when_conditions, array_size(when_conditions) - 1);
       end_position = last_when->location->end;
+    } else if (array_size(in_conditions) > 0) {
+      AST_NODE_T* last_in = array_get(in_conditions, array_size(in_conditions) - 1);
+      end_position = last_in->location->end;
+    }
+
+    if (array_size(in_conditions) > 0) {
+      AST_ERB_CASE_MATCH_NODE_T* case_match_node = ast_erb_case_match_node_init(
+        erb_node->tag_opening,
+        erb_node->content,
+        erb_node->tag_closing,
+        non_when_non_in_children,
+        in_conditions,
+        else_clause,
+        end_node,
+        start_position,
+        end_position,
+        array_init(8)
+      );
+
+      array_append(output_array, (AST_NODE_T*) case_match_node);
+      return index;
     }
 
     AST_ERB_CASE_NODE_T* case_node = ast_erb_case_node_init(
       erb_node->tag_opening,
       erb_node->content,
       erb_node->tag_closing,
-      non_when_children,
+      non_when_non_in_children,
       when_conditions,
       else_clause,
       end_node,
@@ -852,30 +941,9 @@ static size_t process_block_children(
 
     if (is_terminator_type(parent_type, child_type)) { break; }
 
-    if (parent_type == CONTROL_TYPE_CASE && child_type == CONTROL_TYPE_WHEN) {
-      array_T* when_statements = array_init(8);
-
-      index++;
-
-      index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
-
-      AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
-        erb_content->tag_opening,
-        erb_content->content,
-        erb_content->tag_closing,
-        when_statements,
-        erb_content->tag_opening->location->start,
-        erb_content->tag_closing->location->end,
-        array_init(8)
-      );
-
-      array_append(children_array, (AST_NODE_T*) when_node);
-      continue;
-    }
-
-    if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_BEGIN
-        || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE || child_type == CONTROL_TYPE_UNTIL
-        || child_type == CONTROL_TYPE_FOR || child_type == CONTROL_TYPE_BLOCK) {
+    if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_CASE_MATCH
+        || child_type == CONTROL_TYPE_BEGIN || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE
+        || child_type == CONTROL_TYPE_UNTIL || child_type == CONTROL_TYPE_FOR || child_type == CONTROL_TYPE_BLOCK) {
       array_T* temp_array = array_init(1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
@@ -915,6 +983,7 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     switch (type) {
       case CONTROL_TYPE_IF:
       case CONTROL_TYPE_CASE:
+      case CONTROL_TYPE_CASE_MATCH:
       case CONTROL_TYPE_BEGIN:
       case CONTROL_TYPE_UNLESS:
       case CONTROL_TYPE_WHILE:

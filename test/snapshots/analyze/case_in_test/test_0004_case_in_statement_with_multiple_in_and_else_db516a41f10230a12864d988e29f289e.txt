@@ -1,0 +1,48 @@
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (2 items)
+    ├── @ ERBCaseMatchNode (location: (1:0)-(8:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case variable " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:19)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBInNode (location: (2:0)-(2:17))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " in [String] " (location: (2:2)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:17)-(4:0))
+    │   │   │           └── content: "\n  String\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBInNode (location: (4:0)-(4:18))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " in [Integer] " (location: (4:2)-(4:16))
+    │   │       ├── tag_closing: "%>" (location: (4:16)-(4:18))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (4:18)-(6:0))
+    │   │               └── content: "\n  Integer\n"
+    │   │
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (6:0)-(6:10))
+    │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │       ├── content: " else " (location: (6:2)-(6:8))
+    │   │       ├── tag_closing: "%>" (location: (6:8)-(6:10))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (6:10)-(8:0))
+    │   │               └── content: "\n  else\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (8:0)-(8:9))
+    │           ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │           ├── content: " end " (location: (8:2)-(8:7))
+    │           └── tag_closing: "%>" (location: (8:7)-(8:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (8:9)-(9:0))
+        └── content: "\n"

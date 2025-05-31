@@ -14,17 +14,17 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
-    difftastic (0.6.0)
+    difftastic (0.7.0)
       pretty_please
-    difftastic (0.6.0-arm64-darwin)
+    difftastic (0.7.0-arm64-darwin)
       pretty_please
-    difftastic (0.6.0-x86_64-darwin)
+    difftastic (0.7.0-x86_64-darwin)
       pretty_please
-    difftastic (0.6.0-x86_64-linux)
+    difftastic (0.7.0-x86_64-linux)
       pretty_please
     dispersion (0.2.0)
       prism
-    json (2.10.1)
+    json (2.12.2)
     language_server-protocol (3.17.0.4)
     lint_roller (1.1.0)
     lz_string (0.2.0)

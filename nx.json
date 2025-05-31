@@ -33,9 +33,7 @@
   },
   "release": {
     "version": {
-      "generatorOptions": {
-        "preid": "pre"
-      }
+      "preserveLocalDependencyProtocols": false
     },
     "changelog": {
       "projectChangelogs": {
@@ -50,8 +48,5 @@
         "file": false
       }
     }
-  },
-  "affected": {
-    "defaultBase": "main"
   }
 }

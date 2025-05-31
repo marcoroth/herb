@@ -10,15 +10,24 @@
     "url": "https://github.com/marcoroth/herb.git"
   },
   "devDependencies": {
-    "@nx/js": "20.5.0",
-    "@nx/node": "^20.5.0",
-    "@nx/web": "20.5.0",
     "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4",
+    "@nx/js": "21.1.2",
+    "@nx/node": "21.1.2",
+    "@nx/web": "21.1.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@vitest/ui": "^3.1.4",
     "concurrently": "^9.1.2",
-    "nx": "20.5.0",
+    "nx": "21.1.2",
     "prettier": "3.5.3",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.35.0",
+    "tslib": "^2.8.1",
     "tsx": "^4.19.3",
-    "verdaccio": "^6.0.5"
+    "typescript": "^5.8.3",
+    "verdaccio": "^6.0.5",
+    "vitest": "^3.1.4"
   },
   "scripts": {
     "dev": "nx run-many --target=dev --all --parallel",
