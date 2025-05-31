@@ -670,4 +670,4 @@ nodes:
 
         - name: statements
           type: array
-          kind: Node          
+          kind: Node

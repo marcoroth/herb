@@ -32,6 +32,10 @@ bool has_case_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_case_node;
 }
 
+bool has_case_match_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_case_match_node;
+}
+
 bool has_when_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_when_node;
 }
@@ -110,11 +114,24 @@ bool search_block_nodes(const pm_node_t* node, void* data) {
 bool search_case_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
-  if (node->type == PM_CASE_MATCH_NODE || node->type == PM_CASE_NODE) {
+  if (node->type == PM_CASE_NODE) {
     analyzed->has_case_node = true;
     return true;
   } else {
     pm_visit_child_nodes(node, search_case_nodes, analyzed);
+  }
+
+  return false;
+}
+
+bool search_case_match_nodes(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  if (node->type == PM_CASE_MATCH_NODE) {
+    analyzed->has_case_match_node = true;
+    return true;
+  } else {
+    pm_visit_child_nodes(node, search_case_match_nodes, analyzed);
   }
 
   return false;

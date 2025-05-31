@@ -25,6 +25,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
   pm_visit_node(analyzed->root, search_block_nodes, analyzed);
   pm_visit_node(analyzed->root, search_case_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_case_match_nodes, analyzed);
   pm_visit_node(analyzed->root, search_while_nodes, analyzed);
   pm_visit_node(analyzed->root, search_for_nodes, analyzed);
   pm_visit_node(analyzed->root, search_until_nodes, analyzed);
@@ -86,6 +87,7 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
   if (has_end(ruby)) { return CONTROL_TYPE_END; }
   if (has_case_node(ruby)) { return CONTROL_TYPE_CASE; }
+  if (has_case_match_node(ruby)) { return CONTROL_TYPE_CASE_MATCH; }
   if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
   if (has_in_node(ruby)) { return CONTROL_TYPE_IN; }
   if (has_begin_node(ruby)) { return CONTROL_TYPE_BEGIN; }
@@ -169,7 +171,8 @@ static AST_NODE_T* create_control_node(
       return (AST_NODE_T*)
         ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
 
-    case CONTROL_TYPE_CASE: {
+    case CONTROL_TYPE_CASE:
+    case CONTROL_TYPE_CASE_MATCH: {
       AST_ERB_ELSE_NODE_T* else_node = NULL;
       if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_node = (AST_ERB_ELSE_NODE_T*) subsequent; }
 
@@ -937,28 +940,6 @@ static size_t process_block_children(
     control_type_t child_type = detect_control_type(erb_content);
 
     if (is_terminator_type(parent_type, child_type)) { break; }
-
-    if ((parent_type == CONTROL_TYPE_CASE || parent_type == CONTROL_TYPE_CASE_MATCH)
-        && child_type == CONTROL_TYPE_WHEN) {
-      array_T* when_statements = array_init(8);
-
-      index++;
-
-      index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
-
-      AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
-        erb_content->tag_opening,
-        erb_content->content,
-        erb_content->tag_closing,
-        when_statements,
-        erb_content->tag_opening->location->start,
-        erb_content->tag_closing->location->end,
-        array_init(8)
-      );
-
-      array_append(children_array, (AST_NODE_T*) when_node);
-      continue;
-    }
 
     if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_CASE_MATCH
         || child_type == CONTROL_TYPE_BEGIN || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE
