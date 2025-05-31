@@ -458,6 +458,35 @@ nodes:
           type: node
           kind: ERBEndNode
 
+    - name: ERBCaseMatchNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: children
+          type: array
+
+        # - name: predicate
+        #   type: prism_node
+
+        - name: conditions
+          type: array
+          kind: ERBInNode
+
+        - name: else_clause
+          type: node
+          kind: ERBElseNode
+
+        - name: end_node
+          type: node
+          kind: ERBEndNode
+
     - name: ERBWhileNode
       fields:
         - name: tag_opening
@@ -627,3 +656,18 @@ nodes:
 
         - name: tag_closing
           type: token
+
+    - name: ERBInNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: statements
+          type: array
+          kind: Node          

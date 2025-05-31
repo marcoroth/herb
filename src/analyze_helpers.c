@@ -36,6 +36,10 @@ bool has_when_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_when_node;
 }
 
+bool has_in_node(analyzed_ruby_T* analyzed) {
+  return analyzed->has_in_node;
+}
+
 bool has_for_node(analyzed_ruby_T* analyzed) {
   return analyzed->has_for_node;
 }
@@ -106,7 +110,7 @@ bool search_block_nodes(const pm_node_t* node, void* data) {
 bool search_case_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
-  if (node->type == PM_CASE_MATCH_NODE) {
+  if (node->type == PM_CASE_MATCH_NODE || node->type == PM_CASE_NODE) {
     analyzed->has_case_node = true;
     return true;
   } else {
@@ -220,6 +224,15 @@ bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
 bool search_when_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'when', ignoring it")) {
     analyzed->has_when_node = true;
+    return true;
+  }
+
+  return false;
+}
+
+bool search_in_nodes(analyzed_ruby_T* analyzed) {
+  if (has_error_message(analyzed, "unexpected 'in', ignoring it")) {
+    analyzed->has_in_node = true;
     return true;
   }
 

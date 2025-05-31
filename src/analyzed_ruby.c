@@ -18,7 +18,9 @@ analyzed_ruby_T* init_analyzed_ruby(char* source) {
   analyzed->has_block_node = false;
   analyzed->has_block_closing = false;
   analyzed->has_case_node = false;
+  analyzed->has_case_match_node = false;
   analyzed->has_when_node = false;
+  analyzed->has_in_node = false;
   analyzed->has_for_node = false;
   analyzed->has_while_node = false;
   analyzed->has_until_node = false;

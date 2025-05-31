@@ -17,7 +17,9 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_block_closing;
   bool has_block_node;
   bool has_case_node;
+  bool has_case_match_node;
   bool has_when_node;
+  bool has_in_node;
   bool has_for_node;
   bool has_while_node;
   bool has_until_node;
