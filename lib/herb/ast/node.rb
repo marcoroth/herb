@@ -8,15 +8,14 @@ module Herb
       attr_reader :location #: Location
       attr_reader :errors #: Array[Herb::Errors::Error]
 
-      #: (type: String, location: Location, errors: Array[Herb::Errors::Error]) -> void
+      #: (String, Location, Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
         @errors = errors
       end
 
-      # TODO: update error type
-      #: () -> { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }?, errors: Array }
+      #: () -> serialized_node
       def to_hash
         {
           type: type,
@@ -35,19 +34,19 @@ module Herb
         class_name.split("::").last || "Node"
       end
 
-      #: (?untyped, ?untyped) -> String
-      def to_json(state = nil, options = nil)
-        to_hash.to_json(state, options)
+      #: (?untyped) -> String
+      def to_json(state = nil)
+        to_hash.to_json(state)
       end
 
-      #: (prefix: String) -> String
+      #: (?prefix: String) -> String
       def inspect_errors(prefix: "    ")
         return "" if errors.empty?
 
         "├── errors: #{inspect_array(errors, item_name: "error", prefix: prefix)}"
       end
 
-      #: (array: Array, item_name: String, prefix: String) -> String
+      #: (Array[Herb::AST::Node|Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
       def inspect_array(array, item_name: "item", prefix: "    ")
         output = +""
 
@@ -70,6 +69,11 @@ module Herb
         end
 
         output
+      end
+
+      #: (?Integer) -> String
+      def tree_inspect(indent = 0)
+        raise NotImplementedError.new
       end
     end
   end

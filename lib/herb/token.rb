@@ -8,7 +8,7 @@ module Herb
     attr_reader :location #: Location
     attr_reader :type #: String
 
-    #: (value: String, range: Range, location: Location, type: String) -> void
+    #: (String, Range, Location, String) -> void
     def initialize(value, range, location, type)
       @value = value
       @range = range
@@ -16,19 +16,19 @@ module Herb
       @type = type
     end
 
-    #: () -> { value: String, range: [Integer, Integer]?, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }?, type: String }
+    #: () -> serialized_token
     def to_hash
       {
         value: value,
         range: range&.to_a,
         location: location&.to_hash,
         type: type,
-      }
+      } #: Herb::serialized_token
     end
 
-    #: (?untyped, ?untyped) -> String
-    def to_json(state = nil, options = nil)
-      to_hash.to_json(state, options)
+    #: (?untyped) -> String
+    def to_json(state = nil)
+      to_hash.to_json(state)
     end
 
     #: () -> String

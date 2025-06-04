@@ -6,7 +6,7 @@ module Herb
       attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
-      #: (<%= ["type: String", "location: Location", "errors: Array[Herb::Errors::Error]", *node.fields.map { |field| "#{field.name}: #{field.ruby_type}" }].join(", ") %>) -> void
+      #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
       def initialize(<%= ["type", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
         super(type, location, errors)
         <%- node.fields.each do |field| -%>
@@ -18,13 +18,13 @@ module Herb
         <%- end -%>
       end
 
-      #: () -> Hash
+      #: () -> serialized_<%= node.human %>
       def to_hash
         super.merge({
           <%- node.fields.each do |field| -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
-        })
+        }) #: Herb::serialized_<%= node.human %>
       end
 
       #: () -> String
@@ -32,7 +32,7 @@ module Herb
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
-      #: (indent: Integer) -> String
+      #: (?Integer) -> String
       def tree_inspect(indent = 0)
         output = +""
 

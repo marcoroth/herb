@@ -7,7 +7,14 @@ module Herb
   class TokenList < SimpleDelegator
     #: () -> String
     def inspect
-      "#{itself.map(&:inspect).join("\n").force_encoding("utf-8")}\n"
+      "#{items.map(&:inspect).join("\n").force_encoding("utf-8")}\n"
+    end
+
+    private
+
+    #: () -> Array[Token]
+    def items
+      self #: Array[Token]
     end
   end
 end

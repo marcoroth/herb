@@ -1,0 +1,30 @@
+# Generated from lib/herb/position.rb with RBS::Inline
+
+module Herb
+  class Position
+    attr_reader line: Integer
+
+    attr_reader column: Integer
+
+    # : (Integer, Integer) -> void
+    def initialize: (Integer, Integer) -> void
+
+    # : (Integer, Integer) -> Position
+    def self.[]: (Integer, Integer) -> Position
+
+    # : (Integer, Integer) -> Position
+    def self.from: (Integer, Integer) -> Position
+
+    # : () -> serialized_position
+    def to_hash: () -> serialized_position
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def tree_inspect: () -> String
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

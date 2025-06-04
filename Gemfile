@@ -16,5 +16,6 @@ gem "rubocop", "~> 1.71"
 
 group :development do
   gem "sorbet"
-  # gem "rbs-inline", require: false, github: "marcoroth/rbs-inline", branch: "prism"
+  gem "rbs-inline", require: false, github: "marcoroth/rbs-inline", branch: "prism"
+  gem "steep", "~> 1.10"
 end

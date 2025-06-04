@@ -1,7 +1,4 @@
-module Herb
-  VERSION: String
+# Generated from lib/herb.rb with RBS::Inline
 
-  type SerializedPosition = { line: Integer, column: Integer }
-  type SerializedLocation = { start: SerializedPosition, end: SerializedPosition }
-  type SerializedError = { type: String, location: SerializedLocation?, message: String }
+module Herb
 end

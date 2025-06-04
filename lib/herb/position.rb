@@ -6,30 +6,30 @@ module Herb
     attr_reader :line #: Integer
     attr_reader :column #: Integer
 
-    #: (line: Integer, column: Integer) -> void
+    #: (Integer, Integer) -> void
     def initialize(line, column)
       @line = line
       @column = column
     end
 
-    #: (line: Integer, column: Integer) -> Position
+    #: (Integer, Integer) -> Position
     def self.[](line, column)
       new(line, column)
     end
 
-    #: (line: Integer, column: Integer) -> Position
+    #: (Integer, Integer) -> Position
     def self.from(line, column)
       new(line, column)
     end
 
-    #: () -> { line: Integer, column: Integer }
+    #: () -> serialized_position
     def to_hash
-      { line: line, column: column }
+      { line: line, column: column } #: Herb::serialized_position
     end
 
-    #: (?untyped, ?untyped) -> String
-    def to_json(state = nil, options = nil)
-      to_hash.to_json(state, options)
+    #: (?untyped) -> String
+    def to_json(state = nil)
+      to_hash.to_json(state)
     end
 
     #: () -> String

@@ -6,13 +6,13 @@ module Herb
     attr_reader :start #: Position
     attr_reader :end #: Position
 
-    #: (start_position: Position, end_position: Position) -> void
+    #: (Position, Position) -> void
     def initialize(start_position, end_position)
       @start = start_position
       @end = end_position
     end
 
-    #: (start_line: Integer, start_column: Integer, end_line: Integer, end_column: Integer) -> Location
+    #: (Integer, Integer, Integer, Integer) -> Location
     def self.from(start_line, start_column, end_line, end_column)
       new(
         Position.new(start_line, start_column),
@@ -20,22 +20,22 @@ module Herb
       )
     end
 
-    #: (start_line: Integer, start_column: Integer, end_line: Integer, end_column: Integer) -> Location
+    #: (Integer, Integer, Integer, Integer) -> Location
     def self.[](start_line, start_column, end_line, end_column)
       from(start_line, start_column, end_line, end_column)
     end
 
-    #: () -> { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }
+    #: () -> serialized_location
     def to_hash
       {
         start: start,
         end: self.end,
-      }
+      } #: Herb::serialized_location
     end
 
-    #: (?untyped, ?untyped) -> String
-    def to_json(state = nil, options = nil)
-      to_hash.to_json(state, options)
+    #: (?untyped) -> String
+    def to_json(state = nil)
+      to_hash.to_json(state)
     end
 
     #: () -> String

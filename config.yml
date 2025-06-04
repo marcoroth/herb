@@ -482,6 +482,7 @@ nodes:
 
         - name: children
           type: array
+          kind: Node
 
         # - name: predicate
         #   type: prism_node
@@ -580,6 +581,7 @@ nodes:
 
         # - name: exceptions
         #   type: array
+        #   kind: Node
 
         # - name: reference
         #   type: prism_node

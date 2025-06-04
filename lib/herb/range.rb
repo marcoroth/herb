@@ -6,30 +6,30 @@ module Herb
     attr_reader :from #: Integer
     attr_reader :to #: Integer
 
-    #: (from: Integer, to: Integer) -> void
+    #: (Integer, Integer) -> void
     def initialize(from, to)
       @from = from
       @to = to
     end
 
-    #: (from: Integer, to: Integer) -> Range
+    #: (Integer, Integer) -> Range
     def self.[](from, to)
       new(from, to)
     end
 
-    #: (from: Integer, to: Integer) -> Range
+    #: (Integer, Integer) -> Range
     def self.from(from, to)
       new(from, to)
     end
 
-    #: () -> [Integer, Integer]
+    #: () -> serialized_range
     def to_a
-      [from, to]
+      [from, to] #: Herb::serialized_range
     end
 
-    #: (?untyped, ?untyped) -> String
-    def to_json(state = nil, options = nil)
-      to_a.to_json(state, options)
+    #: (?untyped) -> String
+    def to_json(state = nil)
+      to_a.to_json(state)
     end
 
     #: () -> String

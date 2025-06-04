@@ -93,6 +93,8 @@ javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
+sig/serialized_ast_nodes.rbs
+sig/serialized_ast_errors.rbs
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c

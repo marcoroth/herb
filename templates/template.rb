@@ -23,7 +23,17 @@ module Herb
       end
 
       def ruby_type
-        "Array"
+        if specific_kind
+          if specific_kind == "Node"
+            "Array[Herb::AST::Node]"
+          elsif specific_kind.end_with?("Node")
+            "Array[Herb::AST::#{specific_kind}]"
+          else
+            "Array[#{specific_kind}]"
+          end
+        else
+          "Array"
+        end
       end
 
       def c_type
@@ -66,7 +76,7 @@ module Herb
       end
 
       def ruby_type
-        specific_kind || "Node"
+        "Herb::AST::#{specific_kind || "Node"}"
       end
 
       def specific_kind
@@ -140,7 +150,7 @@ module Herb
 
     class BooleanField < Field
       def ruby_type
-        "TrueClass | FalseClass"
+        "bool"
       end
 
       def c_type
@@ -187,7 +197,6 @@ module Herb
 
           if kind.size == 1
             kind = kind.first
-            kind = nil if kind == "Node"
           end
         elsif type < NodeField
           raise "Missing kind in config.yml for field #{name}##{field_name}"
@@ -296,7 +305,7 @@ module Herb
 
     def self.heading_for(file, template_file)
       case File.extname(file)
-      when ".rb"
+      when ".rb", ".rbs"
         <<~HEADING
           # frozen_string_literal: true
           # typed: true

@@ -181,4 +181,8 @@ namespace :parse do
   end
 end
 
+task :rbs_inline do
+  sh "bundle exec rbs-inline --opt-out --output=sig/ lib/"
+end
+
 task default: [:templates, :make, :compile, :test]

@@ -4,9 +4,9 @@ require "json"
 
 module Herb
   class ParseResult < Result
-    attr_reader :value #: String
+    attr_reader :value #: Herb::AST::DocumentNode
 
-    #: (value: Herb::AST::DocumentNode, source: String, warnings: Array, errors: Array[Herb::Errors::Error]) -> void
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
     def initialize(value, source, warnings, errors)
       @value = value
       super(source, warnings, errors)
