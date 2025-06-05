@@ -72,8 +72,8 @@ module Herb
       end
 
       #: (?Integer) -> String
-      def tree_inspect(indent = 0)
-        raise NotImplementedError.new
+      def tree_inspect(_indent = 0)
+        raise NotImplementedError
       end
     end
   end

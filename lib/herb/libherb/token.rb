@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 # typed: ignore
+
 # rbs_inline: disabled
 
 module Herb

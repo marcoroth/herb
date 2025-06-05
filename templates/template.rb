@@ -195,9 +195,7 @@ module Herb
         if kind
           kind = [kind] unless kind.is_a?(Array)
 
-          if kind.size == 1
-            kind = kind.first
-          end
+          kind = kind.first if kind.size == 1
         elsif type < NodeField
           raise "Missing kind in config.yml for field #{name}##{field_name}"
         end
@@ -284,7 +282,7 @@ module Herb
         "%llu" => 20, # Large enough for long long unsigned
         "%ld" => 20, # Large enough for long int
         "%f" => 32,  # Floating point with precision
-        "%lf" => 32  # Long double
+        "%lf" => 32, # Long double
       }.freeze
 
       def self.estimate_buffer_size(template)
