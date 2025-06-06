@@ -40,6 +40,9 @@ jobs:
       - name: Steep
         run: bundle exec steep check
 
+      - name: RBS Inline
+        run: bundle exec rake rbs_inline
+
       # - name: Sorbet
       #   run: bundle exec srb tc
 
