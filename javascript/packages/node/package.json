@@ -24,18 +24,17 @@
     }
   },
   "scripts": {
-    "install": "node-pre-gyp install --fallback-to-build",
+    "install": "yarn vendor && node-pre-gyp install --fallback-to-build",
     "dev": "rollup -c -w",
-    "build": "yarn vendor && yarn rebuild",
+    "build": "yarn templates && yarn vendor && yarn rebuild",
     "build:javascript": "rollup -c",
     "templates": "rake templates",
-    "vendor": "yarn clean && yarn templates && yarn vendor:libherb && yarn vendor:prism",
-    "vendor:libherb": "cp -r ../../../src ./extension/libherb",
-    "vendor:prism": "node ./bin/vendor-prism.cjs",
+    "revendor": "yarn clean && yarn templates && yarn vendor",
+    "vendor": "node ./bin/vendor.cjs",
     "rebuild": "node-pre-gyp rebuild && yarn build:javascript",
     "configure": "node-pre-gyp configure",
     "package": "node-pre-gyp package",
-    "clean": "node-pre-gyp clean && rimraf dist/ && rimraf extension/libherb/ && rimraf build/",
+    "clean": "node-pre-gyp clean && rimraf dist/ && rimraf build/ && rimraf extension/libherb/ && rimraf extension/prism/",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

@@ -4,6 +4,22 @@ const fs = require("fs")
 const path = require("path")
 const { execSync } = require("child_process")
 
+const prismDir = path.resolve(__dirname, "../extension/prism")
+const prismExists = fs.existsSync(prismDir)
+
+const libherbDir = path.resolve(__dirname, "../extension/libherb")
+const libherbExists = fs.existsSync(libherbDir)
+
+if (prismExists && libherbExists) {
+  console.log("Vendored folders already exist, skipping vendor")
+  console.log("Run `yarn clean` to remove them")
+  process.exit(0)
+}
+
+const libherbSourceDir = path.resolve(__dirname, "../../../../src")
+const libherbIncludeDir = path.resolve(libherbSourceDir, "include")
+const libherbTargetDir = path.resolve(__dirname, "../extension/libherb")
+
 const prismPath = execSync("bundle show prism").toString().trim()
 console.log(`Found Prism at: ${prismPath}`)
 
@@ -22,6 +38,7 @@ function ensureDirectoryExists(dir) {
 ensureDirectoryExists(targetIncludeDir)
 ensureDirectoryExists(targetSrcDir)
 ensureDirectoryExists(targetUtilDir)
+ensureDirectoryExists(libherbTargetDir)
 
 function safeCopyFile(sourcePath, targetPath) {
   try {
@@ -62,7 +79,7 @@ function copyDirectory(sourceDir, targetDir) {
   }
 }
 
-console.log("Copying include files...")
+console.log("Vendoring Prism include files...")
 const includeDir = path.join(prismPath, "include")
 copyDirectory(includeDir, targetIncludeDir)
 
@@ -71,8 +88,16 @@ if (fs.existsSync(prismHeader)) {
   safeCopyFile(prismHeader, path.join(targetIncludeDir, "prism.h"))
 }
 
-console.log("Copying source files...")
+console.log("Vendoring Prism source files...")
 const srcDir = path.join(prismPath, "src")
 copyDirectory(srcDir, targetSrcDir)
 
-console.log("Prism source files copied successfully!")
+console.log("Prism source files vendored successfully!")
+
+console.log("Vendoring libherb source files...")
+copyDirectory(libherbSourceDir, libherbTargetDir)
+
+console.log("Vendoring libherb include files...")
+copyDirectory(libherbIncludeDir, libherbTargetDir)
+
+console.log("libherb files vendored successfully!")
