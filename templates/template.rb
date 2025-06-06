@@ -23,25 +23,14 @@ module Herb
       end
 
       def ruby_type
-        if specific_kind
-          if specific_kind == "Node"
-            "Array[Herb::AST::Node]"
-          elsif specific_kind.end_with?("Node")
-            "Array[Herb::AST::#{specific_kind}]"
-          else
-            "Array[#{specific_kind}]"
-          end
-        else
-          "Array"
-        end
+        return "Array" unless specific_kind
+        return "Array[Herb::AST::#{specific_kind}]" if specific_kind.end_with?("Node")
+
+        "Array[#{specific_kind}]"
       end
 
       def c_type
         "array_T*"
-      end
-
-      def ruby_item_type
-        specific_kind || "Object"
       end
 
       def c_item_type
@@ -100,7 +89,7 @@ module Herb
 
     class TokenTypeField < Field
       def ruby_type
-        "String" # TODO: check if this is right
+        "String"
       end
 
       def c_type
