@@ -3,8 +3,11 @@
 
 module Herb
   class Range
-    attr_reader :from #: Integer
-    attr_reader :to #: Integer
+    #: Integer
+    attr_reader :from
+
+    #: Integer
+    attr_reader :to
 
     #: (Integer, Integer) -> void
     def initialize(from, to)
@@ -22,9 +25,9 @@ module Herb
       new(from, to)
     end
 
-    #: () -> serialized_range
+    #: () -> [Integer, Integer]
     def to_a
-      [from, to] #: Herb::serialized_range
+      [from, to]
     end
 
     #: (?untyped) -> String

@@ -2,9 +2,11 @@
 
 module Herb
   class Range
-    attr_reader from: Integer
+    # : Integer
+    attr_reader from: untyped
 
-    attr_reader to: Integer
+    # : Integer
+    attr_reader to: untyped
 
     # : (Integer, Integer) -> void
     def initialize: (Integer, Integer) -> void
@@ -15,8 +17,8 @@ module Herb
     # : (Integer, Integer) -> Range
     def self.from: (Integer, Integer) -> Range
 
-    # : () -> serialized_range
-    def to_a: () -> serialized_range
+    # : () -> [Integer, Integer]
+    def to_a: () -> [ Integer, Integer ]
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

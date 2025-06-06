@@ -3,10 +3,17 @@
 
 module Herb
   class Token
-    attr_reader :value #: String
-    attr_reader :range #: Range
-    attr_reader :location #: Location
-    attr_reader :type #: String
+    #: String
+    attr_reader :value
+
+    #: Range
+    attr_reader :range
+
+    #: Location
+    attr_reader :location
+
+    #: String
+    attr_reader :type
 
     #: (String, Range, Location, String) -> void
     def initialize(value, range, location, type)
@@ -16,14 +23,14 @@ module Herb
       @type = type
     end
 
-    #: () -> serialized_token
+    #: () -> { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String }
     def to_hash
       {
         value: value,
-        range: range&.to_a,
-        location: location&.to_hash,
+        range: range.to_a,
+        location: location.to_hash,
         type: type,
-      } #: Herb::serialized_token
+      } 
     end
 
     #: (?untyped) -> String

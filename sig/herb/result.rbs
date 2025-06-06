@@ -2,11 +2,14 @@
 
 module Herb
   class Result
-    attr_reader source: String
+    # : String
+    attr_reader source: untyped
 
-    attr_reader warnings: Array[Herb::Warnings::Warning]
+    # : Array[Herb::Warnings::Warning]
+    attr_reader warnings: untyped
 
-    attr_reader errors: Array[Herb::Errors::Error]
+    # : Array[Herb::Errors::Error]
+    attr_reader errors: untyped
 
     # : (String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
     def initialize: (String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void

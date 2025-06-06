@@ -3,17 +3,20 @@
 module Herb
   module AST
     class Node
-      attr_reader type: String
+      # : String
+      attr_reader type: untyped
 
-      attr_reader location: Location
+      # : Location
+      attr_reader location: untyped
 
-      attr_reader errors: Array[Herb::Errors::Error]
+      # : Array[Herb::Errors::Error]
+      attr_reader errors: untyped
 
       # : (String, Location, Array[Herb::Errors::Error]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error]) -> void
 
-      # : () -> serialized_node
-      def to_hash: () -> serialized_node
+      # : () -> { type: String, location: { line: Integer, column: Integer, length: Integer }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }]}
+      def to_hash: () -> { type: String, location: { line: Integer, column: Integer, length: Integer }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }
 
       # : () -> String
       def class_name: () -> String

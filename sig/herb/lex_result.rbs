@@ -2,7 +2,8 @@
 
 module Herb
   class LexResult < Result
-    attr_reader value: TokenList
+    # : TokenList
+    attr_reader value: untyped
 
     # : (Array[Herb::Token], String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
     def initialize: (Array[Herb::Token], String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void

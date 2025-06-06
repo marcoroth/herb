@@ -3,13 +3,19 @@
 module Herb
   module AST
     class DocumentNode < Node
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
 
-      # : () -> serialized_document_node
-      def to_hash: () -> serialized_document_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -19,13 +25,19 @@ module Herb
     end
 
     class LiteralNode < Node
+      # : String
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
 
-      # : () -> serialized_literal_node
-      def to_hash: () -> serialized_literal_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   content: String,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -35,21 +47,35 @@ module Herb
     end
 
     class HTMLOpenTagNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
+      # : bool
       attr_reader is_void: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
 
-      # : () -> serialized_html_open_tag_node
-      def to_hash: () -> serialized_html_open_tag_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_name: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   is_void: bool,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -59,17 +85,27 @@ module Herb
     end
 
     class HTMLCloseTagNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
 
-      # : () -> serialized_html_close_tag_node
-      def to_hash: () -> serialized_html_close_tag_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_name: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -79,21 +115,35 @@ module Herb
     end
 
     class HTMLSelfCloseTagNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_name: Herb::Token?
 
+      # : Array[Herb::AST::HTMLAttributeNode]
       attr_reader attributes: Array[Herb::AST::HTMLAttributeNode]
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : bool
       attr_reader is_void: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::HTMLAttributeNode], Herb::Token, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::HTMLAttributeNode], Herb::Token, bool) -> void
 
-      # : () -> serialized_html_self_close_tag_node
-      def to_hash: () -> serialized_html_self_close_tag_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_name: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   attributes: Array[Herb::AST::HTMLAttributeNode],
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   is_void: bool,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -103,21 +153,35 @@ module Herb
     end
 
     class HTMLElementNode < Node
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+      # : Herb::AST::HTMLOpenTagNode?
+      attr_reader open_tag: Herb::AST::HTMLOpenTagNode?
 
-      attr_reader tag_name: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_name: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: Herb::AST::HTMLCloseTagNode
+      # : Herb::AST::HTMLCloseTagNode?
+      attr_reader close_tag: Herb::AST::HTMLCloseTagNode?
 
+      # : bool
       attr_reader is_void: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool) -> void
 
-      # : () -> serialized_html_element_node
-      def to_hash: () -> serialized_html_element_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   open_tag: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   tag_name: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   body: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   close_tag: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   is_void: bool,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -127,19 +191,31 @@ module Herb
     end
 
     class HTMLAttributeValueNode < Node
-      attr_reader open_quote: Herb::Token
+      # : Herb::Token?
+      attr_reader open_quote: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader close_quote: Herb::Token
+      # : Herb::Token?
+      attr_reader close_quote: Herb::Token?
 
+      # : bool
       attr_reader quoted: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
 
-      # : () -> serialized_html_attribute_value_node
-      def to_hash: () -> serialized_html_attribute_value_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   open_quote: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   close_quote: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   quoted: bool,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -149,13 +225,19 @@ module Herb
     end
 
     class HTMLAttributeNameNode < Node
-      attr_reader name: Herb::Token
+      # : Herb::Token?
+      attr_reader name: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
 
-      # : () -> serialized_html_attribute_name_node
-      def to_hash: () -> serialized_html_attribute_name_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   name: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -165,17 +247,27 @@ module Herb
     end
 
     class HTMLAttributeNode < Node
-      attr_reader name: Herb::AST::HTMLAttributeNameNode
+      # : Herb::AST::HTMLAttributeNameNode?
+      attr_reader name: Herb::AST::HTMLAttributeNameNode?
 
-      attr_reader equals: Herb::Token
+      # : Herb::Token?
+      attr_reader equals: Herb::Token?
 
-      attr_reader value: Herb::AST::HTMLAttributeValueNode
+      # : Herb::AST::HTMLAttributeValueNode?
+      attr_reader value: Herb::AST::HTMLAttributeValueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
 
-      # : () -> serialized_html_attribute_node
-      def to_hash: () -> serialized_html_attribute_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   name: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   equals: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   value: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -185,13 +277,19 @@ module Herb
     end
 
     class HTMLTextNode < Node
+      # : String
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
 
-      # : () -> serialized_html_text_node
-      def to_hash: () -> serialized_html_text_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   content: String,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -201,17 +299,27 @@ module Herb
     end
 
     class HTMLCommentNode < Node
-      attr_reader comment_start: Herb::Token
+      # : Herb::Token?
+      attr_reader comment_start: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader comment_end: Herb::Token
+      # : Herb::Token?
+      attr_reader comment_end: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
 
-      # : () -> serialized_html_comment_node
-      def to_hash: () -> serialized_html_comment_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   comment_start: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   comment_end: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -221,17 +329,27 @@ module Herb
     end
 
     class HTMLDoctypeNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
 
-      # : () -> serialized_html_doctype_node
-      def to_hash: () -> serialized_html_doctype_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -241,13 +359,19 @@ module Herb
     end
 
     class WhitespaceNode < Node
-      attr_reader value: Herb::Token
+      # : Herb::Token?
+      attr_reader value: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
 
-      # : () -> serialized_whitespace_node
-      def to_hash: () -> serialized_whitespace_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   value: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -257,23 +381,39 @@ module Herb
     end
 
     class ERBContentNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : nil
       attr_reader analyzed_ruby: nil
 
+      # : bool
       attr_reader parsed: bool
 
+      # : bool
       attr_reader valid: bool
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
 
-      # : () -> serialized_erb_content_node
-      def to_hash: () -> serialized_erb_content_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   analyzed_ruby: nil,
+      # |   parsed: bool,
+      # |   valid: bool,
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -283,17 +423,27 @@ module Herb
     end
 
     class ERBEndNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
 
-      # : () -> serialized_erb_end_node
-      def to_hash: () -> serialized_erb_end_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -303,19 +453,31 @@ module Herb
     end
 
     class ERBElseNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
 
-      # : () -> serialized_erb_else_node
-      def to_hash: () -> serialized_erb_else_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -325,23 +487,39 @@ module Herb
     end
 
     class ERBIfNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::Node
+      # : Herb::AST::Node?
+      attr_reader subsequent: Herb::AST::Node?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_if_node
-      def to_hash: () -> serialized_erb_if_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   subsequent: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -351,21 +529,35 @@ module Herb
     end
 
     class ERBBlockNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_block_node
-      def to_hash: () -> serialized_erb_block_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   body: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -375,19 +567,31 @@ module Herb
     end
 
     class ERBWhenNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
 
-      # : () -> serialized_erb_when_node
-      def to_hash: () -> serialized_erb_when_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -397,25 +601,43 @@ module Herb
     end
 
     class ERBCaseNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
+      # : Array[Herb::AST::ERBWhenNode]
       attr_reader conditions: Array[Herb::AST::ERBWhenNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      # : Herb::AST::ERBElseNode?
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_case_node
-      def to_hash: () -> serialized_erb_case_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   conditions: Array[Herb::AST::ERBWhenNode],
+      # |   else_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -425,25 +647,43 @@ module Herb
     end
 
     class ERBCaseMatchNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader children: Array[Herb::AST::Node]
 
+      # : Array[Herb::AST::ERBInNode]
       attr_reader conditions: Array[Herb::AST::ERBInNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      # : Herb::AST::ERBElseNode?
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_case_match_node
-      def to_hash: () -> serialized_erb_case_match_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   children: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   conditions: Array[Herb::AST::ERBInNode],
+      # |   else_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -453,21 +693,35 @@ module Herb
     end
 
     class ERBWhileNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_while_node
-      def to_hash: () -> serialized_erb_while_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -477,21 +731,35 @@ module Herb
     end
 
     class ERBUntilNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_until_node
-      def to_hash: () -> serialized_erb_until_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -501,21 +769,35 @@ module Herb
     end
 
     class ERBForNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_for_node
-      def to_hash: () -> serialized_erb_for_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -525,21 +807,35 @@ module Herb
     end
 
     class ERBRescueNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::ERBRescueNode
+      # : Herb::AST::ERBRescueNode?
+      attr_reader subsequent: Herb::AST::ERBRescueNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
 
-      # : () -> serialized_erb_rescue_node
-      def to_hash: () -> serialized_erb_rescue_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   subsequent: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -549,19 +845,31 @@ module Herb
     end
 
     class ERBEnsureNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
 
-      # : () -> serialized_erb_ensure_node
-      def to_hash: () -> serialized_erb_ensure_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -571,27 +879,47 @@ module Herb
     end
 
     class ERBBeginNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader rescue_clause: Herb::AST::ERBRescueNode
+      # : Herb::AST::ERBRescueNode?
+      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      # : Herb::AST::ERBElseNode?
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader ensure_clause: Herb::AST::ERBEnsureNode
+      # : Herb::AST::ERBEnsureNode?
+      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_begin_node
-      def to_hash: () -> serialized_erb_begin_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   rescue_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   else_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   ensure_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -601,23 +929,39 @@ module Herb
     end
 
     class ERBUnlessNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      # : Herb::AST::ERBElseNode?
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      # : Herb::AST::ERBEndNode?
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
-      # : () -> serialized_erb_unless_node
-      def to_hash: () -> serialized_erb_unless_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # |   else_clause: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # |   end_node: { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -627,17 +971,27 @@ module Herb
     end
 
     class ERBYieldNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
 
-      # : () -> serialized_erb_yield_node
-      def to_hash: () -> serialized_erb_yield_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String
@@ -647,19 +1001,31 @@ module Herb
     end
 
     class ERBInNode < Node
-      attr_reader tag_opening: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      # : Herb::Token?
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      # : Herb::Token?
+      attr_reader tag_closing: Herb::Token?
 
+      # : Array[Herb::AST::Node]
       attr_reader statements: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
       def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
 
-      # : () -> serialized_erb_in_node
-      def to_hash: () -> serialized_erb_in_node
+      # : () -> {
+      # |   type: String,
+      # |   location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } },
+      # |   errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }],
+      # |   tag_opening: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   content: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   tag_closing: { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String },
+      # |   statements: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }] }],
+      # | }
+      def to_hash: () -> untyped
 
       # : () -> String
       def inspect: () -> String

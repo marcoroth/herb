@@ -2,9 +2,11 @@
 
 module Herb
   class Position
-    attr_reader line: Integer
+    # : Integer
+    attr_reader line: untyped
 
-    attr_reader column: Integer
+    # : Integer
+    attr_reader column: untyped
 
     # : (Integer, Integer) -> void
     def initialize: (Integer, Integer) -> void
@@ -15,8 +17,8 @@ module Herb
     # : (Integer, Integer) -> Position
     def self.from: (Integer, Integer) -> Position
 
-    # : () -> serialized_position
-    def to_hash: () -> serialized_position
+    # : () -> { line: Integer, column: Integer }
+    def to_hash: () -> { line: Integer, column: Integer }
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

@@ -4,22 +4,27 @@
 module Herb
   module AST
     class Node
-      attr_reader :type #: String
-      attr_reader :location #: Location
-      attr_reader :errors #: Array[Herb::Errors::Error]
+      #: String
+      attr_reader :type
+
+      #: Location
+      attr_reader :location
+
+      #: Array[Herb::Errors::Error]
+      attr_reader :errors
 
       #: (String, Location, Array[Herb::Errors::Error]) -> void
-      def initialize(type, location, errors = [])
+      def initialize(type, location, errors)
         @type = type
         @location = location
         @errors = errors
       end
 
-      #: () -> serialized_node
+      #: () -> { type: String, location: { line: Integer, column: Integer, length: Integer }, errors: Array[{ type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }]}
       def to_hash
         {
           type: type,
-          location: location&.to_hash,
+          location: location.to_hash,
           errors: errors.map(&:to_hash),
         }
       end

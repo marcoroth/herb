@@ -2,9 +2,11 @@
 
 module Herb
   class Location
-    attr_reader start: Position
+    # : Position
+    attr_reader start: untyped
 
-    attr_reader end: Position
+    # : Position
+    attr_reader end: untyped
 
     # : (Position, Position) -> void
     def initialize: (Position, Position) -> void
@@ -15,8 +17,8 @@ module Herb
     # : (Integer, Integer, Integer, Integer) -> Location
     def self.[]: (Integer, Integer, Integer, Integer) -> Location
 
-    # : () -> serialized_location
-    def to_hash: () -> serialized_location
+    # : () -> { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }
+    def to_hash: () -> { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

@@ -1,11 +1,25 @@
+<%- serialized_range = "[Integer, Integer]" -%>
+<%- serialized_position = "{ line: Integer, column: Integer }" -%>
+<%- serialized_location = "{ start: #{serialized_position}, end: #{serialized_position} }" -%>
+<%- serialized_error = "{ type: String, location: #{serialized_location}, message: String }" -%>
+<%- serialized_warning = "{ type: String, location: #{serialized_location}, message: String }" -%>
+<%- serialized_node = "{ type: String, location: #{serialized_location}, errors: Array[#{serialized_error}] }" -%>
+<%- serialized_token = "{ value: String, range: #{serialized_range}, location: #{serialized_location}, type: String }" -%>
+
 module Herb
   module AST
     <%- nodes.each do |node| -%>
     class <%= node.name -%> < Node
       <%- node.fields.each do |field| -%>
+      <%- if field.is_a?(Herb::Template::TokenField) || field.is_a?(Herb::Template::NodeField) -%>
+      #: <%= field.ruby_type %>?
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %>?
+      <%- else -%>
+      #: <%= field.ruby_type %>
       attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
+      <%- end -%>
       #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
       def initialize(<%= ["type", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
         super(type, location, errors)
@@ -18,13 +32,34 @@ module Herb
         <%- end -%>
       end
 
-      #: () -> serialized_<%= node.human %>
+      #: () -> {
+      #|   type: String,
+      #|   location: <%= serialized_location %>,
+      #|   errors: Array[<%= serialized_error %>],
+      <%- node.fields.each do |field| -%>
+      <%- if field.is_a?(Herb::Template::ArrayField) && field.specific_kind == "Node" -%>
+      #|   <%= field.name %>: Array[<%= serialized_node %>],
+      <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+      #|   <%= field.name %>: <%= serialized_token %>,
+      <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+      #|   <%= field.name %>: <%= serialized_node %>,
+      <%- else -%>
+      #|   <%= field.name %>: <%= field.ruby_type %>,
+      <%- end -%>
+      <%- end -%>
+      #| }
       def to_hash
         super.merge({
           <%- node.fields.each do |field| -%>
+          <%- if field.is_a?(Herb::Template::TokenField) || field.is_a?(Herb::Template::NodeField) -%>
+          <%= field.name %>: <%= field.name %>&.to_hash,
+          <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+          <%= field.name %>: <%= field.name %>.map(&:to_hash),
+          <%- else -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
-        }) #: Herb::serialized_<%= node.human %>
+          <%- end -%>
+        })
       end
 
       #: () -> String

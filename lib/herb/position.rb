@@ -3,8 +3,11 @@
 
 module Herb
   class Position
-    attr_reader :line #: Integer
-    attr_reader :column #: Integer
+    #: Integer
+    attr_reader :line
+
+    #: Integer
+    attr_reader :column
 
     #: (Integer, Integer) -> void
     def initialize(line, column)
@@ -22,9 +25,9 @@ module Herb
       new(line, column)
     end
 
-    #: () -> serialized_position
+    #: () -> { line: Integer, column: Integer }
     def to_hash
-      { line: line, column: column } #: Herb::serialized_position
+      { line: line, column: column }
     end
 
     #: (?untyped) -> String

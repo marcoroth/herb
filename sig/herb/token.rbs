@@ -2,19 +2,23 @@
 
 module Herb
   class Token
-    attr_reader value: String
+    # : String
+    attr_reader value: untyped
 
-    attr_reader range: Range
+    # : Range
+    attr_reader range: untyped
 
-    attr_reader location: Location
+    # : Location
+    attr_reader location: untyped
 
-    attr_reader type: String
+    # : String
+    attr_reader type: untyped
 
     # : (String, Range, Location, String) -> void
     def initialize: (String, Range, Location, String) -> void
 
-    # : () -> serialized_token
-    def to_hash: () -> serialized_token
+    # : () -> { value: String, range: [Integer, Integer], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String }
+    def to_hash: () -> { value: String, range: [ Integer, Integer ], location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, type: String }
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String

@@ -4,9 +4,14 @@
 module Herb
   module Warnings
     class Warning
-      attr_reader :type #: String
-      attr_reader :location #: Location
-      attr_reader :message #: String
+      #: String
+      attr_reader :type
+
+      #: Location
+      attr_reader :location
+
+      #: String
+      attr_reader :message
 
       #: (String, Location, String) -> void
       def initialize(type, location, message)
@@ -15,11 +20,11 @@ module Herb
         @message = message
       end
 
-      #: () -> serialized_warning
+      #: () -> { type: String, location: { start: { line: Integer, column: Integer }, end: { line: Integer, column: Integer } }, message: String }
       def to_hash
         {
           type: type,
-          location: location&.to_hash,
+          location: location.to_hash,
           message: message,
         }
       end
