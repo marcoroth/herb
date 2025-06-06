@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
     "Rakefile",
     "README.md",
     "lib/**/*.rb",
+    "sig/**/*.rbs",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
     "exe/*"
