@@ -184,18 +184,18 @@ end
 task :rbs_inline do
   require "open3"
 
-  _stdout, stderr, status = Open3.capture3("bundle exec rbs-inline --opt-out --output=sig/ lib/")
+  command = "bundle exec rbs-inline --opt-out --output=sig/ lib/"
 
-  if ENV["CI"]
-    if stderr.strip == "🎉 Generated 0 RBS files under sig/"
-      puts "RBS files in sig/ are up to date"
-      exit status.exitstatus
-    else
-      puts "RBS files in sig/ are not up to date"
-      exit 1
-    end
-  else
+  _stdout, stderr, status = Open3.capture3(command)
+
+  puts "Running `#{command}`"
+
+  if stderr.strip == "🎉 Generated 0 RBS files under sig/"
+    puts "RBS files in sig/ are up to date"
     exit status.exitstatus
+  else
+    puts "RBS files in sig/ are not up to date"
+    exit 1
   end
 end
 
