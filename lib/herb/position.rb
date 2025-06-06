@@ -27,7 +27,7 @@ module Herb
 
     #: () -> { line: Integer, column: Integer }
     def to_hash
-      { line: line, column: column }
+      { line: line, column: column } #: Herb::serialized_position
     end
 
     #: (?untyped) -> String

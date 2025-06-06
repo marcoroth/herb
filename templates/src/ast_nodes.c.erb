@@ -116,7 +116,9 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     pm_node_destroy(NULL, <%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::AnalyzedRubyField -%>
-  // TODO: free
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    free_analyzed_ruby(<%= node.human %>-><%= field.name %>);
+  }
   <%- when Herb::Template::VoidPointerField -%>
   free(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::BooleanField -%>

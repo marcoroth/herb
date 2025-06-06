@@ -43,7 +43,7 @@ jobs:
       - name: Compile Herb
         run: bundle exec rake make
 
-      - name: yarn insall
+      - name: yarn install
         run: yarn install --frozen-lockfile
 
       - name: Install Playwright browsers

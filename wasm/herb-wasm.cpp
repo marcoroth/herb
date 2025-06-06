@@ -29,6 +29,8 @@ val Herb_lex(const std::string& source) {
 
   val result = CreateLexResult(tokens, source);
 
+  herb_free_tokens(&tokens);
+
   return result;
 }
 
@@ -37,7 +39,11 @@ val Herb_parse(const std::string& source) {
 
   herb_analyze_parse_tree(root, source.c_str());
 
-  return CreateParseResult(root, source);
+  val result = CreateParseResult(root, source);
+
+  ast_node_free((AST_NODE_T *) root);
+
+  return result;
 }
 
 std::string Herb_extract_ruby(const std::string& source) {

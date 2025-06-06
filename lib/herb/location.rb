@@ -33,7 +33,7 @@ module Herb
       {
         start: start,
         end: self.end,
-      } 
+      }
     end
 
     #: (?untyped) -> String

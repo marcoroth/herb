@@ -89,8 +89,8 @@ VALUE create_lex_result(array_T* tokens, VALUE source) {
   VALUE Result = rb_define_class_under(Herb, "Result", rb_cObject);
   VALUE LexResult = rb_define_class_under(Herb, "LexResult", Result);
 
-  herb_free_tokens(&tokens);
   VALUE args[4] = { value, source, warnings, errors };
+
   return rb_class_new_instance(4, args, LexResult);
 }
 
@@ -104,6 +104,7 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
   VALUE ParseResult = rb_define_class_under(Herb, "ParseResult", Result);
 
   VALUE args[4] = { value, source, warnings, errors };
+
   return rb_class_new_instance(4, args, ParseResult);
 }
 

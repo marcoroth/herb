@@ -30,7 +30,7 @@ module Herb
         range: range.to_a,
         location: location.to_hash,
         type: type,
-      } 
+      }
     end
 
     #: (?untyped) -> String
