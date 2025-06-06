@@ -22,7 +22,7 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir[
     "herb.gemspec",
-    "License.txt",
+    "LICENSE.txt",
     "Makefile",
     "Rakefile",
     "README.md",

@@ -148,7 +148,9 @@ napi_value ReadFileToString(napi_env env, const char* file_path) {
   }
 
   napi_value result = CreateString(env, content);
+
   free(content);
+
   return result;
 }
 
@@ -175,9 +177,6 @@ napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
   napi_set_named_property(env, result, "source", source);
   napi_set_named_property(env, result, "warnings", warnings_array);
   napi_set_named_property(env, result, "errors", errors_array);
-
-  // Free tokens after creating JS objects
-  herb_free_tokens(&tokens);
 
   return result;
 }

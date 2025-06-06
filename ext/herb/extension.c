@@ -11,7 +11,11 @@ static VALUE Herb_lex(VALUE self, VALUE source) {
 
   array_T* tokens = herb_lex(string);
 
-  return create_lex_result(tokens, source);
+  VALUE result = create_lex_result(tokens, source);
+
+  herb_free_tokens(&tokens);
+
+  return result;
 }
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
@@ -19,8 +23,11 @@ static VALUE Herb_lex_file(VALUE self, VALUE path) {
   array_T* tokens = herb_lex_file(file_path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
+  VALUE result = create_lex_result(tokens, source_value);
 
-  return create_lex_result(tokens, source_value);
+  herb_free_tokens(&tokens);
+
+  return result;
 }
 
 static VALUE Herb_parse(VALUE self, VALUE source) {
@@ -30,7 +37,11 @@ static VALUE Herb_parse(VALUE self, VALUE source) {
 
   herb_analyze_parse_tree(root, string);
 
-  return create_parse_result(root, source);
+  VALUE result = create_parse_result(root, source);
+
+  ast_node_free((AST_NODE_T*) root);
+
+  return result;
 }
 
 static VALUE Herb_parse_file(VALUE self, VALUE path) {
@@ -41,7 +52,11 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
 
-  return create_parse_result(root, source_value);
+  VALUE result = create_parse_result(root, source_value);
+
+  ast_node_free((AST_NODE_T*) root);
+
+  return result;
 }
 
 static VALUE Herb_lex_to_json(VALUE self, VALUE source) {
