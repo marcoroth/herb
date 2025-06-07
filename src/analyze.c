@@ -949,7 +949,7 @@ static size_t process_block_children(
 
       if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
 
-      free(temp_array);
+      array_free(&temp_array);
 
       index = new_index;
       continue;
@@ -1010,22 +1010,30 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
 
   if (node->type == AST_DOCUMENT_NODE) {
     AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
+    array_T* old_array = document_node->children;
     document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ELEMENT_NODE) {
     AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
+    array_T* old_array = element_node->body;
     element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_OPEN_TAG_NODE) {
     AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+    array_T* old_array = open_tag->children;
     open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
+    array_T* old_array = value_node->children;
     value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
+    array_free(&old_array);
   }
 
   herb_visit_child_nodes(node, transform_erb_nodes, data);
@@ -1045,6 +1053,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 
   herb_analyze_parse_errors(document, source);
 
+  array_free(&context->ruby_context_stack);
   free(context);
 }
 
@@ -1054,7 +1063,7 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
   pm_parser_t parser;
   pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), NULL);
 
-  pm_parse(&parser);
+  pm_node_t* root = pm_parse(&parser);
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
@@ -1068,4 +1077,8 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
       array_append(document->base.errors, parse_error);
     }
   }
+
+  pm_node_destroy(&parser, root);
+  pm_parser_free(&parser);
+  free(extracted_ruby);
 }
