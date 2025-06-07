@@ -111,6 +111,10 @@ Layout/EmptyLinesAroundModuleBody:
     - lib/herb/ast/nodes.rb
     - lib/herb/errors.rb
 
+Layout/EmptyLinesAroundClassBody:
+  Exclude:
+    - lib/herb/visitor.rb
+
 Layout/FirstHashElementIndentation:
   EnforcedStyle: consistent
 
