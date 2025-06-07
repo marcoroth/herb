@@ -11,64 +11,94 @@ module Herb
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void
 
-    alias visit_document_node visit_child_nodes
+    # : (Herb::AST::DocumentNode) -> void
+    def visit_document_node: (Herb::AST::DocumentNode) -> void
 
-    alias visit_literal_node visit_child_nodes
+    # : (Herb::AST::LiteralNode) -> void
+    def visit_literal_node: (Herb::AST::LiteralNode) -> void
 
-    alias visit_html_open_tag_node visit_child_nodes
+    # : (Herb::AST::HTMLOpenTagNode) -> void
+    def visit_html_open_tag_node: (Herb::AST::HTMLOpenTagNode) -> void
 
-    alias visit_html_close_tag_node visit_child_nodes
+    # : (Herb::AST::HTMLCloseTagNode) -> void
+    def visit_html_close_tag_node: (Herb::AST::HTMLCloseTagNode) -> void
 
-    alias visit_html_self_close_tag_node visit_child_nodes
+    # : (Herb::AST::HTMLSelfCloseTagNode) -> void
+    def visit_html_self_close_tag_node: (Herb::AST::HTMLSelfCloseTagNode) -> void
 
-    alias visit_html_element_node visit_child_nodes
+    # : (Herb::AST::HTMLElementNode) -> void
+    def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
-    alias visit_html_attribute_value_node visit_child_nodes
+    # : (Herb::AST::HTMLAttributeValueNode) -> void
+    def visit_html_attribute_value_node: (Herb::AST::HTMLAttributeValueNode) -> void
 
-    alias visit_html_attribute_name_node visit_child_nodes
+    # : (Herb::AST::HTMLAttributeNameNode) -> void
+    def visit_html_attribute_name_node: (Herb::AST::HTMLAttributeNameNode) -> void
 
-    alias visit_html_attribute_node visit_child_nodes
+    # : (Herb::AST::HTMLAttributeNode) -> void
+    def visit_html_attribute_node: (Herb::AST::HTMLAttributeNode) -> void
 
-    alias visit_html_text_node visit_child_nodes
+    # : (Herb::AST::HTMLTextNode) -> void
+    def visit_html_text_node: (Herb::AST::HTMLTextNode) -> void
 
-    alias visit_html_comment_node visit_child_nodes
+    # : (Herb::AST::HTMLCommentNode) -> void
+    def visit_html_comment_node: (Herb::AST::HTMLCommentNode) -> void
 
-    alias visit_html_doctype_node visit_child_nodes
+    # : (Herb::AST::HTMLDoctypeNode) -> void
+    def visit_html_doctype_node: (Herb::AST::HTMLDoctypeNode) -> void
 
-    alias visit_whitespace_node visit_child_nodes
+    # : (Herb::AST::WhitespaceNode) -> void
+    def visit_whitespace_node: (Herb::AST::WhitespaceNode) -> void
 
-    alias visit_erb_content_node visit_child_nodes
+    # : (Herb::AST::ERBContentNode) -> void
+    def visit_erb_content_node: (Herb::AST::ERBContentNode) -> void
 
-    alias visit_erb_end_node visit_child_nodes
+    # : (Herb::AST::ERBEndNode) -> void
+    def visit_erb_end_node: (Herb::AST::ERBEndNode) -> void
 
-    alias visit_erb_else_node visit_child_nodes
+    # : (Herb::AST::ERBElseNode) -> void
+    def visit_erb_else_node: (Herb::AST::ERBElseNode) -> void
 
-    alias visit_erb_if_node visit_child_nodes
+    # : (Herb::AST::ERBIfNode) -> void
+    def visit_erb_if_node: (Herb::AST::ERBIfNode) -> void
 
-    alias visit_erb_block_node visit_child_nodes
+    # : (Herb::AST::ERBBlockNode) -> void
+    def visit_erb_block_node: (Herb::AST::ERBBlockNode) -> void
 
-    alias visit_erb_when_node visit_child_nodes
+    # : (Herb::AST::ERBWhenNode) -> void
+    def visit_erb_when_node: (Herb::AST::ERBWhenNode) -> void
 
-    alias visit_erb_case_node visit_child_nodes
+    # : (Herb::AST::ERBCaseNode) -> void
+    def visit_erb_case_node: (Herb::AST::ERBCaseNode) -> void
 
-    alias visit_erb_case_match_node visit_child_nodes
+    # : (Herb::AST::ERBCaseMatchNode) -> void
+    def visit_erb_case_match_node: (Herb::AST::ERBCaseMatchNode) -> void
 
-    alias visit_erb_while_node visit_child_nodes
+    # : (Herb::AST::ERBWhileNode) -> void
+    def visit_erb_while_node: (Herb::AST::ERBWhileNode) -> void
 
-    alias visit_erb_until_node visit_child_nodes
+    # : (Herb::AST::ERBUntilNode) -> void
+    def visit_erb_until_node: (Herb::AST::ERBUntilNode) -> void
 
-    alias visit_erb_for_node visit_child_nodes
+    # : (Herb::AST::ERBForNode) -> void
+    def visit_erb_for_node: (Herb::AST::ERBForNode) -> void
 
-    alias visit_erb_rescue_node visit_child_nodes
+    # : (Herb::AST::ERBRescueNode) -> void
+    def visit_erb_rescue_node: (Herb::AST::ERBRescueNode) -> void
 
-    alias visit_erb_ensure_node visit_child_nodes
+    # : (Herb::AST::ERBEnsureNode) -> void
+    def visit_erb_ensure_node: (Herb::AST::ERBEnsureNode) -> void
 
-    alias visit_erb_begin_node visit_child_nodes
+    # : (Herb::AST::ERBBeginNode) -> void
+    def visit_erb_begin_node: (Herb::AST::ERBBeginNode) -> void
 
-    alias visit_erb_unless_node visit_child_nodes
+    # : (Herb::AST::ERBUnlessNode) -> void
+    def visit_erb_unless_node: (Herb::AST::ERBUnlessNode) -> void
 
-    alias visit_erb_yield_node visit_child_nodes
+    # : (Herb::AST::ERBYieldNode) -> void
+    def visit_erb_yield_node: (Herb::AST::ERBYieldNode) -> void
 
-    alias visit_erb_in_node visit_child_nodes
+    # : (Herb::AST::ERBInNode) -> void
+    def visit_erb_in_node: (Herb::AST::ERBInNode) -> void
   end
 end

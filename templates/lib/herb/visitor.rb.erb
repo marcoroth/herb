@@ -16,7 +16,11 @@ module Herb
     end
 
     <%- nodes.each do |node| -%>
-    alias visit_<%= node.human %> visit_child_nodes
+    #: (Herb::AST::<%= node.name %>) -> void
+    def visit_<%= node.human %>(node)
+      visit_child_nodes(node)
+    end
+
     <%- end -%>
   end
 end
