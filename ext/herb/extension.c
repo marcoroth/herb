@@ -1,10 +1,20 @@
 #include <ruby.h>
 
 #include "error_helpers.h"
+#include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
 
 #include "../../src/include/analyze.h"
+
+VALUE mHerb;
+VALUE cPosition;
+VALUE cLocation;
+VALUE cRange;
+VALUE cToken;
+VALUE cResult;
+VALUE cLexResult;
+VALUE cParseResult;
 
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
@@ -112,14 +122,21 @@ static VALUE Herb_version(VALUE self) {
 }
 
 void Init_herb(void) {
-  VALUE Herb = rb_define_module("Herb");
+  mHerb = rb_define_module("Herb");
+  cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
+  cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
+  cRange = rb_define_class_under(mHerb, "Range", rb_cObject);
+  cToken = rb_define_class_under(mHerb, "Token", rb_cObject);
+  cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
+  cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
+  cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
 
-  rb_define_singleton_method(Herb, "parse", Herb_parse, 1);
-  rb_define_singleton_method(Herb, "lex", Herb_lex, 1);
-  rb_define_singleton_method(Herb, "parse_file", Herb_parse_file, 1);
-  rb_define_singleton_method(Herb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(Herb, "lex_to_json", Herb_lex_to_json, 1);
-  rb_define_singleton_method(Herb, "extract_ruby", Herb_extract_ruby, 1);
-  rb_define_singleton_method(Herb, "extract_html", Herb_extract_html, 1);
-  rb_define_singleton_method(Herb, "version", Herb_version, 0);
+  rb_define_singleton_method(mHerb, "parse", Herb_parse, 1);
+  rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
+  rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
+  rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
+  rb_define_singleton_method(mHerb, "lex_to_json", Herb_lex_to_json, 1);
+  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
+  rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
+  rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }
