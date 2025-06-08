@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "../src"
-import { Node, Visitor } from "../src/index.js"
-import type { HTMLTextNode } from "../src/index.js"
+import { Herb, Visitor } from "../src"
+import type { Node, HTMLTextNode } from "../src/index.js"
 
 class RecordingVisitor extends Visitor {
   visited: string[] = []

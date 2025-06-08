@@ -1,13 +1,14 @@
 import { describe, test, expect } from "vitest"
 
 import {
-  Node,
   Visitor,
   DocumentNode,
   HTMLElementNode,
   HTMLTextNode,
   ERBContentNode,
 } from "../src/index.js"
+
+import type { Node } from "../src/index.js"
 
 import { Position } from "../src/position.js"
 import { Location } from "../src/location.js"
@@ -21,23 +22,21 @@ class RecordingVisitor extends Visitor {
   }
 }
 
-function loc() {
-  const pos = new Position(1, 0)
-  return new Location(pos, pos)
-}
-
 describe("Visitor", () => {
   test("traverses nodes", () => {
+    const position = new Position(1, 0)
+    const location = new Location(position, position)
+
     const text = new HTMLTextNode({
       type: "AST_HTML_TEXT_NODE",
-      location: loc(),
+      location,
       errors: [],
       content: "Hello",
     })
 
     const erb = new ERBContentNode({
       type: "AST_ERB_CONTENT_NODE",
-      location: loc(),
+      location,
       errors: [],
       tag_opening: null,
       content: null,
@@ -48,7 +47,7 @@ describe("Visitor", () => {
 
     const element = new HTMLElementNode({
       type: "AST_HTML_ELEMENT_NODE",
-      location: loc(),
+      location,
       errors: [],
       open_tag: null,
       tag_name: null,
@@ -59,7 +58,7 @@ describe("Visitor", () => {
 
     const doc = new DocumentNode({
       type: "AST_DOCUMENT_NODE",
-      location: loc(),
+      location,
       errors: [],
       children: [element],
     })
