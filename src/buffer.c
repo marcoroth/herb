@@ -8,7 +8,7 @@
 #include "include/util.h"
 
 bool buffer_init(buffer_T* buffer) {
-  buffer->capacity = 1024;
+  buffer->capacity = 8192;
   buffer->length = 0;
   buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
 

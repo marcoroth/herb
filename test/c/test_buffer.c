@@ -6,7 +6,7 @@ TEST(test_buffer_init)
   buffer_T buffer;
 
   ck_assert(buffer_init(&buffer));
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 8192);
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_ptr_nonnull(buffer.value);
   ck_assert_str_eq(buffer.value, "");
@@ -63,7 +63,7 @@ TEST(test_buffer_increase_capacity)
   buffer_T buffer = buffer_new();
 
   const size_t initial_capacity = buffer.capacity;
-  ck_assert_int_ge(initial_capacity, 1024); // Ensure initial capacity is at least 1024
+  ck_assert_int_ge(initial_capacity, 8192); // Ensure initial capacity is at least 8192
 
   // Increase capacity by a small amount, should NOT trigger reallocation
   ck_assert(buffer_increase_capacity(&buffer, 100));
@@ -80,8 +80,8 @@ END
 TEST(test_buffer_reserve)
   buffer_T buffer = buffer_new();
 
-  ck_assert(buffer_reserve(&buffer, 2048)); // Ensure space for 4096 bytes
-  ck_assert_int_eq(buffer.capacity, 4096);
+  ck_assert(buffer_reserve(&buffer, 16384)); // Ensure space for 16384 bytes
+  ck_assert_int_eq(buffer.capacity, 32768);
 
   buffer_free(&buffer);
 END
@@ -97,7 +97,7 @@ TEST(test_buffer_clear)
 
   ck_assert_str_eq(buffer.value, "");
   ck_assert_int_eq(buffer.length, 0);
-  ck_assert_int_eq(buffer.capacity, 1024); // Capacity should remain unchanged
+  ck_assert_int_eq(buffer.capacity, 8192); // Capacity should remain unchanged
 
   buffer_free(&buffer);
 END
@@ -108,7 +108,7 @@ TEST(test_buffer_free)
 
   buffer_append(&buffer, "Test");
   ck_assert_int_eq(buffer.length, 4);
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 8192);
   buffer_free(&buffer);
 
   ck_assert_ptr_null(buffer.value);
