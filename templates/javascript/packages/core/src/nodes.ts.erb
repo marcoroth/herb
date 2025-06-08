@@ -1,9 +1,10 @@
 import { Node } from "./node.js"
-import { Location, SerializedLocation } from "./location.js"
+import { Location } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
-import { HerbError, SerializedHerbError } from "./error.js"
+import { HerbError } from "./error.js"
 import { convertToUTF8 } from "./util.js"
 
+import type { Visitor } from "./visitor.js"
 import type { SerializedNode, BaseNodeProps } from "./node.js"
 
 export function fromSerializedNode(node: SerializedNode): Node {
@@ -58,7 +59,11 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- when Herb::Template::NodeField -%>
   <%= field.name %>: Node | null;
   <%- when Herb::Template::ArrayField -%>
+  <%- if field.specific_kind == "Node" -%>
   <%= field.name %>: Node[];
+  <%- else -%>
+  <%= field.name %>: any[];
+  <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
   <%- else -%>
@@ -79,7 +84,11 @@ export class <%= node.name %> extends Node {
   <%- when Herb::Template::NodeField -%>
   readonly <%= field.name %>: Node | null;
   <%- when Herb::Template::ArrayField -%>
+  <%- if field.specific_kind == "Node" -%>
   readonly <%= field.name %>: Node[];
+  <%- else -%>
+  readonly <%= field.name %>: any[];
+  <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
   <%- else -%>
@@ -135,7 +144,11 @@ export class <%= node.name %> extends Node {
     <%- end -%>
   }
 
-  childNodes(): Node[] {
+  accept(visitor: Visitor): void {
+    visitor.visit<%= node.name %>(this)
+  }
+
+  childNodes(): (Node | null | undefined)[] {
     return [
       <%- node.fields.each do |field| -%>
       <%- case field -%>
@@ -145,7 +158,11 @@ export class <%= node.name %> extends Node {
       ...this.<%= field.name %>,
       <%- end -%>
       <%- end -%>
-    ].filter(node => node !== null && node !== undefined) as Node[];
+    ];
+  }
+
+  compactChildNodes(): Node[] {
+    return this.childNodes().filter(node => node !== null && node !== undefined)
   }
 
   recursiveErrors(): HerbError[] {

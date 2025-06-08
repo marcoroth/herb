@@ -1,6 +1,7 @@
 import { Location, SerializedLocation } from "./location.js"
 import { HerbError, SerializedHerbError } from "./error.js"
 import { NodeType, SerializedNodeType, fromSerializedNode } from "./nodes.js"
+import type { Visitor } from "./visitor.js"
 
 export interface SerializedNode {
   type: SerializedNodeType
@@ -43,7 +44,9 @@ export abstract class Node implements BaseNodeProps {
 
   abstract treeInspect(indent?: number): string
   abstract recursiveErrors(): HerbError[]
-  abstract childNodes(): Node[]
+  abstract accept(visitor: Visitor): void
+  abstract childNodes(): (Node | null | undefined)[]
+  abstract compactChildNodes(): Node[]
 
   protected inspectArray(
     array: (Node | HerbError)[] | null | undefined,

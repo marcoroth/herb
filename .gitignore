@@ -87,6 +87,7 @@ ext/herb/nodes.c
 ext/herb/nodes.h
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/nodes.ts
+javascript/packages/core/src/visitor.ts
 javascript/packages/node/extension/error_helpers.cpp
 javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
