@@ -56,7 +56,7 @@ module LibHerb
 
         assert_equal "#{string}#{string}", buffer.read
         assert_equal 1280, buffer.length
-        assert_equal 16384, buffer.capacity # now it doubled
+        assert_equal 16_384, buffer.capacity # now it doubled
       end
     end
 
