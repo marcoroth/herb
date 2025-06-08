@@ -36,10 +36,13 @@ module Herb
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
-      # : () -> Array[Herb::AST::Node]
-      def child_nodes: () -> Array[Herb::AST::Node]
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
 
       alias deconstruct child_nodes
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
     end
   end
 end

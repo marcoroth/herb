@@ -12,7 +12,7 @@ module Herb
 
     #: (Herb::AST::Node) -> void
     def visit_child_nodes(node)
-      node.child_nodes.each { |node| node.accept(self) }
+      node.compact_child_nodes.each { |node| node.accept(self) }
     end
 
     <%- nodes.each do |node| -%>

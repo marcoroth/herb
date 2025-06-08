@@ -45,6 +45,11 @@ module Herb
         }.compact.join(", ") %>]
       end
 
+      #: () -> Array[Herb::AST::Node]
+      def compact_child_nodes
+        child_nodes.compact
+      end
+
       #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")

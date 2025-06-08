@@ -38,4 +38,20 @@ class VisitorTest < Minitest::Spec
 
     assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
   end
+
+  test "document with nil in child_nodes" do
+    visitor = VisitedNodesVisitor.new
+
+    result = Herb.parse(%(<p>Hello))
+    result.visit(visitor)
+
+    expected_nodes = [
+      "Herb::AST::DocumentNode",
+      "Herb::AST::HTMLElementNode",
+      "Herb::AST::HTMLOpenTagNode",
+      "Herb::AST::HTMLTextNode"
+    ]
+
+    assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
+  end
 end

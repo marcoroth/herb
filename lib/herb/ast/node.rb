@@ -81,12 +81,17 @@ module Herb
         raise NoMethodError, "undefined method `accept' for #{inspect}"
       end
 
-      #: () -> Array[Herb::AST::Node]
+      #: () -> Array[Herb::AST::Node?]
       def child_nodes
         raise NoMethodError, "undefined method `child_nodes' for #{inspect}"
       end
 
       alias deconstruct child_nodes
+
+      #: () -> Array[Herb::AST::Node]
+      def compact_child_nodes
+        child_nodes.compact
+      end
     end
   end
 end
