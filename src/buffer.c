@@ -10,7 +10,7 @@
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
-  buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
+  buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -55,27 +55,38 @@ size_t buffer_sizeof(void) {
  *         false if reallocation failed
  */
 bool buffer_increase_capacity(buffer_T* buffer, const size_t required_length) {
-  if (SIZE_MAX - buffer->length < required_length) {
+  if (required_length + 1 >= SIZE_MAX) {
     fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
-    return false;
+    exit(1);
   }
 
-  const size_t required_capacity = buffer->length + required_length;
+  const size_t required_capacity = buffer->capacity + required_length;
 
-  if (buffer->capacity >= required_capacity) { return true; }
+  if (required_capacity + 1 >= SIZE_MAX) {
+    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+    exit(1);
+  }
 
-  size_t new_capacity;
-  if (required_capacity > SIZE_MAX / 2) {
+  size_t new_capacity = required_capacity * 2;
+
+  if (new_capacity + 1 >= SIZE_MAX) {
+    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+    exit(1);
+  } else {
     new_capacity = required_capacity + 1024;
 
-    if (new_capacity < required_capacity) { new_capacity = SIZE_MAX; }
-  } else {
-    new_capacity = required_capacity * 2;
+    if (new_capacity + 1 >= SIZE_MAX) {
+      fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+      exit(1);
+    }
   }
 
-  char* new_value = safe_realloc(buffer->value, new_capacity);
+  char* new_value = nullable_safe_realloc(buffer->value, new_capacity + 1);
 
-  if (unlikely(new_value == NULL)) { return false; }
+  if (unlikely(new_value == NULL)) {
+    fprintf(stderr, "Error: Failed to increase buffer capacity to %zu.\n", new_capacity);
+    exit(1);
+  }
 
   buffer->value = new_value;
   buffer->capacity = new_capacity;
