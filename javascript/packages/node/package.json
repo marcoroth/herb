@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/node",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -47,7 +47,7 @@
     "host": "https://github.com/marcoroth/herb/releases/download/"
   },
   "dependencies": {
-    "@herb-tools/core": "0.1.1",
+    "@herb-tools/core": "0.2.0",
     "@mapbox/node-pre-gyp": "^2.0.0",
     "node-addon-api": "^5.1.0",
     "node-pre-gyp-github": "^2.0.0"
