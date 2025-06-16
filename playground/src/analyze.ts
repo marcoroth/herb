@@ -1,4 +1,5 @@
 import type { HerbBackend, ParseResult, LexResult } from "@herb-tools/core"
+import { format as formatSource } from "@herb-tools/formatter"
 
 async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   try {
@@ -45,6 +46,9 @@ export async function analyze(herb: HerbBackend, source: string) {
   const version = await safeExecute<string>(
     new Promise((resolve) => resolve(herb.version)),
   )
+  const formatted = await safeExecute<string>(
+    new Promise((resolve) => resolve(formatSource(herb, source))),
+  )
 
   const endTime = performance.now()
 
@@ -56,6 +60,7 @@ export async function analyze(herb: HerbBackend, source: string) {
     lex,
     ruby,
     html,
+    formatted,
     version,
     duration: endTime - startTime,
   }

@@ -51,6 +51,7 @@ export default class extends Controller {
     "rubyViewer",
     "htmlViewer",
     "lexViewer",
+    "formatViewer",
     "fullViewer",
     "viewerButton",
     "version",
@@ -343,6 +344,13 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasFormatViewerTarget) {
+      this.formatViewerTarget.classList.add("language-html")
+      this.formatViewerTarget.textContent = result.formatted
+
+      // Prism.highlightElement(this.formatViewerTarget)
     }
 
     if (this.hasRubyViewerTarget) {

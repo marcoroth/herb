@@ -1,0 +1,45 @@
+{
+  "name": "@herb-tools/formatter",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/formatter%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/formatter"
+  },
+  "main": "./dist/herb-formatter.cjs",
+  "module": "./dist/herb-formatter.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "herb-formatter": "bin/herb-formatter"
+  },
+  "scripts": {
+    "build": "yarn clean && rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/herb-formatter.esm.js",
+      "require": "./dist/herb-formatter.cjs",
+      "default": "./dist/herb-formatter.esm.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.2.0"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/",
+    "bin/"
+  ]
+}

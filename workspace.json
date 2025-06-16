@@ -4,6 +4,7 @@
     "@herb-tools/browser": "javascript/packages/browser",
     "@herb-tools/core": "javascript/packages/core",
     "@herb-tools/node": "javascript/packages/node",
+    "@herb-tools/formatter": "javascript/packages/formatter",
     "docs": "./docs",
     "playground": "./playground"
   }

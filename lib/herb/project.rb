@@ -117,7 +117,7 @@ module Herb
             stderr_file = Tempfile.new("stderr")
             ast_file = Tempfile.new("ast")
 
-            Timeout.timeout(1) do
+            Timeout.timeout(10) do
               pid = Process.fork do
                 $stdout.reopen(stdout_file.path, "w")
                 $stderr.reopen(stderr_file.path, "w")
@@ -188,7 +188,8 @@ module Herb
             stderr_file.unlink
             ast_file.close
             ast_file.unlink
-          rescue Timeout::Error
+          rescue Timeout::Error => e
+            binding.irb
             message = "⏱️ Parsing #{file_path} timed out after 1 second"
             log.puts message
 
