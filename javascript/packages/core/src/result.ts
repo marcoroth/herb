@@ -1,7 +1,7 @@
 import { HerbError } from "./error.js"
 import { HerbWarning } from "./warning.js"
 
-export class Result {
+export abstract class Result {
   readonly source: string
   readonly warnings: HerbWarning[]
   readonly errors: HerbError[]
@@ -16,11 +16,19 @@ export class Result {
     this.errors = errors || []
   }
 
-  success(): boolean {
-    return false
+  /**
+   * Determines if the parsing was successful.
+   * @returns `true` if there are no errors, otherwise `false`.
+   */
+  get successful(): boolean {
+    return this.errors.length === 0
   }
 
-  failed(): boolean {
-    return true
+  /**
+   * Determines if the parsing failed.
+   * @returns `true` if there are errors, otherwise `false`.
+   */
+  get failed(): boolean {
+    return this.errors.length > 0
   }
 }
