@@ -7,6 +7,13 @@ describe("@herb-tools/formatter", () => {
     await Herb.load();
   });
 
+  test("text content", () => {
+    const formatter = new HerbFormatter(Herb);
+    const source = 'Hello';
+    const result = formatter.format(source);
+    expect(result).toEqual('Hello');
+  })
+
   test("formats simple HTML with ERB content", () => {
     const formatter = new HerbFormatter(Herb);
     const source = '<div><%= "Hello" %></div>';

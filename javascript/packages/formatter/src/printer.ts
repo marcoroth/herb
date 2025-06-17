@@ -1,4 +1,5 @@
 import {
+  Node,
   DocumentNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
@@ -31,20 +32,20 @@ import {
   ERBInNode,
 } from "@herb-tools/core"
 
+import type { FormatOptions } from "./options"
+
 /**
- * FormatterPrinter is responsible for traversing the Herb AST
+ * Printer is responsible for traversing the Herb AST
  * and emitting a formatted string with proper indentation,
  * line breaks for long lines, and wrapping HTML attributes.
  */
-export class FormatterPrinter {
-  private indentWidth: number
-  private maxLineLength: number
+export class Printer {
+  private options: Required<FormatOptions>
   private source: string
 
-  constructor(source: string, indentWidth: number, maxLineLength: number) {
+  constructor(source: string, options: Required<FormatOptions>) {
     this.source = source
-    this.indentWidth = indentWidth
-    this.maxLineLength = maxLineLength
+    this.options = options
   }
 
   print(node: DocumentNode): string {
@@ -57,7 +58,9 @@ export class FormatterPrinter {
     return lines.filter(Boolean).join("\n")
   }
 
-  private printNode(node: any, indentLevel: number): string {
+  private printNode(node: Node, indentLevel: number): string {
+    console.log("printNode", node.type)
+
     if (node instanceof HTMLElementNode) {
       return this.printElement(node, indentLevel)
     } else if (node instanceof HTMLOpenTagNode) {
@@ -153,7 +156,7 @@ export class FormatterPrinter {
     if (
       attributes.length === 1 &&
       !hasEmptyValue &&
-      inline.length + indent.length <= this.maxLineLength
+      inline.length + indent.length <= this.options.maxLineLength
     ) {
       if (children.length === 0) {
         return (
@@ -205,7 +208,7 @@ export class FormatterPrinter {
     const attributes = node.children.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
     const inline = this.renderInlineOpen(tagName, attributes, node.is_void)
 
-    if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
+    if (attributes.length === 0 || inline.length + indent.length <= this.options.maxLineLength) {
       return indent + inline
     }
 
@@ -228,7 +231,7 @@ export class FormatterPrinter {
     const attributes = node.attributes.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
     const inline = this.renderInlineOpen(tagName, attributes, true)
 
-    if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
+    if (attributes.length === 0 || inline.length + indent.length <= this.options.maxLineLength) {
       return indent + inline
     }
 
@@ -257,9 +260,10 @@ export class FormatterPrinter {
   private printText(node: HTMLTextNode, indentLevel: number): string {
     const indent = this.indent(indentLevel)
     let text = node.content.trim()
+    console.log("printText", text)
     if (!text) return ""
 
-    const wrapWidth = this.maxLineLength - indent.length
+    const wrapWidth = this.options.maxLineLength - indent.length
     const words = text.split(/\s+/)
     const lines: string[] = []
 
@@ -286,6 +290,7 @@ export class FormatterPrinter {
     let inner: string
 
     if (node.comment_start && node.comment_end) {
+      // TODO: use .value
       const [_, startIndex] = node.comment_start.range.toArray()
       const [endIndex] = node.comment_end.range.toArray()
       inner = this.source.slice(startIndex, endIndex)
@@ -303,6 +308,7 @@ export class FormatterPrinter {
     let innerDoctype: string
 
     if (node.tag_opening && node.tag_closing) {
+      // TODO: use .value
       const [, openingEnd] = node.tag_opening.range.toArray()
       const [closingStart] = node.tag_closing.range.toArray()
       innerDoctype = this.source.slice(openingEnd, closingStart)
@@ -469,7 +475,7 @@ export class FormatterPrinter {
     return lines.join("\n")
   }
 
-  private printERBGeneric(node: any, indentLevel: number): string {
+  private printERBGeneric(node: Node, indentLevel: number): string {
     const indent = this.indent(indentLevel)
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""
@@ -524,7 +530,7 @@ export class FormatterPrinter {
     return name + equals + value
   }
 
-  private raw(node: any, indentLevel: number): string {
+  private raw(node: Node, indentLevel: number): string {
     if (node.tag_opening && node.tag_closing) {
       return this.printNode(node, indentLevel)
     }
@@ -533,6 +539,6 @@ export class FormatterPrinter {
   }
 
   private indent(level: number): string {
-    return " ".repeat(level * this.indentWidth)
+    return " ".repeat(level * this.options.indentWidth)
   }
 }

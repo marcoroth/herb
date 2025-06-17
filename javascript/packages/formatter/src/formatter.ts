@@ -1,39 +1,37 @@
-import type { HerbBackend } from "@herb-tools/core"
-import { FormatterPrinter } from "./printer"
-
-import type { FormatOptions } from "./options"
+import { Printer } from "./printer"
 import { resolveFormatOptions } from "./options"
 
+import type { FormatOptions } from "./options"
+import type { HerbBackend, ParseResult } from "@herb-tools/core"
 /**
- * HerbFormatter uses HerbBackend to parse the source and then
+ * Formatter uses a Herb Backend to parse the source and then
  * formats the resulting AST into a well-indented, wrapped string.
  */
-export class HerbFormatter {
-  constructor(private herb: HerbBackend) {}
+export class Formatter {
+  private herb: HerbBackend
+  private options: Required<FormatOptions>
 
-  format(source: string, options: FormatOptions = {}): string {
-    this.herb.ensureBackend()
+  constructor(herb: HerbBackend, options: FormatOptions = {}) {
+    this.herb = herb
+    this.options = resolveFormatOptions(options)
+  }
 
-    const result = this.herb.parse(source)
+  format(source: string): string {
+    const result = this.parse(source)
+
     if (result.failed()) return source
 
-    const { indentWidth, maxLineLength } = resolveFormatOptions(options)
-    const printer = new FormatterPrinter(
+    const printer = new Printer(
       result.source,
-      indentWidth,
-      maxLineLength,
+      this.options,
     )
 
     return printer.print(result.value)
   }
-}
 
-export function format(
-  herb: HerbBackend,
-  source: string,
-  options: FormatOptions = {},
-): string {
-  const formatter = new HerbFormatter(herb)
+  private parse(source: string): ParseResult {
+    this.herb.ensureBackend()
 
-  return formatter.format(source, options)
+    return this.herb.parse(source)
+  }
 }
