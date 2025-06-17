@@ -119,3 +119,6 @@ tidy:
 
 wasm:
 	cd wasm && make
+
+wasi:
+	cd wasi && make

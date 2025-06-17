@@ -123,6 +123,16 @@ irb(main):001> Herb.parse("<div></div>")
 # => #<Herb::ParseResult:0x0000000 ... >
 ```
 
+### Building for ruby.wasm
+
+To compile Herb for a WASI environment you can use the `wasi` target in the
+`Makefile`. This builds a static library using `clang` with the `wasm32-wasi`
+target which can be linked against `ruby.wasm`.
+
+```bash
+make wasi
+```
+
 ### Test
 
 Builds the test suite from files in `test/` and creates the `run_herb_tests` executable to run the tests:
