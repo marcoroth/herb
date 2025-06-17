@@ -78,6 +78,12 @@ endif
 
 all: prism $(exec) $(lib_name) $(static_lib_name) test wasm
 
+
+asan_flags = -fsanitize=address -fno-omit-frame-pointer -g -O1
+
+herb_asan: prism $(objects)
+	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) $(asan_flags) -o $(exec)_asan
+
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
 
