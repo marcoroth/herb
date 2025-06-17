@@ -1,9 +1,9 @@
 import { Result } from "./result.js"
 import { TokenList } from "./token-list.js"
-import { HerbError } from "./error.js"
+import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
 
-import type { SerializedHerbError } from "./error.js"
+import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedTokenList } from "./token-list.js"
 

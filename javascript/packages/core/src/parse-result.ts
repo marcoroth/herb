@@ -1,10 +1,10 @@
 import { Result } from "./result.js"
 
 import { DocumentNode } from "./nodes.js"
-import { HerbError } from "./error.js"
+import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
 
-import type { SerializedHerbError } from "./error.js"
+import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedDocumentNode } from "./nodes.js"
 

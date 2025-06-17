@@ -1,6 +1,5 @@
 import { Location, SerializedLocation } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
-import { HerbError, SerializedHerbError } from "./error.js"
 
 type HerbDiagnostic = {
   line: number
@@ -18,15 +17,40 @@ export type HerbErrorType =
 
 export type SerializedErrorType = string
 
-export function fromSerializedError(error: SerializedHerbError): HerbError {
-  switch (error.type) {
-    <%- errors.each do |error| -%>
-    case "<%= error.type %>": return <%= error.name %>.from(error as Serialized<%= error.name %>);
-    <%- end -%>
+export interface SerializedHerbError {
+  type: string
+  message: string
+  location: SerializedLocation
+}
 
-    default:
-      throw new Error(`Unknown node type: ${error.type}`);
+export abstract class HerbError {
+  readonly type: string
+  readonly message: string
+  readonly location: Location
+
+  static from(error: SerializedHerbError): HerbError {
+    return fromSerializedError(error)
   }
+
+  constructor(type: string, message: string, location: Location) {
+    this.type = type
+    this.message = message
+    this.location = location
+  }
+
+  toJSON(): SerializedHerbError {
+    return {
+      type: this.type,
+      message: this.message,
+      location: this.location.toJSON(),
+    }
+  }
+
+  inspect(): string {
+    return this.treeInspect(0)
+  }
+
+  abstract treeInspect(indent?: number): string
 }
 
 <%- errors.each do |error| -%>
@@ -183,3 +207,14 @@ export class <%= error.name %> extends HerbError {
 }
 
 <%- end -%>
+
+export function fromSerializedError(error: SerializedHerbError): HerbError {
+  switch (error.type) {
+    <%- errors.each do |error| -%>
+    case "<%= error.type %>": return <%= error.name %>.from(error as Serialized<%= error.name %>);
+    <%- end -%>
+
+    default:
+      throw new Error(`Unknown node type: ${error.type}`);
+  }
+}

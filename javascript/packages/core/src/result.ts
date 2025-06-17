@@ -1,4 +1,4 @@
-import { HerbError } from "./error.js"
+import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
 
 export abstract class Result {
