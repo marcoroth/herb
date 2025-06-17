@@ -21,9 +21,6 @@ connection.onInitialize(async (params: InitializeParams) => {
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
-      completionProvider: { resolveProvider: true },
-      codeActionProvider: true,
-      definitionProvider: true,
     },
   }
 
@@ -52,6 +49,7 @@ connection.onInitialized(() => {
 
   connection.client.register(DidChangeWatchedFilesNotification.type, {
     watchers: [
+      { globPattern: `**/**/*.html.erb` },
       { globPattern: `**/**/*.{ts,js}` },
       { globPattern: `**/**/.herb-lsp/config.json` },
     ],
@@ -90,21 +88,6 @@ connection.onDidChangeWatchedFiles((params) => {
       })
     }
   })
-})
-
-connection.onDefinition((params) => service.definitions.onDefinition(params))
-connection.onCodeAction((params) => service.codeActions.onCodeAction(params))
-
-connection.onCompletion((textDocumentPosition) => {
-  const document = service.documentService.get(textDocumentPosition.textDocument.uri)
-
-  if (!document) return null
-
-  return service.htmlLanguageService.doComplete(
-    document,
-    textDocumentPosition.position,
-    service.htmlLanguageService.parseHTMLDocument(document),
-  )
 })
 
 // Listen on the connection

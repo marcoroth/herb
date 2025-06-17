@@ -1,4 +1,4 @@
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node-wasm"
 import { Connection } from "vscode-languageserver/node"
 
 export class Project {
@@ -12,10 +12,9 @@ export class Project {
 
   async initialize() {
     await Herb.load()
-
-    const result = Herb.parse("content")
-    this.connection.console.log(result.inspect())
   }
 
-  async refresh() {}
+  async refresh() {
+    // TODO
+  }
 }

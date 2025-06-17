@@ -38,8 +38,8 @@ export class Settings {
     )
   }
 
-  get projectPath() {
-    return this.params.rootUri || ""
+  get projectPath(): string {
+    return this.params.workspaceFolders?.at(0)?.uri || ""
   }
 
   getDocumentSettings(resource: string): Thenable<HerbSettings> {
@@ -54,6 +54,7 @@ export class Settings {
         scopeUri: resource,
         section: "languageServerHerb",
       })
+
       this.documentSettings.set(resource, result)
     }
 

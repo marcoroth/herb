@@ -1,0 +1,44 @@
+{
+  "name": "@herb-tools/node-wasm",
+  "version": "0.2.0",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/node-wasm%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/node-wasm"
+  },
+  "main": "./dist/herb-node-wasm.esm.js",
+  "module": "./dist/herb-node-wasm.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && yarn build:wasm && yarn build:javascript",
+    "build:wasm": "cd ../../../wasm && make all && cd -",
+    "build:javascript": "rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist && rimraf build",
+    "test": "vitest run",
+    "test:ui": "vitest --watch --ui",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/herb-node-wasm.esm.js",
+      "default": "./dist/herb-node-wasm.esm.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.2.0"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/",
+    "build/"
+  ]
+}

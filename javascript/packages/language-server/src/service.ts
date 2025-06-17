@@ -1,24 +1,16 @@
 import { Connection, InitializeParams } from "vscode-languageserver/node"
-import { getLanguageService, LanguageService } from "vscode-html-languageservice"
 
 import { Settings } from "./settings"
 import { DocumentService } from "./document_service"
 import { Diagnostics } from "./diagnostics"
-import { Definitions } from "./definitions"
-import { Commands } from "./commands"
-import { CodeActions } from "./code_actions"
 import { Config } from "./config"
 import { Project } from "./project"
 
 export class Service {
   connection: Connection
   settings: Settings
-  htmlLanguageService: LanguageService
   diagnostics: Diagnostics
-  definitions: Definitions
-  commands: Commands
   documentService: DocumentService
-  codeActions: CodeActions
   project: Project
   config?: Config
 
@@ -27,14 +19,7 @@ export class Service {
     this.settings = new Settings(params, this.connection)
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
-    this.codeActions = new CodeActions(this.documentService, this.project)
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.project, this)
-    this.definitions = new Definitions(this.documentService)
-    this.commands = new Commands(this.project, this.connection)
-
-    this.htmlLanguageService = getLanguageService({
-      customDataProviders: [],
-    })
+    this.diagnostics = new Diagnostics(this.connection, this.documentService)
   }
 
   async init() {
