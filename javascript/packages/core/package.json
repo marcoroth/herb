@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/core",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -30,16 +30,7 @@
     }
   },
   "dependencies": {},
-  "devDependencies": {
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-typescript": "^12.1.2",
-    "rimraf": "^6.0.1",
-    "rollup": "^4.35.0",
-    "tslib": "^2.8.1",
-    "typescript": "^5.8.2",
-    "vitest": "^3.0.0"
-  },
+  "devDependencies": {},
   "files": [
     "package.json",
     "README.md",

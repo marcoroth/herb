@@ -1,0 +1,20 @@
+# Generated from lib/herb/result.rb with RBS::Inline
+
+module Herb
+  class Result
+    attr_reader source: String
+
+    attr_reader warnings: Array[Herb::Warnings::Warning]
+
+    attr_reader errors: Array[Herb::Errors::Error]
+
+    # : (String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+    def initialize: (String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+
+    # : () -> bool
+    def success?: () -> bool
+
+    # : () -> bool
+    def failed?: () -> bool
+  end
+end

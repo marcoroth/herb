@@ -1,16 +1,21 @@
 # frozen_string_literal: true
+# typed: true
 
 module Herb
   module AST
     class Node
-      attr_reader :type, :location, :errors
+      attr_reader :type #: String
+      attr_reader :location #: Location
+      attr_reader :errors #: Array[Herb::Errors::Error]
 
+      #: (String, Location, Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
         @errors = errors
       end
 
+      #: () -> serialized_node
       def to_hash
         {
           type: type,
@@ -19,20 +24,29 @@ module Herb
         }
       end
 
+      #: () -> String
+      def class_name
+        self.class.name || "Node"
+      end
+
+      #: () -> String
       def node_name
-        self.class.name.split("::").last
+        class_name.split("::").last || "Node"
       end
 
-      def to_json(*args)
-        to_hash.to_json(*args)
+      #: (?untyped) -> String
+      def to_json(state = nil)
+        to_hash.to_json(state)
       end
 
+      #: (?prefix: String) -> String
       def inspect_errors(prefix: "    ")
         return "" if errors.empty?
 
         "├── errors: #{inspect_array(errors, item_name: "error", prefix: prefix)}"
       end
 
+      #: (Array[Herb::AST::Node|Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
       def inspect_array(array, item_name: "item", prefix: "    ")
         output = +""
 
@@ -55,6 +69,28 @@ module Herb
         end
 
         output
+      end
+
+      #: (?Integer) -> String
+      def tree_inspect(_indent = 0)
+        raise NotImplementedError
+      end
+
+      #: (Visitor) -> void
+      def accept(_visitor)
+        raise NoMethodError, "undefined method `accept' for #{inspect}"
+      end
+
+      #: () -> Array[Herb::AST::Node?]
+      def child_nodes
+        raise NoMethodError, "undefined method `child_nodes' for #{inspect}"
+      end
+
+      alias deconstruct child_nodes
+
+      #: () -> Array[Herb::AST::Node]
+      def compact_child_nodes
+        child_nodes.compact
       end
     end
   end

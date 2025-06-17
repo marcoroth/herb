@@ -1,0 +1,6 @@
+# Generated from lib/herb/ast.rb with RBS::Inline
+
+module Herb
+  module AST
+  end
+end

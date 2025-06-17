@@ -1,27 +1,127 @@
-import { Node } from "./node.js"
-import { Location, SerializedLocation } from "./location.js"
+import { Location } from "./location.js"
 import { Token, SerializedToken } from "./token.js"
-import { HerbError, SerializedHerbError } from "./error.js"
+import { HerbError } from "./errors.js"
 import { convertToUTF8 } from "./util.js"
 
-import type { SerializedNode, BaseNodeProps } from "./node.js"
+import type { SerializedLocation } from "./location.js"
+import type { SerializedHerbError } from "./errors.js"
+import type { Visitor } from "./visitor.js"
 
-export function fromSerializedNode(node: SerializedNode): Node {
-  switch (node.type) {
-    <%- nodes.each do |node| -%>
-    case "<%= node.type %>": return <%= node.name %>.from(node as Serialized<%= node.name %>);
-    <%- end -%>
-
-    default:
-      throw new Error(`Unknown node type: ${node.type}`);
-  }
-}
 export type SerializedNodeType = string
+
+export interface SerializedNode {
+  type: SerializedNodeType
+  location: SerializedLocation
+  errors: SerializedHerbError[]
+}
+
+export interface BaseNodeProps {
+  type: NodeType
+  location: Location
+  errors: HerbError[]
+}
 
 export type NodeType =
   <%- nodes.each_with_index.map do |node, index| -%>
   | "<%= node.type %>"
   <%- end -%>
+
+export abstract class Node implements BaseNodeProps {
+  readonly type: NodeType
+  readonly location: Location
+  readonly errors: HerbError[]
+
+  static from(node: SerializedNode): Node {
+    return fromSerializedNode(node)
+  }
+
+  constructor(type: NodeType, location: Location, errors: HerbError[]) {
+    this.type = type
+    this.location = location
+    this.errors = errors
+  }
+
+  toJSON(): SerializedNode {
+    return {
+      type: this.type,
+      location: this.location.toJSON(),
+      errors: this.errors,
+    }
+  }
+
+  inspect(): string {
+    return this.treeInspect(0)
+  }
+
+  get isSingleLine(): boolean {
+    return this.location.start.line === this.location.end.line
+  }
+
+  abstract treeInspect(indent?: number): string
+  abstract recursiveErrors(): HerbError[]
+  abstract accept(visitor: Visitor): void
+  abstract childNodes(): (Node | null | undefined)[]
+  abstract compactChildNodes(): Node[]
+
+  protected inspectArray(
+    array: (Node | HerbError)[] | null | undefined,
+    prefix: string,
+  ): string {
+    if (!array) return "∅\n"
+    if (array.length === 0) return "[]\n"
+
+    let output = `(${array.length} item${array.length == 1 ? "" : "s"})\n`
+
+    array.forEach((item, index) => {
+      const isLast = index === array.length - 1
+
+      if (item instanceof Node || item instanceof HerbError) {
+        output += this.inspectNode(
+          item,
+          prefix,
+          isLast ? "    " : "│   ",
+          isLast,
+          false,
+        )
+      } else {
+        const symbol = isLast ? "└── " : "├── "
+        output += `${prefix}${symbol} ${item}\n`
+      }
+    })
+
+    output += `${prefix}\n`
+
+    return output
+  }
+
+  protected inspectNode(
+    node: Node | HerbError | undefined | null,
+    prefix: string,
+    prefix2: string = "    ",
+    last: boolean = true,
+    trailingNewline: boolean = true,
+  ): string {
+    if (!node) return "∅\n"
+
+    let output = trailingNewline ? "\n" : ""
+    output += `${prefix}`
+
+    output += last ? "└── " : "├── "
+    output += node
+      .treeInspect()
+      .trimStart()
+      .split("\n")
+      .map((line, index) =>
+        index == 0 ? line.trimStart() : `${prefix}${prefix2}${line}`,
+      )
+      .join("\n")
+      .trimStart()
+
+    output += `\n`
+
+    return output
+  }
+}
 
 <%- nodes.each do |node| -%>
 export interface Serialized<%= node.name %> extends SerializedNode {
@@ -58,7 +158,11 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- when Herb::Template::NodeField -%>
   <%= field.name %>: Node | null;
   <%- when Herb::Template::ArrayField -%>
+  <%- if field.specific_kind == "Node" -%>
   <%= field.name %>: Node[];
+  <%- else -%>
+  <%= field.name %>: any[];
+  <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
   <%- else -%>
@@ -79,7 +183,11 @@ export class <%= node.name %> extends Node {
   <%- when Herb::Template::NodeField -%>
   readonly <%= field.name %>: Node | null;
   <%- when Herb::Template::ArrayField -%>
+  <%- if field.specific_kind == "Node" -%>
   readonly <%= field.name %>: Node[];
+  <%- else -%>
+  readonly <%= field.name %>: any[];
+  <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
   <%- else -%>
@@ -135,7 +243,11 @@ export class <%= node.name %> extends Node {
     <%- end -%>
   }
 
-  childNodes(): Node[] {
+  accept(visitor: Visitor): void {
+    visitor.visit<%= node.name %>(this)
+  }
+
+  childNodes(): (Node | null | undefined)[] {
     return [
       <%- node.fields.each do |field| -%>
       <%- case field -%>
@@ -145,7 +257,11 @@ export class <%= node.name %> extends Node {
       ...this.<%= field.name %>,
       <%- end -%>
       <%- end -%>
-    ].filter(node => node !== null && node !== undefined) as Node[];
+    ];
+  }
+
+  compactChildNodes(): Node[] {
+    return this.childNodes().filter(node => node !== null && node !== undefined)
   }
 
   recursiveErrors(): HerbError[] {
@@ -220,3 +336,14 @@ export class <%= node.name %> extends Node {
 }
 
 <%- end -%>
+
+export function fromSerializedNode(node: SerializedNode): Node {
+  switch (node.type) {
+    <%- nodes.each do |node| -%>
+    case "<%= node.type %>": return <%= node.name %>.from(node as Serialized<%= node.name %>);
+    <%- end -%>
+
+    default:
+      throw new Error(`Unknown node type: ${node.type}`);
+  }
+}

@@ -1,0 +1,193 @@
+# Generated from lib/herb/errors.rb with RBS::Inline
+
+module Herb
+  module Errors
+    class Error
+      attr_reader type: String
+
+      attr_reader location: Location
+
+      attr_reader message: String
+
+      # : (String, Location, String) -> void
+      def initialize: (String, Location, String) -> void
+
+      # : () -> serialized_error
+      def to_hash: () -> serialized_error
+
+      # : () -> String
+      def class_name: () -> String
+
+      # : () -> String
+      def error_name: () -> String
+
+      # : (?untyped) -> String
+      def to_json: (?untyped) -> String
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class UnexpectedError < Error
+      attr_reader description: String
+
+      attr_reader expected: String
+
+      attr_reader found: String
+
+      # : (String, Location, String, String, String, String) -> void
+      def initialize: (String, Location, String, String, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_error
+      def to_hash: () -> serialized_unexpected_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class UnexpectedTokenError < Error
+      attr_reader expected_type: String
+
+      attr_reader found: Herb::Token
+
+      # : (String, Location, String, String, Herb::Token) -> void
+      def initialize: (String, Location, String, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unexpected_token_error
+      def to_hash: () -> serialized_unexpected_token_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class MissingOpeningTagError < Error
+      attr_reader closing_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missing_opening_tag_error
+      def to_hash: () -> serialized_missing_opening_tag_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class MissingClosingTagError < Error
+      attr_reader opening_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missing_closing_tag_error
+      def to_hash: () -> serialized_missing_closing_tag_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class TagNamesMismatchError < Error
+      attr_reader opening_tag: Herb::Token
+
+      attr_reader closing_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_tag_names_mismatch_error
+      def to_hash: () -> serialized_tag_names_mismatch_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class QuotesMismatchError < Error
+      attr_reader opening_quote: Herb::Token
+
+      attr_reader closing_quote: Herb::Token
+
+      # : (String, Location, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_quotes_mismatch_error
+      def to_hash: () -> serialized_quotes_mismatch_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class VoidElementClosingTagError < Error
+      attr_reader tag_name: Herb::Token
+
+      attr_reader expected: String
+
+      attr_reader found: String
+
+      # : (String, Location, String, Herb::Token, String, String) -> void
+      def initialize: (String, Location, String, Herb::Token, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_void_element_closing_tag_error
+      def to_hash: () -> serialized_void_element_closing_tag_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class UnclosedElementError < Error
+      attr_reader opening_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_element_error
+      def to_hash: () -> serialized_unclosed_element_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class RubyParseError < Error
+      attr_reader error_message: String
+
+      attr_reader diagnostic_id: String
+
+      attr_reader level: String
+
+      # : (String, Location, String, String, String, String) -> void
+      def initialize: (String, Location, String, String, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_ruby_parse_error
+      def to_hash: () -> serialized_ruby_parse_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+  end
+end

@@ -22,11 +22,12 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir[
     "herb.gemspec",
-    "License.txt",
+    "LICENSE.txt",
     "Makefile",
     "Rakefile",
     "README.md",
     "lib/**/*.rb",
+    "sig/**/*.rbs",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
     "exe/*"

@@ -87,12 +87,16 @@ ext/herb/nodes.c
 ext/herb/nodes.h
 javascript/packages/core/src/errors.ts
 javascript/packages/core/src/nodes.ts
+javascript/packages/core/src/visitor.ts
 javascript/packages/node/extension/error_helpers.cpp
 javascript/packages/node/extension/error_helpers.h
 javascript/packages/node/extension/nodes.cpp
 javascript/packages/node/extension/nodes.h
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
+lib/herb/visitor.rb
+sig/serialized_ast_nodes.rbs
+sig/serialized_ast_errors.rbs
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c
@@ -117,3 +121,11 @@ vitest.config.*.timestamp*
 
 # Doxygen
 docs/docs/public/c-reference
+
+# TypeScript
+*.tsbuildinfo
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# NPM
+**/node_modules/**/*

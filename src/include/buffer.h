@@ -13,8 +13,11 @@ typedef struct BUFFER_STRUCT {
 bool buffer_init(buffer_T* buffer);
 buffer_T buffer_new(void);
 
-bool buffer_increase_capacity(buffer_T* buffer, size_t required_length);
-bool buffer_reserve(buffer_T* buffer, size_t min_capacity);
+bool buffer_increase_capacity(buffer_T* buffer, size_t additional_capacity);
+bool buffer_has_capacity(buffer_T* buffer, size_t required_length);
+bool buffer_expand_capacity(buffer_T* buffer);
+bool buffer_expand_if_needed(buffer_T* buffer, size_t required_length);
+bool buffer_resize(buffer_T* buffer, size_t new_capacity);
 
 void buffer_append(buffer_T* buffer, const char* text);
 void buffer_append_with_length(buffer_T* buffer, const char* text, size_t length);

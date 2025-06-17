@@ -59,29 +59,74 @@ TEST(test_buffer_concat)
   buffer_free(&buffer2);
 END
 
+// Test increating
 TEST(test_buffer_increase_capacity)
   buffer_T buffer = buffer_new();
 
-  const size_t initial_capacity = buffer.capacity;
-  ck_assert_int_ge(initial_capacity, 1024); // Ensure initial capacity is at least 1024
+  ck_assert_int_eq(buffer.capacity, 1024);
 
-  // Increase capacity by a small amount, should NOT trigger reallocation
-  ck_assert(buffer_increase_capacity(&buffer, 100));
-  ck_assert_int_eq(buffer.capacity, initial_capacity); // No change expected
+  ck_assert(buffer_increase_capacity(&buffer, 1));
+  ck_assert_int_eq(buffer.capacity, 1025);
 
-  // Increase capacity beyond the current limit, should trigger reallocation
-  ck_assert(buffer_increase_capacity(&buffer, initial_capacity + 1));
-  ck_assert(buffer.capacity > initial_capacity); // Capacity should increase
+  ck_assert(buffer_increase_capacity(&buffer, 1024 + 1));
+  ck_assert_int_eq(buffer.capacity, 2050);
 
   buffer_free(&buffer);
 END
 
-// Test buffer reservation (preallocating memory)
-TEST(test_buffer_reserve)
+// Test expanding capacity
+TEST(test_buffer_expand_capacity)
   buffer_T buffer = buffer_new();
 
-  ck_assert(buffer_reserve(&buffer, 2048)); // Ensure space for 4096 bytes
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_expand_capacity(&buffer));
+  ck_assert_int_eq(buffer.capacity, 2048);
+
+  ck_assert(buffer_expand_capacity(&buffer));
   ck_assert_int_eq(buffer.capacity, 4096);
+
+  ck_assert(buffer_expand_capacity(&buffer));
+  ck_assert_int_eq(buffer.capacity, 8192);
+
+  buffer_free(&buffer);
+END
+
+// Test expanding if needed
+TEST(test_buffer_expand_if_needed)
+  buffer_T buffer = buffer_new();
+
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_expand_if_needed(&buffer, 1));
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_expand_if_needed(&buffer, 1023));
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_expand_if_needed(&buffer, 1024));
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_expand_if_needed(&buffer, 1025));
+  ck_assert_int_eq(buffer.capacity, 3074); // initial capacity (1024) + (required (1025) * 2) = 3074
+
+  buffer_free(&buffer);
+END
+
+// Test resizing buffer
+TEST(test_buffer_resize)
+  buffer_T buffer = buffer_new();
+
+  ck_assert_int_eq(buffer.capacity, 1024);
+
+  ck_assert(buffer_resize(&buffer, 2048));
+  ck_assert_int_eq(buffer.capacity, 2048);
+
+  ck_assert(buffer_resize(&buffer, 4096));
+  ck_assert_int_eq(buffer.capacity, 4096);
+
+  ck_assert(buffer_resize(&buffer, 8192));
+  ck_assert_int_eq(buffer.capacity, 8192);
 
   buffer_free(&buffer);
 END
@@ -90,9 +135,13 @@ END
 TEST(test_buffer_clear)
   buffer_T buffer = buffer_new();
 
+  ck_assert_int_eq(buffer.capacity, 1024);
+
   buffer_append(&buffer, "Hello");
   ck_assert_str_eq(buffer.value, "Hello");
   ck_assert_int_eq(buffer.length, 5);
+  ck_assert_int_eq(buffer.capacity, 1024);
+
   buffer_clear(&buffer);
 
   ck_assert_str_eq(buffer.value, "");
@@ -178,7 +227,9 @@ TCase *buffer_tests(void) {
   tcase_add_test(buffer, test_buffer_prepend);
   tcase_add_test(buffer, test_buffer_concat);
   tcase_add_test(buffer, test_buffer_increase_capacity);
-  tcase_add_test(buffer, test_buffer_reserve);
+  tcase_add_test(buffer, test_buffer_expand_capacity);
+  tcase_add_test(buffer, test_buffer_expand_if_needed);
+  tcase_add_test(buffer, test_buffer_resize);
   tcase_add_test(buffer, test_buffer_clear);
   tcase_add_test(buffer, test_buffer_free);
   tcase_add_test(buffer, test_buffer_utf8_integrity);

@@ -157,5 +157,9 @@ module Parser
         </main>
       ))
     end
+
+    test "stray closing tag with whitespace" do
+      assert_parsed_snapshot(%(<div>Hello</div>< /span>))
+    end
   end
 end

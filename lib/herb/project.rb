@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+# typed: ignore
+
+# rbs_inline: disabled
 
 require "io/console"
 require "timeout"
@@ -221,10 +224,10 @@ module Herb
         summary = [
           heading("Summary"),
           "Total files: #{files.count}",
-          "✅ Successful: #{successful_files.count}",
-          "❌ Failed: #{failed_files.count}",
-          "⚠️ Parse errors: #{error_files.count}",
-          "⏱️ Timed out: #{timeout_files.count}"
+          "✅ Successful: #{successful_files.count} (#{percentage(successful_files.count, files.count)}%)",
+          "❌ Failed: #{failed_files.count} (#{percentage(failed_files.count, files.count)}%)",
+          "⚠️ Parse errors: #{error_files.count} (#{percentage(error_files.count, files.count)}%)",
+          "⏱️ Timed out: #{timeout_files.count} (#{percentage(timeout_files.count, files.count)}%)"
         ]
 
         summary.each do |line|
@@ -350,6 +353,12 @@ module Herb
 
       # Format as [███████▋       ] 42% (123/292)
       "[#{completed}#{partial}#{remaining}] #{percentage}% (#{current}/#{total})"
+    end
+
+    def percentage(part, total)
+      return 0.0 if total.zero?
+
+      ((part.to_f / total) * 100).round(1)
     end
 
     def heading(text)

@@ -10,7 +10,7 @@
 bool buffer_init(buffer_T* buffer) {
   buffer->capacity = 1024;
   buffer->length = 0;
-  buffer->value = nullable_safe_malloc(buffer->capacity * sizeof(char));
+  buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -50,37 +50,71 @@ size_t buffer_sizeof(void) {
  * or null termination.
  *
  * @param buffer The buffer to increase capacity for
- * @param required_length The additional length needed beyond current buffer length
- * @return true if capacity is sufficient (either already or after reallocation),
- *         false if reallocation failed
+ * @param additional_capacity The additional length needed beyond current buffer capacity
+ * @return true if capacity was increased, false if reallocation failed
  */
-bool buffer_increase_capacity(buffer_T* buffer, const size_t required_length) {
-  if (SIZE_MAX - buffer->length < required_length) {
+bool buffer_increase_capacity(buffer_T* buffer, const size_t additional_capacity) {
+  if (additional_capacity + 1 >= SIZE_MAX) {
     fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
-    return false;
+    exit(1);
   }
 
-  const size_t required_capacity = buffer->length + required_length;
+  const size_t new_capacity = buffer->capacity + additional_capacity;
 
-  if (buffer->capacity >= required_capacity) { return true; }
+  return buffer_resize(buffer, new_capacity);
+}
 
-  size_t new_capacity;
-  if (required_capacity > SIZE_MAX / 2) {
-    new_capacity = required_capacity + 1024;
-
-    if (new_capacity < required_capacity) { new_capacity = SIZE_MAX; }
-  } else {
-    new_capacity = required_capacity * 2;
+/**
+ * Resizes the capacity of the buffer to the specified new capacity.
+ *
+ * @param buffer The buffer to resize
+ * @param new_capacity The new capacity to resize the buffer to
+ * @return true if capacity was resized, false if reallocation failed
+ */
+bool buffer_resize(buffer_T* buffer, const size_t new_capacity) {
+  if (new_capacity + 1 >= SIZE_MAX) {
+    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+    exit(1);
   }
 
-  char* new_value = safe_realloc(buffer->value, new_capacity);
+  char* new_value = nullable_safe_realloc(buffer->value, new_capacity + 1);
 
-  if (unlikely(new_value == NULL)) { return false; }
+  if (unlikely(new_value == NULL)) {
+    fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);
+    exit(1);
+  }
 
   buffer->value = new_value;
   buffer->capacity = new_capacity;
 
   return true;
+}
+
+/**
+ * Expands the capacity of the buffer by doubling its current capacity.
+ * This function is a convenience function that calls buffer_increase_capacity
+ * with a factor of 2.
+ *
+ * @param buffer The buffer to expand capacity for
+ * @return true if capacity was increased, false if reallocation failed
+ */
+bool buffer_expand_capacity(buffer_T* buffer) {
+  return buffer_resize(buffer, buffer->capacity * 2);
+}
+
+/**
+ * Expands the capacity of the buffer if needed to accommodate additional content.
+ * This function is a convenience function that calls buffer_has_capacity and
+ * buffer_expand_capacity.
+ *
+ * @param buffer The buffer to expand capacity for
+ * @param required_length The additional length needed beyond current buffer capacity
+ * @return true if capacity was increased, false if reallocation failed
+ */
+bool buffer_expand_if_needed(buffer_T* buffer, const size_t required_length) {
+  if (buffer_has_capacity(buffer, required_length)) { return true; }
+
+  return buffer_resize(buffer, buffer->capacity + (required_length * 2));
 }
 
 /**
@@ -99,7 +133,7 @@ void buffer_append(buffer_T* buffer, const char* text) {
 
   size_t text_length = strlen(text);
 
-  if (!buffer_increase_capacity(buffer, text_length)) { return; }
+  if (!buffer_expand_if_needed(buffer, text_length)) { return; }
 
   memcpy(buffer->value + buffer->length, text, text_length);
   buffer->length += text_length;
@@ -120,7 +154,7 @@ void buffer_append(buffer_T* buffer, const char* text) {
  */
 void buffer_append_with_length(buffer_T* buffer, const char* text, const size_t length) {
   if (!buffer || !text || length == 0) { return; }
-  if (!buffer_increase_capacity(buffer, length)) { return; }
+  if (!buffer_expand_if_needed(buffer, length)) { return; }
 
   memcpy(buffer->value + buffer->length, text, length);
 
@@ -161,7 +195,7 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
 
   size_t text_length = strlen(text);
 
-  if (!buffer_increase_capacity(buffer, text_length)) { return; }
+  if (!buffer_expand_if_needed(buffer, text_length)) { return; }
 
   memmove(buffer->value + text_length, buffer->value, buffer->length + 1);
   memcpy(buffer->value, text, text_length);
@@ -171,17 +205,16 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
 
 void buffer_concat(buffer_T* destination, buffer_T* source) {
   if (source->length == 0) { return; }
-  if (!buffer_increase_capacity(destination, source->length)) { return; }
+  if (!buffer_expand_if_needed(destination, source->length)) { return; }
 
   memcpy(destination->value + destination->length, source->value, source->length);
+
   destination->length += source->length;
   destination->value[destination->length] = '\0';
 }
 
-bool buffer_reserve(buffer_T* buffer, const size_t min_capacity) {
-  const size_t required_length = min_capacity - buffer->length;
-
-  return buffer_increase_capacity(buffer, required_length);
+bool buffer_has_capacity(buffer_T* buffer, const size_t required_length) {
+  return (buffer->length + required_length <= buffer->capacity);
 }
 
 void buffer_clear(buffer_T* buffer) {
@@ -192,7 +225,7 @@ void buffer_clear(buffer_T* buffer) {
 void buffer_free(buffer_T* buffer) {
   if (!buffer) { return; }
 
-  free(buffer->value);
+  if (buffer->value != NULL) { free(buffer->value); }
 
   buffer->value = NULL;
   buffer->length = buffer->capacity = 0;

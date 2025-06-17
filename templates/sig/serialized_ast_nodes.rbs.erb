@@ -1,0 +1,10 @@
+module Herb
+  <%- nodes.each do |node| -%>
+  type serialized_<%= node.human %> = serialized_node & {
+    <%- node.fields.each do |field| -%>
+    <%= field.name %>: <%= field.ruby_type %>,
+    <%- end -%>
+  }
+
+  <%- end -%>
+end

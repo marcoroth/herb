@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+# typed: ignore
+
+# rbs_inline: disabled
 
 require "optparse"
 
@@ -41,7 +44,7 @@ class Herb::CLI
     end
 
     unless File.exist?(@file)
-      puts "Not a directory: '#{@file}'."
+      puts "Not a file: '#{@file}'."
       puts
     end
 
@@ -125,11 +128,10 @@ class Herb::CLI
                     puts "This command can currently only be run within the herb repo itself"
                     exit(1)
                   end
-                when "help", "-h", "--help"
+                when "help"
                   help
-                when "version", "-v", "--version"
-                  puts Herb.version
-                  exit(0)
+                when "version"
+                  print_version
                 when String
                   puts "Unknown command: '#{@command}'"
                   puts
@@ -143,6 +145,10 @@ class Herb::CLI
   def option_parser
     @option_parser ||= OptionParser.new do |parser|
       parser.banner = ""
+
+      parser.on_tail("-v", "--version", "Show the version") do
+        print_version
+      end
 
       parser.on_tail("-h", "--help", "Show this message") do
         help
@@ -161,5 +167,12 @@ class Herb::CLI
 
   def options
     option_parser.parse!(@args)
+  end
+
+  private
+
+  def print_version
+    puts Herb.version
+    exit(0)
   end
 end

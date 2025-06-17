@@ -18,7 +18,9 @@ analyzed_ruby_T* init_analyzed_ruby(char* source) {
   analyzed->has_block_node = false;
   analyzed->has_block_closing = false;
   analyzed->has_case_node = false;
+  analyzed->has_case_match_node = false;
   analyzed->has_when_node = false;
+  analyzed->has_in_node = false;
   analyzed->has_for_node = false;
   analyzed->has_while_node = false;
   analyzed->has_until_node = false;
@@ -32,5 +34,11 @@ analyzed_ruby_T* init_analyzed_ruby(char* source) {
 }
 
 void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
-  // TODO
+  if (!analyzed) { return; }
+
+  if (analyzed->parsed && analyzed->root != NULL) { pm_node_destroy(&analyzed->parser, analyzed->root); }
+
+  pm_parser_free(&analyzed->parser);
+
+  free(analyzed);
 }

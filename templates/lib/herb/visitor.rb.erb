@@ -1,0 +1,26 @@
+module Herb
+  class Visitor
+    #: (Herb::AST::Node) -> void
+    def visit(node)
+      node&.accept(self)
+    end
+
+    #: (Array[Herb::AST::Node]) -> void
+    def visit_all(nodes)
+      nodes.each { |node| node&.accept(self) }
+    end
+
+    #: (Herb::AST::Node) -> void
+    def visit_child_nodes(node)
+      node.compact_child_nodes.each { |node| node.accept(self) }
+    end
+
+    <%- nodes.each do |node| -%>
+    #: (Herb::AST::<%= node.name %>) -> void
+    def visit_<%= node.human %>(node)
+      visit_child_nodes(node)
+    end
+
+    <%- end -%>
+  end
+end

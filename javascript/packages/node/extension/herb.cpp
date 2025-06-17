@@ -34,7 +34,9 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   array_T* tokens = herb_lex(string);
   napi_value result = CreateLexResult(env, tokens, args[0]);
 
+  herb_free_tokens(&tokens);
   free(string);
+
   return result;
 }
 
@@ -55,7 +57,9 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   napi_value source_value = ReadFileToString(env, file_path);
   napi_value result = CreateLexResult(env, tokens, source_value);
 
+  herb_free_tokens(&tokens);
   free(file_path);
+
   return result;
 }
 
@@ -76,7 +80,9 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   herb_analyze_parse_tree(root, string);
   napi_value result = CreateParseResult(env, root, args[0]);
 
+  ast_node_free((AST_NODE_T *) root);
   free(string);
+
   return result;
 }
 
@@ -104,8 +110,10 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
   napi_value result = CreateParseResult(env, root, source_value);
 
+  ast_node_free((AST_NODE_T *) root);
   free(file_path);
   free(string);
+
   return result;
 }
 
@@ -136,6 +144,7 @@ napi_value Herb_lex_to_json(napi_env env, napi_callback_info info) {
 
   buffer_free(&output);
   free(string);
+
   return result;
 }
 

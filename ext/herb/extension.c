@@ -1,17 +1,31 @@
 #include <ruby.h>
 
 #include "error_helpers.h"
+#include "extension.h"
 #include "extension_helpers.h"
 #include "nodes.h"
 
 #include "../../src/include/analyze.h"
+
+VALUE mHerb;
+VALUE cPosition;
+VALUE cLocation;
+VALUE cRange;
+VALUE cToken;
+VALUE cResult;
+VALUE cLexResult;
+VALUE cParseResult;
 
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
   array_T* tokens = herb_lex(string);
 
-  return create_lex_result(tokens, source);
+  VALUE result = create_lex_result(tokens, source);
+
+  herb_free_tokens(&tokens);
+
+  return result;
 }
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
@@ -19,8 +33,11 @@ static VALUE Herb_lex_file(VALUE self, VALUE path) {
   array_T* tokens = herb_lex_file(file_path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
+  VALUE result = create_lex_result(tokens, source_value);
 
-  return create_lex_result(tokens, source_value);
+  herb_free_tokens(&tokens);
+
+  return result;
 }
 
 static VALUE Herb_parse(VALUE self, VALUE source) {
@@ -30,7 +47,11 @@ static VALUE Herb_parse(VALUE self, VALUE source) {
 
   herb_analyze_parse_tree(root, string);
 
-  return create_parse_result(root, source);
+  VALUE result = create_parse_result(root, source);
+
+  ast_node_free((AST_NODE_T*) root);
+
+  return result;
 }
 
 static VALUE Herb_parse_file(VALUE self, VALUE path) {
@@ -41,7 +62,11 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string);
 
-  return create_parse_result(root, source_value);
+  VALUE result = create_parse_result(root, source_value);
+
+  ast_node_free((AST_NODE_T*) root);
+
+  return result;
 }
 
 static VALUE Herb_lex_to_json(VALUE self, VALUE source) {
@@ -97,14 +122,21 @@ static VALUE Herb_version(VALUE self) {
 }
 
 void Init_herb(void) {
-  VALUE Herb = rb_define_module("Herb");
+  mHerb = rb_define_module("Herb");
+  cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
+  cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
+  cRange = rb_define_class_under(mHerb, "Range", rb_cObject);
+  cToken = rb_define_class_under(mHerb, "Token", rb_cObject);
+  cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
+  cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
+  cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
 
-  rb_define_singleton_method(Herb, "parse", Herb_parse, 1);
-  rb_define_singleton_method(Herb, "lex", Herb_lex, 1);
-  rb_define_singleton_method(Herb, "parse_file", Herb_parse_file, 1);
-  rb_define_singleton_method(Herb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(Herb, "lex_to_json", Herb_lex_to_json, 1);
-  rb_define_singleton_method(Herb, "extract_ruby", Herb_extract_ruby, 1);
-  rb_define_singleton_method(Herb, "extract_html", Herb_extract_html, 1);
-  rb_define_singleton_method(Herb, "version", Herb_version, 0);
+  rb_define_singleton_method(mHerb, "parse", Herb_parse, 1);
+  rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
+  rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
+  rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
+  rb_define_singleton_method(mHerb, "lex_to_json", Herb_lex_to_json, 1);
+  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
+  rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
+  rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }

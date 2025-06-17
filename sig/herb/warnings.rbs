@@ -1,0 +1,28 @@
+# Generated from lib/herb/warnings.rb with RBS::Inline
+
+module Herb
+  module Warnings
+    class Warning
+      attr_reader type: String
+
+      attr_reader location: Location
+
+      attr_reader message: String
+
+      # : (String, Location, String) -> void
+      def initialize: (String, Location, String) -> void
+
+      # : () -> serialized_warning
+      def to_hash: () -> serialized_warning
+
+      # : () -> String
+      def class_name: () -> String
+
+      # : () -> String
+      def warning_name: () -> String
+
+      # : (?untyped) -> String
+      def to_json: (?untyped) -> String
+    end
+  end
+end

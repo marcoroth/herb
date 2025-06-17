@@ -1,0 +1,13 @@
+# Generated from lib/herb/token_list.rb with RBS::Inline
+
+module Herb
+  class TokenList < SimpleDelegator
+    # : () -> String
+    def inspect: () -> String
+
+    private
+
+    # : () -> Array[Token]
+    def items: () -> Array[Token]
+  end
+end
