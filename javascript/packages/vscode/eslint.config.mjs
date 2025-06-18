@@ -1,5 +1,5 @@
-import typescriptEslint from "@typescript-eslint/eslint-plugin";
-import tsParser from "@typescript-eslint/parser";
+import typescriptEslint from "@typescript-eslint/eslint-plugin"
+import typescriptParser from "@typescript-eslint/parser"
 
 export default [{
   files: ["**/*.ts"],
@@ -9,7 +9,7 @@ export default [{
   },
 
   languageOptions: {
-    parser: tsParser,
+    parser: typescriptParser,
     ecmaVersion: 2022,
     sourceType: "module",
   },
@@ -25,4 +25,4 @@ export default [{
     "no-throw-literal": "warn",
     semi: "off",
   },
-}];
+}]
