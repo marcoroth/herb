@@ -38,8 +38,8 @@ class ErrorVisitor extends Visitor {
 
   private rangeFromHerbError(error: HerbError): Range {
     return Range.create(
-      Position.create(error.location.start.line, error.location.start.column),
-      Position.create(error.location.end.line, error.location.end.column),
+      Position.create(error.location.start.line - 1, error.location.start.column),
+      Position.create(error.location.end.line - 1, error.location.end.column),
     )
   }
 }
