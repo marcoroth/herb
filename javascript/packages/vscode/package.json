@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/vscode",
-  "displayName": "Herb Language Server (HTML+ERB)",
-  "description": "Syntax highlighting and Language Server integration for HTML-aware ERB using Herb.",
+  "displayName": "Herb LSP",
+  "description": "Language Server integration for HTML+ERB.",
   "version": "0.2.0",
   "engines": {
     "vscode": "^1.43.0"
