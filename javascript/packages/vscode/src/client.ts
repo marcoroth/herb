@@ -7,7 +7,7 @@ export class Client {
   private client: LanguageClient
   private serverModule: string
   private languageClientId = "languageServerHerb"
-  private languageClientName = "Herb Language Server"
+  private languageClientName = "Herb LSP"
   private context: ExtensionContext
 
   constructor(context: ExtensionContext) {

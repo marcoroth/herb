@@ -4,7 +4,7 @@
 
 ![](./assets/herb-lsp.png)
 
-Used by the [Herb Language Server (HTML+ERB)](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) Visual Studio Code extension.
+Used by the [Herb LSP](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) Visual Studio Code extension.
 
 ## Install
 

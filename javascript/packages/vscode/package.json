@@ -46,7 +46,8 @@
     "pretest": "yarn run build-tests && yarn run build && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "clean": "rimraf dist"
   },
   "devDependencies": {
     "@types/vscode": "^1.100.0",
