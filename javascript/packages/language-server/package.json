@@ -8,7 +8,11 @@
     "node": "*"
   },
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
-  "repository": "https://github.com/marcoroth/herb",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/language-server"
+  },
   "homepage": "https://herb-tools.dev",
   "bin": {
     "herb-language-server": "./dist/herb-language-server"
@@ -16,7 +20,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
-    "build": "tsc -b",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
     "postbuild": "node scripts/executable.mjs",
     "watch": "tsc -b -w"
   },
@@ -31,6 +35,7 @@
     "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.6",
     "rimraf": "^6.0.1"
   }
 }

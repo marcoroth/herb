@@ -5,7 +5,7 @@ import { exec } from 'child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const infile = resolve(__dirname, '../dist/server.js')
+const infile = resolve(__dirname, '../dist/herb-language-server.js')
 const outfile = resolve(__dirname, '../dist/herb-language-server')
 
 writeFileSync(

@@ -1,14 +1,38 @@
 {
-  "name": "@herb-tools/vscode",
+  "name": "herb-lsp",
   "displayName": "Herb LSP",
   "description": "Language Server integration for HTML+ERB.",
   "version": "0.2.0",
+  "license": "MIT",
+  "pricing": "Free",
+  "icon": "icon.png",
+  "publisher": "marcoroth",
+  "author": {
+    "name": "Marco Roth"
+  },
   "engines": {
-    "vscode": "^1.43.0"
+    "vscode": "^1.100.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Linters",
+    "Formatters"
   ],
+  "keywords": [
+    "HTML",
+    "Ruby",
+    "Hotwire"
+  ],
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/vscode%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/vscode"
+  },
+  "sponsor": {
+    "url": "http://github.com/sponsors/marcoroth"
+  },
   "activationEvents": [
     "onLanguage:ruby",
     "onLanguage:erb",
@@ -36,7 +60,9 @@
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
-    "build": "yarn run check-types && yarn run lint && node esbuild.js",
+    "prebuild": "yarn clean",
+    "build": "yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
+    "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
@@ -58,6 +84,7 @@
     "vscode-languageclient": "^9.0.1",
     "eslint": "^9.25.1",
     "esbuild": "^0.25.3",
+    "esbuild-plugin-copy": "^2.1.1",
     "npm-run-all": "^4.1.5",
     "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.10",

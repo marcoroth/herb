@@ -7,13 +7,14 @@ export class Client {
   private client: LanguageClient
   private serverModule: string
   private languageClientId = "languageServerHerb"
-  private languageClientName = "Herb LSP"
+  private languageClientName = "Herb LSP "
   private context: ExtensionContext
 
   constructor(context: ExtensionContext) {
     this.context = context
 
-    this.serverModule = this.context.asAbsolutePath(path.join("..", "language-server", "dist", "server.js"))
+    this.serverModule = this.context.asAbsolutePath(path.join("dist", "herb-language-server.js"))
+    console.log(this.serverModule)
 
     this.client = new LanguageClient(
       this.languageClientId,
