@@ -3,6 +3,7 @@
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "Language Server integration and Language Tools for HTML+ERB files.",
   "version": "0.2.0",
+  "private": true,
   "license": "MIT",
   "pricing": "Free",
   "icon": "icon.png",
@@ -24,7 +25,7 @@
     "Hotwire"
   ],
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/vscode%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-lsp-vscode%60:%20",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcoroth/herb.git",

@@ -50,7 +50,6 @@ connection.onInitialized(() => {
   connection.client.register(DidChangeWatchedFilesNotification.type, {
     watchers: [
       { globPattern: `**/**/*.html.erb` },
-      { globPattern: `**/**/*.{ts,js}` },
       { globPattern: `**/**/.herb-lsp/config.json` },
     ],
   })

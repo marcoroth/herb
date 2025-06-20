@@ -1,4 +1,4 @@
-# Herb LSP for VS Code (`@herb-tools/vscode`)
+# Herb LSP for Visual Studio Code
 
 A Visual Studio Code extension to use the [Herb Parser](https://herb-tools.dev) for HTML+ERB files.
 
