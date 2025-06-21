@@ -163,7 +163,7 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  const char* erb_patterns[] = { "<%==", "<%=", "<%#", "<%-", "<%%", "<%" };
+  const char* erb_patterns[] = { "<%==", "<%%=", "<%=", "<%#", "<%-", "<%%", "<%" };
 
   lexer->state = STATE_ERB_CONTENT;
 
