@@ -20,8 +20,7 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 ||
-            strcmp(token->value, "<%%=") == 0) {
+        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
           skip_erb_content = true;
         }
 
@@ -70,8 +69,7 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 ||
-            strcmp(token->value, "<%%=") == 0) {
+        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
           skip_erb_content = true;
         }
 
