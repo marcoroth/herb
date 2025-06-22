@@ -1,11 +1,17 @@
 import { Result } from "./result.js"
-import { TokenList, SerializedTokenList } from "./token-list.js"
+import { TokenList } from "./token-list.js"
+import { HerbError } from "./errors.js"
+import { HerbWarning } from "./warning.js"
+
+import type { SerializedHerbError } from "./errors.js"
+import type { SerializedHerbWarning } from "./warning.js"
+import type { SerializedTokenList } from "./token-list.js"
 
 export type SerializedLexResult = {
   tokens: SerializedTokenList
   source: string
-  warnings: any[]
-  errors: any[]
+  warnings: SerializedHerbWarning[]
+  errors: SerializedHerbError[]
 }
 
 /**
@@ -25,8 +31,8 @@ export class LexResult extends Result {
     return new LexResult(
       TokenList.from(result.tokens || []),
       result.source,
-      result.warnings,
-      result.errors,
+      result.warnings.map((warning) => HerbWarning.from(warning)),
+      result.errors.map((error) => HerbError.from(error)),
     )
   }
 
@@ -40,8 +46,8 @@ export class LexResult extends Result {
   constructor(
     value: TokenList,
     source: string,
-    warnings: any[] = [],
-    errors: any[] = [],
+    warnings: HerbWarning[] = [],
+    errors: HerbError[] = [],
   ) {
     super(source, warnings, errors)
     this.value = value
@@ -51,7 +57,7 @@ export class LexResult extends Result {
    * Determines if the lexing was successful.
    * @returns `true` if there are no errors, otherwise `false`.
    */
-  override success(): boolean {
+  get successful(): boolean {
     return this.errors.length === 0
   }
 
@@ -59,7 +65,7 @@ export class LexResult extends Result {
    * Determines if the lexing failed.
    * @returns `true` if there are errors, otherwise `false`.
    */
-  override failed(): boolean {
+  get failed(): boolean {
     return this.errors.length > 0
   }
 

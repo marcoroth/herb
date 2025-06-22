@@ -4,7 +4,7 @@
 
 <h2 align="center">Herb</h2>
 
-<h4 align="center">HTML + ERB (HTML Embedded Ruby)</h4>
+<h4 align="center">HTML+ERB (HTML + Embedded Ruby)</h4>
 
 <div align="center">Powerful and seamless HTML-aware ERB parsing and tooling.</div>
 

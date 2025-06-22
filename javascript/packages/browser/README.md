@@ -1,5 +1,7 @@
 # `@herb-tools/browser`
 
+WebAssembly-based HTML-aware ERB parser for browsers.
+
 ## Building
 
 Run `nx build browser` to build the library.
