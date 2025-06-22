@@ -13,7 +13,7 @@
     "url": "https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/language-server"
   },
-  "main": "./dist/herb-language-server.cjs",
+  "main": "./dist/herb-language-server.js",
   "module": "./dist/server.js",
   "types": "./dist/types/server.d.ts",
   "scripts": {
@@ -28,7 +28,7 @@
     ".": {
       "types": "./dist/types/server.d.ts",
       "import": "./dist/server.js",
-      "require": "./dist/herb-language-server.cjs",
+      "require": "./dist/herb-language-server.js",
       "default": "./dist/server.js"
     }
   },
@@ -46,7 +46,10 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "files": [
-    "dist"
+    "package.json",
+    "README.json",
+    "dist/",
+    "src/"
   ],
   "dependencies": {
     "@herb-tools/node-wasm": "0.3.0",
