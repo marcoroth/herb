@@ -58,7 +58,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build all JavaScript packages
-        run: npx nx run-many -t build
+        run: yarn build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
