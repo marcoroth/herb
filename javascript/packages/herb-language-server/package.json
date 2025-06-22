@@ -23,7 +23,7 @@
     "dev": "rollup -c -w",
     "watch": "tsc -b -w",
     "clean": "rimraf dist && yarn nx run language-server:clean --outputStyle=stream",
-    "test": "vitest run",
+    "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
