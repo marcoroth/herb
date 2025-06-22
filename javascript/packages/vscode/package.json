@@ -74,7 +74,8 @@
     "pretest": "yarn run build-tests && yarn run build && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test",
+    "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
+    "vscode:test": "vscode-test",
     "clean": "rimraf dist",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
