@@ -14,7 +14,7 @@
     "directory": "javascript/packages/language-server"
   },
   "main": "./dist/herb-language-server.js",
-  "module": "./dist/server.js",
+  "module": "./dist/herb-language-server.js",
   "types": "./dist/types/server.d.ts",
   "scripts": {
     "build": "yarn clean && rollup -c",
@@ -27,9 +27,9 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/server.d.ts",
-      "import": "./dist/server.js",
+      "import": "./dist/herb-language-server.js",
       "require": "./dist/herb-language-server.js",
-      "default": "./dist/server.js"
+      "default": "./dist/herb-language-server.js"
     }
   },
   "homepage": "https://herb-tools.dev",
