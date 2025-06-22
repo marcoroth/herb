@@ -49,9 +49,17 @@ jobs:
       - name: Install Playwright browsers
         run: yarn playwright install
 
-      - name: Set NX SHAs
-        uses: nrwl/nx-set-shas@v4
+      - name: Run `build` for all NX packages
+        run: yarn build
 
-      # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
-      - run: npx nx affected -t build
-      - run: npx nx affected -t test
+      - name: Run `test` for all NX packages
+        run: yarn test
+
+      # NX is not able to properly detect affected changes if things change in C source or the WASM build
+      #
+      # - name: Set NX SHAs
+      #   uses: nrwl/nx-set-shas@v4
+      #
+      # # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
+      # - run: npx nx affected -t build
+      # - run: npx nx affected -t test
