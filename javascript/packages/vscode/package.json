@@ -76,7 +76,7 @@
     "lint": "eslint src",
     "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
     "vscode:test": "vscode-test",
-    "clean": "rimraf dist",
+    "clean": "rimraf dist && yarn nx run language-server:clean --outputStyle=stream",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
