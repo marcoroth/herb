@@ -48,6 +48,6 @@
     "docs"
   ],
   "nx": {
-    "includedScripts": ["build", "dev", "test", "clean", "lint"]
+    "includedScripts": []
   }
 }
