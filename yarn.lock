@@ -1664,18 +1664,6 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.9.tgz#50dea3616bc8191fb8e112283b49eaff03e78429"
   integrity sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==
 
-"@herb-tools/core@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@herb-tools/core/-/core-0.3.0.tgz#b7e2c3f176ba58958a8ee4efb8a4595c91b05482"
-  integrity sha512-FDCQGVu476PvXJgMJhRZSGo+grV1S8qrBGf4w+RBuBeygNNepDpgy4sUVR1FCN/cRkXnkl0Nt4CX3EmwI3X++A==
-
-"@herb-tools/node-wasm@0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@herb-tools/node-wasm/-/node-wasm-0.3.0.tgz#60f0f0609ba06b0e399c18643916588643aec8be"
-  integrity sha512-GhmIl3keGvA8x11EP6FVWBKvOcWxvZ1tj/tgjxR3kDg6d8/YGKFEwW5a3TGJSPxa2W2PQvK5dan8rkLOi5FsBw==
-  dependencies:
-    "@herb-tools/core" "0.3.0"
-
 "@hotwired/stimulus@^3.2.2":
   version "3.2.2"
   resolved "https://registry.yarnpkg.com/@hotwired/stimulus/-/stimulus-3.2.2.tgz#071aab59c600fed95b97939e605ff261a4251608"

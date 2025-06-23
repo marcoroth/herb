@@ -36,7 +36,9 @@
   },
   "activationEvents": [
     "onLanguage:erb",
-    "onLanguage:html"
+    "onLanguage:html",
+    "onCommand:herb.analyzeProject",
+    "onCommand:herb.reprocessFile"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -56,6 +58,51 @@
           "description": "Traces the communication between VS Code and the language server."
         }
       }
+    },
+    "commands": [
+      {
+        "command": "herb.analyzeProject",
+        "title": "Herb: Analyze Project",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "herb.reprocessFile",
+        "title": "Herb: Re-analyze File",
+        "icon": "$(refresh)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "herbExplorer",
+          "title": "Herb",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "herbExplorer": [
+        {
+          "id": "herbFileStatus",
+          "name": "Project Analysis"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "herb.analyzeProject",
+          "when": "view == herbFileStatus",
+          "group": "navigation"
+        }
+      ],
+      "view/item/title": [
+        {
+          "command": "herb.reprocessFile",
+          "when": "view == herbFileStatus && viewItem == herbFile",
+          "group": "inline"
+        }
+      ]
     }
   },
   "scripts": {
@@ -79,19 +126,19 @@
   },
   "devDependencies": {
     "@herb-tools/node-wasm": "0.3.1",
-    "@types/vscode": "^1.43.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/vscode": "^1.43.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
-    "vscode-languageclient": "^9.0.1",
-    "eslint": "^9.25.1",
-    "esbuild": "^0.25.3",
-    "esbuild-plugin-copy": "^2.1.1",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.5.0"
+    "@vscode/vsce": "^3.5.0",
+    "esbuild": "^0.25.3",
+    "esbuild-plugin-copy": "^2.1.1",
+    "eslint": "^9.25.1",
+    "npm-run-all": "^4.1.5",
+    "typescript": "^5.8.3",
+    "vscode-languageclient": "^9.0.1"
   }
 }
