@@ -76,7 +76,7 @@
         {
           "id": "herbExplorer",
           "title": "Herb",
-          "icon": "icon.png"
+          "icon": "assets/herb.svg"
         }
       ]
     },
