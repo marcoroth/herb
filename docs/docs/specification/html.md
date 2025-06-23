@@ -318,7 +318,7 @@ outline: deep
 ```html [HTML]
 <h1>
   Version
-  <sup>1.0</sup>
+  <sub>1.0</sub>
 </h1>
 ```
 
