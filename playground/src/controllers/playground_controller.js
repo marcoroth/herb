@@ -350,7 +350,7 @@ export default class extends Controller {
       this.formatViewerTarget.classList.add("language-html")
       this.formatViewerTarget.textContent = result.formatted
 
-      // Prism.highlightElement(this.formatViewerTarget)
+      Prism.highlightElement(this.formatViewerTarget)
     }
 
     if (this.hasRubyViewerTarget) {
