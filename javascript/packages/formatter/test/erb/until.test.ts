@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node"
-import { Formatter } from "../src"
+import { Formatter } from "../../src"
 
 import dedent from "dedent"
 
@@ -16,9 +16,18 @@ describe("@herb-tools/formatter", () => {
     })
   })
 
-  test("empty string", () => {
-    const source = dedent``
+  test("formats ERB until loops", () => {
+    const source = dedent`
+      <% until i == 3 %><b><%= i %></b><% i += 1 %><% end %>
+    `
     const result = formatter.format(source)
-    expect(result).toEqual(dedent``)
+    expect(result).toEqual(dedent`
+      <% until i == 3 %>
+        <b>
+          <%= i %>
+        </b>
+        <% i += 1 %>
+      <% end %>
+    `)
   })
 })

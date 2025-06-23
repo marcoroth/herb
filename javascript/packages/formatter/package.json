@@ -22,6 +22,7 @@
     "dev": "rollup -c -w",
     "clean": "rimraf dist",
     "test": "vitest run",
+    "test:watch": "vitest --watch",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {

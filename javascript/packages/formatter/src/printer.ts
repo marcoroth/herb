@@ -390,10 +390,8 @@ export class Printer extends Visitor {
     const close = node.tag_closing?.value ?? ""
     this.push(indent + open + content + close)
 
-    this.indentLevel = baseLevel > 0 ? baseLevel : baseLevel + 1
     node.conditions.forEach(condition => this.visit(condition))
     if (node.else_clause) this.visit(node.else_clause)
-    this.indentLevel = baseLevel
 
     if (node.end_node) {
       this.visit(node.end_node)
