@@ -1,21 +1,25 @@
 import { describe, test, expect, beforeAll } from "vitest";
 import { Herb } from "@herb-tools/node";
-import { HerbFormatter } from "../src";
+import { Formatter } from "../src";
+
+let formatter: Formatter
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
     await Herb.load();
+    formatter = new Formatter(Herb, {
+      indentWidth: 2,
+      maxLineLength: 80
+    })
   });
 
   test("text content", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = 'Hello';
     const result = formatter.format(source);
     expect(result).toEqual('Hello');
   })
 
   test("formats simple HTML with ERB content", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<div><%= "Hello" %></div>';
     const result = formatter.format(source);
     expect(result).toEqual(`<div>
@@ -24,7 +28,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("respects indentWidth option", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<div><%= "World" %></div>';
     const result = formatter.format(source, { indentWidth: 4 });
     expect(result).toEqual(`<div>
@@ -33,7 +36,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("wraps multiple attributes correctly", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<div class="foo" id="bar"></div>';
     const result = formatter.format(source);
     expect(result).toEqual(`<div
@@ -43,18 +45,17 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("does not wrap single attribute", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<div class="foo"></div>';
     const result = formatter.format(source);
     expect(result).toEqual('<div class="foo"></div>');
   });
 
   test("wraps long text content at maxLineLength threshold", () => {
-    const formatter = new HerbFormatter(Herb);
+    const formatter = new Formatter(Herb, { maxLineLength: 40 });
     const longText =
       'This is a very long line of text that should be broken into multiple lines by the formatter based on the maxLineLength option.';
     const source = `<p>${longText}</p>`;
-    const result = formatter.format(source, { maxLineLength: 40 });
+    const result = formatter.format(source);
     expect(result).toEqual(`<p>
   This is a very long line of text that
   should be broken into multiple lines
@@ -64,7 +65,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats ERB for/in loops with nested HTML", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<% for item in list %><li><%= item.name %></li><% end %>';
     const result = formatter.format(source);
@@ -76,7 +76,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats ERB case/when/else statements", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<% case status %><% when "ok" %>GOOD<% when "error" %>BAD<% else %>UNKNOWN<% end %>';
     const result = formatter.format(source);
@@ -91,7 +90,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats ERB begin/rescue/else/ensure blocks", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<% begin %>OK<% rescue Error => e %>ERR<% else %>NONE<% ensure %>FIN<% end %>';
     const result = formatter.format(source);
@@ -106,7 +104,6 @@ describe("@herb-tools/formatter", () => {
 <% end %>`);
   });
   test("formats ERB while loops", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<% while i < 3 %><b><%= i %></b><% i += 1 %><% end %>';
     const result = formatter.format(source);
@@ -119,7 +116,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats ERB until loops", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<% until i == 3 %><b><%= i %></b><% i += 1 %><% end %>';
     const result = formatter.format(source);
@@ -132,14 +128,12 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats standalone ERB", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<% title %>';
     const result = formatter.format(source);
     expect(result).toEqual(`<% title %>`);
   });
 
   test("formats HTML comments and ERB comments", () => {
-    const formatter = new HerbFormatter(Herb);
     const source =
       '<!-- HTML Comment --><%# ERB Comment %>';
     const result = formatter.format(source);
@@ -148,14 +142,12 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats doctype with ERB inside", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<!DoCTyPe <% hello %> hello>';
     const result = formatter.format(source);
     expect(result).toEqual(`<!DoCTyPe <% hello %> hello>`);
   });
 
   test("formats tags with empty attribute values", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = '<div id=""></div>';
     const result = formatter.format(source);
     expect(result).toEqual(`<div
@@ -164,7 +156,6 @@ describe("@herb-tools/formatter", () => {
   });
 
   test("formats nested blocks with final example", () => {
-    const formatter = new HerbFormatter(Herb);
     const source = [
       '<div id="output">',
       '  <%= tag.div class: "div" do %>',
@@ -187,4 +178,20 @@ describe("@herb-tools/formatter", () => {
   <% end %>
 </div>`);
   });
+
+  test("formats case/when/else statements", () => {
+    const source =
+      '<div><% case status %><% when "ok" %>GOOD<% when "error" %>BAD<% else %>UNKNOWN<% end %></div>';
+    const result = formatter.format(source);
+    expect(result).toEqual(`<div>
+  <% case status %>
+  <% when "ok" %>
+    GOOD
+  <% when "error" %>
+    BAD
+  <% else %>
+    UNKNOWN
+  <% end %>
+</div>`);
+});
 });

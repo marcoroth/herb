@@ -1,6 +1,6 @@
 export * from "@herb-tools/core"
 
-import { HerbBackendNodeWASM } from "./wasm-backend"
+import { HerbBackendNodeWASM } from "./wasm-backend.js"
 
 import LibHerb from "../build/libherb.js"
 

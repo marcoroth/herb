@@ -1,3 +1,3 @@
-export { Formatter } from "./formatter"
-export type { FormatOptions } from "./options"
-export { defaultFormatOptions, resolveFormatOptions } from "./options"
+export { Formatter } from "./formatter.js"
+export type { FormatOptions } from "./options.js"
+export { defaultFormatOptions, resolveFormatOptions } from "./options.js"

@@ -6,6 +6,10 @@ import {
   DidChangeWatchedFilesNotification,
   TextDocumentSyncKind,
   InitializeResult,
+  DocumentFormattingParams,
+  TextEdit,
+  Position,
+  Range
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -21,6 +25,7 @@ connection.onInitialize(async (params: InitializeParams) => {
   const result: InitializeResult = {
     capabilities: {
       textDocumentSync: TextDocumentSyncKind.Incremental,
+      documentFormattingProvider: true,
     },
   }
 
@@ -87,6 +92,29 @@ connection.onDidChangeWatchedFiles((params) => {
       })
     }
   })
+})
+
+connection.onDocumentFormatting(async (params: DocumentFormattingParams): Promise<TextEdit[]> => {
+  const { textDocument } = params;
+
+  const document = service.documentService.get(textDocument.uri)
+  if (!document) return []
+
+  const formatted = service.formatter.format(document.getText())
+
+  const fullRange = Range.create(
+    Position.create(0, 0),  // start of document
+    Position.create(Number.MAX_VALUE, Number.MAX_VALUE)  // end of document
+  )
+
+  const edit: TextEdit = {
+    range: fullRange,
+    newText: formatted
+  }
+
+  return [
+    edit
+  ]
 })
 
 // Listen on the connection

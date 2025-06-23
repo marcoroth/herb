@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import fs from "fs/promises"
-import { format } from "../dist/herb-formatter.esm.js"
-import { Herb } from "@herb-tools/node"
+import { Formatter } from "@herb-tools/formatter"
+import { Herb } from "@herb-tools/node-wasm"
 
 async function readStdin() {
   const chunks = []
@@ -38,7 +38,14 @@ Examples:
   }
 
   await Herb.load()
-  const result = format(Herb, source)
+
+  const formatter = new Formatter(Herb, {
+    indentWidth: 2,
+    maxLineLength: 80,
+  })
+
+  const result = formatter.format(source)
+
   process.stdout.write(result)
 }
 

@@ -9,6 +9,11 @@ export default {
       file: "dist/herb-node-wasm.esm.js",
       format: "esm",
       sourcemap: true,
+    },
+    {
+      file: "dist/herb-node-wasm.cjs",
+      format: "cjs",
+      sourcemap: true,
     }
   ],
   plugins: [
