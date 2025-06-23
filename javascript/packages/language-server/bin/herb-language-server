@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+const usage = `
+  Usage: herb-language-server [options]
+
+  Options:
+    --stdio          use stdio
+    --node-ipc       use node-ipc
+    --socket=<port>  use socket
+`
+
+if (process.argv.length <= 2) {
+  console.error(`Error: Connection input stream is not set. Set command line parameters: '--node-ipc', '--stdio' or '--socket=<port>'`)
+  console.error(usage)
+
+  process.exit(1)
+}
+
+import("../dist/herb-language-server.js")

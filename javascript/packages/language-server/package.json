@@ -27,19 +27,22 @@
   },
   "homepage": "https://herb-tools.dev",
   "bin": {
-    "herb-language-server": "./dist/herb-language-server"
+    "herb-language-server": "./bin/herb-language-server"
   },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "postbuild": "node scripts/executable.mjs",
     "watch": "tsc -b -w",
     "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "files": [
-    "dist"
+    "package.json",
+    "README.md",
+    "src/",
+    "bin/",
+    "dist/"
   ],
   "dependencies": {
     "@herb-tools/node-wasm": "0.3.0",
