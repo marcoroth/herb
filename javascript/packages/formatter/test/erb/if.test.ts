@@ -60,4 +60,20 @@ describe("@herb-tools/formatter", () => {
     expect(output).toEqual(expected)
   })
 
+  test("if without surrounding spaces", () => {
+    const input = dedent`
+      <%if user.admin?%>
+      <%else%>
+      <%end%>
+    `
+
+    const expected = dedent`
+      <% if user.admin? %>
+      <% else %>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
 })

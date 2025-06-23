@@ -1,6 +1,7 @@
 import { Visitor } from "@herb-tools/core"
 
 import {
+  Node,
   DocumentNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
@@ -33,6 +34,26 @@ import {
   ERBInNode,
 } from "@herb-tools/core"
 
+type ERBNode =
+  ERBContentNode
+| ERBBlockNode
+| ERBEndNode
+| ERBElseNode
+| ERBIfNode
+| ERBWhenNode
+| ERBCaseNode
+| ERBCaseMatchNode
+| ERBWhileNode
+| ERBUntilNode
+| ERBForNode
+| ERBRescueNode
+| ERBEnsureNode
+| ERBBeginNode
+| ERBUnlessNode
+| ERBYieldNode
+| ERBInNode
+
+
 import type { FormatOptions } from "./options.js"
 
 /**
@@ -53,10 +74,11 @@ export class Printer extends Visitor {
     this.maxLineLength = options.maxLineLength
   }
 
-  print(node: DocumentNode): string {
+  print(node: Node, indentLevel: number = 0): string {
     this.lines = []
-    this.indentLevel = 0
-    this.visit(node)
+    this.indentLevel = indentLevel
+
+    node.accept(this)
 
     return this.lines.filter(Boolean).join("\n")
   }
@@ -74,6 +96,26 @@ export class Printer extends Visitor {
 
   private indent(): string {
     return " ".repeat(this.indentLevel * this.indentWidth)
+  }
+
+  /**
+   * Print an ERB tag (<% %> or <%= %>) with single spaces around inner content.
+   */
+  private printERBNode(node: ERBNode): void {
+    const indent = this.indent()
+    const open = node.tag_opening?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+    let inner: string
+    if (node.tag_opening && node.tag_closing) {
+      const [, openingEnd] = node.tag_opening.range.toArray()
+      const [closingStart] = node.tag_closing.range.toArray()
+      const rawInner = this.source.slice(openingEnd, closingStart)
+      inner = ` ${rawInner.trim()} `
+    } else {
+      const txt = node.content?.value ?? ""
+      inner = txt.trim() ? ` ${txt.trim()} ` : ""
+    }
+    this.push(indent + open + inner + close)
   }
 
   // --- Visitor methods ---
@@ -267,6 +309,37 @@ export class Printer extends Visitor {
     this.push(indent + open + inner + close)
   }
 
+  visitERBCommentNode(node: ERBContentNode): void {
+    const indent = this.indent()
+    const open = node.tag_opening?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+    let inner: string
+
+    if (node.tag_opening && node.tag_closing) {
+      const [, openingEnd] = node.tag_opening.range.toArray()
+      const [closingStart] = node.tag_closing.range.toArray()
+      const rawInner = this.source.slice(openingEnd, closingStart)
+      const lines = rawInner.split("\n")
+      if (lines.length > 2) {
+        const childIndent = indent + " ".repeat(this.indentWidth)
+        const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+        inner = "\n" + innerLines.join("\n") + "\n"
+      } else {
+        inner = ` ${rawInner.trim()} `
+      }
+    } else {
+      inner = node.children
+        .map(child => {
+          const prevLines = this.lines.length
+          this.visit(child)
+          return this.lines.slice(prevLines).join("")
+        })
+        .join("")
+    }
+
+    this.push(indent + open + inner + close)
+  }
+
   visitHTMLDoctypeNode(node: HTMLDoctypeNode): void {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
@@ -290,32 +363,28 @@ export class Printer extends Visitor {
   }
 
   visitERBContentNode(node: ERBContentNode): void {
-    this.visitERBRaw(node)
+    // TODO: this feels hacky
+    if (node.tag_opening?.value === "<%#") {
+      this.visitERBCommentNode(node)
+    } else {
+      this.printERBNode(node)
+    }
   }
 
   visitERBEndNode(node: ERBEndNode): void {
-    this.visitERBRaw(node)
+    this.printERBNode(node)
   }
 
   visitERBYieldNode(node: ERBYieldNode): void {
-    this.visitERBRaw(node)
+    this.printERBNode(node)
   }
 
   visitERBInNode(node: ERBInNode): void {
-    this.visitERBRaw(node)
+    this.printERBNode(node)
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
-    this.visitERBRaw(node)
-  }
-
-  private visitERBRaw(node: any): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
@@ -336,12 +405,7 @@ export class Printer extends Visitor {
   }
 
   visitERBIfNode(node: ERBIfNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       node.statements.forEach(child => this.visit(child))
@@ -352,17 +416,12 @@ export class Printer extends Visitor {
     }
 
     if (node.end_node) {
-      this.visit(node.end_node)
+      this.printERBNode(node.end_node)
     }
   }
 
   visitERBElseNode(node: ERBElseNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       node.statements.forEach(child => this.visit(child))
@@ -370,12 +429,7 @@ export class Printer extends Visitor {
   }
 
   visitERBWhenNode(node: ERBWhenNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       node.statements.forEach(stmt => this.visit(stmt))
