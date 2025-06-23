@@ -1,8 +1,6 @@
 import { Printer } from "./printer.js"
 import { resolveFormatOptions } from "./options.js"
 
-import { readFileSync } from "fs"
-
 import type { FormatOptions } from "./options.js"
 import type { HerbBackend, ParseResult } from "@herb-tools/core"
 
@@ -29,14 +27,6 @@ export class Formatter {
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
     return new Printer(source, resolvedOptions).print(result.value)
-  }
-
-  /**
-   * Read and format a file at the given path.
-   */
-  formatFile(path: string): string {
-    const source = readFileSync(path, "utf8")
-    return this.format(source)
   }
 
   private parse(source: string): ParseResult {
