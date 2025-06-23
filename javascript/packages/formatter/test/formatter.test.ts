@@ -31,6 +31,18 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual('<!-- hello -->');
   })
 
+  test("HTML tag with missing closing", () => {
+    const source = `<div`;
+    const result = formatter.format(source);
+    expect(result).toEqual('<div');
+  })
+
+  test("HTML tag with mismatched closing tag", () => {
+    const source = `<form></div>`;
+    const result = formatter.format(source);
+    expect(result).toEqual('<form></div>');
+  })
+
   test("HTML tag with attributes", () => {
     const source = `<div id="hello"></div>`;
     const result = formatter.format(source);
