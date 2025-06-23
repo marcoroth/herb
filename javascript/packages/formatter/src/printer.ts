@@ -254,7 +254,8 @@ export class Printer extends Visitor {
       // TODO: use .value
       const [_, startIndex] = node.comment_start.range.toArray()
       const [endIndex] = node.comment_end.range.toArray()
-      inner = this.source.slice(startIndex, endIndex)
+      const rawInner = this.source.slice(startIndex, endIndex)
+      inner = ` ${rawInner.trim()} `
     } else {
       inner = node.children.map(child => {
         const prevLines = this.lines.length

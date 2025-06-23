@@ -25,6 +25,18 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual('<!-- hello -->');
   })
 
+  test("HTML comment with no surrounding spaces", () => {
+    const source = '<!--hello-->';
+    const result = formatter.format(source);
+    expect(result).toEqual('<!-- hello -->');
+  })
+
+  test("HTML tag with attributes", () => {
+    const source = `<div id="hello"></div>`;
+    const result = formatter.format(source);
+    expect(result).toEqual('<div id="hello"></div>');
+  })
+
   test("formats simple HTML with ERB content", () => {
     const source = '<div><%= "Hello" %></div>';
     const result = formatter.format(source);
