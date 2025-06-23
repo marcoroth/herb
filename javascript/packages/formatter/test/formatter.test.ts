@@ -19,6 +19,12 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual('Hello');
   })
 
+  test("HTML comment", () => {
+    const source = '<!-- hello -->';
+    const result = formatter.format(source);
+    expect(result).toEqual('<!-- hello -->');
+  })
+
   test("formats simple HTML with ERB content", () => {
     const source = '<div><%= "Hello" %></div>';
     const result = formatter.format(source);

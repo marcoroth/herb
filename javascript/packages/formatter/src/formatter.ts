@@ -4,7 +4,7 @@ import { resolveFormatOptions } from "./options.js"
 import { readFileSync } from "fs"
 
 import type { FormatOptions } from "./options.js"
-import type { DocumentNode, HerbBackend, ParseResult } from "@herb-tools/core"
+import type { HerbBackend, ParseResult } from "@herb-tools/core"
 
 /**
  * Formatter uses a Herb Backend to parse the source and then
@@ -19,31 +19,28 @@ export class Formatter {
     this.options = resolveFormatOptions(options)
   }
 
-  format(source: string): string {
+  /**
+   * Format a source string, optionally overriding format options per call.
+   */
+  format(source: string, options: FormatOptions = {}): string {
     const result = this.parse(source)
-
     if (result.failed) return source
 
-    return this.formatDocument(result.value)
+    const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
+
+    return new Printer(source, resolvedOptions).print(result.value)
   }
 
+  /**
+   * Read and format a file at the given path.
+   */
   formatFile(path: string): string {
     const source = readFileSync(path, "utf8")
-
     return this.format(source)
-  }
-
-  formatDocument(document: DocumentNode): string {
-    return this.printer.print(document)
-  }
-
-  private get printer(): Printer {
-    return new Printer("", this.options)
   }
 
   private parse(source: string): ParseResult {
     this.herb.ensureBackend()
-
     return this.herb.parse(source)
   }
 }

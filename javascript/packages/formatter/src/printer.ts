@@ -147,9 +147,10 @@ export class Printer extends Visitor {
     }
 
     this.push(indent + `<${tagName}`)
-
-    attributes.forEach(attribute => {
-      this.push(this.indent() + this.renderAttribute(attribute))
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
     })
 
     if (node.is_void) {
@@ -180,11 +181,11 @@ export class Printer extends Visitor {
     }
 
     this.push(indent + `<${tagName}`)
-
-    attributes.forEach(attribute => {
-      this.push(this.indent() + this.renderAttribute(attribute))
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
     })
-
     this.push(indent + (node.is_void ? "/>" : ">"))
   }
 
@@ -200,11 +201,11 @@ export class Printer extends Visitor {
     }
 
     this.push(indent + `<${tagName}`)
-
-    attributes.forEach(attribute => {
-      this.push(this.indent() + this.renderAttribute(attribute))
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
     })
-
     this.push(indent + "/>")
   }
 
@@ -381,17 +382,17 @@ export class Printer extends Visitor {
   }
 
   visitERBCaseNode(node: ERBCaseNode): void {
+    const baseLevel = this.indentLevel
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""
     const close = node.tag_closing?.value ?? ""
     this.push(indent + open + content + close)
 
-    this.withIndent(() => {
-      node.conditions.forEach(condition => this.visit(condition))
-
-      if (node.else_clause) this.visit(node.else_clause)
-    })
+    this.indentLevel = baseLevel > 0 ? baseLevel : baseLevel + 1
+    node.conditions.forEach(condition => this.visit(condition))
+    if (node.else_clause) this.visit(node.else_clause)
+    this.indentLevel = baseLevel
 
     if (node.end_node) {
       this.visit(node.end_node)
