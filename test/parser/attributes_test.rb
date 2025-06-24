@@ -33,5 +33,29 @@ module Parser
     test "attribute value with exclamation point" do
       assert_parsed_snapshot(%(<input value="Hello!" />))
     end
+
+    test "style attribute with url" do
+      assert_parsed_snapshot(%(<div style="background-image: url('./images/image.png')"></div>))
+    end
+
+    test "double quotes inside single quotes" do
+      assert_parsed_snapshot(%(<div data-json='{"key": "value"}'></div>))
+    end
+
+    test "multiple nested quotes" do
+      assert_parsed_snapshot(%(<div title="She said 'Hello' and 'Goodbye'"></div>))
+    end
+
+    test "empty quoted attribute values" do
+      assert_parsed_snapshot(%(<input value="" placeholder='' />))
+    end
+
+    test "mixed quote types in multiple attributes" do
+      assert_parsed_snapshot(%(<input value="double quoted" placeholder='single quoted' />))
+    end
+
+    test "erb output with quotes" do
+      assert_parsed_snapshot(%(<div title="<%= "quoted string" %>"></div>))
+    end
   end
 end
