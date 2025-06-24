@@ -1,4 +1,4 @@
-import { Herb } from "@herb-tools/node-wasm"
+import { Herb } from "@herb-tools/node-wasm"
 import { Connection } from "vscode-languageserver/node"
 
 export class Project {

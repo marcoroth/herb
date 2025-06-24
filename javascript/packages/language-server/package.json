@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/language-server",
   "description": "Herb HTML+ERB Language Tools and Language Server Protocol integration.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -13,9 +13,9 @@
     "url": "https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/language-server"
   },
-  "main": "./dist/herb-language-server.js",
-  "module": "./dist/server.js",
-  "types": "./dist/types/server.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && rollup -c",
     "dev": "rollup -c -w",
@@ -26,21 +26,20 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/server.d.ts",
-      "import": "./dist/server.js",
-      "require": "./dist/herb-language-server.js",
-      "default": "./dist/server.js"
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     }
   },
   "homepage": "https://herb-tools.dev",
   "bin": {
-    "herb-language-server": "./dist/herb-language-server"
+    "herb-language-server": "./bin/herb-language-server"
   },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "postbuild": "node scripts/executable.mjs",
     "watch": "tsc -b -w",
     "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
@@ -48,11 +47,12 @@
   "files": [
     "package.json",
     "README.json",
-    "dist/",
-    "src/"
+    "src/",
+    "bin/",
+    "dist/"
   ],
   "dependencies": {
-    "@herb-tools/node-wasm": "0.3.0",
+    "@herb-tools/node-wasm": "0.3.1",
     "dedent": "^1.6.0",
     "typescript": "^5.8.3",
     "vscode-languageserver": "^9.0.1",

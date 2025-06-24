@@ -1,4 +1,8 @@
-# `@herb-tools/node-wasm`
+## Herb for Node.js (via WASM)
+
+##### Package: [`@herb-tools/node-wasm`](https://www.npmjs.com/package/@herb-tools/node-wasm)
+
+---
 
 WebAssembly-based HTML-aware ERB parser for Node.js.
 

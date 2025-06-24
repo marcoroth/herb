@@ -203,7 +203,11 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
   position_T* start = position_copy(parser->current_token->location->start);
 
-  while (token_is_none_of(parser, TOKEN_QUOTE, TOKEN_EOF)) {
+  while (!token_is(parser, TOKEN_EOF)
+         && !(
+           token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
+           && strcmp(parser->current_token->value, opening_quote->value) == 0
+         )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
@@ -618,6 +622,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           TOKEN_IDENTIFIER,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
+          TOKEN_QUOTE,
           TOKEN_SEMICOLON,
           TOKEN_SLASH,
           TOKEN_UNDERSCORE,

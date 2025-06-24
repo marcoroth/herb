@@ -71,7 +71,6 @@ export class Client {
   private get clientOptions(): LanguageClientOptions {
     return {
       documentSelector: [
-        { scheme: "file", language: "ruby" },
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
       ],

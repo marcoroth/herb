@@ -60,7 +60,7 @@ export abstract class Node implements BaseNodeProps {
   abstract treeInspect(indent?: number): string
   abstract recursiveErrors(): HerbError[]
   abstract accept(visitor: Visitor): void
-  abstract childNodes(): (Node | null | undefined)[]
+  abstract childNodes(): (Node | null | undefined)[]
   abstract compactChildNodes(): Node[]
 
   protected inspectArray(
