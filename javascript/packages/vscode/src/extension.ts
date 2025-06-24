@@ -26,7 +26,24 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   )
 
+  // Auto-run analyze project if HTML+ERB files exist
+  await runAutoAnalysis()
+
   console.log("Herb LSP is now active!")
+}
+
+async function runAutoAnalysis() {
+  if (!vscode.workspace.workspaceFolders) {
+    return
+  }
+
+  const erbFiles = await vscode.workspace.findFiles('**/*.html.erb')
+  if (erbFiles.length === 0) {
+    return
+  }
+
+  console.log(`Found ${erbFiles.length} HTML+ERB files. Running auto-analysis...`)
+  await fileStatusProvider.analyzeProject()
 }
 
 export async function deactivate(): Promise<void> {

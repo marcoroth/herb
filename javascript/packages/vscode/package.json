@@ -96,14 +96,24 @@
           "group": "navigation"
         }
       ],
-      "view/item/title": [
+      "view/item/context": [
         {
           "command": "herb.reprocessFile",
           "when": "view == herbFileStatus && viewItem == herbFile",
           "group": "inline"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "herbFileStatus",
+        "contents": "Run a project analysis to get started",
+        "button": {
+          "title": "Analyze Project",
+          "command": "herb.analyzeProject"
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
