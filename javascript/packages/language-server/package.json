@@ -7,22 +7,19 @@
   "engines": {
     "node": "*"
   },
+  "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/language-server"
   },
+  "bin": {
+    "herb-language-server": "./bin/herb-language-server"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
-  "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
-    "clean": "rimraf dist",
-    "test": "vitest run",
-    "prepublishOnly": "yarn clean && yarn build && yarn test"
-  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -32,21 +29,17 @@
       "default": "./dist/index.js"
     }
   },
-  "homepage": "https://herb-tools.dev",
-  "bin": {
-    "herb-language-server": "./bin/herb-language-server"
-  },
   "scripts": {
     "clean": "rimraf dist",
     "prebuild": "yarn run clean",
     "build": "tsc -b && rollup -c rollup.config.mjs",
-    "watch": "tsc -b -w",
+    "dev": "tsc -b -w",
     "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "files": [
     "package.json",
-    "README.json",
+    "README.md",
     "src/",
     "bin/",
     "dist/"
