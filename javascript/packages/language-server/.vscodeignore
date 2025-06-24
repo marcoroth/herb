@@ -1,9 +1,0 @@
-.gitignore
-.node-version
-
-**/*.ts
-**/*.map
-**/tsconfig.json
-**/tsconfig.base.json
-
-scripts/**

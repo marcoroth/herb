@@ -4,4 +4,4 @@
 
 ---
 
-Placeholder package to reserve the `herb-language-server` name on NPM; use [`@herb-tools/language-server`](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) instead.
+Placeholder package to reserve the `herb-language-server` name on NPM. Use [`@herb-tools/language-server`](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) instead.
