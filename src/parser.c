@@ -618,6 +618,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           TOKEN_IDENTIFIER,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
+          TOKEN_QUOTE,
           TOKEN_SEMICOLON,
           TOKEN_SLASH,
           TOKEN_UNDERSCORE,
