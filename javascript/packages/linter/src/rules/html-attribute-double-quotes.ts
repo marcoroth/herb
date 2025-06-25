@@ -1,4 +1,4 @@
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode, LiteralNode } from "@herb-tools/core"
 import type { Rule, LintMessage } from "../types.js"
 
 export class HTMLAttributeDoubleQuotesRule implements Rule {
@@ -25,22 +25,36 @@ export class HTMLAttributeDoubleQuotesRule implements Rule {
         if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
           const valueNode = attributeNode.value as HTMLAttributeValueNode
 
-          // If the value is quoted with single quotes, report an error
+          // If the value is quoted with single quotes, check if it contains double quotes
           if (valueNode.quoted && valueNode.open_quote && valueNode.open_quote.value === "'" && valueNode.close_quote && valueNode.close_quote.value === "'") {
-            let attributeName = "unknown"
-            if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-              const nameNode = attributeNode.name as HTMLAttributeNameNode
-              if (nameNode.name) {
-                attributeName = nameNode.name.value
-              }
+            // Get the actual value content to check for double quotes
+            let valueContent = ""
+            if (valueNode.children && valueNode.children.length > 0) {
+              // Concatenate all text content from children
+              valueContent = valueNode.children
+                .filter(child => child.type === "AST_LITERAL_NODE")
+                .map(child => (child as LiteralNode).content)
+                .join("")
             }
 
-            messages.push({
-              rule: this.name,
-              message: `Attribute "${attributeName}" uses single quotes. Prefer double quotes for HTML attribute values: ${attributeName}="value".`,
-              location: valueNode.location,
-              severity: "error"
-            })
+            // Only report error if the value doesn't contain double quotes
+            // (single quotes are acceptable when the value contains double quotes)
+            if (!valueContent.includes('"')) {
+              let attributeName = "unknown"
+              if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
+                const nameNode = attributeNode.name as HTMLAttributeNameNode
+                if (nameNode.name) {
+                  attributeName = nameNode.name.value
+                }
+              }
+
+              messages.push({
+                rule: this.name,
+                message: `Attribute "${attributeName}" uses single quotes. Prefer double quotes for HTML attribute values: ${attributeName}="value".`,
+                location: valueNode.location,
+                severity: "error"
+              })
+            }
           }
         }
       }

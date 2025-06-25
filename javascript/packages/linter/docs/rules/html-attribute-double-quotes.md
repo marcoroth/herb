@@ -4,7 +4,9 @@
 
 ##### Description
 
-Prefer using double quotes (`"`) around HTML attribute values instead of single quotes (`'`).
+Prefer using double quotes (`"`) around HTML attribute values instead of single quotes (`'`). 
+
+**Exception:** Single quotes are allowed when the attribute value contains double quotes, as this avoids the need for escaping.
 
 ##### Rationale
 
@@ -18,6 +20,9 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 <input type="text" value="Username">
 <a href="/profile" title="User Profile">Profile</a>
 <div data-controller="dropdown" data-action="click->dropdown#toggle"></div>
+
+<!-- Exception: Single quotes allowed when value contains double quotes -->
+<div id='"hello"' title='Say "Hello" to the world'></div>
 ```
 
 
