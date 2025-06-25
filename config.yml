@@ -179,515 +179,1443 @@ nodes:
 
   types:
     - name: DocumentNode
+      comment: |
+        Represents the root document node that contains all parsed content.
+        This is the top-level container for an entire ERB template.
+
+            <h1>Hello</h1>
+            <% if true %>
+              <p>World</p>
+            <% end %>
+            ^^^^^^^^^^^^^^^
       fields:
         - name: children
           type: array
           kind: Node
+          comment: |
+            An array of all child nodes in the document. Can contain any type of node including HTML elements, ERB blocks, text content, etc.
+
+                <h1>Hello</h1><% if true %><p>World</p><% end %>
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     - name: LiteralNode
+      comment: |
+        Represents literal text content that doesn't need special parsing.
+        This is used for plain text that appears outside of HTML tags or ERB blocks.
+
+            Hello World
+            ^^^^^^^^^^^
+
+            <p>Some text</p>
+                ^^^^^^^^^
       fields:
         - name: content
           type: string
+          comment: |
+            The literal text content as a string.
+
+                Hello World
+                ^^^^^^^^^^^
 
     - name: HTMLOpenTagNode
+      comment: |
+        Represents an HTML opening tag with its attributes.
+        This includes both regular opening tags and self-closing tags.
+
+            <div class="container">
+            ^^^^^^^^^^^^^^^^^^^^^^^
+
+            <img src="photo.jpg" />
+            ^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening bracket of the tag.
+
+                <div class="container">
+                ^
 
         - name: tag_name
           type: token
+          comment: |
+            The name of the HTML tag.
+
+                <div class="container">
+                 ^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing bracket of the tag.
+
+                <div class="container">
+                                      ^
 
         - name: children
           type: array
           kind: Node
+          comment: |
+            The attributes and other content within the opening tag.
+
+                <div class="container" id="main">
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: is_void
           type: boolean
+          comment: |
+            Whether this is a void element (like img, br, hr) that cannot have content.
+
+                <img /> <!-- is_void: true -->
+                <div>   <!-- is_void: false -->
 
     - name: HTMLCloseTagNode
+      comment: |
+        Represents an HTML closing tag.
+
+            </div>
+            ^^^^^^
+
+            </section>
+            ^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening bracket and slash of the closing tag.
+
+                </div>
+                ^
 
         - name: tag_name
           type: token
+          comment: |
+            The name of the HTML tag being closed.
+
+                </div>
+                  ^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing bracket of the tag.
+
+                </div>
+                     ^
 
     - name: HTMLSelfCloseTagNode
+      comment: |
+        Represents a self-closing HTML tag.
+
+            <img src="photo.jpg" />
+            ^^^^^^^^^^^^^^^^^^^^^^^
+
+            <br />
+            ^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening bracket of the tag.
+
+                <img src="photo.jpg" />
+                ^
 
         - name: tag_name
           type: token
+          comment: |
+            The name of the HTML tag.
+
+                <img src="photo.jpg" />
+                 ^^^
 
         - name: attributes
           type: array
           kind: HTMLAttributeNode
+          comment: |
+            An array of all attributes on this tag.
+
+                <img src="photo.jpg" alt="Photo" />
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing slash and bracket of the tag.
+
+                <img src="photo.jpg" />
+                                    ^^^
 
         - name: is_void
           type: boolean
+          comment: |
+            Whether this is a void element that cannot have content.
+
+                <img /> <!-- is_void: true -->
+                <div /> <!-- is_void: false (but self-closing) -->
 
     - name: HTMLElementNode
+      comment: |
+        Represents a complete HTML element with opening tag, content, and closing tag.
+
+            <div class="container">
+              <h1>Title</h1>
+            </div>
+            ^^^^^^^^^^^^^^^^^^^
+
+            <p>Simple paragraph</p>
+            ^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: open_tag
           type: node
           kind: HTMLOpenTagNode
+          comment: |
+            The opening tag of the element.
+
+                <div class="container">
+                ^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_name
           type: token
+          comment: |
+            The name of the HTML tag (duplicated from open_tag for convenience).
+
+                <div class="container">Content</div>
+                 ^^^                           ^^^
 
         - name: body
           type: array
           kind: Node
+          comment: |
+            The content between the opening and closing tags.
+
+                <div>
+                  <h1>Title</h1>
+                  <p>Content</p>
+                </div>
+                ^^^^^^^^^^^^^^^
 
         - name: close_tag
           type: node
           kind: HTMLCloseTagNode
+          comment: |
+            The closing tag of the element.
+
+                <div>Content</div>
+                            ^^^^^^
 
         - name: is_void
           type: boolean
+          comment: |
+            Whether this is a void element. Should be false for complete elements.
 
     - name: HTMLAttributeValueNode
+      comment: |
+        Represents the value part of an HTML attribute, which may contain mixed content including ERB.
+
+            class="container"
+                  ^^^^^^^^^^^
+
+            id="item-<%= item.id %>"
+               ^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: open_quote
           type: token
+          comment: |
+            The opening quote character, if the value is quoted.
+
+                class="container"
+                      ^
 
         - name: children
           type: array
           kind: Node
+          comment: |
+            The content within the attribute value, which may include text and ERB.
+
+                class="base <%= extra_classes %>"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: close_quote
           type: token
+          comment: |
+            The closing quote character, if the value is quoted.
+
+                class="container"
+                                ^
 
         - name: quoted
           type: boolean
+          comment: |
+            Whether the attribute value is quoted.
+
+                class="quoted"   <!-- quoted: true -->
+                class=unquoted   <!-- quoted: false -->
 
     - name: HTMLAttributeNameNode
+      comment: |
+        Represents the name part of an HTML attribute.
+
+            <div class="container">
+                 ^^^^^
+
+            <img src="photo.jpg" alt="Photo">
+                 ^^^             ^^^
       fields:
         - name: name
           type: token
+          comment: |
+            The attribute name token.
+
+                <div class="container">
+                     ^^^^^
 
     - name: HTMLAttributeNode
+      comment: |
+        Represents a complete HTML attribute with name and value.
+
+            class="container"
+            ^^^^^^^^^^^^^^^^^
+
+            disabled
+            ^^^^^^^^
+
+            data-id="<%= item.id %>"
+            ^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: name
           type: node
           kind: HTMLAttributeNameNode
+          comment: |
+            The name part of the attribute.
+
+                class="container"
+                ^^^^^
 
         - name: equals
           type: token
+          comment: |
+            The equals sign between name and value, if present.
+
+                class="container"
+                     ^
 
         - name: value
           type: node
           kind: HTMLAttributeValueNode
+          comment: |
+            The value part of the attribute, if present.
+
+                class="container"
+                      ^^^^^^^^^^^
 
     - name: HTMLTextNode
+      comment: |
+        Represents plain text content within HTML elements.
+
+            <p>Hello World</p>
+               ^^^^^^^^^^^
+
+            <div>
+              Some text content
+              ^^^^^^^^^^^^^^^^^
+            </div>
       fields:
         - name: content
           type: string
+          comment: |
+            The text content as a string.
+
+                <p>Hello World</p>
+                   ^^^^^^^^^^^
 
     - name: HTMLCommentNode
+      comment: |
+        Represents an HTML comment.
+
+            <!-- This is a comment -->
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+            <!-- 
+              Multi-line comment
+              with <%= erb %>
+            -->
+            ^^^^^^^^^^^^^^^^^
       fields:
         - name: comment_start
           type: token
+          comment: |
+            The opening comment delimiter.
+
+                <!-- This is a comment -->
+                ^^^^
 
         - name: children
           type: array
           kind: Node
+          comment: |
+            The content within the comment, which may include ERB.
+
+                <!-- Comment with <%= erb %> -->
+                     ^^^^^^^^^^^^^^^^^^^^^^
 
         - name: comment_end
           type: token
+          comment: |
+            The closing comment delimiter.
+
+                <!-- This is a comment -->
+                                       ^^^
 
     - name: HTMLDoctypeNode
+      comment: |
+        Represents an HTML DOCTYPE declaration.
+
+            <!DOCTYPE html>
+            ^^^^^^^^^^^^^^^
+
+            <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening delimiter of the DOCTYPE.
+
+                <!DOCTYPE html>
+                ^
 
         - name: children
           type: array
           kind: Node
+          comment: |
+            The content within the DOCTYPE declaration.
+
+                <!DOCTYPE html>
+                          ^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing delimiter of the DOCTYPE.
+
+                <!DOCTYPE html>
+                               ^
 
     - name: WhitespaceNode
+      comment: |
+        Represents whitespace that should be preserved in the output.
+        This includes spaces, tabs, and newlines that affect the rendered result.
+
+            <div>
+              <p>Content</p>
+            ^^^
+            </div>
       fields:
         - name: value
           type: token
+          comment: |
+            The whitespace token containing the actual whitespace characters.
+
+                <div>
+                  <p>Content</p>
+                ^^^
 
     - name: ERBContentNode
+      comment: |
+        Represents any ERB tag with its content. This is the base node for all ERB constructs.
+
+            <% ruby_code %>
+            ^^^^^^^^^^^^^^^
+
+            <%= expression %>
+            ^^^^^^^^^^^^^^^^^
+
+            <%# comment %>
+            ^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% ruby_code %>
+                ^^
+
+                <%= expression %>
+                ^^^
 
         - name: content
           type: token
+          comment: |
+            The Ruby code content within the ERB tag.
+
+                <% ruby_code %>
+                   ^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% ruby_code %>
+                             ^^
 
         - name: analyzed_ruby
           type: analyzed_ruby
+          comment: |
+            The parsed Prism AST of the Ruby content, if successfully parsed.
 
         - name: parsed
           type: boolean
+          comment: |
+            Whether the Ruby content was successfully parsed by Prism.
 
         - name: valid
           type: boolean
+          comment: |
+            Whether the Ruby content is syntactically valid.
 
     - name: ERBEndNode
+      comment: |
+        Represents an ERB end statement that closes a control structure.
+
+            <% if condition %>
+              content
+            <% end %>
+            ^^^^^^^^^
+
+            <% users.each do |user| %>
+              <%= user.name %>
+            <% end %>
+            ^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% end %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'end' keyword and any surrounding whitespace.
+
+                <% end %>
+                   ^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% end %>
+                       ^^
 
     - name: ERBElseNode
+      comment: |
+        Represents an ERB else clause within conditional statements.
+
+            <% if condition %>
+              content
+            <% else %>
+            ^^^^^^^^^
+              other content
+            <% end %>
+
+            <% case value %>
+            <% when 'a' %>
+              content
+            <% else %>
+            ^^^^^^^^^
+              default content
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% else %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'else' keyword and any surrounding whitespace.
+
+                <% else %>
+                   ^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% else %>
+                       ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the else clause.
+
+                <% else %>
+                  <p>Default content</p>
+                  ^^^^^^^^^^^^^^^^^^^^^^
+                <% end %>
 
     - name: ERBIfNode
+      comment: |
+        Represents an ERB if statement with optional elsif and else clauses.
+
+            <% if user.admin? %>
+            ^^^^^^^^^^^^^^^^^^^^
+              <p>Admin panel</p>
+            <% elsif user.moderator? %>
+              <p>Moderator tools</p>
+            <% else %>
+              <p>User content</p>
+            <% end %>
+
+            <% if condition %>content<% end %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% if condition %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'if' keyword and condition.
+
+                <% if user.admin? %>
+                   ^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: predicate
-        #   type: prism_node
+                <% if condition %>
+                                ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the if clause.
+
+                <% if condition %>
+                  <p>Content</p>
+                  ^^^^^^^^^^^^^
+                <% end %>
 
         - name: subsequent
           type: node
-          #kind: ERBIfNode # or ERBElseNode
+          comment: |
+            The next clause (elsif or else), if present.
+
+                <% if condition %>
+                  content
+                <% elsif other %>
+                ^^^^^^^^^^^^^^^^^ (subsequent)
+                  other content
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this if statement.
+
+                <% if condition %>
+                  content
+                <% end %>
+                ^^^^^^^^^
 
     - name: ERBBlockNode
+      comment: |
+        Represents an ERB block construct like each, times, or custom blocks.
+
+            <% users.each do |user| %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+              <%= user.name %>
+            <% end %>
+
+            <% 5.times do |i| %>
+            ^^^^^^^^^^^^^^^^^^^^
+              <p><%= i %></p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% users.each do |user| %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The block expression with optional parameters.
+
+                <% users.each do |user| %>
+                   ^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: block_type
-        #   type: string
-
-        # - name: opener
-        #   type: prism_node
+                <% users.each do |user| %>
+                                       ^^
 
         - name: body
           type: array
           kind: Node
+          comment: |
+            The content within the block.
+
+                <% users.each do |user| %>
+                  <%= user.name %>
+                  ^^^^^^^^^^^^^^^^
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this block.
+
+                <% users.each do |user| %>
+                  <%= user.name %>
+                <% end %>
+                ^^^^^^^^^
 
     - name: ERBWhenNode
+      comment: |
+        Represents a when clause within an ERB case statement.
+
+            <% case value %>
+            <% when 'admin' %>
+            ^^^^^^^^^^^^^^^^^^
+              <p>Administrator</p>
+            <% when 'user' %>
+            ^^^^^^^^^^^^^^^^^
+              <p>Regular user</p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% when 'admin' %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'when' keyword and condition(s).
+
+                <% when 'admin', 'moderator' %>
+                   ^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: conditions
-        #   type: array
-        #   kind: prism_node
+                <% when 'admin' %>
+                               ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within this when clause.
+
+                <% when 'admin' %>
+                  <p>Administrator</p>
+                  ^^^^^^^^^^^^^^^^^^^
+                <% end %>
 
     - name: ERBCaseNode
+      comment: |
+        Represents an ERB case statement with when clauses and optional else.
+
+            <% case user.role %>
+            ^^^^^^^^^^^^^^^^^^^^
+            <% when 'admin' %>
+              <p>Administrator</p>
+            <% when 'moderator' %>
+              <p>Moderator</p>
+            <% else %>
+              <p>Regular user</p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% case value %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'case' keyword and expression.
+
+                <% case user.role %>
+                   ^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% case value %>
+                              ^^
 
         - name: children
           type: array
           kind: Node
-
-        # - name: predicate
-        #   type: prism_node
+          comment: |
+            All child nodes between case and end (when clauses, else, etc.).
 
         - name: conditions
           type: array
           kind: ERBWhenNode
+          comment: |
+            Array of when clauses within this case statement.
+
+                <% case value %>
+                <% when 'a' %>  ← conditions[0]
+                  content
+                <% when 'b' %>  ← conditions[1]
+                  content
+                <% end %>
 
         - name: else_clause
           type: node
           kind: ERBElseNode
+          comment: |
+            The else clause, if present.
+
+                <% case value %>
+                <% when 'a' %>
+                  content
+                <% else %>
+                ^^^^^^^^^^ (else_clause)
+                  default
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this case statement.
 
     - name: ERBCaseMatchNode
+      comment: |
+        Represents an ERB case statement with pattern matching using 'in' clauses.
+
+            <% case data %>
+            ^^^^^^^^^^^^^^^
+            <% in { type: 'user', name: String } %>
+              <p>User: <%= name %></p>
+            <% in { type: 'admin' } %>
+              <p>Administrator</p>
+            <% else %>
+              <p>Unknown type</p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% case data %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'case' keyword and expression.
+
+                <% case data %>
+                   ^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% case data %>
+                             ^^
 
         - name: children
           type: array
           kind: Node
-
-        # - name: predicate
-        #   type: prism_node
+          comment: |
+            All child nodes between case and end.
 
         - name: conditions
           type: array
           kind: ERBInNode
+          comment: |
+            Array of 'in' pattern matching clauses.
+
+                <% case data %>
+                <% in pattern1 %>  ← conditions[0]
+                  content
+                <% in pattern2 %>  ← conditions[1]
+                  content
+                <% end %>
 
         - name: else_clause
           type: node
           kind: ERBElseNode
+          comment: |
+            The else clause, if present.
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this case statement.
 
     - name: ERBWhileNode
+      comment: |
+        Represents an ERB while loop.
+
+            <% while counter < 10 %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>Count: <%= counter %></p>
+              <% counter += 1 %>
+            <% end %>
+
+            <% while condition %>content<% end %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% while condition %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'while' keyword and condition.
+
+                <% while counter < 10 %>
+                   ^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: predicate
-        #   type: prism_node
+                <% while condition %>
+                                   ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the while loop.
+
+                <% while condition %>
+                  <p>Content</p>
+                  ^^^^^^^^^^^^^
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this while loop.
 
     - name: ERBUntilNode
+      comment: |
+        Represents an ERB until loop.
+
+            <% until counter == 10 %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>Count: <%= counter %></p>
+              <% counter += 1 %>
+            <% end %>
+
+            <% until condition %>content<% end %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% until condition %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'until' keyword and condition.
+
+                <% until counter == 10 %>
+                   ^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: predicate
-        #   type: prism_node
+                <% until condition %>
+                                   ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the until loop.
+
+                <% until condition %>
+                  <p>Content</p>
+                  ^^^^^^^^^^^^^
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this until loop.
 
     - name: ERBForNode
+      comment: |
+        Represents an ERB for loop.
+
+            <% for item in collection %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              <div><%= item %></div>
+            <% end %>
+
+            <% for i in 1..10 %>content<% end %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% for item in collection %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'for' keyword, variable, and collection.
+
+                <% for item in collection %>
+                   ^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: index
-        #   type: prism_node
-
-        # - name: collection
-        #   type: prism_node
+                <% for item in collection %>
+                                          ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the for loop.
+
+                <% for item in collection %>
+                  <div><%= item %></div>
+                  ^^^^^^^^^^^^^^^^^^^^^
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this for loop.
 
     - name: ERBRescueNode
+      comment: |
+        Represents an ERB rescue clause within a begin block.
+
+            <% begin %>
+              risky_operation
+            <% rescue StandardError => e %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>Error: <%= e.message %></p>
+            <% rescue => e %>
+            ^^^^^^^^^^^^^^^^^
+              <p>Other error</p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% rescue StandardError => e %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'rescue' keyword and exception specification.
+
+                <% rescue StandardError => e %>
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: exceptions
-        #   type: array
-        #   kind: Node
-
-        # - name: reference
-        #   type: prism_node
+                <% rescue StandardError => e %>
+                                           ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within this rescue clause.
+
+                <% rescue StandardError => e %>
+                  <p>Error handled</p>
+                  ^^^^^^^^^^^^^^^^^^^
+                <% end %>
 
         - name: subsequent
           type: node
           kind: ERBRescueNode
+          comment: |
+            The next rescue clause, if present (for multiple rescue clauses).
+
+                <% rescue StandardError => e %>
+                  handle standard error
+                <% rescue => e %>
+                ^^^^^^^^^^^^^^^^^ (subsequent)
+                  handle other errors
+                <% end %>
 
     - name: ERBEnsureNode
+      comment: |
+        Represents an ERB ensure clause within a begin block.
+
+            <% begin %>
+              risky_operation
+            <% rescue => e %>
+              handle error
+            <% ensure %>
+            ^^^^^^^^^^^^
+              cleanup_resources
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% ensure %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'ensure' keyword and any surrounding whitespace.
+
+                <% ensure %>
+                   ^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% ensure %>
+                         ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the ensure clause.
+
+                <% ensure %>
+                  cleanup_resources
+                  ^^^^^^^^^^^^^^^^^
+                <% end %>
 
     - name: ERBBeginNode
+      comment: |
+        Represents an ERB begin block with optional rescue, else, and ensure clauses.
+
+            <% begin %>
+            ^^^^^^^^^^^
+              risky_operation
+            <% rescue StandardError => e %>
+              handle_error(e)
+            <% else %>
+              success_code
+            <% ensure %>
+              cleanup
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% begin %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'begin' keyword and any surrounding whitespace.
+
+                <% begin %>
+                   ^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% begin %>
+                         ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The main content within the begin block.
+
+                <% begin %>
+                  risky_operation
+                  ^^^^^^^^^^^^^^^
+                <% rescue %>
 
         - name: rescue_clause
           type: node
           kind: ERBRescueNode
+          comment: |
+            The rescue clause, if present.
+
+                <% begin %>
+                  content
+                <% rescue => e %>
+                ^^^^^^^^^^^^^^^^^ (rescue_clause)
+                  handle error
+                <% end %>
 
         - name: else_clause
           type: node
           kind: ERBElseNode
+          comment: |
+            The else clause (executed if no exception), if present.
+
+                <% begin %>
+                  content
+                <% rescue => e %>
+                  handle error
+                <% else %>
+                ^^^^^^^^^^ (else_clause)
+                  success code
+                <% end %>
 
         - name: ensure_clause
           type: node
           kind: ERBEnsureNode
+          comment: |
+            The ensure clause (always executed), if present.
+
+                <% begin %>
+                  content
+                <% ensure %>
+                ^^^^^^^^^^^^ (ensure_clause)
+                  cleanup
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this begin block.
 
     - name: ERBUnlessNode
+      comment: |
+        Represents an ERB unless statement with optional else clause.
+
+            <% unless user.banned? %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>Welcome back!</p>
+            <% else %>
+              <p>Access denied</p>
+            <% end %>
+
+            <% unless condition %>content<% end %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% unless condition %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'unless' keyword and condition.
+
+                <% unless user.banned? %>
+                   ^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
 
-        # - name: predicate
-        #   type: prism_node
+                <% unless condition %>
+                                    ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within the unless clause.
+
+                <% unless condition %>
+                  <p>Content</p>
+                  ^^^^^^^^^^^^^
+                <% end %>
 
         - name: else_clause
           type: node
           kind: ERBElseNode
+          comment: |
+            The else clause, if present.
+
+                <% unless condition %>
+                  content
+                <% else %>
+                ^^^^^^^^^^ (else_clause)
+                  else content
+                <% end %>
 
         - name: end_node
           type: node
           kind: ERBEndNode
+          comment: |
+            The ERB end tag that closes this unless statement.
 
     - name: ERBYieldNode
+      comment: |
+        Represents an ERB yield statement for rendering blocks or content.
+
+            <% yield %>
+            ^^^^^^^^^^^
+
+            <% yield :head %>
+            ^^^^^^^^^^^^^^^^^
+
+            <% yield :sidebar if content_for?(:sidebar) %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% yield :head %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'yield' keyword and optional arguments.
+
+                <% yield :head %>
+                   ^^^^^^^^^^^
+
+                <% yield %>
+                   ^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% yield :head %>
+                               ^^
 
     - name: ERBInNode
+      comment: |
+        Represents an 'in' clause within an ERB case statement for pattern matching.
+
+            <% case data %>
+            <% in { type: 'user', name: String } %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>User: <%= name %></p>
+            <% in { type: 'admin' } %>
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+              <p>Administrator</p>
+            <% end %>
       fields:
         - name: tag_opening
           type: token
+          comment: |
+            The opening ERB delimiter.
+
+                <% in pattern %>
+                ^^
 
         - name: content
           type: token
+          comment: |
+            The 'in' keyword and pattern.
+
+                <% in { type: 'user', name: String } %>
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         - name: tag_closing
           type: token
+          comment: |
+            The closing ERB delimiter.
+
+                <% in pattern %>
+                              ^^
 
         - name: statements
           type: array
           kind: Node
+          comment: |
+            The content within this pattern matching clause.
+
+                <% in pattern %>
+                  <p>Matched content</p>
+                  ^^^^^^^^^^^^^^^^^^^^^
+                <% end %>
