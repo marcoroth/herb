@@ -180,7 +180,9 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      return token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
+      token_T* token = token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
+      buffer_free(&buffer);
+      return token;
     }
 
     buffer_append_char(&buffer, lexer->current_character);

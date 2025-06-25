@@ -1,0 +1,3 @@
+#<Herb::Token type="TOKEN_ERB_START" value="<%" range=[0, 2] start=(1:0) end=(1:2)>
+#<Herb::Token type="TOKEN_ERROR" value=" if true %" range=[2, 12] start=(1:2) end=(1:12)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[12, 12] start=(1:12) end=(1:12)>

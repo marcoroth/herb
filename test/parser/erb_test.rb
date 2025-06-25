@@ -109,5 +109,17 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "unterminated erb tag" do
+      assert_parsed_snapshot(%(<% if true %))
+    end
+
+    test "unterminated erb output tag" do
+      assert_parsed_snapshot(%(<%= "hello world" %))
+    end
+
+    test "unterminated erb comment tag" do
+      assert_parsed_snapshot(%(<%# This is a comment %))
+    end
   end
 end

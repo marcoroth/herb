@@ -45,5 +45,17 @@ module Lexer
     test "erb output inside HTML attribute value with value and after" do
       assert_lexed_snapshot(%(<div class="<%= "text-white" %> bg-black"></div>))
     end
+
+    test "unterminated erb tag" do
+      assert_lexed_snapshot(%(<% if true %))
+    end
+
+    test "unterminated erb output tag" do
+      assert_lexed_snapshot(%(<%= "hello world" %))
+    end
+
+    test "unterminated erb comment tag" do
+      assert_lexed_snapshot(%(<%# This is a comment %))
+    end
   end
 end
