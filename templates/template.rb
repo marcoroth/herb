@@ -7,12 +7,54 @@ require "yaml"
 
 module Herb
   module Template
-    class Field
-      attr_reader :name, :options
+    # A comment attached to a field or node.
+    class ConfigComment
+      attr_reader :value
 
-      def initialize(name:, **options)
+      def initialize(value)
+        @value = value
+      end
+
+      def each_line(&block)
+        value.each_line { |line| yield line.prepend(" ").rstrip }
+      end
+
+      def each_ruby_line(&block)
+        each_line { |line| yield "# #{line.strip}" unless line.strip.empty? }
+      end
+
+      def each_c_line(&block)
+        each_line { |line| yield "// #{line.strip}" unless line.strip.empty? }
+      end
+
+      def each_js_line(&block)
+        each_line { |line| yield " * #{line.strip}" unless line.strip.empty? }
+      end
+    end
+
+    class Field
+      attr_reader :name, :comment, :options
+
+      def initialize(name:, comment: nil, **options)
         @name = name
+        @comment = comment
         @options = options
+      end
+
+      def each_comment_line(&block)
+        ConfigComment.new(comment).each_line(&block) if comment
+      end
+
+      def each_comment_ruby_line(&block)
+        ConfigComment.new(comment).each_ruby_line(&block) if comment
+      end
+
+      def each_comment_c_line(&block)
+        ConfigComment.new(comment).each_c_line(&block) if comment
+      end
+
+      def each_comment_js_line(&block)
+        ConfigComment.new(comment).each_js_line(&block) if comment
       end
     end
 
@@ -239,7 +281,7 @@ module Herb
     class NodeType
       include ConfigType
 
-      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields
+      attr_reader :name, :type, :struct_type, :struct_name, :human, :fields, :comment
 
       def initialize(config)
         @name = config.fetch("name")
@@ -248,14 +290,32 @@ module Herb
         @struct_type = "AST_#{camelized.upcase}_T"
         @struct_name = "AST_#{camelized.upcase}_STRUCT"
         @human = camelized.downcase
+        @comment = config.fetch("comment", nil)
 
         @fields = config.fetch("fields", []).map do |field|
           field_name = field.fetch("name")
           type = field_type_for(field.fetch("type"))
           kind = normalize_kind(field.fetch("kind", nil), type, @name, field_name)
+          comment = field.fetch("comment", nil)
 
-          type.new(name: field_name, kind: kind)
+          type.new(name: field_name, kind: kind, comment: comment)
         end
+      end
+
+      def each_comment_line(&block)
+        ConfigComment.new(comment).each_line(&block) if comment
+      end
+
+      def each_comment_ruby_line(&block)
+        ConfigComment.new(comment).each_ruby_line(&block) if comment
+      end
+
+      def each_comment_c_line(&block)
+        ConfigComment.new(comment).each_c_line(&block) if comment
+      end
+
+      def each_comment_js_line(&block)
+        ConfigComment.new(comment).each_js_line(&block) if comment
       end
     end
 

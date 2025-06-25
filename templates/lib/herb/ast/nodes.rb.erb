@@ -1,8 +1,18 @@
 module Herb
   module AST
-    <%- nodes.each do |node| -%>
+<%- nodes.each do |node| -%>
+<% if node.comment -%>
+<% node.each_comment_ruby_line do |line| -%>
+    <%= line %>
+<% end -%>
+<% end -%>
     class <%= node.name -%> < Node
       <%- node.fields.each do |field| -%>
+<% if field.comment -%>
+<% field.each_comment_ruby_line do |line| -%>
+      <%= line %>
+<% end -%>
+<% end -%>
       attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
@@ -110,6 +120,6 @@ module Herb
       end
     end
 
-    <%- end -%>
+<%- end -%>
   end
 end

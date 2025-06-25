@@ -171,8 +171,22 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- end -%>
 }
 
+<% if node.comment -%>
+/**
+<% node.each_comment_js_line do |line| -%>
+<%= line %>
+<% end -%>
+ */
+<% end -%>
 export class <%= node.name %> extends Node {
   <%- node.fields.each do |field| -%>
+<% if field.comment -%>
+  /**
+<% field.each_comment_js_line do |line| -%>
+  <%= line %>
+<% end -%>
+   */
+<% end -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
   readonly <%= field.name %>: string;
@@ -195,6 +209,11 @@ export class <%= node.name %> extends Node {
   <%- end -%>
   <%- end -%>
 
+  /**
+   * Creates a <%= node.name %> instance from serialized data.
+   * @param data - The serialized node data
+   * @returns A new <%= node.name %> instance
+   */
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({
       type: data.type,
@@ -221,6 +240,10 @@ export class <%= node.name %> extends Node {
     })
   }
 
+  /**
+   * Creates a new <%= node.name %> instance.
+   * @param props - The node properties
+   */
   constructor(props: <%= node.name %>Props) {
     super(props.type, props.location, props.errors);
     <%- node.fields.each do |field| -%>
@@ -243,10 +266,18 @@ export class <%= node.name %> extends Node {
     <%- end -%>
   }
 
+  /**
+   * Accepts a visitor and calls the appropriate visit method.
+   * @param visitor - The visitor to accept
+   */
   accept(visitor: Visitor): void {
     visitor.visit<%= node.name %>(this)
   }
 
+  /**
+   * Returns an array of child nodes, including null values.
+   * @returns Array of child nodes
+   */
   childNodes(): (Node | null | undefined)[] {
     return [
       <%- node.fields.each do |field| -%>
@@ -260,10 +291,18 @@ export class <%= node.name %> extends Node {
     ];
   }
 
+  /**
+   * Returns an array of child nodes with null/undefined values filtered out.
+   * @returns Array of non-null child nodes
+   */
   compactChildNodes(): Node[] {
     return this.childNodes().filter(node => node !== null && node !== undefined)
   }
 
+  /**
+   * Returns all errors from this node and its descendants recursively.
+   * @returns Array of all errors in the subtree
+   */
   recursiveErrors(): HerbError[] {
     return [
       ...this.errors,
@@ -303,6 +342,10 @@ export class <%= node.name %> extends Node {
     };
   }
 
+  /**
+   * Generates a tree-like string representation of this node for debugging.
+   * @returns A formatted string showing the node structure
+   */
   treeInspect(): string {
     let output = "";
 
