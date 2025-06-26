@@ -6,10 +6,6 @@ module Analyze::ActionView::UrlHelper
   class LinkToTest < Minitest::Spec
     include SnapshotUtils
 
-    before do
-      skip
-    end
-
     test "link_to" do
       assert_parsed_snapshot(<<~HTML)
         <%= link_to "Click me", "#" %>
@@ -63,6 +59,51 @@ module Analyze::ActionView::UrlHelper
     test "link_to with :back" do
       assert_parsed_snapshot(<<~HTML)
         <%= link_to "Back", :back %>
+      HTML
+    end
+
+    test "link_to with block and path helper" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= link_to root_path do %>
+          <span class="icon">🏠</span>
+          Home
+        <% end %>
+      HTML
+    end
+
+    test "link_to with block and html options" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= link_to "#", class: "btn btn-primary", id: "home-link" do %>
+          Click me
+        <% end %>
+      HTML
+    end
+
+    test "link_to with block and data attributes" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= link_to root_path, data: { controller: "hello", action: "click" } do %>
+          Interactive Link
+        <% end %>
+      HTML
+    end
+
+    test "link_to with block and complex attributes" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= link_to root_path, class: "btn", data: { turbo_method: "delete", confirm: "Are you sure?" }, method: "delete" do %>
+          <i class="icon-trash"></i>
+          Delete
+        <% end %>
+      HTML
+    end
+
+    test "link_to with block and nested html" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= link_to "/profile" do %>
+          <div class="user-card">
+            <img src="avatar.jpg" alt="Avatar">
+            <span>John Doe</span>
+          </div>
+        <% end %>
       HTML
     end
   end

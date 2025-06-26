@@ -38,12 +38,13 @@ int main(const int argc, char* argv[]) {
 
     printf("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n\n");
 
-    printf("./herb lex [file]      -  Lex a file\n");
-    printf("./herb lex_json [file] -  Lex a file and return the result as json.\n");
-    printf("./herb parse [file]    -  Parse a file\n");
-    printf("./herb ruby [file]     -  Extract Ruby from a file\n");
-    printf("./herb html [file]     -  Extract HTML from a file\n");
-    printf("./herb prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./herb lex [file]           -  Lex a file\n");
+    printf("./herb lex_json [file]      -  Lex a file and return the result as json.\n");
+    printf("./herb parse [file]         -  Parse a file\n");
+    printf("./herb parse_analyze [file] -  Parse a and analyze/transform a file\n");
+    printf("./herb ruby [file]          -  Extract Ruby from a file\n");
+    printf("./herb html [file]          -  Extract HTML from a file\n");
+    printf("./herb prism [file]         -  Extract Ruby from a file and parse the Ruby source with Prism\n");
 
     return 1;
   }
@@ -112,6 +113,24 @@ int main(const int argc, char* argv[]) {
     printf("%s\n", output.value);
 
     print_time_diff(start, end, "parsing");
+
+    ast_node_free((AST_NODE_T*) root);
+    buffer_free(&output);
+    free(source);
+
+    return 0;
+  }
+
+  if (strcmp(argv[1], "parse_analyze") == 0) {
+    AST_DOCUMENT_NODE_T* root = herb_parse(source);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    herb_analyze_parse_tree(root, source);
+
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+    printf("%s\n", output.value);
+
+    print_time_diff(start, end, "parsing and analysing");
 
     ast_node_free((AST_NODE_T*) root);
     buffer_free(&output);

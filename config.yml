@@ -189,6 +189,11 @@ nodes:
         - name: content
           type: string
 
+    - name: RubyLiteralNode
+      fields:
+        - name: content
+          type: string
+
     - name: HTMLOpenTagNode
       fields:
         - name: tag_opening
@@ -240,7 +245,7 @@ nodes:
       fields:
         - name: open_tag
           type: node
-          kind: HTMLOpenTagNode
+          # kind: HTMLOpenTagNode or ERBOpenTagNode
 
         - name: tag_name
           type: token
@@ -257,7 +262,7 @@ nodes:
           type: boolean
 
         - name: source
-          type: element_source
+          type: string
 
     - name: HTMLAttributeValueNode
       fields:
@@ -291,6 +296,14 @@ nodes:
         - name: value
           type: node
           kind: HTMLAttributeValueNode
+
+    - name: HTMLAttributeRubySplatNode
+      fields:
+        - name: content
+          type: string
+
+        - name: prefix
+          type: string
 
     - name: HTMLTextNode
       fields:
@@ -345,6 +358,24 @@ nodes:
 
         - name: valid
           type: boolean
+
+    - name: ERBOpenTagNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: content
+          type: token
+
+        - name: tag_closing
+          type: token
+
+        - name: tag_name
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
 
     - name: ERBEndNode
       fields:

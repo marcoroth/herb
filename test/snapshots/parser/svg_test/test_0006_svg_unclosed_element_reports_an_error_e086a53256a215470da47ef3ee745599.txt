@@ -54,10 +54,12 @@
         │   │   │       ├── tag_name: "svg" (location: (3:2)-(3:5))
         │   │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
         │   │   │
-        │   │   └── is_void: false
+        │   │   ├── is_void: false
+        │   │   └── source: "HTML"
         │   │
         │   └── @ HTMLTextNode (location: (3:6)-(4:0))
         │       └── content: "\n"
         │
         ├── close_tag: ∅
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:37))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:37))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " tag.div "Content", id: "hello" " (location: (1:3)-(1:35))
+    │   │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   │       ├── tag_name: "div" (location: (1:3)-(1:35))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:23)-(1:34))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:23)-(1:26))
+    │   │               │       └── name: "id" (location: (1:23)-(1:26))
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:26)-(1:27))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:27)-(1:34))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ HTMLTextNode (location: (1:27)-(1:34))
+    │   │                       │       └── content: "hello"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (1:3)-(1:35))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:0))
+    │   │       └── content: "Content"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: false
+    │   └── source: "ActionView::Helpers::TagHelper#tag"
+    │
+    └── @ HTMLTextNode (location: (1:37)-(2:0))
+        └── content: "\n"

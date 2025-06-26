@@ -123,5 +123,29 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "make sure we preserve errors from previous nodes" do
+      assert_parsed_snapshot(<<~HTML)
+        <% begin %>
+          This is not valid
+        <% e n d %>
+      HTML
+    end
+
+    test "begin without end" do
+      assert_parsed_snapshot(<<~HTML)
+        <% begin %>
+          This is not valid
+      HTML
+    end
+
+    test "begin with extra end" do
+      assert_parsed_snapshot(<<~HTML)
+        <% begin %>
+          This is not valid
+        <% end %>
+        <% end %>
+      HTML
+    end
   end
 end

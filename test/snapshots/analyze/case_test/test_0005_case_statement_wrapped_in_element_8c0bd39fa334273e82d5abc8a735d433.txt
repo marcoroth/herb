@@ -67,7 +67,8 @@
     │   │       ├── tag_name: "h1" (location: (10:2)-(10:4))
     │   │       └── tag_closing: ">" (location: (10:4)-(10:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (10:5)-(11:0))
         └── content: "\n"

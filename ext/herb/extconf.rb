@@ -14,6 +14,7 @@ prism_src_path = "#{prism_path}/src"
 prism_include_path = "#{prism_path}/include"
 
 $VPATH << "$(srcdir)/../../src"
+$VPATH << "$(srcdir)/../../src/action_view_helpers"
 $VPATH << prism_src_path
 $VPATH << "#{prism_src_path}/util"
 

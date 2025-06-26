@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(5:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (4:3)-(4:6))
+│       ├── message: "unexpected_token_ignore: unexpected 'end', ignoring it"
+│       ├── error_message: "unexpected 'end', ignoring it"
+│       ├── diagnostic_id: "unexpected_token_ignore"
+│       └── level: "syntax"
+│
+└── children: (4 items)
+    ├── @ ERBBeginNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " begin " (location: (1:2)-(1:9))
+    │   ├── tag_closing: "%>" (location: (1:9)-(1:11))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:11)-(3:0))
+    │   │       └── content: "\n  This is not valid\n"
+    │   │
+    │   ├── rescue_clause: ∅
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (3:9)-(4:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (4:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   ├── content: " end " (location: (4:2)-(4:7))
+    │   ├── tag_closing: "%>" (location: (4:7)-(4:9))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

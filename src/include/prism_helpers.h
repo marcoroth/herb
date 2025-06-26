@@ -15,4 +15,6 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
 
 position_T* position_from_source_with_offset(const char* source, size_t offset);
 
+position_T* position_from_source_with_offset_erb_aware(const char* source, size_t offset);
+
 #endif

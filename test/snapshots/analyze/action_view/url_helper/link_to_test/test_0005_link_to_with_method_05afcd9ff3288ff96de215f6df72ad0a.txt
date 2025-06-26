@@ -1,0 +1,56 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:52))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:52))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Delete", root_path, method: "delete" " (location: (1:3)-(1:50))
+    │   │       ├── tag_closing: "%>" (location: (1:50)-(1:52))
+    │   │       ├── tag_name: "a" (location: (1:3)-(1:50))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:0)-(1:52))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:0)-(1:52))
+    │   │           │   │       └── name: "href" (location: (1:0)-(1:52))
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:0)-(1:52))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:0)-(1:52))
+    │   │           │           ├── open_quote: ∅
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ RubyLiteralNode (location: (1:0)-(1:52))
+    │   │           │           │       └── content: "root_path"
+    │   │           │           │
+    │   │           │           ├── close_quote: ∅
+    │   │           │           └── quoted: false
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:30)-(1:46))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:30)-(1:37))
+    │   │               │       └── name: "method" (location: (1:30)-(1:37))
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:37)-(1:38))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:38)-(1:46))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ HTMLTextNode (location: (1:38)-(1:46))
+    │   │                       │       └── content: "delete"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:3)-(1:50))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:52))
+    │   │       └── content: "Delete"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: false
+    │   └── source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:52)-(2:0))
+        └── content: "\n"

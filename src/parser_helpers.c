@@ -125,12 +125,12 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
   );
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
     NULL,
     false,
-    ELEMENT_SOURCE_HTML,
+    "HTML",
     open_tag->base.location->start,
     open_tag->base.location->end,
     errors

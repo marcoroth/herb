@@ -20,7 +20,8 @@
     │   │       ├── tag_name: "h1" (location: (3:2)-(3:4))
     │   │       └── tag_closing: ">" (location: (3:4)-(3:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:5)-(4:0))
         └── content: "\n"

@@ -479,12 +479,12 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
   const parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     NULL,
     NULL,
     true,
-    ELEMENT_SOURCE_HTML,
+    "HTML",
     open_tag->base.location->start,
     open_tag->base.location->end,
     NULL
@@ -521,12 +521,12 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   }
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
     close_tag,
     false,
-    ELEMENT_SOURCE_HTML,
+    "HTML",
     open_tag->base.location->start,
     close_tag->base.location->end,
     errors
@@ -554,12 +554,12 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   parser_append_unexpected_error(parser, "Unknown HTML open tag type", "HTMLOpenTag or HTMLSelfCloseTag", errors);
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     NULL,
     NULL,
     false,
-    ELEMENT_SOURCE_HTML,
+    "HTML",
     open_tag->base.location->start,
     open_tag->base.location->end,
     errors

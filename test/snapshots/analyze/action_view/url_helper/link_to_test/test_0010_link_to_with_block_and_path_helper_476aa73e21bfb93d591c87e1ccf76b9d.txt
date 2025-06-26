@@ -1,0 +1,87 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:9))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:27))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to root_path do " (location: (1:3)-(1:25))
+    │   │       ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   │       ├── tag_name: "a" (location: (1:3)-(1:25))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:12)-(1:12))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:12)-(1:12))
+    │   │               │       └── name: "href" (location: (1:12)-(1:12))
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:12)-(1:12))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:12)-(1:12))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:12)-(1:12))
+    │   │                       │       └── content: "root_path"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:3)-(1:25))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:27)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:32))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:21))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:20)-(2:21))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:8)-(2:20))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:8)-(2:13))
+    │   │   │   │       │       │       └── name: "class" (location: (2:8)-(2:13))
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:13)-(2:14))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:14)-(2:20))
+    │   │   │   │       │               ├── open_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (2:15)-(2:19))
+    │   │   │   │       │               │       └── content: "icon"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (2:19)-(2:20))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:21)-(2:25))
+    │   │   │   │       └── content: "🏠"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:25)-(2:32))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:25)-(2:27))
+    │   │   │   │       ├── tag_name: "span" (location: (2:27)-(2:31))
+    │   │   │   │       └── tag_closing: ">" (location: (2:31)-(2:32))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:32)-(4:0))
+    │   │       └── content: "\n  Home\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ ERBEndNode (location: (4:0)-(4:9))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " end " (location: (4:2)-(4:7))
+    │   │       └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

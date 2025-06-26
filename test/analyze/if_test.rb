@@ -93,5 +93,28 @@ module Analyze
         <h1 class="<% if bold? %>bold<% else %>normal<% end %>"></h1>
       HTML
     end
+
+    test "if without end" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          This is not valid
+      HTML
+    end
+
+    test "if without condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if %>
+          This is not valid
+        <% end %>
+      HTML
+    end
+
+    test "if with missing end closing tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          This is not valid
+        <% end
+      HTML
+    end
   end
 end

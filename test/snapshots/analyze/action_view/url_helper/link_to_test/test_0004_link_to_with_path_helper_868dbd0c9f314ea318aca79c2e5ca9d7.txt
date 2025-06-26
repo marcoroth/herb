@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:36))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:36))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Click me", root_path " (location: (1:3)-(1:34))
+    │   │       ├── tag_closing: "%>" (location: (1:34)-(1:36))
+    │   │       ├── tag_name: "a" (location: (1:3)-(1:34))
+    │   │       └── children: (1 item)
+    │   │           └── @ HTMLAttributeNode (location: (1:0)-(1:36))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:0)-(1:36))
+    │   │               │       └── name: "href" (location: (1:0)-(1:36))
+    │   │               │
+    │   │               ├── equals: "=" (location: (1:0)-(1:36))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:0)-(1:36))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ RubyLiteralNode (location: (1:0)-(1:36))
+    │   │                       │       └── content: "root_path"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:3)-(1:34))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:36))
+    │   │       └── content: "Click me"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: false
+    │   └── source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:36)-(2:0))
+        └── content: "\n"

@@ -28,7 +28,8 @@
     │   │   │   │       ├── tag_name: "h1" (location: (2:12)-(2:14))
     │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:15)-(3:2))
     │   │   │   └── content: "\n  "
@@ -53,7 +54,8 @@
     │   │   │   │       ├── tag_name: "h2" (location: (3:12)-(3:14))
     │   │   │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:15)-(4:0))
     │   │       └── content: "\n"

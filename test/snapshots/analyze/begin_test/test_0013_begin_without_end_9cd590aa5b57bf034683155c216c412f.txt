@@ -1,0 +1,27 @@
+@ DocumentNode (location: (1:0)-(3:0))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (2:19)-(3:0))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:10)-(1:10))
+│       ├── message: "begin_term: expected an `end` to close the `begin` statement"
+│       ├── error_message: "expected an `end` to close the `begin` statement"
+│       ├── diagnostic_id: "begin_term"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBBeginNode (location: (1:0)-(1:11))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " begin " (location: (1:2)-(1:9))
+        ├── tag_closing: "%>" (location: (1:9)-(1:11))
+        ├── statements: (1 item)
+        │   └── @ HTMLTextNode (location: (1:11)-(3:0))
+        │       └── content: "\n  This is not valid\n"
+        │
+        ├── rescue_clause: ∅
+        ├── else_clause: ∅
+        ├── ensure_clause: ∅
+        └── end_node: ∅

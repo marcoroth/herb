@@ -10,7 +10,9 @@
         "./extension/nodes.cpp",
 
         # Herb main source files
+        "./extension/libherb/analyze_control_flow.c",
         "./extension/libherb/analyze_helpers.c",
+        "./extension/libherb/analyze_tag_helpers.c",
         "./extension/libherb/analyze.c",
         "./extension/libherb/analyzed_ruby.c",
         "./extension/libherb/array.c",
@@ -38,6 +40,12 @@
         "./extension/libherb/token.c",
         "./extension/libherb/util.c",
         "./extension/libherb/visitor.c",
+
+        # ActionView helpers
+        "./extension/libherb/action_view_helpers/content_tag.c",
+        "./extension/libherb/action_view_helpers/link_to.c",
+        "./extension/libherb/action_view_helpers/registry.c",
+        "./extension/libherb/action_view_helpers/tag.c",
 
         # Prism main source files
         "./extension/prism/src/diagnostic.c",

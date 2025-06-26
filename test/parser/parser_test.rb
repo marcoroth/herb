@@ -48,7 +48,8 @@ module Parser
                 │       ├── tag_name: "h1" (location: (1:25)-(1:27))
                 │       └── tag_closing: ">" (location: (1:27)-(1:28))
                 │
-                └── is_void: false
+                ├── is_void: false
+                └── source: "HTML"
       SNAPSHOT
 
       file.unlink

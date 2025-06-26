@@ -22,4 +22,6 @@ char* herb_strdup(const char* s);
 
 char* size_t_to_string(size_t value);
 
+char* convert_underscores_to_dashes(const char* input);
+
 #endif

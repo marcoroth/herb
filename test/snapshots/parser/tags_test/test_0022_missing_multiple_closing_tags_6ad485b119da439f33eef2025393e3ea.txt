@@ -58,10 +58,13 @@
         │       │       │       ├── tag_name: "p" (location: (1:16)-(1:17))
         │       │       │       └── tag_closing: ">" (location: (1:17)-(1:18))
         │       │       │
-        │       │       └── is_void: false
+        │       │       ├── is_void: false
+        │       │       └── source: "HTML"
         │       │
         │       ├── close_tag: ∅
-        │       └── is_void: false
+        │       ├── is_void: false
+        │       └── source: "HTML"
         │
         ├── close_tag: ∅
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

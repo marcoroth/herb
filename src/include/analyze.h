@@ -9,6 +9,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   array_T* ruby_context_stack;
+  const char* original_source;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -35,5 +36,7 @@ typedef enum {
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
 void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source);
+
+size_t calculate_byte_offset_from_position(const char* source, position_T* position);
 
 #endif

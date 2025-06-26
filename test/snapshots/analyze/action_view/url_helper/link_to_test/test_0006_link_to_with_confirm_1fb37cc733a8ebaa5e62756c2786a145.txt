@@ -1,0 +1,56 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:70))
+    │   ├── open_tag:
+    │   │   └── @ ERBOpenTagNode (location: (1:0)-(1:70))
+    │   │       ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   │       ├── content: " link_to "Delete", root_path, data: { confirm: "Are you sure?" } " (location: (1:3)-(1:68))
+    │   │       ├── tag_closing: "%>" (location: (1:68)-(1:70))
+    │   │       ├── tag_name: "a" (location: (1:3)-(1:68))
+    │   │       └── children: (2 items)
+    │   │           ├── @ HTMLAttributeNode (location: (1:0)-(1:70))
+    │   │           │   ├── name:
+    │   │           │   │   └── @ HTMLAttributeNameNode (location: (1:0)-(1:70))
+    │   │           │   │       └── name: "href" (location: (1:0)-(1:70))
+    │   │           │   │
+    │   │           │   ├── equals: "=" (location: (1:0)-(1:70))
+    │   │           │   └── value:
+    │   │           │       └── @ HTMLAttributeValueNode (location: (1:0)-(1:70))
+    │   │           │           ├── open_quote: ∅
+    │   │           │           ├── children: (1 item)
+    │   │           │           │   └── @ RubyLiteralNode (location: (1:0)-(1:70))
+    │   │           │           │       └── content: "root_path"
+    │   │           │           │
+    │   │           │           ├── close_quote: ∅
+    │   │           │           └── quoted: false
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLAttributeNode (location: (1:38)-(1:62))
+    │   │               ├── name:
+    │   │               │   └── @ HTMLAttributeNameNode (location: (1:38)-(1:46))
+    │   │               │       └── name: "data-confirm" (location: (1:38)-(1:46))
+    │   │               │
+    │   │               ├── equals: ":" (location: (1:46)-(1:47))
+    │   │               └── value:
+    │   │                   └── @ HTMLAttributeValueNode (location: (1:47)-(1:62))
+    │   │                       ├── open_quote: ∅
+    │   │                       ├── children: (1 item)
+    │   │                       │   └── @ HTMLTextNode (location: (1:47)-(1:62))
+    │   │                       │       └── content: "Are you sure?"
+    │   │                       │
+    │   │                       ├── close_quote: ∅
+    │   │                       └── quoted: false
+    │   │
+    │   │
+    │   │
+    │   ├── tag_name: "a" (location: (1:3)-(1:68))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:0)-(1:70))
+    │   │       └── content: "Delete"
+    │   │
+    │   ├── close_tag: ∅
+    │   ├── is_void: false
+    │   └── source: "ActionView::Helpers::UrlHelper#link_to"
+    │
+    └── @ HTMLTextNode (location: (1:70)-(2:0))
+        └── content: "\n"

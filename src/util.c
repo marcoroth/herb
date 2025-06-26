@@ -128,3 +128,18 @@ char* size_t_to_string(const size_t value) {
 
   return buffer;
 }
+
+char* convert_underscores_to_dashes(const char* input) {
+  if (!input) { return NULL; }
+
+  size_t length = strlen(input);
+  char* result = calloc(length + 1, sizeof(char));
+
+  if (!result) { return NULL; }
+
+  for (size_t index = 0; index < length; index++) {
+    result[index] = (char) ((input[index] == '_') ? '-' : input[index]);
+  }
+
+  return result;
+}

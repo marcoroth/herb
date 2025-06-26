@@ -31,6 +31,23 @@ position_T* position_from_source_with_offset(const char* source, size_t offset) 
   return position;
 }
 
+// ERB-aware position calculation for tag helper attributes
+// Uses 1-based column counting to match ERB positioning expectations
+position_T* position_from_source_with_offset_erb_aware(const char* source, size_t offset) {
+  position_T* position = position_init(1, 1);
+
+  for (size_t i = 0; i < offset; i++) {
+    if (is_newline(source[i])) {
+      position->line++;
+      position->column = 1;
+    } else {
+      position->column++;
+    }
+  }
+
+  return position;
+}
+
 RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   const pm_diagnostic_t* error, const AST_NODE_T* node, const char* source, pm_parser_t* parser
 ) {
