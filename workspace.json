@@ -7,6 +7,7 @@
     "@herb-tools/node-wasm": "javascript/packages/node-wasm",
     "@herb-tools/language-server": "javascript/packages/language-server",
     "herb-language-server": "javascript/packages/herb-language-server",
+    "atom": "javascript/packages/atom",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",
     "playground": "./playground"
