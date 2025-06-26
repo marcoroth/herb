@@ -177,6 +177,16 @@ module Herb
       end
     end
 
+    class ElementSourceField < Field
+      def ruby_type
+        "String"
+      end
+
+      def c_type
+        "element_source_t"
+      end
+    end
+
     module ConfigType
       private
 
@@ -204,6 +214,7 @@ module Herb
         when "boolean"    then BooleanField
         when "prism_node" then PrismNodeField
         when "analyzed_ruby" then AnalyzedRubyField
+        when "element_source" then ElementSourceField
         when "void*" then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end

@@ -242,6 +242,9 @@ nodes:
         - name: is_void
           type: boolean
 
+        - name: source
+          type: element_source
+
     - name: HTMLAttributeValueNode
       fields:
         - name: open_quote
