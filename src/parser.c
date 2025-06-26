@@ -484,6 +484,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
     NULL,
     NULL,
     true,
+    ELEMENT_SOURCE_HTML,
     open_tag->base.location->start,
     open_tag->base.location->end,
     NULL
@@ -525,6 +526,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
     body,
     close_tag,
     false,
+    ELEMENT_SOURCE_HTML,
     open_tag->base.location->start,
     close_tag->base.location->end,
     errors
@@ -557,6 +559,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
     NULL,
     NULL,
     false,
+    ELEMENT_SOURCE_HTML,
     open_tag->base.location->start,
     open_tag->base.location->end,
     errors

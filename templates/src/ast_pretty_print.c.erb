@@ -38,6 +38,8 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       pretty_print_array("<%= field.name %>", <%= node.human %>-><%= field.name %>, indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::BooleanField -%>
       pretty_print_boolean_property("<%= field.name %>", <%= node.human %>-><%= field.name %>, indent, relative_indent, <%= last %>, buffer);
+      <%- when Herb::Template::ElementSourceField -%>
+      pretty_print_string_property(element_source_to_string(<%= node.human %>-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::StringField -%>
       pretty_print_string_property(<%= node.human %>-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::PrismNodeField -%>
