@@ -15,8 +15,8 @@
   "module": "./dist/herb-core.esm.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && rollup -c",
-    "dev": "rollup -c -w",
+    "build": "yarn clean && rollup -c rollup.config.mjs",
+    "dev": "rollup -c rollup.config.mjs -w",
     "clean": "rimraf dist",
     "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
