@@ -34,7 +34,7 @@
     "prebuild": "yarn run clean",
     "build": "tsc -b && rollup -c rollup.config.mjs",
     "dev": "tsc -b -w",
-    "test": "echo 'TODO: add tests'",
+    "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "files": [
@@ -58,6 +58,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "rimraf": "^6.0.1",
     "vitest": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.8",
     "@types/node": "^22.10.5",
     "vscode-languageserver-protocol": "^3.17.5"
   }
