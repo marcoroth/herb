@@ -38,6 +38,22 @@ module Parser
       assert_parsed_snapshot(%(<h1 id=<%= "test" %>></h1>))
     end
 
+    test "attribute name from erb" do
+      assert_parsed_snapshot(%(<img <%= key %>="true">))
+    end
+
+    test "attribute name with erb interpolation" do
+      assert_parsed_snapshot(%(<img data-<%= key %>-name="example">))
+    end
+
+    test "attribute name with erb interpolation after" do
+      assert_parsed_snapshot(%(<img data-<%= key %>="example">))
+    end
+
+    test "attribute name with erb interpolation before" do
+      assert_parsed_snapshot(%(<img <%= key %>-value="example">))
+    end
+
     test "interpolate inside attribute value with static content before" do
       assert_parsed_snapshot(%(<h1 class="text-white <%= "bg-black" %>"></h1>))
     end

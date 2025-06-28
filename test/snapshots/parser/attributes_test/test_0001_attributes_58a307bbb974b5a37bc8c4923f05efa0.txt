@@ -10,7 +10,10 @@
         │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:15))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:7))
-        │       │   │   │       └── name: "id" (location: (1:5)-(1:7))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:7))
+        │       │   │   │               └── content: "id"
+        │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:7)-(1:8))
         │       │   │   └── value:
@@ -27,7 +30,10 @@
         │       │   └── @ HTMLAttributeNode (location: (1:16)-(1:37))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:16)-(1:21))
-        │       │       │       └── name: "class" (location: (1:16)-(1:21))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:16)-(1:21))
+        │       │       │               └── content: "class"
+        │       │       │
         │       │       │
         │       │       ├── equals: "=" (location: (1:21)-(1:22))
         │       │       └── value:

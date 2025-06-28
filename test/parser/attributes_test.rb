@@ -10,6 +10,10 @@ module Parser
       assert_parsed_snapshot(%(<div id="hello" class="container p-3"></div>))
     end
 
+    test "attribute with dashed name" do
+      assert_parsed_snapshot(%(<div data-id="1"></div>))
+    end
+
     test "duplicate attributes" do
       assert_parsed_snapshot(%(<div class="hello" class="container p-3"></div>))
     end

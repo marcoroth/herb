@@ -212,10 +212,10 @@ module Herb
     end
 
     class HTMLAttributeNameNode < Node
-      attr_reader name: Herb::Token
+      attr_reader children: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
