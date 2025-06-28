@@ -17,9 +17,9 @@
 
 ## 🌿 What is Herb?
 
-**Herb** is a fast, embeddable HTML+ERB parser and toolkit written in C, with bindings in Ruby and WebAssembly. It provides introspection for `.html.erb` files, ideal for building editor integrations, linters, formatters, and static analysis tools.
+**Herb** is a fast, embeddable HTML+ERB parser and developer toolkit written in C, designed to support advanced tooling for `.html.erb` files. 
 
-TODO: Should we include a section here for people coming from vscode? Like a 'how to use for vscode?
+**Herb** powers both low-level libraries (Ruby and JavaScript bindings) and high-level developer tools like linters, formatters, and language servers. These tools are all built on a shared foundation that enables precise analysis, transformation, and improvement of `.html.erb` code.
 
 ---
 
@@ -43,16 +43,13 @@ yarn build                  # Build all the JavaScript packages
 
 ## Components
 
-Herb consists 3 main components:
+Herb is composed of two layers of tools: low-level libraries that power the ecosystem, and high-level developer tools built on top of them.
 
 - **Core C Library** – Lexer, parser, and compiler logic
-  - TODO: Explain what this is for
 - **Ruby Bindings** – Build and test with `rake`, `bundler`, and `mtest`
-  - TODO: Explain what this is for also...
 - **WebAssembly Bindings** – JS/browser support via [`@herb-tools/browser`](https://github.com/marcoroth/herb/tree/main/javascript/packages/browser)
-  - TODO: Explain what this is for also also...
 - **Javascript VS Code Integration** - Extension for vscode integration
-  - TODO: Dive deeper into what these guys do... I think consumes vscodes editor api to apply formatting/highlighting?
+
 ---
 
 ## Requirements
@@ -199,9 +196,7 @@ yarn test
 
 ## Integration Testing
 
-The `bin/integration` script allows for quick local iteration. On every run it cleans the directory, builds the source from scratch and runs all checks, including the C-Tests, Ruby Tests, Linters, and examples in succession.
-
-TODO: Alt -- Use `bin/integration` to clean, rebuild, and test everything in one command:
+Use `bin/integration` to clean, rebuild, and test everything in one command:
 
 ```bash
 ❯ bin/integration
@@ -216,6 +211,8 @@ Successful output ends with:
 ```
 Integration successful!
 ```
+The `bin/integration` script allows for quick local iteration. On every run it cleans the directory, builds the source from scratch and runs all checks, including the C-Tests, Ruby Tests, Linters, and examples in succession.
+
 
 ---
 
