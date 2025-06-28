@@ -35,6 +35,9 @@ array_T* extract_keyword_arguments_from_call_node(
 array_T* extract_keyword_arguments_from_helper(
   const char* content, position_T* default_pos, const char* original_source, size_t erb_content_offset
 );
+array_T* extract_html_attributes_from_keyword_hash(
+  pm_keyword_hash_node_t* kw_hash, const uint8_t* source, const char* original_source, size_t erb_content_offset
+);
 
 AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_node(
   const char* name_string, const char* value_str, position_T* start_pos, position_T* end_pos
@@ -70,5 +73,13 @@ bool search_tag_helper_node(const pm_node_t* node, void* data);
 
 bool location_matches_tag(const uint8_t* source, pm_location_t loc);
 bool location_matches_content_tag(const uint8_t* source, pm_location_t loc);
+
+position_T* prism_location_to_position_with_offset(
+  const pm_location_t* pm_loc, const char* original_source, size_t erb_content_offset, const uint8_t* erb_content_source
+);
+
+position_T* prism_location_to_position(const pm_location_t* pm_loc);
+
+position_T* byte_offset_to_position(const char* source, size_t offset);
 
 #endif

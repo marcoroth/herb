@@ -189,12 +189,12 @@ position_T* byte_offset_to_position(const char* source, size_t offset) {
 
   position_T* position = calloc(1, sizeof(position_T));
   position->line = 1;
-  position->column = 0;
+  position->column = 1;  // Start from column 1, not 0
 
   for (size_t i = 0; i < offset && source[i] != '\0'; i++) {
     if (source[i] == '\n') {
       position->line++;
-      position->column = 0;
+      position->column = 1;  // Reset to column 1, not 0
     } else {
       position->column++;
     }
@@ -207,11 +207,22 @@ position_T* byte_offset_to_position(const char* source, size_t offset) {
 position_T* prism_location_to_position_with_offset(
   const pm_location_t* pm_loc, const char* original_source, size_t erb_content_offset, const uint8_t* erb_content_source
 ) {
-  if (!pm_loc || !original_source || !erb_content_source) { return NULL; }
+  if (!pm_loc || !pm_loc->start || !original_source || !erb_content_source) { 
+    return NULL; 
+  }
 
+  // Calculate the offset within the ERB content
   size_t offset_in_erb = (size_t) (pm_loc->start - erb_content_source);
-
+  
+  // Calculate the total offset in the original source
   size_t total_offset = erb_content_offset + offset_in_erb;
+  
+  // Validate that total_offset doesn't exceed the source length
+  size_t source_length = strlen(original_source);
+  if (total_offset > source_length) {
+    // Return position at ERB start as fallback
+    return byte_offset_to_position(original_source, erb_content_offset);
+  }
 
   return byte_offset_to_position(original_source, total_offset);
 }
@@ -237,6 +248,11 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value_from_as
   token_T* name_token = calloc(1, sizeof(token_T));
   name_token->value = herb_strdup(name_string);
   name_token->type = TOKEN_IDENTIFIER;
+  
+  // Ensure name positions are valid
+  if (!name_start) { name_start = position_init(1, 1); }
+  if (!name_end) { name_end = position_init(1, 1); }
+  
   name_token->location = location_init(name_start, name_end);
   name_token->range = range_init(0, 0);
 
@@ -313,11 +329,41 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_with_interpolated_value(
 }
 
 position_T* prism_location_to_position(const pm_location_t* pm_loc) {
-  if (!pm_loc) { return NULL; }
+  if (!pm_loc || !pm_loc->start) { return NULL; }
 
   position_T* pos = calloc(1, sizeof(position_T));
   pos->line = 1;
-  pos->column = 0;
+  pos->column = 1;
+
+  // This function calculates positions relative to the ERB content start
+  // For accurate absolute positions, use prism_location_to_position_with_offset
+  const uint8_t* current = pm_loc->start;
+  
+  // If we can't get the source start, return a reasonable default
+  if (!current) {
+    return pos;
+  }
+
+  // Count lines and columns from the start of the Prism location
+  // This gives us the position within the ERB content
+  const uint8_t* source_start = current;
+  while (source_start > current && *(source_start - 1) != '\0') {
+    source_start--;
+    if (*source_start == '\n') {
+      break;
+    }
+  }
+
+  // Calculate line and column from source_start to pm_loc->start
+  for (const uint8_t* p = source_start; p < pm_loc->start; p++) {
+    if (*p == '\n') {
+      pos->line++;
+      pos->column = 1;
+    } else {
+      pos->column++;
+    }
+  }
+
   return pos;
 }
 
@@ -446,6 +492,39 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_from_assoc_node(
   token_T* name_token = calloc(1, sizeof(token_T));
   name_token->value = herb_strdup(name_string);
   name_token->type = TOKEN_IDENTIFIER;
+  
+  // Ensure name positions are valid - use better fallback positions
+  if (!name_start) { 
+    // Try manual calculation as fallback
+    if (assoc->key->location.start >= source) {
+      size_t key_offset = erb_content_offset + (assoc->key->location.start - source);
+      name_start = byte_offset_to_position(original_source, key_offset);
+    }
+    // If still no position, use ERB content start as reasonable fallback
+    if (!name_start) { 
+      name_start = byte_offset_to_position(original_source, erb_content_offset);
+    }
+    // Final fallback if all else fails
+    if (!name_start) { 
+      name_start = position_init(1, 1); 
+    }
+  }
+  if (!name_end) { 
+    // Try manual calculation as fallback
+    if (assoc->key->location.end >= source) {
+      size_t key_end_offset = erb_content_offset + (assoc->key->location.end - source);
+      name_end = byte_offset_to_position(original_source, key_end_offset);
+    }
+    // If still no position, use ERB content start as reasonable fallback
+    if (!name_end) { 
+      name_end = byte_offset_to_position(original_source, erb_content_offset);
+    }
+    // Final fallback if all else fails
+    if (!name_end) { 
+      name_end = position_init(1, 1); 
+    }
+  }
+  
   name_token->location = location_init(name_start, name_end);
   name_token->range = range_init(0, 0);
 
@@ -457,6 +536,26 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_from_assoc_node(
   position_T* equals_start = position_copy(name_end);
   position_T* equals_end =
     prism_location_to_position_with_offset(&assoc->value->location, original_source, erb_content_offset, source);
+
+  // Ensure equals positions are valid
+  if (!equals_start) { 
+    if (name_end) {
+      equals_start = position_copy(name_end);
+    } else {
+      equals_start = byte_offset_to_position(original_source, erb_content_offset);
+      if (!equals_start) { equals_start = position_init(1, 1); }
+    }
+  }
+  if (!equals_end) { 
+    if (assoc->value->location.start >= source) {
+      size_t value_start_offset = erb_content_offset + (assoc->value->location.start - source);
+      equals_end = byte_offset_to_position(original_source, value_start_offset);
+    }
+    if (!equals_end) { 
+      equals_end = byte_offset_to_position(original_source, erb_content_offset);
+    }
+    if (!equals_end) { equals_end = position_init(1, 1); } 
+  }
 
   // Determine operator type based on Ruby syntax (: for symbols, = for hash rockets)
   const char* operator_str = ":";
@@ -481,6 +580,30 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_from_assoc_node(
     value_end = byte_offset_to_position(original_source, total_end_offset);
   }
 
+  // Ensure value positions are valid
+  if (!value_start) { 
+    if (assoc->value->location.start >= source) {
+      size_t value_offset = erb_content_offset + (assoc->value->location.start - source);
+      value_start = byte_offset_to_position(original_source, value_offset);
+    }
+    // Use ERB content start as reasonable fallback
+    if (!value_start) { 
+      value_start = byte_offset_to_position(original_source, erb_content_offset);
+    }
+    if (!value_start) { value_start = position_init(1, 1); } 
+  }
+  if (!value_end) { 
+    if (assoc->value->location.end >= source) {
+      size_t value_end_offset = erb_content_offset + (assoc->value->location.end - source);
+      value_end = byte_offset_to_position(original_source, value_end_offset);
+    }
+    // Use ERB content start as reasonable fallback
+    if (!value_end) { 
+      value_end = byte_offset_to_position(original_source, erb_content_offset);
+    }
+    if (!value_end) { value_end = position_init(1, 1); } 
+  }
+
   AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init(value_str, value_start, value_end, array_init(8));
 
   array_T* value_children = array_init(8);
@@ -488,6 +611,20 @@ AST_HTML_ATTRIBUTE_NODE_T* create_html_attribute_from_assoc_node(
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node =
     ast_html_attribute_value_node_init(NULL, value_children, NULL, false, value_start, value_end, array_init(8));
+
+  // Ensure we have valid positions before creating the attribute node
+  if (!name_start || !value_end) {
+    // Fallback: use default positions if position calculation failed
+    position_T* fallback_start = position_init(1, 1);
+    position_T* fallback_end = position_init(1, 1);
+    AST_HTML_ATTRIBUTE_NODE_T* attr_node =
+      ast_html_attribute_node_init(name_node, equals_token, value_node, 
+                                   name_start ? name_start : fallback_start, 
+                                   value_end ? value_end : fallback_end, array_init(8));
+    if (!name_start) { free(fallback_start); }
+    if (!value_end) { free(fallback_end); }
+    return attr_node;
+  }
 
   AST_HTML_ATTRIBUTE_NODE_T* attr_node =
     ast_html_attribute_node_init(name_node, equals_token, value_node, name_start, value_end, array_init(8));
@@ -668,26 +805,32 @@ array_T* extract_keyword_arguments_from_call_node(
                   char* raw_key = calloc(attr_key_length + 1, sizeof(char));
                   memcpy(raw_key, pm_string_source(&attr_symbol->unescaped), attr_key_length);
 
-                  // Create prefix-* attribute name (data-* or aria-*)
+                  // Convert underscores to dashes and create prefix-* attribute name (data-* or aria-*)
+                  char* dashed_key = convert_underscores_to_dashes(raw_key);
+                  size_t dashed_key_length = strlen(dashed_key);
                   attr_key_str = calloc(
-                    prefix_len + 1 + attr_key_length + 1,
+                    prefix_len + 1 + dashed_key_length + 1,
                     sizeof(char)
-                  ); // prefix + "-" + key + null
-                  snprintf(attr_key_str, prefix_len + 1 + attr_key_length + 1, "%s-%s", prefix, raw_key);
+                  ); // prefix + "-" + dashed_key + null
+                  snprintf(attr_key_str, prefix_len + 1 + dashed_key_length + 1, "%s-%s", prefix, dashed_key);
                   free(raw_key);
+                  free(dashed_key);
                 } else if (hash_assoc->key->type == PM_STRING_NODE) {
                   pm_string_node_t* attr_string = (pm_string_node_t*) hash_assoc->key;
                   size_t attr_key_length = pm_string_length(&attr_string->unescaped);
                   char* raw_key = calloc(attr_key_length + 1, sizeof(char));
                   memcpy(raw_key, pm_string_source(&attr_string->unescaped), attr_key_length);
 
-                  // Create prefix-* attribute name (data-* or aria-*)
+                  // Convert underscores to dashes and create prefix-* attribute name (data-* or aria-*)
+                  char* dashed_key = convert_underscores_to_dashes(raw_key);
+                  size_t dashed_key_length = strlen(dashed_key);
                   attr_key_str = calloc(
-                    prefix_len + 1 + attr_key_length + 1,
+                    prefix_len + 1 + dashed_key_length + 1,
                     sizeof(char)
-                  ); // prefix + "-" + key + null
-                  snprintf(attr_key_str, prefix_len + 1 + attr_key_length + 1, "%s-%s", prefix, raw_key);
+                  ); // prefix + "-" + dashed_key + null
+                  snprintf(attr_key_str, prefix_len + 1 + dashed_key_length + 1, "%s-%s", prefix, dashed_key);
                   free(raw_key);
+                  free(dashed_key);
                 }
 
                 // Extract attribute value
@@ -1022,7 +1165,7 @@ AST_NODE_T* transform_tag_helper_with_attributes(AST_ERB_CONTENT_NODE_T* erb_nod
     AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init(
       text_content,
       erb_node->base.location->start,
-      erb_node->base.location->start,
+      erb_node->base.location->end,
       array_init(8)
     );
     array_append(body, (AST_NODE_T*) text_node);
@@ -1102,7 +1245,7 @@ AST_NODE_T* transform_simple_tag_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyz
     AST_HTML_TEXT_NODE_T* text_node = ast_html_text_node_init(
       text_content,
       erb_node->base.location->start,
-      erb_node->base.location->start,
+      erb_node->base.location->end,
       array_init(8)
     );
     array_append(body, (AST_NODE_T*) text_node);
@@ -1205,23 +1348,13 @@ AST_NODE_T* transform_erb_block_to_tag_helper(AST_ERB_BLOCK_NODE_T* block_node, 
             char* ruby_expr = calloc(source_length + 1, sizeof(char));
             memcpy(ruby_expr, (const char*) first_arg->location.start, source_length);
 
-            position_T* href_start = prism_location_to_position_with_offset(
-              &first_arg->location,
-              context->original_source,
-              erb_content_offset,
-              source
-            );
-            position_T* href_end = prism_location_to_position_with_offset(
-              &first_arg->location,
-              context->original_source,
-              erb_content_offset,
-              source
-            );
+            // Use ERB block node location for synthesized href attribute as fallback
+            position_T* href_start = block_node->base.location->start;
+            position_T* href_end = block_node->base.location->end;
             AST_HTML_ATTRIBUTE_NODE_T* href_attr =
               create_html_attribute_with_ruby_literal("href", ruby_expr, href_start, href_end);
             if (href_attr) { array_append(children, (AST_NODE_T*) href_attr); }
-            if (href_start) { free(href_start); }
-            if (href_end) { free(href_end); }
+            // Don't free ERB node positions as they're managed elsewhere
 
             free(ruby_expr);
           }
@@ -1356,7 +1489,7 @@ AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_r
       char* ruby_expr = calloc(source_length + 1, sizeof(char));
       memcpy(ruby_expr, (const char*) second_arg->location.start, source_length);
 
-      // Create href attribute with RubyLiteralNode
+      // Create href attribute with RubyLiteralNode using ERB node location
       AST_HTML_ATTRIBUTE_NODE_T* href_attr = create_html_attribute_with_ruby_literal(
         "href",
         ruby_expr,
@@ -1402,8 +1535,12 @@ AST_NODE_T* transform_link_to_helper(AST_ERB_CONTENT_NODE_T* erb_node, analyze_r
   }
 
   // Add keyword arguments as HTML attributes
+  size_t erb_block_start = calculate_byte_offset_from_position(context->original_source, erb_node->base.location->start);
+  size_t tag_opening_length = strlen(erb_node->tag_opening->value);
+  size_t erb_content_offset = erb_block_start + tag_opening_length;
+  
   array_T* keyword_attributes =
-    extract_keyword_arguments_from_call_node((pm_node_t*) call_node, source, context->original_source, 0);
+    extract_keyword_arguments_from_call_node((pm_node_t*) call_node, source, context->original_source, erb_content_offset);
   for (size_t i = 0; i < array_size(keyword_attributes); i++) {
     array_append(children, array_get(keyword_attributes, i));
   }

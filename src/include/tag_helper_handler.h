@@ -19,6 +19,9 @@ typedef struct {
   bool (*detect)(pm_call_node_t* call_node, pm_parser_t* parser);
   char* (*extract_tag_name)(pm_call_node_t* call_node, pm_parser_t* parser);
   char* (*extract_content)(pm_call_node_t* call_node, pm_parser_t* parser);
+  array_T* (*extract_attributes)(
+    pm_call_node_t* call_node, const uint8_t* source, const char* original_source, size_t erb_content_offset
+  );
   bool (*supports_block)(void);
 } tag_helper_handler_T;
 

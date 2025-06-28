@@ -175,7 +175,7 @@ module Analyze::ActionView::TagHelper
     end
 
     test "tag.div with complex attributes and enhanced location tracking" do
-      assert_parsed_snapshot(<<~HTML)
+      assert_parsed_snapshot(<<~'HTML')
         <%= tag.div id: "container",
                     class: "wrapper #{dynamic_class}",
                     data: { toggle: "modal", target: "#myModal" },
@@ -183,7 +183,7 @@ module Analyze::ActionView::TagHelper
                     **extra_attributes do %>
           <p>Content with multiple attribute types</p>
         <% end %>
-      HTML
+      'HTML'
     end
 
     xtest "tag.div block with missing quote in data attributes hash" do

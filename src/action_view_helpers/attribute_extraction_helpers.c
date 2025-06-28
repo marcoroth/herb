@@ -18,8 +18,29 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
   if (!name_string) { return NULL; }
   memcpy(name_string, pm_string_source(&symbol->unescaped), name_length);
 
-  // Use simple position for now - following existing patterns in the codebase
-  position_T* default_pos = position_init(1, 1);
+  // Calculate actual positions from Prism location data
+  position_T* start_pos = prism_location_to_position_with_offset(&assoc->key->location, original_source, erb_content_offset, source);
+  position_T* end_pos = prism_location_to_position_with_offset(&assoc->value->location, original_source, erb_content_offset, source);
+  
+  // Use manual calculation as fallback if primary calculation fails
+  if (!start_pos) {
+    if (assoc->key->location.start >= source) {
+      size_t key_offset_in_erb = (size_t)(assoc->key->location.start - source);
+      start_pos = byte_offset_to_position(original_source, erb_content_offset + key_offset_in_erb);
+    }
+    if (!start_pos) {
+      start_pos = prism_location_to_position(&assoc->key->location);
+    }
+  }
+  if (!end_pos) {
+    if (assoc->value->location.end >= source) {
+      size_t value_offset_in_erb = (size_t)(assoc->value->location.end - source);
+      end_pos = byte_offset_to_position(original_source, erb_content_offset + value_offset_in_erb);
+    }
+    if (!end_pos) {
+      end_pos = prism_location_to_position(&assoc->value->location);
+    }
+  }
 
   AST_HTML_ATTRIBUTE_NODE_T* attr_node = NULL;
 
@@ -30,7 +51,8 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
     // only handles single attributes. The caller should use extract_html_attributes_from_keyword_hash
     // which can handle expanding data/aria hashes into multiple attributes.
     free(name_string);
-    position_free(default_pos);
+    position_free(start_pos);
+    position_free(end_pos);
 
     return NULL;
   } else if (assoc->value->type == PM_STRING_NODE) {
@@ -42,7 +64,7 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
     if (value_str) {
       memcpy(value_str, pm_string_source(&string->unescaped), value_length);
       char* dashed_name = convert_underscores_to_dashes(name_string);
-      attr_node = create_html_attribute_node(dashed_name ? dashed_name : name_string, value_str, default_pos, default_pos);
+      attr_node = create_html_attribute_node(dashed_name ? dashed_name : name_string, value_str, start_pos, end_pos);
 
       if (dashed_name) { free(dashed_name); }
       free(value_str);
@@ -55,8 +77,8 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
     attr_node = create_html_attribute_with_interpolated_value(
       dashed_name ? dashed_name : name_string,
       interpolated,
-      default_pos,
-      default_pos
+      start_pos,
+      end_pos
     );
 
     if (dashed_name) { free(dashed_name); }
@@ -65,15 +87,15 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
     size_t value_length = assoc->value->location.end - assoc->value->location.start;
     char* ruby_content = calloc(value_length + 1, sizeof(char));
 
-    if (ruby_content) {
+    if (ruby_content && assoc->value->location.start) {
       memcpy(ruby_content, (const char*) assoc->value->location.start, value_length);
       char* dashed_name = convert_underscores_to_dashes(name_string);
 
       attr_node = create_html_attribute_with_ruby_literal(
         dashed_name ? dashed_name : name_string,
         ruby_content,
-        default_pos,
-        default_pos
+        start_pos,
+        end_pos
       );
 
       if (dashed_name) { free(dashed_name); }
@@ -83,7 +105,8 @@ AST_HTML_ATTRIBUTE_NODE_T* extract_html_attribute_from_assoc(
   }
 
   free(name_string);
-  position_free(default_pos);
+  position_free(start_pos);
+  position_free(end_pos);
 
   return attr_node;
 }
@@ -106,18 +129,22 @@ array_T* extract_html_attributes_from_keyword_hash(
       // Extract the splat expression using position-based source extraction
       size_t splat_length = splat->base.location.end - splat->base.location.start;
       char* splat_content = calloc(splat_length + 1, sizeof(char));
-      if (splat_content) {
+      if (splat_content && splat->base.location.start) {
         memcpy(splat_content, (const char*) splat->base.location.start, splat_length);
 
-        position_T* splat_pos = position_init(1, 1);
+        position_T* splat_start = prism_location_to_position_with_offset(&splat->base.location, original_source, erb_content_offset, source);
+        position_T* splat_end = prism_location_to_position_with_offset(&splat->base.location, original_source, erb_content_offset, source);
+        if (!splat_start) { splat_start = position_init(1, 1); }
+        if (!splat_end) { splat_end = position_init(1, 1); }
         // Create RubyLiteralNode directly and add it to attributes array
         AST_RUBY_LITERAL_NODE_T* splat_ruby_node =
-          ast_ruby_literal_node_init(splat_content, splat_pos, splat_pos, array_init(8));
+          ast_ruby_literal_node_init(splat_content, splat_start, splat_end, array_init(8));
 
         if (splat_ruby_node) { array_append(attributes, (AST_NODE_T*) splat_ruby_node); }
 
         free(splat_content);
-        position_free(splat_pos);
+        position_free(splat_start);
+        position_free(splat_end);
       }
     } else if (element->type == PM_ASSOC_NODE) {
       pm_assoc_node_t* assoc = (pm_assoc_node_t*) element;
@@ -149,10 +176,13 @@ array_T* extract_html_attributes_from_keyword_hash(
             // Extract the splat expression using position-based source extraction
             size_t hash_splat_length = hash_splat->base.location.end - hash_splat->base.location.start;
             char* hash_splat_content = calloc(hash_splat_length + 1, sizeof(char));
-            if (hash_splat_content) {
+            if (hash_splat_content && hash_splat->base.location.start) {
               memcpy(hash_splat_content, (const char*) hash_splat->base.location.start, hash_splat_length);
 
-              position_T* hash_splat_pos = position_init(1, 1);
+              position_T* hash_splat_start = prism_location_to_position_with_offset(&hash_splat->base.location, original_source, erb_content_offset, source);
+              position_T* hash_splat_end = prism_location_to_position_with_offset(&hash_splat->base.location, original_source, erb_content_offset, source);
+              if (!hash_splat_start) { hash_splat_start = position_init(1, 1); }
+              if (!hash_splat_end) { hash_splat_end = position_init(1, 1); }
 
               // Create RubyLiteralNode with prefix information embedded in content
               char* prefixed_content = calloc(strlen(prefix) + 1 + strlen(hash_splat_content) + 1, sizeof(char));
@@ -167,7 +197,7 @@ array_T* extract_html_attributes_from_keyword_hash(
                 );
 
                 AST_RUBY_LITERAL_NODE_T* hash_splat_ruby_node =
-                  ast_ruby_literal_node_init(prefixed_content, hash_splat_pos, hash_splat_pos, array_init(8));
+                  ast_ruby_literal_node_init(prefixed_content, hash_splat_start, hash_splat_end, array_init(8));
 
                 if (hash_splat_ruby_node) { array_append(attributes, (AST_NODE_T*) hash_splat_ruby_node); }
 
@@ -175,7 +205,8 @@ array_T* extract_html_attributes_from_keyword_hash(
               }
 
               free(hash_splat_content);
-              position_free(hash_splat_pos);
+              position_free(hash_splat_start);
+              position_free(hash_splat_end);
             }
           } else if (hash_element->type == PM_ASSOC_NODE) {
             pm_assoc_node_t* hash_assoc = (pm_assoc_node_t*) hash_element;
@@ -207,7 +238,10 @@ array_T* extract_html_attributes_from_keyword_hash(
             }
 
             if (attr_key_str) {
-              position_T* attr_pos = position_init(1, 1);
+              position_T* attr_start = prism_location_to_position_with_offset(&hash_assoc->key->location, original_source, erb_content_offset, source);
+              position_T* attr_end = prism_location_to_position_with_offset(&hash_assoc->value->location, original_source, erb_content_offset, source);
+              if (!attr_start) { attr_start = position_init(1, 1); }
+              if (!attr_end) { attr_end = position_init(1, 1); }
               AST_HTML_ATTRIBUTE_NODE_T* attr_attr = NULL;
 
               if (hash_assoc->value->type == PM_STRING_NODE) {
@@ -216,7 +250,7 @@ array_T* extract_html_attributes_from_keyword_hash(
                 char* attr_value_str = calloc(attr_value_length + 1, sizeof(char));
                 if (attr_value_str) {
                   memcpy(attr_value_str, pm_string_source(&attr_string->unescaped), attr_value_length);
-                  attr_attr = create_html_attribute_node(attr_key_str, attr_value_str, attr_pos, attr_pos);
+                  attr_attr = create_html_attribute_node(attr_key_str, attr_value_str, attr_start, attr_end);
                   free(attr_value_str);
                 }
               } else if (hash_assoc->value->type == PM_INTERPOLATED_STRING_NODE) {
@@ -224,21 +258,22 @@ array_T* extract_html_attributes_from_keyword_hash(
                 // pieces
                 pm_interpolated_string_node_t* interpolated = (pm_interpolated_string_node_t*) hash_assoc->value;
                 attr_attr =
-                  create_html_attribute_with_interpolated_value(attr_key_str, interpolated, attr_pos, attr_pos);
+                  create_html_attribute_with_interpolated_value(attr_key_str, interpolated, attr_start, attr_end);
               } else {
                 // Handle complex attribute values as Ruby literals
                 size_t attr_value_length = hash_assoc->value->location.end - hash_assoc->value->location.start;
                 char* ruby_content = calloc(attr_value_length + 1, sizeof(char));
-                if (ruby_content) {
+                if (ruby_content && hash_assoc->value->location.start) {
                   memcpy(ruby_content, (const char*) hash_assoc->value->location.start, attr_value_length);
-                  attr_attr = create_html_attribute_with_ruby_literal(attr_key_str, ruby_content, attr_pos, attr_pos);
+                  attr_attr = create_html_attribute_with_ruby_literal(attr_key_str, ruby_content, attr_start, attr_end);
                   free(ruby_content);
                 }
               }
 
               if (attr_attr) { array_append(attributes, attr_attr); }
               free(attr_key_str);
-              position_free(attr_pos);
+              position_free(attr_start);
+              position_free(attr_end);
             }
           }
         }

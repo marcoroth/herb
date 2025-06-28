@@ -26,7 +26,7 @@ size_t calculate_byte_offset_from_position(const char* source, position_T* posit
   if (!source || !position) { return 0; }
 
   size_t current_line = 1;
-  size_t current_column = 0;
+  size_t current_column = 1;  // Start from column 1, not 0
   size_t byte_offset = 0;
 
   while (source[byte_offset] != '\0') {
@@ -34,7 +34,7 @@ size_t calculate_byte_offset_from_position(const char* source, position_T* posit
 
     if (source[byte_offset] == '\n') {
       current_line++;
-      current_column = 0;
+      current_column = 1;  // Reset to column 1, not 0
     } else {
       current_column++;
     }
