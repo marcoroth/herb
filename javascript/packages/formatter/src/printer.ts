@@ -32,7 +32,7 @@ import {
   ERBInNode,
 } from "@herb-tools/core"
 
-import type { FormatOptions } from "./options"
+import type { FormatOptions } from "./options.js"
 
 /**
  * Printer is responsible for traversing the Herb AST
@@ -59,7 +59,6 @@ export class Printer {
   }
 
   private printNode(node: Node, indentLevel: number): string {
-    console.log("printNode", node.type)
 
     if (node instanceof HTMLElementNode) {
       return this.printElement(node, indentLevel)
@@ -260,7 +259,6 @@ export class Printer {
   private printText(node: HTMLTextNode, indentLevel: number): string {
     const indent = this.indent(indentLevel)
     let text = node.content.trim()
-    console.log("printText", text)
     if (!text) return ""
 
     const wrapWidth = this.options.maxLineLength - indent.length
@@ -475,7 +473,7 @@ export class Printer {
     return lines.join("\n")
   }
 
-  private printERBGeneric(node: Node, indentLevel: number): string {
+  private printERBGeneric(node: ERBBeginNode | ERBIfNode | ERBCaseNode | ERBWhileNode | ERBUntilNode | ERBForNode | ERBRescueNode | ERBEnsureNode | ERBUnlessNode | ERBYieldNode | ERBInNode, indentLevel: number): string {
     const indent = this.indent(indentLevel)
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""

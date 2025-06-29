@@ -29,6 +29,7 @@ jobs:
           - arm64-darwin
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4

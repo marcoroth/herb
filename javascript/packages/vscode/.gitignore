@@ -1,0 +1,13 @@
+.vscode-test/
+node_modules/
+
+out/
+dist/
+build/
+
+*.vsix
+*.tgz
+*~
+
+.DS_Store
+tsconfig.tsbuildinfo

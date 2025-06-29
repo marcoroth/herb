@@ -1,7 +1,10 @@
 # Makefile for WebAssembly build of Herb
 
 BROWSER_BUILD_DIR = ../javascript/packages/browser/build/
-WASM_OUTPUT = $(BROWSER_BUILD_DIR)libherb.js
+BROWSER_WASM_OUTPUT = $(BROWSER_BUILD_DIR)libherb.js
+
+NODE_BUILD_DIR = ../javascript/packages/node-wasm/build/
+NODE_WASM_OUTPUT = $(NODE_BUILD_DIR)libherb.js
 
 CPP_SOURCES = $(wildcard *.cpp)
 C_SOURCES = $(wildcard ../src/*.c) $(wildcard ../src/**/*.c)
@@ -32,10 +35,9 @@ WASM_FLAGS = -s WASM=1 \
              -s EXPORT_NAME="Herb" \
              -s ALLOW_MEMORY_GROWTH=1 \
              -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
-             -s ENVIRONMENT='web' \
              --bind
 
-all: $(WASM_OUTPUT)
+all: $(BROWSER_WASM_OUTPUT) $(NODE_WASM_OUTPUT)
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/herb
@@ -57,9 +59,13 @@ $(OBJ_DIR)/prism/util/%.o: $(PRISM_PATH)/src/util/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
 	emcc -c $< -o $@ $(CFLAGS)
 
-$(WASM_OUTPUT): $(ALL_OBJECTS)
+$(BROWSER_WASM_OUTPUT): $(ALL_OBJECTS)
 	mkdir -p $(BROWSER_BUILD_DIR)
-	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -o $(WASM_OUTPUT)
+	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='web' -o $(BROWSER_WASM_OUTPUT)
+
+$(NODE_WASM_OUTPUT): $(ALL_OBJECTS)
+	mkdir -p $(NODE_BUILD_DIR)
+	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
 
 clean:
 	rm -rf $(BROWSER_BUILD_DIR)

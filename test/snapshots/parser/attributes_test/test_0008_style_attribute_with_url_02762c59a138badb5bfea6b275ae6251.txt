@@ -1,0 +1,37 @@
+@ DocumentNode (location: (1:0)-(1:63))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:63))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:57))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:56)-(1:57))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:56))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       └── name: "style" (location: (1:5)-(1:10))
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:56))
+        │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:12)-(1:55))
+        │       │               │       └── content: "background-image: url('./images/image.png')"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:55)-(1:56))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:57)-(1:63))
+        │       ├── tag_opening: "</" (location: (1:57)-(1:59))
+        │       ├── tag_name: "div" (location: (1:59)-(1:62))
+        │       └── tag_closing: ">" (location: (1:62)-(1:63))
+        │
+        └── is_void: false

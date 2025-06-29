@@ -189,7 +189,6 @@ module Herb
             ast_file.close
             ast_file.unlink
           rescue Timeout::Error => e
-            binding.irb
             message = "⏱️ Parsing #{file_path} timed out after 1 second"
             log.puts message
 

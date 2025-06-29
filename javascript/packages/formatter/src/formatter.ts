@@ -1,8 +1,9 @@
-import { Printer } from "./printer"
-import { resolveFormatOptions } from "./options"
+import { Printer } from "./printer.js"
+import { resolveFormatOptions } from "./options.js"
 
-import type { FormatOptions } from "./options"
+import type { FormatOptions } from "./options.js"
 import type { HerbBackend, ParseResult } from "@herb-tools/core"
+
 /**
  * Formatter uses a Herb Backend to parse the source and then
  * formats the resulting AST into a well-indented, wrapped string.
@@ -19,7 +20,7 @@ export class Formatter {
   format(source: string): string {
     const result = this.parse(source)
 
-    if (result.failed()) return source
+    if (result.failed) return source
 
     const printer = new Printer(
       result.source,

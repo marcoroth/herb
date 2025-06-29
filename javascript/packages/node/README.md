@@ -1,4 +1,10 @@
-# `@herb-tools/node`
+## Herb for Node.js
+
+##### Package: [`@herb-tools/node`](https://www.npmjs.com/package/@herb-tools/node)
+
+---
+
+Native Node.js addon for HTML-aware ERB parsing using Herb.
 
 ## Building
 
