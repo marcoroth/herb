@@ -41,10 +41,10 @@ async function main() {
     plugins: [
       esbuildProblemMatcherPlugin,
       copy({
-        assets: {
-          from: ['../language-server/dist/herb-language-server.js'],
-          to: ['./'],
-        }
+        assets: [
+          { from: '../language-server/dist/herb-language-server.js', to: ['./'] },
+          { from: 'src/parse-worker.js', to: ['./'] },
+        ],
       })
     ],
   })
