@@ -1,10 +1,11 @@
-import { Connection, Diagnostic, DiagnosticSeverity, Range, Position } from "vscode-languageserver/node"
+import { Connection, Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Herb, Visitor } from "@herb-tools/node-wasm"
+import { Linter } from "@herb-tools/linter"
 
 import { DocumentService } from "./document_service"
 
-import type { Node, HerbError } from "@herb-tools/node-wasm"
+import type { Node, HerbError, DocumentNode } from "@herb-tools/node-wasm"
 
 class ErrorVisitor extends Visitor {
   private diagnostics: Diagnostics
@@ -23,7 +24,7 @@ class ErrorVisitor extends Visitor {
   }
 
   private publishDiagnosticForError(error: HerbError, node: Node): void {
-    this.diagnostics.pushDiagnostic(
+    this.diagnostics.pushDiagnosticForParser(
       error.message,
       error.type,
       this.rangeFromHerbError(error),
@@ -47,7 +48,8 @@ class ErrorVisitor extends Visitor {
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
-  private readonly diagnosticsSource = "Herb LSP "
+  private readonly parserDiagnosticsSource = "Herb Parser "
+  private readonly linterDiagnosticsSource = "Herb Linter "
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
@@ -61,11 +63,38 @@ export class Diagnostics {
   validate(textDocument: TextDocument) {
     const content = textDocument.getText()
     const result = Herb.parse(content)
-    const visitor = new ErrorVisitor(this, textDocument)
 
-    result.visit(visitor)
+    const errorVisitor = new ErrorVisitor(this, textDocument)
+    result.visit(errorVisitor)
+
+    this.runLinter(result.value, textDocument)
 
     this.sendDiagnosticsFor(textDocument)
+  }
+
+  private runLinter(document: DocumentNode, textDocument: TextDocument) {
+    const linter = new Linter()
+    const lintResult = linter.lint(document)
+
+    lintResult.messages.forEach(message => {
+      const severity = message.severity === "error"
+        ? DiagnosticSeverity.Error
+        : DiagnosticSeverity.Warning
+
+      const range = Range.create(
+        Position.create(message.location.start.line - 1, message.location.start.column),
+        Position.create(message.location.end.line - 1, message.location.end.column),
+      )
+
+      this.pushDiagnosticForLinter(
+        message.message,
+        message.rule,
+        range,
+        textDocument,
+        { rule: message.rule },
+        severity
+      )
+    })
   }
 
   refreshDocument(document: TextDocument) {
@@ -78,7 +107,7 @@ export class Diagnostics {
     })
   }
 
-  pushDiagnostic(
+  pushDiagnosticForParser(
     message: string,
     code: string,
     range: Range,
@@ -86,13 +115,41 @@ export class Diagnostics {
     data = {},
     severity: DiagnosticSeverity = DiagnosticSeverity.Error,
   ) {
+    return this.pushDiagnostic(this.parserDiagnosticsSource, message, code, range, textDocument, data, severity)
+  }
+
+  pushDiagnosticForLinter(
+    message: string,
+    code: string,
+    range: Range,
+    textDocument: TextDocument,
+    data = {},
+    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
+  ) {
+    const codeDescription: CodeDescription = {
+      href: `https://github.com/marcoroth/herb/blob/main/javascript/packages/linter/docs/rules/${code}.md`
+    }
+    return this.pushDiagnostic(this.linterDiagnosticsSource, message, code, range, textDocument, data, severity, codeDescription)
+  }
+
+  private pushDiagnostic(
+    source: string,
+    message: string,
+    code: string,
+    range: Range,
+    textDocument: TextDocument,
+    data = {},
+    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
+    codeDescription?: CodeDescription,
+  ) {
     const diagnostic: Diagnostic = {
-      source: this.diagnosticsSource,
+      source,
       severity,
       range,
       message,
       code,
       data,
+      ...(codeDescription && { codeDescription }),
     }
 
     const diagnostics = this.diagnostics.get(textDocument) || []
