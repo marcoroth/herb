@@ -22,7 +22,7 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.diagnostics = new Diagnostics(this.connection, this.documentService)
-    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project)
+    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
   }
 
   async init() {
@@ -51,5 +51,6 @@ export class Service {
 
   async refreshConfig() {
     this.config = await Config.fromPathOrNew(this.project.projectPath)
+    await this.formatting.refreshConfig()
   }
 }

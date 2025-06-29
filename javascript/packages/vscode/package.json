@@ -42,7 +42,7 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Herb configuration",
+      "title": "Herb LSP (HTML+ERB)",
       "properties": {
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -54,6 +54,24 @@
           ],
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
+        },
+        "languageServerHerb.formatting.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable/disable document formatting (Beta)."
+        },
+        "languageServerHerb.formatting.indentWidth": {
+          "scope": "resource",
+          "type": "number",
+          "default": 2,
+          "description": "Number of spaces for each indentation level."
+        },
+        "languageServerHerb.formatting.maxLineLength": {
+          "scope": "resource",
+          "type": "number",
+          "default": 80,
+          "description": "Maximum line length before wrapping."
         }
       }
     }

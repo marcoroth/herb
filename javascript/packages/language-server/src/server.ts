@@ -8,9 +8,6 @@ import {
   InitializeResult,
   Connection,
   DocumentFormattingParams,
-  TextEdit,
-  Position,
-  Range
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"

@@ -69,3 +69,38 @@ Alternatively you can also run the language server directly with `npx` without i
 ```bash
 npx @herb-tools/language-server --stdio
 ```
+
+## Configuration
+
+The language server can be configured using a `.herb-lsp/config.json` file in your project root. This file is automatically created when the language server starts if it doesn't exist.
+
+### Formatting Configuration
+
+You can configure formatting behavior by adding a `formatting` section to your config:
+
+```json
+{
+  "version": "0.3.1",
+  "createdAt": "2025-06-29T00:00:00.000Z",
+  "updatedAt": "2025-06-29T00:00:00.000Z",
+  "options": {
+    "formatting": {
+      "enabled": true,
+      "include": ["**/*.html.erb"],
+      "exclude": ["**/node_modules/**", "**/dist/**", "**/*.min.html.erb"],
+      "indentWidth": 2,
+      "maxLineLength": 80
+    }
+  }
+}
+```
+
+#### `formatting` Options
+
+- `enabled` (`boolean`): Enable or disable formatting for this project. Defaults to `false`.
+- `include` (`string[]`): Glob patterns for files to include in formatting. If specified, only matching files will be formatted.
+- `exclude` (`string[]`): Glob patterns for files to exclude from formatting. Takes precedence over `include` patterns.
+- `indentWidth` (`number`): Number of spaces for each indentation level. Defaults to `2`.
+- `maxLineLength` (`number`): Maximum line length before wrapping. Defaults to `80`.
+
+**Note**: VS Code users can also control formatting globally through the `languageServerHerb.formatting.enabled` setting in VS Code preferences. Formatting is currently in **Beta** and disabled by default.

@@ -1,12 +1,24 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
 
-export interface HerbSettings {}
+export interface HerbSettings {
+  formatting?: {
+    enabled?: boolean
+    indentWidth?: number
+    maxLineLength?: number
+  }
+}
 
 export class Settings {
   // The global settings, used when the `workspace/configuration` request is not supported by the client.
   // Please note that this is not the case when using this server with the client provided in this example
   // but could happen with other clients.
-  defaultSettings: HerbSettings = {}
+  defaultSettings: HerbSettings = {
+    formatting: {
+      enabled: false,
+      indentWidth: 2,
+      maxLineLength: 80
+    }
+  }
   globalSettings: HerbSettings = this.defaultSettings
   documentSettings: Map<string, Thenable<HerbSettings>> = new Map()
 
