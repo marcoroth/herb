@@ -8,8 +8,8 @@ Herb Linter module providing code analysis and rule enforcement capabilities for
 
 ## Building
 
-Run `nx build linter` to build the library.
+Run `yarn build` to build the library.
 
 ## Running unit tests
 
-Run `nx test linter` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `yarn test` to execute the unit tests via [Vitest](https://vitest.dev/).
