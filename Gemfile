@@ -12,6 +12,7 @@ gem "minitest-difftastic", "~> 0.2"
 gem "rake", "~> 13.2"
 gem "rake-compiler", "~> 1.2"
 gem "rake-compiler-dock", "~> 1.9"
+gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 
 group :development do

@@ -60,7 +60,7 @@ const themeConfig = {
 
   footer: {
     message: "Released under the MIT License.",
-    copyright: "Copyright © 2024 Marco Roth and the Herb Contributors.",
+    copyright: "Copyright © 2024-2025 Marco Roth and the Herb Contributors.",
   },
 
   editLink: {

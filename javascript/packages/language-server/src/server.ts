@@ -78,7 +78,6 @@ export class Server {
     })
 
     this.connection.onDidOpenTextDocument((params) => {
-      console.error(params)
       const document = this.service.documentService.get(params.textDocument.uri)
 
       if (document) {
