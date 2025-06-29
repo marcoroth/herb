@@ -5,7 +5,7 @@ import { DocumentService } from "./document_service"
 import { Diagnostics } from "./diagnostics"
 import { Config } from "./config"
 import { Project } from "./project"
-import { Formatter } from "@herb-tools/formatter"
+import { FormattingService } from "./formatting_service"
 
 export class Service {
   connection: Connection
@@ -14,7 +14,7 @@ export class Service {
   documentService: DocumentService
   project: Project
   config?: Config
-  formatter: Formatter
+  formatting: FormattingService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -22,14 +22,12 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.diagnostics = new Diagnostics(this.connection, this.documentService)
-    this.formatter = new Formatter(this.project.herbBackend, {
-      indentWidth: 2,
-      maxLineLength: 80
-    })
+    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project)
   }
 
   async init() {
     await this.project.initialize()
+    await this.formatting.initialize()
 
     this.config = await Config.fromPathOrNew(this.project.projectPath)
 

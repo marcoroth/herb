@@ -1,33 +1,35 @@
-import typescript from "@rollup/plugin-typescript";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
-import json from "@rollup/plugin-json";
+import typescript from "@rollup/plugin-typescript"
+import { nodeResolve } from "@rollup/plugin-node-resolve"
+import json from "@rollup/plugin-json"
 
-const external = ["@herb-tools/core", "@herb-tools/node"];
+const external = [
+  // ...
+]
 
 export default [
   // CLI build
-  {
-    input: "src/herb-formatter.ts",
-    output: {
-      file: "dist/herb-formatter.js",
-      format: "esm",
-      sourcemap: true,
-    },
-    external,
-    plugins: [
-      nodeResolve(),
-      json(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        rootDir: "src/",
-        module: "esnext",
-      }),
-    ],
-  },
+  // {
+  //   input: "src/herb-formatter.ts",
+  //   output: {
+  //     file: "dist/herb-formatter.js",
+  //     format: "esm",
+  //     sourcemap: true,
+  //   },
+  //   external,
+  //   plugins: [
+  //     nodeResolve(),
+  //     json(),
+  //     typescript({
+  //       tsconfig: "./tsconfig.json",
+  //       rootDir: "src/",
+  //       module: "esnext",
+  //     }),
+  //   ],
+  // },
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-formatter.esm.js",
+      file: "dist/index.esm.js",
       format: "esm",
       sourcemap: true,
     },
@@ -46,7 +48,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-formatter.cjs",
+      file: "dist/index.cjs",
       format: "cjs",
       sourcemap: true,
     },
@@ -60,4 +62,4 @@ export default [
       }),
     ],
   },
-];
+]

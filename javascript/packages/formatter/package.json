@@ -10,9 +10,9 @@
     "url": "https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/formatter"
   },
-  "main": "./dist/herb-formatter.cjs",
-  "module": "./dist/herb-formatter.esm.js",
-  "require": "./dist/herb-formatter.cjs",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.esm.js",
+  "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
   "bin": {
     "herb-formatter": "bin/herb-formatter"
@@ -29,16 +29,13 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-formatter.esm.js",
-      "require": "./dist/herb-formatter.cjs",
-      "default": "./dist/herb-formatter.esm.js"
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.esm.js"
     }
   },
   "dependencies": {
     "@herb-tools/core": "0.3.1"
-  },
-  "optionalDependencies": {
-    "@herb-tools/node": "0.3.1"
   },
   "files": [
     "package.json",

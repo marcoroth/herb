@@ -101,6 +101,10 @@ export class Server {
         }
       })
     })
+
+    this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {
+      return this.service.formatting.formatDocument(params)
+    })
   }
 
   listen() {
