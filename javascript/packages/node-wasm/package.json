@@ -13,6 +13,7 @@
   },
   "main": "./dist/herb-node-wasm.esm.js",
   "module": "./dist/herb-node-wasm.esm.js",
+  "require": "./dist/herb-node-wasm.cjs",
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && yarn build:wasm && yarn build:javascript",
@@ -29,6 +30,7 @@
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/herb-node-wasm.esm.js",
+      "require": "./dist/herb-node-wasm.cjs",
       "default": "./dist/herb-node-wasm.esm.js"
     }
   },

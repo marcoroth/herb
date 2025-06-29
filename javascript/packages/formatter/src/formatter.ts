@@ -17,22 +17,20 @@ export class Formatter {
     this.options = resolveFormatOptions(options)
   }
 
-  format(source: string): string {
+  /**
+   * Format a source string, optionally overriding format options per call.
+   */
+  format(source: string, options: FormatOptions = {}): string {
     const result = this.parse(source)
-
     if (result.failed) return source
 
-    const printer = new Printer(
-      result.source,
-      this.options,
-    )
+    const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
-    return printer.print(result.value)
+    return new Printer(source, resolvedOptions).print(result.value)
   }
 
   private parse(source: string): ParseResult {
     this.herb.ensureBackend()
-
     return this.herb.parse(source)
   }
 }

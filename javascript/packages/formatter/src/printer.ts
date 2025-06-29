@@ -1,3 +1,5 @@
+import { Visitor } from "@herb-tools/core"
+
 import {
   Node,
   DocumentNode,
@@ -9,9 +11,9 @@ import {
   HTMLAttributeValueNode,
   HTMLAttributeNameNode,
   HTMLTextNode,
-  LiteralNode,
   HTMLCommentNode,
   HTMLDoctypeNode,
+  LiteralNode,
   WhitespaceNode,
   ERBContentNode,
   ERBBlockNode,
@@ -30,119 +32,145 @@ import {
   ERBUnlessNode,
   ERBYieldNode,
   ERBInNode,
+  Token
 } from "@herb-tools/core"
+
+type ERBNode =
+  ERBContentNode
+| ERBBlockNode
+| ERBEndNode
+| ERBElseNode
+| ERBIfNode
+| ERBWhenNode
+| ERBCaseNode
+| ERBCaseMatchNode
+| ERBWhileNode
+| ERBUntilNode
+| ERBForNode
+| ERBRescueNode
+| ERBEnsureNode
+| ERBBeginNode
+| ERBUnlessNode
+| ERBYieldNode
+| ERBInNode
+
 
 import type { FormatOptions } from "./options.js"
 
 /**
- * Printer is responsible for traversing the Herb AST
- * and emitting a formatted string with proper indentation,
- * line breaks for long lines, and wrapping HTML attributes.
+ * Printer traverses the Herb AST using the Visitor pattern
+ * and emits a formatted string with proper indentation, line breaks, and attribute wrapping.
  */
-export class Printer {
-  private options: Required<FormatOptions>
+export class Printer extends Visitor {
+  private indentWidth: number
+  private maxLineLength: number
   private source: string
+  private lines: string[] = []
+  private indentLevel: number = 0
 
   constructor(source: string, options: Required<FormatOptions>) {
+    super()
     this.source = source
-    this.options = options
+    this.indentWidth = options.indentWidth
+    this.maxLineLength = options.maxLineLength
   }
 
-  print(node: DocumentNode): string {
-    const lines: string[] = []
-
-    for (const child of node.children) {
-      lines.push(this.printNode(child, 0))
+  print(object: Node | Token, indentLevel: number = 0): string {
+    if (object instanceof Token) {
+      return object.value
     }
 
-    return lines.filter(Boolean).join("\n")
+    const node: Node = object
+
+    this.lines = []
+    this.indentLevel = indentLevel
+
+    node.accept(this)
+
+    return this.lines.filter(Boolean).join("\n")
   }
 
-  private printNode(node: Node, indentLevel: number): string {
+  private push(line: string) {
+    this.lines.push(line)
+  }
 
-    if (node instanceof HTMLElementNode) {
-      return this.printElement(node, indentLevel)
-    } else if (node instanceof HTMLOpenTagNode) {
-      return this.printOpenTag(node, indentLevel)
-    } else if (node instanceof HTMLSelfCloseTagNode) {
-      return this.printSelfCloseTag(node, indentLevel)
-    } else if (node instanceof HTMLCloseTagNode) {
-      return this.printCloseTag(node, indentLevel)
-    } else if (node instanceof HTMLTextNode) {
-      return this.printText(node, indentLevel)
-    } else if (node instanceof HTMLCommentNode) {
-      return this.printComment(node, indentLevel)
-    } else if (node instanceof HTMLDoctypeNode) {
-      return this.printDoctype(node, indentLevel)
-    } else if (node instanceof ERBBeginNode) {
-      return this.printERBBegin(node, indentLevel)
-    } else if (node instanceof ERBBlockNode) {
-      return this.printERBBlock(node, indentLevel)
-    } else if (node instanceof ERBIfNode) {
-      return this.printERBIf(node, indentLevel)
-    } else if (node instanceof ERBElseNode) {
-      return this.printERBElse(node, indentLevel)
-    } else if (node instanceof ERBEndNode || node instanceof ERBContentNode) {
-      return this.printERBRaw(node, indentLevel)
-    } else if (node instanceof ERBWhenNode) {
-      return this.printERBWhen(node, indentLevel)
-    } else if (node instanceof ERBCaseNode) {
-      return this.printERBCase(node, indentLevel)
-    } else if (node instanceof ERBCaseMatchNode) {
-      return this.printERBRaw(node, indentLevel)
-    } else if (
-      node instanceof ERBWhileNode ||
-      node instanceof ERBUntilNode ||
-      node instanceof ERBForNode
-    ) {
-      return this.printERBGeneric(node, indentLevel)
-    } else if (
-      node instanceof ERBRescueNode ||
-      node instanceof ERBEnsureNode ||
-      node instanceof ERBUnlessNode
-    ) {
-      return this.printERBGeneric(node, indentLevel)
-    } else if (node instanceof ERBYieldNode || node instanceof ERBInNode) {
-      return this.printERBRaw(node, indentLevel)
-    } else if (node instanceof WhitespaceNode) {
-      return ""
+  private withIndent<T>(callback: () => T): T {
+    this.indentLevel++
+    const result = callback()
+    this.indentLevel--
+    return result
+  }
+
+  private indent(): string {
+    return " ".repeat(this.indentLevel * this.indentWidth)
+  }
+
+  /**
+   * Print an ERB tag (<% %> or <%= %>) with single spaces around inner content.
+   */
+  private printERBNode(node: ERBNode): void {
+    const indent = this.indent()
+    const open = node.tag_opening?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+    let inner: string
+    if (node.tag_opening && node.tag_closing) {
+      const [, openingEnd] = node.tag_opening.range.toArray()
+      const [closingStart] = node.tag_closing.range.toArray()
+      const rawInner = this.source.slice(openingEnd, closingStart)
+      inner = ` ${rawInner.trim()} `
     } else {
-      return this.raw(node, indentLevel)
+      const txt = node.content?.value ?? ""
+      inner = txt.trim() ? ` ${txt.trim()} ` : ""
     }
+    this.push(indent + open + inner + close)
   }
 
-  private printElement(node: HTMLElementNode, indentLevel: number): string {
+  // --- Visitor methods ---
+
+  visitDocumentNode(node: DocumentNode): void {
+    node.children.forEach(child => this.visit(child))
+  }
+
+  visitHTMLElementNode(node: HTMLElementNode): void {
     const open = node.open_tag as HTMLOpenTagNode
     const tagName = open.tag_name?.value ?? ""
-    const indent = this.indent(indentLevel)
-    const attributes = open.children.filter(
-      (child): child is HTMLAttributeNode => child instanceof HTMLAttributeNode,
-    )
+    const indent = this.indent()
+    const attributes = open.children.filter((child): child is HTMLAttributeNode => child instanceof HTMLAttributeNode)
     const children = node.body.filter(
       child =>
         !(child instanceof WhitespaceNode) &&
         !(child instanceof HTMLTextNode && child.content.trim() === ""),
     )
 
+    // Check if this is a malformed/incomplete tag (missing closing >)
+    const hasClosing = open.tag_closing?.value === ">"
+
+    if (!hasClosing) {
+      // For malformed tags, just output the tag name without any closing
+      this.push(indent + `<${tagName}`)
+
+      return
+    }
+
     if (attributes.length === 0) {
       if (children.length === 0) {
         const single = `<${tagName}${node.is_void ? ' /' : ''}>${node.is_void ? '' : `</${tagName}>`}`
-        return indent + single
+        this.push(indent + single)
+
+        return
       }
 
-      const lines: string[] = []
+      this.push(indent + `<${tagName}>`)
 
-      lines.push(indent + `<${tagName}>`)
-
-      for (const child of children) {
-        lines.push(this.printNode(child, indentLevel + 1))
-      }
+      this.withIndent(() => {
+        children.forEach(child => this.visit(child))
+      })
 
       if (!node.is_void) {
-        lines.push(indent + `</${tagName}>`)
+        this.push(indent + `</${tagName}>`)
       }
 
-      return lines.join("\n")
+      return
     }
 
     const inline = this.renderInlineOpen(tagName, attributes, node.is_void)
@@ -155,113 +183,117 @@ export class Printer {
     if (
       attributes.length === 1 &&
       !hasEmptyValue &&
-      inline.length + indent.length <= this.options.maxLineLength
+      inline.length + indent.length <= this.maxLineLength
     ) {
       if (children.length === 0) {
-        return (
+        this.push(
           indent + `<${tagName} ${this.renderAttribute(attributes[0])}></${tagName}>`
         )
+        return
       }
 
-      const lines = [indent + inline]
+      this.push(indent + inline)
 
-      for (const child of children) {
-        lines.push(this.printNode(child, indentLevel + 1))
-      }
+      this.withIndent(() => {
+        children.forEach(child => this.visit(child))
+      })
 
       if (!node.is_void) {
-        lines.push(indent + `</${tagName}>`)
+        this.push(indent + `</${tagName}>`)
       }
 
-      return lines.join("\n")
+      return
     }
 
-    const lines: string[] = []
-
-    lines.push(indent + `<${tagName}`)
-
-    for (const attribute of attributes) {
-      lines.push(this.indent(indentLevel + 1) + this.renderAttribute(attribute))
-    }
+    this.push(indent + `<${tagName}`)
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
+    })
 
     if (node.is_void) {
-      lines.push(indent + "/>" )
+      this.push(indent + "/>")
     } else if (children.length === 0) {
-      lines.push(indent + ">" + `</${tagName}>`)
+      this.push(indent + ">" + `</${tagName}>`)
     } else {
-      lines.push(indent + ">")
+      this.push(indent + ">")
 
-      for (const child of children) {
-        lines.push(this.printNode(child, indentLevel + 1))
-      }
+      this.withIndent(() => {
+        children.forEach(child => this.visit(child))
+      })
 
-      lines.push(indent + `</${tagName}>`)
+      this.push(indent + `</${tagName}>`)
     }
-
-    return lines.join("\n")
   }
 
-  private printOpenTag(node: HTMLOpenTagNode, indentLevel: number): string {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     const tagName = node.tag_name?.value ?? ""
-    const indent = this.indent(indentLevel)
+    const indent = this.indent()
     const attributes = node.children.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
+
+    // Check if this is a malformed/incomplete tag (missing closing >)
+    const hasClosing = node.tag_closing?.value === ">"
+
+    if (!hasClosing) {
+      // For malformed tags, just output the tag name without any closing
+      this.push(indent + `<${tagName}`)
+      return
+    }
+
     const inline = this.renderInlineOpen(tagName, attributes, node.is_void)
 
-    if (attributes.length === 0 || inline.length + indent.length <= this.options.maxLineLength) {
-      return indent + inline
+    if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
+      this.push(indent + inline)
+
+      return
     }
 
-    const lines: string[] = []
-
-    lines.push(indent + `<${tagName}`)
-
-    for (const attribute of attributes) {
-      lines.push(this.indent(indentLevel + 1) + this.renderAttribute(attribute))
-    }
-
-    lines.push(indent + (node.is_void ? "/>" : ">"))
-
-    return lines.join("\n")
+    this.push(indent + `<${tagName}`)
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
+    })
+    this.push(indent + (node.is_void ? "/>" : ">"))
   }
 
-  private printSelfCloseTag(node: HTMLSelfCloseTagNode, indentLevel: number): string {
+  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
     const tagName = node.tag_name?.value ?? ""
-    const indent = this.indent(indentLevel)
+    const indent = this.indent()
     const attributes = node.attributes.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
     const inline = this.renderInlineOpen(tagName, attributes, true)
 
-    if (attributes.length === 0 || inline.length + indent.length <= this.options.maxLineLength) {
-      return indent + inline
+    if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
+      this.push(indent + inline)
+      return
     }
 
-    const lines: string[] = []
-
-    lines.push(indent + `<${tagName}`)
-
-    for (const attribute of attributes) {
-      lines.push(this.indent(indentLevel + 1) + this.renderAttribute(attribute))
-    }
-
-    lines.push(indent + "/>" )
-
-    return lines.join("\n")
+    this.push(indent + `<${tagName}`)
+    this.withIndent(() => {
+      attributes.forEach(attribute => {
+        this.push(this.indent() + this.renderAttribute(attribute))
+      })
+    })
+    this.push(indent + "/>")
   }
 
-  private printCloseTag(node: HTMLCloseTagNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
+    const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const name = node.tag_name?.value ?? ""
     const close = node.tag_closing?.value ?? ""
 
-    return indent + open + name + close
+    this.push(indent + open + name + close)
   }
 
-  private printText(node: HTMLTextNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitHTMLTextNode(node: HTMLTextNode): void {
+    const indent = this.indent()
     let text = node.content.trim()
-    if (!text) return ""
 
-    const wrapWidth = this.options.maxLineLength - indent.length
+    if (!text) return
+
+    const wrapWidth = this.maxLineLength - indent.length
     const words = text.split(/\s+/)
     const lines: string[] = []
 
@@ -278,11 +310,37 @@ export class Printer {
 
     if (line) lines.push(indent + line)
 
-    return lines.join("\n")
+    lines.forEach(line => this.push(line))
   }
 
-  private printComment(node: HTMLCommentNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitHTMLAttributeNode(node: HTMLAttributeNode): void {
+    const indent = this.indent()
+    this.push(indent + this.renderAttribute(node))
+  }
+
+  visitHTMLAttributeNameNode(node: HTMLAttributeNameNode): void {
+    const indent = this.indent()
+    const name = node.name?.value ?? ""
+    this.push(indent + name)
+  }
+
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+    const indent = this.indent()
+    const open_quote = node.open_quote?.value ?? ""
+    const close_quote = node.close_quote?.value ?? ""
+    const attribute_value = node.children.map(child => {
+      if (child instanceof HTMLTextNode || child instanceof LiteralNode) {
+        return (child as HTMLTextNode | LiteralNode).content
+      } else if (child instanceof ERBContentNode) {
+        return (child.tag_opening!.value + child.content!.value + child.tag_closing!.value)
+      }
+      return ""
+    }).join("")
+    this.push(indent + open_quote + attribute_value + close_quote)
+  }
+
+  visitHTMLCommentNode(node: HTMLCommentNode): void {
+    const indent = this.indent()
     const open = node.comment_start?.value ?? ""
     const close = node.comment_end?.value ?? ""
     let inner: string
@@ -291,18 +349,53 @@ export class Printer {
       // TODO: use .value
       const [_, startIndex] = node.comment_start.range.toArray()
       const [endIndex] = node.comment_end.range.toArray()
-      inner = this.source.slice(startIndex, endIndex)
+      const rawInner = this.source.slice(startIndex, endIndex)
+      inner = ` ${rawInner.trim()} `
     } else {
-      inner = node.children.map(child => this.printNode(child, 0)).join("")
+      inner = node.children.map(child => {
+        const prevLines = this.lines.length
+        this.visit(child)
+        return this.lines.slice(prevLines).join("")
+      }).join("")
     }
 
-    return indent + open + inner + close
+    this.push(indent + open + inner + close)
   }
 
-  private printDoctype(node: HTMLDoctypeNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitERBCommentNode(node: ERBContentNode): void {
+    const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+    let inner: string
 
+    if (node.tag_opening && node.tag_closing) {
+      const [, openingEnd] = node.tag_opening.range.toArray()
+      const [closingStart] = node.tag_closing.range.toArray()
+      const rawInner = this.source.slice(openingEnd, closingStart)
+      const lines = rawInner.split("\n")
+      if (lines.length > 2) {
+        const childIndent = indent + " ".repeat(this.indentWidth)
+        const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+        inner = "\n" + innerLines.join("\n") + "\n"
+      } else {
+        inner = ` ${rawInner.trim()} `
+      }
+    } else {
+      inner = node.children
+        .map(child => {
+          const prevLines = this.lines.length
+          this.visit(child)
+          return this.lines.slice(prevLines).join("")
+        })
+        .join("")
+    }
+
+    this.push(indent + open + inner + close)
+  }
+
+  visitHTMLDoctypeNode(node: HTMLDoctypeNode): void {
+    const indent = this.indent()
+    const open = node.tag_opening?.value ?? ""
     let innerDoctype: string
 
     if (node.tag_opening && node.tag_closing) {
@@ -313,189 +406,166 @@ export class Printer {
     } else {
       innerDoctype = node.children
         .map(child =>
-          child instanceof HTMLTextNode ? child.content : this.printNode(child, 0),
+          child instanceof HTMLTextNode ? child.content : (() => { const prevLines = this.lines.length; this.visit(child); return this.lines.slice(prevLines).join("") })(),
         )
         .join("")
     }
 
     const close = node.tag_closing?.value ?? ""
-
-    return indent + open + innerDoctype + close
+    this.push(indent + open + innerDoctype + close)
   }
 
-  private printERBRaw(
-    node: ERBEndNode | ERBContentNode | ERBYieldNode | ERBInNode | ERBCaseMatchNode,
-    indentLevel: number,
-  ): string {
-    const indent = this.indent(indentLevel)
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    return indent + open + content + close
-  }
-
-  private printERBBlock(node: ERBBlockNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
-
-    lines.push(indent + open + content + close)
-
-    for (const child of node.body) {
-      const printed = this.printNode(child, indentLevel + 1)
-      if (printed) lines.push(printed)
+  visitERBContentNode(node: ERBContentNode): void {
+    // TODO: this feels hacky
+    if (node.tag_opening?.value === "<%#") {
+      this.visitERBCommentNode(node)
+    } else {
+      this.printERBNode(node)
     }
+  }
+
+  visitERBEndNode(node: ERBEndNode): void {
+    this.printERBNode(node)
+  }
+
+  visitERBYieldNode(node: ERBYieldNode): void {
+    this.printERBNode(node)
+  }
+
+  visitERBInNode(node: ERBInNode): void {
+    this.printERBNode(node)
+  }
+
+  visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
+    this.printERBNode(node)
+  }
+
+  visitERBBlockNode(node: ERBBlockNode): void {
+    const indent = this.indent()
+    const open = node.tag_opening?.value ?? ""
+    const content = node.content?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+
+    this.push(indent + open + content + close)
+
+    this.withIndent(() => {
+      node.body.forEach(child => this.visit(child))
+    })
 
     if (node.end_node) {
-      lines.push(this.printNode(node.end_node, indentLevel))
+      this.visit(node.end_node)
     }
-
-    return lines.join("\n")
   }
 
-  private printERBIf(node: ERBIfNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
+  visitERBIfNode(node: ERBIfNode): void {
+    this.printERBNode(node)
 
-    lines.push(indent + open + content + close)
-
-    for (const child of node.statements) {
-      lines.push(this.printNode(child, indentLevel + 1))
-    }
+    this.withIndent(() => {
+      node.statements.forEach(child => this.visit(child))
+    })
 
     if (node.subsequent) {
-      lines.push(this.printNode(node.subsequent, indentLevel))
+      this.visit(node.subsequent)
     }
 
     if (node.end_node) {
-      lines.push(this.printNode(node.end_node, indentLevel))
+      this.printERBNode(node.end_node)
     }
-
-    return lines.join("\n")
   }
 
-  private printERBElse(node: ERBElseNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitERBElseNode(node: ERBElseNode): void {
+    this.printERBNode(node)
+
+    this.withIndent(() => {
+      node.statements.forEach(child => this.visit(child))
+    })
+  }
+
+  visitERBWhenNode(node: ERBWhenNode): void {
+    this.printERBNode(node)
+
+    this.withIndent(() => {
+      node.statements.forEach(stmt => this.visit(stmt))
+    })
+  }
+
+  visitERBCaseNode(node: ERBCaseNode): void {
+    const baseLevel = this.indentLevel
+    const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""
     const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
+    this.push(indent + open + content + close)
 
-    lines.push(indent + open + content + close)
-
-    for (const child of node.statements) {
-      lines.push(this.printNode(child, indentLevel + 1))
-    }
-
-    return lines.join("\n")
-  }
-
-  private printERBWhen(node: ERBWhenNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
-
-    lines.push(indent + open + content + close)
-
-    for (const stmt of node.statements) {
-      lines.push(this.printNode(stmt, indentLevel + 1))
-    }
-
-    return lines.join("\n")
-  }
-
-  private printERBCase(node: ERBCaseNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
-
-    lines.push(indent + open + content + close)
-
-    for (const cond of node.conditions) {
-      lines.push(this.printNode(cond, indentLevel + 1))
-    }
-
-    if (node.else_clause) {
-      lines.push(this.printNode(node.else_clause, indentLevel + 1))
-    }
+    node.conditions.forEach(condition => this.visit(condition))
+    if (node.else_clause) this.visit(node.else_clause)
 
     if (node.end_node) {
-      lines.push(this.printNode(node.end_node, indentLevel))
+      this.visit(node.end_node)
     }
-
-    return lines.join("\n")
   }
 
-  private printERBBegin(node: ERBBeginNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitERBBeginNode(node: ERBBeginNode): void {
+    const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""
     const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
 
-    lines.push(indent + open + content + close)
+    this.push(indent + open + content + close)
 
-    for (const stmt of node.statements) {
-      const printed = this.printNode(stmt, indentLevel + 1)
-      if (printed) lines.push(printed)
-    }
+    this.withIndent(() => {
+      node.statements.forEach(statement => this.visit(statement))
+    })
 
-    if (node.rescue_clause) {
-      const printed = this.printNode(node.rescue_clause, indentLevel)
-      if (printed) lines.push(printed)
-    }
-
-    if (node.else_clause) {
-      const printed = this.printNode(node.else_clause, indentLevel)
-      if (printed) lines.push(printed)
-    }
-
-    if (node.ensure_clause) {
-      const printed = this.printNode(node.ensure_clause, indentLevel)
-      if (printed) lines.push(printed)
-    }
-
-    if (node.end_node) {
-      const printed = this.printNode(node.end_node, indentLevel)
-      if (printed) lines.push(printed)
-    }
-
-    return lines.join("\n")
+    if (node.rescue_clause) this.visit(node.rescue_clause)
+    if (node.else_clause) this.visit(node.else_clause)
+    if (node.ensure_clause) this.visit(node.ensure_clause)
+    if (node.end_node) this.visit(node.end_node)
   }
 
-  private printERBGeneric(node: ERBBeginNode | ERBIfNode | ERBCaseNode | ERBWhileNode | ERBUntilNode | ERBForNode | ERBRescueNode | ERBEnsureNode | ERBUnlessNode | ERBYieldNode | ERBInNode, indentLevel: number): string {
-    const indent = this.indent(indentLevel)
+  visitERBWhileNode(node: ERBWhileNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  visitERBUntilNode(node: ERBUntilNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  visitERBForNode(node: ERBForNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  visitERBRescueNode(node: ERBRescueNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  visitERBEnsureNode(node: ERBEnsureNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  visitERBUnlessNode(node: ERBUnlessNode): void {
+    this.visitERBGeneric(node)
+  }
+
+  // TODO: don't use any
+  private visitERBGeneric(node: any): void {
+    const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const content = node.content?.value ?? ""
     const close = node.tag_closing?.value ?? ""
-    const lines: string[] = []
 
-    lines.push(indent + open + content + close)
+    this.push(indent + open + content + close)
 
-    const statements: any[] = node.statements ?? node.body ?? node.children ?? []
+    this.withIndent(() => {
+      const statements: any[] = node.statements ?? node.body ?? node.children ?? []
 
-    for (const statement of statements) {
-      const printed = this.printNode(statement, indentLevel + 1)
-      if (printed) lines.push(printed)
-    }
+      statements.forEach(statement => this.visit(statement))
+    })
 
-    if (node.end_node) {
-      const printed = this.printNode(node.end_node, indentLevel)
-      if (printed) lines.push(printed)
-    }
-
-    return lines.join("\n")
+    if (node.end_node) this.visit(node.end_node)
   }
+
+  // --- Utility methods ---
 
   private renderInlineOpen(name: string, attributes: HTMLAttributeNode[], selfClose: boolean): string {
     const parts = attributes.map(attribute => this.renderAttribute(attribute))
@@ -511,14 +581,12 @@ export class Printer {
     if (attribute.value instanceof HTMLAttributeValueNode) {
       const open_quote = (attribute.value.open_quote?.value ?? "")
       const close_quote = (attribute.value.close_quote?.value ?? "")
-
       const attribute_value = attribute.value.children.map(attribute => {
         if (attribute instanceof HTMLTextNode || attribute instanceof LiteralNode) {
           return (attribute as HTMLTextNode | LiteralNode).content
         } else if (attribute instanceof ERBContentNode) {
           return (attribute.tag_opening!.value + attribute.content!.value + attribute.tag_closing!.value)
         }
-
         return ""
       }).join("")
 
@@ -526,17 +594,5 @@ export class Printer {
     }
 
     return name + equals + value
-  }
-
-  private raw(node: Node, indentLevel: number): string {
-    if (node.tag_opening && node.tag_closing) {
-      return this.printNode(node, indentLevel)
-    }
-
-    return ""
-  }
-
-  private indent(level: number): string {
-    return " ".repeat(level * this.options.indentWidth)
   }
 }
