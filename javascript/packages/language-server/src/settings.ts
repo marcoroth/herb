@@ -1,4 +1,5 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
+import { defaultFormatOptions } from "@herb-tools/formatter"
 
 export interface HerbSettings {
   formatting?: {
@@ -15,8 +16,8 @@ export class Settings {
   defaultSettings: HerbSettings = {
     formatting: {
       enabled: false,
-      indentWidth: 2,
-      maxLineLength: 80
+      indentWidth: defaultFormatOptions.indentWidth,
+      maxLineLength: defaultFormatOptions.maxLineLength
     }
   }
   globalSettings: HerbSettings = this.defaultSettings

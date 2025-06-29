@@ -1,6 +1,6 @@
 import { Connection, TextDocuments, DocumentFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Formatter } from "@herb-tools/formatter"
+import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "./config"
@@ -97,8 +97,8 @@ export class FormattingService {
 
     // Merge options with precedence: project config > VS Code settings > defaults
     return {
-      indentWidth: projectFormatting.indentWidth ?? settings.formatting?.indentWidth ?? 2,
-      maxLineLength: projectFormatting.maxLineLength ?? settings.formatting?.maxLineLength ?? 80
+      indentWidth: projectFormatting.indentWidth ?? settings.formatting?.indentWidth ?? defaultFormatOptions.indentWidth,
+      maxLineLength: projectFormatting.maxLineLength ?? settings.formatting?.maxLineLength ?? defaultFormatOptions.maxLineLength
     }
   }
 

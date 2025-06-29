@@ -79,7 +79,7 @@
   "scripts": {
     "vscode:prepublish": "yarn run package",
     "publish": "vsce publish",
-    "prebuild": "yarn clean",
+    "prebuild": "yarn clean && yarn sync-defaults",
     "build": "yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
     "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
@@ -93,6 +93,7 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "clean": "rimraf dist",
+    "sync-defaults": "node scripts/sync-defaults.js",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
