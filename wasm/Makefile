@@ -69,6 +69,7 @@ $(NODE_WASM_OUTPUT): $(ALL_OBJECTS)
 
 clean:
 	rm -rf $(BROWSER_BUILD_DIR)
+	rm -rf $(NODE_BUILD_DIR)
 	rm -rf $(OBJ_DIR)
 
 .PHONY: all clean
