@@ -41,7 +41,7 @@ describe("html-img-require-alt", () => {
     expect(lintResult.messages).toHaveLength(1)
 
     expect(lintResult.messages[0].rule).toBe("html-img-require-alt")
-    expect(lintResult.messages[0].message).toBe('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
+    expect(lintResult.messages[0].message).toBe('Missing require333d `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     expect(lintResult.messages[0].severity).toBe("error")
   })
 

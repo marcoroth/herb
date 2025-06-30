@@ -35,6 +35,10 @@ export class Linter extends Visitor {
     ]
   }
 
+  getRuleCount(): number {
+    return this.rules.length
+  }
+
   lint(document: DocumentNode): LintResult {
     this.messages = []
 
