@@ -141,17 +141,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T
     if (token_is(parser, TOKEN_ERROR)) {
       buffer_free(&content);
 
-      token_T* token = parser_consume_expected(parser, TOKEN_ERROR, document_errors);
-      append_unexpected_error(
-        "Token Error",
-        "not TOKEN_ERROR",
-        token->value,
-        token->location->start,
-        token->location->end,
-        document_errors
-      );
-
-      token_free(token);
+      parser_append_unexpected_error_string(parser, document_errors, "Token Error", "not TOKEN_ERROR");
       position_free(start);
 
       return NULL;
@@ -300,28 +290,17 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   // <div id="home">
   if (token_is(parser, TOKEN_QUOTE)) { return parser_parse_quoted_html_attribute_value(parser, children, errors); }
 
-  token_T* token = parser_advance(parser);
-
-  append_unexpected_error(
-    "Unexpected Token",
-    "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START",
-    token_type_to_string(token->type),
-    token->location->start,
-    token->location->end,
-    errors
-  );
+  parser_append_unexpected_error(parser, errors, "Unexpected Token", TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = ast_html_attribute_value_node_init(
     NULL,
     children,
     NULL,
     false,
-    token->location->start,
-    token->location->end,
+    parser->current_token->location->start,
+    parser->current_token->location->end,
     errors
   );
-
-  token_free(token);
 
   return value;
 }
@@ -392,9 +371,12 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
     parser_append_unexpected_error(
       parser,
+      errors,
       "Unexpected Token",
-      "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
-      errors
+      TOKEN_IDENTIFIER,
+      TOKEN_ERB_START,
+      TOKEN_WHITESPACE,
+      TOKEN_NEWLINE
     );
   }
 
@@ -553,7 +535,12 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
 
   array_T* errors = array_init(8);
 
-  parser_append_unexpected_error(parser, "Unknown HTML open tag type", "HTMLOpenTag or HTMLSelfCloseTag", errors);
+  parser_append_unexpected_error_string(
+    parser,
+    errors,
+    "Unknown HTML open tag type",
+    "HTMLOpenTag or HTMLSelfCloseTag"
+  );
 
   return ast_html_element_node_init(
     open_tag,
@@ -638,10 +625,14 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
 
     parser_append_unexpected_error(
       parser,
+      errors,
       "Unexpected token",
-      "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, or "
-      "TOKEN_NEWLINE",
-      errors
+      TOKEN_ERB_START,
+      TOKEN_HTML_DOCTYPE,
+      TOKEN_HTML_COMMENT_START,
+      TOKEN_IDENTIFIER,
+      TOKEN_WHITESPACE,
+      TOKEN_NEWLINE
     );
   }
 }

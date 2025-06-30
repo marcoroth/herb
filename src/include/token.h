@@ -9,6 +9,10 @@ token_T* token_init(const char* value, token_type_T type, lexer_T* lexer);
 char* token_to_string(const token_T* token);
 char* token_to_json(const token_T* token);
 const char* token_type_to_string(token_type_T type);
+const char* token_type_to_friendly_string(token_type_T type);
+char* token_types_to_friendly_string_va(token_type_T first_token, ...);
+
+#define token_types_to_friendly_string(...) token_types_to_friendly_string_va(__VA_ARGS__, TOKEN_SENTINEL)
 
 char* token_value(const token_T* token);
 int token_type(const token_T* token);

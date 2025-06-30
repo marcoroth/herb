@@ -9,6 +9,7 @@
 #include "include/parser.h"
 #include "include/token.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <strings.h>
 
@@ -54,13 +55,46 @@ bool parser_in_svg_context(const parser_T* parser) {
   return false;
 }
 
-void parser_append_unexpected_error(parser_T* parser, const char* description, const char* expected, array_T* errors) {
+void parser_append_unexpected_error_impl(
+  parser_T* parser,
+  array_T* errors,
+  const char* description,
+  token_type_T first_token,
+  ...
+) {
+  token_T* token = parser_advance(parser);
+
+  // Pass the variadic arguments to token_types_to_friendly_string_va
+  va_list args;
+  va_start(args, first_token);
+  char* expected = token_types_to_friendly_string_va(first_token, args);
+  va_end(args);
+
+  append_unexpected_error(
+    description,
+    expected,
+    token_type_to_friendly_string(token->type),
+    token->location->start,
+    token->location->end,
+    errors
+  );
+
+  free(expected);
+  token_free(token);
+}
+
+void parser_append_unexpected_error_string(
+  parser_T* parser,
+  array_T* errors,
+  const char* description,
+  const char* expected
+) {
   token_T* token = parser_advance(parser);
 
   append_unexpected_error(
     description,
     expected,
-    token_type_to_string(token->type),
+    token_type_to_friendly_string(token->type),
     token->location->start,
     token->location->end,
     errors

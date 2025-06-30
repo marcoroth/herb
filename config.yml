@@ -12,7 +12,7 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "%s. Expected: `%s`, found: `%s`."
+        template: "%s. Expected: %s, found: `%s`."
         arguments:
           - description
           - expected
@@ -32,8 +32,8 @@ errors:
       message:
         template: "Found `%s` when expecting `%s` at (%zu:%zu)."
         arguments:
-          - token_type_to_string(found->type)
-          - token_type_to_string(expected_type)
+          - token_type_to_friendly_string(found->type)
+          - token_type_to_friendly_string(expected_type)
           - found->location->start->line
           - found->location->start->column
 
