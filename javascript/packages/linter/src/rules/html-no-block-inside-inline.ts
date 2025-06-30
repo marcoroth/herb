@@ -29,45 +29,68 @@ class BlockInsideInlineVisitor extends Visitor {
     return this.messages
   }
 
+  private isValidHTMLOpenTag(node: HTMLElementNode): boolean {
+    return !!(node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE")
+  }
+
+  private getElementType(tagName: string): { isInline: boolean; isBlock: boolean; isUnknown: boolean } {
+    const isInline = this.inlineElements.has(tagName)
+    const isBlock = this.blockElements.has(tagName)
+    const isUnknown = !isInline && !isBlock
+    return { isInline, isBlock, isUnknown }
+  }
+
+  private addViolationMessage(tagName: string, isBlock: boolean, openTag: HTMLOpenTagNode): void {
+    const parentInline = this.inlineStack[this.inlineStack.length - 1]
+    const elementType = isBlock ? "Block-level" : "Unknown"
+
+    this.messages.push({
+      rule: this.ruleName,
+      message: `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
+      location: openTag.tag_name!.location,
+      severity: "error"
+    })
+  }
+
+  private visitInlineElement(node: HTMLElementNode, tagName: string): void {
+    this.inlineStack.push(tagName)
+    super.visitHTMLElementNode(node)
+    this.inlineStack.pop()
+  }
+
+  private visitBlockElement(node: HTMLElementNode): void {
+    const savedStack = [...this.inlineStack]
+    this.inlineStack = []
+    super.visitHTMLElementNode(node)
+    this.inlineStack = savedStack
+  }
+
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE") {
-      const openTag = node.open_tag as HTMLOpenTagNode
-      const tagName = openTag.tag_name?.value.toLowerCase()
-
-      if (tagName) {
-        const isInline = this.inlineElements.has(tagName)
-        const isBlock = this.blockElements.has(tagName)
-        const isUnknown = !isInline && !isBlock
-
-        // Check if this element violates the inline/block rule
-        if ((isBlock || isUnknown) && this.inlineStack.length > 0) {
-          const parentInline = this.inlineStack[this.inlineStack.length - 1]
-          const elementType = isBlock ? "Block-level" : "Unknown"
-          this.messages.push({
-            rule: this.ruleName,
-            message: `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
-            location: openTag.tag_name!.location,
-            severity: "error"
-          })
-        }
-
-        // Track inline element nesting
-        if (isInline) {
-          this.inlineStack.push(tagName)
-          super.visitHTMLElementNode(node)
-          this.inlineStack.pop()
-        } else {
-          // Block and unknown elements break the inline context
-          const savedStack = [...this.inlineStack]
-          this.inlineStack = []
-          super.visitHTMLElementNode(node)
-          this.inlineStack = savedStack
-        }
-      } else {
-        super.visitHTMLElementNode(node)
-      }
-    } else {
+    if (!this.isValidHTMLOpenTag(node)) {
       super.visitHTMLElementNode(node)
+
+      return
+    }
+
+    const openTag = node.open_tag as HTMLOpenTagNode
+    const tagName = openTag.tag_name?.value.toLowerCase()
+
+    if (!tagName) {
+      super.visitHTMLElementNode(node)
+
+      return
+    }
+
+    const { isInline, isBlock, isUnknown } = this.getElementType(tagName)
+
+    if ((isBlock || isUnknown) && this.inlineStack.length > 0) {
+      this.addViolationMessage(tagName, isBlock, openTag)
+    }
+
+    if (isInline) {
+      this.visitInlineElement(node, tagName)
+    } else {
+      this.visitBlockElement(node)
     }
   }
 }
