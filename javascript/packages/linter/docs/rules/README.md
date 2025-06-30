@@ -2,6 +2,17 @@
 
 This directory contains documentation for all Herb Linter rules.
 
+## Available Rules
+
+- [html-attribute-double-quotes](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
+- [html-attribute-values-require-quotes](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
+- [html-boolean-attributes-no-value](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
+- [html-img-require-alt](./html-img-require-alt.md) - Requires alt attributes on img tags
+- [html-no-block-inside-inline](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
+- [html-no-duplicate-attributes](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
+- [html-no-nested-links](./html-no-nested-links.md) - Prevents nested anchor tags
+- [html-tag-name-lowercase](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
+
 ## Contributing
 
 To contribute a new rule:

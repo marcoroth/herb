@@ -7,6 +7,7 @@ import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-val
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 
 import type { Rule, LintResult, LintMessage } from "./types.js"
 import type { DocumentNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
@@ -29,7 +30,8 @@ export class Linter extends Visitor {
       new HTMLAttributeValuesRequireQuotesRule(),
       new HTMLNoNestedLinksRule(),
       new HTMLAttributeDoubleQuotesRule(),
-      new HTMLBooleanAttributesNoValueRule()
+      new HTMLBooleanAttributesNoValueRule(),
+      new HTMLNoBlockInsideInlineRule()
     ]
   }
 
@@ -39,7 +41,7 @@ export class Linter extends Visitor {
     this.visit(document)
 
     for (const rule of this.rules) {
-      if (rule instanceof HTMLNoNestedLinksRule) {
+      if (rule instanceof HTMLNoNestedLinksRule || rule instanceof HTMLNoBlockInsideInlineRule) {
         const ruleMessages = rule.check(document)
         this.messages.push(...ruleMessages)
       }
@@ -59,7 +61,7 @@ export class Linter extends Visitor {
     for (const rule of this.rules) {
 
       // Skip rules that handle their own traversal
-      if (rule instanceof HTMLNoNestedLinksRule) {
+      if (rule instanceof HTMLNoNestedLinksRule || rule instanceof HTMLNoBlockInsideInlineRule) {
         continue
       }
 
