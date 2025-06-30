@@ -26,7 +26,7 @@ export class Client {
 
   async start() {
     try {
-      this.client.start()
+      await this.client.start()
     } catch (error: any) {
       console.error(`Error restarting the server: ${error.message}`)
 

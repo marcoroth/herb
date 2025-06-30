@@ -5,6 +5,7 @@ import { DocumentService } from "./document_service"
 import { Diagnostics } from "./diagnostics"
 import { Config } from "./config"
 import { Project } from "./project"
+import { FormattingService } from "./formatting_service"
 
 export class Service {
   connection: Connection
@@ -13,6 +14,7 @@ export class Service {
   documentService: DocumentService
   project: Project
   config?: Config
+  formatting: FormattingService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -20,10 +22,12 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.diagnostics = new Diagnostics(this.connection, this.documentService)
+    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
   }
 
   async init() {
     await this.project.initialize()
+    await this.formatting.initialize()
 
     this.config = await Config.fromPathOrNew(this.project.projectPath)
 
@@ -47,5 +51,6 @@ export class Service {
 
   async refreshConfig() {
     this.config = await Config.fromPathOrNew(this.project.projectPath)
+    await this.formatting.refreshConfig()
   }
 }
