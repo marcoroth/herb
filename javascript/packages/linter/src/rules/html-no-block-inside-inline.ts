@@ -1,42 +1,20 @@
-import { HTMLOpenTagNode, HTMLElementNode, Visitor, Node } from "@herb-tools/core"
-import { Rule, LintMessage } from "../types.js"
+import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
 
-class BlockInsideInlineVisitor extends Visitor {
+import type { Rule, LintMessage } from "../types.js"
+import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
+
+class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private inlineStack: string[] = []
-  private messages: LintMessage[] = []
-  private ruleName: string
-
-  private inlineElements = new Set([
-    "a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code",
-    "dfn", "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
-    "q", "samp", "script", "select", "small", "span", "strong", "sub", "sup",
-    "textarea", "time", "tt", "var"
-  ])
-
-  private blockElements = new Set([
-    "address", "article", "aside", "blockquote", "canvas", "dd", "div", "dl",
-    "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2",
-    "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "noscript",
-    "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
-  ])
-
-  constructor(ruleName: string) {
-    super()
-    this.ruleName = ruleName
-  }
-
-  getMessages(): LintMessage[] {
-    return this.messages
-  }
 
   private isValidHTMLOpenTag(node: HTMLElementNode): boolean {
     return !!(node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE")
   }
 
   private getElementType(tagName: string): { isInline: boolean; isBlock: boolean; isUnknown: boolean } {
-    const isInline = this.inlineElements.has(tagName)
-    const isBlock = this.blockElements.has(tagName)
+    const isInline = isInlineElement(tagName)
+    const isBlock = isBlockElement(tagName)
     const isUnknown = !isInline && !isBlock
+
     return { isInline, isBlock, isUnknown }
   }
 
@@ -44,12 +22,11 @@ class BlockInsideInlineVisitor extends Visitor {
     const parentInline = this.inlineStack[this.inlineStack.length - 1]
     const elementType = isBlock ? "Block-level" : "Unknown"
 
-    this.messages.push({
-      rule: this.ruleName,
-      message: `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
-      location: openTag.tag_name!.location,
-      severity: "error"
-    })
+    this.addMessage(
+      `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
+      openTag.tag_name!.location,
+      "error"
+    )
   }
 
   private visitInlineElement(node: HTMLElementNode, tagName: string): void {
@@ -89,19 +66,19 @@ class BlockInsideInlineVisitor extends Visitor {
 
     if (isInline) {
       this.visitInlineElement(node, tagName)
-    } else {
-      this.visitBlockElement(node)
+      return
     }
+
+    this.visitBlockElement(node)
   }
 }
 
 export class HTMLNoBlockInsideInlineRule implements Rule {
   name = "html-no-block-inside-inline"
-  description = "Prevent block-level elements from being placed inside inline elements"
 
   check(node: Node): LintMessage[] {
     const visitor = new BlockInsideInlineVisitor(this.name)
     visitor.visit(node)
-    return visitor.getMessages()
+    return visitor.messages
   }
 }

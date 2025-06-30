@@ -11,7 +11,7 @@ describe("html-img-require-alt", () => {
   test("passes for img with alt attribute", () => {
     const html = '<img src="/logo.png" alt="Company logo">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -22,7 +22,7 @@ describe("html-img-require-alt", () => {
   test("passes for img with empty alt attribute", () => {
     const html = '<img src="/divider.png" alt="">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -33,7 +33,7 @@ describe("html-img-require-alt", () => {
   test("fails for img without alt attribute", () => {
     const html = '<img src="/logo.png">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -48,7 +48,7 @@ describe("html-img-require-alt", () => {
   test("fails for multiple img tags without alt", () => {
     const html = '<img src="/logo.png"><img src="/banner.jpg">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
@@ -59,7 +59,7 @@ describe("html-img-require-alt", () => {
   test("handles mixed case img tags", () => {
     const html = '<IMG src="/logo.png">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -69,7 +69,7 @@ describe("html-img-require-alt", () => {
   test("passes for img with ERB alt attribute", () => {
     const html = '<img src="/avatar.jpg" alt="<%= user.name %>\'s profile picture">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -79,7 +79,7 @@ describe("html-img-require-alt", () => {
   test("ignores non-img tags", () => {
     const html = '<div src="/something.png"></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -89,7 +89,7 @@ describe("html-img-require-alt", () => {
   test("handles self-closing img tags", () => {
     const html = '<img src="/logo.png" />'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -99,7 +99,7 @@ describe("html-img-require-alt", () => {
   test("passes for case-insensitive alt attribute", () => {
     const html = '<img src="/logo.png" ALT="Logo">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLImgRequireAltRule()])
+    const linter = new Linter([HTMLImgRequireAltRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)

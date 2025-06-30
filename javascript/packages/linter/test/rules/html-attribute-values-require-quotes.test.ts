@@ -11,7 +11,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("passes for quoted attribute values", () => {
     const html = '<div id="hello" class="container">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -22,7 +22,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("fails for unquoted attribute values", () => {
     const html = '<div id=hello class=container>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2) // Both id and class are unquoted
@@ -37,7 +37,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("passes for single-quoted values", () => {
     const html = "<div id='hello' class='container'>"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -47,7 +47,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("passes for boolean attributes without values", () => {
     const html = '<input type="text" disabled>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -57,7 +57,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("handles mixed quoted and unquoted", () => {
     const html = '<input type="text" name=username value="test">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) // Only name is unquoted
@@ -67,7 +67,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("handles ERB in quoted attributes", () => {
     const html = '<div class="<%= classes %>" data-id="<%= item.id %>">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -77,7 +77,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("handles self-closing tags", () => {
     const html = '<img src=photo.jpg alt="Photo">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -87,7 +87,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("handles complex attribute values", () => {
     const html = '<a href="/profile" title=User\\ Profile>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -97,7 +97,7 @@ describe("html-attribute-values-require-quotes", () => {
   test("ignores closing tags", () => {
     const html = '<div class="test"></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeValuesRequireQuotesRule()])
+    const linter = new Linter([HTMLAttributeValuesRequireQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)

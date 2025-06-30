@@ -19,8 +19,7 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can be instantiated with custom rules", () => {
-      const rule = new HTMLTagNameLowercaseRule()
-      const linter = new Linter([rule])
+      const linter = new Linter([HTMLTagNameLowercaseRule])
       expect(linter).toBeInstanceOf(Linter)
     })
   })
