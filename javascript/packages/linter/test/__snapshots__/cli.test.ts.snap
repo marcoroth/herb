@@ -1,0 +1,90 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CLI Output Formatting > formats detailed error output correctly 1`] = `
+"[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/test-file-with-errors.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │   <img src="test.jpg">
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
+
+
+[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/test-file-with-errors.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │   <img src="test.jpg">
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
+
+
+[error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+test/fixtures/test-file-with-errors.html.erb:3:3
+
+      1 │ <div>
+      2 │   <SPAN>Test content</SPAN>
+  →   3 │   <img src="test.jpg">
+        │    ~~~
+      4 │ </div>
+      5 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/3] ⎯⎯⎯⎯
+
+
+ Checked     1 file
+ Issues      3 errors | 0 warnings (across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats simple output correctly 1`] = `
+"test/fixtures/test-file-simple.html.erb:
+  2:3  ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  2:22 ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+
+ Checked     1 file
+ Issues      2 errors | 0 warnings (across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats success output correctly 1`] = `
+"✓ test/fixtures/clean-file.html.erb - No issues found
+
+ Checked     1 file
+ Issues      0 issues"
+`;
+
+exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
+"[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/bad-file.html.erb:1:1
+
+  →   1 │ <SPAN>Bad file</SPAN>
+        │  ~~~~
+      2 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+
+[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/bad-file.html.erb:1:16
+
+  →   1 │ <SPAN>Bad file</SPAN>
+        │                 ~~~~
+      2 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/2] ⎯⎯⎯⎯
+
+
+ Checked     1 file
+ Issues      2 errors | 0 warnings (across 1 file)"
+`;

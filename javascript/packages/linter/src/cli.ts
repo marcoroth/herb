@@ -1,6 +1,7 @@
 import { readFileSync, statSync } from "fs"
 import { resolve, join } from "path"
 import { glob } from "glob"
+import { parseArgs } from "util"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "./linter.js"
@@ -23,9 +24,11 @@ export class CLI {
     --format         output format (simple|detailed) [default: detailed]
     --simple         use simple output format (shortcut for --format simple)
     --no-color       disable colored output
+    --no-timing      hide timing information
 `
 
   private formatOption: 'simple' | 'detailed' = 'detailed'
+  private showTiming: boolean = true
 
   private pluralize(count: number, singular: string, plural?: string): string {
     return count === 1 ? singular : (plural || `${singular}s`)
@@ -113,42 +116,52 @@ ${contextLines.trimEnd()}
 
   }
 
-  private parseArguments(args: string[]): void {
-    if (args.includes("--help") || args.includes("-h")) {
+  private parseArguments() {
+    const { values, positionals } = parseArgs({
+      args: process.argv.slice(2),
+      options: {
+        help: { type: 'boolean', short: 'h' },
+        version: { type: 'boolean', short: 'v' },
+        format: { type: 'string' },
+        simple: { type: 'boolean' },
+        'no-color': { type: 'boolean' },
+        'no-timing': { type: 'boolean' }
+      },
+      allowPositionals: true
+    })
+
+    if (values.help) {
       console.log(this.usage)
       process.exit(0)
     }
 
-    const formatIndex = args.indexOf("--format")
-    if (formatIndex !== -1 && formatIndex + 1 < args.length) {
-      const formatValue = args[formatIndex + 1]
-      if (formatValue === "detailed" || formatValue === "simple") {
-        this.formatOption = formatValue
-      }
+    if (values.version) {
+      console.log("Versions:")
+      console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+      process.exit(0)
     }
 
-    if (args.includes("--simple")) {
+    if (values.format && (values.format === "detailed" || values.format === "simple")) {
+      this.formatOption = values.format
+    }
+
+    if (values.simple) {
       this.formatOption = "simple"
     }
 
-    if (args.includes("--no-color")) {
+    if (values['no-color']) {
       process.env.NO_COLOR = "1"
     }
-  }
 
-  private getFilePattern(args: string[]): string {
-    const filteredArgs = []
-    for (let i = 0; i < args.length; i++) {
-      if (args[i] === "--format") {
-        i++
-      } else if (args[i] === "--no-color" || args[i] === "--simple" || args[i].startsWith("-")) {
-        // Skip flags
-      } else {
-        filteredArgs.push(args[i])
-      }
+    if (values['no-timing']) {
+      this.showTiming = false
     }
 
-    let pattern = filteredArgs.length > 0 ? filteredArgs[0] : "**/*.html.erb"
+    return { values, positionals }
+  }
+
+  private getFilePattern(positionals: string[]): string {
+    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html.erb"
 
     try {
       const stat = statSync(pattern)
@@ -326,12 +339,14 @@ ${contextLines.trimEnd()}
 
     console.log(` ${colorize(pad("Issues"), "gray")} ${issuesSummary}`)
 
-    // Timing information
-    const duration = Date.now() - startTime
-    const timeString = startDate.toTimeString().split(' ')[0] // HH:MM:SS format
+    // Timing information (if enabled)
+    if (this.showTiming) {
+      const duration = Date.now() - startTime
+      const timeString = startDate.toTimeString().split(' ')[0] // HH:MM:SS format
 
-    console.log(` ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
-    console.log(` ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
+      console.log(` ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
+      console.log(` ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
+    }
 
     // Success message for all files clean
     if (filesWithIssues === 0 && files.length > 1) {
@@ -343,20 +358,20 @@ ${contextLines.trimEnd()}
   async run() {
     const startTime = Date.now()
     const startDate = new Date()
-    const args = process.argv.slice(2)
 
-    this.parseArguments(args)
+    const { positionals } = this.parseArguments()
 
     try {
       await Herb.load()
 
-      if (args.includes("--version") || args.includes("-v")) {
-        console.log("Versions:")
-        console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
-        process.exit(0)
+      const pattern = this.getFilePattern(positionals)
+      
+      // Validate that we have a proper file pattern
+      if (positionals.length === 0) {
+        console.error("Please specify input file.")
+        process.exit(1)
       }
-
-      const pattern = this.getFilePattern(args)
+      
       const files = await glob(pattern)
 
       if (files.length === 0) {
