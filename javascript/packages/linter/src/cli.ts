@@ -6,6 +6,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "./linter.js"
 
 import { name, version } from "../package.json"
+import { colorize } from "./color.js"
 
 export class CLI {
   private usage = `
@@ -19,7 +20,85 @@ export class CLI {
   Options:
     -h, --help       show help
     -v, --version    show version
+    --format         output format (simple|detailed) [default: detailed]
+    --simple         use simple output format (shortcut for --format simple)
+    --no-color       disable colored output
 `
+
+  private formatOption: 'simple' | 'detailed' = 'detailed'
+
+  private formatDetailedMessage(filename: string, message: any, content: string): string {
+    const isError = message.severity === "error"
+    const location = colorize(`${filename}:${message.location.start.line}:${message.location.start.column}`, "cyan")
+    const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
+    const diagnosticId = colorize(message.rule, "gray")
+
+    const lines = content.split('\n')
+    const targetLineNumber = message.location.start.line
+    const column = message.location.start.column - 1
+    const pointer = colorize('~'.repeat(Math.max(1, (message.location.end?.column || message.location.start.column + 1) - message.location.start.column)), isError ? "brightRed" : "brightYellow")
+
+    const aroundLines = 2
+    const startLine = Math.max(1, targetLineNumber - aroundLines)
+    const endLine = Math.min(lines.length, targetLineNumber + aroundLines)
+
+    let contextLines = ''
+
+    for (let i = startLine; i <= endLine; i++) {
+      const line = lines[i - 1] || ''
+      const isTargetLine = i === targetLineNumber
+      const lineNumber = isTargetLine ?
+        colorize(i.toString().padStart(3, ' '), "bold") :
+        colorize(i.toString().padStart(3, ' '), "gray")
+
+      const prefix = isTargetLine ?
+        colorize('│ → ', isError ? "brightRed" : "brightYellow") :
+        colorize('│   ', "gray")
+
+      const separator = colorize('│', "gray")
+
+      let displayLine = line
+
+      if (isTargetLine) {
+        const startCol = message.location.start.column
+        const endCol = message.location.end?.column ? message.location.end.column : message.location.start.column + 1
+        const before = line.substring(0, startCol)
+        const errorText = line.substring(startCol, endCol)
+        const after = line.substring(endCol)
+        const boldWhite = '\x1b[1m\x1b[37m'
+        const reset = '\x1b[0m'
+        const highlightedError = process.stdout.isTTY && process.env.NO_COLOR === undefined ?
+          `${boldWhite}${errorText}${reset}` : errorText
+        displayLine = before + highlightedError + after
+      }
+
+      contextLines += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+
+      if (isTargetLine) {
+        const pointerPrefix = colorize('│       │', "gray")
+        const pointerSpacing = ' '.repeat(column + 2)
+        contextLines += `${pointerPrefix}${pointerSpacing}${pointer}\n`
+      }
+    }
+
+    const borderColor = "gray"
+
+    const highlightBackticks = (text: string): string => {
+      if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
+        const boldWhite = '\x1b[1m\x1b[37m'
+        const reset = '\x1b[0m'
+        return text.replace(/`([^`]+)`/g, `${boldWhite}$1${reset}`)
+      }
+
+      return text
+    }
+
+    const highlightedMessage = highlightBackticks(message.message)
+
+    return `${location} - ${severityText} ${diagnosticId}: ${highlightedMessage}
+${colorize('│', borderColor)}
+${contextLines.trimEnd()}`
+  }
 
   async run() {
     const args = process.argv.slice(2)
@@ -29,18 +108,48 @@ export class CLI {
       process.exit(0)
     }
 
+    const formatIndex = args.indexOf("--format")
+
+    if (formatIndex !== -1 && formatIndex + 1 < args.length) {
+      const formatValue = args[formatIndex + 1]
+
+      if (formatValue === "detailed" || formatValue === "simple") {
+        this.formatOption = formatValue
+      }
+    }
+
+    if (args.includes("--simple")) {
+      this.formatOption = "simple"
+    }
+
+    if (args.includes("--no-color")) {
+      process.env.NO_COLOR = "1"
+    }
+
     try {
       await Herb.load()
 
       if (args.includes("--version") || args.includes("-v")) {
         console.log("Versions:")
         console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+
         process.exit(0)
       }
 
-      let pattern = args.length > 0 && !args[0].startsWith("-") ? args[0] : "**/*.html.erb"
-      
-      // Check if the pattern is a directory and auto-append glob pattern
+      const filteredArgs = []
+
+      for (let i = 0; i < args.length; i++) {
+        if (args[i] === "--format") {
+          i++
+        } else if (args[i] === "--no-color" || args[i] === "--simple" || args[i].startsWith("-")) {
+          // Skip flags
+        } else {
+          filteredArgs.push(args[i])
+        }
+      }
+
+      let pattern = filteredArgs.length > 0 ? filteredArgs[0] : "**/*.html.erb"
+
       try {
         const stat = statSync(pattern)
         if (stat.isDirectory()) {
@@ -49,7 +158,7 @@ export class CLI {
       } catch {
         // Not a file/directory, treat as glob pattern
       }
-      
+
       const files = await glob(pattern)
 
       if (files.length === 0) {
@@ -68,10 +177,10 @@ export class CLI {
         const parseResult = Herb.parse(content)
 
         if (parseResult.errors.length > 0) {
-          console.error(`${filename} - Parse errors:`)
+          console.error(`${colorize(filename, "cyan")} - ${colorize("Parse errors:", "brightRed")}`)
 
           for (const error of parseResult.errors) {
-            console.error(`  ${error.message}`)
+            console.error(`  ${colorize("✗", "brightRed")} ${error.message}`)
           }
 
           totalErrors++
@@ -83,14 +192,26 @@ export class CLI {
         const lintResult = linter.lint(parseResult.value)
 
         if (lintResult.messages.length === 0) {
-          console.log(`✓ ${filename} - No issues found`)
+          if (files.length === 1) {
+            console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
+          }
         } else {
-          console.log(`${filename}:`)
+          if (this.formatOption === 'detailed') {
+            for (const message of lintResult.messages) {
+              console.log(`${this.formatDetailedMessage(filename, message, content)}\n`)
+            }
+          } else {
+            console.log(`${colorize(filename, "cyan")}:`)
 
-          for (const message of lintResult.messages) {
-            const severity = message.severity === "error" ? "✗" : "⚠"
-            const location = `${message.location.start.line}:${message.location.start.column}`
-            console.log(`  ${location} ${severity} ${message.message} (${message.rule})`)
+            for (const message of lintResult.messages) {
+              const isError = message.severity === "error"
+              const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
+              const rule = colorize(`(${message.rule})`, "blue")
+              const locationStr = `${message.location.start.line}:${message.location.start.column}`
+              const paddedLocation = locationStr.padEnd(4) // Pad to 4 characters for alignment
+
+              console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${message.message} ${rule}`)
+            }
           }
 
           totalErrors += lintResult.errors
@@ -100,8 +221,25 @@ export class CLI {
       }
 
       console.log("")
-      console.log(`Checked ${files.length} file(s)`)
-      console.log(`${totalErrors} error(s), ${totalWarnings} warning(s) across ${filesWithIssues} file(s)`)
+
+      if (files.length === 1) {
+        const errorText = totalErrors > 0 ? colorize(`${totalErrors} error(s)`, "brightRed") : colorize(`${totalErrors} error(s)`, "green")
+        const warningText = totalWarnings > 0 ? colorize(`${totalWarnings} warning(s)`, "brightYellow") : colorize(`${totalWarnings} warning(s)`, "green")
+
+        console.log(`${errorText}, ${warningText}`)
+      } else {
+        console.log(`${colorize("Checked", "gray")} ${colorize(files.length.toString(), "cyan")} ${colorize("file(s)", "gray")}`)
+
+        const errorText = totalErrors > 0 ? colorize(`${totalErrors} error(s)`, "brightRed") : colorize(`${totalErrors} error(s)`, "green")
+        const warningText = totalWarnings > 0 ? colorize(`${totalWarnings} warning(s)`, "brightYellow") : colorize(`${totalWarnings} warning(s)`, "green")
+        const filesText = filesWithIssues > 0 ? colorize(`${filesWithIssues} file(s)`, "yellow") : colorize(`${filesWithIssues} file(s)`, "green")
+
+        console.log(`${errorText}, ${warningText} across ${filesText}`)
+
+        if (filesWithIssues === 0) {
+          console.log(`${colorize("✓", "brightGreen")} ${colorize("All files passed!", "green")}`)
+        }
+      }
 
       if (totalErrors > 0) {
         process.exit(1)
