@@ -50,7 +50,7 @@ export class HTMLAttributeDoubleQuotesRule implements Rule {
 
               messages.push({
                 rule: this.name,
-                message: `Attribute "${attributeName}" uses single quotes. Prefer double quotes for HTML attribute values: ${attributeName}="value".`,
+                message: `Attribute \`${attributeName}\` uses single quotes. Prefer double quotes for HTML attribute values: \`${attributeName}="value"\`.`,
                 location: valueNode.location,
                 severity: "error"
               })

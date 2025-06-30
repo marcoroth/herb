@@ -30,7 +30,7 @@ describe("html-no-duplicate-attributes", () => {
     expect(lintResult.messages).toHaveLength(1)
 
     expect(lintResult.messages[0].rule).toBe("html-no-duplicate-attributes")
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "type"')
+    expect(lintResult.messages[0].message).toBe('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
     expect(lintResult.messages[0].severity).toBe("error")
   })
 
@@ -52,7 +52,7 @@ describe("html-no-duplicate-attributes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "class"')
+    expect(lintResult.messages[0].message).toBe('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
   })
 
   test("passes for different attributes", () => {
@@ -72,7 +72,7 @@ describe("html-no-duplicate-attributes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "src"')
+    expect(lintResult.messages[0].message).toBe('Duplicate attribute `src` found on tag. Remove the duplicate occurrence.')
   })
 
   test("handles ERB templates with attributes", () => {

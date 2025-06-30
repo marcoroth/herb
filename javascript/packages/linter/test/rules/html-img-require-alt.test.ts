@@ -41,7 +41,7 @@ describe("html-img-require-alt", () => {
     expect(lintResult.messages).toHaveLength(1)
 
     expect(lintResult.messages[0].rule).toBe("html-img-require-alt")
-    expect(lintResult.messages[0].message).toContain('Missing required "alt" attribute')
+    expect(lintResult.messages[0].message).toBe('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
     expect(lintResult.messages[0].severity).toBe("error")
   })
 
@@ -63,7 +63,7 @@ describe("html-img-require-alt", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Missing required "alt" attribute')
+    expect(lintResult.messages[0].message).toBe('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
   })
 
   test("passes for img with ERB alt attribute", () => {
@@ -93,7 +93,7 @@ describe("html-img-require-alt", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Missing required "alt" attribute')
+    expect(lintResult.messages[0].message).toBe('Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.')
   })
 
   test("passes for case-insensitive alt attribute", () => {

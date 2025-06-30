@@ -41,7 +41,7 @@ describe("html-no-block-inside-inline", () => {
     expect(lintResult.messages).toHaveLength(1)
 
     expect(lintResult.messages[0].rule).toBe("html-no-block-inside-inline")
-    expect(lintResult.messages[0].message).toContain('Block-level element `<div>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
     expect(lintResult.messages[0].severity).toBe("error")
   })
 
@@ -55,7 +55,7 @@ describe("html-no-block-inside-inline", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(1)
 
-    expect(lintResult.messages[0].message).toContain('Block-level element `<p>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<p>` cannot be placed inside inline element `<span>`.')
   })
 
   test("fails for multiple block elements inside inline", () => {
@@ -76,7 +76,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<div>` cannot be placed inside inline element `<a>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<a>`.')
   })
 
   test("fails for heading inside strong", () => {
@@ -86,7 +86,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<h1>` cannot be placed inside inline element `<strong>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<h1>` cannot be placed inside inline element `<strong>`.')
   })
 
   test("fails for section inside em", () => {
@@ -96,7 +96,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<section>` cannot be placed inside inline element `<em>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<section>` cannot be placed inside inline element `<em>`.')
   })
 
   test("passes for nested inline elements", () => {
@@ -116,7 +116,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<div>` cannot be placed inside inline element `<strong>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<strong>`.')
   })
 
   test("passes for inline elements with text and inline children", () => {
@@ -136,7 +136,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<ul>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<ul>` cannot be placed inside inline element `<span>`.')
   })
 
   test("handles ERB templates correctly", () => {
@@ -156,7 +156,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<form>` cannot be placed inside inline element `<button>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<form>` cannot be placed inside inline element `<button>`.')
   })
 
   test("fails for table inside label", () => {
@@ -166,7 +166,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<table>` cannot be placed inside inline element `<label>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<table>` cannot be placed inside inline element `<label>`.')
   })
 
   test("fails for custom elements inside inline elements", () => {
@@ -176,7 +176,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<my-component>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<my-component>` cannot be placed inside inline element `<span>`.')
   })
 
   test("passes for block elements inside custom elements", () => {
@@ -202,9 +202,9 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(3)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<x-button>` cannot be placed inside inline element `<span>`')
-    expect(lintResult.messages[1].message).toContain('Unknown element `<app-icon>` cannot be placed inside inline element `<span>`')
-    expect(lintResult.messages[2].message).toContain('Unknown element `<my-very-long-component-name>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<x-button>` cannot be placed inside inline element `<span>`.')
+    expect(lintResult.messages[1].message).toBe('Unknown element `<app-icon>` cannot be placed inside inline element `<span>`.')
+    expect(lintResult.messages[2].message).toBe('Unknown element `<my-very-long-component-name>` cannot be placed inside inline element `<span>`.')
   })
 
   test("still fails for standard block elements after custom elements", () => {
@@ -214,8 +214,8 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<my-component>` cannot be placed inside inline element `<span>`')
-    expect(lintResult.messages[1].message).toContain('Block-level element `<div>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<my-component>` cannot be placed inside inline element `<span>`.')
+    expect(lintResult.messages[1].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
   })
 
   test("fails for nested custom elements inside inline", () => {
@@ -225,7 +225,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<outer-component>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<outer-component>` cannot be placed inside inline element `<span>`.')
   })
 
   test("fails for single-word custom elements inside inline", () => {
@@ -235,7 +235,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<customtag>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<customtag>` cannot be placed inside inline element `<span>`.')
   })
 
   test("fails for unknown elements inside inline but allows content inside unknown elements", () => {
@@ -245,7 +245,7 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Unknown element `<unknownelement>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Unknown element `<unknownelement>` cannot be placed inside inline element `<span>`.')
   })
 
   test("passes for custom elements at top level", () => {
@@ -265,6 +265,6 @@ describe("html-no-block-inside-inline", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Block-level element `<div>` cannot be placed inside inline element `<span>`')
+    expect(lintResult.messages[0].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
   })
 })

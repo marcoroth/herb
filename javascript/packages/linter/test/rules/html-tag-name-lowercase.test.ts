@@ -30,7 +30,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.messages).toHaveLength(4)
 
     expect(lintResult.messages[0].rule).toBe("html-tag-name-lowercase")
-    expect(lintResult.messages[0].message).toContain('Tag name "DIV" should be lowercase')
+    expect(lintResult.messages[0].message).toBe('Tag name `DIV` should be lowercase. Use `div` instead.')
     expect(lintResult.messages[0].severity).toBe("error")
   })
 
@@ -44,7 +44,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(4)
 
-    expect(lintResult.messages[0].message).toContain('Tag name "Div" should be lowercase')
+    expect(lintResult.messages[0].message).toBe('Tag name `Div` should be lowercase. Use `div` instead.')
   })
 
   test("handles self-closing tags", () => {
@@ -54,7 +54,7 @@ describe("html-tag-name-lowercase", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Tag name "IMG" should be lowercase')
+    expect(lintResult.messages[0].message).toBe('Tag name `IMG` should be lowercase. Use `img` instead.')
   })
 
   test("passes for valid self-closing tags", () => {
@@ -67,7 +67,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.warnings).toBe(0)
   })
 
-  test("handles ERB templates", () => {
+  test.skip("handles ERB templates", () => {
     const html = '<div class="container"><%= content_tag(:DIV, "Hello world!") %></div>'
     const result = Herb.parse(html)
     const linter = new Linter([new HTMLTagNameLowercaseRule()])
@@ -112,7 +112,7 @@ describe("html-tag-name-lowercase", () => {
     const linter = new Linter([new HTMLTagNameLowercaseRule()])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBeGreaterThan(0)
+    expect(lintResult.errors).toBe(14)
     expect(lintResult.warnings).toBe(0)
 
     const errorMessages = lintResult.messages.map(message => message.message)

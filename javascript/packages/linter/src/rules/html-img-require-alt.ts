@@ -38,7 +38,7 @@ export class HTMLImgRequireAltRule implements Rule {
     if (!hasAltAttribute) {
       messages.push({
         rule: this.name,
-        message: 'Missing required "alt" attribute on <img> tag. Add alt="" for decorative images or alt="description" for informative images.',
+        message: 'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
         location: node.tag_name.location,
         severity: "error"
       })

@@ -28,13 +28,13 @@ describe("html-attribute-double-quotes", () => {
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(2)
-    
+
     expect(lintResult.messages[0].rule).toBe("html-attribute-double-quotes")
-    expect(lintResult.messages[0].message).toContain('Attribute "type" uses single quotes')
+    expect(lintResult.messages[0].message).toBe('Attribute `type` uses single quotes. Prefer double quotes for HTML attribute values: `type="value"`.')
     expect(lintResult.messages[0].severity).toBe("error")
 
     expect(lintResult.messages[1].rule).toBe("html-attribute-double-quotes")
-    expect(lintResult.messages[1].message).toContain('Attribute "value" uses single quotes')
+    expect(lintResult.messages[1].message).toBe('Attribute `value` uses single quotes. Prefer double quotes for HTML attribute values: `value="value"`.')
     expect(lintResult.messages[1].severity).toBe("error")
   })
 
@@ -55,9 +55,9 @@ describe("html-attribute-double-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(3)
-    expect(lintResult.messages[0].message).toContain('Attribute "href" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "title" uses single quotes')
-    expect(lintResult.messages[2].message).toContain('Attribute "data-controller" uses single quotes')
+    expect(lintResult.messages[0].message).toBe('Attribute `href` uses single quotes. Prefer double quotes for HTML attribute values: `href="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `title` uses single quotes. Prefer double quotes for HTML attribute values: `title="value"`.')
+    expect(lintResult.messages[2].message).toBe('Attribute `data-controller` uses single quotes. Prefer double quotes for HTML attribute values: `data-controller="value"`.')
   })
 
   test("passes for unquoted attributes (handled by other rule)", () => {
@@ -87,8 +87,8 @@ describe("html-attribute-double-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "src" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "alt" uses single quotes')
+    expect(lintResult.messages[0].message).toBe('Attribute `src` uses single quotes. Prefer double quotes for HTML attribute values: `src="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `alt` uses single quotes. Prefer double quotes for HTML attribute values: `alt="value"`.')
   })
 
   test("handles ERB with single quoted attributes", () => {
@@ -98,8 +98,8 @@ describe("html-attribute-double-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "data-controller" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "data-action" uses single quotes')
+    expect(lintResult.messages[0].message).toBe('Attribute `data-controller` uses single quotes. Prefer double quotes for HTML attribute values: `data-controller="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `data-action` uses single quotes. Prefer double quotes for HTML attribute values: `data-action="value"`.')
   })
 
   test("allows single quotes when value contains double quotes", () => {
@@ -120,7 +120,7 @@ describe("html-attribute-double-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "id" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "class" uses single quotes')
+    expect(lintResult.messages[0].message).toBe('Attribute `id` uses single quotes. Prefer double quotes for HTML attribute values: `id="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `class` uses single quotes. Prefer double quotes for HTML attribute values: `class="value"`.')
   })
 })

@@ -37,7 +37,7 @@ export class HTMLAttributeValuesRequireQuotesRule implements Rule {
 
             messages.push({
               rule: this.name,
-              message: `Attribute value should be quoted: ${attributeName}="value". Always wrap attribute values in quotes.`,
+              message: `Attribute value should be quoted: \`${attributeName}="value"\`. Always wrap attribute values in quotes.`,
               location: valueNode.location,
               severity: "error"
             })

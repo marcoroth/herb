@@ -47,7 +47,7 @@ export class HTMLNoDuplicateAttributesRule implements Rule {
           const nameNode = nameNodes[i]
           messages.push({
             rule: this.name,
-            message: `Duplicate attribute "${attributeName}" found on tag. Remove the duplicate occurrence.`,
+            message: `Duplicate attribute \`${attributeName}\` found on tag. Remove the duplicate occurrence.`,
             location: nameNode.location,
             severity: "error"
           })

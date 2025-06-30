@@ -42,7 +42,7 @@ export class HTMLBooleanAttributesNoValueRule implements Rule {
 
               messages.push({
                 rule: this.name,
-                message: `Boolean attribute "${attributeName}" should not have a value. Use "${attributeName}" instead of "${attributeName}=value".`,
+                message: `Boolean attribute \`${attributeName}\` should not have a value. Use \`${attributeName}\` instead of \`${attributeName}="${attributeName}"\`.`,
                 location: valueNode.location,
                 severity: "error"
               })

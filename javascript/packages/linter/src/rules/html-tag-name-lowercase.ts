@@ -18,7 +18,7 @@ export class HTMLTagNameLowercaseRule implements Rule {
     if (!isLowercase) {
       messages.push({
         rule: this.name,
-        message: `Tag name "${tagName}" should be lowercase. Use "${tagName.toLowerCase()}" instead.`,
+        message: `Tag name \`${tagName}\` should be lowercase. Use \`${tagName.toLowerCase()}\` instead.`,
         location: node.tag_name.location,
         severity: "error"
       })

@@ -30,7 +30,7 @@ describe("html-no-nested-links", () => {
     expect(lintResult.messages).toHaveLength(1)
 
     expect(lintResult.messages[0].rule).toBe("html-no-nested-links")
-    expect(lintResult.messages[0].message).toContain("Nested <a> elements are not allowed")
+    expect(lintResult.messages[0].message).toBe("Nested <a> elements are not allowed. Links cannot contain other links.")
     expect(lintResult.messages[0].severity).toBe("error")
   })
 
@@ -41,7 +41,7 @@ describe("html-no-nested-links", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain("Nested <a> elements are not allowed")
+    expect(lintResult.messages[0].message).toBe("Nested <a> elements are not allowed. Links cannot contain other links.")
   })
 
   test("passes for links in different containers", () => {
@@ -71,7 +71,7 @@ describe("html-no-nested-links", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain("Nested <a> elements are not allowed")
+    expect(lintResult.messages[0].message).toBe("Nested <a> elements are not allowed. Links cannot contain other links.")
   })
 
   test("passes for links with complex content", () => {
