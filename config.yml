@@ -273,8 +273,9 @@ nodes:
 
     - name: HTMLAttributeNameNode
       fields:
-        - name: name
-          type: token
+        - name: children
+          type: array
+          kind: Node # LiteralNode or ERBContentNode
 
     - name: HTMLAttributeNode
       fields:

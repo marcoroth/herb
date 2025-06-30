@@ -1,0 +1,45 @@
+@ DocumentNode (location: (1:0)-(1:36))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:36))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:36))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:35)-(1:36))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:35))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:25))
+        │       │       │       └── children: (3 items)
+        │       │       │           ├── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │           │   └── content: "data-"
+        │       │       │           │
+        │       │       │           ├── @ ERBContentNode (location: (1:10)-(1:20))
+        │       │       │           │   ├── tag_opening: "<%=" (location: (1:10)-(1:13))
+        │       │       │           │   ├── content: " key " (location: (1:13)-(1:18))
+        │       │       │           │   ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │       │           │   ├── parsed: true
+        │       │       │           │   └── valid: true
+        │       │       │           │
+        │       │       │           └── @ LiteralNode (location: (1:20)-(1:25))
+        │       │       │               └── content: "-name"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:25)-(1:26))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:26)-(1:35))
+        │       │               ├── open_quote: """ (location: (1:26)-(1:27))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:27)-(1:34))
+        │       │               │       └── content: "example"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:34)-(1:35))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true
