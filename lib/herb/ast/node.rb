@@ -92,6 +92,11 @@ module Herb
       def compact_child_nodes
         child_nodes.compact
       end
+
+      #: () -> Array[Herb::Errors::Error]
+      def recursive_errors
+        errors + compact_child_nodes.flat_map(&:recursive_errors)
+      end
     end
   end
 end
