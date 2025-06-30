@@ -3,8 +3,11 @@
   "projects": {
     "@herb-tools/browser": "javascript/packages/browser",
     "@herb-tools/core": "javascript/packages/core",
+    "@herb-tools/node": "javascript/packages/node",
+    "@herb-tools/node-wasm": "javascript/packages/node-wasm",
+    "@herb-tools/formatter": "javascript/packages/formatter",
+    "@herb-tools/linter": "javascript/packages/linter",    
     "@herb-tools/language-server": "javascript/packages/language-server",
-    "@herb-tools/linter": "javascript/packages/linter",
     "@herb-tools/node-wasm": "javascript/packages/node-wasm",
     "@herb-tools/node": "javascript/packages/node",
     "docs": "./docs",

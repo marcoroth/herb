@@ -42,7 +42,7 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Herb configuration",
+      "title": "Herb LSP (HTML+ERB)",
       "properties": {
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -54,6 +54,24 @@
           ],
           "default": "verbose",
           "description": "Traces the communication between VS Code and the language server."
+        },
+        "languageServerHerb.formatting.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable/disable document formatting (Beta)."
+        },
+        "languageServerHerb.formatting.indentWidth": {
+          "scope": "resource",
+          "type": "number",
+          "default": 2,
+          "description": "Number of spaces for each indentation level."
+        },
+        "languageServerHerb.formatting.maxLineLength": {
+          "scope": "resource",
+          "type": "number",
+          "default": 80,
+          "description": "Maximum line length before wrapping."
         }
       }
     }
@@ -61,7 +79,7 @@
   "scripts": {
     "vscode:prepublish": "yarn run package",
     "publish": "vsce publish",
-    "prebuild": "yarn clean",
+    "prebuild": "yarn clean && yarn sync-defaults",
     "build": "yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
     "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
@@ -75,10 +93,12 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "clean": "rimraf dist",
+    "sync-defaults": "node scripts/sync-defaults.js",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
     "@herb-tools/node-wasm": "0.3.1",
+    "@herb-tools/formatter": "0.3.1",
     "@types/vscode": "^1.43.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
