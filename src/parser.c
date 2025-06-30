@@ -239,7 +239,9 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 }
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value(
-  parser_T* parser, array_T* children, array_T* errors
+  parser_T* parser,
+  array_T* children,
+  array_T* errors
 ) {
   buffer_T buffer = buffer_new();
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
@@ -553,7 +555,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
 // TODO: this should probably be AST_HTML_ELEMENT_NODE_T with a AST_HTML_SELF_CLOSING_TAG_NODE_T
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
-  const parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  const parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
     open_tag,
@@ -568,7 +571,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
 }
 
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
-  parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   array_T* errors = array_init(8);
   array_T* body = array_init(8);

@@ -11,7 +11,7 @@ describe("html-attribute-double-quotes", () => {
   test("passes for double quoted attributes", () => {
     const html = '<input type="text" value="Username">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -22,26 +22,26 @@ describe("html-attribute-double-quotes", () => {
   test("fails for single quoted attributes", () => {
     const html = "<input type='text' value='Username'>"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(2)
     expect(lintResult.messages).toHaveLength(2)
-    
+
     expect(lintResult.messages[0].rule).toBe("html-attribute-double-quotes")
-    expect(lintResult.messages[0].message).toContain('Attribute "type" uses single quotes')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.messages[0].message).toBe('Attribute `type` uses single quotes. Prefer double quotes for HTML attribute values: `type="value"`.')
+    expect(lintResult.messages[0].severity).toBe("warning")
 
     expect(lintResult.messages[1].rule).toBe("html-attribute-double-quotes")
-    expect(lintResult.messages[1].message).toContain('Attribute "value" uses single quotes')
-    expect(lintResult.messages[1].severity).toBe("error")
+    expect(lintResult.messages[1].message).toBe('Attribute `value` uses single quotes. Prefer double quotes for HTML attribute values: `value="value"`.')
+    expect(lintResult.messages[1].severity).toBe("warning")
   })
 
   test("passes for mixed content with double quotes", () => {
     const html = '<a href="/profile" title="User Profile" data-controller="dropdown">Profile</a>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -51,19 +51,20 @@ describe("html-attribute-double-quotes", () => {
   test("fails for mixed content with single quotes", () => {
     const html = "<a href='/profile' title='User Profile' data-controller='dropdown'>Profile</a>"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(3)
-    expect(lintResult.messages[0].message).toContain('Attribute "href" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "title" uses single quotes')
-    expect(lintResult.messages[2].message).toContain('Attribute "data-controller" uses single quotes')
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(3)
+    expect(lintResult.messages[0].message).toBe('Attribute `href` uses single quotes. Prefer double quotes for HTML attribute values: `href="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `title` uses single quotes. Prefer double quotes for HTML attribute values: `title="value"`.')
+    expect(lintResult.messages[2].message).toBe('Attribute `data-controller` uses single quotes. Prefer double quotes for HTML attribute values: `data-controller="value"`.')
   })
 
   test("passes for unquoted attributes (handled by other rule)", () => {
     const html = '<input type=text value=Username>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -73,7 +74,7 @@ describe("html-attribute-double-quotes", () => {
   test("passes for attributes without values", () => {
     const html = '<input type="checkbox" checked disabled>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -83,29 +84,31 @@ describe("html-attribute-double-quotes", () => {
   test("handles self-closing tags with single quotes", () => {
     const html = "<img src='/image.jpg' alt='Description' />"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "src" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "alt" uses single quotes')
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(2)
+    expect(lintResult.messages[0].message).toBe('Attribute `src` uses single quotes. Prefer double quotes for HTML attribute values: `src="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `alt` uses single quotes. Prefer double quotes for HTML attribute values: `alt="value"`.')
   })
 
   test("handles ERB with single quoted attributes", () => {
     const html = "<div data-controller='<%= controller_name %>' data-action='click->toggle#action'>Content</div>"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "data-controller" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "data-action" uses single quotes')
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(2)
+    expect(lintResult.messages[0].message).toBe('Attribute `data-controller` uses single quotes. Prefer double quotes for HTML attribute values: `data-controller="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `data-action` uses single quotes. Prefer double quotes for HTML attribute values: `data-action="value"`.')
   })
 
   test("allows single quotes when value contains double quotes", () => {
     const html = '<div id=\'"hello"\' class=\'Say "Hello" to the world\'></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -116,11 +119,12 @@ describe("html-attribute-double-quotes", () => {
   test("still fails for single quotes when value has no double quotes", () => {
     const html = "<div id='hello' class='world'></div>"
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLAttributeDoubleQuotesRule()])
+    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toContain('Attribute "id" uses single quotes')
-    expect(lintResult.messages[1].message).toContain('Attribute "class" uses single quotes')
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(2)
+    expect(lintResult.messages[0].message).toBe('Attribute `id` uses single quotes. Prefer double quotes for HTML attribute values: `id="value"`.')
+    expect(lintResult.messages[1].message).toBe('Attribute `class` uses single quotes. Prefer double quotes for HTML attribute values: `class="value"`.')
   })
 })

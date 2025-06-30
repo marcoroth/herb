@@ -64,12 +64,20 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 }
 
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* children_array,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 );
 
 static size_t process_subsequent_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  AST_NODE_T** subsequent_out,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 );
 
@@ -132,7 +140,10 @@ static bool is_terminator_type(control_type_t parent_type, control_type_t child_
 }
 
 static AST_NODE_T* create_control_node(
-  AST_ERB_CONTENT_NODE_T* erb_node, array_T* children, AST_NODE_T* subsequent, AST_ERB_END_NODE_T* end_node,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  array_T* children,
+  AST_NODE_T* subsequent,
+  AST_ERB_END_NODE_T* end_node,
   control_type_t control_type
 ) {
   array_T* errors = array_init(8);
@@ -362,7 +373,11 @@ static AST_NODE_T* create_control_node(
 }
 
 static size_t process_control_structure(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* output_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* output_array,
+  analyze_ruby_context_T* context,
   control_type_t initial_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
@@ -858,7 +873,11 @@ static size_t process_control_structure(
 }
 
 static size_t process_subsequent_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  AST_NODE_T** subsequent_out,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
@@ -922,7 +941,11 @@ static size_t process_subsequent_block(
 }
 
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* children_array,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 ) {
   while (index < array_size(array)) {

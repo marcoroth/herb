@@ -1,4 +1,4 @@
-import { Location } from "@herb-tools/core"
+import { Location, Node } from "@herb-tools/core"
 
 export interface LintMessage {
   rule: string
@@ -15,6 +15,11 @@ export interface LintResult {
 
 export interface Rule {
   name: string
-  description: string
-  check(node: any): LintMessage[]
+  check(node: Node): LintMessage[]
 }
+
+/**
+ * Type representing a rule class constructor.
+ * The Linter accepts rule classes rather than instances for better performance and memory usage.
+ */
+export type RuleClass = new () => Rule

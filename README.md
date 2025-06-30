@@ -30,13 +30,13 @@ The Herb ecosystem includes both low-level libraries (with bindings for Ruby and
 
 Herb provides a complete ecosystem of HTML+ERB tooling, designed to simplify and enhance your daily workflow. Built on the **Herb Parser**, it offers multiple tools that integrate seamlessly into editors, developer environments, and CI pipelines:
 
-- **Herb Language Server** ([available now](https://github.com/marcoroth/herb/tree/main/packages/language-server)):  
+- **Herb Language Server** ([available now](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server)):  
   Rich integration for editors like VS Code, Zed, Neovim, and more. It provides diagnostics and real-time feedback to keep your templates error-free.
 
-- **Herb Formatter** ([coming soon](https://github.com/marcoroth/herb/tree/main/packages/formatter)):  
+- **Herb Formatter** ([coming soon](https://github.com/marcoroth/herb/tree/main/javascript/packages/formatter)):  
   Automatic, consistent formatting for HTML+ERB files, reducing manual styling and enforcing a standard across projects.
 
-- **Herb Linter** ([coming soon](https://github.com/marcoroth/herb/tree/main/packages/linter)):  
+- **Herb Linter** ([coming soon](https://github.com/marcoroth/herb/tree/main/javascript/packages/linter)):  
   Static analysis for your HTML+ERB templates to enforce best practices and quickly identify common mistakes.
 
 You can use Herb programmatically in **Ruby**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
