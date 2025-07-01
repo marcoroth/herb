@@ -1,5 +1,8 @@
-import { Visitor, Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
-import { Rule, LintMessage } from "../types.js"
+import { Visitor } from "@herb-tools/core"
+
+import type { Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
+import type { Rule, LintMessage } from "../types.js"
+
 
 class NoOutputControlFlow extends Visitor {
   private ruleName: string
@@ -12,25 +15,22 @@ class NoOutputControlFlow extends Visitor {
   
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
-    node.statements.forEach(child => this.visit(child))
-    if (node.subsequent) {
-      this.visit(node.subsequent)
-    }
-    if (node.end_node) {
-      this.visit(node.end_node)
-    }
+    this.visitChildNodes(node)
   }
-
+    
   visitERBUnlessNode(node: ERBUnlessNode): void {
     this.checkOutputControlFlow(node)
+    this.visitChildNodes(node)
   }
 
   visitERBElseNode(node: ERBElseNode): void {
     this.checkOutputControlFlow(node)
+    this.visitChildNodes(node)
   }
 
   visitERBEndNode(node: ERBEndNode): void {
     this.checkOutputControlFlow(node)
+    this.visitChildNodes(node)
   }
   
   getMessages(): LintMessage[] {
@@ -42,8 +42,6 @@ class NoOutputControlFlow extends Visitor {
     if (!openTag) {
       return
     }
-    
-    console.log(controlBlock)
     if (openTag.value === "<%="){
       this.messages.push({
         rule: this.ruleName,
@@ -52,7 +50,6 @@ class NoOutputControlFlow extends Visitor {
         severity: "error"
       })
     }
-
     return
   }
 
