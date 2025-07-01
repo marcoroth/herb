@@ -330,8 +330,10 @@ ${contextLines.trimEnd()}
       // Add total count and file count
       let detailText = ""
 
+      const totalIssues = totalErrors + totalWarnings
+
       if (filesWithIssues > 0) {
-        detailText = `across ${filesWithIssues} ${this.pluralize(filesWithIssues, "file")}`
+        detailText = `${totalIssues} ${this.pluralize(totalIssues, "issue")} across ${filesWithIssues} ${this.pluralize(filesWithIssues, "file")}`
       }
 
       issuesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
@@ -365,13 +367,13 @@ ${contextLines.trimEnd()}
       await Herb.load()
 
       const pattern = this.getFilePattern(positionals)
-      
+
       // Validate that we have a proper file pattern
       if (positionals.length === 0) {
         console.error("Please specify input file.")
         process.exit(1)
       }
-      
+
       const files = await glob(pattern)
 
       if (files.length === 0) {

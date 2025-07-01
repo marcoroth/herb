@@ -42,7 +42,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 
  Checked     1 file
- Issues      3 errors | 0 warnings (across 1 file)"
+ Issues      3 errors | 0 warnings (3 issues across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -52,7 +52,7 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 
 
  Checked     1 file
- Issues      2 errors | 0 warnings (across 1 file)"
+ Issues      2 errors | 0 warnings (2 issues across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -86,5 +86,5 @@ test/fixtures/bad-file.html.erb:1:16
 
 
  Checked     1 file
- Issues      2 errors | 0 warnings (across 1 file)"
+ Issues      2 errors | 0 warnings (2 issues across 1 file)"
 `;
