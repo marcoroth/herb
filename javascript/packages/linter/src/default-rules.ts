@@ -1,3 +1,5 @@
+import type { RuleClass } from "./types.js"
+
 import { ERBNoOutputControlFlow } from "./rules/erb-no-output-control-flow.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
@@ -9,8 +11,6 @@ import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attribute
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 
-import type { RuleClass } from "./types.js"
-
 export const defaultRules: RuleClass[] = [
   ERBNoOutputControlFlow,
   HTMLTagNameLowercaseRule,
@@ -21,5 +21,5 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeDoubleQuotesRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLNoBlockInsideInlineRule,
-  HTMLNoEmptyHeadingsRule
+  HTMLNoEmptyHeadingsRule,
 ]
