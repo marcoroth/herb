@@ -1,0 +1,25 @@
+{
+  "name": "wasm",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "wasm",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make all",
+        "cwd": "wasm"
+      },
+      "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/src/**/*", "{workspaceRoot}/include/**/*"],
+      "dependsOn": ["templates:generate"]
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "make clean",
+        "cwd": "wasm"
+      }
+    }
+  },
+  "tags": ["wasm", "native"]
+}

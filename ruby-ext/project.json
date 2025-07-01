@@ -1,0 +1,30 @@
+{
+  "name": "ruby-ext",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "ext",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bundle exec rake compile"
+      },
+      "inputs": ["{workspaceRoot}/ext/**/*", "{workspaceRoot}/src/**/*", "{workspaceRoot}/include/**/*"],
+      "dependsOn": ["templates:generate"]
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bundle exec rake clean"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bundle exec mtest"
+      },
+      "dependsOn": ["ruby-ext:build"]
+    }
+  },
+  "tags": ["ruby", "native", "extension"]
+}

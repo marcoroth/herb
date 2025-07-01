@@ -7,9 +7,13 @@
     "@herb-tools/linter": "javascript/packages/linter",
     "@herb-tools/node-wasm": "javascript/packages/node-wasm",
     "@herb-tools/node": "javascript/packages/node",
-    "docs": "./docs",
     "herb-language-server": "javascript/packages/herb-language-server",
+    "vscode": "javascript/packages/vscode",
+    "docs": "./docs",
     "playground": "./playground",
-    "vscode": "javascript/packages/vscode"
+    "prism": "./prism",
+    "ruby-ext": "./ruby-ext",
+    "templates": "./templates",
+    "wasm": "./wasm"
   }
 }

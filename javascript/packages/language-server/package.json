@@ -19,6 +19,7 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
+  "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",

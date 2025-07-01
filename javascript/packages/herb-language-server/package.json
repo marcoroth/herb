@@ -19,7 +19,7 @@
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "prebuild": "yarn run clean",
-    "build": "yarn nx run language-server:build --outputStyle=stream && tsc -b && rollup -c rollup.config.mjs",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
     "dev": "rollup -c -w",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",

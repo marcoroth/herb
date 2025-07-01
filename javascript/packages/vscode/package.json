@@ -63,7 +63,7 @@
     "publish": "vsce publish",
     "prebuild": "yarn clean",
     "build": "yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
-    "build:language-server": "yarn nx run language-server:build --outputStyle=stream",
+    "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
     "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
