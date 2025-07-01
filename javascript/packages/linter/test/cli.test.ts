@@ -49,4 +49,18 @@ describe("CLI Output Formatting", () => {
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
+
+  test("displays most violated rules with multiple violations", () => {
+    const { output, exitCode } = runLinter("multiple-rule-violations.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("displays rule violations when showing all rules", () => {
+    const { output, exitCode } = runLinter("few-rule-violations.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
 })
