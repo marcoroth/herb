@@ -1,16 +1,11 @@
 import { Visitor } from "@herb-tools/core"
 import type { Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
 import type { Rule, LintMessage } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
 
 
-class NoOutputControlFlow extends Visitor {
-  private ruleName: string
+class NoOutputControlFlow extends BaseRuleVisitor {
   messages: LintMessage[] = []
-
-  constructor(ruleName: string) {
-    super()
-    this.ruleName = ruleName
-  }
   
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
