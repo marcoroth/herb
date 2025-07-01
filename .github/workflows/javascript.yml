@@ -30,6 +30,12 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: bundle install
+        run: bundle install
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
