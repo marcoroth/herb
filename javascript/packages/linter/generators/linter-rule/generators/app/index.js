@@ -155,6 +155,27 @@ export default class extends Generator {
       this.log(chalk.yellow(`Warning: Could not update index.ts automatically. Please add: ${newExport}`))
     }
 
+    // Update default-rules.ts
+    const defaultRulesPath = path.join(this.destinationRoot(), "src/default-rules.ts")
+    const newImport = `import { ${this.ruleClassName} } from "./rules/${this.ruleName}.js"`
+    
+    try {
+      let defaultRulesContent = await fs.readFile(defaultRulesPath, "utf8")
+      
+      // Add import at the top
+      const lines = defaultRulesContent.split("\n")
+      const lastImportIndex = lines.findLastIndex(line => line.startsWith("import"))
+      lines.splice(lastImportIndex + 1, 0, newImport)
+      
+      // Add to defaultRules array (before the closing bracket)
+      const arrayEndIndex = lines.findLastIndex(line => line.includes("]"))
+      lines.splice(arrayEndIndex, 0, `  ${this.ruleClassName},`)
+      
+      await fs.writeFile(defaultRulesPath, lines.join("\n"))
+    } catch (error) {
+      this.log(chalk.yellow(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`))
+    }
+
     // Update README
     const readmePath = path.join(this.destinationRoot(), "docs/rules/README.md")
     const newRule = `- [${this.ruleName}](./${this.ruleName}.md) - ${this.description}`
