@@ -18,7 +18,8 @@ describe("erb-no-output-control-flow", () => {
         <div>Text2</div>
       <% else %>
         <div>Text3</div>
-      <% end %>`
+      <% end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -31,7 +32,8 @@ describe("erb-no-output-control-flow", () => {
     const html = dedent`
       <%= if true %>
         <div>Text1</div>
-      <% end %>`
+      <% end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -45,7 +47,8 @@ describe("erb-no-output-control-flow", () => {
     const html = dedent`
       <%= unless false %>
         <div>Text1</div>
-      <% end %>`
+      <% end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -59,7 +62,8 @@ describe("erb-no-output-control-flow", () => {
     const html = dedent`
       <% if true %>
         <div>Text1</div>
-      <%= end %>`
+      <%= end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -76,7 +80,8 @@ describe("erb-no-output-control-flow", () => {
         <%= if true %>
           <div>Nested Text</div>
         <% end %>
-      <% end %>`
+      <% end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -94,7 +99,8 @@ describe("erb-no-output-control-flow", () => {
         <div>Text2</div>
       <%= else %>
         <div>Text3</div>
-      <%= end %>`
+      <%= end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -107,13 +113,11 @@ describe("erb-no-output-control-flow", () => {
   it("should show an error for outputting control flow blocks with nested control flow blocks", () => {
    const html = dedent`
       <% unless something? %>
-        <%=
-
-
- if true %>
+        <%= if true %>
           thing
         <% end %>
-      <% end %>`
+      <% end %>
+    `
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
