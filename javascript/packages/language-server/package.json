@@ -32,8 +32,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "prebuild": "yarn run clean",
-    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn clean && tsc -b && rollup -c rollup.config.mjs",
     "dev": "tsc -b -w",
     "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
