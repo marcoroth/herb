@@ -16,7 +16,7 @@
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && yarn build:wasm && yarn build:javascript",
-    "build:wasm": "cd ../../../wasm && make all && cd -",
+    "build:wasm": "cd ../../../wasm && make ../javascript/packages/browser/build/libherb.js && cd -",
     "clean:wasm": "cd ../../../wasm && make clean_browser && cd -",
     "build:javascript": "rollup -c",
     "dev": "rollup -c -w",
