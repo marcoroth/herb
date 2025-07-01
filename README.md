@@ -33,7 +33,7 @@ Herb provides a complete ecosystem of HTML+ERB tooling, designed to simplify and
 - **Herb Language Server** ([available now](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server)):  
   Rich integration for editors like VS Code, Zed, Neovim, and more. It provides diagnostics and real-time feedback to keep your templates error-free.
 
-- **Herb Formatter** ([coming soon](https://github.com/marcoroth/herb/tree/main/javascript/packages/formatter)):  
+- **Herb Formatter** ([coming soon](https://github.com/marcoroth/herb/pull/192)):  
   Automatic, consistent formatting for HTML+ERB files, reducing manual styling and enforcing a standard across projects.
 
 - **Herb Linter** ([coming soon](https://github.com/marcoroth/herb/tree/main/javascript/packages/linter)):  

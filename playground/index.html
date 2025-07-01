@@ -99,10 +99,23 @@
               </div>
             </div>
 
-            <div
-              data-playground-target="position"
-              class="mt-2 font-mono whitespace-break-spaces text-right text-gray-400 text-[8pt]"
-            ></div>
+            <div class="mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt] flex justify-between items-center">
+              <span data-playground-target="diagnosticStatus" class="hidden flex items-center gap-4">
+                <span class="flex items-center gap-1" title="Errors">
+                  <i class="fas fa-circle-xmark text-red-500 text-xs"></i>
+                  <span data-playground-target="errorCount">0</span>
+                </span>
+                <span class="flex items-center gap-1" title="Warnings">
+                  <i class="fas fa-triangle-exclamation text-yellow-500 text-xs"></i>
+                  <span data-playground-target="warningCount">0</span>
+                </span>
+                <span class="flex items-center gap-1" title="Info">
+                  <i class="fas fa-info-circle text-blue-500 text-xs"></i>
+                  <span data-playground-target="infoCount">0</span>
+                </span>
+              </span>
+              <div data-playground-target="position"></div>
+            </div>
 
             <div
               class="mt-2 outline outline-1 outline-gray-300 z-10 rounded-md overflow-hidden bg-gray-50 h-[30vh] md:h-[calc(100vh-110px)]"
@@ -197,7 +210,6 @@
               class="flex justify-between mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt]"
             >
               <span data-playground-target="time"></span>
-
               <div data-playground-target="version" class=""></div>
             </div>
 

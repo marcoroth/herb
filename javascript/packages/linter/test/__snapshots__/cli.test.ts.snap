@@ -1,0 +1,297 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CLI Output Formatting > displays most violated rules with multiple violations 1`] = `
+"[error] Duplicate attribute \`class\` found on tag. Remove the duplicate occurrence. (html-no-duplicate-attributes)
+
+test/fixtures/multiple-rule-violations.html.erb:5:14
+
+      3 │ <div id=test1 class='' data-value=bar>
+      4 │   <img />
+  →   5 │   <a class="" class="">Link 1</a>
+        │               ~~~~~
+      6 │ </div>
+      7 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
+
+
+[error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+test/fixtures/multiple-rule-violations.html.erb:4:3
+
+      2 │ 
+      3 │ <div id=test1 class='' data-value=bar>
+  →   4 │   <img />
+        │    ~~~
+      5 │   <a class="" class="">Link 1</a>
+      6 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
+
+
+[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+
+test/fixtures/multiple-rule-violations.html.erb:3:8
+
+      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      2 │ 
+  →   3 │ <div id=test1 class='' data-value=bar>
+        │         ~~~~~
+      4 │   <img />
+      5 │   <a class="" class="">Link 1</a>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
+
+
+[error] Attribute value should be quoted: \`data-value="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+
+test/fixtures/multiple-rule-violations.html.erb:3:34
+
+      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      2 │ 
+  →   3 │ <div id=test1 class='' data-value=bar>
+        │                                   ~~~
+      4 │   <img />
+      5 │   <a class="" class="">Link 1</a>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
+
+
+[error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (html-no-nested-links)
+
+test/fixtures/multiple-rule-violations.html.erb:10:4
+
+      8 │ <h1></h1>
+      9 │ 
+  →  10 │ <a><a>Nested</a></a>
+        │     ~
+     11 │ 
+     12 │ <div id="duplicate"></div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
+
+
+[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class="value"\`. (html-attribute-double-quotes)
+
+test/fixtures/multiple-rule-violations.html.erb:3:20
+
+      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      2 │ 
+  →   3 │ <div id=test1 class='' data-value=bar>
+        │                     ~~
+      4 │   <img />
+      5 │   <a class="" class="">Link 1</a>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/7] ⎯⎯⎯⎯
+
+
+[error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
+
+test/fixtures/multiple-rule-violations.html.erb:8:0
+
+      6 │ </div>
+      7 │ 
+  →   8 │ <h1></h1>
+        │ ~~~~~~~~~
+      9 │ 
+     10 │ <a><a>Nested</a></a>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/7] ⎯⎯⎯⎯
+
+ Most violated rules:
+  html-attribute-values-require-quotes (2 violations in 1 file)
+  html-no-duplicate-attributes (1 violation in 1 file)
+  html-img-require-alt (1 violation in 1 file)
+  html-no-nested-links (1 violation in 1 file)
+  html-attribute-double-quotes (1 violation in 1 file)
+
+  ...and 1 more rule with 1 violation
+
+
+ Summary:
+  Checked      1 file
+  Violations   6 errors | 1 warning (7 violations across 1 file)"
+`;
+
+exports[`CLI Output Formatting > displays rule violations when showing all rules 1`] = `
+"[error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+test/fixtures/few-rule-violations.html.erb:3:3
+
+      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      2 │ <div id=test class=foo>
+  →   3 │   <img src=image.jpg>
+        │    ~~~
+      4 │ </div>
+      5 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
+
+
+[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+
+test/fixtures/few-rule-violations.html.erb:2:8
+
+      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+  →   2 │ <div id=test class=foo>
+        │         ~~~~
+      3 │   <img src=image.jpg>
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
+
+
+[error] Attribute value should be quoted: \`class="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+
+test/fixtures/few-rule-violations.html.erb:2:19
+
+      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+  →   2 │ <div id=test class=foo>
+        │                    ~~~
+      3 │   <img src=image.jpg>
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
+
+
+[error] Attribute value should be quoted: \`src="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+
+test/fixtures/few-rule-violations.html.erb:3:11
+
+      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      2 │ <div id=test class=foo>
+  →   3 │   <img src=image.jpg>
+        │            ~~~~~
+      4 │ </div>
+      5 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
+
+
+[error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
+
+test/fixtures/few-rule-violations.html.erb:6:0
+
+      4 │ </div>
+      5 │ 
+  →   6 │ <h1></h1>
+        │ ~~~~~~~~~
+      7 │ 
+      8 │ <div id="duplicate"></div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/5] ⎯⎯⎯⎯
+
+ Rule violations:
+  html-attribute-values-require-quotes (3 violations in 1 file)
+  html-img-require-alt (1 violation in 1 file)
+  html-no-empty-headings (1 violation in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Violations   5 errors | 0 warnings (5 violations across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats detailed error output correctly 1`] = `
+"[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/test-file-with-errors.html.erb:2:3
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │    ~~~~
+      3 │   <img src="test.jpg">
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
+
+
+[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/test-file-with-errors.html.erb:2:22
+
+      1 │ <div>
+  →   2 │   <SPAN>Test content</SPAN>
+        │                       ~~~~
+      3 │   <img src="test.jpg">
+      4 │ </div>
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
+
+
+[error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
+
+test/fixtures/test-file-with-errors.html.erb:3:3
+
+      1 │ <div>
+      2 │   <SPAN>Test content</SPAN>
+  →   3 │   <img src="test.jpg">
+        │    ~~~
+      4 │ </div>
+      5 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/3] ⎯⎯⎯⎯
+
+ Rule violations:
+  html-tag-name-lowercase (2 violations in 1 file)
+  html-img-require-alt (1 violation in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Violations   3 errors | 0 warnings (3 violations across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats simple output correctly 1`] = `
+"test/fixtures/test-file-simple.html.erb:
+  2:3  ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  2:22 ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+ Rule violations:
+  html-tag-name-lowercase (2 violations in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats success output correctly 1`] = `
+"✓ test/fixtures/clean-file.html.erb - No issues found
+
+
+ Summary:
+  Checked      1 file
+  Violations   0 violations"
+`;
+
+exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
+"[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/bad-file.html.erb:1:1
+
+  →   1 │ <SPAN>Bad file</SPAN>
+        │  ~~~~
+      2 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+
+[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+test/fixtures/bad-file.html.erb:1:16
+
+  →   1 │ <SPAN>Bad file</SPAN>
+        │                 ~~~~
+      2 │
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/2] ⎯⎯⎯⎯
+
+ Rule violations:
+  html-tag-name-lowercase (2 violations in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+`;

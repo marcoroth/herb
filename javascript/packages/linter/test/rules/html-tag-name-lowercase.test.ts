@@ -11,7 +11,7 @@ describe("html-tag-name-lowercase", () => {
   test("passes for lowercase tag names", () => {
     const html = '<div class="container"><span>Hello</span></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -22,7 +22,7 @@ describe("html-tag-name-lowercase", () => {
   test("fails for uppercase tag names", () => {
     const html = '<DIV class="container"><SPAN>Hello</SPAN></DIV>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(4) // DIV open, DIV close, SPAN open, SPAN close
@@ -37,7 +37,7 @@ describe("html-tag-name-lowercase", () => {
   test("fails for mixed case tag names", () => {
     const html = '<Div class="container"><Span>Hello</Span></Div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(4)
@@ -50,7 +50,7 @@ describe("html-tag-name-lowercase", () => {
   test("handles self-closing tags", () => {
     const html = '<IMG src="photo.jpg" />'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -60,7 +60,7 @@ describe("html-tag-name-lowercase", () => {
   test("passes for valid self-closing tags", () => {
     const html = '<img src="photo.jpg" />'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -70,7 +70,7 @@ describe("html-tag-name-lowercase", () => {
   test.skip("handles ERB templates", () => {
     const html = '<div class="container"><%= content_tag(:DIV, "Hello world!") %></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     // Should only lint HTML tags, not Ruby code inside ERB
@@ -90,7 +90,7 @@ describe("html-tag-name-lowercase", () => {
       </article>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -109,7 +109,7 @@ describe("html-tag-name-lowercase", () => {
       </ARTICLE>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(14)
@@ -124,7 +124,7 @@ describe("html-tag-name-lowercase", () => {
   test("handles empty tags", () => {
     const html = '<div></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -141,7 +141,7 @@ describe("html-tag-name-lowercase", () => {
       </div>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLTagNameLowercaseRule()])
+    const linter = new Linter([HTMLTagNameLowercaseRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)

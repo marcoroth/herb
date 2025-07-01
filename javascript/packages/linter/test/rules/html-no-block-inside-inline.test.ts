@@ -11,7 +11,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for inline elements containing other inline elements", () => {
     const html = '<span>Hello <strong>World</strong></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -22,7 +22,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for block elements containing block elements", () => {
     const html = '<div><p>Paragraph inside div (valid)</p></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -33,7 +33,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for div inside span", () => {
     const html = '<span><div>Invalid block inside span</div></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -48,7 +48,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for paragraph inside span", () => {
     const html = '<span><p>Paragraph inside span (invalid)</p></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -61,7 +61,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for multiple block elements inside inline", () => {
     const html = '<span><div>First</div><p>Second</p></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
@@ -72,7 +72,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for block inside anchor tag", () => {
     const html = '<a href="#"><div>Link with div</div></a>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -82,7 +82,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for heading inside strong", () => {
     const html = '<strong><h1>Heading in strong</h1></strong>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -92,7 +92,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for section inside em", () => {
     const html = '<em><section>Section in em</section></em>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -102,7 +102,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for nested inline elements", () => {
     const html = '<span><a href="#"><em><strong>Valid nesting</strong></em></a></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -112,7 +112,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for deeply nested block in inline", () => {
     const html = '<span><em><strong><div>Deeply nested div</div></strong></em></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -122,7 +122,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for inline elements with text and inline children", () => {
     const html = '<span>Text before <code>code</code> text after</span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -132,7 +132,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for list inside inline element", () => {
     const html = '<span><ul><li>Item</li></ul></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -142,7 +142,7 @@ describe("html-no-block-inside-inline", () => {
   test("handles ERB templates correctly", () => {
     const html = '<span><%= render partial: "some/partial" %></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -152,7 +152,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for form inside button", () => {
     const html = '<button><form action="/submit">Submit</form></button>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -162,7 +162,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for table inside label", () => {
     const html = '<label><table><tr><td>Cell</td></tr></table></label>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -172,7 +172,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for custom elements inside inline elements", () => {
     const html = '<span><my-component>Custom content</my-component></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -182,7 +182,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for block elements inside custom elements", () => {
     const html = '<my-inline-component><div>Block inside custom</div></my-inline-component>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -198,7 +198,7 @@ describe("html-no-block-inside-inline", () => {
       </span>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(3)
@@ -210,7 +210,7 @@ describe("html-no-block-inside-inline", () => {
   test("still fails for standard block elements after custom elements", () => {
     const html = '<span><my-component>Custom</my-component><div>Block div</div></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
@@ -221,7 +221,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for nested custom elements inside inline", () => {
     const html = '<span><outer-component><inner-component><div>Content</div></inner-component></outer-component></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -231,7 +231,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for single-word custom elements inside inline", () => {
     const html = '<span><customtag><div>Block inside unknown element</div></customtag></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -241,7 +241,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for unknown elements inside inline but allows content inside unknown elements", () => {
     const html = '<span><unknownelement><randomtag><div>Block content</div></randomtag></unknownelement></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -251,7 +251,7 @@ describe("html-no-block-inside-inline", () => {
   test("passes for custom elements at top level", () => {
     const html = '<my-component><div>Block inside custom</div></my-component>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -261,7 +261,7 @@ describe("html-no-block-inside-inline", () => {
   test("fails for inline element containg erb node containing block node", () => {
     const html = '<span><% if true %><div>Not allowed</div><% end %></span>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoBlockInsideInlineRule()])
+    const linter = new Linter([HTMLNoBlockInsideInlineRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
