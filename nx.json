@@ -18,7 +18,7 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "test"],
+        "cacheableOperations": ["build"],
         "packageManager": "yarn"
       }
     }
@@ -40,7 +40,7 @@
         "commands": [
           "npx nx reset"
         ],
-        "parallel": false
+        "parallel": true
       }
     }
   },
