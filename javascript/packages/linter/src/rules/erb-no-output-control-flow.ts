@@ -5,7 +5,7 @@ import type { Rule, LintMessage } from "../types.js"
 
 class NoOutputControlFlow extends Visitor {
   private ruleName: string
-  private messages: LintMessage[] = []
+  messages: LintMessage[] = []
 
   constructor(ruleName: string) {
     super()
@@ -32,9 +32,6 @@ class NoOutputControlFlow extends Visitor {
     this.visitChildNodes(node)
   }
   
-  getMessages(): LintMessage[] {
-    return this.messages
-  }
 
   private checkOutputControlFlow(controlBlock: ERBIfNode | ERBUnlessNode | ERBElseNode | ERBEndNode): void {
     const openTag = controlBlock.tag_opening;
@@ -44,7 +41,8 @@ class NoOutputControlFlow extends Visitor {
     if (openTag.value === "<%="){
       this.messages.push({
         rule: this.ruleName,
-        message: `Control flow statements like \`${controlBlock.type}\` should not be used with output tags. Use \`<% ${controlBlock.type} ... %>\` instead.`,
+        message: `Control flow statements like \`${controlBlock.type}\` 
+        should not be used with output tags. Use \`<% ${controlBlock.type} ... %>\` instead.`,
         location: openTag.location,
         severity: "error"
       })
@@ -59,6 +57,6 @@ export class ERBNoOutputControlFlow implements Rule {
   check(node: Node): LintMessage[] {
     const visitor = new NoOutputControlFlow(this.name)
     visitor.visit(node)
-    return visitor.getMessages()
+    return visitor.messages
   }
 }
