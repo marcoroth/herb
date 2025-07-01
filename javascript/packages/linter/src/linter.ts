@@ -1,3 +1,4 @@
+import { ErbNoOutputControlFlow } from "./rules/erb-no-output-control-flow.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -29,6 +30,7 @@ export class Linter {
    */
   private getDefaultRules(): RuleClass[] {
     return [
+      ErbNoOutputControlFlow,
       HTMLTagNameLowercaseRule,
       HTMLNoDuplicateAttributesRule,
       HTMLImgRequireAltRule,
