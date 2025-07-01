@@ -1,14 +1,12 @@
 import Generator from "yeoman-generator"
-
 import { execSync } from "child_process"
-
-import chalk from "chalk"
+import { colorize } from "../../../../dist/src/color.js"
 import fs from "fs/promises"
 import path from "path"
 
 export default class extends Generator {
   async prompting() {
-    this.log(chalk.green("Welcome to the Herb Linter Rule generator!"))
+    this.log(colorize("Welcome to the Herb Linter Rule generator!", "green"))
 
     let hasGH = false
 
@@ -16,7 +14,7 @@ export default class extends Generator {
       execSync("which gh", { stdio: "ignore" })
       hasGH = true
     } catch (error) {
-      this.log(chalk.yellow("GitHub CLI (gh) not found. Manual input will be required."))
+      this.log(colorize("GitHub CLI (gh) not found. Manual input will be required.", "yellow"))
     }
 
     let issueData = {}
@@ -71,7 +69,7 @@ export default class extends Generator {
             issueData.issueBody = issueDetails.body
           }
         } catch (error) {
-          this.log(chalk.yellow("Failed to fetch GitHub issues. Proceeding with manual input."))
+          this.log(colorize("Failed to fetch GitHub issues. Proceeding with manual input.", "yellow"))
         }
       }
     }
@@ -152,7 +150,7 @@ export default class extends Generator {
     try {
       await fs.appendFile(indexPath, newExport + "\n")
     } catch (error) {
-      this.log(chalk.yellow(`Warning: Could not update index.ts automatically. Please add: ${newExport}`))
+      this.log(colorize(`Warning: Could not update index.ts automatically. Please add: ${newExport}`, "yellow"))
     }
 
     // Update default-rules.ts
@@ -173,7 +171,7 @@ export default class extends Generator {
       
       await fs.writeFile(defaultRulesPath, lines.join("\n"))
     } catch (error) {
-      this.log(chalk.yellow(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`))
+      this.log(colorize(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`, "yellow"))
     }
 
     // Update README
@@ -207,12 +205,12 @@ export default class extends Generator {
         }
       }
     } catch (error) {
-      this.log(chalk.yellow(`Warning: Could not update README.md automatically. Please add: ${newRule}`))
+      this.log(colorize(`Warning: Could not update README.md automatically. Please add: ${newRule}`, "yellow"))
     }
   }
 
   end() {
-    this.log(chalk.green(`\nRule "${this.ruleName}" has been created!`))
+    this.log(colorize(`\nRule "${this.ruleName}" has been created!`, "green"))
     this.log("\nNext steps:")
     this.log(`1. Implement the rule logic in src/rules/${this.ruleName}.ts`)
     this.log(`2. Add test cases in test/rules/${this.ruleName}.test.ts`)

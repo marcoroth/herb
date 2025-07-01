@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 const env = createEnv()
-const generatorPath = join(__dirname, "..", "generators", "linter-rule", "generators", "app", "index.js")
+const generatorPath = join(__dirname, "..", "generators", "linter-rule", "generators", "app", "index.mjs")
 
 env.register(generatorPath, "herb-linter-rule")
 env.run("herb-linter-rule")
