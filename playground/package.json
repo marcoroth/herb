@@ -20,6 +20,7 @@
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
     "@herb-tools/browser": "0.3.1",
+    "@herb-tools/linter": "0.3.1",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.6.0",
     "express": "^5.1.0",

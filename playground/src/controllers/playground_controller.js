@@ -56,6 +56,10 @@ export default class extends Controller {
     "version",
     "time",
     "position",
+    "diagnosticStatus",
+    "errorCount",
+    "warningCount",
+    "infoCount",
   ]
 
   connect() {
@@ -302,12 +306,40 @@ export default class extends Controller {
 
     this.editor.clearDiagnostics()
 
+    const allDiagnostics = []
+
     if (result.parseResult) {
       const errors = result.parseResult.recursiveErrors()
+      allDiagnostics.push(...errors.flatMap((error) => error.toDiagnostics()))
+    }
 
-      this.editor.addDiagnostics(
-        errors.flatMap((error) => error.toDiagnostics()),
-      )
+    if (result.lintResult && result.lintResult.messages) {
+      const lintDiagnostics = result.lintResult.messages.map((message) => ({
+        severity: message.severity,
+        message: message.message,
+        line: message.location.start.line,
+        column: message.location.start.column,
+        endLine: message.location.end.line,
+        endColumn: message.location.end.column,
+        source: "Herb Linter ",
+        code: message.rule,
+      }))
+
+      allDiagnostics.push(...lintDiagnostics)
+    }
+
+    this.editor.addDiagnostics(allDiagnostics)
+
+    if (this.hasDiagnosticStatusTarget && this.hasErrorCountTarget && this.hasWarningCountTarget && this.hasInfoCountTarget) {
+      const errorCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "error").length
+      const warningCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "warning").length
+      const infoCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "info" || diagnostic.severity === "hint").length
+
+      this.diagnosticStatusTarget.classList.remove("hidden")
+
+      this.errorCountTarget.textContent = errorCount
+      this.warningCountTarget.textContent = warningCount
+      this.infoCountTarget.textContent = infoCount
     }
 
     if (this.hasTimeTarget) {
