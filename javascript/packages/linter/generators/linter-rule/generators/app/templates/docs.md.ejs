@@ -1,0 +1,27 @@
+# <%= title %>
+
+<% if (issueBody) { -%>
+<%- issueBody %>
+<% } else { -%>
+## Rule: `<%= ruleName %>`
+
+<%= description %>
+
+## Examples
+
+### ❌ Incorrect
+
+```html+erb
+<!-- TODO: Add incorrect example -->
+```
+
+### ✅ Correct
+
+```html+erb
+<!-- TODO: Add correct example -->
+```
+
+## Configuration
+
+This rule has no configuration options.
+<% } -%>

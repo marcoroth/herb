@@ -31,7 +31,15 @@ const linter = new Linter([])
 
 ## Contributing
 
-To add a new linter rule:
+To add a new linter rule you can scaffold a new rule by running:
+
+```bash
+scripts/generate-rule
+```
+
+The script creates the documentation, rule stub, and test stub based on the GitHub issue (requires the `linter` label and a `Rule name: [rule-name]` line).
+
+Alternatively, you can create one manually:
 
 1. Create the rule class implementing the `Rule` interface
 2. Add comprehensive tests in `test/rules/`
