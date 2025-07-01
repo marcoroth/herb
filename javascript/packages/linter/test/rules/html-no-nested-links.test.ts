@@ -29,7 +29,7 @@ describe("html-no-nested-links", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-nested-links")
+    expect(lintResult.messages[0].id).toBe("html-no-nested-links")
     expect(lintResult.messages[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
     expect(lintResult.messages[0].severity).toBe("error")
   })

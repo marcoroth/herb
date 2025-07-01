@@ -7,7 +7,9 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "./linter.js"
 
 import { name, version } from "../package.json"
-import { colorize } from "./color.js"
+import { colorize, Highlighter } from "@herb-tools/highlighter"
+
+import type { Diagnostic } from "@herb-tools/core"
 
 export class CLI {
   private usage = `
@@ -32,88 +34,6 @@ export class CLI {
 
   private pluralize(count: number, singular: string, plural?: string): string {
     return count === 1 ? singular : (plural || `${singular}s`)
-  }
-
-  private formatDetailedMessage(filename: string, message: any, content: string): string {
-    const isError = message.severity === "error"
-    const fileHeader = `${colorize(filename, "cyan")}:${colorize(colorize(`${message.location.start.line}:${message.location.start.column}`, "cyan"), "dim")}`
-    const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
-    const diagnosticId = colorize(message.rule, "gray")
-
-    const lines = content.split('\n')
-    const targetLineNumber = message.location.start.line
-    const column = message.location.start.column - 1
-    const pointer = colorize('~'.repeat(Math.max(1, (message.location.end?.column || message.location.start.column + 1) - message.location.start.column)), isError ? "brightRed" : "brightYellow")
-
-    const aroundLines = 2
-    const startLine = Math.max(1, targetLineNumber - aroundLines)
-    const endLine = Math.min(lines.length, targetLineNumber + aroundLines)
-
-    let contextLines = ''
-
-    for (let i = startLine; i <= endLine; i++) {
-      const line = lines[i - 1] || ''
-      const isTargetLine = i === targetLineNumber
-      const lineNumber = isTargetLine ?
-        colorize(i.toString().padStart(3, ' '), "bold") :
-        colorize(i.toString().padStart(3, ' '), "gray")
-
-      const prefix = isTargetLine ?
-        colorize('  → ', isError ? "brightRed" : "brightYellow") :
-        '    '
-
-      const separator = colorize('│', "gray")
-
-      let displayLine = line
-
-      if (isTargetLine) {
-        const startCol = message.location.start.column
-        const endCol = message.location.end?.column ? message.location.end.column : message.location.start.column + 1
-        const before = line.substring(0, startCol)
-        const errorText = line.substring(startCol, endCol)
-        const after = line.substring(endCol)
-        const boldWhite = '\x1b[1m\x1b[37m'
-        const reset = '\x1b[0m'
-        const highlightedError = process.stdout.isTTY && process.env.NO_COLOR === undefined ?
-          `${boldWhite}${errorText}${reset}` : errorText
-        displayLine = before + highlightedError + after
-        contextLines += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
-      } else {
-        // Make context lines gray and dimmed
-        displayLine = colorize(colorize(displayLine, "gray"), "dim")
-        contextLines += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
-      }
-
-      if (isTargetLine) {
-        const pointerPrefix = `        ${colorize('│', "gray")}`
-        const pointerSpacing = ' '.repeat(column + 2)
-        contextLines += `${pointerPrefix}${pointerSpacing}${pointer}\n`
-      }
-    }
-
-    const highlightBackticks = (text: string): string => {
-      if (process.stdout.isTTY && process.env.NO_COLOR === undefined) {
-        const boldWhite = '\x1b[1m\x1b[37m'
-        const reset = '\x1b[0m'
-        return text.replace(/`([^`]+)`/g, `${boldWhite}$1${reset}`)
-      }
-
-      return text
-    }
-
-    const highlightedMessage = highlightBackticks(message.message)
-
-    const width = process.stdout.columns || 80
-    const topSeparator = colorize('────────┬' + '─'.repeat(Math.max(0, width - 9)), "dim")
-    const bottomSeparator = colorize('────────┴' + '─'.repeat(Math.max(0, width - 9)), "dim")
-
-    return `[${severityText}] ${highlightedMessage} (${diagnosticId})
-
-${fileHeader}
-
-${contextLines.trimEnd()}
-`
-
   }
 
   private parseArguments() {
@@ -180,14 +100,14 @@ ${contextLines.trimEnd()}
     totalWarnings: number,
     filesWithIssues: number,
     ruleCount: number,
-    allMessages: Array<{filename: string, message: any, content: string}>,
+    allDiagnostics: Array<{filename: string, diagnostic: Diagnostic, content: string}>,
     ruleViolations: Map<string, { count: number, files: Set<string> }>
   }> {
     let totalErrors = 0
     let totalWarnings = 0
     let filesWithIssues = 0
     let ruleCount = 0
-    const allMessages: Array<{filename: string, message: any, content: string}> = []
+    const allDiagnostics: Array<{filename: string, diagnostic: Diagnostic, content: string}> = []
     const ruleViolations = new Map<string, { count: number, files: Set<string> }>()
 
     for (const filename of files) {
@@ -222,13 +142,13 @@ ${contextLines.trimEnd()}
         }
       } else {
         // Collect messages for later display
-        for (const message of lintResult.messages) {
-          allMessages.push({ filename, message, content })
+        for (const diagnostic of lintResult.messages) {
+          allDiagnostics.push({ filename, diagnostic, content })
 
-          const ruleData = ruleViolations.get(message.rule) || { count: 0, files: new Set() }
+          const ruleData = ruleViolations.get(diagnostic.id) || { count: 0, files: new Set() }
           ruleData.count++
           ruleData.files.add(filename)
-          ruleViolations.set(message.rule, ruleData)
+          ruleViolations.set(diagnostic.id, ruleData)
         }
 
         if (this.formatOption === 'simple') {
@@ -242,42 +162,67 @@ ${contextLines.trimEnd()}
       }
     }
 
-    return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages, ruleViolations }
+    return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allDiagnostics, ruleViolations }
   }
 
-  private displaySimpleFormat(filename: string, messages: any[]): void {
+  private displaySimpleFormat(filename: string, diagnostics: Diagnostic[]): void {
     console.log(`${colorize(filename, "cyan")}:`)
 
-    for (const message of messages) {
-      const isError = message.severity === "error"
+    for (const diagnostic of diagnostics) {
+      const isError = diagnostic.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const rule = colorize(`(${message.rule})`, "blue")
-      const locationString = `${message.location.start.line}:${message.location.start.column}`
+      const rule = colorize(`(${diagnostic.id})`, "blue")
+      const locationString = `${diagnostic.location.start.line}:${diagnostic.location.start.column}`
       const paddedLocation = locationString.padEnd(4) // Pad to 4 characters for alignment
 
-      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${message.message} ${rule}`)
+      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${diagnostic.message} ${rule}`)
     }
 
     console.log() // Add newline after each file
   }
 
-  private displayDetailedFormat(allMessages: Array<{filename: string, message: any, content: string}>): void {
-    if (this.formatOption === 'detailed' && allMessages.length > 0) {
-      const totalMessageCount = allMessages.length
-      for (let i = 0; i < allMessages.length; i++) {
-        const { filename, message, content } = allMessages[i]
-        console.log(`\n${this.formatDetailedMessage(filename, message, content)}`)
+  private async displayDetailedFormat(
+    allDiagnostics: Array<{filename: string, diagnostic: Diagnostic, content: string}>,
+    isSingleFile: boolean = false
+  ): Promise<void> {
+    if (this.formatOption === 'detailed' && allDiagnostics.length > 0) {
+      if (isSingleFile) {
+        // For single file, use inline diagnostics with syntax highlighting
+        const { filename, content } = allDiagnostics[0]
+        const diagnostics = allDiagnostics.map(item => item.diagnostic)
 
-        const width = process.stdout.columns || 80
-        const progressText = `[${i + 1}/${totalMessageCount}]`
-        const rightPadding = 16
-        const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)
-        const separator = '⎯'
-        const leftSeparator = colorize(separator.repeat(separatorLength), "gray")
-        const rightSeparator = colorize(separator.repeat(4), "gray")
-        const progress = colorize(progressText, "gray")
+        const highlighter = new Highlighter('default')
+        await highlighter.initialize()
 
-        console.log(colorize(`${leftSeparator}  ${progress}`, "dim") + colorize(` ${rightSeparator}\n`, "dim"))
+        const highlighted = highlighter.highlight(filename, content, {
+          diagnostics: diagnostics,
+          splitDiagnostics: true, // Use split mode to show each diagnostic separately
+          contextLines: 2
+        })
+
+        console.log(`\n${highlighted}`)
+      } else {
+        // For multiple files, show individual diagnostics with syntax highlighting
+        const highlighter = new Highlighter('default')
+        await highlighter.initialize()
+
+        const totalMessageCount = allDiagnostics.length
+        for (let i = 0; i < allDiagnostics.length; i++) {
+          const { filename, diagnostic, content } = allDiagnostics[i]
+          const formatted = highlighter.highlightDiagnostic(filename, diagnostic, content, { contextLines: 2 })
+          console.log(`\n${formatted}`)
+
+          const width = process.stdout.columns || 80
+          const progressText = `[${i + 1}/${totalMessageCount}]`
+          const rightPadding = 16
+          const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)
+          const separator = '⎯'
+          const leftSeparator = colorize(separator.repeat(separatorLength), "gray")
+          const rightSeparator = colorize(separator.repeat(4), "gray")
+          const progress = colorize(progressText, "gray")
+
+          console.log(colorize(`${leftSeparator}  ${progress}`, "dim") + colorize(` ${rightSeparator}\n`, "dim"))
+        }
       }
     }
   }
@@ -413,9 +358,9 @@ ${contextLines.trimEnd()}
       }
 
       const results = await this.processFiles(files)
-      const { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages, ruleViolations } = results
+      const { totalErrors, totalWarnings, filesWithIssues, ruleCount, allDiagnostics, ruleViolations } = results
 
-      this.displayDetailedFormat(allMessages)
+      await this.displayDetailedFormat(allDiagnostics, files.length === 1)
       this.displayMostViolatedRules(ruleViolations)
       this.displaySummary(files, totalErrors, totalWarnings, filesWithIssues, ruleCount, startTime, startDate)
 

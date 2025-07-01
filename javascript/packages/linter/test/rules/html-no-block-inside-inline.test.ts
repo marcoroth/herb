@@ -40,7 +40,7 @@ describe("html-no-block-inside-inline", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-block-inside-inline")
+    expect(lintResult.messages[0].id).toBe("html-no-block-inside-inline")
     expect(lintResult.messages[0].message).toBe('Block-level element `<div>` cannot be placed inside inline element `<span>`.')
     expect(lintResult.messages[0].severity).toBe("error")
   })

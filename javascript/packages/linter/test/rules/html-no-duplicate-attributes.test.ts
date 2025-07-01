@@ -29,7 +29,7 @@ describe("html-no-duplicate-attributes", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-duplicate-attributes")
+    expect(lintResult.messages[0].id).toBe("html-no-duplicate-attributes")
     expect(lintResult.messages[0].message).toBe('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
     expect(lintResult.messages[0].severity).toBe("error")
   })

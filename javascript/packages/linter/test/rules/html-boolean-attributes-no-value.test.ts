@@ -29,11 +29,11 @@ describe("html-boolean-attributes-no-value", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(2)
 
-    expect(lintResult.messages[0].rule).toBe("html-boolean-attributes-no-value")
+    expect(lintResult.messages[0].id).toBe("html-boolean-attributes-no-value")
     expect(lintResult.messages[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
     expect(lintResult.messages[0].severity).toBe("error")
 
-    expect(lintResult.messages[1].rule).toBe("html-boolean-attributes-no-value")
+    expect(lintResult.messages[1].id).toBe("html-boolean-attributes-no-value")
     expect(lintResult.messages[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
     expect(lintResult.messages[1].severity).toBe("error")
   })

@@ -1,4 +1,5 @@
 export * from "./backend.js"
+export * from "./diagnostics.js"
 export * from "./errors.js"
 export * from "./herb-backend.js"
 export * from "./lex-result.js"

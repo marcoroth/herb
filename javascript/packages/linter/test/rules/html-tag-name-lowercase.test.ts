@@ -29,7 +29,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(4)
 
-    expect(lintResult.messages[0].rule).toBe("html-tag-name-lowercase")
+    expect(lintResult.messages[0].id).toBe("html-tag-name-lowercase")
     expect(lintResult.messages[0].message).toBe('Tag name `DIV` should be lowercase. Use `div` instead.')
     expect(lintResult.messages[0].severity).toBe("error")
   })

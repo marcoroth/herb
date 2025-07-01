@@ -29,7 +29,7 @@ describe("html-attribute-values-require-quotes", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(2)
 
-    expect(lintResult.messages[0].rule).toBe("html-attribute-values-require-quotes")
+    expect(lintResult.messages[0].id).toBe("html-attribute-values-require-quotes")
     expect(lintResult.messages[0].message).toBe('Attribute value should be quoted: `id="value"`. Always wrap attribute values in quotes.')
     expect(lintResult.messages[0].severity).toBe("error")
   })

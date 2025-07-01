@@ -1,29 +1,22 @@
 {
-  "name": "@herb-tools/linter",
+  "name": "@herb-tools/highlighter",
   "version": "0.3.1",
-  "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
+  "description": "Syntax highlighter and diagnostic renderer for HTML+ERB templates.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/linter%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/highlighter%60:%20",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcoroth/herb.git",
-    "directory": "javascript/packages/linter"
+    "directory": "javascript/packages/highlighter"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/types/index.d.ts",
   "bin": {
-    "herb-lint": "./bin/herb-lint"
+    "herb-highlight": "./bin/herb-highlight"
   },
-  "scripts": {
-    "clean": "rimraf dist",
-    "prebuild": "yarn run clean",
-    "build": "tsc -b && rollup -c rollup.config.mjs",
-    "watch": "tsc -b -w",
-    "test": "vitest run",
-    "prepublishOnly": "yarn clean && yarn build && yarn test"
-  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "require": "./dist/index.cjs",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -33,9 +26,16 @@
       "default": "./dist/index.js"
     }
   },
+  "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "yarn run clean",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "watch": "tsc -b -w",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
   "dependencies": {
     "@herb-tools/core": "0.3.1",
-    "@herb-tools/highlighter": "0.3.1",
     "@herb-tools/node-wasm": "0.3.1",
     "@types/glob": "^8.1.0",
     "glob": "^11.0.3"
@@ -46,13 +46,11 @@
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.3",
     "rimraf": "^6.0.1",
-    "yeoman-environment": "^4.4.1",
-    "yeoman-generator": "^7.1.1"
+    "vitest": "^3.1.4"
   },
   "files": [
     "package.json",
     "README.md",
-    "docs/",
     "src/",
     "bin/",
     "dist/"

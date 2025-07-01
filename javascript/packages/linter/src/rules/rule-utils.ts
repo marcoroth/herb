@@ -9,6 +9,7 @@ import {
   Location
 } from "@herb-tools/core"
 
+import type { DiagnosticLevel } from "@herb-tools/core"
 import type { LintMessage } from "../types.js"
 
 /**
@@ -27,9 +28,9 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to create a lint message
    */
-  protected createMessage(message: string, location: Location, severity: "error" | "warning" = "error"): LintMessage {
+  protected createMessage(message: string, location: Location, severity: DiagnosticLevel = "error"): LintMessage {
     return {
-      rule: this.ruleName,
+      id: this.ruleName,
       message,
       location,
       severity
@@ -39,7 +40,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to add a message to the messages array
    */
-  protected addMessage(message: string, location: Location, severity: "error" | "warning" = "error"): void {
+  protected addMessage(message: string, location: Location, severity: DiagnosticLevel = "error"): void {
     this.messages.push(this.createMessage(message, location, severity))
   }
 }

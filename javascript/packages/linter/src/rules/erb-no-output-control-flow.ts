@@ -5,12 +5,12 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 
 class NoOutputControlFlow extends BaseRuleVisitor {
-  
+
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
   }
-    
+
   visitERBUnlessNode(node: ERBUnlessNode): void {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
@@ -25,7 +25,7 @@ class NoOutputControlFlow extends BaseRuleVisitor {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
   }
-  
+
 
   private checkOutputControlFlow(controlBlock: ERBIfNode | ERBUnlessNode | ERBElseNode | ERBEndNode): void {
     const openTag = controlBlock.tag_opening;
@@ -34,8 +34,8 @@ class NoOutputControlFlow extends BaseRuleVisitor {
     }
     if (openTag.value === "<%="){
       this.messages.push({
-        rule: this.ruleName,
-        message: `Control flow statements like \`${controlBlock.type}\` 
+        id: this.ruleName,
+        message: `Control flow statements like \`${controlBlock.type}\`
         should not be used with output tags. Use \`<% ${controlBlock.type} ... %>\` instead.`,
         location: openTag.location,
         severity: "error"

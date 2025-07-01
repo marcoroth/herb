@@ -29,11 +29,11 @@ describe("html-attribute-double-quotes", () => {
     expect(lintResult.warnings).toBe(2)
     expect(lintResult.messages).toHaveLength(2)
 
-    expect(lintResult.messages[0].rule).toBe("html-attribute-double-quotes")
+    expect(lintResult.messages[0].id).toBe("html-attribute-double-quotes")
     expect(lintResult.messages[0].message).toBe('Attribute `type` uses single quotes. Prefer double quotes for HTML attribute values: `type="value"`.')
     expect(lintResult.messages[0].severity).toBe("warning")
 
-    expect(lintResult.messages[1].rule).toBe("html-attribute-double-quotes")
+    expect(lintResult.messages[1].id).toBe("html-attribute-double-quotes")
     expect(lintResult.messages[1].message).toBe('Attribute `value` uses single quotes. Prefer double quotes for HTML attribute values: `value="value"`.')
     expect(lintResult.messages[1].severity).toBe("warning")
   })
