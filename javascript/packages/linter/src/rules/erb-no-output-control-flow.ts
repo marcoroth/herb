@@ -5,7 +5,6 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 
 class NoOutputControlFlow extends BaseRuleVisitor {
-  messages: LintMessage[] = []
   
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
