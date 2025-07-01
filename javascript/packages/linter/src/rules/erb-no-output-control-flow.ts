@@ -1,5 +1,4 @@
 import { Visitor } from "@herb-tools/core"
-
 import type { Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
 import type { Rule, LintMessage } from "../types.js"
 
@@ -55,7 +54,7 @@ class NoOutputControlFlow extends Visitor {
 
 }
 
-export class ErbNoOutputControlFlow implements Rule {
+export class ERBNoOutputControlFlow implements Rule {
   name = "erb-no-output-control-flow"
   description = "Prevent block-level elements from being placed inside inline elements"
 
