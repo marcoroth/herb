@@ -8,6 +8,7 @@ import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quo
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
+import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 
 import type { RuleClass, LintResult, LintMessage } from "./types.js"
 import type { DocumentNode } from "@herb-tools/core"
@@ -32,6 +33,7 @@ export class Linter {
   private getDefaultRules(): RuleClass[] {
     return [
       ERBNoOutputControlFlow,
+      ERBRequireWhitespaceRule,
       HTMLTagNameLowercaseRule,
       HTMLNoDuplicateAttributesRule,
       HTMLImgRequireAltRule,

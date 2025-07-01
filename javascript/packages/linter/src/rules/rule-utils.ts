@@ -6,7 +6,8 @@ import {
   HTMLAttributeValueNode,
   LiteralNode,
   Visitor,
-  Location
+  Location,
+  Node,
 } from "@herb-tools/core"
 
 import type { LintMessage } from "../types.js"
@@ -17,6 +18,7 @@ import type { LintMessage } from "../types.js"
 export abstract class BaseRuleVisitor extends Visitor {
   public messages: LintMessage[] = []
   protected ruleName: string
+  visited:string[] = []
 
   constructor(ruleName: string) {
     super()
@@ -36,12 +38,17 @@ export abstract class BaseRuleVisitor extends Visitor {
     }
   }
 
+  visitChildNodes(node: Node): void {
+    this.visited.push(node.constructor.name)
+    super.visitChildNodes(node)
+  }  
+
   /**
    * Helper method to add a message to the messages array
    */
   protected addMessage(message: string, location: Location, severity: "error" | "warning" = "error"): void {
     this.messages.push(this.createMessage(message, location, severity))
-  }
+  } 
 }
 
 /**

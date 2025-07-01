@@ -45,7 +45,7 @@ class NoOutputControlFlow extends BaseRuleVisitor {
   }
 
 }
-
+// TODO: This needs Rule appended to class name
 export class ERBNoOutputControlFlow implements Rule {
   name = "erb-no-output-control-flow"
   check(node: Node): LintMessage[] {
