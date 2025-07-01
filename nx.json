@@ -7,7 +7,11 @@
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)"
     ],
-    "sharedGlobals": ["{workspaceRoot}/.github/workflows/javascript.yml"]
+    "sharedGlobals": [
+      "{workspaceRoot}/.github/workflows/javascript.yml",
+      "{workspaceRoot}/src/**/*",
+      "{workspaceRoot}/wasm/**/*"
+    ]
   },
   "plugins": [],
   "tasksRunnerOptions": {
@@ -21,10 +25,23 @@
   },
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "options": {
+        "parallel": false
+      }
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false,
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "npx nx reset"
+        ],
+        "parallel": false
+      }
     }
   },
   "workspaceLayout": {
