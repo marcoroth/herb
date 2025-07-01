@@ -1,4 +1,8 @@
-# `@herb-tools/browser`
+# Herb for Browser Usage
+
+##### Package: [`@herb-tools/browser`](https://www.npmjs.com/package/@herb-tools/browser)
+
+---
 
 WebAssembly-based HTML-aware ERB parser for browsers.
 

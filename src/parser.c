@@ -197,13 +197,19 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 }
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value(
-  parser_T* parser, array_T* children, array_T* errors
+  parser_T* parser,
+  array_T* children,
+  array_T* errors
 ) {
   buffer_T buffer = buffer_new();
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
   position_T* start = position_copy(parser->current_token->location->start);
 
-  while (token_is_none_of(parser, TOKEN_QUOTE, TOKEN_EOF)) {
+  while (!token_is(parser, TOKEN_EOF)
+         && !(
+           token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
+           && strcmp(parser->current_token->value, opening_quote->value) == 0
+         )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
@@ -472,7 +478,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
 // TODO: this should probably be AST_HTML_ELEMENT_NODE_T with a AST_HTML_SELF_CLOSING_TAG_NODE_T
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
-  const parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  const parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
     open_tag,
@@ -487,7 +494,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
 }
 
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
-  parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   array_T* errors = array_init(8);
   array_T* body = array_init(8);
@@ -618,6 +626,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           TOKEN_IDENTIFIER,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
+          TOKEN_QUOTE,
           TOKEN_SEMICOLON,
           TOKEN_SLASH,
           TOKEN_UNDERSCORE,

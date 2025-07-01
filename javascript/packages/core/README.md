@@ -1,4 +1,8 @@
-# `@herb-tools/core`
+## Herb Core
+
+##### Package: [`@herb-tools/core`](https://www.npmjs.com/package/@herb-tools/core)
+
+---
 
 Core module exporting shared interfaces, AST node definitions, and common utilities for Herb (no direct parsing functionality).
 

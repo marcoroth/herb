@@ -17,7 +17,7 @@ GIT
 PATH
   remote: .
   specs:
-    herb (0.3.0)
+    herb (0.3.1)
 
 GEM
   remote: https://rubygems.org/
@@ -63,6 +63,7 @@ GEM
     fileutils (1.7.3)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    io-console (0.8.0)
     json (2.12.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
@@ -95,6 +96,8 @@ GEM
     rbs (3.9.4)
       logger
     regexp_parser (2.10.0)
+    reline (0.6.1)
+      io-console (~> 0.5)
     rubocop (1.76.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -162,6 +165,7 @@ DEPENDENCIES
   rake-compiler (~> 1.2)
   rake-compiler-dock (~> 1.9)
   rbs-inline!
+  reline (~> 0.6)
   rubocop (~> 1.71)
   sorbet
   steep (~> 1.10)

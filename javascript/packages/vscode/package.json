@@ -1,8 +1,8 @@
 {
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
-  "description": "Language Server integration and Language Tools for HTML+ERB files.",
-  "version": "0.3.0",
+  "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
+  "version": "0.3.1",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -22,7 +22,7 @@
   "keywords": [
     "HTML",
     "Ruby",
-    "Hotwire"
+    "ERB"
   ],
   "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-lsp-vscode%60:%20",
@@ -35,7 +35,6 @@
     "url": "http://github.com/sponsors/marcoroth"
   },
   "activationEvents": [
-    "onLanguage:ruby",
     "onLanguage:erb",
     "onLanguage:html"
   ],
@@ -79,8 +78,8 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/node-wasm": "0.3.0",
-    "@types/vscode": "^1.100.0",
+    "@herb-tools/node-wasm": "0.3.1",
+    "@types/vscode": "^1.43.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
