@@ -17,13 +17,13 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     const openTag = erbNode.tag_opening
     const closeTag = erbNode.tag_closing
     const content = erbNode.content
-    // Still need to check if this exits when i want it to
+
     if (!openTag || !closeTag || !content) {
       return
     }
 
     const value = content.value
-    
+
     this.checkOpenTagWhitespace(openTag, value)
     this.checkCloseTagWhitespace(closeTag, value)
   }

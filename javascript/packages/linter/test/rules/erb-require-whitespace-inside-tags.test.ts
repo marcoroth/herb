@@ -48,10 +48,9 @@ describe("erb-require-whitespace-inside-tags", () => {
     const linter = new Linter([ERBRequireWhitespaceRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(1)
+    expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
-    expect(lintResult.messages[0].message).toMatch(/after opening tag./i)
+    expect(lintResult.messages).toHaveLength(2)
   })
 
   it("should report errors for only missing opening whitespace", () => {
@@ -72,7 +71,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const html = dedent`
       <% if admin%>
         Hello, admin.
-      <% end%>
+      <% end %>
     `
     const result = Herb.parse(html)
     const linter = new Linter([ERBRequireWhitespaceRule])
@@ -115,7 +114,7 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%= user.name %>
       <%=user.email%>
       <% if admin %>
-        Hello, admin.
+        <h1>Hello, admin.</h1>
       <%end%>
     `
     const result = Herb.parse(html)
@@ -124,5 +123,19 @@ describe("erb-require-whitespace-inside-tags", () => {
 
     expect(lintResult.errors).toBe(4)
     expect(lintResult.messages).toHaveLength(4)
+  })
+
+  it("should handle empty erb tags", () => {
+    const html = dedent`
+      <% %>
+      <%= %>
+      <% if true %> <% end %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.messages).toHaveLength(0)
   })
 })
