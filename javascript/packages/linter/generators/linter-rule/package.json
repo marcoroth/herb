@@ -1,0 +1,21 @@
+{
+  "name": "generator-herb-linter-rule",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Yeoman generator for Herb linter rules",
+  "type": "module",
+  "files": [
+    "generators"
+  ],
+  "keywords": [
+    "yeoman-generator",
+    "herb",
+    "linter",
+    "rule"
+  ],
+  "dependencies": {
+    "yeoman-generator": "^7.1.1",
+    "yeoman-environment": "^4.4.1",
+    "chalk": "^5.3.0"
+  }
+}
