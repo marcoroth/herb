@@ -18,7 +18,7 @@ describe("erb-no-output-control-flow", () => {
         <div>Text2</div>
       <% else %>
         <div>Text3</div>
-    `
+      <% end %>`
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -28,7 +28,10 @@ describe("erb-no-output-control-flow", () => {
   })
 
   it("should not allow if statments with output tags", () => {
-    const html = "<%= if true %>"
+    const html = dedent`
+      <%= if true %>
+        <div>Text1</div>
+      <% end %>`
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -39,7 +42,10 @@ describe("erb-no-output-control-flow", () => {
   })
   
   it("should not allow unless statements with output tags", () => {
-    const html = "<%= unless false %>"
+    const html = dedent`
+      <%= unless false %>
+        <div>Text1</div>
+      <% end %>`
     const result = Herb.parse(html)
     const linter = new Linter([ERBNoOutputControlFlow])
     const lintResult = linter.lint(result.value)
@@ -96,5 +102,24 @@ describe("erb-no-output-control-flow", () => {
     expect(lintResult.errors).toBe(3) 
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.messages).toHaveLength(3)
+  })
+
+  it("should show an error for outputting control flow blocks with nested control flow blocks", () => {
+   const html = dedent`
+      <% unless something? %>
+        <%=
+
+
+ if true %>
+          thing
+        <% end %>
+      <% end %>`
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBNoOutputControlFlow])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(1) 
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.messages).toHaveLength(1)
   })
 })
