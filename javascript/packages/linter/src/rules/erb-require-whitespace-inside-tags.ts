@@ -1,6 +1,6 @@
 import type { ERBBlockNode, Node, Token} from "@herb-tools/core"
 import type { Rule, LintMessage } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor, isERBNode } from "./rule-utils.js"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   
@@ -10,7 +10,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   }
 
   private checkWhitespace(node: Node): void {
-    if (!node.constructor.name.startsWith("ERB")) {
+    if (!isERBNode(node)) {
       return
     }
     const erbNode = node as ERBBlockNode

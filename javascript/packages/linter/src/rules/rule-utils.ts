@@ -9,7 +9,7 @@ import {
   Location,
   Node,
 } from "@herb-tools/core"
-
+import type { ERBBlockNode } from "@herb-tools/core"
 import type { LintMessage } from "../types.js"
 
 /**
@@ -18,7 +18,6 @@ import type { LintMessage } from "../types.js"
 export abstract class BaseRuleVisitor extends Visitor {
   public messages: LintMessage[] = []
   protected ruleName: string
-  visited:string[] = []
 
   constructor(ruleName: string) {
     super()
@@ -41,9 +40,8 @@ export abstract class BaseRuleVisitor extends Visitor {
    * Visits child nodes and records the node type in the visited array
    */
   visitChildNodes(node: Node): void {
-    this.visited.push(node.constructor.name)
     super.visitChildNodes(node)
-  }  
+  }
 
   /**
    * Helper method to add a message to the messages array
@@ -60,6 +58,13 @@ export function getAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): any
   return node.type === "AST_HTML_SELF_CLOSE_TAG_NODE"
     ? (node as HTMLSelfCloseTagNode).attributes
     : (node as HTMLOpenTagNode).children
+}
+
+/**
+ * Checks if a node is an ERB node
+ */
+export function isERBNode(node: Node): node is ERBBlockNode {
+  return node.constructor.name.startsWith("ERB")
 }
 
 /**
