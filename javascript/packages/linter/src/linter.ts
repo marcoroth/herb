@@ -6,6 +6,7 @@ import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
+import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 
 import type { RuleClass, LintResult, LintMessage } from "./types.js"
 import type { DocumentNode } from "@herb-tools/core"
@@ -36,7 +37,8 @@ export class Linter {
       HTMLNoNestedLinksRule,
       HTMLAttributeDoubleQuotesRule,
       HTMLBooleanAttributesNoValueRule,
-      HTMLNoBlockInsideInlineRule
+      HTMLNoBlockInsideInlineRule,
+      HTMLNoEmptyHeadingsRule
     ]
   }
 

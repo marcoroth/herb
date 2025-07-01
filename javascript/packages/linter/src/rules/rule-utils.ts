@@ -163,6 +163,8 @@ export const HTML_BOOLEAN_ATTRIBUTES = new Set([
   "noresize", "noshade", "nowrap", "sortable", "truespeed", "typemustmatch"
 ])
 
+export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
+
 /**
  * Checks if an element is inline
  */
