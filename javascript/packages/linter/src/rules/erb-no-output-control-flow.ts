@@ -56,8 +56,6 @@ class NoOutputControlFlow extends Visitor {
 
 export class ERBNoOutputControlFlow implements Rule {
   name = "erb-no-output-control-flow"
-  description = "Prevent block-level elements from being placed inside inline elements"
-
   check(node: Node): LintMessage[] {
     const visitor = new NoOutputControlFlow(this.name)
     visitor.visit(node)
