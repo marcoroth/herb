@@ -476,8 +476,7 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
   return close_tag;
 }
 
-// TODO: this should probably be AST_HTML_ELEMENT_NODE_T with a AST_HTML_SELF_CLOSING_TAG_NODE_T
-static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
+static AST_HTML_ELEMENT_NODE_T* parser_parse_html_void_element(
   const parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
@@ -486,7 +485,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
     open_tag->tag_name,
     NULL,
     NULL,
-    true,
+    is_void_element(open_tag->tag_name->value),
     open_tag->base.location->start,
     open_tag->base.location->end,
     NULL
@@ -539,13 +538,13 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   AST_HTML_OPEN_TAG_NODE_T* open_tag = parser_parse_html_open_tag(parser);
 
   // <tag />
-  if (open_tag->is_void || ast_node_is((AST_NODE_T*) open_tag, AST_HTML_SELF_CLOSE_TAG_NODE)) {
-    return parser_parse_html_self_closing_element(parser, open_tag);
+  if (open_tag->is_self_closing) {
+    return parser_parse_html_void_element(parser, open_tag);
   }
 
   // <tag>, in void element list, and not in inside an <svg> element
-  if (!open_tag->is_void && is_void_element(open_tag->tag_name->value) && !parser_in_svg_context(parser)) {
-    return parser_parse_html_self_closing_element(parser, open_tag);
+  if (!open_tag->is_self_closing && is_void_element(open_tag->tag_name->value) && !parser_in_svg_context(parser)) {
+    return parser_parse_html_void_element(parser, open_tag);
   }
 
   AST_HTML_ELEMENT_NODE_T* regular_element = parser_parse_html_regular_element(parser, open_tag);

@@ -58,6 +58,18 @@ module Parser
       assert_parsed_snapshot("<img />")
     end
 
+    test "void tag with attributes" do
+      assert_parsed_snapshot(%(<img src="/image.png" />))
+    end
+
+    test "void tag with multiple attributes" do
+      assert_parsed_snapshot(%(<img src="/image.png" alt="description" />))
+    end
+
+    test "void tag with erb attribute value" do
+      assert_parsed_snapshot(%(<img src="<%= image_path("image.png") %>" />))
+    end
+
     test "basic void tag without whitespace" do
       assert_parsed_snapshot("<img/>")
     end

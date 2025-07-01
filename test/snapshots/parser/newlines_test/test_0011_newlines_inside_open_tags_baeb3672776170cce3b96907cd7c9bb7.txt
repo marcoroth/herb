@@ -41,7 +41,7 @@
     │   │       │               └── quoted: true
     │   │       │
     │   │       │
-    │   │       └── is_void: false
+    │   │       └── is_self_closing: false
     │   │
     │   ├── tag_name: "h1" (location: (1:1)-(1:3))
     │   ├── body: (1 item)

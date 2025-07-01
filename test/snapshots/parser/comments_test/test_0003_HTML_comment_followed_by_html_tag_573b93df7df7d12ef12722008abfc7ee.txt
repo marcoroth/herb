@@ -15,7 +15,7 @@
         │       ├── tag_name: "h1" (location: (1:19)-(1:21))
         │       ├── tag_closing: ">" (location: (1:21)-(1:22))
         │       ├── children: []
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "h1" (location: (1:19)-(1:21))
         ├── body: (1 item)

@@ -10,7 +10,7 @@
         │       ├── tag_name: "span" (location: (1:6)-(1:10))
         │       ├── tag_closing: ">" (location: (1:10)-(1:11))
         │       ├── children: []
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "span" (location: (1:6)-(1:10))
         ├── body: (1 item)

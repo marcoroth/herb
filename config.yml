@@ -204,7 +204,7 @@ nodes:
           type: array
           kind: Node
 
-        - name: is_void
+        - name: is_self_closing
           type: boolean
 
     - name: HTMLCloseTagNode
@@ -217,24 +217,6 @@ nodes:
 
         - name: tag_closing
           type: token
-
-    - name: HTMLSelfCloseTagNode
-      fields:
-        - name: tag_opening
-          type: token
-
-        - name: tag_name
-          type: token
-
-        - name: attributes
-          type: array
-          kind: HTMLAttributeNode
-
-        - name: tag_closing
-          type: token
-
-        - name: is_void
-          type: boolean
 
     - name: HTMLElementNode
       fields:

@@ -7,7 +7,7 @@
     │   │       ├── tag_name: "svg" (location: (1:1)-(1:4))
     │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
     │   │       ├── children: []
-    │   │       └── is_void: false
+    │   │       └── is_self_closing: false
     │   │
     │   ├── tag_name: "svg" (location: (1:1)-(1:4))
     │   ├── body: (3 items)
@@ -21,7 +21,7 @@
     │   │   │   │       ├── tag_name: "g" (location: (2:3)-(2:4))
     │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
     │   │   │   │       ├── children: []
-    │   │   │   │       └── is_void: false
+    │   │   │   │       └── is_self_closing: false
     │   │   │   │
     │   │   │   ├── tag_name: "g" (location: (2:3)-(2:4))
     │   │   │   ├── body: (3 items)
@@ -35,12 +35,12 @@
     │   │   │   │   │   │       ├── tag_name: "path" (location: (3:5)-(3:9))
     │   │   │   │   │   │       ├── tag_closing: "/>" (location: (3:9)-(3:11))
     │   │   │   │   │   │       ├── children: []
-    │   │   │   │   │   │       └── is_void: true
+    │   │   │   │   │   │       └── is_self_closing: true
     │   │   │   │   │   │
     │   │   │   │   │   ├── tag_name: "path" (location: (3:5)-(3:9))
     │   │   │   │   │   ├── body: []
     │   │   │   │   │   ├── close_tag: ∅
-    │   │   │   │   │   └── is_void: true
+    │   │   │   │   │   └── is_void: false
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:11)-(4:2))
     │   │   │   │       └── content: "\n  "

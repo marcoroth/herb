@@ -15,7 +15,7 @@
         │       │       ├── equals: ∅
         │       │       └── value: ∅
         │       │
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "input" (location: (1:1)-(1:6))
         ├── body: []

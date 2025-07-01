@@ -7,7 +7,7 @@
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── tag_closing: ">" (location: (1:4)-(1:5))
         │       ├── children: []
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
         ├── body: (1 item)
@@ -23,7 +23,7 @@
         │       │       │       ├── tag_name: "b" (location: (1:20)-(1:21))
         │       │       │       ├── tag_closing: ">" (location: (1:21)-(1:22))
         │       │       │       ├── children: []
-        │       │       │       └── is_void: false
+        │       │       │       └── is_self_closing: false
         │       │       │
         │       │       ├── tag_name: "b" (location: (1:20)-(1:21))
         │       │       ├── body: (1 item)
@@ -55,7 +55,7 @@
         │       │               │       ├── tag_name: "b" (location: (1:49)-(1:50))
         │       │               │       ├── tag_closing: ">" (location: (1:50)-(1:51))
         │       │               │       ├── children: []
-        │       │               │       └── is_void: false
+        │       │               │       └── is_self_closing: false
         │       │               │
         │       │               ├── tag_name: "b" (location: (1:49)-(1:50))
         │       │               ├── body: (1 item)

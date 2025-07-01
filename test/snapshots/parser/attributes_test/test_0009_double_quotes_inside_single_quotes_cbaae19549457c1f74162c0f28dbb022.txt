@@ -24,7 +24,7 @@
         │       │               └── quoted: true
         │       │
         │       │
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
         ├── body: []

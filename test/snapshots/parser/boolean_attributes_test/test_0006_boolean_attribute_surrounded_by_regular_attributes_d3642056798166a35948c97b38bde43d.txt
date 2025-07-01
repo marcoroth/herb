@@ -49,7 +49,7 @@
         │       │               └── quoted: true
         │       │
         │       │
-        │       └── is_void: true
+        │       └── is_self_closing: true
         │
         ├── tag_name: "input" (location: (1:1)-(1:6))
         ├── body: []

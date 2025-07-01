@@ -15,7 +15,7 @@
     │   │   │   │       ├── tag_name: "h1" (location: (2:3)-(2:5))
     │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
     │   │   │   │       ├── children: []
-    │   │   │   │       └── is_void: false
+    │   │   │   │       └── is_self_closing: false
     │   │   │   │
     │   │   │   ├── tag_name: "h1" (location: (2:3)-(2:5))
     │   │   │   ├── body: (1 item)
@@ -40,7 +40,7 @@
     │   │   │   │       ├── tag_name: "h2" (location: (3:3)-(3:5))
     │   │   │   │       ├── tag_closing: ">" (location: (3:5)-(3:6))
     │   │   │   │       ├── children: []
-    │   │   │   │       └── is_void: false
+    │   │   │   │       └── is_self_closing: false
     │   │   │   │
     │   │   │   ├── tag_name: "h2" (location: (3:3)-(3:5))
     │   │   │   ├── body: (1 item)
@@ -73,7 +73,7 @@
     │   │   │   │   │   │       ├── tag_name: "h3" (location: (6:5)-(6:7))
     │   │   │   │   │   │       ├── tag_closing: ">" (location: (6:7)-(6:8))
     │   │   │   │   │   │       ├── children: []
-    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │       └── is_self_closing: false
     │   │   │   │   │   │
     │   │   │   │   │   ├── tag_name: "h3" (location: (6:5)-(6:7))
     │   │   │   │   │   ├── body: (1 item)

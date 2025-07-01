@@ -7,7 +7,7 @@
         │       ├── tag_name: "img" (location: (1:1)-(1:4))
         │       ├── tag_closing: "/>" (location: (1:4)-(1:6))
         │       ├── children: []
-        │       └── is_void: true
+        │       └── is_self_closing: true
         │
         ├── tag_name: "img" (location: (1:1)-(1:4))
         ├── body: []

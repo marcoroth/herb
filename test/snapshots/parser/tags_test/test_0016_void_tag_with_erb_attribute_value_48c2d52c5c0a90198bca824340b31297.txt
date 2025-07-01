@@ -1,0 +1,36 @@
+@ DocumentNode (location: (1:0)-(1:44))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:44))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:44))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── tag_closing: "/>" (location: (1:42)-(1:44))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:41))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:8))
+        │       │       │       └── name: "src" (location: (1:5)-(1:8))
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:8)-(1:9))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:9)-(1:41))
+        │       │               ├── open_quote: """ (location: (1:9)-(1:10))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ ERBContentNode (location: (1:10)-(1:40))
+        │       │               │       ├── tag_opening: "<%=" (location: (1:10)-(1:13))
+        │       │               │       ├── content: " image_path("image.png") " (location: (1:13)-(1:38))
+        │       │               │       ├── tag_closing: "%>" (location: (1:38)-(1:40))
+        │       │               │       ├── parsed: true
+        │       │               │       └── valid: true
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:40)-(1:41))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_self_closing: true
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

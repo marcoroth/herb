@@ -14,7 +14,7 @@
     │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
     │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
     │   │       ├── children: []
-    │   │       └── is_void: false
+    │   │       └── is_self_closing: false
     │   │
     │   ├── tag_name: "div" (location: (1:1)-(1:4))
     │   ├── body: (1 item)

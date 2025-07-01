@@ -7,7 +7,7 @@
         │       ├── tag_name: "b" (location: (1:1)-(1:2))
         │       ├── tag_closing: ">" (location: (1:2)-(1:3))
         │       ├── children: []
-        │       └── is_void: false
+        │       └── is_self_closing: false
         │
         ├── tag_name: "b" (location: (1:1)-(1:2))
         ├── body: (1 item)
