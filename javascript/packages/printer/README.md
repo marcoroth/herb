@@ -1,10 +1,10 @@
-# Herb Syntax Tree Printer <Badge type="info" text="coming soon" />
+# Herb Syntax Tree Printer
 
 **Package:** [`@herb-tools/printer`](https://www.npmjs.com/package/@herb-tools/printer)
 
 ---
 
-AST-to-source code conversion for the Herb Parser Syntax Tree.
+AST printer infrastructure for lossless HTML+ERB reconstruction and AST-to-source code conversion for the Herb Parser Syntax Tree.
 
 ### Installation
 
@@ -26,14 +26,75 @@ bun add @herb-tools/printer
 ```
 :::
 
-<!-- ### Usage -->
+### Usage
 
-<!-- TODO -->
+#### IdentityPrinter (Provides lossless reconstruction of the original source)
 
-<!-- #### Configuration Options -->
+For lossless reconstruction of the original source:
 
-<!-- TODO -->
+```javascript
+import { IdentityPrinter } from '@herb-tools/printer'
+import { Herb } from '@herb-tools/node-wasm'
 
-<!-- #### CLI Usage -->
+await Herb.load()
 
-<!-- TODO -->
+const parseResult = Herb.parse(
+  '<div class="hello" >  Hello  </div>',
+  { track_whitespace: true }
+)
+
+const printer = new IdentityPrinter()
+const output = printer.print(parseResult.value)
+
+// output === '<div class="hello" >  Hello  </div>' (exact preservation)
+```
+
+#### Custom Printers
+
+Create custom printers by extending the base `Printer` class and override specific visitors for custom behavior:
+
+```typescript
+import { Printer } from "@herb-tools/printer"
+import { HTMLAttributeNode } from "@herb-tools/core"
+
+class CustomPrinter extends Printer {
+  protected write(content: string) {
+    super.write(content.toUpperCase())
+  }
+
+  protected visitHTMLAttributeNode(node: HTMLAttributeNode) {
+    // do nothing to strip attributes
+  }
+}
+```
+
+and then printing the result using `print`
+
+```js
+import { Herb } from "@herb-tools/node-wasm"
+
+await Herb.load()
+
+const parseResult = Herb.parse(
+  '<div class="hello">  Hello  </div>',
+  { track_whitespace: true }
+)
+
+const printer = new CustomPrinter()
+const output = printer.print(parseResult.value)
+
+// output === '<div >  HELLO  </div>'
+```
+
+#### CLI Usage
+
+```bash
+# Basic round-trip printing
+herb-print input.html.erb > output.html.erb
+
+# Verify parser accuracy
+herb-print input.html.erb --verify
+
+# Show parsing statistics
+herb-print input.html.erb --stats
+```
