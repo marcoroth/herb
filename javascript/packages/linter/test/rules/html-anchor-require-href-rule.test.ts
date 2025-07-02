@@ -31,7 +31,7 @@ describe("html-anchor-require-href", () => {
 
     expect(lintResult.messages[0].rule).toBe("html-anchor-require-href")
     expect(lintResult.messages[0].message).toBe(
-      "Missing required `href` attribute on `<a>` tag.",
+      "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
     )
     expect(lintResult.messages[0].severity).toBe("error")
   })
@@ -75,7 +75,7 @@ describe("html-anchor-require-href", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.messages[0].message).toBe(
-      "Missing required `href` attribute on `<a>` tag.",
+      "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
     )
   })
 })
