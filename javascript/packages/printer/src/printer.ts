@@ -50,36 +50,56 @@ export abstract class Printer extends Visitor {
 
   // HTML Element nodes
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    this.context.write("<")
+    if (node.tag_opening) {
+      this.context.write(node.tag_opening.value)
+    }
+
     if (node.tag_name) {
       this.context.write(node.tag_name.value)
     }
+
     this.visitChildNodes(node)
-    this.context.write(">")
+
+    if (node.tag_closing) {
+      this.context.write(node.tag_closing.value)
+    }
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
-    this.context.write("</")
+    if (node.tag_opening) {
+      this.context.write(node.tag_opening.value)
+    }
+
     if (node.tag_name) {
       this.context.write(node.tag_name.value)
     }
-    this.context.write(">")
+
+    if (node.tag_closing) {
+      this.context.write(node.tag_closing.value)
+    }
   }
 
   visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.context.write("<")
+    if (node.tag_opening) {
+      this.context.write(node.tag_opening.value)
+    }
+
     if (node.tag_name) {
       this.context.write(node.tag_name.value)
     }
+
     if (node.attributes) {
-      node.attributes.forEach(attr => this.visit(attr))
+      node.attributes.forEach(attribute => this.visit(attribute))
     }
-    const closeStyle = this.options.selfClosingTagStyle || '/>'
-    this.context.write(closeStyle === '/>' ? ' />' : '>')
+
+    if (node.tag_closing) {
+      this.context.write(node.tag_closing.value)
+    }
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = node.tag_name?.value
+
     if (tagName) {
       this.context.enterTag(tagName)
     }
@@ -87,9 +107,11 @@ export abstract class Printer extends Visitor {
     if (node.open_tag) {
       this.visit(node.open_tag)
     }
+
     if (node.body) {
       node.body.forEach(child => this.visit(child))
     }
+
     if (node.close_tag) {
       this.visit(node.close_tag)
     }
@@ -102,11 +124,16 @@ export abstract class Printer extends Visitor {
   // HTML Attributes
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     this.context.write(" ")
+
     if (node.name) {
       this.visit(node.name)
     }
+
+    if (node.equals) {
+      this.context.write(node.equals.value)
+    }
+
     if (node.equals && node.value) {
-      this.context.write("=")
       this.visit(node.value)
     }
   }
@@ -121,23 +148,37 @@ export abstract class Printer extends Visitor {
     if (node.quoted && node.open_quote) {
       this.context.write(node.open_quote.value)
     }
+
     this.visitChildNodes(node)
+
     if (node.quoted && node.close_quote) {
       this.context.write(node.close_quote.value)
     }
   }
 
-  // HTML Comments and Doctype
+  // HTML Comments
   visitHTMLCommentNode(node: HTMLCommentNode): void {
-    this.context.write("<!--")
+    if (node.comment_start) {
+      this.context.write(node.comment_start.value)
+    }
+
     this.visitChildNodes(node)
-    this.context.write("-->")
+
+    if (node.comment_end) {
+      this.context.write(node.comment_end.value)
+    }
   }
 
   visitHTMLDoctypeNode(node: HTMLDoctypeNode): void {
-    this.context.write(node.tag_opening!.value)
+    if (node.tag_opening) {
+      this.context.write(node.tag_opening.value)
+    }
+
     this.visitChildNodes(node)
-    this.context.write(node.tag_closing!.value)
+
+    if (node.tag_closing) {
+      this.context.write(node.tag_closing.value)
+    }
   }
 
   // ERB nodes - all delegate to printERBNode for consistency
@@ -150,9 +191,11 @@ export abstract class Printer extends Visitor {
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
+
     if (node.subsequent) {
       this.visit(node.subsequent)
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -160,6 +203,7 @@ export abstract class Printer extends Visitor {
 
   visitERBElseNode(node: ERBElseNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
@@ -171,9 +215,11 @@ export abstract class Printer extends Visitor {
 
   visitERBBlockNode(node: ERBBlockNode): void {
     this.printERBNode(node)
+
     if (node.body) {
       node.body.forEach(child => this.visit(child))
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -181,12 +227,19 @@ export abstract class Printer extends Visitor {
 
   visitERBCaseNode(node: ERBCaseNode): void {
     this.printERBNode(node)
+
+    if (node.children) {
+      node.children.forEach(child => this.visit(child))
+    }
+
     if (node.conditions) {
       node.conditions.forEach(condition => this.visit(condition))
     }
+
     if (node.else_clause) {
       this.visit(node.else_clause)
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -194,6 +247,7 @@ export abstract class Printer extends Visitor {
 
   visitERBWhenNode(node: ERBWhenNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
@@ -201,9 +255,11 @@ export abstract class Printer extends Visitor {
 
   visitERBWhileNode(node: ERBWhileNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
-      node.statements.forEach(stmt => this.visit(stmt))
+      node.statements.forEach(statement => this.visit(statement))
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -211,9 +267,11 @@ export abstract class Printer extends Visitor {
 
   visitERBUntilNode(node: ERBUntilNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -221,9 +279,11 @@ export abstract class Printer extends Visitor {
 
   visitERBForNode(node: ERBForNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -231,18 +291,23 @@ export abstract class Printer extends Visitor {
 
   visitERBBeginNode(node: ERBBeginNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
+
     if (node.rescue_clause) {
       this.visit(node.rescue_clause)
     }
+
     if (node.else_clause) {
       this.visit(node.else_clause)
     }
+
     if (node.ensure_clause) {
       this.visit(node.ensure_clause)
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -250,9 +315,11 @@ export abstract class Printer extends Visitor {
 
   visitERBRescueNode(node: ERBRescueNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
-      node.statements.forEach(stmt => this.visit(stmt))
+      node.statements.forEach(statement => this.visit(statement))
     }
+
     if (node.subsequent) {
       this.visit(node.subsequent)
     }
@@ -260,6 +327,7 @@ export abstract class Printer extends Visitor {
 
   visitERBEnsureNode(node: ERBEnsureNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
@@ -267,12 +335,15 @@ export abstract class Printer extends Visitor {
 
   visitERBUnlessNode(node: ERBUnlessNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
+
     if (node.else_clause) {
       this.visit(node.else_clause)
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -284,6 +355,7 @@ export abstract class Printer extends Visitor {
 
   visitERBInNode(node: ERBInNode): void {
     this.printERBNode(node)
+
     if (node.statements) {
       node.statements.forEach(stmt => this.visit(stmt))
     }
@@ -291,12 +363,19 @@ export abstract class Printer extends Visitor {
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
     this.printERBNode(node)
+
+    if (node.children) {
+      node.children.forEach(child => this.visit(child))
+    }
+
     if (node.conditions) {
       node.conditions.forEach(condition => this.visit(condition))
     }
+
     if (node.else_clause) {
       this.visit(node.else_clause)
     }
+
     if (node.end_node) {
       this.visit(node.end_node)
     }
@@ -311,16 +390,21 @@ export abstract class Printer extends Visitor {
     if (node.tag_opening) {
       this.context.write(node.tag_opening.value)
     }
+
     if (node.content) {
       const spacing = this.options.erbTagSpacing === 'spaced' ? ' ' : ''
+
       if (spacing && node.tag_opening?.value && !node.content.value.startsWith(' ')) {
         this.context.write(spacing)
       }
+
       this.context.write(node.content.value)
+
       if (spacing && node.tag_closing?.value && !node.content.value.endsWith(' ')) {
         this.context.write(spacing)
       }
     }
+
     if (node.tag_closing) {
       this.context.write(node.tag_closing.value)
     }

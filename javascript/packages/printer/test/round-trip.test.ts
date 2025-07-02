@@ -1,51 +1,41 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, beforeAll } from "vitest"
 import dedent from "dedent"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { IdentityPrinter } from "../src/index.js"
+
+import { expectPrintRoundTrip } from "./helpers/printer-test-helpers.js"
+
 
 describe("Round-trip Parser Accuracy Tests", () => {
   beforeAll(async () => {
     await Herb.load()
   })
 
-  function roundTripTest(input: string, description: string) {
-    test(description, () => {
-      const parseResult = Herb.parse(input)
-      expect(parseResult.value).toBeTruthy()
+  test("ERB Content Tags", () => {
+    expectPrintRoundTrip('<%= @user %>')
+    expectPrintRoundTrip('<%= @user.name %>')
+    expectPrintRoundTrip('<%= "Hello World" %>')
+    expectPrintRoundTrip('<%=   @user   %>')
+    expectPrintRoundTrip('<%=@user%>')
 
-      const printer = new IdentityPrinter()
-      const output = printer.print(parseResult.value!)
-
-      expect(output).toBe(input)
-    })
-  }
-
-  describe("ERB Content Tags", () => {
-    roundTripTest('<%= @user %>', 'simple ERB content tag')
-    roundTripTest('<%= @user.name %>', 'ERB content with method call')
-    roundTripTest('<%= "Hello World" %>', 'ERB content with string literal')
-    roundTripTest('<%=   @user   %>', 'ERB content with extra spaces')
-    roundTripTest('<%=@user%>', 'ERB content without spaces')
-
-    roundTripTest('<div><%= @name %></div>', 'ERB content inside HTML')
-    roundTripTest('Hello <%= @name %>!', 'ERB content mixed with text')
-    roundTripTest('<%= @first %> <%= @last %>', 'multiple ERB content tags')
+    expectPrintRoundTrip('<div><%= @name %></div>')
+    expectPrintRoundTrip('Hello <%= @name %>!')
+    expectPrintRoundTrip('<%= @first %> <%= @last %>')
   })
 
-  describe("ERB Control Flow", () => {
-    roundTripTest('<% if @user %><% end %>', 'simple if statement')
-    roundTripTest('<% if @user %>Hello<% end %>', 'if with content')
-    roundTripTest('<% if @user %>Hello<% else %>Goodbye<% end %>', 'if-else statement')
+  test("ERB Control Flow", () => {
+    expectPrintRoundTrip('<% if @user %><% end %>')
+    expectPrintRoundTrip('<% if @user %>Hello<% end %>')
+    expectPrintRoundTrip('<% if @user %>Hello<% else %>Goodbye<% end %>')
 
-    roundTripTest('<% @items.each do |item| %><% end %>', 'each loop')
-    roundTripTest('<% for i in 1..10 %><% end %>', 'for loop')
-    roundTripTest('<% while @condition %><% end %>', 'while loop')
-    roundTripTest('<% unless @condition %><% end %>', 'unless statement')
+    expectPrintRoundTrip('<% @items.each do |item| %><% end %>')
+    expectPrintRoundTrip('<% for i in 1..10 %><% end %>')
+    expectPrintRoundTrip('<% while @condition %><% end %>')
+    expectPrintRoundTrip('<% unless @condition %><% end %>')
   })
 
-  describe("Complex ERB Templates", () => {
-    const complexTemplate = dedent`
+  test("Complex ERB Templates", () => {
+    expectPrintRoundTrip(dedent`
       <div>
         <% if @user %>
           <h1>Hello <%= @user.name %>!</h1>
@@ -56,19 +46,17 @@ describe("Round-trip Parser Accuracy Tests", () => {
           <p>Please log in</p>
         <% end %>
       </div>
-    `
-    roundTripTest(complexTemplate, 'nested ERB control flow with HTML')
+    `)
 
-    const listTemplate = dedent`
+    expectPrintRoundTrip(dedent`
       <ul>
         <% @items.each do |item| %>
           <li><%= item.name %> - <%= item.price %></li>
         <% end %>
       </ul>
-    `
-    roundTripTest(listTemplate, 'ERB loop with HTML list')
+    `)
 
-    const formTemplate = dedent`
+    expectPrintRoundTrip(dedent`
       <form>
         <% @fields.each do |field| %>
           <div class="field">
@@ -77,39 +65,38 @@ describe("Round-trip Parser Accuracy Tests", () => {
           </div>
         <% end %>
       </form>
-    `
-    roundTripTest(formTemplate, 'ERB in form with dynamic attributes')
+    `)
   })
 
-  describe("Mixed Content Edge Cases", () => {
-    roundTripTest('<div><!-- Comment --><%= @content %></div>', 'ERB with HTML comments')
-    roundTripTest('<script><%= raw @js_code %></script>', 'ERB in script tag')
-    roundTripTest('<style><%= @css_rules %></style>', 'ERB in style tag')
+  test("Mixed Content Edge Cases", () => {
+    expectPrintRoundTrip('<div><!-- Comment --><%= @content %></div>')
+    expectPrintRoundTrip('<script><%= raw @js_code %></script>')
+    expectPrintRoundTrip('<style><%= @css_rules %></style>')
 
-    roundTripTest('<div data-value="<%= @value %>">Content</div>', 'ERB in attribute value')
+    expectPrintRoundTrip('<div data-value="<%= @value %>">Content</div>')
     // Note: ERB in tag names is not yet fully supported by the parser
-    // roundTripTest('<%= @tag %> class="<%= @class %>">Content</<%= @tag %>>', 'ERB in tag names')
+    // expectPrintRoundTrip('<%= @tag %> class="<%= @class %>">Content</<%= @tag %>>', 'ERB in tag names')
 
-    roundTripTest('<%# This is a comment %>', 'ERB comment tag')
-    roundTripTest('<div><%# Hidden comment %><%= @visible %></div>', 'ERB comment mixed with content')
+    expectPrintRoundTrip('<%# This is a comment %>')
+    expectPrintRoundTrip('<div><%# Hidden comment %><%= @visible %></div>')
   })
 
-  describe("Whitespace and ERB", () => {
-    roundTripTest('<% if true -%>\n  Content\n<% end -%>', 'ERB with whitespace control')
-    roundTripTest('<%- @content -%>', 'ERB with strip whitespace')
-    roundTripTest('<%= @content -%>\n<%= @more -%>', 'multiple ERB with whitespace control')
+  test("Whitespace and ERB", () => {
+    expectPrintRoundTrip('<% if true -%>\n  Content\n<% end -%>')
+    expectPrintRoundTrip('<%- @content -%>')
+    expectPrintRoundTrip('<%= @content -%>\n<%= @more -%>')
 
-    roundTripTest(dedent`
+    expectPrintRoundTrip(dedent`
       <div>
         <%  if @condition  %>
           Content
         <%  end  %>
       </div>
-    `, 'ERB with extra spaces in tags')
+    `)
   })
 
-  describe("Real-world Template Patterns", () => {
-    const layoutTemplate = dedent`
+  test("Real-world Template Patterns", () => {
+    expectPrintRoundTrip(dedent`
       <!DOCTYPE html>
       <html>
       <head>
@@ -129,10 +116,9 @@ describe("Round-trip Parser Accuracy Tests", () => {
           <%= yield %></main>
       </body>
       </html>
-    `
-    roundTripTest(layoutTemplate, 'typical Rails layout template')
+    `)
 
-    const partialTemplate = dedent`
+    expectPrintRoundTrip(dedent`
       <div class="card">
         <h3><%= item.title %></h3>
         <p><%= truncate(item.description, length: 100) %></p>
@@ -148,7 +134,6 @@ describe("Round-trip Parser Accuracy Tests", () => {
           <% end %>
         </div>
       </div>
-    `
-    roundTripTest(partialTemplate, 'typical Rails partial template')
+    `)
   })
 })

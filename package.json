@@ -34,6 +34,7 @@
     "typescript": "^5.8.3",
     "verdaccio": "^6.0.5",
     "vitest": "^3.1.4",
+    "yaml": "^2.8.0",
     "yeoman-environment": "^4.4.1",
     "yeoman-generator": "^7.1.1"
   },
