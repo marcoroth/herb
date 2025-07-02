@@ -1,0 +1,48 @@
+{
+  "name": "@herb-tools/printer",
+  "version": "0.3.1",
+  "type": "module",
+  "description": "Base AST printer infrastructure and lossless reconstruction tool for HTML+ERB templates",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/printer%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/printer"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "herb-print": "./bin/herb-print"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "yarn run clean",
+    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "watch": "tsc -b -w",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.3.1",
+    "glob": "^10.3.10"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "src/",
+    "bin/",
+    "dist/"
+  ]
+}
