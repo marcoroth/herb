@@ -1,48 +1,40 @@
-import { Visitor } from "@herb-tools/core"
+import { defaultRules } from "./default-rules.js"
+import type { RuleClass, LintResult, LintMessage } from "./types.js"
+import type { DocumentNode } from "@herb-tools/core"
 
-import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
-import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
-import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
-import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
-import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
-import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
-import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
-
-import type { Rule, LintResult, LintMessage } from "./types.js"
-import type { DocumentNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
-
-export class Linter extends Visitor {
-  private rules: Rule[]
+export class Linter {
+  private rules: RuleClass[]
   private messages: LintMessage[]
 
-  constructor(rules?: Rule[]) {
-    super()
+  /**
+   * Creates a new Linter instance.
+   * @param rules - Array of rule classes (not instances) to use. If not provided, uses default rules.
+   */
+  constructor(rules?: RuleClass[]) {
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.messages = []
   }
 
-  private getDefaultRules(): Rule[] {
-    return [
-      new HTMLTagNameLowercaseRule(),
-      new HTMLNoDuplicateAttributesRule(),
-      new HTMLImgRequireAltRule(),
-      new HTMLAttributeValuesRequireQuotesRule(),
-      new HTMLNoNestedLinksRule(),
-      new HTMLAttributeDoubleQuotesRule(),
-      new HTMLBooleanAttributesNoValueRule()
-    ]
+  /**
+   * Returns the default set of rule classes used by the linter.
+   * @returns Array of rule classes
+   */
+  private getDefaultRules(): RuleClass[] {
+    return defaultRules
+  }
+
+  getRuleCount(): number {
+    return this.rules.length
   }
 
   lint(document: DocumentNode): LintResult {
     this.messages = []
 
-    this.visit(document)
+    for (const Rule of this.rules) {
+      const rule = new Rule()
+      const ruleMessages = rule.check(document)
 
-    for (const rule of this.rules) {
-      if (rule instanceof HTMLNoNestedLinksRule) {
-        const ruleMessages = rule.check(document)
-        this.messages.push(...ruleMessages)
-      }
+      this.messages.push(...ruleMessages)
     }
 
     const errors = this.messages.filter(message => message.severity === "error").length
@@ -53,33 +45,5 @@ export class Linter extends Visitor {
       errors,
       warnings
     }
-  }
-
-  private checkNode(node: HTMLOpenTagNode | HTMLCloseTagNode | HTMLSelfCloseTagNode): void {
-    for (const rule of this.rules) {
-
-      // Skip rules that handle their own traversal
-      if (rule instanceof HTMLNoNestedLinksRule) {
-        continue
-      }
-
-      const ruleMessages = rule.check(node)
-      this.messages.push(...ruleMessages)
-    }
-  }
-
-  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    this.checkNode(node)
-    super.visitHTMLOpenTagNode(node)
-  }
-
-  visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
-    this.checkNode(node)
-    super.visitHTMLCloseTagNode(node)
-  }
-
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkNode(node)
-    super.visitHTMLSelfCloseTagNode(node)
   }
 }
