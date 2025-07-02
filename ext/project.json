@@ -1,5 +1,5 @@
 {
-  "name": "ruby-ext",
+  "name": "ruby-gem",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "ext",
   "projectType": "library",
@@ -9,7 +9,7 @@
       "options": {
         "command": "bundle exec rake compile"
       },
-      "inputs": ["{workspaceRoot}/ext/**/*", "{workspaceRoot}/src/**/*", "{workspaceRoot}/include/**/*"],
+      "inputs": ["{workspaceRoot}/ext/**/*", "{workspaceRoot}/src/**/*", "{workspaceRoot}/lib/**/*", "{workspaceRoot}/*.gemspec", "{workspaceRoot}/Rakefile", "{workspaceRoot}/templates/ext/**/*", "{workspaceRoot}/templates/src/**/*", "{workspaceRoot}/templates/lib/**/*"],
       "dependsOn": ["templates:generate"]
     },
     "clean": {
@@ -23,7 +23,7 @@
       "options": {
         "command": "bundle exec mtest"
       },
-      "dependsOn": ["ruby-ext:build"]
+      "dependsOn": ["ruby-gem:build"]
     }
   },
   "tags": ["ruby", "native", "extension"]

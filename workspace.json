@@ -13,7 +13,7 @@
     "libherb": "./src",
     "playground": "./playground",
     "prism": "./prism",
-    "ruby-ext": "./ruby-ext",
+    "ruby-gem": "./ext",
     "templates": "./templates",
     "wasm": "./wasm"
   }
