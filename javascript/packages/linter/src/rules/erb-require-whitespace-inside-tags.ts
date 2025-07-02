@@ -43,7 +43,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (!/\s$/.test(content)) {
       this.messages.push({
         rule: this.ruleName,
-        message: "ERB tags must have whitespace before closing tag.",
+        message: `Add whitespace before \`${closeTag.content}\`.`,
         location: closeTag.location,
         severity: "error"
       })
