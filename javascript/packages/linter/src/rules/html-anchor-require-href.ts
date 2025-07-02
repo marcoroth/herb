@@ -18,7 +18,7 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
 
     if (!hasAttribute(node, "href")) {
       this.addMessage(
-        "Missing required `href` attribute on `<a>` tag.",
+        "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
         node.tag_name!.location,
         "error",
       )
