@@ -28,8 +28,6 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
 
 export class HTMLAnchorRequireHrefRule implements Rule {
   name = "html-anchor-require-href"
-  description =
-    "Disallow the use of anchor tags without anhref attribute in HTML templates."
 
   check(node: Node): LintMessage[] {
     const visitor = new AnchorRechireHrefVisitor(this.name)
