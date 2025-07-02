@@ -11,12 +11,6 @@
       },
       "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/Rakefile", "{workspaceRoot}/config.yml"],
       "dependsOn": ["prism:build"]
-    },
-    "clean": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bundle exec rake clean"
-      }
     }
   },
   "tags": ["templates", "ruby"]

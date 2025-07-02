@@ -39,7 +39,7 @@
   },
   "scripts": {
     "dev": "nx run-many --target=dev --all --parallel",
-    "build": "nx run-many --target=build --all",
+    "build": "nx run-many --target=build --all --exclude=herb-language-server",
     "test": "nx run-many --target=test --all --parallel",
     "clean": "nx run-many --target=clean --all --parallel && nx reset",
     "playground": "nx run playground:dev",

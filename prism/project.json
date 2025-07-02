@@ -19,7 +19,7 @@
     "clean": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "echo 'Prism clean not implemented'"
+        "command": "make clean"
       }
     }
   },

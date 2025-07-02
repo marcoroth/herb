@@ -15,7 +15,7 @@
     "clean": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bundle exec rake clean"
+        "command": "rake clean"
       }
     },
     "test": {

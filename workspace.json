@@ -10,6 +10,7 @@
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",
+    "libherb": "./src",
     "playground": "./playground",
     "prism": "./prism",
     "ruby-ext": "./ruby-ext",
