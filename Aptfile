@@ -4,3 +4,4 @@ clang-format-19
 clang-tidy-19
 emscripten
 doxygen
+xvfb
