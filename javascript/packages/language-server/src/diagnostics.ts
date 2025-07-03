@@ -76,22 +76,22 @@ export class Diagnostics {
     const linter = new Linter()
     const lintResult = linter.lint(document)
 
-    lintResult.messages.forEach(message => {
-      const severity = message.severity === "error"
+    lintResult.offenses.forEach(offense => {
+      const severity = offense.severity === "error"
         ? DiagnosticSeverity.Error
         : DiagnosticSeverity.Warning
 
       const range = Range.create(
-        Position.create(message.location.start.line - 1, message.location.start.column),
-        Position.create(message.location.end.line - 1, message.location.end.column),
+        Position.create(offense.location.start.line - 1, offense.location.start.column),
+        Position.create(offense.location.end.line - 1, offense.location.end.column),
       )
 
       this.pushDiagnosticForLinter(
-        message.message,
-        message.rule,
+        offense.message,
+        offense.rule,
         range,
         textDocument,
-        { rule: message.rule },
+        { rule: offense.rule },
         severity
       )
     })
@@ -127,7 +127,7 @@ export class Diagnostics {
     severity: DiagnosticSeverity = DiagnosticSeverity.Error,
   ) {
     const codeDescription: CodeDescription = {
-      href: `https://github.com/marcoroth/herb/blob/main/javascript/packages/linter/docs/rules/${code}.md`
+      href: `https://herb-tools.dev/linter/rules/${code}`
     }
     return this.pushDiagnostic(this.linterDiagnosticsSource, message, code, range, textDocument, data, severity, codeDescription)
   }
