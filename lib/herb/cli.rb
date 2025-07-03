@@ -6,7 +6,7 @@
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent, :no_interactive
+  attr_accessor :json, :silent, :no_interactive, :no_log_file
 
   def initialize(args)
     @args = args
@@ -108,6 +108,7 @@ class Herb::CLI
                 when "analyze"
                   project = Herb::Project.new(directory)
                   project.no_interactive = no_interactive
+                  project.no_log_file = no_log_file
                   project.parse!
                   exit(0)
                 when "parse"
@@ -167,6 +168,10 @@ class Herb::CLI
 
       parser.on("-n", "--non-interactive", "Disable interactive output (progress bars, terminal clearing)") do
         self.no_interactive = true
+      end
+
+      parser.on("--no-log-file", "Disable log file generation") do
+        self.no_log_file = true
       end
     end
   end

@@ -8,10 +8,11 @@ require "timeout"
 require "tempfile"
 require "pathname"
 require "English"
+require "stringio"
 
 module Herb
   class Project
-    attr_accessor :project_path, :output_file, :no_interactive
+    attr_accessor :project_path, :output_file, :no_interactive, :no_log_file
 
     def interactive?
       return false if no_interactive
@@ -45,7 +46,13 @@ module Herb
     end
 
     def parse!
-      File.open(output_file, "w") do |log|
+      if no_log_file
+        log = StringIO.new
+      else
+        log = File.open(output_file, "w")
+      end
+
+      begin
         log.puts heading("METADATA")
         log.puts "Herb Version: #{Herb.version}"
         log.puts "Reported at: #{Time.now.strftime("%Y-%m-%dT%H:%M:%S")}\n\n"
@@ -60,7 +67,7 @@ module Herb
           message = "No .html.erb files found using #{full_path_glob}"
           log.puts message
           puts message
-          next
+          return
         end
 
         print "\e[H\e[2J" if interactive?
@@ -348,7 +355,9 @@ module Herb
           end
         end
 
-        puts "\nResults saved to #{output_file}"
+        puts "\nResults saved to #{output_file}" unless no_log_file
+      ensure
+        log.close unless no_log_file
       end
     end
 
