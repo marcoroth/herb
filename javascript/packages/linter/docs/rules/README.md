@@ -3,6 +3,8 @@
 This directory contains documentation for all Herb Linter rules.
 
 ## Available Rules
+
+- [erb-no-empty-tags](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [erb-no-output-control-flow](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [html-attribute-double-quotes](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [html-attribute-values-require-quotes](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
