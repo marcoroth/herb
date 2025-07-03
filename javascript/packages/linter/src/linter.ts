@@ -1,10 +1,10 @@
 import { defaultRules } from "./default-rules.js"
-import type { RuleClass, LintResult, LintMessage } from "./types.js"
+import type { RuleClass, LintResult, LintOffense } from "./types.js"
 import type { DocumentNode } from "@herb-tools/core"
 
 export class Linter {
   private rules: RuleClass[]
-  private messages: LintMessage[]
+  private messages: LintOffense[]
 
   /**
    * Creates a new Linter instance.

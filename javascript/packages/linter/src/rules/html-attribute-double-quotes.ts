@@ -1,6 +1,6 @@
 import { AttributeVisitorMixin, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
+import type { Rule, LintOffense } from "../types.js"
 import type { Node, HTMLAttributeNode } from "@herb-tools/core"
 
 class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
@@ -20,7 +20,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
 export class HTMLAttributeDoubleQuotesRule implements Rule {
   name = "html-attribute-double-quotes"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new AttributeDoubleQuotesVisitor(this.name)
     visitor.visit(node)
     return visitor.messages

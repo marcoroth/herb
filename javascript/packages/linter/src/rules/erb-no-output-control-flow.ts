@@ -1,6 +1,6 @@
 import { Visitor } from "@herb-tools/core"
 import type { Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
-import type { Rule, LintMessage } from "../types.js"
+import type { Rule, LintOffense } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 
@@ -48,7 +48,7 @@ class NoOutputControlFlow extends BaseRuleVisitor {
 
 export class ERBNoOutputControlFlow implements Rule {
   name = "erb-no-output-control-flow"
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new NoOutputControlFlow(this.name)
     visitor.visit(node)
     return visitor.messages

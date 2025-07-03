@@ -1,6 +1,6 @@
 import { Location, Node } from "@herb-tools/core"
 
-export interface LintMessage {
+export interface LintOffense {
   rule: string
   message: string
   location: Location
@@ -8,14 +8,14 @@ export interface LintMessage {
 }
 
 export interface LintResult {
-  messages: LintMessage[]
+  messages: LintOffense[]
   errors: number
   warnings: number
 }
 
 export interface Rule {
   name: string
-  check(node: Node): LintMessage[]
+  check(node: Node): LintOffense[]
 }
 
 /**

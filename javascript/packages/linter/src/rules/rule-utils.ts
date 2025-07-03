@@ -9,13 +9,13 @@ import {
   Location
 } from "@herb-tools/core"
 
-import type { LintMessage } from "../types.js"
+import type { LintOffense } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor extends Visitor {
-  public messages: LintMessage[] = []
+  public messages: LintOffense[] = []
   protected ruleName: string
 
   constructor(ruleName: string) {
@@ -27,7 +27,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to create a lint message
    */
-  protected createMessage(message: string, location: Location, severity: "error" | "warning" = "error"): LintMessage {
+  protected createMessage(message: string, location: Location, severity: "error" | "warning" = "error"): LintOffense {
     return {
       rule: this.ruleName,
       message,
