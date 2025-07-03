@@ -15,6 +15,7 @@ module Herb
 
     def interactive?
       return false if no_interactive
+
       !IO.console.nil?
     end
 
@@ -93,11 +94,10 @@ module Herb
             puts
             puts progress_bar(index + 1, files.count)
             puts
-            puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}"
           else
             relative_path = file_path.sub("#{project_path}/", "")
-            puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}"
           end
+          puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}"
 
           if interactive?
             if failed_files.any?
