@@ -46,11 +46,11 @@ module Herb
     end
 
     def parse!
-      if no_log_file
-        log = StringIO.new
-      else
-        log = File.open(output_file, "w")
-      end
+      log = if no_log_file
+              StringIO.new
+            else
+              File.open(output_file, "w")
+            end
 
       begin
         log.puts heading("METADATA")
