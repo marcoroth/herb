@@ -4,6 +4,7 @@ import { Herb, Visitor } from "@herb-tools/node-wasm"
 import { Linter } from "@herb-tools/linter"
 
 import { DocumentService } from "./document_service"
+import { Settings } from "./settings"
 
 import type { Node, HerbError, DocumentNode } from "@herb-tools/node-wasm"
 
@@ -48,6 +49,7 @@ class ErrorVisitor extends Visitor {
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
+  private readonly settings: Settings
   private readonly parserDiagnosticsSource = "Herb Parser "
   private readonly linterDiagnosticsSource = "Herb Linter "
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
@@ -55,24 +57,33 @@ export class Diagnostics {
   constructor(
     connection: Connection,
     documentService: DocumentService,
+    settings: Settings,
   ) {
     this.connection = connection
     this.documentService = documentService
+    this.settings = settings
   }
 
-  validate(textDocument: TextDocument) {
+  async validate(textDocument: TextDocument) {
     const content = textDocument.getText()
     const result = Herb.parse(content)
 
     const errorVisitor = new ErrorVisitor(this, textDocument)
     result.visit(errorVisitor)
 
-    this.runLinter(result.value, textDocument)
+    await this.runLinter(result.value, textDocument)
 
     this.sendDiagnosticsFor(textDocument)
   }
 
-  private runLinter(document: DocumentNode, textDocument: TextDocument) {
+  private async runLinter(document: DocumentNode, textDocument: TextDocument) {
+    const settings = await this.settings.getDocumentSettings(textDocument.uri)
+    const linterEnabled = settings.linter?.enabled ?? true
+
+    if (!linterEnabled) {
+      return
+    }
+
     const linter = new Linter()
     const lintResult = linter.lint(document)
 
@@ -97,14 +108,13 @@ export class Diagnostics {
     })
   }
 
-  refreshDocument(document: TextDocument) {
-    this.validate(document)
+  async refreshDocument(document: TextDocument) {
+    await this.validate(document)
   }
 
-  refreshAllDocuments() {
-    this.documentService.getAll().forEach((document) => {
-      this.refreshDocument(document)
-    })
+  async refreshAllDocuments() {
+    const documents = this.documentService.getAll()
+    await Promise.all(documents.map(document => this.refreshDocument(document)))
   }
 
   pushDiagnosticForParser(
