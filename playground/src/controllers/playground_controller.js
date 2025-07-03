@@ -310,19 +310,19 @@ export default class extends Controller {
 
     if (result.parseResult) {
       const errors = result.parseResult.recursiveErrors()
-      allDiagnostics.push(...errors.flatMap((error) => error.toDiagnostics()))
+      allDiagnostics.push(...errors.map((error) => error.toMonacoDiagnostic()))
     }
 
-    if (result.lintResult && result.lintResult.messages) {
-      const lintDiagnostics = result.lintResult.messages.map((message) => ({
-        severity: message.severity,
-        message: message.message,
-        line: message.location.start.line,
-        column: message.location.start.column,
-        endLine: message.location.end.line,
-        endColumn: message.location.end.column,
+    if (result.lintResult && result.lintResult.offenses) {
+      const lintDiagnostics = result.lintResult.offenses.map((offense) => ({
+        severity: offense.severity,
+        message: offense.message,
+        line: offense.location.start.line,
+        column: offense.location.start.column,
+        endLine: offense.location.end.line,
+        endColumn: offense.location.end.column,
         source: "Herb Linter ",
-        code: message.rule,
+        code: offense.rule,
       }))
 
       allDiagnostics.push(...lintDiagnostics)

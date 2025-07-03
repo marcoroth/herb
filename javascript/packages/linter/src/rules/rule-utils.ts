@@ -6,10 +6,10 @@ import {
   HTMLAttributeValueNode,
   LiteralNode,
   Visitor,
-  Location
+  Location,
 } from "@herb-tools/core"
 
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintSeverity } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
@@ -27,7 +27,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to create a lint offense
    */
-  protected createOffense(message: string, location: Location, severity: "error" | "warning" = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
     return {
       rule: this.ruleName,
       message,
@@ -39,7 +39,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: "error" | "warning" = "error"): void {
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
     this.offenses.push(this.createOffense(message, location, severity))
   }
 }
