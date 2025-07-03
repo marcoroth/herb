@@ -48,7 +48,7 @@ export abstract class BaseRuleVisitor extends Visitor {
    */
   protected addMessage(message: string, location: Location, severity: "error" | "warning" = "error"): void {
     this.messages.push(this.createMessage(message, location, severity))
-  } 
+  }
 }
 
 /**
