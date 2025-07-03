@@ -36,12 +36,6 @@ export abstract class BaseRuleVisitor extends Visitor {
       severity
     }
   }
-  /**
-   * Visits child nodes and records the node type in the visited array
-   */
-  visitChildNodes(node: Node): void {
-    super.visitChildNodes(node)
-  }
 
   /**
    * Helper method to add a message to the messages array
