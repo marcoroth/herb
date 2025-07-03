@@ -64,7 +64,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toMatch(/after opening tag/i)
+    expect(lintResult.messages[0].message).toMatch(/Add whitespace after/i)
   })
 
   it("should report errors for only missing closing whitespace", () => {
@@ -78,7 +78,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toMatch(/before closing tag/i)
+    expect(lintResult.messages[0].message).toMatch(/Add whitespace before/i)
   })
 
   it("should report multiple errors for multiple violations", () => {

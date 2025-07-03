@@ -1,4 +1,4 @@
-import type { ERBBlockNode, Node, Token} from "@herb-tools/core"
+import type { Node, Token} from "@herb-tools/core"
 import type { Rule, LintMessage } from "../types.js"
 import { BaseRuleVisitor, isERBNode } from "./rule-utils.js"
 
@@ -13,10 +13,9 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (!isERBNode(node)) {
       return
     }
-    const erbNode = node as ERBBlockNode
-    const openTag = erbNode.tag_opening
-    const closeTag = erbNode.tag_closing
-    const content = erbNode.content
+    const openTag = node.tag_opening
+    const closeTag = node.tag_closing
+    const content = node.content
 
     if (!openTag || !closeTag || !content) {
       return
@@ -29,25 +28,27 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   }
 
   private checkOpenTagWhitespace(openTag: Token, content:string):void {
-    if (!/^\s/.test(content)) {
-      this.messages.push({
-        rule: this.ruleName,
-        message: "ERB tags must have whitespace after opening tag.",
-        location: openTag.location,
-        severity: "error"
-      })
+    if (content.startsWith(" ")) {
+      return 
     }
+    this.messages.push({
+      rule: this.ruleName,
+      message: `Add whitespace after ${openTag.value}`,
+      location: openTag.location,
+      severity: "error"
+    })
   }
 
   private checkCloseTagWhitespace(closeTag: Token, content:string):void {
-    if (!/\s$/.test(content)) {
-      this.messages.push({
-        rule: this.ruleName,
-        message: "ERB tags must have whitespace before closing tag.",
-        location: closeTag.location,
-        severity: "error"
-      })
+    if (content.endsWith(" ")) {
+      return
     }
+    this.messages.push({
+      rule: this.ruleName,
+      message: `Add whitespace before ${closeTag.value}`,
+      location: closeTag.location,
+      severity: "error"
+    })
   }
 }
 
