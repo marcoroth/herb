@@ -2,7 +2,7 @@
 name: Linter Rule Proposal
 about: Propose a new rule for the Herb Linter
 title: 'Linter Rule: '
-labels: enhancement, linter
+labels: linter, linter-rule
 assignees: ''
 
 ---

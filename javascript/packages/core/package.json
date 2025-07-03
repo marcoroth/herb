@@ -31,7 +31,6 @@
     }
   },
   "dependencies": {},
-  "devDependencies": {},
   "files": [
     "package.json",
     "README.md",

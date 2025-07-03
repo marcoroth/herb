@@ -11,7 +11,13 @@ require "English"
 
 module Herb
   class Project
-    attr_accessor :project_path, :output_file
+    attr_accessor :project_path, :output_file, :no_interactive
+
+    def interactive?
+      return false if no_interactive
+
+      !IO.console.nil?
+    end
 
     def initialize(project_path, output_file: nil)
       @project_path = Pathname.new(
@@ -57,7 +63,7 @@ module Herb
           next
         end
 
-        print "\e[H\e[2J"
+        print "\e[H\e[2J" if interactive?
 
         successful_files = []
         failed_files = []
@@ -77,37 +83,43 @@ module Herb
           lines_to_clear += 3 if total_timeout.positive?
           lines_to_clear += 3 if total_errors.positive?
 
-          lines_to_clear.times { print "\e[1A\e[K" } if index.positive?
+          lines_to_clear.times { print "\e[1A\e[K" } if index.positive? && interactive?
 
-          puts "Parsing .html.erb files in: #{project_path}"
-          puts "Total files to process: #{files.count}\n"
+          if interactive?
+            puts "Parsing .html.erb files in: #{project_path}"
+            puts "Total files to process: #{files.count}\n"
 
-          relative_path = file_path.sub("#{project_path}/", "")
+            relative_path = file_path.sub("#{project_path}/", "")
 
-          puts
-          puts progress_bar(index + 1, files.count)
-          puts
+            puts
+            puts progress_bar(index + 1, files.count)
+            puts
+          else
+            relative_path = file_path.sub("#{project_path}/", "")
+          end
           puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}"
 
-          if failed_files.any?
-            puts
-            puts "Files that failed:"
-            failed_files.each { |file| puts "  - #{file}" }
-            puts
-          end
+          if interactive?
+            if failed_files.any?
+              puts
+              puts "Files that failed:"
+              failed_files.each { |file| puts "  - #{file}" }
+              puts
+            end
 
-          if timeout_files.any?
-            puts
-            puts "Files that timed out:"
-            timeout_files.each { |file| puts "  - #{file}" }
-            puts
-          end
+            if timeout_files.any?
+              puts
+              puts "Files that timed out:"
+              timeout_files.each { |file| puts "  - #{file}" }
+              puts
+            end
 
-          if error_files.any?
-            puts
-            puts "Files with parse errors:"
-            error_files.each { |file| puts "  - #{file}" }
-            puts
+            if error_files.any?
+              puts
+              puts "Files with parse errors:"
+              error_files.each { |file| puts "  - #{file}" }
+              puts
+            end
           end
 
           begin
@@ -214,10 +226,13 @@ module Herb
           end
         end
 
-        print "\e[1A\e[K"
-        puts "Completed processing all files."
-
-        print "\e[H\e[2J"
+        if interactive?
+          print "\e[1A\e[K"
+          puts "Completed processing all files."
+          print "\e[H\e[2J"
+        else
+          puts "Completed processing all files."
+        end
 
         log.puts ""
 
@@ -339,7 +354,7 @@ module Herb
 
     private
 
-    def progress_bar(current, total, width = IO.console.winsize[1] - "[] 100% (#{total}/#{total})".length)
+    def progress_bar(current, total, width = (IO.console&.winsize&.[](1) || 80) - "[] 100% (#{total}/#{total})".length)
       progress = current.to_f / total
       completed_length = (progress * width).to_i
       completed = "█" * completed_length
