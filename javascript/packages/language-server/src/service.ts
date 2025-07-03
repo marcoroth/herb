@@ -3,6 +3,8 @@ import { Connection, InitializeParams } from "vscode-languageserver/node"
 import { Settings, HerbSettings } from "./settings"
 import { DocumentService } from "./document_service"
 import { Diagnostics } from "./diagnostics"
+import { ParserService } from "./parser_service"
+import { LinterService } from "./linter_service"
 import { Config } from "./config"
 import { Project } from "./project"
 
@@ -11,6 +13,8 @@ export class Service {
   settings: Settings
   diagnostics: Diagnostics
   documentService: DocumentService
+  parserService: ParserService
+  linterService: LinterService
   project: Project
   config?: Config
 
@@ -19,7 +23,9 @@ export class Service {
     this.settings = new Settings(params, this.connection)
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.settings)
+    this.parserService = new ParserService()
+    this.linterService = new LinterService(this.settings)
+    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService)
 
     // Initialize global settings from initialization options
     if (params.initializationOptions) {

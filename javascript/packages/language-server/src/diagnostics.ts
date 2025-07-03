@@ -1,111 +1,40 @@
-import { Connection, Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Herb, Visitor } from "@herb-tools/node-wasm"
-import { Linter } from "@herb-tools/linter"
+import { Connection, Diagnostic } from "vscode-languageserver/node"
 
+import { ParserService } from "./parser_service"
+import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
-import { Settings } from "./settings"
-
-import type { Node, HerbError, DocumentNode } from "@herb-tools/node-wasm"
-
-class ErrorVisitor extends Visitor {
-  private diagnostics: Diagnostics
-  private textDocument: TextDocument
-
-  constructor(diagnostics: Diagnostics, textDocument: TextDocument) {
-    super()
-    this.diagnostics = diagnostics
-    this.textDocument = textDocument
-  }
-
-  visitChildNodes(node: Node) {
-    super.visitChildNodes(node)
-
-    node.errors.forEach(error => this.publishDiagnosticForError(error, node))
-  }
-
-  private publishDiagnosticForError(error: HerbError, node: Node): void {
-    this.diagnostics.pushDiagnosticForParser(
-      error.message,
-      error.type,
-      this.rangeFromHerbError(error),
-      this.textDocument,
-      {
-        error: error.toJSON(),
-        node: node.toJSON()
-      },
-      DiagnosticSeverity.Error
-    )
-  }
-
-  private rangeFromHerbError(error: HerbError): Range {
-    return Range.create(
-      Position.create(error.location.start.line - 1, error.location.start.column),
-      Position.create(error.location.end.line - 1, error.location.end.column),
-    )
-  }
-}
 
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
-  private readonly settings: Settings
-  private readonly parserDiagnosticsSource = "Herb Parser "
-  private readonly linterDiagnosticsSource = "Herb Linter "
+  private readonly parserService: ParserService
+  private readonly linterService: LinterService
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
     connection: Connection,
     documentService: DocumentService,
-    settings: Settings,
+    parserService: ParserService,
+    linterService: LinterService,
   ) {
     this.connection = connection
     this.documentService = documentService
-    this.settings = settings
+    this.parserService = parserService
+    this.linterService = linterService
   }
 
   async validate(textDocument: TextDocument) {
-    const content = textDocument.getText()
-    const result = Herb.parse(content)
+    const parseResult = this.parserService.parseDocument(textDocument)
+    const lintResult = await this.linterService.lintDocument(parseResult.document, textDocument)
 
-    const errorVisitor = new ErrorVisitor(this, textDocument)
-    result.visit(errorVisitor)
+    const allDiagnostics = [
+      ...parseResult.diagnostics,
+      ...lintResult.diagnostics,
+    ]
 
-    await this.runLinter(result.value, textDocument)
-
+    this.diagnostics.set(textDocument, allDiagnostics)
     this.sendDiagnosticsFor(textDocument)
-  }
-
-  private async runLinter(document: DocumentNode, textDocument: TextDocument) {
-    const settings = await this.settings.getDocumentSettings(textDocument.uri)
-    const linterEnabled = settings.linter?.enabled ?? true
-
-    if (!linterEnabled) {
-      return
-    }
-
-    const linter = new Linter()
-    const lintResult = linter.lint(document)
-
-    lintResult.offenses.forEach(offense => {
-      const severity = offense.severity === "error"
-        ? DiagnosticSeverity.Error
-        : DiagnosticSeverity.Warning
-
-      const range = Range.create(
-        Position.create(offense.location.start.line - 1, offense.location.start.column),
-        Position.create(offense.location.end.line - 1, offense.location.end.column),
-      )
-
-      this.pushDiagnosticForLinter(
-        offense.message,
-        offense.rule,
-        range,
-        textDocument,
-        { rule: offense.rule },
-        severity
-      )
-    })
   }
 
   async refreshDocument(document: TextDocument) {
@@ -115,59 +44,6 @@ export class Diagnostics {
   async refreshAllDocuments() {
     const documents = this.documentService.getAll()
     await Promise.all(documents.map(document => this.refreshDocument(document)))
-  }
-
-  pushDiagnosticForParser(
-    message: string,
-    code: string,
-    range: Range,
-    textDocument: TextDocument,
-    data = {},
-    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
-  ) {
-    return this.pushDiagnostic(this.parserDiagnosticsSource, message, code, range, textDocument, data, severity)
-  }
-
-  pushDiagnosticForLinter(
-    message: string,
-    code: string,
-    range: Range,
-    textDocument: TextDocument,
-    data = {},
-    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
-  ) {
-    const codeDescription: CodeDescription = {
-      href: `https://herb-tools.dev/linter/rules/${code}`
-    }
-    return this.pushDiagnostic(this.linterDiagnosticsSource, message, code, range, textDocument, data, severity, codeDescription)
-  }
-
-  private pushDiagnostic(
-    source: string,
-    message: string,
-    code: string,
-    range: Range,
-    textDocument: TextDocument,
-    data = {},
-    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
-    codeDescription?: CodeDescription,
-  ) {
-    const diagnostic: Diagnostic = {
-      source,
-      severity,
-      range,
-      message,
-      code,
-      data,
-      ...(codeDescription && { codeDescription }),
-    }
-
-    const diagnostics = this.diagnostics.get(textDocument) || []
-    diagnostics.push(diagnostic)
-
-    this.diagnostics.set(textDocument, diagnostics)
-
-    return diagnostic
   }
 
   private sendDiagnosticsFor(textDocument: TextDocument) {
