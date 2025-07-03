@@ -1,10 +1,31 @@
-// import express from "express"
-
 import { defineConfig } from "vite"
+import { execSync } from "child_process"
 
-// import type { Request, Response } from "express"
+function getCommitInfo() {
+  try {
+    const hash = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
+    const tag = execSync("git describe --tags --abbrev=0", { encoding: "utf8" }).trim()
+    const commitsAhead = execSync(`git rev-list --count ${tag}..HEAD`, { encoding: "utf8" }).trim()
+
+    return {
+      hash,
+      tag,
+      ahead: parseInt(commitsAhead, 10)
+    }
+  } catch (error) {
+    console.warn("Could not get git commit info:", error)
+    return {
+      hash: "unknown",
+      tag: "unknown",
+      ahead: 0
+    }
+  }
+}
 
 export default defineConfig({
+  define: {
+    __COMMIT_INFO__: JSON.stringify(getCommitInfo()),
+  },
   server: {
     port: process.env.PORT ? parseInt(process.env.PORT) : 5173,
     allowedHosts: ["playground.herb-tools.dev"],
