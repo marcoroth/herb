@@ -8,7 +8,7 @@ export interface LintOffense {
 }
 
 export interface LintResult {
-  messages: LintOffense[]
+  offenses: LintOffense[]
   errors: number
   warnings: number
 }

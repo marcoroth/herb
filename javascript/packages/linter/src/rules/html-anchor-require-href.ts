@@ -17,7 +17,7 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
     }
 
     if (!hasAttribute(node, "href")) {
-      this.addMessage(
+      this.addOffense(
         "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
         node.tag_name!.location,
         "error",
@@ -34,6 +34,6 @@ export class HTMLAnchorRequireHrefRule implements Rule {
 
     visitor.visit(node)
 
-    return visitor.messages
+    return visitor.offenses
   }
 }

@@ -24,7 +24,7 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
     if (!tagName) return
 
     if (tagName !== tagName.toLowerCase()) {
-      this.addMessage(
+      this.addOffense(
         `Tag name \`${tagName}\` should be lowercase. Use \`${tagName.toLowerCase()}\` instead.`,
         node.tag_name!.location,
         "error"
@@ -39,6 +39,6 @@ export class HTMLTagNameLowercaseRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new TagNameLowercaseVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

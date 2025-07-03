@@ -8,7 +8,7 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
     if (!isBooleanAttribute(attributeName)) return
     if (!hasAttributeValue(attributeNode)) return
 
-    this.addMessage(
+    this.addOffense(
       `Boolean attribute \`${attributeName}\` should not have a value. Use \`${attributeName}\` instead of \`${attributeName}="${attributeName}"\`.`,
       attributeNode.value!.location,
       "error"
@@ -22,6 +22,6 @@ export class HTMLBooleanAttributesNoValueRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

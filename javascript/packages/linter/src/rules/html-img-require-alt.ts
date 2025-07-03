@@ -22,7 +22,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
     }
 
     if (!hasAttribute(node, "alt")) {
-      this.addMessage(
+      this.addOffense(
         'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
         node.tag_name!.location,
         "error"
@@ -37,6 +37,6 @@ export class HTMLImgRequireAltRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new ImgRequireAltVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

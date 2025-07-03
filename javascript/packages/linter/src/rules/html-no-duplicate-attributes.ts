@@ -37,7 +37,7 @@ class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
         for (let i = 1; i < nameNodes.length; i++) {
           const nameNode = nameNodes[i]
 
-          this.addMessage(
+          this.addOffense(
             `Duplicate attribute \`${attributeName}\` found on tag. Remove the duplicate occurrence.`,
             nameNode.location,
             "error"
@@ -54,6 +54,6 @@ export class HTMLNoDuplicateAttributesRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new NoDuplicateAttributesVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

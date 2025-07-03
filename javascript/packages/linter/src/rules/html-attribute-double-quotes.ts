@@ -9,7 +9,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
     if (getAttributeValueQuoteType(attributeNode) !== "single") return
     if (attributeValue?.includes('"')) return // Single quotes acceptable when value contains double quotes
 
-    this.addMessage(
+    this.addOffense(
       `Attribute \`${attributeName}\` uses single quotes. Prefer double quotes for HTML attribute values: \`${attributeName}="value"\`.`,
       attributeNode.value!.location,
       "warning"
@@ -23,6 +23,6 @@ export class HTMLAttributeDoubleQuotesRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new AttributeDoubleQuotesVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

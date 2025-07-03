@@ -38,7 +38,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
         ? `\`<${tagName}>\``
         : `\`<${tagName} role="heading">\``
 
-      this.addMessage(
+      this.addOffense(
         `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
         node.location,
         "error"
@@ -65,7 +65,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       ? `\`<${tagName}>\``
       : `\`<${tagName} role="heading">\``
 
-    this.addMessage(
+    this.addOffense(
       `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
       node.tag_name!.location,
       "error"
@@ -180,6 +180,6 @@ export class HTMLNoEmptyHeadingsRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new NoEmptyHeadingsVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

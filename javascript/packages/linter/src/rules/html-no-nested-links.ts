@@ -8,7 +8,7 @@ class NestedLinkVisitor extends BaseRuleVisitor {
 
   private checkNestedLink(openTag: HTMLOpenTagNode): boolean {
     if (this.linkStack.length > 0) {
-      this.addMessage(
+      this.addOffense(
         "Nested `<a>` elements are not allowed. Links cannot contain other links.",
         openTag.tag_name!.location,
         "error"
@@ -60,6 +60,6 @@ export class HTMLNoNestedLinksRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new NestedLinkVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

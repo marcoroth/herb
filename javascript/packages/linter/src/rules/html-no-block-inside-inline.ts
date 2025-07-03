@@ -22,7 +22,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     const parentInline = this.inlineStack[this.inlineStack.length - 1]
     const elementType = isBlock ? "Block-level" : "Unknown"
 
-    this.addMessage(
+    this.addOffense(
       `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
       openTag.tag_name!.location,
       "error"
@@ -79,6 +79,6 @@ export class HTMLNoBlockInsideInlineRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new BlockInsideInlineVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

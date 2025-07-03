@@ -10,7 +10,7 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
     if (!node.content) return
     if (node.content.value.trim().length > 0) return
 
-    this.addMessage(
+    this.addOffense(
       "ERB tag should not be empty. Remove empty ERB tags or add content.",
       node.location,
       "error"
@@ -26,6 +26,6 @@ export class ERBNoEmptyTagsRule implements Rule {
 
     visitor.visit(node)
 
-    return visitor.messages
+    return visitor.offenses
   }
 }

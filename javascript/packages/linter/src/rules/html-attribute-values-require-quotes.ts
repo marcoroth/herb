@@ -10,7 +10,7 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     const valueNode = attributeNode.value as HTMLAttributeValueNode
     if (valueNode.quoted) return
 
-    this.addMessage(
+    this.addOffense(
       `Attribute value should be quoted: \`${attributeName}="value"\`. Always wrap attribute values in quotes.`,
       valueNode.location,
       "error"
@@ -24,6 +24,6 @@ export class HTMLAttributeValuesRequireQuotesRule implements Rule {
   check(node: Node): LintOffense[] {
     const visitor = new AttributeValuesRequireQuotesVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }
