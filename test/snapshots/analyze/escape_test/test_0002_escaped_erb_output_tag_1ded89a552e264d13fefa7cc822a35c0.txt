@@ -1,0 +1,8 @@
+@ DocumentNode (location: (1:0)-(1:15))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:15))
+        ├── tag_opening: "<%%=" (location: (1:0)-(1:4))
+        ├── content: " 'Test' " (location: (1:4)-(1:12))
+        ├── tag_closing: "%%>" (location: (1:12)-(1:15))
+        ├── parsed: false
+        └── valid: true

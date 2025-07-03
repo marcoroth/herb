@@ -16,7 +16,7 @@ describe("html-no-nested-links", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for directly nested links", () => {
@@ -27,11 +27,11 @@ describe("html-no-nested-links", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].id).toBe("html-no-nested-links")
-    expect(lintResult.messages[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-nested-links")
+    expect(lintResult.offenses[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for indirectly nested links", () => {
@@ -41,7 +41,7 @@ describe("html-no-nested-links", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+    expect(lintResult.offenses[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
   })
 
   test("passes for links in different containers", () => {
@@ -71,7 +71,7 @@ describe("html-no-nested-links", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
+    expect(lintResult.offenses[0].message).toBe("Nested `<a>` elements are not allowed. Links cannot contain other links.")
   })
 
   test("passes for links with complex content", () => {

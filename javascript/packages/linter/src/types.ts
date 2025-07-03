@@ -1,18 +1,21 @@
-import type { Location, Node, Diagnostic } from "@herb-tools/core"
+import { Node, Diagnostic } from "@herb-tools/core"
 
-export interface LintMessage extends Diagnostic {
+export type LintSeverity = "error" | "warning"
 
+export interface LintOffense extends Diagnostic {
+  rule: string
+  severity: LintSeverity
 }
 
 export interface LintResult {
-  messages: LintMessage[]
+  offenses: LintOffense[]
   errors: number
   warnings: number
 }
 
 export interface Rule {
   name: string
-  check(node: Node): LintMessage[]
+  check(node: Node): LintOffense[]
 }
 
 /**

@@ -209,7 +209,7 @@ export class Highlighter {
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
 
             const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.id, "gray")
+            const diagnosticId = colorize(diagnostic.code || "-", "gray")
             const highlightedMessage = this.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText = this.applyDimToStyledText(diagnosticText)
@@ -222,7 +222,7 @@ export class Highlighter {
             output += `${pointerSpacing}${pointer}\n`
 
             const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.id, "gray")
+            const diagnosticId = colorize(diagnostic.code || "-", "gray")
             const highlightedMessage = this.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText = this.applyDimToStyledText(diagnosticText)

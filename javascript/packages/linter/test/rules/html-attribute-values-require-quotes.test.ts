@@ -16,7 +16,7 @@ describe("html-attribute-values-require-quotes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for unquoted attribute values", () => {
@@ -27,11 +27,11 @@ describe("html-attribute-values-require-quotes", () => {
 
     expect(lintResult.errors).toBe(2) // Both id and class are unquoted
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
 
-    expect(lintResult.messages[0].id).toBe("html-attribute-values-require-quotes")
-    expect(lintResult.messages[0].message).toBe('Attribute value should be quoted: `id="value"`. Always wrap attribute values in quotes.')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-attribute-values-require-quotes")
+    expect(lintResult.offenses[0].message).toBe('Attribute value should be quoted: `id="value"`. Always wrap attribute values in quotes.')
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("passes for single-quoted values", () => {
@@ -61,7 +61,7 @@ describe("html-attribute-values-require-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) // Only name is unquoted
-    expect(lintResult.messages[0].message).toBe('Attribute value should be quoted: `name="value"`. Always wrap attribute values in quotes.')
+    expect(lintResult.offenses[0].message).toBe('Attribute value should be quoted: `name="value"`. Always wrap attribute values in quotes.')
   })
 
   test("handles ERB in quoted attributes", () => {
@@ -81,7 +81,7 @@ describe("html-attribute-values-require-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Attribute value should be quoted: `src="value"`. Always wrap attribute values in quotes.')
+    expect(lintResult.offenses[0].message).toBe('Attribute value should be quoted: `src="value"`. Always wrap attribute values in quotes.')
   })
 
   test("handles complex attribute values", () => {
@@ -91,7 +91,7 @@ describe("html-attribute-values-require-quotes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Attribute value should be quoted: `title="value"`. Always wrap attribute values in quotes.')
+    expect(lintResult.offenses[0].message).toBe('Attribute value should be quoted: `title="value"`. Always wrap attribute values in quotes.')
   })
 
   test("ignores closing tags", () => {

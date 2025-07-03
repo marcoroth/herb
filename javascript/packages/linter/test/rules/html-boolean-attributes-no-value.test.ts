@@ -16,7 +16,7 @@ describe("html-boolean-attributes-no-value", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for boolean attributes with explicit values", () => {
@@ -27,15 +27,15 @@ describe("html-boolean-attributes-no-value", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
 
-    expect(lintResult.messages[0].id).toBe("html-boolean-attributes-no-value")
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-boolean-attributes-no-value")
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
+    expect(lintResult.offenses[0].severity).toBe("error")
 
-    expect(lintResult.messages[1].id).toBe("html-boolean-attributes-no-value")
-    expect(lintResult.messages[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
-    expect(lintResult.messages[1].severity).toBe("error")
+    expect(lintResult.offenses[1].rule).toBe("html-boolean-attributes-no-value")
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
+    expect(lintResult.offenses[1].severity).toBe("error")
   })
 
   test("fails for boolean attributes with true/false values", () => {
@@ -45,7 +45,7 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
   })
 
   test("passes for non-boolean attributes with values", () => {
@@ -65,8 +65,8 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `multiple` should not have a value. Use `multiple` instead of `multiple="multiple"`.')
-    expect(lintResult.messages[1].message).toBe('Boolean attribute `selected` should not have a value. Use `selected` instead of `selected="selected"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `multiple` should not have a value. Use `multiple` instead of `multiple="multiple"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `selected` should not have a value. Use `selected` instead of `selected="selected"`.')
   })
 
   test("handles self-closing tags with boolean attributes", () => {
@@ -76,8 +76,8 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
-    expect(lintResult.messages[1].message).toBe('Boolean attribute `required` should not have a value. Use `required` instead of `required="required"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `required` should not have a value. Use `required` instead of `required="required"`.')
   })
 
   test("handles case insensitive boolean attributes", () => {
@@ -87,8 +87,8 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
-    expect(lintResult.messages[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
   })
 
   test("passes for video controls", () => {
@@ -108,8 +108,8 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
-    expect(lintResult.messages[1].message).toBe('Boolean attribute `autoplay` should not have a value. Use `autoplay` instead of `autoplay="autoplay"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `autoplay` should not have a value. Use `autoplay` instead of `autoplay="autoplay"`.')
   })
 
   test("fails for boolean attribute with different value", () => {
@@ -119,7 +119,7 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
   })
 
   test("handles mixed boolean and regular attributes", () => {
@@ -129,6 +129,6 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Boolean attribute `novalidate` should not have a value. Use `novalidate` instead of `novalidate="novalidate"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `novalidate` should not have a value. Use `novalidate` instead of `novalidate="novalidate"`.')
   })
 })

@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
+import type { Rule, LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
@@ -22,7 +22,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     const parentInline = this.inlineStack[this.inlineStack.length - 1]
     const elementType = isBlock ? "Block-level" : "Unknown"
 
-    this.addMessage(
+    this.addOffense(
       `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
       openTag.tag_name!.location,
       "error"
@@ -76,9 +76,9 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
 export class HTMLNoBlockInsideInlineRule implements Rule {
   name = "html-no-block-inside-inline"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new BlockInsideInlineVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

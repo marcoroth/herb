@@ -2,37 +2,37 @@
 name: Linter Rule Proposal
 about: Propose a new rule for the Herb Linter
 title: 'Linter Rule: '
-labels: enhancement, linter
+labels: linter, linter-rule
 assignees: ''
 
 ---
 
-### Rule: `[linter-rule-name-here]`
+**Rule:** `[linter-rule-name-here]`
 
-##### Description
+## Description
 
 <!--- Briefly describe what the rule enforces. -->
 
-##### Rationale
+## Rationale
 
 <!--- Why is this rule important? -->
 
-#### Examples
+## Examples
 
 <!-- Provide examples of valid (✅ good) and invalid (🚫 bad) code. -->
 
-##### ✅ Good
+### ✅ Good
 
-```html+erb
-
-```
-
-##### 🚫 Bad
-
-```html+erb
+```erb
 
 ```
 
-#### References
+### 🚫 Bad
+
+```erb
+
+```
+
+## References
 
 <!--- -->

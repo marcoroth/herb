@@ -16,7 +16,7 @@ describe("html-no-duplicate-attributes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for duplicate attributes", () => {
@@ -27,11 +27,11 @@ describe("html-no-duplicate-attributes", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].id).toBe("html-no-duplicate-attributes")
-    expect(lintResult.messages[0].message).toBe('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-duplicate-attributes")
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for multiple duplicate attributes", () => {
@@ -42,7 +42,7 @@ describe("html-no-duplicate-attributes", () => {
 
     expect(lintResult.errors).toBe(2) // One for type, one for class
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   test("handles case-insensitive duplicates", () => {
@@ -52,7 +52,7 @@ describe("html-no-duplicate-attributes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
   })
 
   test("passes for different attributes", () => {
@@ -72,7 +72,7 @@ describe("html-no-duplicate-attributes", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Duplicate attribute `src` found on tag. Remove the duplicate occurrence.')
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `src` found on tag. Remove the duplicate occurrence.')
   })
 
   test("handles ERB templates with attributes", () => {

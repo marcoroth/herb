@@ -136,24 +136,24 @@ export class CLI {
         ruleCount = linter.getRuleCount()
       }
 
-      if (lintResult.messages.length === 0) {
+      if (lintResult.offenses.length === 0) {
         if (files.length === 1) {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
         // Collect messages for later display
-        for (const diagnostic of lintResult.messages) {
-          allDiagnostics.push({ filename, diagnostic, content })
+        for (const offense of lintResult.offenses) {
+          allDiagnostics.push({ filename, diagnostic: offense, content })
 
-          const ruleData = ruleViolations.get(diagnostic.id) || { count: 0, files: new Set() }
+          const ruleData = ruleViolations.get(offense.rule) || { count: 0, files: new Set() }
           ruleData.count++
           ruleData.files.add(filename)
-          ruleViolations.set(diagnostic.id, ruleData)
+          ruleViolations.set(offense.rule, ruleData)
         }
 
         if (this.formatOption === 'simple') {
           console.log("")
-          this.displaySimpleFormat(filename, lintResult.messages)
+          this.displaySimpleFormat(filename, lintResult.offenses)
         }
 
         totalErrors += lintResult.errors
@@ -171,7 +171,7 @@ export class CLI {
     for (const diagnostic of diagnostics) {
       const isError = diagnostic.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const rule = colorize(`(${diagnostic.id})`, "blue")
+      const rule = colorize(`(${diagnostic.code})`, "blue")
       const locationString = `${diagnostic.location.start.line}:${diagnostic.location.start.column}`
       const paddedLocation = locationString.padEnd(4) // Pad to 4 characters for alignment
 

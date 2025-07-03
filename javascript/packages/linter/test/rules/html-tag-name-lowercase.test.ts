@@ -16,7 +16,7 @@ describe("html-tag-name-lowercase", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for uppercase tag names", () => {
@@ -27,11 +27,11 @@ describe("html-tag-name-lowercase", () => {
 
     expect(lintResult.errors).toBe(4) // DIV open, DIV close, SPAN open, SPAN close
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(4)
+    expect(lintResult.offenses).toHaveLength(4)
 
-    expect(lintResult.messages[0].id).toBe("html-tag-name-lowercase")
-    expect(lintResult.messages[0].message).toBe('Tag name `DIV` should be lowercase. Use `div` instead.')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-tag-name-lowercase")
+    expect(lintResult.offenses[0].message).toBe('Tag name `DIV` should be lowercase. Use `div` instead.')
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for mixed case tag names", () => {
@@ -42,9 +42,9 @@ describe("html-tag-name-lowercase", () => {
 
     expect(lintResult.errors).toBe(4)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(4)
+    expect(lintResult.offenses).toHaveLength(4)
 
-    expect(lintResult.messages[0].message).toBe('Tag name `Div` should be lowercase. Use `div` instead.')
+    expect(lintResult.offenses[0].message).toBe('Tag name `Div` should be lowercase. Use `div` instead.')
   })
 
   test("handles self-closing tags", () => {
@@ -54,7 +54,7 @@ describe("html-tag-name-lowercase", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe('Tag name `IMG` should be lowercase. Use `img` instead.')
+    expect(lintResult.offenses[0].message).toBe('Tag name `IMG` should be lowercase. Use `img` instead.')
   })
 
   test("passes for valid self-closing tags", () => {
@@ -115,7 +115,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.errors).toBe(14)
     expect(lintResult.warnings).toBe(0)
 
-    const errorMessages = lintResult.messages.map(message => message.message)
+    const errorMessages = lintResult.offenses.map(message => message.message)
     expect(errorMessages.some(msg => msg.includes('ARTICLE'))).toBe(true)
     expect(errorMessages.some(msg => msg.includes('HEADER'))).toBe(true)
     expect(errorMessages.some(msg => msg.includes('H1'))).toBe(true)

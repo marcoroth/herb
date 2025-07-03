@@ -1,54 +1,54 @@
 # Linter Rule: Disallow empty headings
 
-### Rule: `html-no-empty-headings`
+**Rule:** `html-no-empty-headings`
 
-##### Description
+## Description
 
 Disallow headings (h1, h2, etc.) with no accessible text content.
 
-##### Rationale
+## Rationale
 
 Headings relay the structure of a webpage and provide a meaningful, hierarchical order of its content. If headings are empty or its text contents are inaccessible, this could confuse users or prevent them accessing sections of interest.
 
-#### Examples
+## Examples
 
-##### ✅ Good
+### ✅ Good
 
-```html+erb
+```erb
 <h*>Heading Content</h*>
 ```
 
-```html+erb
+```erb
 <h*><span>Text</span><h*>
 ```
 
-```html+erb
+```erb
 <div role="heading" aria-level="1">Heading Content</div>
 ```
 
-```html+erb
+```erb
 <h* aria-hidden="true">Heading Content</h*>
 ```
 
-```html+erb
+```erb
 <h* hidden>Heading Content</h*>
 ```
 
-##### 🚫 Bad
+### 🚫 Bad
 
-```html+erb
+```erb
 <h*></h*>
 ```
 
-```html+erb
+```erb
 <div role="heading" aria-level="1"></div>
 ```
 
-```html+erb
+```erb
 <h*><span aria-hidden="true">Inaccessible text</span></h*>
 ```
 
-#### References
+## References
 
 - [`<h1>`–`<h6>`: The HTML Section Heading elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/Heading_Elements)
 - [ARIA: `heading` role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/heading_role)

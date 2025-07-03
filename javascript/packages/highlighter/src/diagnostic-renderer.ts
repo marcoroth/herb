@@ -36,7 +36,7 @@ export class DiagnosticRenderer {
     const isError = diagnostic.severity === "error"
     const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
     const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
-    const diagnosticId = colorize(diagnostic.id, "gray")
+    const diagnosticId = colorize(diagnostic.code || "-", "gray")
 
     const originalLines = content.split("\n")
     const targetLineNumber = diagnostic.location.start.line

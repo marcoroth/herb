@@ -1,19 +1,42 @@
-## Herb Highlighter
+# Herb Highlighter
 
-##### Package: [`@herb-tools/highlighter`](https://www.npmjs.com/package/@herb-tools/highlighter)
+**Package:** [`@herb-tools/highlighter`](https://www.npmjs.com/package/@herb-tools/highlighter)
 
 ---
 
-Syntax highlighter and diagnostic renderer for HTML+ERB templates with
-terminal color support.
+Syntax highlighter and diagnostic renderer for HTML+ERB templates with terminal color support.
 
-## Building
+## Installation
 
-Run `yarn build` to build the library.
+:::code-group
+```shell [npm]
+npm add @herb-tools/highlighter
+```
 
-## Running unit tests
+```shell [pnpm]
+pnpm add @herb-tools/highlighter
+```
 
-Run `yarn test` to execute the unit tests via [Vitest](https://vitest.dev/).
+```shell [yarn]
+yarn add @herb-tools/highlighter
+```
+
+```shell [bun]
+bun add @herb-tools/highlighter
+```
+:::
+
+<!-- ### Usage -->
+
+<!-- TODO -->
+
+<!-- #### Configuration Options -->
+
+<!-- TODO -->
+
+<!-- #### CLI Usage -->
+
+<!-- TODO -->
 
 ## Basic Setup
 
