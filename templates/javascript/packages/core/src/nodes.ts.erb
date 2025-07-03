@@ -347,3 +347,9 @@ export function fromSerializedNode(node: SerializedNode): Node {
       throw new Error(`Unknown node type: ${node.type}`);
   }
 }
+
+export type ERBNode =
+  <%- nodes.each_with_index.map do |node, index| -%>
+    <%- next unless node.name.start_with?("ERB") -%>
+  | <%= node.name %>
+  <%- end -%>
