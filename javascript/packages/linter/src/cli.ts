@@ -180,13 +180,15 @@ ${contextLines.trimEnd()}
     totalWarnings: number,
     filesWithIssues: number,
     ruleCount: number,
-    allMessages: Array<{filename: string, message: any, content: string}>
+    allMessages: Array<{filename: string, message: any, content: string}>,
+    ruleViolations: Map<string, { count: number, files: Set<string> }>
   }> {
     let totalErrors = 0
     let totalWarnings = 0
     let filesWithIssues = 0
     let ruleCount = 0
     const allMessages: Array<{filename: string, message: any, content: string}> = []
+    const ruleViolations = new Map<string, { count: number, files: Set<string> }>()
 
     for (const filename of files) {
       const filePath = resolve(filename)
@@ -222,6 +224,11 @@ ${contextLines.trimEnd()}
         // Collect messages for later display
         for (const message of lintResult.messages) {
           allMessages.push({ filename, message, content })
+
+          const ruleData = ruleViolations.get(message.rule) || { count: 0, files: new Set() }
+          ruleData.count++
+          ruleData.files.add(filename)
+          ruleViolations.set(message.rule, ruleData)
         }
 
         if (this.formatOption === 'simple') {
@@ -235,7 +242,7 @@ ${contextLines.trimEnd()}
       }
     }
 
-    return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages }
+    return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages, ruleViolations }
   }
 
   private displaySimpleFormat(filename: string, messages: any[]): void {
@@ -275,40 +282,64 @@ ${contextLines.trimEnd()}
     }
   }
 
-  private displaySummary(files: string[], totalErrors: number, totalWarnings: number, filesWithIssues: number, ruleCount: number, startTime: number, startDate: Date): void {
-    console.log("")
+  private displayMostViolatedRules(ruleViolations: Map<string, { count: number, files: Set<string> }>, limit: number = 5): void {
+    if (ruleViolations.size === 0) return
+
+    const allRules = Array.from(ruleViolations.entries()).sort((a, b) => b[1].count - a[1].count)
+    const displayedRules = allRules.slice(0, limit)
+    const remainingRules = allRules.slice(limit)
+
+    const title = ruleViolations.size <= limit ? "Rule violations:" : "Most violated rules:"
+    console.log(` ${colorize(title, "bold")}`)
+
+    for (const [rule, data] of displayedRules) {
+      const fileCount = data.files.size
+      const countText = `(${data.count} ${this.pluralize(data.count, "violation")} in ${fileCount} ${this.pluralize(fileCount, "file")})`
+      console.log(`  ${colorize(rule, "gray")} ${colorize(colorize(countText, "gray"), "dim")}`)
+    }
+
+    if (remainingRules.length > 0) {
+      const remainingViolationCount = remainingRules.reduce((sum, [_, data]) => sum + data.count, 0)
+      const remainingRuleCount = remainingRules.length
+      console.log(colorize(colorize(`\n  ...and ${remainingRuleCount} more ${this.pluralize(remainingRuleCount, "rule")} with ${remainingViolationCount} ${this.pluralize(remainingViolationCount, "violation")}`, "gray"), "dim"))
+    }
+  }
+
+  private displaySummary(files: string[], totalErrors: number, totalWarnings: number, filesWithViolations: number, ruleCount: number, startTime: number, startDate: Date): void {
+    console.log("\n")
+    console.log(` ${colorize("Summary:", "bold")}`)
 
     // Calculate padding for alignment
-    const labelWidth = 11 // Width for the longest label "Files"
+    const labelWidth = 12 // Width for the longest label "Violations"
     const pad = (label: string) => label.padEnd(labelWidth)
 
     // Checked summary
-    console.log(` ${colorize(pad("Checked"), "gray")} ${colorize(`${files.length} ${this.pluralize(files.length, "file")}`, "cyan")}`)
+    console.log(`  ${colorize(pad("Checked"), "gray")} ${colorize(`${files.length} ${this.pluralize(files.length, "file")}`, "cyan")}`)
 
     // Files summary (for multiple files)
     if (files.length > 1) {
       const filesChecked = files.length
-      const filesClean = filesChecked - filesWithIssues
+      const filesClean = filesChecked - filesWithViolations
 
       let filesSummary = ""
       let shouldDim = false
 
-      if (filesWithIssues > 0) {
-        filesSummary = `${colorize(colorize(`${filesWithIssues} with issues`, "brightRed"), "bold")} | ${colorize(colorize(`${filesClean} clean`, "green"), "bold")} ${colorize(colorize(`(${filesChecked} total)`, "gray"), "dim")}`
+      if (filesWithViolations > 0) {
+        filesSummary = `${colorize(colorize(`${filesWithViolations} with violations`, "brightRed"), "bold")} | ${colorize(colorize(`${filesClean} clean`, "green"), "bold")} ${colorize(colorize(`(${filesChecked} total)`, "gray"), "dim")}`
       } else {
         filesSummary = `${colorize(colorize(`${filesChecked} clean`, "green"), "bold")} ${colorize(colorize(`(${filesChecked} total)`, "gray"), "dim")}`
         shouldDim = true
       }
 
       if (shouldDim) {
-        console.log(colorize(` ${colorize(pad("Files"), "gray")} ${filesSummary}`, "dim"))
+        console.log(colorize(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`, "dim"))
       } else {
-        console.log(` ${colorize(pad("Files"), "gray")} ${filesSummary}`)
+        console.log(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`)
       }
     }
 
-    // Issues summary with file count
-    let issuesSummary = ""
+    // Violations summary with file count
+    let violationsSummary = ""
     const parts = []
 
     // Build the main part with errors and warnings
@@ -324,32 +355,34 @@ ${contextLines.trimEnd()}
     }
 
     if (parts.length === 0) {
-      issuesSummary = colorize(colorize("0 issues", "green"), "bold")
+      violationsSummary = colorize(colorize("0 violations", "green"), "bold")
     } else {
-      issuesSummary = parts.join(" | ")
+      violationsSummary = parts.join(" | ")
       // Add total count and file count
       let detailText = ""
 
-      if (filesWithIssues > 0) {
-        detailText = `across ${filesWithIssues} ${this.pluralize(filesWithIssues, "file")}`
+      const totalViolations = totalErrors + totalWarnings
+
+      if (filesWithViolations > 0) {
+        detailText = `${totalViolations} ${this.pluralize(totalViolations, "violation")} across ${filesWithViolations} ${this.pluralize(filesWithViolations, "file")}`
       }
 
-      issuesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
+      violationsSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
     }
 
-    console.log(` ${colorize(pad("Issues"), "gray")} ${issuesSummary}`)
+    console.log(`  ${colorize(pad("Violations"), "gray")} ${violationsSummary}`)
 
     // Timing information (if enabled)
     if (this.showTiming) {
       const duration = Date.now() - startTime
       const timeString = startDate.toTimeString().split(' ')[0] // HH:MM:SS format
 
-      console.log(` ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
-      console.log(` ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
+      console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
+      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
     }
 
     // Success message for all files clean
-    if (filesWithIssues === 0 && files.length > 1) {
+    if (filesWithViolations === 0 && files.length > 1) {
       console.log("")
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)
     }
@@ -365,13 +398,13 @@ ${contextLines.trimEnd()}
       await Herb.load()
 
       const pattern = this.getFilePattern(positionals)
-      
+
       // Validate that we have a proper file pattern
       if (positionals.length === 0) {
         console.error("Please specify input file.")
         process.exit(1)
       }
-      
+
       const files = await glob(pattern)
 
       if (files.length === 0) {
@@ -380,9 +413,10 @@ ${contextLines.trimEnd()}
       }
 
       const results = await this.processFiles(files)
-      const { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages } = results
+      const { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages, ruleViolations } = results
 
       this.displayDetailedFormat(allMessages)
+      this.displayMostViolatedRules(ruleViolations)
       this.displaySummary(files, totalErrors, totalWarnings, filesWithIssues, ruleCount, startTime, startDate)
 
       if (totalErrors > 0) {

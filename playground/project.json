@@ -14,13 +14,23 @@
       "executor": "nx:run-script",
       "options": {
         "script": "build"
-      }
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/browser:build",
+        "@herb-tools/linter:build"
+      ]
     },
     "build:client": {
       "executor": "nx:run-script",
       "options": {
         "script": "build:client"
-      }
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/browser:build",
+        "@herb-tools/linter:build"
+      ]
     },
     "preview": {
       "executor": "nx:run-script",
