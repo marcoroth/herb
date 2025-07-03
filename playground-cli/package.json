@@ -1,0 +1,15 @@
+{
+  "name": "herb-playground-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CLI playground for herb ERB linter",
+  "main": "herb-analyzer.js",
+  "scripts": {
+    "analyze": "node herb-analyzer.js"
+  },
+  "dependencies": {
+    "@herb-tools/node-wasm": "0.3.1",
+    "@herb-tools/linter": "0.3.1",
+    "@herb-tools/core": "0.3.1"
+  }
+}

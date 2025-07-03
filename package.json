@@ -54,6 +54,7 @@
   "workspaces": [
     "javascript/packages/*",
     "playground",
+    "playground-cli",
     "docs"
   ],
   "nx": {
