@@ -12,7 +12,7 @@ require "stringio"
 
 module Herb
   class Project
-    attr_accessor :project_path, :output_file, :no_interactive, :no_log_file
+    attr_accessor :project_path, :output_file, :no_interactive, :no_log_file, :no_timing
 
     def interactive?
       return false if no_interactive
@@ -46,6 +46,8 @@ module Herb
     end
 
     def parse!
+      start_time = Time.now unless no_timing
+
       log = if no_log_file
               StringIO.new
             else
@@ -355,6 +357,14 @@ module Herb
           end
         end
 
+        unless no_timing
+          end_time = Time.now
+          duration = end_time - start_time
+          timing_message = "\n⏱️ Total time: #{format_duration(duration)}"
+          log.puts timing_message
+          puts timing_message
+        end
+
         puts "\nResults saved to #{output_file}" unless no_log_file
       ensure
         log.close unless no_log_file
@@ -389,6 +399,18 @@ module Herb
       prefix = "--- #{text.upcase} "
 
       prefix + ("-" * (80 - prefix.length))
+    end
+
+    def format_duration(seconds)
+      if seconds < 1
+        "#{(seconds * 1000).round(2)}ms"
+      elsif seconds < 60
+        "#{seconds.round(2)}s"
+      else
+        minutes = (seconds / 60).to_i
+        remaining_seconds = seconds % 60
+        "#{minutes}m #{remaining_seconds.round(2)}s"
+      end
     end
   end
 end
