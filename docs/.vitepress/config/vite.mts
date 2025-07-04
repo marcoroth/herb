@@ -1,7 +1,24 @@
-import {
-  groupIconVitePlugin,
-  localIconLoader,
-} from "vitepress-plugin-group-icons"
+import { groupIconVitePlugin, localIconLoader } from "vitepress-plugin-group-icons"
+import { initializeHerb } from "../utils/herb.mjs"
+
+function createBuildStartPlugin() {
+  return {
+    name: 'herb-build-start',
+    async buildStart() {
+      console.log('🚀 Build starting - initializing Herb...')
+      try {
+        await initializeHerb()
+        console.log('✅ Herb initialized successfully at build start')
+      } catch (error) {
+        console.error('❌ Failed to initialize Herb at build start:', error)
+        throw error
+      }
+    },
+    configResolved(config) {
+      console.log(`📋 Build mode: ${config.command}`)
+    }
+  }
+}
 
 export function createViteConfig() {
   // https://vp.yuy1n.io/features.html
@@ -23,7 +40,9 @@ export function createViteConfig() {
     },
   })
 
+  const buildStartPlugin = createBuildStartPlugin()
+
   return {
-    plugins: [groupIconPlugin],
+    plugins: [groupIconPlugin, buildStartPlugin],
   }
 }

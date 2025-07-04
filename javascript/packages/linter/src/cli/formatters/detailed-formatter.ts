@@ -9,11 +9,13 @@ export class DetailedFormatter extends BaseFormatter {
   private highlighter: Highlighter | null = null
   private theme: ThemeInput
   private wrapLines: boolean
+  private truncateLines: boolean
 
-  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true) {
+  constructor(theme: ThemeInput = DEFAULT_THEME, wrapLines: boolean = true, truncateLines: boolean = false) {
     super()
     this.theme = theme
     this.wrapLines = wrapLines
+    this.truncateLines = truncateLines
   }
 
   async format(allDiagnostics: ProcessedFile[], isSingleFile: boolean = false): Promise<void> {
@@ -33,7 +35,8 @@ export class DetailedFormatter extends BaseFormatter {
         diagnostics: diagnostics,
         splitDiagnostics: true, // Use split mode to show each diagnostic separately
         contextLines: 2,
-        wrapLines: this.wrapLines
+        wrapLines: this.wrapLines,
+        truncateLines: this.truncateLines
       })
 
       console.log(`\n${highlighted}`)
@@ -45,7 +48,8 @@ export class DetailedFormatter extends BaseFormatter {
         const { filename, diagnostic, content } = allDiagnostics[i]
         const formatted = this.highlighter.highlightDiagnostic(filename, diagnostic, content, { 
           contextLines: 2, 
-          wrapLines: this.wrapLines 
+          wrapLines: this.wrapLines,
+          truncateLines: this.truncateLines
         })
         console.log(`\n${formatted}`)
 

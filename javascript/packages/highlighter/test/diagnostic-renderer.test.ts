@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest"
 
 import { themes } from "../src/themes.js"
+import { stripAnsiColors } from "./util.js"
 
 import { DiagnosticRenderer } from "../src/diagnostic-renderer.js"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
@@ -12,7 +13,7 @@ describe("DiagnosticRenderer", () => {
   let syntaxRenderer: SyntaxRenderer
 
   beforeEach(async () => {
-    syntaxRenderer = new SyntaxRenderer(themes.default)
+    syntaxRenderer = new SyntaxRenderer(themes.onedark)
     await syntaxRenderer.initialize()
     renderer = new DiagnosticRenderer(syntaxRenderer)
   })
@@ -26,7 +27,7 @@ describe("DiagnosticRenderer", () => {
       start: { line: 2, column: 5 },
       end: { line: 2, column: 10 },
     },
-    id: "test-rule",
+    code: "test-rule",
     ...overrides,
   })
 
@@ -195,6 +196,208 @@ describe("DiagnosticRenderer", () => {
 
       expect(result).toContain("Test error message")
       expect(result).toContain("short")
+    })
+  })
+
+  describe("smart diagnostic truncation", () => {
+    it("should show ellipsis at end when diagnostic is at start of long line", () => {
+      const longLineStart = `<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long">Content</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Class name should be shorter",
+        location: {
+          start: { line: 1, column: 13 }, // Points to "this-is-a-very-long"
+          end: { line: 1, column: 33 }
+        },
+        code: "class-name-length"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        longLineStart,
+        {
+          truncateLines: true,
+          maxWidth: 60
+        }
+      )
+
+      const strippedResult = stripAnsiColors(result)
+
+      // Should contain ellipsis at the end
+      expect(strippedResult).toContain("…")
+      // Should contain the beginning of the line
+      expect(strippedResult).toContain("this-is-a-very-long")
+      // Should not contain the end of the long line
+      expect(strippedResult).not.toContain("Content</div>")
+      // Should contain the diagnostic message
+      expect(result).toContain("Class name should be shorter")
+    })
+
+    it("should show ellipsis at beginning when diagnostic is at end of long line", () => {
+      const longLineEnd = `<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long">Content</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Content should be more descriptive",
+        severity: "warning",
+        location: {
+          start: { line: 1, column: 95 }, // Points to "Content"
+          end: { line: 1, column: 102 }
+        },
+        code: "content-description"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        longLineEnd,
+        {
+          truncateLines: true,
+          maxWidth: 60
+        }
+      )
+
+      const strippedResult = stripAnsiColors(result)
+
+      // Should contain ellipsis at the beginning
+      expect(strippedResult).toContain("…")
+      // Should contain the end of the line
+      expect(strippedResult).toContain("Content")
+      // Should not contain the beginning of the long line
+      expect(strippedResult).not.toContain("this-is-a-very-long")
+      // Should contain the diagnostic message
+      expect(result).toContain("Content should be more descriptive")
+    })
+
+    it("should show ellipsis on both sides when diagnostic is in middle of long line", () => {
+      const longLineMiddle = `<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long-with-more-content">Content</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Avoid 'should-be' in class names",
+        location: {
+          start: { line: 1, column: 45 }, // Points to "should-be" in middle
+          end: { line: 1, column: 54 }
+        },
+        code: "class-naming-convention"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        longLineMiddle,
+        {
+          truncateLines: true,
+          maxWidth: 60
+        }
+      )
+
+      const strippedResult = stripAnsiColors(result)
+
+      // Should contain ellipsis on both sides
+      const ellipsisCount = (strippedResult.match(/…/g) || []).length
+      expect(ellipsisCount).toBeGreaterThanOrEqual(2)
+      // Should contain the middle portion with the diagnostic
+      expect(strippedResult).toContain("should-be")
+      // Should not contain the very beginning or very end
+      expect(strippedResult).not.toContain("this-is-a-very")
+      expect(strippedResult).not.toContain("Content</div>")
+      // Should contain the diagnostic message
+      expect(result).toContain("Avoid 'should-be' in class names")
+    })
+
+    it("should adjust pointer position correctly for truncated diagnostics", () => {
+      const longLine = `<div class="this-is-a-very-long-class-name-that-should-be-truncated">Content</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Test diagnostic positioning",
+        location: {
+          start: { line: 1, column: 50 }, // Points to middle of line
+          end: { line: 1, column: 55 }
+        },
+        code: "test-positioning"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        longLine,
+        {
+          truncateLines: true,
+          maxWidth: 40
+        }
+      )
+
+      // Should contain the diagnostic pointer (~)
+      expect(result).toMatch(/~{5}/) // Should have 5 tildes for the 5-character range
+      // Should contain ellipsis
+      expect(result).toContain("…")
+    })
+
+    it("should handle truncation with context lines", () => {
+      const content = `<div class="short-line">Short</div>
+<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-is-too-long">Content</div>
+<div class="another-short-line">Short</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Long class name detected",
+        location: {
+          start: { line: 2, column: 13 }, // Points to long class name
+          end: { line: 2, column: 30 }
+        },
+        code: "class-name-length"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+        {
+          truncateLines: true,
+          maxWidth: 60,
+          contextLines: 1
+        }
+      )
+
+      const strippedResult = stripAnsiColors(result)
+
+      // Should show line 1, 2, 3 (target line 2 with 1 context line each side)
+      expect(strippedResult).toContain("short-line")
+      expect(strippedResult).toContain("another-short-line")
+      // Line 2 should be truncated
+      expect(strippedResult).toContain("…")
+      // Should contain the diagnostic message
+      expect(result).toContain("Long class name detected")
+    })
+
+    it("should not truncate when maxWidth is sufficient", () => {
+      const shortLine = `<div class="short">Content</div>`
+
+      const diagnostic = createDiagnostic({
+        message: "Test short line",
+        location: {
+          start: { line: 1, column: 13 },
+          end: { line: 1, column: 18 }
+        },
+        code: "test-short"
+      })
+
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        shortLine,
+        {
+          truncateLines: true,
+          maxWidth: 100
+        }
+      )
+
+      const strippedResult = stripAnsiColors(result)
+
+      // Should not contain ellipsis
+      expect(strippedResult).not.toContain("…")
+      // Should contain the full line
+      expect(strippedResult).toContain("short")
+      expect(strippedResult).toContain("Content")
     })
   })
 

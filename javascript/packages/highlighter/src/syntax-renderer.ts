@@ -278,6 +278,10 @@ export class SyntaxRenderer {
         } break
     }
 
+    if (!this.colors) {
+      return null
+    }
+    
     const color = this.colors[token.type as keyof ColorScheme]
     return color !== undefined ? color : null
   }

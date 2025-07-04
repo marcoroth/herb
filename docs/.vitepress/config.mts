@@ -29,4 +29,8 @@ export default defineConfig({
   markdown: createMarkdownConfig(),
   vite: createViteConfig(),
   themeConfig,
+
+  async buildEnd() {
+    console.log('🎉 VitePress build completed successfully')
+  }
 })

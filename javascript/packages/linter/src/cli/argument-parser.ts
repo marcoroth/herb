@@ -17,6 +17,7 @@ export interface ParsedArguments {
   showTiming: boolean
   theme: ThemeInput
   wrapLines: boolean
+  truncateLines: boolean
 }
 
 export class ArgumentParser {
@@ -37,6 +38,7 @@ export class ArgumentParser {
       --no-color       disable colored output
       --no-timing      hide timing information
       --no-wrap-lines  disable line wrapping
+      --truncate-lines enable line truncation (mutually exclusive with line wrapping)
   `
 
   parse(argv: string[]): ParsedArguments {
@@ -50,7 +52,8 @@ export class ArgumentParser {
         theme: { type: 'string' },
         'no-color': { type: 'boolean' },
         'no-timing': { type: 'boolean' },
-        'no-wrap-lines': { type: 'boolean' }
+        'no-wrap-lines': { type: 'boolean' },
+        'truncate-lines': { type: 'boolean' }
       },
       allowPositionals: true
     })
@@ -80,7 +83,20 @@ export class ArgumentParser {
     }
 
     const showTiming = !values['no-timing']
-    const wrapLines = !values['no-wrap-lines']
+
+    let wrapLines = !values['no-wrap-lines']
+    let truncateLines = false
+
+    if (values['truncate-lines']) {
+      truncateLines = true
+      wrapLines = false
+    }
+
+    if (!values['no-wrap-lines'] && values['truncate-lines']) {
+      console.error("Error: Line wrapping and --truncate-lines cannot be used together. Use --no-wrap-lines with --truncate-lines.")
+      process.exit(1)
+    }
+
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
 
@@ -89,7 +105,7 @@ export class ArgumentParser {
       process.exit(1)
     }
 
-    return { pattern, formatOption, showTiming, theme, wrapLines }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines }
   }
 
   private getFilePattern(positionals: string[]): string {

@@ -294,8 +294,8 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
 "test/fixtures/bad-file.html.erb:
-  1:1  ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
-  1:16 ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  1:1  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  1:16 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
  Rule violations:
   html-tag-name-lowercase (2 violations in 1 file)

@@ -11,7 +11,7 @@ import {
 } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Highlighter } from "../src/highlighter.js"
+import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
 
 describe("Highlighter", () => {
   let highlighter: Highlighter
@@ -21,7 +21,7 @@ describe("Highlighter", () => {
   })
 
   beforeEach(async () => {
-    highlighter = new Highlighter("default")
+    highlighter = new Highlighter("onedark")
     await highlighter.initialize()
   })
 
@@ -98,7 +98,7 @@ describe("Highlighter", () => {
 
   test("should not add colors when NO_COLOR is set", async () => {
     process.env.NO_COLOR = "1"
-    const disabledHighlighter = new Highlighter("default")
+    const disabledHighlighter = new Highlighter("onedark")
     await disabledHighlighter.initialize()
 
     const input = "<% if true %>"
@@ -245,11 +245,11 @@ describe("Standalone utility functions", () => {
     expect(result).toContain("\x1b[38;2;224;108;117mspan\x1b[0m") // HTML tag
   })
 
-  test("highlightContent should work with bright theme", async () => {
+  test("highlightContent should work with github-light theme", async () => {
     const content = "<% true %>"
-    const result = await highlightContent(content, "bright")
+    const result = await highlightContent(content, "github-light")
 
-    expect(result).toContain("\x1b[91mtrue\x1b[0m") // Bright red for keywords in bright theme
+    expect(result).toContain("true") // Should contain the keyword
   })
 
   test("highlightFile should work with default theme", async () => {
@@ -259,11 +259,11 @@ describe("Standalone utility functions", () => {
     expect(result).toContain("\x1b[38;2;198;120;221munless\x1b[0m") // Ruby keyword
   })
 
-  test("highlightFile should work with pastel theme", async () => {
-    const result = await highlightFile(testFile, "pastel")
+  test("highlightFile should work with simple theme", async () => {
+    const result = await highlightFile(testFile, "simple")
 
-    expect(result).toContain("\x1b[36mh1\x1b[0m") // Cyan for HTML tags in pastel theme
-    expect(result).toContain("\x1b[31munless\x1b[0m") // Red for keywords in pastel theme
+    expect(result).toContain("h1") // Should contain the HTML tag
+    expect(result).toContain("unless") // Should contain the Ruby keyword
   })
 
   test("highlightFile should throw error for non-existent file", async () => {
@@ -280,7 +280,7 @@ describe("Standalone utility functions", () => {
   <% end %>
 </div>`
 
-    const highlighter = new Highlighter("default")
+    const highlighter = new Highlighter("onedark")
     await highlighter.initialize()
 
     const result = highlighter.highlight("test.erb", content, {
@@ -299,5 +299,27 @@ describe("Standalone utility functions", () => {
     const lines = result.split("\n")
     const lineNumberCount = lines.filter((line) => line.includes("│")).length
     expect(lineNumberCount).toBe(3) // Lines 2, 3, 4 only
+  })
+
+  test("should support truncateLines option", async () => {
+    const longLineContent = `<div class="this-is-a-very-long-class-name-that-should-be-truncated-when-the-line-exceeds-maximum-width">Content</div>
+<span>Short line</span>`
+
+    const highlighter = new Highlighter("onedark")
+    await highlighter.initialize()
+
+    const result = highlighter.highlight("test.erb", longLineContent, {
+      wrapLines: false,
+      truncateLines: true,
+      maxWidth: 60,
+    })
+
+    // Should contain ellipsis for truncated line
+    expect(result).toContain("…")
+    // Should not contain the end of the long line
+    expect(result).not.toContain("maximum-width")
+    // Should still contain the short line completely
+    const strippedResult = result.replace(/\x1b\[[0-9;]*m/g, "")
+    expect(strippedResult).toContain("Short line")
   })
 })

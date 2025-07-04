@@ -19,6 +19,7 @@ export interface HighlightOptions {
   showLineNumbers?: boolean
   wrapLines?: boolean
   maxWidth?: number
+  truncateLines?: boolean
 }
 
 export interface HighlightDiagnosticOptions {
@@ -27,6 +28,7 @@ export interface HighlightDiagnosticOptions {
   optimizeHighlighting?: boolean
   wrapLines?: boolean
   maxWidth?: number
+  truncateLines?: boolean
 }
 
 export class Highlighter {
@@ -94,6 +96,7 @@ export class Highlighter {
       showLineNumbers = true,
       wrapLines = true,
       maxWidth = LineWrapper.getTerminalWidth(),
+      truncateLines = false,
     } = options
 
     // Case 1: Split diagnostics - render each diagnostic individually
@@ -106,6 +109,7 @@ export class Highlighter {
           showLineNumbers,
           wrapLines,
           maxWidth,
+          truncateLines,
         })
 
         results.push(result)
@@ -137,6 +141,7 @@ export class Highlighter {
         showLineNumbers,
         wrapLines,
         maxWidth,
+        truncateLines,
       )
     }
 
@@ -148,16 +153,17 @@ export class Highlighter {
         focusLine,
         contextLines,
         showLineNumbers,
-        wrapLines,
         maxWidth,
+        wrapLines,
+        truncateLines,
       )
     }
 
     // Case 4: Default - just highlight the whole file
     if (showLineNumbers) {
-      return this.fileRenderer.renderWithLineNumbers(path, content, wrapLines, maxWidth)
+      return this.fileRenderer.renderWithLineNumbers(path, content, wrapLines, maxWidth, truncateLines)
     } else {
-      return this.fileRenderer.renderPlain(content, wrapLines, maxWidth)
+      return this.fileRenderer.renderPlain(content, maxWidth, wrapLines, truncateLines)
     }
   }
 
@@ -214,4 +220,38 @@ export class Highlighter {
   ): string {
     return this.fileReader.highlightDiagnosticFromPath(filePath, diagnostic, options)
   }
+}
+
+/**
+ * Convenience function to highlight content with a specific theme
+ * @param content - The content to highlight
+ * @param theme - The theme to use (defaults to "onedark")
+ * @param options - Additional highlighting options
+ * @returns The highlighted content
+ */
+export async function highlightContent(
+  content: string,
+  theme: ThemeInput = "onedark",
+  options: HighlightOptions = {}
+): Promise<string> {
+  const highlighter = new Highlighter(theme)
+  await highlighter.initialize()
+  return highlighter.highlight("", content, options)
+}
+
+/**
+ * Convenience function to highlight a file with a specific theme
+ * @param filePath - The path to the file to highlight
+ * @param theme - The theme to use (defaults to "onedark")
+ * @param options - Additional highlighting options
+ * @returns The highlighted file content
+ */
+export async function highlightFile(
+  filePath: string,
+  theme: ThemeInput = "onedark",
+  options: HighlightOptions = {}
+): Promise<string> {
+  const highlighter = new Highlighter(theme)
+  await highlighter.initialize()
+  return highlighter.highlightFileFromPath(filePath, options)
 }

@@ -18,7 +18,7 @@ export class FileRenderer {
     this.syntaxRenderer = syntaxRenderer
   }
 
-  renderWithLineNumbers(path: string, content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth()): string {
+  renderWithLineNumbers(path: string, content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth(), truncateLines = false): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
 
@@ -41,6 +41,12 @@ export class FileRenderer {
             output += `        ${separator} ${wrappedLines[j]}\n`
           }
         }
+      } else if (truncateLines) {
+        const linePrefix = `    ${lineNumber} ${separator} `
+        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+        const truncatedLine = LineWrapper.truncateLine(line, availableWidth)
+
+        output += `${linePrefix}${truncatedLine}\n`
       } else {
         output += `    ${lineNumber} ${separator} ${line}\n`
       }
@@ -55,8 +61,9 @@ export class FileRenderer {
     focusLine: number,
     contextLines: number,
     showLineNumbers = true,
-    wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
+    wrapLines = false,
+    truncateLines = false,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
@@ -97,6 +104,11 @@ export class FileRenderer {
               output += `        ${separator} ${wrappedLines[j]}\n`
             }
           }
+        } else if (truncateLines) {
+          const linePrefix = `${prefix}${lineNumber} ${separator} `
+          const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+          const truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
+          output += `${linePrefix}${truncatedLine}\n`
         } else {
           output += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
         }
@@ -112,6 +124,9 @@ export class FileRenderer {
           for (const wrappedLine of wrappedLines) {
             output += `${wrappedLine}\n`
           }
+        } else if (truncateLines) {
+          const truncatedLine = LineWrapper.truncateLine(displayLine, maxWidth)
+          output += `${truncatedLine}\n`
         } else {
           output += `${displayLine}\n`
         }
@@ -121,7 +136,7 @@ export class FileRenderer {
     return output.trimEnd()
   }
 
-  renderPlain(content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth()): string {
+  renderPlain(content: string, maxWidth = LineWrapper.getTerminalWidth(), wrapLines = false, truncateLines = false): string {
     const highlighted = this.syntaxRenderer.highlight(content)
 
     if (wrapLines) {
@@ -134,6 +149,16 @@ export class FileRenderer {
       }
 
       return wrappedLines.join("\n")
+    } else if (truncateLines) {
+      const lines = highlighted.split("\n")
+      const truncatedLines: string[] = []
+
+      for (const line of lines) {
+        const truncated = LineWrapper.truncateLine(line, maxWidth)
+        truncatedLines.push(truncated)
+      }
+
+      return truncatedLines.join("\n")
     }
 
     return highlighted

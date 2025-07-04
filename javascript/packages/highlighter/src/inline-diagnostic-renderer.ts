@@ -20,6 +20,7 @@ export class InlineDiagnosticRenderer {
     showLineNumbers = true,
     wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
+    truncateLines = false,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
 
@@ -83,6 +84,21 @@ export class InlineDiagnosticRenderer {
             output += `        ${separator} ${wrappedLines[j]}\n`
           }
         }
+      } else if (truncateLines && showLineNumbers) {
+        const lineNumber = hasDiagnostics
+          ? colorize(i.toString().padStart(3, " "), "bold")
+          : colorize(i.toString().padStart(3, " "), "gray")
+
+        const prefix = hasDiagnostics
+          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          : "    "
+
+        const separator = colorize("│", "gray")
+        const linePrefix = `${prefix}${lineNumber} ${separator} `
+        availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+
+        const truncatedLine = LineWrapper.truncateLine(displayLine, availableWidth)
+        output += `${linePrefix}${truncatedLine}\n`
       } else if (showLineNumbers) {
         const lineNumber = hasDiagnostics
           ? colorize(i.toString().padStart(3, " "), "bold")
@@ -101,6 +117,9 @@ export class InlineDiagnosticRenderer {
         for (const wrappedLine of wrappedLines) {
           output += `${wrappedLine}\n`
         }
+      } else if (truncateLines) {
+        const truncatedLine = LineWrapper.truncateLine(displayLine, maxWidth)
+        output += `${truncatedLine}\n`
       } else {
         output += `${displayLine}\n`
       }

@@ -14,7 +14,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { pattern, formatOption, showTiming, theme, wrapLines } = this.argumentParser.parse(process.argv)
+    const { pattern, formatOption, showTiming, theme, wrapLines, truncateLines } = this.argumentParser.parse(process.argv)
 
     try {
       await Herb.load()
@@ -31,7 +31,7 @@ export class CLI {
 
       const formatter = formatOption === 'simple'
         ? new SimpleFormatter()
-        : new DetailedFormatter(theme, wrapLines)
+        : new DetailedFormatter(theme, wrapLines, truncateLines)
 
       await formatter.format(allDiagnostics, files.length === 1)
 

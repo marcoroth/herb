@@ -15,7 +15,7 @@ export interface LinterDiagnostic {
   rule?: string
 }
 
-function runLinterOnCodeSync(code: string, language: string, third: any): LinterDiagnostic[] {
+async function runLinterOnCodeSync(code: string, language: string, third: any): Promise<LinterDiagnostic[]> {
   console.log('runLinterOnCodeSync called with:', { language, code })
 
   const supportedLanguages = ['erb', 'html', 'html+erb', 'html.erb', 'herb']
@@ -31,6 +31,10 @@ function runLinterOnCodeSync(code: string, language: string, third: any): Linter
   }
 
   try {
+    if (!Herb.initialized) {
+      await Herb.load()
+    }
+
     console.log('Running linter on code:', code.substring(0, 100))
     const linter = new Linter()
     const document = Herb.parse(code)
@@ -75,26 +79,38 @@ function runLinterOnCodeSync(code: string, language: string, third: any): Linter
 // Create custom Twoslash function for linter diagnostics
 function createCustomTwoslashFunction() {
   return (code, lang, options) => {
-    console.log("MEEEEEE:", options)
-
-    // Check meta.__raw directly (since the flag might not be preserved)
-    if (options?.meta?.__raw?.includes('no-herb-lint')) {
-      return { code, nodes: [] }
-    }
-
-    if (lang?.includes('no-herb-lint')) {
-      return { code, nodes: [] }
-    }
-
     if (!lang || !['erb', 'html'].includes(lang)) {
       return { code, nodes: [] }
     }
 
     let diagnostics
     try {
-      diagnostics = runLinterOnCodeSync(code, lang)
+      const linter = new Linter()
+      const document = Herb.parse(code)
+      const result = linter.lint(document.value)
+
+      diagnostics = result.offenses.map(offense => {
+        const startLine = offense.location?.start?.line || 1
+        const startColumn = offense.location?.start?.column || 0
+        const endLine = offense.location?.end?.line || startLine
+        const endColumn = offense.location?.end?.column || startColumn + 1
+
+        return {
+          line: startLine,
+          column: startColumn,
+          endLine: endLine,
+          endColumn: endColumn,
+          message: offense.message,
+          severity: offense.severity === 'error' ? 'error' : 'warning',
+          rule: offense.rule
+        }
+      })
     } catch (error) {
-      console.error('❌ Linter error:', error)
+      if (error.message && error.message.includes('backend is not loaded')) {
+        console.log('Herb backend not loaded, skipping linter for:', lang)
+      } else {
+        console.error('❌ Linter error:', error)
+      }
       return { code, nodes: [] }
     }
 
@@ -146,7 +162,6 @@ function createCustomTwoslashFunction() {
     return {
       code,
       nodes: twoslashNodes,
-      customTags: ["no-herb-lint"],
       meta: {
         extension: lang === 'erb' ? 'erb' : 'html'
       }

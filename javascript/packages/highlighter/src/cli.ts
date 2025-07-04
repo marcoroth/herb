@@ -26,7 +26,8 @@ export class CLI {
       --no-line-numbers hide line numbers and file path header
       --wrap-lines     enable line wrapping [default: true]
       --no-wrap-lines  disable line wrapping
-      --max-width      maximum width for line wrapping [default: terminal width]
+      --truncate-lines enable line truncation (mutually exclusive with --wrap-lines)
+      --max-width      maximum width for line wrapping/truncation [default: terminal width]
       `
 
   private parseArguments() {
@@ -41,6 +42,7 @@ export class CLI {
         "no-line-numbers": { type: "boolean" },
         "wrap-lines": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
+        "truncate-lines": { type: "boolean" },
         "max-width": { type: "string" },
       },
       allowPositionals: true,
@@ -88,15 +90,26 @@ export class CLI {
     }
 
     const showLineNumbers = !values["no-line-numbers"]
-    // Default to wrapping unless explicitly disabled
+
     let wrapLines = true
-    if (values["no-wrap-lines"]) {
+    let truncateLines = false
+
+    if (values["truncate-lines"]) {
+      truncateLines = true
+      wrapLines = false
+    } else if (values["no-wrap-lines"]) {
       wrapLines = false
     } else if (values["wrap-lines"] !== undefined) {
       wrapLines = !!values["wrap-lines"]
     }
 
+    if (values["wrap-lines"] && values["truncate-lines"]) {
+      console.error("Error: --wrap-lines and --truncate-lines cannot be used together.")
+      process.exit(1)
+    }
+
     let maxWidth: number | undefined
+
     if (values["max-width"]) {
       const parsed = parseInt(values["max-width"], 10)
       if (isNaN(parsed) || parsed < 1) {
@@ -116,12 +129,13 @@ export class CLI {
       contextLines,
       showLineNumbers,
       wrapLines,
+      truncateLines,
       maxWidth,
     }
   }
 
   async run() {
-    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, maxWidth } =
+    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } =
       this.parseArguments()
 
     if (positionals.length === 0) {
@@ -143,6 +157,7 @@ export class CLI {
         contextLines: focusLine ? contextLines : 0,
         showLineNumbers,
         wrapLines,
+        truncateLines,
         maxWidth,
       })
 

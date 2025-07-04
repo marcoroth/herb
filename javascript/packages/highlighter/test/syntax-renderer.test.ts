@@ -4,19 +4,30 @@ import { themes } from "../src/themes.js"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
+// Helper function to strip ANSI color codes for testing
+function stripAnsiColors(text: string): string {
+  return text.replace(/\x1b\[[0-9;]*m/g, '')
+}
+
 describe("SyntaxRenderer", () => {
   let renderer: SyntaxRenderer
 
   beforeEach(async () => {
-    renderer = new SyntaxRenderer(themes.default, Herb)
+    renderer = new SyntaxRenderer(themes.onedark, Herb)
     await renderer.initialize()
   })
 
   describe("initialization", () => {
     it("should initialize successfully", async () => {
-      expect(renderer.initialized).toBe(false)
-      await renderer.initialize()
-      expect(renderer.initialized).toBe(true)
+      const mockHerb = {
+        load: async () => { mockHerb.isLoaded = true },
+        lex: () => ({ errors: [], value: [] }),
+        isLoaded: false,
+      }
+      const freshRenderer = new SyntaxRenderer(themes.onedark, mockHerb as any)
+      expect(freshRenderer.initialized).toBe(false)
+      await freshRenderer.initialize()
+      expect(freshRenderer.initialized).toBe(true)
     })
 
     it("should not reinitialize if already initialized", async () => {
@@ -35,8 +46,13 @@ describe("SyntaxRenderer", () => {
     })
 
     it("should throw error if not initialized", async () => {
-      const uninitializedRenderer = new SyntaxRenderer(themes.default)
-      await uninitializedRenderer.initialize()
+      const uninitializedHerb = {
+        load: async () => {},
+        lex: () => ({ errors: [], value: [] }),
+        isLoaded: false,
+      }
+      const uninitializedRenderer = new SyntaxRenderer(themes.onedark, uninitializedHerb as any)
+      // Don't initialize the renderer
       expect(() => uninitializedRenderer.highlight("<div>test</div>")).toThrow(
         "SyntaxRenderer must be initialized before use",
       )
@@ -46,9 +62,10 @@ describe("SyntaxRenderer", () => {
       const errorHerb = {
         load: async () => {},
         lex: () => ({ errors: ["error"], value: [] }),
+        isLoaded: true,
       }
 
-      const errorRenderer = new SyntaxRenderer(themes.default, errorHerb as any)
+      const errorRenderer = new SyntaxRenderer(themes.onedark, errorHerb as any)
       await errorRenderer.initialize()
 
       const content = "<invalid>"
@@ -72,10 +89,11 @@ describe("SyntaxRenderer", () => {
       const noTokenHerb = {
         load: async () => {},
         lex: () => ({ errors: [], value: [] }),
+        isLoaded: true,
       }
 
       const noTokenRenderer = new SyntaxRenderer(
-        themes.default,
+        themes.onedark,
         noTokenHerb as any,
       )
       await noTokenRenderer.initialize()
@@ -89,20 +107,20 @@ describe("SyntaxRenderer", () => {
 
   describe("theme support", () => {
     it("should work with different themes", async () => {
-      const brightRenderer = new SyntaxRenderer(themes.bright, Herb)
-      await brightRenderer.initialize()
+      const githubLightRenderer = new SyntaxRenderer(themes["github-light"], Herb)
+      await githubLightRenderer.initialize()
 
       const content = "<div>test</div>"
-      const result = brightRenderer.highlight(content)
+      const result = githubLightRenderer.highlight(content)
       expect(result).toContain("div")
     })
 
-    it("should work with pastel theme", async () => {
-      const pastelRenderer = new SyntaxRenderer(themes.pastel, Herb)
-      await pastelRenderer.initialize()
+    it("should work with simple theme", async () => {
+      const simpleRenderer = new SyntaxRenderer(themes.simple, Herb)
+      await simpleRenderer.initialize()
 
       const content = "<div>test</div>"
-      const result = pastelRenderer.highlight(content)
+      const result = simpleRenderer.highlight(content)
       expect(result).toContain("div")
     })
   })
@@ -113,7 +131,7 @@ describe("SyntaxRenderer", () => {
       process.env.NO_COLOR = "1"
 
       try {
-        const noColorRenderer = new SyntaxRenderer(themes.default, Herb)
+        const noColorRenderer = new SyntaxRenderer(themes.onedark, Herb)
         await noColorRenderer.initialize()
 
         const content = "<div>test</div>"
@@ -142,9 +160,10 @@ describe("SyntaxRenderer", () => {
             { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
           ],
         }),
+        isLoaded: true,
       }
 
-      const erbRenderer = new SyntaxRenderer(themes.default, erbHerb as any)
+      const erbRenderer = new SyntaxRenderer(themes.onedark, erbHerb as any)
       await erbRenderer.initialize()
 
       const content = "<% if true %>"
@@ -170,14 +189,14 @@ describe("SyntaxRenderer", () => {
       }
 
       const commentRenderer = new SyntaxRenderer(
-        themes.default,
+        themes.onedark,
         commentHerb as any,
       )
       await commentRenderer.initialize()
 
       const content = "<!-- comment -->"
       const result = commentRenderer.highlight(content)
-      expect(result).toContain("comment")
+      expect(stripAnsiColors(result)).toContain("comment")
     })
 
     it("should preserve ERB highlighting in comments", async () => {
@@ -197,7 +216,7 @@ describe("SyntaxRenderer", () => {
       }
 
       const erbCommentRenderer = new SyntaxRenderer(
-        themes.default,
+        themes.onedark,
         erbCommentHerb as any,
       )
       await erbCommentRenderer.initialize()
