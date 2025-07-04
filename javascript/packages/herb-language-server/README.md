@@ -1,6 +1,6 @@
 ## Herb Language Server
 
-##### Package: [`herb-language-server`](https://www.npmjs.com/package/herb-language-server)
+**Package**: [`herb-language-server`](https://www.npmjs.com/package/herb-language-server)
 
 ---
 

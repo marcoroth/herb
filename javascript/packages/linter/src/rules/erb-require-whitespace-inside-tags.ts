@@ -1,5 +1,5 @@
 import type { Node, Token} from "@herb-tools/core"
-import type { Rule, LintMessage } from "../types.js"
+import type { LintOffense, Rule } from "../types.js"
 import { BaseRuleVisitor, isERBNode } from "./rule-utils.js"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
@@ -31,7 +31,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (content.startsWith(" ")) {
       return 
     }
-    this.messages.push({
+    this.offenses.push({
       rule: this.ruleName,
       message: `Add whitespace after ${openTag.value}`,
       location: openTag.location,
@@ -43,7 +43,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (content.endsWith(" ")) {
       return
     }
-    this.messages.push({
+    this.offenses.push({
       rule: this.ruleName,
       message: `Add whitespace before ${closeTag.value}`,
       location: closeTag.location,
@@ -54,9 +54,9 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 
 export class ERBRequireWhitespaceRule implements Rule {
   name = "erb-require-whitespace-inside-tags"
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new RequireWhitespaceInsideTags(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

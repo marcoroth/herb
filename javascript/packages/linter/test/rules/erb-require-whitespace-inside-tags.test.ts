@@ -22,7 +22,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   it("should require a space after <% and before %> in ERB tags", () => {
@@ -36,7 +36,7 @@ describe("erb-require-whitespace-inside-tags", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   it("should require a space after <%= and before %> in ERB output tags", () => {
@@ -50,7 +50,7 @@ describe("erb-require-whitespace-inside-tags", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   it("should report errors for only missing opening whitespace", () => {
@@ -64,7 +64,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toMatch(/Add whitespace after/i)
+    expect(lintResult.offenses[0].message).toMatch(/Add whitespace after/i)
   })
 
   it("should report errors for only missing closing whitespace", () => {
@@ -78,7 +78,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toMatch(/Add whitespace before/i)
+    expect(lintResult.offenses[0].message).toMatch(/Add whitespace before/i)
   })
 
   it("should report multiple errors for multiple violations", () => {
@@ -93,7 +93,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(6)
-    expect(lintResult.messages).toHaveLength(6)
+    expect(lintResult.offenses).toHaveLength(6)
   })
 
   it("should not report for non-ERB content", () => {
@@ -106,7 +106,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   it("should handle mixed correct and incorrect ERB tags", () => {
@@ -122,7 +122,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(4)
-    expect(lintResult.messages).toHaveLength(4)
+    expect(lintResult.offenses).toHaveLength(4)
   })
 
   it("should handle empty erb tags", () => {
@@ -136,6 +136,6 @@ describe("erb-require-whitespace-inside-tags", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 })

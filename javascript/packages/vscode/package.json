@@ -42,8 +42,16 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Herb configuration",
+      "title": "Herb LSP (HTML+ERB)",
       "properties": {
+        "languageServerHerb.linter.enabled": {
+          "title": "Herb Linter",
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
+          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns."
+        },
         "languageServerHerb.trace.server": {
           "scope": "window",
           "type": "string",
@@ -53,7 +61,7 @@
             "verbose"
           ],
           "default": "verbose",
-          "description": "Traces the communication between VS Code and the language server."
+          "description": "Traces the communication between Visual Studio Code and the Herb Language Server."
         }
       }
     }
@@ -80,6 +88,7 @@
   },
   "devDependencies": {
     "@herb-tools/node-wasm": "0.3.1",
+    "@herb-tools/linter": "0.3.1",
     "@types/vscode": "^1.43.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",

@@ -207,10 +207,13 @@
             </div>
 
             <div
-              class="flex justify-between mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt]"
+              class="flex justify-between items-center mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt]"
             >
               <span data-playground-target="time"></span>
-              <div data-playground-target="version" class=""></div>
+              <div data-playground-target="version" class="cursor-help flex items-center gap-1" title="">
+                <i class="fas fa-info-circle text-xs opacity-50"></i>
+              </div>
+              <a data-playground-target="commitHash" class="hover:text-gray-600 underline" href="#" target="_blank"></a>
             </div>
 
             <div class="mt-2">

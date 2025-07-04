@@ -1,12 +1,15 @@
-## Herb Language Server
+# Herb Language Server
 
-##### Package: [`@herb-tools/language-server`](https://www.npmjs.com/package/@herb-tools/language-server)
+**Package**: [`@herb-tools/language-server`](https://www.npmjs.com/package/@herb-tools/language-server)
 
 ---
 
 [Language Server Protocol](https://github.com/Microsoft/language-server-protocol) integration for HTML-aware ERB parsing using the [Herb Parser](https://herb-tools.dev).
 
-![](./assets/herb-lsp.png)
+![Herb Language Server in action](https://github.com/marcoroth/herb/raw/main/javascript/packages/language-server/assets/herb-lsp.png)
+
+## Status
+**Available Now** - Ready for production use
 
 ### Installation
 

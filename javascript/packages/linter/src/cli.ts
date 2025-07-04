@@ -216,13 +216,13 @@ ${contextLines.trimEnd()}
         ruleCount = linter.getRuleCount()
       }
 
-      if (lintResult.messages.length === 0) {
+      if (lintResult.offenses.length === 0) {
         if (files.length === 1) {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
         // Collect messages for later display
-        for (const message of lintResult.messages) {
+        for (const message of lintResult.offenses) {
           allMessages.push({ filename, message, content })
 
           const ruleData = ruleViolations.get(message.rule) || { count: 0, files: new Set() }
@@ -233,7 +233,7 @@ ${contextLines.trimEnd()}
 
         if (this.formatOption === 'simple') {
           console.log("")
-          this.displaySimpleFormat(filename, lintResult.messages)
+          this.displaySimpleFormat(filename, lintResult.offenses)
         }
 
         totalErrors += lintResult.errors
@@ -245,10 +245,10 @@ ${contextLines.trimEnd()}
     return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allMessages, ruleViolations }
   }
 
-  private displaySimpleFormat(filename: string, messages: any[]): void {
+  private displaySimpleFormat(filename: string, offenses: any[]): void {
     console.log(`${colorize(filename, "cyan")}:`)
 
-    for (const message of messages) {
+    for (const message of offenses) {
       const isError = message.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
       const rule = colorize(`(${message.rule})`, "blue")
