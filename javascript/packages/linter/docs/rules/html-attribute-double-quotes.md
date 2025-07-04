@@ -17,9 +17,11 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 ### ✅ Good
 
 ```html
-<input type="text" value="Username">
-<a href="/profile" title="User Profile">Profile</a>
-<div data-controller="dropdown" data-action="click->dropdown#toggle"></div>
+<input type="text">
+
+<a href="/profile">Profile</a>
+
+<div data-action="click->dropdown#toggle"></div>
 
 <!-- Exception: Single quotes allowed when value contains double quotes -->
 <div id='"hello"' title='Say "Hello" to the world'></div>
@@ -29,9 +31,11 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 ### 🚫 Bad
 
 ```html
-<input type='text' value='Username'>
-<a href='/profile' title='User Profile'>Profile</a>
-<div data-controller='dropdown' data-action='click->dropdown#toggle'></div>
+<input type='text'>
+
+<a href='/profile'>Profile</a>
+
+<div data-action='click->dropdown#toggle'></div>
 ```
 
 ## References

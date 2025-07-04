@@ -11,6 +11,7 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     if (valueNode.quoted) return
 
     this.addOffense(
+      // TODO: print actual attribute value in message
       `Attribute value should be quoted: \`${attributeName}="value"\`. Always wrap attribute values in quotes.`,
       valueNode.location,
       "error"

@@ -4,7 +4,7 @@
 
 ## Description
 
-Disallow headings (h1, h2, etc.) with no accessible text content.
+Disallow headings (`h1`, `h2`, etc.) with no accessible text content.
 
 ## Rationale
 
@@ -37,7 +37,27 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 ### 🚫 Bad
 
 ```erb
-<h*></h*>
+<h1></h1>
+```
+
+```erb
+<h2></h2>
+```
+
+```erb
+<h3></h3>
+```
+
+```erb
+<h4></h4>
+```
+
+```erb
+<h5></h5>
+```
+
+```erb
+<h6></h6>
 ```
 
 ```erb
@@ -45,7 +65,7 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 ```
 
 ```erb
-<h*><span aria-hidden="true">Inaccessible text</span></h*>
+<h1><span aria-hidden="true">Inaccessible text</span></h1>
 ```
 
 ## References

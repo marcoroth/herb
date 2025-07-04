@@ -10,11 +10,8 @@ Require a single space before and after Ruby code inside ERB tags (`<% ... %>` a
 
 Without spacing, ERB tags can become hard to read and visually cramped:
 
-```erb
-<%=user.name%>  <!-- difficult to scan -->
-<%if admin%>    <!-- harder to read -->
-<%end%>
-```
+* difficult to scan: `<%=user.name%>`
+* harder to read: `<%if admin%><%end%>`
 
 By enforcing consistent spacing around Ruby expressions, templates become easier to read, review, and maintain. It also aligns with standard Ruby formatting conventions, where spaces are used around control keywords and operators.
 
@@ -33,11 +30,12 @@ By enforcing consistent spacing around Ruby expressions, templates become easier
 ### 🚫 Bad
 
 ```erb
-<%=user.name%>
+<%=user.name %>
 
-<%if admin%>
+<%if admin %>
+
   Hello, admin.
-<%end%>
+<% end%>
 ```
 
 ## References

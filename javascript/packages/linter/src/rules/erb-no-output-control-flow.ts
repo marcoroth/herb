@@ -31,9 +31,15 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     }
 
     if (openTag.value === "<%="){
+      let controlBlockType: string = controlBlock.type
+
+      if (controlBlock.type === "AST_ERB_IF_NODE") controlBlockType = "if"
+      if (controlBlock.type === "AST_ERB_ELSE_NODE") controlBlockType = "else"
+      if (controlBlock.type === "AST_ERB_END_NODE") controlBlockType = "end"
+      if (controlBlock.type === "AST_ERB_UNLESS_NODE") controlBlockType = "unless"
+
       this.addOffense(
-        `Control flow statements like \`${controlBlock.type}\`
-        should not be used with output tags. Use \`<% ${controlBlock.type} ... %>\` instead.`,
+        `Control flow statements like \`${controlBlockType}\` should not be used with output tags. Use \`<% ${controlBlockType} ... %>\` instead.`,
         openTag.location,
         "error"
       )

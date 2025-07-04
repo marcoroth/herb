@@ -1,0 +1,10 @@
+import { Herb } from '@herb-tools/node-wasm'
+
+export async function initializeHerb() {
+  try {
+    await Herb.load()
+    console.log('Herb initialized successfully:', Herb.initialized)
+  } catch (error) {
+    console.error('Failed to initialize Herb:', error)
+  }
+}

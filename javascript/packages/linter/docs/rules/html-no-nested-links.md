@@ -34,7 +34,7 @@ Browsers may attempt error recovery when encountering nested links, but behavior
 </a>
 
 <%= link_to "Products", products_path do %>
-  <%= link_to "Special offer", offer_path %>
+  <%= link_to "Special offer", offer_path %> <!-- TODO -->
 <% end %>
 ```
 

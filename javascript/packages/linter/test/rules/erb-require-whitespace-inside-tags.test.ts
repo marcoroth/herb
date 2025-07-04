@@ -130,6 +130,9 @@ describe("erb-require-whitespace-inside-tags", () => {
       <% %>
       <%= %>
       <% if true %> <% end %>
+      <%
+
+      %>
     `
     const result = Herb.parse(html)
     const linter = new Linter([ERBRequireWhitespaceRule])

@@ -4,7 +4,7 @@ import type { LintOffense, Rule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
-  
+
   visitChildNodes(node: Node): void {
     this.checkWhitespace(node)
     super.visitChildNodes(node)
@@ -29,22 +29,22 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   }
 
   private checkOpenTagWhitespace(openTag: Token, content:string):void {
-    if (content.startsWith(" ")) {
-      return 
+    if (content.startsWith(" ") || content.startsWith("\n")) {
+      return
     }
     this.addOffense(
-      `Add whitespace after ${openTag.value}`,
+      `Add whitespace after \`${openTag.value}\`.`,
       openTag.location,
       "error"
     )
   }
 
   private checkCloseTagWhitespace(closeTag: Token, content:string):void {
-    if (content.endsWith(" ")) {
+    if (content.endsWith(" ") || content.endsWith("\n")) {
       return
     }
     this.addOffense(
-      `Add whitespace before ${closeTag.value}`,
+      `Add whitespace before \`${closeTag.value}\`.`,
       closeTag.location,
       "error"
     )

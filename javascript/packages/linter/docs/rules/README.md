@@ -36,4 +36,4 @@ Alternatively, you can create one manually:
 3. Add documentation in `docs/rules/`
 4. Update the main linter to include the rule by default (if appropriate)
 
-See [html-tag-name-lowercase.ts](./src/rules/html-tag-name-lowercase.ts) for an example implementation.
+See [`html-tag-name-lowercase.ts`](https://github.com/marcoroth/herb/blob/main/javascript/packages/linter/src/rules/html-tag-name-lowercase.ts) for an example implementation.

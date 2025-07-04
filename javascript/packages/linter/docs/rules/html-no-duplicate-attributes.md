@@ -18,6 +18,7 @@ Catching duplicates early helps prevent subtle bugs, improves code correctness, 
 
 ```erb
 <input type="text" name="username" id="user-id">
+
 <button type="submit" disabled>Submit</button>
 ```
 
@@ -25,6 +26,7 @@ Catching duplicates early helps prevent subtle bugs, improves code correctness, 
 
 ```erb
 <input type="text" type="password" name="username">
+
 <button type="submit" type="button" disabled>Submit</button>
 ```
 
