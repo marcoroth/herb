@@ -30,4 +30,14 @@ describe("html-aria-role-heading-requires-level", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(1)
   })
+
+  it("should show a correct error message ", () => {
+    const html = '<div role="heading">Section Title</div>'
+    const result = Herb.parse(html)
+    const linter = new Linter([HTMLAriaRoleHeadingRequiresLevelRule])
+    const lintResult = linter.lint(result.value)
+    expect(lintResult.offenses[0].message).toBe(
+      `Element with role="heading" must have an aria-level attribute. Example: <div role="heading" aria-level="2">.`
+    )
+  })
 })
