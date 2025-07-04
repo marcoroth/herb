@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoOutputControlFlow } from "./rules/erb-no-output-control-flow.js"
+import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-heading-requires-level.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
@@ -14,10 +15,12 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
+
 export const defaultRules: RuleClass[] = [
   ERBNoEmptyTagsRule,
   ERBNoOutputControlFlow,
   HTMLAriaRoleHeadingRequiresLevelRule,
+  ERBRequireWhitespaceRule,
   HTMLAnchorRequireHrefRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeValuesRequireQuotesRule,

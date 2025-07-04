@@ -1,15 +1,19 @@
 import {
-  HTMLOpenTagNode,
-  HTMLSelfCloseTagNode,
-  HTMLAttributeNode,
-  HTMLAttributeNameNode,
-  HTMLAttributeValueNode,
-  LiteralNode,
-  Visitor,
-  Location,
+  Visitor
 } from "@herb-tools/core"
 
-import type { LintOffense, LintSeverity } from "../types.js"
+import type { 
+  ERBNode, 
+  HTMLAttributeNameNode,
+  HTMLAttributeNode, 
+  HTMLAttributeValueNode, 
+  HTMLOpenTagNode, 
+  HTMLSelfCloseTagNode, 
+  LiteralNode, 
+  Location, 
+  Node 
+} from "@herb-tools/core"
+import type { LintOffense, LintSeverity, } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
