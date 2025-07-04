@@ -18,7 +18,9 @@ For example, instead of writing `disabled="disabled"` or `disabled="true"`, simp
 
 ```html
 <input type="checkbox" checked>
+
 <button disabled>Submit</button>
+
 <select multiple>
 ```
 
@@ -26,7 +28,9 @@ For example, instead of writing `disabled="disabled"` or `disabled="true"`, simp
 
 ```html
 <input type="checkbox" checked="checked">
+
 <button disabled="true">Submit</button>
+
 <select multiple="multiple">
 ```
 

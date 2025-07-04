@@ -22,16 +22,20 @@ Additionally, always quoting is the common convention in most HTML formatters, l
 
 ```html
 <div id="hello"></div>
-<input type="text" value="Username">
-<a href="/profile" title="User Profile">Profile</a>
+
+<input type="text">
+
+<a href="/profile">Profile</a>
 ```
 
 ### 🚫 Bad
 
 ```html
 <div id=hello></div>
-<input type=text value=Username>
-<a href=/profile title=User></a>
+
+<input type=text>
+
+<a href=/profile></a>
 ```
 
 ## References

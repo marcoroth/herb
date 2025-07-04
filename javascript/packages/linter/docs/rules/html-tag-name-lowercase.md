@@ -18,21 +18,25 @@ Writing tags in uppercase or mixed case can lead to inconsistent code and unnece
 ### ✅ Good
 
 ```erb
-<div class="container">
-  <input type="text" name="username">
-  <span>Label</span>
-  <%= content_tag(:div, "Hello world!") %>
-</div>
+<div class="container"></div>
+
+<input type="text" name="username" />
+
+<span>Label</span>
+
+<%= content_tag(:div, "Hello world!") %>
 ```
 
 ### 🚫 Bad
 
 ```erb
-<DIV class="container">
-  <Input type="text" name="username">
-  <Span>Label</Span>
-  <%= content_tag(:DiV, "Hello world!") %>
-</DIV>
+<DIV class="container"></DIV>
+
+<Input type="text" name="username" />
+
+<Span>Label</Span>
+
+<%= content_tag(:DiV, "Hello world!") %> <!-- TODO -->
 ```
 
 ## References

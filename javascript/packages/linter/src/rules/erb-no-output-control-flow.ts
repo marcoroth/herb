@@ -3,7 +3,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 import type { Node, ERBIfNode, ERBUnlessNode, ERBElseNode, ERBEndNode } from "@herb-tools/core"
 import type { Rule, LintOffense } from "../types.js"
 
-class NoOutputControlFlow extends BaseRuleVisitor {
+class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
   visitERBIfNode(node: ERBIfNode): void {
     this.checkOutputControlFlow(node)
     this.visitChildNodes(node)
@@ -31,9 +31,15 @@ class NoOutputControlFlow extends BaseRuleVisitor {
     }
 
     if (openTag.value === "<%="){
+      let controlBlockType: string = controlBlock.type
+
+      if (controlBlock.type === "AST_ERB_IF_NODE") controlBlockType = "if"
+      if (controlBlock.type === "AST_ERB_ELSE_NODE") controlBlockType = "else"
+      if (controlBlock.type === "AST_ERB_END_NODE") controlBlockType = "end"
+      if (controlBlock.type === "AST_ERB_UNLESS_NODE") controlBlockType = "unless"
+
       this.addOffense(
-        `Control flow statements like \`${controlBlock.type}\`
-        should not be used with output tags. Use \`<% ${controlBlock.type} ... %>\` instead.`,
+        `Control flow statements like \`${controlBlockType}\` should not be used with output tags. Use \`<% ${controlBlockType} ... %>\` instead.`,
         openTag.location,
         "error"
       )
@@ -43,10 +49,10 @@ class NoOutputControlFlow extends BaseRuleVisitor {
   }
 }
 
-export class ERBNoOutputControlFlow implements Rule {
+export class ERBNoOutputControlFlowRule implements Rule {
   name = "erb-no-output-control-flow"
   check(node: Node): LintOffense[] {
-    const visitor = new NoOutputControlFlow(this.name)
+    const visitor = new ERBNoOutputControlFlowRuleVisitor(this.name)
 
     visitor.visit(node)
 

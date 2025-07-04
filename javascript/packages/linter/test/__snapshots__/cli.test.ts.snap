@@ -245,7 +245,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
-[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:3
 
@@ -258,7 +258,7 @@ test/fixtures/test-file-with-errors.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
-[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:22
 
@@ -280,8 +280,8 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 "test/fixtures/test-file-simple.html.erb:
-  2:3  ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
-  2:22 ✗ Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  2:3  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  2:22 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
  Rule violations:
   html-tag-name-lowercase (2 violations in 1 file)
@@ -316,7 +316,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
-"[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+"[error] Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:1
 
@@ -327,7 +327,7 @@ test/fixtures/bad-file.html.erb:1:1
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
-[error] Tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:16
 

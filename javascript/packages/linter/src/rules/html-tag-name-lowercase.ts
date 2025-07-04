@@ -6,17 +6,17 @@ import type { HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, Node } fr
 class TagNameLowercaseVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkTagName(node)
-    super.visitHTMLOpenTagNode(node)
+    this.visitChildNodes(node)
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
     this.checkTagName(node)
-    super.visitHTMLCloseTagNode(node)
+    this.visitChildNodes(node)
   }
 
   visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
     this.checkTagName(node)
-    super.visitHTMLSelfCloseTagNode(node)
+    this.visitChildNodes(node)
   }
 
   private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | HTMLSelfCloseTagNode): void {
@@ -24,8 +24,14 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
     if (!tagName) return
 
     if (tagName !== tagName.toLowerCase()) {
+      let type: string = node.type
+
+      if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
+      if (node.type == "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
+      if (node.type == "AST_HTML_SELF_CLOSE_TAG_NODE") type = "Self-closing"
+
       this.addOffense(
-        `Tag name \`${tagName}\` should be lowercase. Use \`${tagName.toLowerCase()}\` instead.`,
+        `${type} tag name \`${tagName}\` should be lowercase. Use \`${tagName.toLowerCase()}\` instead.`,
         node.tag_name!.location,
         "error"
       )

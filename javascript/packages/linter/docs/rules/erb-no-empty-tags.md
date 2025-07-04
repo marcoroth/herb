@@ -14,7 +14,7 @@ Empty ERB tags serve no purpose and may confuse readers or indicate incomplete c
 
 ### ✅ Good
 
-```erb
+```html
 <%= user.name %>
 
 <% if user.admin? %>
@@ -26,6 +26,7 @@ Empty ERB tags serve no purpose and may confuse readers or indicate incomplete c
 
 ```erb
 <% %>
+
 <%=  %>
 
 <%

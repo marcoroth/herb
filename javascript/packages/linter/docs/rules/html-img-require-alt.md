@@ -18,8 +18,11 @@ Omitting the `alt` attribute entirely leads to poor accessibility and can negati
 
 ```erb
 <img src="/logo.png" alt="Company logo">
+
 <img src="/avatar.jpg" alt="<%= user.name %>'s profile picture">
+
 <img src="/divider.png" alt="">
+
 <%= image_tag image_path("logo.png"), alt: "Company logo" %>
 ```
 
@@ -27,9 +30,12 @@ Omitting the `alt` attribute entirely leads to poor accessibility and can negati
 
 ```erb
 <img src="/logo.png">
-<img src="/avatar.jpg" alt>
-<img src="/divider.png" alt=>
-<%= image_tag image_path("logo.png") %>
+
+<img src="/avatar.jpg" alt> <!-- TODO -->
+
+<img src="/divider.png" alt=> <!-- TODO -->
+
+<%= image_tag image_path("logo.png") %> <!-- TODO -->
 ```
 
 ## References

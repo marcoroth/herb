@@ -3,7 +3,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import dedent from "dedent";
 
 import { Linter } from "../../src/linter";
-import { ERBNoOutputControlFlow } from "../../src/rules/erb-no-output-control-flow";
+import { ERBNoOutputControlFlowRule } from "../../src/rules/erb-no-output-control-flow";
 
 describe("erb-no-output-control-flow", () => {
   beforeAll(async () => {
@@ -21,7 +21,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -35,7 +35,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -50,7 +50,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -65,7 +65,7 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
@@ -83,7 +83,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) 
@@ -102,7 +102,7 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(3) 
@@ -119,7 +119,7 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) 

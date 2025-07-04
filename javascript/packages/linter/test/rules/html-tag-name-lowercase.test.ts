@@ -30,8 +30,12 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.offenses).toHaveLength(4)
 
     expect(lintResult.offenses[0].rule).toBe("html-tag-name-lowercase")
-    expect(lintResult.offenses[0].message).toBe('Tag name `DIV` should be lowercase. Use `div` instead.')
     expect(lintResult.offenses[0].severity).toBe("error")
+
+    expect(lintResult.offenses[0].message).toBe('Opening tag name `DIV` should be lowercase. Use `div` instead.')
+    expect(lintResult.offenses[1].message).toBe('Opening tag name `SPAN` should be lowercase. Use `span` instead.')
+    expect(lintResult.offenses[2].message).toBe('Closing tag name `SPAN` should be lowercase. Use `span` instead.')
+    expect(lintResult.offenses[3].message).toBe('Closing tag name `DIV` should be lowercase. Use `div` instead.')
   })
 
   test("fails for mixed case tag names", () => {
@@ -44,7 +48,7 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(4)
 
-    expect(lintResult.offenses[0].message).toBe('Tag name `Div` should be lowercase. Use `div` instead.')
+    expect(lintResult.offenses[0].message).toBe('Opening tag name `Div` should be lowercase. Use `div` instead.')
   })
 
   test("handles self-closing tags", () => {
@@ -54,7 +58,7 @@ describe("html-tag-name-lowercase", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Tag name `IMG` should be lowercase. Use `img` instead.')
+    expect(lintResult.offenses[0].message).toBe('Opening tag name `IMG` should be lowercase. Use `img` instead.')
   })
 
   test("passes for valid self-closing tags", () => {
