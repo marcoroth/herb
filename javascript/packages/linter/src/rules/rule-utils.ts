@@ -58,13 +58,6 @@ export function getAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): any
 }
 
 /**
- * Checks if a node is an ERB node
- */
-export function isERBNode(node: Node): node is ERBNode {
-  return node.constructor.name.startsWith("ERB")
-}
-
-/**
  * Gets the tag name from an HTML tag node (lowercased)
  */
 export function getTagName(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): string | null {

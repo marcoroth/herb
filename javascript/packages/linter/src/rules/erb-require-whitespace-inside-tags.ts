@@ -1,6 +1,7 @@
-import type { Node, Token} from "@herb-tools/core"
+import type { Node, Token } from "@herb-tools/core"
+import { isERBNode } from "@herb-tools/core";
 import type { LintOffense, Rule } from "../types.js"
-import { BaseRuleVisitor, isERBNode } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   
@@ -31,24 +32,22 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (content.startsWith(" ")) {
       return 
     }
-    this.offenses.push({
-      rule: this.ruleName,
-      message: `Add whitespace after ${openTag.value}`,
-      location: openTag.location,
-      severity: "error"
-    })
+    this.addOffense(
+      `Add whitespace after ${openTag.value}`,
+      openTag.location,
+      "error"
+    )
   }
 
   private checkCloseTagWhitespace(closeTag: Token, content:string):void {
     if (content.endsWith(" ")) {
       return
     }
-    this.offenses.push({
-      rule: this.ruleName,
-      message: `Add whitespace before ${closeTag.value}`,
-      location: closeTag.location,
-      severity: "error"
-    })
+    this.addOffense(
+      `Add whitespace before ${closeTag.value}`,
+      closeTag.location,
+      "error"
+    )
   }
 }
 
