@@ -53,6 +53,7 @@
     "README.md",
     "src/",
     "bin/",
-    "dist/"
+    "dist/",
+    "themes/"
   ]
 }

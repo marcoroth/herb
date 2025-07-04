@@ -1,5 +1,7 @@
 import { colorize } from "./color.js"
 import { applyDimToStyledText } from "./util.js"
+import { LineWrapper } from "./line-wrapper.js"
+import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
 
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 import type { Diagnostic } from "@herb-tools/core"
@@ -8,6 +10,8 @@ export interface DiagnosticRenderOptions {
   contextLines?: number
   showLineNumbers?: boolean
   optimizeHighlighting?: boolean
+  wrapLines?: boolean
+  maxWidth?: number
 }
 
 export class DiagnosticRenderer {
@@ -23,6 +27,7 @@ export class DiagnosticRenderer {
       const reset = "\x1b[0m"
       return text.replace(/`([^`]+)`/g, `${boldWhite}$1${reset}`)
     }
+
     return text
   }
 
@@ -30,18 +35,35 @@ export class DiagnosticRenderer {
     path: string,
     diagnostic: Diagnostic,
     content: string,
-    options: DiagnosticRenderOptions = {}
+    options: DiagnosticRenderOptions = {},
   ): string {
-    const { contextLines = 2, showLineNumbers: _showLineNumbers = true, optimizeHighlighting = true } = options
+    const {
+      contextLines = 2,
+      showLineNumbers: _showLineNumbers = true,
+      optimizeHighlighting = true,
+      wrapLines = true,
+      maxWidth = LineWrapper.getTerminalWidth(),
+    } = options
     const isError = diagnostic.severity === "error"
     const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
-    const severityText = isError ? colorize("error", "brightRed") : colorize("warning", "brightYellow")
+    const severityText = isError
+      ? colorize("error", "brightRed")
+      : colorize("warning", "brightYellow")
     const diagnosticId = colorize(diagnostic.code || "-", "gray")
 
     const originalLines = content.split("\n")
     const targetLineNumber = diagnostic.location.start.line
     const column = diagnostic.location.start.column - 1
-    const pointer = colorize("~".repeat(Math.max(1, diagnostic.location.end.column - diagnostic.location.start.column)), isError ? "brightRed" : "brightYellow")
+
+    const pointer = colorize(
+      "~".repeat(
+        Math.max(
+          1,
+          diagnostic.location.end.column - diagnostic.location.start.column,
+        ),
+      ),
+      isError ? "brightRed" : "brightYellow",
+    )
 
     const startLine = Math.max(1, targetLineNumber - contextLines)
     const endLine = Math.min(originalLines.length, targetLineNumber + contextLines)
@@ -73,13 +95,13 @@ export class DiagnosticRenderer {
       const line = lines[i - 1 - lineOffset] || ""
       const isTargetLine = i === targetLineNumber
 
-      const lineNumber = isTargetLine ?
-        colorize(i.toString().padStart(3, " "), "bold") :
-        colorize(i.toString().padStart(3, " "), "gray")
+      const lineNumber = isTargetLine
+        ? colorize(i.toString().padStart(3, " "), "bold")
+        : colorize(i.toString().padStart(3, " "), "gray")
 
-      const prefix = isTargetLine ?
-        colorize("  → ", isError ? "brightRed" : "brightYellow") :
-        "    "
+      const prefix = isTargetLine
+        ? colorize("  → ", isError ? "brightRed" : "brightYellow")
+        : "    "
 
       const separator = colorize("│", "gray")
 
@@ -87,9 +109,23 @@ export class DiagnosticRenderer {
 
       if (isTargetLine) {
         displayLine = line
-        contextOutput += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
       } else {
         displayLine = applyDimToStyledText(line)
+      }
+
+      if (wrapLines) {
+        const linePrefix = `${prefix}${lineNumber} ${separator} `
+        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+        const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+
+        for (let j = 0; j < wrappedLines.length; j++) {
+          if (j === 0) {
+            contextOutput += `${linePrefix}${wrappedLines[j]}\n`
+          } else {
+            contextOutput += `        ${separator} ${wrappedLines[j]}\n`
+          }
+        }
+      } else {
         contextOutput += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
       }
 

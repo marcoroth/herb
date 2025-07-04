@@ -5,12 +5,7 @@ import commonjs from "@rollup/plugin-commonjs"
 
 // Bundle the CLI entry point into a single CommonJS file.
 // Exclude Node built-in so they remain as externals.
-const external = [
-  "path",
-  "url",
-  "fs",
-  "module",
-]
+const external = ["path", "url", "fs", "module"]
 
 function isExternal(id) {
   return (

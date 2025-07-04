@@ -1,40 +1,49 @@
+import dedent from "dedent"
+
 import { readFileSync } from "fs"
 import { parseArgs } from "util"
 import { resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Highlighter } from "./highlighter.js"
+import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
 
 export class CLI {
-  private usage = `
-  Usage: herb-highlight [file] [options]
+  private usage = dedent`
+    Usage: herb-highlight [file] [options]
 
-  Arguments:
-    file             File to highlight (required)
+    Arguments:
+      file             File to highlight (required)
 
-  Options:
-    -h, --help       show help
-    -v, --version    show version
-    --theme          color theme (default|bright|pastel) [default: default]
-    --focus          line number to focus on (shows only that line with context)
-    --context-lines  number of context lines around focus line [default: 2]
-    --no-line-numbers hide line numbers and file path header
-`
+    Options:
+      -h, --help       show help
+      -v, --version    show version
+      --theme          color theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --focus          line number to focus on (shows only that line with context)
+      --context-lines  number of context lines around focus line [default: 2]
+      --no-line-numbers hide line numbers and file path header
+      --wrap-lines     enable line wrapping [default: true]
+      --no-wrap-lines  disable line wrapping
+      --max-width      maximum width for line wrapping [default: terminal width]
+      `
 
   private parseArguments() {
     const { values, positionals } = parseArgs({
       args: process.argv.slice(2),
       options: {
-        help: { type: 'boolean', short: 'h' },
-        version: { type: 'boolean', short: 'v' },
-        theme: { type: 'string' },
-        focus: { type: 'string' },
-        'context-lines': { type: 'string' },
-        'no-line-numbers': { type: 'boolean' }
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+        theme: { type: "string" },
+        focus: { type: "string" },
+        "context-lines": { type: "string" },
+        "no-line-numbers": { type: "boolean" },
+        "wrap-lines": { type: "boolean" },
+        "no-wrap-lines": { type: "boolean" },
+        "max-width": { type: "string" },
       },
-      allowPositionals: true
+      allowPositionals: true,
     })
 
     if (values.help) {
@@ -48,43 +57,72 @@ export class CLI {
       process.exit(0)
     }
 
-    const theme = values.theme || 'default'
-    if (!['default', 'bright', 'pastel'].includes(theme)) {
-      console.error(`Invalid theme: ${theme}. Valid themes: default, bright, pastel`)
-      process.exit(1)
-    }
+    const theme = values.theme || DEFAULT_THEME
 
-    // Parse focus line
     let focusLine: number | undefined
 
     if (values.focus) {
       const parsed = parseInt(values.focus, 10)
+
       if (isNaN(parsed) || parsed < 1) {
-        console.error(`Invalid focus line: ${values.focus}. Must be a positive integer.`)
+        console.error(
+          `Invalid focus line: ${values.focus}. Must be a positive integer.`,
+        )
         process.exit(1)
       }
+
       focusLine = parsed
     }
 
-    // Parse context lines
     let contextLines = 2
 
-    if (values['context-lines']) {
-      const parsed = parseInt(values['context-lines'], 10)
+    if (values["context-lines"]) {
+      const parsed = parseInt(values["context-lines"], 10)
       if (isNaN(parsed) || parsed < 0) {
-        console.error(`Invalid context-lines: ${values['context-lines']}. Must be a non-negative integer.`)
+        console.error(
+          `Invalid context-lines: ${values["context-lines"]}. Must be a non-negative integer.`,
+        )
         process.exit(1)
       }
       contextLines = parsed
     }
 
-    const showLineNumbers = !values['no-line-numbers']
+    const showLineNumbers = !values["no-line-numbers"]
+    // Default to wrapping unless explicitly disabled
+    let wrapLines = true
+    if (values["no-wrap-lines"]) {
+      wrapLines = false
+    } else if (values["wrap-lines"] !== undefined) {
+      wrapLines = !!values["wrap-lines"]
+    }
 
-    return { values, positionals, theme, focusLine, contextLines, showLineNumbers }
+    let maxWidth: number | undefined
+    if (values["max-width"]) {
+      const parsed = parseInt(values["max-width"], 10)
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(
+          `Invalid max-width: ${values["max-width"]}. Must be a positive integer.`,
+        )
+        process.exit(1)
+      }
+      maxWidth = parsed
+    }
+
+    return {
+      values,
+      positionals,
+      theme,
+      focusLine,
+      contextLines,
+      showLineNumbers,
+      wrapLines,
+      maxWidth,
+    }
   }
 
   async run() {
-    const { positionals, theme, focusLine, contextLines, showLineNumbers } = this.parseArguments()
+    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, maxWidth } =
+      this.parseArguments()
 
     if (positionals.length === 0) {
       console.error("Please specify an input file.")
@@ -97,19 +135,20 @@ export class CLI {
       const filePath = resolve(filename)
       const content = readFileSync(filePath, "utf-8")
 
-      const highlighter = new Highlighter(theme as 'default' | 'bright' | 'pastel')
+      const highlighter = new Highlighter(theme)
       await highlighter.initialize()
 
       const highlighted = highlighter.highlight(filePath, content, {
         focusLine,
         contextLines: focusLine ? contextLines : 0,
-        showLineNumbers
+        showLineNumbers,
+        wrapLines,
+        maxWidth,
       })
 
       console.log(highlighted)
-
     } catch (error) {
-      if (error instanceof Error && error.message.includes('ENOENT')) {
+      if (error instanceof Error && error.message.includes("ENOENT")) {
         console.error(`File not found: ${filename}`)
       } else {
         console.error(`Error:`, error)

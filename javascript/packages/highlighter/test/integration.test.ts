@@ -10,13 +10,16 @@ describe("herb-highlight CLI", () => {
   beforeAll(async () => {
     await Herb.load()
 
-    writeFileSync(testFile, `<h1 class="title">
+    writeFileSync(
+      testFile,
+      `<h1 class="title">
   <% if user.present? %>
     Welcome <%= user.name %>!
   <% else %>
     Please sign in
   <% end %>
-</h1>`)
+</h1>`,
+    )
   })
 
   afterAll(() => {
@@ -28,7 +31,7 @@ describe("herb-highlight CLI", () => {
   test("should highlight file via CLI", () => {
     const result = execSync(`node ./bin/herb-highlight ${testFile}`, {
       encoding: "utf8",
-      cwd: process.cwd()
+      cwd: process.cwd(),
     })
 
     // Should contain ANSI color codes
@@ -44,16 +47,19 @@ describe("herb-highlight CLI", () => {
     expect(() => {
       execSync("node ./bin/herb-highlight non-existent-file.erb", {
         encoding: "utf8",
-        cwd: process.cwd()
+        cwd: process.cwd(),
       })
     }).toThrow()
   })
 
   test("should respect NO_COLOR environment variable", () => {
-    const result = execSync(`NO_COLOR=1 node ./bin/herb-highlight ${testFile}`, {
-      encoding: "utf8",
-      cwd: process.cwd()
-    })
+    const result = execSync(
+      `NO_COLOR=1 node ./bin/herb-highlight ${testFile}`,
+      {
+        encoding: "utf8",
+        cwd: process.cwd(),
+      },
+    )
 
     // Should not contain ANSI color codes when NO_COLOR is set
     expect(result).not.toContain("\x1b[")
@@ -62,7 +68,7 @@ describe("herb-highlight CLI", () => {
   test("should support --focus option", () => {
     const result = execSync(`node ./bin/herb-highlight ${testFile} --focus 3`, {
       encoding: "utf8",
-      cwd: process.cwd()
+      cwd: process.cwd(),
     })
 
     // Should contain focus line indicator
@@ -72,18 +78,21 @@ describe("herb-highlight CLI", () => {
     // Should contain dimmed context lines
     expect(result).toContain("\x1b[2;")
     // Should not show all lines (only focus + context)
-    const lines = result.split("\n").filter(line => line.includes("│"))
+    const lines = result.split("\n").filter((line) => line.includes("│"))
     expect(lines.length).toBeLessThanOrEqual(5) // focus + 2 context each side
   })
 
   test("should support --context-lines option", () => {
-    const result = execSync(`node ./bin/herb-highlight ${testFile} --focus 3 --context-lines 1`, {
-      encoding: "utf8",
-      cwd: process.cwd()
-    })
+    const result = execSync(
+      `node ./bin/herb-highlight ${testFile} --focus 3 --context-lines 1`,
+      {
+        encoding: "utf8",
+        cwd: process.cwd(),
+      },
+    )
 
     // Should show fewer context lines
-    const lines = result.split("\n").filter(line => line.includes("│"))
+    const lines = result.split("\n").filter((line) => line.includes("│"))
     expect(lines.length).toBeLessThanOrEqual(3) // focus + 1 context each side
   })
 
@@ -91,7 +100,7 @@ describe("herb-highlight CLI", () => {
     expect(() => {
       execSync("node ./bin/herb-highlight test-template.html.erb --focus abc", {
         encoding: "utf8",
-        cwd: process.cwd()
+        cwd: process.cwd(),
       })
     }).toThrow(/Invalid focus line/)
   })

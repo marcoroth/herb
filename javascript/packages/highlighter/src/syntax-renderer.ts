@@ -1,10 +1,10 @@
-import { Token } from '@herb-tools/core'
-import { Herb } from '@herb-tools/node-wasm'
-import { colorize } from './color.js'
+import { Token } from "@herb-tools/core"
+import { Herb } from "@herb-tools/node-wasm"
+import { colorize } from "./color.js"
 
-import type { HerbBackend } from '@herb-tools/core'
-import type { Color } from './color.js'
-import type { ColorScheme } from './themes.js'
+import type { HerbBackend } from "@herb-tools/core"
+import type { Color } from "./color.js"
+import type { ColorScheme } from "./themes.js"
 
 type SyntaxRenderState = {
   inTag: boolean
@@ -42,7 +42,7 @@ export class SyntaxRenderer {
 
   public highlight(content: string): string {
     if (!this.initialized || !this.herb) {
-      throw new Error('SyntaxRenderer must be initialized before use. Call await initialize() first.')
+      throw new Error("SyntaxRenderer must be initialized before use. Call await initialize() first.")
     }
 
     const lexResult = this.herb.lex(content)
@@ -67,14 +67,50 @@ export class SyntaxRenderer {
     if (!this.isColorEnabled) return code
 
     const words = code.split(/(\s+|[^\w\s]+)/)
-    const keywords = ['if', 'unless', 'else', 'elsif', 'end', 'def', 'class', 'module', 'return', 'yield', 'break', 'next', 'case', 'when', 'then', 'while', 'until', 'for', 'in', 'do', 'begin', 'rescue', 'ensure', 'retry', 'raise', 'super', 'self', 'nil', 'true', 'false', 'and', 'or', 'not']
+    const keywords = [
+      "if",
+      "unless",
+      "else",
+      "elsif",
+      "end",
+      "def",
+      "class",
+      "module",
+      "return",
+      "yield",
+      "break",
+      "next",
+      "case",
+      "when",
+      "then",
+      "while",
+      "until",
+      "for",
+      "in",
+      "do",
+      "begin",
+      "rescue",
+      "ensure",
+      "retry",
+      "raise",
+      "super",
+      "self",
+      "nil",
+      "true",
+      "false",
+      "and",
+      "or",
+      "not",
+    ]
 
-    return words.map(word => {
-      if (keywords.includes(word)) {
-        return this.applyColor(word, this.colors.RUBY_KEYWORD)
-      }
-      return word
-    }).join('')
+    return words
+      .map((word) => {
+        if (keywords.includes(word)) {
+          return this.applyColor(word, this.colors.RUBY_KEYWORD)
+        }
+
+        return word
+      }).join("")
   }
 
   private highlightTokens(tokens: Token[], content: string): string {
@@ -82,18 +118,18 @@ export class SyntaxRenderer {
       return content
     }
 
-    let highlighted = ''
+    let highlighted = ""
     let lastEnd = 0
 
     let state: SyntaxRenderState = {
       inTag: false,
       inQuotes: false,
-      quoteChar: '',
-      tagName: '',
+      quoteChar: "",
+      tagName: "",
       isClosingTag: false,
       expectingAttributeName: false,
       expectingAttributeValue: false,
-      inComment: false
+      inComment: false,
     }
 
     for (let i = 0; i < tokens.length; i++) {
@@ -111,7 +147,7 @@ export class SyntaxRenderer {
 
       const color = this.getContextualColor(state, token, tokenText)
 
-      if (token.type === 'TOKEN_ERB_CONTENT') {
+      if (token.type === "TOKEN_ERB_CONTENT") {
         const highlightedRuby = this.highlightRubyCode(tokenText)
         highlighted += highlightedRuby
       } else if (color !== undefined) {
@@ -130,108 +166,116 @@ export class SyntaxRenderer {
     return highlighted
   }
 
-  private updateState(state: SyntaxRenderState, token: Token, tokenText: string, _nextToken?: Token, _prevToken?: Token) {
+  private updateState(
+    state: SyntaxRenderState,
+    token: Token,
+    tokenText: string,
+    _nextToken?: Token,
+    _prevToken?: Token,
+  ) {
     switch (token.type) {
-      case 'TOKEN_HTML_TAG_START':
+      case "TOKEN_HTML_TAG_START":
         state.inTag = true
         state.isClosingTag = false
         state.expectingAttributeName = false
         state.expectingAttributeValue = false
         break
 
-      case 'TOKEN_HTML_TAG_START_CLOSE':
+      case "TOKEN_HTML_TAG_START_CLOSE":
         state.inTag = true
         state.isClosingTag = true
         state.expectingAttributeName = false
         state.expectingAttributeValue = false
         break
 
-      case 'TOKEN_HTML_TAG_END':
-      case 'TOKEN_HTML_TAG_SELF_CLOSE':
+      case "TOKEN_HTML_TAG_END":
+      case "TOKEN_HTML_TAG_SELF_CLOSE":
         state.inTag = false
-        state.tagName = ''
+        state.tagName = ""
         state.isClosingTag = false
         state.expectingAttributeName = false
         state.expectingAttributeValue = false
         break
 
-      case 'TOKEN_IDENTIFIER':
+      case "TOKEN_IDENTIFIER":
         if (state.inTag && !state.tagName) {
           state.tagName = tokenText
           state.expectingAttributeName = !state.isClosingTag
         } else if (state.inTag && state.expectingAttributeName) {
           state.expectingAttributeName = false
           state.expectingAttributeValue = true
-        }
-        break
+        } break
 
-      case 'TOKEN_EQUALS':
+      case "TOKEN_EQUALS":
         if (state.inTag) {
           state.expectingAttributeValue = true
-        }
-        break
+        } break
 
-      case 'TOKEN_QUOTE':
+      case "TOKEN_QUOTE":
         if (state.inTag) {
           if (!state.inQuotes) {
             state.inQuotes = true
             state.quoteChar = tokenText
           } else if (tokenText === state.quoteChar) {
             state.inQuotes = false
-            state.quoteChar = ''
+            state.quoteChar = ""
             state.expectingAttributeName = true
             state.expectingAttributeValue = false
           }
-        }
-        break
+        } break
 
-      case 'TOKEN_WHITESPACE':
+      case "TOKEN_WHITESPACE":
         if (state.inTag && !state.inQuotes && state.tagName) {
           state.expectingAttributeName = true
           state.expectingAttributeValue = false
-        }
-        break
+        } break
 
-      case 'TOKEN_HTML_COMMENT_START':
+      case "TOKEN_HTML_COMMENT_START":
         state.inComment = true
         break
 
-      case 'TOKEN_HTML_COMMENT_END':
+      case "TOKEN_HTML_COMMENT_END":
         state.inComment = false
         break
     }
   }
 
-  private getContextualColor(state: SyntaxRenderState, token: Token, tokenText: string): Color | null {
-    // If we're inside a comment, color everything as a comment (except comment start/end tokens and ERB tokens)
-    if (state.inComment &&
-        token.type !== 'TOKEN_HTML_COMMENT_START' &&
-        token.type !== 'TOKEN_HTML_COMMENT_END' &&
-        token.type !== 'TOKEN_ERB_START' &&
-        token.type !== 'TOKEN_ERB_CONTENT' &&
-        token.type !== 'TOKEN_ERB_END') {
-
+  private getContextualColor(
+    state: SyntaxRenderState,
+    token: Token,
+    tokenText: string,
+  ): Color | null {
+    if (
+      state.inComment &&
+      token.type !== "TOKEN_HTML_COMMENT_START" &&
+      token.type !== "TOKEN_HTML_COMMENT_END" &&
+      token.type !== "TOKEN_ERB_START" &&
+      token.type !== "TOKEN_ERB_CONTENT" &&
+      token.type !== "TOKEN_ERB_END"
+    ) {
       return this.colors.TOKEN_HTML_COMMENT_START
     }
 
     switch (token.type) {
-      case 'TOKEN_IDENTIFIER':
+      case "TOKEN_IDENTIFIER":
         if (state.inTag && tokenText === state.tagName) {
           return this.colors.TOKEN_HTML_TAG_START
-        } else if (state.inTag && state.expectingAttributeValue && !state.inQuotes) {
-          return '#D19A66'
+        } else if (
+          state.inTag &&
+          state.expectingAttributeValue &&
+          !state.inQuotes
+        ) {
+          return "#D19A66"
         } else if (state.inTag && state.expectingAttributeName) {
-          return '#D19A66'
+          return "#D19A66"
         } else if (state.inTag && state.inQuotes) {
-          return '#98C379'
-        }
-        break
+          return "#98C379"
+        } break
 
-      case 'TOKEN_QUOTE':
+      case "TOKEN_QUOTE":
         if (state.inTag) {
-          return '#98C379'
-        }
-        break
+          return "#98C379"
+        } break
     }
 
     const color = this.colors[token.type as keyof ColorScheme]

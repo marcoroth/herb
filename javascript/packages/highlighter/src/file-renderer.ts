@@ -1,5 +1,7 @@
 import { colorize } from "./color.js"
 import { applyDimToStyledText } from "./util.js"
+import { LineWrapper } from "./line-wrapper.js"
+import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
 
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 
@@ -16,7 +18,7 @@ export class FileRenderer {
     this.syntaxRenderer = syntaxRenderer
   }
 
-  renderWithLineNumbers(path: string, content: string): string {
+  renderWithLineNumbers(path: string, content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth()): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
 
@@ -27,13 +29,35 @@ export class FileRenderer {
       const lineNumber = colorize(i.toString().padStart(3, " "), "gray")
       const separator = colorize("│", "gray")
 
-      output += `    ${lineNumber} ${separator} ${line}\n`
+      if (wrapLines) {
+        const linePrefix = `    ${lineNumber} ${separator} `
+        const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+        const wrappedLines = LineWrapper.wrapLine(line, availableWidth, "")
+
+        for (let j = 0; j < wrappedLines.length; j++) {
+          if (j === 0) {
+            output += `${linePrefix}${wrappedLines[j]}\n`
+          } else {
+            output += `        ${separator} ${wrappedLines[j]}\n`
+          }
+        }
+      } else {
+        output += `    ${lineNumber} ${separator} ${line}\n`
+      }
     }
 
     return output.trimEnd()
   }
 
-  renderWithFocusLine(path: string, content: string, focusLine: number, contextLines: number, showLineNumbers = true): string {
+  renderWithFocusLine(
+    path: string,
+    content: string,
+    focusLine: number,
+    contextLines: number,
+    showLineNumbers = true,
+    wrapLines = false,
+    maxWidth = LineWrapper.getTerminalWidth(),
+  ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
     const lines = highlightedContent.split("\n")
 
@@ -47,22 +71,35 @@ export class FileRenderer {
       const isFocusLine = i === focusLine
 
       if (showLineNumbers) {
-        const lineNumber = isFocusLine ?
-          colorize(i.toString().padStart(3, " "), "bold") :
-          colorize(i.toString().padStart(3, " "), "gray")
+        const lineNumber = isFocusLine
+          ? colorize(i.toString().padStart(3, " "), "bold")
+          : colorize(i.toString().padStart(3, " "), "gray")
 
-        const prefix = isFocusLine ?
-          colorize("  → ", "cyan") :
-          "    "
+        const prefix = isFocusLine ? colorize("  → ", "cyan") : "    "
 
         const separator = colorize("│", "gray")
 
         let displayLine = line
+
         if (!isFocusLine) {
           displayLine = applyDimToStyledText(line)
         }
 
-        output += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+        if (wrapLines) {
+          const linePrefix = `${prefix}${lineNumber} ${separator} `
+          const availableWidth = Math.max(MIN_CONTENT_WIDTH, maxWidth - GUTTER_WIDTH)
+          const wrappedLines = LineWrapper.wrapLine(displayLine, availableWidth, "")
+
+          for (let j = 0; j < wrappedLines.length; j++) {
+            if (j === 0) {
+              output += `${linePrefix}${wrappedLines[j]}\n`
+            } else {
+              output += `        ${separator} ${wrappedLines[j]}\n`
+            }
+          }
+        } else {
+          output += `${prefix}${lineNumber} ${separator} ${displayLine}\n`
+        }
       } else {
         let displayLine = line
 
@@ -70,14 +107,35 @@ export class FileRenderer {
           displayLine = applyDimToStyledText(line)
         }
 
-        output += `${displayLine}\n`
+        if (wrapLines) {
+          const wrappedLines = LineWrapper.wrapLine(displayLine, maxWidth)
+          for (const wrappedLine of wrappedLines) {
+            output += `${wrappedLine}\n`
+          }
+        } else {
+          output += `${displayLine}\n`
+        }
       }
     }
 
     return output.trimEnd()
   }
 
-  renderPlain(content: string): string {
-    return this.syntaxRenderer.highlight(content)
+  renderPlain(content: string, wrapLines = false, maxWidth = LineWrapper.getTerminalWidth()): string {
+    const highlighted = this.syntaxRenderer.highlight(content)
+
+    if (wrapLines) {
+      const lines = highlighted.split("\n")
+      const wrappedLines: string[] = []
+
+      for (const line of lines) {
+        const wrapped = LineWrapper.wrapLine(line, maxWidth)
+        wrappedLines.push(...wrapped)
+      }
+
+      return wrappedLines.join("\n")
+    }
+
+    return highlighted
   }
 }

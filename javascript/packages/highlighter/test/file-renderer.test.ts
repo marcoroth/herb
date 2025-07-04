@@ -64,7 +64,13 @@ describe("FileRenderer", () => {
   describe("renderWithFocusLine", () => {
     it("should highlight focus line and dim others", () => {
       const content = "line 1\nline 2\nline 3\nline 4\nline 5"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 3, 1, true)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        3,
+        1,
+        true,
+      )
 
       expect(result).toContain("/test/file.erb")
       expect(result).toContain("→") // Focus line indicator
@@ -77,7 +83,13 @@ describe("FileRenderer", () => {
 
     it("should handle focus line at beginning of file", () => {
       const content = "line 1\nline 2\nline 3"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 1, 1, true)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        1,
+        1,
+        true,
+      )
 
       expect(result).toContain("1 │") // Focus line
       expect(result).toContain("2 │") // Context line
@@ -86,7 +98,13 @@ describe("FileRenderer", () => {
 
     it("should handle focus line at end of file", () => {
       const content = "line 1\nline 2\nline 3"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 3, 1, true)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        3,
+        1,
+        true,
+      )
 
       expect(result).toContain("2 │") // Context line
       expect(result).toContain("3 │") // Focus line
@@ -95,7 +113,13 @@ describe("FileRenderer", () => {
 
     it("should handle large context that exceeds file bounds", () => {
       const content = "line 1\nline 2"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 1, 10, true)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        1,
+        10,
+        true,
+      )
 
       expect(result).toContain("1 │") // Focus line
       expect(result).toContain("2 │") // All available context
@@ -103,7 +127,13 @@ describe("FileRenderer", () => {
 
     it("should work without line numbers", () => {
       const content = "line 1\nline 2\nline 3"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, false)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        2,
+        1,
+        false,
+      )
 
       expect(result).not.toContain("/test/file.erb") // No file header
       expect(result).not.toMatch(/\d+ │/) // No line numbers
@@ -114,7 +144,13 @@ describe("FileRenderer", () => {
 
     it("should apply syntax highlighting", () => {
       const content = "<div>line 1</div>\n<span>line 2</span>\n<p>line 3</p>"
-      const result = renderer.renderWithFocusLine("/test/file.erb", content, 2, 1, true)
+      const result = renderer.renderWithFocusLine(
+        "/test/file.erb",
+        content,
+        2,
+        1,
+        true,
+      )
 
       expect(result).toContain("div")
       expect(result).toContain("span")
@@ -164,7 +200,10 @@ describe("FileRenderer", () => {
       const brightFileRenderer = new FileRenderer(brightSyntaxRenderer)
 
       const content = "<div>test</div>"
-      const result = brightFileRenderer.renderWithLineNumbers("/test/file.erb", content)
+      const result = brightFileRenderer.renderWithLineNumbers(
+        "/test/file.erb",
+        content,
+      )
 
       expect(result).toContain("/test/file.erb")
       expect(result).toContain("div")
@@ -222,7 +261,7 @@ describe("FileRenderer", () => {
 
       expect(result).toContain("tabs")
       expect(result).toContain(`quotes"`)
-      expect(result).toContain("\"single quotes\"")
+      expect(result).toContain('"single quotes"')
     })
 
     it("should handle unicode characters", () => {

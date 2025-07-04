@@ -15,7 +15,7 @@ import type { LintOffense, LintSeverity } from "../types.js"
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor extends Visitor {
-  public offenses: LintOffense[] = []
+  public readonly offenses: LintOffense[] = []
   protected ruleName: string
 
   constructor(ruleName: string) {
@@ -30,9 +30,11 @@ export abstract class BaseRuleVisitor extends Visitor {
   protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
     return {
       rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
       message,
       location,
-      severity
+      severity,
     }
   }
 

@@ -17,22 +17,28 @@ describe("DiagnosticRenderer", () => {
     renderer = new DiagnosticRenderer(syntaxRenderer)
   })
 
-  const createDiagnostic = (overrides: Partial<Diagnostic> = {}): Diagnostic => ({
+  const createDiagnostic = (
+    overrides: Partial<Diagnostic> = {},
+  ): Diagnostic => ({
     message: "Test error message",
     severity: "error",
     location: {
       start: { line: 2, column: 5 },
-      end: { line: 2, column: 10 }
+      end: { line: 2, column: 10 },
     },
     id: "test-rule",
-    ...overrides
+    ...overrides,
   })
 
   describe("renderSingle", () => {
     it("should render a single error diagnostic", () => {
       const diagnostic = createDiagnostic()
       const content = "line 1\nline <error> content\nline 3"
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       expect(result).toMatch(/\[.*error.*\]/)
       expect(result).toContain("Test error message")
@@ -45,7 +51,11 @@ describe("DiagnosticRenderer", () => {
     it("should render a single warning diagnostic", () => {
       const diagnostic = createDiagnostic({ severity: "warning" })
       const content = "line 1\nline <warn> content\nline 3"
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       expect(result).toMatch(/\[.*warning.*\]/)
       expect(result).toContain("Test error message")
@@ -54,25 +64,39 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle custom context lines", () => {
       const diagnostic = createDiagnostic({
-        location: { start: { line: 5, column: 1 }, end: { line: 5, column: 5 } }
+        location: {
+          start: { line: 5, column: 1 },
+          end: { line: 5, column: 5 },
+        },
       })
-      const content = "line 1\nline 2\nline 3\nline 4\nline 5 error\nline 6\nline 7"
+      const content =
+        "line 1\nline 2\nline 3\nline 4\nline 5 error\nline 6\nline 7"
 
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, { contextLines: 1 })
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+        { contextLines: 1 },
+      )
 
       // Should show line 4, 5, 6 (target line 5 with 1 context line each side)
       expect(result).toMatch(/line.*4/)
       expect(result).toMatch(/line.*5.*error/)
       expect(result).toMatch(/line.*6/)
       // Check for specific line numbers in the left margin rather than content
-      expect(result).not.toMatch(/\s+3\s+│/)  // Line number 3 should not appear
-      expect(result).not.toMatch(/\s+7\s+│/)  // Line number 7 should not appear
+      expect(result).not.toMatch(/\s+3\s+│/) // Line number 3 should not appear
+      expect(result).not.toMatch(/\s+7\s+│/) // Line number 7 should not appear
     })
 
     it("should hide line numbers when requested", () => {
       const diagnostic = createDiagnostic()
       const content = "line 1\nline <error> content\nline 3"
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, { showLineNumbers: false })
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+        { showLineNumbers: false },
+      )
 
       // Should not contain line number formatting
       expect(result).not.toMatch(/\d+\s*│/)
@@ -81,11 +105,19 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle edge cases for line boundaries", () => {
       const diagnostic = createDiagnostic({
-        location: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } }
+        location: {
+          start: { line: 1, column: 1 },
+          end: { line: 1, column: 5 },
+        },
       })
       const content = "single line"
 
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content, { contextLines: 5 })
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+        { contextLines: 5 },
+      )
 
       // Should handle context lines that exceed file boundaries
       expect(result).toMatch(/single.*line/)
@@ -93,34 +125,53 @@ describe("DiagnosticRenderer", () => {
     })
 
     it("should highlight backticks in messages", () => {
-      const diagnostic = createDiagnostic({ message: "Error with `code` in message" })
+      const diagnostic = createDiagnostic({
+        message: "Error with `code` in message",
+      })
       const content = "line 1\nline <error> content\nline 3"
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       expect(result).toContain("`code`")
     })
 
     it("should handle multi-character error ranges", () => {
       const diagnostic = createDiagnostic({
-        location: { start: { line: 2, column: 5 }, end: { line: 2, column: 15 } }
+        location: {
+          start: { line: 2, column: 5 },
+          end: { line: 2, column: 15 },
+        },
       })
       const content = "line 1\nline <long error> content\nline 3"
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       // Should have pointer with correct length
       expect(result).toMatch(/~{10}/) // 10 characters
     })
   })
 
-
   describe("error handling", () => {
     it("should handle invalid line numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: { start: { line: 999, column: 1 }, end: { line: 999, column: 5 } }
+        location: {
+          start: { line: 999, column: 1 },
+          end: { line: 999, column: 5 },
+        },
       })
       const content = "line 1\nline 2"
 
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       // Should not crash and should still show the diagnostic
       expect(result).toContain("Test error message")
@@ -129,11 +180,18 @@ describe("DiagnosticRenderer", () => {
 
     it("should handle invalid column numbers gracefully", () => {
       const diagnostic = createDiagnostic({
-        location: { start: { line: 2, column: 999 }, end: { line: 2, column: 1000 } }
+        location: {
+          start: { line: 2, column: 999 },
+          end: { line: 2, column: 1000 },
+        },
       })
       const content = "line 1\nshort\nline 3"
 
-      const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+      const result = renderer.renderSingle(
+        "/test/file.erb",
+        diagnostic,
+        content,
+      )
 
       expect(result).toContain("Test error message")
       expect(result).toContain("short")
@@ -148,7 +206,11 @@ describe("DiagnosticRenderer", () => {
       try {
         const diagnostic = createDiagnostic()
         const content = "line 1\nline <error> content\nline 3"
-        const result = renderer.renderSingle("/test/file.erb", diagnostic, content)
+        const result = renderer.renderSingle(
+          "/test/file.erb",
+          diagnostic,
+          content,
+        )
 
         // Should not contain ANSI escape codes
         expect(result).not.toMatch(/\x1b\\[[0-9;]*m/)

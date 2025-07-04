@@ -37,19 +37,20 @@ describe("SyntaxRenderer", () => {
     it("should throw error if not initialized", async () => {
       const uninitializedRenderer = new SyntaxRenderer(themes.default)
       await uninitializedRenderer.initialize()
-      expect(() => uninitializedRenderer.highlight("<div>test</div>"))
-        .toThrow("SyntaxRenderer must be initialized before use")
+      expect(() => uninitializedRenderer.highlight("<div>test</div>")).toThrow(
+        "SyntaxRenderer must be initialized before use",
+      )
     })
 
     it("should return original content for lex errors", async () => {
       const errorHerb = {
         load: async () => {},
-        lex: () => ({ errors: ["error"], value: [] })
+        lex: () => ({ errors: ["error"], value: [] }),
       }
 
       const errorRenderer = new SyntaxRenderer(themes.default, errorHerb as any)
       await errorRenderer.initialize()
-      
+
       const content = "<invalid>"
       const result = errorRenderer.highlight(content)
       expect(result).toBe(content)
@@ -70,12 +71,15 @@ describe("SyntaxRenderer", () => {
     it("should handle content with no tokens", async () => {
       const noTokenHerb = {
         load: async () => {},
-        lex: () => ({ errors: [], value: [] })
+        lex: () => ({ errors: [], value: [] }),
       }
 
-      const noTokenRenderer = new SyntaxRenderer(themes.default, noTokenHerb as any)
+      const noTokenRenderer = new SyntaxRenderer(
+        themes.default,
+        noTokenHerb as any,
+      )
       await noTokenRenderer.initialize()
-      
+
       const content = "plain text"
       const result = noTokenRenderer.highlight(content)
 
@@ -136,8 +140,8 @@ describe("SyntaxRenderer", () => {
             { type: "TOKEN_ERB_START", range: { start: 0, end: 2 } },
             { type: "TOKEN_ERB_CONTENT", range: { start: 2, end: 12 } },
             { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
-          ]
-        })
+          ],
+        }),
       }
 
       const erbRenderer = new SyntaxRenderer(themes.default, erbHerb as any)
@@ -161,11 +165,14 @@ describe("SyntaxRenderer", () => {
             { type: "TOKEN_HTML_COMMENT_START", range: { start: 0, end: 4 } },
             { type: "TOKEN_IDENTIFIER", range: { start: 4, end: 11 } },
             { type: "TOKEN_HTML_COMMENT_END", range: { start: 11, end: 14 } },
-          ]
-        })
+          ],
+        }),
       }
 
-      const commentRenderer = new SyntaxRenderer(themes.default, commentHerb as any)
+      const commentRenderer = new SyntaxRenderer(
+        themes.default,
+        commentHerb as any,
+      )
       await commentRenderer.initialize()
 
       const content = "<!-- comment -->"
@@ -185,16 +192,21 @@ describe("SyntaxRenderer", () => {
             { type: "TOKEN_ERB_CONTENT", range: { start: 7, end: 12 } },
             { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
             { type: "TOKEN_HTML_COMMENT_END", range: { start: 15, end: 18 } },
-          ]
-        })
+          ],
+        }),
       }
 
-      const erbCommentRenderer = new SyntaxRenderer(themes.default, erbCommentHerb as any)
+      const erbCommentRenderer = new SyntaxRenderer(
+        themes.default,
+        erbCommentHerb as any,
+      )
       await erbCommentRenderer.initialize()
 
       const content = "<!-- <% code %> -->"
       const result = erbCommentRenderer.highlight(content)
-      expect(result).toMatchInlineSnapshot(`"[38;2;92;99;112m<!--[0m [38;2;190;80;70m<%[0m code[38;2;190;80;70m %[0m>[38;2;92;99;112m --[0m>"`)
+      expect(result).toMatchInlineSnapshot(
+        `"[38;2;92;99;112m<!--[0m [38;2;190;80;70m<%[0m code[38;2;190;80;70m %[0m>[38;2;92;99;112m --[0m>"`,
+      )
     })
   })
 })
