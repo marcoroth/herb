@@ -16,7 +16,7 @@ describe("html-aria-role-heading-requires-level", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   it("fails when role=heading is used without aria-level", () => {
@@ -28,6 +28,6 @@ describe("html-aria-role-heading-requires-level", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 })

@@ -1,6 +1,6 @@
 import { AttributeVisitorMixin, getAttributeName, getAttributes } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
+import type { Rule, LintOffense } from "../types.js"
 import type { Node, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
@@ -23,7 +23,7 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
     // If we have a role="heading", we must check for aria-level
     const ariaLevelAttr = allAttributes.find(attr => getAttributeName(attr) === "aria-level")
     if (!ariaLevelAttr) {
-      this.addMessage(
+      this.addOffense(
         `Element with role="heading" must have an aria-level attribute. Example: <div role="heading" aria-level="2">.`,
         attributeNode.location,
         "error"
@@ -35,9 +35,9 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 export class HTMLAriaRoleHeadingRequiresLevelRule implements Rule {
   name = "html-aria-role-heading-requires-level"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new AriaRoleHeadingRequiresLevel(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }
