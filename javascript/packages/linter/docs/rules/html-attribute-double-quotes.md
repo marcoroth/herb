@@ -1,22 +1,22 @@
 # Linter Rule: Prefer double quotes for HTML Attribute values
 
-### Rule: `html-attribute-double-quotes`
+**Rule:** `html-attribute-double-quotes`
 
-##### Description
+## Description
 
-Prefer using double quotes (`"`) around HTML attribute values instead of single quotes (`'`). 
+Prefer using double quotes (`"`) around HTML attribute values instead of single quotes (`'`).
 
 **Exception:** Single quotes are allowed when the attribute value contains double quotes, as this avoids the need for escaping.
 
-##### Rationale
+## Rationale
 
 Double quotes are the most widely used and expected style for HTML attributes. Consistent use of double quotes improves readability, reduces visual noise when mixing with embedded Ruby (which often uses single quotes), and avoids escaping conflicts when embedding attribute values that contain single quotes.
 
-#### Examples
+## Examples
 
-###### ✅ Good
+### ✅ Good
 
-```html+erb
+```html
 <input type="text" value="Username">
 <a href="/profile" title="User Profile">Profile</a>
 <div data-controller="dropdown" data-action="click->dropdown#toggle"></div>
@@ -26,14 +26,14 @@ Double quotes are the most widely used and expected style for HTML attributes. C
 ```
 
 
-###### 🚫 Bad
+### 🚫 Bad
 
-```html+erb
+```html
 <input type='text' value='Username'>
 <a href='/profile' title='User Profile'>Profile</a>
 <div data-controller='dropdown' data-action='click->dropdown#toggle'></div>
 ```
 
-#### References
+## References
 
 * [HTML Living Standard - Attributes](https://html.spec.whatwg.org/multipage/syntax.html#attributes-2)

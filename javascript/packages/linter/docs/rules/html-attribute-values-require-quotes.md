@@ -1,12 +1,12 @@
 # Linter Rule: Always quote attribute values
 
-### Rule: `html-attribute-values-require-quotes`
+**Rule:** `html-attribute-values-require-quotes`
 
-##### Description
+## Description
 
 Always wrap HTML attribute values in quotes, even when they are technically optional according to the HTML specification.
 
-##### Rationale
+## Rationale
 
 While some attribute values can be written without quotes if they don't contain spaces or special characters, omitting quotes makes the code harder to read, more error-prone, and inconsistent. Always quoting attribute values ensures:
 
@@ -16,24 +16,24 @@ While some attribute values can be written without quotes if they don't contain 
 
 Additionally, always quoting is the common convention in most HTML formatters, linters, and developer tools.
 
-#### Examples
+## Examples
 
-##### ✅ Good
+### ✅ Good
 
-```html+erb
+```html
 <div id="hello"></div>
 <input type="text" value="Username">
 <a href="/profile" title="User Profile">Profile</a>
 ```
 
-##### 🚫 Bad
+### 🚫 Bad
 
-```html+erb
+```html
 <div id=hello></div>
 <input type=text value=Username>
 <a href=/profile title=User></a>
 ```
 
-#### References
+## References
 
 * [HTML Living Standard - Attributes](https://html.spec.whatwg.org/multipage/syntax.html#attributes-2)

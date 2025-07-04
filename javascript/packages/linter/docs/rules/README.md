@@ -1,24 +1,28 @@
 # Linter Rules
 
-This directory contains documentation for all Herb Linter rules.
+This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
-- [erb-no-output-control-flow](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
-- [html-aria-role-heading-requires-level](./html-aria-role-heading-requires-level.md) - Requires level when supply an `aria-role`
-- [html-attribute-double-quotes](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
-- [html-attribute-values-require-quotes](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
-- [html-boolean-attributes-no-value](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
-- [html-img-require-alt](./html-img-require-alt.md) - Requires alt attributes on img tags
-- [html-no-block-inside-inline](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
-- [html-no-duplicate-attributes](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
-- [html-no-nested-links](./html-no-nested-links.md) - Prevents nested anchor tags
-- [html-tag-name-lowercase](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
+
+- [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
+- [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
+- [`html-aria-role-heading-requires-level`](./html-aria-role-heading-requires-level.md) - Requires level when supply an `aria-role`
+- [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
+- [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
+- [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
+- [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags
+- [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
+- [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
+- [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
+- [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 
 ## Contributing
 
 To add a new linter rule you can scaffold a new rule by running:
 
 ```bash
+cd javascript/packages/linter
+
 scripts/generate-rule
 ```
 

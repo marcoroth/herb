@@ -5,6 +5,10 @@ import {
   groupIconVitePlugin,
   localIconLoader,
 } from "vitepress-plugin-group-icons"
+import { generateRuleWrappers } from "./generate-rules.mjs"
+
+// Generate rule wrappers at build time
+const ruleItems = generateRuleWrappers()
 
 const markdown = {
   config(md) {
@@ -43,9 +47,11 @@ const themeConfig = {
   // https://vitepress.dev/reference/default-theme-config
   nav: [
     { text: "Home", link: "/" },
-    { text: "Documentation", link: "/bindings/ruby/" },
+    { text: "Documentation", link: "/overview" },
     { text: "Playground", link: "/playground" },
   ],
+
+  outline: [2, 4],
 
   search: {
     provider: "local",
@@ -68,58 +74,128 @@ const themeConfig = {
     text: "Edit this page on GitHub",
   },
 
-  sidebar: [
-    {
-      text: "Specification",
-      items: [
-        { text: "General", link: "/specification" },
-        { text: "HTML", link: "/specification/html" },
-        { text: "ERB", link: "/specification/erb" },
-        // { text: "Blade", link: "/specification/blade" },
-        // { text: "EJS", link: "/specification/ejs" },
-        // { text: "Handlebars", link: "/specification/handlebars" },
-        // { text: "Jinja", link: "/specification/jinja" },
-        // { text: "Liquid", link: "/specification/liquid" },
-      ],
-    },
-    {
-      text: "Language Bindings",
-      items: [
-        {
-          text: "Ruby",
-          collapsed: false,
-          items: [
-            { text: "Installation", link: "/bindings/ruby/" },
-            { text: "Reference", link: "/bindings/ruby/reference" },
-          ],
-        },
-        {
-          text: "JavaScript/Node.js",
-          collapsed: false,
-          items: [
-            { text: "Installation", link: "/bindings/javascript/" },
-            { text: "Reference", link: "/bindings/javascript/reference" },
-          ],
-        },
-      ],
-    },
-    {
-      text: "C-Reference",
-      collapsed: false,
-      items: [
-        { text: "Index", link: "/c-reference/" },
-        { text: "Structs", link: "/c-reference/structs" },
-        { text: "Tokens", link: "/c-reference/tokens" },
-        { text: "AST-Nodes", link: "/c-reference/nodes" },
-        { text: "Enums", link: "/c-reference/enums" },
-        { text: "Enum-Values", link: "/c-reference/enum-values" },
-      ],
-    },
-    {
-      text: "About",
-      link: "/about",
-    },
-  ],
+  sidebar: {
+    '/linter/rules/': [
+      {
+        text: "← Back to Linter",
+        link: "/projects/linter"
+      },
+      {
+        text: "Linter",
+        items: [
+          { text: "Overview", link: "/projects/linter/" },
+          {
+            text: "Rules",
+            collapsed: false,
+            items: ruleItems
+          }
+        ]
+      }
+    ],
+    '/': [
+      {
+        text: "Getting Started",
+        collapsed: false,
+        items: [
+          { text: "Overview", link: "/overview" },
+          { text: "Projects", link: "/projects" },
+        ],
+      },
+      {
+        text: "Developer Tools",
+        collapsed: false,
+        items: [
+          { text: "Language Server", link: "/projects/language-server" },
+          { text: "Formatter", link: "/projects/formatter" },
+          {
+            text: "Linter",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/projects/linter" },
+              { text: "Rules", link: "/linter/rules/" }
+            ]
+          },
+          { text: "CLI", link: "/projects/cli" },
+        ],
+      },
+      {
+        text: "Utility Libraries",
+        collapsed: false,
+        items: [
+          { text: "Highlighter", link: "/projects/highlighter" },
+          { text: "Minifier", link: "/projects/minifier" },
+          { text: "Printer", link: "/projects/printer" },
+          { text: "Core", link: "/projects/core" },
+        ],
+      },
+      // {
+      //   text: "Specification",
+      //   items: [
+      //     { text: "General", link: "/specification" },
+      //     { text: "HTML", link: "/specification/html" },
+      //     { text: "ERB", link: "/specification/erb" },
+      //     // { text: "Blade", link: "/specification/blade" },
+      //     // { text: "EJS", link: "/specification/ejs" },
+      //     // { text: "Handlebars", link: "/specification/handlebars" },
+      //     // { text: "Jinja", link: "/specification/jinja" },
+      //     // { text: "Liquid", link: "/specification/liquid" },
+      //   ],
+      // },
+      {
+        text: "Editor Integrations",
+        collapsed: false,
+        items: [
+          { text: "Overview", link: "/integrations/editors" },
+          { text: "Cursor", link: "/integrations/editors/cursor" },
+          { text: "Neovim", link: "/integrations/editors/neovim" },
+          { text: "RubyMine", link: "/integrations/editors/rubymine" },
+          { text: "Vim", link: "/integrations/editors/vim" },
+          { text: "Visual Studio Code", link: "/integrations/editors/vscode" },
+          { text: "Zed", link: "/integrations/editors/zed" },
+        ],
+      },
+      {
+        text: "Language Bindings",
+        collapsed: false,
+        items: [
+          {
+            text: "C Library (libherb)",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/projects/parser" },
+              { text: "API Reference", link: "/c-reference/" },
+              { text: "Structs", link: "/c-reference/structs" },
+              { text: "Tokens", link: "/c-reference/tokens" },
+              { text: "AST Nodes", link: "/c-reference/nodes" },
+              { text: "Enums", link: "/c-reference/enums" },
+              { text: "Enum Values", link: "/c-reference/enum-values" },
+            ],
+          },
+          {
+            text: "Ruby",
+            collapsed: false,
+            items: [
+              { text: "Installation", link: "/bindings/ruby/" },
+              { text: "Reference", link: "/bindings/ruby/reference" },
+            ],
+          },
+          {
+            text: "JavaScript",
+            collapsed: false,
+            items: [
+              { text: "Installation", link: "/bindings/javascript/" },
+              { text: "Reference", link: "/bindings/javascript/reference" },
+            ],
+          },
+          { text: "WebAssembly", link: "/projects/webassembly" },
+        ],
+      },
+      {
+        text: "About",
+        link: "/about",
+      },
+    ]
+  },
 
   socialLinks: [
     { icon: "github", link: "https://github.com/marcoroth/herb" },

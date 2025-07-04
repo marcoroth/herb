@@ -1,6 +1,6 @@
-## Herb for Node.js (via WASM)
+# Herb for Node.js (via WebAssembly)
 
-##### Package: [`@herb-tools/node-wasm`](https://www.npmjs.com/package/@herb-tools/node-wasm)
+**Package**: [`@herb-tools/node-wasm`](https://www.npmjs.com/package/@herb-tools/node-wasm)
 
 ---
 

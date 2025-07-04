@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "Herb"
   text: "Powerful and seamless HTML-aware ERB parsing and tooling."
-  tagline: "Next-generation HTML+ERB parsing for smarter developer tooling and more."
+  tagline: "Next-generation HTML+ERB parsing ecosystem for smarter developer tooling."
 
   image:
     src: /herb.svg
@@ -13,8 +13,8 @@ hero:
 
   actions:
     - theme: brand
-      text: Documentation
-      link: /bindings/ruby
+      text: Get Started
+      link: /overview
 
     - theme: alt
       text: Playground
