@@ -1,6 +1,7 @@
 export * from "./erb-no-output-control-flow.js"
 export * from "./html-attribute-double-quotes.js"
 export * from "./html-attribute-values-require-quotes.js"
+export * from "./html-anchor-require-href.js"
 export * from "./html-boolean-attributes-no-value.js"
 export * from "./html-img-require-alt.js"
 export * from "./html-no-block-inside-inline.js"

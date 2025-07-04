@@ -8,8 +8,8 @@ import {
   Visitor,
   Location,
   Node,
+  ERBNode
 } from "@herb-tools/core"
-import type { ERBBlockNode } from "@herb-tools/core"
 import type { LintMessage } from "../types.js"
 
 /**
@@ -57,7 +57,7 @@ export function getAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): any
 /**
  * Checks if a node is an ERB node
  */
-export function isERBNode(node: Node): node is ERBBlockNode {
+export function isERBNode(node: Node): node is ERBNode {
   return node.constructor.name.startsWith("ERB")
 }
 

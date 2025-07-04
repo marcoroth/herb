@@ -73,7 +73,8 @@
     "pretest": "yarn run build-tests && yarn run build && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test",
+    "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
+    "vscode:test": "vscode-test",
     "clean": "rimraf dist",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
@@ -89,7 +90,6 @@
     "esbuild": "^0.25.3",
     "esbuild-plugin-copy": "^2.1.1",
     "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.5.0"

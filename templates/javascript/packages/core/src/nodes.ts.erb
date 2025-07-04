@@ -21,11 +21,6 @@ export interface BaseNodeProps {
   errors: HerbError[]
 }
 
-export type NodeType =
-  <%- nodes.each_with_index.map do |node, index| -%>
-  | "<%= node.type %>"
-  <%- end -%>
-
 export abstract class Node implements BaseNodeProps {
   readonly type: NodeType
   readonly location: Location
@@ -346,4 +341,28 @@ export function fromSerializedNode(node: SerializedNode): Node {
     default:
       throw new Error(`Unknown node type: ${node.type}`);
   }
+}
+
+export type NodeType =
+  <%- nodes.each_with_index.map do |node, index| -%>
+  | "<%= node.type %>"
+  <%- end -%>
+
+export type ERBNodeType = Extract<NodeType, `AST_ERB_${string}`>;
+
+export type ERBNode =
+  <%- nodes.each_with_index.map do |node, index| -%>
+    <%- next unless node.name.start_with?("ERB") -%>
+  | <%= node.name %>
+  <%- end -%>
+
+export const ERBNodeClasses = [
+  <%- nodes.each_with_index.map do |node, index| -%>
+  <%- next unless node.name.start_with?("ERB") -%>
+  <%= node.name %>,
+  <%- end -%>
+]
+
+export function isERBNode(node: Node): node is ERBNode {
+  return ERBNodeClasses.some(NodeClass => node instanceof NodeClass);
 }
