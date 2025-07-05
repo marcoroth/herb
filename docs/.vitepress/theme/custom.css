@@ -153,13 +153,7 @@ pre .twoslash-error-level-error {
 
   --vp-custom-block-tip-bg: rgba(129, 199, 132, 0.21);
 
-  --vp-home-hero-image-background-image: linear-gradient(
-    -45deg,
-    #4caf50 50%,
-    #81c784 50%
-  );
-
-  --vp-home-hero-image-filter: blur(144px);
+  --vp-home-hero-image-filter: blur(0px);
 }
 
 .custom-block.tip code {
@@ -168,13 +162,13 @@ pre .twoslash-error-level-error {
 
 @media (min-width: 640px) {
   :root {
-    --vp-home-hero-image-filter: blur(156px);
+    --vp-home-hero-image-filter: blur(0px);
   }
 }
 
 @media (min-width: 960px) {
   :root {
-    --vp-home-hero-image-filter: blur(168px);
+    --vp-home-hero-image-filter: blur(0px);
   }
 }
 
