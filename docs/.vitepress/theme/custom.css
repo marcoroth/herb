@@ -156,6 +156,16 @@ pre .twoslash-error-level-error {
   --vp-home-hero-image-filter: blur(0px);
 }
 
+.dark {
+  --vp-c-brand-1: #81c784;
+  --vp-c-brand-2: #66bb6a;
+  --vp-button-brand-bg: #81c784;
+  --vp-button-brand-hover-bg: #66bb6a;
+  --vp-button-brand-active-bg: #66bb6a;
+
+  --vp-custom-block-tip-bg: rgba(129, 199, 132, 0.15);
+}
+
 .custom-block.tip code {
   color: rgb(52, 81, 179);
 }
