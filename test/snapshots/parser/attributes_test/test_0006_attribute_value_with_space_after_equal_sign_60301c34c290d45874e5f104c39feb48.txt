@@ -5,35 +5,35 @@
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:24))
         │       ├── errors: (2 errors)
         │       │   ├── @ UnexpectedError (location: (1:14)-(1:15))
-        │       │   │   ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_QUOTE`."
+        │       │   │   ├── message: "Unexpected Token. Expected: `identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`, found: `quote`."
         │       │   │   ├── description: "Unexpected Token"
-        │       │   │   ├── expected: "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"
-        │       │   │   └── found: "TOKEN_QUOTE"
+        │       │   │   ├── expected: "`identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`"
+        │       │   │   └── found: "quote"
         │       │   │
         │       │   └── @ UnexpectedError (location: (1:20)-(1:21))
-        │       │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_QUOTE`."
+        │       │       ├── message: "Unexpected Token. Expected: `identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`, found: `quote`."
         │       │       ├── description: "Unexpected Token"
-        │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"
-        │       │       └── found: "TOKEN_QUOTE"
+        │       │       ├── expected: "`identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`"
+        │       │       └── found: "quote"
         │       │
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
         │       ├── tag_name: "input" (location: (1:1)-(1:6))
         │       ├── tag_closing: "/>" (location: (1:22)-(1:24))
         │       ├── children: (2 items)
-        │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:14))
+        │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:15))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:12))
         │       │   │   │       └── name: "value" (location: (1:7)-(1:12))
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:12)-(1:13))
         │       │   │   └── value:
-        │       │   │       └── @ HTMLAttributeValueNode (location: (1:13)-(1:14))
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:14)-(1:15))
         │       │   │           ├── errors: (1 error)
         │       │   │           │   └── @ UnexpectedError (location: (1:13)-(1:14))
-        │       │   │           │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START`, found: `TOKEN_WHITESPACE`."
+        │       │   │           │       ├── message: "Unexpected Token. Expected: `identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`, found: `whitespace`."
         │       │   │           │       ├── description: "Unexpected Token"
-        │       │   │           │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
-        │       │   │           │       └── found: "TOKEN_WHITESPACE"
+        │       │   │           │       ├── expected: "`identifier`, `unknown token`, `unknown token`, `unknown token`, `unknown token`, `newline` or `unknown token`"
+        │       │   │           │       └── found: "whitespace"
         │       │   │           │
         │       │   │           ├── open_quote: ∅
         │       │   │           ├── children: []

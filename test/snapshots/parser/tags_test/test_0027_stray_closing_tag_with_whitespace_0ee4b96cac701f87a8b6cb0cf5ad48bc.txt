@@ -1,10 +1,10 @@
 @ DocumentNode (location: (1:0)-(1:24))
 ├── errors: (1 error)
 │   └── @ UnexpectedError (location: (1:16)-(1:17))
-│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_LT`."
+│       ├── message: "Unexpected token. Expected: `ERB start`, `unknown token`, `unknown token`, `unknown token`, `identifier`, `newline` or `unknown token`, found: `<`."
 │       ├── description: "Unexpected token"
-│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, or TOKEN_NEWLINE"
-│       └── found: "TOKEN_LT"
+│       ├── expected: "`ERB start`, `unknown token`, `unknown token`, `unknown token`, `identifier`, `newline` or `unknown token`"
+│       └── found: "<"
 │
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:16))
