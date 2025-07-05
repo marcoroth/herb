@@ -1,10 +1,10 @@
 import * as vscode from "vscode"
 
 import { Client } from "./client"
-import { HerbFileStatusProvider } from "./fileStatusProvider"
+import { HerbAnalysisProvider } from "./herb-analysis-provider"
 
 let client: Client
-let fileStatusProvider: HerbFileStatusProvider
+let analysisProvider: HerbAnalysisProvider
 
 export async function activate(context: vscode.ExtensionContext) {
   console.log("Activating Herb LSP...")
@@ -13,16 +13,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await client.start()
 
-  fileStatusProvider = new HerbFileStatusProvider(context)
+  analysisProvider = new HerbAnalysisProvider(context)
 
-  vscode.window.createTreeView('herbFileStatus', { treeDataProvider: fileStatusProvider })
+  vscode.window.createTreeView('herbFileStatus', { treeDataProvider: analysisProvider })
 
   context.subscriptions.push(
     vscode.commands.registerCommand('herb.analyzeProject', async () => {
-      await fileStatusProvider.analyzeProject()
+      await analysisProvider.analyzeProject()
     }),
     vscode.commands.registerCommand('herb.reprocessFile', async (item: any) => {
-      await fileStatusProvider.reprocessFile(item.uri)
+      await analysisProvider.reprocessFile(item.uri)
     })
   )
 
@@ -43,7 +43,7 @@ async function runAutoAnalysis() {
   }
 
   console.log(`Found ${erbFiles.length} HTML+ERB files. Running auto-analysis...`)
-  await fileStatusProvider.analyzeProject()
+  await analysisProvider.analyzeProject()
 }
 
 export async function deactivate(): Promise<void> {

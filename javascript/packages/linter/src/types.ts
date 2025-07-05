@@ -1,9 +1,16 @@
 import { Node, Diagnostic } from "@herb-tools/core"
+import type { defaultRules } from "./default-rules.js"
 
 export type LintSeverity = "error" | "warning"
 
+/**
+ * Automatically inferred union type of all available linter rule names.
+ * This type extracts the 'name' property from each rule class instance.
+ */
+export type LinterRule = InstanceType<typeof defaultRules[number]>['name']
+
 export interface LintOffense extends Diagnostic {
-  rule: string
+  rule: LinterRule
   severity: LintSeverity
 }
 
