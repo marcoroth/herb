@@ -22,6 +22,8 @@ export class TreeItemBuilder {
         case 'githubRepo':         return this.buildGitHubRepoItem()
         case 'reportGeneralIssue': return this.buildReportGeneralIssueItem()
         case 'documentation':      return this.buildDocumentationItem()
+        case 'noParseErrors':      return this.buildNoParseErrorsItem()
+        case 'noLintIssues':       return this.buildNoLintIssuesItem()
       }
     }
 
@@ -36,14 +38,17 @@ export class TreeItemBuilder {
 
     const label =
       element.status === 'processing'
-        ? `Processing (${processingCount})`
+        ? `Processing (${processingCount} file${processingCount === 1 ? '' : 's'})`
         : element.status === 'ok'
-        ? `Successful (${okCount})`
+        ? `Successful (${okCount} file${okCount === 1 ? '' : 's'})`
         : element.status === 'timeout'
-        ? `Timed Out (${timeoutCount})`
-        : `Failed (${failCount})`
+        ? `Timed Out (${timeoutCount} file${timeoutCount === 1 ? '' : 's'})`
+        : `Failed (${failCount} file${failCount === 1 ? '' : 's'})`
 
-    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
+    const collapsibleState = element.status === 'ok' || (element.status === 'timeout' && timeoutCount === 0)
+      ? vscode.TreeItemCollapsibleState.None
+      : vscode.TreeItemCollapsibleState.Collapsed
+    const item = new vscode.TreeItem(label, collapsibleState)
 
     if (element.status === 'ok') {
       item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
@@ -60,7 +65,7 @@ export class TreeItemBuilder {
 
   private buildParseErrorGroupItem(): vscode.TreeItem {
     const parseErrorCount = this.files.filter(f => f.errors > 0).length
-    const label = `Parse Errors (${parseErrorCount})`
+    const label = `Parse Errors (${parseErrorCount} file${parseErrorCount === 1 ? '' : 's'})`
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
     item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
@@ -84,19 +89,18 @@ export class TreeItemBuilder {
       return item
     }
 
-    const lintErrorCount = this.files.filter(f => f.lintErrors > 0).length
-    const lintWarningCount = this.files.filter(f => f.lintWarnings > 0).length
-    const totalLintIssues = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
+    const totalLintErrors = this.files.reduce((sum, f) => sum + f.lintErrors, 0)
+    const totalLintWarnings = this.files.reduce((sum, f) => sum + f.lintWarnings, 0)
 
     const parts = []
-    if (lintErrorCount > 0) {
-      parts.push(`${lintErrorCount} errors`)
+    if (totalLintErrors > 0) {
+      parts.push(`${totalLintErrors} error${totalLintErrors === 1 ? '' : 's'}`)
     }
-    if (lintWarningCount > 0) {
-      parts.push(`${lintWarningCount} warnings`)
+    if (totalLintWarnings > 0) {
+      parts.push(`${totalLintWarnings} warning${totalLintWarnings === 1 ? '' : 's'}`)
     }
 
-    const label = `Linter Issues (${totalLintIssues} files with ${parts.join(', ')})`
+    const label = `Linter Issues (${parts.join(', ')})`
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
     item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.orange'))
@@ -224,6 +228,30 @@ export class TreeItemBuilder {
     item.command = { command: 'vscode.open', title: 'Open Documentation', arguments: [vscode.Uri.parse('https://herb-tools.dev')] }
     item.iconPath = new vscode.ThemeIcon('book')
     item.tooltip = 'Open the Herb documentation'
+
+    return item
+  }
+
+  private buildNoParseErrorsItem(): vscode.TreeItem {
+    const item = new vscode.TreeItem(
+      '🌿 No parse errors, great job!',
+      vscode.TreeItemCollapsibleState.None
+    )
+
+    item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    item.tooltip = 'All files parsed successfully and have no errors.'
+
+    return item
+  }
+
+  private buildNoLintIssuesItem(): vscode.TreeItem {
+    const item = new vscode.TreeItem(
+      '🌿 No linter issues, great job!',
+      vscode.TreeItemCollapsibleState.None
+    )
+
+    item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    item.tooltip = 'All files passed linting.'
 
     return item
   }

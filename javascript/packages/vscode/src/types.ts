@@ -77,6 +77,14 @@ export interface DocumentationNode {
   type: 'documentation'
 }
 
+export interface NoParseErrorsNode {
+  type: 'noParseErrors'
+}
+
+export interface NoLintIssuesNode {
+  type: 'noLintIssues'
+}
+
 export type TreeNode =
   | StatusGroup
   | ParseErrorGroup
@@ -92,6 +100,8 @@ export type TreeNode =
   | ReportGeneralIssueNode
   | GitHubRepoNode
   | DocumentationNode
+  | NoParseErrorsNode
+  | NoLintIssuesNode
 
 export interface AnalysisResult {
   status: Status

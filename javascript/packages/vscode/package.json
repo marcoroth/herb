@@ -96,7 +96,8 @@
       {
         "command": "herb.reportDiagnosticIssue",
         "title": "Herb: Report Issue with Diagnostic",
-        "icon": "$(github)"
+        "icon": "$(github)",
+        "when": "false"
       }
     ],
     "viewsContainers": {

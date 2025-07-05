@@ -21,17 +21,41 @@ export class TreeChildrenProvider {
     if ('type' in element) {
       switch (element.type) {
         case 'statusGroup':
+          if (element.status === 'ok') {
+            return []
+          }
+
+          if (element.status === 'timeout') {
+            const timeoutFiles = this.files.filter(f => f.status === 'timeout')
+
+            return timeoutFiles.length === 0 ? [] : this.buildFolderTree(element.status, [])
+          }
+
           return this.buildFolderTree(element.status, [])
+
         case 'folderGroup':
           return element.status === 'failed'
             ? this.buildParseErrorFolderTree(element.pathSegments)
             : this.buildFolderTree(element.status, element.pathSegments)
+
         case 'parseErrorGroup':
-          return this.buildParseErrorFolderTree([])
+          const parseErrorCount = this.files.filter(f => f.errors > 0).length
+
+          return parseErrorCount > 0 ? this.buildParseErrorFolderTree([]) : [{ type: 'noParseErrors' }]
+
         case 'lintIssueGroup':
-          return this.getLintSeverityGroups()
+          const lintIssueCount = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
+          const linterDisabled = this.files.some(f => f.linterDisabled)
+
+          if (lintIssueCount > 0 || linterDisabled) {
+            return this.getLintSeverityGroups()
+          } else {
+            return [{ type: 'noLintIssues' }]
+          }
+
         case 'lintSeverityGroup':
           return this.getLintRuleGroups(element.severity)
+
         case 'lintRuleGroup':
           return this.getFilesWithLintRule(element.rule, element.severity)
       }
@@ -47,9 +71,6 @@ export class TreeChildrenProvider {
     }
 
     const processingCount = this.files.filter(f => f.status === 'processing').length
-    const parseErrorCount = this.files.filter(f => f.errors > 0).length
-    const lintIssueCount = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
-    const linterDisabled = this.files.some(f => f.linterDisabled)
 
     const groups: TreeNode[] = []
     groups.push({ type: 'separator', label: '── Analysis Results ──' })
@@ -59,13 +80,11 @@ export class TreeChildrenProvider {
     } else {
       groups.push({ type: 'statusGroup', status: 'ok' })
 
-      if (parseErrorCount > 0) {
-        groups.push({ type: 'parseErrorGroup' })
-      }
+      // Always show parse error group (will contain "great job" message if no errors)
+      groups.push({ type: 'parseErrorGroup' })
 
-      if (lintIssueCount > 0 || linterDisabled) {
-        groups.push({ type: 'lintIssueGroup' })
-      }
+      // Always show linter issue group (will contain "great job" message if no issues)
+      groups.push({ type: 'lintIssueGroup' })
 
       groups.push({ type: 'statusGroup', status: 'timeout' })
     }

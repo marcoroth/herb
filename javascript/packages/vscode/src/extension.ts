@@ -54,7 +54,11 @@ export async function activate(context: vscode.ExtensionContext) {
       await reportGeneralIssue()
     }),
 
-    vscode.commands.registerCommand('herb.reportDiagnosticIssue', async (uri: vscode.Uri, diagnostic: vscode.Diagnostic) => {
+    vscode.commands.registerCommand('herb.reportDiagnosticIssue', async (uri?: vscode.Uri, diagnostic?: vscode.Diagnostic) => {
+      if (!uri || !diagnostic) {
+        vscode.window.showErrorMessage('This command can only be used on diagnostics. Please right-click on an error or warning to report an issue.')
+        return
+      }
       await reportDiagnosticIssue(uri, diagnostic)
     })
   )
