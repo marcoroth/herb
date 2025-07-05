@@ -32,7 +32,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "yarn clean && tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn clean && tsc -b && rollup -c",
     "dev": "tsc -b -w",
     "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
@@ -45,6 +45,7 @@
     "dist/"
   ],
   "dependencies": {
+    "@herb-tools/linter": "0.3.1",
     "@herb-tools/node-wasm": "0.3.1",
     "dedent": "^1.6.0",
     "vscode-languageserver": "^9.0.1",

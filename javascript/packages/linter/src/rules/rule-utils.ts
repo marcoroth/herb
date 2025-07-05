@@ -1,21 +1,25 @@
 import {
-  HTMLOpenTagNode,
-  HTMLSelfCloseTagNode,
-  HTMLAttributeNode,
-  HTMLAttributeNameNode,
-  HTMLAttributeValueNode,
-  LiteralNode,
-  Visitor,
-  Location
+  Visitor
 } from "@herb-tools/core"
 
-import type { LintMessage } from "../types.js"
+import type { 
+  ERBNode, 
+  HTMLAttributeNameNode,
+  HTMLAttributeNode, 
+  HTMLAttributeValueNode, 
+  HTMLOpenTagNode, 
+  HTMLSelfCloseTagNode, 
+  LiteralNode, 
+  Location, 
+  Node 
+} from "@herb-tools/core"
+import type { LintOffense, LintSeverity, } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor extends Visitor {
-  public messages: LintMessage[] = []
+  public offenses: LintOffense[] = []
   protected ruleName: string
 
   constructor(ruleName: string) {
@@ -25,9 +29,9 @@ export abstract class BaseRuleVisitor extends Visitor {
   }
 
   /**
-   * Helper method to create a lint message
+   * Helper method to create a lint offense
    */
-  protected createMessage(message: string, location: Location, severity: "error" | "warning" = "error"): LintMessage {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
     return {
       rule: this.ruleName,
       message,
@@ -37,10 +41,10 @@ export abstract class BaseRuleVisitor extends Visitor {
   }
 
   /**
-   * Helper method to add a message to the messages array
+   * Helper method to add an offense to the offenses array
    */
-  protected addMessage(message: string, location: Location, severity: "error" | "warning" = "error"): void {
-    this.messages.push(this.createMessage(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
+    this.offenses.push(this.createOffense(message, location, severity))
   }
 }
 

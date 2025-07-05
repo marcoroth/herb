@@ -27,7 +27,7 @@
   "scripts": {
     "install": "yarn vendor && node-pre-gyp install --fallback-to-build",
     "dev": "rollup -c -w",
-    "build": "yarn templates && yarn vendor && yarn rebuild",
+    "build": "yarn clean && yarn templates && yarn vendor && yarn rebuild",
     "build:javascript": "rollup -c",
     "templates": "rake templates",
     "revendor": "yarn clean && yarn templates && yarn vendor",

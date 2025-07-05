@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
 
-import { Rule, LintMessage } from "../types.js"
+import { Rule, LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, Node } from "@herb-tools/core"
 
 class AnchorRechireHrefVisitor extends BaseRuleVisitor {
@@ -17,7 +17,7 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
     }
 
     if (!hasAttribute(node, "href")) {
-      this.addMessage(
+      this.addOffense(
         "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
         node.tag_name!.location,
         "error",
@@ -29,11 +29,11 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
 export class HTMLAnchorRequireHrefRule implements Rule {
   name = "html-anchor-require-href"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new AnchorRechireHrefVisitor(this.name)
 
     visitor.visit(node)
 
-    return visitor.messages
+    return visitor.offenses
   }
 }

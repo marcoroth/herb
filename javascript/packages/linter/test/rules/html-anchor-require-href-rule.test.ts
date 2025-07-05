@@ -16,7 +16,7 @@ describe("html-anchor-require-href", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for a without href attribute", () => {
@@ -27,13 +27,13 @@ describe("html-anchor-require-href", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-anchor-require-href")
-    expect(lintResult.messages[0].message).toBe(
+    expect(lintResult.offenses[0].rule).toBe("html-anchor-require-href")
+    expect(lintResult.offenses[0].message).toBe(
       "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
     )
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for multiple a tags without href", () => {
@@ -44,7 +44,7 @@ describe("html-anchor-require-href", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   test("passes for img with ERB alt attribute", () => {
@@ -74,7 +74,7 @@ describe("html-anchor-require-href", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe(
+    expect(lintResult.offenses[0].message).toBe(
       "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
     )
   })

@@ -55,7 +55,7 @@ export default class extends Generator {
           const issueDetails = JSON.parse(issueBody)
 
           // Extract rule name from issue body
-          // Try different formats: ### Rule: `rule-name` or Rule name: rule-name
+          // Try different formats: **Rule:** `rule-name` or Rule name: rule-name
           let ruleNameMatch = issueDetails.body.match(/###\s*Rule:\s*`([^`]+)`/)
 
           if (!ruleNameMatch) {

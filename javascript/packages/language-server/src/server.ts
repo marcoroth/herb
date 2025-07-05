@@ -64,7 +64,7 @@ export class Server {
       })
     })
 
-    this.connection.onDidChangeConfiguration((change) => {
+    this.connection.onDidChangeConfiguration(async (change) => {
       if (this.service.settings.hasConfigurationCapability) {
         // Reset all cached document settings
         this.service.settings.documentSettings.clear()
@@ -74,14 +74,14 @@ export class Server {
         ) as HerbSettings
       }
 
-      this.service.refresh()
+      await this.service.refresh()
     })
 
-    this.connection.onDidOpenTextDocument((params) => {
+    this.connection.onDidOpenTextDocument(async (params) => {
       const document = this.service.documentService.get(params.textDocument.uri)
 
       if (document) {
-        this.service.diagnostics.refreshDocument(document)
+        await this.service.diagnostics.refreshDocument(document)
       }
     })
 
@@ -90,9 +90,10 @@ export class Server {
         if (event.uri.endsWith("/.herb-lsp/config.json")) {
           await this.service.refreshConfig()
 
-          this.service.documentService.getAll().forEach((document) => {
+          const documents = this.service.documentService.getAll()
+          await Promise.all(documents.map(document => 
             this.service.diagnostics.refreshDocument(document)
-          })
+          ))
         }
       })
     })
