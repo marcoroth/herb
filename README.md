@@ -24,7 +24,7 @@
 
 At the core of Herb is the **Herb Parser**, a fast, portable, and HTML-aware ERB parser written in C. The parser generates a detailed, accurate syntax tree that serves as the foundation for reliable code analysis, transformations, and developer tooling.
 
-The Herb ecosystem includes **developer tools** (CLI, language server, formatter, linter), **language bindings** (for Ruby, Node.js, and the Browser using WebAssembly), and **utility libraries** (highlighter, minifier, printer). All these components leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
+The Herb ecosystem includes **developer tools** (CLI, language server, formatter, linter), **language bindings** (for Ruby, Node.js, and the Browser using WebAssembly), and **utility libraries** (language service, highlighter, minifier, printer). All these components leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
 
 ## What Herb Can Do for You
 
@@ -40,6 +40,8 @@ Herb provides a complete ecosystem of HTML+ERB tooling, designed to simplify and
   Static analysis for your HTML+ERB templates to enforce best practices and quickly identify common mistakes.
 
 You can use Herb programmatically in **Ruby**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
+
+For a complete overview of all available tools, libraries, and integrations, visit the [**Projects page**](https://herb-tools.dev/projects) on our documentation site.
 
 ## Motiviation
 

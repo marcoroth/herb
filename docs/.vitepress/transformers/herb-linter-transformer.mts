@@ -2,7 +2,7 @@ import { rendererRich } from "@shikijs/twoslash"
 import { transformerTwoslash } from "@shikijs/vitepress-twoslash"
 import { createPositionConverter } from "twoslash-protocol"
 
-import { Herb } from '@herb-tools/node-wasm'
+import { Herb } from '@herb-tools/node'
 import { Linter } from '@herb-tools/linter'
 
 export interface LinterDiagnostic {

@@ -18,8 +18,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "prebuild": "yarn run clean",
-    "build": "tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn clean && tsc -b && rollup -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

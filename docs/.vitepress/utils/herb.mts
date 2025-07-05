@@ -1,4 +1,4 @@
-import { Herb } from '@herb-tools/node-wasm'
+import { Herb } from '@herb-tools/node'
 
 export async function initializeHerb() {
   try {

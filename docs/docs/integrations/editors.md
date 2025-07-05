@@ -12,7 +12,7 @@ The Herb Language Server provides intelligent language features for HTML+ERB fil
 - **[Visual Studio Code](/integrations/editors/vscode)** - Full-featured extension available on the Visual Studio Marketplace
 - **[Zed](/integrations/editors/zed)** - Built into the official Ruby extension
 
-## Coming Soon
+## Planned Support
 
 - **[RubyMine](/integrations/editors/rubymine)** - JetBrains IDE support (not yet available)
 

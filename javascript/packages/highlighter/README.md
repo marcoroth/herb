@@ -1,4 +1,4 @@
-# Herb Highlighter
+# Herb Highlighter <Badge type="info" text="coming soon" />
 
 **Package:** [`@herb-tools/highlighter`](https://www.npmjs.com/package/@herb-tools/highlighter)
 

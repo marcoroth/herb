@@ -18,7 +18,7 @@
   "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn clean && tsc -b && rollup -c",
     "dev": "rollup -c -w",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
