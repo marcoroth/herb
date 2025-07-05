@@ -10,6 +10,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "@herb-tools/language-server",
 ]
 
 function isExternal(id) {
@@ -19,22 +20,45 @@ function isExternal(id) {
   )
 }
 
-export default {
-  input: "src/index.ts",
-  output: {
-    file: "dist/herb-language-server.js",
-    format: "cjs",
-    sourcemap: true,
+export default [
+  // CLI entry point
+  {
+    input: "src/herb-language-server.ts",
+    output: {
+      file: "dist/herb-language-server.js",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
   },
-  external: isExternal,
-  plugins: [
-    nodeResolve(),
-    commonjs(),
-    json(),
-    typescript({
-      tsconfig: "./tsconfig.json",
-      rootDir: "src/",
-      module: "esnext",
-    }),
-  ],
-}
+  // Library exports (CommonJS)
+  {
+    input: "src/index.ts",
+    output: {
+      file: "dist/index.cjs",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
+  },
+]

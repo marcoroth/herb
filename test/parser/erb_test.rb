@@ -81,5 +81,33 @@ module Parser
         %>
       HTML
     end
+
+    test "erb output wrapped in double quotes" do
+      assert_parsed_snapshot(<<~HTML)
+        "<%= value %>"
+      HTML
+    end
+
+    test "erb output wrapped in single quotes" do
+      assert_parsed_snapshot(<<~HTML)
+        '<%= value %>'
+      HTML
+    end
+
+    test "erb output wrapped in double quotes inside if" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          "<%= value %>"
+        <% end %>
+      HTML
+    end
+
+    test "erb output wrapped in single quotes inside if" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          '<%= value %>'
+        <% end %>
+      HTML
+    end
   end
 end

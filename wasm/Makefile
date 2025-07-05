@@ -7,7 +7,7 @@ NODE_BUILD_DIR = ../javascript/packages/node-wasm/build/
 NODE_WASM_OUTPUT = $(NODE_BUILD_DIR)libherb.js
 
 CPP_SOURCES = $(wildcard *.cpp)
-C_SOURCES = $(filter-out ../src/main.c, $(wildcard ../src/*.c) $(wildcard ../src/**/*.c))
+C_SOURCES = $(filter-out ../src/main.c, $(wildcard ../src/*.c)) $(wildcard ../src/**/*.c)
 
 PRISM_PATH = $(shell cd .. && bundle show prism)
 PRISM_MAIN_SOURCES = $(wildcard $(PRISM_PATH)/src/*.c)
@@ -67,8 +67,15 @@ $(NODE_WASM_OUTPUT): $(ALL_OBJECTS)
 	mkdir -p $(NODE_BUILD_DIR)
 	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
 
-clean:
-	rm -rf $(BROWSER_BUILD_DIR)
+clean: clean_objects clean_browser clean_node
+
+clean_objects:
 	rm -rf $(OBJ_DIR)
+
+clean_browser:
+	rm -rf $(BROWSER_BUILD_DIR)
+
+clean_node:
+	rm -rf $(NODE_BUILD_DIR)
 
 .PHONY: all clean

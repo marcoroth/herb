@@ -28,6 +28,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
 
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,7 +59,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build all JavaScript packages
-        run: npx nx run-many -t build
+        run: yarn build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -76,6 +77,7 @@ jobs:
 
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     name: Deploy
     steps:
       - name: Deploy to GitHub Pages

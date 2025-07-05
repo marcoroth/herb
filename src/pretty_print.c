@@ -25,7 +25,11 @@ void pretty_print_newline(const size_t indent, const size_t relative_indent, buf
 }
 
 void pretty_print_label(
-  const char* name, const size_t indent, const size_t relative_indent, const bool last_property, buffer_T* buffer
+  const char* name,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
+  buffer_T* buffer
 ) {
   pretty_print_indent(buffer, indent);
   pretty_print_indent(buffer, relative_indent);
@@ -41,7 +45,11 @@ void pretty_print_label(
 }
 
 void pretty_print_quoted_property(
-  const char* name, const char* value, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* name,
+  const char* value,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   char* quoted = quoted_string(value);
@@ -50,14 +58,22 @@ void pretty_print_quoted_property(
 }
 
 void pretty_print_boolean_property(
-  const char* name, bool value, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* name,
+  bool value,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_property(name, value ? "true" : "false", indent, relative_indent, last_property, buffer);
 }
 
 void pretty_print_property(
-  const char* name, const char* value, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* name,
+  const char* value,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
@@ -66,7 +82,11 @@ void pretty_print_property(
 }
 
 void pretty_print_size_t_property(
-  size_t value, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+  size_t value,
+  const char* name,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
@@ -77,7 +97,11 @@ void pretty_print_size_t_property(
 }
 
 void pretty_print_array(
-  const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* name,
+  array_T* array,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   if (array == NULL) {
@@ -122,7 +146,11 @@ void pretty_print_array(
 }
 
 void pretty_print_errors(
-  AST_NODE_T* node, const size_t indent, const size_t relative_indent, const bool last_property, buffer_T* buffer
+  AST_NODE_T* node,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
+  buffer_T* buffer
 ) {
   if (node->errors != NULL && array_size(node->errors) > 0) {
     error_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
@@ -146,7 +174,11 @@ void pretty_print_location(location_T* location, buffer_T* buffer) {
 }
 
 void pretty_print_position_property(
-  position_T* position, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+  position_T* position,
+  const char* name,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
@@ -173,7 +205,11 @@ void pretty_print_position_property(
 }
 
 void pretty_print_token_property(
-  token_T* token, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+  token_T* token,
+  const char* name,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
@@ -193,7 +229,11 @@ void pretty_print_token_property(
 }
 
 void pretty_print_string_property(
-  const char* string, const char* name, const size_t indent, const size_t relative_indent, const bool last_property,
+  const char* string,
+  const char* name,
+  const size_t indent,
+  const size_t relative_indent,
+  const bool last_property,
   buffer_T* buffer
 ) {
   const char* value = "∅";

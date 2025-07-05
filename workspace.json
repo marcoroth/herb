@@ -3,12 +3,19 @@
   "projects": {
     "@herb-tools/browser": "javascript/packages/browser",
     "@herb-tools/core": "javascript/packages/core",
-    "@herb-tools/node": "javascript/packages/node",
-    "@herb-tools/node-wasm": "javascript/packages/node-wasm",
+    "@herb-tools/highlighter": "javascript/packages/highlighter",
     "@herb-tools/language-server": "javascript/packages/language-server",
+    "@herb-tools/linter": "javascript/packages/linter",
+    "@herb-tools/node-wasm": "javascript/packages/node-wasm",
+    "@herb-tools/node": "javascript/packages/node",
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",
-    "playground": "./playground"
+    "libherb": "./src",
+    "playground": "./playground",
+    "prism": "./prism",
+    "ruby-gem": "./ext",
+    "templates": "./templates",
+    "wasm": "./wasm"
   }
 }

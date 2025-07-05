@@ -10,6 +10,133 @@
   border-color: black !important;
 }
 
+/* Linter Diagnostics Styling */
+.twoslash-error {
+  font-weight: bold;
+  text-decoration: underline !important;
+  text-decoration-color: #ef4444 !important;
+  text-decoration-style: wavy !important;
+  text-underline-offset: 2px !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  position: relative !important;
+}
+
+.twoslash-error-level-error {
+  text-decoration-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.twoslash-error-level-warning {
+  text-decoration-color: #f59e0b !important;
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+.twoslash-error-level-info {
+  text-decoration-color: #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.twoslash-popup-container {
+  position: absolute;
+  z-index: 50;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 300px;
+  word-wrap: break-word;
+  pointer-events: none;
+  transform: translateY(-100%);
+  margin-top: -8px;
+}
+
+.twoslash-popup-container::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--vp-c-bg-soft);
+}
+
+.linter-diagnostic {
+  color: var(--vp-c-text-1);
+}
+
+.linter-diagnostic-message {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.linter-diagnostic-rule {
+  font-family: var(--vp-font-family-mono);
+  font-size: 11px;
+  color: var(--vp-c-text-2);
+  opacity: 0.8;
+}
+
+/* Additional hover handling for linter diagnostics */
+.twoslash-error:hover .twoslash-popup-container {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 999 !important;
+}
+
+/* Ensure the error styling is visible */
+code .twoslash-error,
+pre .twoslash-error,
+.linter-error {
+  text-decoration: underline wavy #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  cursor: help !important;
+  position: relative !important;
+}
+
+/* Warning-specific styling */
+code .twoslash-error-level-warning,
+pre .twoslash-error-level-warning {
+  text-decoration: underline wavy #f59e0b !important;
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+/* Error-specific styling */
+code .twoslash-error-level-error,
+pre .twoslash-error-level-error {
+  text-decoration: underline wavy #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Custom linter error tooltip */
+.linter-error::after {
+  content: attr(data-linter-error) " (" attr(data-linter-rule) ")";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  max-width: 300px;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.linter-error:hover::after {
+  opacity: 1;
+}
+
+
 :root {
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: -webkit-linear-gradient(

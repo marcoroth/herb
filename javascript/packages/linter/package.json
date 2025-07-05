@@ -1,0 +1,49 @@
+{
+  "name": "@herb-tools/linter",
+  "version": "0.3.1",
+  "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/linter%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/linter"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "bin": {
+    "herb-lint": "./bin/herb-lint"
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "yarn clean && tsc -b && rollup -c",
+    "watch": "tsc -b -w",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.3.1",
+    "@herb-tools/highlighter": "0.3.1",
+    "@herb-tools/node-wasm": "0.3.1",
+    "glob": "^11.0.3"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "docs/",
+    "src/",
+    "bin/",
+    "dist/"
+  ]
+}

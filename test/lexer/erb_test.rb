@@ -30,6 +30,10 @@ module Lexer
       assert_lexed_snapshot(%(<%% "Test" %%>))
     end
 
+    test "erb <%%= %%>" do
+      assert_lexed_snapshot(%(<%%= "Test" %%>))
+    end
+
     test "erb output inside HTML attribute value" do
       assert_lexed_snapshot(%(<article id="<%= dom_id(article) %>"></article>))
     end
