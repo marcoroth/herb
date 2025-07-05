@@ -77,6 +77,26 @@
         "command": "herb.reprocessFile",
         "title": "Herb: Re-analyze File",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "herb.reportIssue",
+        "title": "Herb: Report Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportDetailedIssue",
+        "title": "Herb: Report Detailed Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportGeneralIssue",
+        "title": "Herb: Report General Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportDiagnosticIssue",
+        "title": "Herb: Report Issue with Diagnostic",
+        "icon": "$(github)"
       }
     ],
     "viewsContainers": {
@@ -107,7 +127,12 @@
       "view/item/context": [
         {
           "command": "herb.reprocessFile",
-          "when": "view == herbFileStatus && viewItem == herbFile",
+          "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.reportDetailedIssue",
+          "when": "view == herbFileStatus && viewItem == herbFileWithIssues",
           "group": "inline"
         }
       ]
@@ -143,19 +168,13 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/node-wasm": "0.3.1",
     "@herb-tools/linter": "0.3.1",
-    "@types/vscode": "^1.43.0",
+    "@herb-tools/node-wasm": "0.3.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.43.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
-    "vscode-languageclient": "^9.0.1",
-    "eslint": "^9.25.1",
-    "esbuild": "^0.25.3",
-    "esbuild-plugin-copy": "^2.1.1",
-    "npm-run-all": "^4.1.5",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.5.0",
@@ -163,7 +182,6 @@
     "esbuild-plugin-copy": "^2.1.1",
     "eslint": "^9.25.1",
     "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
     "vscode-languageclient": "^9.0.1"
   }
 }

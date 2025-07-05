@@ -23,7 +23,7 @@ export class TreeChildrenProvider {
         case 'statusGroup':
           return this.buildFolderTree(element.status, [])
         case 'folderGroup':
-          return element.status === 'failed' 
+          return element.status === 'failed'
             ? this.buildParseErrorFolderTree(element.pathSegments)
             : this.buildFolderTree(element.status, element.pathSegments)
         case 'parseErrorGroup':
@@ -58,15 +58,15 @@ export class TreeChildrenProvider {
       groups.push({ type: 'statusGroup', status: 'processing' })
     } else {
       groups.push({ type: 'statusGroup', status: 'ok' })
-      
+
       if (parseErrorCount > 0) {
         groups.push({ type: 'parseErrorGroup' })
       }
-      
+
       if (lintIssueCount > 0 || linterDisabled) {
         groups.push({ type: 'lintIssueGroup' })
       }
-      
+
       groups.push({ type: 'statusGroup', status: 'timeout' })
     }
 
@@ -77,32 +77,32 @@ export class TreeChildrenProvider {
 
   private getLintSeverityGroups(): TreeNode[] {
     const groups: TreeNode[] = []
-    
+
     const filesWithErrors = this.files.filter(f => f.lintErrors > 0)
     if (filesWithErrors.length > 0) {
       groups.push({ type: 'lintSeverityGroup', severity: 'error' })
     }
-    
+
     const filesWithWarnings = this.files.filter(f => f.lintWarnings > 0)
     if (filesWithWarnings.length > 0) {
       groups.push({ type: 'lintSeverityGroup', severity: 'warning' })
     }
-    
+
     return groups
   }
 
   private getLintRuleGroups(severity: LintSeverity): TreeNode[] {
     const rules = this.getLintRulesForSeverity(severity)
-    return rules.map(rule => ({ 
-      type: 'lintRuleGroup' as const, 
-      rule, 
-      severity 
+    return rules.map(rule => ({
+      type: 'lintRuleGroup' as const,
+      rule,
+      severity
     }))
   }
 
   private getLintRulesForSeverity(severity: LintSeverity): LinterRule[] {
     const rules = new Set<LinterRule>()
-    
+
     for (const file of this.files) {
       for (const offense of file.lintOffenses) {
         if (offense.severity === severity) {
@@ -110,12 +110,12 @@ export class TreeChildrenProvider {
         }
       }
     }
-    
+
     return Array.from(rules).sort()
   }
 
   private getFilesWithLintRule(rule: LinterRule, severity: LintSeverity): FileStatus[] {
-    return this.files.filter(f => 
+    return this.files.filter(f =>
       f.lintOffenses.some(offense => offense.rule === rule && offense.severity === severity)
     )
   }
@@ -235,24 +235,31 @@ export class TreeChildrenProvider {
 
   private createInfoNodes(): TreeNode[] {
     const nodes: TreeNode[] = []
-    
+
     nodes.push({ type: 'separator', label: '' })
     nodes.push({ type: 'separator', label: '' })
     nodes.push({ type: 'separator', label: '── Information ──' })
-    
+
     if (this.lastAnalysisTime) {
       const timeString = this.lastAnalysisTime.toLocaleString()
-      nodes.push({ type: 'timestamp', label: 'Last Analyzed', value: timeString })
+      nodes.push({ type: 'timestamp', label: 'Last run', value: timeString })
     }
-    
+
     nodes.push({ type: 'versionInfo', label: 'VS Code Extension', value: `v${this.extensionVersion}` })
     nodes.push({ type: 'versionInfo', label: '@herb-tools/linter', value: `v${this.linterVersion}` })
-    
+
     const herbComponents = this.getVersionComponents()
     herbComponents.forEach(component => {
       nodes.push({ type: 'versionInfo', label: component.name, value: component.version })
     })
-    
+
+    nodes.push({ type: 'separator', label: '' })
+    nodes.push({ type: 'separator', label: '' })
+    nodes.push({ type: 'separator', label: '── Support ──' })
+    nodes.push({ type: 'githubRepo' })
+    nodes.push({ type: 'reportGeneralIssue' })
+    nodes.push({ type: 'documentation' })
+
     return nodes
   }
 }

@@ -65,6 +65,18 @@ export interface TimestampNode {
   value: string
 }
 
+export interface ReportGeneralIssueNode {
+  type: 'reportGeneralIssue'
+}
+
+export interface GitHubRepoNode {
+  type: 'githubRepo'
+}
+
+export interface DocumentationNode {
+  type: 'documentation'
+}
+
 export type TreeNode =
   | StatusGroup
   | ParseErrorGroup
@@ -77,6 +89,9 @@ export type TreeNode =
   | VersionInfoNode
   | SeparatorNode
   | TimestampNode
+  | ReportGeneralIssueNode
+  | GitHubRepoNode
+  | DocumentationNode
 
 export interface AnalysisResult {
   status: Status

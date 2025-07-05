@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile)
 export class AnalysisService {
   private workerPath: string
   private onVersionUpdate?: (version: string) => void
-  
+
   constructor(context: vscode.ExtensionContext, onVersionUpdate?: (version: string) => void) {
     this.workerPath = context.asAbsolutePath(path.join('dist', 'parse-worker.js'))
     this.onVersionUpdate = onVersionUpdate
@@ -20,15 +20,15 @@ export class AnalysisService {
     try {
       const config = vscode.workspace.getConfiguration('languageServerHerb')
       const linterEnabled = config.get('linter.enabled', true)
-      
+
       const { stdout } = await execFileAsync(process.execPath, [this.workerPath, file, linterEnabled.toString()], { timeout: 1000 })
       const result = JSON.parse(stdout.trim())
       const failed = result.errors > 0 || result.lintErrors > 0
-      
+
       if (result.version && this.onVersionUpdate) {
         this.onVersionUpdate(result.version)
       }
-      
+
       return {
         status: failed ? 'failed' : 'ok',
         errors: result.errors as number,
@@ -46,11 +46,11 @@ export class AnalysisService {
         try {
           const result = JSON.parse(error.stdout.trim())
           const failed = result.errors > 0 || result.lintErrors > 0
-          
+
           if (result.version && this.onVersionUpdate) {
             this.onVersionUpdate(result.version)
           }
-          
+
           return {
             status: failed ? 'failed' : 'ok',
             errors: result.errors as number,
@@ -102,7 +102,7 @@ export class AnalysisService {
     const totalLintErrors = files.reduce((sum, file) => sum + file.lintErrors, 0)
     const totalLintWarnings = files.reduce((sum, file) => sum + file.lintWarnings, 0)
     const totalLintOffenses = files.reduce((sum, file) => sum + file.lintOffenses.length, 0)
-    
+
     const parseErrorFileCount = files.filter(f => f.errors > 0).length
     const lintOffenseFileCount = files.filter(f => f.lintOffenses.length > 0).length
     const linterDisabled = files.some(f => f.linterDisabled)

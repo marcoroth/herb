@@ -16,13 +16,17 @@ hero:
       text: Get Started
       link: /overview
 
-    - theme: alt
-      text: Playground
-      link: /playground
+    - theme: brand
+      text: Install in VS Code
+      link: vscode:extension/marcoroth.herb-lsp
 
     - theme: alt
       text: GitHub
       link: https://github.com/marcoroth/herb
+
+    - theme: alt
+      text: Playground
+      link: /playground
 
 features:
   - title: HTML-aware
