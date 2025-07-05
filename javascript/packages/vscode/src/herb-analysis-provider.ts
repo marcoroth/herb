@@ -99,17 +99,27 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
 
   async reprocessFile(uri: Uri): Promise<void> {
     const result = await this.analysisService.analyzeFile(uri.fsPath)
-    const idx = this.files.findIndex(f => f.uri.toString() === uri.toString())
+    const index = this.files.findIndex(file => file.uri.toString() === uri.toString())
     const updated: FileStatus = { uri, ...result }
 
-    if (idx >= 0) {
-      this.files[idx] = updated
+    if (index >= 0) {
+      this.files[index] = updated
     } else {
       this.files.push(updated)
     }
 
     this.updateProviders()
     this._onDidChangeTreeData.fire()
+  }
+
+  async removeFile(uri: Uri): Promise<void> {
+    const index = this.files.findIndex(file => file.uri.toString() === uri.toString())
+
+    if (index >= 0) {
+      this.files.splice(index, 1)
+      this.updateProviders()
+      this._onDidChangeTreeData.fire()
+    }
   }
 
   updateHerbVersions(versionString: string): void {

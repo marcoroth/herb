@@ -63,6 +63,26 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   )
 
+  // Set up file watcher for HTML+ERB files
+  const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.html.erb')
+
+  fileWatcher.onDidChange(async (uri) => {
+    console.log(`File changed: ${uri.fsPath}`)
+    await analysisProvider.reprocessFile(uri)
+  })
+
+  fileWatcher.onDidCreate(async (uri) => {
+    console.log(`File created: ${uri.fsPath}`)
+    await analysisProvider.reprocessFile(uri)
+  })
+
+  fileWatcher.onDidDelete(async (uri) => {
+    console.log(`File deleted: ${uri.fsPath}`)
+    await analysisProvider.removeFile(uri)
+  })
+
+  context.subscriptions.push(fileWatcher)
+
   // Auto-run analyze project if HTML+ERB files exist
   await runAutoAnalysis()
 

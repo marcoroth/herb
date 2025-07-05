@@ -9,27 +9,22 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
   ): vscode.CodeAction[] {
     const actions: vscode.CodeAction[] = []
 
-    // Only provide actions for HTML+ERB files
     if (!document.fileName.endsWith('.html.erb')) {
       return actions
     }
 
-    // Check if there are any diagnostics in the current range
     const diagnostics = context.diagnostics
     if (diagnostics.length === 0) {
       return actions
     }
 
-    // Create a code action for each diagnostic
     for (const diagnostic of diagnostics) {
-      // Extract error code from diagnostic.code
       let errorType = 'UNKNOWN_ERROR'
       if (typeof diagnostic.code === 'string' && diagnostic.code) {
         errorType = diagnostic.code
       } else if (diagnostic.code && typeof diagnostic.code === 'object' && 'value' in diagnostic.code) {
         errorType = String(diagnostic.code.value)
       } else {
-        // Fallback: extract from message
         const codeMatch = diagnostic.message.match(/([A-Z_]+[A-Z0-9_]*)/)
         errorType = codeMatch ? codeMatch[1] : 'DIAGNOSTIC_ERROR'
       }

@@ -79,13 +79,8 @@ export class TreeChildrenProvider {
       groups.push({ type: 'statusGroup', status: 'processing' })
     } else {
       groups.push({ type: 'statusGroup', status: 'ok' })
-
-      // Always show parse error group (will contain "great job" message if no errors)
       groups.push({ type: 'parseErrorGroup' })
-
-      // Always show linter issue group (will contain "great job" message if no issues)
       groups.push({ type: 'lintIssueGroup' })
-
       groups.push({ type: 'statusGroup', status: 'timeout' })
     }
 
