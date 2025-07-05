@@ -184,7 +184,16 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     }
 
     buffer_append_char(&buffer, lexer->current_character);
-    lexer_advance(lexer);
+
+    if (is_newline(lexer->current_character)) {
+      lexer->current_line++;
+      lexer->current_column = 0;
+    } else {
+      lexer->current_column++;
+    }
+
+    lexer->current_position++;
+    lexer->current_character = lexer->source[lexer->current_position];
   }
 
   lexer->state = STATE_ERB_CLOSE;
