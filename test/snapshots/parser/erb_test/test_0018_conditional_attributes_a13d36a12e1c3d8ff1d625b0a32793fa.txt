@@ -15,7 +15,10 @@
         │       │       │   └── @ HTMLAttributeNode (location: (1:19)-(1:32))
         │       │       │       ├── name:
         │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:27))
-        │       │       │       │       └── name: "data-odd" (location: (1:19)-(1:27))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:19)-(1:27))
+        │       │       │       │               └── content: "data-odd"
+        │       │       │       │
         │       │       │       │
         │       │       │       ├── equals: "=" (location: (1:27)-(1:28))
         │       │       │       └── value:
@@ -38,7 +41,10 @@
         │       │       │           └── @ HTMLAttributeNode (location: (1:44)-(1:58))
         │       │       │               ├── name:
         │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:52))
-        │       │       │               │       └── name: "data-odd" (location: (1:44)-(1:52))
+        │       │       │               │       └── children: (1 item)
+        │       │       │               │           └── @ LiteralNode (location: (1:44)-(1:52))
+        │       │       │               │               └── content: "data-odd"
+        │       │       │               │
         │       │       │               │
         │       │       │               ├── equals: "=" (location: (1:52)-(1:53))
         │       │       │               └── value:
