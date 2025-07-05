@@ -1,6 +1,13 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
 
-export interface HerbSettings {}
+export interface HerbSettings {
+  linter?: {
+    enabled?: boolean
+  }
+  trace?: {
+    server?: string
+  }
+}
 
 export class Settings {
   // The global settings, used when the `workspace/configuration` request is not supported by the client.

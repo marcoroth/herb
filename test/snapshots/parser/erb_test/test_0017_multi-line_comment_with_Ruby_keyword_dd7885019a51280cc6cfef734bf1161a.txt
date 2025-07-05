@@ -1,13 +1,13 @@
-@ DocumentNode (location: (1:0)-(2:0))
+@ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
-    ├── @ ERBContentNode (location: (1:0)-(1:10))
+    ├── @ ERBContentNode (location: (1:0)-(3:2))
     │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
     │   ├── content: "
     │     end
-    │   " (location: (1:3)-(1:8))
-    │   ├── tag_closing: "%>" (location: (1:8)-(1:10))
+    │   " (location: (1:3)-(3:0))
+    │   ├── tag_closing: "%>" (location: (3:0)-(3:2))
     │   ├── parsed: true
     │   └── valid: false
     │
-    └── @ HTMLTextNode (location: (1:10)-(2:0))
+    └── @ HTMLTextNode (location: (3:2)-(4:0))
         └── content: "\n"

@@ -109,5 +109,43 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "multi-line erb content" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          hello
+        %>
+      HTML
+    end
+
+    test "multi-line erb content with complex ruby" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          if condition
+            "value1"
+          else
+            "value2"
+          end
+        %>
+      HTML
+    end
+
+    test "multi-line erb silent tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          x = 1
+          y = 2
+        %>
+      HTML
+    end
+
+    test "multi-line erb comment" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#
+          This is a comment
+          across multiple lines
+        %>
+      HTML
+    end
   end
 end

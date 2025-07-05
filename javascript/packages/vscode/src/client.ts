@@ -1,6 +1,6 @@
 import * as path from "path"
 
-import { workspace, ExtensionContext } from "vscode"
+import { workspace, ExtensionContext, Disposable } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
 
 export class Client {
@@ -9,6 +9,7 @@ export class Client {
   private languageClientId = "languageServerHerb"
   private languageClientName = "Herb LSP "
   private context: ExtensionContext
+  private configurationListener?: Disposable
 
   constructor(context: ExtensionContext) {
     this.context = context
@@ -26,7 +27,8 @@ export class Client {
 
   async start() {
     try {
-      this.client.start()
+      await this.client.start()
+      this.setupConfigurationListener()
     } catch (error: any) {
       console.error(`Error restarting the server: ${error.message}`)
 
@@ -34,7 +36,23 @@ export class Client {
     }
   }
 
+  private setupConfigurationListener() {
+    this.configurationListener = workspace.onDidChangeConfiguration(async (event) => {
+      if (event.affectsConfiguration('languageServerHerb')) {
+        console.log("Herb LSP configuration changed, updating...")
+        await this.updateConfiguration()
+      }
+    })
+
+    this.context.subscriptions.push(this.configurationListener)
+  }
+
   async stop(): Promise<void> {
+    if (this.configurationListener) {
+      this.configurationListener.dispose()
+      this.configurationListener = undefined
+    }
+
     if (this.client) {
       await this.client.stop()
     }
@@ -42,6 +60,22 @@ export class Client {
 
   async sendNotification(method: string, params: any) {
     return await this.client.sendNotification(method, params)
+  }
+
+  async updateConfiguration() {
+    const config = workspace.getConfiguration('languageServerHerb')
+    const settings = {
+      linter: {
+        enabled: config.get('linter.enabled', true),
+      },
+      trace: {
+        server: config.get('trace.server', 'verbose'),
+      },
+    }
+
+    await this.client.sendNotification('workspace/didChangeConfiguration', {
+      settings: { languageServerHerb: settings }
+    })
   }
 
   // The debug options for the server
@@ -75,8 +109,21 @@ export class Client {
         { scheme: "file", language: "html" },
       ],
       synchronize: {
-        // Notify the server about file changes to '.clientrc files contained in the workspace
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+        configurationSection: 'languageServerHerb',
+      },
+      initializationOptions: this.getInitializationOptions(),
+    }
+  }
+
+  private getInitializationOptions() {
+    const config = workspace.getConfiguration('languageServerHerb')
+    return {
+      linter: {
+        enabled: config.get('linter.enabled', true),
+      },
+      trace: {
+        server: config.get('trace.server', 'verbose'),
       },
     }
   }

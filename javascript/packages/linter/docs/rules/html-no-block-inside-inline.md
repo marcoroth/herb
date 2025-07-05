@@ -1,12 +1,12 @@
 # Linter Rule: No block elements inside inline elements
 
-### Rule: `html-no-block-inside-inline`
+**Rule:** `html-no-block-inside-inline`
 
-##### Description
+## Description
 
 Prevent block-level elements from being placed inside inline elements.
 
-##### Rationale
+## Rationale
 
 Placing block-level elements (like `<div>`, `<p>`, `<section>`) inside inline elements (like `<span>`, `<a>`, `<strong>`) violates HTML content model rules and may lead to unpredictable rendering behavior across browsers.
 
@@ -16,12 +16,12 @@ This practice can cause:
 - Layout issues and unexpected visual results
 - Accessibility problems with screen readers
 
-#### Examples
+## Examples
 
 
-##### ✅ Good
+### ✅ Good
 
-```html+erb
+```erb
 <span>
   Hello <strong>World</strong>
 </span>
@@ -36,9 +36,9 @@ This practice can cause:
 </a>
 ```
 
-##### 🚫 Bad
+### 🚫 Bad
 
-```html+erb
+```erb
 <span>
   <div>Invalid block inside span</div>
 </span>
@@ -59,7 +59,7 @@ This practice can cause:
 </strong>
 ```
 
-#### References
+## References
 
 * [HTML Living Standard - Content models](https://html.spec.whatwg.org/multipage/dom.html#content-models)
 * [MDN - Block-level elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements)

@@ -12,9 +12,14 @@ module Herb
       super(source, warnings, errors)
     end
 
+    #: () -> Array[Herb::Errors::Error]
+    def errors
+      super + value.recursive_errors
+    end
+
     #: () -> bool
     def failed?
-      errors.any? || value.errors.any? # TODO: this should probably be recursive
+      errors.any?
     end
 
     #: () -> bool
@@ -24,7 +29,7 @@ module Herb
 
     #: () -> String
     def pretty_errors
-      JSON.pretty_generate(errors + value.errors)
+      JSON.pretty_generate(errors)
     end
 
     #: (Visitor) -> void

@@ -1,10 +1,11 @@
 import { defaultRules } from "./default-rules.js"
-import type { RuleClass, LintResult, LintMessage } from "./types.js"
+
+import type { RuleClass, LintResult, LintOffense } from "./types.js"
 import type { DocumentNode } from "@herb-tools/core"
 
 export class Linter {
   private rules: RuleClass[]
-  private messages: LintMessage[]
+  private offenses: LintOffense[]
 
   /**
    * Creates a new Linter instance.
@@ -12,7 +13,7 @@ export class Linter {
    */
   constructor(rules?: RuleClass[]) {
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
-    this.messages = []
+    this.offenses = []
   }
 
   /**
@@ -28,20 +29,20 @@ export class Linter {
   }
 
   lint(document: DocumentNode): LintResult {
-    this.messages = []
+    this.offenses = []
 
     for (const Rule of this.rules) {
       const rule = new Rule()
-      const ruleMessages = rule.check(document)
+      const ruleOffenses = rule.check(document)
 
-      this.messages.push(...ruleMessages)
+      this.offenses.push(...ruleOffenses)
     }
 
-    const errors = this.messages.filter(message => message.severity === "error").length
-    const warnings = this.messages.filter(message => message.severity === "warning").length
+    const errors = this.offenses.filter(offense => offense.severity === "error").length
+    const warnings = this.offenses.filter(offense => offense.severity === "warning").length
 
     return {
-      messages: this.messages,
+      offenses: this.offenses,
       errors,
       warnings
     }

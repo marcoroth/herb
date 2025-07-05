@@ -3,7 +3,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import dedent from "dedent";
 
 import { Linter } from "../../src/linter";
-import { ERBNoOutputControlFlow } from "../../src/rules/erb-no-output-control-flow";
+import { ERBNoOutputControlFlowRule } from "../../src/rules/erb-no-output-control-flow";
 
 describe("erb-no-output-control-flow", () => {
   beforeAll(async () => {
@@ -21,11 +21,11 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   it("should not allow if statments with output tags", () => {
@@ -35,12 +35,12 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
   
   it("should not allow unless statements with output tags", () => {
@@ -50,12 +50,12 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 
   it("should not allow end statements with output tags", () => {
@@ -65,12 +65,12 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 
   it("should not allow nested control flow blocks with output tags", () => {
@@ -83,12 +83,12 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) 
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 
   it('should show multiple errors for multiple output tags', () => {
@@ -102,12 +102,12 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(3) 
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(3)
+    expect(lintResult.offenses).toHaveLength(3)
   })
 
   it("should show an error for outputting control flow blocks with nested control flow blocks", () => {
@@ -119,11 +119,11 @@ describe("erb-no-output-control-flow", () => {
       <% end %>
     `
     const result = Herb.parse(html)
-    const linter = new Linter([ERBNoOutputControlFlow])
+    const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1) 
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 })

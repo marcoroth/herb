@@ -1,4 +1,19 @@
+# Templates
 templates/**/*.c.erb linguist-language=C
 templates/**/*.h.erb linguist-language=C
 templates/**/*.rb.erb linguist-language=Ruby
 templates/**/*.cpp.erb linguist-language=C++
+
+# Template-generated RBS files
+sig/**/*.rbs linguist-generated
+
+# Test files
+**/test/** linguist-vendored
+**/snapshots/** linguist-generated
+**/__snapshots__/** linguist-generated
+
+# Documentation files
+*.md linguist-documentation
+docs/** linguist-documentation
+playground/** linguist-documentation
+.doxygen/** linguist-documentation

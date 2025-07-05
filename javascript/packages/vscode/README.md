@@ -1,6 +1,8 @@
-## Herb for Visual Studio Code
+# Using Herb with Visual Studio Code
 
 A Visual Studio Code extension for connecting with the [Herb Language Server](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) and Language Tools for HTML+ERB files using the [Herb](https://herb-tools.dev) HTML-aware ERB parser.
+
+[![Herb + Visual Studio Code](https://github.com/marcoroth/herb/raw/main/javascript/packages/vscode/assets/herb-vscode.png)](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp)
 
 ---
 
@@ -8,15 +10,11 @@ A Visual Studio Code extension for connecting with the [Herb Language Server](ht
 
 #### Visual Studio Code
 
-Install the [Herb LSP extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace.
-
-[![](https://github.com/marcoroth/herb/raw/main/javascript/packages/vscode/assets/herb-vscode.png)](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp)
+Install the [Herb LSP extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace, or [**click here to open it directly in VS Code**](vscode:extension/marcoroth.herb-lsp).
 
 #### Other editors
 
-If you are looking to use Herb in another editor, check out the instruction on the [Herb Language Server](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) page.
-
-[![](https://github.com/marcoroth/herb/raw/main/javascript/packages/vscode/assets/herb-lsp.png)](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme)
+If you are looking to use Herb in another editor, check out the instructions on the [editor integrations](https://herb-tools.dev/integrations/editors) page.
 
 ## Functionality
 
@@ -38,14 +36,3 @@ Formatting and Auto-formatting are underway. We are planning to integrate the [H
 #### Roadmap/Ideas
 
 Check-out the roadmap/issues on [GitHub](https://github.com/marcoroth/herb) or suggest a new featured that you would like to see integrated into the Visual Studio Code extension.
-
-## Running the extension locally
-
-- Run `yarn install` in this folder. This installs all necessary npm modules in both the client and server folder
-- Open VS Code on this folder.
-- Press Ctrl+Shift+B to compile the client and server.
-- Switch to the Debug viewlet.
-- Select `Launch Client` from the drop down.
-- Run the launch config.
-- If you want to debug the server as well use the launch configuration `Attach to Server`
-- In the `[Extension Development Host]` instance of VSCode, open a HTML+ERB file.

@@ -1,6 +1,7 @@
 # Docs
 .vitepress/dist
 .vitepress/cache
+docs/docs/linter/rules/
 
 # Herb output
 /herb

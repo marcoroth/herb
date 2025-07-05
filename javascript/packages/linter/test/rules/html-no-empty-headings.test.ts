@@ -16,7 +16,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("passes for heading with nested elements", () => {
@@ -27,7 +27,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("passes for heading with ERB content", () => {
@@ -38,7 +38,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for empty heading", () => {
@@ -49,11 +49,11 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-empty-headings")
-    expect(lintResult.messages[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-empty-headings")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for heading with only whitespace", () => {
@@ -64,10 +64,10 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-empty-headings")
-    expect(lintResult.messages[0].message).toBe("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].rule).toBe("html-no-empty-headings")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
   })
 
   test("fails for self-closing heading", () => {
@@ -78,10 +78,10 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-empty-headings")
-    expect(lintResult.messages[0].message).toBe("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].rule).toBe("html-no-empty-headings")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h3>` must not be empty. Provide accessible text content for screen readers and SEO.")
   })
 
   test("handles all heading levels h1-h6", () => {
@@ -92,11 +92,11 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(6)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(6)
+    expect(lintResult.offenses).toHaveLength(6)
 
-    expect(lintResult.messages[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expect(lintResult.messages[1].message).toBe("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expect(lintResult.messages[5].message).toBe("Heading element `<h6>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[1].message).toBe("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[5].message).toBe("Heading element `<h6>` must not be empty. Provide accessible text content for screen readers and SEO.")
   })
 
   test("handles mixed case heading tags", () => {
@@ -106,7 +106,7 @@ describe("html-no-empty-headings", () => {
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
   })
 
   test("ignores non-heading tags", () => {
@@ -147,7 +147,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   test("passes for div with role='heading' and content", () => {
@@ -158,7 +158,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for empty div with role='heading'", () => {
@@ -169,11 +169,11 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-empty-headings")
-    expect(lintResult.messages[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-empty-headings")
+    expect(lintResult.offenses[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for div with role='heading' containing only whitespace", () => {
@@ -184,9 +184,9 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expect(lintResult.offenses[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
   })
 
   test("fails for self-closing div with role='heading'", () => {
@@ -197,9 +197,9 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expect(lintResult.offenses[0].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
   })
 
   test("ignores div without role='heading'", () => {
@@ -210,7 +210,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("handles mixed standard headings and ARIA headings", () => {
@@ -221,10 +221,10 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
 
-    expect(lintResult.messages[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expect(lintResult.messages[1].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[1].message).toBe('Heading element `<div role="heading">` must not be empty. Provide accessible text content for screen readers and SEO.')
   })
 
   test("fails for heading with only aria-hidden content", () => {
@@ -235,11 +235,11 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-empty-headings")
-    expect(lintResult.messages[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-empty-headings")
+    expect(lintResult.offenses[0].message).toBe("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for heading with mixed accessible and inaccessible content", () => {
@@ -250,7 +250,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
   })
 
   test("passes for heading with mix of accessible and inaccessible content", () => {
@@ -261,7 +261,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("passes for heading itself with aria-hidden='true' but has content", () => {
@@ -272,7 +272,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("passes for heading itself with hidden attribute but has content", () => {
@@ -283,7 +283,7 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("passes for heading with nested span containing text", () => {
@@ -294,6 +294,6 @@ describe("html-no-empty-headings", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 })

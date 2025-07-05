@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
+import type { Rule, LintOffense } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node, LiteralNode, HTMLTextNode } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
@@ -38,7 +38,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
         ? `\`<${tagName}>\``
         : `\`<${tagName} role="heading">\``
 
-      this.addMessage(
+      this.addOffense(
         `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
         node.location,
         "error"
@@ -65,7 +65,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       ? `\`<${tagName}>\``
       : `\`<${tagName} role="heading">\``
 
-    this.addMessage(
+    this.addOffense(
       `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
       node.tag_name!.location,
       "error"
@@ -177,9 +177,9 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 export class HTMLNoEmptyHeadingsRule implements Rule {
   name = "html-no-empty-headings"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new NoEmptyHeadingsVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

@@ -30,7 +30,7 @@ export default class extends Generator {
       if (useIssue.useIssue) {
         try {
           const issues = execSync(
-            "gh issue list --repo marcoroth/herb --label linter --state open --limit 100 --json number,title",
+            "gh issue list --repo marcoroth/herb --label linter-rule --state open --limit 100 --json number,title",
             { encoding: "utf8" }
           )
 
@@ -55,7 +55,7 @@ export default class extends Generator {
           const issueDetails = JSON.parse(issueBody)
 
           // Extract rule name from issue body
-          // Try different formats: ### Rule: `rule-name` or Rule name: rule-name
+          // Try different formats: **Rule:** `rule-name` or Rule name: rule-name
           let ruleNameMatch = issueDetails.body.match(/###\s*Rule:\s*`([^`]+)`/)
 
           if (!ruleNameMatch) {
@@ -101,7 +101,12 @@ export default class extends Generator {
 
     this.className = this.ruleName
       .split("-")
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .map(part => {
+        if (part.toLowerCase() === "html") return "HTML"
+        if (part.toLowerCase() === "erb") return "ERB"
+
+        return part.charAt(0).toUpperCase() + part.slice(1)
+      })
       .join("")
 
     this.ruleClassName = this.className + "Rule"
@@ -156,19 +161,19 @@ export default class extends Generator {
     // Update default-rules.ts
     const defaultRulesPath = path.join(this.destinationRoot(), "src/default-rules.ts")
     const newImport = `import { ${this.ruleClassName} } from "./rules/${this.ruleName}.js"`
-    
+
     try {
       let defaultRulesContent = await fs.readFile(defaultRulesPath, "utf8")
-      
+
       // Add import at the top
       const lines = defaultRulesContent.split("\n")
       const lastImportIndex = lines.findLastIndex(line => line.startsWith("import"))
       lines.splice(lastImportIndex + 1, 0, newImport)
-      
+
       // Add to defaultRules array (before the closing bracket)
       const arrayEndIndex = lines.findLastIndex(line => line.includes("]"))
       lines.splice(arrayEndIndex, 0, `  ${this.ruleClassName},`)
-      
+
       await fs.writeFile(defaultRulesPath, lines.join("\n"))
     } catch (error) {
       this.log(colorize(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`, "yellow"))

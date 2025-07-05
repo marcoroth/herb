@@ -89,11 +89,16 @@ bool search_if_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
   if (node->type == PM_IF_NODE) {
-    analyzed->has_if_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_if_nodes, analyzed);
+    const pm_if_node_t* if_node = (const pm_if_node_t*) node;
+
+    // Handle ternary
+    if (if_node->if_keyword_loc.start != NULL && if_node->if_keyword_loc.end != NULL) {
+      analyzed->has_if_node = true;
+      return true;
+    }
   }
+
+  pm_visit_child_nodes(node, search_if_nodes, analyzed);
 
   return false;
 }

@@ -59,7 +59,7 @@ onMounted(async () => {
         />
         <div class="details">
           <span class="username">{{ contributor.login }}</span>
-          <span class="contributions">{{ contributor.contributions }} commits</span>
+          <span class="contributions">{{ contributor.contributions }} {{ contributor.contributions === 1 ? 'commit' : 'commits' }}</span>
         </div>
       </a>
     </div>
