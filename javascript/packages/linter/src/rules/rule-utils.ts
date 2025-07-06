@@ -169,6 +169,20 @@ export const HTML_BOOLEAN_ATTRIBUTES = new Set([
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
+export const VALID_ARIA_ROLES = new Set([
+  "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
+  "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",
+  "group", "heading", "img", "list", "listitem", "math", "none", "note", "presentation",
+  "row", "rowgroup", "rowheader", "separator", "table", "term", "tooltip",
+  "alert", "alertdialog", "button", "checkbox", "combobox", "dialog", "grid", "gridcell", "link",
+  "listbox", "menu", "menubar", "menuitem", "menuitemcheckbox", "menuitemradio", "option",
+  "progressbar", "radio", "radiogroup", "scrollbar", "searchbox", "slider", "spinbutton",
+  "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
+  "treegrid", "treeitem",
+  "log", "marquee"
+]);
+
+
 /**
  * Checks if an element is inline
  */
