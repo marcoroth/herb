@@ -27,7 +27,7 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAriaRoleMustBeValid implements Rule {
+export class HTMLAriaRoleMustBeValidRule implements Rule {
   name = "html-aria-role-must-be-valid"
 
   check(node: Node): LintOffense[] {
