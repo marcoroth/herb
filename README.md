@@ -130,6 +130,41 @@ While Herb brings a fresh approach to HTML+ERB tooling, it builds upon and learn
 
 Herb differentiates itself by being HTML-aware from the ground up, providing a unified parsing approach that understands both HTML and ERB as first-class citizens, rather than treating one as embedded within the other.
 
+## Badges
+
+
+```md
+[![Made with Herb](https://herb-tools.dev/herb-badge.svg)](https://herb-tools.dev/)
+```
+
+```html
+<a href="https://herb-tools.dev">
+  <img
+    width="200"
+    height="200"
+    src="https://herb-tools.dev/herb-badge.svg"
+    alt="Made with Herb"
+  />
+</a>
+```
+
+
+```md
+[![Made with Herb](https://herb-tools.dev/herb-badge-dark.svg)](https://herb-tools.dev/)
+```
+
+```html
+<a href="https://herb-tools.dev">
+  <img
+    width="200"
+    height="200"
+    src="https://herb-tools.dev/herb-badge-dark.svg"
+    alt="Made with Herb"
+  />
+</a>
+```
+
+
 ## License
 
 This project is available as open source under the terms of the [MIT License](https://github.com/marcoroth/herb/blob/main/LICENSE.txt).
