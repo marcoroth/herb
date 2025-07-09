@@ -67,7 +67,7 @@ describe("html-no-duplicated-id", () => {
     expect(lintResult.offenses).toHaveLength(0);
   })
 
-  test.skip("fails for multiple duplicate IDs in ERB", () => {
+  test("fails for multiple duplicate IDs in ERB", () => {
     const html = '<div id="<%= user.id %>"></div><span id="<%= user.id %>"></span>';
     const result = Herb.parse(html);
     const linter = new Linter([HTMLNoDuplicateIdsRule]);

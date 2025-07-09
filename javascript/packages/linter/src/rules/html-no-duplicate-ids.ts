@@ -1,15 +1,37 @@
-import { Node } from "@herb-tools/core";
+import { ERBNode, HTMLAttributeNode, Node } from "@herb-tools/core";
 import { AttributeVisitorMixin } from "./rule-utils";
 import { LintOffense, Rule } from "../types";
 
+function attributeValueContainsERB(attributeNode: HTMLAttributeNode): boolean {
+  return (
+    attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE" &&
+    attributeNode.value.children?.some((child: Node) =>
+      child.type === "AST_ERB_CONTENT_NODE"
+    )
+  );
+}
+
+function extractERBContents(attributeNode: HTMLAttributeNode): string[] {
+  if (attributeNode.value?.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE") return [];
+
+  return attributeNode.value.children
+    .filter((child) => child.type === "AST_ERB_CONTENT_NODE")
+    .map((child) => (child as ERBNode)?.content?.value.trim());
+}
+
 class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
-  protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: Node): void {
+  protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
     if (attributeName.toLowerCase() !== "id") return; // Only check 'id' attributes
 
-    if (!attributeValue) return; // Skip valueless IDs
+    let id;
 
-    const id = attributeValue.trim();
-    if (!id) return; // Skip empty IDs
+    if (attributeValueContainsERB(attributeNode)) {
+      id = `<%= ${extractERBContents(attributeNode).join(", ")} %>`;
+    } else {
+      id = attributeValue ? attributeValue.trim() : null;
+    }
+
+    if(!id) return; // Skip empty IDs
 
     // Check for duplicates in the current document
     const existingIds = this.getDocumentIds();
