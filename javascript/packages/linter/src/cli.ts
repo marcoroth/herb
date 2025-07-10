@@ -1,55 +1,24 @@
-import { readFileSync, statSync } from "fs"
-import { resolve, join } from "path"
 import { glob } from "glob"
-
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "./linter.js"
-
-import { name, version } from "../package.json"
+import { ArgumentParser } from "./cli/argument-parser.js"
+import { FileProcessor } from "./cli/file-processor.js"
+import { SimpleFormatter, DetailedFormatter } from "./cli/formatters/index.js"
+import { SummaryReporter } from "./cli/summary-reporter.js"
 
 export class CLI {
-  private usage = `
-  Usage: herb-lint [file|glob-pattern|directory] [options]
-
-  Arguments:
-    file             Single file to lint
-    glob-pattern     Files to lint (defaults to **/*.html.erb)
-    directory        Directory to lint (automatically appends **/*.html.erb)
-
-  Options:
-    -h, --help       show help
-    -v, --version    show version
-`
+  private argumentParser = new ArgumentParser()
+  private fileProcessor = new FileProcessor()
+  private summaryReporter = new SummaryReporter()
 
   async run() {
-    const args = process.argv.slice(2)
+    const startTime = Date.now()
+    const startDate = new Date()
 
-    if (args.includes("--help") || args.includes("-h")) {
-      console.log(this.usage)
-      process.exit(0)
-    }
+    const { pattern, formatOption, showTiming, theme, wrapLines, truncateLines } = this.argumentParser.parse(process.argv)
 
     try {
       await Herb.load()
 
-      if (args.includes("--version") || args.includes("-v")) {
-        console.log("Versions:")
-        console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
-        process.exit(0)
-      }
-
-      let pattern = args.length > 0 && !args[0].startsWith("-") ? args[0] : "**/*.html.erb"
-      
-      // Check if the pattern is a directory and auto-append glob pattern
-      try {
-        const stat = statSync(pattern)
-        if (stat.isDirectory()) {
-          pattern = join(pattern, "**/*.html.erb")
-        }
-      } catch {
-        // Not a file/directory, treat as glob pattern
-      }
-      
       const files = await glob(pattern)
 
       if (files.length === 0) {
@@ -57,51 +26,27 @@ export class CLI {
         process.exit(0)
       }
 
-      let totalErrors = 0
-      let totalWarnings = 0
-      let filesWithIssues = 0
+      const results = await this.fileProcessor.processFiles(files)
+      const { totalErrors, totalWarnings, filesWithIssues, ruleCount, allDiagnostics, ruleViolations } = results
 
-      for (const filename of files) {
-        const filePath = resolve(filename)
-        const content = readFileSync(filePath, "utf-8")
+      const formatter = formatOption === 'simple'
+        ? new SimpleFormatter()
+        : new DetailedFormatter(theme, wrapLines, truncateLines)
 
-        const parseResult = Herb.parse(content)
+      await formatter.format(allDiagnostics, files.length === 1)
 
-        if (parseResult.errors.length > 0) {
-          console.error(`${filename} - Parse errors:`)
-
-          for (const error of parseResult.errors) {
-            console.error(`  ${error.message}`)
-          }
-
-          totalErrors++
-          filesWithIssues++
-          continue
-        }
-
-        const linter = new Linter()
-        const lintResult = linter.lint(parseResult.value)
-
-        if (lintResult.messages.length === 0) {
-          console.log(`✓ ${filename} - No issues found`)
-        } else {
-          console.log(`${filename}:`)
-
-          for (const message of lintResult.messages) {
-            const severity = message.severity === "error" ? "✗" : "⚠"
-            const location = `${message.location.start.line}:${message.location.start.column}`
-            console.log(`  ${location} ${severity} ${message.message} (${message.rule})`)
-          }
-
-          totalErrors += lintResult.errors
-          totalWarnings += lintResult.warnings
-          filesWithIssues++
-        }
-      }
-
-      console.log("")
-      console.log(`Checked ${files.length} file(s)`)
-      console.log(`${totalErrors} error(s), ${totalWarnings} warning(s) across ${filesWithIssues} file(s)`)
+      this.summaryReporter.displayMostViolatedRules(ruleViolations)
+      this.summaryReporter.displaySummary({
+        files,
+        totalErrors,
+        totalWarnings,
+        filesWithViolations: filesWithIssues,
+        ruleCount,
+        startTime,
+        startDate,
+        showTiming,
+        ruleViolations
+      })
 
       if (totalErrors > 0) {
         process.exit(1)

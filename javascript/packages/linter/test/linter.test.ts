@@ -19,8 +19,7 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can be instantiated with custom rules", () => {
-      const rule = new HTMLTagNameLowercaseRule()
-      const linter = new Linter([rule])
+      const linter = new Linter([HTMLTagNameLowercaseRule])
       expect(linter).toBeInstanceOf(Linter)
     })
   })
@@ -32,10 +31,10 @@ describe("@herb-tools/linter", () => {
       const linter = new Linter()
       const lintResult = linter.lint(result.value)
 
-      expect(lintResult).toHaveProperty('messages')
+      expect(lintResult).toHaveProperty('offenses')
       expect(lintResult).toHaveProperty('errors')
       expect(lintResult).toHaveProperty('warnings')
-      expect(Array.isArray(lintResult.messages)).toBe(true)
+      expect(Array.isArray(lintResult.offenses)).toBe(true)
     })
 
     test("returns correct error and warning counts", () => {
@@ -46,9 +45,9 @@ describe("@herb-tools/linter", () => {
 
       expect(lintResult.errors).toBe(4)
       expect(lintResult.warnings).toBe(0)
-      expect(lintResult.messages).toHaveLength(4)
+      expect(lintResult.offenses).toHaveLength(4)
 
-      const allErrors = lintResult.messages.every(message => message.severity === "error")
+      const allErrors = lintResult.offenses.every(offense => offense.severity === "error")
       expect(allErrors).toBe(true)
     })
 
@@ -60,7 +59,7 @@ describe("@herb-tools/linter", () => {
 
       expect(lintResult.errors).toBe(0)
       expect(lintResult.warnings).toBe(0)
-      expect(lintResult.messages).toHaveLength(0)
+      expect(lintResult.offenses).toHaveLength(0)
     })
 
     test("processes complex ERB templates", () => {

@@ -2,7 +2,13 @@ import { ClientCapabilities, Connection, InitializeParams } from "vscode-languag
 import { defaultFormatOptions } from "@herb-tools/formatter"
 
 export interface HerbSettings {
-  formatting?: {
+  trace?: {
+    server?: string
+  }
+  linter?: {
+    enabled?: boolean
+  }
+  formatter?: {
     enabled?: boolean
     indentWidth?: number
     maxLineLength?: number
@@ -14,7 +20,7 @@ export class Settings {
   // Please note that this is not the case when using this server with the client provided in this example
   // but could happen with other clients.
   defaultSettings: HerbSettings = {
-    formatting: {
+    formatter: {
       enabled: false,
       indentWidth: defaultFormatOptions.indentWidth,
       maxLineLength: defaultFormatOptions.maxLineLength

@@ -1,5 +1,9 @@
 import type { HerbBackend, ParseResult, LexResult } from "@herb-tools/core"
+
 import { Formatter } from "@herb-tools/formatter"
+import { Linter } from "@herb-tools/linter"
+
+import type { LintResult } from "@herb-tools/linter"
 
 async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   try {
@@ -51,6 +55,16 @@ export async function analyze(herb: HerbBackend, source: string) {
     new Promise((resolve) => resolve((new Formatter(herb, {})).format(source))),
   )
 
+  let lintResult: LintResult | null = null
+
+  if (parseResult && parseResult.value) {
+    const linter = new Linter()
+
+    lintResult = await safeExecute<LintResult>(
+      new Promise((resolve) => resolve(linter.lint(parseResult.value))),
+    )
+  }
+
   const endTime = performance.now()
 
   return {
@@ -63,6 +77,7 @@ export async function analyze(herb: HerbBackend, source: string) {
     html,
     formatted,
     version,
+    lintResult,
     duration: endTime - startTime,
   }
 }

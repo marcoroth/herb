@@ -9,7 +9,9 @@ AllowShortCaseLabelsOnASingleLine: true
 AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
+BinPackParameters: false
 BreakAfterReturnType: Automatic
 BreakArrays: true
 BreakBeforeBinaryOperators: NonAssignment
@@ -45,6 +47,6 @@ BraceWrapping: # for BreakBeforeBraces
   BeforeLambdaBody: false
   BeforeWhile: false
   IndentBraces: false
-  SplitEmptyFunction: false
-  SplitEmptyNamespace: false
-  SplitEmptyRecord: false
+  SplitEmptyFunction: true
+  SplitEmptyNamespace: true
+  SplitEmptyRecord: true

@@ -4,7 +4,17 @@ on:
   workflow_dispatch:
   push:
     tags: ["v*"]
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "Gemfile"
+      - "Makefile"
   pull_request:
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "Gemfile"
+      - "Makefile"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

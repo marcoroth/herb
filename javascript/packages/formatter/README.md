@@ -1,18 +1,38 @@
-# `@herb-tools/formatter`
+# Herb Formatter <Badge type="info" text="coming soon" />
 
-Base utilities to format HTML + ERB templates using Herb.
+**Package:** [`@herb-tools/formatter`](https://www.npmjs.com/package/@herb-tools/formatter)
 
-This package currently exposes a simple formatter class that parses the
-input using a provided `HerbBackend` instance. It returns the original
-source for now and serves as a starting point for further formatting
-work.
+---
 
-## Command‑Line Interface
+Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.
 
-With the `herb-formatter` executable (installed globally or via `npx`),
-you can format files directly or pipe from stdin.
+Perfect for format-on-save in editors and formatting verification in CI/CD pipelines. Transforms templates into consistently formatted, readable code while preserving all functionality.
 
-### Format a file
+### Installation
+
+
+:::code-group
+```shell [npm]
+npm add @herb-tools/formatter
+```
+
+```shell [pnpm]
+pnpm add @herb-tools/formatter
+```
+
+```shell [yarn]
+yarn add @herb-tools/formatter
+```
+
+```shell [bun]
+bun add @herb-tools/formatter
+```
+:::
+
+### Usage
+
+
+#### Format a file
 
 ```bash
 # relative path
@@ -22,10 +42,18 @@ herb-formatter templates/index.html.erb
 herb-formatter /full/path/to/template.html.erb
 ```
 
-### Format from stdin
+#### Format from stdin
 
 ```bash
 cat template.html.erb | herb-formatter
 # or explicitly use "-" for stdin
 herb-formatter - < template.html.erb
 ```
+
+<!-- #### Configuration Options -->
+
+<!-- TODO -->
+
+<!-- #### CLI Usage -->
+
+<!-- TODO -->

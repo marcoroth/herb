@@ -1,0 +1,30 @@
+import { BaseRuleVisitor } from "./rule-utils.js"
+
+import type { Rule, LintOffense } from "../types.js"
+import type { Node, HTMLElementNode, ERBContentNode } from "@herb-tools/core"
+
+class <%= visitorClassName %> extends BaseRuleVisitor {
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    // TODO: implement logic
+    this.visitChildNodes(node)
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    // TODO: implement logic
+    this.visitChildNodes(node)
+  }
+
+  // TODO: implement other nodes if needed
+}
+
+export class <%= ruleClassName %> implements Rule {
+  name = "<%= ruleName %>"
+
+  check(node: Node): LintOffense[] {
+    const visitor = new <%= visitorClassName %>(this.name)
+
+    visitor.visit(node)
+
+    return visitor.messages
+  }
+}

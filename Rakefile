@@ -181,7 +181,7 @@ namespace :parse do
   end
 end
 
-task :rbs_inline do
+task rbs_inline: :templates do
   require "open3"
 
   command = "bundle exec rbs-inline --opt-out --output=sig/ lib/"

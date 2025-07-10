@@ -1,12 +1,12 @@
-## Herb Language Server
+# Herb Language Server
 
-##### Package: [`@herb-tools/language-server`](https://www.npmjs.com/package/@herb-tools/language-server)
+**Package**: [`@herb-tools/language-server`](https://www.npmjs.com/package/@herb-tools/language-server)
 
 ---
 
-[Language Server Protocol](https://github.com/Microsoft/language-server-protocol) integration for HTML-aware ERB parsing using the [Herb Parser](https://herb-tools.dev).
+[Language Server Protocol](https://github.com/Microsoft/language-server-protocol) integration for HTML-aware ERB parsing using the [Herb Parser](/projects/parser).
 
-![](./assets/herb-lsp.png)
+![Herb Language Server in action](https://github.com/marcoroth/herb/raw/main/javascript/packages/language-server/assets/herb-lsp.png)
 
 ### Installation
 
@@ -32,8 +32,6 @@ Coming soon, see [#3925](https://github.com/neovim/nvim-lspconfig/pull/3925).
 
 You can use the language server in any editor that supports the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/).
 
-##### Install
-
 ###### NPM (Global)
 
 ```bash
@@ -51,6 +49,8 @@ yarn global add @herb-tools/language-server
 ```bash
 herb-language-server --stdio
 ```
+
+##### Usage
 
 ```
 Usage: herb-language-server [options]

@@ -11,54 +11,54 @@ describe("html-no-duplicate-attributes", () => {
   test("passes for unique attributes", () => {
     const html = '<input type="text" name="username" id="user-id">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("fails for duplicate attributes", () => {
     const html = '<input type="text" type="password" name="username">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
+    expect(lintResult.offenses).toHaveLength(1)
 
-    expect(lintResult.messages[0].rule).toBe("html-no-duplicate-attributes")
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "type"')
-    expect(lintResult.messages[0].severity).toBe("error")
+    expect(lintResult.offenses[0].rule).toBe("html-no-duplicate-attributes")
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
+    expect(lintResult.offenses[0].severity).toBe("error")
   })
 
   test("fails for multiple duplicate attributes", () => {
     const html = '<button type="submit" type="button" class="btn" class="primary">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(2) // One for type, one for class
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
   })
 
   test("handles case-insensitive duplicates", () => {
     const html = '<div Class="container" class="active">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "class"')
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
   })
 
   test("passes for different attributes", () => {
     const html = '<div class="container" id="main" data-value="test">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -68,17 +68,17 @@ describe("html-no-duplicate-attributes", () => {
   test("handles self-closing tags", () => {
     const html = '<img src="/logo.png" src="/backup.png" alt="Logo">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.messages[0].message).toContain('Duplicate attribute "src"')
+    expect(lintResult.offenses[0].message).toBe('Duplicate attribute `src` found on tag. Remove the duplicate occurrence.')
   })
 
   test("handles ERB templates with attributes", () => {
     const html = '<div class="<%= classes %>" data-id="<%= item.id %>">'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
@@ -88,7 +88,7 @@ describe("html-no-duplicate-attributes", () => {
   test("ignores closing tags", () => {
     const html = '<div class="test"></div>'
     const result = Herb.parse(html)
-    const linter = new Linter([new HTMLNoDuplicateAttributesRule()])
+    const linter = new Linter([HTMLNoDuplicateAttributesRule])
     const lintResult = linter.lint(result.value)
 
     expect(lintResult.errors).toBe(0)
