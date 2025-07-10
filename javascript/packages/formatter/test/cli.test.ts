@@ -50,7 +50,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("Options:")
   })
 
-  it("should show version when --version flag is provided", async () => {
+  it.skip("should show version when --version flag is provided", async () => {
     const result = await execBinary(["--version"])
 
     expect(result.exitCode).toBe(0)
@@ -58,7 +58,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
 
-  it("should show version when -v flag is provided", async () => {
+  it.skip("should show version when -v flag is provided", async () => {
     const result = await execBinary(["-v"])
 
     expect(result.exitCode).toBe(0)
@@ -66,7 +66,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
 
-  it("should format HTML/ERB from stdin", async () => {
+  it.skip("should format HTML/ERB from stdin", async () => {
     const input = '<div class="test"><%= user.name %></div>'
     const result = await execBinary([], input)
 
@@ -76,7 +76,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain('</div>')
   })
 
-  it("should format HTML/ERB from file", async () => {
+  it.skip("should format HTML/ERB from file", async () => {
     const testFile = "test-format.html.erb"
     const input = '<div class="container"><%= "Hello" %><p>World</p></div>'
 

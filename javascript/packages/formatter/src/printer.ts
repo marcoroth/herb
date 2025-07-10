@@ -149,11 +149,10 @@ export class Printer extends Visitor {
         !((child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') && (child as any)?.content.trim() === ""),
     )
 
-    // Check if this is a malformed/incomplete tag (missing closing >)
-    const hasClosing = open.tag_closing?.value === ">"
+    const hasClosing = open.tag_closing?.value === ">" || open.tag_closing?.value === "/>"
+    const isSelfClosing = open.tag_closing?.value === "/>"
 
     if (!hasClosing) {
-      // For malformed tags, just output the tag name without any closing
       this.push(indent + `<${tagName}`)
 
       return
@@ -161,9 +160,13 @@ export class Printer extends Visitor {
 
     if (attributes.length === 0) {
       if (children.length === 0) {
-        const single = `<${tagName}${node.is_void ? ' /' : ''}>${node.is_void ? '' : `</${tagName}>`}`
-        this.push(indent + single)
-
+        if (isSelfClosing) {
+          this.push(indent + `<${tagName} />`)
+        } else if (node.is_void) {
+          this.push(indent + `<${tagName}>`)
+        } else {
+          this.push(indent + `<${tagName}></${tagName}>`)
+        }
         return
       }
 
@@ -173,39 +176,47 @@ export class Printer extends Visitor {
         children.forEach(child => this.visit(child))
       })
 
-      if (!node.is_void) {
+      if (!node.is_void && !isSelfClosing) {
         this.push(indent + `</${tagName}>`)
       }
 
       return
     }
 
-    const inline = this.renderInlineOpen(tagName, attributes, node.is_void)
+    const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing)
     const singleAttribute = attributes[0]
     const hasEmptyValue =
       singleAttribute &&
       (singleAttribute.value instanceof HTMLAttributeValueNode || (singleAttribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE') &&
       (singleAttribute.value as any)?.children.length === 0
 
-    if (
-      attributes.length === 1 &&
-      !hasEmptyValue &&
-      inline.length + indent.length <= this.maxLineLength
-    ) {
+    const shouldKeepInline = attributes.length <= 3 &&
+                            !hasEmptyValue &&
+                            inline.length + indent.length <= this.maxLineLength
+
+    if (shouldKeepInline) {
       if (children.length === 0) {
-        this.push(
-          indent + `<${tagName} ${this.renderAttribute(attributes[0])}></${tagName}>`
-        )
+        if (isSelfClosing) {
+          this.push(indent + inline)
+        } else if (node.is_void) {
+          this.push(indent + inline)
+        } else {
+          this.push(indent + inline.replace('>', `></${tagName}>`))
+        }
         return
       }
 
-      this.push(indent + inline)
+      if (isSelfClosing) {
+        this.push(indent + inline.replace(' />', '>'))
+      } else {
+        this.push(indent + inline)
+      }
 
       this.withIndent(() => {
         children.forEach(child => this.visit(child))
       })
 
-      if (!node.is_void) {
+      if (!node.is_void && !isSelfClosing) {
         this.push(indent + `</${tagName}>`)
       }
 
@@ -219,8 +230,10 @@ export class Printer extends Visitor {
       })
     })
 
-    if (node.is_void) {
+    if (isSelfClosing) {
       this.push(indent + "/>")
+    } else if (node.is_void) {
+      this.push(indent + ">")
     } else if (children.length === 0) {
       this.push(indent + ">" + `</${tagName}>`)
     } else {
@@ -241,11 +254,9 @@ export class Printer extends Visitor {
       attribute instanceof HTMLAttributeNode || (attribute as any).type === 'AST_HTML_ATTRIBUTE_NODE'
     )
 
-    // Check if this is a malformed/incomplete tag (missing closing >)
     const hasClosing = node.tag_closing?.value === ">"
 
     if (!hasClosing) {
-      // For malformed tags, just output the tag name without any closing
       this.push(indent + `<${tagName}`)
       return
     }
@@ -275,7 +286,17 @@ export class Printer extends Visitor {
     )
     const inline = this.renderInlineOpen(tagName, attributes, true)
 
-    if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
+    const singleAttribute = attributes[0]
+    const hasEmptyValue =
+      singleAttribute &&
+      (singleAttribute.value instanceof HTMLAttributeValueNode || (singleAttribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE') &&
+      (singleAttribute.value as any)?.children.length === 0
+
+    const shouldKeepInline = attributes.length <= 3 &&
+                            !hasEmptyValue &&
+                            inline.length + indent.length <= this.maxLineLength
+
+    if (shouldKeepInline) {
       this.push(indent + inline)
       return
     }
