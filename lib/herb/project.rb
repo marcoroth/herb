@@ -209,7 +209,7 @@ module Herb
             stderr_file.unlink
             ast_file.close
             ast_file.unlink
-          rescue Timeout::Error => e
+          rescue Timeout::Error
             message = "⏱️ Parsing #{file_path} timed out after 1 second"
             log.puts message
 
