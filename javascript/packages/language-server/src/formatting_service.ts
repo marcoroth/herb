@@ -34,26 +34,23 @@ export class FormattingService {
   }
 
   private async shouldFormatFile(filePath: string): Promise<boolean> {
-    if (!this.config?.options.formatting) {
+    if (!this.config?.options.formatter) {
       return true
     }
 
-    const formatting = this.config.options.formatting
+    const formatter = this.config.options.formatter
 
     // Check if formatting is disabled in project config
-    if (formatting.enabled === false) {
+    if (formatter.enabled === false) {
       return false
     }
 
     // Check exclude patterns first
-    if (formatting.exclude) {
-      for (const pattern of formatting.exclude) {
+    if (formatter.exclude) {
+      for (const pattern of formatter.exclude) {
         try {
           const matches = await new Promise<string[]>((resolve, reject) => {
-            glob(pattern, { cwd: this.project.projectPath }, (err, matches) => {
-              if (err) reject(err)
-              else resolve(matches)
-            })
+            glob(pattern, { cwd: this.project.projectPath }).then(resolve).catch(reject)
           })
 
           if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
@@ -65,14 +62,11 @@ export class FormattingService {
       }
     }
 
-    if (formatting.include && formatting.include.length > 0) {
-      for (const pattern of formatting.include) {
+    if (formatter.include && formatter.include.length > 0) {
+      for (const pattern of formatter.include) {
         try {
           const matches = await new Promise<string[]>((resolve, reject) => {
-            glob(pattern, { cwd: this.project.projectPath }, (err, matches) => {
-              if (err) reject(err)
-              else resolve(matches)
-            })
+            glob(pattern, { cwd: this.project.projectPath }).then(resolve).catch(reject)
           })
           if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
             return true
@@ -93,12 +87,12 @@ export class FormattingService {
     const settings = await this.settings.getDocumentSettings(uri)
 
     // Get project config options
-    const projectFormatting = this.config?.options.formatting || {}
+    const projectFormatter = this.config?.options.formatter || {}
 
     // Merge options with precedence: project config > VS Code settings > defaults
     return {
-      indentWidth: projectFormatting.indentWidth ?? settings.formatting?.indentWidth ?? defaultFormatOptions.indentWidth,
-      maxLineLength: projectFormatting.maxLineLength ?? settings.formatting?.maxLineLength ?? defaultFormatOptions.maxLineLength
+      indentWidth: projectFormatter.indentWidth ?? settings.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
+      maxLineLength: projectFormatter.maxLineLength ?? settings.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
     }
   }
 
@@ -137,7 +131,7 @@ export class FormattingService {
     // Check VS Code settings first
     const settings = await this.settings.getDocumentSettings(params.textDocument.uri)
 
-    if (settings.formatting?.enabled === false) {
+    if (settings.formatter?.enabled === false) {
       return []
     }
 

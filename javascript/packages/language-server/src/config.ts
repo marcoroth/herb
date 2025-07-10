@@ -1,5 +1,5 @@
 export type HerbConfigOptions = {
-  formatting?: {
+  formatter?: {
     enabled?: boolean
     include?: string[]
     exclude?: string[]

@@ -58,7 +58,8 @@
           "scope": "resource",
           "type": "boolean",
           "default": false,
-          "description": "Enable/disable document formatting (Beta)."
+          "description": "Enable/disable document formatting using the Herb Formatter (Experimental Preview). WARNING: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.",
+          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control."
         },
         "languageServerHerb.formatter.indentWidth": {
           "scope": "resource",
