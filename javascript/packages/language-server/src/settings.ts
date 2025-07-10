@@ -20,6 +20,9 @@ export class Settings {
   // Please note that this is not the case when using this server with the client provided in this example
   // but could happen with other clients.
   defaultSettings: HerbSettings = {
+    linter: {
+      enabled: true
+    },
     formatter: {
       enabled: false,
       indentWidth: defaultFormatOptions.indentWidth,
