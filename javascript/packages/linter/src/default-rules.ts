@@ -4,6 +4,7 @@ import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
+import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
 import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-heading-requires-level.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
@@ -20,6 +21,7 @@ export const defaultRules: RuleClass[] = [
   ERBNoOutputControlFlowRule,
   ERBRequireWhitespaceRule,
   HTMLAnchorRequireHrefRule,
+  HTMLAriaAttributeMustBeValid,
   HTMLAriaRoleHeadingRequiresLevelRule,
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeValuesRequireQuotesRule,
