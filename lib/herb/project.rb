@@ -138,7 +138,7 @@ module Herb
             stderr_file = Tempfile.new("stderr")
             ast_file = Tempfile.new("ast")
 
-            Timeout.timeout(10) do
+            Timeout.timeout(1) do
               pid = Process.fork do
                 $stdout.reopen(stdout_file.path, "w")
                 $stderr.reopen(stderr_file.path, "w")
