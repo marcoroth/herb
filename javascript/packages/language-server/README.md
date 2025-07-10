@@ -26,7 +26,12 @@ Read more in the [documentation](https://zed.dev/docs/languages/ruby).
 
 #### Neovim (using `nvim-lspconfig`)
 
-Coming soon, see [#3925](https://github.com/neovim/nvim-lspconfig/pull/3925).
+After installing the Herb Language Server (see below), add `herb_ls` to your Neovim config (requires nvim 0.11+):
+
+```lua
+require('lspconfig')
+vim.lsp.enable('herb_ls')
+```
 
 #### Manual Installation
 
