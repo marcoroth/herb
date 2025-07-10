@@ -76,8 +76,8 @@ export class Printer extends Visitor {
   }
 
   print(object: Node | Token, indentLevel: number = 0): string {
-    if (object instanceof Token) {
-      return object.value
+    if (object instanceof Token || (object as any).type?.startsWith('TOKEN_')) {
+      return (object as Token).value
     }
 
     const node: Node = object
@@ -85,7 +85,11 @@ export class Printer extends Visitor {
     this.lines = []
     this.indentLevel = indentLevel
 
-    node.accept(this)
+    if (typeof (node as any).accept === 'function') {
+      node.accept(this)
+    } else {
+      this.visit(node)
+    }
 
     return this.lines.filter(Boolean).join("\n")
   }
@@ -135,11 +139,14 @@ export class Printer extends Visitor {
     const open = node.open_tag as HTMLOpenTagNode
     const tagName = open.tag_name?.value ?? ""
     const indent = this.indent()
-    const attributes = open.children.filter((child): child is HTMLAttributeNode => child instanceof HTMLAttributeNode)
+
+    const attributes = open.children.filter((child): child is HTMLAttributeNode =>
+      child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+    )
     const children = node.body.filter(
       child =>
-        !(child instanceof WhitespaceNode) &&
-        !(child instanceof HTMLTextNode && child.content.trim() === ""),
+        !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') &&
+        !((child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') && (child as any)?.content.trim() === ""),
     )
 
     // Check if this is a malformed/incomplete tag (missing closing >)
@@ -176,9 +183,9 @@ export class Printer extends Visitor {
     const inline = this.renderInlineOpen(tagName, attributes, node.is_void)
     const singleAttribute = attributes[0]
     const hasEmptyValue =
-      singleAttribute instanceof HTMLAttributeNode &&
-      singleAttribute.value instanceof HTMLAttributeValueNode &&
-      singleAttribute.value.children.length === 0
+      singleAttribute &&
+      (singleAttribute.value instanceof HTMLAttributeValueNode || (singleAttribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE') &&
+      (singleAttribute.value as any)?.children.length === 0
 
     if (
       attributes.length === 1 &&
@@ -230,7 +237,9 @@ export class Printer extends Visitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     const tagName = node.tag_name?.value ?? ""
     const indent = this.indent()
-    const attributes = node.children.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
+    const attributes = node.children.filter((attribute): attribute is HTMLAttributeNode =>
+      attribute instanceof HTMLAttributeNode || (attribute as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+    )
 
     // Check if this is a malformed/incomplete tag (missing closing >)
     const hasClosing = node.tag_closing?.value === ">"
@@ -261,7 +270,9 @@ export class Printer extends Visitor {
   visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
     const tagName = node.tag_name?.value ?? ""
     const indent = this.indent()
-    const attributes = node.attributes.filter((attribute): attribute is HTMLAttributeNode => attribute instanceof HTMLAttributeNode)
+    const attributes = node.attributes.filter((attribute): attribute is HTMLAttributeNode =>
+      attribute instanceof HTMLAttributeNode || (attribute as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+    )
     const inline = this.renderInlineOpen(tagName, attributes, true)
 
     if (attributes.length === 0 || inline.length + indent.length <= this.maxLineLength) {
@@ -329,10 +340,12 @@ export class Printer extends Visitor {
     const open_quote = node.open_quote?.value ?? ""
     const close_quote = node.close_quote?.value ?? ""
     const attribute_value = node.children.map(child => {
-      if (child instanceof HTMLTextNode || child instanceof LiteralNode) {
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE' ||
+          child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
         return (child as HTMLTextNode | LiteralNode).content
-      } else if (child instanceof ERBContentNode) {
-        return (child.tag_opening!.value + child.content!.value + child.tag_closing!.value)
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbChild = child as ERBContentNode
+        return (erbChild.tag_opening!.value + erbChild.content!.value + erbChild.tag_closing!.value)
       }
       return ""
     }).join("")
@@ -381,8 +394,8 @@ export class Printer extends Visitor {
         inner = ` ${rawInner.trim()} `
       }
     } else {
-      inner = node.children
-        .map(child => {
+      inner = (node as any).children
+        .map((child: any) => {
           const prevLines = this.lines.length
           this.visit(child)
           return this.lines.slice(prevLines).join("")
@@ -469,7 +482,7 @@ export class Printer extends Visitor {
     }
 
     if (node.end_node) {
-      this.printERBNode(node.end_node)
+      this.printERBNode(node.end_node as any)
     }
   }
 
@@ -573,19 +586,22 @@ export class Printer extends Visitor {
     return `<${name}${parts.length ? " " + parts.join(" ") : ""}${selfClose ? " /" : ""}>`
   }
 
-  private renderAttribute(attribute: HTMLAttributeNode): string {
+  renderAttribute(attribute: HTMLAttributeNode): string {
     const name = (attribute.name as HTMLAttributeNameNode)!.name!.value ?? ""
     const equals = attribute.equals?.value ?? ""
     let value = ""
 
-    if (attribute.value instanceof HTMLAttributeValueNode) {
-      const open_quote = (attribute.value.open_quote?.value ?? "")
-      const close_quote = (attribute.value.close_quote?.value ?? "")
-      const attribute_value = attribute.value.children.map(attribute => {
-        if (attribute instanceof HTMLTextNode || attribute instanceof LiteralNode) {
-          return (attribute as HTMLTextNode | LiteralNode).content
-        } else if (attribute instanceof ERBContentNode) {
-          return (attribute.tag_opening!.value + attribute.content!.value + attribute.tag_closing!.value)
+    if (attribute.value && (attribute.value instanceof HTMLAttributeValueNode || (attribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE')) {
+      const attrValue = attribute.value as HTMLAttributeValueNode
+      const open_quote = (attrValue.open_quote?.value ?? "")
+      const close_quote = (attrValue.close_quote?.value ?? "")
+      const attribute_value = attrValue.children.map((attr: any) => {
+        if (attr instanceof HTMLTextNode || (attr as any).type === 'AST_HTML_TEXT_NODE' ||
+            attr instanceof LiteralNode || (attr as any).type === 'AST_LITERAL_NODE') {
+          return (attr as HTMLTextNode | LiteralNode).content
+        } else if (attr instanceof ERBContentNode || (attr as any).type === 'AST_ERB_CONTENT_NODE') {
+          const erbAttr = attr as ERBContentNode
+          return (erbAttr.tag_opening!.value + erbAttr.content!.value + erbAttr.tag_closing!.value)
         }
         return ""
       }).join("")

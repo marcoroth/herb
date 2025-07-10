@@ -8,24 +8,24 @@ const external = [
 
 export default [
   // CLI build
-  // {
-  //   input: "src/herb-formatter.ts",
-  //   output: {
-  //     file: "dist/herb-formatter.js",
-  //     format: "esm",
-  //     sourcemap: true,
-  //   },
-  //   external,
-  //   plugins: [
-  //     nodeResolve(),
-  //     json(),
-  //     typescript({
-  //       tsconfig: "./tsconfig.json",
-  //       rootDir: "src/",
-  //       module: "esnext",
-  //     }),
-  //   ],
-  // },
+  {
+    input: "src/herb-formatter.ts",
+    output: {
+      file: "dist/herb-formatter.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external,
+    plugins: [
+      nodeResolve(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
+  },
   {
     input: "src/index.ts",
     output: {

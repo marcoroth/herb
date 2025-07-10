@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
 
 import dedent from "dedent"

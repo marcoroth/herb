@@ -1,5 +1,5 @@
 import { readFileSync } from "fs"
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
 import { name, version } from "../package.json"
 

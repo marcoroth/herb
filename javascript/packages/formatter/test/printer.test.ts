@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node-wasm"
 import { Printer } from "../src/printer.js"
 
 import dedent from "dedent"
