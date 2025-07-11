@@ -2,16 +2,16 @@ import {
   Visitor
 } from "@herb-tools/core"
 
-import type { 
-  ERBNode, 
+import type {
+  ERBNode,
   HTMLAttributeNameNode,
-  HTMLAttributeNode, 
-  HTMLAttributeValueNode, 
-  HTMLOpenTagNode, 
-  HTMLSelfCloseTagNode, 
-  LiteralNode, 
-  Location, 
-  Node 
+  HTMLAttributeNode,
+  HTMLAttributeValueNode,
+  HTMLOpenTagNode,
+  HTMLSelfCloseTagNode,
+  LiteralNode,
+  Location,
+  Node
 } from "@herb-tools/core"
 import type { LintOffense, LintSeverity, } from "../types.js"
 
@@ -87,10 +87,21 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
     const valueNode = attributeNode.value as HTMLAttributeValueNode
 
     if (valueNode.children && valueNode.children.length > 0) {
-      return valueNode.children
-        .filter(child => child.type === "AST_LITERAL_NODE")
-        .map(child => (child as LiteralNode).content)
-        .join("")
+      return valueNode.children.reduce((acc, child) => {
+        switch (child.type) {
+          case "AST_ERB_CONTENT_NODE": {
+            const erbNode = child as ERBNode
+            if (erbNode.content) {
+              return acc + `<%= ${erbNode.content.value.trim()} %>`
+            }
+            break
+          }
+          case "AST_LITERAL_NODE": {
+            return acc + (child as LiteralNode).content
+          }
+        }
+        return acc
+      }, "")
     }
   }
 
