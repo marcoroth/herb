@@ -33,6 +33,37 @@ require('lspconfig')
 vim.lsp.enable('herb_ls')
 ```
 
+#### Sublime Text (using Sublime LSP)
+
+After installing the Herb Language Server (see below) and [Sublime LSP](http://lsp.sublimetext.io), update the preferences for the `LSP` package:
+
+```json
+// LSP.sublime-settings
+{
+  "clients": {
+    "herb": {
+      "enabled": true,
+      "command": [
+        "herb-language-server",
+        "--stdio"
+      ],
+      "selector": "text.html.ruby | text.html.rails",
+      "settings": {
+        "languageServerHerb.linter": {
+          "enabled": true
+        }
+      },
+      "initializationOptions": {
+        "enabledFeatures": {
+          "diagnostics": true,
+        },
+        "experimentalFeaturesEnabled": true
+      }
+    }
+  },
+}
+```
+
 #### Manual Installation
 
 You can use the language server in any editor that supports the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/).

@@ -93,6 +93,7 @@ export function createThemeConfig() {
             { text: "Helix", link: "/integrations/editors/helix" },
             { text: "Neovim", link: "/integrations/editors/neovim" },
             { text: "RubyMine", link: "/integrations/editors/rubymine" },
+            { text: "Sublime Text", link: "/integrations/editors/sublime" },
             { text: "Vim", link: "/integrations/editors/vim" },
             { text: "Visual Studio Code", link: "/integrations/editors/vscode" },
             { text: "Zed", link: "/integrations/editors/zed" },
