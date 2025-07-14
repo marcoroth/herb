@@ -67,6 +67,7 @@ export class Printer extends Visitor {
   private source: string
   private lines: string[] = []
   private indentLevel: number = 0
+  private inlineMode: boolean = false
 
   constructor(source: string, options: Required<FormatOptions>) {
     super()
@@ -143,6 +144,11 @@ export class Printer extends Visitor {
     const attributes = open.children.filter((child): child is HTMLAttributeNode =>
       child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
     )
+    const inlineNodes = open.children.filter(child =>
+      !(child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') &&
+      !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE')
+    )
+
     const children = node.body.filter(
       child =>
         !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') &&
@@ -158,7 +164,7 @@ export class Printer extends Visitor {
       return
     }
 
-    if (attributes.length === 0) {
+    if (attributes.length === 0 && inlineNodes.length === 0) {
       if (children.length === 0) {
         if (isSelfClosing) {
           this.push(indent + `<${tagName} />`)
@@ -167,6 +173,7 @@ export class Printer extends Visitor {
         } else {
           this.push(indent + `<${tagName}></${tagName}>`)
         }
+
         return
       }
 
@@ -183,16 +190,41 @@ export class Printer extends Visitor {
       return
     }
 
-    const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing)
+    if (attributes.length === 0 && inlineNodes.length > 0) {
+      const inline = this.renderInlineOpen(tagName, [], isSelfClosing, inlineNodes, open.children)
+
+      if (children.length === 0) {
+        if (isSelfClosing || node.is_void) {
+          this.push(indent + inline)
+        } else {
+          this.push(indent + inline + `</${tagName}>`)
+        }
+        return
+      }
+
+      this.push(indent + inline)
+      this.withIndent(() => {
+        children.forEach(child => this.visit(child))
+      })
+
+      if (!node.is_void && !isSelfClosing) {
+        this.push(indent + `</${tagName}>`)
+      }
+
+      return
+    }
+
+    const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
     const singleAttribute = attributes[0]
     const hasEmptyValue =
       singleAttribute &&
       (singleAttribute.value instanceof HTMLAttributeValueNode || (singleAttribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE') &&
       (singleAttribute.value as any)?.children.length === 0
 
-    const shouldKeepInline = attributes.length <= 3 &&
+    const shouldKeepInline = (attributes.length <= 3 &&
                             !hasEmptyValue &&
-                            inline.length + indent.length <= this.maxLineLength
+                            inline.length + indent.length <= this.maxLineLength) ||
+                            inlineNodes.length > 0
 
     if (shouldKeepInline) {
       if (children.length === 0) {
@@ -223,27 +255,38 @@ export class Printer extends Visitor {
       return
     }
 
-    this.push(indent + `<${tagName}`)
-    this.withIndent(() => {
-      attributes.forEach(attribute => {
-        this.push(this.indent() + this.renderAttribute(attribute))
-      })
-    })
+    if (inlineNodes.length > 0) {
+      this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
 
-    if (isSelfClosing) {
-      this.push(indent + "/>")
-    } else if (node.is_void) {
-      this.push(indent + ">")
-    } else if (children.length === 0) {
-      this.push(indent + ">" + `</${tagName}>`)
+      if (!isSelfClosing && !node.is_void && children.length > 0) {
+        this.withIndent(() => {
+          children.forEach(child => this.visit(child))
+        })
+        this.push(indent + `</${tagName}>`)
+      }
     } else {
-      this.push(indent + ">")
-
+      this.push(indent + `<${tagName}`)
       this.withIndent(() => {
-        children.forEach(child => this.visit(child))
+        attributes.forEach(attribute => {
+          this.push(this.indent() + this.renderAttribute(attribute))
+        })
       })
 
-      this.push(indent + `</${tagName}>`)
+      if (isSelfClosing) {
+        this.push(indent + "/>")
+      } else if (node.is_void) {
+        this.push(indent + ">")
+      } else if (children.length === 0) {
+        this.push(indent + ">" + `</${tagName}>`)
+      } else {
+        this.push(indent + ">")
+
+        this.withIndent(() => {
+          children.forEach(child => this.visit(child))
+        })
+
+        this.push(indent + `</${tagName}>`)
+      }
     }
   }
 
@@ -492,18 +535,41 @@ export class Printer extends Visitor {
   }
 
   visitERBIfNode(node: ERBIfNode): void {
-    this.printERBNode(node)
+    if (this.inlineMode) {
+      const open = node.tag_opening?.value ?? ""
+      const content = node.content?.value ?? ""
+      const close = node.tag_closing?.value ?? ""
+      this.lines.push(open + content + close)
 
-    this.withIndent(() => {
-      node.statements.forEach(child => this.visit(child))
-    })
+      node.statements.forEach(child => {
+        if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
+          this.lines.push(" " + this.renderAttribute(child as HTMLAttributeNode) + " ")
+        } else {
+          this.visit(child)
+        }
+      })
 
-    if (node.subsequent) {
-      this.visit(node.subsequent)
-    }
+      if (node.end_node) {
+        const endNode = node.end_node as any
+        const endOpen = endNode.tag_opening?.value ?? ""
+        const endContent = endNode.content?.value ?? ""
+        const endClose = endNode.tag_closing?.value ?? ""
+        this.lines.push(endOpen + endContent + endClose)
+      }
+    } else {
+      this.printERBNode(node)
 
-    if (node.end_node) {
-      this.printERBNode(node.end_node as any)
+      this.withIndent(() => {
+        node.statements.forEach(child => this.visit(child))
+      })
+
+      if (node.subsequent) {
+        this.visit(node.subsequent)
+      }
+
+      if (node.end_node) {
+        this.printERBNode(node.end_node as any)
+      }
     }
   }
 
@@ -601,8 +667,65 @@ export class Printer extends Visitor {
 
   // --- Utility methods ---
 
-  private renderInlineOpen(name: string, attributes: HTMLAttributeNode[], selfClose: boolean): string {
+  private renderInlineOpen(name: string, attributes: HTMLAttributeNode[], selfClose: boolean, inlineNodes: Node[] = [], allChildren: Node[] = []): string {
     const parts = attributes.map(attribute => this.renderAttribute(attribute))
+
+    if (inlineNodes.length > 0) {
+      let result = `<${name}`
+
+      if (allChildren.length > 0) {
+        const currentIndentLevel = this.indentLevel
+        this.indentLevel = 0
+        const tempLines = this.lines
+        this.lines = []
+
+        allChildren.forEach(child => {
+          if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
+            this.lines.push(" " + this.renderAttribute(child as HTMLAttributeNode))
+          } else if (!(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE')) {
+            const wasInlineMode = this.inlineMode
+            this.inlineMode = true
+
+            this.lines.push(" ")
+
+            this.visit(child)
+            this.inlineMode = wasInlineMode
+          }
+        })
+
+        const inlineContent = this.lines.join("")
+        this.lines = tempLines
+        this.indentLevel = currentIndentLevel
+
+        result += inlineContent
+      } else {
+        if (parts.length > 0) {
+          result += ` ${parts.join(" ")}`
+        }
+
+        const currentIndentLevel = this.indentLevel
+        this.indentLevel = 0
+        const tempLines = this.lines
+        this.lines = []
+
+        inlineNodes.forEach(node => {
+          const wasInlineMode = this.inlineMode
+          this.inlineMode = true
+          this.visit(node)
+          this.inlineMode = wasInlineMode
+        })
+
+        const inlineContent = this.lines.join("")
+        this.lines = tempLines
+        this.indentLevel = currentIndentLevel
+
+        result += inlineContent
+      }
+
+      result += selfClose ? " />" : ">"
+
+      return result
+    }
 
     return `<${name}${parts.length ? " " + parts.join(" ") : ""}${selfClose ? " /" : ""}>`
   }
@@ -610,6 +733,7 @@ export class Printer extends Visitor {
   renderAttribute(attribute: HTMLAttributeNode): string {
     const name = (attribute.name as HTMLAttributeNameNode)!.name!.value ?? ""
     const equals = attribute.equals?.value ?? ""
+
     let value = ""
 
     if (attribute.value && (attribute.value instanceof HTMLAttributeValueNode || (attribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE')) {
@@ -617,13 +741,15 @@ export class Printer extends Visitor {
       const open_quote = (attrValue.open_quote?.value ?? "")
       const close_quote = (attrValue.close_quote?.value ?? "")
       const attribute_value = attrValue.children.map((attr: any) => {
-        if (attr instanceof HTMLTextNode || (attr as any).type === 'AST_HTML_TEXT_NODE' ||
-            attr instanceof LiteralNode || (attr as any).type === 'AST_LITERAL_NODE') {
+        if (attr instanceof HTMLTextNode || (attr as any).type === 'AST_HTML_TEXT_NODE' || attr instanceof LiteralNode || (attr as any).type === 'AST_LITERAL_NODE') {
+
           return (attr as HTMLTextNode | LiteralNode).content
         } else if (attr instanceof ERBContentNode || (attr as any).type === 'AST_ERB_CONTENT_NODE') {
           const erbAttr = attr as ERBContentNode
+
           return (erbAttr.tag_opening!.value + erbAttr.content!.value + erbAttr.tag_closing!.value)
         }
+
         return ""
       }).join("")
 

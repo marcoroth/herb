@@ -142,4 +142,38 @@ describe("@herb-tools/formatter", () => {
       >
     `)
   })
+
+  test("preserves inline ERB conditionals in tags", () => {
+    const source = dedent`
+      <span<% if "x" == "x" %>class="is-x"<% end %>></span>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span <% if "x" == "x" %> class="is-x" <% end %>></span>
+    `)
+  })
+
+  test("preserves inline ERB conditionals with content", () => {
+    const source = dedent`
+      <div<% if condition %>class="active"<% end %>>Content</div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div <% if condition %> class="active" <% end %>>
+        Content
+      </div>
+    `)
+  })
+
+  test("preserves inline ERB conditionals with multiple attributes", () => {
+    const source = dedent`
+      <div id="test"<% if show_class %>class="visible"<% end %> data-value="123">Content</div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div id="test" <% if show_class %> class="visible" <% end %> data-value="123">
+        Content
+      </div>
+    `)
+  })
 })
