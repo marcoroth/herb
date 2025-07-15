@@ -1,12 +1,12 @@
-# Linter Rule: ARIA role must be valid
+# Linter Rule: Disallow invalid values for the `role` attribute
 
-### Rule: `aria-role-must-be-valid`
+**Rule:** `html-aria-role-must-be-valid`
 
-##### Description
+## Description
 
-Disallow unknown or invalid values for the `role` attribute. The `role` attribute must match one of the recognized ARIA role values as defined by the WAI-ARIA specification.
+Disallow invalid or unknown values for the `role` attribute. The `role` attribute must match one of the recognized ARIA role values as defined by the [WAI-ARIA specification](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles).
 
-##### Rationale
+## Rationale
 
 ARIA `role` attributes are used to define the purpose of an element to assistive technologies. Using invalid, misspelled, or non-standard roles results in:
 
@@ -16,9 +16,9 @@ ARIA `role` attributes are used to define the purpose of an element to assistive
 
 Validating against the official list of ARIA roles prevents silent accessibility failures.
 
-#### Examples
+## Examples
 
-##### ✅ Good
+### ✅ Good
 
 ```html
 <div role="button">Click me</div>
@@ -26,16 +26,20 @@ Validating against the official list of ARIA roles prevents silent accessibility
 <section role="region">...</section>
 ```
 
-##### 🚫 Bad
+### 🚫 Bad
 
 ```html
-<div role="buton">Click me</div>       <!-- typo -->
-<nav role="nav">...</nav>              <!-- not a valid role -->
-<section role="header">...</section>   <!-- not in the ARIA spec -->
+<!-- typo -->
+<div role="buton">Click me</div>
+
+<!-- not a valid role -->
+<nav role="nav">...</nav>
+
+<!-- not in the ARIA spec -->
+<section role="header">...</section>
 ```
 
-#### References
+## References
 
 * [ARIA 1.2 Specification - Roles](https://www.w3.org/TR/wai-aria/#roles)
 * [MDN: ARIA roles](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles)
-

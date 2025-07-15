@@ -10,7 +10,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
 - [`html-aria-role-heading-requires-level`](./html-aria-role-heading-requires-level.md) - Requires `aria-level` when supplying a `role`
-- [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - An `aria-level` must be a valid [WAI-ARIA Role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles)
+- [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - The `role` attribute must have a valid [WAI-ARIA Role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles) value.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
