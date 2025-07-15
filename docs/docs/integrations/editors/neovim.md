@@ -31,9 +31,19 @@ bun add -g @herb-tools/language-server
 
 Then you can set up Herb using `nvim-lspconfig` with a simple configuration:
 
-```lua
+
+::: code-group
+
+```lua [nvim <= 0.10]
 require('lspconfig').herb_ls.setup()
 ```
+
+```lua [nvim 0.11+]
+require('lspconfig')
+vim.lsp.enable('herb_ls')
+```
+
+:::
 
 ### [`mason.nvim`](https://github.com/mason-org/mason.nvim)
 

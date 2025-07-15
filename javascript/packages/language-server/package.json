@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/language-server",
   "description": "Herb HTML+ERB Language Tools and Language Server Protocol integration.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -34,8 +34,9 @@
     "clean": "rimraf dist",
     "build": "yarn clean && tsc -b && rollup -c",
     "dev": "tsc -b -w",
-    "test": "echo 'TODO: add tests'",
-    "prepublishOnly": "yarn clean && yarn build && yarn test"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test:run"
   },
   "files": [
     "package.json",
@@ -45,10 +46,14 @@
     "dist/"
   ],
   "dependencies": {
-    "@herb-tools/linter": "0.3.1",
-    "@herb-tools/node-wasm": "0.3.1",
+    "@herb-tools/formatter": "0.4.0",
+    "@herb-tools/linter": "0.4.0",
+    "@herb-tools/node-wasm": "0.4.0",
     "dedent": "^1.6.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
   }
 }

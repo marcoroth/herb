@@ -269,6 +269,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     case '_': return lexer_advance_current(lexer, TOKEN_UNDERSCORE);
     case ':': return lexer_advance_current(lexer, TOKEN_COLON);
+    case '@': return lexer_advance_current(lexer, TOKEN_AT);
     case ';': return lexer_advance_current(lexer, TOKEN_SEMICOLON);
     case '&': return lexer_advance_current(lexer, TOKEN_AMPERSAND);
     case '!': return lexer_advance_current(lexer, TOKEN_EXCLAMATION);

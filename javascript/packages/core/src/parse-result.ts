@@ -61,8 +61,8 @@ export class ParseResult extends Result {
    * @returns `true` if there are errors, otherwise `false`.
    */
   get failed(): boolean {
-    // TODO: this should probably be recursive as noted in the Ruby version
-    return this.errors.length > 0 || this.value.errors.length > 0
+    // Consider errors on this result and recursively in the document tree
+    return this.recursiveErrors().length > 0
   }
 
   /**
@@ -70,7 +70,7 @@ export class ParseResult extends Result {
    * @returns `true` if there are no errors, otherwise `false`.
    */
   get successful(): boolean {
-    return this.errors.length === 0
+    return !this.failed
   }
 
   /**

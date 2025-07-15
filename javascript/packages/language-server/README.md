@@ -26,7 +26,43 @@ Read more in the [documentation](https://zed.dev/docs/languages/ruby).
 
 #### Neovim (using `nvim-lspconfig`)
 
-Coming soon, see [#3925](https://github.com/neovim/nvim-lspconfig/pull/3925).
+After installing the Herb Language Server (see below), add `herb_ls` to your Neovim config (requires nvim 0.11+):
+
+```lua
+require('lspconfig')
+vim.lsp.enable('herb_ls')
+```
+
+#### Sublime Text (using Sublime LSP)
+
+After installing the Herb Language Server (see below) and [Sublime LSP](http://lsp.sublimetext.io), update the preferences for the `LSP` package:
+
+```json
+// LSP.sublime-settings
+{
+  "clients": {
+    "herb": {
+      "enabled": true,
+      "command": [
+        "herb-language-server",
+        "--stdio"
+      ],
+      "selector": "text.html.ruby | text.html.rails",
+      "settings": {
+        "languageServerHerb.linter": {
+          "enabled": true
+        }
+      },
+      "initializationOptions": {
+        "enabledFeatures": {
+          "diagnostics": true,
+        },
+        "experimentalFeaturesEnabled": true
+      }
+    }
+  },
+}
+```
 
 #### Manual Installation
 
@@ -69,3 +105,34 @@ Alternatively you can also run the language server directly with `npx` without i
 ```bash
 npx @herb-tools/language-server --stdio
 ```
+
+## Configuration
+
+The language server can be configured using a `.herb-lsp/config.json` file in your project root. This file is automatically created when the language server starts if it doesn't exist.
+
+### Formatter Configuration
+
+You can configure formatting behavior by adding a `formatter` section to your config:
+
+```json
+{
+  "version": "0.3.1",
+  "createdAt": "2025-06-29T00:00:00.000Z",
+  "updatedAt": "2025-06-29T00:00:00.000Z",
+  "options": {
+    "formatter": {
+      "enabled": true,
+      "indentWidth": 2,
+      "maxLineLength": 80
+    }
+  }
+}
+```
+
+#### `formatter` Options
+
+- `enabled` (`boolean`): Enable or disable formatting for this project. Defaults to `false`.
+- `indentWidth` (`number`): Number of spaces for each indentation level. Defaults to `2`.
+- `maxLineLength` (`number`): Maximum line length before wrapping. Defaults to `80`.
+
+**Note**: VS Code users can also control formatting globally through the `languageServerHerb.formatter.enabled` setting in VS Code preferences. Formatting is currently in **Beta** and disabled by default.

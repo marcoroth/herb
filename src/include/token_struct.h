@@ -33,6 +33,7 @@ typedef enum {
   TOKEN_EXCLAMATION, // !
   TOKEN_SEMICOLON,   // ;
   TOKEN_COLON,       // :
+  TOKEN_AT,          // @
   TOKEN_PERCENT,     // %
   TOKEN_AMPERSAND,   // &
 

@@ -24,6 +24,7 @@ export default defineConfig({
     ['meta', { property: 'og:description', content: 'Powerful and seamless HTML-aware ERB parsing and tooling.' }],
     ['meta', { property: 'og:url', content: 'https://herb-tools.dev' }],
     ['meta', { property: 'og:type', content: 'website' }],
+    ['script', { defer: true, 'data-domain': 'herb-tools.dev', src: 'https://plausible.io/js/script.js' }],
   ],
   cleanUrls: true,
   markdown: createMarkdownConfig(),

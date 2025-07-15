@@ -61,6 +61,7 @@ const char* token_type_to_string(const token_type_T type) {
     case TOKEN_SLASH: return "TOKEN_SLASH";
     case TOKEN_SEMICOLON: return "TOKEN_SEMICOLON";
     case TOKEN_COLON: return "TOKEN_COLON";
+    case TOKEN_AT: return "TOKEN_AT";
     case TOKEN_LT: return "TOKEN_LT";
     case TOKEN_PERCENT: return "TOKEN_PERCENT";
     case TOKEN_AMPERSAND: return "TOKEN_AMPERSAND";
