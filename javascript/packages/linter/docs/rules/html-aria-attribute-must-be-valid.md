@@ -1,4 +1,4 @@
-# Linter Rule: Disallow output ERB tags with control flow
+# Linter Rule: Aria Attribute must be valid
 
 **Rule:** `aria-attribute-must-be-valid`
 

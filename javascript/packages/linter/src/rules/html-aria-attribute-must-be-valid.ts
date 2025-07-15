@@ -18,17 +18,16 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
     attributeNode: HTMLAttributeNode,
     _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
   ): void {
-    if (!attributeName.includes("aria-") return;
-      if (!ARIA_ATTRIBUTES.has(attributeName)){
-        this.offenses.push({
-          message: `The ARIA attribute "${attributeName}" is not valid.`,
-          severity: "error",
-          location: attributeNode.location,
-          rule: this.ruleName,
-        });
-      }
+    if (!attributeName.startsWith("aria-")) return;
+
+    if (!ARIA_ATTRIBUTES.has(attributeName)){
+      this.offenses.push({
+        message: `The ARIA attribute "${attributeName}" is not valid.`,
+        severity: "error",
+        location: attributeNode.location,
+        rule: this.ruleName,
+      });
     }
- 
   }
 }
 
