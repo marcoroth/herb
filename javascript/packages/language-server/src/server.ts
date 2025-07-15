@@ -7,6 +7,7 @@ import {
   TextDocumentSyncKind,
   InitializeResult,
   Connection,
+  DocumentFormattingParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -30,6 +31,7 @@ export class Server {
       const result: InitializeResult = {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Incremental,
+          documentFormattingProvider: true,
         },
       }
 
@@ -96,6 +98,10 @@ export class Server {
           ))
         }
       })
+    })
+
+    this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {
+      return this.service.formatting.formatDocument(params)
     })
   }
 

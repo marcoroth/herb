@@ -1,4 +1,4 @@
-# Herb Syntax Tree Printer
+# Herb Syntax Tree Printer <Badge type="info" text="coming soon" />
 
 **Package:** [`@herb-tools/printer`](https://www.npmjs.com/package/@herb-tools/printer)
 

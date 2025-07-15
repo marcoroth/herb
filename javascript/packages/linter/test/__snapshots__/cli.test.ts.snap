@@ -12,8 +12,8 @@ test/fixtures/multiple-rule-violations.html.erb:5:3
       6 │ </div>
       7 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/10] ⎯⎯⎯⎯
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -26,8 +26,8 @@ test/fixtures/multiple-rule-violations.html.erb:10:1
      11 │ 
      12 │ <div id="duplicate"></div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/10] ⎯⎯⎯⎯
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -40,8 +40,8 @@ test/fixtures/multiple-rule-violations.html.erb:10:4
      11 │ 
      12 │ <div id="duplicate"></div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/10] ⎯⎯⎯⎯
 
 [warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class="value"\`. (html-attribute-double-quotes)
 
@@ -54,8 +54,8 @@ test/fixtures/multiple-rule-violations.html.erb:3:20
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/10] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -68,8 +68,8 @@ test/fixtures/multiple-rule-violations.html.erb:3:8
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/10] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`data-value="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -82,8 +82,8 @@ test/fixtures/multiple-rule-violations.html.erb:3:34
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/10] ⎯⎯⎯⎯
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -96,8 +96,8 @@ test/fixtures/multiple-rule-violations.html.erb:4:3
       5 │   <a class="" class="">Link 1</a>
       6 │ </div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/10] ⎯⎯⎯⎯
 
 [error] Duplicate attribute \`class\` found on tag. Remove the duplicate occurrence. (html-no-duplicate-attributes)
 
@@ -110,8 +110,8 @@ test/fixtures/multiple-rule-violations.html.erb:5:14
       6 │ </div>
       7 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/10] ⎯⎯⎯⎯
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
@@ -124,8 +124,8 @@ test/fixtures/multiple-rule-violations.html.erb:8:0
       9 │ 
      10 │ <a><a>Nested</a></a>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/10] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/10] ⎯⎯⎯⎯
 
 [error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (html-no-nested-links)
 
@@ -137,8 +137,6 @@ test/fixtures/multiple-rule-violations.html.erb:10:4
         │     ~
      11 │ 
      12 │ <div id="duplicate"></div>
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/10] ⎯⎯⎯⎯
 
  Most violated rules:
   html-anchor-require-href (3 violations in 1 file)
@@ -166,8 +164,8 @@ test/fixtures/few-rule-violations.html.erb:2:8
       3 │   <img src=image.jpg>
       4 │ </div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/5] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`class="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -179,8 +177,8 @@ test/fixtures/few-rule-violations.html.erb:2:19
       3 │   <img src=image.jpg>
       4 │ </div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/5] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`src="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -193,8 +191,8 @@ test/fixtures/few-rule-violations.html.erb:3:11
       4 │ </div>
       5 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/5] ⎯⎯⎯⎯
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -207,8 +205,8 @@ test/fixtures/few-rule-violations.html.erb:3:3
       4 │ </div>
       5 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/5] ⎯⎯⎯⎯
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
@@ -220,8 +218,6 @@ test/fixtures/few-rule-violations.html.erb:6:0
         │ ~~~~~~~~~
       7 │ 
       8 │ <div id="duplicate"></div>
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/5] ⎯⎯⎯⎯
 
  Rule violations:
   html-attribute-values-require-quotes (3 violations in 1 file)
@@ -246,8 +242,8 @@ test/fixtures/test-file-with-errors.html.erb:3:3
       4 │ </div>
       5 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
 [error] Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
@@ -259,8 +255,8 @@ test/fixtures/test-file-with-errors.html.erb:2:3
       3 │   <img src="test.jpg">
       4 │ </div>
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
 [error] Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
@@ -271,8 +267,6 @@ test/fixtures/test-file-with-errors.html.erb:2:22
         │                       ~~~~
       3 │   <img src="test.jpg">
       4 │ </div>
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/3] ⎯⎯⎯⎯
 
  Rule violations:
   html-tag-name-lowercase (2 violations in 1 file)
@@ -288,6 +282,20 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 "test/fixtures/test-file-simple.html.erb:
   2:3  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
   2:22 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+
+ Rule violations:
+  html-tag-name-lowercase (2 violations in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
+"test/fixtures/bad-file.html.erb:
+  1:1  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
+  1:16 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
  Rule violations:
   html-tag-name-lowercase (2 violations in 1 file)
@@ -316,8 +324,8 @@ test/fixtures/bad-file.html.erb:1:1
         │  ~~~~
       2 │
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
 [error] Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
@@ -326,8 +334,6 @@ test/fixtures/bad-file.html.erb:1:16
   →   1 │ <SPAN>Bad file</SPAN>
         │                 ~~~~
       2 │
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/2] ⎯⎯⎯⎯
 
  Rule violations:
   html-tag-name-lowercase (2 violations in 1 file)

@@ -7,6 +7,8 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around erb tags
+- [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
+- [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
 - [`html-aria-role-heading-requires-level`](./html-aria-role-heading-requires-level.md) - Requires `aria-level` when supplying a `role`
 - [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - An `aria-level` must be a valid [WAI-ARIA Role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles)
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values

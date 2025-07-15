@@ -22,7 +22,7 @@ export class LinterService {
 
   async lintDocument(document: DocumentNode, textDocument: TextDocument): Promise<LintServiceResult> {
     const settings = await this.settings.getDocumentSettings(textDocument.uri)
-    const linterEnabled = settings.linter?.enabled ?? true
+    const linterEnabled = settings?.linter?.enabled ?? true
 
     if (!linterEnabled) {
       return { diagnostics: [] }

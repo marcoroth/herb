@@ -26,7 +26,7 @@ export function createThemeConfig() {
       copyright: "Copyright © 2024-2025 Marco Roth and the Herb Contributors.",
     },
     editLink: {
-      pattern: "https://github.com/marcoroth/herb/edit/main/docs/:path",
+      pattern: "https://github.com/marcoroth/herb/edit/main/docs/docs/:path",
       text: "Edit this page on GitHub",
     },
     sidebar: {
@@ -77,9 +77,10 @@ export function createThemeConfig() {
           text: "Utility Libraries",
           collapsed: false,
           items: [
+            { text: "Language Service", link: "/projects/language-service" },
             { text: "Highlighter", link: "/projects/highlighter" },
+            { text: "Syntax Tree Printer", link: "/projects/printer" },
             { text: "Minifier", link: "/projects/minifier" },
-            { text: "Printer", link: "/projects/printer" },
             { text: "Core", link: "/projects/core" },
           ],
         },
@@ -89,8 +90,10 @@ export function createThemeConfig() {
           items: [
             { text: "Overview", link: "/integrations/editors" },
             { text: "Cursor", link: "/integrations/editors/cursor" },
+            { text: "Helix", link: "/integrations/editors/helix" },
             { text: "Neovim", link: "/integrations/editors/neovim" },
             { text: "RubyMine", link: "/integrations/editors/rubymine" },
+            { text: "Sublime Text", link: "/integrations/editors/sublime" },
             { text: "Vim", link: "/integrations/editors/vim" },
             { text: "Visual Studio Code", link: "/integrations/editors/vscode" },
             { text: "Zed", link: "/integrations/editors/zed" },

@@ -19,7 +19,7 @@ import type { LintOffense, LintSeverity, } from "../types.js"
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor extends Visitor {
-  public offenses: LintOffense[] = []
+  public readonly offenses: LintOffense[] = []
   protected ruleName: string
 
   constructor(ruleName: string) {
@@ -34,9 +34,11 @@ export abstract class BaseRuleVisitor extends Visitor {
   protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
     return {
       rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
       message,
       location,
-      severity
+      severity,
     }
   }
 
@@ -182,6 +184,56 @@ export const VALID_ARIA_ROLES = new Set([
   "log", "marquee"
 ]);
 
+export const ARIA_ATTRIBUTES =  new Set([
+  'aria-activedescendant',
+  'aria-atomic',
+  'aria-autocomplete',
+  'aria-busy',
+  'aria-checked',
+  'aria-colcount',
+  'aria-colindex',
+  'aria-colspan',
+  'aria-controls',
+  'aria-current',
+  'aria-describedby',
+  'aria-details',
+  'aria-disabled',
+  'aria-dropeffect',
+  'aria-errormessage',
+  'aria-expanded',
+  'aria-flowto',
+  'aria-grabbed',
+  'aria-haspopup',
+  'aria-hidden',
+  'aria-invalid',
+  'aria-keyshortcuts',
+  'aria-label',
+  'aria-labelledby',
+  'aria-level',
+  'aria-live',
+  'aria-modal',
+  'aria-multiline',
+  'aria-multiselectable',
+  'aria-orientation',
+  'aria-owns',
+  'aria-placeholder',
+  'aria-posinset',
+  'aria-pressed',
+  'aria-readonly',
+  'aria-relevant',
+  'aria-required',
+  'aria-roledescription',
+  'aria-rowcount',
+  'aria-rowindex',
+  'aria-rowspan',
+  'aria-selected',
+  'aria-setsize',
+  'aria-sort',
+  'aria-valuemax',
+  'aria-valuemin',
+  'aria-valuenow',
+  'aria-valuetext',
+])
 
 /**
  * Checks if an element is inline

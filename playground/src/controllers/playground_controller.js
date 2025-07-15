@@ -51,6 +51,7 @@ export default class extends Controller {
     "rubyViewer",
     "htmlViewer",
     "lexViewer",
+    "formatViewer",
     "fullViewer",
     "viewerButton",
     "version",
@@ -64,6 +65,10 @@ export default class extends Controller {
   ]
 
   connect() {
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark')
+    }
+    
     this.restoreInput()
     this.inputTarget.focus()
     this.load()
@@ -72,7 +77,7 @@ export default class extends Controller {
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: "erb",
-      theme: "",
+      theme: this.isDarkMode ? 'vs-dark' : 'vs',
       automaticLayout: true,
       minimap: { enabled: false },
     })
@@ -107,6 +112,26 @@ export default class extends Controller {
 
     window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
+
+    this.setupThemeListener()
+  }
+
+  get isDarkMode() {
+    const actualTheme = localStorage.getItem('vitepress-theme-actual')
+
+    if (actualTheme) {
+      return actualTheme === 'dark'
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  setupThemeListener() {
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'vitepress-theme-actual' && event.newValue) {
+        window.location.reload()
+      }
+    })
   }
 
   updatePosition(line, column, length) {
@@ -353,7 +378,21 @@ export default class extends Controller {
 
     if (this.hasVersionTarget) {
       const fullVersion = result.version
-      const shortVersion = fullVersion.split(',')[0]
+      let displayVersion = fullVersion
+
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        displayVersion = fullVersion.split(',').map(component => {
+          if (component.includes('libprism')) {
+            return component
+          }
+
+          return component.replace(/@[\d]+\.[\d]+\.[\d]+/g, `@${commitInfo.hash}`)
+        }).join(',')
+      }
+
+      const shortVersion = displayVersion.split(',')[0]
 
       const icon = this.versionTarget.querySelector('i')
       if (icon) {
@@ -364,7 +403,7 @@ export default class extends Controller {
         this.versionTarget.textContent = shortVersion
       }
 
-      this.versionTarget.title = fullVersion
+      this.versionTarget.title = displayVersion
     }
 
     if (this.hasCommitHashTarget) {
@@ -408,6 +447,13 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasFormatViewerTarget) {
+      this.formatViewerTarget.classList.add("language-html")
+      this.formatViewerTarget.textContent = result.formatted
+
+      Prism.highlightElement(this.formatViewerTarget)
     }
 
     if (this.hasRubyViewerTarget) {

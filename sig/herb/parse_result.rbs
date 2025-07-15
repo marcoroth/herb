@@ -7,6 +7,9 @@ module Herb
     # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
     def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
 
+    # : () -> Array[Herb::Errors::Error]
+    def errors: () -> Array[Herb::Errors::Error]
+
     # : () -> bool
     def failed?: () -> bool
 

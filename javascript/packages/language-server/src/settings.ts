@@ -1,11 +1,17 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
+import { defaultFormatOptions } from "@herb-tools/formatter"
 
 export interface HerbSettings {
+  trace?: {
+    server?: string
+  }
   linter?: {
     enabled?: boolean
   }
-  trace?: {
-    server?: string
+  formatter?: {
+    enabled?: boolean
+    indentWidth?: number
+    maxLineLength?: number
   }
 }
 
@@ -13,7 +19,16 @@ export class Settings {
   // The global settings, used when the `workspace/configuration` request is not supported by the client.
   // Please note that this is not the case when using this server with the client provided in this example
   // but could happen with other clients.
-  defaultSettings: HerbSettings = {}
+  defaultSettings: HerbSettings = {
+    linter: {
+      enabled: true
+    },
+    formatter: {
+      enabled: false,
+      indentWidth: defaultFormatOptions.indentWidth,
+      maxLineLength: defaultFormatOptions.maxLineLength
+    }
+  }
   globalSettings: HerbSettings = this.defaultSettings
   documentSettings: Map<string, Thenable<HerbSettings>> = new Map()
 

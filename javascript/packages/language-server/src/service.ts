@@ -7,6 +7,7 @@ import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { Config } from "./config"
 import { Project } from "./project"
+import { FormattingService } from "./formatting_service"
 
 export class Service {
   connection: Connection
@@ -17,6 +18,7 @@ export class Service {
   linterService: LinterService
   project: Project
   config?: Config
+  formatting: FormattingService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -25,6 +27,7 @@ export class Service {
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
     this.linterService = new LinterService(this.settings)
+    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService)
 
     // Initialize global settings from initialization options
@@ -35,6 +38,7 @@ export class Service {
 
   async init() {
     await this.project.initialize()
+    await this.formatting.initialize()
 
     this.config = await Config.fromPathOrNew(this.project.projectPath)
 
@@ -57,5 +61,6 @@ export class Service {
 
   async refreshConfig() {
     this.config = await Config.fromPathOrNew(this.project.projectPath)
+    await this.formatting.refreshConfig()
   }
 }
