@@ -96,4 +96,30 @@ describe("CLI Binary", () => {
       await unlink(testFile).catch(() => {})
     }
   })
+
+  it("CLI output should end with trailing newline", async () => {
+    const input = '<div>Hello</div>'
+    const result = await execBinary([], input)
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.endsWith('\n')).toBe(true)
+    expect(result.stdout).toBe('<div>\n  Hello\n</div>\n')
+  })
+
+  it("CLI should preserve existing trailing newline", async () => {
+    const input = '<div>Hello</div>\n'
+    const result = await execBinary([], input)
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.endsWith('\n')).toBe(true)
+    expect(result.stdout).toBe('<div>\n  Hello\n</div>\n')
+  })
+
+  it("CLI should add trailing newline to empty input", async () => {
+    const input = ''
+    const result = await execBinary([], input)
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toBe('\n')
+  })
 })
