@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { readFileSync, writeFileSync, statSync } from "fs"
 import { glob } from "glob"
 import { join, resolve } from "path"
@@ -12,26 +13,26 @@ const pluralize = (count: number, singular: string, plural: string = singular + 
 }
 
 export class CLI {
-  private usage = `
-  Usage: herb-format [file|directory] [options]
+  private usage = dedent`
+    Usage: herb-format [file|directory] [options]
 
-  Arguments:
-    file|directory   File to format, directory to format all **/*.html.erb files within,
-                     or '-' for stdin (omit to format all **/*.html.erb files in current directory)
+    Arguments:
+      file|directory   File to format, directory to format all **/*.html.erb files within,
+                       or '-' for stdin (omit to format all **/*.html.erb files in current directory)
 
-  Options:
-    -c, --check      check if files are formatted without modifying them
-    -h, --help       show help
-    -v, --version    show version
+    Options:
+      -c, --check      check if files are formatted without modifying them
+      -h, --help       show help
+      -v, --version    show version
 
-  Examples:
-    herb-format                            # Format all **/*.html.erb files in current directory
-    herb-format --check                    # Check if all **/*.html.erb files are formatted
-    herb-format templates/index.html.erb   # Format and write single file
-    herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
-    cat template.html.erb | herb-format    # Format from stdin to stdout
-    herb-format - < template.html.erb      # Format from stdin to stdout
-`
+    Examples:
+      herb-format                            # Format all **/*.html.erb files in current directory
+      herb-format --check                    # Check if all **/*.html.erb files are formatted
+      herb-format templates/index.html.erb   # Format and write single file
+      herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
+      cat template.html.erb | herb-format    # Format from stdin to stdout
+      herb-format - < template.html.erb      # Format from stdin to stdout
+  `
 
   async run() {
     const args = process.argv.slice(2)
@@ -69,8 +70,9 @@ export class CLI {
 
         const source = await this.readStdin()
         const result = formatter.format(source)
+        const output = result.endsWith('\n') ? result : result + '\n'
 
-        process.stdout.write(result)
+        process.stdout.write(output)
       } else if (file === "-") {
         if (isCheckMode) {
           console.error("Error: --check mode is not supported with stdin")
@@ -80,8 +82,9 @@ export class CLI {
 
         const source = await this.readStdin()
         const result = formatter.format(source)
+        const output = result.endsWith('\n') ? result : result + '\n'
 
-        process.stdout.write(result)
+        process.stdout.write(output)
       } else if (file) {
         try {
           const stats = statSync(file)

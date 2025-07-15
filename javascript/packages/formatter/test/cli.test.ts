@@ -355,4 +355,44 @@ describe("CLI Binary", () => {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
   })
+
+  it("CLI output should end with trailing newline", async () => {
+    const input = '<div>Hello</div>'
+    const result = await execBinary([], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout.endsWith('\n')).toBe(true)
+    expect(result.stdout).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toContain('<div>\n  Hello\n</div>')
+
+    const lines = result.stdout.split('\n')
+    const formattedLines = lines.slice(2) // Skip experimental preview lines
+    expect(formattedLines.join('\n')).toBe('<div>\n  Hello\n</div>\n')
+  })
+
+  it("CLI should preserve existing trailing newline", async () => {
+    const input = '<div>Hello</div>\n'
+    const result = await execBinary([], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout.endsWith('\n')).toBe(true)
+    expect(result.stdout).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toContain('<div>\n  Hello\n</div>')
+
+    const lines = result.stdout.split('\n')
+    const formattedLines = lines.slice(2) // Skip experimental preview lines
+    expect(formattedLines.join('\n')).toBe('<div>\n  Hello\n</div>\n')
+  })
+
+  it("CLI should add trailing newline to empty input", async () => {
+    const input = ''
+    const result = await execBinary([], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("⚠️  Experimental Preview")
+
+    const lines = result.stdout.split('\n')
+    const formattedLines = lines.slice(2) // Skip experimental preview lines
+    expect(formattedLines.join('\n')).toBe('\n')
+  })
 })
