@@ -10,7 +10,7 @@ import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quo
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
-import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
+// import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
@@ -27,7 +27,7 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeValuesRequireQuotesRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLImgRequireAltRule,
-  HTMLNoBlockInsideInlineRule,
+  // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoNestedLinksRule,
