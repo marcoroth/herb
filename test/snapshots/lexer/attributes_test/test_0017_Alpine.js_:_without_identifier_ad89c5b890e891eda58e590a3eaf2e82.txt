@@ -1,0 +1,10 @@
+#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=(1:0) end=(1:1)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="div" range=[1, 4] start=(1:1) end=(1:4)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=(1:4) end=(1:5)>
+#<Herb::Token type="TOKEN_COLON" value=":" range=[5, 6] start=(1:5) end=(1:6)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[6, 7] start=(1:6) end=(1:7)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Content" range=[7, 14] start=(1:7) end=(1:14)>
+#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[14, 16] start=(1:14) end=(1:16)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="div" range=[16, 19] start=(1:16) end=(1:19)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[19, 20] start=(1:19) end=(1:20)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[20, 20] start=(1:20) end=(1:20)>

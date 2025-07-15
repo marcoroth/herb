@@ -1,0 +1,17 @@
+#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=(1:0) end=(1:1)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="button" range=[1, 7] start=(1:1) end=(1:7)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[7, 8] start=(1:7) end=(1:8)>
+#<Herb::Token type="TOKEN_AT" value="@" range=[8, 9] start=(1:8) end=(1:9)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="click" range=[9, 14] start=(1:9) end=(1:14)>
+#<Herb::Token type="TOKEN_EQUALS" value="=" range=[14, 15] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[15, 16] start=(1:15) end=(1:16)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="handleClick" range=[16, 27] start=(1:16) end=(1:27)>
+#<Herb::Token type="TOKEN_QUOTE" value="\"" range=[27, 28] start=(1:27) end=(1:28)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[28, 29] start=(1:28) end=(1:29)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Click" range=[29, 34] start=(1:29) end=(1:34)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[34, 35] start=(1:34) end=(1:35)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="me" range=[35, 37] start=(1:35) end=(1:37)>
+#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[37, 39] start=(1:37) end=(1:39)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="button" range=[39, 45] start=(1:39) end=(1:45)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[45, 46] start=(1:45) end=(1:46)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[46, 46] start=(1:46) end=(1:46)>
