@@ -16,6 +16,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
+- [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML

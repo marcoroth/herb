@@ -208,7 +208,7 @@ test/fixtures/few-rule-violations.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
 
-[error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicated-id)
+[error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicate-ids)
 
 test/fixtures/few-rule-violations.html.erb:9:5
 
@@ -235,7 +235,7 @@ test/fixtures/few-rule-violations.html.erb:6:0
  Rule violations:
   html-attribute-values-require-quotes (3 violations in 1 file)
   html-img-require-alt (1 violation in 1 file)
-  html-no-duplicated-id (1 violation in 1 file)
+  html-no-duplicate-ids (1 violation in 1 file)
   html-no-empty-headings (1 violation in 1 file)
 
 

@@ -1,42 +1,39 @@
-import { Node } from "@herb-tools/core";
-import { AttributeVisitorMixin } from "./rule-utils";
-import { LintOffense, Rule } from "../types";
+import { AttributeVisitorMixin } from "./rule-utils"
+
+import type { Node } from "@herb-tools/core"
+import type { LintOffense, Rule } from "../types"
 
 class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
+  private documentIds: Set<string> = new Set<string>()
+
   protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: Node): void {
-    if (attributeName.toLowerCase() !== "id") return; // Only check 'id' attributes
+    if (attributeName.toLowerCase() !== "id") return
+    if (!attributeValue) return
 
-    if (!attributeValue) return; // Skip empty IDs
+    const id = attributeValue.trim()
 
-    const id = attributeValue.trim();
-
-    // Check for duplicates in the current document
-    const existingIds = this.getDocumentIds();
-    if (existingIds.has(id)) {
+    if (this.documentIds.has(id)) {
       this.addOffense(
         `Duplicate ID \`${id}\` found. IDs must be unique within a document.`,
         attributeNode.location,
         "error"
-      );
-    } else {
-      existingIds.add(id); // Add to the set of seen IDs
+      )
+
+      return
     }
+
+    this.documentIds.add(id)
   }
-
-  private getDocumentIds(): Set<string> {
-    return this.documentIds || (this.documentIds = new Set<string>());
-  }
-
-  private documentIds: Set<string> | null = null;
-
 }
 
 export class HTMLNoDuplicateIdsRule implements Rule {
-  name = "html-no-duplicated-id";
+  name = "html-no-duplicate-ids"
 
   check(node: Node): LintOffense[] {
-    const visitor = new NoDuplicateIdsVisitor(this.name);
-    visitor.visit(node);
-    return visitor.offenses;
+    const visitor = new NoDuplicateIdsVisitor(this.name)
+
+    visitor.visit(node)
+
+    return visitor.offenses
   }
 }

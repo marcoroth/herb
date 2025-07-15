@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { Linter } from "../../src/linter.js";
 import { HTMLNoDuplicateIdsRule } from "../../src/rules/html-no-duplicate-ids.js";
 
-describe("html-no-duplicated-id", () => {
+describe("html-no-duplicate-ids", () => {
   beforeAll(async () => {
     await Herb.load();
   })
@@ -29,7 +29,7 @@ describe("html-no-duplicated-id", () => {
     expect(lintResult.warnings).toBe(0);
     expect(lintResult.offenses).toHaveLength(1);
 
-    expect(lintResult.offenses[0].rule).toBe("html-no-duplicated-id");
+    expect(lintResult.offenses[0].rule).toBe("html-no-duplicate-ids");
     expect(lintResult.offenses[0].message).toBe('Duplicate ID `duplicate` found. IDs must be unique within a document.');
     expect(lintResult.offenses[0].severity).toBe("error");
   })
@@ -77,7 +77,7 @@ describe("html-no-duplicated-id", () => {
     expect(lintResult.warnings).toBe(0);
     expect(lintResult.offenses).toHaveLength(1);
 
-    expect(lintResult.offenses[0].rule).toBe("html-no-duplicated-id");
+    expect(lintResult.offenses[0].rule).toBe("html-no-duplicate-ids");
     expect(lintResult.offenses[0].message).toBe('Duplicate ID `<%= user.id %>` found. IDs must be unique within a document.');
     expect(lintResult.offenses[0].severity).toBe("error");
   })
