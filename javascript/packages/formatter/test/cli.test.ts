@@ -4,7 +4,7 @@ import { writeFile, unlink } from "fs/promises"
 
 const execBinary = (args: string[] = [], input?: string): Promise<{stdout: string, stderr: string, exitCode: number}> => {
   return new Promise((resolve) => {
-    const child = spawn("node", ["bin/herb-formatter", ...args], {
+    const child = spawn("node", ["bin/herb-format", ...args], {
       stdio: ["pipe", "pipe", "pipe"]
     })
 
@@ -36,7 +36,7 @@ describe("CLI Binary", () => {
     const result = await execBinary(["--help"])
 
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain("Usage: herb-formatter")
+    expect(result.stdout).toContain("Usage: herb-format")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
   })
@@ -45,7 +45,7 @@ describe("CLI Binary", () => {
     const result = await execBinary(["-h"])
 
     expect(result.exitCode).toBe(0)
-    expect(result.stdout).toContain("Usage: herb-formatter")
+    expect(result.stdout).toContain("Usage: herb-format")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
   })

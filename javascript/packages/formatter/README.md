@@ -39,18 +39,18 @@ bun add @herb-tools/formatter
 
 ```bash
 # relative path
-herb-formatter templates/index.html.erb
+herb-format templates/index.html.erb
 
 # absolute path
-herb-formatter /full/path/to/template.html.erb
+herb-format /full/path/to/template.html.erb
 ```
 
 #### Format from stdin
 
 ```bash
-cat template.html.erb | herb-formatter
+cat template.html.erb | herb-format
 # or explicitly use "-" for stdin
-herb-formatter - < template.html.erb
+herb-format - < template.html.erb
 ```
 
 <!-- #### Configuration Options -->
