@@ -1,4 +1,6 @@
 const fs = require('fs');
+const { Herb } = require('@herb-tools/node-wasm');
+const { Linter } = require('@herb-tools/linter');
 
 (async () => {
   const file = process.argv[2];
@@ -21,9 +23,6 @@ const fs = require('fs');
     const originalConsoleError = console.error;
     console.log = () => {};
     console.error = () => {};
-
-    const { Herb } = await import('@herb-tools/node-wasm');
-    const { Linter } = await import('@herb-tools/linter');
 
     await Herb.load();
 
@@ -68,7 +67,6 @@ const fs = require('fs');
     };
 
     try {
-      const { Herb } = await import('@herb-tools/node-wasm');
       if (Herb && Herb.version) {
         result.version = Herb.version;
       }
