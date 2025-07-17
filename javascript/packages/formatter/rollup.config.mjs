@@ -1,23 +1,28 @@
 import typescript from "@rollup/plugin-typescript"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
+import commonjs from "@rollup/plugin-commonjs"
 import json from "@rollup/plugin-json"
 
 const external = [
-  // ...
+  "path",
+  "url",
+  "fs",
+  "module",
 ]
 
 export default [
   // CLI build
   {
-    input: "src/herb-formatter.ts",
+    input: "src/herb-format.ts",
     output: {
-      file: "dist/herb-formatter.js",
+      file: "dist/herb-format.js",
       format: "esm",
       sourcemap: true,
     },
     external,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
       json(),
       typescript({
         tsconfig: "./tsconfig.json",
@@ -35,7 +40,8 @@ export default [
     },
     external,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
       json(),
       typescript({
         tsconfig: "./tsconfig.json",
@@ -54,7 +60,8 @@ export default [
     },
     external,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
       json(),
       typescript({
         tsconfig: "./tsconfig.json",

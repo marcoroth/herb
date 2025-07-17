@@ -1,3 +1,0 @@
-#!/usr/bin/env node
-
-import("../dist/herb-formatter.js")
