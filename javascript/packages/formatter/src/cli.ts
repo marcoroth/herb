@@ -1,24 +1,27 @@
+import dedent from "dedent"
 import { readFileSync } from "fs"
+
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
+
 import { name, version } from "../package.json"
 
 export class CLI {
-  private usage = `
-  Usage: herb-formatter [file] [options]
+  private usage = dedent`
+    Usage: herb-formatter [file] [options]
 
-  Arguments:
-    file             File to format (use '-' or omit for stdin)
+    Arguments:
+      file             File to format (use '-' or omit for stdin)
 
-  Options:
-    -h, --help       show help
-    -v, --version    show version
+    Options:
+      -h, --help       show help
+      -v, --version    show version
 
-  Examples:
-    herb-formatter templates/index.html.erb
-    cat template.html.erb | herb-formatter
-    herb-formatter - < template.html.erb
-`
+    Examples:
+      herb-formatter templates/index.html.erb
+      cat template.html.erb | herb-formatter
+      herb-formatter - < template.html.erb
+  `
 
   async run() {
     const args = process.argv.slice(2)
@@ -39,10 +42,8 @@ export class CLI {
 
       let source: string
 
-      // Find the first non-flag argument (the file)
       const file = args.find(arg => !arg.startsWith("-"))
 
-      // Read from file or stdin
       if (file && file !== "-") {
         source = readFileSync(file, "utf-8")
       } else {
@@ -51,7 +52,9 @@ export class CLI {
 
       const formatter = new Formatter(Herb)
       const result = formatter.format(source)
-      process.stdout.write(result)
+      const output = result.endsWith('\n') ? result : result + '\n'
+
+      process.stdout.write(output)
     } catch (error) {
       console.error(error)
       process.exit(1)
