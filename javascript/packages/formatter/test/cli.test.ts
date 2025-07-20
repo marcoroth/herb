@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest"
+import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { spawn } from "child_process"
-import { writeFile, unlink } from "fs/promises"
+import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
+import { join } from "path"
 
 const execBinary = (args: string[] = [], input?: string): Promise<{stdout: string, stderr: string, exitCode: number}> => {
   return new Promise((resolve) => {
@@ -11,6 +12,11 @@ const execBinary = (args: string[] = [], input?: string): Promise<{stdout: strin
     let stdout = ""
     let stderr = ""
 
+    const timeout = setTimeout(() => {
+      child.kill()
+      resolve({ stdout, stderr, exitCode: 1 })
+    }, 5000)
+
     child.stdout.on("data", (data) => {
       stdout += data.toString()
     })
@@ -20,6 +26,7 @@ const execBinary = (args: string[] = [], input?: string): Promise<{stdout: strin
     })
 
     child.on("close", (code) => {
+      clearTimeout(timeout)
       resolve({ stdout, stderr, exitCode: code || 0 })
     })
 
@@ -32,13 +39,37 @@ const execBinary = (args: string[] = [], input?: string): Promise<{stdout: strin
 }
 
 describe("CLI Binary", () => {
+  beforeEach(async () => {
+    await cleanup()
+  })
+
+  afterEach(async () => {
+    await cleanup()
+  })
+
+  const cleanup = async () => {
+    const testFiles = [
+      "test-format.html.erb",
+      "test-unchanged.html.erb",
+      "test-changed.html.erb"
+    ]
+
+    for (const file of testFiles) {
+      await unlink(file).catch(() => {})
+    }
+
+    await rm("test-dir", { recursive: true }).catch(() => {})
+  }
+
   it("should show help when --help flag is provided", async () => {
     const result = await execBinary(["--help"])
 
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("Usage: herb-format")
+    expect(result.stdout).toContain("file|directory")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
+    expect(result.stdout).toContain("Examples:")
   })
 
   it("should show help when -h flag is provided", async () => {
@@ -46,11 +77,13 @@ describe("CLI Binary", () => {
 
     expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("Usage: herb-format")
+    expect(result.stdout).toContain("file|directory")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
+    expect(result.stdout).toContain("Examples:")
   })
 
-  it.skip("should show version when --version flag is provided", async () => {
+  it("should show version when --version flag is provided", async () => {
     const result = await execBinary(["--version"])
 
     expect(result.exitCode).toBe(0)
@@ -58,7 +91,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
 
-  it.skip("should show version when -v flag is provided", async () => {
+  it("should show version when -v flag is provided", async () => {
     const result = await execBinary(["-v"])
 
     expect(result.exitCode).toBe(0)
@@ -66,7 +99,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
 
-  it.skip("should format HTML/ERB from stdin", async () => {
+  it("should format HTML/ERB from stdin", async () => {
     const input = '<div class="test"><%= user.name %></div>'
     const result = await execBinary([], input)
 
@@ -76,7 +109,7 @@ describe("CLI Binary", () => {
     expect(result.stdout).toContain('</div>')
   })
 
-  it.skip("should format HTML/ERB from file", async () => {
+  it("should format HTML/ERB from file", async () => {
     const testFile = "test-format.html.erb"
     const input = '<div class="container"><%= "Hello" %><p>World</p></div>'
 
@@ -94,6 +127,210 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain('</div>')
     } finally {
       await unlink(testFile).catch(() => {})
+    }
+  })
+
+  it("should show experimental preview message", async () => {
+    const result = await execBinary([])
+
+    expect(result.stdout).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toContain("early development")
+    expect(result.stdout).toContain("github.com/marcoroth/herb/issues")
+  })
+
+  it("should format empty input from stdin when no args provided", async () => {
+    const result = await execBinary([], "")
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toContain("\n\n")
+  })
+
+  it("should handle no files found in empty directory", async () => {
+    await mkdir("test-empty-dir", { recursive: true })
+
+    try {
+      const result = await execBinary(["test-empty-dir"])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain("⚠️  Experimental Preview")
+      expect(result.stdout).toContain("No files found matching pattern:")
+      expect(result.stdout).toContain("test-empty-dir/**/*.html.erb")
+    } finally {
+      await rm("test-empty-dir", { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should only show formatted message when file changes", async () => {
+    const testFile = "test-unchanged.html.erb"
+    const input = '<div>\n  Already formatted\n</div>'
+
+    await writeFile(testFile, input)
+
+    try {
+      const result = await execBinary([testFile])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).not.toContain(`Formatted: ${testFile}`)
+
+      const fileContent = await readFile(testFile, 'utf-8')
+      expect(fileContent).toBe(input)
+    } finally {
+      await unlink(testFile).catch(() => {})
+    }
+  })
+
+  it("should show formatted message when file changes", async () => {
+    const testFile = "test-changed.html.erb"
+    const input = '<div><p>Unformatted</p></div>'
+
+    await writeFile(testFile, input)
+
+    try {
+      const result = await execBinary([testFile])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain(`Formatted: ${testFile}`)
+
+      const fileContent = await readFile(testFile, 'utf-8')
+      expect(fileContent).not.toBe(input)
+    } finally {
+      await unlink(testFile).catch(() => {})
+    }
+  })
+
+  it("should handle directory with no files", async () => {
+    await mkdir("test-dir", { recursive: true })
+
+    try {
+      const result = await execBinary(["test-dir"])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain("No files found matching pattern:")
+      expect(result.stdout).toContain("test-dir/**/*.html.erb")
+    } finally {
+      await rm("test-dir", { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should handle directory with files", async () => {
+    await mkdir("test-dir", { recursive: true })
+    const testFile = join("test-dir", "test.html.erb")
+    const input = '<div><p>Test</p></div>'
+
+    await writeFile(testFile, input)
+
+    try {
+      const result = await execBinary(["test-dir"])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain("Checked 1 file, formatted")
+      expect(result.stdout).toContain(`Formatted: ${testFile}`)
+    } finally {
+      await rm("test-dir", { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should use proper singular/plural forms", async () => {
+    await mkdir("test-dir", { recursive: true })
+    const testFile1 = join("test-dir", "test1.html.erb")
+    const testFile2 = join("test-dir", "test2.html.erb")
+    const input = '<div><p>Test</p></div>'
+
+    await writeFile(testFile1, input)
+    await writeFile(testFile2, input)
+
+    try {
+      const result = await execBinary(["test-dir"])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain("Checked 2 files, formatted")
+      expect(result.stdout).not.toContain("file(s)")
+    } finally {
+      await rm("test-dir", { recursive: true }).catch(() => {})
+    }
+  })
+
+  it("should handle non-existent file gracefully", async () => {
+    const result = await execBinary(["non-existent-file.html.erb"])
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain("Error: Cannot access 'non-existent-file.html.erb'")
+  })
+
+  it("should show --check option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout).toContain("--check")
+    expect(result.stdout).toContain("check if files are formatted")
+    expect(result.stdout).toContain("herb-format --check")
+  })
+
+  it("should reject --check with stdin", async () => {
+    const result = await execBinary(["--check"], "<div>test</div>")
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
+  })
+
+  it("should reject -c with stdin", async () => {
+    const result = await execBinary(["-c"], "<div>test</div>")
+
+    expect(result.exitCode).toBe(1)
+    expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
+  })
+
+  it("should pass --check when file is already formatted", async () => {
+    const testFile = "test-formatted.html.erb"
+    const input = '<div>\n  <p>\n    Already formatted\n  </p>\n</div>'
+
+    await writeFile(testFile, input)
+
+    try {
+      const result = await execBinary(["--check", testFile])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toContain("File is properly formatted")
+    } finally {
+      await unlink(testFile).catch(() => {})
+    }
+  })
+
+  it("should fail --check when file is not formatted", async () => {
+    const testFile = "test-unformatted.html.erb"
+    const input = '<div><p>Not formatted</p></div>'
+
+    await writeFile(testFile, input)
+
+    try {
+      const result = await execBinary(["--check", testFile])
+
+      expect(result.exitCode).toBe(1)
+      expect(result.stdout).toContain("File is not formatted")
+    } finally {
+      await unlink(testFile).catch(() => {})
+    }
+  })
+
+  it("should handle --check with directory containing mixed files", async () => {
+    await mkdir("test-dir", { recursive: true })
+    const formattedFile = join("test-dir", "formatted.html.erb")
+    const unformattedFile = join("test-dir", "unformatted.html.erb")
+
+    await writeFile(formattedFile, '<div>\n  <p>\n    Formatted\n  </p>\n</div>')
+    await writeFile(unformattedFile, '<div><p>Unformatted</p></div>')
+
+    try {
+      const result = await execBinary(["--check", "test-dir"])
+
+      expect(result.exitCode).toBe(1)
+      expect(result.stdout).toContain("The following")
+      expect(result.stdout).toContain("not formatted")
+      expect(result.stdout).toContain("unformatted.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+    } finally {
+      await rm("test-dir", { recursive: true }).catch(() => {})
     }
   })
 })

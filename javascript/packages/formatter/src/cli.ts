@@ -7,6 +7,10 @@ import { Formatter } from "./formatter.js"
 
 import { name, version } from "../package.json"
 
+const pluralize = (count: number, singular: string, plural: string = singular + 's'): string => {
+  return count === 1 ? singular : plural
+}
+
 export class CLI {
   private usage = `
   Usage: herb-format [file|directory] [options]
@@ -16,13 +20,15 @@ export class CLI {
                      or '-' for stdin (omit to format all **/*.html.erb files in current directory)
 
   Options:
+    -c, --check      check if files are formatted without modifying them
     -h, --help       show help
     -v, --version    show version
 
   Examples:
     herb-format                            # Format all **/*.html.erb files in current directory
+    herb-format --check                    # Check if all **/*.html.erb files are formatted
     herb-format templates/index.html.erb   # Format and write single file
-    herb-format templates/                 # Format all **/*.html.erb files in templates directory
+    herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
     cat template.html.erb | herb-format    # Format from stdin to stdout
     herb-format - < template.html.erb      # Format from stdin to stdout
 `
@@ -32,6 +38,7 @@ export class CLI {
 
     if (args.includes("--help") || args.includes("-h")) {
       console.log(this.usage)
+
       process.exit(0)
     }
 
@@ -41,6 +48,7 @@ export class CLI {
       if (args.includes("--version") || args.includes("-v")) {
         console.log("Versions:")
         console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+
         process.exit(0)
       }
 
@@ -48,15 +56,28 @@ export class CLI {
       console.log()
 
       const formatter = new Formatter(Herb)
+      const isCheckMode = args.includes("--check") || args.includes("-c")
 
       const file = args.find(arg => !arg.startsWith("-"))
 
       if (!file && !process.stdin.isTTY) {
+        if (isCheckMode) {
+          console.error("Error: --check mode is not supported with stdin")
+
+          process.exit(1)
+        }
+
         const source = await this.readStdin()
         const result = formatter.format(source)
 
         process.stdout.write(result)
       } else if (file === "-") {
+        if (isCheckMode) {
+          console.error("Error: --check mode is not supported with stdin")
+
+          process.exit(1)
+        }
+
         const source = await this.readStdin()
         const result = formatter.format(source)
 
@@ -75,14 +96,19 @@ export class CLI {
             }
 
             let formattedCount = 0
+            let unformattedFiles: string[] = []
 
             for (const filePath of files) {
               try {
                 const source = readFileSync(filePath, "utf-8")
                 const result = formatter.format(source)
                 if (result !== source) {
-                  writeFileSync(filePath, result, "utf-8")
-                  console.log(`Formatted: ${filePath}`)
+                  if (isCheckMode) {
+                    unformattedFiles.push(filePath)
+                  } else {
+                    writeFileSync(filePath, result, "utf-8")
+                    console.log(`Formatted: ${filePath}`)
+                  }
                   formattedCount++
                 }
               } catch (error) {
@@ -90,14 +116,32 @@ export class CLI {
               }
             }
 
-            console.log(`\nChecked ${files.length} ${files.length === 1 ? 'file' : 'files'}, formatted ${formattedCount} ${formattedCount === 1 ? 'file' : 'files'}`)
+            if (isCheckMode) {
+              if (unformattedFiles.length > 0) {
+                console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
+                unformattedFiles.forEach(file => console.log(`  ${file}`))
+                console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
+                process.exit(1)
+              } else {
+                console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
+              }
+            } else {
+              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
+            }
           } else {
             const source = readFileSync(file, "utf-8")
             const result = formatter.format(source)
 
             if (result !== source) {
-              writeFileSync(file, result, "utf-8")
-              console.log(`Formatted: ${file}`)
+              if (isCheckMode) {
+                console.log(`File is not formatted: ${file}`)
+                process.exit(1)
+              } else {
+                writeFileSync(file, result, "utf-8")
+                console.log(`Formatted: ${file}`)
+              }
+            } else if (isCheckMode) {
+              console.log(`File is properly formatted: ${file}`)
             }
           }
 
@@ -111,18 +155,25 @@ export class CLI {
 
         if (files.length === 0) {
           console.log(`No files found matching pattern: ${resolve("**/*.html.erb")}`)
+
           process.exit(0)
         }
 
         let formattedCount = 0
+        let unformattedFiles: string[] = []
 
         for (const filePath of files) {
           try {
             const source = readFileSync(filePath, "utf-8")
             const result = formatter.format(source)
+
             if (result !== source) {
-              writeFileSync(filePath, result, "utf-8")
-              console.log(`Formatted: ${filePath}`)
+              if (isCheckMode) {
+                unformattedFiles.push(filePath)
+              } else {
+                writeFileSync(filePath, result, "utf-8")
+                console.log(`Formatted: ${filePath}`)
+              }
               formattedCount++
             }
           } catch (error) {
@@ -130,7 +181,19 @@ export class CLI {
           }
         }
 
-        console.log(`\nChecked ${files.length} ${files.length === 1 ? 'file' : 'files'}, formatted ${formattedCount} ${formattedCount === 1 ? 'file' : 'files'}`)
+        if (isCheckMode) {
+          if (unformattedFiles.length > 0) {
+            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
+            unformattedFiles.forEach(file => console.log(`  ${file}`))
+            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
+
+            process.exit(1)
+          } else {
+            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
+          }
+        } else {
+          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
+        }
       }
     } catch (error) {
       console.error(error)
