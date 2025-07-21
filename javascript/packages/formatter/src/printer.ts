@@ -144,6 +144,7 @@ export class Printer extends Visitor {
     const attributes = open.children.filter((child): child is HTMLAttributeNode =>
       child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
     )
+
     const inlineNodes = open.children.filter(child =>
       !(child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') &&
       !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE')
@@ -221,10 +222,19 @@ export class Printer extends Visitor {
       (singleAttribute.value instanceof HTMLAttributeValueNode || (singleAttribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE') &&
       (singleAttribute.value as any)?.children.length === 0
 
+    const hasERBControlFlow = inlineNodes.some(node =>
+      node instanceof ERBIfNode || (node as any).type === 'AST_ERB_IF_NODE' ||
+      node instanceof ERBUnlessNode || (node as any).type === 'AST_ERB_UNLESS_NODE' ||
+      node instanceof ERBBlockNode || (node as any).type === 'AST_ERB_BLOCK_NODE' ||
+      node instanceof ERBCaseNode || (node as any).type === 'AST_ERB_CASE_NODE' ||
+      node instanceof ERBWhileNode || (node as any).type === 'AST_ERB_WHILE_NODE' ||
+      node instanceof ERBForNode || (node as any).type === 'AST_ERB_FOR_NODE'
+    )
+
     const shouldKeepInline = (attributes.length <= 3 &&
                             !hasEmptyValue &&
                             inline.length + indent.length <= this.maxLineLength) ||
-                            inlineNodes.length > 0
+                            (inlineNodes.length > 0 && !hasERBControlFlow)
 
     if (shouldKeepInline) {
       if (children.length === 0) {
@@ -235,6 +245,7 @@ export class Printer extends Visitor {
         } else {
           this.push(indent + inline.replace('>', `></${tagName}>`))
         }
+
         return
       }
 
@@ -255,7 +266,32 @@ export class Printer extends Visitor {
       return
     }
 
-    if (inlineNodes.length > 0) {
+    if (inlineNodes.length > 0 && hasERBControlFlow) {
+      this.push(indent + `<${tagName}`)
+      this.withIndent(() => {
+        open.children.forEach(child => {
+          if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
+            this.push(this.indent() + this.renderAttribute(child as HTMLAttributeNode))
+          } else if (!(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE')) {
+            this.visit(child)
+          }
+        })
+      })
+
+      if (isSelfClosing) {
+        this.push(indent + "/>")
+      } else if (node.is_void) {
+        this.push(indent + ">")
+      } else if (children.length === 0) {
+        this.push(indent + ">" + `</${tagName}>`)
+      } else {
+        this.push(indent + ">")
+        this.withIndent(() => {
+          children.forEach(child => this.visit(child))
+        })
+        this.push(indent + `</${tagName}>`)
+      }
+    } else if (inlineNodes.length > 0) {
       this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
@@ -539,21 +575,39 @@ export class Printer extends Visitor {
       const open = node.tag_opening?.value ?? ""
       const content = node.content?.value ?? ""
       const close = node.tag_closing?.value ?? ""
+
       this.lines.push(open + content + close)
 
-      node.statements.forEach(child => {
+      if (node.statements.length > 0) {
+        this.lines.push(" ")
+      }
+
+      node.statements.forEach((child, index) => {
         if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
-          this.lines.push(" " + this.renderAttribute(child as HTMLAttributeNode) + " ")
+          this.lines.push(this.renderAttribute(child as HTMLAttributeNode))
         } else {
           this.visit(child)
         }
+
+        if (index < node.statements.length - 1) {
+          this.lines.push(" ")
+        }
       })
+
+      if (node.statements.length > 0) {
+        this.lines.push(" ")
+      }
+
+      if (node.subsequent) {
+        this.visit(node.subsequent)
+      }
 
       if (node.end_node) {
         const endNode = node.end_node as any
         const endOpen = endNode.tag_opening?.value ?? ""
         const endContent = endNode.content?.value ?? ""
         const endClose = endNode.tag_closing?.value ?? ""
+
         this.lines.push(endOpen + endContent + endClose)
       }
     } else {
