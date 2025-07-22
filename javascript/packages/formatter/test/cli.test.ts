@@ -3,7 +3,26 @@ import { spawn } from "child_process"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
 import { join } from "path"
 
-const execBinary = (args: string[] = [], input?: string): Promise<{stdout: string, stderr: string, exitCode: number}> => {
+type ExecResult = {
+  stdout: string
+  stderr: string
+  exitCode: number
+}
+
+const expectExitCode = (result: ExecResult, expectedCode: number) => {
+  if (result.exitCode !== expectedCode) {
+    const errorInfo = {
+      expectedExitCode: expectedCode,
+      actualExitCode: result.exitCode,
+      stdout: result.stdout,
+      stderr: result.stderr
+    }
+
+    expect.fail(`Exit code mismatch:\n${JSON.stringify(errorInfo, null, 2)}`)
+  }
+}
+
+const execBinary = (args: string[] = [], input?: string): Promise<ExecResult> => {
   return new Promise((resolve) => {
     const child = spawn("node", ["bin/herb-format", ...args], {
       stdio: ["pipe", "pipe", "pipe"]
@@ -64,7 +83,7 @@ describe("CLI Binary", () => {
   it("should show help when --help flag is provided", async () => {
     const result = await execBinary(["--help"])
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("Usage: herb-format")
     expect(result.stdout).toContain("file|directory")
     expect(result.stdout).toContain("Arguments:")
@@ -75,7 +94,7 @@ describe("CLI Binary", () => {
   it("should show help when -h flag is provided", async () => {
     const result = await execBinary(["-h"])
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("Usage: herb-format")
     expect(result.stdout).toContain("file|directory")
     expect(result.stdout).toContain("Arguments:")
@@ -86,7 +105,7 @@ describe("CLI Binary", () => {
   it("should show version when --version flag is provided", async () => {
     const result = await execBinary(["--version"])
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("Versions:")
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
@@ -94,7 +113,7 @@ describe("CLI Binary", () => {
   it("should show version when -v flag is provided", async () => {
     const result = await execBinary(["-v"])
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("Versions:")
     expect(result.stdout).toContain("@herb-tools/formatter@")
   })
@@ -103,7 +122,7 @@ describe("CLI Binary", () => {
     const input = '<div class="test"><%= user.name %></div>'
     const result = await execBinary([], input)
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain('<div class="test">')
     expect(result.stdout).toContain('  <%= user.name %>')
     expect(result.stdout).toContain('</div>')
@@ -118,7 +137,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary([testFile])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain('Formatted: test-format.html.erb')
 
       const formattedContent = await readFile(testFile, 'utf-8')
@@ -144,7 +163,7 @@ describe("CLI Binary", () => {
   it("should format empty input from stdin when no args provided", async () => {
     const result = await execBinary([], "")
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("⚠️  Experimental Preview")
     expect(result.stdout).toContain("\n\n")
   })
@@ -155,7 +174,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["test-empty-dir"])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain("⚠️  Experimental Preview")
       expect(result.stdout).toContain("No files found matching pattern:")
       expect(result.stdout).toContain("test-empty-dir/**/*.html.erb")
@@ -173,7 +192,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary([testFile])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).not.toContain(`Formatted: ${testFile}`)
 
       const fileContent = await readFile(testFile, 'utf-8')
@@ -192,7 +211,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary([testFile])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain(`Formatted: ${testFile}`)
 
       const fileContent = await readFile(testFile, 'utf-8')
@@ -208,7 +227,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["test-dir"])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain("No files found matching pattern:")
       expect(result.stdout).toContain("test-dir/**/*.html.erb")
     } finally {
@@ -226,7 +245,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["test-dir"])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain("Checked 1 file, formatted")
       expect(result.stdout).toContain(`Formatted: ${testFile}`)
     } finally {
@@ -246,7 +265,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["test-dir"])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain("Checked 2 files, formatted")
       expect(result.stdout).not.toContain("file(s)")
     } finally {
@@ -257,14 +276,14 @@ describe("CLI Binary", () => {
   it("should handle non-existent file gracefully", async () => {
     const result = await execBinary(["non-existent-file.html.erb"])
 
-    expect(result.exitCode).toBe(1)
+    expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: Cannot access 'non-existent-file.html.erb'")
   })
 
   it("should show --check option in help", async () => {
     const result = await execBinary(["--help"])
 
-    expect(result.exitCode).toBe(0)
+    expectExitCode(result, 0)
     expect(result.stdout).toContain("--check")
     expect(result.stdout).toContain("check if files are formatted")
     expect(result.stdout).toContain("herb-format --check")
@@ -273,14 +292,14 @@ describe("CLI Binary", () => {
   it("should reject --check with stdin", async () => {
     const result = await execBinary(["--check"], "<div>test</div>")
 
-    expect(result.exitCode).toBe(1)
+    expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
   })
 
   it("should reject -c with stdin", async () => {
     const result = await execBinary(["-c"], "<div>test</div>")
 
-    expect(result.exitCode).toBe(1)
+    expectExitCode(result, 1)
     expect(result.stderr).toContain("Error: --check mode is not supported with stdin")
   })
 
@@ -293,7 +312,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["--check", testFile])
 
-      expect(result.exitCode).toBe(0)
+      expectExitCode(result, 0)
       expect(result.stdout).toContain("File is properly formatted")
     } finally {
       await unlink(testFile).catch(() => {})
@@ -309,7 +328,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["--check", testFile])
 
-      expect(result.exitCode).toBe(1)
+      expectExitCode(result, 1)
       expect(result.stdout).toContain("File is not formatted")
     } finally {
       await unlink(testFile).catch(() => {})
@@ -327,7 +346,7 @@ describe("CLI Binary", () => {
     try {
       const result = await execBinary(["--check", "test-dir"])
 
-      expect(result.exitCode).toBe(1)
+      expectExitCode(result, 1)
       expect(result.stdout).toContain("The following")
       expect(result.stdout).toContain("not formatted")
       expect(result.stdout).toContain("unformatted.html.erb")
