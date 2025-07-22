@@ -45,13 +45,9 @@ describe("@herb-tools/formatter", () => {
       <div id="output">
         <%= tag.div class: "div" do %>
           <% if true %>
-            <span>
-              OK
-            </span>
+            <span>OK</span>
           <% else %>
-            <span>
-              NO
-            </span>
+            <span>NO</span>
           <% end %>
         <% end %>
       </div>

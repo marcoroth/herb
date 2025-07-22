@@ -178,6 +178,20 @@ export class Printer extends Visitor {
         return
       }
 
+      if (children.length === 1) {
+        const child = children[0]
+
+        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+          const textContent = (child as HTMLTextNode).content.trim()
+          const singleLine = `<${tagName}>${textContent}</${tagName}>`
+
+          if (!textContent.includes('\n') && (indent.length + singleLine.length) <= this.maxLineLength) {
+            this.push(indent + singleLine)
+            return
+          }
+        }
+      }
+
       this.push(indent + `<${tagName}>`)
 
       this.withIndent(() => {

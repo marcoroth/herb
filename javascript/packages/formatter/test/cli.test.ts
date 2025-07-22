@@ -143,9 +143,7 @@ describe("CLI Binary", () => {
       const formattedContent = await readFile(testFile, 'utf-8')
       expect(formattedContent).toContain('<div class="container">')
       expect(formattedContent).toContain('  <%= "Hello" %>')
-      expect(formattedContent).toContain('  <p>')
-      expect(formattedContent).toContain('    World')
-      expect(formattedContent).toContain('  </p>')
+      expect(formattedContent).toContain('  <p>World</p>')
       expect(formattedContent).toContain('</div>')
     } finally {
       await unlink(testFile).catch(() => {})
@@ -185,7 +183,7 @@ describe("CLI Binary", () => {
 
   it("should only show formatted message when file changes", async () => {
     const testFile = "test-unchanged.html.erb"
-    const input = '<div>\n  Already formatted\n</div>'
+    const input = '<div>Already formatted</div>'
 
     await writeFile(testFile, input)
 
@@ -305,7 +303,7 @@ describe("CLI Binary", () => {
 
   it("should pass --check when file is already formatted", async () => {
     const testFile = "test-formatted.html.erb"
-    const input = '<div>\n  <p>\n    Already formatted\n  </p>\n</div>'
+    const input = '<div>\n  <p>Already formatted</p>\n</div>'
 
     await writeFile(testFile, input)
 
@@ -340,8 +338,8 @@ describe("CLI Binary", () => {
     const formattedFile = join("test-dir", "formatted.html.erb")
     const unformattedFile = join("test-dir", "unformatted.html.erb")
 
-    await writeFile(formattedFile, '<div>\n  <p>\n    Formatted\n  </p>\n</div>')
-    await writeFile(unformattedFile, '<div><p>Unformatted</p></div>')
+    await writeFile(formattedFile, '<div>\n  <p>Formatted</p>\n</div>')
+    await writeFile(unformattedFile, '<div   ><p>Unformatted</p></div>')
 
     try {
       const result = await execBinary(["--check", "test-dir"])
@@ -363,11 +361,11 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stdout.endsWith('\n')).toBe(true)
     expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain('<div>\n  Hello\n</div>')
+    expect(result.stdout).toContain('<div>Hello</div>')
 
     const lines = result.stdout.split('\n')
     const formattedLines = lines.slice(2) // Skip experimental preview lines
-    expect(formattedLines.join('\n')).toBe('<div>\n  Hello\n</div>\n')
+    expect(formattedLines.join('\n')).toBe('<div>Hello</div>\n')
   })
 
   it("CLI should preserve existing trailing newline", async () => {
@@ -377,11 +375,11 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stdout.endsWith('\n')).toBe(true)
     expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain('<div>\n  Hello\n</div>')
+    expect(result.stdout).toContain('<div>Hello</div>')
 
     const lines = result.stdout.split('\n')
     const formattedLines = lines.slice(2) // Skip experimental preview lines
-    expect(formattedLines.join('\n')).toBe('<div>\n  Hello\n</div>\n')
+    expect(formattedLines.join('\n')).toBe('<div>Hello</div>\n')
   })
 
   it("CLI should add trailing newline to empty input", async () => {
