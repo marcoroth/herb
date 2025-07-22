@@ -68,6 +68,7 @@ export class Printer extends Visitor {
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
+  private isInComplexNesting: boolean = false
 
   constructor(source: string, options: Required<FormatOptions>) {
     super()
@@ -85,6 +86,7 @@ export class Printer extends Visitor {
 
     this.lines = []
     this.indentLevel = indentLevel
+    this.isInComplexNesting = false // Reset for each top-level element
 
     if (typeof (node as any).accept === 'function') {
       node.accept(this)
@@ -178,15 +180,26 @@ export class Printer extends Visitor {
         return
       }
 
-      if (children.length === 1) {
-        const child = children[0]
+      if (children.length >= 1) {
+        if (this.isInComplexNesting) {
+          if (children.length === 1) {
+            const child = children[0]
 
-        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-          const textContent = (child as HTMLTextNode).content.trim()
-          const singleLine = `<${tagName}>${textContent}</${tagName}>`
+            if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+              const textContent = (child as HTMLTextNode).content.trim()
+              const singleLine = `<${tagName}>${textContent}</${tagName}>`
 
-          if (!textContent.includes('\n') && (indent.length + singleLine.length) <= this.maxLineLength) {
-            this.push(indent + singleLine)
+              if (!textContent.includes('\n') && (indent.length + singleLine.length) <= this.maxLineLength) {
+                this.push(indent + singleLine)
+                return
+              }
+            }
+          }
+        } else {
+          const inlineResult = this.tryRenderInline(children, tagName)
+
+          if (inlineResult && (indent.length + inlineResult.length) <= this.maxLineLength) {
+            this.push(indent + inlineResult)
             return
           }
         }
@@ -825,5 +838,114 @@ export class Printer extends Visitor {
     }
 
     return name + equals + value
+  }
+
+  /**
+   * Try to render children inline if they are simple enough.
+   * Returns the inline string if possible, null otherwise.
+   */
+  private tryRenderInline(children: Node[], tagName: string, depth: number = 0): string | null {
+    if (children.length > 10) {
+      return null
+    }
+
+    const maxNestingDepth = this.getMaxNestingDepth(children, 0)
+
+    if (maxNestingDepth > 1) {
+      this.isInComplexNesting = true
+      return null
+    }
+
+    for (const child of children) {
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const textContent = (child as HTMLTextNode).content
+        if (textContent.includes('\n')) {
+          return null
+        }
+      } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
+        // We've already checked nesting depth above, so we know this is safe to inline
+      } else {
+        return null
+      }
+    }
+
+    const oldLines = this.lines
+    const oldInlineMode = this.inlineMode
+
+    try {
+      this.lines = []
+      this.inlineMode = true
+
+      let content = ''
+
+      for (const child of children) {
+        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+          content += (child as HTMLTextNode).content
+        } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
+          const element = child as HTMLElementNode
+          const childTagName = element.open_tag?.tag_name?.value || ''
+
+          const elementContent = this.renderElementInline(element)
+          content += `<${childTagName}>${elementContent}</${childTagName}>`
+        }
+      }
+
+      content = content.replace(/\s+/g, ' ').trim()
+
+      return `<${tagName}>${content}</${tagName}>`
+
+    } finally {
+      this.lines = oldLines
+      this.inlineMode = oldInlineMode
+    }
+  }
+
+  /**
+   * Calculate the maximum nesting depth in a subtree of nodes.
+   */
+  private getMaxNestingDepth(children: Node[], currentDepth: number): number {
+    let maxDepth = currentDepth
+
+    for (const child of children) {
+      if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
+        const element = child as HTMLElementNode
+        const elementChildren = element.body.filter(
+          child =>
+            !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') &&
+            !((child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') && (child as any)?.content.trim() === ""),
+        )
+
+        const childDepth = this.getMaxNestingDepth(elementChildren, currentDepth + 1)
+        maxDepth = Math.max(maxDepth, childDepth)
+      }
+    }
+
+    return maxDepth
+  }
+
+  /**
+   * Render an HTML element's content inline (without the wrapping tags).
+   */
+  private renderElementInline(element: HTMLElementNode): string {
+    const children = element.body.filter(
+      child =>
+        !(child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') &&
+        !((child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') && (child as any)?.content.trim() === ""),
+    )
+
+    let content = ''
+    for (const child of children) {
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        content += (child as HTMLTextNode).content
+      } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
+        const childElement = child as HTMLElementNode
+        const childTagName = childElement.open_tag?.tag_name?.value || ''
+        const childContent = this.renderElementInline(childElement)
+
+        content += `<${childTagName}>${childContent}</${childTagName}>`
+      }
+    }
+
+    return content.replace(/\s+/g, ' ').trim()
   }
 }

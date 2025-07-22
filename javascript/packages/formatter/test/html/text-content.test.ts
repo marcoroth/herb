@@ -71,4 +71,76 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
   })
+
+  test("mixed inline content stays inline", () => {
+    const source = dedent`
+      <p>hello <b>bold</b> world</p>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>hello <b>bold</b> world</p>
+    `)
+  })
+
+  test("simple mixed content with multiple elements stays inline", () => {
+    const source = dedent`
+      <p>A <b>bold</b> and <i>italic</i> text</p>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>A <b>bold</b> and <i>italic</i> text</p>
+    `)
+  })
+
+  test("any tag can be inline when content is simple", () => {
+    const source = dedent`
+      <div>Simple <section>nested</section> content</div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>Simple <section>nested</section> content</div>
+    `)
+  })
+
+  test("mixed content with nested elements splits when too deep", () => {
+    const source = dedent`
+      <p>hello <div>complex <span>nested</span> content</div> world</p>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>
+        hello
+        <div>
+          complex
+          <span>nested</span>
+          content
+        </div>
+        world
+      </p>
+    `)
+  })
+
+  test("single level nesting stays inline", () => {
+    const source = dedent`
+      <h1><b>hello</b></h1>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <h1><b>hello</b></h1>
+    `)
+  })
+
+  test("deep nesting splits across lines", () => {
+    const source = dedent`
+      <h1><b><i>hello</i></b></h1>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <h1>
+        <b>
+          <i>hello</i>
+        </b>
+      </h1>
+    `)
+  })
 })
