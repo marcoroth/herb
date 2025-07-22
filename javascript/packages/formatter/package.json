@@ -1,7 +1,6 @@
 {
   "name": "@herb-tools/formatter",
   "version": "0.4.0",
-  "type": "module",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/formatter%60:%20",

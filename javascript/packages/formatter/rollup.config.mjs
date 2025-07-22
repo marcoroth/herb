@@ -10,18 +10,25 @@ const external = [
   "module",
 ]
 
+function isExternal(id) {
+  return (
+    external.includes(id) ||
+    external.some((pkg) => id === pkg || id.startsWith(pkg + "/"))
+  )
+}
+
 export default [
   // CLI build
   {
     input: "src/herb-format.ts",
     output: {
       file: "dist/herb-format.js",
-      format: "esm",
+      format: "cjs",
       sourcemap: true,
     },
-    external,
+    external: isExternal,
     plugins: [
-      nodeResolve({ preferBuiltins: true }),
+      nodeResolve(),
       commonjs(),
       json(),
       typescript({
