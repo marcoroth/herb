@@ -83,13 +83,10 @@ export class FormattingService {
   }
 
   private async getFormatterOptions(uri: string) {
-    // Get VS Code settings
     const settings = await this.settings.getDocumentSettings(uri)
 
-    // Get project config options
     const projectFormatter = this.config?.options.formatter || {}
 
-    // Merge options with precedence: project config > VS Code settings > defaults
     return {
       indentWidth: projectFormatter.indentWidth ?? settings.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
       maxLineLength: projectFormatter.maxLineLength ?? settings.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
@@ -108,7 +105,11 @@ export class FormattingService {
       const formatter = new Formatter(this.project.herbBackend, options)
 
       const text = document.getText()
-      const newText = formatter.format(text)
+      let newText = formatter.format(text)
+
+      if (!newText.endsWith('\n')) {
+        newText = newText + '\n'
+      }
 
       if (newText === text) {
         return []
@@ -128,14 +129,12 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
-    // Check VS Code settings first
     const settings = await this.settings.getDocumentSettings(params.textDocument.uri)
 
     if (settings.formatter?.enabled === false) {
       return []
     }
 
-    // Check project config and file patterns
     const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
 
     if (!(await this.shouldFormatFile(filePath))) {
