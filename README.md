@@ -43,7 +43,7 @@ You can use Herb programmatically in **Ruby**, as well as in **JavaScript** via 
 
 For a complete overview of all available tools, libraries, and integrations, visit the [**Projects page**](https://herb-tools.dev/projects) on our documentation site.
 
-## Motiviation
+## Motivation
 
 HTML+ERB templates never really had good, accurate, and reliable tooling. While developer tooling for Ruby code improved significantly in the last few years (especially with the introduction of the new Prism parser), HTML+ERB files remained underserved, lacking fundamental support like syntax checking, auto-formatting, linting, and structural understanding.
 
