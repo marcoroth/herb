@@ -119,12 +119,15 @@ describe("CLI Binary", () => {
       const result = await execBinary([testFile])
 
       expect(result.exitCode).toBe(0)
-      expect(result.stdout).toContain('<div class="container">')
-      expect(result.stdout).toContain('  <%= "Hello" %>')
-      expect(result.stdout).toContain('  <p>')
-      expect(result.stdout).toContain('    World')
-      expect(result.stdout).toContain('  </p>')
-      expect(result.stdout).toContain('</div>')
+      expect(result.stdout).toContain('Formatted: test-format.html.erb')
+
+      const formattedContent = await readFile(testFile, 'utf-8')
+      expect(formattedContent).toContain('<div class="container">')
+      expect(formattedContent).toContain('  <%= "Hello" %>')
+      expect(formattedContent).toContain('  <p>')
+      expect(formattedContent).toContain('    World')
+      expect(formattedContent).toContain('  </p>')
+      expect(formattedContent).toContain('</div>')
     } finally {
       await unlink(testFile).catch(() => {})
     }
