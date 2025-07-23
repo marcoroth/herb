@@ -25,9 +25,7 @@ By default, all rules are enabled. You can customize the rules by passing a cust
 import { Linter, HTMLTagNameLowercaseRule } from "@herb-tools/linter"
 
 // Only run specific rules
-const linter = new Linter([
-  new HTMLTagNameLowercaseRule()
-])
+const linter = new Linter([HTMLTagNameLowercaseRule])
 
 // Run with no rules (disabled)
 const linter = new Linter([])
