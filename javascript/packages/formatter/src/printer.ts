@@ -859,11 +859,24 @@ export class Printer extends Visitor {
     for (const child of children) {
       if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
         const textContent = (child as HTMLTextNode).content
+
         if (textContent.includes('\n')) {
           return null
         }
       } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
-        // We've already checked nesting depth above, so we know this is safe to inline
+        const element = child as HTMLElementNode
+        const openTag = element.open_tag as HTMLOpenTagNode
+
+        const attributes = openTag.children.filter((child): child is HTMLAttributeNode =>
+          child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+        )
+
+        if (attributes.length > 0) {
+          return null
+        }
+
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        // ERB content nodes are allowed in inline rendering
       } else {
         return null
       }
@@ -883,10 +896,27 @@ export class Printer extends Visitor {
           content += (child as HTMLTextNode).content
         } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
           const element = child as HTMLElementNode
-          const childTagName = element.open_tag?.tag_name?.value || ''
+          const openTag = element.open_tag as HTMLOpenTagNode
+          const childTagName = openTag?.tag_name?.value || ''
+
+          const attributes = openTag.children.filter((child): child is HTMLAttributeNode =>
+            child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+          )
+
+          const attributesString = attributes.length > 0
+            ? ' ' + attributes.map(attr => this.renderAttribute(attr)).join(' ')
+            : ''
 
           const elementContent = this.renderElementInline(element)
-          content += `<${childTagName}>${elementContent}</${childTagName}>`
+
+          content += `<${childTagName}${attributesString}>${elementContent}</${childTagName}>`
+        } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+          const erbNode = child as ERBContentNode
+          const open = erbNode.tag_opening?.value ?? ""
+          const erbContent = erbNode.content?.value ?? ""
+          const close = erbNode.tag_closing?.value ?? ""
+
+          content += `${open} ${erbContent.trim()} ${close}`
         }
       }
 
@@ -939,10 +969,26 @@ export class Printer extends Visitor {
         content += (child as HTMLTextNode).content
       } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
         const childElement = child as HTMLElementNode
-        const childTagName = childElement.open_tag?.tag_name?.value || ''
-        const childContent = this.renderElementInline(childElement)
+        const openTag = childElement.open_tag as HTMLOpenTagNode
+        const childTagName = openTag?.tag_name?.value || ''
 
-        content += `<${childTagName}>${childContent}</${childTagName}>`
+        const attributes = openTag.children.filter((child): child is HTMLAttributeNode =>
+          child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE'
+        )
+
+        const attributesString = attributes.length > 0
+          ? ' ' + attributes.map(attr => this.renderAttribute(attr)).join(' ')
+          : ''
+
+        const childContent = this.renderElementInline(childElement)
+        content += `<${childTagName}${attributesString}>${childContent}</${childTagName}>`
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbNode = child as ERBContentNode
+        const open = erbNode.tag_opening?.value ?? ""
+        const erbContent = erbNode.content?.value ?? ""
+        const close = erbNode.tag_closing?.value ?? ""
+
+        content += `${open} ${erbContent.trim()} ${close}`
       }
     }
 

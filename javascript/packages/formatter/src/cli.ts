@@ -105,13 +105,16 @@ export class CLI {
               try {
                 const source = readFileSync(filePath, "utf-8")
                 const result = formatter.format(source)
-                if (result !== source) {
+                const output = result.endsWith('\n') ? result : result + '\n'
+
+                if (output !== source) {
                   if (isCheckMode) {
                     unformattedFiles.push(filePath)
                   } else {
-                    writeFileSync(filePath, result, "utf-8")
+                    writeFileSync(filePath, output, "utf-8")
                     console.log(`Formatted: ${filePath}`)
                   }
+
                   formattedCount++
                 }
               } catch (error) {
@@ -134,13 +137,14 @@ export class CLI {
           } else {
             const source = readFileSync(file, "utf-8")
             const result = formatter.format(source)
+            const output = result.endsWith('\n') ? result : result + '\n'
 
-            if (result !== source) {
+            if (output !== source) {
               if (isCheckMode) {
                 console.log(`File is not formatted: ${file}`)
                 process.exit(1)
               } else {
-                writeFileSync(file, result, "utf-8")
+                writeFileSync(file, output, "utf-8")
                 console.log(`Formatted: ${file}`)
               }
             } else if (isCheckMode) {
@@ -169,12 +173,13 @@ export class CLI {
           try {
             const source = readFileSync(filePath, "utf-8")
             const result = formatter.format(source)
+            const output = result.endsWith('\n') ? result : result + '\n'
 
-            if (result !== source) {
+            if (output !== source) {
               if (isCheckMode) {
                 unformattedFiles.push(filePath)
               } else {
-                writeFileSync(filePath, result, "utf-8")
+                writeFileSync(filePath, output, "utf-8")
                 console.log(`Formatted: ${filePath}`)
               }
               formattedCount++

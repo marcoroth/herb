@@ -18,11 +18,14 @@ describe("@herb-tools/formatter", () => {
 
   test("respects indentWidth option", () => {
     const source = dedent`
-      <div><%= "World" %></div>
+      <div><b><i>Hello</i></b> <%= "World" %></div>
     `
     const result = formatter.format(source, { indentWidth: 4 })
     expect(result).toEqual(dedent`
       <div>
+          <b>
+              <i>Hello</i>
+          </b>
           <%= "World" %>
       </div>
     `)

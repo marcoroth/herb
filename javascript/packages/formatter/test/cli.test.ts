@@ -183,7 +183,7 @@ describe("CLI Binary", () => {
 
   it("should only show formatted message when file changes", async () => {
     const testFile = "test-unchanged.html.erb"
-    const input = '<div>Already formatted</div>'
+    const input = '<div>Already formatted</div>\n'
 
     await writeFile(testFile, input)
 
@@ -202,7 +202,7 @@ describe("CLI Binary", () => {
 
   it("should show formatted message when file changes", async () => {
     const testFile = "test-changed.html.erb"
-    const input = '<div><p>Unformatted</p></div>'
+    const input = '<div><p>   Unformatted   </p></div>'
 
     await writeFile(testFile, input)
 
@@ -236,7 +236,7 @@ describe("CLI Binary", () => {
   it("should handle directory with files", async () => {
     await mkdir("test-dir", { recursive: true })
     const testFile = join("test-dir", "test.html.erb")
-    const input = '<div><p>Test</p></div>'
+    const input = '<div><p>   Test   </p></div>'
 
     await writeFile(testFile, input)
 
@@ -303,7 +303,7 @@ describe("CLI Binary", () => {
 
   it("should pass --check when file is already formatted", async () => {
     const testFile = "test-formatted.html.erb"
-    const input = '<div>\n  <p>Already formatted</p>\n</div>'
+    const input = '<div><p>Already formatted</p></div>\n'
 
     await writeFile(testFile, input)
 
@@ -319,7 +319,7 @@ describe("CLI Binary", () => {
 
   it("should fail --check when file is not formatted", async () => {
     const testFile = "test-unformatted.html.erb"
-    const input = '<div><p>Not formatted</p></div>'
+    const input = '<div><p>   Not formatted   </p></div>'
 
     await writeFile(testFile, input)
 
@@ -338,8 +338,8 @@ describe("CLI Binary", () => {
     const formattedFile = join("test-dir", "formatted.html.erb")
     const unformattedFile = join("test-dir", "unformatted.html.erb")
 
-    await writeFile(formattedFile, '<div>\n  <p>Formatted</p>\n</div>')
-    await writeFile(unformattedFile, '<div   ><p>Unformatted</p></div>')
+    await writeFile(formattedFile, '<div><p>Formatted</p></div>\n')
+    await writeFile(unformattedFile, '<div><p>   Unformatted   </p></div>')
 
     try {
       const result = await execBinary(["--check", "test-dir"])

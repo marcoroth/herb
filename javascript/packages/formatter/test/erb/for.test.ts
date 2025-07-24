@@ -24,9 +24,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toEqual(dedent`
       <% for item in list %>
-        <li>
-          <%= item.name %>
-        </li>
+        <li><%= item.name %></li>
       <% end %>
     `)
   })
