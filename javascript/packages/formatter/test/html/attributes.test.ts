@@ -61,14 +61,37 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("formats tags with empty attribute values", () => {
+  test("keeps empty attribute values inline when ≤3 attributes", () => {
     const source = dedent`
       <div id=""></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
+      <div id=""></div>
+    `)
+  })
+
+  test("keeps multiple empty attributes inline when <= 3 attributes", () => {
+    const source = dedent`
+      <div id="" class="" data-value=""></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div id="" class="" data-value=""></div>
+    `)
+  })
+
+  test("splits multiple empty attributes inline when > 3 attributes", () => {
+    const source = dedent`
+      <div id="" class="" data-value="" another-value=""></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
       <div
         id=""
+        class=""
+        data-value=""
+        another-value=""
       ></div>
     `)
   })

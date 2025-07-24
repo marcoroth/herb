@@ -259,7 +259,6 @@ export class Printer extends Visitor {
     )
 
     const shouldKeepInline = (attributes.length <= 3 &&
-                            !hasEmptyValue &&
                             inline.length + indent.length <= this.maxLineLength) ||
                             (inlineNodes.length > 0 && !hasERBControlFlow)
 
@@ -399,7 +398,6 @@ export class Printer extends Visitor {
       (singleAttribute.value as any)?.children.length === 0
 
     const shouldKeepInline = attributes.length <= 3 &&
-                            !hasEmptyValue &&
                             inline.length + indent.length <= this.maxLineLength
 
     if (shouldKeepInline) {
