@@ -1,6 +1,5 @@
 # Using Herb with JetBrains IDEs
 
-![Build](https://github.com/mwnciau/herb-lsp-intellij/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/com.herblsp.svg)](https://plugins.jetbrains.com/plugin/com.herblsp)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/com.herblsp.svg)](https://plugins.jetbrains.com/plugin/com.herblsp)
 
