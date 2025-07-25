@@ -28,7 +28,7 @@ jobs:
     name: Build Native Gems with Rake-Compiler-Dock
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubicloud-premium-2]
         target:
           - default
           - aarch64-linux-gnu
