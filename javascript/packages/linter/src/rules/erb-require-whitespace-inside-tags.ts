@@ -24,14 +24,43 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 
     const value = content.value
 
-    this.checkOpenTagWhitespace(openTag, value)
-    this.checkCloseTagWhitespace(closeTag, value)
+    if (openTag.value === "<%#") {
+      this.checkCommentTagWhitespace(openTag, closeTag, value)
+    } else {
+      this.checkOpenTagWhitespace(openTag, value)
+      this.checkCloseTagWhitespace(closeTag, value)
+    }
+  }
+
+  private checkCommentTagWhitespace(openTag: Token, closeTag: Token, content: string): void {
+    if (!content.startsWith(" ") && !content.startsWith("\n") && !content.startsWith("=")) {
+      this.addOffense(
+        `Add whitespace after \`${openTag.value}\`.`,
+        openTag.location,
+        "error"
+      )
+    } else if (content.startsWith("=") && content.length > 1 && !content[1].match(/\s/)) {
+      this.addOffense(
+        `Add whitespace after \`<%#=\`.`,
+        openTag.location,
+        "error"
+      )
+    }
+
+    if (!content.endsWith(" ") && !content.endsWith("\n")) {
+      this.addOffense(
+        `Add whitespace before \`${closeTag.value}\`.`,
+        closeTag.location,
+        "error"
+      )
+    }
   }
 
   private checkOpenTagWhitespace(openTag: Token, content:string):void {
     if (content.startsWith(" ") || content.startsWith("\n")) {
       return
     }
+
     this.addOffense(
       `Add whitespace after \`${openTag.value}\`.`,
       openTag.location,
@@ -43,6 +72,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
     if (content.endsWith(" ") || content.endsWith("\n")) {
       return
     }
+
     this.addOffense(
       `Add whitespace before \`${closeTag.value}\`.`,
       closeTag.location,
@@ -53,6 +83,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 
 export class ERBRequireWhitespaceRule implements Rule {
   name = "erb-require-whitespace-inside-tags"
+
   check(node: Node): LintOffense[] {
     const visitor = new RequireWhitespaceInsideTags(this.name)
     visitor.visit(node)

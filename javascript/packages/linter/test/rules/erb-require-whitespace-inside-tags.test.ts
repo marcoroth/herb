@@ -141,4 +141,81 @@ describe("erb-require-whitespace-inside-tags", () => {
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
   })
+
+  it("should require whitespace after # in ERB comment tags", () => {
+    const html = dedent`
+      <%# This is a comment %>
+      <%#This is a comment without spaces%>
+      <%# %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(2)
+    expect(lintResult.offenses).toHaveLength(2)
+
+    expect(lintResult.offenses[0].message).toBe("Add whitespace after `<%#`.")
+    expect(lintResult.offenses[1].message).toBe("Add whitespace before `%>`.")
+  })
+
+  it("should not report ERB comment tags with equals signs", () => {
+    const html = dedent`
+      <%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  it("should report ERB comment tags with equals sign and no space after", () => {
+    const html = dedent`
+      <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(2)
+    expect(lintResult.offenses).toHaveLength(2)
+
+    expect(lintResult.offenses[0].message).toBe("Add whitespace after `<%#=`.")
+    expect(lintResult.offenses[1].message).toBe("Add whitespace before `%>`.")
+  })
+
+  it("should not report ERB comment tags with equals followed by space", () => {
+    const html = dedent`
+      <%# = link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  it("should handle multi-line ERB comment tags", () => {
+    const html = dedent`
+      <%#
+        This is a multi-line comment
+        with multiple lines
+      %>
+
+      <%#=
+        link_to "New watch list",
+        new_watch_list_path,
+        class: "btn btn-ghost"
+      %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
 })

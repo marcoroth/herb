@@ -1,0 +1,8 @@
+@ DocumentNode (location: (1:0)-(1:77))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:77))
+        ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+        ├── content: "= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" " (location: (1:3)-(1:75))
+        ├── tag_closing: "%>" (location: (1:75)-(1:77))
+        ├── parsed: true
+        └── valid: false
