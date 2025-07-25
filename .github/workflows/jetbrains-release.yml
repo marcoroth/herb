@@ -5,7 +5,16 @@
 name: Release
 on:
   release:
-    types: [prereleased, released]
+  push:
+    tags: ["v*"]
+    # Trigger the workflow only when the jetbrains subdirectory has changed
+    paths:
+      - 'jetbrains/**'
+
+defaults:
+  run:
+    working-directory: ./jetbrains
+
 
 jobs:
 
