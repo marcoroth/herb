@@ -5,6 +5,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -74,6 +75,123 @@ const char* token_type_to_string(const token_type_T type) {
   }
 
   return "Unknown token_type_T";
+}
+
+const char* token_type_to_friendly_string(const token_type_T type) {
+  switch (type) {
+    case TOKEN_WHITESPACE: return "whitespace";
+    case TOKEN_NBSP: return "non-breaking space";
+    case TOKEN_NEWLINE: return "newline";
+    case TOKEN_IDENTIFIER: return "identifier";
+    case TOKEN_HTML_DOCTYPE: return "<!DOCTYPE";
+    case TOKEN_HTML_TAG_START: return "<";
+    case TOKEN_HTML_TAG_END: return ">";
+    case TOKEN_HTML_TAG_START_CLOSE: return "</";
+    case TOKEN_HTML_TAG_SELF_CLOSE: return "/>";
+    case TOKEN_HTML_COMMENT_START: return "<!--";
+    case TOKEN_HTML_COMMENT_END: return "-->";
+    case TOKEN_EQUALS: return "=";
+    case TOKEN_QUOTE: return "quote";
+    case TOKEN_DASH: return "-";
+    case TOKEN_UNDERSCORE: return "_";
+    case TOKEN_EXCLAMATION: return "!";
+    case TOKEN_SLASH: return "/";
+    case TOKEN_SEMICOLON: return ";";
+    case TOKEN_COLON: return ":";
+    case TOKEN_LT: return "<";
+    case TOKEN_PERCENT: return "%";
+    case TOKEN_AMPERSAND: return "&";
+    case TOKEN_ERB_START: return "ERB start";
+    case TOKEN_ERB_CONTENT: return "ERB content";
+    case TOKEN_ERB_END: return "ERB end";
+    case TOKEN_CHARACTER: return "character";
+    case TOKEN_ERROR: return "error";
+    case TOKEN_EOF: return "end of file";
+  }
+
+  return "unknown token";
+}
+
+char* token_types_to_friendly_string_va(token_type_T first_token, ...) {
+  // Count tokens
+  va_list args;
+  va_start(args, first_token);
+
+  size_t count = 0;
+  token_type_T current = first_token;
+
+  // First pass: count tokens
+  while (current != TOKEN_SENTINEL) {
+    count++;
+    current = va_arg(args, token_type_T);
+  }
+  va_end(args);
+
+  if (count == 0) { return herb_strdup(""); }
+
+  // Calculate total length needed
+  va_start(args, first_token);
+  size_t total_length = 0;
+  current = first_token;
+  size_t i = 0;
+
+  while (current != TOKEN_SENTINEL) {
+    const char* friendly_name = token_type_to_friendly_string(current);
+    total_length += strlen(friendly_name) + 2; // +2 for backticks
+
+    if (i < count - 1 && count > 1) {
+      if (i == count - 2) {
+        total_length += 4; // " or "
+      } else {
+        total_length += 2; // ", "
+      }
+    }
+
+    current = va_arg(args, token_type_T);
+    i++;
+  }
+  va_end(args);
+
+  total_length += 1; // null terminator
+
+  // Allocate buffer
+  char* result = calloc(total_length, sizeof(char));
+  if (!result) { return NULL; }
+
+  // Build the string
+  va_start(args, first_token);
+  current = first_token;
+  size_t pos = 0;
+  i = 0;
+
+  while (current != TOKEN_SENTINEL) {
+    const char* friendly_name = token_type_to_friendly_string(current);
+
+    // Add backtick before token name
+    result[pos++] = '`';
+
+    // Add token name
+    strcpy(result + pos, friendly_name);
+    pos += strlen(friendly_name);
+
+    // Add backtick after token name
+    result[pos++] = '`';
+
+    // Add separator
+    if (count > 2 && i < count - 2) {
+      strcpy(result + pos, ", ");
+      pos += 2;
+    } else if (count > 1 && i == count - 2) {
+      strcpy(result + pos, " or ");
+      pos += 4;
+    }
+
+    current = va_arg(args, token_type_T);
+    i++;
+  }
+
+  va_end(args);
+  return result;
 }
 
 char* token_to_string(const token_T* token) {
