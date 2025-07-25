@@ -82,7 +82,6 @@ module Parser
       HTML
     end
 
-
     test "erb output wrapped in double quotes" do
       assert_parsed_snapshot(<<~HTML)
         "<%= value %>"
