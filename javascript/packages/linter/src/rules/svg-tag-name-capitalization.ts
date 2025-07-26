@@ -21,15 +21,12 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
       if (node.open_tag) {
         this.checkTagName(node.open_tag as HTMLOpenTagNode)
       }
-
-      this.visitChildNodes(node)
-
       if (node.close_tag) {
         this.checkTagName(node.close_tag as HTMLCloseTagNode)
       }
-    } else {
-      this.visitChildNodes(node)
     }
+
+    this.visitChildNodes(node)
   }
 
   visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
