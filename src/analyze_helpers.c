@@ -279,10 +279,14 @@ bool search_ensure_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_yield_nodes(analyzed_ruby_T* analyzed) {
-  if (has_error_message(analyzed, "Invalid yield")) {
+bool search_yield_nodes(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  if (node->type == PM_YIELD_NODE) {
     analyzed->has_yield_node = true;
     return true;
+  } else {
+    pm_visit_child_nodes(node, search_yield_nodes, analyzed);
   }
 
   return false;
