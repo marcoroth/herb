@@ -1027,13 +1027,7 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
         continue;
 
       case CONTROL_TYPE_YIELD: {
-        AST_NODE_T* yield_node = create_control_node(
-          erb_node,
-          array_init(8),
-          NULL,
-          NULL,
-          type
-        );
+        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(8), NULL, NULL, type);
 
         if (yield_node) {
           array_append(new_array, yield_node);
