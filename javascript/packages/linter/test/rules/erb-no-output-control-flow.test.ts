@@ -42,7 +42,7 @@ describe("erb-no-output-control-flow", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(1)
   })
-  
+
   it("should not allow unless statements with output tags", () => {
     const html = dedent`
       <%= unless false %>
@@ -86,7 +86,7 @@ describe("erb-no-output-control-flow", () => {
     const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(1) 
+    expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(1)
   })
@@ -105,7 +105,7 @@ describe("erb-no-output-control-flow", () => {
     const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(3) 
+    expect(lintResult.errors).toBe(3)
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(3)
   })
@@ -122,8 +122,23 @@ describe("erb-no-output-control-flow", () => {
     const linter = new Linter([ERBNoOutputControlFlowRule])
     const lintResult = linter.lint(result.value)
 
-    expect(lintResult.errors).toBe(1) 
+    expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(1)
+  })
+
+  it("should not report for link to with an if condition", () => {
+   const html = dedent`
+      <%= link_to(some_url, class: ("some-class" if some_condition)) do %>
+        Click
+      <% end %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBNoOutputControlFlowRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 })
