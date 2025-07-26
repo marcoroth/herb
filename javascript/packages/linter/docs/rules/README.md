@@ -20,6 +20,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
+- [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
 
 ## Contributing
 

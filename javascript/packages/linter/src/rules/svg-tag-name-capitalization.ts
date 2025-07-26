@@ -1,33 +1,38 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
 
 import type { Rule, LintOffense } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
 
-class TagNameLowercaseVisitor extends BaseRuleVisitor {
+class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
+  private insideSVG = false
+
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = node.tag_name?.value
 
-    if (node.open_tag) {
-      this.checkTagName(node.open_tag as HTMLOpenTagNode)
-    }
-
     if (tagName && ["svg"].includes(tagName.toLowerCase())) {
-      if (node.close_tag) {
-        this.checkTagName(node.close_tag as HTMLCloseTagNode)
-      }
-
+      const wasInsideSVG = this.insideSVG
+      this.insideSVG = true
+      this.visitChildNodes(node)
+      this.insideSVG = wasInsideSVG
       return
     }
 
-    this.visitChildNodes(node)
-
-    if (node.close_tag) {
-      this.checkTagName(node.close_tag as HTMLCloseTagNode)
+    if (this.insideSVG) {
+      if (node.open_tag) {
+        this.checkTagName(node.open_tag as HTMLOpenTagNode)
+      }
+      if (node.close_tag) {
+        this.checkTagName(node.close_tag as HTMLCloseTagNode)
+      }
     }
+
+    this.visitChildNodes(node)
   }
 
   visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkTagName(node)
+    if (this.insideSVG) {
+      this.checkTagName(node)
+    }
     this.visitChildNodes(node)
   }
 
@@ -36,9 +41,12 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
 
     if (!tagName) return
 
-    const lowercaseTagName = tagName.toLowerCase()
+    if (SVG_CAMEL_CASE_ELEMENTS.has(tagName)) return
 
-    if (tagName !== lowercaseTagName) {
+    const lowercaseTagName = tagName.toLowerCase()
+    const correctCamelCase = SVG_LOWERCASE_TO_CAMELCASE.get(lowercaseTagName)
+
+    if (correctCamelCase && tagName !== correctCamelCase) {
       let type: string = node.type
 
       if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
@@ -46,7 +54,7 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
       if (node.type == "AST_HTML_SELF_CLOSE_TAG_NODE") type = "Self-closing"
 
       this.addOffense(
-        `${type} tag name \`${tagName}\` should be lowercase. Use \`${lowercaseTagName}\` instead.`,
+        `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
         node.tag_name!.location,
         "error"
       )
@@ -54,11 +62,11 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLTagNameLowercaseRule implements Rule {
-  name = "html-tag-name-lowercase"
+export class SVGTagNameCapitalizationRule implements Rule {
+  name = "svg-tag-name-capitalization"
 
   check(node: Node): LintOffense[] {
-    const visitor = new TagNameLowercaseVisitor(this.name)
+    const visitor = new SVGTagNameCapitalizationVisitor(this.name)
     visitor.visit(node)
     return visitor.offenses
   }

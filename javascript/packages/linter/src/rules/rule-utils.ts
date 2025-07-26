@@ -188,6 +188,53 @@ export const HTML_BOOLEAN_ATTRIBUTES = new Set([
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
+/**
+ * SVG elements that use camelCase naming
+ */
+export const SVG_CAMEL_CASE_ELEMENTS = new Set([
+  "animateMotion",
+  "animateTransform",
+  "clipPath",
+  "feBlend",
+  "feColorMatrix",
+  "feComponentTransfer",
+  "feComposite",
+  "feConvolveMatrix",
+  "feDiffuseLighting",
+  "feDisplacementMap",
+  "feDistantLight",
+  "feDropShadow",
+  "feFlood",
+  "feFuncA",
+  "feFuncB",
+  "feFuncG",
+  "feFuncR",
+  "feGaussianBlur",
+  "feImage",
+  "feMerge",
+  "feMergeNode",
+  "feMorphology",
+  "feOffset",
+  "fePointLight",
+  "feSpecularLighting",
+  "feSpotLight",
+  "feTile",
+  "feTurbulence",
+  "foreignObject",
+  "glyphRef",
+  "linearGradient",
+  "radialGradient",
+  "textPath"
+])
+
+/**
+ * Mapping from lowercase SVG element names to their correct camelCase versions
+ * Generated dynamically from SVG_CAMEL_CASE_ELEMENTS
+ */
+export const SVG_LOWERCASE_TO_CAMELCASE = new Map(
+  Array.from(SVG_CAMEL_CASE_ELEMENTS).map(element => [element.toLowerCase(), element])
+)
+
 export const VALID_ARIA_ROLES = new Set([
   "banner", "complementary", "contentinfo", "form", "main", "navigation", "region", "search",
   "article", "cell", "columnheader", "definition", "directory", "document", "feed", "figure",

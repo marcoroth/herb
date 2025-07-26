@@ -17,6 +17,7 @@ import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
+import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
 export const defaultRules: RuleClass[] = [
   ERBNoEmptyTagsRule,
@@ -36,4 +37,5 @@ export const defaultRules: RuleClass[] = [
   HTMLNoEmptyHeadingsRule,
   HTMLNoNestedLinksRule,
   HTMLTagNameLowercaseRule,
+  SVGTagNameCapitalizationRule,
 ]

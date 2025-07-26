@@ -151,4 +151,44 @@ describe("html-tag-name-lowercase", () => {
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
   })
+
+  test("ignores SVG child elements (handled by svg-tag-name-capitalization rule)", () => {
+    const html = `
+      <svg>
+        <linearGradient id="grad1">
+          <stop offset="0%" />
+        </linearGradient>
+        <LINEARGRADIENT id="grad2">
+          <stop offset="100%" />
+        </LINEARGRADIENT>
+        <lineargradient id="grad3">
+          <stop offset="50%" />
+        </lineargradient>
+      </svg>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([HTMLTagNameLowercaseRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("still checks SVG tag itself for lowercase", () => {
+    const html = `
+      <SVG>
+        <linearGradient id="grad1">
+          <stop offset="0%" />
+        </linearGradient>
+      </SVG>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([HTMLTagNameLowercaseRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(2) // opening and closing SVG tags
+    expect(lintResult.offenses[0].message).toBe('Opening tag name `SVG` should be lowercase. Use `svg` instead.')
+    expect(lintResult.offenses[1].message).toBe('Closing tag name `SVG` should be lowercase. Use `svg` instead.')
+  })
 })
