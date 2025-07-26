@@ -141,4 +141,29 @@ describe("erb-no-output-control-flow", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
   })
+
+  it("should not report on form_builder.fieldset with block", () => {
+   const html = dedent`
+     <%= form_builder.fieldset(
+       "foo",
+       :foo,
+       required: true,
+       hint:
+         if some_condition?
+           "foo"
+         else
+           "bar"
+         end
+     ) do %>
+         <%# ... %>
+     <% end %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBNoOutputControlFlowRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
 })
