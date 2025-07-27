@@ -47,7 +47,7 @@ For a complete overview of all available tools, libraries, and integrations, vis
 
 HTML+ERB templates never really had good, accurate, and reliable tooling. While developer tooling for Ruby code improved significantly in the last few years (especially with the introduction of the new Prism parser), HTML+ERB files remained underserved, lacking fundamental support like syntax checking, auto-formatting, linting, and structural understanding.
 
-At the same time, with the rise of tools like [Hotwire](https://hotwired.dev), [Stimulus](https://stimulus.hotwired.dev), [Turbo](https://turbo.hotwired.dev), [HTMX](https://htmx.org), [Unploy](https://unpoly.com), and [Alpine.js](https://alpinejs.dev), advanced HTML templating became increasingly relevant (again). Developers expect modern, reliable, and precise tooling, especially given the robust ecosystem available to JavaScript frameworks and libraries.
+At the same time, with the rise of tools like [Hotwire](https://hotwired.dev), [Stimulus](https://stimulus.hotwired.dev), [Turbo](https://turbo.hotwired.dev), [HTMX](https://htmx.org), [Unpoly](https://unpoly.com), and [Alpine.js](https://alpinejs.dev), advanced HTML templating became increasingly relevant (again). Developers expect modern, reliable, and precise tooling, especially given the robust ecosystem available to JavaScript frameworks and libraries.
 
 Herb was built to close this tooling gap, providing proper tooling for HTML+ERB that matches what modern developers expect in the age of language servers, LLMs, and AI-driven workflows.
 
