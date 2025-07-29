@@ -19,6 +19,7 @@ describe("@herb-tools/formatter", () => {
   test("formats ERB comments", () => {
     const source = '<%# ERB Comment %>'
     const result = formatter.format(source)
+
     expect(result).toEqual(`<%# ERB Comment %>`)
   })
 
@@ -40,5 +41,22 @@ describe("@herb-tools/formatter", () => {
         comment
       %>
     `)
+  })
+
+  test("handles long ERB comments that exceed maxLineLength", () => {
+    const source = '<%# herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp %>'
+
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
+  })
+
+  test("handles various long ERB comment lengths", () => {
+    const source80 = '<%# This comment is exactly 80 characters long and should not crash %>'
+    const result80 = formatter.format(source80)
+    expect(result80).toEqual(source80)
+
+    const source100 = '<%# This is a very long ERB comment that exceeds 100 characters and should be handled gracefully %>'
+    const result100 = formatter.format(source100)
+    expect(result100).toEqual(source100)
   })
 })

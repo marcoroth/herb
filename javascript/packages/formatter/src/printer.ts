@@ -507,25 +507,52 @@ export class Printer extends Visitor {
     let inner: string
 
     if (node.tag_opening && node.tag_closing) {
-      const [, openingEnd] = node.tag_opening.range.toArray()
-      const [closingStart] = node.tag_closing.range.toArray()
-      const rawInner = this.source.slice(openingEnd, closingStart)
-      const lines = rawInner.split("\n")
-      if (lines.length > 2) {
-        const childIndent = indent + " ".repeat(this.indentWidth)
-        const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
-        inner = "\n" + innerLines.join("\n") + "\n"
+      const openingRange = node.tag_opening.range.toArray()
+      const closingRange = node.tag_closing.range.toArray()
+
+      if (openingRange.length < 2 || closingRange.length < 1) {
+        inner = node.content?.value ? ` ${node.content.value.trim()} ` : " "
       } else {
-        inner = ` ${rawInner.trim()} `
+        const [, openingEnd] = openingRange
+        const [closingStart] = closingRange
+
+        if (openingEnd >= 0 && closingStart >= 0 && openingEnd <= this.source.length && closingStart <= this.source.length && openingEnd <= closingStart) {
+          const rawInner = this.source.slice(openingEnd, closingStart)
+          const lines = rawInner.split("\n")
+
+          if (lines.length > 2) {
+            const childIndent = indent + " ".repeat(this.indentWidth)
+            const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+            inner = "\n" + innerLines.join("\n") + "\n"
+          } else {
+            inner = ` ${rawInner.trim()} `
+          }
+        } else {
+          inner = node.content?.value ? ` ${node.content.value.trim()} ` : " "
+        }
       }
     } else {
-      inner = (node as any).children
-        .map((child: any) => {
-          const prevLines = this.lines.length
-          this.visit(child)
-          return this.lines.slice(prevLines).join("")
-        })
-        .join("")
+      const children = (node as any).children
+
+      if (Array.isArray(children) && children.length > 0) {
+        inner = children
+          .map((child: any) => {
+            if (!child) return ""
+
+            const prevLines = this.lines.length
+
+            if (prevLines > 1000) {
+              console.warn("ERB comment processing stopped due to excessive recursion")
+              return ""
+            }
+
+            this.visit(child)
+            return this.lines.slice(prevLines).join("")
+          })
+          .join("")
+      } else {
+        inner = node.content?.value ? ` ${node.content.value.trim()} ` : " "
+      }
     }
 
     this.push(indent + open + inner + close)
@@ -556,6 +583,28 @@ export class Printer extends Visitor {
   visitERBContentNode(node: ERBContentNode): void {
     // TODO: this feels hacky
     if (node.tag_opening?.value === "<%#") {
+      if (node.tag_opening && node.tag_closing) {
+        const openingRange = node.tag_opening.range.toArray()
+        const closingRange = node.tag_closing.range.toArray()
+
+        if (openingRange.length >= 2 && closingRange.length >= 1) {
+          const [, openingEnd] = openingRange
+          const [closingStart] = closingRange
+          const commentLength = closingStart - openingEnd
+
+          if (commentLength > 1000) {
+            const indent = this.indent()
+            const open = node.tag_opening?.value ?? ""
+            const close = node.tag_closing?.value ?? ""
+            const content = node.content?.value ?? ""
+
+            this.push(indent + open + ` ${content.trim()} ` + close)
+
+            return
+          }
+        }
+      }
+
       this.visitERBCommentNode(node)
     } else {
       this.printERBNode(node)
