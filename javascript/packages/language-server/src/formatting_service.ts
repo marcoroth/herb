@@ -88,8 +88,8 @@ export class FormattingService {
     const projectFormatter = this.config?.options.formatter || {}
 
     return {
-      indentWidth: projectFormatter.indentWidth ?? settings.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
-      maxLineLength: projectFormatter.maxLineLength ?? settings.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
+      indentWidth: projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
+      maxLineLength: projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
     }
   }
 
@@ -131,7 +131,7 @@ export class FormattingService {
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
     const settings = await this.settings.getDocumentSettings(params.textDocument.uri)
 
-    if (settings.formatter?.enabled === false) {
+    if (settings?.formatter?.enabled === false) {
       return []
     }
 
