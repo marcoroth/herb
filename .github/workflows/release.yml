@@ -8,13 +8,17 @@ on:
       - "src/**"
       - "lib/**"
       - "Gemfile"
+      - "Gemfile.lock"
       - "Makefile"
+      - ".ruby-version"
   pull_request:
     paths:
       - "src/**"
       - "lib/**"
       - "Gemfile"
+      - "Gemfile.lock"
       - "Makefile"
+      - ".ruby-version"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
