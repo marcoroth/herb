@@ -72,6 +72,7 @@ export class Printer extends Visitor {
 
   constructor(source: string, options: Required<FormatOptions>) {
     super()
+
     this.source = source
     this.indentWidth = options.indentWidth
     this.maxLineLength = options.maxLineLength
@@ -105,6 +106,7 @@ export class Printer extends Visitor {
     this.indentLevel++
     const result = callback()
     this.indentLevel--
+
     return result
   }
 
@@ -119,16 +121,9 @@ export class Printer extends Visitor {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const close = node.tag_closing?.value ?? ""
-    let inner: string
-    if (node.tag_opening && node.tag_closing) {
-      const [, openingEnd] = node.tag_opening.range.toArray()
-      const [closingStart] = node.tag_closing.range.toArray()
-      const rawInner = this.source.slice(openingEnd, closingStart)
-      inner = ` ${rawInner.trim()} `
-    } else {
-      const txt = node.content?.value ?? ""
-      inner = txt.trim() ? ` ${txt.trim()} ` : ""
-    }
+    const content = node.content?.value ?? ""
+    const inner = content.trim() ? ` ${content.trim()} ` : ""
+
     this.push(indent + open + inner + close)
   }
 
