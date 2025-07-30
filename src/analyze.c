@@ -39,7 +39,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   search_in_nodes(analyzed);
   search_rescue_nodes(analyzed);
   search_ensure_nodes(analyzed);
-  search_yield_nodes(analyzed);
+  search_yield_nodes(analyzed->root, analyzed);
   search_block_closing_nodes(analyzed);
 
   return analyzed;
@@ -49,13 +49,20 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
-    analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
+    const char* opening = erb_content_node->tag_opening->value;
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0) {
+      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
-    if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
+      if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
 
-    erb_content_node->parsed = true;
-    erb_content_node->valid = analyzed->valid;
-    erb_content_node->analyzed_ruby = analyzed;
+      erb_content_node->parsed = true;
+      erb_content_node->valid = analyzed->valid;
+      erb_content_node->analyzed_ruby = analyzed;
+    } else {
+      erb_content_node->parsed = false;
+      erb_content_node->valid = true;
+      erb_content_node->analyzed_ruby = NULL;
+    }
   }
 
   herb_visit_child_nodes(node, analyze_erb_content, data);
@@ -64,12 +71,20 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 }
 
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* children_array,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 );
 
 static size_t process_subsequent_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  AST_NODE_T** subsequent_out,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 );
 
@@ -80,8 +95,13 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
+  if (ruby->valid) {
+    if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
+    return CONTROL_TYPE_UNKNOWN;
+  }
 
+  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
+  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
   if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
@@ -97,8 +117,6 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_while_node(ruby)) { return CONTROL_TYPE_WHILE; }
   if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
   if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
-  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
-  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
 
   return CONTROL_TYPE_UNKNOWN;
@@ -132,7 +150,10 @@ static bool is_terminator_type(control_type_t parent_type, control_type_t child_
 }
 
 static AST_NODE_T* create_control_node(
-  AST_ERB_CONTENT_NODE_T* erb_node, array_T* children, AST_NODE_T* subsequent, AST_ERB_END_NODE_T* end_node,
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  array_T* children,
+  AST_NODE_T* subsequent,
+  AST_ERB_END_NODE_T* end_node,
   control_type_t control_type
 ) {
   array_T* errors = array_init(8);
@@ -362,7 +383,11 @@ static AST_NODE_T* create_control_node(
 }
 
 static size_t process_control_structure(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* output_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* output_array,
+  analyze_ruby_context_T* context,
   control_type_t initial_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
@@ -858,7 +883,11 @@ static size_t process_control_structure(
 }
 
 static size_t process_subsequent_block(
-  AST_NODE_T* node, array_T* array, size_t index, AST_NODE_T** subsequent_out, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  AST_NODE_T** subsequent_out,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
@@ -922,7 +951,11 @@ static size_t process_subsequent_block(
 }
 
 static size_t process_block_children(
-  AST_NODE_T* node, array_T* array, size_t index, array_T* children_array, analyze_ruby_context_T* context,
+  AST_NODE_T* node,
+  array_T* array,
+  size_t index,
+  array_T* children_array,
+  analyze_ruby_context_T* context,
   control_type_t parent_type
 ) {
   while (index < array_size(array)) {
@@ -949,7 +982,7 @@ static size_t process_block_children(
 
       if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
 
-      free(temp_array);
+      array_free(&temp_array);
 
       index = new_index;
       continue;
@@ -990,9 +1023,21 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
       case CONTROL_TYPE_UNTIL:
       case CONTROL_TYPE_FOR:
       case CONTROL_TYPE_BLOCK:
-      case CONTROL_TYPE_YIELD:
         index = process_control_structure(node, array, index, new_array, context, type);
         continue;
+
+      case CONTROL_TYPE_YIELD: {
+        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(8), NULL, NULL, type);
+
+        if (yield_node) {
+          array_append(new_array, yield_node);
+        } else {
+          array_append(new_array, item);
+        }
+
+        index++;
+        break;
+      }
 
       default:
         array_append(new_array, item);
@@ -1010,22 +1055,30 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
 
   if (node->type == AST_DOCUMENT_NODE) {
     AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
+    array_T* old_array = document_node->children;
     document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ELEMENT_NODE) {
     AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
+    array_T* old_array = element_node->body;
     element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_OPEN_TAG_NODE) {
     AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+    array_T* old_array = open_tag->children;
     open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
+    array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
+    array_T* old_array = value_node->children;
     value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
+    array_free(&old_array);
   }
 
   herb_visit_child_nodes(node, transform_erb_nodes, data);
@@ -1045,6 +1098,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 
   herb_analyze_parse_errors(document, source);
 
+  array_free(&context->ruby_context_stack);
   free(context);
 }
 
@@ -1054,7 +1108,7 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
   pm_parser_t parser;
   pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), NULL);
 
-  pm_parse(&parser);
+  pm_node_t* root = pm_parse(&parser);
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
@@ -1068,4 +1122,8 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
       array_append(document->base.errors, parse_error);
     }
   }
+
+  pm_node_destroy(&parser, root);
+  pm_parser_free(&parser);
+  free(extracted_ruby);
 }

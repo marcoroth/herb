@@ -1,9 +1,12 @@
 # frozen_string_literal: true
+# typed: ignore
+
+# rbs_inline: disabled
 
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing
 
   def initialize(args)
     @args = args
@@ -41,7 +44,7 @@ class Herb::CLI
     end
 
     unless File.exist?(@file)
-      puts "Not a directory: '#{@file}'."
+      puts "Not a file: '#{@file}'."
       puts
     end
 
@@ -103,7 +106,11 @@ class Herb::CLI
   def result
     @result ||= case @command
                 when "analyze"
-                  Herb::Project.new(directory).parse!
+                  project = Herb::Project.new(directory)
+                  project.no_interactive = no_interactive
+                  project.no_log_file = no_log_file
+                  project.no_timing = no_timing
+                  project.parse!
                   exit(0)
                 when "parse"
                   Herb.parse(file_content)
@@ -125,11 +132,10 @@ class Herb::CLI
                     puts "This command can currently only be run within the herb repo itself"
                     exit(1)
                   end
-                when "help", "-h", "--help"
+                when "help"
                   help
-                when "version", "-v", "--version"
-                  puts Herb.version
-                  exit(0)
+                when "version"
+                  print_version
                 when String
                   puts "Unknown command: '#{@command}'"
                   puts
@@ -144,6 +150,10 @@ class Herb::CLI
     @option_parser ||= OptionParser.new do |parser|
       parser.banner = ""
 
+      parser.on_tail("-v", "--version", "Show the version") do
+        print_version
+      end
+
       parser.on_tail("-h", "--help", "Show this message") do
         help
         exit(0)
@@ -156,10 +166,29 @@ class Herb::CLI
       parser.on("-s", "--silent", "Log no result to stdout") do
         self.silent = true
       end
+
+      parser.on("-n", "--non-interactive", "Disable interactive output (progress bars, terminal clearing)") do
+        self.no_interactive = true
+      end
+
+      parser.on("--no-log-file", "Disable log file generation") do
+        self.no_log_file = true
+      end
+
+      parser.on("--no-timing", "Disable timing output") do
+        self.no_timing = true
+      end
     end
   end
 
   def options
     option_parser.parse!(@args)
+  end
+
+  private
+
+  def print_version
+    puts Herb.version
+    exit(0)
   end
 end

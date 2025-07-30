@@ -1,0 +1,50 @@
+{
+  "name": "herb-language-server",
+  "description": "Placeholder package to reserve the herb-language-server name on NPM; use @herb-tools/language-server instead.",
+  "version": "0.4.2",
+  "author": "Marco Roth",
+  "license": "MIT",
+  "engines": {
+    "node": "*"
+  },
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60herb-language-server%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/herb-language-server"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && tsc -b && rollup -c",
+    "dev": "rollup -c -w",
+    "watch": "tsc -b -w",
+    "clean": "rimraf dist",
+    "test": "echo 'TODO: add tests'",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "herb-language-server": "./bin/herb-language-server"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "src/",
+    "bin/",
+    "dist/"
+  ],
+  "dependencies": {
+    "@herb-tools/language-server": "0.4.2"
+  }
+}

@@ -13,7 +13,7 @@ The API remains the same for both packages regardless of whether you imported `H
 
 :::code-group
 ```js twoslash [Browser]
-import { Herb } from "@herb-tools/browser"
+import { Herb } from "@herb-tools/browser"
 
 await Herb.load()
 
@@ -21,7 +21,7 @@ Herb.parse("content")
 ```
 
 ```js twoslash [Node.js]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 await Herb.load()
 
@@ -55,7 +55,7 @@ The `Herb.lex` and `Herb.lexFile` methods allow you to tokenize an HTML document
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const source = "<p>Hello <%= user.name %></p>"
@@ -75,7 +75,7 @@ console.log(result)
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const result = Herb.lexFile("./index.html.erb")
@@ -96,7 +96,7 @@ The `Herb.parse` and `Herb.parseFile` methods allow you to parse an HTML documen
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const source = "<p>Hello <%= user.name %></p>"
@@ -116,7 +116,7 @@ console.log(result)
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const result = Herb.parseFile("./index.html.erb")
@@ -140,7 +140,7 @@ The `Herb.extractRuby` method allows you to extract only the Ruby parts of an HT
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const source = "<p>Hello <%= user.name %></p>"
@@ -158,7 +158,7 @@ The `Herb.extractHTML` method allows you to extract only the HTML parts of an HT
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 const source = "<p>Hello <%= user.name %></p>"
@@ -178,7 +178,7 @@ Herb supports AST traversal using visitors.
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 import { Visitor } from "@herb-tools/node"
@@ -206,7 +206,7 @@ This allows you to analyze the parsed HTML+ERB programmatically.
 
 :::code-group
 ```js twoslash [javascript]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 // ---cut---
 console.log(Herb.version)

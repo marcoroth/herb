@@ -1,0 +1,31 @@
+# Generated from lib/herb/token.rb with RBS::Inline
+
+module Herb
+  class Token
+    attr_reader value: String
+
+    attr_reader range: Range
+
+    attr_reader location: Location
+
+    attr_reader type: String
+
+    # : (String, Range, Location, String) -> void
+    def initialize: (String, Range, Location, String) -> void
+
+    # : () -> serialized_token
+    def to_hash: () -> serialized_token
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def tree_inspect: () -> String
+
+    # : () -> String
+    def value_inspect: () -> String
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

@@ -72,7 +72,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
     lexer->current_column
   );
 
-  return token_init(herb_strdup(error_message), TOKEN_ERROR, lexer);
+  return token_init(error_message, TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
@@ -163,7 +163,7 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  const char* erb_patterns[] = { "<%==", "<%=", "<%#", "<%-", "<%%", "<%" };
+  const char* erb_patterns[] = { "<%==", "<%%=", "<%=", "<%#", "<%-", "<%%", "<%" };
 
   lexer->state = STATE_ERB_CONTENT;
 
@@ -184,7 +184,16 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     }
 
     buffer_append_char(&buffer, lexer->current_character);
-    lexer_advance(lexer);
+
+    if (is_newline(lexer->current_character)) {
+      lexer->current_line++;
+      lexer->current_column = 0;
+    } else {
+      lexer->current_column++;
+    }
+
+    lexer->current_position++;
+    lexer->current_character = lexer->source[lexer->current_position];
   }
 
   lexer->state = STATE_ERB_CLOSE;
@@ -260,6 +269,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     case '_': return lexer_advance_current(lexer, TOKEN_UNDERSCORE);
     case ':': return lexer_advance_current(lexer, TOKEN_COLON);
+    case '@': return lexer_advance_current(lexer, TOKEN_AT);
     case ';': return lexer_advance_current(lexer, TOKEN_SEMICOLON);
     case '&': return lexer_advance_current(lexer, TOKEN_AMPERSAND);
     case '!': return lexer_advance_current(lexer, TOKEN_EXCLAMATION);

@@ -1,4 +1,7 @@
 # frozen_string_literal: true
+# typed: ignore
+
+# rbs_inline: disabled
 
 require "ffi"
 require "rbconfig"

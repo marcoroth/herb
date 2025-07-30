@@ -1,0 +1,46 @@
+import dedent from "dedent"
+
+import { describe, test, expect, beforeAll } from "vitest"
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "../../src/linter.js"
+
+import { <%= ruleClassName %> } from "../../src/rules/<%= ruleName %>.js"
+
+describe("<%= ruleClassName %>", () => {
+  beforeAll(async () => {
+    await Herb.load()
+  })
+
+  test("valid case TODO", () => {
+    const html = dedent`
+      <h1>
+        <%%= title %>
+      </h1>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([<%= ruleClassName %>])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("invalid case TODO", () => {
+    const html = dedent`
+      <h1>
+        <%%= title %>
+    `
+    const result = Herb.parse(html)
+    const linter = new Linter([<%= ruleClassName %>])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].code).toBe("<%= ruleName %>")
+    expect(lintResult.offenses[0].message).toBe("TODO: update rule message")
+
+    // TODO: add assertions for invalid case
+  })
+})

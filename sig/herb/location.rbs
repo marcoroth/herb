@@ -1,0 +1,30 @@
+# Generated from lib/herb/location.rb with RBS::Inline
+
+module Herb
+  class Location
+    attr_reader start: Position
+
+    attr_reader end: Position
+
+    # : (Position, Position) -> void
+    def initialize: (Position, Position) -> void
+
+    # : (Integer, Integer, Integer, Integer) -> Location
+    def self.from: (Integer, Integer, Integer, Integer) -> Location
+
+    # : (Integer, Integer, Integer, Integer) -> Location
+    def self.[]: (Integer, Integer, Integer, Integer) -> Location
+
+    # : () -> serialized_location
+    def to_hash: () -> serialized_location
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def tree_inspect: () -> String
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

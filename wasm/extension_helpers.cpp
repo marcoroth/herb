@@ -113,8 +113,6 @@ val CreateLexResult(array_T* tokens, const std::string& source) {
   result.set("warnings", warningsArray);
   result.set("errors", errorsArray);
 
-  herb_free_tokens(&tokens);
-
   return result;
 }
 

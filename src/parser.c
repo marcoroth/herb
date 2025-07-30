@@ -124,10 +124,9 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
   return doctype;
 }
 
-static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
+static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T* document_errors) {
   position_T* start = position_copy(parser->current_token->location->start);
 
-  array_T* errors = array_init(8);
   buffer_T content = buffer_new();
 
   while (token_is_none_of(
@@ -142,16 +141,18 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
     if (token_is(parser, TOKEN_ERROR)) {
       buffer_free(&content);
 
-      token_T* token = parser_consume_expected(parser, TOKEN_ERROR, errors);
+      token_T* token = parser_consume_expected(parser, TOKEN_ERROR, document_errors);
       append_unexpected_error(
         "Token Error",
         "not TOKEN_ERROR",
         token->value,
         token->location->start,
         token->location->end,
-        errors
+        document_errors
       );
+
       token_free(token);
+      position_free(start);
 
       return NULL;
     }
@@ -160,6 +161,8 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser) {
     buffer_append(&content, token->value);
     token_free(token);
   }
+
+  array_T* errors = array_init(8);
 
   if (buffer_length(&content) > 0) {
     AST_HTML_TEXT_NODE_T* text_node =
@@ -194,13 +197,19 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 }
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value(
-  parser_T* parser, array_T* children, array_T* errors
+  parser_T* parser,
+  array_T* children,
+  array_T* errors
 ) {
   buffer_T buffer = buffer_new();
   token_T* opening_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
   position_T* start = position_copy(parser->current_token->location->start);
 
-  while (token_is_none_of(parser, TOKEN_QUOTE, TOKEN_EOF)) {
+  while (!token_is(parser, TOKEN_EOF)
+         && !(
+           token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
+           && strcmp(parser->current_token->value, opening_quote->value) == 0
+         )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
@@ -265,7 +274,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       false,
       erb_node->base.location->start,
       erb_node->base.location->end,
-      NULL
+      errors
     );
   }
 
@@ -284,7 +293,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
       false,
       literal->base.location->start,
       literal->base.location->end,
-      NULL
+      errors
     );
   }
 
@@ -400,6 +409,9 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       token_free(tag_start);
       token_free(tag_name);
 
+      array_free(&children);
+      array_free(&errors);
+
       return NULL;
     }
 
@@ -466,7 +478,8 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
 // TODO: this should probably be AST_HTML_ELEMENT_NODE_T with a AST_HTML_SELF_CLOSING_TAG_NODE_T
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
-  const parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  const parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
     open_tag,
@@ -481,7 +494,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
 }
 
 static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
-  parser_T* parser, AST_HTML_OPEN_TAG_NODE_T* open_tag
+  parser_T* parser,
+  AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   array_T* errors = array_init(8);
   array_T* body = array_init(8);
@@ -612,12 +626,13 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           TOKEN_IDENTIFIER,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
+          TOKEN_QUOTE,
           TOKEN_SEMICOLON,
           TOKEN_SLASH,
           TOKEN_UNDERSCORE,
           TOKEN_WHITESPACE
         )) {
-      array_append(children, parser_parse_text_content(parser));
+      array_append(children, parser_parse_text_content(parser, errors));
       continue;
     }
 
@@ -650,6 +665,10 @@ static void parser_parse_stray_closing_tags(parser_T* parser, array_T* children,
   while (token_is_not(parser, TOKEN_EOF)) {
     if (token_is_not(parser, TOKEN_HTML_TAG_START_CLOSE)) {
       parser_append_unexpected_token_error(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
+
+      token_T* unexpected = parser_advance(parser);
+      token_free(unexpected);
+
       continue;
     }
 

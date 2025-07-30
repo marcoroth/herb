@@ -20,7 +20,7 @@ typedef enum {
   TOKEN_HTML_COMMENT_START, // <!--
   TOKEN_HTML_COMMENT_END,   // -->
 
-  TOKEN_ERB_START,   // <%, <%=, <%#, <%-, <%==, <%%
+  TOKEN_ERB_START,   // <%, <%=, <%%=, <%#, <%-, <%==, <%%
   TOKEN_ERB_CONTENT, // Ruby Code
   TOKEN_ERB_END,     // %>, -%>, %%>
 
@@ -33,6 +33,7 @@ typedef enum {
   TOKEN_EXCLAMATION, // !
   TOKEN_SEMICOLON,   // ;
   TOKEN_COLON,       // :
+  TOKEN_AT,          // @
   TOKEN_PERCENT,     // %
   TOKEN_AMPERSAND,   // &
 

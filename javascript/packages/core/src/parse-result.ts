@@ -1,11 +1,13 @@
 import { Result } from "./result.js"
+
 import { DocumentNode } from "./nodes.js"
-import { HerbError } from "./error.js"
+import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
 
-import type { SerializedHerbError } from "./error.js"
+import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedDocumentNode } from "./nodes.js"
+
 import type { Visitor } from "./visitor.js"
 
 export type SerializedParseResult = {
@@ -58,17 +60,17 @@ export class ParseResult extends Result {
    * Determines if the parsing failed.
    * @returns `true` if there are errors, otherwise `false`.
    */
-  failed(): boolean {
-    // TODO: this should probably be recursive as noted in the Ruby version
-    return this.errors.length > 0 || this.value.errors.length > 0
+  get failed(): boolean {
+    // Consider errors on this result and recursively in the document tree
+    return this.recursiveErrors().length > 0
   }
 
   /**
    * Determines if the parsing was successful.
    * @returns `true` if there are no errors, otherwise `false`.
    */
-  success(): boolean {
-    return !this.failed()
+  get successful(): boolean {
+    return !this.failed
   }
 
   /**

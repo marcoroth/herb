@@ -39,7 +39,7 @@ Import the `Herb` object into your project:
 
 :::code-group
 ```js twoslash [async/await]
-import { Herb } from "@herb-tools/browser"
+import { Herb } from "@herb-tools/browser"
 
 await Herb.load()
 
@@ -47,7 +47,7 @@ Herb.parse("content")
 ```
 
 ```js twoslash [Promise]
-import { Herb } from "@herb-tools/browser"
+import { Herb } from "@herb-tools/browser"
 
 Herb.load().then(() => {
   Herb.parse("content")
@@ -90,7 +90,7 @@ Import the `Herb` object into your project:
 
 :::code-group
 ```js twoslash [async/await]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 await Herb.load()
 
@@ -98,7 +98,7 @@ Herb.parse("content")
 ```
 
 ```js twoslash [Promise]
-import { Herb } from "@herb-tools/node"
+import { Herb } from "@herb-tools/node"
 
 Herb.load().then(() => {
   Herb.parse("content")

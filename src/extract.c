@@ -7,7 +7,7 @@
 #include <stdlib.h>
 
 void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* output) {
-  const array_T* tokens = herb_lex(source);
+  array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -20,7 +20,9 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0) { skip_erb_content = true; }
+        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+          skip_erb_content = true;
+        }
 
         buffer_append_whitespace(output, range_length(token->range));
         break;
@@ -49,10 +51,12 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
       }
     }
   }
+
+  herb_free_tokens(&tokens);
 }
 
 void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
-  const array_T* tokens = herb_lex(source);
+  array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -65,7 +69,9 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0) { skip_erb_content = true; }
+        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+          skip_erb_content = true;
+        }
 
         buffer_append_whitespace(output, range_length(token->range));
         break;
@@ -93,10 +99,12 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
       }
     }
   }
+
+  herb_free_tokens(&tokens);
 }
 
 void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
-  const array_T* tokens = herb_lex(source);
+  array_T* tokens = herb_lex(source);
 
   for (size_t i = 0; i < array_size(tokens); i++) {
     const token_T* token = array_get(tokens, i);
@@ -108,6 +116,8 @@ void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
       default: buffer_append(output, token->value);
     }
   }
+
+  herb_free_tokens(&tokens);
 }
 
 char* herb_extract_ruby_with_semicolons(const char* source) {

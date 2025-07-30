@@ -34,5 +34,11 @@ analyzed_ruby_T* init_analyzed_ruby(char* source) {
 }
 
 void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
-  // TODO
+  if (!analyzed) { return; }
+
+  if (analyzed->parsed && analyzed->root != NULL) { pm_node_destroy(&analyzed->parser, analyzed->root); }
+
+  pm_parser_free(&analyzed->parser);
+
+  free(analyzed);
 }

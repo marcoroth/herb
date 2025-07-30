@@ -1,0 +1,10 @@
+module Herb
+  <%- errors.each do |error| -%>
+  type serialized_<%= error.human %> = serialized_error & {
+    <%- error.fields.each do |field| -%>
+    <%= field.name %>: <%= field.ruby_type %>,
+    <%- end -%>
+  }
+
+  <%- end -%>
+end

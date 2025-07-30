@@ -81,5 +81,89 @@ module Parser
         %>
       HTML
     end
+
+    test "erb output wrapped in double quotes" do
+      assert_parsed_snapshot(<<~HTML)
+        "<%= value %>"
+      HTML
+    end
+
+    test "erb output wrapped in single quotes" do
+      assert_parsed_snapshot(<<~HTML)
+        '<%= value %>'
+      HTML
+    end
+
+    test "erb output wrapped in double quotes inside if" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          "<%= value %>"
+        <% end %>
+      HTML
+    end
+
+    test "erb output wrapped in single quotes inside if" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          '<%= value %>'
+        <% end %>
+      HTML
+    end
+
+    test "multi-line erb content" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          hello
+        %>
+      HTML
+    end
+
+    test "multi-line erb content with complex ruby" do
+      assert_parsed_snapshot(<<~HTML)
+        <%=
+          if condition
+            "value1"
+          else
+            "value2"
+          end
+        %>
+      HTML
+    end
+
+    test "multi-line erb silent tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          x = 1
+          y = 2
+        %>
+      HTML
+    end
+
+    test "multi-line erb comment" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#
+          This is a comment
+          across multiple lines
+        %>
+      HTML
+    end
+
+    test "erb comment with equals sign" do
+      assert_parsed_snapshot(%(<%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>))
+    end
+
+    test "erb comment with equals sign without spaces" do
+      assert_parsed_snapshot(%(<%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>))
+    end
+
+    test "multi-line erb comment with equals sign" do
+      assert_parsed_snapshot(<<~HTML)
+        <%#=
+          link_to "New watch list",
+          new_watch_list_path,
+          class: "btn btn-ghost"
+        %>
+      HTML
+    end
   end
 end

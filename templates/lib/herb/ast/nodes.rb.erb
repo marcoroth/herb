@@ -3,9 +3,10 @@ module Herb
     <%- nodes.each do |node| -%>
     class <%= node.name -%> < Node
       <%- node.fields.each do |field| -%>
-      attr_reader :<%= field.name %>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
 
+      #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
       def initialize(<%= ["type", "location", "errors", *node.fields.map(&:name)].join(", ") %>)
         super(type, location, errors)
         <%- node.fields.each do |field| -%>
@@ -17,18 +18,44 @@ module Herb
         <%- end -%>
       end
 
+      #: () -> serialized_<%= node.human %>
       def to_hash
         super.merge({
           <%- node.fields.each do |field| -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
-        })
+        }) #: Herb::serialized_<%= node.human %>
       end
 
+      #: (Visitor) -> void
+      def accept(visitor)
+        visitor.visit_<%= node.human %>(self)
+      end
+
+      #: () -> Array[Herb::AST::Node?]
+      def child_nodes
+        [<%= node.fields.map { |field|
+          if field.is_a?(Herb::Template::NodeField)
+            field.name
+          elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
+            "*#{field.name}"
+          else
+            nil
+          end
+        }.compact.join(", ") %>]
+      end
+
+      #: () -> Array[Herb::AST::Node]
+      def compact_child_nodes
+        child_nodes.compact
+      end
+
+      #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
+      #: (?Integer) -> String
       def tree_inspect(indent = 0)
         output = +""
 

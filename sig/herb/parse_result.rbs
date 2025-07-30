@@ -1,0 +1,25 @@
+# Generated from lib/herb/parse_result.rb with RBS::Inline
+
+module Herb
+  class ParseResult < Result
+    attr_reader value: Herb::AST::DocumentNode
+
+    # : (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+    def initialize: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+
+    # : () -> Array[Herb::Errors::Error]
+    def errors: () -> Array[Herb::Errors::Error]
+
+    # : () -> bool
+    def failed?: () -> bool
+
+    # : () -> bool
+    def success?: () -> bool
+
+    # : () -> String
+    def pretty_errors: () -> String
+
+    # : (Visitor) -> void
+    def visit: (Visitor) -> void
+  end
+end

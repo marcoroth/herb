@@ -1,0 +1,59 @@
+{
+  "name": "@herb-tools/language-server",
+  "description": "Herb HTML+ERB Language Tools and Language Server Protocol integration.",
+  "version": "0.4.2",
+  "author": "Marco Roth",
+  "license": "MIT",
+  "engines": {
+    "node": "*"
+  },
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/language-server"
+  },
+  "bin": {
+    "herb-language-server": "./bin/herb-language-server"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "require": "./dist/index.cjs",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "yarn clean && tsc -b && rollup -c",
+    "dev": "tsc -b -w",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test:run"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "src/",
+    "bin/",
+    "dist/"
+  ],
+  "dependencies": {
+    "@herb-tools/formatter": "0.4.2",
+    "@herb-tools/linter": "0.4.2",
+    "@herb-tools/node-wasm": "0.4.2",
+    "dedent": "^1.6.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

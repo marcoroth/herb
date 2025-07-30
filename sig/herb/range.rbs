@@ -1,0 +1,33 @@
+# Generated from lib/herb/range.rb with RBS::Inline
+
+module Herb
+  class Range
+    attr_reader from: Integer
+
+    attr_reader to: Integer
+
+    # : (Integer, Integer) -> void
+    def initialize: (Integer, Integer) -> void
+
+    # : (Integer, Integer) -> Range
+    def self.[]: (Integer, Integer) -> Range
+
+    # : (Integer, Integer) -> Range
+    def self.from: (Integer, Integer) -> Range
+
+    # : () -> serialized_range
+    def to_a: () -> serialized_range
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def tree_inspect: () -> String
+
+    # : () -> String
+    def inspect: () -> String
+
+    # : () -> String
+    def to_s: () -> String
+  end
+end

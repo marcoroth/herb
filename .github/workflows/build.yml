@@ -2,14 +2,24 @@ name: Build
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
+          sudo apt update
 
       - name: Install APT dependencies
         run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
@@ -33,6 +43,15 @@ jobs:
 
       - name: Run Ruby Tests
         run: bundle exec rake test
+
+      - name: Steep
+        run: bundle exec steep check
+
+      - name: RBS Inline
+        run: bundle exec rake rbs_inline
+
+      # - name: Sorbet
+      #   run: bundle exec srb tc
 
       - name: Run C tests
         run: ./run_herb_tests

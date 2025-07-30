@@ -1,0 +1,16 @@
+# Generated from lib/herb/lex_result.rb with RBS::Inline
+
+module Herb
+  class LexResult < Result
+    attr_reader value: TokenList
+
+    # : (Array[Herb::Token], String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+    def initialize: (Array[Herb::Token], String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
+
+    # : () -> bool
+    def success?: () -> bool
+
+    # : () -> bool
+    def failed?: () -> bool
+  end
+end

@@ -1,0 +1,9 @@
+module Herb
+  type serialized_position = { line: Integer, column: Integer }
+  type serialized_location = { start: serialized_position, end: serialized_position }
+  type serialized_error = { type: String, location: serialized_location?, message: String }
+  type serialized_warning = { type: String, location: serialized_location?, message: String }
+  type serialized_range = [Integer, Integer]
+  type serialized_node = { type: String, location: serialized_location?, errors: Array[serialized_error] }
+  type serialized_token = { value: String, range: serialized_range?, location: serialized_location?, type: String }
+end

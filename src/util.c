@@ -43,13 +43,15 @@ int count_newlines(const char* string) {
 }
 
 char* replace_char(char* string, const char find, const char replace) {
+  char* original_string = string;
+
   while (*string != '\0') {
     if (*string == find) { *string = replace; }
 
     string++;
   }
 
-  return string;
+  return original_string;
 }
 
 char* escape_newlines(const char* input) {

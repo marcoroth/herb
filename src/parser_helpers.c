@@ -80,7 +80,10 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
 }
 
 void parser_append_literal_node_from_buffer(
-  const parser_T* parser, buffer_T* buffer, array_T* children, position_T* start
+  const parser_T* parser,
+  buffer_T* buffer,
+  array_T* children,
+  position_T* start
 ) {
   if (buffer_length(buffer) == 0) { return; }
 
@@ -115,7 +118,9 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
 }
 
 AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
-  AST_HTML_OPEN_TAG_NODE_T* open_tag, array_T* body, array_T* errors
+  AST_HTML_OPEN_TAG_NODE_T* open_tag,
+  array_T* body,
+  array_T* errors
 ) {
   append_missing_closing_tag_error(
     open_tag->tag_name,
@@ -137,7 +142,9 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
 }
 
 void parser_handle_mismatched_tags(
-  const parser_T* parser, const AST_HTML_CLOSE_TAG_NODE_T* close_tag, array_T* errors
+  const parser_T* parser,
+  const AST_HTML_CLOSE_TAG_NODE_T* close_tag,
+  array_T* errors
 ) {
   if (array_size(parser->open_tags_stack) > 0) {
     token_T* expected_tag = array_last(parser->open_tags_stack);
