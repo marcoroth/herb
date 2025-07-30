@@ -278,5 +278,52 @@ module Parser
         </style>
       HTML
     end
+
+    test "closing tag with newline before >" do
+      assert_parsed_snapshot(<<-HTML)
+        <a href="https://example.com/">Link Text</a
+        >
+      HTML
+    end
+
+    test "closing tag with whitespace and newline before >" do
+      assert_parsed_snapshot(<<-HTML)
+        <div>Content</div
+        >
+      HTML
+    end
+
+    test "multiple closing tags with newlines before >" do
+      assert_parsed_snapshot(<<-HTML)
+        <div>
+          <span>Text</span
+          >
+        </div
+        >
+      HTML
+    end
+
+    test "nested tags with newlines in closing tags from issue 312" do
+      assert_parsed_snapshot(<<-HTML)
+        <div
+          id="footer-img"
+          class="d-flex align-items-start justify-content-lg-start"
+        >
+          <a
+            href="https://example.com/"
+            class="stacked-lg"
+            >Link Text</a
+          >
+        </div>
+      HTML
+    end
+
+    test "self-closing tag with closing tag having newline before >" do
+      assert_parsed_snapshot(<<-HTML)
+        <img src="image.jpg" />
+        <br></br
+        >
+      HTML
+    end
   end
 end

@@ -441,6 +441,12 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
+
+  while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+    token_T* whitespace = parser_advance(parser);
+    token_free(whitespace);
+  }
+
   token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
 
   if (tag_name != NULL && is_void_element(tag_name->value) && parser_in_svg_context(parser) == false) {
