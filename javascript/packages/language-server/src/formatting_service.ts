@@ -1,4 +1,4 @@
-import { Connection, TextDocuments, DocumentFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
+import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
@@ -146,5 +146,72 @@ export class FormattingService {
 
   async formatDocumentIgnoreConfig(params: DocumentFormattingParams): Promise<TextEdit[]> {
     return this.performFormatting(params)
+  }
+
+  private async performRangeFormatting(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
+    const document = this.documents.get(params.textDocument.uri)
+
+    if (!document) {
+      return []
+    }
+
+    try {
+      const options = await this.getFormatterOptions(params.textDocument.uri)
+      const formatter = new Formatter(this.project.herbBackend, options)
+
+      const rangeText = document.getText(params.range)
+      const startPosition = params.range.start
+
+      const startLine = document.getText({
+        start: Position.create(startPosition.line, 0),
+        end: startPosition
+      })
+
+      const baseIndent = startLine.match(/^\s*/)?.[0] || ''
+      const baseIndentLevel = Math.floor(baseIndent.length / options.indentWidth)
+
+      let formattedText = formatter.format(rangeText, { ...options })
+
+      if (baseIndentLevel > 0) {
+        const lines = formattedText.split('\n')
+        const indentString = ' '.repeat(baseIndentLevel * options.indentWidth)
+
+        formattedText = lines.map((line, index) => {
+          if (index === 0 || line.trim() === '') {
+            return line
+          }
+
+          return indentString + line
+        }).join('\n')
+      }
+
+      if (!rangeText.endsWith('\n') && formattedText.endsWith('\n')) {
+        formattedText = formattedText.slice(0, -1)
+      }
+
+      if (formattedText === rangeText) {
+        return []
+      }
+
+      return [{ range: params.range, newText: formattedText }]
+    } catch (error) {
+      this.connection.console.error(`Range formatting failed: ${error}`)
+
+      return []
+    }
+  }
+
+  async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
+    const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
+
+    if (!(await this.shouldFormatFile(filePath))) {
+      return []
+    }
+
+    return this.performRangeFormatting(params)
+  }
+
+  async formatRangeIgnoreConfig(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
+    return this.performRangeFormatting(params)
   }
 }

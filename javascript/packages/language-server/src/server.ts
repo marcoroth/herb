@@ -8,6 +8,7 @@ import {
   InitializeResult,
   Connection,
   DocumentFormattingParams,
+  DocumentRangeFormattingParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -32,6 +33,7 @@ export class Server {
         capabilities: {
           textDocumentSync: TextDocumentSyncKind.Incremental,
           documentFormattingProvider: true,
+          documentRangeFormattingProvider: true,
         },
       }
 
@@ -93,7 +95,7 @@ export class Server {
           await this.service.refreshConfig()
 
           const documents = this.service.documentService.getAll()
-          await Promise.all(documents.map(document => 
+          await Promise.all(documents.map(document =>
             this.service.diagnostics.refreshDocument(document)
           ))
         }
@@ -102,6 +104,10 @@ export class Server {
 
     this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {
       return this.service.formatting.formatDocument(params)
+    })
+
+    this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
+      return this.service.formatting.formatRange(params)
     })
   }
 
