@@ -206,6 +206,32 @@ describe("erb-prefer-image-tag-helper", () => {
     expect(lintResult.offenses[0].severity).toBe("warning")
   })
 
+  test("fails for img with ERB expression containing string literal followed by another ERB tag", () => {
+    const html = '<img src="<%= root_path %>/assets/<%= "icon.png" %>" alt="Icon">'
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses).toHaveLength(1)
+
+    expect(lintResult.offenses[0].rule).toBe("erb-prefer-image-tag-helper")
+    expect(lintResult.offenses[0].message).toBe('Prefer `image_tag` helper over manual `<img>` with dynamic ERB expressions. Use `<%= image_tag "#{root_path}/assets/#{"icon.png"}", alt: "..." %>` instead.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("shouldn't flag empty src attribute", () => {
+    const html = '<img src="" alt="Empty"><img src="    " alt="Empty">'
+    const result = Herb.parse(html)
+    const linter = new Linter([ERBPreferImageTagHelperRule])
+    const lintResult = linter.lint(result.value)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
   test("passes for img tags with static paths only", () => {
     const html = dedent`
       <div>
