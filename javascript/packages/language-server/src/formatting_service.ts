@@ -160,24 +160,47 @@ export class FormattingService {
       const formatter = new Formatter(this.project.herbBackend, options)
 
       const rangeText = document.getText(params.range)
-      const startPosition = params.range.start
+      const lines = rangeText.split('\n')
 
-      const startLine = document.getText({
-        start: Position.create(startPosition.line, 0),
-        end: startPosition
-      })
+      let minIndentLevel = Infinity
 
-      const baseIndent = startLine.match(/^\s*/)?.[0] || ''
-      const baseIndentLevel = Math.floor(baseIndent.length / options.indentWidth)
+      for (const line of lines) {
+        const trimmedLine = line.trim()
 
-      let formattedText = formatter.format(rangeText, { ...options })
+        if (trimmedLine !== '') {
+          const indent = line.match(/^\s*/)?.[0] || ''
+          const indentLevel = Math.floor(indent.length / options.indentWidth)
 
-      if (baseIndentLevel > 0) {
-        const lines = formattedText.split('\n')
-        const indentString = ' '.repeat(baseIndentLevel * options.indentWidth)
+          minIndentLevel = Math.min(minIndentLevel, indentLevel)
+        }
+      }
 
-        formattedText = lines.map((line, index) => {
-          if (index === 0 || line.trim() === '') {
+      if (minIndentLevel === Infinity) {
+        minIndentLevel = 0
+      }
+
+      let textToFormat = rangeText
+
+      if (minIndentLevel > 0) {
+        const minIndentString = ' '.repeat(minIndentLevel * options.indentWidth)
+
+        textToFormat = lines.map(line => {
+          if (line.trim() === '') {
+            return line
+          }
+
+          return line.startsWith(minIndentString) ? line.slice(minIndentString.length) : line
+        }).join('\n')
+      }
+
+      let formattedText = formatter.format(textToFormat, { ...options })
+
+      if (minIndentLevel > 0) {
+        const formattedLines = formattedText.split('\n')
+        const indentString = ' '.repeat(minIndentLevel * options.indentWidth)
+
+        formattedText = formattedLines.map((line, _index) => {
+          if (line.trim() === '') {
             return line
           }
 
@@ -185,8 +208,8 @@ export class FormattingService {
         }).join('\n')
       }
 
-      if (!rangeText.endsWith('\n') && formattedText.endsWith('\n')) {
-        formattedText = formattedText.slice(0, -1)
+      if (!formattedText.endsWith('\n')) {
+        formattedText += '\n'
       }
 
       if (formattedText === rangeText) {

@@ -373,5 +373,48 @@ describe('FormattingService', () => {
 
       expect(result).toBeDefined()
     })
+
+    it('should calculate minimum indentation across all selected lines', async () => {
+      const input = dedent`
+        <div>
+          <div>
+            <div>
+              <p>some <%= formatted %> text, that needs <% needs %> <% to_be_formatted %> without being reset to the <b><i>start of the line</i></b>.</p>
+            </div>
+          </div>
+        </div>
+      `
+
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const range: Range = {
+        start: Position.create(3, 0),
+        end: Position.create(3, 150)
+      }
+
+      const params: DocumentRangeFormattingParams = {
+        textDocument: { uri: 'file:///test/file.erb' },
+        range,
+        options: { tabSize: 2, insertSpaces: true }
+      }
+
+      const result = await formattingService.formatRange(params)
+
+      expect(result[0].newText).toBe(
+        '      <p>\n' +
+        '        some\n' +
+        '        <%= formatted %>\n' +
+        '        text, that needs\n' +
+        '        <% needs %>\n' +
+        '        <% to_be_formatted %>\n' +
+        '        without being reset to the\n' +
+        '        <b>\n' +
+        '          <i>start of the line</i>\n' +
+        '        </b>\n' +
+        '        .\n' +
+        '      </p>\n'
+      )
+    })
   })
 })
