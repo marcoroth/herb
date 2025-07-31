@@ -105,5 +105,21 @@ module Parser
     test "emoji as only content" do
       assert_parsed_snapshot("<b>🌿</b>")
     end
+
+    test "non-breaking space (U+00A0) as only content" do
+      assert_parsed_snapshot("<b> </b>")
+    end
+
+    test "non-breaking space mixed with ERB - issue 310" do
+      assert_parsed_snapshot("<p><%= hello %> !</p>")
+    end
+
+    test "multiple non-breaking spaces in text" do
+      assert_parsed_snapshot("<p>Hello   World</p>")
+    end
+
+    test "non-breaking space in attribute value" do
+      assert_parsed_snapshot('<div title="Hello World">Content</div>')
+    end
   end
 end

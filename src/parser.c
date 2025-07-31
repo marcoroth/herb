@@ -630,6 +630,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           TOKEN_EQUALS,
           TOKEN_EXCLAMATION,
           TOKEN_IDENTIFIER,
+          TOKEN_NBSP,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
           TOKEN_QUOTE,
@@ -645,8 +646,8 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
     parser_append_unexpected_error(
       parser,
       "Unexpected token",
-      "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, or "
-      "TOKEN_NEWLINE",
+      "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, "
+      "TOKEN_NBSP, or TOKEN_NEWLINE",
       errors
     );
   }
