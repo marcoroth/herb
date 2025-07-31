@@ -1,7 +1,7 @@
-import { BaseRuleVisitor, getTagName, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
 
 import type { Rule, LintOffense } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -28,29 +28,87 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
       return
     }
 
-    const srcValue = getAttributeValue(srcAttribute)
+    if (!srcAttribute.value) {
+      return
+    }
 
-    if (srcValue && this.containsImagePathHelper(srcValue)) {
+    const valueNode = srcAttribute.value as HTMLAttributeValueNode
+    const hasERBContent = this.containsERBContent(valueNode)
+
+    if (hasERBContent) {
+      const suggestedExpression = this.buildSuggestedExpression(valueNode)
+
       this.addOffense(
-        'Prefer `image_tag` helper over manual `<img>` with Rails URL helpers. Use `<%= image_tag "filename.png", alt: "description" %>` instead.',
-        node.tag_name!.location,
+        `Prefer \`image_tag\` helper over manual \`<img>\` with dynamic ERB expressions. Use \`<%= image_tag ${suggestedExpression}, alt: "..." %>\` instead.`,
+        srcAttribute.location,
         "warning"
       )
     }
   }
 
-  private containsImagePathHelper(srcValue: string): boolean {
-    const patterns = [
-      /<%=\s*image_path\s*\(/,
-      /<%=\s*asset_path\s*\(/,
-      /<%=\s*Rails\.application\.routes\.url_helpers\./,
-      /<%=\s*root_url/,
-      /<%=\s*root_path/,
-      /<%=\s*.*_url.*\//,
-      /<%=\s*.*_path.*\//
-    ]
+  private containsERBContent(valueNode: HTMLAttributeValueNode): boolean {
+    if (!valueNode.children) return false
 
-    return patterns.some(pattern => pattern.test(srcValue))
+    return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+  }
+
+  private buildSuggestedExpression(valueNode: HTMLAttributeValueNode): string {
+    if (!valueNode.children) return "expression"
+
+    let hasText = false
+    let hasERB = false
+
+    for (const child of valueNode.children) {
+      if (child.type === "AST_ERB_CONTENT_NODE") {
+        hasERB = true
+      } else if (child.type === "AST_LITERAL_NODE") {
+        const literalNode = child as LiteralNode
+
+        if (literalNode.content && literalNode.content.trim()) {
+          hasText = true
+        }
+      }
+    }
+
+    if (hasText && hasERB) {
+      let result = '"'
+
+      for (const child of valueNode.children) {
+        if (child.type === "AST_ERB_CONTENT_NODE") {
+          const erbNode = child as ERBContentNode
+
+          result += `#{${(erbNode.content?.value || "").trim()}}`
+        } else if (child.type === "AST_LITERAL_NODE") {
+          const literalNode = child as LiteralNode
+
+          result += literalNode.content || ""
+        }
+      }
+
+      result += '"'
+
+      return result
+    }
+
+    if (hasERB && !hasText) {
+      const erbNodes = valueNode.children.filter(child => child.type === "AST_ERB_CONTENT_NODE") as ERBContentNode[]
+
+      if (erbNodes.length === 1) {
+        return (erbNodes[0].content?.value || "").trim()
+      } else if (erbNodes.length > 1) {
+        let result = '"'
+
+        for (const erbNode of erbNodes) {
+          result += `#{${(erbNode.content?.value || "").trim()}}`
+        }
+
+        result += '"'
+
+        return result
+      }
+    }
+
+    return "expression"
   }
 }
 
