@@ -8,11 +8,7 @@ Prefer using Rails' `image_tag` helper over manual `<img>` tags with dynamic ERB
 
 ## Rationale
 
-- The `image_tag` helper properly escapes the `src` value
-- Reduces template complexity
-- Simplifies adding attributes
-- Ensures consistent rendering
-- Prevents interpolation issues
+The `image_tag` helper provides several advantages over manual `<img>` tags with dynamic ERB expressions. It properly escapes the `src` value to prevent XSS vulnerabilities and ensures consistent rendering across different contexts. Using `image_tag` also reduces template complexity by eliminating the need for manual string interpolation and makes it easier to add additional attributes like `alt`, `class`, or `data-*` attributes in a clean, readable way. Additionally, it prevents common interpolation issues that can arise when mixing ERB expressions with static text in attribute values.
 
 ## Examples
 
