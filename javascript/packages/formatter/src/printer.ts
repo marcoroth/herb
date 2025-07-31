@@ -95,7 +95,7 @@ export class Printer extends Visitor {
       this.visit(node)
     }
 
-    return this.lines.filter(Boolean).join("\n")
+    return this.lines.join("\n")
   }
 
   private push(line: string) {
@@ -130,7 +130,29 @@ export class Printer extends Visitor {
   // --- Visitor methods ---
 
   visitDocumentNode(node: DocumentNode): void {
-    node.children.forEach(child => this.visit(child))
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i]
+
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const textNode = child as HTMLTextNode
+        const isWhitespaceOnly = textNode.content.trim() === ""
+
+        if (isWhitespaceOnly) {
+          const hasPrevNonWhitespace = i > 0 && this.isNonWhitespaceNode(node.children[i - 1])
+          const hasNextNonWhitespace = i < node.children.length - 1 && this.isNonWhitespaceNode(node.children[i + 1])
+
+          const hasMultipleNewlines = textNode.content.includes('\n\n')
+
+          if (hasPrevNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
+            this.push("")
+          }
+
+          continue
+        }
+      }
+
+      this.visit(child)
+    }
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -740,6 +762,18 @@ export class Printer extends Visitor {
   }
 
   // --- Utility methods ---
+
+  private isNonWhitespaceNode(node: Node): boolean {
+    if (node instanceof HTMLTextNode || (node as any).type === 'AST_HTML_TEXT_NODE') {
+      return (node as HTMLTextNode).content.trim() !== ""
+    }
+
+    if (node instanceof WhitespaceNode || (node as any).type === 'AST_WHITESPACE_NODE') {
+      return false
+    }
+
+    return true
+  }
 
   private renderInlineOpen(name: string, attributes: HTMLAttributeNode[], selfClose: boolean, inlineNodes: Node[] = [], allChildren: Node[] = []): string {
     const parts = attributes.map(attribute => this.renderAttribute(attribute))
