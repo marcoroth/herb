@@ -624,6 +624,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
     if (token_is_any_of(
           parser,
           TOKEN_AMPERSAND,
+          TOKEN_AT,
           TOKEN_CHARACTER,
           TOKEN_COLON,
           TOKEN_DASH,
@@ -647,7 +648,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
       parser,
       "Unexpected token",
       "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, "
-      "TOKEN_NBSP, or TOKEN_NEWLINE",
+      "TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE",
       errors
     );
   }

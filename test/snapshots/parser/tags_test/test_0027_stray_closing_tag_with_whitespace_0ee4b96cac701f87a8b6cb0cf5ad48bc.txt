@@ -1,9 +1,9 @@
 @ DocumentNode (location: (1:0)-(1:24))
 ├── errors: (1 error)
 │   └── @ UnexpectedError (location: (1:16)-(1:17))
-│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, or TOKEN_NEWLINE`, found: `TOKEN_LT`."
+│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_LT`."
 │       ├── description: "Unexpected token"
-│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, or TOKEN_NEWLINE"
+│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
 │       └── found: "TOKEN_LT"
 │
 └── children: (2 items)
