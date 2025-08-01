@@ -1,6 +1,7 @@
 import { BaseRuleVisitor, forEachAttribute } from "./rule-utils.js"
 
-import type { ParserRule, LintOffense } from "../types.js"
+import { ParserRule } from "../types.js"
+import type { LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNameNode, Node } from "@herb-tools/core"
 
 class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
@@ -48,7 +49,7 @@ class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoDuplicateAttributesRule implements ParserRule {
+export class HTMLNoDuplicateAttributesRule extends ParserRule {
   name = "html-no-duplicate-attributes"
 
   check(node: Node): LintOffense[] {

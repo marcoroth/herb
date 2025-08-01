@@ -1,6 +1,7 @@
 import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
 
-import type { ParserRule, LintOffense } from "../types.js"
+import { ParserRule } from "../types.js"
+import type { LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
@@ -73,7 +74,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoBlockInsideInlineRule implements ParserRule {
+export class HTMLNoBlockInsideInlineRule extends ParserRule {
   name = "html-no-block-inside-inline"
 
   check(node: Node): LintOffense[] {

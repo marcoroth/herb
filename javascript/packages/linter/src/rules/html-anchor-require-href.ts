@@ -1,6 +1,7 @@
 import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
 
-import type { ParserRule, LintOffense } from "../types.js"
+import { ParserRule } from "../types.js"
+import type { LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, Node } from "@herb-tools/core"
 
 class AnchorRechireHrefVisitor extends BaseRuleVisitor {
@@ -26,7 +27,7 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLAnchorRequireHrefRule implements ParserRule {
+export class HTMLAnchorRequireHrefRule extends ParserRule {
   name = "html-anchor-require-href"
 
   check(node: Node): LintOffense[] {
