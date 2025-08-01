@@ -307,7 +307,34 @@ export class Printer extends Visitor {
         } else if (node.is_void) {
           this.push(indent + inline)
         } else {
-          this.push(indent + inline.replace('>', `></${tagName}>`))
+          let result = `<${tagName}`
+
+          if (attributes.length > 0) {
+            result += ` ${attributes.map(attr => this.renderAttribute(attr)).join(" ")}`
+          }
+
+          if (inlineNodes.length > 0) {
+            const currentIndentLevel = this.indentLevel
+            this.indentLevel = 0
+            const tempLines = this.lines
+            this.lines = []
+
+            inlineNodes.forEach(node => {
+              const wasInlineMode = this.inlineMode
+              this.inlineMode = true
+              this.visit(node)
+              this.inlineMode = wasInlineMode
+            })
+
+            const inlineContent = this.lines.join("")
+            this.lines = tempLines
+            this.indentLevel = currentIndentLevel
+
+            result += inlineContent
+          }
+
+          result += `></${tagName}>`
+          this.push(indent + result)
         }
 
         return
