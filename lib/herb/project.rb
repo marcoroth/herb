@@ -366,6 +366,8 @@ module Herb
         end
 
         puts "\nResults saved to #{output_file}" unless no_log_file
+
+        problem_files.any?
       ensure
         log.close unless no_log_file
       end
