@@ -18,7 +18,7 @@ Trailing newlines are a common convention in Ruby and are enforced by tools like
 
 ### ✅ Good
 
-```erb
+```
 <%= render partial: "header" %>
 <%= render partial: "footer" %>
 ```
@@ -27,7 +27,7 @@ Trailing newlines are a common convention in Ruby and are enforced by tools like
 
 ```erb
 <%= render partial: "header" %>
-<%= render partial: "footer" %>▌  <!-- No newline at end of file -->
+<%= render partial: "footer" %>▌
 ```
 
 ## References

@@ -303,6 +303,22 @@ export const ARIA_ATTRIBUTES =  new Set([
 ])
 
 /**
+ * Helper function to create a location at the end of the source with a 1-character range
+ */
+export function createEndOfFileLocation(source: string): Location {
+  const lines = source.split('\n')
+  const lastLineNumber = lines.length
+  const lastLine = lines[lines.length - 1]
+  const lastColumnNumber = lastLine.length
+
+  const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
+  const start = new Position(lastLineNumber, startColumn)
+  const end = new Position(lastLineNumber, lastColumnNumber)
+
+  return new Location(start, end)
+}
+
+/**
  * Checks if an element is inline
  */
 export function isInlineElement(tagName: string): boolean {
@@ -445,19 +461,6 @@ export abstract class BaseLexerRuleVisitor {
     // Default implementation does nothing
   }
 
-  /**
-   * Helper method to create a location at the end of the source
-   */
-  protected createEndOfFileLocation(source: string): Location {
-    const lines = source.split('\n')
-    const lastLineNumber = lines.length
-    const lastColumnNumber = lines[lines.length - 1].length
-
-    const start = new Position(lastLineNumber, lastColumnNumber)
-    const end = new Position(lastLineNumber, lastColumnNumber)
-
-    return new Location(start, end)
-  }
 }
 
 /**
@@ -505,20 +508,6 @@ export abstract class BaseSourceRuleVisitor {
    * Override this method to implement source-level checks
    */
   protected abstract visitSource(source: string): void
-
-  /**
-   * Helper method to create a location at the end of the source
-   */
-  protected createEndOfFileLocation(source: string): Location {
-    const lines = source.split('\n')
-    const lastLineNumber = lines.length
-    const lastColumnNumber = lines[lines.length - 1].length
-
-    const start = new Position(lastLineNumber, lastColumnNumber)
-    const end = new Position(lastLineNumber, lastColumnNumber)
-
-    return new Location(start, end)
-  }
 
   /**
    * Helper method to create a location for a specific position in the source
