@@ -1,8 +1,8 @@
 #include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/token.h"
-#include "include/util.h"
 #include "include/utf8.h"
+#include "include/util.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -86,12 +86,10 @@ static void lexer_advance(lexer_T* lexer) {
 }
 
 static void lexer_advance_utf8_bytes(lexer_T* lexer, int byte_count) {
-  if (byte_count <= 0) return;
+  if (byte_count <= 0) { return; }
 
   if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
-    if (!is_newline(lexer->current_character)) {
-      lexer->current_column++;
-    }
+    if (!is_newline(lexer->current_character)) { lexer->current_column++; }
 
     lexer->current_position += byte_count;
 
@@ -139,15 +137,11 @@ static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
   int char_byte_length = utf8_sequence_length(lexer->source, lexer->current_position, lexer->source_length);
 
-  if (char_byte_length <= 1) {
-    return lexer_advance_current(lexer, type);
-  }
+  if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
 
   char* utf8_char = malloc(char_byte_length + 1);
 
-  if (!utf8_char) {
-    return lexer_advance_current(lexer, type);
-  }
+  if (!utf8_char) { return lexer_advance_current(lexer, type); }
 
   for (int i = 0; i < char_byte_length; i++) {
     if (lexer->current_position + i >= lexer->source_length) {

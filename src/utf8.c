@@ -25,9 +25,9 @@ bool utf8_is_valid_continuation_byte(unsigned char byte) {
 }
 
 int utf8_sequence_length(const char* str, size_t position, size_t max_length) {
-  if (position >= max_length) return 0;
+  if (position >= max_length) { return 0; }
 
-  unsigned char first_byte = (unsigned char)str[position];
+  unsigned char first_byte = (unsigned char) str[position];
   int expected_length = utf8_char_byte_length(first_byte);
 
   if (position + expected_length > max_length) {
@@ -36,7 +36,7 @@ int utf8_sequence_length(const char* str, size_t position, size_t max_length) {
 
   if (expected_length > 1) {
     for (int i = 1; i < expected_length; i++) {
-      if (!utf8_is_valid_continuation_byte((unsigned char)str[position + i])) {
+      if (!utf8_is_valid_continuation_byte((unsigned char) str[position + i])) {
         return 1; // Invalid continuation byte, treat first byte as single byte
       }
     }
