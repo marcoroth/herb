@@ -115,6 +115,14 @@ export class Printer extends Visitor {
   }
 
   /**
+   * Format ERB content with proper spacing around the inner content.
+   * Returns empty string if content is empty, otherwise wraps content with single spaces.
+   */
+  private formatERBContent(content: string): string {
+    return content.trim() ? ` ${content.trim()} ` : ""
+  }
+
+  /**
    * Print an ERB tag (<% %> or <%= %>) with single spaces around inner content.
    */
   private printERBNode(node: ERBNode): void {
@@ -122,7 +130,7 @@ export class Printer extends Visitor {
     const open = node.tag_opening?.value ?? ""
     const close = node.tag_closing?.value ?? ""
     const content = node.content?.value ?? ""
-    const inner = content.trim() ? ` ${content.trim()} ` : ""
+    const inner = this.formatERBContent(content)
 
     this.push(indent + open + inner + close)
   }
@@ -631,7 +639,8 @@ export class Printer extends Visitor {
       const content = node.content?.value ?? ""
       const close = node.tag_closing?.value ?? ""
 
-      this.lines.push(open + content + close)
+      const inner = this.formatERBContent(content)
+      this.lines.push(open + inner + close)
 
       if (node.statements.length > 0) {
         this.lines.push(" ")
@@ -663,7 +672,8 @@ export class Printer extends Visitor {
         const endContent = endNode.content?.value ?? ""
         const endClose = endNode.tag_closing?.value ?? ""
 
-        this.lines.push(endOpen + endContent + endClose)
+        const endInner = this.formatERBContent(endContent)
+        this.lines.push(endOpen + endInner + endClose)
       }
     } else {
       this.printERBNode(node)
@@ -956,7 +966,7 @@ export class Printer extends Visitor {
           const erbContent = erbNode.content?.value ?? ""
           const close = erbNode.tag_closing?.value ?? ""
 
-          content += `${open} ${erbContent.trim()} ${close}`
+          content += `${open}${this.formatERBContent(erbContent)}${close}`
         }
       }
 
@@ -1028,7 +1038,7 @@ export class Printer extends Visitor {
         const erbContent = erbNode.content?.value ?? ""
         const close = erbNode.tag_closing?.value ?? ""
 
-        content += `${open} ${erbContent.trim()} ${close}`
+        content += `${open}${this.formatERBContent(erbContent)}${close}`
       }
     }
 
