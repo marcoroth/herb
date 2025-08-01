@@ -30,9 +30,9 @@ describe("svg-tag-name-capitalization", () => {
         </text>
       </svg>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -53,9 +53,9 @@ describe("svg-tag-name-capitalization", () => {
         </filter>
       </svg>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -75,9 +75,9 @@ describe("svg-tag-name-capitalization", () => {
         </CLIPPATH>
       </svg>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(6) // 3 opening + 3 closing tags
     expect(lintResult.offenses[0].message).toBe('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
@@ -103,9 +103,9 @@ describe("svg-tag-name-capitalization", () => {
           repeatCount="indefinite" />
       </svg>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -122,9 +122,9 @@ describe("svg-tag-name-capitalization", () => {
         </clipPath>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -142,9 +142,9 @@ describe("svg-tag-name-capitalization", () => {
         <P>Outside SVG again</P>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2) // 1 opening + 1 closing tag
     expect(lintResult.offenses[0].message).toBe('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')

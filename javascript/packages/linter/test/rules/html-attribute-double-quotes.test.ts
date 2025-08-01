@@ -10,9 +10,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("passes for double quoted attributes", () => {
     const html = '<input type="text" value="Username">'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -21,9 +21,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("fails for single quoted attributes", () => {
     const html = "<input type='text' value='Username'>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(2)
@@ -40,9 +40,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("passes for mixed content with double quotes", () => {
     const html = '<a href="/profile" title="User Profile" data-controller="dropdown">Profile</a>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -50,9 +50,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("fails for mixed content with single quotes", () => {
     const html = "<a href='/profile' title='User Profile' data-controller='dropdown'>Profile</a>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(3)
@@ -63,9 +63,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("passes for unquoted attributes (handled by other rule)", () => {
     const html = '<input type=text value=Username>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -73,9 +73,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("passes for attributes without values", () => {
     const html = '<input type="checkbox" checked disabled>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -83,9 +83,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("handles self-closing tags with single quotes", () => {
     const html = "<img src='/image.jpg' alt='Description' />"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(2)
@@ -95,9 +95,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("handles ERB with single quoted attributes", () => {
     const html = "<div data-controller='<%= controller_name %>' data-action='click->toggle#action'>Content</div>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(2)
@@ -107,9 +107,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("allows single quotes when value contains double quotes", () => {
     const html = '<div id=\'"hello"\' class=\'Say "Hello" to the world\'></div>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -118,9 +118,9 @@ describe("html-attribute-double-quotes", () => {
 
   test("still fails for single quotes when value has no double quotes", () => {
     const html = "<div id='hello' class='world'></div>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAttributeDoubleQuotesRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAttributeDoubleQuotesRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(2)

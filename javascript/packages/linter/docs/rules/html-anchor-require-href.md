@@ -4,7 +4,7 @@
 
 ## Description
 
-Disallow the use of anchor tags without anhref attribute in HTML templates. Use if you want to perform an action without having the user navigated to a new URL.
+Disallow the use of anchor tags without an `href` attribute in HTML templates. Use if you want to perform an action without having the user navigated to a new URL.
 
 ## Rationale
 

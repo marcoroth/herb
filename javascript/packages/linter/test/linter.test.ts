@@ -14,12 +14,12 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can be instantiated", () => {
-      const linter = new Linter()
+      const linter = new Linter(Herb)
       expect(linter).toBeInstanceOf(Linter)
     })
 
     test("can be instantiated with custom rules", () => {
-      const linter = new Linter([HTMLTagNameLowercaseRule])
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
       expect(linter).toBeInstanceOf(Linter)
     })
   })
@@ -27,9 +27,8 @@ describe("@herb-tools/linter", () => {
   describe("Linter functionality", () => {
     test("can lint a document with default rules", () => {
       const html = '<div><span>Hello</span></div>'
-      const result = Herb.parse(html)
-      const linter = new Linter()
-      const lintResult = linter.lint(result.value)
+      const linter = new Linter(Herb)
+      const lintResult = linter.lint(html)
 
       expect(lintResult).toHaveProperty('offenses')
       expect(lintResult).toHaveProperty('errors')
@@ -38,10 +37,9 @@ describe("@herb-tools/linter", () => {
     })
 
     test("returns correct error and warning counts", () => {
-      const html = '<DIV><SPAN>Hello</SPAN></DIV>'
-      const result = Herb.parse(html)
-      const linter = new Linter()
-      const lintResult = linter.lint(result.value)
+      const html = '<DIV><SPAN>Hello</SPAN></DIV>\n'
+      const linter = new Linter(Herb)
+      const lintResult = linter.lint(html)
 
       expect(lintResult.errors).toBe(4)
       expect(lintResult.warnings).toBe(0)
@@ -53,9 +51,8 @@ describe("@herb-tools/linter", () => {
 
     test("can run with no rules", () => {
       const html = '<DIV><SPAN>Hello</SPAN></DIV>'
-      const result = Herb.parse(html)
-      const linter = new Linter([])
-      const lintResult = linter.lint(result.value)
+      const linter = new Linter(Herb, [])
+      const lintResult = linter.lint(html)
 
       expect(lintResult.errors).toBe(0)
       expect(lintResult.warnings).toBe(0)
@@ -69,10 +66,10 @@ describe("@herb-tools/linter", () => {
             <span><%= item.name %></span>
           <% end %>
         </div>
-      `
-      const result = Herb.parse(html)
-      const linter = new Linter()
-      const lintResult = linter.lint(result.value)
+      ` + '\n'
+
+      const linter = new Linter(Herb)
+      const lintResult = linter.lint(html)
 
       expect(lintResult.errors).toBe(0)
     })

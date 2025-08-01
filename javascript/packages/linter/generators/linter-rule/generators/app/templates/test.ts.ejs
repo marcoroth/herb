@@ -17,9 +17,8 @@ describe("<%= ruleClassName %>", () => {
         <%%= title %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([<%= ruleClassName %>])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [<%= ruleClassName %>])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -31,9 +30,8 @@ describe("<%= ruleClassName %>", () => {
       <h1>
         <%%= title %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([<%= ruleClassName %>])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [<%= ruleClassName %>])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)

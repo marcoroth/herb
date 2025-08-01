@@ -3,7 +3,7 @@ import {
   AttributeVisitorMixin,
 } from "./rule-utils.js";
 
-import type { LintOffense, Rule } from "../types.js";
+import type { LintOffense, ParserRule } from "../types.js";
 import type {
   HTMLAttributeNode,
   HTMLOpenTagNode,
@@ -31,7 +31,7 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAriaAttributeMustBeValid implements Rule {
+export class HTMLAriaAttributeMustBeValid implements ParserRule {
   name = "html-aria-attribute-must-be-valid";
 
   check(node: Node): LintOffense[] {

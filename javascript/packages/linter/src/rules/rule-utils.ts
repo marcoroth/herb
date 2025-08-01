@@ -1,5 +1,7 @@
 import {
-  Visitor
+  Visitor,
+  Position,
+  Location
 } from "@herb-tools/core"
 
 import type {
@@ -10,7 +12,8 @@ import type {
   HTMLOpenTagNode,
   HTMLSelfCloseTagNode,
   LiteralNode,
-  Location
+  LexResult,
+  Token
 } from "@herb-tools/core"
 import type { LintOffense, LintSeverity, } from "../types.js"
 
@@ -381,5 +384,154 @@ export function forEachAttribute(
     if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
       callback(child as HTMLAttributeNode)
     }
+  }
+}
+
+/**
+ * Base lexer visitor class that provides common functionality for lexer-based rule visitors
+ */
+export abstract class BaseLexerRuleVisitor {
+  public readonly offenses: LintOffense[] = []
+  protected ruleName: string
+
+  constructor(ruleName: string) {
+    this.ruleName = ruleName
+  }
+
+  /**
+   * Helper method to create a lint offense for lexer rules
+   */
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+    return {
+      rule: this.ruleName,
+      code: this.ruleName,
+      source: "Herb Linter",
+      message,
+      location,
+      severity,
+    }
+  }
+
+  /**
+   * Helper method to add an offense to the offenses array
+   */
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
+    this.offenses.push(this.createOffense(message, location, severity))
+  }
+
+  /**
+   * Main entry point for lexer rule visitors
+   * @param lexResult - The lexer result containing tokens and source
+   */
+  visit(lexResult: LexResult): void {
+    this.visitTokens(lexResult.value.tokens)
+  }
+
+  /**
+   * Visit all tokens
+   * Override this method to implement token-level checks
+   */
+  protected visitTokens(tokens: Token[]): void {
+    for (const token of tokens) {
+      this.visitToken(token)
+    }
+  }
+
+  /**
+   * Visit individual tokens
+   * Override this method to implement per-token checks
+   */
+  protected visitToken(_token: Token): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Helper method to create a location at the end of the source
+   */
+  protected createEndOfFileLocation(source: string): Location {
+    const lines = source.split('\n')
+    const lastLineNumber = lines.length
+    const lastColumnNumber = lines[lines.length - 1].length
+
+    const start = new Position(lastLineNumber, lastColumnNumber)
+    const end = new Position(lastLineNumber, lastColumnNumber)
+
+    return new Location(start, end)
+  }
+}
+
+/**
+ * Base source visitor class that provides common functionality for source-based rule visitors
+ */
+export abstract class BaseSourceRuleVisitor {
+  public readonly offenses: LintOffense[] = []
+  protected ruleName: string
+
+  constructor(ruleName: string) {
+    this.ruleName = ruleName
+  }
+
+  /**
+   * Helper method to create a lint offense for source rules
+   */
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+    return {
+      rule: this.ruleName as any, // Type assertion for compatibility
+      code: this.ruleName,
+      source: "Herb Linter",
+      message,
+      location,
+      severity,
+    }
+  }
+
+  /**
+   * Helper method to add an offense to the offenses array
+   */
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
+    this.offenses.push(this.createOffense(message, location, severity))
+  }
+
+  /**
+   * Main entry point for source rule visitors
+   * @param source - The raw source code
+   */
+  visit(source: string): void {
+    this.visitSource(source)
+  }
+
+  /**
+   * Visit the source code directly
+   * Override this method to implement source-level checks
+   */
+  protected abstract visitSource(source: string): void
+
+  /**
+   * Helper method to create a location at the end of the source
+   */
+  protected createEndOfFileLocation(source: string): Location {
+    const lines = source.split('\n')
+    const lastLineNumber = lines.length
+    const lastColumnNumber = lines[lines.length - 1].length
+
+    const start = new Position(lastLineNumber, lastColumnNumber)
+    const end = new Position(lastLineNumber, lastColumnNumber)
+
+    return new Location(start, end)
+  }
+
+  /**
+   * Helper method to create a location for a specific position in the source
+   */
+  protected createLocationAt(source: string, position: number): Location {
+    const beforePosition = source.substring(0, position)
+    const lines = beforePosition.split('\n')
+    const line = lines.length
+    const column = lines[lines.length - 1].length + 1
+
+    const start = new Position(line, column)
+    const end = new Position(line, column)
+
+    return new Location(start, end)
   }
 }

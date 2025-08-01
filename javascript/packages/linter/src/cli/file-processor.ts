@@ -50,12 +50,11 @@ export class FileProcessor {
       }
 
       if (!this.linter) {
-        this.linter = new Linter()
+        this.linter = new Linter(Herb)
       }
 
-      const lintResult = this.linter.lint(parseResult.value)
+      const lintResult = this.linter.lint(content)
 
-      // Get rule count on first file
       if (ruleCount === 0) {
         ruleCount = this.linter.getRuleCount()
       }
@@ -65,7 +64,6 @@ export class FileProcessor {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
-        // Collect messages for later display
         for (const offense of lintResult.offenses) {
           allDiagnostics.push({ filename, diagnostic: offense, content })
 

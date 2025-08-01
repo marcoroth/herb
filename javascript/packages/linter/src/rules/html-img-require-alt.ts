@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
 
-import type { Rule, LintOffense } from "../types.js"
+import type { ParserRule, LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
 
 class ImgRequireAltVisitor extends BaseRuleVisitor {
@@ -31,7 +31,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLImgRequireAltRule implements Rule {
+export class HTMLImgRequireAltRule implements ParserRule {
   name = "html-img-require-alt"
 
   check(node: Node): LintOffense[] {

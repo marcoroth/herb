@@ -10,9 +10,9 @@ describe("html-aria-attribute-must-be-valid", () => {
 
   it("allows a div with a valid aria attribute", () => {
     const html = '<div aria-label="Section Title"></div>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaAttributeMustBeValid])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaAttributeMustBeValid])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -21,9 +21,9 @@ describe("html-aria-attribute-must-be-valid", () => {
 
   it("ignores non-aria attributes", () => {
     const html = '<div class="foo"></div>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaAttributeMustBeValid])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaAttributeMustBeValid])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -32,9 +32,9 @@ describe("html-aria-attribute-must-be-valid", () => {
 
   it("fails when a div has an invalid aria attribute", () => {
     const html = '<div aria-bogus="foo"></div>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaAttributeMustBeValid])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaAttributeMustBeValid])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -46,9 +46,9 @@ describe("html-aria-attribute-must-be-valid", () => {
 
   it("fails for mistyped aria name", () => {
     const html = '<input type="text" aria-lable="Search" />'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaAttributeMustBeValid])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaAttributeMustBeValid])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -60,9 +60,9 @@ describe("html-aria-attribute-must-be-valid", () => {
 
   it("fails for aria-", () => {
     const html = '<input type="text" aria-="Search" />'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaAttributeMustBeValid])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaAttributeMustBeValid])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)

@@ -1,6 +1,6 @@
 import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
 
-import type { Rule, LintOffense } from "../types.js"
+import type { ParserRule, LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
@@ -112,7 +112,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 }
 
-export class ERBPreferImageTagHelperRule implements Rule {
+export class ERBPreferImageTagHelperRule implements ParserRule {
   name = "erb-prefer-image-tag-helper"
 
   check(node: Node): LintOffense[] {

@@ -1,6 +1,6 @@
 import { AttributeVisitorMixin, VALID_ARIA_ROLES } from "./rule-utils.js"
 
-import type { Rule, LintOffense } from "../types.js"
+import type { ParserRule, LintOffense } from "../types.js"
 import type { Node, HTMLAttributeNode } from "@herb-tools/core"
 
 class AriaRoleMustBeValid extends AttributeVisitorMixin {
@@ -17,7 +17,7 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAriaRoleMustBeValidRule implements Rule {
+export class HTMLAriaRoleMustBeValidRule implements ParserRule {
   name = "html-aria-role-must-be-valid"
 
   check(node: Node): LintOffense[] {

@@ -10,9 +10,9 @@ describe("html-anchor-require-href", () => {
 
   test("passes for a with href attribute", () => {
     const html = '<a href="http://example.com">My link</a>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -21,9 +21,9 @@ describe("html-anchor-require-href", () => {
 
   test("fails for a without href attribute", () => {
     const html = "<a>My link</a>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -38,9 +38,9 @@ describe("html-anchor-require-href", () => {
 
   test("fails for multiple a tags without href", () => {
     const html = "<a>My link</a><a>My other link</a>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
@@ -49,9 +49,9 @@ describe("html-anchor-require-href", () => {
 
   test("passes for img with ERB alt attribute", () => {
     const html = '<a href="<%= user.home_page_url %>">My Link</a>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -59,9 +59,9 @@ describe("html-anchor-require-href", () => {
 
   test("ignores non-a tags", () => {
     const html = "<div>My div</div>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -69,9 +69,9 @@ describe("html-anchor-require-href", () => {
 
   test("handles mixed case a tags", () => {
     const html = "<A>My link</A>"
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.offenses[0].message).toBe(

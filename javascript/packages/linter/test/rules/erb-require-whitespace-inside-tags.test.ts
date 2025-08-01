@@ -17,9 +17,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <% end %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
@@ -30,9 +30,9 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%if true%>
       <% end %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
@@ -44,9 +44,9 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%=user.name%>
       <%= user.name %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
@@ -59,9 +59,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, user.
       <% end %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.offenses[0].message).toMatch(/Add whitespace after/i)
@@ -73,9 +73,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <% end %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.offenses[0].message).toMatch(/Add whitespace before/i)
@@ -88,9 +88,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <%end%>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(6)
     expect(lintResult.offenses).toHaveLength(6)
@@ -101,9 +101,9 @@ describe("erb-require-whitespace-inside-tags", () => {
       <div>Hello</div>
       <p>World</p>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
@@ -117,9 +117,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         <h1>Hello, admin.</h1>
       <%end%>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(4)
     expect(lintResult.offenses).toHaveLength(4)
@@ -134,9 +134,9 @@ describe("erb-require-whitespace-inside-tags", () => {
 
       %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
@@ -148,9 +148,9 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%#This is a comment without spaces%>
       <%# %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.offenses).toHaveLength(2)
@@ -163,9 +163,9 @@ describe("erb-require-whitespace-inside-tags", () => {
     const html = dedent`
       <%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
@@ -175,9 +175,9 @@ describe("erb-require-whitespace-inside-tags", () => {
     const html = dedent`
       <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.offenses).toHaveLength(2)
@@ -190,9 +190,9 @@ describe("erb-require-whitespace-inside-tags", () => {
     const html = dedent`
       <%# = link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
@@ -211,9 +211,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         class: "btn btn-ghost"
       %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)

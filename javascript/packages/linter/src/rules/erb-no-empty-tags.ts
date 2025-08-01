@@ -1,6 +1,6 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import type { Rule, LintOffense } from "../types.js"
+import type { ParserRule, LintOffense } from "../types.js"
 import type { Node, ERBContentNode } from "@herb-tools/core"
 
 class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
@@ -21,7 +21,7 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
   }
 }
 
-export class ERBNoEmptyTagsRule implements Rule {
+export class ERBNoEmptyTagsRule implements ParserRule {
   name = "erb-no-empty-tags"
 
   check(node: Node): LintOffense[] {

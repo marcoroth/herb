@@ -28,9 +28,8 @@ describe("ERBNoEmptyTagsRule", () => {
 
       <%= "" %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -41,9 +40,8 @@ describe("ERBNoEmptyTagsRule", () => {
     const html = dedent`
       <%
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -54,9 +52,8 @@ describe("ERBNoEmptyTagsRule", () => {
     const html = dedent`
       <%=
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -70,9 +67,8 @@ describe("ERBNoEmptyTagsRule", () => {
         <%= %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
@@ -90,9 +86,8 @@ describe("ERBNoEmptyTagsRule", () => {
         %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(3)
     expect(lintResult.warnings).toBe(0)
@@ -112,9 +107,8 @@ describe("ERBNoEmptyTagsRule", () => {
         <%= @variable %>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -131,9 +125,8 @@ describe("ERBNoEmptyTagsRule", () => {
         <% end %>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
@@ -146,9 +139,8 @@ describe("ERBNoEmptyTagsRule", () => {
 
   test("should handle empty ERB tag in attribute value", () => {
     const html = `<div class="<%= %>"></div>`
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -158,9 +150,8 @@ describe("ERBNoEmptyTagsRule", () => {
 
   test("should handle empty ERB tag in open tag", () => {
     const html = `<div <%= %>></div>`
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)

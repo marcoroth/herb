@@ -10,9 +10,9 @@ describe("html-aria-role-heading-requires-level", () => {
 
   it("allows a div with the proper heading", () => {
     const html = '<div role="heading" aria-level="2">Section Title</div>'
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaRoleHeadingRequiresLevelRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaRoleHeadingRequiresLevelRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -22,9 +22,9 @@ describe("html-aria-role-heading-requires-level", () => {
   it("fails when role=heading is used without aria-level", () => {
     const html = '<div role="heading">Section Title</div>'
 
-    const result = Herb.parse(html)
-    const linter = new Linter([HTMLAriaRoleHeadingRequiresLevelRule])
-    const lintResult = linter.lint(result.value)
+    
+    const linter = new Linter(Herb, [HTMLAriaRoleHeadingRequiresLevelRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)

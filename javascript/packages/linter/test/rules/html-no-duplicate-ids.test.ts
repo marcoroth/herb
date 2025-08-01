@@ -10,9 +10,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("passes for unique IDs", () => {
     const html = '<div id="unique1"></div><span id="unique2"></span>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(0);
     expect(lintResult.warnings).toBe(0);
@@ -21,9 +21,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("fails for duplicate IDs", () => {
     const html = '<div id="duplicate"></div><span id="duplicate"></span>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(1);
     expect(lintResult.warnings).toBe(0);
@@ -36,9 +36,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("passes for missing IDs", () => {
     const html = '<div></div><span></span>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(0);
     expect(lintResult.warnings).toBe(0);
@@ -47,9 +47,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("passes for IDs without value", () => {
     const html = '<div id=""></div><span id="  "></span>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(0);
     expect(lintResult.warnings).toBe(0);
@@ -58,9 +58,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("passes when using ERB in ID", () => {
     const html = '<div id="<%= user.id %>"></div>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(0);
     expect(lintResult.warnings).toBe(0);
@@ -69,9 +69,9 @@ describe("html-no-duplicate-ids", () => {
 
   test("fails for multiple duplicate IDs in ERB", () => {
     const html = '<div id="<%= user.id %>"></div><span id="<%= user.id %>"></span>';
-    const result = Herb.parse(html);
-    const linter = new Linter([HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(result.value);
+    ;
+    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
+    const lintResult = linter.lint(html);
 
     expect(lintResult.errors).toBe(1);
     expect(lintResult.warnings).toBe(0);

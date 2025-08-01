@@ -1,6 +1,6 @@
 import { AttributeVisitorMixin } from "./rule-utils.js"
 
-import type { Rule, LintOffense } from "../types.js"
+import type { ParserRule, LintOffense } from "../types.js"
 import type { HTMLAttributeNode, HTMLAttributeValueNode, Node } from "@herb-tools/core"
 
 class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
@@ -19,7 +19,7 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAttributeValuesRequireQuotesRule implements Rule {
+export class HTMLAttributeValuesRequireQuotesRule implements ParserRule {
   name = "html-attribute-values-require-quotes"
 
   check(node: Node): LintOffense[] {
