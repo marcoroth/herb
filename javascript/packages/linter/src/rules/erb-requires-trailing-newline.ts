@@ -1,4 +1,4 @@
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
+import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
 import type { LintOffense } from "../types.js"
 
@@ -9,7 +9,7 @@ class ERBRequiresTrailingNewlineVisitor extends BaseSourceRuleVisitor {
 
     this.addOffense(
       "File must end with trailing newline",
-      this.createEndOfFileLocation(source),
+      createEndOfFileLocation(source),
       "error"
     )
   }
