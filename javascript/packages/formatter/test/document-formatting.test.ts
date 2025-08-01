@@ -106,7 +106,7 @@ describe("Document-level formatting", () => {
     `)
   })
 
-  test("does not add extra newlines when no blank lines exist", () => {
+  test("adds newlines between top-level elements when none exist", () => {
     const source = dedent`
       <% title = "Test" %>
       <div><%= title %></div>
@@ -114,6 +114,7 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% title = "Test" %>
+
       <div><%= title %></div>
     `)
   })
@@ -144,9 +145,11 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% page_title = "User Profile" %>
+
       <% user_data = { name: "John", age: 30 } %>
 
       <!DOCTYPE html>
+
       <html>
         <head>
           <title>
@@ -219,6 +222,32 @@ describe("Document-level formatting", () => {
       <div class="footer">
         Done
       </div>
+    `)
+  })
+
+  test("adds newlines between adjacent ERB and HTML with no spacing", () => {
+    const source = `<% user = current_user %><div>Hello</div><% if user %><span>Welcome</span><% end %>`
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% user = current_user %>
+
+      <div>Hello</div>
+
+      <% if user %>
+        <span>Welcome</span>
+      <% end %>
+    `)
+  })
+
+  test("handles single line with multiple elements", () => {
+    const source = `<h1>Title</h1><p>Content</p><footer>Footer</footer>`
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <h1>Title</h1>
+
+      <p>Content</p>
+
+      <footer>Footer</footer>
     `)
   })
 })

@@ -130,6 +130,9 @@ export class Printer extends Visitor {
   // --- Visitor methods ---
 
   visitDocumentNode(node: DocumentNode): void {
+    let lastWasMeaningful = false
+    let hasHandledSpacing = false
+
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i]
 
@@ -145,13 +148,23 @@ export class Printer extends Visitor {
 
           if (hasPrevNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
             this.push("")
+            hasHandledSpacing = true
           }
 
           continue
         }
       }
 
+      if (this.isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
+        this.push("")
+      }
+
       this.visit(child)
+
+      if (this.isNonWhitespaceNode(child)) {
+        lastWasMeaningful = true
+        hasHandledSpacing = false
+      }
     }
   }
 
