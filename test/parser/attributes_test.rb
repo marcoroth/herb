@@ -57,5 +57,13 @@ module Parser
     test "erb output with quotes" do
       assert_parsed_snapshot(%(<div title="<%= "quoted string" %>"></div>))
     end
+
+    test "attributes with dots in name" do
+      assert_parsed_snapshot(%(<div x-transition.duration.500ms x-show="visible" x-cloak></div>))
+    end
+
+    test "complex attribute with dots and values" do
+      assert_parsed_snapshot(%(<div x-transition.duration.500ms="fast" data-component.option="value"></div>))
+    end
   end
 end

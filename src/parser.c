@@ -9,6 +9,7 @@
 #include "include/parser_helpers.h"
 #include "include/token.h"
 #include "include/token_matchers.h"
+#include "include/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -184,14 +185,58 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T
 
 static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser) {
   array_T* errors = array_init(8);
-  token_T* identifier = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
+  token_T* first_token = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
 
-  if (identifier == NULL) { parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors); }
+  if (first_token == NULL) {
+    parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors);
+    AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = ast_html_attribute_name_node_init(NULL, NULL, NULL, errors);
+    return attribute_name;
+  }
+
+  buffer_T name_buffer = buffer_new();
+  buffer_append(&name_buffer, first_token->value);
+
+  position_T* start_pos = position_copy(first_token->location->start);
+  position_T* end_pos = position_copy(first_token->location->end);
+  size_t range_end = first_token->range->to;
+
+  while (parser->current_token->type == TOKEN_CHARACTER && parser->current_token->value
+         && strcmp(parser->current_token->value, ".") == 0) {
+
+    token_T* dot_token = parser_advance(parser);
+    buffer_append(&name_buffer, dot_token->value);
+    position_free(end_pos);
+    end_pos = position_copy(dot_token->location->end);
+    range_end = dot_token->range->to;
+    token_free(dot_token);
+
+    if (parser->current_token->type == TOKEN_IDENTIFIER) {
+      token_T* next_identifier = parser_advance(parser);
+      buffer_append(&name_buffer, next_identifier->value);
+      position_free(end_pos);
+      end_pos = position_copy(next_identifier->location->end);
+      range_end = next_identifier->range->to;
+      token_free(next_identifier);
+    } else {
+      break;
+    }
+  }
+
+  token_T* combined_token = calloc(1, sizeof(token_T));
+  combined_token->value = herb_strdup(name_buffer.value);
+  combined_token->type = TOKEN_IDENTIFIER;
+  combined_token->location = location_from(start_pos->line, start_pos->column, end_pos->line, end_pos->column);
+
+  combined_token->range = range_init(first_token->range->from, range_end);
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name =
-    ast_html_attribute_name_node_init(identifier, identifier->location->start, identifier->location->end, errors);
+    ast_html_attribute_name_node_init(combined_token, start_pos, end_pos, errors);
 
-  token_free(identifier);
+  buffer_free(&name_buffer);
+  position_free(start_pos);
+  position_free(end_pos);
+  token_free(first_token);
+  token_free(combined_token);
 
   return attribute_name;
 }
