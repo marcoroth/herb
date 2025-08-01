@@ -1,6 +1,7 @@
 export * from "./erb-no-empty-tags.js"
 export * from "./erb-no-output-control-flow.js"
 export * from "./erb-prefer-image-tag-helper.js"
+export * from "./erb-requires-trailing-newline.js"
 export * from "./html-anchor-require-href.js"
 export * from "./html-aria-role-heading-requires-level.js"
 export * from "./html-aria-role-must-be-valid.js"

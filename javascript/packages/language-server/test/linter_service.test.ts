@@ -36,9 +36,9 @@ describe("LinterService", () => {
       settings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<div>Test</div>")
+      const parseResult = Herb.parse("<div>Test</div>\n")
       const document = parseResult.value
-      const textDocument = createTestDocument("<div>Test</div>")
+      const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(document, textDocument)
 
@@ -54,9 +54,9 @@ describe("LinterService", () => {
       })
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<div>Test</div>")
+      const parseResult = Herb.parse("<div>Test</div>\n")
       const document = parseResult.value
-      const textDocument = createTestDocument("<div>Test</div>")
+      const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(document, textDocument)
 
@@ -71,9 +71,9 @@ describe("LinterService", () => {
       })
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<DIV>Test</DIV>")
+      const parseResult = Herb.parse("<DIV>Test</DIV>\n")
       const document = parseResult.value
-      const textDocument = createTestDocument("<DIV>Test</DIV>")
+      const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
       const result = await linterService.lintDocument(document, textDocument)
 
