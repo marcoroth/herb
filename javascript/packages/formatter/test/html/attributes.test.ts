@@ -199,4 +199,64 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
   })
+
+  test("handles ERB content in attribute values correctly (issue #250)", () => {
+    const source = dedent`
+      <data value="<%= @post.external %>"></data>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <data value="<%= @post.external %>"></data>
+    `)
+  })
+
+  test("handles complex ERB expressions in attribute values", () => {
+    const source = dedent`
+      <div class="<%= user.admin? ? 'admin' : 'user' %>"></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="<%= user.admin? ? 'admin' : 'user' %>"></div>
+    `)
+  })
+
+  test("handles multiple ERB expressions in single attribute", () => {
+    const source = dedent`
+      <div class="prefix-<%= @id %>-<%= @type %>-suffix"></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="prefix-<%= @id %>-<%= @type %>-suffix"></div>
+    `)
+  })
+
+  test("handles ERB in attribute with nested quotes", () => {
+    const source = dedent`
+      <img src="<%= asset_path('icons/user.png') %>" alt="User">
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <img src="<%= asset_path('icons/user.png') %>" alt="User">
+    `)
+  })
+
+  test("handles ERB in self-closing tags with attributes", () => {
+    const source = dedent`
+      <input type="text" value="<%= @user.name %>" />
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input type="text" value="<%= @user.name %>" />
+    `)
+  })
+
+  test("handles ERB in void elements", () => {
+    const source = dedent`
+      <input type="text" value="<%= @user.name %>">
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input type="text" value="<%= @user.name %>">
+    `)
+  })
 })
