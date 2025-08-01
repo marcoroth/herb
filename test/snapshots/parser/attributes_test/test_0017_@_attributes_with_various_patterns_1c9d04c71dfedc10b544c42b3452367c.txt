@@ -1,0 +1,53 @@
+@ DocumentNode (location: (1:0)-(1:70))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:70))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:64))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:63)-(1:64))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:20))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:20))
+        │       │   │   │       └── name: "@submit.prevent" (location: (1:5)-(1:20))
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:21)-(1:52))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:43))
+        │       │   │   │       └── name: "@change.debounce.100ms" (location: (1:21)-(1:43))
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:43)-(1:44))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:44)-(1:52))
+        │       │   │           ├── open_quote: """ (location: (1:44)-(1:45))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:45)-(1:51))
+        │       │   │           │       └── content: "update"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:51)-(1:52))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:53)-(1:63))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:53)-(1:63))
+        │       │       │       └── name: "@mouseover" (location: (1:53)-(1:63))
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:64)-(1:70))
+        │       ├── tag_opening: "</" (location: (1:64)-(1:66))
+        │       ├── tag_name: "div" (location: (1:66)-(1:69))
+        │       └── tag_closing: ">" (location: (1:69)-(1:70))
+        │
+        └── is_void: false

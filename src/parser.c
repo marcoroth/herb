@@ -185,36 +185,69 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T
 
 static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser) {
   array_T* errors = array_init(8);
-  token_T* first_token = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
 
-  if (first_token == NULL) {
-    parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors);
-    AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = ast_html_attribute_name_node_init(NULL, NULL, NULL, errors);
-    return attribute_name;
+  token_T* at_token = parser_consume_if_present(parser, TOKEN_AT);
+  token_T* first_token = NULL;
+
+  if (at_token != NULL) {
+    first_token = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
+
+    if (first_token == NULL) {
+      parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors);
+
+      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name =
+        ast_html_attribute_name_node_init(at_token, at_token->location->start, at_token->location->end, errors);
+
+      token_free(at_token);
+
+      return attribute_name;
+    }
+  } else {
+    first_token = parser_consume_if_present(parser, TOKEN_IDENTIFIER);
+
+    if (first_token == NULL) {
+      parser_append_unexpected_token_error(parser, TOKEN_IDENTIFIER, errors);
+      AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = ast_html_attribute_name_node_init(NULL, NULL, NULL, errors);
+      return attribute_name;
+    }
   }
 
   buffer_T name_buffer = buffer_new();
+
+  position_T* start_position;
+
+  if (at_token != NULL) {
+    buffer_append(&name_buffer, at_token->value);
+    start_position = position_copy(at_token->location->start);
+  } else {
+    start_position = position_copy(first_token->location->start);
+  }
+
   buffer_append(&name_buffer, first_token->value);
 
-  position_T* start_pos = position_copy(first_token->location->start);
-  position_T* end_pos = position_copy(first_token->location->end);
+  position_T* end_position = position_copy(first_token->location->end);
   size_t range_end = first_token->range->to;
 
   while (parser->current_token->type == TOKEN_CHARACTER && parser->current_token->value
          && strcmp(parser->current_token->value, ".") == 0) {
 
     token_T* dot_token = parser_advance(parser);
+
     buffer_append(&name_buffer, dot_token->value);
-    position_free(end_pos);
-    end_pos = position_copy(dot_token->location->end);
+    position_free(end_position);
+
+    end_position = position_copy(dot_token->location->end);
     range_end = dot_token->range->to;
+
     token_free(dot_token);
 
     if (parser->current_token->type == TOKEN_IDENTIFIER) {
       token_T* next_identifier = parser_advance(parser);
+
       buffer_append(&name_buffer, next_identifier->value);
-      position_free(end_pos);
-      end_pos = position_copy(next_identifier->location->end);
+      position_free(end_position);
+
+      end_position = position_copy(next_identifier->location->end);
       range_end = next_identifier->range->to;
       token_free(next_identifier);
     } else {
@@ -225,17 +258,22 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   token_T* combined_token = calloc(1, sizeof(token_T));
   combined_token->value = herb_strdup(name_buffer.value);
   combined_token->type = TOKEN_IDENTIFIER;
-  combined_token->location = location_from(start_pos->line, start_pos->column, end_pos->line, end_pos->column);
+  combined_token->location =
+    location_from(start_position->line, start_position->column, end_position->line, end_position->column);
 
-  combined_token->range = range_init(first_token->range->from, range_end);
+  size_t range_start = at_token != NULL ? at_token->range->from : first_token->range->from;
+  combined_token->range = range_init(range_start, range_end);
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name =
-    ast_html_attribute_name_node_init(combined_token, start_pos, end_pos, errors);
+    ast_html_attribute_name_node_init(combined_token, start_position, end_position, errors);
 
   buffer_free(&name_buffer);
-  position_free(start_pos);
-  position_free(end_pos);
+  position_free(start_position);
+  position_free(end_position);
   token_free(first_token);
+
+  if (at_token != NULL) { token_free(at_token); }
+
   token_free(combined_token);
 
   return attribute_name;
@@ -435,10 +473,15 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       continue;
     }
 
+    if (parser->current_token->type == TOKEN_AT) {
+      array_append(children, parser_parse_html_attribute(parser));
+      continue;
+    }
+
     parser_append_unexpected_error(
       parser,
       "Unexpected Token",
-      "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
+      "TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
       errors
     );
   }

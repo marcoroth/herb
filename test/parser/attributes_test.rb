@@ -65,5 +65,33 @@ module Parser
     test "complex attribute with dots and values" do
       assert_parsed_snapshot(%(<div x-transition.duration.500ms="fast" data-component.option="value"></div>))
     end
+
+    test "attributes starting with @ symbol" do
+      assert_parsed_snapshot(%(<div @click="handleClick" @keyup.enter="submit"></div>))
+    end
+
+    test "@ attributes with various patterns" do
+      assert_parsed_snapshot(%(<div @submit.prevent @change.debounce.100ms="update" @mouseover></div>))
+    end
+
+    test "standalone @ symbol in div tag" do
+      assert_parsed_snapshot(%(<div @></div>))
+    end
+
+    test "standalone @ symbol followed by whitesapce in div tag" do
+      assert_parsed_snapshot(%(<div @ ></div>))
+    end
+
+    test "standalone @ symbol followed by whitesapce and identifier in div tag" do
+      assert_parsed_snapshot(%(<div @ click></div>))
+    end
+
+    test "standalone @ symbol in div tag followed by attribute" do
+      assert_parsed_snapshot(%(<div @ data-attribute="test"></div>))
+    end
+
+    test "atttribute with @ prefix and now value" do
+      assert_parsed_snapshot(%(<div @click></div>))
+    end
   end
 end
