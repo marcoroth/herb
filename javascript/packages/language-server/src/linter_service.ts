@@ -1,6 +1,7 @@
 import { Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Linter } from "@herb-tools/linter"
+import { Herb } from "@herb-tools/node-wasm"
 
 import { Settings } from "./settings"
 
@@ -17,7 +18,7 @@ export class LinterService {
 
   constructor(settings: Settings) {
     this.settings = settings
-    this.linter = new Linter()
+    this.linter = new Linter(Herb)
   }
 
   async lintDocument(document: DocumentNode, textDocument: TextDocument): Promise<LintServiceResult> {
@@ -28,7 +29,7 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const lintResult = this.linter.lint(document)
+    const lintResult = this.linter.lint(textDocument.getText())
     const diagnostics: Diagnostic[] = []
 
     lintResult.offenses.forEach(offense => {

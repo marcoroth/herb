@@ -58,10 +58,10 @@ export async function analyze(herb: HerbBackend, source: string) {
   let lintResult: LintResult | null = null
 
   if (parseResult && parseResult.value) {
-    const linter = new Linter()
+    const linter = new Linter(herb)
 
     lintResult = await safeExecute<LintResult>(
-      new Promise((resolve) => resolve(linter.lint(parseResult.value))),
+      new Promise((resolve) => resolve(linter.lint(source))),
     )
   }
 

@@ -36,9 +36,8 @@ async function runLinterOnCodeSync(code: string, language: string, third: any): 
     }
 
     console.log('Running linter on code:', code.substring(0, 100))
-    const linter = new Linter()
-    const document = Herb.parse(code)
-    const result = linter.lint(document.value)
+    const linter = new Linter(Herb)
+    const result = linter.lint(code)
 
     console.log('Linter result:', { offenses: result.offenses.length, errors: result.errors, warnings: result.warnings })
     console.log('First offense structure:', result.offenses[0])
@@ -85,9 +84,8 @@ function createCustomTwoslashFunction() {
 
     let diagnostics
     try {
-      const linter = new Linter()
-      const document = Herb.parse(code)
-      const result = linter.lint(document.value)
+      const linter = new Linter(Herb)
+      const result = linter.lint(code)
 
       diagnostics = result.offenses.map(offense => {
         const startLine = offense.location?.start?.line || 1
