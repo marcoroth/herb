@@ -98,7 +98,11 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div>Simple <section>nested</section> content</div>
+      <div>
+        Simple
+        <section>nested</section>
+        content
+      </div>
     `)
   })
 
@@ -110,11 +114,7 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual(dedent`
       <p>
         hello
-        <div>
-          complex
-          <span>nested</span>
-          content
-        </div>
+        <div>complex <span>nested</span> content</div>
         world
       </p>
     `)

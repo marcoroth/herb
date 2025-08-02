@@ -86,7 +86,9 @@ describe("Document-level formatting", () => {
         <span>Welcome <%= user.name %></span>
       <% end %>
 
-      <main><p>Main content</p></main>
+      <main>
+        <p>Main content</p>
+      </main>
     `)
   })
 
@@ -158,14 +160,8 @@ describe("Document-level formatting", () => {
         </head>
         <body>
           <% if user_data %>
-            <h1>
-              Welcome
-              <%= user_data[:name] %>
-            </h1>
-            <p>
-              Age:
-              <%= user_data[:age] %>
-            </p>
+            <h1>Welcome <%= user_data[:name] %></h1>
+            <p>Age: <%= user_data[:age] %></p>
           <% end %>
           <footer>
             <p>&copy; 2024</p>
@@ -249,5 +245,223 @@ describe("Document-level formatting", () => {
 
       <footer>Footer</footer>
     `)
+  })
+
+  test("splits mixed content with nested block elements properly", () => {
+    const source = dedent`
+      <div>hello <div>complex <span>nested</span> content</div> world</div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        hello
+        <div>complex <span>nested</span> content</div>
+        world
+      </div>
+    `)
+  })
+
+  test("handles mixed content in paragraph with block elements", () => {
+    const source = dedent`
+      <p>hello <div>complex <span>nested</span> content</div> world</p>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>
+        hello
+        <div>complex <span>nested</span> content</div>
+        world
+      </p>
+    `)
+  })
+
+  test("formats nested paragraph in div with mixed content", () => {
+    const source = dedent`
+      <div>hello <p>complex <span>nested</span> content</p> world</div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        hello
+        <p>complex <span>nested</span> content</p>
+        world
+      </div>
+    `)
+  })
+
+  test("preserves inline elements while splitting long mixed content", () => {
+    const source = dedent`
+      <p>hello <b>complex <span>nested</span> content</b> world</p>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>
+        hello <b>complex <span>nested</span> content</b> world
+      </p>
+    `)
+  })
+
+  test("formats HTML elements with ERB conditionals inline when total attributes <= 3", () => {
+    const source = dedent`
+      <span <% if true %> class="one" <% end %> another="attribute" final="one">Content</span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span <% if true %> class="one" <% end %> another="attribute" final="one">
+        Content
+      </span>
+    `)
+  })
+
+  test("formats regular HTML elements in multiline when attributes > 3", () => {
+    const source = dedent`
+      <div id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div
+        id="element"
+        class="bg-gray-300"
+        another="attribute"
+        final="one"
+      >
+        Content
+      </div>
+    `)
+  })
+
+  test("formats HTML elements with ERB conditionals in multiline when total attributes > 3", () => {
+    const source = dedent`
+      <div <% if disabled? %> disabled <% end %> id="element" class="bg-gray-300" another="attribute" final="one">Content</div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div
+        <% if disabled? %>
+          disabled
+        <% end %>
+        id="element"
+        class="bg-gray-300"
+        another="attribute"
+        final="one"
+      >
+        Content
+      </div>
+    `)
+  })
+
+  test("formats self-closing tags with ERB conditionals in multiline when total attributes > 3", () => {
+    const source = dedent`
+      <input <% if disabled? %> disabled <% end %> id="element" class="bg-gray-300" another="attribute" final="one" />
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input
+        <% if disabled? %>
+          disabled
+        <% end %>
+        id="element"
+        class="bg-gray-300"
+        another="attribute"
+        final="one"
+      />
+    `)
+  })
+
+  test("keeps self-closing tags with ERB conditionals inline when total attributes <= 3", () => {
+    const source = dedent`
+      <input <% if disabled? %> disabled <% end %> id="element" />
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input <% if disabled? %> disabled <% end %> id="element" />
+    `)
+  })
+
+  test("formats void elements with ERB conditionals in multiline when total attributes > 3", () => {
+    const source = dedent`
+      <input <% if disabled? %> disabled <% end %> id="element" class="bg-gray-300" another="attribute" final="one">
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input
+        <% if disabled? %>
+          disabled
+        <% end %>
+        id="element"
+        class="bg-gray-300"
+        another="attribute"
+        final="one"
+      >
+    `)
+  })
+
+  test("keeps void elements with ERB conditionals inline when total attributes <= 3", () => {
+    const source = dedent`
+      <input <% if disabled? %> disabled <% end %> id="element">
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <input <% if disabled? %> disabled <% end %> id="element">
+    `)
+  })
+
+  test("handles multiple ERB conditionals with attributes correctly", () => {
+    const source = dedent`
+      <div <% if disabled? %> disabled <% end %> <% if hidden? %> hidden <% end %> id="element" class="test">Content</div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div
+        <% if disabled? %>
+          disabled
+        <% end %>
+        <% if hidden? %>
+          hidden
+        <% end %>
+        id="element"
+        class="test"
+      >
+        Content
+      </div>
+    `)
+  })
+
+  test("keeps simple ERB conditionals with few attributes inline", () => {
+    const source = dedent`
+      <span <% if active? %> class="active" <% end %>>Text</span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span <% if active? %> class="active" <% end %>>
+        Text
+      </span>
+    `)
+  })
+
+  test("preserves inline opening tag for block elements with few attributes", () => {
+    const source = dedent`
+      <div class="flex flex-col">
+        <h3 class="line-clamp-1">
+          <pre>Content</pre>
+        </h3>
+      </div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
   })
 })

@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
 import { spawn } from "child_process"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
@@ -141,10 +142,12 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain('Formatted: test-format.html.erb')
 
       const formattedContent = await readFile(testFile, 'utf-8')
-      expect(formattedContent).toContain('<div class="container">')
-      expect(formattedContent).toContain('  <%= "Hello" %>')
-      expect(formattedContent).toContain('  <p>World</p>')
-      expect(formattedContent).toContain('</div>')
+      expect(formattedContent).toBe(dedent`
+        <div class="container">
+          <%= "Hello" %>
+          <p>World</p>
+        </div>
+      ` + '\n')
     } finally {
       await unlink(testFile).catch(() => {})
     }
@@ -303,7 +306,7 @@ describe("CLI Binary", () => {
 
   it("should pass --check when file is already formatted", async () => {
     const testFile = "test-formatted.html.erb"
-    const input = '<div><p>Already formatted</p></div>\n'
+    const input = '<div>\n  <p>Already formatted</p>\n</div>\n'
 
     await writeFile(testFile, input)
 
@@ -338,7 +341,7 @@ describe("CLI Binary", () => {
     const formattedFile = join("test-dir", "formatted.html.erb")
     const unformattedFile = join("test-dir", "unformatted.html.erb")
 
-    await writeFile(formattedFile, '<div><p>Formatted</p></div>\n')
+    await writeFile(formattedFile, '<div>\n  <p>Formatted</p>\n</div>\n')
     await writeFile(unformattedFile, '<div><p>   Unformatted   </p></div>')
 
     try {

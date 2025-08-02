@@ -19,7 +19,7 @@ describe("ERB whitespace formatting", () => {
   describe("regression tests for whitespace formatting fix", () => {
     test("formats the original problematic snippet correctly", () => {
       const source = dedent`
-        <a href=""
+        <a href="/path"
           <% if disabled%>
             class="disabled"
           <%end%>
@@ -28,6 +28,17 @@ describe("ERB whitespace formatting", () => {
         </a>
       `
       const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <a
+          href="/path"
+          <% if disabled %>
+            class="disabled"
+          <% end %>
+        >
+          Text
+        </a>
+      `)
 
       expect(result).toContain('<% if disabled %>')
       expect(result).toContain('<% end %>')
