@@ -121,6 +121,22 @@ describe("Quote normalization", () => {
     `)
   })
 
+  test("should convert quotes when ERB expressions contain double quotes", () => {
+    const source = `<input value='<%= "hello" %>' />`
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(`<input value="<%= "hello" %>" />`)
+  })
+
+  test("should preserve single quotes when HTML text contains double quotes even with ERB", () => {
+    const source = `<input value='"<%= "hello" %>"' />`
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(`<input value='"<%= "hello" %>"' />`)
+  })
+
   test("should handle apostrophes in attribute values", () => {
     const source = `<div title="It's working" data-msg='Don't worry'>Text</div>`
 
@@ -227,7 +243,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div class='<%= "active" if active? %> <%= "highlight" if highlighted? %>'>
+        <div class="<%= "active" if active? %> <%= "highlight" if highlighted? %>">
           Content
         </div>
       `)

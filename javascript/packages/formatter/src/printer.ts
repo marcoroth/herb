@@ -1324,11 +1324,14 @@ export class Printer extends Visitor {
 
       let open_quote = attributeValue.open_quote?.value ?? ""
       let close_quote = attributeValue.close_quote?.value ?? ""
+      let htmlTextContent = ""
 
       const content = attributeValue.children.map((child: Node) => {
         if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE' || child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+          const textContent = (child as HTMLTextNode | LiteralNode).content
+          htmlTextContent += textContent
 
-          return (child as HTMLTextNode | LiteralNode).content
+          return textContent
         } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
           const erbAttribute = child as ERBContentNode
 
@@ -1341,7 +1344,7 @@ export class Printer extends Visitor {
       if (open_quote === "" && close_quote === "") {
         open_quote = '"'
         close_quote = '"'
-      } else if (open_quote === "'" && close_quote === "'" && !content.includes('"')) {
+      } else if (open_quote === "'" && close_quote === "'" && !htmlTextContent.includes('"')) {
         open_quote = '"'
         close_quote = '"'
       }
