@@ -1,6 +1,7 @@
 import { BaseRuleVisitor, forEachAttribute } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
+import { ParserRule } from "../types.js"
+import type { LintOffense } from "../types.js"
 import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNameNode, Node } from "@herb-tools/core"
 
 class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
@@ -37,7 +38,7 @@ class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
         for (let i = 1; i < nameNodes.length; i++) {
           const nameNode = nameNodes[i]
 
-          this.addMessage(
+          this.addOffense(
             `Duplicate attribute \`${attributeName}\` found on tag. Remove the duplicate occurrence.`,
             nameNode.location,
             "error"
@@ -48,12 +49,12 @@ class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoDuplicateAttributesRule implements Rule {
+export class HTMLNoDuplicateAttributesRule extends ParserRule {
   name = "html-no-duplicate-attributes"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new NoDuplicateAttributesVisitor(this.name)
     visitor.visit(node)
-    return visitor.messages
+    return visitor.offenses
   }
 }

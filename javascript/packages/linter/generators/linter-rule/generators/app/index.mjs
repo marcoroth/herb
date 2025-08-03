@@ -1,6 +1,6 @@
 import Generator from "yeoman-generator"
 import { execSync } from "child_process"
-import { colorize } from "../../../../dist/src/color.js"
+import { colorize } from "@herb-tools/highlighter"
 import fs from "fs/promises"
 import path from "path"
 
@@ -30,7 +30,7 @@ export default class extends Generator {
       if (useIssue.useIssue) {
         try {
           const issues = execSync(
-            "gh issue list --repo marcoroth/herb --label linter --state open --limit 100 --json number,title",
+            "gh issue list --repo marcoroth/herb --label linter-rule --state open --limit 100 --json number,title",
             { encoding: "utf8" }
           )
 
@@ -46,7 +46,6 @@ export default class extends Generator {
             }))
           })
 
-          // Get issue details
           const issueBody = execSync(
             `gh issue view ${issueChoice.issue} --repo marcoroth/herb --json body,title`,
             { encoding: "utf8" }
@@ -54,8 +53,6 @@ export default class extends Generator {
 
           const issueDetails = JSON.parse(issueBody)
 
-          // Extract rule name from issue body
-          // Try different formats: ### Rule: `rule-name` or Rule name: rule-name
           let ruleNameMatch = issueDetails.body.match(/###\s*Rule:\s*`([^`]+)`/)
 
           if (!ruleNameMatch) {
@@ -74,7 +71,6 @@ export default class extends Generator {
       }
     }
 
-    // If we didn"t get data from issue, ask manually
     if (!issueData.ruleName) {
       const answers = await this.prompt([
         {
@@ -101,7 +97,12 @@ export default class extends Generator {
 
     this.className = this.ruleName
       .split("-")
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .map(part => {
+        if (part.toLowerCase() === "html") return "HTML"
+        if (part.toLowerCase() === "erb") return "ERB"
+
+        return part.charAt(0).toUpperCase() + part.slice(1)
+      })
       .join("")
 
     this.ruleClassName = this.className + "Rule"
@@ -129,7 +130,6 @@ export default class extends Generator {
       }
     )
 
-    // Create docs file
     this.fs.copyTpl(
       this.templatePath("docs.md.ejs"),
       this.destinationPath(`docs/rules/${this.ruleName}.md`),
@@ -143,7 +143,6 @@ export default class extends Generator {
   }
 
   async install() {
-    // Update index.ts after all files are written to avoid conflicts
     const indexPath = path.join(this.destinationRoot(), "src/rules/index.ts")
     const newExport = `export * from "./${this.ruleName}.js"`
 
@@ -153,30 +152,26 @@ export default class extends Generator {
       this.log(colorize(`Warning: Could not update index.ts automatically. Please add: ${newExport}`, "yellow"))
     }
 
-    // Update default-rules.ts
     const defaultRulesPath = path.join(this.destinationRoot(), "src/default-rules.ts")
     const newImport = `import { ${this.ruleClassName} } from "./rules/${this.ruleName}.js"`
-    
+
     try {
       let defaultRulesContent = await fs.readFile(defaultRulesPath, "utf8")
-      
-      // Add import at the top
+
       const lines = defaultRulesContent.split("\n")
       const lastImportIndex = lines.findLastIndex(line => line.startsWith("import"))
       lines.splice(lastImportIndex + 1, 0, newImport)
-      
-      // Add to defaultRules array (before the closing bracket)
+
       const arrayEndIndex = lines.findLastIndex(line => line.includes("]"))
       lines.splice(arrayEndIndex, 0, `  ${this.ruleClassName},`)
-      
+
       await fs.writeFile(defaultRulesPath, lines.join("\n"))
     } catch (error) {
       this.log(colorize(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`, "yellow"))
     }
 
-    // Update README
     const readmePath = path.join(this.destinationRoot(), "docs/rules/README.md")
-    const newRule = `- [${this.ruleName}](./${this.ruleName}.md) - ${this.description}`
+    const newRule = `- [\`${this.ruleName}\`](./${this.ruleName}.md) - ${this.description}`
 
     try {
       let readmeContent = await fs.readFile(readmePath, "utf8")
@@ -187,7 +182,6 @@ export default class extends Generator {
 
         for (let i = 0; i < lines.length; i++) {
           if (lines[i].includes("## Available Rules")) {
-            // Find the last rule line
             for (let j = i + 1; j < lines.length; j++) {
               if (lines[j].trim().startsWith("-")) {
                 insertIndex = j
@@ -195,6 +189,7 @@ export default class extends Generator {
                 break
               }
             }
+
             break
           }
         }

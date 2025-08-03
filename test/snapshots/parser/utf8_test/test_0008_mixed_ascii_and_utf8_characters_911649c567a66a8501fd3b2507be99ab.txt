@@ -1,0 +1,26 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:27))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:5)-(1:21))
+    │   │       └── content: "Hello ▌ World 🌿!"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:21)-(1:27))
+    │   │       ├── tag_opening: "</" (location: (1:21)-(1:23))
+    │   │       ├── tag_name: "div" (location: (1:23)-(1:26))
+    │   │       └── tag_closing: ">" (location: (1:26)-(1:27))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (1:27)-(2:0))
+        └── content: "\n"

@@ -1,7 +1,7 @@
 {
   "name": "herb-language-server",
   "description": "Placeholder package to reserve the herb-language-server name on NPM; use @herb-tools/language-server instead.",
-  "version": "0.3.1",
+  "version": "0.4.2",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -18,7 +18,7 @@
   "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
   "scripts": {
-    "build": "yarn clean && tsc -b && rollup -c rollup.config.mjs",
+    "build": "yarn clean && tsc -b && rollup -c",
     "dev": "rollup -c -w",
     "watch": "tsc -b -w",
     "clean": "rimraf dist",
@@ -45,6 +45,6 @@
     "dist/"
   ],
   "dependencies": {
-    "@herb-tools/language-server": "0.3.1"
+    "@herb-tools/language-server": "0.4.2"
   }
 }

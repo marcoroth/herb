@@ -1,6 +1,6 @@
-@ DocumentNode (location: (1:0)-(1:11))
+@ DocumentNode (location: (1:0)-(1:8))
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:11))
+    └── @ HTMLElementNode (location: (1:0)-(1:8))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
@@ -11,13 +11,13 @@
         │
         ├── tag_name: "b" (location: (1:1)-(1:2))
         ├── body: (1 item)
-        │   └── @ HTMLTextNode (location: (1:3)-(1:7))
+        │   └── @ HTMLTextNode (location: (1:3)-(1:4))
         │       └── content: "🌿"
         │
         ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (1:7)-(1:11))
-        │       ├── tag_opening: "</" (location: (1:7)-(1:9))
-        │       ├── tag_name: "b" (location: (1:9)-(1:10))
-        │       └── tag_closing: ">" (location: (1:10)-(1:11))
+        │   └── @ HTMLCloseTagNode (location: (1:4)-(1:8))
+        │       ├── tag_opening: "</" (location: (1:4)-(1:6))
+        │       ├── tag_name: "b" (location: (1:6)-(1:7))
+        │       └── tag_closing: ">" (location: (1:7)-(1:8))
         │
         └── is_void: false

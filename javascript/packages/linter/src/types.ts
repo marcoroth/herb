@@ -1,25 +1,71 @@
-import { Location, Node } from "@herb-tools/core"
+import { Node, Diagnostic, LexResult } from "@herb-tools/core"
+import type { defaultRules } from "./default-rules.js"
 
-export interface LintMessage {
-  rule: string
-  message: string
-  location: Location
-  severity: "error" | "warning"
+export type LintSeverity = "error" | "warning"
+
+/**
+ * Automatically inferred union type of all available linter rule names.
+ * This type extracts the 'name' property from each rule class instance.
+ */
+export type LinterRule = InstanceType<typeof defaultRules[number]>['name']
+
+export interface LintOffense extends Diagnostic {
+  rule: LinterRule
+  severity: LintSeverity
 }
 
 export interface LintResult {
-  messages: LintMessage[]
+  offenses: LintOffense[]
   errors: number
   warnings: number
 }
 
-export interface Rule {
-  name: string
-  check(node: Node): LintMessage[]
+export abstract class ParserRule {
+  static type = "parser" as const
+  abstract name: string
+  abstract check(node: Node): LintOffense[]
+}
+
+export abstract class LexerRule {
+  static type = "lexer" as const
+  abstract name: string
+  abstract check(lexResult: LexResult): LintOffense[]
+}
+
+export interface LexerRuleConstructor {
+  type: "lexer"
+  new (): LexerRule
+}
+
+export abstract class SourceRule {
+  static type = "source" as const
+  abstract name: string
+  abstract check(source: string): LintOffense[]
+}
+
+export interface SourceRuleConstructor {
+  type: "source"
+  new (): SourceRule
 }
 
 /**
- * Type representing a rule class constructor.
+ * Type representing a parser/AST rule class constructor.
  * The Linter accepts rule classes rather than instances for better performance and memory usage.
+ * Parser rules are the default and don't require static properties.
  */
-export type RuleClass = new () => Rule
+export type ParserRuleClass = (new () => ParserRule) & {
+  type?: "parser"
+}
+
+export type LexerRuleClass = LexerRuleConstructor
+export type SourceRuleClass = SourceRuleConstructor
+
+/**
+ * Union type for any rule instance (Parser/AST, Lexer, or Source)
+ */
+export type Rule = ParserRule | LexerRule | SourceRule
+
+/**
+ * Union type for any rule class (Parser/AST, Lexer, or Source)
+ */
+export type RuleClass = ParserRuleClass | LexerRuleClass | SourceRuleClass

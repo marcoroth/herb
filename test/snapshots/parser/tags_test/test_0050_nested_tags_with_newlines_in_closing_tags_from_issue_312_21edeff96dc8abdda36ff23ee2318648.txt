@@ -1,0 +1,122 @@
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:8))
+    │   └── content: "        "
+    │
+    ├── @ HTMLElementNode (location: (1:8)-(10:14))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:8)-(4:9))
+    │   │       ├── tag_opening: "<" (location: (1:8)-(1:9))
+    │   │       ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   │       ├── tag_closing: ">" (location: (4:8)-(4:9))
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (2:10)-(2:25))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:10)-(2:12))
+    │   │       │   │   │       └── name: "id" (location: (2:10)-(2:12))
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (2:13)-(2:25))
+    │   │       │   │           ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (2:14)-(2:24))
+    │   │       │   │           │       └── content: "footer-img"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (2:24)-(2:25))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (3:10)-(3:67))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:10)-(3:15))
+    │   │       │       │       └── name: "class" (location: (3:10)-(3:15))
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (3:15)-(3:16))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (3:16)-(3:67))
+    │   │       │               ├── open_quote: """ (location: (3:16)-(3:17))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (3:17)-(3:66))
+    │   │       │               │       └── content: "d-flex align-items-start justify-content-lg-start"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (3:66)-(3:67))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (4:9)-(5:10))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (5:10)-(9:11))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (5:10)-(8:13))
+    │   │   │   │       ├── tag_opening: "<" (location: (5:10)-(5:11))
+    │   │   │   │       ├── tag_name: "a" (location: (5:11)-(5:12))
+    │   │   │   │       ├── tag_closing: ">" (location: (8:12)-(8:13))
+    │   │   │   │       ├── children: (2 items)
+    │   │   │   │       │   ├── @ HTMLAttributeNode (location: (6:12)-(6:39))
+    │   │   │   │       │   │   ├── name:
+    │   │   │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (6:12)-(6:16))
+    │   │   │   │       │   │   │       └── name: "href" (location: (6:12)-(6:16))
+    │   │   │   │       │   │   │
+    │   │   │   │       │   │   ├── equals: "=" (location: (6:16)-(6:17))
+    │   │   │   │       │   │   └── value:
+    │   │   │   │       │   │       └── @ HTMLAttributeValueNode (location: (6:17)-(6:39))
+    │   │   │   │       │   │           ├── open_quote: """ (location: (6:17)-(6:18))
+    │   │   │   │       │   │           ├── children: (1 item)
+    │   │   │   │       │   │           │   └── @ LiteralNode (location: (6:18)-(6:38))
+    │   │   │   │       │   │           │       └── content: "https://example.com/"
+    │   │   │   │       │   │           │
+    │   │   │   │       │   │           ├── close_quote: """ (location: (6:38)-(6:39))
+    │   │   │   │       │   │           └── quoted: true
+    │   │   │   │       │   │
+    │   │   │   │       │   │
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (7:12)-(7:30))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (7:12)-(7:17))
+    │   │   │   │       │       │       └── name: "class" (location: (7:12)-(7:17))
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (7:17)-(7:18))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (7:18)-(7:30))
+    │   │   │   │       │               ├── open_quote: """ (location: (7:18)-(7:19))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (7:19)-(7:29))
+    │   │   │   │       │               │       └── content: "stacked-lg"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (7:29)-(7:30))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "a" (location: (5:11)-(5:12))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (8:13)-(8:22))
+    │   │   │   │       └── content: "Link Text"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (8:22)-(9:11))
+    │   │   │   │       ├── tag_opening: "</" (location: (8:22)-(8:24))
+    │   │   │   │       ├── tag_name: "a" (location: (8:24)-(8:25))
+    │   │   │   │       └── tag_closing: ">" (location: (9:10)-(9:11))
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (9:11)-(10:8))
+    │   │       └── content: "\n        "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (10:8)-(10:14))
+    │   │       ├── tag_opening: "</" (location: (10:8)-(10:10))
+    │   │       ├── tag_name: "div" (location: (10:10)-(10:13))
+    │   │       └── tag_closing: ">" (location: (10:13)-(10:14))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (10:14)-(11:0))
+        └── content: "\n"

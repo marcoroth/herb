@@ -1,6 +1,17 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+/*
+ * Rule Type Guide:
+ * - ParserRule: AST-based validation using parsed document tree (most common)
+ * - LexerRule: Token-based validation using lexer output (for syntax-level checks)  
+ * - SourceRule: Raw text validation using original source code (for file-level checks)
+ * 
+ * This template generates a ParserRule. To create other types:
+ * - Replace `ParserRule` with `LexerRule` and use `BaseLexerRuleVisitor`
+ * - Replace `ParserRule` with `SourceRule` and use `BaseSourceRuleVisitor`
+ */
 
-import type { Rule, LintMessage } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
+import type { LintOffense } from "../types.js"
 import type { Node, HTMLElementNode, ERBContentNode } from "@herb-tools/core"
 
 class <%= visitorClassName %> extends BaseRuleVisitor {
@@ -17,14 +28,14 @@ class <%= visitorClassName %> extends BaseRuleVisitor {
   // TODO: implement other nodes if needed
 }
 
-export class <%= ruleClassName %> implements Rule {
+export class <%= ruleClassName %> extends ParserRule {
   name = "<%= ruleName %>"
 
-  check(node: Node): LintMessage[] {
+  check(node: Node): LintOffense[] {
     const visitor = new <%= visitorClassName %>(this.name)
 
     visitor.visit(node)
 
-    return visitor.messages
+    return visitor.offenses
   }
 }

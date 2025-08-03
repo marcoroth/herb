@@ -1,18 +1,22 @@
 import { defaultRules } from "./default-rules.js"
-import type { RuleClass, LintResult, LintMessage } from "./types.js"
-import type { DocumentNode } from "@herb-tools/core"
+
+import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense } from "./types.js"
+import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
   private rules: RuleClass[]
-  private messages: LintMessage[]
+  private herb: HerbBackend
+  private offenses: LintOffense[]
 
   /**
    * Creates a new Linter instance.
-   * @param rules - Array of rule classes (not instances) to use. If not provided, uses default rules.
+   * @param herb - The Herb backend instance for parsing and lexing
+   * @param rules - Array of rule classes (Parser/AST or Lexer) to use. If not provided, uses default rules.
    */
-  constructor(rules?: RuleClass[]) {
+  constructor(herb: HerbBackend, rules?: RuleClass[]) {
+    this.herb = herb
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
-    this.messages = []
+    this.offenses = []
   }
 
   /**
@@ -27,21 +31,51 @@ export class Linter {
     return this.rules.length
   }
 
-  lint(document: DocumentNode): LintResult {
-    this.messages = []
+  /**
+   * Type guard to check if a rule is a LexerRule
+   */
+  private isLexerRule(rule: Rule): rule is LexerRule {
+    return (rule.constructor as any).type === "lexer"
+  }
 
-    for (const Rule of this.rules) {
-      const rule = new Rule()
-      const ruleMessages = rule.check(document)
+  /**
+   * Type guard to check if a rule is a SourceRule
+   */
+  private isSourceRule(rule: Rule): rule is SourceRule {
+    return (rule.constructor as any).type === "source"
+  }
 
-      this.messages.push(...ruleMessages)
+  /**
+   * Lint source code using Parser/AST, Lexer, and Source rules.
+   * @param source - The source code to lint
+   */
+  lint(source: string): LintResult {
+    this.offenses = []
+
+    const parseResult = this.herb.parse(source)
+    const lexResult = this.herb.lex(source)
+
+    for (const RuleClass of this.rules) {
+      const rule = new RuleClass()
+
+      let ruleOffenses: LintOffense[]
+
+      if (this.isLexerRule(rule)) {
+        ruleOffenses = (rule as LexerRule).check(lexResult)
+      } else if (this.isSourceRule(rule)) {
+        ruleOffenses = (rule as SourceRule).check(source)
+      } else {
+        ruleOffenses = (rule as ParserRule).check(parseResult.value)
+      }
+
+      this.offenses.push(...ruleOffenses)
     }
 
-    const errors = this.messages.filter(message => message.severity === "error").length
-    const warnings = this.messages.filter(message => message.severity === "warning").length
+    const errors = this.offenses.filter(offense => offense.severity === "error").length
+    const warnings = this.offenses.filter(offense => offense.severity === "warning").length
 
     return {
-      messages: this.messages,
+      offenses: this.offenses,
       errors,
       warnings
     }

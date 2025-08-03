@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="Herb HTML+ERB parser" height="256px" src="https://github.com/user-attachments/assets/d0714ee1-ca33-4aa4-aaa9-d632ba79d54a">
+  <img alt="Herb HTML+ERB parser" style="height: 256px" height="256px" src="https://github.com/user-attachments/assets/d0714ee1-ca33-4aa4-aaa9-d632ba79d54a">
 </div>
 
 <h2 align="center">Herb</h2>
@@ -20,32 +20,34 @@
 
 ## What is Herb?
 
-**Herb** is an ecosystem of developer tooling built specifically around **HTML+ERB** (`.html.erb` files). It is designed to simplify and enhance the experience of working with HTML+ERB templates through precise, accurate tooling.
+**Herb** is an ecosystem of developer tooling built specifically around **HTML+ERB** (`.html.erb`) files. It is designed to simplify and enhance the experience of working with HTML+ERB templates through precise, accurate tooling.
 
 At the core of Herb is the **Herb Parser**, a fast, portable, and HTML-aware ERB parser written in C. The parser generates a detailed, accurate syntax tree that serves as the foundation for reliable code analysis, transformations, and developer tooling.
 
-The Herb ecosystem includes both low-level libraries (with bindings for Ruby and JavaScript) and high-level tools such as linters, formatters, and language servers. All these tools leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
+The Herb ecosystem includes **developer tools** (CLI, language server, formatter, linter), **language bindings** (for Ruby, Node.js, and the Browser using WebAssembly), and **utility libraries** (language service, highlighter, minifier, printer). All these components leverage the Herb Parser's syntax tree to provide consistent, accurate, and helpful tooling experiences.
 
 ## What Herb Can Do for You
 
 Herb provides a complete ecosystem of HTML+ERB tooling, designed to simplify and enhance your daily workflow. Built on the **Herb Parser**, it offers multiple tools that integrate seamlessly into editors, developer environments, and CI pipelines:
 
-- **Herb Language Server** ([available now](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server)):  
+- **Herb Language Server** ([available now](https://herb-tools.dev/projects/language-server)):
   Rich integration for editors like VS Code, Zed, Neovim, and more. It provides diagnostics and real-time feedback to keep your templates error-free.
 
-- **Herb Formatter** ([coming soon](https://github.com/marcoroth/herb/pull/192)):  
-  Automatic, consistent formatting for HTML+ERB files, reducing manual styling and enforcing a standard across projects.
+- **Herb Formatter** ([experimental preview](https://herb-tools.dev/projects/formatter)):
+  Automatic, consistent formatting for HTML+ERB files, reducing manual styling and enforcing a standard across projects. Currently in experimental preview - use with caution on version-controlled files.
 
-- **Herb Linter** ([coming soon](https://github.com/marcoroth/herb/tree/main/javascript/packages/linter)):  
-  Static analysis for your HTML+ERB templates to enforce best practices and quickly identify common mistakes.
+- **Herb Linter** ([available now](https://herb-tools.dev/projects/linter)):  
+  Static analysis for your HTML+ERB templates to enforce best practices and quickly identify common mistakes with 17 configurable rules.
 
 You can use Herb programmatically in **Ruby**, as well as in **JavaScript** via Node.js, WebAssembly, or directly in browsers.
 
-## Motiviation
+For a complete overview of all available tools, libraries, and integrations, visit the [**Projects page**](https://herb-tools.dev/projects) on our documentation site.
+
+## Motivation
 
 HTML+ERB templates never really had good, accurate, and reliable tooling. While developer tooling for Ruby code improved significantly in the last few years (especially with the introduction of the new Prism parser), HTML+ERB files remained underserved, lacking fundamental support like syntax checking, auto-formatting, linting, and structural understanding.
 
-At the same time, with the rise of tools like Hotwire, Stimulus, Turbo, HTMX, and Alpine.js, advanced HTML templating became increasingly relevant (again). Developers expect modern, reliable, and precise tooling, especially given the robust ecosystem available to JavaScript frameworks and libraries.
+At the same time, with the rise of tools like [Hotwire](https://hotwired.dev), [Stimulus](https://stimulus.hotwired.dev), [Turbo](https://turbo.hotwired.dev), [HTMX](https://htmx.org), [Unpoly](https://unpoly.com), and [Alpine.js](https://alpinejs.dev), advanced HTML templating became increasingly relevant (again). Developers expect modern, reliable, and precise tooling, especially given the robust ecosystem available to JavaScript frameworks and libraries.
 
 Herb was built to close this tooling gap, providing proper tooling for HTML+ERB that matches what modern developers expect in the age of language servers, LLMs, and AI-driven workflows.
 
@@ -73,8 +75,8 @@ Total files: 145
 ⏱️ Timed out: 0 (0.0%)
 
 Files with parse errors:
-  - /Users/marcoroth/Development/rubyevents/app/views/contributions/index.html.erb
-  - /Users/marcoroth/Development/rubyevents/index.html.erb
+  - app/views/contributions/index.html.erb
+  - index.html.erb
 
 Results saved to 2025-06-29_12-16-23_erb_parsing_result_rubyevents.log
 ```
@@ -106,8 +108,28 @@ For detailed information, like how you can use Herb progamatiacally in Ruby and 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on [GitHub](https://github.com/marcoroth/herb). Please see the [CONTRIBUTING.md](CONTRIBUTING.md) document for guidelines on how to set up Herb for local development and how to contribute to **Herb**.
+Bug reports and pull requests are welcome on [GitHub](https://github.com/marcoroth/herb). Please see the [CONTRIBUTING.md](https://github.com/marcoroth/herb/blob/main/CONTRIBUTING.md) document for guidelines on how to set up Herb for local development and how to contribute to **Herb**.
+
+## Prior Art & Inspiration
+
+While Herb brings a fresh approach to HTML+ERB tooling, it builds upon and learns from several existing tools and approaches in the ecosystem:
+
+- [**Tree-sitter**](https://tree-sitter.github.io/tree-sitter/)
+- [**tree-sitter-embedded-template**](https://github.com/tree-sitter/tree-sitter-embedded-template)
+- [**Prism Ruby Parser**](https://github.com/ruby/prism)
+- [**Ruby LSP**](https://github.com/Shopify/ruby-lsp)
+- [**better-html**](https://github.com/Shopify/better-html)
+- [**erb_lint**](https://github.com/Shopify/erb_lint)
+- [**erb-formatter**](https://github.com/nebulab/erb-formatter)
+- [**erb-formatter-vscode**](https://github.com/nebulab/erb-formatter-vscode)
+- [**deface**](https://github.com/spree/deface)
+- [**html_press**](https://github.com/stereobooster/html_press)
+- [**htmlbeautifier**](https://github.com/threedaymonk/htmlbeautifier)
+- [**vscode-erb-beautify**](https://github.com/aliariff/vscode-erb-beautify)
+- [**vscode-erb-linter**](https://github.com/manuelpuyol/vscode-erb-linter)
+
+Herb differentiates itself by being HTML-aware from the ground up, providing a unified parsing approach that understands both HTML and ERB as first-class citizens, rather than treating one as embedded within the other.
 
 ## License
 
-This project is available as open source under the terms of the [MIT License](LICENSE.txt).
+This project is available as open source under the terms of the [MIT License](https://github.com/marcoroth/herb/blob/main/LICENSE.txt).

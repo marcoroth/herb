@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Herb Playground</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class'
+      }
+    </script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/js/all.min.js"
       integrity="sha512-GWzVrcGlo0TxTRvz9ttioyYJ+Wwk9Ck0G81D+eO63BaqHaJ3YZX9wuqjwgfcV/MrB2PhaVX9DkYVhbFpStnqpQ=="
@@ -18,21 +23,21 @@
     />
   </head>
 
-  <body class="bg-white flex flex-col" data-controller="playground iframe">
+  <body class="bg-white dark:bg-zinc-900 flex flex-col" data-controller="playground iframe">
     <script type="module" src="/src/entry-client.ts"></script>
 
     <div class="w-full md:max-h-[100vh] overflow-hidden">
       <nav
-        class="mx-auto flex items-center justify-between p-1 py-2 px-8 border hidden"
+        class="mx-auto flex items-center justify-between p-1 py-2 px-8 border dark:border-gray-700 hidden"
         data-iframe-target="hide"
       >
         <div class="flex font-medium items-center h-8 md:flex-1">
           <div class="w-auto text-xl">🌿 Herb</div>
-          <span class="block md:hidden text-gray-500 ml-2">Playground</span>
+          <span class="block md:hidden text-gray-500 dark:text-gray-400 ml-2">Playground</span>
         </div>
 
         <div class="hidden md:flex">
-          <div class="text-center text-lg font-medium text-gray-900">
+          <div class="text-center text-lg font-medium text-gray-900 dark:text-gray-100">
             Playground
           </div>
         </div>
@@ -41,16 +46,16 @@
           <div class="flex flex-row-reserve space-x-4 py-0 items-center">
             <a
               href="https://docs.herb-tools.dev"
-              class="text-sm text-gray-500 hover:text-gray-500"
+              class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               target="_blank"
               >Documentation</a
             >
             <a
               href="https://github.com/marcoroth/herb"
               target="_blank"
-              class="opacity-50 hover:opacity-100"
+              class="opacity-50 hover:opacity-100 dark:opacity-70 dark:hover:opacity-100"
             >
-              <i class="h-6 w-6 fa-brands fa-github text-black"></i>
+              <i class="h-6 w-6 fa-brands fa-github text-black dark:text-white"></i>
             </a>
           </div>
         </div>
@@ -60,7 +65,7 @@
         <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mt-6">
             <div class="lg:flex justify-between">
-              <div class="text-gray-900 rounded-md py-1.5 text-sm font-medium">
+              <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
                 HTML+ERB File
               </div>
 
@@ -68,7 +73,7 @@
                 <button
                   data-action="click->playground#share"
                   id="copy-share-url"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
                 >
                   <i class="fas fa-copy"></i>
                   <i
@@ -87,7 +92,7 @@
                 <button
                   data-action="click->playground#insert click->playground#analyze"
                   id="example"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
                 >
                   <i class="fas fa-file w-4"></i>
                   <i
@@ -99,7 +104,7 @@
               </div>
             </div>
 
-            <div class="mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt] flex justify-between items-center">
+            <div class="mt-2 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] flex justify-between items-center">
               <span data-playground-target="diagnosticStatus" class="hidden flex items-center gap-4">
                 <span class="flex items-center gap-1" title="Errors">
                   <i class="fas fa-circle-xmark text-red-500 text-xs"></i>
@@ -118,13 +123,13 @@
             </div>
 
             <div
-              class="mt-2 outline outline-1 outline-gray-300 z-10 rounded-md overflow-hidden bg-gray-50 h-[30vh] md:h-[calc(100vh-110px)]"
+              class="mt-2 outline outline-1 outline-gray-300 dark:outline-gray-600 z-10 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800 h-[30vh] md:h-[calc(100vh-110px)]"
             >
               <textarea
                 data-playground-target="input"
                 data-action="input->playground#input"
                 id="input"
-                class="h-full border-none font-mono w-full text-sm"
+                class="h-full border-none font-mono w-full text-sm dark:bg-gray-800 dark:text-gray-200"
                 placeholder="Your HTML+ERB content goes here"
               ></textarea>
             </div>
@@ -133,15 +138,15 @@
           <div class="mt-6" data-contoller="output">
             <div class="lg:flex justify-between">
               <div
-                class="text-gray-900 rounded-md px-0 py-1.5 text-sm font-medium"
+                class="text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium"
               >
-                Herb Parse Result
+                Herb Result
               </div>
 
               <div class="mt-1 md:mt-0 md:flex gap-3">
                 <button
                   data-action="playground#toggleViewer keydown.esc@window->playground#shrinkViewer"
-                  class="hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                 >
                   <i class="fas fa-expand"></i>
                   <span class="ml-1">Fullscreen</span>
@@ -151,7 +156,7 @@
                   data-playground-target="viewerButton"
                   data-viewer="pretty"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
                   data-active="true"
                 >
                   <i class="fas fa-folder-tree"></i>
@@ -164,7 +169,7 @@
                   data-playground-target="viewerButton"
                   data-viewer="lex"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
                 >
                   <i class="fas fa-bars"></i>
                   <span class="ml-1"
@@ -176,7 +181,7 @@
                   data-playground-target="viewerButton"
                   data-viewer="ruby"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
                 >
                   <i class="fas fa-gem"></i>
                   <span class="ml-1">Ruby</span>
@@ -186,10 +191,19 @@
                   data-playground-target="viewerButton"
                   data-viewer="html"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
                 >
                   <i class="fab fa-html5"></i>
                   <span class="ml-1">HTML</span>
+                </button>
+                <button
+                  data-playground-target="viewerButton"
+                  data-viewer="format"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                >
+                  <i class="fas fa-indent"></i>
+                  <span class="ml-1">Format</span>
                 </button>
 
                 <button
@@ -207,10 +221,13 @@
             </div>
 
             <div
-              class="flex justify-between mt-2 font-mono whitespace-break-spaces text-gray-400 text-[8pt]"
+              class="flex justify-between items-center mt-2 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt]"
             >
               <span data-playground-target="time"></span>
-              <div data-playground-target="version" class=""></div>
+              <div data-playground-target="version" class="cursor-help flex items-center gap-1" title="">
+                <i class="fas fa-info-circle text-xs opacity-50 dark:opacity-70"></i>
+              </div>
+              <a data-playground-target="commitHash" class="hover:text-gray-600 dark:hover:text-gray-300 underline" href="#" target="_blank"></a>
             </div>
 
             <div class="mt-2">
@@ -234,6 +251,14 @@
                 style="white-space: pre; line-height: 1.3"
                 data-viewer-target="html"
                 data-playground-target="htmlViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              ></pre>
+
+              <pre
+                style="white-space: pre; line-height: 1.3"
+                data-viewer-target="format"
+                data-playground-target="formatViewer"
                 data-action="click->playground#shrinkViewer"
                 class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               ></pre>

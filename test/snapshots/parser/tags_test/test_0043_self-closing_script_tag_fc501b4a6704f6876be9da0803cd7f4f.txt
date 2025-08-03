@@ -1,0 +1,15 @@
+@ DocumentNode (location: (1:0)-(1:10))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:10))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:10))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: "/>" (location: (1:8)-(1:10))
+        │       ├── children: []
+        │       └── is_void: true
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

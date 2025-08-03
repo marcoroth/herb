@@ -105,5 +105,41 @@ module Parser
     test "emoji as only content" do
       assert_parsed_snapshot("<b>🌿</b>")
     end
+
+    test "non-breaking space (U+00A0) as only content" do
+      assert_parsed_snapshot("<b> </b>")
+    end
+
+    test "non-breaking space mixed with ERB - issue 310" do
+      assert_parsed_snapshot("<p><%= hello %> !</p>")
+    end
+
+    test "multiple non-breaking spaces in text" do
+      assert_parsed_snapshot("<p>Hello   World</p>")
+    end
+
+    test "non-breaking space in attribute value" do
+      assert_parsed_snapshot('<div title="Hello World">Content</div>')
+    end
+
+    test "at symbol (@) in text content - issue 285" do
+      assert_parsed_snapshot("<p>Did we get it wrong? Respond with <em>@reverse</em> to remove the receipt.</p>")
+    end
+
+    test "at symbol at beginning of text" do
+      assert_parsed_snapshot("<span>@username</span>")
+    end
+
+    test "multiple at symbols in text" do
+      assert_parsed_snapshot("<p>Email me @john@example.com</p>")
+    end
+
+    test "at symbol mixed with ERB" do
+      assert_parsed_snapshot("<p>Contact <%= user.name %> @support</p>")
+    end
+
+    test "at symbol in attribute value" do
+      assert_parsed_snapshot('<a href="mailto:support@example.com">Contact @support</a>')
+    end
   end
 end

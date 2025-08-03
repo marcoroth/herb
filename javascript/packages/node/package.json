@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/node",
-  "version": "0.3.1",
+  "version": "0.4.2",
   "description": "Native Node.js addon for HTML-aware ERB parsing using Herb.",
   "type": "module",
   "license": "MIT",
@@ -27,7 +27,7 @@
   "scripts": {
     "install": "yarn vendor && node-pre-gyp install --fallback-to-build",
     "dev": "rollup -c -w",
-    "build": "yarn templates && yarn vendor && yarn rebuild",
+    "build": "yarn clean && yarn templates && yarn vendor && yarn rebuild",
     "build:javascript": "rollup -c",
     "templates": "rake templates",
     "revendor": "yarn clean && yarn templates && yarn vendor",
@@ -48,7 +48,7 @@
     "host": "https://github.com/marcoroth/herb/releases/download/"
   },
   "dependencies": {
-    "@herb-tools/core": "0.3.1",
+    "@herb-tools/core": "0.4.2",
     "@mapbox/node-pre-gyp": "^2.0.0",
     "node-addon-api": "^5.1.0",
     "node-pre-gyp-github": "^2.0.0"

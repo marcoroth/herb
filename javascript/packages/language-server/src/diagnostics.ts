@@ -1,106 +1,49 @@
-import { Connection, Diagnostic, DiagnosticSeverity, Range, Position } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Herb, Visitor } from "@herb-tools/node-wasm"
+import { Connection, Diagnostic } from "vscode-languageserver/node"
 
+import { ParserService } from "./parser_service"
+import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
-
-import type { Node, HerbError } from "@herb-tools/node-wasm"
-
-class ErrorVisitor extends Visitor {
-  private diagnostics: Diagnostics
-  private textDocument: TextDocument
-
-  constructor(diagnostics: Diagnostics, textDocument: TextDocument) {
-    super()
-    this.diagnostics = diagnostics
-    this.textDocument = textDocument
-  }
-
-  visitChildNodes(node: Node) {
-    super.visitChildNodes(node)
-
-    node.errors.forEach(error => this.publishDiagnosticForError(error, node))
-  }
-
-  private publishDiagnosticForError(error: HerbError, node: Node): void {
-    this.diagnostics.pushDiagnostic(
-      error.message,
-      error.type,
-      this.rangeFromHerbError(error),
-      this.textDocument,
-      {
-        error: error.toJSON(),
-        node: node.toJSON()
-      },
-      DiagnosticSeverity.Error
-    )
-  }
-
-  private rangeFromHerbError(error: HerbError): Range {
-    return Range.create(
-      Position.create(error.location.start.line - 1, error.location.start.column),
-      Position.create(error.location.end.line - 1, error.location.end.column),
-    )
-  }
-}
 
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
-  private readonly diagnosticsSource = "Herb LSP "
+  private readonly parserService: ParserService
+  private readonly linterService: LinterService
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
     connection: Connection,
     documentService: DocumentService,
+    parserService: ParserService,
+    linterService: LinterService,
   ) {
     this.connection = connection
     this.documentService = documentService
+    this.parserService = parserService
+    this.linterService = linterService
   }
 
-  validate(textDocument: TextDocument) {
-    const content = textDocument.getText()
-    const result = Herb.parse(content)
-    const visitor = new ErrorVisitor(this, textDocument)
+  async validate(textDocument: TextDocument) {
+    const parseResult = this.parserService.parseDocument(textDocument)
+    const lintResult = await this.linterService.lintDocument(parseResult.document, textDocument)
 
-    result.visit(visitor)
+    const allDiagnostics = [
+      ...parseResult.diagnostics,
+      ...lintResult.diagnostics,
+    ]
 
+    this.diagnostics.set(textDocument, allDiagnostics)
     this.sendDiagnosticsFor(textDocument)
   }
 
-  refreshDocument(document: TextDocument) {
-    this.validate(document)
+  async refreshDocument(document: TextDocument) {
+    await this.validate(document)
   }
 
-  refreshAllDocuments() {
-    this.documentService.getAll().forEach((document) => {
-      this.refreshDocument(document)
-    })
-  }
-
-  pushDiagnostic(
-    message: string,
-    code: string,
-    range: Range,
-    textDocument: TextDocument,
-    data = {},
-    severity: DiagnosticSeverity = DiagnosticSeverity.Error,
-  ) {
-    const diagnostic: Diagnostic = {
-      source: this.diagnosticsSource,
-      severity,
-      range,
-      message,
-      code,
-      data,
-    }
-
-    const diagnostics = this.diagnostics.get(textDocument) || []
-    diagnostics.push(diagnostic)
-
-    this.diagnostics.set(textDocument, diagnostics)
-
-    return diagnostic
+  async refreshAllDocuments() {
+    const documents = this.documentService.getAll()
+    await Promise.all(documents.map(document => this.refreshDocument(document)))
   }
 
   private sendDiagnosticsFor(textDocument: TextDocument) {

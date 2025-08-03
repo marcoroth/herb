@@ -1,0 +1,29 @@
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:8))
+    │   └── content: "        "
+    │
+    ├── @ HTMLElementNode (location: (1:8)-(2:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:8)-(1:13))
+    │   │       ├── tag_opening: "<" (location: (1:8)-(1:9))
+    │   │       ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   │       ├── tag_closing: ">" (location: (1:12)-(1:13))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:13)-(1:20))
+    │   │       └── content: "Content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:20)-(2:9))
+    │   │       ├── tag_opening: "</" (location: (1:20)-(1:22))
+    │   │       ├── tag_name: "div" (location: (1:22)-(1:25))
+    │   │       └── tag_closing: ">" (location: (2:8)-(2:9))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (2:9)-(3:0))
+        └── content: "\n"
