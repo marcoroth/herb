@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
 
 class TagNameLowercaseVisitor extends BaseRuleVisitor {
@@ -58,8 +58,8 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
 export class HTMLTagNameLowercaseRule extends ParserRule {
   name = "html-tag-name-lowercase"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new TagNameLowercaseVisitor(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new TagNameLowercaseVisitor(this.name, context)
     visitor.visit(node)
     return visitor.offenses
   }

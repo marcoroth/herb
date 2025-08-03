@@ -11,7 +11,7 @@
 
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { Node, HTMLElementNode, ERBContentNode } from "@herb-tools/core"
 
 class <%= visitorClassName %> extends BaseRuleVisitor {
@@ -31,8 +31,8 @@ class <%= visitorClassName %> extends BaseRuleVisitor {
 export class <%= ruleClassName %> extends ParserRule {
   name = "<%= ruleName %>"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new <%= visitorClassName %>(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new <%= visitorClassName %>(this.name, context)
 
     visitor.visit(node)
 

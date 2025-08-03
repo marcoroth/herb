@@ -53,7 +53,7 @@ export class FileProcessor {
         this.linter = new Linter(Herb)
       }
 
-      const lintResult = this.linter.lint(content)
+      const lintResult = this.linter.lint(content, { fileName: filename })
 
       if (ruleCount === 0) {
         ruleCount = this.linter.getRuleCount()

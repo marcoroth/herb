@@ -160,4 +160,66 @@ describe("ERBRequiresTrailingNewlineRule", () => {
     expect(lintResult.offenses[0].rule).toBe("erb-requires-trailing-newline")
     expect(lintResult.offenses[0].message).toBe("File must end with trailing newline")
   })
+
+  test("should not flag snippets without trailing newline (fileName: null)", () => {
+    const html = dedent`
+      <h1>
+        <%= title %>
+      </h1>
+    `
+
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const lintResult = linter.lint(html, { fileName: null })
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should not flag single line snippets without trailing newline (fileName: null)", () => {
+    const html = `<%= render partial: "header" %>`
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const lintResult = linter.lint(html, { fileName: null })
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should not flag single line snippets without trailing newline (fileName: undefined)", () => {
+    const html = `<%= render partial: "header" %>`
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const lintResult = linter.lint(html, { fileName: undefined })
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should not flag single line snippets without trailing newline with no context", () => {
+    const html = `<%= render partial: "header" %>`
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should flag files without trailing newline when fileName is provided", () => {
+    const html = dedent`
+      <h1>
+        <%= title %>
+      </h1>
+    `
+
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const lintResult = linter.lint(html, { fileName: "template.html.erb" })
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].rule).toBe("erb-requires-trailing-newline")
+    expect(lintResult.offenses[0].message).toBe("File must end with trailing newline")
+  })
 })

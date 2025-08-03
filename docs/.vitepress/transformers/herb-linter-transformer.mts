@@ -4,6 +4,7 @@ import { createPositionConverter } from "twoslash-protocol"
 
 import { Herb } from '@herb-tools/node'
 import { Linter } from '@herb-tools/linter'
+import type { LintContext } from '@herb-tools/linter'
 
 export interface LinterDiagnostic {
   line: number
@@ -15,69 +16,16 @@ export interface LinterDiagnostic {
   rule?: string
 }
 
-async function runLinterOnCodeSync(code: string, language: string, third: any): Promise<LinterDiagnostic[]> {
-  console.log('runLinterOnCodeSync called with:', { language, code })
+// Create custom Twoslash function for linter diagnostics
+function createCustomTwoslashFunction(optionse) {
+  return (code, lang, options) => {
+    let fileName = undefined
 
-  const supportedLanguages = ['erb', 'html', 'html+erb', 'html.erb', 'herb']
-
-  if (!supportedLanguages.includes(language)) {
-    console.log('Skipping linter - not erb/html language, got:', language)
-    return []
-  }
-
-  if (typeof Herb.parse !== 'function') {
-    console.log('Herb.parse not available, skipping linter')
-    return []
-  }
-
-  try {
-    if (!Herb.initialized) {
-      await Herb.load()
+    // kinda of a hack to make sure we pass a `fileName` for the `erb-requires-trailing-newline` rule
+    if (code.includes('▌')) {
+      fileName = "erb-requires-trailing-newline.html.erb"
     }
 
-    console.log('Running linter on code:', code.substring(0, 100))
-    const linter = new Linter(Herb)
-    const result = linter.lint(code)
-
-    console.log('Linter result:', { offenses: result.offenses.length, errors: result.errors, warnings: result.warnings })
-    console.log('First offense structure:', result.offenses[0])
-
-    const diagnostics = result.offenses.map(offense => {
-      const startLine = offense.location?.start?.line || 1
-      const startColumn = offense.location?.start?.column || 0
-      const endLine = offense.location?.end?.line || startLine
-      const endColumn = offense.location?.end?.column || startColumn + 1
-
-      console.log('Raw offense location:', {
-        rule: offense.rule,
-        start: offense.location?.start,
-        end: offense.location?.end,
-        mapped: { startLine, startColumn, endLine, endColumn }
-      })
-
-      return {
-        line: startLine,        // 1-based line (matches linter output)
-        column: startColumn,    // 0-based column (matches linter output)
-        endLine: endLine,       // 1-based line
-        endColumn: endColumn,   // 0-based column
-        message: offense.message,
-        severity: offense.severity === 'error' ? 'error' : 'warning',
-        rule: offense.rule
-      }
-    })
-
-    console.log('Mapped diagnostics:', diagnostics)
-    return diagnostics
-  } catch (error) {
-    // If parsing fails, return empty diagnostics
-    console.warn('Failed to run linter on code snippet:', error)
-    return []
-  }
-}
-
-// Create custom Twoslash function for linter diagnostics
-function createCustomTwoslashFunction() {
-  return (code, lang, options) => {
     if (!lang || !['erb', 'html'].includes(lang)) {
       return { code, nodes: [] }
     }
@@ -85,7 +33,7 @@ function createCustomTwoslashFunction() {
     let diagnostics
     try {
       const linter = new Linter(Herb)
-      const result = linter.lint(code)
+      const result = linter.lint(code, { fileName })
 
       diagnostics = result.offenses.map(offense => {
         const startLine = offense.location?.start?.line || 1

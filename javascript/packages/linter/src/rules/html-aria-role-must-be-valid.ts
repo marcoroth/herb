@@ -1,7 +1,7 @@
 import { AttributeVisitorMixin, VALID_ARIA_ROLES } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { Node, HTMLAttributeNode } from "@herb-tools/core"
 
 class AriaRoleMustBeValid extends AttributeVisitorMixin {
@@ -21,8 +21,8 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
 export class HTMLAriaRoleMustBeValidRule extends ParserRule {
   name = "html-aria-role-must-be-valid"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new AriaRoleMustBeValid(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new AriaRoleMustBeValid(this.name, context)
 
     visitor.visit(node)
 

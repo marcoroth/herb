@@ -1,7 +1,7 @@
 import { BaseRuleVisitor, getTagName } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
 
 class NestedLinkVisitor extends BaseRuleVisitor {
@@ -58,8 +58,8 @@ class NestedLinkVisitor extends BaseRuleVisitor {
 export class HTMLNoNestedLinksRule extends ParserRule {
   name = "html-no-nested-links"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new NestedLinkVisitor(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new NestedLinkVisitor(this.name, context)
     visitor.visit(node)
     return visitor.offenses
   }

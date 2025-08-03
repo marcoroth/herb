@@ -15,7 +15,8 @@ import type {
   LexResult,
   Token
 } from "@herb-tools/core"
-import type { LintOffense, LintSeverity, } from "../types.js"
+import type { LintOffense, LintSeverity, LintContext } from "../types.js"
+import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
@@ -23,11 +24,13 @@ import type { LintOffense, LintSeverity, } from "../types.js"
 export abstract class BaseRuleVisitor extends Visitor {
   public readonly offenses: LintOffense[] = []
   protected ruleName: string
+  protected context: LintContext
 
-  constructor(ruleName: string) {
+  constructor(ruleName: string, context?: Partial<LintContext>) {
     super()
 
     this.ruleName = ruleName
+    this.context = { ...DEFAULT_LINT_CONTEXT, ...context }
   }
 
   /**
@@ -345,6 +348,10 @@ export function isBooleanAttribute(attributeName: string): boolean {
  * and attribute iteration logic. Provides simplified interface with extracted attribute info.
  */
 export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
+  constructor(ruleName: string, context?: Partial<LintContext>) {
+    super(ruleName, context)
+  }
+
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkAttributesOnNode(node)
     super.visitHTMLOpenTagNode(node)
@@ -409,9 +416,11 @@ export function forEachAttribute(
 export abstract class BaseLexerRuleVisitor {
   public readonly offenses: LintOffense[] = []
   protected ruleName: string
+  protected context: LintContext
 
-  constructor(ruleName: string) {
+  constructor(ruleName: string, context?: Partial<LintContext>) {
     this.ruleName = ruleName
+    this.context = { ...DEFAULT_LINT_CONTEXT, ...context }
   }
 
   /**
@@ -469,9 +478,11 @@ export abstract class BaseLexerRuleVisitor {
 export abstract class BaseSourceRuleVisitor {
   public readonly offenses: LintOffense[] = []
   protected ruleName: string
+  protected context: LintContext
 
-  constructor(ruleName: string) {
+  constructor(ruleName: string, context?: Partial<LintContext>) {
     this.ruleName = ruleName
+    this.context = { ...DEFAULT_LINT_CONTEXT, ...context }
   }
 
   /**

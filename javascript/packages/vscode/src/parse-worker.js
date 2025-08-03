@@ -37,7 +37,7 @@ const { Linter } = require('@herb-tools/linter');
     if (parseErrors === 0 && linterEnabled) {
       try {
         const linter = new Linter(Herb);
-        const lintResult = linter.lint(content);
+        const lintResult = linter.lint(content, { fileName: file });
 
         lintOffenses = lintResult.offenses || [];
       } catch (lintError) {

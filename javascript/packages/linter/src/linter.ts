@@ -1,6 +1,6 @@
 import { defaultRules } from "./default-rules.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense } from "./types.js"
+import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext } from "./types.js"
 import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
@@ -48,8 +48,9 @@ export class Linter {
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
    * @param source - The source code to lint
+   * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
-  lint(source: string): LintResult {
+  lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
 
     const parseResult = this.herb.parse(source)
@@ -61,11 +62,11 @@ export class Linter {
       let ruleOffenses: LintOffense[]
 
       if (this.isLexerRule(rule)) {
-        ruleOffenses = (rule as LexerRule).check(lexResult)
+        ruleOffenses = (rule as LexerRule).check(lexResult, context)
       } else if (this.isSourceRule(rule)) {
-        ruleOffenses = (rule as SourceRule).check(source)
+        ruleOffenses = (rule as SourceRule).check(source, context)
       } else {
-        ruleOffenses = (rule as ParserRule).check(parseResult.value)
+        ruleOffenses = (rule as ParserRule).check(parseResult.value, context)
       }
 
       this.offenses.push(...ruleOffenses)

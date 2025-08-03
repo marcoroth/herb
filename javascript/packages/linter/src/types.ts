@@ -23,13 +23,13 @@ export interface LintResult {
 export abstract class ParserRule {
   static type = "parser" as const
   abstract name: string
-  abstract check(node: Node): LintOffense[]
+  abstract check(node: Node, context?: Partial<LintContext>): LintOffense[]
 }
 
 export abstract class LexerRule {
   static type = "lexer" as const
   abstract name: string
-  abstract check(lexResult: LexResult): LintOffense[]
+  abstract check(lexResult: LexResult, context?: Partial<LintContext>): LintOffense[]
 }
 
 export interface LexerRuleConstructor {
@@ -37,10 +37,25 @@ export interface LexerRuleConstructor {
   new (): LexerRule
 }
 
+/**
+ * Complete lint context with all properties defined.
+ * Use Partial<LintContext> when passing context to rules.
+ */
+export interface LintContext {
+  fileName: string | undefined
+}
+
+/**
+ * Default context object with all keys defined but set to undefined
+ */
+export const DEFAULT_LINT_CONTEXT: LintContext = {
+  fileName: undefined
+} as const
+
 export abstract class SourceRule {
   static type = "source" as const
   abstract name: string
-  abstract check(source: string): LintOffense[]
+  abstract check(source: string, context?: Partial<LintContext>): LintOffense[]
 }
 
 export interface SourceRuleConstructor {

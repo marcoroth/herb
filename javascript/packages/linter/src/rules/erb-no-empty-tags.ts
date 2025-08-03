@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { Node, ERBContentNode } from "@herb-tools/core"
 
 class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
@@ -25,8 +25,8 @@ class ERBNoEmptyTagsVisitor extends BaseRuleVisitor {
 export class ERBNoEmptyTagsRule extends ParserRule {
   name = "erb-no-empty-tags"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new ERBNoEmptyTagsVisitor(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new ERBNoEmptyTagsVisitor(this.name, context)
 
     visitor.visit(node)
 

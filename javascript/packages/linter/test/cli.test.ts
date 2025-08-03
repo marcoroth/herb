@@ -80,4 +80,12 @@ describe("CLI Output Formatting", () => {
     const wrappedLines = lines.filter(line => line.match(/^\s+│\s/))
     expect(wrappedLines.length).toBeGreaterThan(0)
   })
+
+  test("correctly passes filename context for file-specific rules", () => {
+    const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--simple", "--no-wrap-lines")
+
+    expect(output).toContain("erb-requires-trailing-newline")
+    expect(output).toContain("File must end with trailing newline")
+    expect(exitCode).toBe(1)
+  })
 })

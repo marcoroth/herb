@@ -1,7 +1,7 @@
 import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
 import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
@@ -116,8 +116,8 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
 export class ERBPreferImageTagHelperRule extends ParserRule {
   name = "erb-prefer-image-tag-helper"
 
-  check(node: Node): LintOffense[] {
-    const visitor = new ERBPreferImageTagHelperVisitor(this.name)
+  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new ERBPreferImageTagHelperVisitor(this.name, context)
     visitor.visit(node)
     return visitor.offenses
   }
