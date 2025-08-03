@@ -56,6 +56,7 @@ type ERBNode =
 
 
 import type { FormatOptions } from "./options.js"
+import { sortTailwindClassesInAST } from "@herb-tools/tailwind"
 
 /**
  * Printer traverses the Herb AST using the Visitor pattern
@@ -64,12 +65,12 @@ import type { FormatOptions } from "./options.js"
 export class Printer extends Visitor {
   private indentWidth: number
   private maxLineLength: number
+  private sortTailwindClasses: boolean
   private source: string
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
   private isInComplexNesting: boolean = false
-
   private static readonly INLINE_ELEMENTS = new Set([
     'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
     'dfn', 'em', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
@@ -83,18 +84,28 @@ export class Printer extends Visitor {
     this.source = source
     this.indentWidth = options.indentWidth
     this.maxLineLength = options.maxLineLength
+    this.sortTailwindClasses = options.sortTailwindClasses
   }
 
-  print(object: Node | Token, indentLevel: number = 0): string {
+  async print(object: Node | Token, indentLevel: number = 0): Promise<string> {
     if (object instanceof Token || (object as any).type?.startsWith('TOKEN_')) {
       return (object as Token).value
     }
 
-    const node: Node = object
+    let node: Node = object
 
     this.lines = []
     this.indentLevel = indentLevel
     this.isInComplexNesting = false // Reset for each top-level element
+
+    // Sort Tailwind classes if enabled
+    if (this.sortTailwindClasses) {
+      const result = await sortTailwindClassesInAST(node, { 
+        enabled: true, 
+        verbose: false 
+      })
+      // Note: The AST is modified in-place, so we continue with the same node
+    }
 
     if (typeof (node as any).accept === 'function') {
       node.accept(this)
@@ -108,6 +119,7 @@ export class Printer extends Visitor {
   private push(line: string) {
     this.lines.push(line)
   }
+
 
   private withIndent<T>(callback: () => T): T {
     this.indentLevel++
@@ -1326,7 +1338,7 @@ export class Printer extends Visitor {
       let close_quote = attributeValue.close_quote?.value ?? ""
       let htmlTextContent = ""
 
-      const content = attributeValue.children.map((child: Node) => {
+      let content = attributeValue.children.map((child: Node) => {
         if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE' || child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
           const textContent = (child as HTMLTextNode | LiteralNode).content
           htmlTextContent += textContent
@@ -1340,6 +1352,7 @@ export class Printer extends Visitor {
 
         return ""
       }).join("")
+
 
       if (open_quote === "" && close_quote === "") {
         open_quote = '"'

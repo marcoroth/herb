@@ -89,7 +89,8 @@ export class FormattingService {
 
     return {
       indentWidth: projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
-      maxLineLength: projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
+      maxLineLength: projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength,
+      sortTailwindClasses: projectFormatter.sortTailwindClasses ?? settings?.formatter?.sortTailwindClasses ?? defaultFormatOptions.sortTailwindClasses
     }
   }
 
@@ -105,7 +106,7 @@ export class FormattingService {
       const formatter = new Formatter(this.project.herbBackend, options)
 
       const text = document.getText()
-      let newText = formatter.format(text)
+      let newText = await formatter.format(text)
 
       if (!newText.endsWith('\n')) {
         newText = newText + '\n'
@@ -193,7 +194,7 @@ export class FormattingService {
         }).join('\n')
       }
 
-      let formattedText = formatter.format(textToFormat, { ...options })
+      let formattedText = await formatter.format(textToFormat, { ...options })
 
       if (minIndentLevel > 0) {
         const formattedLines = formattedText.split('\n')

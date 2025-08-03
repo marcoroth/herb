@@ -20,13 +20,13 @@ export class Formatter {
   /**
    * Format a source string, optionally overriding format options per call.
    */
-  format(source: string, options: FormatOptions = {}): string {
+  async format(source: string, options: FormatOptions = {}): Promise<string> {
     const result = this.parse(source)
     if (result.failed) return source
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
-    return new Printer(source, resolvedOptions).print(result.value)
+    return await new Printer(source, resolvedOptions).print(result.value)
   }
 
   private parse(source: string): ParseResult {

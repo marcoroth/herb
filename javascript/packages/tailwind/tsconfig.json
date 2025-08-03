@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2019",
     "lib": ["ES2019"],
-    "module": "commonjs",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -13,12 +13,8 @@
     "declaration": true,
     "declarationDir": "./dist/types",
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "typeRoots": [
-      "./types",
-      "./node_modules/@types"
-    ]
+    "skipLibCheck": true
   },
   "include": ["src"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

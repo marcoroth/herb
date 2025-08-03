@@ -5,6 +5,7 @@ export type HerbConfigOptions = {
     exclude?: string[]
     indentWidth?: number
     maxLineLength?: number
+    sortTailwindClasses?: boolean
   }
 }
 

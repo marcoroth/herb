@@ -49,6 +49,7 @@
     "@herb-tools/formatter": "0.4.2",
     "@herb-tools/linter": "0.4.2",
     "@herb-tools/node-wasm": "0.4.2",
+    "@herb-tools/tailwind": "0.4.2",
     "dedent": "^1.6.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"

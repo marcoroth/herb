@@ -69,7 +69,7 @@ export class CLI {
         }
 
         const source = await this.readStdin()
-        const result = formatter.format(source)
+        const result = await formatter.format(source)
         const output = result.endsWith('\n') ? result : result + '\n'
 
         process.stdout.write(output)
@@ -81,7 +81,7 @@ export class CLI {
         }
 
         const source = await this.readStdin()
-        const result = formatter.format(source)
+        const result = await formatter.format(source)
         const output = result.endsWith('\n') ? result : result + '\n'
 
         process.stdout.write(output)
@@ -104,7 +104,7 @@ export class CLI {
             for (const filePath of files) {
               try {
                 const source = readFileSync(filePath, "utf-8")
-                const result = formatter.format(source)
+                const result = await formatter.format(source)
                 const output = result.endsWith('\n') ? result : result + '\n'
 
                 if (output !== source) {
@@ -136,7 +136,7 @@ export class CLI {
             }
           } else {
             const source = readFileSync(file, "utf-8")
-            const result = formatter.format(source)
+            const result = await formatter.format(source)
             const output = result.endsWith('\n') ? result : result + '\n'
 
             if (output !== source) {
@@ -172,7 +172,7 @@ export class CLI {
         for (const filePath of files) {
           try {
             const source = readFileSync(filePath, "utf-8")
-            const result = formatter.format(source)
+            const result = await formatter.format(source)
             const output = result.endsWith('\n') ? result : result + '\n'
 
             if (output !== source) {

@@ -12,6 +12,7 @@ export interface HerbSettings {
     enabled?: boolean
     indentWidth?: number
     maxLineLength?: number
+    sortTailwindClasses?: boolean
   }
 }
 
@@ -26,7 +27,8 @@ export class Settings {
     formatter: {
       enabled: false,
       indentWidth: defaultFormatOptions.indentWidth,
-      maxLineLength: defaultFormatOptions.maxLineLength
+      maxLineLength: defaultFormatOptions.maxLineLength,
+      sortTailwindClasses: defaultFormatOptions.sortTailwindClasses
     }
   }
   globalSettings: HerbSettings = this.defaultSettings

@@ -8,6 +8,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "prettier-plugin-tailwindcss",
 ]
 
 function isExternal(id) {
@@ -25,6 +26,7 @@ export default [
       file: "dist/herb-format.js",
       format: "cjs",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     external: isExternal,
     plugins: [
@@ -44,6 +46,7 @@ export default [
       file: "dist/index.esm.js",
       format: "esm",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     external,
     plugins: [
@@ -64,6 +67,7 @@ export default [
       file: "dist/index.cjs",
       format: "cjs",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     external,
     plugins: [
