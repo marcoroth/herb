@@ -1,22 +1,19 @@
 {
-  "name": "@herb-tools/formatter",
+  "name": "@herb-tools/rewriter",
   "version": "0.4.3",
-  "description": "Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.",
+  "description": "Code rewriters for HTML+ERB templates including Tailwind CSS class sorting.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/formatter%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/rewriter%60:%20",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcoroth/herb.git",
-    "directory": "javascript/packages/formatter"
+    "directory": "javascript/packages/rewriter"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.esm.js",
   "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
-  "bin": {
-    "herb-format": "bin/herb-format"
-  },
   "scripts": {
     "build": "yarn clean && rollup -c rollup.config.mjs",
     "dev": "rollup -c rollup.config.mjs -w",
@@ -36,8 +33,7 @@
   },
   "dependencies": {
     "@herb-tools/core": "0.4.3",
-    "@herb-tools/rewriter": "0.4.3",
-    "glob": "^11.0.3"
+    "prettier": "^3.6.2"
   },
   "devDependencies": {
     "prettier-plugin-tailwindcss": "^0.6.14"
@@ -46,7 +42,6 @@
     "package.json",
     "README.md",
     "dist/",
-    "src/",
-    "bin/"
+    "src/"
   ]
 }

@@ -1,17 +1,15 @@
 import typescript from "@rollup/plugin-typescript"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
-import json from "@rollup/plugin-json"
 import commonjs from "@rollup/plugin-commonjs"
+import json from "@rollup/plugin-json"
 
-// Bundle the LSP server entry point into a single CommonJS file.
-// Exclude Node built-in so they remain as externals.
 const external = [
   "path",
   "url",
   "fs",
   "module",
-  "prettier",
   "prettier-plugin-tailwindcss",
+  "@herb-tools/core",
 ]
 
 function isExternal(id) {
@@ -22,29 +20,27 @@ function isExternal(id) {
 }
 
 export default [
-  // CLI entry point (CommonJS)
   {
-    input: "src/herb-language-server.ts",
+    input: "src/index.ts",
     output: {
-      file: "dist/herb-language-server.js",
-      format: "cjs",
+      file: "dist/index.esm.js",
+      format: "esm",
       sourcemap: true,
       inlineDynamicImports: true,
     },
-    external: isExternal,
+    external,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ preferBuiltins: true }),
       commonjs(),
       json(),
       typescript({
         tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
         rootDir: "src/",
-        module: "esnext",
       }),
     ],
   },
-
-  // Library exports (CommonJS)
   {
     input: "src/index.ts",
     output: {
@@ -53,15 +49,14 @@ export default [
       sourcemap: true,
       inlineDynamicImports: true,
     },
-    external: isExternal,
+    external,
     plugins: [
-      nodeResolve(),
+      nodeResolve({ preferBuiltins: true }),
       commonjs(),
       json(),
       typescript({
         tsconfig: "./tsconfig.json",
         rootDir: "src/",
-        module: "esnext",
       }),
     ],
   },

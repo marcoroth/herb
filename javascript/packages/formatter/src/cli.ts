@@ -5,6 +5,7 @@ import { join, resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
+import { TailwindClassSorter } from "@herb-tools/rewriter"
 
 import { name, version } from "../package.json"
 
@@ -21,17 +22,19 @@ export class CLI {
                        or '-' for stdin (omit to format all **/*.html.erb files in current directory)
 
     Options:
-      -c, --check      check if files are formatted without modifying them
-      -h, --help       show help
-      -v, --version    show version
+      -c, --check                    check if files are formatted without modifying them
+      -h, --help                     show help
+      -v, --version                  show version
+      --sort-tailwind-classes        sort Tailwind CSS classes according to recommended order
 
     Examples:
-      herb-format                            # Format all **/*.html.erb files in current directory
-      herb-format --check                    # Check if all **/*.html.erb files are formatted
-      herb-format templates/index.html.erb   # Format and write single file
-      herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
-      cat template.html.erb | herb-format    # Format from stdin to stdout
-      herb-format - < template.html.erb      # Format from stdin to stdout
+      herb-format                                    # Format all **/*.html.erb files in current directory
+      herb-format --check                            # Check if all **/*.html.erb files are formatted
+      herb-format --sort-tailwind-classes            # Format and sort Tailwind classes
+      herb-format templates/index.html.erb           # Format and write single file
+      herb-format --check templates/                 # Check if all **/*.html.erb files in templates/ are formatted
+      cat template.html.erb | herb-format            # Format from stdin to stdout
+      herb-format - < template.html.erb              # Format from stdin to stdout
   `
 
   async run() {
@@ -56,7 +59,12 @@ export class CLI {
       console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues")
       console.log()
 
-      const formatter = new Formatter(Herb)
+      const sortTailwindClasses = args.includes("--sort-tailwind-classes")
+      const formatter = new Formatter(Herb, sortTailwindClasses ? {
+        rewriters: {
+          before: [new TailwindClassSorter({ enabled: true, verbose: false })]
+        }
+      } : {})
       const isCheckMode = args.includes("--check") || args.includes("-c")
 
       const file = args.find(arg => !arg.startsWith("-"))
