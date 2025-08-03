@@ -7,6 +7,7 @@ import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-ne
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
+import { HTMLAriaLevelMustBeValidRule } from "./rules/html-aria-level-must-be-valid.js"
 import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-heading-requires-level.js"
 import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
@@ -29,6 +30,7 @@ export const defaultRules: RuleClass[] = [
   ERBRequireWhitespaceRule,
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,
+  HTMLAriaLevelMustBeValidRule,
   HTMLAriaRoleHeadingRequiresLevelRule,
   HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
