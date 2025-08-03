@@ -58,7 +58,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
     `
 
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, { fileName: "test.html.erb" })
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -70,7 +70,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
   test("should report errors for single line files without newline", () => {
     const html = `<%= render partial: "header" %>`
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, { fileName: "test.html.erb" })
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -90,7 +90,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
     `
 
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, { fileName: "test.html.erb" })
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -120,7 +120,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
   test("should handle ERB-only template without trailing newline", () => {
     const html = `<%= hello world %>`
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, { fileName: "test.html.erb" })
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
@@ -152,7 +152,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
   test("should flag empty file with whitespace", () => {
     const html = ` `
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, { fileName: "test.html.erb" })
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
