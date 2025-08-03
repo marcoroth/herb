@@ -7,8 +7,16 @@ import type { Node, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } f
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
     if (attributeName !== "aria-level") return
-    if (attributeValue === null) return
-    if (attributeValue.includes("<%")) return
+    if (attributeValue !== null && attributeValue.includes("<%")) return
+
+    if (attributeValue === null || attributeValue === "") {
+      this.addOffense(
+        `The \`aria-level\` attribute must be an integer between 1 and 6, got an empty value.`,
+        attributeNode.location,
+      )
+
+      return
+    }
 
     const number = parseInt(attributeValue)
 

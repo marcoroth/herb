@@ -175,4 +175,20 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(0)
   })
+
+  test("flags empty aria-level attribute", () => {
+    const html = dedent`
+      <div role="heading" aria-level="">Empty value</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].code).toBe("html-aria-level-must-be-valid")
+    expect(lintResult.offenses[0].message).toBe(
+      'The `aria-level` attribute must be an integer between 1 and 6, got an empty value.',
+    )
+  })
 })
