@@ -29,7 +29,7 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const lintResult = this.linter.lint(textDocument.getText())
+    const lintResult = this.linter.lint(textDocument.getText(), { fileName: textDocument.uri })
     const diagnostics: Diagnostic[] = []
 
     lintResult.offenses.forEach(offense => {
