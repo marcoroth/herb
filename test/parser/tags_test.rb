@@ -163,22 +163,18 @@ module Parser
     end
 
     test "script tag with nested div" do
-      skip
       assert_parsed_snapshot(%(<script><div>var x = 5;</div></script>))
     end
 
     test "script tag with JavaScript greater than comparison" do
-      skip
       assert_parsed_snapshot(%(<script>if (something > 3) { alert("hello"); }</script>))
     end
 
     test "script tag with JavaScript less than comparison" do
-      skip
       assert_parsed_snapshot(%(<script>if (count < 10) { return true; }</script>))
     end
 
     test "script tag with HTML-like string literals" do
-      skip
       assert_parsed_snapshot(%(<script>var html = "<div class='test'>content</div>";</script>))
     end
 
@@ -193,12 +189,10 @@ module Parser
     end
 
     test "style tag with nested div and CSS selectors" do
-      skip
       assert_parsed_snapshot(%(<style><div>.class { color: red; }</div></style>))
     end
 
     test "style tag with CSS greater than selector" do
-      skip
       assert_parsed_snapshot(%(<style>.parent > .child { margin: 0; }</style>))
     end
 
@@ -218,12 +212,10 @@ module Parser
     end
 
     test "script tag with ERB interpolation" do
-      skip
       assert_parsed_snapshot(%(<script>var userId = <%= current_user.id %>; if (userId > 0) { login(); }</script>))
     end
 
     test "style tag with ERB interpolation" do
-      skip
       assert_parsed_snapshot(%(<style>.user-<%= user.id %> > .content { color: <%= theme_color %>; }</style>))
     end
 

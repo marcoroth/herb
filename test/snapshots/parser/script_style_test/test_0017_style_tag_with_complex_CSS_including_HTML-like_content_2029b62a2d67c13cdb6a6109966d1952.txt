@@ -1,0 +1,26 @@
+@ DocumentNode (location: (1:0)-(10:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(9:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:7)-(9:0))
+    │   │       └── content: "\n  /* <div>Comment with HTML</div> */\n  .tooltip::after {\n    content: \"<div class='arrow'></div>\";\n  }\n  .container > .item:first-child {\n    background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (9:0)-(9:8))
+    │   │       ├── tag_opening: "</" (location: (9:0)-(9:2))
+    │   │       ├── tag_name: "style" (location: (9:2)-(9:7))
+    │   │       └── tag_closing: ">" (location: (9:7)-(9:8))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (9:8)-(10:0))
+        └── content: "\n"

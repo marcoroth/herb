@@ -1,0 +1,46 @@
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   ├── body: (5 items)
+    │   │   ├── @ LiteralNode (location: (1:7)-(3:25))
+    │   │   │   └── content: "\n  .dynamic::before {\n    content: \"Generated: "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:25)-(3:42))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:25)-(3:28))
+    │   │   │   ├── content: " @timestamp " (location: (3:28)-(3:40))
+    │   │   │   ├── tag_closing: "%>" (location: (3:40)-(3:42))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ LiteralNode (location: (3:42)-(4:21))
+    │   │   │   └── content: "\";\n    background: url('"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:21)-(4:39))
+    │   │   │   ├── tag_opening: "<%=" (location: (4:21)-(4:24))
+    │   │   │   ├── content: " @image_path " (location: (4:24)-(4:37))
+    │   │   │   ├── tag_closing: "%>" (location: (4:37)-(4:39))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ LiteralNode (location: (4:39)-(6:0))
+    │   │       └── content: "');\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:8))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "style" (location: (6:2)-(6:7))
+    │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (6:8)-(7:0))
+        └── content: "\n"

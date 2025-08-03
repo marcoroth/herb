@@ -1,0 +1,26 @@
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(6:0))
+    │   │       └── content: "\n  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\n  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:9))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "script" (location: (6:2)-(6:8))
+    │   │       └── tag_closing: ">" (location: (6:8)-(6:9))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

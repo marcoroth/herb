@@ -17,6 +17,7 @@
 #include <strings.h>
 
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors);
+static void parser_parse_foreign_content(parser_T* parser, array_T* children, array_T* errors);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 
 size_t parser_sizeof(void) {
@@ -29,6 +30,8 @@ parser_T* parser_init(lexer_T* lexer) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
+  parser->state = PARSER_STATE_DATA;
+  parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
 
   return parser;
 }
@@ -383,6 +386,30 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   // <div id="home">
   if (token_is(parser, TOKEN_QUOTE)) { return parser_parse_quoted_html_attribute_value(parser, children, errors); }
 
+  if (token_is(parser, TOKEN_BACKTICK)) {
+    token_T* token = parser_advance(parser);
+    position_T* start = position_copy(token->location->start);
+    position_T* end = position_copy(token->location->end);
+
+    append_unexpected_error(
+      "Invalid quote character for HTML attribute",
+      "single quote (') or double quote (\")",
+      "backtick (`)",
+      start,
+      end,
+      errors
+    );
+
+    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value =
+      ast_html_attribute_value_node_init(NULL, children, NULL, false, start, end, errors);
+
+    position_free(start);
+    position_free(end);
+    token_free(token);
+
+    return value;
+  }
+
   token_T* token = parser_advance(parser);
 
   append_unexpected_error(
@@ -606,7 +633,13 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 
   parser_push_open_tag(parser, open_tag->tag_name);
 
-  parser_parse_in_data_state(parser, body, errors);
+  if (open_tag->tag_name->value && parser_is_foreign_content_tag(open_tag->tag_name->value)) {
+    foreign_content_type_T content_type = parser_get_foreign_content_type(open_tag->tag_name->value);
+    parser_enter_foreign_content(parser, content_type);
+    parser_parse_foreign_content(parser, body, errors);
+  } else {
+    parser_parse_in_data_state(parser, body, errors);
+  }
 
   if (!token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) { return parser_handle_missing_close_tag(open_tag, body, errors); }
 
@@ -695,6 +728,83 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   token_free(closing_tag);
 
   return erb_node;
+}
+
+static void parser_parse_foreign_content(parser_T* parser, array_T* children, array_T* errors) {
+  buffer_T content = buffer_new();
+  position_T* start = position_copy(parser->current_token->location->start);
+  const char* expected_closing_tag = parser_get_foreign_content_closing_tag(parser->foreign_content_type);
+
+  if (expected_closing_tag == NULL) {
+    parser_exit_foreign_content(parser);
+    position_free(start);
+    buffer_free(&content);
+
+    return;
+  }
+
+  while (!token_is(parser, TOKEN_EOF)) {
+    if (token_is(parser, TOKEN_ERB_START)) {
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      array_append(children, erb_node);
+
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
+
+      continue;
+    }
+
+    if (token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) {
+      size_t saved_position = parser->lexer->current_position;
+      size_t saved_line = parser->lexer->current_line;
+      size_t saved_column = parser->lexer->current_column;
+      size_t saved_previous_position = parser->lexer->previous_position;
+      size_t saved_previous_line = parser->lexer->previous_line;
+      size_t saved_previous_column = parser->lexer->previous_column;
+
+      char saved_char = parser->lexer->current_character;
+      lexer_state_T saved_state = parser->lexer->state;
+
+      token_T* next_token = lexer_next_token(parser->lexer);
+      bool is_potential_match = false;
+
+      if (next_token && next_token->type == TOKEN_IDENTIFIER && next_token->value) {
+        is_potential_match = parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
+      }
+
+      parser->lexer->current_position = saved_position;
+      parser->lexer->current_line = saved_line;
+      parser->lexer->current_column = saved_column;
+      parser->lexer->previous_position = saved_previous_position;
+      parser->lexer->previous_line = saved_previous_line;
+      parser->lexer->previous_column = saved_previous_column;
+      parser->lexer->current_character = saved_char;
+      parser->lexer->state = saved_state;
+
+      if (next_token) { token_free(next_token); }
+
+      if (is_potential_match) {
+        parser_append_literal_node_from_buffer(parser, &content, children, start);
+        parser_exit_foreign_content(parser);
+
+        position_free(start);
+        buffer_free(&content);
+
+        return;
+      }
+    }
+
+    token_T* token = parser_advance(parser);
+    buffer_append(&content, token->value);
+    token_free(token);
+  }
+
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
+  parser_exit_foreign_content(parser);
+  position_free(start);
+  buffer_free(&content);
 }
 
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors) {

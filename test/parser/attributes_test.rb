@@ -123,5 +123,25 @@ module Parser
     test "atttribute with @ prefix and now value" do
       assert_parsed_snapshot(%(<div @click></div>))
     end
+
+    test "attribute with backtick quotes (invalid)" do
+      assert_parsed_snapshot(%(<div class=`hello`></div>))
+    end
+
+    test "attribute with backtick quotes and whitespace (invalid)" do
+      assert_parsed_snapshot(%(<div class=`hello world`></div>))
+    end
+
+    test "multiple attributes with mixed quotes including backticks (invalid)" do
+      assert_parsed_snapshot(%(<div class="valid" id=`invalid` data-test='also-valid'></div>))
+    end
+
+    test "self-closing tag with backtick attribute (invalid)" do
+      assert_parsed_snapshot(%(<img src=`image.jpg` />))
+    end
+
+    test "attribute with backtick containing HTML (invalid)" do
+      assert_parsed_snapshot(%(<div data-template=`<span>Hello</span>`></div>))
+    end
   end
 end

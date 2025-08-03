@@ -1,0 +1,56 @@
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (7 items)
+    │   │   ├── @ LiteralNode (location: (1:8)-(2:17))
+    │   │   │   └── content: "\n  var message = \""
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:17)-(2:33))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:17)-(2:20))
+    │   │   │   ├── content: " @greeting " (location: (2:20)-(2:31))
+    │   │   │   ├── tag_closing: "%>" (location: (2:31)-(2:33))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ LiteralNode (location: (2:33)-(3:18))
+    │   │   │   └── content: "\";\n  var template = '"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:18)-(3:34))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:18)-(3:21))
+    │   │   │   ├── content: " @template " (location: (3:21)-(3:32))
+    │   │   │   ├── tag_closing: "%>" (location: (3:32)-(3:34))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ LiteralNode (location: (3:34)-(4:16))
+    │   │   │   └── content: "';\n  var config = `"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:16)-(4:30))
+    │   │   │   ├── tag_opening: "<%=" (location: (4:16)-(4:19))
+    │   │   │   ├── content: " @config " (location: (4:19)-(4:28))
+    │   │   │   ├── tag_closing: "%>" (location: (4:28)-(4:30))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ LiteralNode (location: (4:30)-(5:0))
+    │   │       └── content: "`;\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:9))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "script" (location: (5:2)-(5:8))
+    │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

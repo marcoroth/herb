@@ -1,0 +1,78 @@
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (10 items)
+    ├── @ HTMLElementNode (location: (1:0)-(2:27))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(2:18))
+    │   │       └── content: "\n  // Comment with "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (2:18)-(2:27))
+    │   │       ├── tag_opening: "</" (location: (2:18)-(2:20))
+    │   │       ├── tag_name: "script" (location: (2:20)-(2:26))
+    │   │       └── tag_closing: ">" (location: (2:26)-(2:27))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (2:27)-(3:25))
+    │   └── content: "\n  var str = \"String with "
+    │
+    ├── @ HTMLCloseTagNode (location: (3:25)-(3:34))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (3:25)-(3:34))
+    │   │       ├── message: "Found closing tag `</script>` at (3:27) without a matching opening tag."
+    │   │       └── closing_tag: "script" (location: (3:27)-(3:33))
+    │   │
+    │   ├── tag_opening: "</" (location: (3:25)-(3:27))
+    │   ├── tag_name: "script" (location: (3:27)-(3:33))
+    │   └── tag_closing: ">" (location: (3:33)-(3:34))
+    │
+    ├── @ HTMLTextNode (location: (3:34)-(5:10))
+    │   └── content: "\";\n  /* Multi-line comment\n     with "
+    │
+    ├── @ HTMLCloseTagNode (location: (5:10)-(5:19))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (5:10)-(5:19))
+    │   │       ├── message: "Found closing tag `</script>` at (5:12) without a matching opening tag."
+    │   │       └── closing_tag: "script" (location: (5:12)-(5:18))
+    │   │
+    │   ├── tag_opening: "</" (location: (5:10)-(5:12))
+    │   ├── tag_name: "script" (location: (5:12)-(5:18))
+    │   └── tag_closing: ">" (location: (5:18)-(5:19))
+    │
+    ├── @ HTMLTextNode (location: (5:19)-(6:30))
+    │   └── content: " inside */\n  var another = 'Single quote "
+    │
+    ├── @ HTMLCloseTagNode (location: (6:30)-(6:39))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (6:30)-(6:39))
+    │   │       ├── message: "Found closing tag `</script>` at (6:32) without a matching opening tag."
+    │   │       └── closing_tag: "script" (location: (6:32)-(6:38))
+    │   │
+    │   ├── tag_opening: "</" (location: (6:30)-(6:32))
+    │   ├── tag_name: "script" (location: (6:32)-(6:38))
+    │   └── tag_closing: ">" (location: (6:38)-(6:39))
+    │
+    ├── @ HTMLTextNode (location: (6:39)-(7:0))
+    │   └── content: "';\n"
+    │
+    ├── @ HTMLCloseTagNode (location: (7:0)-(7:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (7:0)-(7:9))
+    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag."
+    │   │       └── closing_tag: "script" (location: (7:2)-(7:8))
+    │   │
+    │   ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   ├── tag_name: "script" (location: (7:2)-(7:8))
+    │   └── tag_closing: ">" (location: (7:8)-(7:9))
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

@@ -24,6 +24,15 @@ void parser_append_literal_node_from_buffer(
 
 bool parser_in_svg_context(const parser_T* parser);
 
+foreign_content_type_T parser_get_foreign_content_type(const char* tag_name);
+bool parser_is_foreign_content_tag(const char* tag_name);
+const char* parser_get_foreign_content_closing_tag(foreign_content_type_T type);
+
+void parser_enter_foreign_content(parser_T* parser, foreign_content_type_T type);
+void parser_exit_foreign_content(parser_T* parser);
+
+bool parser_is_expected_closing_tag_name(const char* tag_name, foreign_content_type_T expected_type);
+
 token_T* parser_advance(parser_T* parser);
 token_T* parser_consume_if_present(parser_T* parser, token_type_T type);
 token_T* parser_consume_expected(parser_T* parser, token_type_T type, array_T* array);

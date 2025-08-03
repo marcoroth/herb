@@ -1,0 +1,36 @@
+@ DocumentNode (location: (1:0)-(1:37))
+└── children: (3 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:26))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(1:17))
+    │   │       └── content: "var s = \""
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:17)-(1:26))
+    │   │       ├── tag_opening: "</" (location: (1:17)-(1:19))
+    │   │       ├── tag_name: "script" (location: (1:19)-(1:25))
+    │   │       └── tag_closing: ">" (location: (1:25)-(1:26))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:26)-(1:28))
+    │   └── content: "\";"
+    │
+    └── @ HTMLCloseTagNode (location: (1:28)-(1:37))
+        ├── errors: (1 error)
+        │   └── @ MissingOpeningTagError (location: (1:28)-(1:37))
+        │       ├── message: "Found closing tag `</script>` at (1:30) without a matching opening tag."
+        │       └── closing_tag: "script" (location: (1:30)-(1:36))
+        │
+        ├── tag_opening: "</" (location: (1:28)-(1:30))
+        ├── tag_name: "script" (location: (1:30)-(1:36))
+        └── tag_closing: ">" (location: (1:36)-(1:37))

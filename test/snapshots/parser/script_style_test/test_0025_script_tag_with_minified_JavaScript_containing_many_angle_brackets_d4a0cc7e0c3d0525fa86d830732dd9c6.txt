@@ -1,0 +1,23 @@
+@ DocumentNode (location: (1:0)-(1:115))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:115))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: (1 item)
+        │   └── @ LiteralNode (location: (1:8)-(1:106))
+        │       └── content: "!function(){for(var i=0;i<10;i++)if(arr[i]>5&&arr[i]<15)console.log(\"<item>\"+arr[i]+\"</item>\")}();"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:106)-(1:115))
+        │       ├── tag_opening: "</" (location: (1:106)-(1:108))
+        │       ├── tag_name: "script" (location: (1:108)-(1:114))
+        │       └── tag_closing: ">" (location: (1:114)-(1:115))
+        │
+        └── is_void: false

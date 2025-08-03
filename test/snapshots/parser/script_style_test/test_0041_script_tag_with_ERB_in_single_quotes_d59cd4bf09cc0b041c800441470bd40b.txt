@@ -1,0 +1,33 @@
+@ DocumentNode (location: (1:0)-(1:59))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:59))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: (3 items)
+        │   ├── @ LiteralNode (location: (1:8)-(1:25))
+        │   │   └── content: "var msg = 'Hello "
+        │   │
+        │   ├── @ ERBContentNode (location: (1:25)-(1:42))
+        │   │   ├── tag_opening: "<%=" (location: (1:25)-(1:28))
+        │   │   ├── content: " @user.name " (location: (1:28)-(1:40))
+        │   │   ├── tag_closing: "%>" (location: (1:40)-(1:42))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (1:42)-(1:50))
+        │       └── content: " world';"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:50)-(1:59))
+        │       ├── tag_opening: "</" (location: (1:50)-(1:52))
+        │       ├── tag_name: "script" (location: (1:52)-(1:58))
+        │       └── tag_closing: ">" (location: (1:58)-(1:59))
+        │
+        └── is_void: false

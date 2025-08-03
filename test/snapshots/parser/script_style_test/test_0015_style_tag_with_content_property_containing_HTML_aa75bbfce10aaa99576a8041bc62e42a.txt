@@ -1,0 +1,23 @@
+@ DocumentNode (location: (1:0)-(1:59))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:59))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "style" (location: (1:1)-(1:6))
+        │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "style" (location: (1:1)-(1:6))
+        ├── body: (1 item)
+        │   └── @ LiteralNode (location: (1:7)-(1:51))
+        │       └── content: ".icon::before { content: \"<span>★</span>\"; }"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:51)-(1:59))
+        │       ├── tag_opening: "</" (location: (1:51)-(1:53))
+        │       ├── tag_name: "style" (location: (1:53)-(1:58))
+        │       └── tag_closing: ">" (location: (1:58)-(1:59))
+        │
+        └── is_void: false

@@ -1,0 +1,43 @@
+@ DocumentNode (location: (1:0)-(1:68))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:68))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: (5 items)
+        │   ├── @ LiteralNode (location: (1:8)-(1:22))
+        │   │   └── content: "var a = \"ERB: "
+        │   │
+        │   ├── @ ERBContentNode (location: (1:22)-(1:31))
+        │   │   ├── tag_opening: "<%=" (location: (1:22)-(1:25))
+        │   │   ├── content: " @a " (location: (1:25)-(1:29))
+        │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   ├── @ LiteralNode (location: (1:31)-(1:48))
+        │   │   └── content: "\"; var b = 'ERB: "
+        │   │
+        │   ├── @ ERBContentNode (location: (1:48)-(1:57))
+        │   │   ├── tag_opening: "<%=" (location: (1:48)-(1:51))
+        │   │   ├── content: " @b " (location: (1:51)-(1:55))
+        │   │   ├── tag_closing: "%>" (location: (1:55)-(1:57))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (1:57)-(1:59))
+        │       └── content: "';"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:59)-(1:68))
+        │       ├── tag_opening: "</" (location: (1:59)-(1:61))
+        │       ├── tag_name: "script" (location: (1:61)-(1:67))
+        │       └── tag_closing: ">" (location: (1:67)-(1:68))
+        │
+        └── is_void: false

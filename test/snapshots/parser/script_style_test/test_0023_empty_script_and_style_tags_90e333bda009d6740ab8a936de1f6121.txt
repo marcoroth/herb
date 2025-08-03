@@ -1,0 +1,39 @@
+@ DocumentNode (location: (1:0)-(1:32))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:17))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:8)-(1:17))
+    │   │       ├── tag_opening: "</" (location: (1:8)-(1:10))
+    │   │       ├── tag_name: "script" (location: (1:10)-(1:16))
+    │   │       └── tag_closing: ">" (location: (1:16)-(1:17))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLElementNode (location: (1:17)-(1:32))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:17)-(1:24))
+        │       ├── tag_opening: "<" (location: (1:17)-(1:18))
+        │       ├── tag_name: "style" (location: (1:18)-(1:23))
+        │       ├── tag_closing: ">" (location: (1:23)-(1:24))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "style" (location: (1:18)-(1:23))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:24)-(1:32))
+        │       ├── tag_opening: "</" (location: (1:24)-(1:26))
+        │       ├── tag_name: "style" (location: (1:26)-(1:31))
+        │       └── tag_closing: ">" (location: (1:31)-(1:32))
+        │
+        └── is_void: false
