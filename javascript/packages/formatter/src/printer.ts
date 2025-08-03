@@ -1320,23 +1320,33 @@ export class Printer extends Visitor {
     let value = ""
 
     if (attribute.value && (attribute.value instanceof HTMLAttributeValueNode || (attribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE')) {
-      const attrValue = attribute.value as HTMLAttributeValueNode
-      const open_quote = (attrValue.open_quote?.value ?? "")
-      const close_quote = (attrValue.close_quote?.value ?? "")
-      const attribute_value = attrValue.children.map((attr: any) => {
-        if (attr instanceof HTMLTextNode || (attr as any).type === 'AST_HTML_TEXT_NODE' || attr instanceof LiteralNode || (attr as any).type === 'AST_LITERAL_NODE') {
+      const attributeValue = attribute.value as HTMLAttributeValueNode
 
-          return (attr as HTMLTextNode | LiteralNode).content
-        } else if (attr instanceof ERBContentNode || (attr as any).type === 'AST_ERB_CONTENT_NODE') {
-          const erbAttr = attr as ERBContentNode
+      let open_quote = attributeValue.open_quote?.value ?? ""
+      let close_quote = attributeValue.close_quote?.value ?? ""
 
-          return (erbAttr.tag_opening!.value + erbAttr.content!.value + erbAttr.tag_closing!.value)
+      const content = attributeValue.children.map((child: Node) => {
+        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE' || child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+
+          return (child as HTMLTextNode | LiteralNode).content
+        } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+          const erbAttribute = child as ERBContentNode
+
+          return erbAttribute.tag_opening!.value + erbAttribute.content!.value + erbAttribute.tag_closing!.value
         }
 
         return ""
       }).join("")
 
-      value = open_quote + attribute_value + close_quote
+      if (open_quote === "" && close_quote === "") {
+        open_quote = '"'
+        close_quote = '"'
+      } else if (open_quote === "'" && close_quote === "'" && !content.includes('"')) {
+        open_quote = '"'
+        close_quote = '"'
+      }
+
+      value = open_quote + content + close_quote
     }
 
     return name + equals + value
