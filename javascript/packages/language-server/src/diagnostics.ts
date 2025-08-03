@@ -26,7 +26,7 @@ export class Diagnostics {
 
   async validate(textDocument: TextDocument) {
     const parseResult = this.parserService.parseDocument(textDocument)
-    const lintResult = await this.linterService.lintDocument(parseResult.document, textDocument)
+    const lintResult = await this.linterService.lintDocument(textDocument)
 
     const allDiagnostics = [
       ...parseResult.diagnostics,

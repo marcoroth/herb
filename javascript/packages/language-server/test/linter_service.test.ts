@@ -36,11 +36,9 @@ describe("LinterService", () => {
       settings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<div>Test</div>\n")
-      const document = parseResult.value
       const textDocument = createTestDocument("<div>Test</div>\n")
 
-      const result = await linterService.lintDocument(document, textDocument)
+      const result = await linterService.lintDocument(textDocument)
 
       expect(result).toBeDefined()
       expect(result.diagnostics).toEqual([])
@@ -54,11 +52,9 @@ describe("LinterService", () => {
       })
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<div>Test</div>\n")
-      const document = parseResult.value
       const textDocument = createTestDocument("<div>Test</div>\n")
 
-      const result = await linterService.lintDocument(document, textDocument)
+      const result = await linterService.lintDocument(textDocument)
 
       expect(result).toBeDefined()
       expect(result.diagnostics).toBeDefined()
@@ -71,11 +67,9 @@ describe("LinterService", () => {
       })
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<DIV>Test</DIV>\n")
-      const document = parseResult.value
       const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
-      const result = await linterService.lintDocument(document, textDocument)
+      const result = await linterService.lintDocument(textDocument)
 
       expect(result.diagnostics).toEqual([])
     })
@@ -87,11 +81,9 @@ describe("LinterService", () => {
       })
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<DIV><SPAN>Hello</SPAN></DIV>")
-      const document = parseResult.value
       const textDocument = createTestDocument("<DIV><SPAN>Hello</SPAN></DIV>")
 
-      const result = await linterService.lintDocument(document, textDocument)
+      const result = await linterService.lintDocument(textDocument)
 
       expect(result.diagnostics.length).toBeGreaterThan(0)
     })
@@ -101,11 +93,9 @@ describe("LinterService", () => {
       settings.hasConfigurationCapability = false
 
       const linterService = new LinterService(settings)
-      const parseResult = Herb.parse("<DIV>Test</DIV>")
-      const document = parseResult.value
       const textDocument = createTestDocument("<DIV>Test</DIV>")
 
-      const result = await linterService.lintDocument(document, textDocument)
+      const result = await linterService.lintDocument(textDocument)
 
       expect(result.diagnostics.length).toBeGreaterThan(0)
     })

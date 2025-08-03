@@ -5,8 +5,6 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { Settings } from "./settings"
 
-import type { DocumentNode } from "@herb-tools/node-wasm"
-
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
 }
@@ -21,7 +19,7 @@ export class LinterService {
     this.linter = new Linter(Herb)
   }
 
-  async lintDocument(document: DocumentNode, textDocument: TextDocument): Promise<LintServiceResult> {
+  async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
     const settings = await this.settings.getDocumentSettings(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
