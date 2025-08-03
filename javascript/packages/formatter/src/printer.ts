@@ -137,6 +137,7 @@ export class Printer extends Visitor {
       node instanceof ERBUnlessNode || (node as any).type === 'AST_ERB_UNLESS_NODE' ||
       node instanceof ERBBlockNode || (node as any).type === 'AST_ERB_BLOCK_NODE' ||
       node instanceof ERBCaseNode || (node as any).type === 'AST_ERB_CASE_NODE' ||
+      node instanceof ERBCaseMatchNode || (node as any).type === 'AST_ERB_CASE_MATCH_NODE' ||
       node instanceof ERBWhileNode || (node as any).type === 'AST_ERB_WHILE_NODE' ||
       node instanceof ERBForNode || (node as any).type === 'AST_ERB_FOR_NODE'
   }
@@ -895,10 +896,19 @@ export class Printer extends Visitor {
 
   visitERBInNode(node: ERBInNode): void {
     this.printERBNode(node)
+
+    this.withIndent(() => {
+      node.statements.forEach(stmt => this.visit(stmt))
+    })
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
     this.printERBNode(node)
+
+    node.conditions.forEach(condition => this.visit(condition))
+
+    if (node.else_clause) this.visit(node.else_clause)
+    if (node.end_node) this.visit(node.end_node)
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
