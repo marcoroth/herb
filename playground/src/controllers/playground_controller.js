@@ -322,6 +322,33 @@ export default class extends Controller {
     this.urlUpdatedFromChangeEvent = false
   }
 
+  async formatEditor(event) {
+    const button = this.getClosestButton(event.target)
+    
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const result = await analyze(Herb, value)
+      
+      if (result.formatted) {
+        if (this.editor) {
+          this.editor.setValue(result.formatted)
+        } else {
+          this.inputTarget.value = result.formatted
+        }
+        
+        button.querySelector(".fa-indent").classList.add("hidden")
+        button.querySelector(".fa-circle-check").classList.remove("hidden")
+        
+        setTimeout(() => {
+          button.querySelector(".fa-indent").classList.remove("hidden")
+          button.querySelector(".fa-circle-check").classList.add("hidden")
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('Format error:', error)
+    }
+  }
+
   async analyze() {
     this.updateURL()
 

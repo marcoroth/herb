@@ -1,4 +1,12 @@
-# Using Herb with Helix
+---
+title: Using Herb with Helix
+head:
+  - - meta
+    - property: og:image
+      content: /herb-helix.png
+---
+
+# {{ $frontmatter.title }}
 
 Integrate the Herb Language Server with Helix for HTML+ERB development.
 

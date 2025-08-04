@@ -1,4 +1,12 @@
-# Using Herb with Zed
+---
+title: Using Herb with Zed
+head:
+  - - meta
+    - property: og:image
+      content: /herb-zed.png
+---
+
+# {{ $frontmatter.title }}
 
 The Herb Language Server is integrated into Zed's official Ruby extension, providing seamless HTML+ERB support.
 

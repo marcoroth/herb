@@ -19,9 +19,9 @@
     "fetch:contributors": "mkdir -p .vitepress/data/ && gh api -X get https://api.github.com/repos/marcoroth/herb/contributors > .vitepress/data/contributors.json"
   },
   "dependencies": {
-    "@herb-tools/browser": "0.4.2",
-    "@herb-tools/core": "0.4.2",
-    "@herb-tools/node": "0.4.2"
+    "@herb-tools/browser": "0.4.3",
+    "@herb-tools/core": "0.4.3",
+    "@herb-tools/node": "0.4.3"
   },
   "devDependencies": {
     "@shikijs/vitepress-twoslash": "^3.4.2",

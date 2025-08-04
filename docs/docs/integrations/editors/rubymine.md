@@ -1,4 +1,12 @@
-# Using Herb with RubyMine
+---
+title: Using Herb with RubyMine
+head:
+  - - meta
+    - property: og:image
+      content: /herb-rubymine.png
+---
+
+# {{ $frontmatter.title }}
 
 Support for RubyMine and other JetBrains IDEs is not yet available.
 

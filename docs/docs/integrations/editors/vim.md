@@ -1,4 +1,12 @@
-# Using Herb with Vim
+---
+title: Using Herb with Vim
+head:
+  - - meta
+    - property: og:image
+      content: /herb-vim.png
+---
+
+# {{ $frontmatter.title }}
 
 Configure the Herb Language Server with traditional Vim for HTML+ERB development.
 

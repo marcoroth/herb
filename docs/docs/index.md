@@ -2,6 +2,8 @@
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
+title: "Herb - Powerful and seamless HTML-aware ERB parsing and tooling."
+
 hero:
   name: "Herb"
   text: "Powerful and seamless HTML-aware ERB parsing and tooling."

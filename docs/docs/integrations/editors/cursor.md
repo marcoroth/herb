@@ -1,4 +1,12 @@
-# Using Herb with Cursor
+---
+title: Using Herb with Cursor
+head:
+  - - meta
+    - property: og:image
+      content: /herb-cursor.png
+---
+
+# {{ $frontmatter.title }}
 
 Cursor users can install the Herb extension through the Open VSX Registry for full HTML+ERB language support.
 

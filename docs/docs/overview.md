@@ -1,3 +1,7 @@
+---
+title: Getting Started
+---
+
 <div align="center">
   <img src="/herb.svg" alt="Herb Logo" width="200" height="200">
 

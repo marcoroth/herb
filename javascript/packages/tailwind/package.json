@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/tailwind",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Tailwind CSS class sorting and utilities for HTML+ERB templates using Herb's AST visitor pattern.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -31,11 +31,9 @@
       "default": "./dist/index.esm.js"
     }
   },
-  "dependencies": {
-    "@herb-tools/core": "0.4.2",
-    "prettier": "^3.6.2"
-  },
   "devDependencies": {
+    "@herb-tools/core": "0.4.3",
+    "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.6.14"
   },
   "files": [

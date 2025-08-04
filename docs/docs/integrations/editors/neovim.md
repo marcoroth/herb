@@ -1,4 +1,12 @@
-# Using Herb with Neovim
+---
+title: Using Herb with Neovim
+head:
+  - - meta
+    - property: og:image
+      content: /herb-neovim.png
+---
+
+# {{ $frontmatter.title }}
 
 Multiple ways to integrate the Herb Language Server with Neovim for HTML+ERB development.
 

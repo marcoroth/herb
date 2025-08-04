@@ -273,6 +273,40 @@ describe("Quote normalization", () => {
       `)
     })
 
+    test("handles actual newline in attribute values", () => {
+      const source = dedent`
+        <div placeholder='Line 1
+          Line 2'>Text</div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          placeholder="Line 1
+          Line 2"
+        >
+          Text
+        </div>
+      `)
+    })
+
+    test("handles actual newline in class attribute value", () => {
+      const source = dedent`
+        <div class='Line 1
+        Line 2'>
+        Text</div>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="Line 1 Line 2">
+          Text
+        </div>
+      `)
+    })
+
     test("handles self-closing tags with mixed quotes", () => {
       const source = `<img src='image.jpg' alt="My Image" data-caption='The "best" photo' />`
 

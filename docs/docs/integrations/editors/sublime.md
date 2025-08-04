@@ -1,4 +1,12 @@
-# Using Herb with Sublime Text
+---
+title: Using Herb with Sublime Text
+head:
+  - - meta
+    - property: og:image
+      content: /herb-sublime.png
+---
+
+# {{ $frontmatter.title }}
 
 Configure the Herb Language Server with Sublime Text (via [Sublime LSP](https://lsp.sublimetext.io)) for HTML+ERB development.
 

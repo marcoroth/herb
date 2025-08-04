@@ -8,11 +8,13 @@ await initializeHerb()
 
 const themeConfig = createThemeConfig()
 
+const title = "Herb"
+const description = "Powerful and seamless HTML-aware ERB parsing and tooling."
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "Herb",
-  titleTemplate: "HTML-aware ERB parsing",
-  description: "Powerful and seamless HTML-aware ERB parsing and tooling.",
+  title,
+  description,
   srcDir: "./docs",
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
@@ -30,6 +32,19 @@ export default defineConfig({
   markdown: createMarkdownConfig(),
   vite: createViteConfig(),
   themeConfig,
+  transformPageData(pageData) {
+    pageData.frontmatter.head ??= []
+
+    const pageTitle = pageData.frontmatter.title || pageData.title
+
+    pageData.frontmatter.head.push([
+      'meta',
+      {
+        property: 'og:title',
+        content: pageTitle ? `${pageTitle} | ${title}` : `${title} - ${description}`
+      }
+    ])
+  },
 
   async buildEnd() {
     console.log('🎉 VitePress build completed successfully')

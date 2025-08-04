@@ -51,4 +51,53 @@ describe("@herb-tools/formatter", () => {
       </div>
     `)
   })
+
+  test("formats ERB case/in statements", () => {
+    const source = dedent`
+      <% case { hash: { nested: '4' } } %>
+            <% in { hash: { nested: } } %>
+      <span>there</span>
+              <% in { another: } %>
+      <span>there</span>
+      <% in { yet_another: { nested: } } %>
+             <span>hi</span>
+            <% else %>
+      <span>there</span>
+        <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case { hash: { nested: '4' } } %>
+      <% in { hash: { nested: } } %>
+        <span>there</span>
+      <% in { another: } %>
+        <span>there</span>
+      <% in { yet_another: { nested: } } %>
+        <span>hi</span>
+      <% else %>
+        <span>there</span>
+      <% end %>
+    `)
+  })
+
+  test("formats ERB case/in/else statements", () => {
+    const source = dedent`
+      <% case { hash: { nested: '4' } } %>
+            <% in { hash: { nested: } } %>
+            2
+              <% else %>
+              3
+
+      <% end %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <% case { hash: { nested: '4' } } %>
+      <% in { hash: { nested: } } %>
+        2
+      <% else %>
+        3
+      <% end %>
+    `)
+  })
 })

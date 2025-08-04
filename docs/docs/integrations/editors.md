@@ -1,3 +1,10 @@
+---
+head:
+  - - meta
+    - property: og:image
+      content: /herb-editors.png
+---
+
 # Using Herb in Editors
 
 The Herb Language Server provides intelligent language features for HTML+ERB files across multiple editors. With built-in support for diagnostics, syntax highlighting, and upcoming formatting capabilities, you can enhance your ERB development workflow in your favorite editor.
