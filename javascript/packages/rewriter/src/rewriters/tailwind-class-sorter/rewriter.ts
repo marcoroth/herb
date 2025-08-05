@@ -42,7 +42,7 @@ export class TailwindRewriter extends Visitor {
    * Update the content of a class attribute with sorted classes
    */
   private updateClassAttribute(attribute: HTMLAttributeNode, sortedContent: string): void {
-    if (!attribute.value || !(attribute.value instanceof HTMLAttributeValueNode)) {
+    if (!attribute.value || (attribute.value as any).type !== 'AST_HTML_ATTRIBUTE_VALUE_NODE') {
       return
     }
 
@@ -52,19 +52,19 @@ export class TailwindRewriter extends Visitor {
     for (let i = 0; i < attributeValue.children.length; i++) {
       const child = attributeValue.children[i]
       
-      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+      if ((child as any).type === 'AST_HTML_TEXT_NODE') {
         const textNode = child as HTMLTextNode
         if (textNode.content.trim()) {
-          // Create a new text node with updated content
+          // Create a new text node with updated content (content property is read-only)
           const newTextNode = Object.assign(Object.create(Object.getPrototypeOf(textNode)), textNode, {
             content: sortedContent
           })
           ;(attributeValue.children as any)[i] = newTextNode
         }
-      } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+      } else if ((child as any).type === 'AST_LITERAL_NODE') {
         const literalNode = child as LiteralNode
         if (literalNode.content.trim()) {
-          // Create a new literal node with updated content
+          // Create a new literal node with updated content (content property is read-only)
           const newLiteralNode = Object.assign(Object.create(Object.getPrototypeOf(literalNode)), literalNode, {
             content: sortedContent
           })

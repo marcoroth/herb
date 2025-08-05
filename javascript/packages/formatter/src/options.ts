@@ -3,24 +3,35 @@
  *
  * indentWidth: number of spaces per indentation level.
  * maxLineLength: maximum line length before wrapping text or attributes.
- * sortTailwindClasses: whether to sort Tailwind CSS classes in class attributes.
+ * rewriters: rewriters to apply before and after formatting.
  */
+
+import type { Rewriter } from "@herb-tools/rewriter"
+
 export interface FormatOptions {
   /** number of spaces per indentation level; defaults to 2 */
   indentWidth?: number
   /** maximum line length before wrapping; defaults to 80 */
   maxLineLength?: number
-  /** whether to sort Tailwind CSS classes in class attributes; defaults to false */
-  sortTailwindClasses?: boolean
+  /** rewriters to apply at different stages of formatting */
+  rewriters?: {
+    /** rewriters to apply before formatting (after parsing) */
+    before?: Rewriter[]
+    /** rewriters to apply after formatting (before output) */
+    after?: Rewriter[]
+  }
 }
 
 /**
  * Default values for formatting options.
  */
-export const defaultFormatOptions: Required<FormatOptions> = {
+export const defaultFormatOptions: Required<Pick<FormatOptions, 'indentWidth' | 'maxLineLength'>> & Pick<FormatOptions, 'rewriters'> = {
   indentWidth: 2,
   maxLineLength: 80,
-  sortTailwindClasses: false,
+  rewriters: {
+    before: [],
+    after: []
+  }
 }
 
 /**
@@ -30,10 +41,10 @@ export const defaultFormatOptions: Required<FormatOptions> = {
  */
 export function resolveFormatOptions(
   options: FormatOptions = {},
-): Required<FormatOptions> {
+): Required<Pick<FormatOptions, 'indentWidth' | 'maxLineLength'>> & Pick<FormatOptions, 'rewriters'> {
   return {
     indentWidth: options.indentWidth ?? defaultFormatOptions.indentWidth,
     maxLineLength: options.maxLineLength ?? defaultFormatOptions.maxLineLength,
-    sortTailwindClasses: options.sortTailwindClasses ?? defaultFormatOptions.sortTailwindClasses,
+    rewriters: options.rewriters ?? defaultFormatOptions.rewriters,
   }
 }

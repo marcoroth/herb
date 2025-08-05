@@ -1,6 +1,7 @@
 import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
-import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
+import { Formatter } from "@herb-tools/formatter"
+import { TailwindClassSorter } from "@herb-tools/rewriter"
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "./config"
@@ -87,11 +88,23 @@ export class FormattingService {
 
     const projectFormatter = this.config?.options.formatter || {}
 
-    return {
-      indentWidth: projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
-      maxLineLength: projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength,
-      sortTailwindClasses: projectFormatter.sortTailwindClasses ?? settings?.formatter?.sortTailwindClasses ?? defaultFormatOptions.sortTailwindClasses
+    const indentWidth = projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? 2
+    const maxLineLength = projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? 80
+    const sortTailwindClasses = projectFormatter.sortTailwindClasses ?? settings?.formatter?.sortTailwindClasses ?? false
+
+    const options: any = {
+      indentWidth,
+      maxLineLength
     }
+
+    // Add TailwindClassSorter to before rewriters if enabled
+    if (sortTailwindClasses) {
+      options.rewriters = {
+        before: [new TailwindClassSorter({ enabled: true, verbose: false })]
+      }
+    }
+
+    return options
   }
 
   private async performFormatting(params: DocumentFormattingParams): Promise<TextEdit[]> {
@@ -106,7 +119,7 @@ export class FormattingService {
       const formatter = new Formatter(this.project.herbBackend, options)
 
       const text = document.getText()
-      let newText = await formatter.format(text)
+      let newText = formatter.format(text)
 
       if (!newText.endsWith('\n')) {
         newText = newText + '\n'
@@ -194,7 +207,7 @@ export class FormattingService {
         }).join('\n')
       }
 
-      let formattedText = await formatter.format(textToFormat, { ...options })
+      let formattedText = formatter.format(textToFormat, { ...options })
 
       if (minIndentLevel > 0) {
         const formattedLines = formattedText.split('\n')

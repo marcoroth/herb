@@ -56,7 +56,8 @@ type ERBNode =
 
 
 import type { FormatOptions } from "./options.js"
-import { sortTailwindClassesInAST } from "@herb-tools/tailwind"
+// Note: Tailwind class sorting has been moved to @herb-tools/rewriter
+// Use the formatter's rewriter pipeline instead
 
 // TODO: we can probably expand this list with more tags/attributes
 const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
@@ -71,7 +72,6 @@ const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
 export class Printer extends Visitor {
   private indentWidth: number
   private maxLineLength: number
-  private sortTailwindClasses: boolean
   private source: string
   private lines: string[] = []
   private indentLevel: number = 0
@@ -86,16 +86,15 @@ export class Printer extends Visitor {
     'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
   ])
 
-  constructor(source: string, options: Required<FormatOptions>) {
+  constructor(source: string, options: Pick<FormatOptions, 'indentWidth' | 'maxLineLength'>) {
     super()
 
     this.source = source
-    this.indentWidth = options.indentWidth
-    this.maxLineLength = options.maxLineLength
-    this.sortTailwindClasses = options.sortTailwindClasses
+    this.indentWidth = options.indentWidth || 2
+    this.maxLineLength = options.maxLineLength || 80
   }
 
-  async print(object: Node | Token, indentLevel: number = 0): Promise<string> {
+  print(object: Node | Token, indentLevel: number = 0): string {
     if (object instanceof Token || (object as any).type?.startsWith('TOKEN_')) {
       return (object as Token).value
     }
@@ -106,14 +105,8 @@ export class Printer extends Visitor {
     this.indentLevel = indentLevel
     this.isInComplexNesting = false // Reset for each top-level element
 
-    // Sort Tailwind classes if enabled
-    if (this.sortTailwindClasses) {
-      const result = await sortTailwindClassesInAST(node, {
-        enabled: true,
-        verbose: false
-      })
-      // Note: The AST is modified in-place, so we continue with the same node
-    }
+    // Note: Tailwind class sorting has been moved to @herb-tools/rewriter
+    // Use TailwindClassSorter before or after formatting if needed
 
     if (typeof (node as any).accept === 'function') {
       node.accept(this)
@@ -287,8 +280,8 @@ export class Printer extends Visitor {
     const attributeLine = `${name}${equals}${open_quote}${normalizedContent}${close_quote}`
 
     if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      const classes = normalizedContent.split(' ')
-      const lines = this.breakTokensIntoLines(classes, currentIndent)
+      const tokens = this.tokenizeClassContent(normalizedContent)
+      const lines = this.breakTokensIntoLines(tokens, currentIndent)
 
       if (lines.length > 1) {
         return open_quote + this.formatMultilineAttributeValue(lines) + close_quote
@@ -328,6 +321,131 @@ export class Printer extends Visitor {
     const closeIndent = " ".repeat(this.indentLevel * this.indentWidth)
 
     return "\n" + lines.map(line => indent + line).join("\n") + "\n" + closeIndent
+  }
+
+  /**
+   * Tokenize class content while preserving ERB control flow as atomic units
+   */
+  private tokenizeClassContent(content: string): string[] {
+    const tokens: string[] = []
+    let currentToken = ''
+    let i = 0
+    
+    while (i < content.length) {
+      if (i < content.length - 1 && content.slice(i, i + 2) === '<%') {
+        // If we have a current token, add it
+        if (currentToken.trim()) {
+          tokens.push(currentToken.trim())
+          currentToken = ''
+        }
+        
+        // Check if this starts a control flow construct
+        const controlFlowResult = this.extractERBControlFlowConstruct(content, i)
+        if (controlFlowResult) {
+          tokens.push(controlFlowResult.construct)
+          i = controlFlowResult.endIndex
+          continue
+        }
+        
+        // Otherwise, extract single ERB tag
+        let erbContent = '<%'
+        i += 2
+        
+        // Find the matching %>  
+        while (i < content.length) {
+          if (i < content.length - 1 && content.slice(i, i + 2) === '%>') {
+            erbContent += '%>'
+            i += 2
+            break
+          } else {
+            erbContent += content[i]
+            i++
+          }
+        }
+        
+        tokens.push(erbContent)
+      } else if (content[i] === ' ') {
+        // Space - if we have a current token, add it
+        if (currentToken.trim()) {
+          tokens.push(currentToken.trim())
+          currentToken = ''
+        }
+        // Skip multiple spaces
+        while (i < content.length && content[i] === ' ') {
+          i++
+        }
+      } else {
+        // Regular character
+        currentToken += content[i]
+        i++
+      }
+    }
+    
+    // Add the last token if any
+    if (currentToken.trim()) {
+      tokens.push(currentToken.trim())
+    }
+    
+    return tokens.filter(token => token.length > 0)
+  }
+
+  /**
+   * Extract an entire ERB control flow construct (if/elsif/else/end) as a single unit
+   */
+  private extractERBControlFlowConstruct(content: string, startIndex: number): { construct: string, endIndex: number } | null {
+    if (startIndex >= content.length - 1 || content.slice(startIndex, startIndex + 2) !== '<%') {
+      return null
+    }
+    
+    // Check if this is a control flow start (if, unless, case)
+    const tagMatch = content.slice(startIndex).match(/^<%\s*(if|unless|case)\b/)
+    if (!tagMatch) {
+      return null
+    }
+    
+    const controlType = tagMatch[1]
+    let construct = ''
+    let i = startIndex
+    let nestingDepth = 0
+    
+    while (i < content.length) {
+      if (i < content.length - 1 && content.slice(i, i + 2) === '<%') {
+        // Find the end of this ERB tag
+        let tagStart = i
+        i += 2
+        
+        while (i < content.length && !(i < content.length - 1 && content.slice(i, i + 2) === '%>')) {
+          i++
+        }
+        
+        if (i < content.length - 1) {
+          i += 2 // Skip the %>
+          const fullTag = content.slice(tagStart, i)
+          construct += fullTag
+          
+          // Check what kind of tag this is
+          if (fullTag.match(/<%\s*(if|unless|case)\b/)) {
+            nestingDepth++
+          } else if (fullTag.match(/<%\s*end\b/)) {
+            nestingDepth--
+            if (nestingDepth === 0) {
+              // Found the matching end, we're done
+              return { construct, endIndex: i }
+            }
+          }
+          // elsif, else, when tags don't change nesting depth
+        } else {
+          // Malformed ERB, give up
+          return null
+        }
+      } else {
+        construct += content[i]
+        i++
+      }
+    }
+    
+    // If we get here, we didn't find a matching end
+    return null
   }
 
   private breakTokensIntoLines(tokens: string[], currentIndent: number, separator: string = ' '): string[] {
@@ -1094,7 +1212,10 @@ export class Printer extends Visitor {
       this.lines.push(open + inner + close)
 
       node.statements.forEach((child, _index) => {
-        this.lines.push(" ")
+        // Only add space before statement if it's not an ERB node
+        if (!this.isERBControlFlow(child)) {
+          this.lines.push(" ")
+        }
 
         if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
           this.lines.push(this.renderAttribute(child as HTMLAttributeNode))
@@ -1103,15 +1224,22 @@ export class Printer extends Visitor {
         }
       })
 
-      if (node.statements.length > 0 && node.end_node) {
-        this.lines.push(" ")
-      }
-
       if (node.subsequent) {
+        // Add space before subsequent node (elsif) if previous content doesn't end with space or ERB tag
+        const lastLine = this.lines[this.lines.length - 1]
+        if (lastLine && !lastLine.endsWith(' ') && !lastLine.endsWith('%>')) {
+          this.lines.push(' ')
+        }
         this.visit(node.subsequent)
       }
 
       if (node.end_node) {
+        // Add space before end tag if previous content doesn't end with space or ERB tag
+        const lastLine = this.lines[this.lines.length - 1]
+        if (lastLine && !lastLine.endsWith(' ') && !lastLine.endsWith('%>')) {
+          this.lines.push(' ')
+        }
+        
         const endNode = node.end_node as any
         const endOpen = endNode.tag_opening?.value ?? ""
         const endContent = endNode.content?.value ?? ""
@@ -1138,11 +1266,43 @@ export class Printer extends Visitor {
   }
 
   visitERBElseNode(node: ERBElseNode): void {
-    this.printERBNode(node)
+    if (this.inlineMode) {
+      const open = node.tag_opening?.value ?? ""
+      const content = node.content?.value ?? ""
+      const close = node.tag_closing?.value ?? ""
+      const inner = this.formatERBContent(content)
+      
+      // Add space before else tag if previous content doesn't end with space or ERB tag
+      const lastLine = this.lines[this.lines.length - 1]
+      if (lastLine && !lastLine.endsWith(' ') && !lastLine.endsWith('%>')) {
+        this.lines.push(' ')
+      }
+      
+      this.lines.push(open + inner + close)
+      
+      node.statements.forEach((child, _index) => {
+        // Only add space before statement if it's not an ERB node
+        if (!this.isERBControlFlow(child)) {
+          this.lines.push(" ")
+        }
+        
+        if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
+          this.lines.push(this.renderAttribute(child as HTMLAttributeNode))
+        } else {
+          this.visit(child)
+        }
+      })
+      
+      if ((node as any).subsequent) {
+        this.visit((node as any).subsequent)
+      }
+    } else {
+      this.printERBNode(node)
 
-    this.withIndent(() => {
-      node.statements.forEach(child => this.visit(child))
-    })
+      this.withIndent(() => {
+        node.statements.forEach(child => this.visit(child))
+      })
+    }
   }
 
   visitERBWhenNode(node: ERBWhenNode): void {
@@ -1213,20 +1373,66 @@ export class Printer extends Visitor {
 
   // TODO: don't use any
   private visitERBGeneric(node: any): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
-
-    this.withIndent(() => {
+    if (this.inlineMode) {
+      const open = node.tag_opening?.value ?? ""
+      const content = node.content?.value ?? ""
+      const close = node.tag_closing?.value ?? ""
+      const inner = this.formatERBContent(content)
+      
+      this.lines.push(open + inner + close)
+      
       const statements: any[] = node.statements ?? node.body ?? node.children ?? []
+      statements.forEach((child, index) => {
+        // Only add space before statement if it's not an ERB node and conditions are met
+        if ((index > 0 || statements.length > 0) && !this.isERBControlFlow(child)) {
+          this.lines.push(" ")
+        }
+        
+        if (child instanceof HTMLAttributeNode || (child as any).type === 'AST_HTML_ATTRIBUTE_NODE') {
+          this.lines.push(this.renderAttribute(child as HTMLAttributeNode))
+        } else {
+          this.visit(child)
+        }
+      })
+      
+      if (statements.length > 0 && node.end_node) {
+        this.lines.push(" ")
+      }
+      
+      if (node.end_node) {
+        const endNode = node.end_node as any
+        const endOpen = endNode.tag_opening?.value ?? ""
+        const endContent = endNode.content?.value ?? ""
+        const endClose = endNode.tag_closing?.value ?? ""
+        const endInner = this.formatERBContent(endContent)
+        
+        this.lines.push(endOpen + endInner + endClose)
+      }
+    } else {
+      const indent = this.indent()
+      const open = node.tag_opening?.value ?? ""
+      const content = node.content?.value ?? ""
+      const close = node.tag_closing?.value ?? ""
 
-      statements.forEach(statement => this.visit(statement))
-    })
+      this.push(indent + open + content + close)
 
-    if (node.end_node) this.visit(node.end_node)
+      this.withIndent(() => {
+        const statements: any[] = node.statements ?? node.body ?? node.children ?? []
+
+        statements.forEach(statement => this.visit(statement))
+      })
+
+      if (node.end_node) this.visit(node.end_node)
+    }
+  }
+
+  visitLiteralNode(node: LiteralNode): void {
+    if (this.inlineMode) {
+      this.push(node.content)
+    } else {
+      const indent = this.indent()
+      this.push(indent + node.content)
+    }
   }
 
   // --- Utility methods ---
@@ -1502,6 +1708,9 @@ export class Printer extends Visitor {
           const erbAttribute = child as ERBContentNode
 
           return erbAttribute.tag_opening!.value + erbAttribute.content!.value + erbAttribute.tag_closing!.value
+        } else if (this.isERBControlFlow(child)) {
+          // Handle ERB control flow nodes (if/else/unless/etc)
+          return this.renderERBControlFlowInAttribute(child)
         }
 
         return ""
@@ -1528,6 +1737,31 @@ export class Printer extends Visitor {
     }
 
     return name + equals + value
+  }
+
+  /**
+   * Render ERB control flow nodes within attributes
+   */
+  private renderERBControlFlowInAttribute(node: Node): string {
+    // Save current state
+    const oldLines = this.lines
+    const oldIndentLevel = this.indentLevel
+    const oldInlineMode = this.inlineMode
+    
+    this.lines = []
+    this.indentLevel = 0
+    this.inlineMode = true
+    
+    try {
+      // Visit the ERB control flow node
+      this.visit(node)
+      return this.lines.join("")
+    } finally {
+      // Restore state
+      this.lines = oldLines
+      this.indentLevel = oldIndentLevel
+      this.inlineMode = oldInlineMode
+    }
   }
 
   /**

@@ -76,9 +76,9 @@
         "languageServerHerb.formatter.sortTailwindClasses": {
           "scope": "resource",
           "type": "boolean",
-          "default": false,
           "description": "Enable sorting of Tailwind CSS classes in class attributes using the official Tailwind CSS class order.",
-          "markdownDescription": "Enable sorting of [Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier#how-classes-are-sorted) classes in `class` attributes using the official Tailwind CSS class order. This uses the same sorting algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss)."
+          "markdownDescription": "Enable sorting of [Tailwind CSS](https://tailwindcss.com/blog/automatic-class-sorting-with-prettier#how-classes-are-sorted) classes in `class` attributes using the official Tailwind CSS class order. This uses the same sorting algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).",
+          "default": false
         },
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -199,11 +199,10 @@
     "@herb-tools/formatter": "0.4.3",
     "@herb-tools/linter": "0.4.3",
     "@herb-tools/node-wasm": "0.4.3",
-    "@herb-tools/tailwind": "0.4.3",
+    "@herb-tools/rewriter": "0.4.3",
     "@types/vscode": "^1.43.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "@types/vscode": "^1.43.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.10",

@@ -21,7 +21,7 @@ if (formattingConfig['languageServerHerb.formatter.maxLineLength']) {
 }
 
 if (formattingConfig['languageServerHerb.formatter.sortTailwindClasses']) {
-  formattingConfig['languageServerHerb.formatter.sortTailwindClasses'].default = defaultFormatOptions.sortTailwindClasses;
+  formattingConfig['languageServerHerb.formatter.sortTailwindClasses'].default = false;
 }
 
 // Write the updated package.json
@@ -30,4 +30,4 @@ fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 console.log(`Updated VS Code settings defaults to match formatter defaults:`);
 console.log(`  indentWidth: ${defaultFormatOptions.indentWidth}`);
 console.log(`  maxLineLength: ${defaultFormatOptions.maxLineLength}`);
-console.log(`  sortTailwindClasses: ${defaultFormatOptions.sortTailwindClasses}`);
+console.log(`  sortTailwindClasses: false`);

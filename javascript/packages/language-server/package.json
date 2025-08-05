@@ -34,7 +34,7 @@
     "clean": "rimraf dist",
     "build": "yarn clean && tsc -b && rollup -c",
     "dev": "tsc -b -w",
-    "test": "vitest",
+    "test": "vitest run",
     "test:run": "vitest run",
     "prepublishOnly": "yarn clean && yarn build && yarn test:run"
   },
@@ -49,7 +49,7 @@
     "@herb-tools/formatter": "0.4.3",
     "@herb-tools/linter": "0.4.3",
     "@herb-tools/node-wasm": "0.4.3",
-    "@herb-tools/tailwind": "0.4.3",
+    "@herb-tools/rewriter": "0.4.3",
     "dedent": "^1.6.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"

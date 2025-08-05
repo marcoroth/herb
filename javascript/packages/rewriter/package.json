@@ -1,14 +1,14 @@
 {
-  "name": "@herb-tools/tailwind",
+  "name": "@herb-tools/rewriter",
   "version": "0.4.3",
-  "description": "Tailwind CSS class sorting and utilities for HTML+ERB templates using Herb's AST visitor pattern.",
+  "description": "Code rewriters for HTML+ERB templates including Tailwind CSS class sorting.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
-  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/tailwind%60:%20",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/rewriter%60:%20",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcoroth/herb.git",
-    "directory": "javascript/packages/tailwind"
+    "directory": "javascript/packages/rewriter"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.esm.js",
