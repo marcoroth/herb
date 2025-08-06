@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { CachedInputFileSystem, ResolverFactory } from 'enhanced-resolve'
 import { expiringMap } from './expiring-map'
 
-const fileSystem = new CachedInputFileSystem(fs, 30_000)
+const fileSystem = new CachedInputFileSystem(fs as any, 30_000)
 
 const esmResolver = ResolverFactory.createResolver({
   fileSystem,

@@ -7,11 +7,10 @@
     "allowJs": true,
 
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "preserveConstEnums": true,
-    "noEmit": true,
+    "outDir": "dist",
 
     "skipLibCheck": true,
     "strict": true,

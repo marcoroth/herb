@@ -1,12 +1,11 @@
-import type { LegacyTailwindContext, TransformerEnv } from './types'
-import './index'
+import type { TailwindContext, SortEnv } from './types'
 
 export function bigSign(bigIntValue: bigint) {
   return Number(bigIntValue > 0n) - Number(bigIntValue < 0n)
 }
 
 function prefixCandidate(
-  context: LegacyTailwindContext,
+  context: TailwindContext,
   selector: string,
 ): string {
   let prefix = context.tailwindConfig.prefix
@@ -16,7 +15,7 @@ function prefixCandidate(
 // Polyfill for older Tailwind CSS versions
 function getClassOrderPolyfill(
   classes: string[],
-  { env }: { env: TransformerEnv },
+  { env }: { env: SortEnv },
 ): [string, bigint | null][] {
   // A list of utilities that are used by certain Tailwind CSS utilities but
   // that don't exist on their own. This will result in them "not existing" and
@@ -48,7 +47,7 @@ function getClassOrderPolyfill(
   return classNamesWithOrder
 }
 
-function reorderClasses(classList: string[], { env }: { env: TransformerEnv }) {
+function reorderClasses(classList: string[], { env }: { env: SortEnv }) {
   let orderedClasses = env.context.getClassOrder
     ? env.context.getClassOrder(classList)
     : getClassOrderPolyfill(classList, { env })
@@ -74,7 +73,7 @@ export function sortClasses(
     removeDuplicates = true,
     collapseWhitespace = { start: true, end: true },
   }: {
-    env: TransformerEnv
+    env: SortEnv
     ignoreFirst?: boolean
     ignoreLast?: boolean
     removeDuplicates?: boolean
@@ -154,7 +153,7 @@ export function sortClassList(
     env,
     removeDuplicates,
   }: {
-    env: TransformerEnv
+    env: SortEnv
     removeDuplicates: boolean
   },
 ) {
