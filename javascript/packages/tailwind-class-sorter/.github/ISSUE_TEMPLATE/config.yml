@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Get Help
+    url: https://github.com/tailwindlabs/tailwindcss/discussions/new?category=help&title=%5BPrettier%20Plugin%5D%20
+    about: If you can't get something to work the way you expect, open a question in our discussion forums.
+  - name: Feature Request
+    url: https://github.com/tailwindlabs/tailwindcss/discussions/new?category=ideas&title=%5BPrettier%20Plugin%5D%20
+    about: 'Suggest any ideas you have using our discussion forums.'
