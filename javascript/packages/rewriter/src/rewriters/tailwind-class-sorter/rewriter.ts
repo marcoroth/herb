@@ -18,9 +18,9 @@ export class TailwindRewriter extends Visitor {
 
   constructor(classAttributes: ClassAttribute[]) {
     super()
-    // Create a map for quick lookup of class attributes
+
     this.classAttributeMap = new Map(
-      classAttributes.map(attr => [attr.node, attr])
+      classAttributes.map(attribute => [attribute.node, attribute])
     )
   }
 
@@ -29,12 +29,11 @@ export class TailwindRewriter extends Visitor {
    */
   visitHTMLAttributeNode(node: HTMLAttributeNode): void {
     const classAttribute = this.classAttributeMap.get(node)
-    
+
     if (classAttribute && classAttribute.sortedContent !== null) {
       this.updateClassAttribute(node, classAttribute.sortedContent)
     }
 
-    // Continue visiting children
     super.visitHTMLAttributeNode(node)
   }
 
@@ -79,8 +78,6 @@ export class TailwindRewriter extends Visitor {
  * Options for Tailwind class sorting
  */
 export interface TailwindSortOptions {
-  /** Whether to enable Tailwind class sorting */
   enabled?: boolean
-  /** Whether to log statistics about the sorting operation */
   verbose?: boolean
 }

@@ -123,7 +123,6 @@ export class TailwindVisitor extends Visitor {
       } else if ((child as any).type === 'AST_LITERAL_NODE') {
         classContent += (child as LiteralNode).content
       }
-      // Note: We ignore ERB content for now as it's dynamic
     }
 
     return classContent.trim() || null
