@@ -9,6 +9,7 @@
     "@herb-tools/linter": "javascript/packages/linter",
     "@herb-tools/node-wasm": "javascript/packages/node-wasm",
     "@herb-tools/node": "javascript/packages/node",
+    "@herb-tools/tailwind-class-sorter": "javascript/packages/tailwind-class-sorter",
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",

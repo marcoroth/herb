@@ -8,8 +8,6 @@ import { createJiti, type Jiti } from 'jiti'
 import postcss from 'postcss'
 // @ts-ignore
 import postcssImport from 'postcss-import'
-import prettier from 'prettier'
-import type { ParserOptions } from 'prettier'
 // @ts-ignore
 import { generateRules as generateRulesFallback } from 'tailwindcss/lib/lib/generateRules'
 // @ts-ignore
@@ -19,27 +17,25 @@ import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import type { RequiredConfig } from 'tailwindcss/types/config.js'
 import { expiringMap } from './expiring-map.js'
 import { resolveCssFrom, resolveJsFrom } from './resolve'
-import type { ContextContainer } from './types'
+import type { ContextContainer, SortTailwindClassesOptions } from './types'
 
 let sourceToPathMap = new Map<string, string | null>()
 let sourceToEntryMap = new Map<string, string | null>()
 let pathToContextMap = expiringMap<string | null, ContextContainer>(10_000)
-let prettierConfigCache = expiringMap<string, string | null>(10_000)
 
 export async function getTailwindConfig(
-  options: ParserOptions,
+  options: SortTailwindClassesOptions = {},
 ): Promise<ContextContainer> {
-  let pkgName = options.tailwindPackageName ?? 'tailwindcss'
+  let pkgName = 'tailwindcss'
 
   let key = [
-    options.filepath,
+    options.baseDir ?? process.cwd(),
     options.tailwindStylesheet ?? '',
-    options.tailwindEntryPoint ?? '',
     options.tailwindConfig ?? '',
     pkgName,
   ].join(':')
 
-  let baseDir = await getBaseDir(options)
+  let baseDir = getBaseDir(options)
 
   // Map the source file to it's associated Tailwind config file
   let configPath = sourceToPathMap.get(key)
@@ -74,37 +70,12 @@ export async function getTailwindConfig(
   return result
 }
 
-async function getPrettierConfigPath(
-  options: ParserOptions,
-): Promise<string | null> {
-  // Locating the config file can be mildly expensive so we cache it temporarily
-  let existingPath = prettierConfigCache.get(options.filepath)
-  if (existingPath !== undefined) {
-    return existingPath
+function getBaseDir(options: SortTailwindClassesOptions): string {
+  if (options.baseDir) {
+    return options.baseDir
   }
 
-  let path = await prettier.resolveConfigFile(options.filepath)
-  prettierConfigCache.set(options.filepath, path)
-
-  return path
-}
-
-async function getBaseDir(options: ParserOptions): Promise<string> {
-  let prettierConfigPath = await getPrettierConfigPath(options)
-
-  if (options.tailwindConfig) {
-    return prettierConfigPath ? path.dirname(prettierConfigPath) : process.cwd()
-  }
-
-  if (options.tailwindEntryPoint) {
-    return prettierConfigPath ? path.dirname(prettierConfigPath) : process.cwd()
-  }
-
-  return prettierConfigPath
-    ? path.dirname(prettierConfigPath)
-    : options.filepath
-      ? path.dirname(options.filepath)
-      : process.cwd()
+  return process.cwd()
 }
 
 async function loadTailwindConfig(
@@ -143,9 +114,13 @@ async function loadTailwindConfig(
   } catch {}
 
   if (tailwindConfigPath) {
-    clearModule(tailwindConfigPath)
-    const loadedConfig = loadConfig(tailwindConfigPath)
-    tailwindConfig = loadedConfig.default ?? loadedConfig
+    try {
+      clearModule(tailwindConfigPath)
+      const loadedConfig = loadConfig(tailwindConfigPath)
+      tailwindConfig = loadedConfig.default ?? loadedConfig
+    } catch (error) {
+      console.warn(`Failed to load Tailwind config from ${tailwindConfigPath}:`, error)
+    }
   }
 
   // suppress "empty content" warning
@@ -318,7 +293,7 @@ async function loadV4(
   }
 }
 
-function getConfigPath(options: ParserOptions, baseDir: string): string | null {
+function getConfigPath(options: SortTailwindClassesOptions, baseDir: string): string | null {
   if (options.tailwindConfig) {
     if (options.tailwindConfig.endsWith('.css')) {
       return null
@@ -352,17 +327,9 @@ function getConfigPath(options: ParserOptions, baseDir: string): string | null {
   return null
 }
 
-function getEntryPoint(options: ParserOptions, baseDir: string): string | null {
+function getEntryPoint(options: SortTailwindClassesOptions, baseDir: string): string | null {
   if (options.tailwindStylesheet) {
     return path.resolve(baseDir, options.tailwindStylesheet)
-  }
-
-  if (options.tailwindEntryPoint) {
-    console.warn(
-      'Use the `tailwindStylesheet` option for v4 projects instead of `tailwindEntryPoint`.',
-    )
-
-    return path.resolve(baseDir, options.tailwindEntryPoint)
   }
 
   if (options.tailwindConfig && options.tailwindConfig.endsWith('.css')) {

@@ -1,24 +1,31 @@
-import type { ParserOptions } from 'prettier'
+export interface SortTailwindClassesOptions {
+  /**
+   * Path to the Tailwind config file.
+   */
+  tailwindConfig?: string
 
-export interface TransformerMetadata {
-  // Default customizations for a given transformer
-  staticAttrs?: string[]
-  dynamicAttrs?: string[]
-  functions?: string[]
+  /**
+   * Path to the CSS stylesheet used by Tailwind CSS (v4+)
+   */
+  tailwindStylesheet?: string
+
+  /**
+   * Preserve whitespace around Tailwind classes when sorting.
+   */
+  tailwindPreserveWhitespace?: boolean
+
+  /**
+   * Preserve duplicate classes inside a class list when sorting.
+   */
+  tailwindPreserveDuplicates?: boolean
+
+  /**
+   * Base directory for resolving config files (defaults to process.cwd())
+   */
+  baseDir?: string
 }
 
-export interface Customizations {
-  functions: Set<string>
-  staticAttrs: Set<string>
-  dynamicAttrs: Set<string>
-}
-
-export interface TransformerContext {
-  env: TransformerEnv
-  changes: StringChange[]
-}
-
-export interface LegacyTailwindContext {
+export interface TailwindContext {
   tailwindConfig: {
     prefix: string | ((selector: string) => string)
   }
@@ -30,25 +37,19 @@ export interface LegacyTailwindContext {
   }
 }
 
-export interface TransformerEnv {
-  context: LegacyTailwindContext
-  customizations: Customizations
+export interface SortEnv {
+  context: TailwindContext
   generateRules: (
     classes: Iterable<string>,
-    context: LegacyTailwindContext,
+    context: TailwindContext,
   ) => [bigint][]
-  parsers: any
-  options: ParserOptions
+  options: SortTailwindClassesOptions
 }
 
 export interface ContextContainer {
   context: any
-  generateRules: () => any
-}
-
-export interface StringChange {
-  start: number
-  end: number
-  before: string
-  after: string
+  generateRules: (
+    classes: Iterable<string>,
+    context: TailwindContext,
+  ) => [bigint][]
 }
