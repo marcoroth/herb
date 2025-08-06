@@ -454,5 +454,47 @@ describe('Tailwind CSS Sorting', () => {
         </div>
       `)
     })
+
+    it.skip('TODO', () => {
+      const source = dedent`
+        <div
+          class="
+            text-white px-4 sm:px-8 py-2 sm:py-3 bg-sky-700 hover:bg-sky-800
+            <% if error? %>
+            text-white px-4 sm:px-8 py-2 sm:py-3 bg-sky-700 hover:bg-sky-800
+            <% else %>
+            text-white px-4 sm:px-8 py-2 sm:py-3 bg-sky-700 hover:bg-sky-800
+            <% end %>
+          "
+        >
+          content
+        </div>
+      `
+
+      const formatter = new Formatter(Herb, {
+        indentWidth: 2,
+        maxLineLength: 80,
+        rewriters: {
+          before: [new TailwindClassSorter({ enabled: true, verbose: false })]
+        }
+      })
+
+      const formatted = formatter.format(source)
+
+      expect(formatted).toBe(dedent`
+        <div
+          class="
+            bg-sky-700 px-4 py-2 text-white hover:bg-sky-800 sm:px-8 sm:py-3
+            <% if error? %>
+              bg-sky-700 px-4 py-2 text-white hover:bg-sky-800 sm:px-8 sm:py-3
+            <% else %>
+              bg-sky-700 px-4 py-2 text-white hover:bg-sky-800 sm:px-8 sm:py-3
+            <% end %>
+          "
+        >
+          content
+        </div>
+      `)
+    })
   })
 })
