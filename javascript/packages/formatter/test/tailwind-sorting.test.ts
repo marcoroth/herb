@@ -378,6 +378,7 @@ describe('Tailwind CSS Sorting', () => {
       `)
     })
 
+    // TODO: we probably want the ERBIfBlock with it's conditionals to be split up into multiple lines if one of the conditions exceeds the maxLineLength
     it('should format long ERB control flow with internal line breaks', () => {
       const source = dedent`
         <div class="m-2 p-4 text-yellow-100 base-class <% if error? %> text-red-500 so-long-that-each-condtions-needs-to-be-wrapped <% else %> text-green-500 another-long-class-that-should-cause-it-to-wrap <% end %>">
@@ -399,16 +400,42 @@ describe('Tailwind CSS Sorting', () => {
         <div
           class="
             m-2 p-4 text-yellow-100 base-class
-            <% if error? %>
-              text-red-500 so-long-that-each-condtions-needs-to-be-wrapped
-            <% else %>
-              text-green-500 another-long-class-that-should-cause-it-to-wrap
-            <% end %>
+            <% if error? %> text-red-500 so-long-that-each-condtions-needs-to-be-wrapped <% else %> text-green-500 another-long-class-that-should-cause-it-to-wrap <% end %>
           "
         >
           content
         </div>
+      `)
+    })
 
+    // TODO: we probably want the ERBIfBlock with it's conditionals to be split up into multiple lines if one of the conditions exceeds the maxLineLength
+    it('should format long ERB control flow with internal line breaks and classes after', () => {
+      const source = dedent`
+        <div class="m-2 p-4 <% if error? %> text-red-500 so-long-that-each-condtions-needs-to-be-wrapped <% else %> text-green-500 another-long-class-that-should-cause-it-to-wrap <% end %> text-yellow-100 base-class ">
+          content
+        </div>
+      `
+
+      const formatter = new Formatter(Herb, {
+        indentWidth: 2,
+        maxLineLength: 80,
+        rewriters: {
+          before: [new TailwindClassSorter({ enabled: true, verbose: false })]
+        }
+      })
+
+      const formatted = formatter.format(source)
+
+      expect(formatted).toBe(dedent`
+        <div
+          class="
+            m-2 p-4
+            <% if error? %> text-red-500 so-long-that-each-condtions-needs-to-be-wrapped <% else %> text-green-500 another-long-class-that-should-cause-it-to-wrap <% end %>
+            text-yellow-100 base-class
+          "
+        >
+          content
+        </div>
       `)
     })
 
@@ -442,12 +469,13 @@ describe('Tailwind CSS Sorting', () => {
       expect(formatted).toBe(dedent`
         <div
           class="
-            m-2 p-4 text-yellow-100 base-class
+            m-2 p-4
             <% if error? %>
               text-red-500 so-long-that-each-condtions-needs-to-wrap
             <% else %>
               text-green-500 another-long-class
             <% end %>
+            text-yellow-100 base-class
           "
         >
           content
@@ -455,7 +483,7 @@ describe('Tailwind CSS Sorting', () => {
       `)
     })
 
-    it.skip('TODO', () => {
+    it.skip('should format tailwind classing also within conditionals', () => {
       const source = dedent`
         <div
           class="

@@ -108,6 +108,7 @@ export class TailwindVisitor extends Visitor {
 
   /**
    * Extract the text content from a class attribute
+   * Only extract from text/literal nodes, ignoring ERB content
    */
   private extractClassContent(attribute: HTMLAttributeNode): string | null {
     if (!attribute.value || (attribute.value as any).type !== 'AST_HTML_ATTRIBUTE_VALUE_NODE') {
@@ -115,17 +116,25 @@ export class TailwindVisitor extends Visitor {
     }
 
     const attributeValue = attribute.value as HTMLAttributeValueNode
-    let classContent = ""
+    const textParts: string[] = []
 
     for (const child of attributeValue.children) {
       if ((child as any).type === 'AST_HTML_TEXT_NODE') {
-        classContent += (child as HTMLTextNode).content
+        const content = (child as HTMLTextNode).content.trim()
+        if (content) {
+          textParts.push(content)
+        }
       } else if ((child as any).type === 'AST_LITERAL_NODE') {
-        classContent += (child as LiteralNode).content
+        const content = (child as LiteralNode).content.trim()
+        if (content) {
+          textParts.push(content)
+        }
       }
+      // Ignore ERB content nodes - they will be preserved as-is
     }
 
-    return classContent.trim() || null
+    // Join all text parts with single spaces
+    return textParts.join(' ').trim() || null
   }
 
   /**
