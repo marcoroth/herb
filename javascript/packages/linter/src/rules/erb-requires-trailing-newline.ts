@@ -1,4 +1,4 @@
-import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
+import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./utils/rule-utils.js"
 import { SourceRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
 

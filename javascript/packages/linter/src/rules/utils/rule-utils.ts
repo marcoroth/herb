@@ -15,8 +15,8 @@ import type {
   LexResult,
   Token
 } from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext } from "../types.js"
-import { DEFAULT_LINT_CONTEXT } from "../types.js"
+import type { LintOffense, LintSeverity, LintContext } from "../../types.js"
+import { DEFAULT_LINT_CONTEXT } from "../../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
@@ -92,8 +92,12 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
 
   if (valueNode === null) return null
 
-  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
+  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE") {
     return null
+  }
+  
+  if (!valueNode.children?.length) {
+    return ""
   }
 
   let result = ""

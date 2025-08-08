@@ -1,7 +1,7 @@
-import { AttributeVisitorMixin } from "./rule-utils"
-import { ParserRule } from "../types"
+import { AttributeVisitorMixin } from "./utils/rule-utils.js"
+import { ParserRule } from "../types.js"
 import type { Node } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { LintOffense, LintContext } from "../types.js"
 
 class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
   private documentIds: Set<string> = new Set<string>()

@@ -1,4 +1,4 @@
-import { AttributeVisitorMixin, VALID_ARIA_ROLES } from "./rule-utils.js"
+import { AttributeVisitorMixin, VALID_ARIA_ROLES } from "./utils/rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"

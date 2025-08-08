@@ -2,7 +2,7 @@ import type { Node, Token } from "@herb-tools/core"
 import { isERBNode } from "@herb-tools/core";
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./utils/rule-utils.js"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 

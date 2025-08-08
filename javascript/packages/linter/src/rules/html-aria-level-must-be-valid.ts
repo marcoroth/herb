@@ -1,4 +1,4 @@
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin } from "./utils/rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { LintOffense, LintContext } from "../types.js"

@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, getTagName } from "./rule-utils.js"
+import { BaseRuleVisitor, getTagName } from "./utils/rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
