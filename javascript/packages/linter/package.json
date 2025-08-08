@@ -21,6 +21,7 @@
     "build": "yarn clean && tsc -b && rollup -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
+    "test:watch": "vitest --watch",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
