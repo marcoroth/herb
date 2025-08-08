@@ -92,8 +92,12 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
 
   if (valueNode === null) return null
 
-  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
+  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE") {
     return null
+  }
+  
+  if (!valueNode.children?.length) {
+    return ""
   }
 
   let result = ""
