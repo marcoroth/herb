@@ -1,4 +1,4 @@
-import { AttributeVisitorMixin, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, isBooleanAttribute, hasAttributeValue } from "./utils/rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
