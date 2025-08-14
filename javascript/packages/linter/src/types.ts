@@ -1,7 +1,7 @@
-import { Node, Diagnostic, LexResult } from "@herb-tools/core"
+import { Diagnostic, LexResult, ParseResult } from "@herb-tools/core"
 import type { defaultRules } from "./default-rules.js"
 
-export type LintSeverity = "error" | "warning"
+export type LintSeverity = "error" | "warning" | "info" | "hint"
 
 /**
  * Automatically inferred union type of all available linter rule names.
@@ -23,7 +23,7 @@ export interface LintResult {
 export abstract class ParserRule {
   static type = "parser" as const
   abstract name: string
-  abstract check(node: Node, context?: Partial<LintContext>): LintOffense[]
+  abstract check(result: ParseResult, context?: Partial<LintContext>): LintOffense[]
 }
 
 export abstract class LexerRule {

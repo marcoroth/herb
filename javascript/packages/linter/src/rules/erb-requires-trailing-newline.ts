@@ -21,7 +21,9 @@ export class ERBRequiresTrailingNewlineRule extends SourceRule {
 
   check(source: string, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new ERBRequiresTrailingNewlineVisitor(this.name, context)
+
     visitor.visit(source)
+
     return visitor.offenses
   }
 }

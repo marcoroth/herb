@@ -2,7 +2,7 @@ import { AttributeVisitorMixin, isBooleanAttribute, hasAttributeValue } from "./
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, Node } from "@herb-tools/core"
+import type { HTMLAttributeNode, ParseResult } from "@herb-tools/core"
 
 class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, _attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
@@ -20,9 +20,9 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
 export class HTMLBooleanAttributesNoValueRule extends ParserRule {
   name = "html-boolean-attributes-no-value"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }

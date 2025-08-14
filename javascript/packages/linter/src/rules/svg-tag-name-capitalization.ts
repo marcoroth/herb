@@ -2,7 +2,7 @@ import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } 
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, ParseResult } from "@herb-tools/core"
 
 class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
   private insideSVG = false
@@ -66,9 +66,9 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
 export class SVGTagNameCapitalizationRule extends ParserRule {
   name = "svg-tag-name-capitalization"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new SVGTagNameCapitalizationVisitor(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }

@@ -2,7 +2,7 @@ import { AttributeVisitorMixin } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, HTMLAttributeValueNode, Node } from "@herb-tools/core"
+import type { HTMLAttributeNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
 
 class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, _attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
@@ -23,9 +23,9 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
 export class HTMLAttributeValuesRequireQuotesRule extends ParserRule {
   name = "html-attribute-values-require-quotes"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new AttributeValuesRequireQuotesVisitor(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }

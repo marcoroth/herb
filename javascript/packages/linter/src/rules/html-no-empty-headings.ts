@@ -2,7 +2,7 @@ import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAtt
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node, LiteralNode, HTMLTextNode } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -178,9 +178,9 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
   name = "html-no-empty-headings"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new NoEmptyHeadingsVisitor(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }

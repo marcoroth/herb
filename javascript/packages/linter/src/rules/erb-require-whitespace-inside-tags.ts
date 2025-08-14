@@ -1,4 +1,4 @@
-import type { Node, Token } from "@herb-tools/core"
+import type { ParseResult, Token, Node } from "@herb-tools/core"
 import { isERBNode } from "@herb-tools/core";
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
@@ -85,9 +85,9 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 export class ERBRequireWhitespaceRule extends ParserRule {
   name = "erb-require-whitespace-inside-tags"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new RequireWhitespaceInsideTags(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }

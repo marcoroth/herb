@@ -1,6 +1,6 @@
 import { AttributeVisitorMixin } from "./rule-utils"
 import { ParserRule } from "../types"
-import type { Node } from "@herb-tools/core"
+import type { ParseResult, Node } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
@@ -29,10 +29,10 @@ class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
 export class HTMLNoDuplicateIdsRule extends ParserRule {
   name = "html-no-duplicate-ids"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new NoDuplicateIdsVisitor(this.name, context)
 
-    visitor.visit(node)
+    visitor.visit(result.value)
 
     return visitor.offenses
   }

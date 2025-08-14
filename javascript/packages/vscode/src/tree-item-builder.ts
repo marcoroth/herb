@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import * as path from 'path'
 
 import type { FileStatus, TreeNode, Status } from './types'
+import type { LintSeverity } from '@herb-tools/linter'
 
 export class TreeItemBuilder {
   constructor(private files: FileStatus[]) {}
@@ -108,24 +109,35 @@ export class TreeItemBuilder {
     return item
   }
 
-  private buildLintSeverityGroupItem(element: { severity: 'error' | 'warning' }): vscode.TreeItem {
+  private buildLintSeverityGroupItem(element: { severity: LintSeverity }): vscode.TreeItem {
     const count = element.severity === 'error'
       ? this.files.filter(f => f.lintErrors > 0).length
       : this.files.filter(f => f.lintWarnings > 0).length
 
-    const label = element.severity === 'error' ? `Errors (${count})` : `Warnings (${count})`
+    const label = element.severity === 'error'
+      ? `Errors (${count})`
+      : element.severity === 'warning'
+      ? `Warnings (${count})`
+      : element.severity === 'info'
+      ? `Info (${count})`
+      : `Hints (${count})`
+
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
     if (element.severity === 'error') {
       item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
-    } else {
+    } else if (element.severity === 'warning') {
       item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.yellow'))
+    } else if (element.severity === 'info') {
+      item.iconPath = new vscode.ThemeIcon('info', new vscode.ThemeColor('charts.blue'))
+    } else {
+      item.iconPath = new vscode.ThemeIcon('lightbulb', new vscode.ThemeColor('charts.gray'))
     }
 
     return item
   }
 
-  private buildLintRuleGroupItem(element: { rule: string; severity: 'error' | 'warning' }): vscode.TreeItem {
+  private buildLintRuleGroupItem(element: { rule: string; severity: LintSeverity }): vscode.TreeItem {
     const filesWithRule = this.files.filter(f =>
       f.lintOffenses.some(offense => offense.rule === element.rule && offense.severity === element.severity)
     )

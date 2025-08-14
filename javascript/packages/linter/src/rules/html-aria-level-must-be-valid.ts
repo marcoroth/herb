@@ -2,7 +2,7 @@ import { AttributeVisitorMixin } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { Node, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
 
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
@@ -32,10 +32,10 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
 export class HTMLAriaLevelMustBeValidRule extends ParserRule {
   name = "html-aria-level-must-be-valid"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new HTMLAriaLevelMustBeValidVisitor(this.name, context)
 
-    visitor.visit(node)
+    visitor.visit(result.value)
 
     return visitor.offenses
   }

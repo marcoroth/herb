@@ -66,7 +66,7 @@ export class Linter {
       } else if (this.isSourceRule(rule)) {
         ruleOffenses = (rule as SourceRule).check(source, context)
       } else {
-        ruleOffenses = (rule as ParserRule).check(parseResult.value, context)
+        ruleOffenses = (rule as ParserRule).check(parseResult, context)
       }
 
       this.offenses.push(...ruleOffenses)

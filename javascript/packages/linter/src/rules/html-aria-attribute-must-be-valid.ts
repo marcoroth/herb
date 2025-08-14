@@ -8,7 +8,7 @@ import type {
   HTMLAttributeNode,
   HTMLOpenTagNode,
   HTMLSelfCloseTagNode,
-  Node,
+  ParseResult,
 } from "@herb-tools/core";
 
 class AriaAttributeMustBeValid extends AttributeVisitorMixin {
@@ -34,9 +34,9 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
 export class HTMLAriaAttributeMustBeValid extends ParserRule {
   name = "html-aria-attribute-must-be-valid";
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new AriaAttributeMustBeValid(this.name, context);
-    visitor.visit(node);
+    visitor.visit(result.value);
     return visitor.offenses;
   }
 }

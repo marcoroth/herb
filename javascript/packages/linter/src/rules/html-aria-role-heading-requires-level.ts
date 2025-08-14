@@ -2,7 +2,7 @@ import { AttributeVisitorMixin, getAttributeName, getAttributes } from "./rule-u
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { Node, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 
@@ -37,9 +37,9 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
   name = "html-aria-role-heading-requires-level"
 
-  check(node: Node, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new AriaRoleHeadingRequiresLevel(this.name, context)
-    visitor.visit(node)
+    visitor.visit(result.value)
     return visitor.offenses
   }
 }
