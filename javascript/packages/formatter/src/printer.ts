@@ -948,20 +948,25 @@ export class Printer extends Visitor {
     const indent = this.indent()
     const open = node.comment_start?.value ?? ""
     const close = node.comment_end?.value ?? ""
+
     let inner: string
 
-    if (node.comment_start && node.comment_end) {
-      // TODO: use .value
-      const [_, startIndex] = node.comment_start.range.toArray()
-      const [endIndex] = node.comment_end.range.toArray()
-      const rawInner = this.source.slice(startIndex, endIndex)
-      inner = ` ${rawInner.trim()} `
-    } else {
+    if (node.children && node.children.length > 0) {
       inner = node.children.map(child => {
-        const prevLines = this.lines.length
-        this.visit(child)
-        return this.lines.slice(prevLines).join("")
+        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+          return (child as HTMLTextNode).content
+        } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+          return (child as LiteralNode).content
+        } else {
+          const prevLines = this.lines.length
+          this.visit(child)
+          return this.lines.slice(prevLines).join("")
+        }
       }).join("")
+
+      inner = ` ${inner.trim()} `
+    } else {
+      inner = ""
     }
 
     this.push(indent + open + inner + close)
@@ -973,26 +978,28 @@ export class Printer extends Visitor {
     const close = node.tag_closing?.value ?? ""
     let inner: string
 
-    if (node.tag_opening && node.tag_closing) {
-      const [, openingEnd] = node.tag_opening.range.toArray()
-      const [closingStart] = node.tag_closing.range.toArray()
-      const rawInner = this.source.slice(openingEnd, closingStart)
+    if (node.content && node.content.value) {
+      const rawInner = node.content.value
       const lines = rawInner.split("\n")
+
       if (lines.length > 2) {
         const childIndent = indent + " ".repeat(this.indentWidth)
         const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+
         inner = "\n" + innerLines.join("\n") + "\n"
       } else {
         inner = ` ${rawInner.trim()} `
       }
+    } else if ((node as any).children) {
+      inner = (node as any).children.map((child: any) => {
+        const prevLines = this.lines.length
+
+        this.visit(child)
+
+        return this.lines.slice(prevLines).join("")
+      }).join("")
     } else {
-      inner = (node as any).children
-        .map((child: any) => {
-          const prevLines = this.lines.length
-          this.visit(child)
-          return this.lines.slice(prevLines).join("")
-        })
-        .join("")
+      inner = ""
     }
 
     this.push(indent + open + inner + close)
@@ -1001,22 +1008,30 @@ export class Printer extends Visitor {
   visitHTMLDoctypeNode(node: HTMLDoctypeNode): void {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
-    let innerDoctype: string
 
-    if (node.tag_opening && node.tag_closing) {
-      // TODO: use .value
-      const [, openingEnd] = node.tag_opening.range.toArray()
-      const [closingStart] = node.tag_closing.range.toArray()
-      innerDoctype = this.source.slice(openingEnd, closingStart)
-    } else {
-      innerDoctype = node.children
-        .map(child =>
-          child instanceof HTMLTextNode ? child.content : (() => { const prevLines = this.lines.length; this.visit(child); return this.lines.slice(prevLines).join("") })(),
-        )
-        .join("")
-    }
+    let innerDoctype = node.children.map(child => {
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        return (child as HTMLTextNode).content
+      } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+        return (child as LiteralNode).content
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbNode = child as ERBContentNode
+        const erbOpen = erbNode.tag_opening?.value ?? ""
+        const erbContent = erbNode.content?.value ?? ""
+        const erbClose = erbNode.tag_closing?.value ?? ""
+
+        return erbOpen + (erbContent ? ` ${erbContent.trim()} ` : "") + erbClose
+      } else {
+        const prevLines = this.lines.length
+
+        this.visit(child)
+
+        return this.lines.slice(prevLines).join("")
+      }
+    }).join("")
 
     const close = node.tag_closing?.value ?? ""
+
     this.push(indent + open + innerDoctype + close)
   }
 
