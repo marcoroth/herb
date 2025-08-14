@@ -47,7 +47,7 @@ const exampleFile = dedent`
 export default class extends Controller {
   static targets = [
     "input",
-    "prettyViewer",
+    "parseViewer",
     "rubyViewer",
     "htmlViewer",
     "lexViewer",
@@ -70,6 +70,7 @@ export default class extends Controller {
     }
     
     this.restoreInput()
+    this.restoreActiveTab()
     this.inputTarget.focus()
     this.load()
 
@@ -210,6 +211,56 @@ export default class extends Controller {
     }
   }
 
+  restoreActiveTab() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const tabParam = urlParams.get('tab')
+    
+    if (tabParam && this.isValidTab(tabParam)) {
+      this.setActiveTab(tabParam)
+    }
+  }
+
+  isValidTab(tab) {
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'full']
+    return validTabs.includes(tab)
+  }
+
+  setActiveTab(tabName) {
+    this.viewerButtonTargets.forEach((button) => {
+      button.dataset.active = false
+    })
+    
+    const targetButton = this.viewerButtonTargets.find(
+      (button) => button.dataset.viewer === tabName
+    )
+    
+    if (targetButton) {
+      targetButton.dataset.active = true
+      
+      this.element
+        .querySelectorAll("[data-viewer-target]")
+        .forEach((viewer) => viewer.classList.add("hidden"))
+      
+      const targetViewer = this.element.querySelector(
+        `[data-viewer-target=${tabName}]`
+      )
+      
+      targetViewer?.classList.remove("hidden")
+    }
+  }
+
+  updateTabInURL(tabName) {
+    const url = new URL(window.parent.location)
+    
+    if (tabName && tabName !== 'parse') {
+      url.searchParams.set('tab', tabName)
+    } else {
+      url.searchParams.delete('tab')
+    }
+    
+    window.parent.history.replaceState({}, '', url)
+  }
+
   getClosestButton(element) {
     return element instanceof window.HTMLButtonElement
       ? element
@@ -230,17 +281,10 @@ export default class extends Controller {
 
   selectViewer(event) {
     const button = this.getClosestButton(event.target)
+    const tabName = button.dataset.viewer
 
-    this.viewerButtonTargets.forEach((button) => {
-      button.dataset.active = false
-    })
-    button.dataset.active = true
-
-    this.element
-      .querySelectorAll("[data-viewer-target]")
-      .forEach((viewer) => viewer.classList.add("hidden"))
-
-    this.currentViewer?.classList.remove("hidden")
+    this.setActiveTab(tabName)
+    this.updateTabInURL(tabName)
   }
 
   toggleViewer() {
@@ -293,7 +337,7 @@ export default class extends Controller {
   }
 
   clearTreeLocationHighlights() {
-    this.prettyViewerTarget
+    this.parseViewerTarget
       .querySelectorAll(".tree-location-highlight")
       .forEach((element) => {
         element.classList.remove("tree-location-highlight")
@@ -302,7 +346,7 @@ export default class extends Controller {
 
   get treeLocations() {
     return Array.from(
-      this.prettyViewerTarget?.querySelectorAll(".token.location") || [],
+      this.parseViewerTarget?.querySelectorAll(".token.location") || [],
     ).map((locationElement) => {
       const element = locationElement.previousElementSibling
       const location = Array.from(
@@ -453,11 +497,11 @@ export default class extends Controller {
       }
     }
 
-    if (this.hasPrettyViewerTarget) {
-      this.prettyViewerTarget.classList.add("language-tree")
-      this.prettyViewerTarget.textContent = result.string
+    if (this.hasParseViewerTarget) {
+      this.parseViewerTarget.classList.add("language-tree")
+      this.parseViewerTarget.textContent = result.string
 
-      Prism.highlightElement(this.prettyViewerTarget)
+      Prism.highlightElement(this.parseViewerTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
