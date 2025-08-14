@@ -85,6 +85,7 @@
               "svg-tag-name-capitalization"
             ]
           },
+          "uniqueItems": true,
           "default": [
             "parser-no-errors"
           ],
