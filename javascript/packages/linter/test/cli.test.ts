@@ -91,7 +91,7 @@ describe("CLI Output Formatting", () => {
 
   test("formats JSON output correctly for file with errors", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json")
-    
+
     const json = JSON.parse(output)
     expect(json).toMatchSnapshot()
     expect(exitCode).toBe(1)
@@ -99,7 +99,7 @@ describe("CLI Output Formatting", () => {
 
   test("formats JSON output correctly for clean file", () => {
     const { output, exitCode } = runLinter("clean-file.html.erb", "--json")
-    
+
     const json = JSON.parse(output)
     expect(json).toMatchSnapshot()
     expect(exitCode).toBe(0)
@@ -107,9 +107,51 @@ describe("CLI Output Formatting", () => {
 
   test("formats JSON output correctly for bad file", () => {
     const { output, exitCode } = runLinter("bad-file.html.erb", "--json")
-    
+
     const json = JSON.parse(output)
     expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output correctly for file with errors", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output correctly for clean file", () => {
+    const { output, exitCode } = runLinter("clean-file.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
+  test("formats GitHub Actions output correctly for bad file", () => {
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output with --format=github option", () => {
+    const { output, exitCode } = runLinter("test-file-simple.html.erb", "--format=github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("GitHub Actions format escapes special characters in messages", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("GitHub Actions format includes rule codes", () => {
+    const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 })

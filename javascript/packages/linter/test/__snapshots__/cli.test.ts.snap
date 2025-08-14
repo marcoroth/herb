@@ -1,5 +1,15 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3::Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22::Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]"
+`;
+
+exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `"::error file=test/fixtures/no-trailing-newline.html.erb,line=1,col=29::File must end with trailing newline [erb-requires-trailing-newline]"`;
+
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
 "[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -257,6 +267,28 @@ test/fixtures/few-rule-offenses.html.erb:3:16
  Summary:
   Checked      1 file
   Offenses     7 errors | 0 warnings (7 offenses across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
+"::error file=test/fixtures/bad-file.html.erb,line=1,col=1::Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]
+
+::error file=test/fixtures/bad-file.html.erb,line=1,col=16::Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]"
+`;
+
+exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `""`;
+
+exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3::Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22::Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]"
+`;
+
+exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
+"::error file=test/fixtures/test-file-simple.html.erb,line=2,col=3::Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]
+
+::error file=test/fixtures/test-file-simple.html.erb,line=2,col=22::Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. [html-tag-name-lowercase]"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `

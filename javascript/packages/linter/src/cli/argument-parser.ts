@@ -11,7 +11,7 @@ import type { ThemeInput } from "@herb-tools/highlighter"
 
 import { name, version } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json"
+export type FormatOption = "simple" | "detailed" | "json" | "github"
 
 export interface ParsedArguments {
   pattern: string
@@ -34,9 +34,10 @@ export class ArgumentParser {
     Options:
       -h, --help       show help
       -v, --version    show version
-      --format         output format (simple|detailed|json) [default: detailed]
+      --format         output format (simple|detailed|json|github) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
+      --github         use GitHub Actions output format (shortcut for --format github)
       --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color       disable colored output
       --no-timing      hide timing information
@@ -53,6 +54,7 @@ export class ArgumentParser {
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
+        github: { type: "boolean" },
         theme: { type: "string" },
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
@@ -74,7 +76,7 @@ export class ArgumentParser {
     }
 
     let formatOption: FormatOption = "detailed"
-    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
+    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json" || values.format === "github")) {
       formatOption = values.format
     }
 
@@ -84,6 +86,10 @@ export class ArgumentParser {
 
     if (values.json) {
       formatOption = "json"
+    }
+
+    if (values.github) {
+      formatOption = "github"
     }
 
     if (values["no-color"]) {

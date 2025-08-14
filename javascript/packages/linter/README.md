@@ -63,12 +63,11 @@ bun add -D @herb-tools/linter
 
 :::
 
-After installing as a dev dependency, add lint scripts to your `package.json`:
+After installing as a dev dependency, add a lint NPM script to your `package.json`:
 ```json
 {
   "scripts": {
-    "herb:lint": "herb-lint",
-    "herb:lint:simple": "herb-lint --simple"
+    "herb:lint": "herb-lint '**/*.html.erb'"
   }
 }
 ```
@@ -79,26 +78,18 @@ Then run the scripts:
 
 ```shell [npm]
 npm run herb:lint
-npm run herb:lint:simple
-npm run herb:lint:json
 ```
 
 ```shell [pnpm]
 pnpm herb:lint
-pnpm herb:lint:simple
-pnpm herb:lint:json
 ```
 
 ```shell [yarn]
 yarn herb:lint
-yarn herb:lint:simple
-yarn herb:lint:json
 ```
 
 ```shell [bun]
 bun run herb:lint
-bun run herb:lint:simple
-bun run herb:lint:json
 ```
 
 :::
@@ -110,8 +101,8 @@ bun run herb:lint:json
 Basic usage:
 ```bash
 npx @herb-tools/linter template.html.erb
-npx @herb-tools/linter "src/**/*.html.erb"
-npx @herb-tools/linter src/
+npx @herb-tools/linter "**/*.html.erb"
+npx @herb-tools/linter app/
 ```
 
 #### Options
@@ -130,6 +121,11 @@ npx @herb-tools/linter template.html.erb --format simple
 npx @herb-tools/linter template.html.erb --json
 # or
 npx @herb-tools/linter template.html.erb --format json
+
+# Use GitHub Actions output format
+npx @herb-tools/linter template.html.erb --github
+# or
+npx @herb-tools/linter template.html.erb --format github
 ```
 
 **Display Options:**
@@ -157,6 +153,35 @@ npx @herb-tools/linter --help
 
 # Show version information
 npx @herb-tools/linter --version
+```
+
+#### GitHub Actions Output Format
+
+The linter supports GitHub Actions annotation format with the `--github` flag, which outputs errors and warnings in a format that GitHub Actions can parse to create inline annotations in pull requests:
+
+```bash
+npx @herb-tools/linter "**/*.html.erb" --github
+```
+
+Example output:
+```
+::error file=template.html.erb,line=5,col=5::File must end with trailing newline [erb-requires-trailing-newline]
+::warning file=template.html.erb,line=3,col=10::Consider using semantic HTML tags [html-semantic-tags]
+```
+
+This format is ideal for CI/CD workflows in GitHub Actions:
+
+```yaml [.github/workflows/herb-lint.yml]
+name: Herb Lint
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npx @herb-tools/linter "**/*.html.erb" --github
 ```
 
 #### JSON Output Format
