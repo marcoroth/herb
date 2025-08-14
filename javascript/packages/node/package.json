@@ -14,11 +14,11 @@
   "gypfile": true,
   "main": "./dist/herb-node.cjs",
   "module": "./dist/herb-node.esm.js",
-  "types": "./dist/types/index-esm.d.mts",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/index-esm.d.mts",
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/herb-node.esm.js",
       "require": "./dist/herb-node.cjs",
       "default": "./dist/herb-node.esm.js"

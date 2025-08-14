@@ -23,7 +23,7 @@ function isExternal(id) {
 
 export default [
   {
-    input: "src/index-esm.mts",
+    input: "src/index.ts",
     output: {
       file: "dist/herb-node.esm.js",
       format: "esm",
@@ -43,7 +43,7 @@ export default [
   },
 
   {
-    input: "src/index-cjs.cts",
+    input: "src/index.ts",
     output: {
       file: "dist/herb-node.cjs",
       format: "cjs",
