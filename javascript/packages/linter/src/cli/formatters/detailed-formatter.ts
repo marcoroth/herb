@@ -18,8 +18,8 @@ export class DetailedFormatter extends BaseFormatter {
     this.truncateLines = truncateLines
   }
 
-  async format(allDiagnostics: ProcessedFile[], isSingleFile: boolean = false): Promise<void> {
-    if (allDiagnostics.length === 0) return
+  async format(allOffenses: ProcessedFile[], isSingleFile: boolean = false): Promise<void> {
+    if (allOffenses.length === 0) return
 
     if (!this.highlighter) {
       this.highlighter = new Highlighter(this.theme)
@@ -28,8 +28,8 @@ export class DetailedFormatter extends BaseFormatter {
 
     if (isSingleFile) {
       // For single file, use inline diagnostics with syntax highlighting
-      const { filename, content } = allDiagnostics[0]
-      const diagnostics = allDiagnostics.map(item => item.diagnostic)
+      const { filename, content } = allOffenses[0]
+      const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
         diagnostics: diagnostics,
@@ -42,11 +42,11 @@ export class DetailedFormatter extends BaseFormatter {
       console.log(`\n${highlighted}`)
     } else {
       // For multiple files, show individual diagnostics with syntax highlighting
-      const totalMessageCount = allDiagnostics.length
+      const totalMessageCount = allOffenses.length
 
-      for (let i = 0; i < allDiagnostics.length; i++) {
-        const { filename, diagnostic, content } = allDiagnostics[i]
-        const formatted = this.highlighter.highlightDiagnostic(filename, diagnostic, content, { 
+      for (let i = 0; i < allOffenses.length; i++) {
+        const { filename, offense, content } = allOffenses[i]
+        const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, { 
           contextLines: 2, 
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines
@@ -67,7 +67,7 @@ export class DetailedFormatter extends BaseFormatter {
     }
   }
 
-  formatFile(_filename: string, _diagnostics: Diagnostic[]): void {
+  formatFile(_filename: string, _offenses: Diagnostic[]): void {
     // Not used in detailed formatter
     throw new Error("formatFile is not implemented for DetailedFormatter")
   }

@@ -81,7 +81,7 @@ describe("erb-require-whitespace-inside-tags", () => {
     expect(lintResult.offenses[0].message).toMatch(/Add whitespace before/i)
   })
 
-  it("should report multiple errors for multiple violations", () => {
+  it("should report multiple errors for multiple offenses", () => {
     const html = dedent`
       <%=user.name%>
       <%if admin%>

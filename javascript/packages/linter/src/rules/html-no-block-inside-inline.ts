@@ -19,7 +19,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     return { isInline, isBlock, isUnknown }
   }
 
-  private addViolationMessage(tagName: string, isBlock: boolean, openTag: HTMLOpenTagNode): void {
+  private addOffenseMessage(tagName: string, isBlock: boolean, openTag: HTMLOpenTagNode): void {
     const parentInline = this.inlineStack[this.inlineStack.length - 1]
     const elementType = isBlock ? "Block-level" : "Unknown"
 
@@ -62,7 +62,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     const { isInline, isBlock, isUnknown } = this.getElementType(tagName)
 
     if ((isBlock || isUnknown) && this.inlineStack.length > 0) {
-      this.addViolationMessage(tagName, isBlock, openTag)
+      this.addOffenseMessage(tagName, isBlock, openTag)
     }
 
     if (isInline) {

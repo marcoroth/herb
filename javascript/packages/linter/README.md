@@ -33,7 +33,7 @@ npx @herb-tools/linter template.html.erb --json
 Example output:
 ```json
 {
-  "diagnostics": [
+  "offenses": [
     {
       "filename": "template.html.erb",
       "message": "File must end with trailing newline",
@@ -48,10 +48,10 @@ Example output:
   ],
   "summary": {
     "filesChecked": 1,
-    "filesWithViolations": 1,
+    "filesWithOffenses": 1,
     "totalErrors": 1,
     "totalWarnings": 0,
-    "totalViolations": 1,
+    "totalOffenses": 1,
     "ruleCount": 21
   },
   "timing": {
@@ -65,11 +65,11 @@ Example output:
 ```
 
 JSON output fields:
-- `diagnostics`: Array of linting violations with location and severity
+- `offenses`: Array of linting offenses with location and severity
 - `summary`: Statistics about the linting run (null on errors)
 - `timing`: Timing information with ISO timestamp (null with `--no-timing`)
 - `completed`: Whether the linter ran successfully on files
-- `clean`: Whether there were no violations (null when `completed=false`)
+- `clean`: Whether there were no offenses (null when `completed=false`)
 - `message`: Error or informational message (null on success)
 
 ### Language Server Integration

@@ -57,15 +57,15 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
-  test("displays most violated rules with multiple violations", () => {
-    const { output, exitCode } = runLinter("multiple-rule-violations.html.erb", "--no-wrap-lines")
+  test("displays most violated rules with multiple offenses", () => {
+    const { output, exitCode } = runLinter("multiple-rule-offenses.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 
-  test("displays rule violations when showing all rules", () => {
-    const { output, exitCode } = runLinter("few-rule-violations.html.erb", "--no-wrap-lines")
+  test("displays rule offenses when showing all rules", () => {
+    const { output, exitCode } = runLinter("few-rule-offenses.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
@@ -86,6 +86,30 @@ describe("CLI Output Formatting", () => {
 
     expect(output).toContain("erb-requires-trailing-newline")
     expect(output).toContain("File must end with trailing newline")
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats JSON output correctly for file with errors", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json")
+    
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats JSON output correctly for clean file", () => {
+    const { output, exitCode } = runLinter("clean-file.html.erb", "--json")
+    
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
+  test("formats JSON output correctly for bad file", () => {
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--json")
+    
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 })

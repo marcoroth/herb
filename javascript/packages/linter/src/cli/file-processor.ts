@@ -8,17 +8,17 @@ import type { FormatOption } from "./argument-parser.js"
 
 export interface ProcessedFile {
   filename: string
-  diagnostic: Diagnostic
+  offense: Diagnostic
   content: string
 }
 
 export interface ProcessingResult {
   totalErrors: number
   totalWarnings: number
-  filesWithIssues: number
+  filesWithOffenses: number
   ruleCount: number
-  allDiagnostics: ProcessedFile[]
-  ruleViolations: Map<string, { count: number, files: Set<string> }>
+  allOffenses: ProcessedFile[]
+  ruleOffenses: Map<string, { count: number, files: Set<string> }>
 }
 
 export class FileProcessor {
@@ -27,10 +27,10 @@ export class FileProcessor {
   async processFiles(files: string[], formatOption: FormatOption = 'detailed'): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
-    let filesWithIssues = 0
+    let filesWithOffenses = 0
     let ruleCount = 0
-    const allDiagnostics: ProcessedFile[] = []
-    const ruleViolations = new Map<string, { count: number, files: Set<string> }>()
+    const allOffenses: ProcessedFile[] = []
+    const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
 
     for (const filename of files) {
       const filePath = resolve(filename)
@@ -47,13 +47,13 @@ export class FileProcessor {
           }
         }
 
-        // Add parse errors to diagnostics for JSON output
+        // Add parse errors to offenses for JSON output
         for (const error of parseResult.errors) {
-          allDiagnostics.push({ filename, diagnostic: error, content })
+          allOffenses.push({ filename, offense: error, content })
         }
 
         totalErrors++
-        filesWithIssues++
+        filesWithOffenses++
         continue
       }
 
@@ -73,20 +73,20 @@ export class FileProcessor {
         }
       } else {
         for (const offense of lintResult.offenses) {
-          allDiagnostics.push({ filename, diagnostic: offense, content })
+          allOffenses.push({ filename, offense: offense, content })
 
-          const ruleData = ruleViolations.get(offense.rule) || { count: 0, files: new Set() }
+          const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
           ruleData.count++
           ruleData.files.add(filename)
-          ruleViolations.set(offense.rule, ruleData)
+          ruleOffenses.set(offense.rule, ruleData)
         }
 
         totalErrors += lintResult.errors
         totalWarnings += lintResult.warnings
-        filesWithIssues++
+        filesWithOffenses++
       }
     }
 
-    return { totalErrors, totalWarnings, filesWithIssues, ruleCount, allDiagnostics, ruleViolations }
+    return { totalErrors, totalWarnings, filesWithOffenses, ruleCount, allOffenses, ruleOffenses }
   }
 }

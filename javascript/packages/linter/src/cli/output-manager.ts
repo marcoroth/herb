@@ -26,24 +26,24 @@ export class OutputManager {
    * Output successful lint results
    */
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
-    const { allDiagnostics, files, totalErrors, totalWarnings, filesWithIssues, ruleCount, ruleViolations } = results
+    const { allOffenses, files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, ruleOffenses } = results
 
     if (options.formatOption === "json") {
       const output: JSONOutput = {
-        diagnostics: allDiagnostics.map(({ filename, diagnostic }) => ({
+        offenses: allOffenses.map(({ filename, offense }) => ({
           filename,
-          message: diagnostic.message,
-          location: diagnostic.location.toJSON(),
-          severity: diagnostic.severity,
-          code: diagnostic.code,
-          source: diagnostic.source
+          message: offense.message,
+          location: offense.location.toJSON(),
+          severity: offense.severity,
+          code: offense.code,
+          source: offense.source
         })),
         summary: {
           filesChecked: files.length,
-          filesWithViolations: filesWithIssues,
+          filesWithOffenses,
           totalErrors,
           totalWarnings,
-          totalViolations: totalErrors + totalWarnings,
+          totalOffenses: totalErrors + totalWarnings,
           ruleCount
         },
         timing: null,
@@ -64,19 +64,19 @@ export class OutputManager {
         ? new SimpleFormatter()
         : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
 
-      await formatter.format(allDiagnostics, files.length === 1)
+      await formatter.format(allOffenses, files.length === 1)
 
-      this.summaryReporter.displayMostViolatedRules(ruleViolations)
+      this.summaryReporter.displayMostViolatedRules(ruleOffenses)
       this.summaryReporter.displaySummary({
         files,
         totalErrors,
         totalWarnings,
-        filesWithViolations: filesWithIssues,
+        filesWithOffenses,
         ruleCount,
         startTime: options.startTime,
         startDate: options.startDate,
         showTiming: options.showTiming,
-        ruleViolations
+        ruleOffenses
       })
     }
   }
@@ -87,13 +87,13 @@ export class OutputManager {
   outputInfo(message: string, options: OutputOptions): void {
     if (options.formatOption === "json") {
       const output: JSONOutput = {
-        diagnostics: [],
+        offenses: [],
         summary: {
           filesChecked: 0,
-          filesWithViolations: 0,
+          filesWithOffenses: 0,
           totalErrors: 0,
           totalWarnings: 0,
-          totalViolations: 0,
+          totalOffenses: 0,
           ruleCount: 0
         },
         timing: null,
@@ -120,7 +120,7 @@ export class OutputManager {
   outputError(message: string, options: OutputOptions): void {
     if (options.formatOption === "json") {
       const output: JSONOutput = {
-        diagnostics: [],
+        offenses: [],
         summary: null,
         timing: null,
         completed: false,

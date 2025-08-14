@@ -3,16 +3,16 @@ import { BaseFormatter } from "./base-formatter.js"
 import type { Diagnostic, SerializedDiagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
 
-interface JSONDiagnostic extends SerializedDiagnostic {
+interface JSONOffense extends SerializedDiagnostic {
   filename: string
 }
 
 interface JSONSummary {
   filesChecked: number
-  filesWithViolations: number
+  filesWithOffenses: number
   totalErrors: number
   totalWarnings: number
-  totalViolations: number
+  totalOffenses: number
   ruleCount: number
 }
 
@@ -22,7 +22,7 @@ interface JSONTiming {
 }
 
 export interface JSONOutput {
-  diagnostics: JSONDiagnostic[]
+  offenses: JSONOffense[]
   summary: JSONSummary | null
   timing: JSONTiming | null
   completed: boolean
@@ -34,7 +34,7 @@ interface JSONFormatOptions {
   files: string[]
   totalErrors: number
   totalWarnings: number
-  filesWithIssues: number
+  filesWithOffenses: number
   ruleCount: number
   startTime: number
   startDate: Date
@@ -42,49 +42,49 @@ interface JSONFormatOptions {
 }
 
 export class JSONFormatter extends BaseFormatter {
-  async format(allDiagnostics: ProcessedFile[]): Promise<void> {
-    const jsonDiagnostics: JSONDiagnostic[] = allDiagnostics.map(({ filename, diagnostic }) => ({
+  async format(allOffenses: ProcessedFile[]): Promise<void> {
+    const jsonOffenses: JSONOffense[] = allOffenses.map(({ filename, offense }) => ({
       filename,
-      message: diagnostic.message,
-      location: diagnostic.location.toJSON(),
-      severity: diagnostic.severity,
-      code: diagnostic.code,
-      source: diagnostic.source
+      message: offense.message,
+      location: offense.location.toJSON(),
+      severity: offense.severity,
+      code: offense.code,
+      source: offense.source
     }))
 
     const output: JSONOutput = {
-      diagnostics: jsonDiagnostics,
+      offenses: jsonOffenses,
       summary: null,
       timing: null,
       completed: true,
-      clean: jsonDiagnostics.length === 0,
+      clean: jsonOffenses.length === 0,
       message: null
     }
 
     console.log(JSON.stringify(output, null, 2))
   }
 
-  async formatWithSummary(allDiagnostics: ProcessedFile[], options: JSONFormatOptions): Promise<void> {
-    const jsonDiagnostics: JSONDiagnostic[] = allDiagnostics.map(({ filename, diagnostic }) => ({
+  async formatWithSummary(allOffenses: ProcessedFile[], options: JSONFormatOptions): Promise<void> {
+    const jsonOffenses: JSONOffense[] = allOffenses.map(({ filename, offense }) => ({
       filename,
-      message: diagnostic.message,
-      location: diagnostic.location.toJSON(),
-      severity: diagnostic.severity,
-      code: diagnostic.code,
-      source: diagnostic.source
+      message: offense.message,
+      location: offense.location.toJSON(),
+      severity: offense.severity,
+      code: offense.code,
+      source: offense.source
     }))
 
     const summary: JSONSummary = {
       filesChecked: options.files.length,
-      filesWithViolations: options.filesWithIssues,
+      filesWithOffenses: options.filesWithOffenses,
       totalErrors: options.totalErrors,
       totalWarnings: options.totalWarnings,
-      totalViolations: options.totalErrors + options.totalWarnings,
+      totalOffenses: options.totalErrors + options.totalWarnings,
       ruleCount: options.ruleCount
     }
 
     const output: JSONOutput = {
-      diagnostics: jsonDiagnostics,
+      offenses: jsonOffenses,
       summary,
       timing: null,
       completed: true,
@@ -101,7 +101,7 @@ export class JSONFormatter extends BaseFormatter {
     console.log(JSON.stringify(output, null, 2))
   }
 
-  formatFile(_filename: string, _diagnostics: Diagnostic[]): void {
+  formatFile(_filename: string, _offenses: Diagnostic[]): void {
     // Not used in JSON formatter, everything is handled in format()
   }
 }

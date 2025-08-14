@@ -1,9 +1,9 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`CLI Output Formatting > displays most violated rules with multiple violations 1`] = `
+exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
 "[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
-test/fixtures/multiple-rule-violations.html.erb:5:3
+test/fixtures/multiple-rule-offenses.html.erb:5:3
 
       3 │ <div id=test1 class='' data-value=bar>
       4 │   <img />
@@ -17,7 +17,7 @@ test/fixtures/multiple-rule-violations.html.erb:5:3
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
-test/fixtures/multiple-rule-violations.html.erb:10:1
+test/fixtures/multiple-rule-offenses.html.erb:10:1
 
       8 │ <h1></h1>
       9 │ 
@@ -31,7 +31,7 @@ test/fixtures/multiple-rule-violations.html.erb:10:1
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
-test/fixtures/multiple-rule-violations.html.erb:10:4
+test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
       9 │ 
@@ -45,9 +45,9 @@ test/fixtures/multiple-rule-violations.html.erb:10:4
 
 [warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class="value"\`. (html-attribute-double-quotes)
 
-test/fixtures/multiple-rule-violations.html.erb:3:20
+test/fixtures/multiple-rule-offenses.html.erb:3:20
 
-      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
       2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │                     ~~
@@ -59,9 +59,9 @@ test/fixtures/multiple-rule-violations.html.erb:3:20
 
 [error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
-test/fixtures/multiple-rule-violations.html.erb:3:8
+test/fixtures/multiple-rule-offenses.html.erb:3:8
 
-      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
       2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │         ~~~~~
@@ -73,9 +73,9 @@ test/fixtures/multiple-rule-violations.html.erb:3:8
 
 [error] Attribute value should be quoted: \`data-value="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
-test/fixtures/multiple-rule-violations.html.erb:3:34
+test/fixtures/multiple-rule-offenses.html.erb:3:34
 
-      1 │ <!-- Multiple violations of same rules to test "Most violated rules" display -->
+      1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
       2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │                                   ~~~
@@ -87,7 +87,7 @@ test/fixtures/multiple-rule-violations.html.erb:3:34
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
-test/fixtures/multiple-rule-violations.html.erb:4:3
+test/fixtures/multiple-rule-offenses.html.erb:4:3
 
       2 │ 
       3 │ <div id=test1 class='' data-value=bar>
@@ -101,7 +101,7 @@ test/fixtures/multiple-rule-violations.html.erb:4:3
 
 [error] Duplicate attribute \`class\` found on tag. Remove the duplicate occurrence. (html-no-duplicate-attributes)
 
-test/fixtures/multiple-rule-violations.html.erb:5:14
+test/fixtures/multiple-rule-offenses.html.erb:5:14
 
       3 │ <div id=test1 class='' data-value=bar>
       4 │   <img />
@@ -115,7 +115,7 @@ test/fixtures/multiple-rule-violations.html.erb:5:14
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
-test/fixtures/multiple-rule-violations.html.erb:8:0
+test/fixtures/multiple-rule-offenses.html.erb:8:0
 
       6 │ </div>
       7 │ 
@@ -129,7 +129,7 @@ test/fixtures/multiple-rule-violations.html.erb:8:0
 
 [error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (html-no-nested-links)
 
-test/fixtures/multiple-rule-violations.html.erb:10:4
+test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
       9 │ 
@@ -138,27 +138,27 @@ test/fixtures/multiple-rule-violations.html.erb:10:4
      11 │ 
      12 │ <div id="duplicate"></div>
 
- Most violated rules:
-  html-anchor-require-href (3 violations in 1 file)
-  html-attribute-values-require-quotes (2 violations in 1 file)
-  html-attribute-double-quotes (1 violation in 1 file)
-  html-img-require-alt (1 violation in 1 file)
-  html-no-duplicate-attributes (1 violation in 1 file)
+ Most frequent rule offenses:
+  html-anchor-require-href (3 offenses in 1 file)
+  html-attribute-values-require-quotes (2 offenses in 1 file)
+  html-attribute-double-quotes (1 offense in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+  html-no-duplicate-attributes (1 offense in 1 file)
 
-  ...and 2 more rules with 2 violations
+  ...and 2 more rules with 2 offenses
 
 
  Summary:
   Checked      1 file
-  Violations   9 errors | 1 warning (10 violations across 1 file)"
+  Offenses     9 errors | 1 warning (10 offenses across 1 file)"
 `;
 
-exports[`CLI Output Formatting > displays rule violations when showing all rules 1`] = `
+exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
 "[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
-test/fixtures/few-rule-violations.html.erb:2:8
+test/fixtures/few-rule-offenses.html.erb:2:8
 
-      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │         ~~~~
       3 │   <img src=image.jpg>
@@ -169,9 +169,9 @@ test/fixtures/few-rule-violations.html.erb:2:8
 
 [error] Attribute value should be quoted: \`class="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
-test/fixtures/few-rule-violations.html.erb:2:19
+test/fixtures/few-rule-offenses.html.erb:2:19
 
-      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │                    ~~~
       3 │   <img src=image.jpg>
@@ -182,9 +182,9 @@ test/fixtures/few-rule-violations.html.erb:2:19
 
 [error] Attribute value should be quoted: \`src="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
-test/fixtures/few-rule-violations.html.erb:3:11
+test/fixtures/few-rule-offenses.html.erb:3:11
 
-      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
   →   3 │   <img src=image.jpg>
         │            ~~~~~
@@ -196,9 +196,9 @@ test/fixtures/few-rule-violations.html.erb:3:11
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
-test/fixtures/few-rule-violations.html.erb:3:3
+test/fixtures/few-rule-offenses.html.erb:3:3
 
-      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
   →   3 │   <img src=image.jpg>
         │    ~~~
@@ -210,7 +210,7 @@ test/fixtures/few-rule-violations.html.erb:3:3
 
 [error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicate-ids)
 
-test/fixtures/few-rule-violations.html.erb:9:5
+test/fixtures/few-rule-offenses.html.erb:9:5
 
       7 │ 
       8 │ <div id="duplicate"></div>
@@ -223,7 +223,7 @@ test/fixtures/few-rule-violations.html.erb:9:5
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
-test/fixtures/few-rule-violations.html.erb:6:0
+test/fixtures/few-rule-offenses.html.erb:6:0
 
       4 │ </div>
       5 │ 
@@ -237,26 +237,167 @@ test/fixtures/few-rule-violations.html.erb:6:0
 
 [error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
 
-test/fixtures/few-rule-violations.html.erb:3:16
+test/fixtures/few-rule-offenses.html.erb:3:16
 
-      1 │ <!-- Just a few different rule violations to test "Rule violations:" vs "Most violated rules:" -->
+      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
   →   3 │   <img src=image.jpg>
         │                 ~
       4 │ </div>
       5 │
 
- Rule violations:
-  html-attribute-values-require-quotes (3 violations in 1 file)
-  html-img-require-alt (1 violation in 1 file)
-  html-no-duplicate-ids (1 violation in 1 file)
-  html-no-empty-headings (1 violation in 1 file)
-  parser-no-errors (1 violation in 1 file)
+ Rule offenses:
+  html-attribute-values-require-quotes (3 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
+  html-no-duplicate-ids (1 offense in 1 file)
+  html-no-empty-headings (1 offense in 1 file)
+  parser-no-errors (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Violations   7 errors | 0 warnings (7 violations across 1 file)"
+  Offenses     7 errors | 0 warnings (7 offenses across 1 file)"
+`;
+
+exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
+{
+  "clean": false,
+  "completed": true,
+  "message": null,
+  "offenses": [
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test/fixtures/bad-file.html.erb",
+      "location": {
+        "end": {
+          "column": 5,
+          "line": 1,
+        },
+        "start": {
+          "column": 1,
+          "line": 1,
+        },
+      },
+      "message": "Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test/fixtures/bad-file.html.erb",
+      "location": {
+        "end": {
+          "column": 20,
+          "line": 1,
+        },
+        "start": {
+          "column": 16,
+          "line": 1,
+        },
+      },
+      "message": "Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+  ],
+  "summary": {
+    "filesChecked": 1,
+    "filesWithOffenses": 1,
+    "ruleCount": 21,
+    "totalErrors": 2,
+    "totalOffenses": 2,
+    "totalWarnings": 0,
+  },
+  "timing": null,
+}
+`;
+
+exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`] = `
+{
+  "clean": true,
+  "completed": true,
+  "message": null,
+  "offenses": [],
+  "summary": {
+    "filesChecked": 1,
+    "filesWithOffenses": 0,
+    "ruleCount": 21,
+    "totalErrors": 0,
+    "totalOffenses": 0,
+    "totalWarnings": 0,
+  },
+  "timing": null,
+}
+`;
+
+exports[`CLI Output Formatting > formats JSON output correctly for file with errors 1`] = `
+{
+  "clean": false,
+  "completed": true,
+  "message": null,
+  "offenses": [
+    {
+      "code": "html-img-require-alt",
+      "filename": "test/fixtures/test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 6,
+          "line": 3,
+        },
+        "start": {
+          "column": 3,
+          "line": 3,
+        },
+      },
+      "message": "Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test/fixtures/test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 7,
+          "line": 2,
+        },
+        "start": {
+          "column": 3,
+          "line": 2,
+        },
+      },
+      "message": "Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+    {
+      "code": "html-tag-name-lowercase",
+      "filename": "test/fixtures/test-file-with-errors.html.erb",
+      "location": {
+        "end": {
+          "column": 26,
+          "line": 2,
+        },
+        "start": {
+          "column": 22,
+          "line": 2,
+        },
+      },
+      "message": "Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead.",
+      "severity": "error",
+      "source": "Herb Linter",
+    },
+  ],
+  "summary": {
+    "filesChecked": 1,
+    "filesWithOffenses": 1,
+    "ruleCount": 21,
+    "totalErrors": 3,
+    "totalOffenses": 3,
+    "totalWarnings": 0,
+  },
+  "timing": null,
+}
 `;
 
 exports[`CLI Output Formatting > formats detailed error output correctly 1`] = `
@@ -297,14 +438,14 @@ test/fixtures/test-file-with-errors.html.erb:2:22
       3 │   <img src="test.jpg">
       4 │ </div>
 
- Rule violations:
-  html-tag-name-lowercase (2 violations in 1 file)
-  html-img-require-alt (1 violation in 1 file)
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+  html-img-require-alt (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Violations   3 errors | 0 warnings (3 violations across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -312,13 +453,13 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
   2:3  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
   2:22 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
- Rule violations:
-  html-tag-name-lowercase (2 violations in 1 file)
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
 
 
  Summary:
   Checked      1 file
-  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -326,13 +467,13 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
   1:1  ✗ Opening tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
   1:16 ✗ Closing tag name \`SPAN\` should be lowercase. Use \`span\` instead. (html-tag-name-lowercase)
 
- Rule violations:
-  html-tag-name-lowercase (2 violations in 1 file)
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
 
 
  Summary:
   Checked      1 file
-  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -341,7 +482,7 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
 
  Summary:
   Checked      1 file
-  Violations   0 violations"
+  Offenses     0 offenses"
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
@@ -364,11 +505,11 @@ test/fixtures/bad-file.html.erb:1:16
         │                 ~~~~
       2 │
 
- Rule violations:
-  html-tag-name-lowercase (2 violations in 1 file)
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
 
 
  Summary:
   Checked      1 file
-  Violations   2 errors | 0 warnings (2 violations across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
 `;
