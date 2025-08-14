@@ -27,11 +27,11 @@ export class CLI {
 
     Examples:
       herb-format                            # Format all **/*.html.erb files in current directory
-      herb-format --check                    # Check if all **/*.html.erb files are formatted
+      herb-format templates/                 # Format and **/*.html.erb within the given directory
       herb-format templates/index.html.erb   # Format and write single file
+      herb-format --check                    # Check if all **/*.html.erb files are formatted
       herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
       cat template.html.erb | herb-format    # Format from stdin to stdout
-      herb-format - < template.html.erb      # Format from stdin to stdout
   `
 
   async run() {

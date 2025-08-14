@@ -11,46 +11,144 @@ Auto-formatter for HTML+ERB templates with intelligent indentation, line wrappin
 
 Perfect for format-on-save in editors and formatting verification in CI/CD pipelines. Transforms templates into consistently formatted, readable code while preserving all functionality.
 
-### Installation
+## Installation
 
+### Global Installation
 
 :::code-group
+
 ```shell [npm]
-npm add @herb-tools/formatter
+npm install -g @herb-tools/formatter
 ```
 
 ```shell [pnpm]
-pnpm add @herb-tools/formatter
+pnpm add -g @herb-tools/formatter
 ```
 
 ```shell [yarn]
-yarn add @herb-tools/formatter
+yarn global add @herb-tools/formatter
 ```
 
 ```shell [bun]
-bun add @herb-tools/formatter
+bun add -g @herb-tools/formatter
 ```
+
 :::
 
-### Usage
-
-
-#### Format a file
-
+Then run directly:
 ```bash
-# relative path
-herb-format templates/index.html.erb
-
-# absolute path
-herb-format /full/path/to/template.html.erb
+herb-format template.html.erb
 ```
 
-#### Format from stdin
+### One-time Usage
+For occasional use without installing:
 
 ```bash
+npx @herb-tools/formatter template.html.erb
+```
+
+### Project Installation
+
+:::code-group
+
+```shell [npm]
+npm add -D @herb-tools/formatter
+```
+
+```shell [pnpm]
+pnpm add -D @herb-tools/formatter
+```
+
+```shell [yarn]
+yarn add -D @herb-tools/formatter
+```
+
+```shell [bun]
+bun add -D @herb-tools/formatter
+```
+
+:::
+
+After installing as a dev dependency, add format scripts to your `package.json`:
+```json
+{
+  "scripts": {
+    "herb:format": "herb-format",
+    "herb:format:check": "herb-format --check"
+  }
+}
+```
+
+Then run the scripts:
+
+:::code-group
+
+```shell [npm]
+npm run herb:format
+npm run herb:format:check
+```
+
+```shell [pnpm]
+pnpm herb:format
+pnpm herb:format:check
+```
+
+```shell [yarn]
+yarn herb:format
+yarn herb:format:check
+```
+
+```shell [bun]
+bun run herb:format
+bun run herb:format:check
+```
+
+:::
+
+## Usage
+
+### Command Line
+
+Basic usage:
+```bash
+herb-format
+herb-format template.html.erb
+herb-format templates/
+```
+
+#### Options
+
+**Check Mode:**
+```bash
+# Check if files are formatted without modifying them
+herb-format --check template.html.erb
+
+# Check all files in current directory
+herb-format --check
+```
+
+**Input Sources:**
+```bash
+# Format specific file
+herb-format templates/index.html.erb
+
+# Format all .html.erb files in directory
+herb-format templates/
+
+# Format all .html.erb files in current directory (default)
+herb-format
+
+# Format from stdin
 cat template.html.erb | herb-format
-# or explicitly use "-" for stdin
-herb-format - < template.html.erb
+```
+
+**Help and Version:**
+```bash
+# Show help
+herb-format --help
+
+# Show version information
+herb-format --version
 ```
 
 <!-- #### Configuration Options -->
