@@ -11,9 +11,11 @@ import type { ThemeInput } from "@herb-tools/highlighter"
 
 import { name, version } from "../../package.json"
 
+export type FormatOption = "simple" | "detailed" | "json"
+
 export interface ParsedArguments {
   pattern: string
-  formatOption: 'simple' | 'detailed'
+  formatOption: FormatOption
   showTiming: boolean
   theme: ThemeInput
   wrapLines: boolean
@@ -32,9 +34,10 @@ export class ArgumentParser {
     Options:
       -h, --help       show help
       -v, --version    show version
-      --format         output format (simple|detailed) [default: detailed]
+      --format         output format (simple|detailed|json) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
-      --theme          syntax highlighting theme (${THEME_NAMES.join('|')}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --json           use JSON output format (shortcut for --format json)
+      --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color       disable colored output
       --no-timing      hide timing information
       --no-wrap-lines  disable line wrapping
@@ -45,15 +48,16 @@ export class ArgumentParser {
     const { values, positionals } = parseArgs({
       args: argv.slice(2),
       options: {
-        help: { type: 'boolean', short: 'h' },
-        version: { type: 'boolean', short: 'v' },
-        format: { type: 'string' },
-        simple: { type: 'boolean' },
-        theme: { type: 'string' },
-        'no-color': { type: 'boolean' },
-        'no-timing': { type: 'boolean' },
-        'no-wrap-lines': { type: 'boolean' },
-        'truncate-lines': { type: 'boolean' }
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+        format: { type: "string" },
+        simple: { type: "boolean" },
+        json: { type: "boolean" },
+        theme: { type: "string" },
+        "no-color": { type: "boolean" },
+        "no-timing": { type: "boolean" },
+        "no-wrap-lines": { type: "boolean" },
+        "truncate-lines": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -69,8 +73,8 @@ export class ArgumentParser {
       process.exit(0)
     }
 
-    let formatOption: 'simple' | 'detailed' = 'detailed'
-    if (values.format && (values.format === "detailed" || values.format === "simple")) {
+    let formatOption: FormatOption = "detailed"
+    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
       formatOption = values.format
     }
 
@@ -78,21 +82,25 @@ export class ArgumentParser {
       formatOption = "simple"
     }
 
-    if (values['no-color']) {
+    if (values.json) {
+      formatOption = "json"
+    }
+
+    if (values["no-color"]) {
       process.env.NO_COLOR = "1"
     }
 
-    const showTiming = !values['no-timing']
+    const showTiming = !values["no-timing"]
 
-    let wrapLines = !values['no-wrap-lines']
+    let wrapLines = !values["no-wrap-lines"]
     let truncateLines = false
 
-    if (values['truncate-lines']) {
+    if (values["truncate-lines"]) {
       truncateLines = true
       wrapLines = false
     }
 
-    if (!values['no-wrap-lines'] && values['truncate-lines']) {
+    if (!values["no-wrap-lines"] && values["truncate-lines"]) {
       console.error("Error: Line wrapping and --truncate-lines cannot be used together. Use --no-wrap-lines with --truncate-lines.")
       process.exit(1)
     }

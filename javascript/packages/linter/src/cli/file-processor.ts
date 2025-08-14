@@ -4,6 +4,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
 import { colorize } from "@herb-tools/highlighter"
 import type { Diagnostic } from "@herb-tools/core"
+import type { FormatOption } from "./argument-parser.js"
 
 export interface ProcessedFile {
   filename: string
@@ -23,7 +24,7 @@ export interface ProcessingResult {
 export class FileProcessor {
   private linter: Linter | null = null
 
-  async processFiles(files: string[]): Promise<ProcessingResult> {
+  async processFiles(files: string[], formatOption: FormatOption = 'detailed'): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
     let filesWithIssues = 0
@@ -38,10 +39,17 @@ export class FileProcessor {
       const parseResult = Herb.parse(content)
 
       if (parseResult.errors.length > 0) {
-        console.error(`${colorize(filename, "cyan")} - ${colorize("Parse errors:", "brightRed")}`)
+        if (formatOption !== 'json') {
+          console.error(`${colorize(filename, "cyan")} - ${colorize("Parse errors:", "brightRed")}`)
 
+          for (const error of parseResult.errors) {
+            console.error(`  ${colorize("✗", "brightRed")} ${error.message}`)
+          }
+        }
+
+        // Add parse errors to diagnostics for JSON output
         for (const error of parseResult.errors) {
-          console.error(`  ${colorize("✗", "brightRed")} ${error.message}`)
+          allDiagnostics.push({ filename, diagnostic: error, content })
         }
 
         totalErrors++
@@ -60,7 +68,7 @@ export class FileProcessor {
       }
 
       if (lintResult.offenses.length === 0) {
-        if (files.length === 1) {
+        if (files.length === 1 && formatOption !== 'json') {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {
