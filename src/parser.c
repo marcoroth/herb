@@ -412,9 +412,19 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
 static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) {
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = parser_parse_html_attribute_name(parser);
 
+  while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+    token_T* whitespace = parser_advance(parser);
+    token_free(whitespace);
+  }
+
   token_T* equals = parser_consume_if_present(parser, TOKEN_EQUALS);
 
   if (equals != NULL) {
+    while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+      token_T* whitespace = parser_advance(parser);
+      token_free(whitespace);
+    }
+
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = parser_parse_html_attribute_value(parser);
 
     AST_HTML_ATTRIBUTE_NODE_T* attribute_node = ast_html_attribute_node_init(

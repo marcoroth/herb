@@ -30,6 +30,36 @@ module Parser
       assert_parsed_snapshot(%(<input value= "value" />))
     end
 
+    test "attribute value with space before equal sign" do
+      assert_parsed_snapshot(%(<input value ="value" />))
+    end
+
+    test "attribute value with space before and after equal sign" do
+      assert_parsed_snapshot(%(<div class    =    "hello">Content</div>))
+    end
+
+    test "attribute value with newline before equal sign" do
+      assert_parsed_snapshot(%(<input value
+="value" />))
+    end
+
+    test "attribute value with newline after equal sign" do
+      assert_parsed_snapshot(%(<input value=
+"value" />))
+    end
+
+    test "attribute value with newline before and after equal sign" do
+      assert_parsed_snapshot(%(<input value
+=
+"value" />))
+    end
+
+    test "attribute value with mixed whitespace and newlines around equal sign" do
+      assert_parsed_snapshot(%(<div class
+  =
+  "hello">Content</div>))
+    end
+
     test "attribute value with exclamation point" do
       assert_parsed_snapshot(%(<input value="Hello!" />))
     end
