@@ -50,7 +50,8 @@ After installing the Herb Language Server (see below) and [Sublime LSP](http://l
       "selector": "text.html.ruby | text.html.rails",
       "settings": {
         "languageServerHerb.linter": {
-          "enabled": true
+          "enabled": true,
+          "excludedRules": ["parser-no-errors"]
         }
       },
       "initializationOptions": {

@@ -54,6 +54,43 @@
           "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
           "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns."
         },
+        "languageServerHerb.linter.excludedRules": {
+          "title": "Herb Linter Excluded Rules",
+          "scope": "window",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "erb-no-empty-tags",
+              "erb-no-output-control-flow",
+              "erb-prefer-image-tag-helper",
+              "erb-require-whitespace-inside-tags",
+              "erb-requires-trailing-newline",
+              "html-anchor-require-href",
+              "html-aria-attribute-must-be-valid",
+              "html-aria-level-must-be-valid",
+              "html-aria-role-heading-requires-level",
+              "html-aria-role-must-be-valid",
+              "html-attribute-double-quotes",
+              "html-attribute-values-require-quotes",
+              "html-boolean-attributes-no-value",
+              "html-img-require-alt",
+              "html-no-block-inside-inline",
+              "html-no-duplicate-attributes",
+              "html-no-duplicate-ids",
+              "html-no-empty-headings",
+              "html-no-nested-links",
+              "html-tag-name-lowercase",
+              "parser-no-errors",
+              "svg-tag-name-capitalization"
+            ]
+          },
+          "default": [
+            "parser-no-errors"
+          ],
+          "description": "Array of linter rule names to exclude from diagnostics. The 'parser-no-errors' rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics.",
+          "markdownDescription": "Array of linter rule names to exclude from diagnostics. The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics. See all available [rules](https://herb-tools.dev/linter/rules/)."
+        },
         "languageServerHerb.formatter.enabled": {
           "scope": "resource",
           "type": "boolean",

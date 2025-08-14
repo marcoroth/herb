@@ -16,6 +16,29 @@ Install the [Herb LSP extension](https://marketplace.visualstudio.com/items?item
 
 If you are looking to use Herb in another editor, check out the instructions on the [editor integrations](https://herb-tools.dev/integrations/editors) page.
 
+## Configuration
+
+### Linter Settings
+
+You can configure the linter behavior through VS Code settings:
+
+* `languageServerHerb.linter.enabled` (boolean, default: `true`) - Enable/disable the linter
+* `languageServerHerb.linter.excludedRules` (string[], default: `["parser-no-errors"]`) - Array of linter rule names to exclude from diagnostics
+
+#### Example configuration in `settings.json`:
+
+```json
+{
+  "languageServerHerb.linter.enabled": true,
+  "languageServerHerb.linter.excludedRules": [
+    "parser-no-errors",
+    "html-tag-name-lowercase"
+  ]
+}
+```
+
+**Note:** The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting, since parser errors are already displayed through the language server's built-in diagnostics.
+
 ## Functionality
 
 #### Diagnostics

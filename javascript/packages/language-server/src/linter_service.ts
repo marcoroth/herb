@@ -1,9 +1,12 @@
 import { Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
+
 import { Linter } from "@herb-tools/linter"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { Settings } from "./settings"
+
+import type { LintSeverity  } from "@herb-tools/linter"
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
@@ -28,13 +31,10 @@ export class LinterService {
     }
 
     const lintResult = this.linter.lint(textDocument.getText(), { fileName: textDocument.uri })
-    const diagnostics: Diagnostic[] = []
+    const excludedRules = settings?.linter?.excludedRules ?? ["parser-no-errors"]
+    const offenses = lintResult.offenses.filter(offense => !excludedRules.includes(offense.rule))
 
-    lintResult.offenses.forEach(offense => {
-      const severity = offense.severity === "error"
-        ? DiagnosticSeverity.Error
-        : DiagnosticSeverity.Warning
-
+    const diagnostics: Diagnostic[] = offenses.map(offense => {
       const range = Range.create(
         Position.create(offense.location.start.line - 1, offense.location.start.column),
         Position.create(offense.location.end.line - 1, offense.location.end.column),
@@ -44,19 +44,26 @@ export class LinterService {
         href: `https://herb-tools.dev/linter/rules/${offense.rule}`
       }
 
-      const diagnostic: Diagnostic = {
+      return {
         source: this.source,
-        severity,
+        severity: this.lintToDignosticSeverity(offense.severity),
         range,
         message: offense.message,
         code: offense.rule,
         data: { rule: offense.rule },
         codeDescription
       }
-
-      diagnostics.push(diagnostic)
     })
 
     return { diagnostics }
+  }
+
+  private lintToDignosticSeverity(severity: LintSeverity): DiagnosticSeverity {
+    switch (severity) {
+      case "error": return DiagnosticSeverity.Error
+      case "warning": return DiagnosticSeverity.Warning
+      case "info": return DiagnosticSeverity.Information
+      case "hint": return DiagnosticSeverity.Hint
+    }
   }
 }

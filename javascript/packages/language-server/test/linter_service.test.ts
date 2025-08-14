@@ -99,5 +99,46 @@ describe("LinterService", () => {
 
       expect(result.diagnostics.length).toBeGreaterThan(0)
     })
+
+    test("filters out parser-no-errors rule by default to avoid duplicate diagnostics", async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      const linterService = new LinterService(settings)
+      const textDocument = createTestDocument("<h2>Content<h3>")
+
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics).toBeDefined()
+
+      const parserErrorDiagnostics = result.diagnostics.filter(
+        diagnostic => diagnostic.code === "parser-no-errors"
+      )
+
+      expect(parserErrorDiagnostics).toHaveLength(0)
+    })
+
+    test("respects custom excludedRules configuration", async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: {
+          enabled: true,
+          excludedRules: ["html-tag-name-lowercase", "parser-no-errors"]
+        }
+      })
+
+      const linterService = new LinterService(settings)
+      const textDocument = createTestDocument("<DIV>Content</DIV>")
+
+      const result = await linterService.lintDocument(textDocument)
+
+      const lowercaseDiagnostics = result.diagnostics.filter(
+        diagnostic => diagnostic.code === "html-tag-name-lowercase"
+      )
+
+      expect(lowercaseDiagnostics).toHaveLength(0)
+    })
   })
 })
