@@ -18,6 +18,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags
+- [`html-meta-name-must-be-unique`](./html-meta-name-must-be-unique.md) - Duplicate `<meta>` name attributes are not allowed
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
