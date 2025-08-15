@@ -74,6 +74,7 @@
               "html-attribute-double-quotes",
               "html-attribute-values-require-quotes",
               "html-boolean-attributes-no-value",
+              "html-head-only-elements",
               "html-img-require-alt",
               "html-no-block-inside-inline",
               "html-no-duplicate-attributes",

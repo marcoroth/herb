@@ -195,6 +195,17 @@ export const HTML_BOOLEAN_ATTRIBUTES = new Set([
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
 
 /**
+ * HTML elements that are only permitted inside the <head> section
+ */
+export const HTML_HEAD_ONLY_ELEMENTS = new Set([
+  "title",
+  "meta", 
+  "base",
+  "link",
+  "style"
+])
+
+/**
  * SVG elements that use camelCase naming
  */
 export const SVG_CAMEL_CASE_ELEMENTS = new Set([

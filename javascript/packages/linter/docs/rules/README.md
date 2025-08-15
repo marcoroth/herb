@@ -17,6 +17,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
+- [`html-head-only-elements`](./html-head-only-elements.md) - Restrict certain elements to the `<head>` section
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
