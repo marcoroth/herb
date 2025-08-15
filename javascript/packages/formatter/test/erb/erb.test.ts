@@ -117,4 +117,45 @@ describe("@herb-tools/formatter", () => {
       expect(result).toBe(input)
     })
   })
+
+  test("preserves ERB content with HTML entities when line wrapping occurs", () => {
+    const input = dedent`
+      <h3>
+        <%= link_to "Start", start_path %>&rsquo;s overview of <%= link_to "Section", section_path %>, <%= link_to "End", end_path %>.
+      </h3>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <h3>
+        <%= link_to "Start", start_path %>
+        &rsquo;s overview of
+        <%= link_to "Section", section_path %>
+        ,
+        <%= link_to "End", end_path %>
+        .
+      </h3>
+    `)
+  })
+
+  test("preserves complex ERB expressions when exceeding line length", () => {
+    const input = dedent`
+      <p class="info-text">
+        For assistance, contact us at <%= config.phone_number %> or <%= mail_to(config.support_email, class: "email-link") %> if you need help with your account.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p class="info-text">
+        For assistance, contact us at
+        <%= config.phone_number %>
+        or
+        <%= mail_to(config.support_email, class: "email-link") %>
+        if you need help with your account.
+      </p>
+    `)
+  })
 })

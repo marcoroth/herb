@@ -1333,6 +1333,8 @@ export class Printer extends Visitor {
           currentLineContent += erbContent
 
           if ((indent.length + currentLineContent.length) > Math.max(this.maxLineLength, 120)) {
+            this.lines = oldLines
+            this.inlineMode = oldInlineMode
             this.visitTextFlowChildrenMultiline(children)
 
             return
