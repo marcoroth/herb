@@ -219,25 +219,25 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <%#
           This fails
+            hey
+              hey
+                hey
+            hey
+        %>
+
+        <%#
+          This fails
           hey
-          hey
-          hey
+            hey
+              hey
           hey
         %>
 
         <%#
           This fails
           hey
-          hey
-          hey
-          hey
-        %>
-
-        <%#
-          This fails
-          hey
-          hey
-          hey
+            hey
+              hey
           hey
         %>
       `)
@@ -255,14 +255,7 @@ describe("ERB Formatter Fixture Tests", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(dedent`
-        <div>
-          <%# Inline comment %>
-          <p>Content</p>
-          <% # Another comment style %>
-          <span>More content</span>
-        </div>
-      `)
+      expect(result).toBe(source)
     })
   })
 

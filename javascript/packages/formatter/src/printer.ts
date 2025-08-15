@@ -982,11 +982,39 @@ export class Printer extends Visitor {
       const rawInner = node.content.value
       const lines = rawInner.split("\n")
 
-      if (lines.length > 2) {
-        const childIndent = indent + " ".repeat(this.indentWidth)
-        const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+      if (lines.length > 1) {
+        const endsWithNewline = rawInner.endsWith('\n')
+        const firstLine = lines[0].trim()
 
-        inner = "\n" + innerLines.join("\n") + "\n"
+        let contentLines = endsWithNewline ? lines.slice(1, -1) : lines.slice(1)
+        let wasFirstLineAdded = false
+
+        if (firstLine) {
+          const shouldAvoidDuplication = contentLines.length > 0 && contentLines[0].trim() === firstLine && contentLines[0].length - contentLines[0].trimStart().length <= 2
+
+          if (!shouldAvoidDuplication) {
+            contentLines.unshift(firstLine)
+            wasFirstLineAdded = true
+          }
+        }
+
+        if (!endsWithNewline && contentLines.length > 0 && contentLines[contentLines.length - 1].trim() === '') {
+          contentLines = contentLines.slice(0, -1)
+        }
+
+        const linesForIndentCalc = wasFirstLineAdded ? contentLines.slice(1) : contentLines
+        const nonEmptyLines = linesForIndentCalc.filter(line => line.trim() !== '')
+        const minIndent = nonEmptyLines.length > 0 ? Math.min(...nonEmptyLines.map(line => line.length - line.trimStart().length)) : 0
+        const childIndent = indent + " ".repeat(this.indentWidth)
+
+        const innerLines = contentLines.map((line, index) => {
+          if (line.trim() === "") return ""
+          if (wasFirstLineAdded && index === 0) return childIndent + line.trimEnd()
+
+          return childIndent + line.substring(minIndent).trimEnd()
+        })
+
+        inner = "\n" + innerLines.join("\n") + "\n" + indent
       } else {
         inner = ` ${rawInner.trim()} `
       }
