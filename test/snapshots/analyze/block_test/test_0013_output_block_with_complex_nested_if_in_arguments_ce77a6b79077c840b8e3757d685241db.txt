@@ -22,8 +22,8 @@
     │   │   │   ├── tag_opening: "<%#" (location: (12:4)-(12:7))
     │   │   │   ├── content: " ... " (location: (12:7)-(12:12))
     │   │   │   ├── tag_closing: "%>" (location: (12:12)-(12:14))
-    │   │   │   ├── parsed: true
-    │   │   │   └── valid: false
+    │   │   │   ├── parsed: false
+    │   │   │   └── valid: true
     │   │   │
     │   │   └── @ HTMLTextNode (location: (12:14)-(13:0))
     │   │       └── content: "\n"

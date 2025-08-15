@@ -6,7 +6,7 @@
     │     comment
     │   " (location: (1:3)-(3:0))
     │   ├── tag_closing: "%>" (location: (3:0)-(3:2))
-    │   ├── parsed: true
+    │   ├── parsed: false
     │   └── valid: true
     │
     └── @ HTMLTextNode (location: (3:2)-(4:0))

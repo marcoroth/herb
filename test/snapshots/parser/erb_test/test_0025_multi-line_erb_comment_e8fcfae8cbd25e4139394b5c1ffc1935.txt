@@ -7,7 +7,7 @@
     │     across multiple lines
     │   " (location: (1:3)-(4:0))
     │   ├── tag_closing: "%>" (location: (4:0)-(4:2))
-    │   ├── parsed: true
+    │   ├── parsed: false
     │   └── valid: true
     │
     └── @ HTMLTextNode (location: (4:2)-(5:0))

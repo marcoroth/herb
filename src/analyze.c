@@ -50,7 +50,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
     const char* opening = erb_content_node->tag_opening->value;
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0) {
+
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
