@@ -129,12 +129,8 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <h3>
-        <%= link_to "Start", start_path %>
-        &rsquo;s overview of
-        <%= link_to "Section", section_path %>
-        ,
-        <%= link_to "End", end_path %>
-        .
+        <%= link_to "Start", start_path %>&rsquo;s overview of
+        <%= link_to "Section", section_path %>, <%= link_to "End", end_path %>.
       </h3>
     `)
   })
@@ -150,11 +146,136 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <p class="info-text">
-        For assistance, contact us at
-        <%= config.phone_number %>
-        or
-        <%= mail_to(config.support_email, class: "email-link") %>
-        if you need help with your account.
+        For assistance, contact us at <%= config.phone_number %> or
+        <%= mail_to(config.support_email, class: "email-link") %> if you need help
+        with your account.
+      </p>
+    `)
+  })
+
+  test("handles inline HTML elements with long text content", () => {
+    const input = dedent`
+      <p>
+        Visit <a href="/products">our amazing product catalog with hundreds of items</a> or <a href="/support">contact our customer support team</a> for assistance with your order.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p>
+        Visit
+        <a href="/products">our amazing product catalog with hundreds of items</a> or
+        <a href="/support">contact our customer support team</a> for assistance with
+        your order.
+      </p>
+    `)
+  })
+
+  test("handles multiple inline elements with adjacent text", () => {
+    const input = dedent`
+      <div>
+        Call us at <strong>555-123-4567</strong>, email <a href="mailto:help@example.com">help@example.com</a>, or visit <em>our downtown office</em> during business hours.
+      </div>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <div>
+        Call us at <strong>555-123-4567</strong>, email
+        <a href="mailto:help@example.com">help@example.com</a>, or visit
+        <em>our downtown office</em> during business hours.
+      </div>
+    `)
+  })
+
+  test("handles inline elements with punctuation attachment", () => {
+    const input = dedent`
+      <p>
+        Read the <a href="/terms">terms and conditions</a>, review our <a href="/privacy">privacy policy</a>, and check the <a href="/faq">frequently asked questions</a>.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p>
+        Read the <a href="/terms">terms and conditions</a>, review our
+        <a href="/privacy">privacy policy</a>, and check the
+        <a href="/faq">frequently asked questions</a>.
+      </p>
+    `)
+  })
+
+  test("handles nested inline elements with line wrapping", () => {
+    const input = dedent`
+      <p>
+        Please review <strong>Chapter <em>3: Advanced Techniques</em> in the <a href="/manual">user manual</a></strong> for detailed instructions on configuration.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p>
+        Please review
+        <strong>Chapter <em>3: Advanced Techniques</em> in the <a href="/manual">user manual</a></strong>
+        for detailed instructions on configuration.
+      </p>
+    `)
+  })
+
+  test("handles inline elements immediately followed by punctuation", () => {
+    const input = dedent`
+      <div>
+        Download the <a href="/app.zip">latest version</a>; install it quickly; then restart your <strong>computer</strong>!
+      </div>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <div>
+        Download the
+        <a href="/app.zip">latest version</a>; install it quickly; then restart your
+        <strong>computer</strong>!
+      </div>
+    `)
+  })
+
+  test("handles mixed content with inline elements and long URLs", () => {
+    const input = dedent`
+      <p>
+        For more information, visit <a href="https://example.com/very/long/path/to/documentation/page">our comprehensive documentation</a> or contact support.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p>
+        For more information, visit
+        <a href="https://example.com/very/long/path/to/documentation/page">our comprehensive documentation</a>
+        or contact support.
+      </p>
+    `)
+  })
+
+  test("handles anchor tags with content that forces line breaks", () => {
+    const input = dedent`
+      <p>
+        For more information, visit <a href="https://example.com/very/long/path/to/documentation/page/so/long/that/it/should/break/the/content/of/the/tag">our comprehensive documentation</a> or contact support.
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p>
+        For more information, visit
+        <a href="https://example.com/very/long/path/to/documentation/page/so/long/that/it/should/break/the/content/of/the/tag">our comprehensive documentation</a>
+        or contact support.
       </p>
     `)
   })

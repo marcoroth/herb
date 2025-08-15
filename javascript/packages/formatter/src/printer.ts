@@ -1365,10 +1365,161 @@ export class Printer extends Visitor {
   }
 
   private visitTextFlowChildrenMultiline(children: Node[]): void {
-    children.forEach(child => this.visit(child))
+    const indent = this.indent()
+    const contentUnits = this.buildContentUnits(children)
+    const lines = this.wrapContentUnits(contentUnits, indent)
+
+    lines.forEach(line => this.push(line))
   }
 
-  private isInTextFlowContext(parent: Node | null, children: Node[]): boolean {
+  private buildContentUnits(children: Node[]): Array<{content: string, isAtomic: boolean, breaksFlow: boolean}> {
+    const units: Array<{content: string, isAtomic: boolean, breaksFlow: boolean}> = []
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
+      const nextChild = i + 1 < children.length ? children[i + 1] : null
+
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const content = (child as HTMLTextNode).content
+        let processedContent = content.replace(/\s+/g, ' ')
+
+        const isAdjacentToNext = nextChild && (nextChild instanceof HTMLTextNode || (nextChild as any).type === 'AST_HTML_TEXT_NODE') && !/^\s/.test((nextChild as HTMLTextNode).content)
+
+        if (isAdjacentToNext) {
+          const nextContent = (nextChild as HTMLTextNode).content
+          processedContent += nextContent.replace(/\s+/g, ' ')
+          i++
+        }
+
+        units.push({ content: processedContent.trim(), isAtomic: false, breaksFlow: false })
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbContent = this.renderNodeInline(child)
+
+        let combinedContent = erbContent
+
+        if (nextChild && (nextChild instanceof HTMLTextNode || (nextChild as any).type === 'AST_HTML_TEXT_NODE') && !/^\s/.test((nextChild as HTMLTextNode).content)) {
+          const nextContent = (nextChild as HTMLTextNode).content
+          combinedContent += nextContent.replace(/\s+/g, ' ').trim()
+          i++
+        }
+
+        units.push({ content: combinedContent, isAtomic: true, breaksFlow: false })
+      } else if (child instanceof HTMLElementNode || (child as any).type === 'AST_HTML_ELEMENT_NODE') {
+        const element = child as HTMLElementNode
+        const openTag = element.open_tag as HTMLOpenTagNode
+        const childTagName = openTag?.tag_name?.value || ''
+
+        if (this.isInlineElement(childTagName)) {
+          const htmlContent = this.tryRenderInlineFull(
+            element,
+            childTagName,
+            this.extractAttributes(openTag.children),
+            element.body.filter(c => !(c instanceof WhitespaceNode || (c as any).type === 'AST_WHITESPACE_NODE') && !((c instanceof HTMLTextNode || (c as any).type === 'AST_HTML_TEXT_NODE') && (c as any)?.content.trim() === ""))
+          )
+
+          if (htmlContent) {
+            let combinedContent = htmlContent
+
+            if (nextChild && (nextChild instanceof HTMLTextNode || (nextChild as any).type === 'AST_HTML_TEXT_NODE') && !/^\s/.test((nextChild as HTMLTextNode).content)) {
+              const nextContent = (nextChild as HTMLTextNode).content
+              combinedContent += nextContent.replace(/\s+/g, ' ').trim()
+              i++
+            }
+
+            units.push({ content: combinedContent, isAtomic: true, breaksFlow: false })
+          } else {
+            units.push({ content: '', isAtomic: true, breaksFlow: true })
+          }
+        } else {
+          units.push({ content: '', isAtomic: true, breaksFlow: true})
+        }
+      } else {
+        units.push({ content: '', isAtomic: true, breaksFlow: true })
+      }
+    }
+
+    return units.filter(unit => unit.content.trim() || unit.breaksFlow)
+  }
+
+  private wrapContentUnits(units: Array<{content: string, isAtomic: boolean, breaksFlow: boolean}>, indent: string): string[] {
+    const lines: string[] = []
+    let currentLine = ""
+    const maxWidth = this.maxLineLength - indent.length
+
+    for (const unit of units) {
+      if (unit.breaksFlow) {
+        if (currentLine.trim()) {
+          lines.push(indent + currentLine.trim())
+          currentLine = ""
+        }
+
+        continue
+      }
+
+      const testLine = currentLine + (currentLine ? ' ' : '') + unit.content
+
+      if (testLine.length <= maxWidth || !currentLine) {
+        currentLine = testLine
+      } else {
+        if (unit.isAtomic) {
+          if (currentLine.trim()) {
+            lines.push(indent + currentLine.trim())
+          }
+
+          currentLine = unit.content
+        } else {
+          const availableSpace = maxWidth - currentLine.length - 1
+          const breakPoint = unit.content.lastIndexOf(' ', availableSpace)
+
+          if (breakPoint > 0) {
+            currentLine += ' ' + unit.content.substring(0, breakPoint)
+            lines.push(indent + currentLine.trim())
+            currentLine = unit.content.substring(breakPoint + 1)
+          } else {
+            if (currentLine.trim()) {
+              lines.push(indent + currentLine.trim())
+            }
+
+            currentLine = unit.content
+          }
+        }
+      }
+
+      while (currentLine.length > maxWidth && !unit.isAtomic) {
+        const breakPoint = currentLine.lastIndexOf(' ', maxWidth)
+
+        if (breakPoint > 0) {
+          lines.push(indent + currentLine.substring(0, breakPoint).trim())
+          currentLine = currentLine.substring(breakPoint + 1)
+        } else {
+          break
+        }
+      }
+    }
+
+    if (currentLine.trim()) {
+      lines.push(indent + currentLine.trim())
+    }
+
+    return lines
+  }
+
+  private renderNodeInline(node: Node): string {
+    const oldLines = this.lines
+    const oldInlineMode = this.inlineMode
+
+    try {
+      this.lines = []
+      this.inlineMode = true
+      this.visit(node)
+      return this.lines.join("")
+    } finally {
+      this.lines = oldLines
+      this.inlineMode = oldInlineMode
+    }
+  }
+
+  private isInTextFlowContext(_parent: Node | null, children: Node[]): boolean {
     const hasTextContent = children.some(child =>
       (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') &&
       (child as HTMLTextNode).content.trim() !== ""
