@@ -13,6 +13,7 @@ import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-vali
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
@@ -37,6 +38,7 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeDoubleQuotesRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLBooleanAttributesNoValueRule,
+  HTMLHeadOnlyElementsRule,
   HTMLImgRequireAltRule,
   // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
