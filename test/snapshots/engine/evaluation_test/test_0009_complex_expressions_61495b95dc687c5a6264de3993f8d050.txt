@@ -1,0 +1,7 @@
+<div class="user-123" data-active="true">
+  <h1>JOHN DOE</h1>
+  <p>Score: 150</p>
+  
+    <span class="high-score">Excellent!</span>
+  
+</div>

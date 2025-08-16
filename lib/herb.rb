@@ -34,4 +34,16 @@ rescue LoadError
 end
 
 module Herb
+  # HTML escape function for engine
+  ESCAPE_TABLE = {
+    "&" => "&amp;",
+    "<" => "&lt;",
+    ">" => "&gt;",
+    '"' => "&quot;",
+    "'" => "&#39;",
+  }.freeze
+
+  def self.h(value)
+    value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
+  end
 end

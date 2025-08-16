@@ -31,6 +31,41 @@ module SnapshotUtils
     result
   end
 
+  def assert_compiled_snapshot(source, options = {})
+    require_relative "../lib/herb/engine"
+
+    engine = Herb::Engine.new(source, options)
+    expected = engine.src
+
+    snapshot_key = { source: source, options: options }.to_s
+    assert_snapshot_matches(expected, snapshot_key)
+
+    engine
+  end
+
+  def assert_evaluated_snapshot(source, locals = {}, options = {})
+    require_relative "../lib/herb/engine"
+
+    engine = Herb::Engine.new(source, options)
+    binding_context = Object.new
+
+    locals.each do |key, value|
+      binding_context.define_singleton_method(key) { value }
+    end
+
+    result = binding_context.instance_eval(engine.src)
+
+    snapshot_key = {
+      source: source,
+      locals: locals,
+      options: options,
+    }.to_s
+
+    assert_snapshot_matches(result, snapshot_key)
+
+    { engine: engine, result: result }
+  end
+
   def snapshot_changed?(content, source, options = {})
     if snapshot_file(source, options).exist?
       previous_content = snapshot_file(source, options).read

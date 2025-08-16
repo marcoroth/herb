@@ -1,0 +1,5 @@
+_buf = ::String.new;
+ _buf << '<input type="text" name="name" value="'.freeze; _buf << ::Herb::Engine.attr((@name)); _buf << '"/>
+<input type="text" name="name" value="'.freeze; _buf << ::Herb::Engine.attr((@name)); _buf << '"/>
+'.freeze;
+_buf.to_s

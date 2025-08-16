@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ names = ["Alice", "Bob", "John"]; _buf << '
+
+'.freeze; for name in names; _buf << '
+  <p>Hello, '.freeze; _buf << (name).to_s; _buf << '!</p>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

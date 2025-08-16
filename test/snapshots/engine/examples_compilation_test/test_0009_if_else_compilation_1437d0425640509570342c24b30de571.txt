@@ -1,0 +1,12 @@
+_buf = ::String.new;
+ _buf << '<h1>
+  '.freeze; if true; _buf << '
+    <div>Text1</div>
+  '.freeze; elsif false; _buf << '
+    <div>Text2</div>
+  '.freeze; else; _buf << '
+    <div>Text3</div>
+  '.freeze; end; _buf << '
+</h1>
+'.freeze;
+_buf.to_s

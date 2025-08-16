@@ -1,0 +1,4 @@
+_buf = ::String.new;
+ _buf << '<!-- Hello World -->
+'.freeze;
+_buf.to_s
