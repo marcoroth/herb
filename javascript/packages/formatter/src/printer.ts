@@ -442,8 +442,11 @@ export class Printer extends Visitor {
     const inlineNodes = this.extractInlineNodes(open.children)
 
     const hasTextFlow = this.isInTextFlowContext(null, node.body)
-
-    const children = node.body.filter(child => {
+    
+    // Special handling for script and style tags - preserve their raw content
+    const isScriptOrStyle = tagName.toLowerCase() === 'script' || tagName.toLowerCase() === 'style'
+    
+    const children = isScriptOrStyle ? node.body : node.body.filter(child => {
       if (child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') {
         return false
       }
@@ -478,6 +481,7 @@ export class Printer extends Visitor {
         } else if (node.is_void) {
           this.push(indent + `<${tagName}>`)
         } else {
+          // Keep empty script/style tags inline
           this.push(indent + `<${tagName}></${tagName}>`)
         }
 
@@ -485,6 +489,18 @@ export class Printer extends Visitor {
       }
 
       if (children.length >= 1) {
+        // Special handling for script/style tags with single-line content
+        if (isScriptOrStyle && children.length > 0) {
+          const content = this.collectScriptStyleContent(children)
+          
+          const trimmedContent = content.trim()
+          if (trimmedContent && !content.includes('\n')) {
+            // Single-line content - render inline
+            this.push(indent + `<${tagName}>${trimmedContent}</${tagName}>`)
+            return
+          }
+        }
+        
         if (this.isInComplexNesting) {
           if (children.length === 1) {
             const child = children[0]
@@ -556,7 +572,9 @@ export class Printer extends Visitor {
       this.push(indent + `<${tagName}>`)
 
       this.withIndent(() => {
-        if (hasTextFlow) {
+        if (isScriptOrStyle) {
+          this.visitScriptStyleContent(children)
+        } else if (hasTextFlow) {
           this.visitTextFlowChildren(children)
         } else {
           children.forEach(child => this.visit(child))
@@ -584,7 +602,11 @@ export class Printer extends Visitor {
 
       this.push(indent + inline)
       this.withIndent(() => {
-        children.forEach(child => this.visit(child))
+        if (isScriptOrStyle) {
+          this.visitScriptStyleContent(children)
+        } else {
+          children.forEach(child => this.visit(child))
+        }
       })
 
       if (!node.is_void && !isSelfClosing) {
@@ -671,6 +693,44 @@ export class Printer extends Visitor {
 
         return
       }
+      
+      // Special handling for script/style with attributes and inline content
+      if (isScriptOrStyle && children.length > 0) {
+        const content = this.collectScriptStyleContent(children)
+        
+        const trimmedContent = content.trim()
+        if (trimmedContent && !content.includes('\n')) {
+          // Single-line content with attributes - render inline
+          let result = `<${tagName}`
+          result += this.renderAttributesString(attributes)
+          
+          // Handle inline nodes (ERB in attributes)
+          if (inlineNodes.length > 0) {
+            const currentIndentLevel = this.indentLevel
+            this.indentLevel = 0
+            const tempLines = this.lines
+            this.lines = []
+
+            inlineNodes.forEach(node => {
+              const wasInlineMode = this.inlineMode
+              if (!this.isERBControlFlow(node)) {
+                this.inlineMode = true
+              }
+              this.visit(node)
+              this.inlineMode = wasInlineMode
+            })
+
+            const inlineContent = this.lines.join("")
+            this.lines = tempLines
+            this.indentLevel = currentIndentLevel
+            result += inlineContent
+          }
+          
+          result += `>${trimmedContent}</${tagName}>`
+          this.push(indent + result)
+          return
+        }
+      }
 
       if (isInlineElement && children.length > 0 && !hasERBControlFlow) {
         const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
@@ -690,7 +750,9 @@ export class Printer extends Visitor {
         this.push(indent + inline)
 
         this.withIndent(() => {
-          if (hasTextFlow) {
+          if (isScriptOrStyle) {
+            this.visitScriptStyleContent(children)
+          } else if (hasTextFlow) {
             this.visitTextFlowChildren(children)
           } else {
             children.forEach(child => this.visit(child))
@@ -711,7 +773,9 @@ export class Printer extends Visitor {
       }
 
       this.withIndent(() => {
-        if (hasTextFlow) {
+        if (isScriptOrStyle) {
+          this.visitScriptStyleContent(children)
+        } else if (hasTextFlow) {
           this.visitTextFlowChildren(children)
         } else {
           children.forEach(child => this.visit(child))
@@ -730,7 +794,11 @@ export class Printer extends Visitor {
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.withIndent(() => {
-          children.forEach(child => this.visit(child))
+          if (isScriptOrStyle) {
+            this.visitScriptStyleContent(children)
+          } else {
+            children.forEach(child => this.visit(child))
+          }
         })
         this.push(indent + `</${tagName}>`)
       }
@@ -739,7 +807,11 @@ export class Printer extends Visitor {
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.withIndent(() => {
-          children.forEach(child => this.visit(child))
+          if (isScriptOrStyle) {
+            this.visitScriptStyleContent(children)
+          } else {
+            children.forEach(child => this.visit(child))
+          }
         })
         this.push(indent + `</${tagName}>`)
       }
@@ -790,7 +862,9 @@ export class Printer extends Visitor {
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.withIndent(() => {
-          if (hasTextFlow) {
+          if (isScriptOrStyle) {
+            this.visitScriptStyleContent(children)
+          } else if (hasTextFlow) {
             this.visitTextFlowChildren(children)
           } else {
             children.forEach(child => this.visit(child))
@@ -1232,6 +1306,176 @@ export class Printer extends Visitor {
   }
 
   // --- Utility methods ---
+
+  /**
+   * Collect raw content from script/style tag children, handling all node types
+   * This version preserves content exactly as it appears, including ERB blocks
+   */
+  private collectScriptStyleContent(children: Node[]): string {
+    let content = ""
+    for (const child of children) {
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        content += (child as HTMLTextNode).content
+      } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+        content += (child as LiteralNode).content
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbNode = child as ERBContentNode
+        content += erbNode.tag_opening!.value + erbNode.content!.value + erbNode.tag_closing!.value
+      } else if (child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') {
+        content += " "
+      } else {
+        // Handle ERB control flow nodes with full content preservation
+        if (this.isERBControlFlow(child)) {
+          // For ERB control flow, we need to get both the ERB tags and their nested content
+          const erbNode = child as any
+          
+          // Add the opening ERB tag
+          if (erbNode.tag_opening && erbNode.content && erbNode.tag_closing) {
+            content += erbNode.tag_opening.value + erbNode.content.value + erbNode.tag_closing.value + '\n'
+          }
+          
+          // Process nested statements if they exist
+          if (erbNode.statements && Array.isArray(erbNode.statements)) {
+            for (const statement of erbNode.statements) {
+              // Recursively collect content from nested statements
+              if (statement instanceof HTMLTextNode || (statement as any).type === 'AST_HTML_TEXT_NODE') {
+                content += (statement as HTMLTextNode).content
+              } else if (statement instanceof LiteralNode || (statement as any).type === 'AST_LITERAL_NODE') {
+                content += (statement as LiteralNode).content  
+              } else if (statement instanceof ERBContentNode || (statement as any).type === 'AST_ERB_CONTENT_NODE') {
+                const erbStmt = statement as ERBContentNode
+                content += erbStmt.tag_opening!.value + erbStmt.content!.value + erbStmt.tag_closing!.value
+              } else {
+                // Recursively handle nested content
+                content += this.collectScriptStyleContent([statement])
+              }
+            }
+          }
+          
+          // Add else/elsif nodes if they exist
+          if (erbNode.else_node) {
+            content += this.collectScriptStyleContent([erbNode.else_node])
+          }
+          
+          // Add end node if it exists
+          if (erbNode.end_node) {
+            content += this.collectScriptStyleContent([erbNode.end_node])
+          }
+        } else {
+          // For other ERB node types, get their complete formatted output
+          const tempLines = this.lines
+          this.lines = []
+          
+          this.visit(child)
+          const childOutput = this.lines.join('\n')
+          
+          this.lines = tempLines
+          content += childOutput
+        }
+      }
+    }
+    
+    return content
+  }
+
+  /**
+   * Special handler for script and style tag content that preserves it exactly as-is
+   * No indentation processing - just preserve whatever comes in
+   */
+  private visitScriptStyleContent(children: Node[]): void {
+    // Collect all content without forcing line breaks
+    let content = ""
+    
+    for (const child of children) {
+      // Handle different node types appropriately for script/style content
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        content += (child as HTMLTextNode).content
+      } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
+        content += (child as LiteralNode).content
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        const erbNode = child as ERBContentNode
+        content += erbNode.tag_opening!.value + erbNode.content!.value + erbNode.tag_closing!.value
+      } else {
+        // For ERB block nodes, we need to extract both the ERB structure and the nested literal content
+        if ((child as any).statements && Array.isArray((child as any).statements)) {
+          // This is an ERB block node - we need to handle it specially to preserve the literal content
+          
+          // First, add the opening ERB tag
+          const tempLines = this.lines
+          this.lines = []
+          
+          this.visit(child)
+          const erbOutput = this.lines.join('\n')
+          
+          this.lines = tempLines
+          
+          // Extract just the opening ERB tag from the output (everything before the first newline)
+          const erbLines = erbOutput.split('\n')
+          const openingERB = erbLines[0] || ""
+          content += openingERB + '\n'
+          
+          // Now visit all the statements to get the literal content  
+          for (const statement of (child as any).statements) {
+            if (statement instanceof LiteralNode || (statement as any).type === 'AST_LITERAL_NODE') {
+              content += (statement as LiteralNode).content
+            } else if (statement instanceof HTMLTextNode || (statement as any).type === 'AST_HTML_TEXT_NODE') {
+              content += (statement as HTMLTextNode).content
+            } else if (statement instanceof ERBContentNode || (statement as any).type === 'AST_ERB_CONTENT_NODE') {
+              const erbNode = statement as ERBContentNode
+              content += erbNode.tag_opening!.value + erbNode.content!.value + erbNode.tag_closing!.value
+            } else {
+              // For other statement types, visit them
+              const tempStmtLines = this.lines
+              this.lines = []
+              
+              this.visit(statement)
+              const stmtOutput = this.lines.join('\n')
+              
+              this.lines = tempStmtLines
+              content += stmtOutput
+            }
+          }
+          
+          // Add the closing ERB tags (else, end, etc.)
+          const remainingLines = erbLines.slice(1)
+          content += remainingLines.join('\n')
+        } else {
+          // For other nodes, use normal visiting
+          const tempLines = this.lines
+          this.lines = []
+          
+          this.visit(child)
+          const childOutput = this.lines.join('\n')
+          
+          this.lines = tempLines
+          content += childOutput
+        }
+      }
+    }
+
+    // Now output the collected content appropriately
+    if (content.trim()) {
+      // Split by lines and preserve the structure, but trim leading/trailing empty lines
+      const lines = content.split('\n')
+      
+      // Find first and last non-empty lines
+      let firstNonEmpty = 0
+      let lastNonEmpty = lines.length - 1
+      
+      while (firstNonEmpty < lines.length && lines[firstNonEmpty].trim() === '') {
+        firstNonEmpty++
+      }
+      
+      while (lastNonEmpty >= 0 && lines[lastNonEmpty].trim() === '') {
+        lastNonEmpty--
+      }
+      
+      // Output only the content lines, preserving empty lines in between
+      for (let i = firstNonEmpty; i <= lastNonEmpty; i++) {
+        this.push(lines[i])
+      }
+    }
+  }
 
   private isNonWhitespaceNode(node: Node): boolean {
     if (node instanceof HTMLTextNode || (node as any).type === 'AST_HTML_TEXT_NODE') {
