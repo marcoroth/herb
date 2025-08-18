@@ -15,23 +15,12 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
 
-    runs-on: ubicloud-standard-2
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: "yarn"
-
-      - name: Add LLVM apt Repo
-        run: |-
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
-          sudo apt update
 
       - name: Install APT dependencies
         run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
