@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Herb Sidebar</title>
+  <style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    margin: 8px;
+    color: #333;
+  }
+  .sidebar-content {
+    padding: 4px 0;
+  }
+  .sidebar-item {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .sidebar-item:last-child {
+    border-bottom: none;
+  }
+  .sidebar-label {
+    font-weight: 600;
+    color: #666;
+  }
+  .sidebar-value {
+    color: #333;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="sidebar-content">
+    <div class="sidebar-item">
+      <div class="sidebar-label">Herb Status</div>
+      <div class="sidebar-value" id="herb-status">Not detected</div>
+    </div>
+    <div class="sidebar-item">
+      <div class="sidebar-label">Components</div>
+      <div class="sidebar-value" id="component-count">0</div>
+    </div>
+    <div class="sidebar-item">
+      <div class="sidebar-label">Selected Element</div>
+      <div class="sidebar-value" id="selected-element">None</div>
+    </div>
+  </div>
+
+  <script>
+    console.log('Herb DevTools Sidebar initialized');
+
+    chrome.devtools?.panels?.elements?.onSelectionChanged?.addListener(() => {
+      chrome.devtools.inspectedWindow.eval('document.querySelector($0).getAttribute("data-herb-component") || $0.tagName', (result, isException) => {
+        if (!isException) {
+          document.getElementById('selected-element').textContent = result || 'None';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
