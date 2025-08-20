@@ -493,7 +493,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 
       token_T* equals_with_whitespace = calloc(1, sizeof(token_T));
       equals_with_whitespace->type = TOKEN_EQUALS;
-      equals_with_whitespace->value = strdup(equals_buffer.value);
+      equals_with_whitespace->value = herb_strdup(equals_buffer.value);
       equals_with_whitespace->location = location_init(equals_start, equals_end);
       equals_with_whitespace->range = range_init(range_start, range_end);
 
