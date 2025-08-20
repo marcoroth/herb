@@ -1,0 +1,46 @@
+{
+  "name": "@herb-tools/devtools-client",
+  "version": "0.5.0",
+  "description": "Client-side library for Herb DevTools integration",
+  "license": "MIT",
+  "author": "Marco Roth",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herb-tools/herb.git",
+    "directory": "javascript/packages/devtools-client"
+  },
+  "bugs": {
+    "url": "https://github.com/herb-tools/herb/issues"
+  },
+  "homepage": "https://github.com/herb-tools/herb#readme",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "yarn clean && yarn build:javascript",
+    "build:javascript": "rollup -c",
+    "dev": "rollup -c --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage"
+  },
+  "keywords": [
+    "herb",
+    "devtools",
+    "erb",
+    "html",
+    "template",
+    "debugging"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.12.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.3.1"
+  }
+}
