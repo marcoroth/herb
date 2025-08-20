@@ -1210,7 +1210,14 @@ export class Printer extends Visitor {
   }
 
   visitERBUnlessNode(node: ERBUnlessNode): void {
-    this.visitERBGeneric(node)
+    this.printERBNode(node)
+
+    this.withIndent(() => {
+      node.statements.forEach(statement => this.visit(statement))
+    })
+
+    if (node.else_clause) this.visit(node.else_clause)
+    if (node.end_node) this.visit(node.end_node)
   }
 
   // TODO: don't use any
