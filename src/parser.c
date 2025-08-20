@@ -21,6 +21,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
 static void parser_parse_foreign_content(parser_T* parser, array_T* children, array_T* errors);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children);
+static void parser_consume_whitespace(parser_T* parser, array_T* children);
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -520,19 +521,13 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       );
     }
   } else {
-    while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
-      token_T* whitespace = parser_advance(parser);
-      token_free(whitespace);
-    }
+    parser_consume_whitespace(parser, NULL);
   }
 
   token_T* equals = parser_consume_if_present(parser, TOKEN_EQUALS);
 
   if (equals != NULL) {
-    while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
-      token_T* whitespace = parser_advance(parser);
-      token_free(whitespace);
-    }
+    parser_consume_whitespace(parser, NULL);
 
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = parser_parse_html_attribute_value(parser);
 
@@ -648,12 +643,12 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
   array_T* children = array_init(8);
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
+
+  parser_consume_whitespace(parser, children);
+
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
 
-  while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
-    token_T* whitespace = parser_advance(parser);
-    parser_handle_whitespace(parser, whitespace, children);
-  }
+  parser_consume_whitespace(parser, children);
 
   token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
 
@@ -1025,6 +1020,18 @@ static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token
   }
 
   token_free(whitespace_token);
+}
+
+static void parser_consume_whitespace(parser_T* parser, array_T* children) {
+  while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+    token_T* whitespace = parser_advance(parser);
+
+    if (parser->options && parser->options->track_whitespace && children != NULL) {
+      parser_handle_whitespace(parser, whitespace, children);
+    } else {
+      token_free(whitespace);
+    }
+  }
 }
 
 void parser_free(parser_T* parser) {

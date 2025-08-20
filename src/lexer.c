@@ -296,7 +296,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with(lexer, "<!--", TOKEN_HTML_COMMENT_START);
       }
 
-      if (lexer_peek(lexer, 1) == '/' && isalnum(lexer_peek(lexer, 2))) {
+      if (lexer_peek_for_close_tag_start(lexer, 0)) {
         return lexer_advance_with(lexer, "</", TOKEN_HTML_TAG_START_CLOSE);
       }
 

@@ -30,7 +30,7 @@ module Parser
       HTML
     end
 
-    test "invalid HTML" do
+    test "whitespace between close tag opening and tag name" do
       assert_parsed_snapshot(<<~HTML, track_whitespace: true)
         <div></    div>
       HTML
