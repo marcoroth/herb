@@ -73,7 +73,8 @@ module SnapshotUtils
   end
 
   def assert_snapshot_matches(actual, source, options = {})
-    assert snapshot_file(source, options).exist?, "Expected snapshot file to exist: \n#{snapshot_file(source, options).to_path}"
+    assert snapshot_file(source, options).exist?,
+           "Expected snapshot file to exist: \n#{snapshot_file(source, options).to_path}"
 
     assert_equal snapshot_file(source, options).read, actual
   rescue Minitest::Assertion => e
@@ -123,11 +124,11 @@ module SnapshotUtils
 
     return expected_snapshot_path if expected_snapshot_path.exist?
 
-    if options && !options.empty?
-      matching_md5_files = Dir[base_path / "*_#{content_hash}-#{options_hash}.txt"]
-    else
-      matching_md5_files = Dir[base_path / "*_#{content_hash}.txt"]
-    end
+    matching_md5_files = if options && !options.empty?
+                           Dir[base_path / "*_#{content_hash}-#{options_hash}.txt"]
+                         else
+                           Dir[base_path / "*_#{content_hash}.txt"]
+                         end
 
     if matching_md5_files.any? && matching_md5_files.length == 1
       old_file = Pathname.new(matching_md5_files.first)
@@ -135,7 +136,6 @@ module SnapshotUtils
       return expected_snapshot_path if old_file.rename(expected_snapshot_path).zero?
 
       return old_file
-
     end
 
     expected_snapshot_path
