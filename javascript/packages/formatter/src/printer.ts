@@ -1070,12 +1070,7 @@ export class Printer extends Visitor {
   }
 
   visitERBBlockNode(node: ERBBlockNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       node.body.forEach(child => this.visit(child))
@@ -1088,12 +1083,7 @@ export class Printer extends Visitor {
 
   visitERBIfNode(node: ERBIfNode): void {
     if (this.inlineMode) {
-      const open = node.tag_opening?.value ?? ""
-      const content = node.content?.value ?? ""
-      const close = node.tag_closing?.value ?? ""
-      const inner = this.formatERBContent(content)
-
-      this.lines.push(open + inner + close)
+      this.printERBNode(node)
 
       node.statements.forEach((child, _index) => {
         this.lines.push(" ")
@@ -1156,12 +1146,7 @@ export class Printer extends Visitor {
   }
 
   visitERBCaseNode(node: ERBCaseNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     node.conditions.forEach(condition => this.visit(condition))
     if (node.else_clause) this.visit(node.else_clause)
@@ -1172,12 +1157,7 @@ export class Printer extends Visitor {
   }
 
   visitERBBeginNode(node: ERBBeginNode): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       node.statements.forEach(statement => this.visit(statement))
@@ -1222,12 +1202,7 @@ export class Printer extends Visitor {
 
   // TODO: don't use any
   private visitERBGeneric(node: any): void {
-    const indent = this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const content = node.content?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-
-    this.push(indent + open + content + close)
+    this.printERBNode(node)
 
     this.withIndent(() => {
       const statements: any[] = node.statements ?? node.body ?? node.children ?? []

@@ -100,4 +100,46 @@ describe("@herb-tools/formatter", () => {
       <% end %>
     `)
   })
+
+  test("formats ERB case with when and no else", () => {
+    const input = dedent`
+      <% case user_type %>
+      <% when :admin %>
+      <p>Admin Panel</p>
+      <% when :user %>
+      <p>User Dashboard</p>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% case user_type %>
+      <% when :admin %>
+        <p>Admin Panel</p>
+      <% when :user %>
+        <p>User Dashboard</p>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
+
+  test("case without surrounding spaces", () => {
+    const input = dedent`
+      <%case status%>
+      <%when "ok"%>
+      <%else%>
+      <%end%>
+    `
+
+    const expected = dedent`
+      <% case status %>
+      <% when "ok" %>
+      <% else %>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
 })

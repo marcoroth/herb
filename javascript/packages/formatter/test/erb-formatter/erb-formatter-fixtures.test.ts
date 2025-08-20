@@ -273,7 +273,7 @@ describe("ERB Formatter Fixture Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <%foo.each do |bar|%>
+        <% foo.each do |bar| %>
           <p><%= baz %></p>
         <% end %>
       `)

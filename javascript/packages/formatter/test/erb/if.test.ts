@@ -60,6 +60,56 @@ describe("@herb-tools/formatter", () => {
     expect(output).toEqual(expected)
   })
 
+  test("formats ERB if/elsif/else statement", () => {
+    const input = dedent`
+      <% if user.admin? %>
+      <p>Admin content</p>
+      <% elsif user.moderator? %>
+      <p>Moderator content</p>
+      <% elsif user.member? %>
+      <p>Member content</p>
+      <% else %>
+      <p>Guest content</p>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% if user.admin? %>
+        <p>Admin content</p>
+      <% elsif user.moderator? %>
+        <p>Moderator content</p>
+      <% elsif user.member? %>
+        <p>Member content</p>
+      <% else %>
+        <p>Guest content</p>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
+
+  test("formats ERB if with only elsif", () => {
+    const input = dedent`
+      <% if condition_1 %>
+      <p>First condition</p>
+      <% elsif condition_2 %>
+      <p>Second condition</p>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% if condition_1 %>
+        <p>First condition</p>
+      <% elsif condition_2 %>
+        <p>Second condition</p>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
+
   test("if without surrounding spaces", () => {
     const input = dedent`
       <%if user.admin?%>
