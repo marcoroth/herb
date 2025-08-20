@@ -1,0 +1,54 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:44))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:31))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:30)-(1:31))
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:4)-(1:5))
+    │   │       │   │   └── value: " " (location: (1:4)-(1:5))
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:30))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── name: "class" (location: (1:5)-(1:10))
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:30))
+    │   │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │               ├── children: (2 items)
+    │   │       │               │   ├── @ ERBContentNode (location: (1:12)-(1:22))
+    │   │       │               │   │   ├── tag_opening: "<%=" (location: (1:12)-(1:15))
+    │   │       │               │   │   ├── content: " foo " (location: (1:15)-(1:20))
+    │   │       │               │   │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   │       │               │   │   ├── parsed: true
+    │   │       │               │   │   └── valid: true
+    │   │       │               │   │
+    │   │       │               │   └── @ LiteralNode (location: (1:22)-(1:29))
+    │   │       │               │       └── content: "    bar"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:29)-(1:30))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:31)-(1:38))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:38)-(1:44))
+    │   │       ├── tag_opening: "</" (location: (1:38)-(1:40))
+    │   │       ├── tag_name: "div" (location: (1:40)-(1:43))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:43)-(1:44))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (1:44)-(2:0))
+        └── content: "\n"

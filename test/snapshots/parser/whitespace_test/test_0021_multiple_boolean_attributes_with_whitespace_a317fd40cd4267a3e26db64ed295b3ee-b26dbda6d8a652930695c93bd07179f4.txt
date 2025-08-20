@@ -1,0 +1,54 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:51))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:51))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: "/>" (location: (1:51)-(1:51))
+    │   │       ├── children: (7 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:6)-(1:11))
+    │   │       │   │   └── value: "     " (location: (1:6)-(1:11))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:11)-(1:18))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:18))
+    │   │       │   │   │       └── name: "checked" (location: (1:11)-(1:18))
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:18)-(1:23))
+    │   │       │   │   └── value: "     " (location: (1:18)-(1:23))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:31)-(1:31))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:31))
+    │   │       │   │   │       └── name: "required" (location: (1:31)-(1:31))
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:31)-(1:36))
+    │   │       │   │   └── value: "     " (location: (1:31)-(1:36))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:44)-(1:44))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:44))
+    │   │       │   │   │       └── name: "disabled" (location: (1:44)-(1:44))
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   └── @ WhitespaceNode (location: (1:44)-(1:49))
+    │   │       │       └── value: "     " (location: (1:44)-(1:49))
+    │   │       │
+    │   │       └── is_void: true
+    │   │
+    │   ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   └── is_void: true
+    │
+    └── @ HTMLTextNode (location: (1:51)-(2:0))
+        └── content: "\n"
