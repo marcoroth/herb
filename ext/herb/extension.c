@@ -40,10 +40,26 @@ static VALUE Herb_lex_file(VALUE self, VALUE path) {
   return result;
 }
 
-static VALUE Herb_parse(VALUE self, VALUE source) {
+static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
   char* string = (char*) check_string(source);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string);
+  parser_options_T* parser_options = NULL;
+  parser_options_T opts = { 0 };
+
+  if (!NIL_P(options)) {
+    VALUE track_whitespace = rb_hash_lookup(options, rb_str_new_cstr("track_whitespace"));
+    if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
+
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) {
+      opts.track_whitespace = true;
+      parser_options = &opts;
+    }
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
 
   herb_analyze_parse_tree(root, string);
 
@@ -60,7 +76,7 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   VALUE source_value = read_file_to_ruby_string(file_path);
   char* string = (char*) check_string(source_value);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
 
   VALUE result = create_parse_result(root, source_value);
 
@@ -131,7 +147,7 @@ void Init_herb(void) {
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
 
-  rb_define_singleton_method(mHerb, "parse", Herb_parse, 1);
+  rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);

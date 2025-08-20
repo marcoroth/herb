@@ -20,9 +20,9 @@ window.analyze = analyze
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
 
-  <input required />
+  <input     required />
 
-  <h1 class='bg-gray-300 text-gray" id='' data-controller="example">
+  <h1     class='bg-gray-300 text-gray"     id=''     data-controller="example">
     Hello World <%= RUBY_VERSION %>
   </h1>
 
@@ -33,6 +33,9 @@ const exampleFile = dedent`
       <div>Happy Day!</div>
     <% end %>
   </h2>
+
+  <!-- Track whitespace example -->
+  <div   class="example"></div   >
 
   <!-- invalid -->
   </br>
@@ -48,6 +51,7 @@ export default class extends Controller {
   static targets = [
     "input",
     "parseViewer",
+    "parserOptions",
     "rubyViewer",
     "htmlViewer",
     "lexViewer",
@@ -68,9 +72,10 @@ export default class extends Controller {
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark')
     }
-    
+
     this.restoreInput()
     this.restoreActiveTab()
+    this.restoreParserOptions()
     this.inputTarget.focus()
     this.load()
 
@@ -158,6 +163,9 @@ export default class extends Controller {
 
   updateURL() {
     window.parent.location.hash = this.compressedValue
+
+    const options = this.getParserOptions()
+    this.setOptionsInURL(options)
   }
 
   async insert(event) {
@@ -214,9 +222,16 @@ export default class extends Controller {
   restoreActiveTab() {
     const urlParams = new URLSearchParams(window.parent.location.search)
     const tabParam = urlParams.get('tab')
-    
+
     if (tabParam && this.isValidTab(tabParam)) {
       this.setActiveTab(tabParam)
+    }
+  }
+
+  restoreParserOptions() {
+    const optionsFromURL = this.getOptionsFromURL()
+    if (Object.keys(optionsFromURL).length > 0) {
+      this.setParserOptions(optionsFromURL)
     }
   }
 
@@ -229,35 +244,35 @@ export default class extends Controller {
     this.viewerButtonTargets.forEach((button) => {
       button.dataset.active = false
     })
-    
+
     const targetButton = this.viewerButtonTargets.find(
       (button) => button.dataset.viewer === tabName
     )
-    
+
     if (targetButton) {
       targetButton.dataset.active = true
-      
+
       this.element
         .querySelectorAll("[data-viewer-target]")
         .forEach((viewer) => viewer.classList.add("hidden"))
-      
+
       const targetViewer = this.element.querySelector(
         `[data-viewer-target=${tabName}]`
       )
-      
+
       targetViewer?.classList.remove("hidden")
     }
   }
 
   updateTabInURL(tabName) {
     const url = new URL(window.parent.location)
-    
+
     if (tabName && tabName !== 'parse') {
       url.searchParams.set('tab', tabName)
     } else {
       url.searchParams.delete('tab')
     }
-    
+
     window.parent.history.replaceState({}, '', url)
   }
 
@@ -368,21 +383,21 @@ export default class extends Controller {
 
   async formatEditor(event) {
     const button = this.getClosestButton(event.target)
-    
+
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const result = await analyze(Herb, value)
-      
+
       if (result.formatted) {
         if (this.editor) {
           this.editor.setValue(result.formatted)
         } else {
           this.inputTarget.value = result.formatted
         }
-        
+
         button.querySelector(".fa-indent").classList.add("hidden")
         button.querySelector(".fa-circle-check").classList.remove("hidden")
-        
+
         setTimeout(() => {
           button.querySelector(".fa-indent").classList.remove("hidden")
           button.querySelector(".fa-circle-check").classList.add("hidden")
@@ -397,7 +412,8 @@ export default class extends Controller {
     this.updateURL()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-    const result = await analyze(Herb, value)
+    const options = this.getParserOptions()
+    const result = await analyze(Herb, value, options)
 
     this.updatePosition(1, 0, value.length)
 
@@ -551,5 +567,76 @@ export default class extends Controller {
     return lz.decompressFromEncodedURIComponent(
       window.parent.location.hash.slice(1),
     )
+  }
+
+  getParserOptions() {
+    const options = {}
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+
+    optionInputs.forEach(input => {
+      const optionName = input.dataset.option
+      if (input.type === 'checkbox') {
+        options[optionName] = input.checked
+      } else {
+        options[optionName] = input.value
+      }
+    })
+
+    return options
+  }
+
+  setParserOptions(options) {
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+
+    optionInputs.forEach(input => {
+      const optionName = input.dataset.option
+      if (options.hasOwnProperty(optionName)) {
+        if (input.type === 'checkbox') {
+          input.checked = Boolean(options[optionName])
+        } else {
+          input.value = options[optionName]
+        }
+      }
+    })
+  }
+
+  onOptionChange(event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  getOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.location.search)
+    const optionsString = urlParams.get('options')
+
+    if (optionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(optionsString))
+      } catch (e) {
+        console.warn('Failed to parse options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setOptionsInURL(options) {
+    const url = new URL(window.location)
+
+    const nonDefaultOptions = {}
+
+    Object.keys(options).forEach(key => {
+      if (options[key] !== false && options[key] !== '' && options[key] !== null && options[key] !== undefined) {
+        nonDefaultOptions[key] = options[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultOptions).length > 0) {
+      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
+    } else {
+      url.searchParams.delete('options')
+    }
+
+    window.history.replaceState({}, '', url)
   }
 }

@@ -18,6 +18,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:18)-(1:27))
     │   │       ├── tag_opening: "</" (location: (1:18)-(1:20))
     │   │       ├── tag_name: "script" (location: (1:20)-(1:26))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:26)-(1:27))
     │   │
     │   └── is_void: false
@@ -33,6 +34,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (1:40)-(1:42))
     │   ├── tag_name: "style" (location: (1:42)-(1:47))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (1:47)-(1:48))
     │
     ├── @ HTMLTextNode (location: (1:48)-(1:50))
@@ -46,4 +48,5 @@
         │
         ├── tag_opening: "</" (location: (1:50)-(1:52))
         ├── tag_name: "script" (location: (1:52)-(1:58))
+        ├── children: []
         └── tag_closing: ">" (location: (1:58)-(1:59))

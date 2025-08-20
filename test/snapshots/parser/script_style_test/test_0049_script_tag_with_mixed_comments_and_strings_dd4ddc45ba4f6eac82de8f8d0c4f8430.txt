@@ -18,6 +18,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (2:18)-(2:27))
     │   │       ├── tag_opening: "</" (location: (2:18)-(2:20))
     │   │       ├── tag_name: "script" (location: (2:20)-(2:26))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (2:26)-(2:27))
     │   │
     │   └── is_void: false
@@ -33,6 +34,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (3:25)-(3:27))
     │   ├── tag_name: "script" (location: (3:27)-(3:33))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (3:33)-(3:34))
     │
     ├── @ HTMLTextNode (location: (3:34)-(5:10))
@@ -46,6 +48,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (5:10)-(5:12))
     │   ├── tag_name: "script" (location: (5:12)-(5:18))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (5:18)-(5:19))
     │
     ├── @ HTMLTextNode (location: (5:19)-(6:30))
@@ -59,6 +62,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (6:30)-(6:32))
     │   ├── tag_name: "script" (location: (6:32)-(6:38))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (6:38)-(6:39))
     │
     ├── @ HTMLTextNode (location: (6:39)-(7:0))
@@ -72,6 +76,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (7:0)-(7:2))
     │   ├── tag_name: "script" (location: (7:2)-(7:8))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (7:8)-(7:9))
     │
     └── @ HTMLTextNode (location: (7:9)-(8:0))

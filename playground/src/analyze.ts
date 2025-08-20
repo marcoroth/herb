@@ -1,4 +1,4 @@
-import type { HerbBackend, ParseResult, LexResult } from "@herb-tools/core"
+import type { HerbBackend, ParseResult, LexResult, ParserOptions } from "@herb-tools/core"
 
 import { Formatter } from "@herb-tools/formatter"
 import { Linter } from "@herb-tools/linter"
@@ -14,11 +14,11 @@ async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
-export async function analyze(herb: HerbBackend, source: string) {
+export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}) {
   const startTime = performance.now()
 
   const parseResult = await safeExecute<ParseResult>(
-    new Promise((resolve) => resolve(herb.parse(source))),
+    new Promise((resolve) => resolve(herb.parse(source, options))),
   )
 
   const string = await safeExecute<string>(

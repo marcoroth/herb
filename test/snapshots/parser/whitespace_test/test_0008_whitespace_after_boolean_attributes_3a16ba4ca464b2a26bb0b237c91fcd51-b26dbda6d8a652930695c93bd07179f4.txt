@@ -1,0 +1,32 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:23))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:23))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: "/>" (location: (1:23)-(1:23))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:6)-(1:11))
+    │   │       │   │   └── value: "     " (location: (1:6)-(1:11))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:11)-(1:19))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:19))
+    │   │       │   │   │       └── name: "required" (location: (1:11)-(1:19))
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   └── @ WhitespaceNode (location: (1:19)-(1:21))
+    │   │       │       └── value: "  " (location: (1:19)-(1:21))
+    │   │       │
+    │   │       └── is_void: true
+    │   │
+    │   ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   └── is_void: true
+    │
+    └── @ HTMLTextNode (location: (1:23)-(2:0))
+        └── content: "\n"

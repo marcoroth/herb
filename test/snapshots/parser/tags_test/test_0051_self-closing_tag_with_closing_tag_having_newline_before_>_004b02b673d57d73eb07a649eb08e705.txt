@@ -61,6 +61,7 @@
     │   │
     │   ├── tag_opening: "</" (location: (2:12)-(2:14))
     │   ├── tag_name: "br" (location: (2:14)-(2:16))
+    │   ├── children: []
     │   └── tag_closing: ">" (location: (3:8)-(3:9))
     │
     └── @ HTMLTextNode (location: (3:9)-(4:0))

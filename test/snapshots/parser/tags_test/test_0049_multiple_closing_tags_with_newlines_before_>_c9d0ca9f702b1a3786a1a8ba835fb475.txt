@@ -35,6 +35,7 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:20)-(3:11))
     │   │   │   │       ├── tag_opening: "</" (location: (2:20)-(2:22))
     │   │   │   │       ├── tag_name: "span" (location: (2:22)-(2:26))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (3:10)-(3:11))
     │   │   │   │
     │   │   │   └── is_void: false
@@ -46,6 +47,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (4:8)-(5:9))
     │   │       ├── tag_opening: "</" (location: (4:8)-(4:10))
     │   │       ├── tag_name: "div" (location: (4:10)-(4:13))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
     │   └── is_void: false

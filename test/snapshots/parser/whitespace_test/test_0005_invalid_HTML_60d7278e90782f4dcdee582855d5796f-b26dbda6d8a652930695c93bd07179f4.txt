@@ -1,0 +1,34 @@
+@ DocumentNode (location: (1:0)-(2:0))
+├── errors: (1 error)
+│   └── @ UnclosedElementError (location: (2:0)-(2:0))
+│       ├── message: "Tag `<div>` opened at (1:1) was never closed before the end of document."
+│       └── opening_tag: "div" (location: (1:1)-(1:4))
+│
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:5))
+        ├── errors: (2 errors)
+        │   ├── @ UnexpectedError (location: (1:5)-(1:6))
+        │   │   ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_LT`."
+        │   │   ├── description: "Unexpected token"
+        │   │   ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
+        │   │   └── found: "TOKEN_LT"
+        │   │
+        │   └── @ MissingClosingTagError (location: (1:1)-(1:4))
+        │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>`."
+        │       └── opening_tag: "div" (location: (1:1)-(1:4))
+        │
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:6)-(2:0))
+        │       └── content: "/    div>\n"
+        │
+        ├── close_tag: ∅
+        └── is_void: false

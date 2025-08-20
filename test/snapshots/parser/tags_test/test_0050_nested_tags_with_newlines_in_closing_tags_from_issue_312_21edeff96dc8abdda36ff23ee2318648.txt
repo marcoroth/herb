@@ -103,6 +103,7 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (8:22)-(9:11))
     │   │   │   │       ├── tag_opening: "</" (location: (8:22)-(8:24))
     │   │   │   │       ├── tag_name: "a" (location: (8:24)-(8:25))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (9:10)-(9:11))
     │   │   │   │
     │   │   │   └── is_void: false
@@ -114,6 +115,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (10:8)-(10:14))
     │   │       ├── tag_opening: "</" (location: (10:8)-(10:10))
     │   │       ├── tag_name: "div" (location: (10:10)-(10:13))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (10:13)-(10:14))
     │   │
     │   └── is_void: false

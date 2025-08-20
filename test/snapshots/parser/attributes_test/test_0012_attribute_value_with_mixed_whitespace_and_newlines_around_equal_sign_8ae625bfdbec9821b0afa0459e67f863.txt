@@ -35,6 +35,7 @@
         │   └── @ HTMLCloseTagNode (location: (3:17)-(3:23))
         │       ├── tag_opening: "</" (location: (3:17)-(3:19))
         │       ├── tag_name: "div" (location: (3:19)-(3:22))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (3:22)-(3:23))
         │
         └── is_void: false

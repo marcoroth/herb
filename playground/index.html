@@ -65,11 +65,28 @@
         <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mt-6">
             <div class="lg:flex justify-between">
-              <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
-                HTML+ERB File
+              <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4">
+                <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
+                  HTML+ERB File
+                </div>
+
+                <div
+                  class="flex flex-wrap items-center gap-3 text-sm"
+                  data-playground-target="parserOptions"
+                >
+                  <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <input
+                      type="checkbox"
+                      data-option="track_whitespace"
+                      data-action="change->playground#onOptionChange"
+                      class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                    />
+                    <span class="select-none">Track whitespace</span>
+                  </label>
+                </div>
               </div>
 
-              <div class="flex gap-3">
+              <div class="flex gap-3 mt-2 lg:mt-0">
                 <button
                   data-action="click->playground#share"
                   id="copy-share-url"

@@ -18,6 +18,7 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:27)-(1:36))
     │   │       ├── tag_opening: "</" (location: (1:27)-(1:29))
     │   │       ├── tag_name: "script" (location: (1:29)-(1:35))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:35)-(1:36))
     │   │
     │   └── is_void: false
@@ -33,4 +34,5 @@
         │
         ├── tag_opening: "</" (location: (1:50)-(1:52))
         ├── tag_name: "script" (location: (1:52)-(1:58))
+        ├── children: []
         └── tag_closing: ">" (location: (1:58)-(1:59))

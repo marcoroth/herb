@@ -15,15 +15,20 @@ typedef enum {
 
 typedef enum { PARSER_STATE_DATA, PARSER_STATE_FOREIGN_CONTENT } parser_state_T;
 
+typedef struct PARSER_OPTIONS_STRUCT {
+  bool track_whitespace;
+} parser_options_T;
+
 typedef struct PARSER_STRUCT {
   lexer_T* lexer;
   token_T* current_token;
   array_T* open_tags_stack;
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
+  parser_options_T* options;
 } parser_T;
 
-parser_T* parser_init(lexer_T* lexer);
+parser_T* parser_init(lexer_T* lexer, parser_options_T* options);
 
 AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser);
 
