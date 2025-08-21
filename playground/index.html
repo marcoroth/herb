@@ -88,6 +88,15 @@
 
               <div class="flex gap-3 mt-2 lg:mt-0">
                 <button
+                  data-action="click->playground#copyEditorContent"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                >
+                  <i class="fas fa-copy"></i>
+                  <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
+                  <span class="ml-1">Copy</span>
+                </button>
+
+                <button
                   data-action="click->playground#share"
                   id="copy-share-url"
                   class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
@@ -168,9 +177,17 @@
           <div class="mt-6" data-contoller="output">
             <div class="lg:flex justify-between">
               <div
-                class="text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium"
+                class="text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium flex items-center gap-3"
               >
-                Herb Result
+                <span>Herb Result</span>
+                <button
+                  data-action="click->playground#copyViewerContent"
+                  class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
+                  title="Copy current panel content"
+                >
+                  <i class="fas fa-copy"></i>
+                  <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
+                </button>
               </div>
 
               <div class="mt-1 md:mt-0 md:flex gap-3">
@@ -295,13 +312,12 @@
                 class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               ></pre>
 
-              <pre
-                style="white-space: pre; line-height: 1.3"
+              <div
                 data-viewer-target="format"
                 data-playground-target="formatViewer"
                 data-action="click->playground#shrinkViewer"
-                class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
-              ></pre>
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              ></div>
 
               <pre
                 style="white-space: pre; line-height: 1.3"
@@ -315,11 +331,19 @@
                 data-viewer-target="diagnostics"
                 data-playground-target="linterViewer"
                 data-action="click->playground#shrinkViewer"
-                class="hidden w-full p-3 mb-3 rounded overflow-auto bg-[#282c34] text-[#dcdfe4] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+                class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] text-[#dcdfe4] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               >
-                <div data-playground-target="linterContent">
-                  <div class="text-center text-gray-500 dark:text-gray-400 py-8">
-                    No diagnostics to display
+                <div data-playground-target="linterContent" class="h-full p-3">
+                  <div class="relative h-full overflow-hidden">
+                    <div class="absolute inset-0 flex items-center justify-center z-10">
+                      <div class="bg-gray-700 border border-gray-500 rounded-lg p-6 text-center">
+                        <i class="fas fa-circle-check text-green-400 text-2xl mb-3"></i>
+                        <h3 class="text-lg font-semibold text-gray-100 mb-2">No Issues Found</h3>
+                        <p class="text-gray-300 text-sm">
+                          No diagnostics to display
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
