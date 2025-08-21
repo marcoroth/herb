@@ -56,6 +56,8 @@ export default class extends Controller {
     "htmlViewer",
     "lexViewer",
     "formatViewer",
+    "linterViewer",
+    "linterContent",
     "fullViewer",
     "viewerButton",
     "version",
@@ -236,7 +238,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'diagnostics', 'full']
     return validTabs.includes(tab)
   }
 
@@ -300,6 +302,11 @@ export default class extends Controller {
 
     this.setActiveTab(tabName)
     this.updateTabInURL(tabName)
+  }
+
+  showDiagnostics(event) {
+    this.setActiveTab('diagnostics')
+    this.updateTabInURL('diagnostics')
   }
 
   toggleViewer() {
@@ -441,12 +448,17 @@ export default class extends Controller {
       allDiagnostics.push(...lintDiagnostics)
     }
 
-    this.editor.addDiagnostics(allDiagnostics)
+    // Filter out parser-no-errors diagnostics for both editor and status display
+    const filteredDiagnosticsForEditor = allDiagnostics.filter(diagnostic => 
+      diagnostic.code !== 'parser-no-errors'
+    )
+
+    this.editor.addDiagnostics(filteredDiagnosticsForEditor)
 
     if (this.hasDiagnosticStatusTarget && this.hasErrorCountTarget && this.hasWarningCountTarget && this.hasInfoCountTarget) {
-      const errorCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "error").length
-      const warningCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "warning").length
-      const infoCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "info" || diagnostic.severity === "hint").length
+      const errorCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "error").length
+      const warningCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "warning").length
+      const infoCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "info" || diagnostic.severity === "hint").length
 
       this.diagnosticStatusTarget.classList.remove("hidden")
 
@@ -556,6 +568,10 @@ export default class extends Controller {
 
       Prism.highlightElement(this.lexViewerTarget)
     }
+
+    if (this.hasLinterViewerTarget && this.hasLinterContentTarget) {
+      this.updateLinterViewer(filteredDiagnosticsForEditor)
+    }
   }
 
   get compressedValue() {
@@ -638,5 +654,174 @@ export default class extends Controller {
     }
 
     window.history.replaceState({}, '', url)
+  }
+
+  updateLinterViewer(diagnostics) {
+    // Filter out parser-no-errors diagnostics
+    const filteredDiagnostics = diagnostics.filter(diagnostic => 
+      diagnostic.code !== 'parser-no-errors'
+    )
+
+    if (filteredDiagnostics.length === 0) {
+      this.linterContentTarget.innerHTML = `
+        <div class="text-center text-gray-400 py-8">
+          No diagnostics to display
+        </div>
+      `
+      return
+    }
+
+    const sortDiagnostics = (items) => {
+      return items.sort((a, b) => {
+        const lineA = a.line || a.startLineNumber || 1
+        const lineB = b.line || b.startLineNumber || 1
+        if (lineA !== lineB) return lineA - lineB
+        
+        const colA = a.column || a.startColumn || 0
+        const colB = b.column || b.startColumn || 0
+        return colA - colB
+      })
+    }
+
+    const diagnosticsByType = {
+      error: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "error")),
+      warning: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "warning")),
+      info: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "info" || d.severity === "hint"))
+    }
+
+    let html = ''
+
+    const renderDiagnosticGroup = (title, items, iconClass, textColorClass) => {
+      if (items.length === 0) return ''
+
+      let groupHtml = `
+        <div class="mb-6">
+          <h3 class="flex items-center gap-2 text-lg font-semibold mb-3 ${textColorClass}">
+            <i class="${iconClass}"></i>
+            ${title} (${items.length})
+          </h3>
+          <div class="space-y-2">
+      `
+
+      items.forEach((diagnostic, index) => {
+        const startLine = diagnostic.line || diagnostic.startLineNumber || 1
+        const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
+        const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
+        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+
+        groupHtml += `
+          <div 
+            class="p-3 border rounded-lg cursor-pointer bg-gray-700 hover:border-gray-400 border-gray-500 diagnostic-item transition-colors duration-150"
+            data-diagnostic-index="${index}"
+            data-start-line="${startLine}"
+            data-start-column="${startColumn}"
+            data-end-line="${endLine}"
+            data-end-column="${endColumn}"
+          >
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 mt-1">
+                <i class="${iconClass} text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-100">
+                  ${this.escapeHtml(diagnostic.message)}
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  Line ${startLine}:${startColumn - 1}
+                  ${diagnostic.source ? `• ${diagnostic.source}` : ''}
+                  ${diagnostic.code ? `• ${diagnostic.code}` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      })
+
+      groupHtml += `
+          </div>
+        </div>
+      `
+
+      return groupHtml
+    }
+
+    html += renderDiagnosticGroup(
+      'Errors',
+      diagnosticsByType.error,
+      'fas fa-circle-xmark text-red-400',
+      'text-red-400'
+    )
+
+    html += renderDiagnosticGroup(
+      'Warnings', 
+      diagnosticsByType.warning,
+      'fas fa-triangle-exclamation text-yellow-400',
+      'text-yellow-400'
+    )
+
+    html += renderDiagnosticGroup(
+      'Info',
+      diagnosticsByType.info,
+      'fas fa-info-circle text-blue-400', 
+      'text-blue-400'
+    )
+
+    this.linterContentTarget.innerHTML = html
+
+    // Add click handlers for each diagnostic item
+    this.linterContentTarget.querySelectorAll('.diagnostic-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const startLine = parseInt(item.dataset.startLine)
+        const startColumn = parseInt(item.dataset.startColumn)
+        const endLine = parseInt(item.dataset.endLine)
+        const endColumn = parseInt(item.dataset.endColumn)
+
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+          this.editor.highlightAndRevealSection(
+            startLine,
+            startColumn,
+            endLine,
+            endColumn,
+            'error-highlight'
+          )
+          this.editor.setCursorPosition(startLine, startColumn - 1)
+        }
+      })
+
+      // Add hover effect to highlight in editor
+      item.addEventListener('mouseenter', () => {
+        const startLine = parseInt(item.dataset.startLine)
+        const startColumn = parseInt(item.dataset.startColumn)
+        const endLine = parseInt(item.dataset.endLine)
+        const endColumn = parseInt(item.dataset.endColumn)
+
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+          this.editor.highlightAndRevealSection(
+            startLine,
+            startColumn,
+            endLine,
+            endColumn,
+            'info-highlight'
+          )
+        }
+      })
+
+      item.addEventListener('mouseleave', () => {
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+        }
+      })
+    })
+  }
+
+  escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
   }
 }

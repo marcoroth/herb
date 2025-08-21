@@ -135,7 +135,7 @@
             </div>
 
             <div class="mt-2 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] flex justify-between items-center">
-              <span data-playground-target="diagnosticStatus" class="hidden flex items-center gap-4">
+              <span data-playground-target="diagnosticStatus" data-action="click->playground#showDiagnostics" class="hidden flex items-center gap-4 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300" title="Click to view diagnostics">
                 <span class="flex items-center gap-1" title="Errors">
                   <i class="fas fa-circle-xmark text-red-500 text-xs"></i>
                   <span data-playground-target="errorCount">0</span>
@@ -174,13 +174,13 @@
               </div>
 
               <div class="mt-1 md:mt-0 md:flex gap-3">
-                <button
+                <!-- <button
                   data-action="playground#toggleViewer keydown.esc@window->playground#shrinkViewer"
                   class="hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
                 >
                   <i class="fas fa-expand"></i>
                   <span class="ml-1">Fullscreen</span>
-                </button>
+                </button> -->
 
                 <button
                   data-playground-target="viewerButton"
@@ -191,7 +191,7 @@
                 >
                   <i class="fas fa-folder-tree"></i>
                   <span class="ml-1"
-                    >Parse <span class="hidden lg:inline">Result</span></span
+                    >Parse</span
                   >
                 </button>
 
@@ -203,7 +203,7 @@
                 >
                   <i class="fas fa-bars"></i>
                   <span class="ml-1"
-                    >Lex <span class="hidden lg:inline">Result</span></span
+                    >Lex</span
                   >
                 </button>
 
@@ -230,10 +230,20 @@
                   data-playground-target="viewerButton"
                   data-viewer="format"
                   data-action="click->playground#selectViewer"
-                  class="text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
                 >
                   <i class="fas fa-indent"></i>
                   <span class="ml-1">Format</span>
+                </button>
+
+                <button
+                  data-playground-target="viewerButton"
+                  data-viewer="diagnostics"
+                  data-action="click->playground#selectViewer"
+                  class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:!bg-green-600 data-[active=true]:hover:!bg-green-700 data-[active=true]:!text-white"
+                >
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span class="ml-1">Diagnostics</span>
                 </button>
 
                 <button
@@ -300,6 +310,19 @@
                 data-action="click->playground#shrinkViewer"
                 class="hidden w-full p-3 mb-3 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] highlight h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               ></pre>
+
+              <div
+                data-viewer-target="diagnostics"
+                data-playground-target="linterViewer"
+                data-action="click->playground#shrinkViewer"
+                class="hidden w-full p-3 mb-3 rounded overflow-auto bg-[#282c34] text-[#dcdfe4] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
+              >
+                <div data-playground-target="linterContent">
+                  <div class="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No diagnostics to display
+                  </div>
+                </div>
+              </div>
 
               <json-viewer
                 data-playground-target="fullViewer"
