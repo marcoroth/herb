@@ -43,7 +43,7 @@
     "dev": "nx run-many -t dev --all --parallel --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter",
     "build": "nx run-many -t build --all --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter",
     "build:affected": "nx affected -t build --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter",
-    "test": "nx run-many -t test --all --maxParallel=1 --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter --exclude=vscode",
+    "test": "nx run-many -t test --all --parallel --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter --exclude=vscode",
     "test:affected": "nx affected -t test --exclude=herb-language-server --exclude=@herb-tools/tailwind-class-sorter",
     "clean": "nx run-many -t clean --all --parallel && nx reset",
     "playground": "nx run playground:dev",
