@@ -5,6 +5,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "moduleDetection": "force",
     "esModuleInterop": true,
     "sourceMap": true,
     "strict": true,
