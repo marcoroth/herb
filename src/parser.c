@@ -572,11 +572,18 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
 }
 
 static void parser_handle_erb_in_open_tag(parser_T* parser, array_T* children) {
+  bool is_output_tag = parser->current_token->value && strlen(parser->current_token->value) >= 3 && strncmp(parser->current_token->value, "<%=", 3) == 0;
+
+  if (!is_output_tag) {
+    array_append(children, parser_parse_erb_tag(parser));
+
+    return;
+  }
+
   lexer_T lexer_copy = *parser->lexer;
 
-  token_T* start_token = lexer_next_token(&lexer_copy);
-  token_free(start_token);
-
+  token_T* erb_start = lexer_next_token(&lexer_copy);
+  token_free(erb_start);
   parser_skip_erb_content(&lexer_copy);
 
   bool looks_like_attribute = parser_lookahead_erb_is_attribute(&lexer_copy);
