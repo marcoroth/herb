@@ -572,7 +572,8 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
 }
 
 static void parser_handle_erb_in_open_tag(parser_T* parser, array_T* children) {
-  bool is_output_tag = parser->current_token->value && strlen(parser->current_token->value) >= 3 && strncmp(parser->current_token->value, "<%=", 3) == 0;
+  bool is_output_tag = parser->current_token->value && strlen(parser->current_token->value) >= 3
+                    && strncmp(parser->current_token->value, "<%=", 3) == 0;
 
   if (!is_output_tag) {
     array_append(children, parser_parse_erb_tag(parser));
