@@ -58,6 +58,12 @@ export default class extends Controller {
     "formatViewer",
     "formatSuccess",
     "formatError",
+    "formatButton",
+    "formatTooltip",
+    "shareButton",
+    "shareTooltip",
+    "githubButton",
+    "githubTooltip",
     "diagnosticsViewer",
     "diagnosticsContent",
     "noDiagnostics",
@@ -130,6 +136,8 @@ export default class extends Controller {
     window.editor = this.editor
 
     this.setupThemeListener()
+    this.setupShareTooltip()
+    this.setupGitHubTooltip()
   }
 
   get isDarkMode() {
@@ -523,6 +531,10 @@ export default class extends Controller {
   async formatEditor(event) {
     const button = this.getClosestButton(event.target)
 
+    if (button.disabled) {
+      return
+    }
+
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const result = await analyze(Herb, value)
@@ -697,6 +709,22 @@ export default class extends Controller {
         this.formatSuccessTarget.textContent = result.formatted || 'No formatted output available'
 
         Prism.highlightElement(this.formatSuccessTarget)
+      }
+    }
+
+    if (this.hasFormatButtonTarget) {
+      const hasErrors = filteredDiagnosticsForEditor.some(diagnostic => diagnostic.severity === "error")
+
+      if (hasErrors) {
+        this.formatButtonTarget.disabled = true
+        this.formatButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+        this.formatButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+        this.setupTooltip()
+      } else {
+        this.formatButtonTarget.disabled = false
+        this.formatButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+        this.formatButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+        this.removeTooltip()
       }
     }
 
@@ -956,6 +984,105 @@ export default class extends Controller {
         }
       })
     })
+  }
+
+  setupTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.addEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.addEventListener('mouseleave', this.hideTooltip)
+    }
+  }
+
+  removeTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.removeEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.removeEventListener('mouseleave', this.hideTooltip)
+
+      this.hideTooltip()
+    }
+  }
+
+  showTooltip = ()  => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideTooltip = () => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  setupShareTooltip() {
+    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
+      this.shareButtonTarget.addEventListener('mouseenter', this.showShareTooltip)
+      this.shareButtonTarget.addEventListener('mouseleave', this.hideShareTooltip)
+    }
+  }
+
+  showShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  setupGitHubTooltip() {
+    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
+      this.githubButtonTarget.addEventListener('mouseenter', this.showGitHubTooltip)
+      this.githubButtonTarget.addEventListener('mouseleave', this.hideGitHubTooltip)
+    }
+  }
+
+  showGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  openGitHubIssue(event) {
+    const currentUrl = window.parent.location.href
+
+    const issueTitle = encodeURIComponent('Bug report from Herb Playground')
+    const issueBody = encodeURIComponent(dedent`
+      ## Bug Report
+
+      <!-- Describe the issue you're experiencing -->
+
+      ## Reproduction
+
+      You can reproduce this issue using the following playground link:
+
+      ${currentUrl}
+
+      ## Expected Behavior
+
+      <!-- What did you expect to happen? -->
+
+      ## Actual Behavior
+
+      <!-- What actually happened? -->
+
+      ## Additional Context
+
+      <!-- Add any other context about the problem here -->
+    `)
+
+    const githubUrl = `https://github.com/marcoroth/herb/issues/new?title=${issueTitle}&body=${issueBody}`
+
+    window.open(githubUrl, '_blank')
   }
 
   escapeHtml(unsafe) {
