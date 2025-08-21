@@ -36,6 +36,7 @@
         "./extension/libherb/range.c",
         "./extension/libherb/token_matchers.c",
         "./extension/libherb/token.c",
+        "./extension/libherb/utf8.c",
         "./extension/libherb/util.c",
         "./extension/libherb/visitor.c",
 

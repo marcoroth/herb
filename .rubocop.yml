@@ -57,6 +57,7 @@ Metrics/MethodLength:
     - lib/herb/project.rb
     - templates/template.rb
     - test/fork_helper.rb
+    - test/snapshot_utils.rb
 
 Metrics/AbcSize:
   Exclude:
@@ -93,6 +94,7 @@ Metrics/PerceivedComplexity:
   Exclude:
     - lib/herb/project.rb
     - lib/herb/ast/nodes.rb
+    - test/snapshot_utils.rb
 
 Layout/LineLength:
   Max: 120

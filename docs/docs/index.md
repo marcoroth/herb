@@ -2,10 +2,12 @@
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
+title: "Herb - Powerful and seamless HTML-aware ERB parsing and tooling."
+
 hero:
   name: "Herb"
   text: "Powerful and seamless HTML-aware ERB parsing and tooling."
-  tagline: "Next-generation HTML+ERB parsing for smarter developer tooling and more."
+  tagline: "Next-generation HTML+ERB parsing ecosystem for smarter developer tooling."
 
   image:
     src: /herb.svg
@@ -13,16 +15,20 @@ hero:
 
   actions:
     - theme: brand
-      text: Documentation
-      link: /bindings/ruby
+      text: Get Started
+      link: /overview
 
-    - theme: alt
-      text: Playground
-      link: /playground
+    - theme: brand
+      text: Install in VS Code
+      link: vscode:extension/marcoroth.herb-lsp
 
     - theme: alt
       text: GitHub
       link: https://github.com/marcoroth/herb
+
+    - theme: alt
+      text: Playground
+      link: /playground
 
 features:
   - title: HTML-aware

@@ -1,7 +1,8 @@
 import { AttributeVisitorMixin, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
-import type { Node, HTMLAttributeNode } from "@herb-tools/core"
+import { ParserRule } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
@@ -9,7 +10,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
     if (getAttributeValueQuoteType(attributeNode) !== "single") return
     if (attributeValue?.includes('"')) return // Single quotes acceptable when value contains double quotes
 
-    this.addMessage(
+    this.addOffense(
       `Attribute \`${attributeName}\` uses single quotes. Prefer double quotes for HTML attribute values: \`${attributeName}="value"\`.`,
       attributeNode.value!.location,
       "warning"
@@ -17,12 +18,12 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAttributeDoubleQuotesRule implements Rule {
+export class HTMLAttributeDoubleQuotesRule extends ParserRule {
   name = "html-attribute-double-quotes"
 
-  check(node: Node): LintMessage[] {
-    const visitor = new AttributeDoubleQuotesVisitor(this.name)
-    visitor.visit(node)
-    return visitor.messages
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new AttributeDoubleQuotesVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }

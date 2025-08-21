@@ -24,4 +24,5 @@
         │
         ├── tag_opening: "</" (location: (1:4)-(1:6))
         ├── tag_name: "br" (location: (1:6)-(1:8))
+        ├── children: []
         └── tag_closing: ">" (location: (1:8)-(1:9))

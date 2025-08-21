@@ -1,7 +1,8 @@
 import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
-import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
+import { ParserRule } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
+import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private inlineStack: string[] = []
@@ -18,11 +19,11 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     return { isInline, isBlock, isUnknown }
   }
 
-  private addViolationMessage(tagName: string, isBlock: boolean, openTag: HTMLOpenTagNode): void {
+  private addOffenseMessage(tagName: string, isBlock: boolean, openTag: HTMLOpenTagNode): void {
     const parentInline = this.inlineStack[this.inlineStack.length - 1]
     const elementType = isBlock ? "Block-level" : "Unknown"
 
-    this.addMessage(
+    this.addOffense(
       `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
       openTag.tag_name!.location,
       "error"
@@ -61,7 +62,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     const { isInline, isBlock, isUnknown } = this.getElementType(tagName)
 
     if ((isBlock || isUnknown) && this.inlineStack.length > 0) {
-      this.addViolationMessage(tagName, isBlock, openTag)
+      this.addOffenseMessage(tagName, isBlock, openTag)
     }
 
     if (isInline) {
@@ -73,12 +74,12 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoBlockInsideInlineRule implements Rule {
+export class HTMLNoBlockInsideInlineRule extends ParserRule {
   name = "html-no-block-inside-inline"
 
-  check(node: Node): LintMessage[] {
-    const visitor = new BlockInsideInlineVisitor(this.name)
-    visitor.visit(node)
-    return visitor.messages
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new BlockInsideInlineVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/core",
-  "version": "0.3.1",
+  "version": "0.5.0",
   "description": "Core module exporting shared interfaces, AST node definitions, and common utilities for Herb",
   "type": "module",
   "license": "MIT",

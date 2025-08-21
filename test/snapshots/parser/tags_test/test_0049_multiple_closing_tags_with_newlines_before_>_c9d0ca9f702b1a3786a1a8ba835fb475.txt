@@ -1,0 +1,56 @@
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:8))
+    │   └── content: "        "
+    │
+    ├── @ HTMLElementNode (location: (1:8)-(5:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:8)-(1:13))
+    │   │       ├── tag_opening: "<" (location: (1:8)-(1:9))
+    │   │       ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   │       ├── tag_closing: ">" (location: (1:12)-(1:13))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:9)-(1:12))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:13)-(2:10))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:10)-(3:11))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:10)-(2:16))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:10)-(2:11))
+    │   │   │   │       ├── tag_name: "span" (location: (2:11)-(2:15))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:15)-(2:16))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (2:11)-(2:15))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:16)-(2:20))
+    │   │   │   │       └── content: "Text"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:20)-(3:11))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:20)-(2:22))
+    │   │   │   │       ├── tag_name: "span" (location: (2:22)-(2:26))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:10)-(3:11))
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:11)-(4:8))
+    │   │       └── content: "\n        "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:8)-(5:9))
+    │   │       ├── tag_opening: "</" (location: (4:8)-(4:10))
+    │   │       ├── tag_name: "div" (location: (4:10)-(4:13))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

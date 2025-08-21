@@ -6,9 +6,11 @@
 #include "include/errors.h"
 #include "include/html_util.h"
 #include "include/lexer.h"
+#include "include/lexer_peek_helpers.h"
 #include "include/parser_helpers.h"
 #include "include/token.h"
 #include "include/token_matchers.h"
+#include "include/util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,18 +18,30 @@
 #include <strings.h>
 
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors);
+static void parser_parse_foreign_content(parser_T* parser, array_T* children, array_T* errors);
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
+static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children);
+static void parser_consume_whitespace(parser_T* parser, array_T* children);
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-parser_T* parser_init(lexer_T* lexer) {
+parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
   parser_T* parser = calloc(1, parser_sizeof());
 
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
+  parser->state = PARSER_STATE_DATA;
+  parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
+
+  if (options) {
+    parser->options = calloc(1, sizeof(parser_options_T));
+    parser->options->track_whitespace = options->track_whitespace;
+  } else {
+    parser->options = NULL;
+  }
 
   return parser;
 }
@@ -205,7 +219,6 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 
       position_free(start);
       start = position_copy(parser->current_token->location->start);
-
       continue;
     }
 
@@ -215,11 +228,9 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   }
 
   parser_append_literal_node_from_buffer(parser, &buffer, children, start);
-  position_free(start);
-  buffer_free(&buffer);
 
-  position_T* node_start;
-  position_T* node_end;
+  position_T* node_start = NULL;
+  position_T* node_end = NULL;
 
   if (children->size > 0) {
     AST_NODE_T* first_child = array_get(children, 0);
@@ -234,6 +245,11 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
 
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name =
     ast_html_attribute_name_node_init(children, node_start, node_end, errors);
+
+  position_free(start);
+  position_free(node_start);
+  position_free(node_end);
+  buffer_free(&buffer);
 
   return attribute_name;
 }
@@ -343,6 +359,30 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   // <div id="home">
   if (token_is(parser, TOKEN_QUOTE)) { return parser_parse_quoted_html_attribute_value(parser, children, errors); }
 
+  if (token_is(parser, TOKEN_BACKTICK)) {
+    token_T* token = parser_advance(parser);
+    position_T* start = position_copy(token->location->start);
+    position_T* end = position_copy(token->location->end);
+
+    append_unexpected_error(
+      "Invalid quote character for HTML attribute",
+      "single quote (') or double quote (\")",
+      "backtick (`)",
+      start,
+      end,
+      errors
+    );
+
+    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value =
+      ast_html_attribute_value_node_init(NULL, children, NULL, false, start, end, errors);
+
+    position_free(start);
+    position_free(end);
+    token_free(token);
+
+    return value;
+  }
+
   token_T* token = parser_advance(parser);
 
   append_unexpected_error(
@@ -372,9 +412,86 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
 static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) {
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = parser_parse_html_attribute_name(parser);
 
+  if (parser->options && parser->options->track_whitespace) {
+    bool has_equals = (parser->current_token->type == TOKEN_EQUALS)
+                   || lexer_peek_for_token_type_after_whitespace(parser->lexer, TOKEN_EQUALS);
+
+    if (has_equals) {
+      buffer_T equals_buffer = buffer_new();
+      position_T* equals_start = NULL;
+      position_T* equals_end = NULL;
+      size_t range_start = 0;
+      size_t range_end = 0;
+
+      while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+        token_T* whitespace = parser_advance(parser);
+
+        if (equals_start == NULL) {
+          equals_start = position_copy(whitespace->location->start);
+          range_start = whitespace->range->from;
+        }
+
+        buffer_append(&equals_buffer, whitespace->value);
+        token_free(whitespace);
+      }
+
+      token_T* equals = parser_advance(parser);
+
+      if (equals_start == NULL) {
+        equals_start = position_copy(equals->location->start);
+        range_start = equals->range->from;
+      }
+
+      buffer_append(&equals_buffer, equals->value);
+      equals_end = position_copy(equals->location->end);
+      range_end = equals->range->to;
+      token_free(equals);
+
+      while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+        token_T* whitespace = parser_advance(parser);
+        buffer_append(&equals_buffer, whitespace->value);
+        equals_end = position_copy(whitespace->location->end);
+        range_end = whitespace->range->to;
+        token_free(whitespace);
+      }
+
+      token_T* equals_with_whitespace = calloc(1, sizeof(token_T));
+      equals_with_whitespace->type = TOKEN_EQUALS;
+      equals_with_whitespace->value = herb_strdup(equals_buffer.value);
+      equals_with_whitespace->location = location_init(equals_start, equals_end);
+      equals_with_whitespace->range = range_init(range_start, range_end);
+
+      buffer_free(&equals_buffer);
+
+      AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = parser_parse_html_attribute_value(parser);
+
+      return ast_html_attribute_node_init(
+        attribute_name,
+        equals_with_whitespace,
+        attribute_value,
+        attribute_name->base.location->start,
+        attribute_value->base.location->end,
+        NULL
+      );
+    } else {
+      return ast_html_attribute_node_init(
+        attribute_name,
+        NULL,
+        NULL,
+        attribute_name->base.location->start,
+        attribute_name->base.location->end,
+        NULL
+      );
+    }
+  } else {
+    parser_consume_whitespace(parser, NULL);
+  }
+
   token_T* equals = parser_consume_if_present(parser, TOKEN_EQUALS);
 
   if (equals != NULL) {
+    parser_consume_whitespace(parser, NULL);
+
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = parser_parse_html_attribute_value(parser);
 
     AST_HTML_ATTRIBUTE_NODE_T* attribute_node = ast_html_attribute_node_init(
@@ -412,14 +529,14 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     token_T* whitespace = parser_consume_if_present(parser, TOKEN_WHITESPACE);
 
     if (whitespace != NULL) {
-      token_free(whitespace);
+      parser_handle_whitespace(parser, whitespace, children);
       continue;
     }
 
     token_T* newline = parser_consume_if_present(parser, TOKEN_NEWLINE);
 
     if (newline != NULL) {
-      token_free(newline);
+      parser_handle_whitespace(parser, newline, children);
       continue;
     }
 
@@ -430,7 +547,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
     if (parser->current_token->type == TOKEN_ERB_START) {
       lexer_T lexer_copy = *parser->lexer;
-      token_T* start_token = lexer_next_token(&lexer_copy); // consume ERB_START
+      token_T* start_token = lexer_next_token(&lexer_copy);
 
       token_free(start_token);
 
@@ -447,16 +564,45 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
         token_free(token);
       } while (true);
 
-      token_T* after = lexer_next_token(&lexer_copy);
+      bool looks_like_attribute = false;
+      token_T* after = NULL;
 
-      while (after->type == TOKEN_WHITESPACE || after->type == TOKEN_NEWLINE) {
-        token_free(after);
+      do {
         after = lexer_next_token(&lexer_copy);
-      }
 
-      bool looks_like_attribute = after->type == TOKEN_EQUALS;
+        if (after->type == TOKEN_EQUALS) {
+          looks_like_attribute = true;
+          token_free(after);
+          break;
+        }
 
-      token_free(after);
+        if (after->type == TOKEN_WHITESPACE || after->type == TOKEN_NEWLINE) {
+          token_free(after);
+          continue;
+        }
+
+        if (after->type == TOKEN_IDENTIFIER || after->type == TOKEN_CHARACTER || after->type == TOKEN_DASH
+            || after->type == TOKEN_ERB_START) {
+          if (after->type == TOKEN_ERB_START) {
+            token_free(after);
+            do {
+              after = lexer_next_token(&lexer_copy);
+              if (after->type == TOKEN_ERB_END) {
+                token_free(after);
+                break;
+              }
+              token_free(after);
+            } while (true);
+          } else {
+            token_free(after);
+          }
+          continue;
+        }
+
+        token_free(after);
+        break;
+
+      } while (true);
 
       if (looks_like_attribute) {
         array_append(children, parser_parse_html_attribute(parser));
@@ -467,10 +613,15 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       continue;
     }
 
+    if (parser->current_token->type == TOKEN_AT) {
+      array_append(children, parser_parse_html_attribute(parser));
+      continue;
+    }
+
     parser_append_unexpected_error(
       parser,
       "Unexpected Token",
-      "TOKEN_IDENTIFIER, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
+      "TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE",
       errors
     );
   }
@@ -515,9 +666,16 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
 static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) {
   array_T* errors = array_init(8);
+  array_T* children = array_init(8);
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
+
+  parser_consume_whitespace(parser, children);
+
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
+
+  parser_consume_whitespace(parser, children);
+
   token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
 
   if (tag_name != NULL && is_void_element(tag_name->value) && parser_in_svg_context(parser) == false) {
@@ -540,6 +698,7 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
   AST_HTML_CLOSE_TAG_NODE_T* close_tag = ast_html_close_tag_node_init(
     tag_opening,
     tag_name,
+    children,
     tag_closing,
     tag_opening->location->start,
     tag_closing->location->end,
@@ -579,7 +738,13 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 
   parser_push_open_tag(parser, open_tag->tag_name);
 
-  parser_parse_in_data_state(parser, body, errors);
+  if (open_tag->tag_name->value && parser_is_foreign_content_tag(open_tag->tag_name->value)) {
+    foreign_content_type_T content_type = parser_get_foreign_content_type(open_tag->tag_name->value);
+    parser_enter_foreign_content(parser, content_type);
+    parser_parse_foreign_content(parser, body, errors);
+  } else {
+    parser_parse_in_data_state(parser, body, errors);
+  }
 
   if (!token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) { return parser_handle_missing_close_tag(open_tag, body, errors); }
 
@@ -670,6 +835,83 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
   return erb_node;
 }
 
+static void parser_parse_foreign_content(parser_T* parser, array_T* children, array_T* errors) {
+  buffer_T content = buffer_new();
+  position_T* start = position_copy(parser->current_token->location->start);
+  const char* expected_closing_tag = parser_get_foreign_content_closing_tag(parser->foreign_content_type);
+
+  if (expected_closing_tag == NULL) {
+    parser_exit_foreign_content(parser);
+    position_free(start);
+    buffer_free(&content);
+
+    return;
+  }
+
+  while (!token_is(parser, TOKEN_EOF)) {
+    if (token_is(parser, TOKEN_ERB_START)) {
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      array_append(children, erb_node);
+
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
+
+      continue;
+    }
+
+    if (token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) {
+      size_t saved_position = parser->lexer->current_position;
+      size_t saved_line = parser->lexer->current_line;
+      size_t saved_column = parser->lexer->current_column;
+      size_t saved_previous_position = parser->lexer->previous_position;
+      size_t saved_previous_line = parser->lexer->previous_line;
+      size_t saved_previous_column = parser->lexer->previous_column;
+
+      char saved_char = parser->lexer->current_character;
+      lexer_state_T saved_state = parser->lexer->state;
+
+      token_T* next_token = lexer_next_token(parser->lexer);
+      bool is_potential_match = false;
+
+      if (next_token && next_token->type == TOKEN_IDENTIFIER && next_token->value) {
+        is_potential_match = parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
+      }
+
+      parser->lexer->current_position = saved_position;
+      parser->lexer->current_line = saved_line;
+      parser->lexer->current_column = saved_column;
+      parser->lexer->previous_position = saved_previous_position;
+      parser->lexer->previous_line = saved_previous_line;
+      parser->lexer->previous_column = saved_previous_column;
+      parser->lexer->current_character = saved_char;
+      parser->lexer->state = saved_state;
+
+      if (next_token) { token_free(next_token); }
+
+      if (is_potential_match) {
+        parser_append_literal_node_from_buffer(parser, &content, children, start);
+        parser_exit_foreign_content(parser);
+
+        position_free(start);
+        buffer_free(&content);
+
+        return;
+      }
+    }
+
+    token_T* token = parser_advance(parser);
+    buffer_append(&content, token->value);
+    token_free(token);
+  }
+
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
+  parser_exit_foreign_content(parser);
+  position_free(start);
+  buffer_free(&content);
+}
+
 static void parser_parse_in_data_state(parser_T* parser, array_T* children, array_T* errors) {
   while (token_is_none_of(parser, TOKEN_HTML_TAG_START_CLOSE, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
@@ -695,12 +937,14 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
     if (token_is_any_of(
           parser,
           TOKEN_AMPERSAND,
+          TOKEN_AT,
           TOKEN_CHARACTER,
           TOKEN_COLON,
           TOKEN_DASH,
           TOKEN_EQUALS,
           TOKEN_EXCLAMATION,
           TOKEN_IDENTIFIER,
+          TOKEN_NBSP,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
           TOKEN_QUOTE,
@@ -716,8 +960,8 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
     parser_append_unexpected_error(
       parser,
       "Unexpected token",
-      "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, or "
-      "TOKEN_NEWLINE",
+      "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, "
+      "TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE",
       errors
     );
   }
@@ -789,12 +1033,40 @@ AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser) {
   return parser_parse_document(parser);
 }
 
+static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children) {
+  if (parser->options && parser->options->track_whitespace) {
+    array_T* errors = array_init(8);
+    AST_WHITESPACE_NODE_T* whitespace_node = ast_whitespace_node_init(
+      whitespace_token,
+      whitespace_token->location->start,
+      whitespace_token->location->end,
+      errors
+    );
+    array_append(children, whitespace_node);
+  }
+
+  token_free(whitespace_token);
+}
+
+static void parser_consume_whitespace(parser_T* parser, array_T* children) {
+  while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+    token_T* whitespace = parser_advance(parser);
+
+    if (parser->options && parser->options->track_whitespace && children != NULL) {
+      parser_handle_whitespace(parser, whitespace, children);
+    } else {
+      token_free(whitespace);
+    }
+  }
+}
+
 void parser_free(parser_T* parser) {
   if (parser == NULL) { return; }
 
   if (parser->lexer != NULL) { lexer_free(parser->lexer); }
   if (parser->current_token != NULL) { token_free(parser->current_token); }
   if (parser->open_tags_stack != NULL) { array_free(&parser->open_tags_stack); }
+  if (parser->options != NULL) { free(parser->options); }
 
   free(parser);
 }

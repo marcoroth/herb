@@ -7,32 +7,32 @@ assignees: ''
 
 ---
 
-### Rule: `[linter-rule-name-here]`
+**Rule:** `[linter-rule-name-here]`
 
-##### Description
+## Description
 
 <!--- Briefly describe what the rule enforces. -->
 
-##### Rationale
+## Rationale
 
 <!--- Why is this rule important? -->
 
-#### Examples
+## Examples
 
 <!-- Provide examples of valid (✅ good) and invalid (🚫 bad) code. -->
 
-##### ✅ Good
+### ✅ Good
 
-```html+erb
-
-```
-
-##### 🚫 Bad
-
-```html+erb
+```erb
 
 ```
 
-#### References
+### 🚫 Bad
+
+```erb
+
+```
+
+## References
 
 <!--- -->

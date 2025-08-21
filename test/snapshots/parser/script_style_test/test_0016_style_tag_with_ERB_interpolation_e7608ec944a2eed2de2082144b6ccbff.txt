@@ -1,0 +1,44 @@
+@ DocumentNode (location: (1:0)-(1:68))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:68))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "style" (location: (1:1)-(1:6))
+        │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "style" (location: (1:1)-(1:6))
+        ├── body: (5 items)
+        │   ├── @ LiteralNode (location: (1:7)-(1:13))
+        │   │   └── content: ".user-"
+        │   │
+        │   ├── @ ERBContentNode (location: (1:13)-(1:28))
+        │   │   ├── tag_opening: "<%=" (location: (1:13)-(1:16))
+        │   │   ├── content: " @user.id " (location: (1:16)-(1:26))
+        │   │   ├── tag_closing: "%>" (location: (1:26)-(1:28))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   ├── @ LiteralNode (location: (1:28)-(1:38))
+        │   │   └── content: " { color: "
+        │   │
+        │   ├── @ ERBContentNode (location: (1:38)-(1:57))
+        │   │   ├── tag_opening: "<%=" (location: (1:38)-(1:41))
+        │   │   ├── content: " @theme_color " (location: (1:41)-(1:55))
+        │   │   ├── tag_closing: "%>" (location: (1:55)-(1:57))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (1:57)-(1:60))
+        │       └── content: "; }"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:60)-(1:68))
+        │       ├── tag_opening: "</" (location: (1:60)-(1:62))
+        │       ├── tag_name: "style" (location: (1:62)-(1:67))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:67)-(1:68))
+        │
+        └── is_void: false

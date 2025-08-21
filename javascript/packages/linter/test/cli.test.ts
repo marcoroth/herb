@@ -23,42 +23,133 @@ describe("CLI Output Formatting", () => {
   }
 
   test("formats detailed error output correctly", () => {
-    const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 
   test("formats simple output correctly", () => {
-    const { output, exitCode } = runLinter("test-file-simple.html.erb", "--simple")
+    const { output, exitCode } = runLinter("test-file-simple.html.erb", "--simple", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats simple output for bad-file correctly", () => {
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--simple", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 
   test("formats success output correctly", () => {
-    const { output, exitCode } = runLinter("clean-file.html.erb")
+    const { output, exitCode } = runLinter("clean-file.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(0)
   })
 
   test("handles multiple errors correctly", () => {
-    const { output, exitCode } = runLinter("bad-file.html.erb")
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 
-  test("displays most violated rules with multiple violations", () => {
-    const { output, exitCode } = runLinter("multiple-rule-violations.html.erb")
+  test("displays most violated rules with multiple offenses", () => {
+    const { output, exitCode } = runLinter("multiple-rule-offenses.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
   })
 
-  test("displays rule violations when showing all rules", () => {
-    const { output, exitCode } = runLinter("few-rule-violations.html.erb")
+  test("displays rule offenses when showing all rules", () => {
+    const { output, exitCode } = runLinter("few-rule-offenses.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("enables line wrapping by default", () => {
+    const { output } = runLinter("long-line.html.erb")
+
+    expect(output).toContain("        │")
+
+    const lines = output.split('\n')
+    const wrappedLines = lines.filter(line => line.match(/^\s+│\s/))
+    expect(wrappedLines.length).toBeGreaterThan(0)
+  })
+
+  test("correctly passes filename context for file-specific rules", () => {
+    const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--simple", "--no-wrap-lines")
+
+    expect(output).toContain("erb-requires-trailing-newline")
+    expect(output).toContain("File must end with trailing newline")
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats JSON output correctly for file with errors", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json")
+
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats JSON output correctly for clean file", () => {
+    const { output, exitCode } = runLinter("clean-file.html.erb", "--json")
+
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
+  test("formats JSON output correctly for bad file", () => {
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--json")
+
+    const json = JSON.parse(output)
+    expect(json).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output correctly for file with errors", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output correctly for clean file", () => {
+    const { output, exitCode } = runLinter("clean-file.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
+  test("formats GitHub Actions output correctly for bad file", () => {
+    const { output, exitCode } = runLinter("bad-file.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("formats GitHub Actions output with --format=github option", () => {
+    const { output, exitCode } = runLinter("test-file-simple.html.erb", "--format=github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("GitHub Actions format escapes special characters in messages", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("GitHub Actions format includes rule codes", () => {
+    const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--github")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)

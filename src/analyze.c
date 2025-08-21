@@ -39,7 +39,7 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   search_in_nodes(analyzed);
   search_rescue_nodes(analyzed);
   search_ensure_nodes(analyzed);
-  search_yield_nodes(analyzed);
+  search_yield_nodes(analyzed->root, analyzed);
   search_block_closing_nodes(analyzed);
 
   return analyzed;
@@ -50,7 +50,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
     const char* opening = erb_content_node->tag_opening->value;
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0) {
+
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
       if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
@@ -95,8 +96,13 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
+  if (ruby->valid) {
+    if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
+    return CONTROL_TYPE_UNKNOWN;
+  }
 
+  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
+  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
   if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
@@ -112,8 +118,6 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_while_node(ruby)) { return CONTROL_TYPE_WHILE; }
   if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
   if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
-  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
-  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
 
   return CONTROL_TYPE_UNKNOWN;
@@ -1020,9 +1024,21 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
       case CONTROL_TYPE_UNTIL:
       case CONTROL_TYPE_FOR:
       case CONTROL_TYPE_BLOCK:
-      case CONTROL_TYPE_YIELD:
         index = process_control_structure(node, array, index, new_array, context, type);
         continue;
+
+      case CONTROL_TYPE_YIELD: {
+        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(8), NULL, NULL, type);
+
+        if (yield_node) {
+          array_append(new_array, yield_node);
+        } else {
+          array_append(new_array, item);
+        }
+
+        index++;
+        break;
+      }
 
       default:
         array_append(new_array, item);

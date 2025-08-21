@@ -27,9 +27,9 @@ array_T* herb_lex(const char* source) {
   return tokens;
 }
 
-AST_DOCUMENT_NODE_T* herb_parse(const char* source) {
+AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
   lexer_T* lexer = lexer_init(source);
-  parser_T* parser = parser_init(lexer);
+  parser_T* parser = parser_init(lexer, options);
 
   AST_DOCUMENT_NODE_T* document = parser_parse(parser);
 

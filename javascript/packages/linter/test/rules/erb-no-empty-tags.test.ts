@@ -28,13 +28,36 @@ describe("ERBNoEmptyTagsRule", () => {
 
       <%= "" %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should not report errors for incomplete erb tags", () => {
+    const html = dedent`
+      <%
+    `
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("should not report errors for incomplete erb output tags", () => {
+    const html = dedent`
+      <%=
+    `
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("should report errors for completely empty ERB tags", () => {
@@ -44,15 +67,14 @@ describe("ERBNoEmptyTagsRule", () => {
         <%= %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
-    expect(lintResult.messages[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
-    expect(lintResult.messages[1].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
+    expect(lintResult.offenses).toHaveLength(2)
+    expect(lintResult.offenses[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
+    expect(lintResult.offenses[1].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
   })
 
   test("should report errors for whitespace-only ERB tags", () => {
@@ -64,14 +86,13 @@ describe("ERBNoEmptyTagsRule", () => {
         %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(3)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(3)
-    lintResult.messages.forEach(message => {
+    expect(lintResult.offenses).toHaveLength(3)
+    lintResult.offenses.forEach(message => {
       expect(message.message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
     })
   })
@@ -86,13 +107,12 @@ describe("ERBNoEmptyTagsRule", () => {
         <%= @variable %>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("should handle mixed valid and invalid ERB tags", () => {
@@ -105,40 +125,37 @@ describe("ERBNoEmptyTagsRule", () => {
         <% end %>
       </div>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(2)
+    expect(lintResult.offenses).toHaveLength(2)
 
-    lintResult.messages.forEach(message => {
+    lintResult.offenses.forEach(message => {
       expect(message.message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
     })
   })
 
   test("should handle empty ERB tag in attribute value", () => {
     const html = `<div class="<%= %>"></div>`
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
-    expect(lintResult.messages[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
   })
 
   test("should handle empty ERB tag in open tag", () => {
     const html = `<div <%= %>></div>`
-    const result = Herb.parse(html)
-    const linter = new Linter([ERBNoEmptyTagsRule])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [ERBNoEmptyTagsRule])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(1)
-    expect(lintResult.messages[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].message).toBe("ERB tag should not be empty. Remove empty ERB tags or add content.")
   })
 })

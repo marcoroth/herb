@@ -1,0 +1,52 @@
+@ DocumentNode (location: (1:0)-(1:59))
+└── children: (5 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:27))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(1:18))
+    │   │       └── content: "var s1 = '"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:18)-(1:27))
+    │   │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+    │   │       ├── tag_name: "script" (location: (1:20)-(1:26))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:26)-(1:27))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:27)-(1:40))
+    │   └── content: "'; var s2 = '"
+    │
+    ├── @ HTMLCloseTagNode (location: (1:40)-(1:48))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (1:40)-(1:48))
+    │   │       ├── message: "Found closing tag `</style>` at (1:42) without a matching opening tag."
+    │   │       └── closing_tag: "style" (location: (1:42)-(1:47))
+    │   │
+    │   ├── tag_opening: "</" (location: (1:40)-(1:42))
+    │   ├── tag_name: "style" (location: (1:42)-(1:47))
+    │   ├── children: []
+    │   └── tag_closing: ">" (location: (1:47)-(1:48))
+    │
+    ├── @ HTMLTextNode (location: (1:48)-(1:50))
+    │   └── content: "';"
+    │
+    └── @ HTMLCloseTagNode (location: (1:50)-(1:59))
+        ├── errors: (1 error)
+        │   └── @ MissingOpeningTagError (location: (1:50)-(1:59))
+        │       ├── message: "Found closing tag `</script>` at (1:52) without a matching opening tag."
+        │       └── closing_tag: "script" (location: (1:52)-(1:58))
+        │
+        ├── tag_opening: "</" (location: (1:50)-(1:52))
+        ├── tag_name: "script" (location: (1:52)-(1:58))
+        ├── children: []
+        └── tag_closing: ">" (location: (1:58)-(1:59))

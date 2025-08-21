@@ -18,6 +18,7 @@
         │   └── @ HTMLCloseTagNode (location: (1:8204)-(1:8210))
         │       ├── tag_opening: "</" (location: (1:8204)-(1:8206))
         │       ├── tag_name: "div" (location: (1:8206)-(1:8209))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:8209)-(1:8210))
         │
         └── is_void: false

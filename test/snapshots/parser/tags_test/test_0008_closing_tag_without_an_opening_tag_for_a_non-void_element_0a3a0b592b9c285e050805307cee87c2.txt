@@ -8,4 +8,5 @@
         │
         ├── tag_opening: "</" (location: (1:0)-(1:2))
         ├── tag_name: "div" (location: (1:2)-(1:5))
+        ├── children: []
         └── tag_closing: ">" (location: (1:5)-(1:6))

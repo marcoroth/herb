@@ -1,0 +1,45 @@
+@ DocumentNode (location: (1:0)-(1:44))
+├── errors: (1 error)
+│   └── @ UnexpectedError (location: (1:33)-(1:34))
+│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_BACKTICK`."
+│       ├── description: "Unexpected token"
+│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
+│       └── found: "TOKEN_BACKTICK"
+│
+└── children: (3 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:33))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(1:24))
+    │   │       └── content: "var template = `"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:24)-(1:33))
+    │   │       ├── tag_opening: "</" (location: (1:24)-(1:26))
+    │   │       ├── tag_name: "script" (location: (1:26)-(1:32))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:32)-(1:33))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (1:34)-(1:35))
+    │   └── content: ";"
+    │
+    └── @ HTMLCloseTagNode (location: (1:35)-(1:44))
+        ├── errors: (1 error)
+        │   └── @ MissingOpeningTagError (location: (1:35)-(1:44))
+        │       ├── message: "Found closing tag `</script>` at (1:37) without a matching opening tag."
+        │       └── closing_tag: "script" (location: (1:37)-(1:43))
+        │
+        ├── tag_opening: "</" (location: (1:35)-(1:37))
+        ├── tag_name: "script" (location: (1:37)-(1:43))
+        ├── children: []
+        └── tag_closing: ">" (location: (1:43)-(1:44))

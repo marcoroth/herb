@@ -28,11 +28,13 @@ typedef enum {
   TOKEN_SLASH,       // /
   TOKEN_EQUALS,      // =
   TOKEN_QUOTE,       // ", '
+  TOKEN_BACKTICK,    // `
   TOKEN_DASH,        // -
   TOKEN_UNDERSCORE,  // _
   TOKEN_EXCLAMATION, // !
   TOKEN_SEMICOLON,   // ;
   TOKEN_COLON,       // :
+  TOKEN_AT,          // @
   TOKEN_PERCENT,     // %
   TOKEN_AMPERSAND,   // &
 

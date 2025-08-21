@@ -34,6 +34,36 @@ module Parser
       assert_parsed_snapshot(%(<input value= "value" />))
     end
 
+    test "attribute value with space before equal sign" do
+      assert_parsed_snapshot(%(<input value ="value" />))
+    end
+
+    test "attribute value with space before and after equal sign" do
+      assert_parsed_snapshot(%(<div class    =    "hello">Content</div>))
+    end
+
+    test "attribute value with newline before equal sign" do
+      assert_parsed_snapshot(%(<input value
+="value" />))
+    end
+
+    test "attribute value with newline after equal sign" do
+      assert_parsed_snapshot(%(<input value=
+"value" />))
+    end
+
+    test "attribute value with newline before and after equal sign" do
+      assert_parsed_snapshot(%(<input value
+=
+"value" />))
+    end
+
+    test "attribute value with mixed whitespace and newlines around equal sign" do
+      assert_parsed_snapshot(%(<div class
+  =
+  "hello">Content</div>))
+    end
+
     test "attribute value with exclamation point" do
       assert_parsed_snapshot(%(<input value="Hello!" />))
     end
@@ -60,6 +90,62 @@ module Parser
 
     test "erb output with quotes" do
       assert_parsed_snapshot(%(<div title="<%= "quoted string" %>"></div>))
+    end
+
+    test "attributes with dots in name" do
+      assert_parsed_snapshot(%(<div x-transition.duration.500ms x-show="visible" x-cloak></div>))
+    end
+
+    test "complex attribute with dots and values" do
+      assert_parsed_snapshot(%(<div x-transition.duration.500ms="fast" data-component.option="value"></div>))
+    end
+
+    test "attributes starting with @ symbol" do
+      assert_parsed_snapshot(%(<div @click="handleClick" @keyup.enter="submit"></div>))
+    end
+
+    test "@ attributes with various patterns" do
+      assert_parsed_snapshot(%(<div @submit.prevent @change.debounce.100ms="update" @mouseover></div>))
+    end
+
+    test "standalone @ symbol in div tag" do
+      assert_parsed_snapshot(%(<div @></div>))
+    end
+
+    test "standalone @ symbol followed by whitesapce in div tag" do
+      assert_parsed_snapshot(%(<div @ ></div>))
+    end
+
+    test "standalone @ symbol followed by whitesapce and identifier in div tag" do
+      assert_parsed_snapshot(%(<div @ click></div>))
+    end
+
+    test "standalone @ symbol in div tag followed by attribute" do
+      assert_parsed_snapshot(%(<div @ data-attribute="test"></div>))
+    end
+
+    test "atttribute with @ prefix and now value" do
+      assert_parsed_snapshot(%(<div @click></div>))
+    end
+
+    test "attribute with backtick quotes (invalid)" do
+      assert_parsed_snapshot(%(<div class=`hello`></div>))
+    end
+
+    test "attribute with backtick quotes and whitespace (invalid)" do
+      assert_parsed_snapshot(%(<div class=`hello world`></div>))
+    end
+
+    test "multiple attributes with mixed quotes including backticks (invalid)" do
+      assert_parsed_snapshot(%(<div class="valid" id=`invalid` data-test='also-valid'></div>))
+    end
+
+    test "self-closing tag with backtick attribute (invalid)" do
+      assert_parsed_snapshot(%(<img src=`image.jpg` />))
+    end
+
+    test "attribute with backtick containing HTML (invalid)" do
+      assert_parsed_snapshot(%(<div data-template=`<span>Hello</span>`></div>))
     end
   end
 end

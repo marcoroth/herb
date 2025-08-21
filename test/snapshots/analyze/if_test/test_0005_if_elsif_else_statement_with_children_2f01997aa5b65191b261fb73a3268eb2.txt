@@ -26,6 +26,7 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:10)-(2:15))
     │   │   │   │       ├── tag_opening: "</" (location: (2:10)-(2:12))
     │   │   │   │       ├── tag_name: "h1" (location: (2:12)-(2:14))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
     │   │   │   └── is_void: false
@@ -60,6 +61,7 @@
     │   │       │   │   │   └── @ HTMLCloseTagNode (location: (4:11)-(4:16))
     │   │       │   │   │       ├── tag_opening: "</" (location: (4:11)-(4:13))
     │   │       │   │   │       ├── tag_name: "h1" (location: (4:13)-(4:15))
+    │   │       │   │   │       ├── children: []
     │   │       │   │   │       └── tag_closing: ">" (location: (4:15)-(4:16))
     │   │       │   │   │
     │   │       │   │   └── is_void: false
@@ -94,6 +96,7 @@
     │   │       │           │   │   └── @ HTMLCloseTagNode (location: (6:10)-(6:15))
     │   │       │           │   │       ├── tag_opening: "</" (location: (6:10)-(6:12))
     │   │       │           │   │       ├── tag_name: "h1" (location: (6:12)-(6:14))
+    │   │       │           │   │       ├── children: []
     │   │       │           │   │       └── tag_closing: ">" (location: (6:14)-(6:15))
     │   │       │           │   │
     │   │       │           │   └── is_void: false

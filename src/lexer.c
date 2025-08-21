@@ -1,6 +1,7 @@
 #include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/token.h"
+#include "include/utf8.h"
 #include "include/util.h"
 
 #include <ctype.h>
@@ -84,6 +85,23 @@ static void lexer_advance(lexer_T* lexer) {
   }
 }
 
+static void lexer_advance_utf8_bytes(lexer_T* lexer, int byte_count) {
+  if (byte_count <= 0) { return; }
+
+  if (lexer_has_more_characters(lexer) && !lexer_eof(lexer)) {
+    if (!is_newline(lexer->current_character)) { lexer->current_column++; }
+
+    lexer->current_position += byte_count;
+
+    if (lexer->current_position >= lexer->source_length) {
+      lexer->current_position = lexer->source_length;
+      lexer->current_character = '\0';
+    } else {
+      lexer->current_character = lexer->source[lexer->current_position];
+    }
+  }
+}
+
 static void lexer_advance_by(lexer_T* lexer, const size_t count) {
   for (size_t i = 0; i < count; i++) {
     lexer_advance(lexer);
@@ -114,6 +132,35 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
 
 static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
   return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
+}
+
+static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
+  int char_byte_length = utf8_sequence_length(lexer->source, lexer->current_position, lexer->source_length);
+
+  if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
+
+  char* utf8_char = malloc(char_byte_length + 1);
+
+  if (!utf8_char) { return lexer_advance_current(lexer, type); }
+
+  for (int i = 0; i < char_byte_length; i++) {
+    if (lexer->current_position + i >= lexer->source_length) {
+      free(utf8_char);
+      return lexer_advance_current(lexer, type);
+    }
+
+    utf8_char[i] = lexer->source[lexer->current_position + i];
+  }
+
+  utf8_char[char_byte_length] = '\0';
+
+  lexer_advance_utf8_bytes(lexer, char_byte_length);
+
+  token_T* token = token_init(utf8_char, type, lexer);
+
+  free(utf8_char);
+
+  return token;
 }
 
 static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
@@ -184,7 +231,16 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     }
 
     buffer_append_char(&buffer, lexer->current_character);
-    lexer_advance(lexer);
+
+    if (is_newline(lexer->current_character)) {
+      lexer->current_line++;
+      lexer->current_column = 0;
+    } else {
+      lexer->current_column++;
+    }
+
+    lexer->current_position++;
+    lexer->current_character = lexer->source[lexer->current_position];
   }
 
   lexer->state = STATE_ERB_CLOSE;
@@ -223,7 +279,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
   if (isspace(lexer->current_character)) { return lexer_parse_whitespace(lexer); }
 
   if (lexer->current_character == '\xC2' && lexer_peek(lexer, 1) == '\xA0') {
-    return lexer_advance_with(lexer, "\xC2\xA0", TOKEN_NBSP);
+    return lexer_advance_utf8_character(lexer, TOKEN_NBSP);
   }
 
   switch (lexer->current_character) {
@@ -240,7 +296,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with(lexer, "<!--", TOKEN_HTML_COMMENT_START);
       }
 
-      if (lexer_peek(lexer, 1) == '/' && isalnum(lexer_peek(lexer, 2))) {
+      if (lexer_peek_for_close_tag_start(lexer, 0)) {
         return lexer_advance_with(lexer, "</", TOKEN_HTML_TAG_START_CLOSE);
       }
 
@@ -260,6 +316,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);
     case '_': return lexer_advance_current(lexer, TOKEN_UNDERSCORE);
     case ':': return lexer_advance_current(lexer, TOKEN_COLON);
+    case '@': return lexer_advance_current(lexer, TOKEN_AT);
     case ';': return lexer_advance_current(lexer, TOKEN_SEMICOLON);
     case '&': return lexer_advance_current(lexer, TOKEN_AMPERSAND);
     case '!': return lexer_advance_current(lexer, TOKEN_EXCLAMATION);
@@ -268,11 +325,12 @@ token_T* lexer_next_token(lexer_T* lexer) {
 
     case '"':
     case '\'': return lexer_advance_current(lexer, TOKEN_QUOTE);
+    case '`': return lexer_advance_current(lexer, TOKEN_BACKTICK);
 
     default: {
       if (isalnum(lexer->current_character)) { return lexer_parse_identifier(lexer); }
 
-      return lexer_advance_current(lexer, TOKEN_CHARACTER);
+      return lexer_advance_utf8_character(lexer, TOKEN_CHARACTER);
     }
   }
 }

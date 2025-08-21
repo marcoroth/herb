@@ -1,0 +1,44 @@
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:24))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:18))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:17)-(1:18))
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:4)-(1:5))
+    │   │       │   │   └── value: " " (location: (1:4)-(1:5))
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:17))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "  =  " (location: (1:10)-(1:15))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:17))
+    │   │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+    │   │       │               ├── children: []
+    │   │       │               ├── close_quote: """ (location: (1:16)-(1:17))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:18)-(1:24))
+    │   │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+    │   │       ├── tag_name: "div" (location: (1:20)-(1:23))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:23)-(1:24))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (1:24)-(2:0))
+        └── content: "\n"

@@ -20,9 +20,9 @@ window.analyze = analyze
 const exampleFile = dedent`
   <!-- Example HTML+ERB File -->
 
-  <input required />
+  <input     required />
 
-  <h1 class='bg-gray-300 text-gray" id='' data-controller="example">
+  <h1     class='bg-gray-300 text-gray"     id=''     data-controller="example">
     Hello World <%= RUBY_VERSION %>
   </h1>
 
@@ -33,6 +33,9 @@ const exampleFile = dedent`
       <div>Happy Day!</div>
     <% end %>
   </h2>
+
+  <!-- Track whitespace example -->
+  <div   class="example"></div   >
 
   <!-- invalid -->
   </br>
@@ -47,10 +50,12 @@ const exampleFile = dedent`
 export default class extends Controller {
   static targets = [
     "input",
-    "prettyViewer",
+    "parseViewer",
+    "parserOptions",
     "rubyViewer",
     "htmlViewer",
     "lexViewer",
+    "formatViewer",
     "fullViewer",
     "viewerButton",
     "version",
@@ -60,10 +65,17 @@ export default class extends Controller {
     "errorCount",
     "warningCount",
     "infoCount",
+    "commitHash",
   ]
 
   connect() {
+    if (this.isDarkMode) {
+      document.documentElement.classList.add('dark')
+    }
+
     this.restoreInput()
+    this.restoreActiveTab()
+    this.restoreParserOptions()
     this.inputTarget.focus()
     this.load()
 
@@ -71,7 +83,7 @@ export default class extends Controller {
 
     this.editor = replaceTextareaWithMonaco("input", this.inputTarget, {
       language: "erb",
-      theme: "",
+      theme: this.isDarkMode ? 'vs-dark' : 'vs',
       automaticLayout: true,
       minimap: { enabled: false },
     })
@@ -106,6 +118,26 @@ export default class extends Controller {
 
     window.addEventListener("popstate", this.handlePopState)
     window.editor = this.editor
+
+    this.setupThemeListener()
+  }
+
+  get isDarkMode() {
+    const actualTheme = localStorage.getItem('vitepress-theme-actual')
+
+    if (actualTheme) {
+      return actualTheme === 'dark'
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+
+  setupThemeListener() {
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'vitepress-theme-actual' && event.newValue) {
+        window.location.reload()
+      }
+    })
   }
 
   updatePosition(line, column, length) {
@@ -131,6 +163,9 @@ export default class extends Controller {
 
   updateURL() {
     window.parent.location.hash = this.compressedValue
+
+    const options = this.getParserOptions()
+    this.setOptionsInURL(options)
   }
 
   async insert(event) {
@@ -184,6 +219,63 @@ export default class extends Controller {
     }
   }
 
+  restoreActiveTab() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const tabParam = urlParams.get('tab')
+
+    if (tabParam && this.isValidTab(tabParam)) {
+      this.setActiveTab(tabParam)
+    }
+  }
+
+  restoreParserOptions() {
+    const optionsFromURL = this.getOptionsFromURL()
+    if (Object.keys(optionsFromURL).length > 0) {
+      this.setParserOptions(optionsFromURL)
+    }
+  }
+
+  isValidTab(tab) {
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'full']
+    return validTabs.includes(tab)
+  }
+
+  setActiveTab(tabName) {
+    this.viewerButtonTargets.forEach((button) => {
+      button.dataset.active = false
+    })
+
+    const targetButton = this.viewerButtonTargets.find(
+      (button) => button.dataset.viewer === tabName
+    )
+
+    if (targetButton) {
+      targetButton.dataset.active = true
+
+      this.element
+        .querySelectorAll("[data-viewer-target]")
+        .forEach((viewer) => viewer.classList.add("hidden"))
+
+      const targetViewer = this.element.querySelector(
+        `[data-viewer-target=${tabName}]`
+      )
+
+      targetViewer?.classList.remove("hidden")
+    }
+  }
+
+  updateTabInURL(tabName) {
+    const url = new URL(window.parent.location)
+
+    if (tabName && tabName !== 'parse') {
+      url.searchParams.set('tab', tabName)
+    } else {
+      url.searchParams.delete('tab')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
   getClosestButton(element) {
     return element instanceof window.HTMLButtonElement
       ? element
@@ -204,17 +296,10 @@ export default class extends Controller {
 
   selectViewer(event) {
     const button = this.getClosestButton(event.target)
+    const tabName = button.dataset.viewer
 
-    this.viewerButtonTargets.forEach((button) => {
-      button.dataset.active = false
-    })
-    button.dataset.active = true
-
-    this.element
-      .querySelectorAll("[data-viewer-target]")
-      .forEach((viewer) => viewer.classList.add("hidden"))
-
-    this.currentViewer?.classList.remove("hidden")
+    this.setActiveTab(tabName)
+    this.updateTabInURL(tabName)
   }
 
   toggleViewer() {
@@ -267,7 +352,7 @@ export default class extends Controller {
   }
 
   clearTreeLocationHighlights() {
-    this.prettyViewerTarget
+    this.parseViewerTarget
       .querySelectorAll(".tree-location-highlight")
       .forEach((element) => {
         element.classList.remove("tree-location-highlight")
@@ -276,7 +361,7 @@ export default class extends Controller {
 
   get treeLocations() {
     return Array.from(
-      this.prettyViewerTarget?.querySelectorAll(".token.location") || [],
+      this.parseViewerTarget?.querySelectorAll(".token.location") || [],
     ).map((locationElement) => {
       const element = locationElement.previousElementSibling
       const location = Array.from(
@@ -296,11 +381,39 @@ export default class extends Controller {
     this.urlUpdatedFromChangeEvent = false
   }
 
+  async formatEditor(event) {
+    const button = this.getClosestButton(event.target)
+
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const result = await analyze(Herb, value)
+
+      if (result.formatted) {
+        if (this.editor) {
+          this.editor.setValue(result.formatted)
+        } else {
+          this.inputTarget.value = result.formatted
+        }
+
+        button.querySelector(".fa-indent").classList.add("hidden")
+        button.querySelector(".fa-circle-check").classList.remove("hidden")
+
+        setTimeout(() => {
+          button.querySelector(".fa-indent").classList.remove("hidden")
+          button.querySelector(".fa-circle-check").classList.add("hidden")
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('Format error:', error)
+    }
+  }
+
   async analyze() {
     this.updateURL()
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-    const result = await analyze(Herb, value)
+    const options = this.getParserOptions()
+    const result = await analyze(Herb, value, options)
 
     this.updatePosition(1, 0, value.length)
 
@@ -310,19 +423,19 @@ export default class extends Controller {
 
     if (result.parseResult) {
       const errors = result.parseResult.recursiveErrors()
-      allDiagnostics.push(...errors.flatMap((error) => error.toDiagnostics()))
+      allDiagnostics.push(...errors.map((error) => error.toMonacoDiagnostic()))
     }
 
-    if (result.lintResult && result.lintResult.messages) {
-      const lintDiagnostics = result.lintResult.messages.map((message) => ({
-        severity: message.severity,
-        message: message.message,
-        line: message.location.start.line,
-        column: message.location.start.column,
-        endLine: message.location.end.line,
-        endColumn: message.location.end.column,
+    if (result.lintResult && result.lintResult.offenses) {
+      const lintDiagnostics = result.lintResult.offenses.map((offense) => ({
+        severity: offense.severity,
+        message: offense.message,
+        line: offense.location.start.line,
+        column: offense.location.start.column,
+        endLine: offense.location.end.line,
+        endColumn: offense.location.end.column,
         source: "Herb Linter ",
-        code: message.rule,
+        code: offense.rule,
       }))
 
       allDiagnostics.push(...lintDiagnostics)
@@ -351,14 +464,60 @@ export default class extends Controller {
     }
 
     if (this.hasVersionTarget) {
-      this.versionTarget.textContent = result.version
+      const fullVersion = result.version
+      let displayVersion = fullVersion
+
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+
+        displayVersion = fullVersion.split(',').map(component => {
+          if (component.includes('libprism')) {
+            return component
+          }
+
+          return component.replace(/@[\d]+\.[\d]+\.[\d]+/g, `@${commitInfo.hash}`)
+        }).join(',')
+      }
+
+      const shortVersion = displayVersion.split(',')[0]
+
+      const icon = this.versionTarget.querySelector('i')
+      if (icon) {
+        const textNodes = Array.from(this.versionTarget.childNodes).filter(node => node.nodeType === Node.TEXT_NODE)
+        textNodes.forEach(node => node.remove())
+        this.versionTarget.insertBefore(document.createTextNode(shortVersion), icon)
+      } else {
+        this.versionTarget.textContent = shortVersion
+      }
+
+      this.versionTarget.title = displayVersion
     }
 
-    if (this.hasPrettyViewerTarget) {
-      this.prettyViewerTarget.classList.add("language-tree")
-      this.prettyViewerTarget.textContent = result.string
+    if (this.hasCommitHashTarget) {
+      if (typeof __COMMIT_INFO__ !== 'undefined') {
+        const commitInfo = __COMMIT_INFO__
+        const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
-      Prism.highlightElement(this.prettyViewerTarget)
+        if (commitInfo.ahead > 0) {
+          this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+        } else {
+          this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
+        }
+
+        this.commitHashTarget.href = githubUrl
+        this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+      } else {
+        this.commitHashTarget.textContent = 'unknown'
+        this.commitHashTarget.removeAttribute('href')
+        this.commitHashTarget.removeAttribute('title')
+      }
+    }
+
+    if (this.hasParseViewerTarget) {
+      this.parseViewerTarget.classList.add("language-tree")
+      this.parseViewerTarget.textContent = result.string
+
+      Prism.highlightElement(this.parseViewerTarget)
 
       this.treeLocations.forEach(({ element, locationElement, location }) => {
         this.setupHoverListener(locationElement, location)
@@ -375,6 +534,13 @@ export default class extends Controller {
       this.htmlViewerTarget.textContent = result.html
 
       Prism.highlightElement(this.htmlViewerTarget)
+    }
+
+    if (this.hasFormatViewerTarget) {
+      this.formatViewerTarget.classList.add("language-html")
+      this.formatViewerTarget.textContent = result.formatted
+
+      Prism.highlightElement(this.formatViewerTarget)
     }
 
     if (this.hasRubyViewerTarget) {
@@ -401,5 +567,76 @@ export default class extends Controller {
     return lz.decompressFromEncodedURIComponent(
       window.parent.location.hash.slice(1),
     )
+  }
+
+  getParserOptions() {
+    const options = {}
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+
+    optionInputs.forEach(input => {
+      const optionName = input.dataset.option
+      if (input.type === 'checkbox') {
+        options[optionName] = input.checked
+      } else {
+        options[optionName] = input.value
+      }
+    })
+
+    return options
+  }
+
+  setParserOptions(options) {
+    const optionInputs = this.parserOptionsTarget.querySelectorAll('input[data-option]')
+
+    optionInputs.forEach(input => {
+      const optionName = input.dataset.option
+      if (options.hasOwnProperty(optionName)) {
+        if (input.type === 'checkbox') {
+          input.checked = Boolean(options[optionName])
+        } else {
+          input.value = options[optionName]
+        }
+      }
+    })
+  }
+
+  onOptionChange(event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  getOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.location.search)
+    const optionsString = urlParams.get('options')
+
+    if (optionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(optionsString))
+      } catch (e) {
+        console.warn('Failed to parse options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setOptionsInURL(options) {
+    const url = new URL(window.location)
+
+    const nonDefaultOptions = {}
+
+    Object.keys(options).forEach(key => {
+      if (options[key] !== false && options[key] !== '' && options[key] !== null && options[key] !== undefined) {
+        nonDefaultOptions[key] = options[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultOptions).length > 0) {
+      url.searchParams.set('options', JSON.stringify(nonDefaultOptions))
+    } else {
+      url.searchParams.delete('options')
+    }
+
+    window.history.replaceState({}, '', url)
   }
 }

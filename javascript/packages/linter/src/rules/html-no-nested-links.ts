@@ -1,14 +1,15 @@
 import { BaseRuleVisitor, getTagName } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
-import type { HTMLOpenTagNode, HTMLElementNode, Node } from "@herb-tools/core"
+import { ParserRule } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
+import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class NestedLinkVisitor extends BaseRuleVisitor {
   private linkStack: HTMLOpenTagNode[] = []
 
   private checkNestedLink(openTag: HTMLOpenTagNode): boolean {
     if (this.linkStack.length > 0) {
-      this.addMessage(
+      this.addOffense(
         "Nested `<a>` elements are not allowed. Links cannot contain other links.",
         openTag.tag_name!.location,
         "error"
@@ -54,12 +55,12 @@ class NestedLinkVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLNoNestedLinksRule implements Rule {
+export class HTMLNoNestedLinksRule extends ParserRule {
   name = "html-no-nested-links"
 
-  check(node: Node): LintMessage[] {
-    const visitor = new NestedLinkVisitor(this.name)
-    visitor.visit(node)
-    return visitor.messages
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new NestedLinkVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }

@@ -215,6 +215,10 @@ nodes:
         - name: tag_name
           type: token
 
+        - name: children
+          type: array
+          kind: Node
+
         - name: tag_closing
           type: token
 

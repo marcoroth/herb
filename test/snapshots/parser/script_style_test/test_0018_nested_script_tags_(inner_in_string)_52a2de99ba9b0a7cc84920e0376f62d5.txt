@@ -1,0 +1,27 @@
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(3:0))
+    │   │       └── content: "\n  document.write('<script src=\"other.js\"><' + '/script>');\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:9))
+    │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
+    │   │       ├── tag_name: "script" (location: (3:2)-(3:8))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:8)-(3:9))
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

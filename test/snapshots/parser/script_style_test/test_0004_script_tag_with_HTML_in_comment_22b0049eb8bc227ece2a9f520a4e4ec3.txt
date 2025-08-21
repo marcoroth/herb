@@ -1,0 +1,24 @@
+@ DocumentNode (location: (1:0)-(1:54))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:54))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: (1 item)
+        │   └── @ LiteralNode (location: (1:8)-(1:45))
+        │       └── content: "// <div> should be ignored in comment"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:45)-(1:54))
+        │       ├── tag_opening: "</" (location: (1:45)-(1:47))
+        │       ├── tag_name: "script" (location: (1:47)-(1:53))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:53)-(1:54))
+        │
+        └── is_void: false

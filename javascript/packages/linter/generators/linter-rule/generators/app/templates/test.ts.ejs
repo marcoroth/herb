@@ -17,13 +17,12 @@ describe("<%= ruleClassName %>", () => {
         <%%= title %>
       </h1>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([<%= ruleClassName %>])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [<%= ruleClassName %>])
+    const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
-    expect(lintResult.messages).toHaveLength(0)
+    expect(lintResult.offenses).toHaveLength(0)
   })
 
   test("invalid case TODO", () => {
@@ -31,9 +30,14 @@ describe("<%= ruleClassName %>", () => {
       <h1>
         <%%= title %>
     `
-    const result = Herb.parse(html)
-    const linter = new Linter([<%= ruleClassName %>])
-    const lintResult = linter.lint(result.value)
+    const linter = new Linter(Herb, [<%= ruleClassName %>])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].code).toBe("<%= ruleName %>")
+    expect(lintResult.offenses[0].message).toBe("TODO: update rule message")
 
     // TODO: add assertions for invalid case
   })

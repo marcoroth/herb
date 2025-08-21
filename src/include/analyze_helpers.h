@@ -44,6 +44,6 @@ bool search_when_nodes(analyzed_ruby_T* analyzed);
 bool search_in_nodes(analyzed_ruby_T* analyzed);
 bool search_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_ensure_nodes(analyzed_ruby_T* analyzed);
-bool search_yield_nodes(analyzed_ruby_T* analyzed);
+bool search_yield_nodes(const pm_node_t* node, void* data);
 
 #endif

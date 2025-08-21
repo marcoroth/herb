@@ -1,0 +1,34 @@
+@ DocumentNode (location: (1:0)-(1:44))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:44))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "script" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "script" (location: (1:1)-(1:7))
+        ├── body: (3 items)
+        │   ├── @ LiteralNode (location: (1:8)-(1:17))
+        │   │   └── content: "var s = \""
+        │   │
+        │   ├── @ ERBContentNode (location: (1:17)-(1:33))
+        │   │   ├── tag_opening: "<%" (location: (1:17)-(1:19))
+        │   │   ├── content: ""; var e = "" (location: (1:19)-(1:31))
+        │   │   ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ LiteralNode (location: (1:33)-(1:35))
+        │       └── content: "\";"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:35)-(1:44))
+        │       ├── tag_opening: "</" (location: (1:35)-(1:37))
+        │       ├── tag_name: "script" (location: (1:37)-(1:43))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:43)-(1:44))
+        │
+        └── is_void: false

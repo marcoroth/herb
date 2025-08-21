@@ -1,0 +1,55 @@
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (6 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:37))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(3:28))
+    │   │       └── content: "\n  /*\n   * This is a comment with "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:28)-(3:37))
+    │   │       ├── tag_opening: "</" (location: (3:28)-(3:30))
+    │   │       ├── tag_name: "script" (location: (3:30)-(3:36))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:36)-(3:37))
+    │   │
+    │   └── is_void: false
+    │
+    ├── @ HTMLTextNode (location: (3:37)-(4:27))
+    │   └── content: " inside\n   * and some more content "
+    │
+    ├── @ HTMLCloseTagNode (location: (4:27)-(4:35))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (4:27)-(4:35))
+    │   │       ├── message: "Found closing tag `</style>` at (4:29) without a matching opening tag."
+    │   │       └── closing_tag: "style" (location: (4:29)-(4:34))
+    │   │
+    │   ├── tag_opening: "</" (location: (4:27)-(4:29))
+    │   ├── tag_name: "style" (location: (4:29)-(4:34))
+    │   ├── children: []
+    │   └── tag_closing: ">" (location: (4:34)-(4:35))
+    │
+    ├── @ HTMLTextNode (location: (4:35)-(7:0))
+    │   └── content: "\n   */\n  console.log(\"actual code\");\n"
+    │
+    ├── @ HTMLCloseTagNode (location: (7:0)-(7:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingOpeningTagError (location: (7:0)-(7:9))
+    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag."
+    │   │       └── closing_tag: "script" (location: (7:2)-(7:8))
+    │   │
+    │   ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   ├── tag_name: "script" (location: (7:2)-(7:8))
+    │   ├── children: []
+    │   └── tag_closing: ">" (location: (7:8)-(7:9))
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

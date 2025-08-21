@@ -1,7 +1,8 @@
 import { AttributeVisitorMixin } from "./rule-utils.js"
 
-import type { Rule, LintMessage } from "../types.js"
-import type { HTMLAttributeNode, HTMLAttributeValueNode, Node } from "@herb-tools/core"
+import { ParserRule } from "../types.js"
+import type { LintOffense, LintContext } from "../types.js"
+import type { HTMLAttributeNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
 
 class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
   protected checkAttribute(attributeName: string, _attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
@@ -10,7 +11,8 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     const valueNode = attributeNode.value as HTMLAttributeValueNode
     if (valueNode.quoted) return
 
-    this.addMessage(
+    this.addOffense(
+      // TODO: print actual attribute value in message
       `Attribute value should be quoted: \`${attributeName}="value"\`. Always wrap attribute values in quotes.`,
       valueNode.location,
       "error"
@@ -18,12 +20,12 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
   }
 }
 
-export class HTMLAttributeValuesRequireQuotesRule implements Rule {
+export class HTMLAttributeValuesRequireQuotesRule extends ParserRule {
   name = "html-attribute-values-require-quotes"
 
-  check(node: Node): LintMessage[] {
-    const visitor = new AttributeValuesRequireQuotesVisitor(this.name)
-    visitor.visit(node)
-    return visitor.messages
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+    const visitor = new AttributeValuesRequireQuotesVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }
