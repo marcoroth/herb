@@ -56,8 +56,12 @@ export default class extends Controller {
     "htmlViewer",
     "lexViewer",
     "formatViewer",
-    "linterViewer",
-    "linterContent",
+    "formatSuccess",
+    "formatError",
+    "diagnosticsViewer",
+    "diagnosticsContent",
+    "noDiagnostics",
+    "diagnosticsList",
     "fullViewer",
     "viewerButton",
     "version",
@@ -250,8 +254,12 @@ export default class extends Controller {
         content = this.htmlViewerTarget.textContent
         break
       case 'format':
-        const formatPre = this.formatViewerTarget.querySelector('pre')
-        content = formatPre ? formatPre.textContent : ''
+        if (!this.formatSuccessTarget.classList.contains('hidden')) {
+          content = this.formatSuccessTarget.textContent
+        } else if (!this.formatErrorTarget.classList.contains('hidden')) {
+          const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
+          content = blurredPre ? blurredPre.textContent : ''
+        }
         break
       case 'diagnostics':
         content = this.getDiagnosticsAsText()
@@ -323,7 +331,7 @@ export default class extends Controller {
   }
 
   getDiagnosticsAsText() {
-    const diagnosticItems = this.linterContentTarget.querySelectorAll('.diagnostic-item')
+    const diagnosticItems = this.diagnosticsContentTarget.querySelectorAll('.diagnostic-item')
 
     if (diagnosticItems.length === 0) {
       return 'No diagnostics to display'
@@ -572,7 +580,6 @@ export default class extends Controller {
       allDiagnostics.push(...lintDiagnostics)
     }
 
-    // Filter out parser-no-errors diagnostics for both editor and status display
     const filteredDiagnosticsForEditor = allDiagnostics.filter(diagnostic =>
       diagnostic.code !== 'parser-no-errors'
     )
@@ -673,49 +680,23 @@ export default class extends Controller {
     }
 
     if (this.hasFormatViewerTarget) {
-      // Check if there are any errors that would prevent proper formatting
       const hasErrors = filteredDiagnosticsForEditor.some(diagnostic => diagnostic.severity === "error")
 
       if (hasErrors) {
-        // Show overlay with blurred formatted content
-        this.formatViewerTarget.innerHTML = `
-          <div class="relative h-full overflow-hidden">
-            <pre class="absolute inset-0 blur-md opacity-30 overflow-auto p-3 m-0 font-mono text-[#dcdfe4] language-html" style="white-space: pre; line-height: 1.3">${this.escapeHtml(result.formatted || 'No formatted output available')}</pre>
-            <div class="absolute inset-0 bg-gray-800/70 backdrop-blur-md flex items-center justify-center z-10 rounded">
-              <div class="bg-gray-700 border border-gray-500 rounded-lg p-6 text-center">
-                <i class="fas fa-exclamation-triangle text-yellow-400 text-2xl mb-3"></i>
-                <h3 class="text-lg font-semibold text-gray-100 mb-2">Formatting Unavailable</h3>
-                <p class="text-gray-300 text-sm">
-                  Cannot format code due to syntax errors.
-                </p>
-                <p class="text-gray-300 text-sm mt-2">
-                  Fix errors in
-                  <button class="text-blue-400 hover:text-blue-300 underline" onclick="this.closest('[data-controller*=playground]').querySelector('[data-playground-target=diagnosticStatus]').click()">
-                    Diagnostics
-                  </button>
-                  tab first.
-                </p>
-              </div>
-            </div>
-          </div>
-        `
+        this.formatSuccessTarget.classList.add('hidden')
+        this.formatErrorTarget.classList.remove('hidden')
 
-        // Apply syntax highlighting to the blurred pre
-        const blurredPre = this.formatViewerTarget.querySelector('pre.language-html')
-        if (blurredPre) {
-          Prism.highlightElement(blurredPre)
-        }
-      } else {
-        // Show normal formatted content in a pre element
-        this.formatViewerTarget.innerHTML = ''
-
-        const pre = document.createElement('pre')
-        pre.className = 'w-full h-full p-3 m-0 rounded overflow-auto font-mono bg-[#282c34] text-[#dcdfe4] language-html highlight'
-        pre.style.cssText = 'white-space: pre; line-height: 1.3'
+        const pre = this.formatErrorTarget.querySelector('pre.language-html')
         pre.textContent = result.formatted || 'No formatted output available'
 
-        this.formatViewerTarget.appendChild(pre)
         Prism.highlightElement(pre)
+      } else {
+        this.formatErrorTarget.classList.add('hidden')
+        this.formatSuccessTarget.classList.remove('hidden')
+
+        this.formatSuccessTarget.textContent = result.formatted || 'No formatted output available'
+
+        Prism.highlightElement(this.formatSuccessTarget)
       }
     }
 
@@ -733,8 +714,8 @@ export default class extends Controller {
       Prism.highlightElement(this.lexViewerTarget)
     }
 
-    if (this.hasLinterViewerTarget && this.hasLinterContentTarget) {
-      this.updateLinterViewer(filteredDiagnosticsForEditor)
+    if (this.hasDiagnosticsViewerTarget && this.hasDiagnosticsContentTarget) {
+      this.updateDiagnosticsViewer(filteredDiagnosticsForEditor)
     }
   }
 
@@ -820,28 +801,19 @@ export default class extends Controller {
     window.history.replaceState({}, '', url)
   }
 
-  updateLinterViewer(diagnostics) {
-    // Filter out parser-no-errors diagnostics
+  updateDiagnosticsViewer(diagnostics) {
     const filteredDiagnostics = diagnostics.filter(diagnostic =>
       diagnostic.code !== 'parser-no-errors'
     )
 
     if (filteredDiagnostics.length === 0) {
-      this.linterContentTarget.innerHTML = `
-        <div class="relative h-full overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center z-10">
-            <div class="bg-gray-700 border border-gray-500 rounded-lg p-6 text-center">
-              <i class="fas fa-circle-check text-green-400 text-2xl mb-3"></i>
-              <h3 class="text-lg font-semibold text-gray-100 mb-2">No Issues Found</h3>
-              <p class="text-gray-300 text-sm">
-                No diagnostics to display
-              </p>
-            </div>
-          </div>
-        </div>
-      `
+      this.noDiagnosticsTarget.classList.remove('hidden')
+      this.diagnosticsListTarget.classList.add('hidden')
       return
     }
+
+    this.diagnosticsListTarget.classList.remove('hidden')
+    this.noDiagnosticsTarget.classList.add('hidden')
 
     const sortDiagnostics = (items) => {
       return items.sort((a, b) => {
@@ -938,10 +910,9 @@ export default class extends Controller {
       'text-blue-400'
     )
 
-    this.linterContentTarget.innerHTML = html
+    this.diagnosticsListTarget.innerHTML = html
 
-    // Add click handlers for each diagnostic item
-    this.linterContentTarget.querySelectorAll('.diagnostic-item').forEach(item => {
+    this.diagnosticsListTarget.querySelectorAll('.diagnostic-item').forEach(item => {
       item.addEventListener('click', () => {
         const startLine = parseInt(item.dataset.startLine)
         const startColumn = parseInt(item.dataset.startColumn)
@@ -961,7 +932,6 @@ export default class extends Controller {
         }
       })
 
-      // Add hover effect to highlight in editor
       item.addEventListener('mouseenter', () => {
         const startLine = parseInt(item.dataset.startLine)
         const startColumn = parseInt(item.dataset.startColumn)
