@@ -22,6 +22,10 @@ static void parser_parse_foreign_content(parser_T* parser, array_T* children, ar
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser);
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children);
 static void parser_consume_whitespace(parser_T* parser, array_T* children);
+static void parser_skip_erb_content(lexer_T* lexer);
+static bool parser_lookahead_erb_is_attribute(lexer_T* lexer);
+static void parser_handle_erb_in_open_tag(parser_T* parser, array_T* children);
+static void parser_handle_whitespace_in_open_tag(parser_T* parser, array_T* children);
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -518,6 +522,85 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
   );
 }
 
+static void parser_skip_erb_content(lexer_T* lexer) {
+  token_T* token = NULL;
+
+  do {
+    token = lexer_next_token(lexer);
+
+    if (token->type == TOKEN_ERB_END) {
+      token_free(token);
+      break;
+    }
+
+    token_free(token);
+  } while (true);
+}
+
+static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
+  token_T* after = NULL;
+
+  do {
+    after = lexer_next_token(lexer);
+
+    if (after->type == TOKEN_EQUALS) {
+      token_free(after);
+      return true;
+    }
+
+    if (after->type == TOKEN_WHITESPACE || after->type == TOKEN_NEWLINE) {
+      token_free(after);
+      continue;
+    }
+
+    if (after->type == TOKEN_IDENTIFIER || after->type == TOKEN_CHARACTER || after->type == TOKEN_DASH
+        || after->type == TOKEN_ERB_START) {
+
+      if (after->type == TOKEN_ERB_START) {
+        token_free(after);
+        parser_skip_erb_content(lexer);
+      } else {
+        token_free(after);
+      }
+      continue;
+    }
+
+    token_free(after);
+    return false;
+
+  } while (true);
+}
+
+static void parser_handle_erb_in_open_tag(parser_T* parser, array_T* children) {
+  lexer_T lexer_copy = *parser->lexer;
+
+  token_T* start_token = lexer_next_token(&lexer_copy);
+  token_free(start_token);
+
+  parser_skip_erb_content(&lexer_copy);
+
+  bool looks_like_attribute = parser_lookahead_erb_is_attribute(&lexer_copy);
+
+  if (looks_like_attribute) {
+    array_append(children, parser_parse_html_attribute(parser));
+  } else {
+    array_append(children, parser_parse_erb_tag(parser));
+  }
+}
+
+static void parser_handle_whitespace_in_open_tag(parser_T* parser, array_T* children) {
+  token_T* whitespace = parser_consume_if_present(parser, TOKEN_WHITESPACE);
+
+  if (whitespace != NULL) {
+    parser_handle_whitespace(parser, whitespace, children);
+    return;
+  }
+
+  token_T* newline = parser_consume_if_present(parser, TOKEN_NEWLINE);
+
+  if (newline != NULL) { parser_handle_whitespace(parser, newline, children); }
+}
+
 static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   array_T* errors = array_init(8);
   array_T* children = array_init(8);
@@ -526,17 +609,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
-    token_T* whitespace = parser_consume_if_present(parser, TOKEN_WHITESPACE);
-
-    if (whitespace != NULL) {
-      parser_handle_whitespace(parser, whitespace, children);
-      continue;
-    }
-
-    token_T* newline = parser_consume_if_present(parser, TOKEN_NEWLINE);
-
-    if (newline != NULL) {
-      parser_handle_whitespace(parser, newline, children);
+    if (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
+      parser_handle_whitespace_in_open_tag(parser, children);
       continue;
     }
 
@@ -546,70 +620,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     }
 
     if (parser->current_token->type == TOKEN_ERB_START) {
-      lexer_T lexer_copy = *parser->lexer;
-      token_T* start_token = lexer_next_token(&lexer_copy);
-
-      token_free(start_token);
-
-      token_T* token = NULL;
-
-      do {
-        token = lexer_next_token(&lexer_copy);
-
-        if (token->type == TOKEN_ERB_END) {
-          token_free(token);
-          break;
-        }
-
-        token_free(token);
-      } while (true);
-
-      bool looks_like_attribute = false;
-      token_T* after = NULL;
-
-      do {
-        after = lexer_next_token(&lexer_copy);
-
-        if (after->type == TOKEN_EQUALS) {
-          looks_like_attribute = true;
-          token_free(after);
-          break;
-        }
-
-        if (after->type == TOKEN_WHITESPACE || after->type == TOKEN_NEWLINE) {
-          token_free(after);
-          continue;
-        }
-
-        if (after->type == TOKEN_IDENTIFIER || after->type == TOKEN_CHARACTER || after->type == TOKEN_DASH
-            || after->type == TOKEN_ERB_START) {
-          if (after->type == TOKEN_ERB_START) {
-            token_free(after);
-            do {
-              after = lexer_next_token(&lexer_copy);
-              if (after->type == TOKEN_ERB_END) {
-                token_free(after);
-                break;
-              }
-              token_free(after);
-            } while (true);
-          } else {
-            token_free(after);
-          }
-          continue;
-        }
-
-        token_free(after);
-        break;
-
-      } while (true);
-
-      if (looks_like_attribute) {
-        array_append(children, parser_parse_html_attribute(parser));
-      } else {
-        array_append(children, parser_parse_erb_tag(parser));
-      }
-
+      parser_handle_erb_in_open_tag(parser, children);
       continue;
     }
 
