@@ -13,7 +13,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (1:11)-(1:19))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:19))
-    │   │       │   │   │       └── name: "required" (location: (1:11)-(1:19))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:11)-(1:19))
+    │   │       │   │   │               └── content: "required"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: ∅
     │   │       │   │   └── value: ∅

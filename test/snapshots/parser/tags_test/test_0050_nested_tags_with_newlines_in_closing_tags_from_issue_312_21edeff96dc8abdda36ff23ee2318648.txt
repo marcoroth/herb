@@ -13,7 +13,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (2:10)-(2:25))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:10)-(2:12))
-    │   │       │   │   │       └── name: "id" (location: (2:10)-(2:12))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (2:10)-(2:12))
+    │   │       │   │   │               └── content: "id"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: "=" (location: (2:12)-(2:13))
     │   │       │   │   └── value:
@@ -30,7 +33,10 @@
     │   │       │   └── @ HTMLAttributeNode (location: (3:10)-(3:67))
     │   │       │       ├── name:
     │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:10)-(3:15))
-    │   │       │       │       └── name: "class" (location: (3:10)-(3:15))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (3:10)-(3:15))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
     │   │       │       │
     │   │       │       ├── equals: "=" (location: (3:15)-(3:16))
     │   │       │       └── value:
@@ -61,7 +67,10 @@
     │   │   │   │       │   ├── @ HTMLAttributeNode (location: (6:12)-(6:39))
     │   │   │   │       │   │   ├── name:
     │   │   │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (6:12)-(6:16))
-    │   │   │   │       │   │   │       └── name: "href" (location: (6:12)-(6:16))
+    │   │   │   │       │   │   │       └── children: (1 item)
+    │   │   │   │       │   │   │           └── @ LiteralNode (location: (6:12)-(6:16))
+    │   │   │   │       │   │   │               └── content: "href"
+    │   │   │   │       │   │   │
     │   │   │   │       │   │   │
     │   │   │   │       │   │   ├── equals: "=" (location: (6:16)-(6:17))
     │   │   │   │       │   │   └── value:
@@ -78,7 +87,10 @@
     │   │   │   │       │   └── @ HTMLAttributeNode (location: (7:12)-(7:30))
     │   │   │   │       │       ├── name:
     │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (7:12)-(7:17))
-    │   │   │   │       │       │       └── name: "class" (location: (7:12)-(7:17))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (7:12)-(7:17))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
     │   │   │   │       │       │
     │   │   │   │       │       ├── equals: "=" (location: (7:17)-(7:18))
     │   │   │   │       │       └── value:

@@ -10,7 +10,10 @@
         │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:24))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
-        │       │       │       └── name: "title" (location: (1:5)-(1:10))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               └── content: "title"
+        │       │       │
         │       │       │
         │       │       ├── equals: "=" (location: (1:10)-(1:11))
         │       │       └── value:

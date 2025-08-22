@@ -1,11 +1,10 @@
-import { Visitor } from "@herb-tools/core"
+import { Visitor, getCombinedAttributeName, getStaticAttributeName, getCombinedStringFromNodes } from "@herb-tools/core"
 
 import {
   Node,
   DocumentNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
-  HTMLSelfCloseTagNode,
   HTMLElementNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
@@ -225,20 +224,11 @@ export class Printer extends Visitor {
       if (attribute.value && (attribute.value instanceof HTMLAttributeValueNode || (attribute.value as any)?.type === 'AST_HTML_ATTRIBUTE_VALUE_NODE')) {
         const attributeValue = attribute.value as HTMLAttributeValueNode
 
-        const content = attributeValue.children.map((child: Node) => {
-          if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE' || child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
-            return (child as HTMLTextNode | LiteralNode).content
-          } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
-            const erbAttribute = child as ERBContentNode
-
-            return erbAttribute.tag_opening!.value + erbAttribute.content!.value + erbAttribute.tag_closing!.value
-          }
-
-          return ""
-        }).join("")
+        const content = getCombinedStringFromNodes(attributeValue.children)
 
         if (/\r?\n/.test(content)) {
-          const name = (attribute.name as HTMLAttributeNameNode)!.name!.value ?? ""
+          const attributeNameNode = attribute.name as HTMLAttributeNameNode
+          const name = getCombinedAttributeName(attributeNameNode)
 
           if (name === 'class') {
             const normalizedContent = content.replace(/\s+/g, ' ').trim()
@@ -837,34 +827,6 @@ export class Printer extends Visitor {
     this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.children, false, node.is_void, false)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    const tagName = node.tag_name?.value ?? ""
-    const indent = this.indent()
-
-    const attributes = this.extractAttributes(node.attributes)
-    const inlineNodes = this.extractInlineNodes(node.attributes)
-
-    const inline = this.renderInlineOpen(tagName, attributes, true, inlineNodes, node.attributes)
-    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-    const shouldKeepInline = this.shouldRenderInline(
-      totalAttributeCount,
-      inline.length,
-      indent.length,
-      this.maxLineLength,
-      false,
-      0,
-      inlineNodes.length,
-      this.hasMultilineAttributes(attributes)
-    )
-
-    if (shouldKeepInline) {
-      this.push(indent + inline)
-
-      return
-    }
-
-    this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.attributes, true, false, false)
-  }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
     const indent = this.indent()
@@ -918,7 +880,7 @@ export class Printer extends Visitor {
 
   visitHTMLAttributeNameNode(node: HTMLAttributeNameNode): void {
     const indent = this.indent()
-    const name = node.name?.value ?? ""
+    const name = getCombinedAttributeName(node)
     this.push(indent + name)
   }
 
@@ -1466,7 +1428,8 @@ export class Printer extends Visitor {
   }
 
   renderAttribute(attribute: HTMLAttributeNode): string {
-    const name = (attribute.name as HTMLAttributeNameNode)!.name!.value ?? ""
+    const attributeNameNode = attribute.name as HTMLAttributeNameNode
+    const name = getCombinedAttributeName(attributeNameNode)
     const equals = attribute.equals?.value ?? ""
 
     let value = ""

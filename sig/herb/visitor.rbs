@@ -23,9 +23,6 @@ module Herb
     # : (Herb::AST::HTMLCloseTagNode) -> void
     def visit_html_close_tag_node: (Herb::AST::HTMLCloseTagNode) -> void
 
-    # : (Herb::AST::HTMLSelfCloseTagNode) -> void
-    def visit_html_self_close_tag_node: (Herb::AST::HTMLSelfCloseTagNode) -> void
-
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 

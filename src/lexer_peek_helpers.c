@@ -99,3 +99,26 @@ bool lexer_peek_for_close_tag_start(const lexer_T* lexer, const int offset) {
 
   return isalpha(c) || c == '_';
 }
+
+lexer_state_snapshot_T lexer_save_state(lexer_T* lexer) {
+  lexer_state_snapshot_T snapshot = { .position = lexer->current_position,
+                                      .line = lexer->current_line,
+                                      .column = lexer->current_column,
+                                      .previous_position = lexer->previous_position,
+                                      .previous_line = lexer->previous_line,
+                                      .previous_column = lexer->previous_column,
+                                      .current_character = lexer->current_character,
+                                      .state = lexer->state };
+  return snapshot;
+}
+
+void lexer_restore_state(lexer_T* lexer, lexer_state_snapshot_T snapshot) {
+  lexer->current_position = snapshot.position;
+  lexer->current_line = snapshot.line;
+  lexer->current_column = snapshot.column;
+  lexer->previous_position = snapshot.previous_position;
+  lexer->previous_line = snapshot.previous_line;
+  lexer->previous_column = snapshot.previous_column;
+  lexer->current_character = snapshot.current_character;
+  lexer->state = snapshot.state;
+}

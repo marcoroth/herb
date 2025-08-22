@@ -18,7 +18,10 @@
     │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:7)-(2:58))
     │   │   │   │       │       ├── name:
     │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
-    │   │   │   │       │       │       └── name: "class" (location: (2:7)-(2:12))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
     │   │   │   │       │       │
     │   │   │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
     │   │   │   │       │       └── value:

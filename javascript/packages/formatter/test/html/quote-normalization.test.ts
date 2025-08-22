@@ -214,7 +214,11 @@ describe("Quote normalization", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(`<div title='It\\'s "complicated"' data-msg="She said \\"Hello\\"">Text</div>`)
+      expect(result).toBe(dedent`
+        <div title='It\'s "complicated"' data-msg="She said \"Hello\"">
+          Text
+        </div>
+      `)
     })
 
     test("handles URLs with query parameters", () => {

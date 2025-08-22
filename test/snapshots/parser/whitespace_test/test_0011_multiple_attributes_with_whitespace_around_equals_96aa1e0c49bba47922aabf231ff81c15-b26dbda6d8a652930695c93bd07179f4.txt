@@ -13,7 +13,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:23))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:13))
-    │   │       │   │   │       └── name: "data-foo" (location: (1:5)-(1:13))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:13))
+    │   │       │   │   │               └── content: "data-foo"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: "  =  " (location: (1:13)-(1:18))
     │   │       │   │   └── value:
@@ -33,7 +36,10 @@
     │   │       │   └── @ HTMLAttributeNode (location: (1:28)-(1:43))
     │   │       │       ├── name:
     │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:28)-(1:33))
-    │   │       │       │       └── name: "class" (location: (1:28)-(1:33))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:28)-(1:33))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
     │   │       │       │
     │   │       │       ├── equals: "  =  " (location: (1:33)-(1:38))
     │   │       │       └── value:

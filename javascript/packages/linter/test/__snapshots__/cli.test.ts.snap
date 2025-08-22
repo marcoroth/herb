@@ -53,7 +53,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/10] ⎯⎯⎯⎯
 
-[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class="value"\`. (html-attribute-double-quotes)
+[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. (html-attribute-double-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:20
 
@@ -67,7 +67,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/10] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:8
 
@@ -81,7 +81,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/10] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`data-value="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:34
 
@@ -164,7 +164,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
-"[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+"[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:8
 
@@ -177,7 +177,7 @@ test/fixtures/few-rule-offenses.html.erb:2:8
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`class="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:19
 
@@ -190,7 +190,7 @@ test/fixtures/few-rule-offenses.html.erb:2:19
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`src="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:3:11
 
@@ -335,7 +335,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 21,
+    "ruleCount": 22,
     "totalErrors": 2,
     "totalOffenses": 2,
     "totalWarnings": 0,
@@ -353,7 +353,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 21,
+    "ruleCount": 22,
     "totalErrors": 0,
     "totalOffenses": 0,
     "totalWarnings": 0,
@@ -423,7 +423,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 21,
+    "ruleCount": 22,
     "totalErrors": 3,
     "totalOffenses": 3,
     "totalWarnings": 0,

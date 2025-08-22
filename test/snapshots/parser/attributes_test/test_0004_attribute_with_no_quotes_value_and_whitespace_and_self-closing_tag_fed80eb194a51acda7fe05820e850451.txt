@@ -1,0 +1,35 @@
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:19))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:19))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "img" (location: (1:1)-(1:4))
+        │       ├── tag_closing: "/>" (location: (1:17)-(1:19))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:16))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               └── content: "value"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:16))
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:11)-(1:16))
+        │       │               │       └── content: "hello"
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       └── is_void: true
+        │
+        ├── tag_name: "img" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag: ∅
+        └── is_void: true

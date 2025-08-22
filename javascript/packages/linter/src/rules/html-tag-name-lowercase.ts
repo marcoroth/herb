@@ -2,7 +2,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
 
 class TagNameLowercaseVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -27,12 +27,7 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
     }
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkTagName(node)
-    this.visitChildNodes(node)
-  }
-
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | HTMLSelfCloseTagNode): void {
+  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {
     const tagName = node.tag_name?.value
 
     if (!tagName) return
@@ -44,7 +39,6 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
 
       if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
       if (node.type == "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
-      if (node.type == "AST_HTML_SELF_CLOSE_TAG_NODE") type = "Self-closing"
 
       this.addOffense(
         `${type} tag name \`${tagName}\` should be lowercase. Use \`${lowercaseTagName}\` instead.`,

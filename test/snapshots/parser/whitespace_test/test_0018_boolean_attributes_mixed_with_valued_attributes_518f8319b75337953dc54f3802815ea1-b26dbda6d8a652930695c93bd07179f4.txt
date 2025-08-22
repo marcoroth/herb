@@ -13,7 +13,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (1:11)-(1:19))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:19))
-    │   │       │   │   │       └── name: "required" (location: (1:11)-(1:19))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:11)-(1:19))
+    │   │       │   │   │               └── content: "required"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: ∅
     │   │       │   │   └── value: ∅
@@ -24,7 +27,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (1:28)-(1:35))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:28)-(1:28))
-    │   │       │   │   │       └── name: "type" (location: (1:28)-(1:28))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:28)-(1:28))
+    │   │       │   │   │               └── content: "type"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: "=" (location: (1:28)-(1:29))
     │   │       │   │   └── value:
@@ -44,7 +50,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (1:40)-(1:48))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:40)-(1:48))
-    │   │       │   │   │       └── name: "disabled" (location: (1:40)-(1:48))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:40)-(1:48))
+    │   │       │   │   │               └── content: "disabled"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: ∅
     │   │       │   │   └── value: ∅

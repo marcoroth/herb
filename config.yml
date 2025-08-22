@@ -222,23 +222,6 @@ nodes:
         - name: tag_closing
           type: token
 
-    - name: HTMLSelfCloseTagNode
-      fields:
-        - name: tag_opening
-          type: token
-
-        - name: tag_name
-          type: token
-
-        - name: attributes
-          type: array
-          kind: HTMLAttributeNode
-
-        - name: tag_closing
-          type: token
-
-        - name: is_void
-          type: boolean
 
     - name: HTMLElementNode
       fields:
@@ -277,8 +260,9 @@ nodes:
 
     - name: HTMLAttributeNameNode
       fields:
-        - name: name
-          type: token
+        - name: children
+          type: array
+          kind: Node # LiteralNode or ERBContentNode
 
     - name: HTMLAttributeNode
       fields:

@@ -10,6 +10,10 @@ module Parser
       assert_parsed_snapshot(%(<div id="hello" class="container p-3"></div>))
     end
 
+    test "attribute with dashed name" do
+      assert_parsed_snapshot(%(<div data-id="1"></div>))
+    end
+
     test "duplicate attributes" do
       assert_parsed_snapshot(%(<div class="hello" class="container p-3"></div>))
     end
@@ -74,6 +78,18 @@ module Parser
 
     test "multiple nested quotes" do
       assert_parsed_snapshot(%(<div title="She said 'Hello' and 'Goodbye'"></div>))
+    end
+
+    test "apostrophe inside single quotes" do
+      assert_parsed_snapshot(%(<div data-msg='Don't worry'>Text</div>))
+    end
+
+    test "escaped apostrophe inside single quotes" do
+      assert_parsed_snapshot(%(<div data-msg='Don\\'t worry'>Text</div>))
+    end
+
+    test "escaped double quote inside double quotes" do
+      assert_parsed_snapshot(%(<div data-msg="She said \\"Hello\\"">Text</div>))
     end
 
     test "empty quoted attribute values" do

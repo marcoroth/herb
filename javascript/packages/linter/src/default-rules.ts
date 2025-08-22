@@ -11,6 +11,7 @@ import { HTMLAriaLevelMustBeValidRule } from "./rules/html-aria-level-must-be-va
 import { HTMLAriaRoleHeadingRequiresLevelRule } from "./rules/html-aria-role-heading-requires-level.js"
 import { HTMLAriaRoleMustBeValidRule } from "./rules/html-aria-role-must-be-valid.js"
 import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quotes.js"
+import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -36,6 +37,7 @@ export const defaultRules: RuleClass[] = [
   HTMLAriaRoleHeadingRequiresLevelRule,
   HTMLAriaRoleMustBeValidRule,
   HTMLAttributeDoubleQuotesRule,
+  HTMLAttributeEqualsSpacingRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLImgRequireAltRule,

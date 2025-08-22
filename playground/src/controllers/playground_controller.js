@@ -56,6 +56,18 @@ export default class extends Controller {
     "htmlViewer",
     "lexViewer",
     "formatViewer",
+    "formatSuccess",
+    "formatError",
+    "formatButton",
+    "formatTooltip",
+    "shareButton",
+    "shareTooltip",
+    "githubButton",
+    "githubTooltip",
+    "diagnosticsViewer",
+    "diagnosticsContent",
+    "noDiagnostics",
+    "diagnosticsList",
     "fullViewer",
     "viewerButton",
     "version",
@@ -72,6 +84,10 @@ export default class extends Controller {
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark')
     }
+
+    document.querySelectorAll('.fa-circle-check').forEach(icon => {
+      icon.style.display = 'none'
+    })
 
     this.restoreInput()
     this.restoreActiveTab()
@@ -120,6 +136,8 @@ export default class extends Controller {
     window.editor = this.editor
 
     this.setupThemeListener()
+    this.setupShareTooltip()
+    this.setupGitHubTooltip()
   }
 
   get isDarkMode() {
@@ -213,6 +231,130 @@ export default class extends Controller {
     }, 1000)
   }
 
+  async copyEditorContent(event) {
+    const button = this.getClosestButton(event.target)
+    const content = this.editor ? this.editor.getValue() : this.inputTarget.value
+
+    try {
+      await navigator.clipboard.writeText(content)
+      this.showCopySuccessFixed(button)
+    } catch (error) {
+      console.error('Failed to copy editor content:', error)
+    }
+  }
+
+  async copyViewerContent(event) {
+    const button = this.getClosestButton(event.target)
+    const activeViewer = this.activeViewerButton.dataset.viewer
+    let content = ''
+
+    switch(activeViewer) {
+      case 'parse':
+        content = this.parseViewerTarget.textContent
+        break
+      case 'lex':
+        content = this.lexViewerTarget.textContent
+        break
+      case 'ruby':
+        content = this.rubyViewerTarget.textContent
+        break
+      case 'html':
+        content = this.htmlViewerTarget.textContent
+        break
+      case 'format':
+        if (!this.formatSuccessTarget.classList.contains('hidden')) {
+          content = this.formatSuccessTarget.textContent
+        } else if (!this.formatErrorTarget.classList.contains('hidden')) {
+          const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
+          content = blurredPre ? blurredPre.textContent : ''
+        }
+        break
+      case 'diagnostics':
+        content = this.getDiagnosticsAsText()
+        break
+    }
+
+    if (content) {
+      try {
+        await navigator.clipboard.writeText(content)
+        this.showCopySuccessFixed(button)
+      } catch (error) {
+        console.error('Failed to copy viewer content:', error)
+      }
+    }
+  }
+
+  showCopySuccessFixed(button) {
+    const allIcons = button.querySelectorAll('svg, i')
+
+    let copyIcon = null
+    let checkIcon = null
+
+    allIcons.forEach(icon => {
+      if (icon.classList.contains('fa-copy')) {
+        copyIcon = icon
+      } else if (icon.classList.contains('fa-circle-check')) {
+        checkIcon = icon
+      }
+    })
+
+    if (!copyIcon || !checkIcon) {
+      console.error('Icons not found', { copyIcon, checkIcon })
+      return
+    }
+
+    if (this.copyTimeout) {
+      clearTimeout(this.copyTimeout)
+    }
+
+    copyIcon.style.display = 'none'
+    checkIcon.style.display = 'inline-block'
+
+    this.copyTimeout = setTimeout(() => {
+      copyIcon.style.display = 'inline-block'
+      checkIcon.style.display = 'none'
+      this.copyTimeout = null
+    }, 1000)
+  }
+
+  showCopySuccess(button) {
+    const copyIcon = button.querySelector('.fa-copy, svg.fa-copy')
+    const checkIcon = button.querySelector('.fa-circle-check, svg.fa-circle-check')
+
+    if (!copyIcon || !checkIcon) return
+
+    if (this.copyTimeout) {
+      clearTimeout(this.copyTimeout)
+    }
+
+    checkIcon.classList.add('hidden')
+    checkIcon.classList.remove('hidden')
+    copyIcon.classList.add('hidden')
+
+    this.copyTimeout = setTimeout(() => {
+      copyIcon.classList.remove('hidden')
+      checkIcon.classList.add('hidden')
+      this.copyTimeout = null
+    }, 1000)
+  }
+
+  getDiagnosticsAsText() {
+    const diagnosticItems = this.diagnosticsContentTarget.querySelectorAll('.diagnostic-item')
+
+    if (diagnosticItems.length === 0) {
+      return 'No diagnostics to display'
+    }
+
+    let text = 'Diagnostics:\n\n'
+    diagnosticItems.forEach(item => {
+      const message = item.querySelector('.text-sm.font-medium').textContent.trim()
+      const location = item.querySelector('.text-xs.text-gray-400').textContent.trim()
+      text += `• ${message}\n  ${location}\n\n`
+    })
+
+    return text
+  }
+
   restoreInput() {
     if (window.parent.location.hash && this.inputTarget.value === "") {
       this.inputTarget.value = this.decompressedValue
@@ -236,7 +378,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'diagnostics', 'full']
     return validTabs.includes(tab)
   }
 
@@ -300,6 +442,11 @@ export default class extends Controller {
 
     this.setActiveTab(tabName)
     this.updateTabInURL(tabName)
+  }
+
+  showDiagnostics(event) {
+    this.setActiveTab('diagnostics')
+    this.updateTabInURL('diagnostics')
   }
 
   toggleViewer() {
@@ -384,6 +531,10 @@ export default class extends Controller {
   async formatEditor(event) {
     const button = this.getClosestButton(event.target)
 
+    if (button.disabled) {
+      return
+    }
+
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
       const result = await analyze(Herb, value)
@@ -441,12 +592,16 @@ export default class extends Controller {
       allDiagnostics.push(...lintDiagnostics)
     }
 
-    this.editor.addDiagnostics(allDiagnostics)
+    const filteredDiagnosticsForEditor = allDiagnostics.filter(diagnostic =>
+      diagnostic.code !== 'parser-no-errors'
+    )
+
+    this.editor.addDiagnostics(filteredDiagnosticsForEditor)
 
     if (this.hasDiagnosticStatusTarget && this.hasErrorCountTarget && this.hasWarningCountTarget && this.hasInfoCountTarget) {
-      const errorCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "error").length
-      const warningCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "warning").length
-      const infoCount = allDiagnostics.filter(diagnostic => diagnostic.severity === "info" || diagnostic.severity === "hint").length
+      const errorCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "error").length
+      const warningCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "warning").length
+      const infoCount = filteredDiagnosticsForEditor.filter(diagnostic => diagnostic.severity === "info" || diagnostic.severity === "hint").length
 
       this.diagnosticStatusTarget.classList.remove("hidden")
 
@@ -537,10 +692,40 @@ export default class extends Controller {
     }
 
     if (this.hasFormatViewerTarget) {
-      this.formatViewerTarget.classList.add("language-html")
-      this.formatViewerTarget.textContent = result.formatted
+      const hasErrors = filteredDiagnosticsForEditor.some(diagnostic => diagnostic.severity === "error")
 
-      Prism.highlightElement(this.formatViewerTarget)
+      if (hasErrors) {
+        this.formatSuccessTarget.classList.add('hidden')
+        this.formatErrorTarget.classList.remove('hidden')
+
+        const pre = this.formatErrorTarget.querySelector('pre.language-html')
+        pre.textContent = result.formatted || 'No formatted output available'
+
+        Prism.highlightElement(pre)
+      } else {
+        this.formatErrorTarget.classList.add('hidden')
+        this.formatSuccessTarget.classList.remove('hidden')
+
+        this.formatSuccessTarget.textContent = result.formatted || 'No formatted output available'
+
+        Prism.highlightElement(this.formatSuccessTarget)
+      }
+    }
+
+    if (this.hasFormatButtonTarget) {
+      const hasErrors = filteredDiagnosticsForEditor.some(diagnostic => diagnostic.severity === "error")
+
+      if (hasErrors) {
+        this.formatButtonTarget.disabled = true
+        this.formatButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+        this.formatButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+        this.setupTooltip()
+      } else {
+        this.formatButtonTarget.disabled = false
+        this.formatButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+        this.formatButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+        this.removeTooltip()
+      }
     }
 
     if (this.hasRubyViewerTarget) {
@@ -555,6 +740,10 @@ export default class extends Controller {
       this.lexViewerTarget.textContent = result.lex
 
       Prism.highlightElement(this.lexViewerTarget)
+    }
+
+    if (this.hasDiagnosticsViewerTarget && this.hasDiagnosticsContentTarget) {
+      this.updateDiagnosticsViewer(filteredDiagnosticsForEditor)
     }
   }
 
@@ -638,5 +827,270 @@ export default class extends Controller {
     }
 
     window.history.replaceState({}, '', url)
+  }
+
+  updateDiagnosticsViewer(diagnostics) {
+    const filteredDiagnostics = diagnostics.filter(diagnostic =>
+      diagnostic.code !== 'parser-no-errors'
+    )
+
+    if (filteredDiagnostics.length === 0) {
+      this.noDiagnosticsTarget.classList.remove('hidden')
+      this.diagnosticsListTarget.classList.add('hidden')
+      return
+    }
+
+    this.diagnosticsListTarget.classList.remove('hidden')
+    this.noDiagnosticsTarget.classList.add('hidden')
+
+    const sortDiagnostics = (items) => {
+      return items.sort((a, b) => {
+        const lineA = a.line || a.startLineNumber || 1
+        const lineB = b.line || b.startLineNumber || 1
+        if (lineA !== lineB) return lineA - lineB
+
+        const colA = a.column || a.startColumn || 0
+        const colB = b.column || b.startColumn || 0
+        return colA - colB
+      })
+    }
+
+    const diagnosticsByType = {
+      error: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "error")),
+      warning: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "warning")),
+      info: sortDiagnostics(filteredDiagnostics.filter(d => d.severity === "info" || d.severity === "hint"))
+    }
+
+    let html = ''
+
+    const renderDiagnosticGroup = (title, items, iconClass, textColorClass) => {
+      if (items.length === 0) return ''
+
+      let groupHtml = `
+        <div class="mb-6">
+          <h3 class="flex items-center gap-2 text-lg font-semibold mb-3 ${textColorClass}">
+            <i class="${iconClass}"></i>
+            ${title} (${items.length})
+          </h3>
+          <div class="space-y-2">
+      `
+
+      items.forEach((diagnostic, index) => {
+        const startLine = diagnostic.line || diagnostic.startLineNumber || 1
+        const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
+        const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
+        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+
+        groupHtml += `
+          <div
+            class="p-3 border rounded-lg cursor-pointer bg-gray-700 hover:border-gray-400 border-gray-500 diagnostic-item transition-colors duration-150"
+            data-diagnostic-index="${index}"
+            data-start-line="${startLine}"
+            data-start-column="${startColumn}"
+            data-end-line="${endLine}"
+            data-end-column="${endColumn}"
+          >
+            <div class="flex items-start gap-3">
+              <div class="flex-shrink-0 mt-1">
+                <i class="${iconClass} text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-100">
+                  ${this.escapeHtml(diagnostic.message)}
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                  Line ${startLine}:${startColumn - 1}
+                  ${diagnostic.source ? `• ${diagnostic.source}` : ''}
+                  ${diagnostic.code ? `• ${diagnostic.code}` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+      })
+
+      groupHtml += `
+          </div>
+        </div>
+      `
+
+      return groupHtml
+    }
+
+    html += renderDiagnosticGroup(
+      'Errors',
+      diagnosticsByType.error,
+      'fas fa-circle-xmark text-red-400',
+      'text-red-400'
+    )
+
+    html += renderDiagnosticGroup(
+      'Warnings',
+      diagnosticsByType.warning,
+      'fas fa-triangle-exclamation text-yellow-400',
+      'text-yellow-400'
+    )
+
+    html += renderDiagnosticGroup(
+      'Info',
+      diagnosticsByType.info,
+      'fas fa-info-circle text-blue-400',
+      'text-blue-400'
+    )
+
+    this.diagnosticsListTarget.innerHTML = html
+
+    this.diagnosticsListTarget.querySelectorAll('.diagnostic-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const startLine = parseInt(item.dataset.startLine)
+        const startColumn = parseInt(item.dataset.startColumn)
+        const endLine = parseInt(item.dataset.endLine)
+        const endColumn = parseInt(item.dataset.endColumn)
+
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+          this.editor.highlightAndRevealSection(
+            startLine,
+            startColumn,
+            endLine,
+            endColumn,
+            'error-highlight'
+          )
+          this.editor.setCursorPosition(startLine, startColumn - 1)
+        }
+      })
+
+      item.addEventListener('mouseenter', () => {
+        const startLine = parseInt(item.dataset.startLine)
+        const startColumn = parseInt(item.dataset.startColumn)
+        const endLine = parseInt(item.dataset.endLine)
+        const endColumn = parseInt(item.dataset.endColumn)
+
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+          this.editor.highlightAndRevealSection(
+            startLine,
+            startColumn,
+            endLine,
+            endColumn,
+            'info-highlight'
+          )
+        }
+      })
+
+      item.addEventListener('mouseleave', () => {
+        if (this.editor) {
+          this.editor.clearAllHighlights()
+        }
+      })
+    })
+  }
+
+  setupTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.addEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.addEventListener('mouseleave', this.hideTooltip)
+    }
+  }
+
+  removeTooltip() {
+    if (this.hasFormatTooltipTarget) {
+      this.formatButtonTarget.removeEventListener('mouseenter', this.showTooltip)
+      this.formatButtonTarget.removeEventListener('mouseleave', this.hideTooltip)
+
+      this.hideTooltip()
+    }
+  }
+
+  showTooltip = ()  => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideTooltip = () => {
+    if (this.hasFormatTooltipTarget) {
+      this.formatTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  setupShareTooltip() {
+    if (this.hasShareButtonTarget && this.hasShareTooltipTarget) {
+      this.shareButtonTarget.addEventListener('mouseenter', this.showShareTooltip)
+      this.shareButtonTarget.addEventListener('mouseleave', this.hideShareTooltip)
+    }
+  }
+
+  showShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideShareTooltip = () => {
+    if (this.hasShareTooltipTarget) {
+      this.shareTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  setupGitHubTooltip() {
+    if (this.hasGithubButtonTarget && this.hasGithubTooltipTarget) {
+      this.githubButtonTarget.addEventListener('mouseenter', this.showGitHubTooltip)
+      this.githubButtonTarget.addEventListener('mouseleave', this.hideGitHubTooltip)
+    }
+  }
+
+  showGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideGitHubTooltip = () => {
+    if (this.hasGithubTooltipTarget) {
+      this.githubTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  openGitHubIssue(event) {
+    const currentUrl = window.parent.location.href
+
+    const issueTitle = encodeURIComponent('Bug report from Herb Playground')
+    const issueBody = encodeURIComponent(dedent`
+      ## Bug Report
+
+      <!-- Describe the issue you're experiencing -->
+
+      ## Reproduction
+
+      You can reproduce this issue using the following playground link:
+
+      ${currentUrl}
+
+      ## Expected Behavior
+
+      <!-- What did you expect to happen? -->
+
+      ## Actual Behavior
+
+      <!-- What actually happened? -->
+
+      ## Additional Context
+
+      <!-- Add any other context about the problem here -->
+    `)
+
+    const githubUrl = `https://github.com/marcoroth/herb/issues/new?title=${issueTitle}&body=${issueBody}`
+
+    window.open(githubUrl, '_blank')
+  }
+
+  escapeHtml(unsafe) {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;")
   }
 }
