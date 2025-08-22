@@ -15,6 +15,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-aria-role-heading-requires-level`](./html-aria-role-heading-requires-level.md) - Requires `aria-level` when supplying a `role`
 - [`html-aria-role-must-be-valid`](./html-aria-role-must-be-valid.md) - The `role` attribute must have a valid WAI-ARIA Role.
 - [`html-attribute-double-quotes`](./html-attribute-double-quotes.md) - Enforces double quotes for attribute values
+- [`html-attribute-equals-spacing`](./html-attribute-equals-spacing.md) - No whitespace around `=` in HTML attributes
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags

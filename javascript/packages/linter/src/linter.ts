@@ -53,7 +53,7 @@ export class Linter {
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
 
-    const parseResult = this.herb.parse(source)
+    const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
 
     for (const RuleClass of this.rules) {
