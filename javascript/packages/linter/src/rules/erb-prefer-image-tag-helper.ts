@@ -2,7 +2,7 @@ import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from 
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, ParseResult } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -10,12 +10,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkImgTag(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
-
-  private checkImgTag(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  private checkImgTag(node: HTMLOpenTagNode): void {
     const tagName = getTagName(node)
 
     if (tagName !== "img") {

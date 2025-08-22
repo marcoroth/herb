@@ -877,9 +877,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   AST_HTML_OPEN_TAG_NODE_T* open_tag = parser_parse_html_open_tag(parser);
 
   // <tag />
-  if (open_tag->is_void || ast_node_is((AST_NODE_T*) open_tag, AST_HTML_SELF_CLOSE_TAG_NODE)) {
-    return parser_parse_html_self_closing_element(parser, open_tag);
-  }
+  if (open_tag->is_void) { return parser_parse_html_self_closing_element(parser, open_tag); }
 
   // <tag>, in void element list, and not in inside an <svg> element
   if (!open_tag->is_void && is_void_element(open_tag->tag_name->value) && !parser_in_svg_context(parser)) {

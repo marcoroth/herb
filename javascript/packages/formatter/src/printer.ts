@@ -5,7 +5,6 @@ import {
   DocumentNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
-  HTMLSelfCloseTagNode,
   HTMLElementNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
@@ -828,34 +827,6 @@ export class Printer extends Visitor {
     this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.children, false, node.is_void, false)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    const tagName = node.tag_name?.value ?? ""
-    const indent = this.indent()
-
-    const attributes = this.extractAttributes(node.attributes)
-    const inlineNodes = this.extractInlineNodes(node.attributes)
-
-    const inline = this.renderInlineOpen(tagName, attributes, true, inlineNodes, node.attributes)
-    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-    const shouldKeepInline = this.shouldRenderInline(
-      totalAttributeCount,
-      inline.length,
-      indent.length,
-      this.maxLineLength,
-      false,
-      0,
-      inlineNodes.length,
-      this.hasMultilineAttributes(attributes)
-    )
-
-    if (shouldKeepInline) {
-      this.push(indent + inline)
-
-      return
-    }
-
-    this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.attributes, true, false, false)
-  }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
     const indent = this.indent()

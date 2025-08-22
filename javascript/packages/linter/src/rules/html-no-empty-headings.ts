@@ -2,7 +2,7 @@ import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAtt
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -10,10 +10,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     super.visitHTMLElementNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkSelfClosingHeading(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
 
   private checkHeadingElement(node: HTMLElementNode): void {
     if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
@@ -47,31 +43,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkSelfClosingHeading(node: HTMLSelfCloseTagNode): void {
-    const tagName = getTagName(node)
-    if (!tagName) {
-      return
-    }
-
-    // Check if it's a standard heading tag (h1-h6) or has role="heading"
-    const isStandardHeading = HEADING_TAGS.has(tagName)
-    const isAriaHeading = this.hasHeadingRole(node)
-
-    if (!isStandardHeading && !isAriaHeading) {
-      return
-    }
-
-    // Self-closing headings are always empty
-    const elementDescription = isStandardHeading
-      ? `\`<${tagName}>\``
-      : `\`<${tagName} role="heading">\``
-
-    this.addOffense(
-      `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
-      node.tag_name!.location,
-      "error"
-    )
-  }
 
   private isEmptyHeading(node: HTMLElementNode): boolean {
     if (!node.body || node.body.length === 0) {
@@ -114,7 +85,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     return !hasAccessibleContent
   }
 
-  private hasHeadingRole(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): boolean {
+  private hasHeadingRole(node: HTMLOpenTagNode): boolean {
     const attributes = getAttributes(node)
     const roleAttribute = findAttributeByName(attributes, "role")
 

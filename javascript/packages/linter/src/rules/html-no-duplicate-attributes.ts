@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
 
 class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
   private attributeNames = new Map<string, HTMLAttributeNode[]>()
@@ -13,11 +13,6 @@ class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
     this.reportDuplicates()
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.attributeNames.clear()
-    super.visitHTMLSelfCloseTagNode(node)
-    this.reportDuplicates()
-  }
 
   protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams): void {
     this.trackAttributeName(attributeName, attributeNode)

@@ -18,7 +18,6 @@ import type {
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   HTMLOpenTagNode,
-  HTMLSelfCloseTagNode,
   LiteralNode,
   LexResult,
   Token,
@@ -67,20 +66,16 @@ export abstract class BaseRuleVisitor extends Visitor {
 }
 
 /**
- * Gets attributes from either an HTMLOpenTagNode or HTMLSelfCloseTagNode
+ * Gets attributes from an HTMLOpenTagNode
  */
-export function getAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): HTMLAttributeNode[] {
-  const nodes = node.type === "AST_HTML_SELF_CLOSE_TAG_NODE"
-    ? (node as HTMLSelfCloseTagNode).attributes
-    : (node as HTMLOpenTagNode).children
-
-  return nodes.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE")
+export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
+  return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
 }
 
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): string | null {
+export function getTagName(node: HTMLOpenTagNode): string | null {
   return node.tag_name?.value.toLowerCase() || null
 }
 
@@ -282,7 +277,7 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Checks if a tag has a specific attribute
  */
-export function hasAttribute(node: HTMLOpenTagNode | HTMLSelfCloseTagNode, attributeName: string): boolean {
+export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
   const attributes = getAttributes(node)
 
   return findAttributeByName(attributes, attributeName) !== null
@@ -382,14 +377,14 @@ export interface StaticAttributeStaticValueParams {
   attributeName: string
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  parentNode: HTMLOpenTagNode
 }
 
 export interface StaticAttributeDynamicValueParams {
   attributeName: string
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  parentNode: HTMLOpenTagNode
   combinedValue?: string | null
 }
 
@@ -397,7 +392,7 @@ export interface DynamicAttributeStaticValueParams {
   nameNodes: Node[]
   attributeValue: string
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  parentNode: HTMLOpenTagNode
   combinedName?: string
 }
 
@@ -405,7 +400,7 @@ export interface DynamicAttributeDynamicValueParams {
   nameNodes: Node[]
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
-  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  parentNode: HTMLOpenTagNode
   combinedName?: string
   combinedValue?: string | null
 }
@@ -518,13 +513,7 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkAttributesOnNode(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
-
-
-  private checkAttributesOnNode(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
       const isDynamicName = hasDynamicAttributeName(attributeNode)
@@ -611,7 +600,7 @@ export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolea
  * Iterates over all attributes of a tag node, calling the callback for each attribute
  */
 export function forEachAttribute(
-  node: HTMLOpenTagNode | HTMLSelfCloseTagNode,
+  node: HTMLOpenTagNode,
   callback: (attributeNode: HTMLAttributeNode) => void
 ): void {
   const attributes = getAttributes(node)

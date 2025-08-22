@@ -116,39 +116,6 @@ module Herb
       def tree_inspect: (?Integer) -> String
     end
 
-    class HTMLSelfCloseTagNode < Node
-      attr_reader tag_opening: Herb::Token
-
-      attr_reader tag_name: Herb::Token
-
-      attr_reader attributes: Array[Herb::AST::HTMLAttributeNode]
-
-      attr_reader tag_closing: Herb::Token
-
-      attr_reader is_void: bool
-
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::HTMLAttributeNode], Herb::Token, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::HTMLAttributeNode], Herb::Token, bool) -> void
-
-      # : () -> serialized_html_self_close_tag_node
-      def to_hash: () -> serialized_html_self_close_tag_node
-
-      # : (Visitor) -> void
-      def accept: (Visitor) -> void
-
-      # : () -> Array[Herb::AST::Node?]
-      def child_nodes: () -> Array[Herb::AST::Node?]
-
-      # : () -> Array[Herb::AST::Node]
-      def compact_child_nodes: () -> Array[Herb::AST::Node]
-
-      # : () -> String
-      def inspect: () -> String
-
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
-    end
-
     class HTMLElementNode < Node
       attr_reader open_tag: Herb::AST::HTMLOpenTagNode
 
