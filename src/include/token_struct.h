@@ -29,6 +29,7 @@ typedef enum {
   TOKEN_EQUALS,      // =
   TOKEN_QUOTE,       // ", '
   TOKEN_BACKTICK,    // `
+  TOKEN_BACKSLASH,   // backslash
   TOKEN_DASH,        // -
   TOKEN_UNDERSCORE,  // _
   TOKEN_EXCLAMATION, // !

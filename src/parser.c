@@ -283,10 +283,123 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       continue;
     }
 
+    if (token_is(parser, TOKEN_BACKSLASH)) {
+      size_t saved_position = parser->lexer->current_position;
+      size_t saved_line = parser->lexer->current_line;
+      size_t saved_column = parser->lexer->current_column;
+      size_t saved_previous_position = parser->lexer->previous_position;
+      size_t saved_previous_line = parser->lexer->previous_line;
+      size_t saved_previous_column = parser->lexer->previous_column;
+      char saved_char = parser->lexer->current_character;
+      lexer_state_T saved_state = parser->lexer->state;
+
+      token_T* next_token = lexer_next_token(parser->lexer);
+
+      if (next_token && next_token->type == TOKEN_QUOTE && opening_quote != NULL
+          && strcmp(next_token->value, opening_quote->value) == 0) {
+        buffer_append(&buffer, parser->current_token->value);
+        buffer_append(&buffer, next_token->value);
+
+        token_free(parser->current_token);
+        token_free(next_token);
+
+        parser->current_token = lexer_next_token(parser->lexer);
+        continue;
+      } else {
+        parser->lexer->current_position = saved_position;
+        parser->lexer->current_line = saved_line;
+        parser->lexer->current_column = saved_column;
+        parser->lexer->previous_position = saved_previous_position;
+        parser->lexer->previous_line = saved_previous_line;
+        parser->lexer->previous_column = saved_previous_column;
+        parser->lexer->current_character = saved_char;
+        parser->lexer->state = saved_state;
+
+        if (next_token) { token_free(next_token); }
+      }
+    }
+
     buffer_append(&buffer, parser->current_token->value);
     token_free(parser->current_token);
 
     parser->current_token = lexer_next_token(parser->lexer);
+  }
+
+  if (token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
+      && strcmp(parser->current_token->value, opening_quote->value) == 0) {
+    size_t saved_position = parser->lexer->current_position;
+    size_t saved_line = parser->lexer->current_line;
+    size_t saved_column = parser->lexer->current_column;
+    size_t saved_previous_position = parser->lexer->previous_position;
+    size_t saved_previous_line = parser->lexer->previous_line;
+    size_t saved_previous_column = parser->lexer->previous_column;
+    char saved_char = parser->lexer->current_character;
+    lexer_state_T saved_state = parser->lexer->state;
+
+    token_T* potential_closing = parser->current_token;
+    parser->current_token = lexer_next_token(parser->lexer);
+
+    if (token_is(parser, TOKEN_IDENTIFIER) || token_is(parser, TOKEN_CHARACTER)) {
+      append_unexpected_error(
+        "Unescaped quote character in attribute value",
+        "escaped quote (\\') or different quote style (\")",
+        opening_quote->value,
+        potential_closing->location->start,
+        potential_closing->location->end,
+        errors
+      );
+
+      parser->lexer->current_position = saved_position;
+      parser->lexer->current_line = saved_line;
+      parser->lexer->current_column = saved_column;
+      parser->lexer->previous_position = saved_previous_position;
+      parser->lexer->previous_line = saved_previous_line;
+      parser->lexer->previous_column = saved_previous_column;
+      parser->lexer->current_character = saved_char;
+      parser->lexer->state = saved_state;
+
+      token_free(parser->current_token);
+      parser->current_token = potential_closing;
+
+      buffer_append(&buffer, parser->current_token->value);
+      token_free(parser->current_token);
+      parser->current_token = lexer_next_token(parser->lexer);
+
+      while (!token_is(parser, TOKEN_EOF)
+             && !(
+               token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
+               && strcmp(parser->current_token->value, opening_quote->value) == 0
+             )) {
+        if (token_is(parser, TOKEN_ERB_START)) {
+          parser_append_literal_node_from_buffer(parser, &buffer, children, start);
+
+          array_append(children, parser_parse_erb_tag(parser));
+
+          position_free(start);
+          start = position_copy(parser->current_token->location->start);
+
+          continue;
+        }
+
+        buffer_append(&buffer, parser->current_token->value);
+        token_free(parser->current_token);
+
+        parser->current_token = lexer_next_token(parser->lexer);
+      }
+    } else {
+      token_free(parser->current_token);
+      parser->current_token = potential_closing;
+
+      // Restore lexer state
+      parser->lexer->current_position = saved_position;
+      parser->lexer->current_line = saved_line;
+      parser->lexer->current_column = saved_column;
+      parser->lexer->previous_position = saved_previous_position;
+      parser->lexer->previous_line = saved_previous_line;
+      parser->lexer->previous_column = saved_previous_column;
+      parser->lexer->current_character = saved_char;
+      parser->lexer->state = saved_state;
+    }
   }
 
   parser_append_literal_node_from_buffer(parser, &buffer, children, start);

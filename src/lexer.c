@@ -326,6 +326,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '"':
     case '\'': return lexer_advance_current(lexer, TOKEN_QUOTE);
     case '`': return lexer_advance_current(lexer, TOKEN_BACKTICK);
+    case '\\': return lexer_advance_current(lexer, TOKEN_BACKSLASH);
 
     default: {
       if (isalnum(lexer->current_character)) { return lexer_parse_identifier(lexer); }

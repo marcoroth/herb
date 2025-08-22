@@ -285,6 +285,106 @@ describe("Attribute formatting", () => {
     })
   })
 
+  describe("Dynamic attribute names", () => {
+    test("formats elements with simple ERB in attribute names", () => {
+      const source = `<div data-<%= key %>="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>="value">
+          Content
+        </div>
+      `)
+    })
+
+    test("formats elements with complex ERB in attribute names", () => {
+      const source = `<div data-<%= key %>-something-<%= suffix %>="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>-something-<%= suffix %>="value">
+          Content
+        </div>
+      `)
+    })
+
+    test("handles multiple dynamic attributes", () => {
+      const source = `<div data-<%= prefix %>-key="value1" <%= attribute_name %>="value2" class="static">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          data-<%= prefix %>-key="value1"
+          <%= attribute_name %>="value2"
+          class="static"
+        >
+          Content
+        </div>
+      `)
+    })
+
+    test("breaks dynamic attributes onto multiple lines when long", () => {
+      const source = `<div data-<%= very_long_prefix %>-something-<%= another_long_suffix %>="a very long value that might cause line breaking" class="container fluid responsive grid">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          data-<%= very_long_prefix %>-something-<%= another_long_suffix %>="a very long value that might cause line breaking"
+          class="container fluid responsive grid"
+        >
+          Content
+        </div>
+      `)
+    })
+
+    test("handles dynamic attribute names with dynamic values", () => {
+      const source = `<div data-<%= key %>="<%= value %>" <%= attr %>="<%= content %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>="<%= value %>" <%= attr %>="<%= content %>">
+          Content
+        </div>
+      `)
+    })
+
+    test("formats dynamic class attributes", () => {
+      const source = `<div class-<%= modifier %>="active selected" data-config="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class-<%= modifier %>="active selected" data-config="value">
+          Content
+        </div>
+      `)
+    })
+
+    test("handles mixed static and dynamic attributes with line breaking", () => {
+      const source = `<input type="text" name="user[email]" data-<%= validation_key %>="required email" class="form-input border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200" placeholder="Enter your email address">`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <input
+          type="text"
+          name="user[email]"
+          data-<%= validation_key %>="required email"
+          class="
+            form-input border-gray-300 rounded-md shadow-sm focus:border-indigo-500
+            focus:ring focus:ring-indigo-200
+          "
+          placeholder="Enter your email address"
+        >
+      `)
+    })
+  })
+
   describe("Quote handling with formatted attributes", () => {
     test("maintains proper quote selection for formatted class attributes", () => {
       const source = `<div class='container "special" formatting'>Content</div>`
