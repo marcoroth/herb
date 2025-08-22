@@ -98,7 +98,7 @@ export function expectSourceToPrint(source: string, expectedOutput: string, fail
   }
 
   const printer = new IdentityPrinter()
-  const output = printer.print(parseResult.value)
+  const output = printer.print(parseResult.value, { ignoreErrors: !failOnErrors })
 
   expect(output).toBeDefined()
   expect(output).toBe(expectedOutput)

@@ -96,7 +96,7 @@ describe("ERBIfNode Printing", () => {
     `)
   })
 
-  test("can print from invlid source", () => {
+  test("can print from invalid source", () => {
     expectPrintRoundTrip(`<% if true %>true`, false)
 
     expectPrintRoundTrip(dedent`
