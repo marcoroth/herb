@@ -1,5 +1,6 @@
 export * from "./erb-no-empty-tags.js"
 export * from "./erb-no-output-control-flow.js"
+export * from "./erb-no-silent-tag-in-attribute-name.js"
 export * from "./erb-prefer-image-tag-helper.js"
 export * from "./erb-requires-trailing-newline.js"
 export * from "./html-anchor-require-href.js"

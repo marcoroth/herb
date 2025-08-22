@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
+import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
@@ -28,6 +29,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 export const defaultRules: RuleClass[] = [
   ERBNoEmptyTagsRule,
   ERBNoOutputControlFlowRule,
+  ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,
   ERBRequiresTrailingNewlineRule,
   ERBRequireWhitespaceRule,
