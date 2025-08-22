@@ -6,7 +6,6 @@
 #include "include/errors.h"
 #include "include/html_util.h"
 #include "include/lexer.h"
-#include "include/lexer_helpers.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/parser_helpers.h"
 #include "include/token.h"
