@@ -67,7 +67,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/10] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:8
 
@@ -81,7 +81,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/10] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`data-value="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:34
 
@@ -164,7 +164,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
-"[error] Attribute value should be quoted: \`id="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+"[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:8
 
@@ -177,7 +177,7 @@ test/fixtures/few-rule-offenses.html.erb:2:8
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`class="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:19
 
@@ -190,7 +190,7 @@ test/fixtures/few-rule-offenses.html.erb:2:19
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`src="value"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:3:11
 
