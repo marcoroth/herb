@@ -72,6 +72,7 @@ export default class extends Controller {
     "copyViewerTooltip",
     "diagnosticsViewer",
     "diagnosticsContent",
+    "diagnosticsFilter",
     "noDiagnostics",
     "diagnosticsList",
     "fullViewer",
@@ -87,6 +88,9 @@ export default class extends Controller {
   ]
 
   connect() {
+    this.currentDiagnosticsFilter = this.restoreDiagnosticsFilter()
+    this.allDiagnostics = []
+
     if (this.isDarkMode) {
       document.documentElement.classList.add('dark')
     }
@@ -431,6 +435,10 @@ export default class extends Controller {
       url.searchParams.delete('tab')
     }
 
+    if (tabName !== 'diagnostics') {
+      url.searchParams.delete('diagnosticsFilter')
+    }
+
     window.parent.history.replaceState({}, '', url)
   }
 
@@ -590,7 +598,14 @@ export default class extends Controller {
 
     if (result.parseResult) {
       const errors = result.parseResult.recursiveErrors()
-      allDiagnostics.push(...errors.map((error) => error.toMonacoDiagnostic()))
+      allDiagnostics.push(...errors.map((error) => {
+        const diagnostic = error.toMonacoDiagnostic()
+
+        diagnostic.source = "Herb Parser"
+        diagnostic.code = diagnostic.code || error.constructor?.name || 'parser-error'
+
+        return diagnostic
+      }))
     }
 
     if (result.lintResult && result.lintResult.offenses) {
@@ -760,7 +775,9 @@ export default class extends Controller {
     }
 
     if (this.hasDiagnosticsViewerTarget && this.hasDiagnosticsContentTarget) {
-      this.updateDiagnosticsViewer(filteredDiagnosticsForEditor)
+      this.allDiagnostics = filteredDiagnosticsForEditor
+      this.updateDiagnosticsFilterButtons(this.currentDiagnosticsFilter)
+      this.updateDiagnosticsViewer(this.getFilteredDiagnostics())
     }
   }
 
@@ -846,19 +863,45 @@ export default class extends Controller {
     window.history.replaceState({}, '', url)
   }
 
+  restoreDiagnosticsFilter() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const filterParam = urlParams.get('diagnosticsFilter')
+
+    if (filterParam && ['all', 'parser', 'linter'].includes(filterParam)) {
+      return filterParam
+    }
+
+    return 'all'
+  }
+
+  updateDiagnosticsFilterInURL(filter) {
+    const url = new URL(window.parent.location)
+
+    if (filter && filter !== 'all') {
+      url.searchParams.set('diagnosticsFilter', filter)
+    } else {
+      url.searchParams.delete('diagnosticsFilter')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
   updateDiagnosticsViewer(diagnostics) {
     const filteredDiagnostics = diagnostics.filter(diagnostic =>
       diagnostic.code !== 'parser-no-errors'
     )
 
     if (filteredDiagnostics.length === 0) {
-      this.noDiagnosticsTarget.classList.remove('hidden')
+      console.log('No diagnostics, showing message')
       this.diagnosticsListTarget.classList.add('hidden')
+      this.noDiagnosticsTarget.classList.remove('hidden')
+      this.updateNoDiagnosticsMessage()
       return
     }
 
-    this.diagnosticsListTarget.classList.remove('hidden')
+    console.log('Has diagnostics, showing list')
     this.noDiagnosticsTarget.classList.add('hidden')
+    this.diagnosticsListTarget.classList.remove('hidden')
 
     const sortDiagnostics = (items) => {
       return items.sort((a, b) => {
@@ -889,6 +932,7 @@ export default class extends Controller {
             <i class="${iconClass}"></i>
             ${title} (${items.length})
           </h3>
+
           <div class="space-y-2">
       `
 
@@ -908,17 +952,18 @@ export default class extends Controller {
             data-end-column="${endColumn}"
           >
             <div class="flex items-start gap-3">
-              <div class="flex-shrink-0 mt-1">
-                <i class="${iconClass} text-sm"></i>
-              </div>
               <div class="flex-1 min-w-0">
-                <div class="text-sm font-medium text-gray-100">
-                  ${this.escapeHtml(diagnostic.message)}
+                <div class="flex items-start justify-between mb-1">
+                  <div class="text-sm font-medium text-gray-100">
+                    ${this.escapeHtml(diagnostic.message)}
+                  </div>
+                  ${diagnostic.source ? `<span class="px-2 py-0.5 text-xs rounded ${diagnostic.source.toLowerCase().includes('linter') ? 'bg-blue-600' : 'bg-red-600'} text-white ml-2 flex-shrink-0">${diagnostic.source}</span>` : ''}
                 </div>
-                <div class="text-xs text-gray-400 mt-1">
-                  Line ${startLine}:${startColumn - 1}
-                  ${diagnostic.source ? `• ${diagnostic.source}` : ''}
-                  ${diagnostic.code ? `• ${diagnostic.code}` : ''}
+
+                <div class="text-xs text-gray-400 flex items-center gap-2">
+                  ${diagnostic.severity ? `<span class="px-1.5 py-0.5 rounded text-xs font-medium ${diagnostic.severity === 'error' ? 'bg-red-600 text-red-100' : diagnostic.severity === 'warning' ? 'bg-yellow-600 text-yellow-100' : 'bg-gray-600 text-gray-100'}">${diagnostic.severity.toUpperCase()}</span>` : ''}
+                  <span>Line ${startLine}:${startColumn - 1}</span>
+                  ${diagnostic.code ? `<span>• ${diagnostic.code}</span>` : ''}
                 </div>
               </div>
             </div>
@@ -1173,6 +1218,149 @@ export default class extends Controller {
     if (this.hasCopyViewerTooltipTarget) {
       this.copyViewerTooltipTarget.classList.add('hidden')
     }
+  }
+
+  filterDiagnostics(event) {
+    const filter = event.target.getAttribute('data-filter')
+    this.currentDiagnosticsFilter = filter
+
+    this.updateDiagnosticsFilterButtons(filter)
+    this.updateDiagnosticsFilterInURL(filter)
+    this.updateDiagnosticsViewer(this.getFilteredDiagnostics())
+  }
+
+  updateNoDiagnosticsMessage() {
+    console.log('updateNoDiagnosticsMessage called', {
+      hasTarget: !!this.noDiagnosticsTarget,
+      filter: this.currentDiagnosticsFilter,
+      allDiagnosticsCount: this.allDiagnostics?.length || 0
+    })
+
+    if (!this.hasNoDiagnosticsTarget) {
+      console.log('No noDiagnosticsTarget found')
+      return
+    }
+
+    const realDiagnostics = this.allDiagnostics.filter(d => d.code !== 'parser-no-errors')
+    const hasAnyDiagnostics = realDiagnostics.length > 0
+    const parserCount = realDiagnostics.filter(d => (d.source || '').toLowerCase().includes('herb parser')).length
+    const linterCount = realDiagnostics.filter(d => (d.source || '').toLowerCase().includes('herb linter')).length
+
+    let iconClass = 'fas fa-circle-check text-green-400 text-2xl mb-3'
+    let title = 'No Issues Found'
+    let message = 'No diagnostics to display'
+
+    if (hasAnyDiagnostics) {
+      iconClass = 'fas fa-filter text-blue-400 text-2xl mb-3'
+
+      switch(this.currentDiagnosticsFilter) {
+        case 'parser':
+          title = 'No Parser Issues'
+
+          if (linterCount > 0) {
+            message = `No parser errors found.<br>Switch to <button class="text-blue-400 hover:text-blue-300 underline" onclick="document.querySelector('[data-playground-target=diagnosticsFilter][data-filter=linter]').click()">Linter</button> or <button class="text-blue-400 hover:text-blue-300 underline" onclick="document.querySelector('[data-playground-target=diagnosticsFilter][data-filter=all]').click()">All</button> to see other diagnostics.`
+          } else {
+            message = 'No parser errors found.'
+          }
+
+          break
+        case 'linter':
+          title = 'No Linter Issues'
+
+          if (parserCount > 0) {
+            message = `No linter issues found.<br>Switch to <button class="text-blue-400 hover:text-blue-300 underline" onclick="document.querySelector('[data-playground-target=diagnosticsFilter][data-filter=parser]').click()">Parser</button> or <button class="text-blue-400 hover:text-blue-300 underline" onclick="document.querySelector('[data-playground-target=diagnosticsFilter][data-filter=all]').click()">All</button> to see other diagnostics.`
+          } else {
+            message = 'No linter issues found.'
+          }
+
+          break
+        default:
+          iconClass = 'fas fa-circle-check text-green-400 text-2xl mb-3'
+          title = 'No Issues Found'
+          message = 'No diagnostics to display'
+      }
+    }
+
+    let containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
+
+    if (!containerDiv) {
+      this.noDiagnosticsTarget.innerHTML = `
+        <div class="absolute inset-0 flex items-center justify-center z-10">
+          <div class="bg-gray-700 border border-gray-500 rounded-lg p-6 text-center">
+            <i class="${iconClass}"></i>
+            <h3 class="text-lg font-semibold text-gray-100 mb-2">${title}</h3>
+            <p class="text-gray-300 text-sm">
+              ${message}
+            </p>
+          </div>
+        </div>
+      `
+    } else {
+      const contentBox = containerDiv.querySelector('.bg-gray-700')
+
+      if (contentBox) {
+        contentBox.innerHTML = `
+          <i class="${iconClass}"></i>
+          <h3 class="text-lg font-semibold text-gray-100 mb-2">${title}</h3>
+          <p class="text-gray-300 text-sm">
+            ${message}
+          </p>
+        `
+      }
+    }
+  }
+
+  updateDiagnosticsFilterButtons(activeFilter) {
+    const allCount = this.allDiagnostics.length
+    const parserCount = this.allDiagnostics.filter(d => (d.source || '').toLowerCase().includes('herb parser')).length
+    const linterCount = this.allDiagnostics.filter(d => (d.source || '').toLowerCase().includes('herb linter')).length
+
+    this.diagnosticsFilterTargets.forEach(button => {
+      const filter = button.getAttribute('data-filter')
+      let count = 0
+      let label = ''
+
+      switch(filter) {
+        case 'all':
+          count = allCount
+          label = 'All'
+          break
+        case 'parser':
+          count = parserCount
+          label = 'Parser'
+          break
+        case 'linter':
+          count = linterCount
+          label = 'Linter'
+          break
+      }
+
+      button.innerHTML = `${label} (${count})`
+
+      if (filter === activeFilter) {
+        button.className = 'px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white'
+      } else {
+        button.className = 'px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white'
+      }
+    })
+  }
+
+  getFilteredDiagnostics() {
+    if (this.currentDiagnosticsFilter === 'all') {
+      return this.allDiagnostics
+    }
+
+    return this.allDiagnostics.filter(diagnostic => {
+      const source = diagnostic.source || ''
+
+      if (this.currentDiagnosticsFilter === 'parser') {
+        return source.toLowerCase().includes('herb parser')
+      } else if (this.currentDiagnosticsFilter === 'linter') {
+        return source.toLowerCase().includes('herb linter')
+      }
+
+      return true
+    })
   }
 
 

@@ -429,8 +429,36 @@
                 data-action="click->playground#shrinkViewer"
                 class="hidden w-full mb-3 rounded overflow-auto bg-[#282c34] text-[#dcdfe4] h-[50vh] md:h-[calc(100vh-110px)] overflow-scroll"
               >
-                <div data-playground-target="diagnosticsContent" class="h-full p-3">
-                  <div data-playground-target="noDiagnostics" class="relative h-full overflow-hidden">
+                <div data-playground-target="diagnosticsContent" class="h-full">
+                  <div class="p-3 border-b border-gray-600 flex gap-2 items-center flex-wrap">
+                    <span class="text-sm text-gray-300 mr-2">Filter:</span>
+                    <button
+                      data-action="click->playground#filterDiagnostics"
+                      data-playground-target="diagnosticsFilter"
+                      data-filter="all"
+                      class="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      All
+                    </button>
+                    <button
+                      data-action="click->playground#filterDiagnostics"
+                      data-playground-target="diagnosticsFilter"
+                      data-filter="parser"
+                      class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
+                    >
+                      Parser
+                    </button>
+                    <button
+                      data-action="click->playground#filterDiagnostics"
+                      data-playground-target="diagnosticsFilter"
+                      data-filter="linter"
+                      class="px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-500 text-white"
+                    >
+                      Linter
+                    </button>
+                  </div>
+                  <div class="p-3 flex-1 overflow-auto">
+                    <div data-playground-target="noDiagnostics" class="relative h-full min-h-[200px] overflow-hidden">
                     <div class="absolute inset-0 flex items-center justify-center z-10">
                       <div class="bg-gray-700 border border-gray-500 rounded-lg p-6 text-center">
                         <i class="fas fa-circle-check text-green-400 text-2xl mb-3"></i>
@@ -442,7 +470,8 @@
                     </div>
                   </div>
 
-                  <div data-playground-target="diagnosticsList" class="hidden">
+                    <div data-playground-target="diagnosticsList" class="hidden">
+                    </div>
                   </div>
                 </div>
               </div>
