@@ -19,6 +19,7 @@ import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attribu
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
+import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
@@ -43,6 +44,7 @@ export const defaultRules: RuleClass[] = [
   HTMLNoDuplicateIdsRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoNestedLinksRule,
+  HTMLNoSelfClosingRule,
   HTMLTagNameLowercaseRule,
   ParserNoErrorsRule,
   SVGTagNameCapitalizationRule,
