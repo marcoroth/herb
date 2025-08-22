@@ -86,7 +86,7 @@ jobs:
         id: artifact
         shell: bash
         run: |
-          cd ${{ github.workspace }}/build/distributions
+          cd ${{ github.workspace }}/jetbrains/build/distributions
           FILENAME=`ls *.zip`
           unzip "$FILENAME" -d content
 
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifact.outputs.filename }}
-          path: ./build/distributions/content/*/*
+          path: ./jetbrains/build/distributions/content/*/*
 
   # Run tests and upload a code coverage report
   test:
@@ -131,19 +131,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: tests-result
-          path: ${{ github.workspace }}/build/reports/tests
+          path: ${{ github.workspace }}/jetbrains/build/reports/tests
 
       # Upload the Kover report to CodeCov
       - name: Upload Code Coverage Report
         uses: codecov/codecov-action@v5
         with:
-          files: ${{ github.workspace }}/build/reports/kover/report.xml
+          files: ${{ github.workspace }}/jetbrains/build/reports/kover/report.xml
 
   # Run Qodana inspections and provide report
   inspectCode:
     name: Inspect code
     needs: [ build ]
     runs-on: ubuntu-latest
+    environment: Github Actions
     permissions:
       contents: write
       checks: write
@@ -176,6 +177,9 @@ jobs:
         uses: JetBrains/qodana-action@v2024.2
         with:
           cache-default-branch-only: true
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+        continue-on-error: true
 
   # Run plugin structure verification along with IntelliJ Plugin Verifier
   verify:
@@ -223,41 +227,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pluginVerifier-result
-          path: ${{ github.workspace }}/build/reports/pluginVerifier
-
-  # Prepare a draft release for GitHub Releases page for the manual verification
-  # If accepted and published, release workflow would be triggered
-  releaseDraft:
-    name: Release draft
-    if: github.event_name != 'pull_request'
-    needs: [ build, test, inspectCode, verify ]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-
-      # Check out the current repository
-      - name: Fetch Sources
-        uses: actions/checkout@v4
-
-      # Remove old release drafts by using the curl request for the available releases with a draft flag
-      - name: Remove Old Release Drafts
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api repos/{owner}/{repo}/releases \
-            --jq '.[] | select(.draft == true) | .id' \
-            | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
-
-      # Create a new release draft which is not publicly visible and requires manual acceptance
-      - name: Create Release Draft
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create "v${{ needs.build.outputs.version }}" \
-            --draft \
-            --title "v${{ needs.build.outputs.version }}" \
-            --notes "$(cat << 'EOM'
-          ${{ needs.build.outputs.changelog }}
-          EOM
-          )"
+          path: ${{ github.workspace }}/jetbrains/build/reports/pluginVerifier
