@@ -6,6 +6,7 @@
 #include "include/errors.h"
 #include "include/html_util.h"
 #include "include/lexer.h"
+#include "include/lexer_helpers.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/parser_helpers.h"
 #include "include/token.h"
@@ -284,14 +285,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
     }
 
     if (token_is(parser, TOKEN_BACKSLASH)) {
-      size_t saved_position = parser->lexer->current_position;
-      size_t saved_line = parser->lexer->current_line;
-      size_t saved_column = parser->lexer->current_column;
-      size_t saved_previous_position = parser->lexer->previous_position;
-      size_t saved_previous_line = parser->lexer->previous_line;
-      size_t saved_previous_column = parser->lexer->previous_column;
-      char saved_char = parser->lexer->current_character;
-      lexer_state_T saved_state = parser->lexer->state;
+      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
       token_T* next_token = lexer_next_token(parser->lexer);
 
@@ -306,14 +300,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
         parser->current_token = lexer_next_token(parser->lexer);
         continue;
       } else {
-        parser->lexer->current_position = saved_position;
-        parser->lexer->current_line = saved_line;
-        parser->lexer->current_column = saved_column;
-        parser->lexer->previous_position = saved_previous_position;
-        parser->lexer->previous_line = saved_previous_line;
-        parser->lexer->previous_column = saved_previous_column;
-        parser->lexer->current_character = saved_char;
-        parser->lexer->state = saved_state;
+        lexer_restore_state(parser->lexer, saved_state);
 
         if (next_token) { token_free(next_token); }
       }
@@ -327,14 +314,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 
   if (token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
       && strcmp(parser->current_token->value, opening_quote->value) == 0) {
-    size_t saved_position = parser->lexer->current_position;
-    size_t saved_line = parser->lexer->current_line;
-    size_t saved_column = parser->lexer->current_column;
-    size_t saved_previous_position = parser->lexer->previous_position;
-    size_t saved_previous_line = parser->lexer->previous_line;
-    size_t saved_previous_column = parser->lexer->previous_column;
-    char saved_char = parser->lexer->current_character;
-    lexer_state_T saved_state = parser->lexer->state;
+    lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
     token_T* potential_closing = parser->current_token;
     parser->current_token = lexer_next_token(parser->lexer);
@@ -349,14 +329,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
         errors
       );
 
-      parser->lexer->current_position = saved_position;
-      parser->lexer->current_line = saved_line;
-      parser->lexer->current_column = saved_column;
-      parser->lexer->previous_position = saved_previous_position;
-      parser->lexer->previous_line = saved_previous_line;
-      parser->lexer->previous_column = saved_previous_column;
-      parser->lexer->current_character = saved_char;
-      parser->lexer->state = saved_state;
+      lexer_restore_state(parser->lexer, saved_state);
 
       token_free(parser->current_token);
       parser->current_token = potential_closing;
@@ -390,15 +363,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       token_free(parser->current_token);
       parser->current_token = potential_closing;
 
-      // Restore lexer state
-      parser->lexer->current_position = saved_position;
-      parser->lexer->current_line = saved_line;
-      parser->lexer->current_column = saved_column;
-      parser->lexer->previous_position = saved_previous_position;
-      parser->lexer->previous_line = saved_previous_line;
-      parser->lexer->previous_column = saved_previous_column;
-      parser->lexer->current_character = saved_char;
-      parser->lexer->state = saved_state;
+      lexer_restore_state(parser->lexer, saved_state);
     }
   }
 
@@ -994,15 +959,7 @@ static void parser_parse_foreign_content(parser_T* parser, array_T* children, ar
     }
 
     if (token_is(parser, TOKEN_HTML_TAG_START_CLOSE)) {
-      size_t saved_position = parser->lexer->current_position;
-      size_t saved_line = parser->lexer->current_line;
-      size_t saved_column = parser->lexer->current_column;
-      size_t saved_previous_position = parser->lexer->previous_position;
-      size_t saved_previous_line = parser->lexer->previous_line;
-      size_t saved_previous_column = parser->lexer->previous_column;
-
-      char saved_char = parser->lexer->current_character;
-      lexer_state_T saved_state = parser->lexer->state;
+      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
       token_T* next_token = lexer_next_token(parser->lexer);
       bool is_potential_match = false;
@@ -1011,14 +968,7 @@ static void parser_parse_foreign_content(parser_T* parser, array_T* children, ar
         is_potential_match = parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
       }
 
-      parser->lexer->current_position = saved_position;
-      parser->lexer->current_line = saved_line;
-      parser->lexer->current_column = saved_column;
-      parser->lexer->previous_position = saved_previous_position;
-      parser->lexer->previous_line = saved_previous_line;
-      parser->lexer->previous_column = saved_previous_column;
-      parser->lexer->current_character = saved_char;
-      parser->lexer->state = saved_state;
+      lexer_restore_state(parser->lexer, saved_state);
 
       if (next_token) { token_free(next_token); }
 
