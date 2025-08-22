@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node, ParseResult } from "@herb-tools/core"
+import type { ParseResult } from "@herb-tools/core"
 
 class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, _attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams) {
     if (!isBooleanAttribute(attributeName)) return
     if (!hasAttributeValue(attributeNode)) return
 
@@ -16,7 +16,7 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
     )
   }
 
-  protected checkStaticAttributeDynamicValue(attributeName: string, _valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, combinedValue?: string): void {
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode, combinedValue }: StaticAttributeDynamicValueParams) {
     if (!isBooleanAttribute(attributeName)) return
     if (!hasAttributeValue(attributeNode)) return
 

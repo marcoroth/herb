@@ -1,8 +1,8 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { Node, HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
 
 class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
   private attributeNames = new Map<string, HTMLAttributeNode[]>()
@@ -19,11 +19,11 @@ class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
     this.reportDuplicates()
   }
 
-  protected checkStaticAttributeStaticValue(attributeName: string, _attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams): void {
     this.trackAttributeName(attributeName, attributeNode)
   }
 
-  protected checkStaticAttributeDynamicValue(attributeName: string, _valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, _combinedValue?: string): void {
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode }: StaticAttributeDynamicValueParams): void {
     this.trackAttributeName(attributeName, attributeNode)
   }
 

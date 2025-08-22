@@ -373,6 +373,41 @@ export const VALID_ARIA_ROLES = new Set([
   "log", "marquee"
 ]);
 
+/**
+ * Parameter types for AttributeVisitorMixin methods
+ */
+export interface StaticAttributeStaticValueParams {
+  attributeName: string
+  attributeValue: string
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+}
+
+export interface StaticAttributeDynamicValueParams {
+  attributeName: string
+  valueNodes: Node[]
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  combinedValue?: string | null
+}
+
+export interface DynamicAttributeStaticValueParams {
+  nameNodes: Node[]
+  attributeValue: string
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  combinedName?: string
+}
+
+export interface DynamicAttributeDynamicValueParams {
+  nameNodes: Node[]
+  valueNodes: Node[]
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
+  combinedName?: string
+  combinedValue?: string | null
+}
+
 export const ARIA_ATTRIBUTES =  new Set([
   'aria-activedescendant',
   'aria-atomic',
@@ -497,28 +532,33 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
       const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
 
       if (staticAttributeName && staticAttributeValue !== null) {
-        this.checkStaticAttributeStaticValue(staticAttributeName, staticAttributeValue, attributeNode, node)
+        this.checkStaticAttributeStaticValue({
+          attributeName: staticAttributeName,
+          attributeValue: staticAttributeValue,
+          attributeNode,
+          parentNode: node
+        })
       } else if (staticAttributeName && isEffectivelyStaticValue && !hasOutputERB) {
         const validatableContent = getValidatableStaticContent(valueNodes) || ""
 
-        this.checkStaticAttributeStaticValue(staticAttributeName, validatableContent, attributeNode, node)
+        this.checkStaticAttributeStaticValue({ attributeName: staticAttributeName, attributeValue: validatableContent, attributeNode, parentNode: node })
       } else if (staticAttributeName && hasOutputERB) {
         const combinedValue = getAttributeValue(attributeNode)
 
-        this.checkStaticAttributeDynamicValue(staticAttributeName, valueNodes, attributeNode, node, combinedValue)
+        this.checkStaticAttributeDynamicValue({ attributeName: staticAttributeName, valueNodes, attributeNode, parentNode: node, combinedValue })
       } else if (isDynamicName && staticAttributeValue !== null) {
         const nameNode = attributeNode.name as HTMLAttributeNameNode
         const nameNodes = nameNode.children || []
         const combinedName = getCombinedAttributeNameString(attributeNode)
 
-        this.checkDynamicAttributeStaticValue(nameNodes, staticAttributeValue, attributeNode, node, combinedName)
+        this.checkDynamicAttributeStaticValue({ nameNodes, attributeValue: staticAttributeValue, attributeNode, parentNode: node, combinedName })
       } else if (isDynamicName) {
         const nameNode = attributeNode.name as HTMLAttributeNameNode
         const nameNodes = nameNode.children || []
         const combinedName = getCombinedAttributeNameString(attributeNode)
         const combinedValue = getAttributeValue(attributeNode)
 
-        this.checkDynamicAttributeDynamicValue(nameNodes, valueNodes, attributeNode, node, combinedName, combinedValue)
+        this.checkDynamicAttributeDynamicValue({ nameNodes, valueNodes, attributeNode, parentNode: node, combinedName, combinedValue })
       }
     })
   }
@@ -526,52 +566,28 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
   /**
    * Static attribute name with static value: class="container"
    */
-  protected checkStaticAttributeStaticValue(
-    attributeName: string,
-    attributeValue: string,
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
-  ): void {
+  protected checkStaticAttributeStaticValue(params: StaticAttributeStaticValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Static attribute name with dynamic value: class="<%= css_class %>"
    */
-  protected checkStaticAttributeDynamicValue(
-    attributeName: string,
-    valueNodes: Node[],
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
-    combinedValue?: string | null
-  ): void {
+  protected checkStaticAttributeDynamicValue(params: StaticAttributeDynamicValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Dynamic attribute name with static value: data-<%= key %>="foo"
    */
-  protected checkDynamicAttributeStaticValue(
-    nameNodes: Node[],
-    attributeValue: string,
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
-    combinedName?: string
-  ): void {
+  protected checkDynamicAttributeStaticValue(params: DynamicAttributeStaticValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Dynamic attribute name with dynamic value: data-<%= key %>="<%= value %>"
    */
-  protected checkDynamicAttributeDynamicValue(
-    nameNodes: Node[],
-    valueNodes: Node[],
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
-    combinedName?: string,
-    combinedValue?: string | null
-  ): void {
+  protected checkDynamicAttributeDynamicValue(params: DynamicAttributeDynamicValueParams): void {
     // Default implementation does nothing
   }
 }

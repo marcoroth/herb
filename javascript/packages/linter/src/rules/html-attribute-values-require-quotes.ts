@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, HTMLAttributeValueNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node, ParseResult } from "@herb-tools/core"
+import type { HTMLAttributeNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
 
 class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
     if (this.hasAttributeValue(attributeNode)) return
     if (this.isQuoted(attributeNode)) return
 
@@ -16,7 +16,7 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     )
   }
 
-  protected checkStaticAttributeDynamicValue(attributeName: string, _valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, combinedValue?: string): void {
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode, combinedValue }: StaticAttributeDynamicValueParams): void {
     if (this.hasAttributeValue(attributeNode)) return
     if (this.isQuoted(attributeNode)) return
 

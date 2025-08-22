@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, getAttributeName, getAttributes } from "./rule-utils.js"
+import { AttributeVisitorMixin, getAttributeName, getAttributes, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
     if (!(attributeName === "role" && attributeValue === "heading")) return
 
     const ariaLevelAttributes = getAttributes(parentNode).find(attribute => getAttributeName(attribute) === "aria-level")

@@ -1,18 +1,18 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 import { getValidatableStaticContent, hasERBOutput, filterLiteralNodes, filterERBContentNodes, isERBOutputNode } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams) {
     if (attributeName !== "aria-level") return
 
     this.validateAriaLevel(attributeValue, attributeNode)
   }
 
-  protected checkStaticAttributeDynamicValue(attributeName: string, valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, _combinedValue?: string): void {
+  protected checkStaticAttributeDynamicValue({ attributeName, valueNodes, attributeNode }: StaticAttributeDynamicValueParams) {
     if (attributeName !== "aria-level") return
 
     const validatableContent = getValidatableStaticContent(valueNodes)
@@ -40,7 +40,6 @@ class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
       )
     }
   }
-
 
   private validateAriaLevel(attributeValue: string, attributeNode: HTMLAttributeNode): void {
     if (!attributeValue || attributeValue === "") {

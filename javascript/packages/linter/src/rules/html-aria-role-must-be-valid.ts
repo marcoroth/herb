@@ -1,11 +1,11 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, VALID_ARIA_ROLES } from "./rule-utils.js"
+import { AttributeVisitorMixin, VALID_ARIA_ROLES, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult } from "@herb-tools/core"
 
 class AriaRoleMustBeValid extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
     if (attributeName !== "role") return
     if (!attributeValue) return
     if (VALID_ARIA_ROLES.has(attributeValue)) return

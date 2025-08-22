@@ -1,12 +1,12 @@
 import { ParserRule } from "../types.js"
-import { AttributeVisitorMixin, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
 import { filterLiteralNodes } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
+import type { ParseResult } from "@herb-tools/core"
 
 class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams) {
     if (!hasAttributeValue(attributeNode)) return
     if (getAttributeValueQuoteType(attributeNode) !== "single") return
     if (attributeValue?.includes('"')) return
@@ -18,7 +18,7 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin {
     )
   }
 
-  protected checkStaticAttributeDynamicValue(attributeName: string, valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, combinedValue?: string): void {
+  protected checkStaticAttributeDynamicValue({ attributeName, valueNodes, attributeNode, combinedValue }: StaticAttributeDynamicValueParams) {
     if (!hasAttributeValue(attributeNode)) return
     if (getAttributeValueQuoteType(attributeNode) !== "single") return
     if (filterLiteralNodes(valueNodes).some(node => node.content?.includes('"'))) return
