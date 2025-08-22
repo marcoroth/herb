@@ -1,4 +1,4 @@
-import { Visitor, getCombinedAttributeName, getStaticAttributeName, getCombinedStringFromNodes } from "@herb-tools/core"
+import { Visitor, getCombinedAttributeName, getCombinedStringFromNodes, isERBNode } from "@herb-tools/core"
 
 import {
   Node,
@@ -368,16 +368,26 @@ export class Printer extends Visitor {
   }
 
   /**
+   * Reconstruct the text representation of an ERB node
+   * @param withFormatting - if true, format the content; if false, preserve original
+   */
+  private reconstructERBNode(node: ERBNode, withFormatting: boolean = true): string {
+    const open = node.tag_opening?.value ?? ""
+    const close = node.tag_closing?.value ?? ""
+    const content = node.content?.value ?? ""
+    const inner = withFormatting ? this.formatERBContent(content) : content
+
+    return open + inner + close
+  }
+
+  /**
    * Print an ERB tag (<% %> or <%= %>) with single spaces around inner content.
    */
   private printERBNode(node: ERBNode): void {
     const indent = this.inlineMode ? "" : this.indent()
-    const open = node.tag_opening?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
-    const content = node.content?.value ?? ""
-    const inner = this.formatERBContent(content)
+    const erbText = this.reconstructERBNode(node, true)
 
-    this.push(indent + open + inner + close)
+    this.push(indent + erbText)
   }
 
   // --- Visitor methods ---
@@ -919,14 +929,52 @@ export class Printer extends Visitor {
           return (child as HTMLTextNode).content
         } else if (child instanceof LiteralNode || (child as any).type === 'AST_LITERAL_NODE') {
           return (child as LiteralNode).content
+        } else if (isERBNode(child) || child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+          return this.reconstructERBNode(child as ERBContentNode, false)
         } else {
-          const prevLines = this.lines.length
-          this.visit(child)
-          return this.lines.slice(prevLines).join("")
+          return ""
         }
       }).join("")
 
-      inner = ` ${inner.trim()} `
+      const hasNewlines = inner.includes('\n')
+
+      if (hasNewlines) {
+        const lines = inner.split('\n')
+        const childIndent = " ".repeat(this.indentWidth)
+        const firstLineHasContent = lines[0].trim() !== ''
+
+        if (firstLineHasContent && lines.length > 1) {
+          const contentLines = lines.map(line => line.trim()).filter(line => line !== '')
+          inner = '\n' + contentLines.map(line => childIndent + line).join('\n') + '\n'
+        } else {
+          const contentLines = lines.filter((line, index) => {
+            return line.trim() !== '' && !(index === 0 || index === lines.length - 1)
+          })
+
+          const minIndent = contentLines.length > 0 ? Math.min(...contentLines.map(line => line.length - line.trimStart().length)) : 0
+
+          const processedLines = lines.map((line, index) => {
+            const trimmedLine = line.trim()
+
+            if ((index === 0 || index === lines.length - 1) && trimmedLine === '') {
+              return line
+            }
+
+            if (trimmedLine !== '') {
+              const currentIndent = line.length - line.trimStart().length
+              const relativeIndent = Math.max(0, currentIndent - minIndent)
+
+              return childIndent + " ".repeat(relativeIndent) + trimmedLine
+            }
+
+            return line
+          })
+
+          inner = processedLines.join('\n')
+        }
+      } else {
+        inner = ` ${inner.trim()} `
+      }
     } else {
       inner = ""
     }
@@ -1736,19 +1784,12 @@ export class Printer extends Visitor {
         const childTagName = openTag?.tag_name?.value || ''
 
         const attributes = this.extractAttributes(openTag.children)
-
         const attributesString = this.renderAttributesString(attributes)
-
         const childContent = this.renderElementInline(childElement)
 
         content += `<${childTagName}${attributesString}>${childContent}</${childTagName}>`
       } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
-        const erbNode = child as ERBContentNode
-        const open = erbNode.tag_opening?.value ?? ""
-        const erbContent = erbNode.content?.value ?? ""
-        const close = erbNode.tag_closing?.value ?? ""
-
-        content += `${open}${this.formatERBContent(erbContent)}${close}`
+        content += this.reconstructERBNode(child as ERBContentNode, true)
       }
     }
 
