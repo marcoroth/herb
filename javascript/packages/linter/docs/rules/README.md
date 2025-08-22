@@ -7,7 +7,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
-- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around erb tags
+- [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-requires-trailing-newline`](./erb-requires-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
@@ -18,7 +18,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-attribute-equals-spacing`](./html-attribute-equals-spacing.md) - No whitespace around `=` in HTML attributes
 - [`html-attribute-values-require-quotes`](./html-attribute-values-require-quotes.md) - Requires quotes around attribute values
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
-- [`html-img-require-alt`](./html-img-require-alt.md) - Requires alt attributes on img tags
+- [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document

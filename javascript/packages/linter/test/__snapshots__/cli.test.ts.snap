@@ -23,7 +23,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:3
       7 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/11] ⎯⎯⎯⎯
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -37,7 +37,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:1
      12 │ <div id="duplicate"></div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/11] ⎯⎯⎯⎯
 
 [error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -51,7 +51,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
      12 │ <div id="duplicate"></div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/11] ⎯⎯⎯⎯
 
 [warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. (html-attribute-double-quotes)
 
@@ -65,7 +65,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/11] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -79,7 +79,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/11] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -93,7 +93,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
       5 │   <a class="" class="">Link 1</a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/11] ⎯⎯⎯⎯
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -107,7 +107,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:3
       6 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/11] ⎯⎯⎯⎯
 
 [error] Duplicate attribute \`class\` found on tag. Remove the duplicate occurrence. (html-no-duplicate-attributes)
 
@@ -121,7 +121,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
       7 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/11] ⎯⎯⎯⎯
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
@@ -135,7 +135,7 @@ test/fixtures/multiple-rule-offenses.html.erb:8:0
      10 │ <a><a>Nested</a></a>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/10] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/11] ⎯⎯⎯⎯
 
 [error] Nested \`<a>\` elements are not allowed. Links cannot contain other links. (html-no-nested-links)
 
@@ -148,6 +148,20 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
      11 │ 
      12 │ <div id="duplicate"></div>
 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/11] ⎯⎯⎯⎯
+
+[error] Self-closing syntax \`<img />\` is not allowed in HTML. Use \`<img>\` instead. (html-no-self-closing)
+
+test/fixtures/multiple-rule-offenses.html.erb:4:2
+
+      2 │ 
+      3 │ <div id=test1 class='' data-value=bar>
+  →   4 │   <img />
+        │   ~~~~~~~
+      5 │   <a class="" class="">Link 1</a>
+      6 │ </div>
+
  Most frequent rule offenses:
   html-anchor-require-href (3 offenses in 1 file)
   html-attribute-values-require-quotes (2 offenses in 1 file)
@@ -155,12 +169,12 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
   html-img-require-alt (1 offense in 1 file)
   html-no-duplicate-attributes (1 offense in 1 file)
 
-  ...and 2 more rules with 2 offenses
+  ...and 3 more rules with 3 offenses
 
 
  Summary:
   Checked      1 file
-  Offenses     9 errors | 1 warning (10 offenses across 1 file)"
+  Offenses     10 errors | 1 warning (11 offenses across 1 file)"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -335,7 +349,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 22,
+    "ruleCount": 23,
     "totalErrors": 2,
     "totalOffenses": 2,
     "totalWarnings": 0,
@@ -353,7 +367,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 22,
+    "ruleCount": 23,
     "totalErrors": 0,
     "totalOffenses": 0,
     "totalWarnings": 0,
@@ -423,7 +437,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 22,
+    "ruleCount": 23,
     "totalErrors": 3,
     "totalOffenses": 3,
     "totalWarnings": 0,

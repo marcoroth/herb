@@ -38,11 +38,14 @@ describe("html-no-self-closing", () => {
 
     expect(lintResult.errors).toBe(4);
     expect(lintResult.offenses).toHaveLength(4);
-    lintResult.offenses.forEach((offense) => {
-      expect(offense.rule).toBe("html-no-self-closing");
-      expect(offense.message).toMatch(/Self-closing syntax/);
-      expect(offense.severity).toBe("error");
-    });
+
+    expect(lintResult.offenses[0].rule).toBe("html-no-self-closing");
+    expect(lintResult.offenses[0].severity).toBe("error");
+
+    expect(lintResult.offenses[0].message).toBe('Self-closing syntax `<div />` is not allowed in HTML. Use `<div></div>` instead.')
+    expect(lintResult.offenses[1].message).toBe('Self-closing syntax `<span />` is not allowed in HTML. Use `<span></span>` instead.')
+    expect(lintResult.offenses[2].message).toBe('Self-closing syntax `<section />` is not allowed in HTML. Use `<section></section>` instead.')
+    expect(lintResult.offenses[3].message).toBe('Self-closing syntax `<custom-element />` is not allowed in HTML. Use `<custom-element></custom-element>` instead.')
   });
 
   test("fails for self-closing void elements", () => {
@@ -57,11 +60,14 @@ describe("html-no-self-closing", () => {
 
     expect(lintResult.errors).toBe(4);
     expect(lintResult.offenses).toHaveLength(4);
-    lintResult.offenses.forEach((offense) => {
-      expect(offense.rule).toBe("html-no-self-closing");
-      expect(offense.message).toMatch(/Self-closing syntax/);
-      expect(offense.severity).toBe("error");
-    });
+
+    expect(lintResult.offenses[0].rule).toBe("html-no-self-closing");
+    expect(lintResult.offenses[0].severity).toBe("error");
+
+    expect(lintResult.offenses[0].message).toBe('Self-closing syntax `<img />` is not allowed in HTML. Use `<img>` instead.')
+    expect(lintResult.offenses[1].message).toBe('Self-closing syntax `<input />` is not allowed in HTML. Use `<input>` instead.')
+    expect(lintResult.offenses[2].message).toBe('Self-closing syntax `<br />` is not allowed in HTML. Use `<br>` instead.')
+    expect(lintResult.offenses[3].message).toBe('Self-closing syntax `<hr />` is not allowed in HTML. Use `<hr>` instead.')
   });
 
   test("passes for mixed correct and incorrect tags", () => {
@@ -76,6 +82,9 @@ describe("html-no-self-closing", () => {
 
     expect(lintResult.errors).toBe(2);
     expect(lintResult.offenses).toHaveLength(2);
+
+    expect(lintResult.offenses[0].message).toBe('Self-closing syntax `<span />` is not allowed in HTML. Use `<span></span>` instead.')
+    expect(lintResult.offenses[1].message).toBe('Self-closing syntax `<input />` is not allowed in HTML. Use `<input>` instead.')
   });
 
   test("passes for nested non-self-closing tags", () => {
@@ -104,11 +113,9 @@ describe("html-no-self-closing", () => {
 
     expect(lintResult.errors).toBe(2);
     expect(lintResult.offenses).toHaveLength(2);
-    lintResult.offenses.forEach((offense) => {
-      expect(offense.rule).toBe("html-no-self-closing");
-      expect(offense.message).toMatch(/Self-closing syntax/);
-      expect(offense.severity).toBe("error");
-    });
+
+    expect(lintResult.offenses[0].message).toBe('Self-closing syntax `<span />` is not allowed in HTML. Use `<span></span>` instead.')
+    expect(lintResult.offenses[1].message).toBe('Self-closing syntax `<section />` is not allowed in HTML. Use `<section></section>` instead.')
   });
 
   test("passes for custom elements without self-closing", () => {
@@ -133,11 +140,9 @@ describe("html-no-self-closing", () => {
 
     expect(lintResult.errors).toBe(2);
     expect(lintResult.offenses).toHaveLength(2);
-    lintResult.offenses.forEach((offense) => {
-      expect(offense.rule).toBe("html-no-self-closing");
-      expect(offense.message).toMatch(/Self-closing syntax/);
-      expect(offense.severity).toBe("error");
-    });
+
+    expect(lintResult.offenses[0].message).toBe('Self-closing syntax `<custom-element />` is not allowed in HTML. Use `<custom-element></custom-element>` instead.')
+    expect(lintResult.offenses[1].message).toBe('Self-closing syntax `<another-custom />` is not allowed in HTML. Use `<another-custom></another-custom>` instead.')
   });
 
   test("passes for void elements without self-closing", () => {

@@ -1,3 +1,5 @@
+# Linter Rule: Disallow self-closing tag syntax for void elements
+
 **Rule:** `html-no-self-closing`
 
 ## Description
@@ -40,13 +42,19 @@ XHTML and HTML styles.
 
 ```html
 <span />
+
 <div />
+
 <section />
+
 <custom-element />
 
 <img src="/logo.png" alt="Logo" />
+
 <input type="text" />
+
 <br />
+
 <hr />
 ```
 
@@ -54,3 +62,4 @@ XHTML and HTML styles.
 
 - [HTML Living Standard: Void Elements](https://html.spec.whatwg.org/multipage/syntax.html#void-elements)
 - [MDN: Void element](https://developer.mozilla.org/en-US/docs/Glossary/Void_element)
+- [erb_lint: SelfClosingTag](https://github.com/Shopify/erb_lint#selfclosingtag)

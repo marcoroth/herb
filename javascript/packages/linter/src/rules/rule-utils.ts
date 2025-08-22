@@ -300,6 +300,11 @@ export const HTML_BLOCK_ELEMENTS = new Set([
   "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
 ])
 
+export const HTML_VOID_ELEMENTS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
+  "param", "source", "track", "wbr",
+])
+
 export const HTML_BOOLEAN_ATTRIBUTES = new Set([
   "autofocus", "autoplay", "checked", "controls", "defer", "disabled", "hidden",
   "loop", "multiple", "muted", "readonly", "required", "reversed", "selected",
@@ -484,6 +489,13 @@ export function isInlineElement(tagName: string): boolean {
  */
 export function isBlockElement(tagName: string): boolean {
   return HTML_BLOCK_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
+ * Checks if an element is a void element
+ */
+export function isVoidElement(tagName: string): boolean {
+  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
 }
 
 /**
