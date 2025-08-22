@@ -15,6 +15,7 @@ import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-sp
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
+import { HTMLMetaNameMustBeUniqueRule } from "./rules/html-meta-name-must-be-unique.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
@@ -40,6 +41,7 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeValuesRequireQuotesRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLImgRequireAltRule,
+  HTMLMetaNameMustBeUniqueRule,
   // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
