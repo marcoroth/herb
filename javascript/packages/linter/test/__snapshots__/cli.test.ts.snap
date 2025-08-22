@@ -53,7 +53,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/10] ⎯⎯⎯⎯
 
-[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class="value"\`. (html-attribute-double-quotes)
+[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. (html-attribute-double-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:20
 

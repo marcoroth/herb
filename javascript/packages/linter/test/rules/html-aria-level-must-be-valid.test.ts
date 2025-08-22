@@ -176,6 +176,71 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
     expect(lintResult.offenses).toHaveLength(0)
   })
 
+  test("allows mixed ERB expressions with no output in aria-level values", () => {
+    const html = dedent`
+      <div aria-level="1<% @level %>">Dynamic level</div>
+      <div aria-level="<% @level %>2">Dynamic level</div>
+      <div aria-level="<% @level %>3<% @level %>">Dynamic level</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("disallows mixed ERB expressions with no output in aria-level values", () => {
+    const html = dedent`
+      <div aria-level="-1<% @level %>">Dynamic level</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].message).toBe('The `aria-level` attribute must be an integer between 1 and 6, got `-1`.')
+  })
+
+  test("disallows mixed ERB expressions with valid static value and dynamic ERB output", () => {
+    const html = dedent`
+      <div aria-level="1<%= @level %>">Dynamic level</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].message).toBe('The `aria-level` attribute must be an integer between 1 and 6, got `1` and the ERB expression `<%= @level %>`.')
+  })
+
+  test.todo("allows mixed ERB expressions in aria-level values if both branches are valid", () => {
+    const html = dedent`
+      <div aria-level="<% if valid? %>1<% else %>2<% end %>">Dynamic level</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test.todo("flags mixed ERB expressions in aria-level values if one branch is valid", () => {
+    const html = dedent`
+      <div aria-level="<% if valid? %>1<% else %>-1<% end %>">Dynamic level</div>
+    `
+    const linter = new Linter(Herb, [HTMLAriaLevelMustBeValidRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(1)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(1)
+    expect(lintResult.offenses[0].message).toBe('The `aria-level` attribute must be an integer between 1 and 6, at least one branch has an invlid value: `-1`.') // TODO: message can be tweaked
+  })
+
   test("flags empty aria-level attribute", () => {
     const html = dedent`
       <div role="heading" aria-level="">Empty value</div>
@@ -187,8 +252,6 @@ describe("HTMLAriaLevelMustBeValidRule", () => {
     expect(lintResult.warnings).toBe(0)
     expect(lintResult.offenses).toHaveLength(1)
     expect(lintResult.offenses[0].code).toBe("html-aria-level-must-be-valid")
-    expect(lintResult.offenses[0].message).toBe(
-      'The `aria-level` attribute must be an integer between 1 and 6, got an empty value.',
-    )
+    expect(lintResult.offenses[0].message).toBe('The `aria-level` attribute must be an integer between 1 and 6, got an empty value.')
   })
 })

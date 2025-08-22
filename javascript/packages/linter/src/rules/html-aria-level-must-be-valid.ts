@@ -1,15 +1,49 @@
-import { AttributeVisitorMixin } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
+import { AttributeVisitorMixin } from "./rule-utils.js"
+import { getValidatableStaticContent, hasERBOutput, filterLiteralNodes, filterERBContentNodes, isERBOutputNode } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node } from "@herb-tools/core"
 
 class HTMLAriaLevelMustBeValidVisitor extends AttributeVisitorMixin {
-  protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
     if (attributeName !== "aria-level") return
-    if (attributeValue !== null && attributeValue.includes("<%")) return
 
-    if (attributeValue === null || attributeValue === "") {
+    this.validateAriaLevel(attributeValue, attributeNode)
+  }
+
+  protected checkStaticAttributeDynamicValue(attributeName: string, valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, _combinedValue?: string): void {
+    if (attributeName !== "aria-level") return
+
+    const validatableContent = getValidatableStaticContent(valueNodes)
+
+    if (validatableContent !== null) {
+      this.validateAriaLevel(validatableContent, attributeNode)
+      return
+    }
+
+    if (!hasERBOutput(valueNodes)) return
+
+    const literalNodes = filterLiteralNodes(valueNodes)
+    const erbOutputNodes = filterERBContentNodes(valueNodes).filter(isERBOutputNode)
+
+    if (literalNodes.length > 0 && erbOutputNodes.length > 0) {
+      const staticPart = literalNodes.map(node => node.content).join("")
+
+      // TODO: this can be cleaned up using @herb-tools/printer
+      const erbPart = erbOutputNodes[0]
+      const erbText = `${erbPart.tag_opening?.value || ""}${erbPart.content?.value || ""}${erbPart.tag_closing?.value || ""}`
+
+      this.addOffense(
+        `The \`aria-level\` attribute must be an integer between 1 and 6, got \`${staticPart}\` and the ERB expression \`${erbText}\`.`,
+        attributeNode.location,
+      )
+    }
+  }
+
+
+  private validateAriaLevel(attributeValue: string, attributeNode: HTMLAttributeNode): void {
+    if (!attributeValue || attributeValue === "") {
       this.addOffense(
         `The \`aria-level\` attribute must be an integer between 1 and 6, got an empty value.`,
         attributeNode.location,

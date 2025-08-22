@@ -1,32 +1,32 @@
-import {
-  ARIA_ATTRIBUTES,
-  AttributeVisitorMixin,
-} from "./rule-utils.js";
 import { ParserRule } from "../types.js";
+import { ARIA_ATTRIBUTES, AttributeVisitorMixin } from "./rule-utils.js";
+
 import type { LintOffense, LintContext } from "../types.js";
-import type {
-  HTMLAttributeNode,
-  HTMLOpenTagNode,
-  HTMLSelfCloseTagNode,
-  ParseResult,
-} from "@herb-tools/core";
+import type {HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode, Node, ParseResult } from "@herb-tools/core";
 
 class AriaAttributeMustBeValid extends AttributeVisitorMixin {
-  checkAttribute(
-    attributeName: string,
-    _attributeValue: string | null,
-    attributeNode: HTMLAttributeNode,
-    _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
-  ): void {
+  protected checkStaticAttributeStaticValue(
+    attributeName: string, _attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
     if (!attributeName.startsWith("aria-")) return;
 
     if (!ARIA_ATTRIBUTES.has(attributeName)){
-      this.offenses.push({
-        message: `The attribute \`${attributeName}\` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.`,
-        severity: "error",
-        location: attributeNode.location,
-        rule: this.ruleName,
-      });
+      this.addOffense(
+        `The attribute \`${attributeName}\` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.`,
+        attributeNode.location,
+        "error"
+      );
+    }
+  }
+
+  protected checkStaticAttributeDynamicValue(attributeName: string, _valueNodes: Node[], attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode, _combinedValue?: string): void {
+    if (!attributeName.startsWith("aria-")) return;
+
+    if (!ARIA_ATTRIBUTES.has(attributeName)){
+      this.addOffense(
+        `The attribute \`${attributeName}\` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.`,
+        attributeNode.location,
+        "error"
+      );
     }
   }
 }
@@ -36,7 +36,9 @@ export class HTMLAriaAttributeMustBeValid extends ParserRule {
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new AriaAttributeMustBeValid(this.name, context);
+
     visitor.visit(result.value);
+
     return visitor.offenses;
   }
 }

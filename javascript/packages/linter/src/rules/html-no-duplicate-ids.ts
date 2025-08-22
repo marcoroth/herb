@@ -1,12 +1,13 @@
 import { AttributeVisitorMixin } from "./rule-utils"
 import { ParserRule } from "../types"
-import type { ParseResult, Node } from "@herb-tools/core"
+
+import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 class NoDuplicateIdsVisitor extends AttributeVisitorMixin {
   private documentIds: Set<string> = new Set<string>()
 
-  protected checkAttribute(attributeName: string, attributeValue: string | null, attributeNode: Node): void {
+  protected checkStaticAttributeStaticValue(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode, _parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
     if (attributeName.toLowerCase() !== "id") return
     if (!attributeValue) return
 

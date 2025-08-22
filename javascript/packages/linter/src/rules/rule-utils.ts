@@ -1,7 +1,15 @@
 import {
   Visitor,
   Position,
-  Location
+  Location,
+  getStaticAttributeName,
+  hasDynamicAttributeName as hasNodeDynamicAttributeName,
+  getCombinedAttributeName,
+  hasERBOutput,
+  getStaticContentFromNodes,
+  hasStaticContent,
+  isEffectivelyStatic,
+  getValidatableStaticContent
 } from "@herb-tools/core"
 
 import type {
@@ -13,10 +21,13 @@ import type {
   HTMLSelfCloseTagNode,
   LiteralNode,
   LexResult,
-  Token
+  Token,
+  Node
 } from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext } from "../types.js"
+
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
+
+import type { LintOffense, LintSeverity, LintContext } from "../types.js"
 
 /**
  * Base visitor class that provides common functionality for rule visitors
@@ -73,15 +84,109 @@ export function getTagName(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): string
 
 /**
  * Gets the attribute name from an HTMLAttributeNode (lowercased)
+ * Returns null if the attribute name contains dynamic content (ERB)
  */
 export function getAttributeName(attributeNode: HTMLAttributeNode): string | null {
   if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
     const nameNode = attributeNode.name as HTMLAttributeNameNode
+    const staticName = getStaticAttributeName(nameNode)
 
-    return nameNode.name?.value.toLowerCase() || null
+    return staticName ? staticName.toLowerCase() : null
   }
 
   return null
+}
+
+/**
+ * Checks if an attribute has a dynamic (ERB-containing) name
+ */
+export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
+  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
+    const nameNode = attributeNode.name as HTMLAttributeNameNode
+    return hasNodeDynamicAttributeName(nameNode)
+  }
+
+  return false
+}
+
+/**
+ * Gets the combined string representation of an attribute name (for debugging)
+ * This includes both static content and ERB syntax
+ */
+export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
+  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
+    const nameNode = attributeNode.name as HTMLAttributeNameNode
+
+    return getCombinedAttributeName(nameNode)
+  }
+
+  return ""
+}
+
+/**
+ * Checks if an attribute value contains only static content (no ERB)
+ */
+export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  if (!valueNode?.children) return false
+
+  return valueNode.children.every(child => child.type === "AST_LITERAL_NODE")
+}
+
+/**
+ * Checks if an attribute value contains dynamic content (ERB)
+ */
+export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  if (!valueNode?.children) return false
+
+  return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+}
+
+/**
+ * Gets the static string value of an attribute (returns null if it contains ERB)
+ */
+export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
+  if (!hasStaticAttributeValue(attributeNode)) return null
+
+  const valueNode = attributeNode.value as HTMLAttributeValueNode
+
+  const result = valueNode.children
+    ?.filter(child => child.type === "AST_LITERAL_NODE")
+    .map(child => (child as LiteralNode).content)
+    .join("") || ""
+
+  return result
+}
+
+/**
+ * Gets the value nodes array for dynamic inspection
+ */
+export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  return valueNode?.children || []
+}
+
+/**
+ * Checks if an attribute value contains any static content (for validation purposes)
+ */
+export function hasStaticAttributeValueContent(attributeNode: HTMLAttributeNode): boolean {
+  const valueNodes = getAttributeValueNodes(attributeNode)
+
+  return hasStaticContent(valueNodes)
+}
+
+/**
+ * Gets the static content of an attribute value (all literal parts combined)
+ * Returns the concatenated literal content, or null if no literal nodes exist
+ */
+export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode): string | null {
+  const valueNodes = getAttributeValueNodes(attributeNode)
+
+  return getStaticContentFromNodes(valueNodes)
 }
 
 /**
@@ -130,9 +235,20 @@ export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
 /**
  * Gets the quote type used for an attribute value
  */
-export function getAttributeValueQuoteType(attributeNode: HTMLAttributeNode): "single" | "double" | "none" | null {
-  if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
+export function getAttributeValueQuoteType(nodeOrAttribute: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
+  let valueNode: HTMLAttributeValueNode | undefined
+
+  if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_NODE") {
+    const attributeNode = nodeOrAttribute as HTMLAttributeNode
+
+    if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
+      valueNode = attributeNode.value as HTMLAttributeValueNode
+    }
+  } else if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
+    valueNode = nodeOrAttribute as HTMLAttributeValueNode
+  }
+
+  if (valueNode) {
     if (valueNode.quoted && valueNode.open_quote) {
       return valueNode.open_quote.value === '"' ? "double" : "single"
     }
@@ -151,11 +267,13 @@ export function findAttributeByName(attributes: any[], attributeName: string): H
     if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
       const attributeNode = child as HTMLAttributeNode
       const name = getAttributeName(attributeNode)
+
       if (name === attributeName.toLowerCase()) {
         return attributeNode
       }
     }
   }
+
   return null
 }
 
@@ -164,6 +282,7 @@ export function findAttributeByName(attributes: any[], attributeName: string): H
  */
 export function hasAttribute(node: HTMLOpenTagNode | HTMLSelfCloseTagNode, attributeName: string): boolean {
   const attributes = getAttributes(node)
+
   return findAttributeByName(attributes, attributeName) !== null
 }
 
@@ -343,9 +462,14 @@ export function isBooleanAttribute(attributeName: string): boolean {
 }
 
 /**
- * Abstract base class for rules that need to check individual attributes on HTML tags
- * Eliminates duplication of visitHTMLOpenTagNode/visitHTMLSelfCloseTagNode patterns
- * and attribute iteration logic. Provides simplified interface with extracted attribute info.
+ * Attribute visitor that provides granular processing based on both
+ * attribute name type (static/dynamic) and value type (static/dynamic)
+ *
+ * This gives you 4 distinct methods to override:
+ * - checkStaticAttributeStaticValue()   - name="class" value="foo"
+ * - checkStaticAttributeDynamicValue()  - name="class" value="<%= css_class %>"
+ * - checkDynamicAttributeStaticValue()  - name="data-<%= key %>" value="foo"
+ * - checkDynamicAttributeDynamicValue() - name="data-<%= key %>" value="<%= value %>"
  */
 export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
   constructor(ruleName: string, context?: Partial<LintContext>) {
@@ -362,23 +486,94 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
     super.visitHTMLSelfCloseTagNode(node)
   }
 
+
   private checkAttributesOnNode(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
     forEachAttribute(node, (attributeNode) => {
-      const attributeName = getAttributeName(attributeNode)
-      const attributeValue = getAttributeValue(attributeNode)
+      const staticAttributeName = getAttributeName(attributeNode)
+      const isDynamicName = hasDynamicAttributeName(attributeNode)
+      const staticAttributeValue = getStaticAttributeValue(attributeNode)
+      const valueNodes = getAttributeValueNodes(attributeNode)
+      const hasOutputERB = hasERBOutput(valueNodes)
+      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
 
-      if (attributeName) {
-        this.checkAttribute(attributeName, attributeValue, attributeNode, node)
+      if (staticAttributeName && staticAttributeValue !== null) {
+        this.checkStaticAttributeStaticValue(staticAttributeName, staticAttributeValue, attributeNode, node)
+      } else if (staticAttributeName && isEffectivelyStaticValue && !hasOutputERB) {
+        const validatableContent = getValidatableStaticContent(valueNodes) || ""
+
+        this.checkStaticAttributeStaticValue(staticAttributeName, validatableContent, attributeNode, node)
+      } else if (staticAttributeName && hasOutputERB) {
+        const combinedValue = getAttributeValue(attributeNode)
+
+        this.checkStaticAttributeDynamicValue(staticAttributeName, valueNodes, attributeNode, node, combinedValue)
+      } else if (isDynamicName && staticAttributeValue !== null) {
+        const nameNode = attributeNode.name as HTMLAttributeNameNode
+        const nameNodes = nameNode.children || []
+        const combinedName = getCombinedAttributeNameString(attributeNode)
+
+        this.checkDynamicAttributeStaticValue(nameNodes, staticAttributeValue, attributeNode, node, combinedName)
+      } else if (isDynamicName) {
+        const nameNode = attributeNode.name as HTMLAttributeNameNode
+        const nameNodes = nameNode.children || []
+        const combinedName = getCombinedAttributeNameString(attributeNode)
+        const combinedValue = getAttributeValue(attributeNode)
+
+        this.checkDynamicAttributeDynamicValue(nameNodes, valueNodes, attributeNode, node, combinedName, combinedValue)
       }
     })
   }
 
-  protected abstract checkAttribute(
+  /**
+   * Static attribute name with static value: class="container"
+   */
+  protected checkStaticAttributeStaticValue(
     attributeName: string,
-    attributeValue: string | null,
+    attributeValue: string,
     attributeNode: HTMLAttributeNode,
     parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
-  ): void
+  ): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Static attribute name with dynamic value: class="<%= css_class %>"
+   */
+  protected checkStaticAttributeDynamicValue(
+    attributeName: string,
+    valueNodes: Node[],
+    attributeNode: HTMLAttributeNode,
+    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
+    combinedValue?: string | null
+  ): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Dynamic attribute name with static value: data-<%= key %>="foo"
+   */
+  protected checkDynamicAttributeStaticValue(
+    nameNodes: Node[],
+    attributeValue: string,
+    attributeNode: HTMLAttributeNode,
+    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
+    combinedName?: string
+  ): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Dynamic attribute name with dynamic value: data-<%= key %>="<%= value %>"
+   */
+  protected checkDynamicAttributeDynamicValue(
+    nameNodes: Node[],
+    valueNodes: Node[],
+    attributeNode: HTMLAttributeNode,
+    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode,
+    combinedName?: string,
+    combinedValue?: string | null
+  ): void {
+    // Default implementation does nothing
+  }
 }
 
 /**
