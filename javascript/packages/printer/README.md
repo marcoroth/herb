@@ -86,6 +86,29 @@ const output = printer.print(parseResult.value)
 // output === '<div >  HELLO  </div>'
 ```
 
+#### Print Options
+
+The printer supports options to control how nodes are printed:
+
+```typescript
+import { IdentityPrinter, DEFAULT_PRINT_OPTIONS } from "@herb-tools/printer"
+import type { PrintOptions } from "@herb-tools/printer"
+
+const printer = new IdentityPrinter()
+
+// Will throw error if node has parse errors (default behavior)
+const output1 = printer.print(nodeWithErrors)
+
+// Will print the node despite parse errors
+const output2 = printer.print(nodeWithErrors, { ignoreErrors: true })
+```
+
+When `ignoreErrors` is `false` (default), the printer will throw an error if you attempt to print a node that contains parse errors. Set `ignoreErrors` to `true` to print nodes with errors, which can be useful for debugging or partial AST reconstruction.
+
+:::warning Important
+The Printer expects the source to be parsed using the `track_whitespace: true` parser option for accurate source reconstruction.
+:::
+
 #### CLI Usage
 
 ```bash
