@@ -278,9 +278,16 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
  * Checks if a tag has a specific attribute
  */
 export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
+  return getAttribute(node, attributeName) !== null
+}
+
+/**
+ * Checks if a tag has a specific attribute
+ */
+export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
   const attributes = getAttributes(node)
 
-  return findAttributeByName(attributes, attributeName) !== null
+  return findAttributeByName(attributes, attributeName)
 }
 
 /**
