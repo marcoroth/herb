@@ -1,4 +1,4 @@
-import { Node, Visitor } from "@herb-tools/core"
+import { Node, Visitor, Token, ParseResult } from "@herb-tools/core"
 import { PrintContext } from "./print-context.js"
 
 import type * as Nodes from "@herb-tools/core"
@@ -22,37 +22,52 @@ export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
   ignoreErrors: false
 }
 
+function isToken(input: any): input is Token {
+  return (input instanceof Token) || (input?.constructor?.name === "Token" && "value" in input)
+}
+
+function isParseResult(input: any): input is ParseResult {
+  return (input instanceof ParseResult) || (input?.constructor?.name === "ParseResult" && "value" in input)
+}
+
 export abstract class Printer extends Visitor {
   protected context: PrintContext = new PrintContext()
 
   /**
    * Static method to print a node without creating an instance
    *
-   * @param node - The AST node to print
+   * @param input - The AST Node, Token, or ParseResult to print
    * @param options - Print options to control behavior
-   * @returns The printed string representation of the node
+   * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  static print(node: Node, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  static print(input: Token | Node | ParseResult, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     const printer = new (this as any)()
 
-    return printer.print(node, options)
+    return printer.print(input, options)
   }
 
   /**
-   * Print a node to a string
+   * Print a node, token, or parse result to a string
    *
-   * @param node - The AST node to print
+   * @param input - The AST Node, Token, or ParseResult to print
    * @param options - Print options to control behavior
-   * @returns The printed string representation of the node
+   * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  print(node: Node, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  print(input: Token | Node | ParseResult, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+    if (isToken(input)) {
+      return input.value
+    }
+
+    const node: Node = isParseResult(input) ? input.value : input
+
     if (options.ignoreErrors === false && node.recursiveErrors().length > 0) {
       throw new Error(`Cannot print the node (${node.type}) since it or any of its children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
     }
 
     this.context.reset()
+
     this.visit(node)
 
     return this.context.getOutput()

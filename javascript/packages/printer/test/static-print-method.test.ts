@@ -3,6 +3,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Printer, IdentityPrinter } from "../src/index.js"
+import { Range, Location } from "@herb-tools/core"
 import type { HTMLTextNode } from "@herb-tools/core"
 
 class UppercasePrinter extends Printer {
@@ -124,6 +125,80 @@ describe("Static print method", () => {
 
       const output = UppercasePrinter.print(parseResult.value!, { ignoreErrors: true })
       expect(output).toBe('<p>ERROR TEST')
+    })
+  })
+
+  describe("Token and ParseResult handling", () => {
+    test("can print Token objects", () => {
+      const token = {
+        constructor: { name: "Token" },
+        value: "hello",
+        range: new Range(0, 5),
+        location: null,
+        type: "TEXT"
+      }
+
+      const output = IdentityPrinter.print(token)
+      expect(output).toBe("hello")
+    })
+
+    test("can print ParseResult objects", () => {
+      const input = `<div>Hello from ParseResult</div>`
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+      expect(parseResult.value).toBeTruthy()
+
+      const output = IdentityPrinter.print(parseResult)
+      expect(output).toBe(input)
+    })
+
+    test("instance method also handles Token and ParseResult", () => {
+      const input = `<p>Test content</p>`
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+
+      const printer = new IdentityPrinter()
+
+      const parseResultOutput = printer.print(parseResult)
+      expect(parseResultOutput).toBe(input)
+
+      const token = {
+        constructor: { name: "Token" },
+        value: "test",
+        range: new Range(0, 4),
+        location: null,
+        type: "TEXT"
+      }
+
+      const tokenOutput = printer.print(token)
+      expect(tokenOutput).toBe("test")
+    })
+
+    test("custom printers work with Token and ParseResult", () => {
+      const input = `<div>hello world</div>`
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+
+      const uppercaseOutput = UppercasePrinter.print(parseResult)
+      expect(uppercaseOutput).toBe(`<div>HELLO WORLD</div>`)
+
+      const token = {
+        constructor: { name: "Token" },
+        value: "hello",
+        range: new Range(0, 5),
+        location: null,
+        type: "TEXT"
+      }
+
+      const tokenOutput = UppercasePrinter.print(token)
+      expect(tokenOutput).toBe("hello")
+    })
+
+    test("ParseResult with errors respects ignoreErrors option", () => {
+      const input = `<div>Incomplete`
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+
+      expect(() => IdentityPrinter.print(parseResult)).toThrow()
+
+      const output = IdentityPrinter.print(parseResult, { ignoreErrors: true })
+      expect(output).toBe(input)
     })
   })
 })
