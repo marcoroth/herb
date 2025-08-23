@@ -85,7 +85,7 @@ export class FormatPrinter extends Printer {
   private indentLevel: number = 0
   private inlineMode: boolean = false
   private isInComplexNesting: boolean = false
-  private currentTagName: string = ""
+  private currentElement: HTMLElementNode | null = null
 
   public source: string
 
@@ -451,67 +451,131 @@ export class FormatPrinter extends Printer {
   visitHTMLElementNode(node: HTMLElementNode) {
     const open = node.open_tag as HTMLOpenTagNode
     const tagName = open.tag_name?.value ?? ""
-
-    this.currentTagName = tagName
-
-    const attributes = this.extractAttributes(open.children)
-    const inlineNodes = this.extractInlineNodes(open.children)
-    const hasTextFlow = this.isInTextFlowContext(null, node.body)
-    const children = this.filterSignificantChildren(node.body, hasTextFlow)
-    const isInlineElement = this.isInlineElement(tagName)
-    const hasClosing = open.tag_closing?.value === ">" || open.tag_closing?.value === "/>"
     const isSelfClosing = open.tag_closing?.value === "/>"
 
-    if (!hasClosing) {
-      this.visit(open)
-      return
+    this.currentElement = node
+
+    // 1. Visit the open tag (handles just the opening tag)
+    this.visit(node.open_tag)
+
+    // 2. Handle element content (if not self-closing and not void)
+    if (!isSelfClosing && !node.is_void) {
+      this.visitHTMLElementContent(node.body, tagName)
     }
 
-    if (attributes.length === 0 && inlineNodes.length === 0) {
-      this.handleSimpleElement(node, tagName, children, hasTextFlow, isSelfClosing)
-      return
+    // 3. Visit the closing tag (if it exists and needed)
+    if (!isSelfClosing && !node.is_void && node.close_tag) {
+      this.visit(node.close_tag)
     }
 
-    if (attributes.length === 0 && inlineNodes.length > 0) {
-      this.handleElementWithInlineNodes(node, tagName, attributes, inlineNodes, children, isSelfClosing, hasTextFlow)
-      return
-    }
-
-    this.handleComplexElement(node, tagName, attributes, inlineNodes, children, isSelfClosing, isInlineElement, hasTextFlow)
+    this.currentElement = null
   }
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
     const tagName = node.tag_name?.value ?? ""
-    const indent = this.indent()
     const attributes = this.extractAttributes(node.children)
     const inlineNodes = this.extractInlineNodes(node.children)
-    const hasClosing = node.tag_closing?.value === ">"
+    const hasClosing = node.tag_closing?.value === ">" || node.tag_closing?.value === "/>"
+    const isSelfClosing = node.tag_closing?.value === "/>"
 
     if (!hasClosing) {
+      const indent = this.indent()
       this.push(indent + `<${tagName}`)
       return
     }
 
-    const inline = this.renderInlineOpen(tagName, attributes, node.is_void, inlineNodes, node.children)
-    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-    const shouldKeepInline = this.shouldRenderInline(
-      totalAttributeCount,
-      inline.length,
-      indent.length,
-      this.maxLineLength,
-      false,
-      0,
-      inlineNodes.length,
-      this.hasMultilineAttributes(attributes)
-    )
+    // Use the simplified open tag printing that only handles the opening tag
+    this.printHTMLOpenTag(tagName, attributes, inlineNodes, node.children, isSelfClosing, node.is_void, true)
+  }
 
-    if (shouldKeepInline) {
-      this.push(indent + inline)
+  /**
+   * Visit HTML element content - handles the body of an HTML element
+   */
+  visitHTMLElementContent(children: Node[], tagName: string) {
+    const hasTextFlow = this.isInTextFlowContext(null, children)
+    const significantChildren = this.filterSignificantChildren(children, hasTextFlow)
 
+    // If no content, check if this should be an inline empty element
+    if (significantChildren.length === 0) {
+      this.handleEmptyElementContent()
       return
     }
 
-    this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.children, false, node.is_void, false)
+    // Check if content should be rendered inline
+    if (this.shouldRenderContentInline(significantChildren, tagName)) {
+      this.renderContentInline(significantChildren)
+      return
+    }
+
+    // Render content normally (multiline)
+    this.printHTMLElementContent(significantChildren, hasTextFlow, tagName)
+  }
+
+  /**
+   * Handle empty element content - may render the element inline
+   */
+  private handleEmptyElementContent() {
+    if (!this.currentElement) return
+
+    const open = this.currentElement.open_tag as HTMLOpenTagNode
+    const attributes = this.extractAttributes(open.children)
+    const inlineNodes = this.extractInlineNodes(open.children)
+
+    // For simple empty elements, we can render them inline by going back and modifying the last line
+    if (attributes.length <= 2 && inlineNodes.length === 0) {
+      const tagName = open.tag_name?.value ?? ""
+      const lastLine = this.lines[this.lines.length - 1]
+
+      // Replace the opening tag line with the complete inline element
+      if (lastLine && lastLine.includes(`<${tagName}`)) {
+        this.lines[this.lines.length - 1] = lastLine.replace(`<${tagName}`, `<${tagName}`).replace('>', `></${tagName}>`)
+        // Skip the closing tag by marking element as complete
+        this.currentElement.close_tag = null
+      }
+    }
+  }
+
+  /**
+   * Check if content should be rendered inline
+   */
+  private shouldRenderContentInline(children: Node[], tagName: string): boolean {
+    if (children.length !== 1) return false
+
+    const child = children[0]
+    if (!(child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE')) return false
+
+    const textContent = (child as HTMLTextNode).content.trim()
+    if (!textContent || textContent.includes('\n')) return false
+
+    if (!this.currentElement) return false
+
+    const open = this.currentElement.open_tag as HTMLOpenTagNode
+    const attributes = this.extractAttributes(open.children)
+    const inlineNodes = this.extractInlineNodes(open.children)
+
+    // Simple elements with short text and not too many attributes
+    return textContent.length < 50 && attributes.length <= 2 && inlineNodes.length === 0
+  }
+
+  /**
+   * Render content inline (modify the last opening tag line to include content)
+   */
+  private renderContentInline(children: Node[]) {
+    if (!this.currentElement) return
+
+    const child = children[0]
+    if (!(child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE')) return
+
+    const textContent = (child as HTMLTextNode).content.trim()
+    const tagName = this.currentElement.open_tag?.tag_name?.value ?? ""
+    const lastLine = this.lines[this.lines.length - 1]
+
+    // Replace the opening tag line with the complete inline element
+    if (lastLine && lastLine.endsWith('>')) {
+      this.lines[this.lines.length - 1] = lastLine.replace('>', `>${textContent}</${tagName}>`)
+      // Skip the closing tag by marking element as complete
+      this.currentElement.close_tag = null
+    }
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
@@ -901,12 +965,150 @@ export class FormatPrinter extends Printer {
     }
   }
 
+
   /**
-   * Print HTML closing tag
+   * Handle open tag rendering when visited as part of an HTMLElementNode
    */
-  private printHTMLClosingTag(tagName: string): void {
+  private handleElementOpenTag(
+    element: HTMLElementNode,
+    openTag: HTMLOpenTagNode,
+    tagName: string,
+    attributes: HTMLAttributeNode[],
+    inlineNodes: Node[],
+    isSelfClosing: boolean
+  ): void {
+    const hasTextFlow = this.isInTextFlowContext(null, element.body)
+    const children = this.filterSignificantChildren(element.body, hasTextFlow)
+    const isInlineElement = this.isInlineElement(tagName)
+
+    if (attributes.length === 0 && inlineNodes.length === 0) {
+      this.handleSimpleElementOpenTag(element, tagName, children, hasTextFlow, isSelfClosing)
+      return
+    }
+
+    if (attributes.length === 0 && inlineNodes.length > 0) {
+      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, true)
+      return
+    }
+
+    this.handleComplexElementOpenTag(element, openTag, tagName, attributes, inlineNodes, children, isSelfClosing, isInlineElement, hasTextFlow)
+  }
+
+  /**
+   * Handle simple element open tag (no attributes or inline nodes)
+   */
+  private handleSimpleElementOpenTag(
+    element: HTMLElementNode,
+    tagName: string,
+    children: Node[],
+    hasTextFlow: boolean,
+    isSelfClosing: boolean
+  ): void {
+    // Handle empty elements
+    if (children.length === 0) {
+      if (isSelfClosing) {
+        this.printHTMLOpenTag(tagName, [], [], [], true, element.is_void, true)
+        this.elementRenderedCompletely = true
+      } else if (element.is_void) {
+        this.printHTMLOpenTag(tagName, [], [], [], false, true, true)
+        this.elementRenderedCompletely = true
+      } else {
+        // Empty element with opening and closing tag on same line
+        const indent = this.indent()
+        this.push(indent + `<${tagName}></${tagName}>`)
+        this.elementRenderedCompletely = true
+      }
+      return
+    }
+
+    // Try to render inline if possible
+    if (this.canRenderSimpleInline(tagName, children, hasTextFlow)) {
+      const fullInlineResult = this.tryRenderInlineFull(element, tagName, [], children)
+      if (fullInlineResult) {
+        const indent = this.indent()
+        const totalLength = indent.length + fullInlineResult.length
+        const maxNesting = this.getMaxNestingDepth(children, 0)
+        const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
+
+        if (totalLength <= maxInlineLength) {
+          this.push(indent + fullInlineResult)
+          // Mark that the element was rendered completely inline
+          this.elementRenderedCompletely = true
+          return
+        }
+      }
+    }
+
+    // Render as regular opening tag
+    this.printHTMLOpenTag(tagName, [], [], [], isSelfClosing, element.is_void, true)
+  }
+
+  /**
+   * Handle complex element open tag (with attributes and/or inline nodes)
+   */
+  private handleComplexElementOpenTag(
+    element: HTMLElementNode,
+    openTag: HTMLOpenTagNode,
+    tagName: string,
+    attributes: HTMLAttributeNode[],
+    inlineNodes: Node[],
+    children: Node[],
+    isSelfClosing: boolean,
+    isInlineElement: boolean,
+    hasTextFlow: boolean
+  ): void {
+    const hasERBControlFlow = inlineNodes.some(node => this.isERBControlFlow(node)) || openTag.children.some(node => this.isERBControlFlow(node))
+    const hasComplexERB = hasERBControlFlow && this.hasComplexERBControlFlow(inlineNodes)
+
     const indent = this.indent()
-    this.push(indent + `</${tagName}>`)
+    const inline = hasComplexERB ? "" : this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, openTag.children)
+    const nestingDepth = this.getMaxNestingDepth(children, 0)
+    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
+
+    const shouldKeepInline = this.shouldRenderInline(
+      totalAttributeCount,
+      inline.length,
+      indent.length,
+      this.maxLineLength,
+      hasComplexERB,
+      nestingDepth,
+      inlineNodes.length,
+      this.hasMultilineAttributes(attributes)
+    )
+
+    if (shouldKeepInline) {
+      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, true)
+    } else {
+      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, false)
+    }
+  }
+
+  /**
+   * Check if simple element can be rendered inline
+   */
+  private canRenderSimpleInline(tagName: string, children: Node[], hasTextFlow: boolean): boolean {
+    if (this.isInComplexNesting && children.length === 1) {
+      const child = children[0]
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const textContent = (child as HTMLTextNode).content.trim()
+        return !textContent.includes('\n')
+      }
+    }
+
+    if (!this.isInComplexNesting) {
+      if (hasTextFlow) {
+        const hasAnyNewlines = children.some(child => {
+          if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+            return (child as HTMLTextNode).content.includes('\n')
+          }
+          return false
+        })
+        return !hasAnyNewlines
+      }
+      return true
+    }
+
+    return false
   }
 
   /**
@@ -915,7 +1117,7 @@ export class FormatPrinter extends Printer {
    */
   private printHTMLElementContent(children: Node[], hasTextFlow: boolean = false, tagName: string = ''): void {
     const specialTags = ['script', 'style', 'pre', 'textarea']
-    
+
     if (specialTags.includes(tagName.toLowerCase())) {
       this.printSpecialElementContent(children, tagName.toLowerCase())
     } else {
@@ -935,7 +1137,7 @@ export class FormatPrinter extends Printer {
         const content = IdentityPrinter.print(child)
         const lines = content.split('\n')
         const indent = this.indent()
-        
+
         lines.forEach(line => {
           this.push(indent + line)
         })
@@ -977,16 +1179,27 @@ export class FormatPrinter extends Printer {
 
         if (totalLength <= maxInlineLength) {
           this.push(this.indent() + fullInlineResult)
+          this.elementRenderedCompletely = true
           return
         }
       }
     }
 
     // Render as multiline element
-    this.renderElementWithBody(tagName, children, hasTextFlow, node.is_void, isSelfClosing)
+    this.renderElementWithBody(tagName, children, hasTextFlow, node.is_void, isSelfClosing, node.close_tag)
   }
 
+
   // --- Utility methods ---
+
+  /**
+   * Get the current tag name from the current element context
+   */
+  private get currentTagName(): string {
+    if (!this.currentElement) return ""
+    const openTag = this.currentElement.open_tag as HTMLOpenTagNode
+    return openTag.tag_name?.value ?? ""
+  }
 
   private isNonWhitespaceNode(node: Node): boolean {
     if (node instanceof HTMLTextNode || (node as any).type === 'AST_HTML_TEXT_NODE') {
@@ -1615,18 +1828,13 @@ export class FormatPrinter extends Printer {
   /**
    * Render element with body content (opening tag, children, closing tag)
    */
-  private renderElementWithBody(tagName: string, children: Node[], hasTextFlow: boolean, isVoid: boolean, isSelfClosing: boolean) {
+  private renderElementWithBody(tagName: string, children: Node[], hasTextFlow: boolean, isVoid: boolean, isSelfClosing: boolean, closeTag?: HTMLCloseTagNode) {
     // Print opening tag
     this.printHTMLOpenTag(tagName, [], [], [], isSelfClosing, isVoid, true)
-    
+
     // Print element content
     if (children.length > 0) {
       this.printHTMLElementContent(children, hasTextFlow, tagName)
-    }
-
-    // Print closing tag
-    if (!isVoid && !isSelfClosing) {
-      this.printHTMLClosingTag(tagName)
     }
   }
 
@@ -1652,10 +1860,7 @@ export class FormatPrinter extends Printer {
     // Print element content
     this.printHTMLElementContent(children, hasTextFlow, tagName)
 
-    // Print closing tag
-    if (!node.is_void && !isSelfClosing) {
-      this.printHTMLClosingTag(tagName)
-    }
+    // Note: Closing tag is now handled by visitHTMLElementNode
   }
 
   /**
@@ -1803,14 +2008,14 @@ export class FormatPrinter extends Printer {
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.printHTMLElementContent(children, hasTextFlow, tagName)
-        this.printHTMLClosingTag(tagName)
+        // Note: Closing tag is now handled by visitHTMLElementNode
       }
     } else if (inlineNodes.length > 0) {
       this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.printHTMLElementContent(children, hasTextFlow, tagName)
-        this.printHTMLClosingTag(tagName)
+        // Note: Closing tag is now handled by visitHTMLElementNode
       }
     } else {
       if (isInlineElement && children.length > 0) {
@@ -1863,7 +2068,7 @@ export class FormatPrinter extends Printer {
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
         this.printHTMLElementContent(children, hasTextFlow, tagName)
-        this.printHTMLClosingTag(tagName)
+        // Note: Closing tag is now handled by visitHTMLElementNode
       }
     }
   }
