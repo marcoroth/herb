@@ -1,4 +1,4 @@
-import { Node, Visitor, Token, ParseResult } from "@herb-tools/core"
+import { Node, Visitor, Token, ParseResult, isToken, isParseResult } from "@herb-tools/core"
 import { PrintContext } from "./print-context.js"
 
 import type * as Nodes from "@herb-tools/core"
@@ -20,14 +20,6 @@ export type PrintOptions = {
  */
 export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
   ignoreErrors: false
-}
-
-function isToken(input: any): input is Token {
-  return (input instanceof Token) || (input?.constructor?.name === "Token" && "value" in input)
-}
-
-function isParseResult(input: any): input is ParseResult {
-  return (input instanceof ParseResult) || (input?.constructor?.name === "ParseResult" && "value" in input)
 }
 
 export abstract class Printer extends Visitor {

@@ -154,15 +154,15 @@ describe("Document-level formatting", () => {
 
       <html>
         <head>
-          <title>
-            <%= page_title %>
-          </title>
+          <title><%= page_title %></title>
         </head>
+
         <body>
           <% if user_data %>
             <h1>Welcome <%= user_data[:name] %></h1>
             <p>Age: <%= user_data[:age] %></p>
           <% end %>
+
           <footer>
             <p>&copy; 2024</p>
           </footer>
@@ -210,14 +210,10 @@ describe("Document-level formatting", () => {
       <% items = [1, 2, 3] %>
 
       <% items.each do |item| %>
-        <div class="item">
-          <span><%= item %></span>
-        </div>
+        <div class="item"><span><%= item %></span></div>
       <% end %>
 
-      <div class="footer">
-        Done
-      </div>
+      <div class="footer">Done</div>
     `)
   })
 
@@ -292,27 +288,64 @@ describe("Document-level formatting", () => {
     `)
   })
 
-  test("preserves inline elements while splitting long mixed content", () => {
+  test("keeps inline elements inline when content fits on one line", () => {
     const source = dedent`
       <p>hello <b>complex <span>nested</span> content</b> world</p>
     `
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>
-        hello <b>complex <span>nested</span> content</b> world
-      </p>
+      <p>hello <b>complex <span>nested</span> content</b> world</p>
     `)
   })
 
-  test("formats HTML elements with ERB conditionals inline when total attributes <= 3", () => {
+  test("keeps HTML elements with ERB conditionals inline when content is short", () => {
     const source = dedent`
       <span <% if true %> class="one" <% end %> another="attribute" final="one">Content</span>
     `
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <span <% if true %> class="one" <% end %> another="attribute" final="one">
+      <span <% if true %> class="one" <% end %> another="attribute" final="one">Content</span>
+    `)
+  })
+
+  test("splits HTML elements with ERB conditionals when there are more than three attribites", () => {
+    const source = dedent`
+      <span <% if true %> class="one" <% end %> another="attribute" one="more" final="one">Content</span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span
+        <% if true %>
+          class="one"
+        <% end %>
+        another="attribute"
+        one="more"
+        final="one"
+      >
+        Content
+      </span>
+    `)
+  })
+
+  test("splits HTML elements with ERB conditionals with elsewhen there are more than three attribites", () => {
+    const source = dedent`
+      <span <% if true %> class="one" <% else %> another="attribute" <% end %> one="more" final="one">Content</span>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span
+        <% if true %>
+          class="one"
+        <% else %>
+          another="attribute"
+        <% end %>
+        one="more"
+        final="one"
+      >
         Content
       </span>
     `)
@@ -446,9 +479,7 @@ describe("Document-level formatting", () => {
 
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <span <% if active? %> class="active" <% end %>>
-        Text
-      </span>
+      <span <% if active? %> class="active" <% end %>>Text</span>
     `)
   })
 
@@ -463,5 +494,295 @@ describe("Document-level formatting", () => {
 
     const result = formatter.format(source)
     expect(result).toEqual(source)
+  })
+
+  test("split ERB tag if it doesn't fit on current line", () => {
+    const source = dedent`
+      <div class="mt-6 block md:grid gap-8 overflow-scroll"><%= render partial: "cfp/event_list", locals: {events: @events} %></div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="mt-6 block md:grid gap-8 overflow-scroll">
+        <%= render partial: "cfp/event_list", locals: {events: @events} %>
+      </div>
+    `)
+  })
+
+  test("preserves ERB expressions in style attributes without adding extra spaces", () => {
+    const source = dedent`
+      <div style="background: '<%= url %>';">test</div>
+      <div
+        class="w-full lg:h-92 p-4 lg:p-16 border rounded-[25px] lg:rounded-[50px] text-center lg:text-left"
+        style="
+          color: <%= event.static_metadata.featured_color %>;
+          <% if event.static_metadata.featured_background.start_with?("data:") %>
+            background: url('<%= event.static_metadata.featured_background %>');
+            background-repeat: no-repeat;
+            background-size: cover;
+          <% else %>
+            background: <%= event.static_metadata.featured_background %>;
+          <% end %>
+        "
+      >
+        Content
+      </div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div style="background: '<%= url %>';">test</div>
+
+      <div
+        class="
+          w-full lg:h-92 p-4 lg:p-16 border rounded-[25px] lg:rounded-[50px]
+          text-center lg:text-left
+        "
+        style="
+          color: <%= event.static_metadata.featured_color %>;
+          <% if event.static_metadata.featured_background.start_with?("data:") %>
+            background: url('<%= event.static_metadata.featured_background %>');
+            background-repeat: no-repeat;
+            background-size: cover;
+          <% else %>
+            background: <%= event.static_metadata.featured_background %>;
+          <% end %>
+        "
+      >
+        Content
+      </div>
+    `)
+  })
+
+  test("https://github.com/rubyevents/rubyevents/blob/390ffa561e5a3392ed20d061948c27824c239f28/app/views/events/_featured.html.erb", () => {
+    const source = dedent`
+      <div
+        class="w-full lg:h-92 p-4 lg:p-16 border rounded-[25px] lg:rounded-[50px] text-center lg:text-left"
+        style="
+          color: <%= event.static_metadata.featured_color %>;
+          <% if event.static_metadata.featured_background.start_with?("data:") %>
+            background: url('<%= event.static_metadata.featured_background %>');
+            background-repeat: no-repeat;
+            background-size: cover;
+          <% else %>
+            background: <%= event.static_metadata.featured_background %>;
+          <% end %>
+        ">
+        <a href="<%= event_path(event) %>">
+          <div class="lg:grid grid-cols-[1fr_2fr]">
+            <div>
+              <div class="flex justify-center mb-9">
+                <%= image_tag event.featured_image_path, class: "w-1/2 max-h-none lg:w-full", loading: "lazy", width: 615, height: 350, alt: event.name %>
+              </div>
+
+              <div class="flex flex-col gap-3 lg:h-48 lg:max-h-48 overflow-hidden items-center lg:items-start">
+                <h1 class="text-inherit font-bold text-xl line-clamp-1 lg:line-clamp-2"><%= event.name %></h1>
+                <h2 class="text-inherit opacity-60 text-sm line-clamp-1"><%= event.static_metadata.location %> • <%= event.formatted_dates %></h2>
+                <h2 class="text-inherit font-medium text-sm line-clamp-3 hidden lg:block">
+                  <%= event.description %>
+
+                  <%= home_updated_text(event) %>
+                </h2>
+              </div>
+
+              <%= ui_button kind: :rounded, class: "btn-sm lg:btn-md my-4" do %>
+                <span>Explore Talks</span>
+              <% end %>
+            </div>
+
+            <div class="hidden lg:flex flex-col justify-center items-center">
+              <div>
+                <div class="avatar-group -space-x-6 rtl:space-x-reverse">
+                  <% shown_speakers = [] %>
+
+                  <% all_speakers = event.speakers.to_a %>
+                  <% speakers_with_avatars = all_speakers.select { |speaker| speaker.avatar_url.present? }.sort_by(&:avatar_rank) %>
+
+                  <% event.keynote_speakers.each do |keynote_speaker| %>
+                    <% shown_speakers << keynote_speaker %>
+
+                    <div class="avatar bg-white">
+                      <div class="w-12 lg:w-28 xl:w-40">
+                        <img src="<%= keynote_speaker.avatar_url %>" onerror="this.parentElement.parentElement.remove()" loading="lazy" alt="<%= keynote_speaker.name %>">
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <% if event.keynote_speakers.none? %>
+                    <% speakers_with_avatars.first(4).each do |speaker| %>
+                      <% shown_speakers << speaker %>
+
+                      <div class="avatar bg-white">
+                        <div class="w-12 lg:w-28 xl:w-40">
+                          <img src="<%= speaker.avatar_url %>" loading="lazy" alt="<%= speaker.name %>">
+                        </div>
+                      </div>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="mt-12">
+                <div class="avatar-group -space-x-6 lg:-space-x-3 rtl:space-x-reverse">
+                  <% remaining_speakers = speakers_with_avatars - shown_speakers %>
+
+                  <% if remaining_speakers.any? %>
+                    <% remaining_speakers.first(10).each do |speaker| %>
+                      <% shown_speakers << speaker %>
+
+                      <div class="avatar bg-white">
+                        <div class="w-8 xl:w-12">
+                          <img src="<%= speaker.avatar_url %>" loading="lazy" alt="<%= speaker.name %>">
+                        </div>
+                      </div>
+                    <% end %>
+                  <% end %>
+
+                  <% more_speakers_count = all_speakers.count - shown_speakers.count %>
+
+                  <% if more_speakers_count.positive? %>
+                    <div class="avatar placeholder">
+                      <div class="bg-neutral text-neutral-content w-8 xl:w-12">
+                        <span>+<%= more_speakers_count %></span>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </a>
+      </div>
+    `
+
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div
+        class="
+          w-full lg:h-92 p-4 lg:p-16 border rounded-[25px] lg:rounded-[50px]
+          text-center lg:text-left
+        "
+        style="
+          color: <%= event.static_metadata.featured_color %>;
+          <% if event.static_metadata.featured_background.start_with?("data:") %>
+            background: url('<%= event.static_metadata.featured_background %>');
+            background-repeat: no-repeat;
+            background-size: cover;
+          <% else %>
+            background: <%= event.static_metadata.featured_background %>;
+          <% end %>
+        "
+      >
+        <a href="<%= event_path(event) %>">
+          <div class="lg:grid grid-cols-[1fr_2fr]">
+            <div>
+              <div class="flex justify-center mb-9">
+                <%= image_tag event.featured_image_path, class: "w-1/2 max-h-none lg:w-full", loading: "lazy", width: 615, height: 350, alt: event.name %>
+              </div>
+
+              <div
+                class="
+                  flex flex-col gap-3 lg:h-48 lg:max-h-48 overflow-hidden
+                  items-center lg:items-start
+                "
+              >
+                <h1 class="text-inherit font-bold text-xl line-clamp-1 lg:line-clamp-2">
+                  <%= event.name %>
+                </h1>
+
+                <h2 class="text-inherit opacity-60 text-sm line-clamp-1">
+                  <%= event.static_metadata.location %> • <%= event.formatted_dates %>
+                </h2>
+
+                <h2 class="text-inherit font-medium text-sm line-clamp-3 hidden lg:block">
+                  <%= event.description %>
+
+                  <%= home_updated_text(event) %>
+                </h2>
+              </div>
+
+              <%= ui_button kind: :rounded, class: "btn-sm lg:btn-md my-4" do %>
+                <span>Explore Talks</span>
+              <% end %>
+            </div>
+
+            <div class="hidden lg:flex flex-col justify-center items-center">
+              <div>
+                <div class="avatar-group -space-x-6 rtl:space-x-reverse">
+                  <% shown_speakers = [] %>
+
+                  <% all_speakers = event.speakers.to_a %>
+                  <% speakers_with_avatars = all_speakers.select { |speaker| speaker.avatar_url.present? }.sort_by(&:avatar_rank) %>
+
+                  <% event.keynote_speakers.each do |keynote_speaker| %>
+                    <% shown_speakers << keynote_speaker %>
+
+                    <div class="avatar bg-white">
+                      <div class="w-12 lg:w-28 xl:w-40">
+                        <img
+                          src="<%= keynote_speaker.avatar_url %>"
+                          onerror="this.parentElement.parentElement.remove()"
+                          loading="lazy"
+                          alt="<%= keynote_speaker.name %>"
+                        >
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <% if event.keynote_speakers.none? %>
+                    <% speakers_with_avatars.first(4).each do |speaker| %>
+                      <% shown_speakers << speaker %>
+
+                      <div class="avatar bg-white">
+                        <div class="w-12 lg:w-28 xl:w-40">
+                          <img
+                            src="<%= speaker.avatar_url %>"
+                            loading="lazy"
+                            alt="<%= speaker.name %>"
+                          >
+                        </div>
+                      </div>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+
+              <div class="mt-12">
+                <div class="avatar-group -space-x-6 lg:-space-x-3 rtl:space-x-reverse">
+                  <% remaining_speakers = speakers_with_avatars - shown_speakers %>
+
+                  <% if remaining_speakers.any? %>
+                    <% remaining_speakers.first(10).each do |speaker| %>
+                      <% shown_speakers << speaker %>
+
+                      <div class="avatar bg-white">
+                        <div class="w-8 xl:w-12">
+                          <img
+                            src="<%= speaker.avatar_url %>"
+                            loading="lazy"
+                            alt="<%= speaker.name %>"
+                          >
+                        </div>
+                      </div>
+                    <% end %>
+                  <% end %>
+
+                  <% more_speakers_count = all_speakers.count - shown_speakers.count %>
+
+                  <% if more_speakers_count.positive? %>
+                    <div class="avatar placeholder">
+                      <div class="bg-neutral text-neutral-content w-8 xl:w-12">
+                        <span>+<%= more_speakers_count %></span>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    `)
   })
 })

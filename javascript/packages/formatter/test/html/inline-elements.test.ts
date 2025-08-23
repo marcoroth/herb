@@ -203,9 +203,7 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <h2 class="title">
-        Posts (<%= @posts.count %>)
-      </h2>
+      <h2 class="title">Posts (<%= @posts.count %>)</h2>
     `)
   })
 })

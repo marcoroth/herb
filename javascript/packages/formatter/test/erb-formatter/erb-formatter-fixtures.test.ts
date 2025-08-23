@@ -168,9 +168,7 @@ describe("ERB Formatter Fixture Tests", () => {
           <div class="admin-panel">
             <h2>Admin Controls</h2>
             <% if user.permissions.include?('delete') %>
-              <button class="btn-danger">
-                Delete
-              </button>
+              <button class="btn-danger">Delete</button>
             <% end %>
           </div>
         <% when 'user' %>
@@ -259,6 +257,7 @@ describe("ERB Formatter Fixture Tests", () => {
         <div>
           <%# Inline comment %>
           <p>Content</p>
+
           <% # Another comment style %>
           <span>More content</span>
         </div>
@@ -307,7 +306,9 @@ describe("ERB Formatter Fixture Tests", () => {
 
         <div <% if eeee then a else c end %>></div>
 
-        <div <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>></div>
+        <div
+          <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>
+        ></div>
       `)
     })
   })
@@ -401,9 +402,8 @@ describe("ERB Formatter Fixture Tests", () => {
                 </ul>
               </nav>
             <% end %>
-            <main>
-              <%= yield %>
-            </main>
+
+            <main><%= yield %></main>
           </body>
         </html>
       `)
@@ -441,10 +441,10 @@ describe("ERB Formatter Fixture Tests", () => {
               <div>
                 <div>
                   <% link_to "Very long long long long long long long long string here and there", very_very_very_long_long_long_pathhhhhh_here, opt: "212", options: "222sdasdasd", class: "  322 ", dis: diss %>
+
                   <% link_to "string", path, opt: "212", options: "222sdasdasd" %>
-                  <div>
-                    <%= react_component({ greeting: 'react-rails.' }) %>
-                  </div>
+
+                  <div><%= react_component({ greeting: 'react-rails.' }) %></div>
                 </div>
               </div>
             </div>
@@ -463,9 +463,7 @@ describe("ERB Formatter Fixture Tests", () => {
                   <div class="level-5">
                     <span>Deep content</span>
                     <% items.each_with_index do |item, index| %>
-                      <div class="item-<%= index %>">
-                        <%= item.title %>
-                      </div>
+                      <div class="item-<%= index %>"><%= item.title %></div>
                     <% end %>
                   </div>
                 </div>
@@ -486,9 +484,7 @@ describe("ERB Formatter Fixture Tests", () => {
                   <div class="level-5">
                     <span>Deep content</span>
                     <% items.each_with_index do |item, index| %>
-                      <div class="item-<%= index %>">
-                        <%= item.title %>
-                      </div>
+                      <div class="item-<%= index %>"><%= item.title %></div>
                     <% end %>
                   </div>
                 </div>
@@ -516,8 +512,10 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div>
           <h1>Тест UTF-8 🚀</h1>
+
           <p>Café, naïve, résumé</p>
           <span>中文测试</span>
+
           <div>🍰🎉🎊✨🌟💫⭐🔥💥🎯</div>
         </div>
       `)
@@ -548,18 +546,13 @@ describe("ERB Formatter Fixture Tests", () => {
 
       expect(result).toBe(dedent`
         <div class="layout">
-          <header>
-            <%= yield :header %>
-          </header>
-          <main>
-            <%= yield %>
-          </main>
-          <aside>
-            <%= yield :sidebar if content_for?(:sidebar) %>
-          </aside>
-          <footer>
-            <%= yield :footer %>
-          </footer>
+          <header><%= yield :header %></header>
+
+          <main><%= yield %></main>
+
+          <aside><%= yield :sidebar if content_for?(:sidebar) %></aside>
+
+          <footer><%= yield :footer %></footer>
         </div>
       `)
     })
@@ -668,12 +661,8 @@ describe("ERB Formatter Fixture Tests", () => {
             focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50
           "
         >
-          <h2 class="text-xl font-bold mb-2">
-            Card Title
-          </h2>
-          <p class="text-sm opacity-75">
-            Card description
-          </p>
+          <h2 class="text-xl font-bold mb-2">Card Title</h2>
+          <p class="text-sm opacity-75">Card description</p>
         </div>
       `)
     })

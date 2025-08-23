@@ -182,9 +182,7 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div <% if condition %> class="active" <% end %>>
-        Content
-      </div>
+      <div <% if condition %> class="active" <% end %>>Content</div>
     `)
   })
 
@@ -194,9 +192,7 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div id="test" <% if show_class %> class="visible" <% end %> data-value="123">
-        Content
-      </div>
+      <div id="test" <% if show_class %> class="visible" <% end %> data-value="123">Content</div>
     `)
   })
 

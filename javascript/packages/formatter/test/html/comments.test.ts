@@ -189,4 +189,143 @@ describe("@herb-tools/formatter", () => {
       -->
     `)
   })
+
+  describe("Mixed content with comments", () => {
+    test("div with comment and another element stays multiline", () => {
+      const source = dedent`
+        <div>
+          <!-- This is a comment -->
+          <p>Some content</p>
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <!-- This is a comment -->
+          <p>Some content</p>
+        </div>
+      `)
+    })
+
+    test("div with comment and text content stays multiline", () => {
+      const source = dedent`
+        <div>
+          <!-- Important note -->
+          Some text content here
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <!-- Important note -->
+          Some text content here
+        </div>
+      `)
+    })
+
+    test("div with comment and ERB expression stays multiline", () => {
+      const source = dedent`
+        <div>
+          <!-- User info -->
+          <%= current_user.name %>
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <!-- User info -->
+          <%= current_user.name %>
+        </div>
+      `)
+    })
+
+    test("div with multiple comments and elements stays multiline", () => {
+      const source = dedent`
+        <div>
+          <!-- Header comment -->
+          <h1>Title</h1>
+          <!-- Body comment -->
+          <p>Content</p>
+          <!-- Footer comment -->
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <!-- Header comment -->
+          <h1>Title</h1>
+
+          <!-- Body comment -->
+          <p>Content</p>
+
+          <!-- Footer comment -->
+        </div>
+      `)
+    })
+
+    test("nested elements with comments stay multiline", () => {
+      const source = dedent`
+        <section>
+          <div>
+            <!-- Section comment -->
+            <span>Inline content</span>
+          </div>
+        </section>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <section>
+          <div>
+            <!-- Section comment -->
+            <span>Inline content</span>
+          </div>
+        </section>
+      `)
+    })
+
+    test("comment with ERB in mixed content stays multiline", () => {
+      const source = dedent`
+        <article>
+          <!-- Debug: <%= Rails.env %> -->
+          <h2>Article Title</h2>
+          <p>Article content goes here.</p>
+        </article>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <article>
+          <!-- Debug: <%= Rails.env %> -->
+          <h2>Article Title</h2>
+
+          <p>Article content goes here.</p>
+        </article>
+      `)
+    })
+
+    test("div with only a comment uses multiline formatting", () => {
+      const source = dedent`
+        <div>
+          <!-- Only a comment here -->
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <!-- Only a comment here -->
+        </div>
+      `)
+    })
+
+    test("span with only a comment becomes inline (acceptable for inline elements)", () => {
+      const source = dedent`
+        <span>
+          <!-- Even in inline elements -->
+        </span>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <span><!-- Even in inline elements --></span>
+      `)
+    })
+  })
 })

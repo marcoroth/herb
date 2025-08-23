@@ -120,12 +120,12 @@ describe("CLI Binary", () => {
   })
 
   it("should format HTML/ERB from stdin", async () => {
-    const input = '<div class="test"><%= user.name %></div>'
+    const input = '<div class="test"><div><%= user.name %></div></div>'
     const result = await execBinary([], input)
 
     expectExitCode(result, 0)
     expect(result.stdout).toContain('<div class="test">')
-    expect(result.stdout).toContain('  <%= user.name %>')
+    expect(result.stdout).toContain('  <div><%= user.name %></div>')
     expect(result.stdout).toContain('</div>')
   })
 

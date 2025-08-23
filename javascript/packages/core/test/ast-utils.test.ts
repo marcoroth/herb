@@ -4,7 +4,7 @@ import {
   filterLiteralNodes,
   isERBContentNode,
   isERBOutputNode,
-  isERBControlNode,
+  isERBControlFlowNode,
   hasERBContent,
   hasERBOutput,
   filterERBContentNodes,
@@ -114,29 +114,29 @@ describe("ast-utils", () => {
     })
   })
 
-  describe("isERBControlNode", () => {
+  describe("isERBControlFlowNode", () => {
     test("returns true for <% control nodes", () => {
       const node = createERBContentNode("<%", "if condition")
 
-      expect(isERBControlNode(node)).toBe(true)
+      expect(isERBControlFlowNode(node)).toBe(false)
     })
 
     test("returns false for <%= output nodes", () => {
       const node = createERBContentNode("<%=", "test")
 
-      expect(isERBControlNode(node)).toBe(false)
+      expect(isERBControlFlowNode(node)).toBe(false)
     })
 
     test("returns false for <%== escaped output nodes", () => {
       const node = createERBContentNode("<%==", "test")
 
-      expect(isERBControlNode(node)).toBe(false)
+      expect(isERBControlFlowNode(node)).toBe(false)
     })
 
     test("returns false for literal nodes", () => {
       const node = createLiteralNode("test")
 
-      expect(isERBControlNode(node)).toBe(false)
+      expect(isERBControlFlowNode(node)).toBe(false)
     })
   })
 

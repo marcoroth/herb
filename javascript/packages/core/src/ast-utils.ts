@@ -1,35 +1,43 @@
-import { LiteralNode } from "./nodes.js"
+import {
+  LiteralNode,
+  ERBIfNode,
+  ERBUnlessNode,
+  ERBBlockNode,
+  ERBCaseNode,
+  ERBCaseMatchNode,
+  ERBWhileNode,
+  ERBForNode,
+  ERBBeginNode,
+  HTMLElementNode,
+  HTMLOpenTagNode,
+  HTMLCloseTagNode,
+  HTMLCommentNode
+} from "./nodes.js"
 
 import {
+  isNode,
+  isAnyOf,
   isLiteralNode,
+  isERBNode,
   isERBContentNode,
   areAllOfType,
   filterLiteralNodes
 } from "./node-type-guards.js"
 
-import type { Node, ERBContentNode, HTMLAttributeNameNode } from "./nodes.js"
+import { Node, ERBContentNode, HTMLAttributeNameNode } from "./nodes.js"
 
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
 export function isERBOutputNode(node: Node): node is ERBContentNode {
-  if (!isERBContentNode(node)) return false
-
-  const erbNode = node as ERBContentNode
-  const opening = erbNode.tag_opening?.value
-
-  return opening === "<%=" || opening === "<%=="
+  return isNode(node, ERBContentNode) && ["<%=", "<%=="].includes((node as ERBContentNode).tag_opening?.value!)
 }
 
 /**
  * Checks if a node is a non-output ERB node (control flow: <% %>)
  */
-export function isERBControlNode(node: Node): node is ERBContentNode {
-  if (!isERBContentNode(node)) return false
-
-  const erbNode = node as ERBContentNode
-
-  return erbNode.tag_opening?.value === "<%"
+export function isERBControlFlowNode(node: Node): node is ERBContentNode {
+  return isAnyOf(node, ERBIfNode, ERBUnlessNode, ERBBlockNode, ERBCaseNode, ERBCaseMatchNode, ERBWhileNode, ERBForNode, ERBBeginNode)
 }
 
 /**
@@ -166,4 +174,18 @@ export function getCombinedAttributeName(attributeNameNode: HTMLAttributeNameNod
   }
 
   return getCombinedStringFromNodes(attributeNameNode.children)
+}
+
+/**
+ * Gets the tag name of an HTML element node
+ */
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string {
+  return node.tag_name?.value ?? ""
+}
+
+/**
+ * Check if a node is a comment (HTML comment or ERB comment)
+ */
+export function isCommentNode(node: Node): boolean {
+  return isNode(node, HTMLCommentNode) || (isERBNode(node) && !isERBControlFlowNode(node))
 }

@@ -160,7 +160,9 @@ describe("ERB Formatter Compatibility Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toEqual(dedent`
-        <div <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>></div>
+        <div
+          <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>
+        ></div>
       `)
     })
   })
@@ -267,9 +269,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toEqual(dedent`
-        <div>
-          <%= yield %>
-        </div>
+        <div><%= yield %></div>
       `)
     })
 
@@ -284,10 +284,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toEqual(dedent`
-        <div>
-          <%= yield(:header) %>
-          <%= yield :footer, class: "mt-4" %>
-        </div>
+        <div><%= yield(:header) %><%= yield :footer, class: "mt-4" %></div>
       `)
     })
   })
@@ -375,9 +372,7 @@ describe("ERB Formatter Compatibility Tests", () => {
           <div class="category">
             <h3><%= category.name %></h3>
             <% category.items.each do |item| %>
-              <div class="item">
-                <%= item.name %>
-              </div>
+              <div class="item"><%= item.name %></div>
             <% end %>
           </div>
         <% end %>

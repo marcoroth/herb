@@ -130,7 +130,11 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%- when Herb::Template::BooleanField -%>
   <%= field.name %>: boolean;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  <%= field.name %>: Serialized<%= field.specific_kind %> | null;
+  <%- else -%>
   <%= field.name %>: SerializedNode | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%= field.name %>: SerializedNode[];
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
@@ -151,7 +155,11 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- when Herb::Template::BooleanField -%>
   <%= field.name %>: boolean;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- else -%>
   <%= field.name %>: Node | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%- if field.specific_kind == "Node" -%>
   <%= field.name %>: Node[];
@@ -176,12 +184,16 @@ export class <%= node.name %> extends Node {
   <%- when Herb::Template::BooleanField -%>
   readonly <%= field.name %>: boolean;
   <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind -%>
+  readonly <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- else -%>
   readonly <%= field.name %>: Node | null;
+  <%- end -%>
   <%- when Herb::Template::ArrayField -%>
   <%- if field.specific_kind == "Node" -%>
   readonly <%= field.name %>: Node[];
   <%- else -%>
-  readonly <%= field.name %>: any[];
+  readonly <%= field.name %>: Node[];
   <%- end -%>
   <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
   // no-op for <%= field.name %>
@@ -204,7 +216,7 @@ export class <%= node.name %> extends Node {
       <%- when Herb::Template::BooleanField -%>
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::NodeField -%>
-      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %> as any)) : null,
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) : null,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
       <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>
@@ -332,6 +344,16 @@ export class <%= node.name %> extends Node {
 
 <%- end -%>
 
+export type ConcreteNode =
+<%- nodes.each do |node| -%>
+  <%= node.name %><%- if nodes.last != node -%> |<%- end -%>
+<%- end -%>
+
+<%- nodes.each do |node| -%>
+export function fromSerializedNode(node: Serialized<%= node.name %>): <%= node.name %>;
+<%- end -%>
+export function fromSerializedNode(node: SerializedNode): Node;
+
 export function fromSerializedNode(node: SerializedNode): Node {
   switch (node.type) {
     <%- nodes.each do |node| -%>
@@ -362,4 +384,3 @@ export const ERBNodeClasses = [
   <%= node.name %>,
   <%- end -%>
 ]
-

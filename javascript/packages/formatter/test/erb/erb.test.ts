@@ -63,9 +63,7 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div>
-        <h1 class="<%= classes %>">
-          <%= title %>
-        </h1>
+        <h1 class="<%= classes %>"><%= title %></h1>
       </div>
     `)
   })

@@ -33,9 +33,7 @@ describe("conditional attributes", () => {
     `
 
     const expected = dedent`
-      <button class="btn <%= "active" if is_active %> primary">
-        Click me
-      </button>
+      <button class="btn <%= "active" if is_active %> primary">Click me</button>
     `
 
     expect(formatter.format(source)).toBe(expected)
