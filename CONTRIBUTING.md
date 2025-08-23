@@ -53,6 +53,12 @@ git clone https://github.com/marcoroth/herb && cd herb/
 
 #### Build Herb
 
+First we will need to generate the templates
+
+```bash
+bundle exec rake template
+```
+
 We can now compile all source files in `src/` and generate the `herb` executable.
 
 ```bash
