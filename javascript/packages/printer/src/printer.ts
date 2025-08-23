@@ -3,10 +3,21 @@ import { PrintContext } from "./print-context.js"
 
 import type * as Nodes from "@herb-tools/core"
 
+/**
+ * Options for controlling the printing behavior
+ */
 export type PrintOptions = {
+  /**
+   * When true, allows printing nodes that have parse errors.
+   * When false (default), throws an error if attempting to print nodes with errors.
+   * @default false
+   */
   ignoreErrors: boolean
 }
 
+/**
+ * Default print options used when none are provided
+ */
 export const DEFAULT_PRINT_OPTIONS: PrintOptions = {
   ignoreErrors: false
 }
@@ -16,10 +27,15 @@ export abstract class Printer extends Visitor {
 
   /**
    * Print a node to a string
+   * 
+   * @param node - The AST node to print
+   * @param options - Print options to control behavior
+   * @returns The printed string representation of the node
+   * @throws {Error} When node has parse errors and ignoreErrors is false
    */
   print(node: Node, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     if (options.ignoreErrors === false && node.recursiveErrors().length > 0) {
-      throw new Error(`Cannot print the node (${node.type}) since it or any of it's children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
+      throw new Error(`Cannot print the node (${node.type}) since it or any of its children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
     }
 
     this.context.reset()

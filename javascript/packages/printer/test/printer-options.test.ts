@@ -28,7 +28,7 @@ describe("Printer Options", () => {
 
       expect(() => {
         printer.print(parseResult.value!)
-      }).toThrow("Cannot print the node (AST_DOCUMENT_NODE) since it or any of it's children has parse errors. Either pass in a valid Node or call `print()` using `print(node, { ignoreErrors: true })`")
+      }).toThrow("Cannot print the node (AST_DOCUMENT_NODE) since it or any of its children has parse errors. Either pass in a valid Node or call `print()` using `print(node, { ignoreErrors: true })`")
     })
 
     test("throws error when explicitly setting ignoreErrors to false", () => {
@@ -43,7 +43,7 @@ describe("Printer Options", () => {
 
       expect(() => {
         printer.print(parseResult.value!, options)
-      }).toThrow("Cannot print the node (AST_DOCUMENT_NODE) since it or any of it's children has parse errors. Either pass in a valid Node or call `print()` using `print(node, { ignoreErrors: true })`")
+      }).toThrow("Cannot print the node (AST_DOCUMENT_NODE) since it or any of its children has parse errors. Either pass in a valid Node or call `print()` using `print(node, { ignoreErrors: true })`")
     })
 
     test("prints nodes with errors when ignoreErrors is true", () => {
@@ -105,7 +105,7 @@ describe("Printer Options", () => {
 
           expect(() => {
             printer.print(parseResult.value!)
-          }).toThrow(`Cannot print the node (${expectedType}) since it or any of it's children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
+          }).toThrow(`Cannot print the node (${expectedType}) since it or any of its children has parse errors. Either pass in a valid Node or call \`print()\` using \`print(node, { ignoreErrors: true })\``)
         }
       })
     })

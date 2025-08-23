@@ -342,7 +342,7 @@ export class Printer extends Visitor {
     isSelfClosing: boolean = false,
     isVoid: boolean = false,
     hasBodyContent: boolean = false
-  ): void {
+  ) {
     const indent = this.indent()
     this.push(indent + `<${tagName}`)
 
@@ -383,7 +383,7 @@ export class Printer extends Visitor {
   /**
    * Print an ERB tag (<% %> or <%= %>) with single spaces around inner content.
    */
-  private printERBNode(node: ERBNode): void {
+  private printERBNode(node: ERBNode) {
     const indent = this.inlineMode ? "" : this.indent()
     const erbText = this.reconstructERBNode(node, true)
 
@@ -392,7 +392,7 @@ export class Printer extends Visitor {
 
   // --- Visitor methods ---
 
-  visitDocumentNode(node: DocumentNode): void {
+  visitDocumentNode(node: DocumentNode) {
     let lastWasMeaningful = false
     let hasHandledSpacing = false
 
@@ -431,383 +431,73 @@ export class Printer extends Visitor {
     }
   }
 
-  visitHTMLElementNode(node: HTMLElementNode): void {
+  visitHTMLElementNode(node: HTMLElementNode) {
     const open = node.open_tag as HTMLOpenTagNode
     const tagName = open.tag_name?.value ?? ""
-    const indent = this.indent()
 
     this.currentTagName = tagName
 
     const attributes = this.extractAttributes(open.children)
     const inlineNodes = this.extractInlineNodes(open.children)
-
     const hasTextFlow = this.isInTextFlowContext(null, node.body)
-
-    const children = node.body.filter(child => {
-      if (child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') {
-        return false
-      }
-
-      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-        const content = (child as HTMLTextNode).content
-
-        if (hasTextFlow && content === " ") {
-          return true
-        }
-
-        return content.trim() !== ""
-      }
-
-      return true
-    })
-
+    const children = this.filterSignificantChildren(node.body, hasTextFlow)
     const isInlineElement = this.isInlineElement(tagName)
     const hasClosing = open.tag_closing?.value === ">" || open.tag_closing?.value === "/>"
     const isSelfClosing = open.tag_closing?.value === "/>"
 
     if (!hasClosing) {
-      this.push(indent + `<${tagName}`)
+      this.visit(open)
 
       return
     }
 
     if (attributes.length === 0 && inlineNodes.length === 0) {
       if (children.length === 0) {
-        if (isSelfClosing) {
-          this.push(indent + `<${tagName} />`)
-        } else if (node.is_void) {
-          this.push(indent + `<${tagName}>`)
-        } else {
-          this.push(indent + `<${tagName}></${tagName}>`)
+        if (this.handleSimpleEmptyElement(tagName, isSelfClosing, node.is_void)) {
+          return
         }
-
-        return
       }
 
       if (children.length >= 1) {
-        if (this.isInComplexNesting) {
-          if (children.length === 1) {
-            const child = children[0]
-
-            if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-              const textContent = (child as HTMLTextNode).content.trim()
-              const singleLine = `<${tagName}>${textContent}</${tagName}>`
-
-              if (!textContent.includes('\n') && (indent.length + singleLine.length) <= this.maxLineLength) {
-                this.push(indent + singleLine)
-
-                return
-              }
-            }
-          }
-        } else {
-          const inlineResult = this.tryRenderInline(children, tagName, 0, false, hasTextFlow)
-
-          if (inlineResult && (indent.length + inlineResult.length) <= this.maxLineLength) {
-            this.push(indent + inlineResult)
-
-            return
-          }
-
-          if (hasTextFlow) {
-            const hasAnyNewlines = children.some(child => {
-              if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-                return (child as HTMLTextNode).content.includes('\n')
-              }
-
-              return false
-            })
-
-            if (!hasAnyNewlines) {
-              const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
-
-              if (fullInlineResult) {
-                const totalLength = indent.length + fullInlineResult.length
-                const maxNesting = this.getMaxNestingDepth(children, 0)
-                const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
-
-                if (totalLength <= maxInlineLength) {
-                  this.push(indent + fullInlineResult)
-
-                  return
-                }
-              }
-            }
-          }
+        if (this.tryRenderSimpleInline(tagName, children, hasTextFlow)) {
+          return
         }
       }
 
       if (hasTextFlow) {
         const fullInlineResult = this.tryRenderInlineFull(node, tagName, [], children)
-
         if (fullInlineResult) {
-          const totalLength = indent.length + fullInlineResult.length
+          const totalLength = this.indent().length + fullInlineResult.length
           const maxNesting = this.getMaxNestingDepth(children, 0)
           const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
 
           if (totalLength <= maxInlineLength) {
-            this.push(indent + fullInlineResult)
+            this.push(this.indent() + fullInlineResult)
 
             return
           }
         }
       }
 
-      this.push(indent + `<${tagName}>`)
-
-      this.withIndent(() => {
-        if (hasTextFlow) {
-          this.visitTextFlowChildren(children)
-        } else {
-          children.forEach(child => this.visit(child))
-        }
-      })
-
-      if (!node.is_void && !isSelfClosing) {
-        this.push(indent + `</${tagName}>`)
-      }
+      this.renderElementWithBody(tagName, children, hasTextFlow, node.is_void, isSelfClosing)
 
       return
     }
 
     if (attributes.length === 0 && inlineNodes.length > 0) {
-      const inline = this.renderInlineOpen(tagName, [], isSelfClosing, inlineNodes, open.children)
-
-      if (children.length === 0) {
-        if (isSelfClosing || node.is_void) {
-          this.push(indent + inline)
-        } else {
-          this.push(indent + inline + `</${tagName}>`)
-        }
-        return
-      }
-
-      this.push(indent + inline)
-      this.withIndent(() => {
-        children.forEach(child => this.visit(child))
-      })
-
-      if (!node.is_void && !isSelfClosing) {
-        this.push(indent + `</${tagName}>`)
-      }
+      this.handleElementWithInlineNodes(node, tagName, attributes, inlineNodes, children, isSelfClosing, hasTextFlow)
 
       return
     }
 
-    const hasERBControlFlow = inlineNodes.some(node => this.isERBControlFlow(node)) ||
-                             open.children.some(node => this.isERBControlFlow(node))
-
-    const hasComplexERB = hasERBControlFlow && inlineNodes.some(node => {
-      if (node instanceof ERBIfNode || (node as any).type === 'AST_ERB_IF_NODE') {
-        const erbNode = node as ERBIfNode
-
-        if (erbNode.statements.length > 0 && erbNode.location) {
-          const startLine = erbNode.location.start.line
-          const endLine = erbNode.location.end.line
-
-          return startLine !== endLine
-        }
-
-        return false
-      }
-
-      return false
-    })
-
-    const inline = hasComplexERB ? "" : this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
-    const nestingDepth = this.getMaxNestingDepth(children, 0)
-    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-
-    const shouldKeepInline = this.shouldRenderInline(
-      totalAttributeCount,
-      inline.length,
-      indent.length,
-      this.maxLineLength,
-      hasComplexERB,
-      nestingDepth,
-      inlineNodes.length,
-      this.hasMultilineAttributes(attributes)
-    )
-
-    if (shouldKeepInline) {
-      if (children.length === 0) {
-        if (isSelfClosing) {
-          this.push(indent + inline)
-        } else if (node.is_void) {
-          this.push(indent + inline)
-        } else {
-          let result = `<${tagName}`
-
-          result += this.renderAttributesString(attributes)
-
-          if (inlineNodes.length > 0) {
-            const currentIndentLevel = this.indentLevel
-            this.indentLevel = 0
-            const tempLines = this.lines
-            this.lines = []
-
-            inlineNodes.forEach(node => {
-              const wasInlineMode = this.inlineMode
-
-              if (!this.isERBControlFlow(node)) {
-                this.inlineMode = true
-              }
-
-              this.visit(node)
-              this.inlineMode = wasInlineMode
-            })
-
-            const inlineContent = this.lines.join("")
-
-            this.lines = tempLines
-            this.indentLevel = currentIndentLevel
-
-            result += inlineContent
-          }
-
-          result += `></${tagName}>`
-          this.push(indent + result)
-        }
-
-        return
-      }
-
-      if (isInlineElement && children.length > 0 && !hasERBControlFlow) {
-        const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
-
-        if (fullInlineResult) {
-          const totalLength = indent.length + fullInlineResult.length
-
-          if (totalLength <= this.maxLineLength || totalLength <= 120) {
-            this.push(indent + fullInlineResult)
-
-            return
-          }
-        }
-      }
-
-      if (!isInlineElement && children.length > 0 && !hasERBControlFlow) {
-        this.push(indent + inline)
-
-        this.withIndent(() => {
-          if (hasTextFlow) {
-            this.visitTextFlowChildren(children)
-          } else {
-            children.forEach(child => this.visit(child))
-          }
-        })
-
-        if (!node.is_void && !isSelfClosing) {
-          this.push(indent + `</${tagName}>`)
-        }
-
-        return
-      }
-
-      if (isSelfClosing) {
-        this.push(indent + inline.replace(' />', '>'))
-      } else {
-        this.push(indent + inline)
-      }
-
-      this.withIndent(() => {
-        if (hasTextFlow) {
-          this.visitTextFlowChildren(children)
-        } else {
-          children.forEach(child => this.visit(child))
-        }
-      })
-
-      if (!node.is_void && !isSelfClosing) {
-        this.push(indent + `</${tagName}>`)
-      }
-
-      return
-    }
-
-    if (inlineNodes.length > 0 && hasERBControlFlow) {
-      this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
-
-      if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.withIndent(() => {
-          children.forEach(child => this.visit(child))
-        })
-        this.push(indent + `</${tagName}>`)
-      }
-    } else if (inlineNodes.length > 0) {
-      this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
-
-      if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.withIndent(() => {
-          children.forEach(child => this.visit(child))
-        })
-        this.push(indent + `</${tagName}>`)
-      }
-    } else {
-      if (isInlineElement && children.length > 0) {
-        const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
-
-        if (fullInlineResult) {
-          const totalLength = indent.length + fullInlineResult.length
-
-          if (totalLength <= this.maxLineLength || totalLength <= 120) {
-            this.push(indent + fullInlineResult)
-            return
-          }
-        }
-      }
-
-      if (isInlineElement && children.length === 0) {
-        const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
-        const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-        const shouldKeepInline = this.shouldRenderInline(
-          totalAttributeCount,
-          inline.length,
-          indent.length,
-          this.maxLineLength,
-          false,
-          0,
-          inlineNodes.length,
-          this.hasMultilineAttributes(attributes)
-        )
-
-        if (shouldKeepInline) {
-          let result = `<${tagName}`
-          result += this.renderAttributesString(attributes)
-          if (isSelfClosing) {
-            result += " />"
-          } else if (node.is_void) {
-            result += ">"
-          } else {
-            result += `></${tagName}>`
-          }
-          this.push(indent + result)
-          return
-        }
-      }
-
-      this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
-
-      if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.withIndent(() => {
-          if (hasTextFlow) {
-            this.visitTextFlowChildren(children)
-          } else {
-            children.forEach(child => this.visit(child))
-          }
-        })
-
-        this.push(indent + `</${tagName}>`)
-      }
-    }
+    this.handleComplexElement(node, tagName, attributes, inlineNodes, children, isSelfClosing, isInlineElement, hasTextFlow)
   }
 
-  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
     const tagName = node.tag_name?.value ?? ""
     const indent = this.indent()
     const attributes = this.extractAttributes(node.children)
     const inlineNodes = this.extractInlineNodes(node.children)
-
     const hasClosing = node.tag_closing?.value === ">"
 
     if (!hasClosing) {
@@ -837,8 +527,7 @@ export class Printer extends Visitor {
     this.renderMultilineAttributes(tagName, attributes, inlineNodes, node.children, false, node.is_void, false)
   }
 
-
-  visitHTMLCloseTagNode(node: HTMLCloseTagNode): void {
+  visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const name = node.tag_name?.value ?? ""
@@ -847,7 +536,7 @@ export class Printer extends Visitor {
     this.push(indent + open + name + close)
   }
 
-  visitHTMLTextNode(node: HTMLTextNode): void {
+  visitHTMLTextNode(node: HTMLTextNode) {
     if (this.inlineMode) {
       const normalizedContent = node.content.replace(/\s+/g, ' ').trim()
 
@@ -883,18 +572,20 @@ export class Printer extends Visitor {
     lines.forEach(line => this.push(line))
   }
 
-  visitHTMLAttributeNode(node: HTMLAttributeNode): void {
+  visitHTMLAttributeNode(node: HTMLAttributeNode) {
     const indent = this.indent()
+
     this.push(indent + this.renderAttribute(node))
   }
 
-  visitHTMLAttributeNameNode(node: HTMLAttributeNameNode): void {
+  visitHTMLAttributeNameNode(node: HTMLAttributeNameNode) {
     const indent = this.indent()
     const name = getCombinedAttributeName(node)
+
     this.push(indent + name)
   }
 
-  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
+  visitHTMLAttributeValueNode(node: HTMLAttributeValueNode) {
     const indent = this.indent()
     const open_quote = node.open_quote?.value ?? ""
     const close_quote = node.close_quote?.value ?? ""
@@ -916,7 +607,7 @@ export class Printer extends Visitor {
     this.push(indent + open_quote + attribute_value + close_quote)
   }
 
-  visitHTMLCommentNode(node: HTMLCommentNode): void {
+  visitHTMLCommentNode(node: HTMLCommentNode) {
     const indent = this.indent()
     const open = node.comment_start?.value ?? ""
     const close = node.comment_end?.value ?? ""
@@ -982,7 +673,7 @@ export class Printer extends Visitor {
     this.push(indent + open + inner + close)
   }
 
-  visitERBCommentNode(node: ERBContentNode): void {
+  visitERBCommentNode(node: ERBContentNode) {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
     const close = node.tag_closing?.value ?? ""
@@ -1015,7 +706,7 @@ export class Printer extends Visitor {
     this.push(indent + open + inner + close)
   }
 
-  visitHTMLDoctypeNode(node: HTMLDoctypeNode): void {
+  visitHTMLDoctypeNode(node: HTMLDoctypeNode) {
     const indent = this.indent()
     const open = node.tag_opening?.value ?? ""
 
@@ -1045,7 +736,7 @@ export class Printer extends Visitor {
     this.push(indent + open + innerDoctype + close)
   }
 
-  visitERBContentNode(node: ERBContentNode): void {
+  visitERBContentNode(node: ERBContentNode) {
     // TODO: this feels hacky
     if (node.tag_opening?.value === "<%#") {
       this.visitERBCommentNode(node)
@@ -1054,15 +745,15 @@ export class Printer extends Visitor {
     }
   }
 
-  visitERBEndNode(node: ERBEndNode): void {
+  visitERBEndNode(node: ERBEndNode) {
     this.printERBNode(node)
   }
 
-  visitERBYieldNode(node: ERBYieldNode): void {
+  visitERBYieldNode(node: ERBYieldNode) {
     this.printERBNode(node)
   }
 
-  visitERBInNode(node: ERBInNode): void {
+  visitERBInNode(node: ERBInNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1070,7 +761,7 @@ export class Printer extends Visitor {
     })
   }
 
-  visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
+  visitERBCaseMatchNode(node: ERBCaseMatchNode) {
     this.printERBNode(node)
 
     node.conditions.forEach(condition => this.visit(condition))
@@ -1079,7 +770,7 @@ export class Printer extends Visitor {
     if (node.end_node) this.visit(node.end_node)
   }
 
-  visitERBBlockNode(node: ERBBlockNode): void {
+  visitERBBlockNode(node: ERBBlockNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1091,7 +782,7 @@ export class Printer extends Visitor {
     }
   }
 
-  visitERBIfNode(node: ERBIfNode): void {
+  visitERBIfNode(node: ERBIfNode) {
     if (this.inlineMode) {
       this.printERBNode(node)
 
@@ -1139,7 +830,7 @@ export class Printer extends Visitor {
     }
   }
 
-  visitERBElseNode(node: ERBElseNode): void {
+  visitERBElseNode(node: ERBElseNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1147,7 +838,7 @@ export class Printer extends Visitor {
     })
   }
 
-  visitERBWhenNode(node: ERBWhenNode): void {
+  visitERBWhenNode(node: ERBWhenNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1155,7 +846,7 @@ export class Printer extends Visitor {
     })
   }
 
-  visitERBCaseNode(node: ERBCaseNode): void {
+  visitERBCaseNode(node: ERBCaseNode) {
     this.printERBNode(node)
 
     node.conditions.forEach(condition => this.visit(condition))
@@ -1166,7 +857,7 @@ export class Printer extends Visitor {
     }
   }
 
-  visitERBBeginNode(node: ERBBeginNode): void {
+  visitERBBeginNode(node: ERBBeginNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1179,27 +870,27 @@ export class Printer extends Visitor {
     if (node.end_node) this.visit(node.end_node)
   }
 
-  visitERBWhileNode(node: ERBWhileNode): void {
+  visitERBWhileNode(node: ERBWhileNode) {
     this.visitERBGeneric(node)
   }
 
-  visitERBUntilNode(node: ERBUntilNode): void {
+  visitERBUntilNode(node: ERBUntilNode) {
     this.visitERBGeneric(node)
   }
 
-  visitERBForNode(node: ERBForNode): void {
+  visitERBForNode(node: ERBForNode) {
     this.visitERBGeneric(node)
   }
 
-  visitERBRescueNode(node: ERBRescueNode): void {
+  visitERBRescueNode(node: ERBRescueNode) {
     this.visitERBGeneric(node)
   }
 
-  visitERBEnsureNode(node: ERBEnsureNode): void {
+  visitERBEnsureNode(node: ERBEnsureNode) {
     this.visitERBGeneric(node)
   }
 
-  visitERBUnlessNode(node: ERBUnlessNode): void {
+  visitERBUnlessNode(node: ERBUnlessNode) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1211,7 +902,7 @@ export class Printer extends Visitor {
   }
 
   // TODO: don't use any
-  private visitERBGeneric(node: any): void {
+  private visitERBGeneric(node: any) {
     this.printERBNode(node)
 
     this.withIndent(() => {
@@ -1247,7 +938,7 @@ export class Printer extends Visitor {
   /**
    * Check if we're in a text flow context (parent contains mixed text and inline elements)
    */
-  private visitTextFlowChildren(children: Node[]): void {
+  private visitTextFlowChildren(children: Node[]) {
     const indent = this.indent()
     let currentLineContent = ""
 
@@ -1356,11 +1047,11 @@ export class Printer extends Visitor {
     }
   }
 
-  private visitTextFlowChildrenMultiline(children: Node[]): void {
+  private visitTextFlowChildrenMultiline(children: Node[]) {
     children.forEach(child => this.visit(child))
   }
 
-  private isInTextFlowContext(parent: Node | null, children: Node[]): boolean {
+  private isInTextFlowContext(_parent: Node | null, children: Node[]): boolean {
     const hasTextContent = children.some(child =>
       (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') &&
       (child as HTMLTextNode).content.trim() !== ""
@@ -1626,7 +1317,7 @@ export class Printer extends Visitor {
    * Try to render children inline if they are simple enough.
    * Returns the inline string if possible, null otherwise.
    */
-  private tryRenderInline(children: Node[], tagName: string, depth: number = 0, forceInline: boolean = false, hasTextFlow: boolean = false): string | null {
+  private tryRenderInline(children: Node[], tagName: string, _depth: number = 0, forceInline: boolean = false, hasTextFlow: boolean = false): string | null {
     if (!forceInline && children.length > 10) {
       return null
     }
@@ -1764,8 +1455,365 @@ export class Printer extends Visitor {
   }
 
   /**
-   * Render an HTML element's content inline (without the wrapping tags).
+   * Visit and render children nodes of an element
    */
+  private visitElementChildren(children: Node[], hasTextFlow: boolean = false) {
+    if (children.length === 0) return
+
+    this.withIndent(() => {
+      if (hasTextFlow) {
+        this.visitTextFlowChildren(children)
+      } else {
+        children.forEach(child => this.visit(child))
+      }
+    })
+  }
+
+  /**
+   * Handle simple empty elements (no attributes, no inline nodes)
+   */
+  private handleSimpleEmptyElement(tagName: string, isSelfClosing: boolean, isVoid: boolean): boolean {
+    const indent = this.indent()
+
+    if (isSelfClosing) {
+      this.push(indent + `<${tagName} />`)
+      return true
+    } else if (isVoid) {
+      this.push(indent + `<${tagName}>`)
+      return true
+    } else {
+      this.push(indent + `<${tagName}></${tagName}>`)
+      return true
+    }
+  }
+
+  /**
+   * Try to render element content inline if possible
+   */
+  private tryRenderSimpleInline(tagName: string, children: Node[], hasTextFlow: boolean): boolean {
+    const indent = this.indent()
+
+    if (this.isInComplexNesting && children.length === 1) {
+      const child = children[0]
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const textContent = (child as HTMLTextNode).content.trim()
+        const singleLine = `<${tagName}>${textContent}</${tagName}>`
+
+        if (!textContent.includes('\n') && (indent.length + singleLine.length) <= this.maxLineLength) {
+          this.push(indent + singleLine)
+          return true
+        }
+      }
+    }
+
+    if (!this.isInComplexNesting) {
+      const inlineResult = this.tryRenderInline(children, tagName, 0, false, hasTextFlow)
+      if (inlineResult && (indent.length + inlineResult.length) <= this.maxLineLength) {
+        this.push(indent + inlineResult)
+        return true
+      }
+
+      if (hasTextFlow) {
+        const hasAnyNewlines = children.some(child => {
+          if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+            return (child as HTMLTextNode).content.includes('\n')
+          }
+          return false
+        })
+
+        if (!hasAnyNewlines) {
+          const fullInlineResult = this.tryRenderInlineFull(
+            { open_tag: { tag_name: { value: tagName } }, body: children } as any,
+            tagName, [], children
+          )
+
+          if (fullInlineResult) {
+            const totalLength = indent.length + fullInlineResult.length
+            const maxNesting = this.getMaxNestingDepth(children, 0)
+            const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
+
+            if (totalLength <= maxInlineLength) {
+              this.push(indent + fullInlineResult)
+              return true
+            }
+          }
+        }
+      }
+    }
+
+    return false
+  }
+
+  /**
+   * Render element with body content (opening tag, children, closing tag)
+   */
+  private renderElementWithBody(tagName: string, children: Node[], hasTextFlow: boolean, isVoid: boolean, isSelfClosing: boolean) {
+    const indent = this.indent()
+
+    this.push(indent + `<${tagName}>`)
+    this.visitElementChildren(children, hasTextFlow)
+
+    if (!isVoid && !isSelfClosing) {
+      this.push(indent + `</${tagName}>`)
+    }
+  }
+
+  /**
+   * Handle element with inline nodes (ERB conditionals, etc.)
+   */
+  private handleElementWithInlineNodes(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], inlineNodes: Node[], children: Node[], isSelfClosing: boolean, hasTextFlow: boolean) {
+    const open = node.open_tag as HTMLOpenTagNode
+    const indent = this.indent()
+    const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
+
+    if (children.length === 0) {
+      if (isSelfClosing || node.is_void) {
+        this.push(indent + inline)
+      } else {
+        this.push(indent + inline + `</${tagName}>`)
+      }
+      return
+    }
+
+    this.push(indent + inline)
+    this.visitElementChildren(children, hasTextFlow)
+
+    if (!node.is_void && !isSelfClosing) {
+      this.push(indent + `</${tagName}>`)
+    }
+  }
+
+  /**
+   * Check if element has complex ERB control flow
+   */
+  private hasComplexERBControlFlow(inlineNodes: Node[]): boolean {
+    return inlineNodes.some(node => {
+      if (node instanceof ERBIfNode || (node as any).type === 'AST_ERB_IF_NODE') {
+        const erbNode = node as ERBIfNode
+        if (erbNode.statements.length > 0 && erbNode.location) {
+          const startLine = erbNode.location.start.line
+          const endLine = erbNode.location.end.line
+          return startLine !== endLine
+        }
+        return false
+      }
+      return false
+    })
+  }
+
+  /**
+   * Handle complex element with attributes and possible ERB control flow
+   */
+  private handleComplexElement(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], inlineNodes: Node[], children: Node[], isSelfClosing: boolean, isInlineElement: boolean, hasTextFlow: boolean) {
+    const open = node.open_tag as HTMLOpenTagNode
+    const indent = this.indent()
+
+    const hasERBControlFlow = inlineNodes.some(node => this.isERBControlFlow(node)) || open.children.some(node => this.isERBControlFlow(node))
+    const hasComplexERB = hasERBControlFlow && this.hasComplexERBControlFlow(inlineNodes)
+
+    const inline = hasComplexERB ? "" : this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
+    const nestingDepth = this.getMaxNestingDepth(children, 0)
+    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
+
+    const shouldKeepInline = this.shouldRenderInline(
+      totalAttributeCount,
+      inline.length,
+      indent.length,
+      this.maxLineLength,
+      hasComplexERB,
+      nestingDepth,
+      inlineNodes.length,
+      this.hasMultilineAttributes(attributes)
+    )
+
+    if (shouldKeepInline) {
+      this.handleInlineElement(node, tagName, attributes, inlineNodes, children, isSelfClosing, isInlineElement, hasTextFlow, hasERBControlFlow, inline)
+    } else {
+      this.handleMultilineElement(node, tagName, attributes, inlineNodes, children, isSelfClosing, hasTextFlow, hasERBControlFlow)
+    }
+  }
+
+  /**
+   * Handle rendering of inline element
+   */
+  private handleInlineElement(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], inlineNodes: Node[], children: Node[], isSelfClosing: boolean, isInlineElement: boolean, hasTextFlow: boolean, hasERBControlFlow: boolean, inline: string) {
+    const indent = this.indent()
+
+    if (children.length === 0) {
+      if (isSelfClosing || node.is_void) {
+        this.push(indent + inline)
+      } else {
+        this.renderEmptyElementWithAttributes(tagName, attributes, inlineNodes)
+      }
+      return
+    }
+
+    if (isInlineElement && !hasERBControlFlow) {
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
+      if (fullInlineResult) {
+        const totalLength = indent.length + fullInlineResult.length
+        if (totalLength <= this.maxLineLength || totalLength <= 120) {
+          this.push(indent + fullInlineResult)
+          return
+        }
+      }
+    }
+
+    if (!isInlineElement && !hasERBControlFlow) {
+      this.push(indent + inline)
+      this.visitElementChildren(children, hasTextFlow)
+      if (!node.is_void && !isSelfClosing) {
+        this.push(indent + `</${tagName}>`)
+      }
+      return
+    }
+
+    if (isSelfClosing) {
+      this.push(indent + inline.replace(' />', '>'))
+    } else {
+      this.push(indent + inline)
+    }
+
+    this.visitElementChildren(children, hasTextFlow)
+
+    if (!node.is_void && !isSelfClosing) {
+      this.push(indent + `</${tagName}>`)
+    }
+  }
+
+  /**
+   * Render empty element with attributes
+   */
+  private renderEmptyElementWithAttributes(tagName: string,attributes: HTMLAttributeNode[],inlineNodes: Node[]) {
+    const indent = this.indent()
+    let result = `<${tagName}`
+
+    result += this.renderAttributesString(attributes)
+
+    if (inlineNodes.length > 0) {
+      const currentIndentLevel = this.indentLevel
+      this.indentLevel = 0
+      const tempLines = this.lines
+      this.lines = []
+
+      inlineNodes.forEach(node => {
+        const wasInlineMode = this.inlineMode
+        if (!this.isERBControlFlow(node)) {
+          this.inlineMode = true
+        }
+        this.visit(node)
+        this.inlineMode = wasInlineMode
+      })
+
+      const inlineContent = this.lines.join("")
+      this.lines = tempLines
+      this.indentLevel = currentIndentLevel
+      result += inlineContent
+    }
+
+    result += `></${tagName}>`
+    this.push(indent + result)
+  }
+
+  /**
+   * Handle multiline element rendering
+   */
+  private handleMultilineElement(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], inlineNodes: Node[], children: Node[], isSelfClosing: boolean, hasTextFlow: boolean, hasERBControlFlow: boolean) {
+    const open = node.open_tag as HTMLOpenTagNode
+    const indent = this.indent()
+    const isInlineElement = this.isInlineElement(tagName)
+
+    if (inlineNodes.length > 0 && hasERBControlFlow) {
+      this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
+
+      if (!isSelfClosing && !node.is_void && children.length > 0) {
+        this.visitElementChildren(children, hasTextFlow)
+        this.push(indent + `</${tagName}>`)
+      }
+    } else if (inlineNodes.length > 0) {
+      this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
+
+      if (!isSelfClosing && !node.is_void && children.length > 0) {
+        this.visitElementChildren(children, hasTextFlow)
+        this.push(indent + `</${tagName}>`)
+      }
+    } else {
+      if (isInlineElement && children.length > 0) {
+        const fullInlineResult = this.tryRenderInlineFull(node, tagName, attributes, children)
+
+        if (fullInlineResult) {
+          const totalLength = indent.length + fullInlineResult.length
+
+          if (totalLength <= this.maxLineLength || totalLength <= 120) {
+            this.push(indent + fullInlineResult)
+
+            return
+          }
+        }
+      }
+
+      if (isInlineElement && children.length === 0) {
+        const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
+        const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
+        const shouldKeepInline = this.shouldRenderInline(
+          totalAttributeCount,
+          inline.length,
+          indent.length,
+          this.maxLineLength,
+          false,
+          0,
+          inlineNodes.length,
+          this.hasMultilineAttributes(attributes)
+        )
+
+        if (shouldKeepInline) {
+          let result = `<${tagName}`
+          result += this.renderAttributesString(attributes)
+
+          if (isSelfClosing) {
+            result += " />"
+          } else if (node.is_void) {
+            result += ">"
+          } else {
+            result += `></${tagName}>`
+          }
+
+          this.push(indent + result)
+
+          return
+        }
+      }
+
+      this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
+
+      if (!isSelfClosing && !node.is_void && children.length > 0) {
+        this.visitElementChildren(children, hasTextFlow)
+        this.push(indent + `</${tagName}>`)
+      }
+    }
+  }
+
+  /**
+   * Filter children to remove insignificant whitespace
+   */
+  private filterSignificantChildren(body: Node[], hasTextFlow: boolean): Node[] {
+    return body.filter(child => {
+      if (child instanceof WhitespaceNode || (child as any).type === 'AST_WHITESPACE_NODE') {
+        return false
+      }
+
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const content = (child as HTMLTextNode).content
+        if (hasTextFlow && content === " ") {
+          return true
+        }
+        return content.trim() !== ""
+      }
+
+      return true
+    })
+  }
+
   private renderElementInline(element: HTMLElementNode): string {
     const children = element.body.filter(
       child =>
