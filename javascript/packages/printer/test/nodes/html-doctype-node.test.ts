@@ -46,5 +46,8 @@ describe("HTMLDoctypeNode Printing", () => {
     expectPrintRoundTrip(`<!doctype>`)
     expectPrintRoundTrip(`<!DoCtYpE>`)
     expectPrintRoundTrip(`<!dOcTyPe>`)
+    expectPrintRoundTrip(`<!doctype html5>`)
+    expectPrintRoundTrip(`<!DoCTyPe <% hello %> hello>`)
+    expectPrintRoundTrip(`<!DoCTyPe hello <%= hello %> hello>`)
   })
 })

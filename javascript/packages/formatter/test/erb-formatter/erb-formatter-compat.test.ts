@@ -69,18 +69,18 @@ describe("ERB Formatter Compatibility Tests", () => {
       `)
     })
 
-    test.skip("handles ERB in attributes", () => {
+    test("handles ERB in attributes", () => {
       const source = dedent`
         <nav class="
-        flex flex-col bg-gray-15 p-4 w-full       " data-controller="<%= stimulus_id %>" data-<%= stimulus_id %>-cookie-value="solidus_admin"> Foooo </nav>
+        flex flex-col bg-gray-15 p-4 w-full       " data-controller="<%= stimulus_id %> " data-<%= stimulus_id %>-cookie-value="solidus_admin"> Foooo </nav>
       `
 
       const result = formatter.format(source)
 
       expect(result).toEqual(dedent`
         <nav
-          class="flex flex-col bg-gray-15 p-4 w-full       "
-          data-controller="<%= stimulus_id %>"
+          class="flex flex-col bg-gray-15 p-4 w-full"
+          data-controller="<%= stimulus_id %> "
           data-<%= stimulus_id %>-cookie-value="solidus_admin"
         >
           Foooo
