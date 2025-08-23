@@ -26,8 +26,22 @@ export abstract class Printer extends Visitor {
   protected context: PrintContext = new PrintContext()
 
   /**
+   * Static method to print a node without creating an instance
+   *
+   * @param node - The AST node to print
+   * @param options - Print options to control behavior
+   * @returns The printed string representation of the node
+   * @throws {Error} When node has parse errors and ignoreErrors is false
+   */
+  static print(node: Node, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+    const printer = new (this as any)()
+
+    return printer.print(node, options)
+  }
+
+  /**
    * Print a node to a string
-   * 
+   *
    * @param node - The AST node to print
    * @param options - Print options to control behavior
    * @returns The printed string representation of the node

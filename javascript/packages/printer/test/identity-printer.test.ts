@@ -30,9 +30,36 @@ describe("IdentityPrinter", () => {
       expect(printer).toBeInstanceOf(IdentityPrinter)
     })
 
-    test("can be instantiated with options", () => {
-      const printer = new IdentityPrinter({ indentSize: 4 })
-      expect(printer).toBeInstanceOf(IdentityPrinter)
+    test("static print method works", () => {
+      const input = '<div>Hello World</div>'
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+      expect(parseResult.value).toBeTruthy()
+
+      const output = IdentityPrinter.print(parseResult.value!)
+      expect(output).toBe(input)
+    })
+
+    test("static print method produces same output as instance method", () => {
+      const input = '<p class="paragraph">Test paragraph</p>'
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+      expect(parseResult.value).toBeTruthy()
+
+      const printer = new IdentityPrinter()
+      const instanceOutput = printer.print(parseResult.value!)
+      const staticOutput = IdentityPrinter.print(parseResult.value!)
+
+      expect(staticOutput).toBe(instanceOutput)
+      expect(staticOutput).toBe(input)
+    })
+
+    test("static print method respects options", () => {
+      const input = '<div id="error">Error'
+      const parseResult = Herb.parse(input, { track_whitespace: true })
+
+      expect(() => IdentityPrinter.print(parseResult.value!)).toThrow()
+
+      const output = IdentityPrinter.print(parseResult.value!, { ignoreErrors: true })
+      expect(output).toBe(input)
     })
   })
 
