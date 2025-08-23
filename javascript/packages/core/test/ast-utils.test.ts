@@ -1,7 +1,6 @@
 import { describe, test, expect } from "vitest"
 import {
   isLiteralNode,
-  areAllLiteralNodes,
   filterLiteralNodes,
   isERBContentNode,
   isERBOutputNode,
@@ -19,7 +18,7 @@ import {
   hasDynamicAttributeName,
   getStaticAttributeName,
   getCombinedAttributeName
-} from "../src/ast-utils.js"
+} from "../src"
 
 import type { Node, LiteralNode, ERBContentNode, HTMLAttributeNameNode } from "../src/nodes.js"
 
@@ -53,22 +52,6 @@ describe("ast-utils", () => {
     test("returns false for ERB content nodes", () => {
       const node = createERBContentNode("<%=", "test")
       expect(isLiteralNode(node)).toBe(false)
-    })
-  })
-
-  describe("areAllLiteralNodes", () => {
-    test("returns true for array of all literal nodes", () => {
-      const nodes = [createLiteralNode("hello"), createLiteralNode(" world")]
-      expect(areAllLiteralNodes(nodes)).toBe(true)
-    })
-
-    test("returns false for mixed node types", () => {
-      const nodes = [createLiteralNode("hello"), createERBContentNode("<%=", "name")]
-      expect(areAllLiteralNodes(nodes)).toBe(false)
-    })
-
-    test("returns true for empty array", () => {
-      expect(areAllLiteralNodes([])).toBe(true)
     })
   })
 

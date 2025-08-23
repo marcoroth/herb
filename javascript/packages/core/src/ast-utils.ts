@@ -1,32 +1,13 @@
-import type { Node, LiteralNode, ERBContentNode, HTMLAttributeNameNode } from "./nodes.js"
+import { LiteralNode } from "./nodes.js"
 
-/**
- * Checks if a single node is a literal node
- */
-export function isLiteralNode(node: Node): node is LiteralNode {
-  return node.type === "AST_LITERAL_NODE"
-}
+import {
+  isLiteralNode,
+  isERBContentNode,
+  areAllOfType,
+  filterLiteralNodes
+} from "./node-type-guards.js"
 
-/**
- * Checks if all nodes in an array are literal nodes
- */
-export function areAllLiteralNodes(nodes: Node[]): nodes is LiteralNode[] {
-  return nodes.every(isLiteralNode)
-}
-
-/**
- * Filters an array of nodes to only include literal nodes
- */
-export function filterLiteralNodes(nodes: Node[]): LiteralNode[] {
-  return nodes.filter(isLiteralNode) as LiteralNode[]
-}
-
-/**
- * Checks if a node is an ERB content node
- */
-export function isERBContentNode(node: Node): node is ERBContentNode {
-  return node.type === "AST_ERB_CONTENT_NODE"
-}
+import type { Node, ERBContentNode, HTMLAttributeNameNode } from "./nodes.js"
 
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
@@ -65,19 +46,13 @@ export function hasERBOutput(nodes: Node[]): boolean {
   return nodes.some(isERBOutputNode)
 }
 
-/**
- * Filters an array of nodes to only include ERB content nodes
- */
-export function filterERBContentNodes(nodes: Node[]): ERBContentNode[] {
-  return nodes.filter(isERBContentNode) as ERBContentNode[]
-}
 
 /**
  * Extracts a static string from an array of literal nodes
  * Returns null if any node is not a literal node
  */
 export function getStaticStringFromNodes(nodes: Node[]): string | null {
-  if (!areAllLiteralNodes(nodes)) {
+  if (!areAllOfType(nodes, LiteralNode)) {
     return null
   }
 
@@ -155,7 +130,7 @@ export function hasStaticAttributeName(attributeNameNode: HTMLAttributeNameNode)
     return false
   }
 
-  return areAllLiteralNodes(attributeNameNode.children)
+  return areAllOfType(attributeNameNode.children, LiteralNode)
 }
 
 /**

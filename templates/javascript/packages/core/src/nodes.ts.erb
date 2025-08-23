@@ -363,11 +363,3 @@ export const ERBNodeClasses = [
   <%- end -%>
 ]
 
-export function isERBNode(node: Node): node is ERBNode {
-  <%#
-    TODO: Investigate this approach, ran into some weird instances of multiple classes
-    so instanceof would fail
-    return ERBNodeClasses.some(NodeClass => node instanceof NodeClass);
-  %>
-  return node.constructor.name.startsWith("ERB")
-}
