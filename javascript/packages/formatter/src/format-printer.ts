@@ -107,6 +107,72 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Helper method to determine if an element should render inline based on its content
+   * This is used by opening tag to coordinate with body and closing tag
+   */
+  private shouldElementRenderInline(element: HTMLElementNode): boolean {
+    const tagName = (element.open_tag as HTMLOpenTagNode).tag_name?.value ?? ""
+    const body = element.body
+    const attributes = this.extractAttributes((element.open_tag as HTMLOpenTagNode).children)
+
+    // Empty elements can be inline if they fit
+    if (body.length === 0) {
+      const indent = this.indent()
+      const simpleTag = attributes.length === 0
+        ? `<${tagName}></${tagName}>`
+        : `<${tagName}${this.renderAttributesString(attributes)}></${tagName}>`
+      return (indent.length + simpleTag.length) <= this.maxLineLength
+    }
+
+    // Single content node can be inline if simple
+    if (body.length === 1) {
+      const child = body[0]
+      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+        const textContent = (child as HTMLTextNode).content.trim()
+        if (!textContent.includes('\n')) {
+          const indent = this.indent()
+          const attributesStr = attributes.length > 0 ? this.renderAttributesString(attributes) : ""
+          const projectedLine = `${indent}<${tagName}${attributesStr}>${textContent}</${tagName}>`
+          return projectedLine.length <= this.maxLineLength
+        }
+      } else if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+        // Single ERB node can be inline
+        const indent = this.indent()
+        const result = this.tryRenderInlineFull(element, tagName, attributes, body)
+        if (result && (indent.length + result.length) <= this.maxLineLength) {
+          return true
+        }
+      }
+    }
+
+    // Check if we have simple mixed inline content (text + ERB)
+    const hasTextFlow = this.isInTextFlowContext(null, body)
+    if (hasTextFlow && body.length > 0) {
+      // Check if all children are inline-friendly
+      const allInline = body.every(child => {
+        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
+          return !(child as HTMLTextNode).content.includes('\n')
+        }
+        if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
+          return true // ERB content can be inline
+        }
+        return false
+      })
+
+      if (allInline) {
+        // Try to render and see if it fits
+        const indent = this.indent()
+        const result = this.tryRenderInlineFull(element, tagName, attributes, body)
+        if (result && (indent.length + result.length) <= this.maxLineLength) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  /**
    * Append text to the last line instead of creating a new line
    */
   private pushToLastLine(text: string): void {
@@ -562,78 +628,81 @@ export class FormatPrinter extends Printer {
     const tagName = openTag.tag_name?.value ?? ""
     const attributes = this.extractAttributes(openTag.children)
     const inlineNodes = this.extractInlineNodes(openTag.children)
-    // const hasClosing = node.tag_closing?.value === ">" || node.tag_closing?.value === "/>"
     const isSelfClosing = openTag.tag_closing?.value === "/>"
 
-    // if (!hasClosing) {
-    //   const indent = this.indent()
-    //   this.push(indent + `<${tagName}`)
-    //   return
-    // }
-
     if (element) {
-      // Handle the open tag as part of a complete element
-      this.handleElementOpenTag(element, openTag, tagName, attributes, inlineNodes, false)
-
-
-      const hasTextFlow = this.isInTextFlowContext(null, element.body)
-      const children = this.filterSignificantChildren(element.body, hasTextFlow)
-      const isInlineElement = this.isInlineElement(tagName)
-
-      if (attributes.length === 0 && inlineNodes.length === 0) {
-        this.handleSimpleElementOpenTag(element, tagName, children, hasTextFlow, isSelfClosing)
-        return
+      // Check if this element should render inline and mark it
+      if (this.shouldElementRenderInline(element)) {
+        this.renderContentInline.add(element)
       }
 
-      if (attributes.length === 0 && inlineNodes.length > 0) {
-        this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, this.currentElement.is_void, true)
-        return
-      }
-
-      this.handleComplexElementOpenTag(element, openTag, tagName, attributes, inlineNodes, children, isSelfClosing, isInlineElement, hasTextFlow)
-
+      // Only render the opening tag - nothing else
+      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, true)
     } else {
       // This is a standalone open tag
-      this.printHTMLOpenTag(tagName, attributes, inlineNodes, node.children, false, node.is_void, true)
+      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, false, true)
     }
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
-    // const hasTextFlow = this.isInTextFlowContext(null, body)
-    // const children = this.filterSignificantChildren(body, hasTextFlow)
-    // const shouldRenderContentInline = this.shouldRenderContentInline(body, element.tag_name?.value)
+    // If no body content, nothing to do
+    if (body.length === 0) return
 
-    const allNodes = this.captureNodes(() => {
-      body.forEach(element => this.visit(element))
-    })
+    // Check if the opening tag marked this for inline rendering
+    const shouldRenderInline = this.renderContentInline.has(element)
 
-    const elements = filterNodes(allNodes, HTMLElementNode)
-    const blockElements = elements.filter(element => !this.isInlineElement(element.tag_name!.value))
-    const inlineElements = elements.filter(element => this.isInlineElement(element.tag_name!.value))
-    const textContentNodes = filterNodes(allNodes, HTMLTextNode)
-    const erbNodes = filterNodes(allNodes, isERBContentNode)
-    const erbControlFlowNodes = filterNodes(allNodes, isERBControlNode)
+    if (shouldRenderInline) {
+      // Render all content inline and append to the last line
+      const inlineContent = this.renderChildrenInline(body)
+      if (inlineContent) {
+        this.pushToLastLine(inlineContent)
+      }
+    } else {
+      // Check if we need special handling for certain tag types
+      const tagName = (element.open_tag as HTMLOpenTagNode).tag_name?.value ?? ""
+      const hasTextFlow = this.isInTextFlowContext(null, body)
 
-    let inline = true
+      // For normal multiline rendering, capture all content and analyze it
+      const capturedLines = this.capture(() => {
+        this.withIndent(() => {
+          if (hasTextFlow) {
+            this.visitTextFlowChildren(body)
+          } else {
+            body.forEach(child => this.visit(child))
+          }
+        })
+      })
 
-    if (blockElements.length > 0) inline = false
-    if (blockElements.length > 0) inline = false
+      // If the captured content is simple enough, we could potentially reformat it inline
+      // But for now, just render it normally
+      if (capturedLines.length === 1 && !hasTextFlow) {
+        // Single line content might be reformattable to inline
+        const singleLine = capturedLines[0].trim()
+        const indent = this.indent()
+        const totalLength = indent.length + `<${tagName}>${singleLine}</${tagName}>`.length
 
-    console.log("inline", inline, elements.length, blockElements.length, inlineElements.length, textContentNodes.length, erbNodes.length, erbControlFlowNodes.length)
+        if (totalLength <= this.maxLineLength && !singleLine.includes('<')) {
+          // This could be reformatted inline, but the opening tag already printed
+          // So we continue with normal rendering
+          this.pushToLastLine(singleLine.replace(new RegExp('^' + indent), ''))
+          return
+        }
+      }
 
-    // const lines = this.capture(() => {
-    //   body.forEach(element => this.visit(element))
-    // })
-
-    // console.log(lines)
+      // Render normally
+      capturedLines.forEach(line => this.push(line))
+    }
   }
 
   visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
+    const element = this.currentElement
     const closingTag = IdentityPrinter.print(node)
 
-    if (this.currentElement && this.renderContentInline.has(this.currentElement)) {
+    if (element && this.renderContentInline.has(element)) {
+      // Content was rendered inline, append closing tag to the last line
       this.pushToLastLine(closingTag)
     } else {
+      // Content was rendered on separate lines, closing tag gets its own line
       this.push(this.indent() + closingTag)
     }
   }
@@ -1017,132 +1086,9 @@ export class FormatPrinter extends Printer {
   }
 
 
-  /**
-   * Handle open tag rendering when visited as part of an HTMLElementNode
-   */
-  private handleElementOpenTag(
-    element: HTMLElementNode,
-    openTag: HTMLOpenTagNode,
-    tagName: string,
-    attributes: HTMLAttributeNode[],
-    inlineNodes: Node[],
-    isSelfClosing: boolean
-  ): void {
 
-  }
 
-  /**
-   * Handle simple element open tag (no attributes or inline nodes)
-   */
-  private handleSimpleElementOpenTag(
-    element: HTMLElementNode,
-    tagName: string,
-    children: Node[],
-    hasTextFlow: boolean,
-    isSelfClosing: boolean
-  ): void {
-    // Decide if content should be rendered inline
-    if (this.shouldElementRenderInline(element, tagName, children)) {
-      this.renderContentInline.add(element)
-    }
 
-    // Just render the opening tag
-    this.printHTMLOpenTag(tagName, [], [], [], isSelfClosing, element.is_void, true)
-  }
-
-  /**
-   * Determine if an element's content should be rendered inline
-   */
-  private shouldElementRenderInline(element: HTMLElementNode, tagName: string, children: Node[]): boolean {
-    // Empty elements can be inline
-    if (children.length === 0) {
-      return true
-    }
-
-    // Single text node can be inline if it's simple enough
-    if (children.length === 1) {
-      const child = children[0]
-      if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-        const textContent = (child as HTMLTextNode).content.trim()
-        if (!textContent.includes('\n')) {
-          const indent = this.indent()
-          const projectedLine = `${indent}<${tagName}>${textContent}</${tagName}>`
-          return projectedLine.length <= this.maxLineLength
-        }
-      }
-    }
-
-    // Check if we have simple inline content (text + ERB that fits on one line)
-    const hasTextFlow = this.isInTextFlowContext(null, children)
-    if (hasTextFlow && children.length > 0) {
-      // Check if all children are inline-friendly (no block elements)
-      const allInline = children.every(child => {
-        if (child instanceof HTMLTextNode || (child as any).type === 'AST_HTML_TEXT_NODE') {
-          return !(child as HTMLTextNode).content.includes('\n')
-        }
-        if (child instanceof ERBContentNode || (child as any).type === 'AST_ERB_CONTENT_NODE') {
-          return true // ERB content nodes can be inline
-        }
-        return false
-      })
-
-      if (allInline) {
-        // Try to render and see if it fits
-        const indent = this.indent()
-        const result = this.tryRenderInlineFull(element, tagName, [], children)
-        if (result && (indent.length + result.length) <= this.maxLineLength) {
-          return true
-        }
-      }
-    }
-
-    return false
-  }
-
-  /**
-   * Handle complex element open tag (with attributes and/or inline nodes)
-   */
-  private handleComplexElementOpenTag(
-    element: HTMLElementNode,
-    openTag: HTMLOpenTagNode,
-    tagName: string,
-    attributes: HTMLAttributeNode[],
-    inlineNodes: Node[],
-    children: Node[],
-    isSelfClosing: boolean,
-    isInlineElement: boolean,
-    hasTextFlow: boolean
-  ): void {
-    const hasERBControlFlow = inlineNodes.some(node => this.isERBControlFlow(node)) || openTag.children.some(node => this.isERBControlFlow(node))
-    const hasComplexERB = hasERBControlFlow && this.hasComplexERBControlFlow(inlineNodes)
-
-    const indent = this.indent()
-    const inline = hasComplexERB ? "" : this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, openTag.children)
-    const nestingDepth = this.getMaxNestingDepth(children, 0)
-    const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-
-    const shouldKeepInline = this.shouldRenderInline(
-      totalAttributeCount,
-      inline.length,
-      indent.length,
-      this.maxLineLength,
-      hasComplexERB,
-      nestingDepth,
-      inlineNodes.length,
-      this.hasMultilineAttributes(attributes)
-    )
-
-    // Decide if content should be rendered inline (for empty elements with attributes)
-    if (children.length === 0 && shouldKeepInline) {
-      this.renderContentInline.add(element)
-    }
-
-    if (shouldKeepInline) {
-      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, true)
-    } else {
-      this.printHTMLOpenTag(tagName, attributes, inlineNodes, openTag.children, isSelfClosing, element.is_void, false)
-    }
-  }
 
   /**
    * Check if simple element can be rendered inline
@@ -1172,34 +1118,6 @@ export class FormatPrinter extends Printer {
     return false
   }
 
-  /**
-   * Print HTML element content (children)
-   * Handles special formatting for script, style, pre, and textarea elements
-   */
-  private printHTMLElementContent(children: Node[], hasTextFlow: boolean = false, tagName: string = ''): void {
-    const specialTags = ['script', 'style', 'pre', 'textarea']
-
-    if (specialTags.includes(tagName.toLowerCase())) {
-      this.printSpecialElementContent(children, tagName.toLowerCase())
-      return
-    }
-
-    // Check if the opening tag marked this content to be rendered inline
-    if (this.currentElement && this.renderContentInline.has(this.currentElement)) {
-      // For empty content, do nothing (closing tag will handle it)
-      if (children.length === 0) return
-
-      // Render all content inline
-      const inlineContent = this.renderChildrenInline(children)
-      if (inlineContent) {
-        this.pushToLastLine(inlineContent)
-        return
-      }
-    }
-
-    // Otherwise render children normally
-    this.visitElementChildren(children, hasTextFlow)
-  }
 
   /**
    * Render children inline as a single string
@@ -1923,7 +1841,7 @@ export class FormatPrinter extends Printer {
 
     // Print element content
     if (children.length > 0) {
-      this.printHTMLElementContent(children, hasTextFlow, tagName)
+      this.visitElementChildren(children, hasTextFlow)
     }
   }
 
@@ -1947,7 +1865,7 @@ export class FormatPrinter extends Printer {
     }
 
     // Print element content
-    this.printHTMLElementContent(children, hasTextFlow, tagName)
+    this.visitElementChildren(children, hasTextFlow)
 
     // Note: Closing tag is now handled by visitHTMLElementNode
   }
@@ -2096,14 +2014,14 @@ export class FormatPrinter extends Printer {
       this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.visitElementChildren(children, hasTextFlow)
         // Note: Closing tag is now handled by visitHTMLElementNode
       }
     } else if (inlineNodes.length > 0) {
       this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.visitElementChildren(children, hasTextFlow)
         // Note: Closing tag is now handled by visitHTMLElementNode
       }
     } else {
@@ -2156,7 +2074,7 @@ export class FormatPrinter extends Printer {
       this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.visitElementChildren(children, hasTextFlow)
         // Note: Closing tag is now handled by visitHTMLElementNode
       }
     }
