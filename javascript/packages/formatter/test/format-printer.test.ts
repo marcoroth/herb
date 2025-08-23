@@ -1,7 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { FormatPrinter } from "../src/printer.js"
-import { IdentityPrinter } from "@herb-tools/printer"
+import { FormatPrinter } from "../src"
 
 import dedent from "dedent"
 

@@ -68,8 +68,19 @@ const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
  * and emits a formatted string with proper indentation, line breaks, and attribute wrapping.
  */
 export class FormatPrinter extends Printer {
+  /**
+   * @deprecated integrate indentWidth into this.options and update FormatOptions to extend from @herb-tools/printer options
+   */
   private indentWidth: number
+
+  /**
+   * @deprecated integrate maxLineLength into this.options and update FormatOptions to extend from @herb-tools/printer options
+   */
   private maxLineLength: number
+
+  /**
+   * @deprecated refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
+   */
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
@@ -100,6 +111,7 @@ export class FormatPrinter extends Printer {
 
     const node: Node = object
 
+    // TODO: refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
     this.lines = []
     this.indentLevel = 0
     this.isInComplexNesting = false // Reset for each top-level element
@@ -113,6 +125,9 @@ export class FormatPrinter extends Printer {
     return this.lines.join("\n")
   }
 
+  /**
+   * @deprecated refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
+   */
   private push(line: string) {
     this.lines.push(line)
   }

@@ -1,4 +1,4 @@
-import { FormatPrinter } from "./printer.js"
+import { FormatPrinter } from "./format-printer.js"
 import { resolveFormatOptions } from "./options.js"
 
 import type { FormatOptions } from "./options.js"
