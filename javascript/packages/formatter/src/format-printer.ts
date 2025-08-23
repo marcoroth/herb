@@ -464,46 +464,16 @@ export class FormatPrinter extends Printer {
 
     if (!hasClosing) {
       this.visit(open)
-
       return
     }
 
     if (attributes.length === 0 && inlineNodes.length === 0) {
-      if (children.length === 0) {
-        if (this.handleSimpleEmptyElement(tagName, isSelfClosing, node.is_void)) {
-          return
-        }
-      }
-
-      if (children.length >= 1) {
-        if (this.tryRenderSimpleInline(tagName, children, hasTextFlow)) {
-          return
-        }
-      }
-
-      if (hasTextFlow) {
-        const fullInlineResult = this.tryRenderInlineFull(node, tagName, [], children)
-        if (fullInlineResult) {
-          const totalLength = this.indent().length + fullInlineResult.length
-          const maxNesting = this.getMaxNestingDepth(children, 0)
-          const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
-
-          if (totalLength <= maxInlineLength) {
-            this.push(this.indent() + fullInlineResult)
-
-            return
-          }
-        }
-      }
-
-      this.renderElementWithBody(tagName, children, hasTextFlow, node.is_void, isSelfClosing)
-
+      this.handleSimpleElement(node, tagName, children, hasTextFlow, isSelfClosing)
       return
     }
 
     if (attributes.length === 0 && inlineNodes.length > 0) {
       this.handleElementWithInlineNodes(node, tagName, attributes, inlineNodes, children, isSelfClosing, hasTextFlow)
-
       return
     }
 
@@ -905,6 +875,115 @@ export class FormatPrinter extends Printer {
     })
 
     if (node.end_node) this.visit(node.end_node)
+  }
+
+  // --- HTML Element Printing Methods ---
+
+  /**
+   * Print HTML opening tag with attributes and inline nodes
+   */
+  private printHTMLOpenTag(
+    tagName: string,
+    attributes: HTMLAttributeNode[],
+    inlineNodes: Node[] = [],
+    allChildren: Node[] = [],
+    isSelfClosing: boolean = false,
+    isVoid: boolean = false,
+    renderInline: boolean = true
+  ): void {
+    const indent = this.indent()
+
+    if (renderInline) {
+      const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, allChildren)
+      this.push(indent + inline)
+    } else {
+      this.renderMultilineAttributes(tagName, attributes, inlineNodes, allChildren, isSelfClosing, isVoid, false)
+    }
+  }
+
+  /**
+   * Print HTML closing tag
+   */
+  private printHTMLClosingTag(tagName: string): void {
+    const indent = this.indent()
+    this.push(indent + `</${tagName}>`)
+  }
+
+  /**
+   * Print HTML element content (children)
+   * Handles special formatting for script, style, pre, and textarea elements
+   */
+  private printHTMLElementContent(children: Node[], hasTextFlow: boolean = false, tagName: string = ''): void {
+    const specialTags = ['script', 'style', 'pre', 'textarea']
+    
+    if (specialTags.includes(tagName.toLowerCase())) {
+      this.printSpecialElementContent(children, tagName.toLowerCase())
+    } else {
+      this.visitElementChildren(children, hasTextFlow)
+    }
+  }
+
+  /**
+   * Print content for special elements that need raw content preservation
+   */
+  private printSpecialElementContent(children: Node[], tagName: string): void {
+    if (children.length === 0) return
+
+    // For special tags, use IdentityPrinter to preserve original formatting
+    this.withIndent(() => {
+      children.forEach(child => {
+        const content = IdentityPrinter.print(child)
+        const lines = content.split('\n')
+        const indent = this.indent()
+        
+        lines.forEach(line => {
+          this.push(indent + line)
+        })
+      })
+    })
+  }
+
+  /**
+   * Handle simple HTML elements (no attributes or inline nodes)
+   */
+  private handleSimpleElement(
+    node: HTMLElementNode,
+    tagName: string,
+    children: Node[],
+    hasTextFlow: boolean,
+    isSelfClosing: boolean
+  ): void {
+    // Handle empty elements
+    if (children.length === 0) {
+      if (this.handleSimpleEmptyElement(tagName, isSelfClosing, node.is_void)) {
+        return
+      }
+    }
+
+    // Try to render inline if possible
+    if (children.length >= 1) {
+      if (this.tryRenderSimpleInline(tagName, children, hasTextFlow)) {
+        return
+      }
+    }
+
+    // Try full inline rendering for text flow contexts
+    if (hasTextFlow) {
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, [], children)
+      if (fullInlineResult) {
+        const totalLength = this.indent().length + fullInlineResult.length
+        const maxNesting = this.getMaxNestingDepth(children, 0)
+        const maxInlineLength = maxNesting <= 1 ? this.maxLineLength : 60
+
+        if (totalLength <= maxInlineLength) {
+          this.push(this.indent() + fullInlineResult)
+          return
+        }
+      }
+    }
+
+    // Render as multiline element
+    this.renderElementWithBody(tagName, children, hasTextFlow, node.is_void, isSelfClosing)
   }
 
   // --- Utility methods ---
@@ -1466,18 +1545,14 @@ export class FormatPrinter extends Printer {
    * Handle simple empty elements (no attributes, no inline nodes)
    */
   private handleSimpleEmptyElement(tagName: string, isSelfClosing: boolean, isVoid: boolean): boolean {
-    const indent = this.indent()
-
-    if (isSelfClosing) {
-      this.push(indent + `<${tagName} />`)
-      return true
-    } else if (isVoid) {
-      this.push(indent + `<${tagName}>`)
-      return true
+    if (isSelfClosing || isVoid) {
+      this.printHTMLOpenTag(tagName, [], [], [], isSelfClosing, isVoid, true)
     } else {
+      // Empty element with opening and closing tag on same line
+      const indent = this.indent()
       this.push(indent + `<${tagName}></${tagName}>`)
-      return true
     }
+    return true
   }
 
   /**
@@ -1541,13 +1616,17 @@ export class FormatPrinter extends Printer {
    * Render element with body content (opening tag, children, closing tag)
    */
   private renderElementWithBody(tagName: string, children: Node[], hasTextFlow: boolean, isVoid: boolean, isSelfClosing: boolean) {
-    const indent = this.indent()
+    // Print opening tag
+    this.printHTMLOpenTag(tagName, [], [], [], isSelfClosing, isVoid, true)
+    
+    // Print element content
+    if (children.length > 0) {
+      this.printHTMLElementContent(children, hasTextFlow, tagName)
+    }
 
-    this.push(indent + `<${tagName}>`)
-    this.visitElementChildren(children, hasTextFlow)
-
+    // Print closing tag
     if (!isVoid && !isSelfClosing) {
-      this.push(indent + `</${tagName}>`)
+      this.printHTMLClosingTag(tagName)
     }
   }
 
@@ -1556,23 +1635,26 @@ export class FormatPrinter extends Printer {
    */
   private handleElementWithInlineNodes(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], inlineNodes: Node[], children: Node[], isSelfClosing: boolean, hasTextFlow: boolean) {
     const open = node.open_tag as HTMLOpenTagNode
-    const indent = this.indent()
-    const inline = this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children)
 
+    // Print opening tag with inline nodes
+    this.printHTMLOpenTag(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, true)
+
+    // Handle special case for elements with no content
     if (children.length === 0) {
-      if (isSelfClosing || node.is_void) {
-        this.push(indent + inline)
-      } else {
-        this.push(indent + inline + `</${tagName}>`)
+      if (!isSelfClosing && !node.is_void) {
+        // Need to append closing tag directly since it was rendered inline
+        const lastLine = this.lines[this.lines.length - 1]
+        this.lines[this.lines.length - 1] = lastLine + `</${tagName}>`
       }
       return
     }
 
-    this.push(indent + inline)
-    this.visitElementChildren(children, hasTextFlow)
+    // Print element content
+    this.printHTMLElementContent(children, hasTextFlow, tagName)
 
+    // Print closing tag
     if (!node.is_void && !isSelfClosing) {
-      this.push(indent + `</${tagName}>`)
+      this.printHTMLClosingTag(tagName)
     }
   }
 
@@ -1720,15 +1802,15 @@ export class FormatPrinter extends Printer {
       this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.visitElementChildren(children, hasTextFlow)
-        this.push(indent + `</${tagName}>`)
+        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.printHTMLClosingTag(tagName)
       }
     } else if (inlineNodes.length > 0) {
       this.push(indent + this.renderInlineOpen(tagName, attributes, isSelfClosing, inlineNodes, open.children))
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.visitElementChildren(children, hasTextFlow)
-        this.push(indent + `</${tagName}>`)
+        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.printHTMLClosingTag(tagName)
       }
     } else {
       if (isInlineElement && children.length > 0) {
@@ -1780,8 +1862,8 @@ export class FormatPrinter extends Printer {
       this.renderMultilineAttributes(tagName, attributes, inlineNodes, open.children, isSelfClosing, node.is_void, children.length > 0)
 
       if (!isSelfClosing && !node.is_void && children.length > 0) {
-        this.visitElementChildren(children, hasTextFlow)
-        this.push(indent + `</${tagName}>`)
+        this.printHTMLElementContent(children, hasTextFlow, tagName)
+        this.printHTMLClosingTag(tagName)
       }
     }
   }
