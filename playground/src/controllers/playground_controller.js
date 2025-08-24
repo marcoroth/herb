@@ -802,19 +802,30 @@ export default class extends Controller {
     }
 
     if (this.hasPrinterViewerTarget) {
-      this.printerOutputTarget.classList.add("language-html")
       const printedContent = result.printed || 'No printed output available'
-      this.printerOutputTarget.textContent = printedContent
-
-      Prism.highlightElement(this.printerOutputTarget)
+      
+      if (typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')) {
+        this.printerOutputTarget.classList.remove("language-html")
+        this.printerOutputTarget.textContent = printedContent
+      } else {
+        this.printerOutputTarget.classList.add("language-html")
+        this.printerOutputTarget.textContent = printedContent
+        Prism.highlightElement(this.printerOutputTarget)
+      }
 
       if (this.hasPrinterVerificationTarget) {
         const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
         const isMatch = currentSource === result.printed
         const options = this.getParserOptions()
         const trackWhitespace = options.track_whitespace
+        const isError = typeof printedContent === 'string' && printedContent.startsWith('Error: Cannot print')
         
-        if (!trackWhitespace) {
+        if (isError) {
+          this.printerVerificationTarget.textContent = '⚠ Printer Error'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else if (!trackWhitespace) {
           this.printerVerificationTarget.textContent = '⚠ Enable "Track whitespace" for accurate verification'
           this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
           this.hidePrinterDiff()
