@@ -396,4 +396,257 @@ describe("CLI Binary", () => {
     const formattedLines = lines.slice(2) // Skip experimental preview lines
     expect(formattedLines.join('\n')).toBe('\n')
   })
+
+  describe("Glob Pattern Support", () => {
+    beforeEach(async () => {
+      await mkdir("test-fixtures", { recursive: true })
+      await mkdir("test-fixtures/nested", { recursive: true })
+    })
+
+    afterEach(async () => {
+      await rm("test-fixtures", { recursive: true }).catch(() => {})
+    })
+
+    it("should format single .xml.erb file", async () => {
+      const content = '<?xml version="1.0"?>\n<root><% if true %><item/><% end %></root>'
+      const expectedContent = dedent`
+        <?xml version="1.0"?>
+
+        <root>
+          <% if true %>
+            <item />
+          <% end %>
+        </root>
+      `
+
+      await writeFile("test-fixtures/test.xml.erb", content)
+      const result = await execBinary(["test-fixtures/test.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
+
+      const actualContent = await readFile("test-fixtures/test.xml.erb", "utf-8")
+      expect(actualContent.trim()).toBe(expectedContent)
+    })
+
+    it("should handle glob pattern for .xml.erb files", async () => {
+      const content1 = '<?xml version="1.0"?><root><item/></root>'
+      const content2 = '<?xml version="1.0"?><config><setting/></config>'
+
+      await writeFile("test-fixtures/file1.xml.erb", content1)
+      await writeFile("test-fixtures/file2.xml.erb", content2)
+      await writeFile("test-fixtures/ignored.html.erb", "<div></div>")
+
+      const result = await execBinary(["test-fixtures/*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-fixtures/file1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file2.xml.erb")
+      expect(result.stdout).not.toContain("ignored.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+    })
+
+    it("should handle recursive glob pattern", async () => {
+      const content = '<?xml version="1.0"?><root><item/></root>'
+
+      await writeFile("test-fixtures/top.xml.erb", content)
+      await writeFile("test-fixtures/nested/deep.xml.erb", content)
+
+      const result = await execBinary(["test-fixtures/**/*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-fixtures/top.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/nested/deep.xml.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+    })
+
+    it("should handle mixed file extensions with glob", async () => {
+      const xmlContent = '<?xml version="1.0"?><root><item/></root>'
+      const htmlContent = '<div><p></p></div>'
+
+      await writeFile("test-fixtures/file.xml.erb", xmlContent)
+      await writeFile("test-fixtures/file.html.erb", htmlContent)
+
+      const result = await execBinary(["test-fixtures/*.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-fixtures/file.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-fixtures/file.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+    })
+
+    it("should handle glob with --check mode", async () => {
+      const wellFormattedContent = dedent`
+        <?xml version="1.0"?>
+
+        <root>
+          <% if true %>
+            <item />
+          <% end %>
+        </root>
+      `
+      const poorlyFormattedContent = '<?xml version="1.0"?><root><% if true %><item/><% end %></root>'
+
+      await writeFile("test-fixtures/good.xml.erb", wellFormattedContent + '\n')
+      await writeFile("test-fixtures/bad.xml.erb", poorlyFormattedContent)
+
+      const result = await execBinary(["--check", "test-fixtures/*.xml.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stdout).toContain("The following")
+      expect(result.stdout).toContain("not formatted")
+      expect(result.stdout).toContain("bad.xml.erb")
+      expect(result.stdout).not.toContain("good.xml.erb")
+      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+    })
+
+    it("should handle no files matching glob pattern", async () => {
+      const result = await execBinary(["test-fixtures/*.nonexistent"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("No files found matching pattern")
+      expect(result.stdout).toContain("test-fixtures/*.nonexistent")
+    })
+
+    it("should error for non-existent specific file", async () => {
+      const result = await execBinary(["test-fixtures/nonexistent.xml.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stderr).toContain("Error: Cannot access 'test-fixtures/nonexistent.xml.erb'")
+    })
+
+    it("should handle relative path glob patterns", async () => {
+      const content = '<?xml version="1.0"?><root><item/></root>'
+
+      await writeFile("test-fixtures/test.xml.erb", content)
+
+      const result = await execBinary(["./test-fixtures/*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-fixtures/test.xml.erb")
+      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+    })
+  })
+
+  describe("Advanced CLI Patterns", () => {
+    beforeEach(async () => {
+      await mkdir("test-advanced", { recursive: true })
+      await mkdir("test-advanced/sub1", { recursive: true })
+      await mkdir("test-advanced/sub2", { recursive: true })
+    })
+
+    afterEach(async () => {
+      await rm("test-advanced", { recursive: true }).catch(() => {})
+    })
+
+    it("should handle complex nested glob patterns", async () => {
+      const content = '<?xml version="1.0"?><root><item/></root>'
+
+      await writeFile("test-advanced/root.xml.erb", content)
+      await writeFile("test-advanced/sub1/file1.xml.erb", content)
+      await writeFile("test-advanced/sub1/file2.xml.erb", content)
+      await writeFile("test-advanced/sub2/file3.xml.erb", content)
+      await writeFile("test-advanced/sub2/ignore.html.erb", "<div></div>")
+
+      const result = await execBinary(["test-advanced/**/file*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-advanced/sub1/file1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/sub1/file2.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/sub2/file3.xml.erb")
+      expect(result.stdout).not.toContain("root.xml.erb")
+      expect(result.stdout).not.toContain("ignore.html.erb")
+      expect(result.stdout).toContain("Checked 3 files, formatted 3 files")
+    })
+
+    it("should handle brace expansion patterns", async () => {
+      const content = '<?xml version="1.0"?><root><item/></root>'
+
+      await writeFile("test-advanced/config.xml.erb", content)
+      await writeFile("test-advanced/manifest.xml.erb", content)
+      await writeFile("test-advanced/other.erb", content)
+
+      const result = await execBinary(["test-advanced/{config,manifest}.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-advanced/config.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-advanced/manifest.xml.erb")
+      expect(result.stdout).not.toContain("other.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+    })
+
+    it("should handle directory argument with mixed file types", async () => {
+      const xmlContent = '<?xml version="1.0"?><root><item/></root>'
+      const htmlContent = '<div><p></p></div>'
+
+      await writeFile("test-advanced/file.xml.erb", xmlContent)
+      await writeFile("test-advanced/page.html.erb", htmlContent)
+      await writeFile("test-advanced/readme.txt", "plain text")
+
+      const result = await execBinary(["test-advanced/"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-advanced/page.html.erb")
+      expect(result.stdout).not.toContain("file.xml.erb") // Only .html.erb by default for directories
+      expect(result.stdout).not.toContain("readme.txt")
+      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+    })
+
+    it("should handle empty directory gracefully", async () => {
+      const result = await execBinary(["test-advanced/"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("No files found matching pattern")
+      expect(result.stdout).toContain("test-advanced/**/*.html.erb")
+    })
+
+    it("should handle mixed file arguments", async () => {
+      const xmlContent = '<?xml version="1.0"?><root><item/></root>'
+      const htmlContent = '<div><p></p></div>'
+
+      await writeFile("test-advanced/specific.xml.erb", xmlContent)
+      await writeFile("test-advanced/another.html.erb", htmlContent)
+
+      const result1 = await execBinary(["test-advanced/specific.xml.erb"])
+      expectExitCode(result1, 0)
+      expect(result1.stdout).toContain("Formatted: test-advanced/specific.xml.erb")
+
+      const result2 = await execBinary(["test-advanced/another.html.erb"])
+      expectExitCode(result2, 0)
+      expect(result2.stdout).toContain("Formatted: test-advanced/another.html.erb")
+    })
+
+    it("should preserve glob patterns in error messages", async () => {
+      const result = await execBinary(["test-advanced/non-existent-*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("No files found matching pattern")
+      expect(result.stdout).toContain("test-advanced/non-existent-*.xml.erb")
+    })
+
+    it("should handle check mode with complex patterns", async () => {
+      const formattedContent = dedent`
+        <?xml version="1.0"?>
+
+        <root>
+          <item />
+        </root>
+      `
+      const unformattedContent = '<?xml version="1.0"?><root><item/></root>'
+
+      await writeFile("test-advanced/good1.xml.erb", formattedContent + '\n')
+      await writeFile("test-advanced/good2.xml.erb", formattedContent + '\n')
+      await writeFile("test-advanced/sub1/bad.xml.erb", unformattedContent)
+
+      const result = await execBinary(["--check", "test-advanced/**/*.xml.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stdout).toContain("The following")
+      expect(result.stdout).toContain("not formatted")
+      expect(result.stdout).toContain("bad.xml.erb")
+      expect(result.stdout).not.toContain("good1.xml.erb")
+      expect(result.stdout).not.toContain("good2.xml.erb")
+      expect(result.stdout).toContain("Checked 3 files, found 1 unformatted file")
+    })
+  })
 })

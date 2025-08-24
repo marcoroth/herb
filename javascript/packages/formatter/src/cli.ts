@@ -14,11 +14,11 @@ const pluralize = (count: number, singular: string, plural: string = singular + 
 
 export class CLI {
   private usage = dedent`
-    Usage: herb-format [file|directory] [options]
+    Usage: herb-format [file|directory|glob-pattern] [options]
 
     Arguments:
-      file|directory   File to format, directory to format all **/*.html.erb files within,
-                       or '-' for stdin (omit to format all **/*.html.erb files in current directory)
+      file|directory|glob-pattern   File to format, directory to format all **/*.html.erb files within,
+                                    glob pattern to match files, or '-' for stdin (omit to format all **/*.html.erb files in current directory)
 
     Options:
       -c, --check      check if files are formatted without modifying them
@@ -27,8 +27,12 @@ export class CLI {
 
     Examples:
       herb-format                            # Format all **/*.html.erb files in current directory
-      herb-format templates/                 # Format and **/*.html.erb within the given directory
+      herb-format index.html.erb             # Format and write single file
       herb-format templates/index.html.erb   # Format and write single file
+      herb-format templates/                 # Format and **/*.html.erb within the given directory
+      herb-format "templates/**/*.html.erb"  # Format all .html.erb files in templates directory using glob pattern
+      herb-format "**/*.html.erb"            # Format all .html.erb files using glob pattern
+      herb-format "**/*.xml.erb"             # Format all .xml.erb files using glob pattern
       herb-format --check                    # Check if all **/*.html.erb files are formatted
       herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
       cat template.html.erb | herb-format    # Format from stdin to stdout
@@ -86,17 +90,58 @@ export class CLI {
 
         process.stdout.write(output)
       } else if (file) {
+        let isDirectory = false
+        let isFile = false
+        let pattern = file
+
         try {
           const stats = statSync(file)
+          isDirectory = stats.isDirectory()
+          isFile = stats.isFile()
+        } catch {
+          // Not a file/directory, treat as glob pattern
+        }
 
-          if (stats.isDirectory()) {
-            const pattern = join(file, "**/*.html.erb")
-            const files = await glob(pattern)
+        if (isDirectory) {
+          pattern = join(file, "**/*.html.erb")
+        } else if (isFile) {
+          const source = readFileSync(file, "utf-8")
+          const result = formatter.format(source)
+          const output = result.endsWith('\n') ? result : result + '\n'
 
-            if (files.length === 0) {
-              console.log(`No files found matching pattern: ${resolve(pattern)}`)
-              process.exit(0)
+          if (output !== source) {
+            if (isCheckMode) {
+              console.log(`File is not formatted: ${file}`)
+              process.exit(1)
+            } else {
+              writeFileSync(file, output, "utf-8")
+              console.log(`Formatted: ${file}`)
             }
+          } else if (isCheckMode) {
+            console.log(`File is properly formatted: ${file}`)
+          }
+
+          process.exit(0)
+        }
+
+        try {
+          const files = await glob(pattern)
+
+          if (files.length === 0) {
+            try {
+              statSync(file)
+            } catch {
+              if (!file.includes('*') && !file.includes('?') && !file.includes('[') && !file.includes('{')) {
+                console.error(`Error: Cannot access '${file}': ENOENT: no such file or directory`)
+
+                process.exit(1)
+              }
+            }
+
+            console.log(`No files found matching pattern: ${resolve(pattern)}`)
+
+            process.exit(0)
+          }
 
             let formattedCount = 0
             let unformattedFiles: string[] = []
@@ -134,23 +179,6 @@ export class CLI {
             } else {
               console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
             }
-          } else {
-            const source = readFileSync(file, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                console.log(`File is not formatted: ${file}`)
-                process.exit(1)
-              } else {
-                writeFileSync(file, output, "utf-8")
-                console.log(`Formatted: ${file}`)
-              }
-            } else if (isCheckMode) {
-              console.log(`File is properly formatted: ${file}`)
-            }
-          }
 
         } catch (error) {
           console.error(`Error: Cannot access '${file}':`, error)

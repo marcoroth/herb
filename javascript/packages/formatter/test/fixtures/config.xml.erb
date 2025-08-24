@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <settings>
+    <% if Rails.env.production? %>
+      <env>production</env>
+      <debug>false</debug>
+    <% else %>
+      <env>development</env>
+      <debug>true</debug>
+    <% end %>
+  </settings>
+  <database>
+    <host><%= database_host %></host>
+    <port><%= database_port || 5432 %></port>
+  </database>
+</configuration>

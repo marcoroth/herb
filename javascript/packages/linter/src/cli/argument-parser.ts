@@ -114,11 +114,6 @@ export class ArgumentParser {
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
 
-    if (positionals.length === 0) {
-      console.error("Please specify input file.")
-      process.exit(1)
-    }
-
     return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines }
   }
 
