@@ -47,6 +47,9 @@ module Herb
     # : (Herb::AST::XMLDeclarationNode) -> void
     def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
 
+    # : (Herb::AST::CDATANode) -> void
+    def visit_cdata_node: (Herb::AST::CDATANode) -> void
+
     # : (Herb::AST::WhitespaceNode) -> void
     def visit_whitespace_node: (Herb::AST::WhitespaceNode) -> void
 

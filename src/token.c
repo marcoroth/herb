@@ -49,6 +49,8 @@ const char* token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_DOCTYPE: return "TOKEN_HTML_DOCTYPE";
     case TOKEN_XML_DECLARATION: return "TOKEN_XML_DECLARATION";
     case TOKEN_XML_DECLARATION_END: return "TOKEN_XML_DECLARATION_END";
+    case TOKEN_CDATA_START: return "TOKEN_CDATA_START";
+    case TOKEN_CDATA_END: return "TOKEN_CDATA_END";
     case TOKEN_HTML_TAG_START: return "TOKEN_HTML_TAG_START";
     case TOKEN_HTML_TAG_END: return "TOKEN_HTML_TAG_END";
     case TOKEN_HTML_TAG_START_CLOSE: return "TOKEN_HTML_TAG_START_CLOSE";

@@ -22,6 +22,8 @@ typedef struct {
 char lexer_peek(const lexer_T* lexer, int offset);
 bool lexer_peek_for_doctype(const lexer_T* lexer, int offset);
 bool lexer_peek_for_xml_declaration(const lexer_T* lexer, int offset);
+bool lexer_peek_for_cdata_start(const lexer_T* lexer, int offset);
+bool lexer_peek_for_cdata_end(const lexer_T* lexer, int offset);
 
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, int offset);
 bool lexer_peek_for_html_comment_end(const lexer_T* lexer, int offset);

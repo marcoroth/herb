@@ -1,0 +1,12 @@
+#<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
+#<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[9, 10] start=(1:9) end=(1:10)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="sender" range=[10, 16] start=(1:10) end=(1:16)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[16, 17] start=(1:16) end=(1:17)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="John" range=[17, 21] start=(1:17) end=(1:21)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[21, 22] start=(1:21) end=(1:22)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Smith" range=[22, 27] start=(1:22) end=(1:27)>
+#<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[27, 29] start=(1:27) end=(1:29)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="sender" range=[29, 35] start=(1:29) end=(1:35)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[35, 36] start=(1:35) end=(1:36)>
+#<Herb::Token type="TOKEN_CDATA_END" value="]]>" range=[36, 39] start=(1:36) end=(1:39)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[39, 39] start=(1:39) end=(1:39)>

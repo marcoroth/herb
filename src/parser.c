@@ -50,6 +50,49 @@ parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
   return parser;
 }
 
+static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
+  array_T* errors = array_init(8);
+  array_T* children = array_init(8);
+  buffer_T content = buffer_new();
+
+  token_T* tag_opening = parser_consume_expected(parser, TOKEN_CDATA_START, errors);
+  position_T* start = position_copy(parser->current_token->location->start);
+
+  while (token_is_none_of(parser, TOKEN_CDATA_END, TOKEN_EOF)) {
+    if (token_is(parser, TOKEN_ERB_START)) {
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
+      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      array_append(children, erb_node);
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
+      continue;
+    }
+
+    token_T* token = parser_advance(parser);
+    buffer_append(&content, token->value);
+    token_free(token);
+  }
+
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
+  token_T* tag_closing = parser_consume_expected(parser, TOKEN_CDATA_END, errors);
+
+  AST_CDATA_NODE_T* cdata = ast_cdata_node_init(
+    tag_opening,
+    children,
+    tag_closing,
+    tag_opening->location->start,
+    tag_closing->location->end,
+    errors
+  );
+
+  position_free(start);
+  buffer_free(&content);
+  token_free(tag_opening);
+  token_free(tag_closing);
+
+  return cdata;
+}
+
 static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   array_T* errors = array_init(8);
   array_T* children = array_init(8);
@@ -1053,6 +1096,11 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
 
     if (token_is(parser, TOKEN_XML_DECLARATION)) {
       array_append(children, parser_parse_xml_declaration(parser));
+      continue;
+    }
+
+    if (token_is(parser, TOKEN_CDATA_START)) {
+      array_append(children, parser_parse_cdata(parser));
       continue;
     }
 

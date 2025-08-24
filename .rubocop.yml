@@ -74,6 +74,7 @@ Metrics/ClassLength:
   Exclude:
     - lib/herb/cli.rb
     - lib/herb/project.rb
+    - lib/herb/visitor.rb
     - test/**/*_test.rb
 
 Metrics/BlockLength:

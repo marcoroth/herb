@@ -203,6 +203,18 @@ export abstract class Printer extends Visitor {
     }
   }
 
+  visitCDATANode(node: Nodes.CDATANode): void {
+    if (node.tag_opening) {
+      this.context.write(node.tag_opening.value)
+    }
+
+    this.visitChildNodes(node)
+
+    if (node.tag_closing) {
+      this.context.write(node.tag_closing.value)
+    }
+  }
+
   visitERBContentNode(node: Nodes.ERBContentNode): void {
     this.printERBNode(node)
   }

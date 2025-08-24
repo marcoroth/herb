@@ -294,6 +294,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with_next(lexer, strlen("<?xml"), TOKEN_XML_DECLARATION);
       }
 
+      if (lexer_peek_for_cdata_start(lexer, 0)) {
+        return lexer_advance_with_next(lexer, strlen("<![CDATA["), TOKEN_CDATA_START);
+      }
+
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
@@ -320,6 +324,11 @@ token_T* lexer_next_token(lexer_T* lexer) {
     case '-': {
       token_T* token = lexer_match_and_advance(lexer, "-->", TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
+    }
+
+    case ']': {
+      token_T* token = lexer_match_and_advance(lexer, "]]>", TOKEN_CDATA_END);
+      return token ? token : lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
 
     case '>': return lexer_advance_current(lexer, TOKEN_HTML_TAG_END);

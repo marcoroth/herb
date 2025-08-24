@@ -37,6 +37,14 @@ bool lexer_peek_for_xml_declaration(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<?xml", true);
 }
 
+bool lexer_peek_for_cdata_start(const lexer_T* lexer, const int offset) {
+  return lexer_peek_for(lexer, offset, "<![CDATA[", false);
+}
+
+bool lexer_peek_for_cdata_end(const lexer_T* lexer, const int offset) {
+  return lexer_peek_for(lexer, offset, "]]>", false);
+}
+
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<!--", false);
 }

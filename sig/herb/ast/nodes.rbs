@@ -346,6 +346,35 @@ module Herb
       def tree_inspect: (?Integer) -> String
     end
 
+    class CDATANode < Node
+      attr_reader tag_opening: Herb::Token
+
+      attr_reader children: Array[Herb::AST::Node]
+
+      attr_reader tag_closing: Herb::Token
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+
+      # : () -> serialized_cdata_node
+      def to_hash: () -> serialized_cdata_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
     class WhitespaceNode < Node
       attr_reader value: Herb::Token
 
