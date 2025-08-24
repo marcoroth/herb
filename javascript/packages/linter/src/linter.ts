@@ -59,14 +59,40 @@ export class Linter {
     for (const RuleClass of this.rules) {
       const rule = new RuleClass()
 
+      let isEnabled = true
       let ruleOffenses: LintOffense[]
 
       if (this.isLexerRule(rule)) {
-        ruleOffenses = (rule as LexerRule).check(lexResult, context)
+        if (rule.isEnabled) {
+          isEnabled = rule.isEnabled(lexResult, context)
+        }
+
+        if (isEnabled) {
+          ruleOffenses = (rule as LexerRule).check(lexResult, context)
+        } else {
+          ruleOffenses = []
+        }
+
       } else if (this.isSourceRule(rule)) {
-        ruleOffenses = (rule as SourceRule).check(source, context)
+        if (rule.isEnabled) {
+          isEnabled = rule.isEnabled(source, context)
+        }
+
+        if (isEnabled) {
+          ruleOffenses = (rule as SourceRule).check(source, context)
+        } else {
+          ruleOffenses = []
+        }
       } else {
-        ruleOffenses = (rule as ParserRule).check(parseResult, context)
+        if (rule.isEnabled) {
+          isEnabled = rule.isEnabled(parseResult, context)
+        }
+
+        if (isEnabled) {
+          ruleOffenses = (rule as ParserRule).check(parseResult, context)
+        } else {
+          ruleOffenses = []
+        }
       }
 
       this.offenses.push(...ruleOffenses)

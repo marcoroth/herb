@@ -1,47 +1,56 @@
+import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
-import { ParserRule } from "../types.js"
+import { isNode, getTagName, HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
+
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
+
+class XMLDeclarationChecker extends BaseRuleVisitor {
+  hasXMLDeclaration: boolean = false
+
+  visitXMLDeclarationNode(_node: XMLDeclarationNode): void {
+    this.hasXMLDeclaration = true
+  }
+
+  visitChildNodes(node: Node): void {
+    if (this.hasXMLDeclaration) return
+    super.visitChildNodes(node)
+  }
+}
 
 class TagNameLowercaseVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value
-
-    if (node.open_tag) {
-      this.checkTagName(node.open_tag as HTMLOpenTagNode)
-    }
-
-    if (tagName && ["svg"].includes(tagName.toLowerCase())) {
-      if (node.close_tag) {
-        this.checkTagName(node.close_tag as HTMLCloseTagNode)
-      }
-
-      return
-    }
-
-    this.visitChildNodes(node)
-
-    if (node.close_tag) {
-      this.checkTagName(node.close_tag as HTMLCloseTagNode)
+    if (getTagName(node).toLowerCase() === "svg") {
+      this.checkTagName(node.open_tag)
+      this.checkTagName(node.close_tag)
+    } else {
+      super.visitHTMLElementNode(node)
     }
   }
 
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {
-    const tagName = node.tag_name?.value
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
+    this.checkTagName(node)
+  }
+
+  visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
+    this.checkTagName(node)
+  }
+
+  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | null): void {
+    if (!node) return
+
+    const tagName = getTagName(node)
 
     if (!tagName) return
 
     const lowercaseTagName = tagName.toLowerCase()
 
+    const type = isNode(node, HTMLOpenTagNode) ? "Opening" : "Closing"
+    const open = isNode(node, HTMLOpenTagNode) ? "<" : "</"
+
     if (tagName !== lowercaseTagName) {
-      let type: string = node.type
-
-      if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
-      if (node.type == "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
-
       this.addOffense(
-        `${type} tag name \`${tagName}\` should be lowercase. Use \`${lowercaseTagName}\` instead.`,
+        `${type} tag name \`${open}${tagName}>\` should be lowercase. Use \`${open}${lowercaseTagName}>\` instead.`,
         node.tag_name!.location,
         "error"
       )
@@ -51,6 +60,16 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
 
 export class HTMLTagNameLowercaseRule extends ParserRule {
   name = "html-tag-name-lowercase"
+
+  isEnabled(result: ParseResult, context?: Partial<LintContext>): boolean {
+    if (context?.fileName?.endsWith(".xml") || context?.fileName?.endsWith(".xml.erb")) {
+      return false
+    }
+
+    const checker = new XMLDeclarationChecker(this.name)
+    checker.visit(result.value)
+    return !checker.hasXMLDeclaration
+  }
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new TagNameLowercaseVisitor(this.name, context)

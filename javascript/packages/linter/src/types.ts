@@ -24,12 +24,30 @@ export abstract class ParserRule {
   static type = "parser" as const
   abstract name: string
   abstract check(result: ParseResult, context?: Partial<LintContext>): LintOffense[]
+  
+  /**
+   * Optional method to determine if this rule should run.
+   * If not implemented, rule is always enabled.
+   * @param result - The parse result to analyze
+   * @param context - Optional context for linting
+   * @returns true if rule should run, false to skip
+   */
+  isEnabled?(result: ParseResult, context?: Partial<LintContext>): boolean
 }
 
 export abstract class LexerRule {
   static type = "lexer" as const
   abstract name: string
   abstract check(lexResult: LexResult, context?: Partial<LintContext>): LintOffense[]
+  
+  /**
+   * Optional method to determine if this rule should run.
+   * If not implemented, rule is always enabled.
+   * @param lexResult - The lex result to analyze
+   * @param context - Optional context for linting
+   * @returns true if rule should run, false to skip
+   */
+  isEnabled?(lexResult: LexResult, context?: Partial<LintContext>): boolean
 }
 
 export interface LexerRuleConstructor {
@@ -56,6 +74,15 @@ export abstract class SourceRule {
   static type = "source" as const
   abstract name: string
   abstract check(source: string, context?: Partial<LintContext>): LintOffense[]
+  
+  /**
+   * Optional method to determine if this rule should run.
+   * If not implemented, rule is always enabled.
+   * @param source - The source code to analyze
+   * @param context - Optional context for linting
+   * @returns true if rule should run, false to skip
+   */
+  isEnabled?(source: string, context?: Partial<LintContext>): boolean
 }
 
 export interface SourceRuleConstructor {

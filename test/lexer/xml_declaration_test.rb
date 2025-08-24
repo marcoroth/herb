@@ -7,7 +7,7 @@ module Lexer
     include SnapshotUtils
 
     test "basic xml declaration" do
-      assert_lexed_snapshot("<?xml version=\"1.0\"?>")
+      assert_lexed_snapshot("<?xml version=\"1.0\" ?>")
     end
 
     test "xml declaration with encoding" do

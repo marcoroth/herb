@@ -7,7 +7,7 @@ module Parser
     include SnapshotUtils
 
     test "basic xml declaration" do
-      assert_parsed_snapshot("<?xml version=\"1.0\"?>")
+      assert_parsed_snapshot("<?xml version=\"1.0\" ?>")
     end
 
     test "xml declaration with encoding" do
