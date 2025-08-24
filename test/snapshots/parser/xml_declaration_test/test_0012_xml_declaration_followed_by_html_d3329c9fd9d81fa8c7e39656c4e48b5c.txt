@@ -1,0 +1,55 @@
+@ DocumentNode (location: (1:0)-(2:31))
+└── children: (3 items)
+    ├── @ XMLDeclarationNode (location: (1:0)-(1:21))
+    │   ├── tag_opening: "<?xml" (location: (1:0)-(1:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:5)-(1:19))
+    │   │       └── content: " version=\"1.0\""
+    │   │
+    │   └── tag_closing: "?>" (location: (1:19)-(1:21))
+    │
+    ├── @ HTMLTextNode (location: (1:21)-(2:0))
+    │   └── content: "\n"
+    │
+    └── @ HTMLElementNode (location: (2:0)-(2:31))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (2:0)-(2:6))
+        │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+        │       ├── tag_name: "html" (location: (2:1)-(2:5))
+        │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "html" (location: (2:1)-(2:5))
+        ├── body: (1 item)
+        │   └── @ HTMLElementNode (location: (2:6)-(2:24))
+        │       ├── open_tag:
+        │       │   └── @ HTMLOpenTagNode (location: (2:6)-(2:12))
+        │       │       ├── tag_opening: "<" (location: (2:6)-(2:7))
+        │       │       ├── tag_name: "body" (location: (2:7)-(2:11))
+        │       │       ├── tag_closing: ">" (location: (2:11)-(2:12))
+        │       │       ├── children: []
+        │       │       └── is_void: false
+        │       │
+        │       ├── tag_name: "body" (location: (2:7)-(2:11))
+        │       ├── body: (1 item)
+        │       │   └── @ HTMLTextNode (location: (2:12)-(2:17))
+        │       │       └── content: "Hello"
+        │       │
+        │       ├── close_tag:
+        │       │   └── @ HTMLCloseTagNode (location: (2:17)-(2:24))
+        │       │       ├── tag_opening: "</" (location: (2:17)-(2:19))
+        │       │       ├── tag_name: "body" (location: (2:19)-(2:23))
+        │       │       ├── children: []
+        │       │       └── tag_closing: ">" (location: (2:23)-(2:24))
+        │       │
+        │       └── is_void: false
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (2:24)-(2:31))
+        │       ├── tag_opening: "</" (location: (2:24)-(2:26))
+        │       ├── tag_name: "html" (location: (2:26)-(2:30))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (2:30)-(2:31))
+        │
+        └── is_void: false

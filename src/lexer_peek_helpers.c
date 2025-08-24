@@ -33,6 +33,10 @@ bool lexer_peek_for_doctype(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<!DOCTYPE", true);
 }
 
+bool lexer_peek_for_xml_declaration(const lexer_T* lexer, const int offset) {
+  return lexer_peek_for(lexer, offset, "<?xml", true);
+}
+
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "<!--", false);
 }

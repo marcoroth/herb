@@ -142,6 +142,54 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
   return doctype;
 }
 
+static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser) {
+  array_T* errors = array_init(8);
+  array_T* children = array_init(8);
+  buffer_T content = buffer_new();
+
+  token_T* tag_opening = parser_consume_expected(parser, TOKEN_XML_DECLARATION, errors);
+
+  position_T* start = position_copy(parser->current_token->location->start);
+
+  while (token_is_none_of(parser, TOKEN_XML_DECLARATION_END, TOKEN_EOF)) {
+    if (token_is(parser, TOKEN_ERB_START)) {
+      parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+      AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
+      array_append(children, erb_node);
+
+      position_free(start);
+      start = position_copy(parser->current_token->location->start);
+
+      continue;
+    }
+
+    token_T* token = parser_advance(parser);
+    buffer_append(&content, token->value);
+    token_free(token);
+  }
+
+  parser_append_literal_node_from_buffer(parser, &content, children, start);
+
+  token_T* tag_closing = parser_consume_expected(parser, TOKEN_XML_DECLARATION_END, errors);
+
+  AST_XML_DECLARATION_NODE_T* xml_declaration = ast_xml_declaration_node_init(
+    tag_opening,
+    children,
+    tag_closing,
+    tag_opening->location->start,
+    tag_closing->location->end,
+    errors
+  );
+
+  position_free(start);
+  token_free(tag_opening);
+  token_free(tag_closing);
+  buffer_free(&content);
+
+  return xml_declaration;
+}
+
 static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T* document_errors) {
   position_T* start = position_copy(parser->current_token->location->start);
 
@@ -1000,6 +1048,11 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
 
     if (token_is(parser, TOKEN_HTML_DOCTYPE)) {
       array_append(children, parser_parse_html_doctype(parser));
+      continue;
+    }
+
+    if (token_is(parser, TOKEN_XML_DECLARATION)) {
+      array_append(children, parser_parse_xml_declaration(parser));
       continue;
     }
 

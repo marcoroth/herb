@@ -306,6 +306,18 @@ nodes:
         - name: tag_closing
           type: token
 
+    - name: XMLDeclarationNode
+      fields:
+        - name: tag_opening
+          type: token
+
+        - name: children
+          type: array
+          kind: Node
+
+        - name: tag_closing
+          type: token
+
     - name: WhitespaceNode
       fields:
         - name: value

@@ -11,6 +11,8 @@ typedef enum {
   TOKEN_IDENTIFIER,
 
   TOKEN_HTML_DOCTYPE, // <!DOCTYPE, <!doctype, <!DoCtYpE, <!dOcTyPe
+  TOKEN_XML_DECLARATION, // <?xml
+  TOKEN_XML_DECLARATION_END, // ?>
 
   TOKEN_HTML_TAG_START,       // <
   TOKEN_HTML_TAG_START_CLOSE, // </
