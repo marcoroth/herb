@@ -47,6 +47,7 @@ import {
   ERBUnlessNode,
   ERBYieldNode,
   ERBInNode,
+  XMLDeclarationNode,
   Token
 } from "@herb-tools/core"
 
@@ -1020,6 +1021,10 @@ export class FormatPrinter extends Printer {
   }
 
   visitHTMLDoctypeNode(node: HTMLDoctypeNode) {
+    this.push(this.indent + IdentityPrinter.print(node))
+  }
+
+  visitXMLDeclarationNode(node: XMLDeclarationNode) {
     this.push(this.indent + IdentityPrinter.print(node))
   }
 
