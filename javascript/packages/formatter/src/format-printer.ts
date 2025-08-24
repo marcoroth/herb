@@ -475,7 +475,7 @@ export class FormatPrinter extends Printer {
     const currentIndent = indentLength
 
     if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%.+%>/.test(normalizedContent)) {
+      if (/<%[^%]*%>/.test(normalizedContent)) {
         return false
       }
 
@@ -542,7 +542,7 @@ export class FormatPrinter extends Printer {
     const attributeLine = `${name}${equals}${open_quote}${normalizedContent}${close_quote}`
 
     if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%.+%>/.test(normalizedContent)) {
+      if (/<%[^%]*%>/.test(normalizedContent)) {
         return open_quote + normalizedContent + close_quote
       }
 

@@ -108,10 +108,10 @@ describe('FormattingService', () => {
       const expected = dedent`
         <div>
           <h1>Title</h1>
+
           <p>Some content that is long enough to force multi-line formatting</p>
-          <div>
-            <span>Nested content</span>
-          </div>
+
+          <div><span>Nested content</span></div>
         </div>
       ` + '\n'
 
@@ -144,10 +144,10 @@ describe('FormattingService', () => {
       const expected = dedent`
         <div>
             <h1>Title</h1>
+
             <p>Content with multiple elements</p>
-            <div>
-                <span>Nested</span>
-            </div>
+
+            <div><span>Nested</span></div>
         </div>
       ` + '\n'
 
@@ -409,9 +409,7 @@ describe('FormattingService', () => {
         '        <% needs %>\n' +
         '        <% to_be_formatted %>\n' +
         '        without being reset to the\n' +
-        '        <b>\n' +
-        '          <i>start of the line</i>\n' +
-        '        </b>\n' +
+        '        <b><i>start of the line</i></b>\n' +
         '        .\n' +
         '      </p>\n'
       )
