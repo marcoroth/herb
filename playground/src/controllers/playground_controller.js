@@ -60,6 +60,13 @@ export default class extends Controller {
     "formatError",
     "formatButton",
     "formatTooltip",
+    "printerViewer",
+    "printerOutput",
+    "printerVerification",
+    "printerIgnoreErrors",
+    "printerDiff",
+    "printerDiffContent",
+    "printerLegend",
     "shareButton",
     "shareTooltip",
     "githubButton",
@@ -102,6 +109,7 @@ export default class extends Controller {
     this.restoreInput()
     this.restoreActiveTab()
     this.restoreParserOptions()
+    this.restorePrinterOptions()
     this.inputTarget.focus()
     this.load()
 
@@ -203,7 +211,9 @@ export default class extends Controller {
     window.parent.location.hash = this.compressedValue
 
     const options = this.getParserOptions()
+    const printerOptions = this.getPrinterOptions()
     this.setOptionsInURL(options)
+    this.setPrinterOptionsInURL(printerOptions)
   }
 
   async insert(event) {
@@ -288,6 +298,9 @@ export default class extends Controller {
           const blurredPre = this.formatErrorTarget.querySelector('pre.language-html')
           content = blurredPre ? blurredPre.textContent : ''
         }
+        break
+      case 'printer':
+        content = this.printerOutputTarget.textContent
         break
       case 'diagnostics':
         content = this.getDiagnosticsAsText()
@@ -397,8 +410,21 @@ export default class extends Controller {
     }
   }
 
+  restorePrinterOptions() {
+    const printerOptionsFromURL = this.getPrinterOptionsFromURL()
+    if (Object.keys(printerOptionsFromURL).length > 0) {
+      this.setPrinterOptions(printerOptionsFromURL)
+    }
+  }
+
+  setPrinterOptions(printerOptions) {
+    if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
+      this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
+    }
+  }
+
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
     return validTabs.includes(tab)
   }
 
@@ -588,7 +614,8 @@ export default class extends Controller {
 
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     const options = this.getParserOptions()
-    const result = await analyze(Herb, value, options)
+    const printerOptions = this.getPrinterOptions()
+    const result = await analyze(Herb, value, options, printerOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -774,6 +801,38 @@ export default class extends Controller {
       Prism.highlightElement(this.lexViewerTarget)
     }
 
+    if (this.hasPrinterViewerTarget) {
+      this.printerOutputTarget.classList.add("language-html")
+      const printedContent = result.printed || 'No printed output available'
+      this.printerOutputTarget.textContent = printedContent
+
+      Prism.highlightElement(this.printerOutputTarget)
+
+      if (this.hasPrinterVerificationTarget) {
+        const currentSource = this.editor ? this.editor.getValue() : this.inputTarget.value
+        const isMatch = currentSource === result.printed
+        const options = this.getParserOptions()
+        const trackWhitespace = options.track_whitespace
+        
+        if (!trackWhitespace) {
+          this.printerVerificationTarget.textContent = '⚠ Enable "Track whitespace" for accurate verification'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-yellow-600 text-yellow-100'
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else if (isMatch) {
+          this.printerVerificationTarget.textContent = '✓ Perfect Match'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-green-600 text-green-100'
+          this.hidePrinterDiff()
+          this.hidePrinterLegend()
+        } else {
+          this.printerVerificationTarget.textContent = '✗ Differences Detected'
+          this.printerVerificationTarget.className = 'px-2 py-1 text-xs rounded font-medium bg-red-600 text-red-100'
+          this.showPrinterDiff(currentSource, result.printed)
+          this.showPrinterLegend()
+        }
+      }
+    }
+
     if (this.hasDiagnosticsViewerTarget && this.hasDiagnosticsContentTarget) {
       this.allDiagnostics = filteredDiagnosticsForEditor
       this.updateDiagnosticsFilterButtons(this.currentDiagnosticsFilter)
@@ -828,6 +887,19 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onPrinterOptionChange(event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  getPrinterOptions() {
+    const options = {}
+    if (this.hasPrinterIgnoreErrorsTarget) {
+      options.ignoreErrors = this.printerIgnoreErrorsTarget.checked
+    }
+    return options
+  }
+
   getOptionsFromURL() {
     const urlParams = new URLSearchParams(window.location.search)
     const optionsString = urlParams.get('options')
@@ -861,6 +933,41 @@ export default class extends Controller {
     }
 
     window.history.replaceState({}, '', url)
+  }
+
+  setPrinterOptionsInURL(printerOptions) {
+    const url = new URL(window.location)
+
+    const nonDefaultPrinterOptions = {}
+
+    Object.keys(printerOptions).forEach(key => {
+      if (printerOptions[key] !== false && printerOptions[key] !== '' && printerOptions[key] !== null && printerOptions[key] !== undefined) {
+        nonDefaultPrinterOptions[key] = printerOptions[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultPrinterOptions).length > 0) {
+      url.searchParams.set('printerOptions', JSON.stringify(nonDefaultPrinterOptions))
+    } else {
+      url.searchParams.delete('printerOptions')
+    }
+
+    window.history.replaceState({}, '', url)
+  }
+
+  getPrinterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.location.search)
+    const printerOptionsString = urlParams.get('printerOptions')
+
+    if (printerOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(printerOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse printer options from URL:', e)
+      }
+    }
+
+    return {}
   }
 
   restoreDiagnosticsFilter() {
@@ -1405,4 +1512,112 @@ export default class extends Controller {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;")
   }
+
+  showPrinterDiff(original, printed) {
+    if (!this.hasPrinterDiffTarget || !this.hasPrinterDiffContentTarget) {
+      return
+    }
+
+    this.printerOutputTarget.classList.add('hidden')
+    this.printerDiffTarget.classList.remove('hidden')
+
+    const diff = this.computeCharDiff(original, printed)
+    this.printerDiffContentTarget.innerHTML = diff.replace(/^(\s*\n)+/, '')
+  }
+
+  hidePrinterDiff() {
+    if (!this.hasPrinterDiffTarget) {
+      return
+    }
+
+    this.printerOutputTarget.classList.remove('hidden')
+    this.printerDiffTarget.classList.add('hidden')
+  }
+
+  showPrinterLegend() {
+    if (this.hasPrinterLegendTarget) {
+      this.printerLegendTarget.classList.remove('hidden')
+    }
+  }
+
+  hidePrinterLegend() {
+    if (this.hasPrinterLegendTarget) {
+      this.printerLegendTarget.classList.add('hidden')
+    }
+  }
+
+  computeCharDiff(original, printed) {
+    const originalChars = Array.from(original)
+    const printedChars = Array.from(printed)
+    
+    const dp = this.computeEditDistance(originalChars, printedChars)
+    const diff = this.backtrackDiff(originalChars, printedChars, dp)
+    
+    let result = ''
+    for (const op of diff) {
+      if (op.type === 'equal') {
+        result += this.escapeHtml(op.char)
+      } else if (op.type === 'delete') {
+        result += `<span class="bg-yellow-400 text-black">${this.escapeHtml(op.char)}</span>`
+      } else if (op.type === 'insert') {
+        result += `<span class="bg-green-500 text-black">${this.escapeHtml(op.char)}</span>`
+      }
+    }
+    
+    return result
+  }
+
+  computeEditDistance(str1, str2) {
+    const m = str1.length
+    const n = str2.length
+    const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0))
+    
+    for (let i = 0; i <= m; i++) dp[i][0] = i
+    for (let j = 0; j <= n; j++) dp[0][j] = j
+    
+    for (let i = 1; i <= m; i++) {
+      for (let j = 1; j <= n; j++) {
+        if (str1[i - 1] === str2[j - 1]) {
+          dp[i][j] = dp[i - 1][j - 1]
+        } else {
+          dp[i][j] = Math.min(
+            dp[i - 1][j] + 1,     // deletion
+            dp[i][j - 1] + 1,     // insertion
+            dp[i - 1][j - 1] + 1  // substitution
+          )
+        }
+      }
+    }
+    
+    return dp
+  }
+
+  backtrackDiff(str1, str2, dp) {
+    const diff = []
+    let i = str1.length
+    let j = str2.length
+    
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && str1[i - 1] === str2[j - 1]) {
+        diff.unshift({ type: 'equal', char: str1[i - 1] })
+        i--
+        j--
+      } else if (i > 0 && j > 0 && dp[i][j] === dp[i - 1][j - 1] + 1) {
+        // Substitution - show as delete + insert
+        diff.unshift({ type: 'delete', char: str1[i - 1] })
+        diff.unshift({ type: 'insert', char: str2[j - 1] })
+        i--
+        j--
+      } else if (i > 0 && dp[i][j] === dp[i - 1][j] + 1) {
+        diff.unshift({ type: 'delete', char: str1[i - 1] })
+        i--
+      } else if (j > 0 && dp[i][j] === dp[i][j - 1] + 1) {
+        diff.unshift({ type: 'insert', char: str2[j - 1] })
+        j--
+      }
+    }
+    
+    return diff
+  }
+
 }
