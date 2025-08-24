@@ -44,6 +44,9 @@ module Herb
     # : (Herb::AST::HTMLDoctypeNode) -> void
     def visit_html_doctype_node: (Herb::AST::HTMLDoctypeNode) -> void
 
+    # : (Herb::AST::XMLDeclarationNode) -> void
+    def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
+
     # : (Herb::AST::WhitespaceNode) -> void
     def visit_whitespace_node: (Herb::AST::WhitespaceNode) -> void
 
