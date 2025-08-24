@@ -6,7 +6,7 @@
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local
 
   def initialize(args)
     @args = args
@@ -125,12 +125,21 @@ class Herb::CLI
                 when "playground"
                   require "lz_string"
 
-                  if Dir.pwd.include?("/herb")
-                    system(%(npx concurrently "nx dev playground" "sleep 1 && open http://localhost:5173##{LZString::UriSafe.compress(file_content)}"))
-                    exit(0)
+                  hash = LZString::UriSafe.compress(file_content)
+                  local_url = "http://localhost:5173"
+                  url = "https://herb-tools.dev/playground"
+
+                  if local
+                    if Dir.pwd.include?("/herb")
+                      system(%(npx concurrently "nx dev playground" "sleep 1 && open #{local_url}##{hash}"))
+                      exit(0)
+                    else
+                      puts "This command can currently only be run within the herb repo itself"
+                      exit(1)
+                    end
                   else
-                    puts "This command can currently only be run within the herb repo itself"
-                    exit(1)
+                    system(%(open "#{url}##{hash}"))
+                    exit(0)
                   end
                 when "help"
                   help
@@ -177,6 +186,10 @@ class Herb::CLI
 
       parser.on("--no-timing", "Disable timing output") do
         self.no_timing = true
+      end
+
+      parser.on("--local", "Use localhost for playground command instead of herb-tools.dev") do
+        self.local = true
       end
     end
   end

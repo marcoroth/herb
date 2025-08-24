@@ -93,8 +93,9 @@ Metrics/ParameterLists:
 
 Metrics/PerceivedComplexity:
   Exclude:
-    - lib/herb/project.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/cli.rb
+    - lib/herb/project.rb
     - test/snapshot_utils.rb
 
 Layout/LineLength:
