@@ -105,13 +105,18 @@ export class FormatPrinter extends Printer {
     'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
   ])
 
+  private static readonly CONTENT_PRESERVING_ELEMENTS = new Set([
+    'script', 'style', 'pre', 'textarea'
+  ])
+
   private static readonly SPACEABLE_CONTAINERS = new Set([
     'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
     'figure', 'details', 'summary', 'dialog', 'fieldset'
   ])
 
   private static readonly TIGHT_GROUP_PARENTS = new Set([
-    'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead', 'tbody', 'tfoot'
+    'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead',
+    'tbody', 'tfoot'
   ])
 
   private static readonly TIGHT_GROUP_CHILDREN = new Set([
@@ -714,8 +719,13 @@ export class FormatPrinter extends Printer {
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
-    const analysis = this.elementFormattingAnalysis.get(element)
+    if (this.isContentPreserving(element)) {
+      element.body.map(child => this.pushToLastLine(IdentityPrinter.print(child)))
 
+      return
+    }
+
+    const analysis = this.elementFormattingAnalysis.get(element)
     const hasTextFlow = this.isInTextFlowContext(null, body)
     const children = this.filterSignificantChildren(body, hasTextFlow)
 
@@ -1294,9 +1304,9 @@ export class FormatPrinter extends Printer {
    * Determines if the close tag should be rendered inline (usually follows content decision)
    */
   private shouldRenderCloseTagInline(node: HTMLElementNode, elementContentInline: boolean): boolean {
-    const isSelfClosing = node.open_tag?.tag_closing?.value === "/>"
-
-    if (isSelfClosing || node.is_void) return true
+    if (node.is_void) return true
+    if (node.open_tag?.tag_closing?.value === "/>") return true
+    if (this.isContentPreserving(node)) return true
 
     const children = this.filterSignificantChildren(node.body, this.isInTextFlowContext(null, node.body))
 
@@ -1813,5 +1823,11 @@ export class FormatPrinter extends Printer {
     }
 
     return content.replace(/\s+/g, ' ').trim()
+  }
+
+  private isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): boolean {
+    const tagName = getTagName(element)
+
+    return FormatPrinter.CONTENT_PRESERVING_ELEMENTS.has(tagName)
   }
 }
