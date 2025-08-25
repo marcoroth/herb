@@ -151,7 +151,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/11] ⎯⎯⎯⎯
 
-[error] Self-closing syntax \`<img />\` is not allowed in HTML. Use \`<img>\` instead. (html-no-self-closing)
+[error] Use \`<img>\` instead of self-closing \`<img />\` for HTML compatibility. (html-no-self-closing)
 
 test/fixtures/multiple-rule-offenses.html.erb:4:2
 
