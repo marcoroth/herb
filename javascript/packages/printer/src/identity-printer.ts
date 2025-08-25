@@ -1,4 +1,6 @@
 import { Printer } from "./printer.js"
+import { getNodesBeforePosition, getNodesAfterPosition } from "@herb-tools/core"
+
 import type * as Nodes from "@herb-tools/core"
 
 /**
@@ -47,7 +49,14 @@ export class IdentityPrinter extends Printer {
     }
 
     if (node.tag_name) {
+      const before = getNodesBeforePosition(node.children, node.tag_name.location.start, true)
+      const after = getNodesAfterPosition(node.children, node.tag_name.location.end)
+
+      this.visitAll(before)
       this.write(node.tag_name.value)
+      this.visitAll(after)
+    } else {
+      this.visitAll(node.children)
     }
 
     if (node.tag_closing) {

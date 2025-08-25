@@ -1,4 +1,3 @@
-import dedent from "dedent"
 import { describe, test, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
@@ -25,12 +24,18 @@ describe("HTMLCloseTagNode Printing", () => {
   })
 
   test("can print from source", () => {
-    expectPrintRoundTrip(dedent`<a></a>`)
-    expectPrintRoundTrip(dedent`<custom-name></custom-name>`)
+    expectPrintRoundTrip(`<a></a>`)
+    expectPrintRoundTrip(`<custom-name></custom-name>`)
+    expectPrintRoundTrip(`<div></div     >`)
+    expectPrintRoundTrip(`<div></     div>`)
+    expectPrintRoundTrip(`<div></     div     >`)
   })
 
   test("can print from invalid source", () => {
-    expectPrintRoundTrip(dedent`</a>`, false)
-    expectPrintRoundTrip(dedent`</custom-name>`, false)
+    expectPrintRoundTrip(`</a>`, false)
+    expectPrintRoundTrip(`</custom-name>`, false)
+    expectPrintRoundTrip(`</div  >`, false)
+    expectPrintRoundTrip(`</  div>`, false)
+    expectPrintRoundTrip(`</  div  >`, false)
   })
 })

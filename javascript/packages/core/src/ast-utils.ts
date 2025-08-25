@@ -1,5 +1,7 @@
 import {
+  Node,
   LiteralNode,
+  ERBContentNode,
   ERBIfNode,
   ERBUnlessNode,
   ERBBlockNode,
@@ -11,6 +13,7 @@ import {
   HTMLElementNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
+  HTMLAttributeNameNode,
   HTMLCommentNode
 } from "./nodes.js"
 
@@ -24,7 +27,8 @@ import {
   filterLiteralNodes
 } from "./node-type-guards.js"
 
-import { Node, ERBContentNode, HTMLAttributeNameNode } from "./nodes.js"
+import type { Location } from "./location.js"
+import type { Position } from "./position.js"
 
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
@@ -188,4 +192,100 @@ export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseT
  */
 export function isCommentNode(node: Node): boolean {
   return isNode(node, HTMLCommentNode) || (isERBNode(node) && !isERBControlFlowNode(node))
+}
+
+/**
+ * Compares two positions to determine if the first comes before the second
+ * Returns true if pos1 comes before pos2 in source order
+ * @param inclusive - If true, returns true when positions are equal
+ */
+function isPositionBefore(position1: Position, position2: Position, inclusive = false): boolean {
+  if (position1.line < position2.line) return true
+  if (position1.line > position2.line) return false
+
+  return inclusive ? position1.column <= position2.column : position1.column < position2.column
+}
+
+/**
+ * Compares two positions to determine if they are equal
+ * Returns true if pos1 and pos2 are at the same location
+ */
+export function isPositionEqual(position1: Position, position2: Position): boolean {
+  return position1.line === position2.line && position1.column === position2.column
+}
+
+/**
+ * Compares two positions to determine if the first comes after the second
+ * Returns true if pos1 comes after pos2 in source order
+ * @param inclusive - If true, returns true when positions are equal
+ */
+export function isPositionAfter(position1: Position, position2: Position, inclusive = false): boolean {
+  if (position1.line > position2.line) return true
+  if (position1.line < position2.line) return false
+
+  return inclusive ? position1.column >= position2.column : position1.column > position2.column
+}
+
+/**
+ * Gets nodes that appear before the specified location in source order
+ * Uses line and column positions to determine ordering
+ */
+export function getNodesBeforeLocation<T extends Node>(nodes: T[], location: Location): T[] {
+  return nodes.filter(node =>
+    node.location && isPositionBefore(node.location.end, location.start)
+  )
+}
+
+/**
+ * Gets nodes that appear after the specified location in source order
+ * Uses line and column positions to determine ordering
+ */
+export function getNodesAfterLocation<T extends Node>(nodes: T[], location: Location): T[] {
+  return nodes.filter(node =>
+    node.location && isPositionAfter(node.location.start, location.end)
+  )
+}
+
+/**
+ * Splits nodes into before and after the specified location
+ * Returns an object with `before` and `after` arrays
+ */
+export function splitNodesAroundLocation<T extends Node>(nodes: T[], location: Location): { before: T[], after: T[] } {
+  return {
+    before: getNodesBeforeLocation(nodes, location),
+    after: getNodesAfterLocation(nodes, location)
+  }
+}
+
+/**
+ * Splits nodes at a specific position
+ * Returns nodes that end before the position and nodes that start after the position
+ * More precise than splitNodesAroundLocation as it uses a single position point
+ * Uses the same defaults as the individual functions: before=exclusive, after=inclusive
+ */
+export function splitNodesAroundPosition<T extends Node>(nodes: T[], position: Position): { before: T[], after: T[] } {
+  return {
+    before: getNodesBeforePosition(nodes, position), // uses default: inclusive = false
+    after: getNodesAfterPosition(nodes, position)    // uses default: inclusive = true
+  }
+}
+
+/**
+ * Gets nodes that end before the specified position
+ * @param inclusive - If true, includes nodes that end exactly at the position (default: false, matching half-open interval semantics)
+ */
+export function getNodesBeforePosition<T extends Node>(nodes: T[], position: Position, inclusive = false): T[] {
+  return nodes.filter(node =>
+    node.location && isPositionBefore(node.location.end, position, inclusive)
+  )
+}
+
+/**
+ * Gets nodes that start after the specified position  
+ * @param inclusive - If true, includes nodes that start exactly at the position (default: true, matching typical boundary behavior)
+ */
+export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Position, inclusive = true): T[] {
+  return nodes.filter(node =>
+    node.location && isPositionAfter(node.location.start, position, inclusive)
+  )
 }
