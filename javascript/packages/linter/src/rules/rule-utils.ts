@@ -24,9 +24,17 @@ import type {
   Node
 } from "@herb-tools/core"
 
+import { IdentityPrinter } from "@herb-tools/printer"
+
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
+import type * as Nodes from "@herb-tools/core"
 import type { LintOffense, LintSeverity, LintContext } from "../types.js"
+
+export enum ControlFlowType {
+  CONDITIONAL,
+  LOOP
+}
 
 /**
  * Base visitor class that provides common functionality for rule visitors
@@ -63,6 +71,95 @@ export abstract class BaseRuleVisitor extends Visitor {
   protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
     this.offenses.push(this.createOffense(message, location, severity))
   }
+}
+
+/**
+ * Mixin that adds control flow tracking capabilities to rule visitors
+ * This allows rules to track state across different control flow structures
+ * like if/else branches, loops, etc.
+ *
+ * @template TControlFlowState - Type for state passed between onEnterControlFlow and onExitControlFlow
+ * @template TBranchState - Type for state passed between onEnterBranch and onExitBranch
+ */
+export abstract class ControlFlowTrackingVisitor<TControlFlowState = any, TBranchState = any> extends BaseRuleVisitor {
+  protected isInControlFlow: boolean = false
+  protected currentControlFlowType: ControlFlowType | null = null
+
+  /**
+   * Handle visiting a control flow node with proper scope management
+   */
+  protected handleControlFlowNode(node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
+    const wasInControlFlow = this.isInControlFlow
+    const previousControlFlowType = this.currentControlFlowType
+
+    this.isInControlFlow = true
+    this.currentControlFlowType = controlFlowType
+
+    const stateToRestore = this.onEnterControlFlow(controlFlowType, wasInControlFlow)
+
+    visitChildren()
+
+    this.onExitControlFlow(controlFlowType, wasInControlFlow, stateToRestore)
+
+    this.isInControlFlow = wasInControlFlow
+    this.currentControlFlowType = previousControlFlowType
+  }
+
+  /**
+   * Handle visiting a branch node (like else, when) with proper scope management
+   */
+  protected startNewBranch(visitChildren: () => void): void {
+    const stateToRestore = this.onEnterBranch()
+
+    visitChildren()
+
+    this.onExitBranch(stateToRestore)
+  }
+
+  visitERBIfNode(node: Nodes.ERBIfNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBIfNode(node))
+  }
+
+  visitERBUnlessNode(node: Nodes.ERBUnlessNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBUnlessNode(node))
+  }
+
+  visitERBCaseNode(node: Nodes.ERBCaseNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBCaseNode(node))
+  }
+
+  visitERBCaseMatchNode(node: Nodes.ERBCaseMatchNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBCaseMatchNode(node))
+  }
+
+  visitERBWhileNode(node: Nodes.ERBWhileNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBWhileNode(node))
+  }
+
+  visitERBForNode(node: Nodes.ERBForNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBForNode(node))
+  }
+
+  visitERBUntilNode(node: Nodes.ERBUntilNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBUntilNode(node))
+  }
+
+  visitERBBlockNode(node: Nodes.ERBBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
+  }
+
+  visitERBElseNode(node: Nodes.ERBElseNode): void {
+    this.startNewBranch(() => super.visitERBElseNode(node))
+  }
+
+  visitERBWhenNode(node: Nodes.ERBWhenNode): void {
+    this.startNewBranch(() => super.visitERBWhenNode(node))
+  }
+
+  protected abstract onEnterControlFlow(controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean): TControlFlowState
+  protected abstract onExitControlFlow(controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean, stateToRestore: TControlFlowState): void
+  protected abstract onEnterBranch(): TBranchState
+  protected abstract onExitBranch(stateToRestore: TBranchState): void
 }
 
 /**
@@ -755,4 +852,11 @@ export abstract class BaseSourceRuleVisitor {
 
     return new Location(start, end)
   }
+}
+
+export function printNodes(nodes: Node[]): string {
+  if (!nodes) return ""
+  if (!Array.isArray(nodes)) return ""
+
+  return nodes.map(node => IdentityPrinter.print(node)).join("")
 }
