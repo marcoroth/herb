@@ -285,29 +285,29 @@ describe("@herb-tools/formatter", () => {
   test("formats multi-line ERB comment with newlines", () => {
     const source = dedent`
       <%# this is the first line
-
+        ${'' /* this is the add trailing whitespace */}
 
         this is the second line
 
-
+        ${'' /* this is the add trailing whitespace */}
 
 
         this is the last line
 
-
+        ${'' /* this is the add trailing whitespace */}
       -%>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <%#
         this is the first line
-        ${''}
-        ${''}
+
+
         this is the second line
-        ${''}
-        ${''}
-        ${''}
-        ${''}
+
+
+
+
         this is the last line
       -%>
     `)

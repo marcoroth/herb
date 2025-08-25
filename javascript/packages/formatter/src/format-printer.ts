@@ -1030,7 +1030,10 @@ export class FormatPrinter extends Printer {
     this.push(this.indent + open)
 
     this.withIndent(() => {
-      dedentedContent.split("\n").forEach(line => this.push(this.indent + line))
+      dedentedContent.split("\n").forEach(line => {
+        const indent = line.trim() === "" ? "" : this.indent
+        this.push(indent + line)
+      })
     })
 
     this.push(this.indent + close)
