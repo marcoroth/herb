@@ -194,7 +194,23 @@ describe("ERB Formatter Fixture Tests", () => {
               hey
           hey
         %>
+      `
 
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <%#
+          This fails
+          hey
+            hey
+              hey
+          hey
+        %>
+      `)
+    })
+
+    test("comments.html.erb - handles various comment formats", () => {
+      const source = dedent`
         <%#
             This fails
             hey
@@ -202,7 +218,23 @@ describe("ERB Formatter Fixture Tests", () => {
                 hey
             hey
         %>
+      `
 
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <%#
+          This fails
+          hey
+            hey
+              hey
+          hey
+        %>
+      `)
+    })
+
+    test("comments.html.erb - handles various comment formats", () => {
+      const source = dedent`
         <%# This fails
           This fails
           hey
@@ -217,25 +249,10 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <%#
           This fails
-          hey
-          hey
-          hey
-          hey
-        %>
-
-        <%#
           This fails
           hey
-          hey
-          hey
-          hey
-        %>
-
-        <%#
-          This fails
-          hey
-          hey
-          hey
+            hey
+              hey
           hey
         %>
       `)

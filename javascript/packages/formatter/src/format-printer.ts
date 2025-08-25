@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import {
   getTagName,
   getCombinedAttributeName,
@@ -1002,28 +1003,37 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBCommentNode(node: ERBContentNode) {
-    const open = node.tag_opening?.value ?? ""
-    const close = node.tag_closing?.value ?? ""
+    const open = node.tag_opening?.value || "<%#"
+    const content = node?.content?.value || ""
+    const close = node.tag_closing?.value || "%>"
 
-    let inner: string
+    const contentLines = content.split("\n")
+    const contentTrimmedLines = content.trim().split("\n")
 
-    if (node.content && node.content.value) {
-      const rawInner = node.content.value
-      const lines = rawInner.split("\n")
+    if (contentLines.length === 1 && contentTrimmedLines.length === 1) {
+      const startsWithSpace = content[0] === " "
+      const before = startsWithSpace ? "" : " "
 
-      if (lines.length > 2) {
-        const childIndent = this.indent + " ".repeat(this.indentWidth)
-        const innerLines = lines.slice(1, -1).map(line => childIndent + line.trim())
+      this.push(this.indent + open + before + content.trimEnd() + ' ' + close)
 
-        inner = "\n" + innerLines.join("\n") + "\n"
-      } else {
-        inner = ` ${rawInner.trim()} `
-      }
-    } else {
-      inner = ""
+      return
     }
 
-    this.push(this.indent + open + inner + close)
+    if (contentTrimmedLines.length === 1) {
+      this.push(this.indent + open + ' ' + content.trim() + ' ' + close)
+      return
+    }
+
+    const firstLineEmpty = contentLines[0].trim() === ""
+    const dedentedContent = dedent(firstLineEmpty ? content : content.trimStart())
+
+    this.push(this.indent + open)
+
+    this.withIndent(() => {
+      dedentedContent.split("\n").forEach(line => this.push(this.indent + line))
+    })
+
+    this.push(this.indent + close)
   }
 
   visitHTMLDoctypeNode(node: HTMLDoctypeNode) {
