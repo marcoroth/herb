@@ -235,6 +235,15 @@ export class FormatPrinter extends Printer {
     this.lines.push(line)
   }
 
+  /**
+   * @deprecated refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
+   */
+  private pushWithIndent(line: string) {
+    const indent = line.trim() === "" ? "" : this.indent
+
+    this.push(indent + line)
+  }
+
   private withIndent<T>(callback: () => T): T {
     this.indentLevel++
     const result = callback()
@@ -620,12 +629,12 @@ export class FormatPrinter extends Printer {
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
-    this.push(this.indent + `<${tagName}`)
+    this.pushWithIndent(`<${tagName}`)
 
     this.withIndent(() => {
       allChildren.forEach(child => {
         if (isNode(child, HTMLAttributeNode)) {
-          this.push(this.indent + this.renderAttribute(child))
+          this.pushWithIndent(this.renderAttribute(child))
         } else if (!isNode(child, WhitespaceNode)) {
           this.visit(child)
         }
@@ -633,9 +642,9 @@ export class FormatPrinter extends Printer {
     })
 
     if (isSelfClosing) {
-      this.push(this.indent + "/>")
+      this.pushWithIndent("/>")
     } else {
-      this.push(this.indent + ">")
+      this.pushWithIndent(">")
     }
   }
 
@@ -887,7 +896,7 @@ export class FormatPrinter extends Printer {
     if (this.currentElement && closeTagInline) {
       this.pushToLastLine(closingTag)
     } else {
-      this.push(this.indent + closingTag)
+      this.pushWithIndent(closingTag)
     }
   }
 
@@ -927,15 +936,15 @@ export class FormatPrinter extends Printer {
   }
 
   visitHTMLAttributeNode(node: HTMLAttributeNode) {
-    this.push(this.indent + this.renderAttribute(node))
+    this.pushWithIndent(this.renderAttribute(node))
   }
 
   visitHTMLAttributeNameNode(node: HTMLAttributeNameNode) {
-    this.push(this.indent + getCombinedAttributeName(node))
+    this.pushWithIndent(getCombinedAttributeName(node))
   }
 
   visitHTMLAttributeValueNode(node: HTMLAttributeValueNode) {
-    this.push(this.indent + IdentityPrinter.print(node))
+    this.pushWithIndent(IdentityPrinter.print(node))
   }
 
   // TODO: rework
@@ -999,7 +1008,7 @@ export class FormatPrinter extends Printer {
       inner = ""
     }
 
-    this.push(this.indent + open + inner + close)
+    this.pushWithIndent(open + inner + close)
   }
 
   visitERBCommentNode(node: ERBContentNode) {
@@ -1014,41 +1023,38 @@ export class FormatPrinter extends Printer {
       const startsWithSpace = content[0] === " "
       const before = startsWithSpace ? "" : " "
 
-      this.push(this.indent + open + before + content.trimEnd() + ' ' + close)
+      this.pushWithIndent(open + before + content.trimEnd() + ' ' + close)
 
       return
     }
 
     if (contentTrimmedLines.length === 1) {
-      this.push(this.indent + open + ' ' + content.trim() + ' ' + close)
+      this.pushWithIndent(open + ' ' + content.trim() + ' ' + close)
       return
     }
 
     const firstLineEmpty = contentLines[0].trim() === ""
     const dedentedContent = dedent(firstLineEmpty ? content : content.trimStart())
 
-    this.push(this.indent + open)
+    this.pushWithIndent(open)
 
     this.withIndent(() => {
-      dedentedContent.split("\n").forEach(line => {
-        const indent = line.trim() === "" ? "" : this.indent
-        this.push(indent + line)
-      })
+      dedentedContent.split("\n").forEach(line => this.pushWithIndent(line))
     })
 
-    this.push(this.indent + close)
+    this.pushWithIndent(close)
   }
 
   visitHTMLDoctypeNode(node: HTMLDoctypeNode) {
-    this.push(this.indent + IdentityPrinter.print(node))
+    this.pushWithIndent(IdentityPrinter.print(node))
   }
 
   visitXMLDeclarationNode(node: XMLDeclarationNode) {
-    this.push(this.indent + IdentityPrinter.print(node))
+    this.pushWithIndent(IdentityPrinter.print(node))
   }
 
   visitCDATANode(node: CDATANode) {
-    this.push(this.indent + IdentityPrinter.print(node))
+    this.pushWithIndent(IdentityPrinter.print(node))
   }
 
   visitERBContentNode(node: ERBContentNode) {
@@ -1397,7 +1403,7 @@ export class FormatPrinter extends Printer {
             }
           } else {
             if (currentLineContent.trim()) {
-              this.push(this.indent + currentLineContent.trim())
+              this.pushWithIndent(currentLineContent.trim())
               currentLineContent = ""
             }
 
@@ -1405,7 +1411,7 @@ export class FormatPrinter extends Printer {
           }
         } else {
           if (currentLineContent.trim()) {
-            this.push(this.indent + currentLineContent.trim())
+            this.pushWithIndent(currentLineContent.trim())
             currentLineContent = ""
           }
 
@@ -1436,7 +1442,7 @@ export class FormatPrinter extends Printer {
         }
       } else {
         if (currentLineContent.trim()) {
-          this.push(this.indent + currentLineContent.trim())
+          this.pushWithIndent(currentLineContent.trim())
           currentLineContent = ""
         }
 
