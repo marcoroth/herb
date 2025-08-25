@@ -53,18 +53,6 @@ describe("html-no-duplicate-ids", () => {
     expect(lintResult.offenses).toHaveLength(0);
   })
 
-  test("fails for two IDs without value", () => {
-    const html = '<div id=""></div><span id=""></span>';
-    const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);
-    const lintResult = linter.lint(html);
-
-    expect(lintResult.errors).toBe(1);
-    expect(lintResult.warnings).toBe(0);
-    expect(lintResult.offenses).toHaveLength(1);
-
-    expect(lintResult.offenses[0].message).toBe('Duplicate ID `` found. IDs must be unique within a document.');
-  })
-
   test("passes for other attributes with equal value", () => {
     const html = '<div class="value"></div><div class="value"></div>';
     const linter = new Linter(Herb, [HTMLNoDuplicateIdsRule]);

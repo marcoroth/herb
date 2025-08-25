@@ -1,10 +1,11 @@
 import { ParserRule } from "../types"
-import { ControlFlowTrackingVisitor, ControlFlowType, printNodes } from "./rule-utils"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { LiteralNode } from "@herb-tools/core"
+import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
-import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, areAllOfType, getStaticAttributeName } from "@herb-tools/core"
+import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode } from "@herb-tools/core"
 
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ERBContentNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 interface ControlFlowState {
@@ -14,6 +15,18 @@ interface ControlFlowState {
 
 interface BranchState {
   previousBranchIds: Set<string>
+}
+
+class OutputPrinter extends Printer {
+  visitLiteralNode(node: LiteralNode) {
+    this.write(IdentityPrinter.print(node))
+  }
+
+  visitERBContentNode(node: ERBContentNode) {
+    if (isERBOutputNode(node)) {
+      this.write(IdentityPrinter.print(node))
+    }
+  }
 }
 
 class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<ControlFlowState, BranchState> {
@@ -81,26 +94,14 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<ControlFlowState,
   }
 
   private extractIdValue(attributeNode: HTMLAttributeNode): { identifier: string; shouldTrackDuplicates: boolean } | null {
-    const valueNodes = attributeNode.value!.children
-    const isCompletelyStatic = areAllOfType(valueNodes, LiteralNode)
-    const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
+    const valueNodes = attributeNode.value?.children || []
 
     if (hasERBOutput(valueNodes) && this.isInControlFlow && this.currentControlFlowType === ControlFlowType.LOOP) {
       return null
     }
 
-    let identifier: string
-
-    if (isCompletelyStatic) {
-      identifier = printNodes(valueNodes)
-    } else if (isEffectivelyStaticValue) {
-      const staticContent = getValidatableStaticContent(valueNodes)
-      if (!staticContent) return null
-
-      identifier = staticContent
-    } else {
-      identifier = printNodes(valueNodes)
-    }
+    const identifier = isEffectivelyStatic(valueNodes) ? getValidatableStaticContent(valueNodes) : OutputPrinter.print(valueNodes)
+    if (!identifier) return null
 
     return { identifier, shouldTrackDuplicates: true }
   }

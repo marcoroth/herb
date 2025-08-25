@@ -853,10 +853,3 @@ export abstract class BaseSourceRuleVisitor {
     return new Location(start, end)
   }
 }
-
-export function printNodes(nodes: Node[]): string {
-  if (!nodes) return ""
-  if (!Array.isArray(nodes)) return ""
-
-  return nodes.map(node => IdentityPrinter.print(node)).join("")
-}
