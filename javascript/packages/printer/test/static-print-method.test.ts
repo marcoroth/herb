@@ -2,17 +2,17 @@ import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Printer, IdentityPrinter } from "../src/index.js"
-import { Range, Location } from "@herb-tools/core"
+import { IdentityPrinter } from "../src/index.js"
+import { Range } from "@herb-tools/core"
 import type { HTMLTextNode } from "@herb-tools/core"
 
-class UppercasePrinter extends Printer {
+class UppercasePrinter extends IdentityPrinter {
   visitHTMLTextNode(node: HTMLTextNode): void {
     this.write(node.content.toUpperCase())
   }
 }
 
-class NoAttributesPrinter extends Printer {
+class NoAttributesPrinter extends IdentityPrinter {
   visitHTMLAttributeNode(): void {
     // Skip attributes entirely
   }
