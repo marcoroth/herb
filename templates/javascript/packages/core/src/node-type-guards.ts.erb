@@ -21,7 +21,7 @@ import {
  * Checks if a node is a <%= node.name %>
  */
 export function is<%= node.name %>(node: Node): node is <%= node.name %> {
-  return node instanceof <%= node.name %> || (node as any).type === "<%= node.type %>"
+  return node instanceof <%= node.name %> || node.type === "<%= node.type %>" || (node.constructor as any).type === "<%= node.type %>"
 }
 
 <%- end -%>
@@ -71,7 +71,7 @@ export const NODE_TYPE_GUARDS = new Map<new (...args: any[]) => Node, (node: Nod
  *   // node is HTMLTextNode
  * }
  */
-export const AST_TYPE_GUARDS = new Map<string, (node: Node) => boolean>([
+export const AST_TYPE_GUARDS = new Map<NodeType, (node: Node) => boolean>([
 <%- nodes.each_with_index do |node, index| -%>
   ["<%= node.type %>", is<%= node.name %>],
 <%- end -%>
@@ -246,19 +246,21 @@ export function filterNodes(
  */
 
 export function isNode<T extends NodeType>(
-  node: Node,
+  node: Node | null | undefined,
   type: T
 ): node is NodeTypeToClass[T]
 
 export function isNode<T extends new (...args: any[]) => Node>(
-  node: Node,
+  node: Node | null | undefined,
   type: T
 ): node is ClassToInstance<T>
 
 export function isNode(
-  node: Node,
+  node: Node | null | undefined,
   type: NodeType | (new (...args: any[]) => Node)
 ): boolean {
+  if (!node) return false
+
   if (typeof type === 'string') {
     const guard = AST_TYPE_GUARDS.get(type)
 

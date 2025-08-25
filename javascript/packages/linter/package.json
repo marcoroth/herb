@@ -36,6 +36,7 @@
     "@herb-tools/core": "0.6.0",
     "@herb-tools/highlighter": "0.6.0",
     "@herb-tools/node-wasm": "0.6.0",
+    "@herb-tools/printer": "0.6.0",
     "glob": "^11.0.3"
   },
   "files": [

@@ -30,6 +30,10 @@ export abstract class Node implements BaseNodeProps {
     return fromSerializedNode(node)
   }
 
+  static get type(): NodeType {
+    throw new Error("AST_NODE")
+  }
+
   constructor(type: NodeType, location: Location, errors: HerbError[]) {
     this.type = type
     this.location = location
@@ -46,6 +50,14 @@ export abstract class Node implements BaseNodeProps {
 
   inspect(): string {
     return this.treeInspect(0)
+  }
+
+  is<T extends Node>(nodeClass: { new(...args: any[]): T; prototype: T, type: NodeType }): this is T {
+    return this.type === nodeClass.type
+  }
+
+  isOfType<T extends Node>(type: NodeType): this is T {
+    return this.type === type
   }
 
   get isSingleLine(): boolean {
@@ -201,6 +213,10 @@ export class <%= node.name %> extends Node {
   <% raise "Unhandled class #{field.class}" %>
   <%- end -%>
   <%- end -%>
+
+  static get type(): NodeType {
+    return "<%= node.type %>"
+  }
 
   static from(data: Serialized<%= node.name %>): <%= node.name %> {
     return new <%= node.name %>({

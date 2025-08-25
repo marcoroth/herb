@@ -222,7 +222,6 @@ nodes:
         - name: tag_closing
           type: token
 
-
     - name: HTMLElementNode
       fields:
         - name: open_tag
@@ -262,7 +261,11 @@ nodes:
       fields:
         - name: children
           type: array
-          kind: Node # LiteralNode or ERBContentNode
+          kind: Node
+          # kind:
+          #   - LiteralNode
+          #   - ERBContentNode
+          #   - WhitespaceNode
 
     - name: HTMLAttributeNode
       fields:
@@ -401,7 +404,10 @@ nodes:
 
         - name: subsequent
           type: node
-          #kind: ERBIfNode # or ERBElseNode
+          kind: Node
+          # kind:
+          #   - ERBIfNode
+          #   - ERBElseNode
 
         - name: end_node
           type: node

@@ -490,21 +490,16 @@ export class FormatPrinter extends Printer {
   }
 
   private getAttributeValue(attribute: HTMLAttributeNode): string {
-    if (attribute.value && isNode(attribute.value, HTMLAttributeValueNode)) {
-      const content = attribute.value.children.map(child => {
-        if (isNode(child, HTMLTextNode)) {
-          return child.content
-        }
-        return IdentityPrinter.print(child)
-      }).join('')
-      return content
+    if (isNode(attribute.value, HTMLAttributeValueNode)) {
+      return attribute.value.children.map(child => isNode(child, HTMLTextNode) ? child.content : IdentityPrinter.print(child)).join('')
     }
+
     return ''
   }
 
   private hasMultilineAttributes(attributes: HTMLAttributeNode[]): boolean {
     return attributes.some(attribute => {
-      if (attribute.value && isNode(attribute.value, HTMLAttributeValueNode)) {
+      if (isNode(attribute.value, HTMLAttributeValueNode)) {
         const content = getCombinedStringFromNodes(attribute.value.children)
 
         if (/\r?\n/.test(content)) {
@@ -1523,7 +1518,7 @@ export class FormatPrinter extends Printer {
 
     let value = ""
 
-    if (attribute.value && isNode(attribute.value, HTMLAttributeValueNode)) {
+    if (isNode(attribute.value, HTMLAttributeValueNode)) {
       const attributeValue = attribute.value
 
       let open_quote = attributeValue.open_quote?.value ?? ""
