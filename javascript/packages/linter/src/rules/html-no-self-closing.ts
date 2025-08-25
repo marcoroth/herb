@@ -1,25 +1,30 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, isVoidElement } from "./rule-utils.js"
+import { BaseRuleVisitor, isVoidElement } from "./rule-utils.js"
+import { getTagName } from "@herb-tools/core"
 
 import type { LintContext, LintOffense } from "../types.js"
-import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class NoSelfClosingVisitor extends BaseRuleVisitor {
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (getTagName(node) === "svg") {
+      this.visit(node.open_tag)
+    } else {
+      this.visitChildNodes(node)
+    }
+  }
+
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     if (node.tag_closing?.value === "/>") {
       const tagName = getTagName(node)
-
-      const shouldBeVoid = tagName ? isVoidElement(tagName) : false
-      const instead = shouldBeVoid ? `Use \`<${tagName}>\` instead.` : `Use \`<${tagName}></${tagName}>\` instead.`
+      const instead = isVoidElement(tagName) ? `<${tagName}>` : `<${tagName}></${tagName}>`
 
       this.addOffense(
-        `Self-closing syntax \`<${tagName} />\` is not allowed in HTML. ${instead}`,
+        `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
         node.location,
         "error"
       )
     }
-
-    super.visitHTMLOpenTagNode(node)
   }
 }
 
