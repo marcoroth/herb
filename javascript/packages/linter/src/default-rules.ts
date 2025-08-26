@@ -33,6 +33,7 @@ import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
+import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 
 export const defaultRules: RuleClass[] = [
   ERBNoEmptyTagsRule,
@@ -68,4 +69,5 @@ export const defaultRules: RuleClass[] = [
   HTMLTagNameLowercaseRule,
   ParserNoErrorsRule,
   SVGTagNameCapitalizationRule,
+  HTMLNoUnderscoresInAttributeNamesRule,
 ]
