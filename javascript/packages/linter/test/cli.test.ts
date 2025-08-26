@@ -6,14 +6,18 @@ describe("CLI Output Formatting", () => {
     await Herb.load()
   })
 
-  function runLinter(fixture: string, ...args: string[]): { output: string, exitCode: number } {
+  function runLinter(fixture: string, ...args: (string | Record<string, string>)[]): { output: string, exitCode: number } {
     try {
       const { execSync } = require("child_process")
-      const allArgs = [...args, "--no-timing"].join(' ')
+      let env: Record<string, string> = {}
+      if (typeof args[args.length - 1] === "object") {
+        env = args.pop() as Record<string, string>
+      }
+      const allArgs = [...(args as string[]), "--no-timing"].join(' ')
 
       const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs}`, {
         encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1" }
+        env: { ...process.env, NO_COLOR: "1", ...env }
       })
 
       return { output: output.trim(), exitCode: 0 }
@@ -136,6 +140,13 @@ describe("CLI Output Formatting", () => {
 
   test("formats GitHub Actions output with --format=github option", () => {
     const { output, exitCode } = runLinter("test-file-simple.html.erb", "--format=github")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("uses GitHub Actions format by default when GITHUB_ACTIONS is true", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", { GITHUB_ACTIONS: "true" })
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)

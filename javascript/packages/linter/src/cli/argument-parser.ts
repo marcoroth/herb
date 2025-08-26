@@ -34,7 +34,7 @@ export class ArgumentParser {
     Options:
       -h, --help       show help
       -v, --version    show version
-      --format         output format (simple|detailed|json|github) [default: detailed]
+      --format         output format (simple|detailed|json|github) [default: detailed, github in GitHub Actions]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
       --github         use GitHub Actions output format (shortcut for --format github)
@@ -75,7 +75,9 @@ export class ArgumentParser {
       process.exit(0)
     }
 
-    let formatOption: FormatOption = "detailed"
+    const isGitHubActions = process.env.GITHUB_ACTIONS === "true"
+
+    let formatOption: FormatOption = isGitHubActions ? "github" : "detailed"
     if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json" || values.format === "github")) {
       formatOption = values.format
     }

@@ -559,3 +559,11 @@ test/fixtures/bad-file.html.erb:1:16
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
 `;
+
+exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]
+
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]"
+`;

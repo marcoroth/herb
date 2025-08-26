@@ -123,6 +123,7 @@ npx @herb-tools/linter template.html.erb --json
 npx @herb-tools/linter template.html.erb --format json
 
 # Use GitHub Actions output format
+# (This format is selected automatically when the GITHUB_ACTIONS environment variable is set)
 npx @herb-tools/linter template.html.erb --github
 # or
 npx @herb-tools/linter template.html.erb --format github
@@ -157,10 +158,14 @@ npx @herb-tools/linter --version
 
 #### GitHub Actions Output Format
 
-The linter supports GitHub Actions annotation format with the `--github` flag, which outputs errors and warnings in a format that GitHub Actions can parse to create inline annotations in pull requests:
+The linter supports GitHub Actions annotation format with the `--github` flag, which outputs errors and warnings in a format that GitHub Actions can parse to create inline annotations in pull requests.
+
+::: tip Tip: Running in GitHub Actions
+When the `GITHUB_ACTIONS` environment variable is set (as in GitHub Actions), this format is enabled by default, so the `--github` flag is optional.
+:::
 
 ```bash
-npx @herb-tools/linter "**/*.html.erb" --github
+npx @herb-tools/linter --github
 ```
 
 Example output:
@@ -181,7 +186,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-      - run: npx @herb-tools/linter "**/*.html.erb" --github
+      - run: npx @herb-tools/linter
 ```
 
 #### JSON Output Format
@@ -232,11 +237,11 @@ npx @herb-tools/linter template.html.erb --json
 
 JSON output fields:
 - `offenses`: Array of linting offenses with location and severity
-- `summary`: Statistics about the linting run (null on errors)
-- `timing`: Timing information with ISO timestamp (null with `--no-timing`)
+- `summary`: Statistics about the linting run (`null` on errors)
+- `timing`: Timing information with ISO timestamp (`null` with `--no-timing`)
 - `completed`: Whether the linter ran successfully on files
-- `clean`: Whether there were no offenses (null when `completed=false`)
-- `message`: Error or informational message (null on success)
+- `clean`: Whether there were no offenses (`null` when `completed=false`)
+- `message`: Error or informational message (`null` on success)
 
 ### Language Server Integration
 
