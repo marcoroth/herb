@@ -1,6 +1,7 @@
 import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
+import { LineWrapper } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -27,13 +28,12 @@ export class DetailedFormatter extends BaseFormatter {
     }
 
     if (isSingleFile) {
-      // For single file, use inline diagnostics with syntax highlighting
       const { filename, content } = allOffenses[0]
       const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
         diagnostics: diagnostics,
-        splitDiagnostics: true, // Use split mode to show each diagnostic separately
+        splitDiagnostics: true,
         contextLines: 2,
         wrapLines: this.wrapLines,
         truncateLines: this.truncateLines
@@ -41,19 +41,18 @@ export class DetailedFormatter extends BaseFormatter {
 
       console.log(`\n${highlighted}`)
     } else {
-      // For multiple files, show individual diagnostics with syntax highlighting
       const totalMessageCount = allOffenses.length
 
       for (let i = 0; i < allOffenses.length; i++) {
         const { filename, offense, content } = allOffenses[i]
-        const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, { 
-          contextLines: 2, 
+        const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
+          contextLines: 2,
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines
         })
         console.log(`\n${formatted}`)
 
-        const width = process.stdout.columns || 80
+        const width = LineWrapper.getTerminalWidth()
         const progressText = `[${i + 1}/${totalMessageCount}]`
         const rightPadding = 16
         const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)
@@ -68,7 +67,6 @@ export class DetailedFormatter extends BaseFormatter {
   }
 
   formatFile(_filename: string, _offenses: Diagnostic[]): void {
-    // Not used in detailed formatter
     throw new Error("formatFile is not implemented for DetailedFormatter")
   }
 }

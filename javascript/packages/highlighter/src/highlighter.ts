@@ -114,9 +114,8 @@ export class Highlighter {
 
         results.push(result)
 
-        // Add separator between diagnostics
         if (i < diagnostics.length - 1) {
-          const width = process.stdout.columns || 80
+          const width = LineWrapper.getTerminalWidth()
           const progressText = `[${i + 1}/${diagnostics.length}]`
           const rightPadding = 16
           const separatorLength = Math.max(0, width - progressText.length - 1 - rightPadding)

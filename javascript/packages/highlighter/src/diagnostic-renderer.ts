@@ -47,7 +47,7 @@ export class DiagnosticRenderer {
 
     const ellipsisChar = "…"
     const ellipsis = colorize(ellipsisChar, "dim")
-    const rightPadding = 2 // Leave some breathing room from the right edge
+    const rightPadding = 2
     const ellipsisCharLength = ellipsisChar.length
     const ellipsisLength = ellipsisCharLength + rightPadding
 
