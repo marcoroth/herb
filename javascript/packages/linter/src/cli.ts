@@ -16,6 +16,7 @@ export class CLI {
       wrapLines: false, 
       truncateLines: false, 
       showTiming: false, 
+      useGitHubActions: false,
       startTime: 0, 
       startDate: new Date() 
     })
@@ -29,6 +30,7 @@ export class CLI {
       wrapLines: false,
       truncateLines: false,
       showTiming: timingData?.showTiming ?? false,
+      useGitHubActions: false,
       startTime: timingData?.startTime ?? Date.now(),
       startDate: timingData?.startDate ?? new Date()
     }
@@ -41,7 +43,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { pattern, formatOption, showTiming, theme, wrapLines, truncateLines } = this.argumentParser.parse(process.argv)
+    const { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions } = this.argumentParser.parse(process.argv)
 
     const outputOptions = {
       formatOption,
@@ -49,6 +51,7 @@ export class CLI {
       wrapLines,
       truncateLines,
       showTiming,
+      useGitHubActions,
       startTime,
       startDate
     }

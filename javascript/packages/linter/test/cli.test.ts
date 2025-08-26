@@ -22,7 +22,10 @@ describe("CLI Output Formatting", () => {
 
       return { output: output.trim(), exitCode: 0 }
     } catch (error: any) {
-      return { output: error.stdout.toString().trim(), exitCode: error.status }
+      const stderr = error.stderr ? error.stderr.toString().trim() : ""
+      const stdout = error.stdout ? error.stdout.toString().trim() : ""
+
+      return { output: stderr || stdout, exitCode: error.status }
     }
   }
 
@@ -163,6 +166,28 @@ describe("CLI Output Formatting", () => {
     const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--github")
 
     expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("rejects --github with --json format", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
+
+    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(exitCode).toBe(1)
+  })
+
+  test("rejects --github with --format=json", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format=json", "--github")
+
+    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(exitCode).toBe(1)
+  })
+
+  test("--no-github disables GitHub Actions annotations", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-github", { GITHUB_ACTIONS: "true" })
+
+    expect(output).not.toMatch(/^::error/)
+    expect(output).toMatch(/error.*Missing required.*alt.*attribute/)
     expect(exitCode).toBe(1)
   })
 })

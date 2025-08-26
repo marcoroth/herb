@@ -39,7 +39,7 @@ export class FileProcessor {
       const parseResult = Herb.parse(content)
 
       if (parseResult.errors.length > 0) {
-        if (formatOption !== 'json' && formatOption !== 'github') {
+        if (formatOption !== 'json') {
           console.error(`${colorize(filename, "cyan")} - ${colorize("Parse errors:", "brightRed")}`)
 
           for (const error of parseResult.errors) {
@@ -47,7 +47,6 @@ export class FileProcessor {
           }
         }
 
-        // Add parse errors to offenses for JSON output
         for (const error of parseResult.errors) {
           allOffenses.push({ filename, offense: error, content })
         }
@@ -68,7 +67,7 @@ export class FileProcessor {
       }
 
       if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && formatOption !== 'json' && formatOption !== 'github') {
+        if (files.length === 1 && formatOption !== 'json') {
           console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
         }
       } else {

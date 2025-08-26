@@ -11,6 +11,7 @@ interface OutputOptions {
   wrapLines: boolean
   truncateLines: boolean
   showTiming: boolean
+  useGitHubActions: boolean
   startTime: number
   startDate: Date
 }
@@ -28,9 +29,30 @@ export class OutputManager {
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
     const { allOffenses, files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, ruleOffenses } = results
 
-    if (options.formatOption === "github") {
-      const formatter = new GitHubActionsFormatter()
-      await formatter.format(allOffenses)
+    if (options.useGitHubActions) {
+      const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines)
+      await githubFormatter.formatAnnotations(allOffenses)
+
+      if (options.formatOption !== "json") {
+        const regularFormatter = options.formatOption === "simple"
+          ? new SimpleFormatter()
+          : new DetailedFormatter(options.theme, options.wrapLines, options.truncateLines)
+
+        await regularFormatter.format(allOffenses, files.length === 1)
+
+        this.summaryReporter.displayMostViolatedRules(ruleOffenses)
+        this.summaryReporter.displaySummary({
+          files,
+          totalErrors,
+          totalWarnings,
+          filesWithOffenses,
+          ruleCount,
+          startTime: options.startTime,
+          startDate: options.startDate,
+          showTiming: options.showTiming,
+          ruleOffenses
+        })
+      }
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
         offenses: allOffenses.map(({ filename, offense }) => ({
@@ -88,7 +110,7 @@ export class OutputManager {
    * Output informational message (like "no files found")
    */
   outputInfo(message: string, options: OutputOptions): void {
-    if (options.formatOption === "github") {
+    if (options.useGitHubActions) {
       // GitHub Actions format doesn't output anything for info messages
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {
@@ -123,7 +145,7 @@ export class OutputManager {
    * Output error message
    */
   outputError(message: string, options: OutputOptions): void {
-    if (options.formatOption === "github") {
+    if (options.useGitHubActions) {
       console.log(`::error::${message}`)
     } else if (options.formatOption === "json") {
       const output: JSONOutput = {

@@ -23,14 +23,11 @@ export class SummaryReporter {
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
 
-    // Calculate padding for alignment
-    const labelWidth = 12 // Width for the longest label "Offenses"
+    const labelWidth = 12
     const pad = (label: string) => label.padEnd(labelWidth)
 
-    // Checked summary
     console.log(`  ${colorize(pad("Checked"), "gray")} ${colorize(`${files.length} ${this.pluralize(files.length, "file")}`, "cyan")}`)
 
-    // Files summary (for multiple files)
     if (files.length > 1) {
       const filesChecked = files.length
       const filesClean = filesChecked - filesWithOffenses
@@ -52,11 +49,9 @@ export class SummaryReporter {
       }
     }
 
-    // Offenses summary with file count
     let offensesSummary = ""
     const parts = []
 
-    // Build the main part with errors and warnings
     if (totalErrors > 0) {
       parts.push(colorize(colorize(`${totalErrors} ${this.pluralize(totalErrors, "error")}`, "brightRed"), "bold"))
     }
@@ -64,7 +59,6 @@ export class SummaryReporter {
     if (totalWarnings > 0) {
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "brightYellow"), "bold"))
     } else if (totalErrors > 0) {
-      // Show 0 warnings when there are errors but no warnings
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "green"), "bold"))
     }
 
@@ -72,7 +66,7 @@ export class SummaryReporter {
       offensesSummary = colorize(colorize("0 offenses", "green"), "bold")
     } else {
       offensesSummary = parts.join(" | ")
-      // Add total count and file count
+
       let detailText = ""
 
       const totalOffenses = totalErrors + totalWarnings
@@ -86,16 +80,14 @@ export class SummaryReporter {
 
     console.log(`  ${colorize(pad("Offenses"), "gray")} ${offensesSummary}`)
 
-    // Timing information (if enabled)
     if (showTiming) {
       const duration = Date.now() - startTime
-      const timeString = startDate.toTimeString().split(' ')[0] // HH:MM:SS format
+      const timeString = startDate.toTimeString().split(' ')[0]
 
       console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
       console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
     }
 
-    // Success message for all files clean
     if (filesWithOffenses === 0 && files.length > 1) {
       console.log("")
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)

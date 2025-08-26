@@ -11,7 +11,7 @@ import type { ThemeInput } from "@herb-tools/highlighter"
 
 import { name, version } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json" | "github"
+export type FormatOption = "simple" | "detailed" | "json"
 
 export interface ParsedArguments {
   pattern: string
@@ -20,6 +20,7 @@ export interface ParsedArguments {
   theme: ThemeInput
   wrapLines: boolean
   truncateLines: boolean
+  useGitHubActions: boolean
 }
 
 export class ArgumentParser {
@@ -34,10 +35,11 @@ export class ArgumentParser {
     Options:
       -h, --help       show help
       -v, --version    show version
-      --format         output format (simple|detailed|json|github) [default: detailed, github in GitHub Actions]
+      --format         output format (simple|detailed|json) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
-      --github         use GitHub Actions output format (shortcut for --format github)
+      --github         enable GitHub Actions annotations (combines with --format)
+      --no-github      disable GitHub Actions annotations (even in GitHub Actions environment)
       --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color       disable colored output
       --no-timing      hide timing information
@@ -55,6 +57,7 @@ export class ArgumentParser {
         simple: { type: "boolean" },
         json: { type: "boolean" },
         github: { type: "boolean" },
+        "no-github": { type: "boolean" },
         theme: { type: "string" },
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
@@ -77,8 +80,8 @@ export class ArgumentParser {
 
     const isGitHubActions = process.env.GITHUB_ACTIONS === "true"
 
-    let formatOption: FormatOption = isGitHubActions ? "github" : "detailed"
-    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json" || values.format === "github")) {
+    let formatOption: FormatOption = "detailed"
+    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
       formatOption = values.format
     }
 
@@ -90,8 +93,11 @@ export class ArgumentParser {
       formatOption = "json"
     }
 
-    if (values.github) {
-      formatOption = "github"
+    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+
+    if (useGitHubActions && formatOption === "json") {
+      console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+      process.exit(1)
     }
 
     if (values["no-color"]) {
@@ -116,7 +122,7 @@ export class ArgumentParser {
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions }
   }
 
   private getFilePattern(positionals: string[]): string {
