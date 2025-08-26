@@ -22,6 +22,22 @@ module Herb
         }
       end
 
+      #: (Hash) -> Error
+      def self.from_hash(data)
+        type = data[:type] || data["type"] || ""
+        location = Location.from_hash(data[:location] || data["location"] || {})
+        message = data[:message] || data["message"] || ""
+
+        case type
+        <%- errors.each do |error| -%>
+        when "<%= error.type %>"
+          <%= error.name %>.from_hash(data)
+        <%- end -%>
+        else
+          new(type, location, message)
+        end
+      end
+
       #: () -> String
       def class_name
         self.class.name || "Error"
@@ -70,6 +86,25 @@ module Herb
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
         }) #: Herb::serialized_<%= error.human %>
+      end
+
+      #: (Hash) -> <%= error.name %>
+      def self.from_hash(data)
+        type = data[:type] || data["type"] || ""
+        location = Location.from_hash(data[:location] || data["location"] || {})
+        message = data[:message] || data["message"] || ""
+        <%- error.fields.each do |field| -%>
+        <%- case field -%>
+        <%- when Herb::Template::StringField -%>
+        <%= field.name %> = data[:<%= field.name %>] || data["<%= field.name %>"] || ""
+        <%- when Herb::Template::TokenField -%>
+        <%= field.name %> = data[:<%= field.name %>] ? Herb::Token.from_hash(data[:<%= field.name %>] || data["<%= field.name %>"]) : nil
+        <%- else -%>
+        <%= field.name %> = data[:<%= field.name %>] || data["<%= field.name %>"]
+        <%- end -%>
+        <%- end -%>
+
+        new(type, location, message, <%= error.fields.map(&:name).join(", ") %>)
       end
 
       #: (?Integer) -> String

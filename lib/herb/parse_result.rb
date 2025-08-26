@@ -36,5 +36,19 @@ module Herb
     def visit(visitor)
       value.accept(visitor)
     end
+
+    #: (Hash) -> ParseResult
+    def self.from_hash(data)
+      value_date = data[:value] || data["value"]
+      warnings_data = data[:warnings] || data["warnings"] || []
+      errors_data = data[:errors] || data["errors"] || []
+      source = data[:source] || data["source"] || ""
+
+      value = Herb::AST::Node.node_from_hash(value_date) if value_date
+      warnings = warnings_data.map { |warning_data| Herb::Warnings::Warning.from_hash(warning_data) }
+      errors = errors_data.map { |error_data| Herb::Errors::Error.from_hash(error_data) }
+
+      new(value, source, warnings, errors)
+    end
   end
 end

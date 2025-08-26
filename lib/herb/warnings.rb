@@ -24,6 +24,15 @@ module Herb
         }
       end
 
+      #: (Hash) -> Warning
+      def self.from_hash(data)
+        type = data[:type] || data["type"] || ""
+        location = Location.from_hash(data[:location] || data["location"] || {})
+        message = data[:message] || data["message"] || ""
+
+        new(type, location, message)
+      end
+
       #: () -> String
       def class_name
         self.class.name || "Warning"

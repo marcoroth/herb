@@ -1,0 +1,49 @@
+# Generated from lib/herb/backends/node_backend.rb with RBS::Inline
+
+module Herb
+  module Backends
+    class NodeBackend < Backend
+      attr_reader nodo: untyped
+
+      attr_reader herb_node: untyped
+
+      def perform_load: () -> untyped
+
+      def perform_lex: (untyped source) -> untyped
+
+      def perform_lex_file: (untyped path) -> untyped
+
+      def perform_parse: (untyped source, untyped options) -> untyped
+
+      def perform_parse_file: (untyped path, untyped options) -> untyped
+
+      def perform_extract_ruby: (untyped source) -> untyped
+
+      def perform_extract_html: (untyped source) -> untyped
+
+      def perform_format: (untyped source, untyped options) -> untyped
+
+      def perform_lint: (untyped source, untyped options) -> untyped
+
+      def perform_print_node: (untyped node, untyped options) -> untyped
+
+      def backend_version: () -> untyped
+
+      private
+
+      def setup_node_environment: () -> untyped
+
+      def find_node_binary: () -> untyped
+
+      def find_node_modules_path: () -> untyped
+
+      def convert_options: (untyped options) -> untyped
+
+      def parse_lex_result: (untyped json_string) -> untyped
+
+      def parse_parse_result: (untyped json_string) -> untyped
+
+      def parse_lint_result: (untyped json_string) -> untyped
+    end
+  end
+end

@@ -15,6 +15,9 @@ module Herb
       # : () -> serialized_error
       def to_hash: () -> serialized_error
 
+      # : (Hash) -> Error
+      def self.from_hash: (Hash) -> Error
+
       # : () -> String
       def class_name: () -> String
 
@@ -44,6 +47,9 @@ module Herb
       # : () -> serialized_unexpected_error
       def to_hash: () -> serialized_unexpected_error
 
+      # : (Hash) -> UnexpectedError
+      def self.from_hash: (Hash) -> UnexpectedError
+
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
@@ -62,6 +68,9 @@ module Herb
       # : () -> serialized_unexpected_token_error
       def to_hash: () -> serialized_unexpected_token_error
 
+      # : (Hash) -> UnexpectedTokenError
+      def self.from_hash: (Hash) -> UnexpectedTokenError
+
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
@@ -78,6 +87,9 @@ module Herb
       # : () -> serialized_missing_opening_tag_error
       def to_hash: () -> serialized_missing_opening_tag_error
 
+      # : (Hash) -> MissingOpeningTagError
+      def self.from_hash: (Hash) -> MissingOpeningTagError
+
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
@@ -93,6 +105,9 @@ module Herb
 
       # : () -> serialized_missing_closing_tag_error
       def to_hash: () -> serialized_missing_closing_tag_error
+
+      # : (Hash) -> MissingClosingTagError
+      def self.from_hash: (Hash) -> MissingClosingTagError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
@@ -112,6 +127,9 @@ module Herb
       # : () -> serialized_tag_names_mismatch_error
       def to_hash: () -> serialized_tag_names_mismatch_error
 
+      # : (Hash) -> TagNamesMismatchError
+      def self.from_hash: (Hash) -> TagNamesMismatchError
+
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
@@ -129,6 +147,9 @@ module Herb
 
       # : () -> serialized_quotes_mismatch_error
       def to_hash: () -> serialized_quotes_mismatch_error
+
+      # : (Hash) -> QuotesMismatchError
+      def self.from_hash: (Hash) -> QuotesMismatchError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
@@ -150,6 +171,9 @@ module Herb
       # : () -> serialized_void_element_closing_tag_error
       def to_hash: () -> serialized_void_element_closing_tag_error
 
+      # : (Hash) -> VoidElementClosingTagError
+      def self.from_hash: (Hash) -> VoidElementClosingTagError
+
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
@@ -165,6 +189,9 @@ module Herb
 
       # : () -> serialized_unclosed_element_error
       def to_hash: () -> serialized_unclosed_element_error
+
+      # : (Hash) -> UnclosedElementError
+      def self.from_hash: (Hash) -> UnclosedElementError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
@@ -185,6 +212,9 @@ module Herb
 
       # : () -> serialized_ruby_parse_error
       def to_hash: () -> serialized_ruby_parse_error
+
+      # : (Hash) -> RubyParseError
+      def self.from_hash: (Hash) -> RubyParseError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String

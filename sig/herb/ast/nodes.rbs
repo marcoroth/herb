@@ -2,6 +2,12 @@
 
 module Herb
   module AST
+    # Dynamically reopen Node class to add node_from_hash method with knowledge of all node types
+    class Node
+      # : (Hash) -> Node
+      def self.node_from_hash: (Hash) -> Node
+    end
+
     class DocumentNode < Node
       attr_reader children: Array[Herb::AST::Node]
 
@@ -10,6 +16,9 @@ module Herb
 
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
+
+      # : (Hash) -> DocumentNode
+      def self.from_hash: (Hash) -> DocumentNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -35,6 +44,9 @@ module Herb
 
       # : () -> serialized_literal_node
       def to_hash: () -> serialized_literal_node
+
+      # : (Hash) -> LiteralNode
+      def self.from_hash: (Hash) -> LiteralNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -69,6 +81,9 @@ module Herb
       # : () -> serialized_html_open_tag_node
       def to_hash: () -> serialized_html_open_tag_node
 
+      # : (Hash) -> HTMLOpenTagNode
+      def self.from_hash: (Hash) -> HTMLOpenTagNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -99,6 +114,9 @@ module Herb
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
+
+      # : (Hash) -> HTMLCloseTagNode
+      def self.from_hash: (Hash) -> HTMLCloseTagNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -133,6 +151,9 @@ module Herb
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
 
+      # : (Hash) -> HTMLElementNode
+      def self.from_hash: (Hash) -> HTMLElementNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -164,6 +185,9 @@ module Herb
       # : () -> serialized_html_attribute_value_node
       def to_hash: () -> serialized_html_attribute_value_node
 
+      # : (Hash) -> HTMLAttributeValueNode
+      def self.from_hash: (Hash) -> HTMLAttributeValueNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -188,6 +212,9 @@ module Herb
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
+
+      # : (Hash) -> HTMLAttributeNameNode
+      def self.from_hash: (Hash) -> HTMLAttributeNameNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -218,6 +245,9 @@ module Herb
       # : () -> serialized_html_attribute_node
       def to_hash: () -> serialized_html_attribute_node
 
+      # : (Hash) -> HTMLAttributeNode
+      def self.from_hash: (Hash) -> HTMLAttributeNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -242,6 +272,9 @@ module Herb
 
       # : () -> serialized_html_text_node
       def to_hash: () -> serialized_html_text_node
+
+      # : (Hash) -> HTMLTextNode
+      def self.from_hash: (Hash) -> HTMLTextNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -272,6 +305,9 @@ module Herb
       # : () -> serialized_html_comment_node
       def to_hash: () -> serialized_html_comment_node
 
+      # : (Hash) -> HTMLCommentNode
+      def self.from_hash: (Hash) -> HTMLCommentNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -300,6 +336,9 @@ module Herb
 
       # : () -> serialized_html_doctype_node
       def to_hash: () -> serialized_html_doctype_node
+
+      # : (Hash) -> HTMLDoctypeNode
+      def self.from_hash: (Hash) -> HTMLDoctypeNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -330,6 +369,9 @@ module Herb
       # : () -> serialized_xml_declaration_node
       def to_hash: () -> serialized_xml_declaration_node
 
+      # : (Hash) -> XMLDeclarationNode
+      def self.from_hash: (Hash) -> XMLDeclarationNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -359,6 +401,9 @@ module Herb
       # : () -> serialized_cdata_node
       def to_hash: () -> serialized_cdata_node
 
+      # : (Hash) -> CDATANode
+      def self.from_hash: (Hash) -> CDATANode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -383,6 +428,9 @@ module Herb
 
       # : () -> serialized_whitespace_node
       def to_hash: () -> serialized_whitespace_node
+
+      # : (Hash) -> WhitespaceNode
+      def self.from_hash: (Hash) -> WhitespaceNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -419,6 +467,9 @@ module Herb
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
 
+      # : (Hash) -> ERBContentNode
+      def self.from_hash: (Hash) -> ERBContentNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -447,6 +498,9 @@ module Herb
 
       # : () -> serialized_erb_end_node
       def to_hash: () -> serialized_erb_end_node
+
+      # : (Hash) -> ERBEndNode
+      def self.from_hash: (Hash) -> ERBEndNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -478,6 +532,9 @@ module Herb
 
       # : () -> serialized_erb_else_node
       def to_hash: () -> serialized_erb_else_node
+
+      # : (Hash) -> ERBElseNode
+      def self.from_hash: (Hash) -> ERBElseNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -514,6 +571,9 @@ module Herb
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
 
+      # : (Hash) -> ERBIfNode
+      def self.from_hash: (Hash) -> ERBIfNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -547,6 +607,9 @@ module Herb
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
 
+      # : (Hash) -> ERBBlockNode
+      def self.from_hash: (Hash) -> ERBBlockNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -577,6 +640,9 @@ module Herb
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
+
+      # : (Hash) -> ERBWhenNode
+      def self.from_hash: (Hash) -> ERBWhenNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -615,6 +681,9 @@ module Herb
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
 
+      # : (Hash) -> ERBCaseNode
+      def self.from_hash: (Hash) -> ERBCaseNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -652,6 +721,9 @@ module Herb
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
 
+      # : (Hash) -> ERBCaseMatchNode
+      def self.from_hash: (Hash) -> ERBCaseMatchNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -684,6 +756,9 @@ module Herb
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
+
+      # : (Hash) -> ERBWhileNode
+      def self.from_hash: (Hash) -> ERBWhileNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -718,6 +793,9 @@ module Herb
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
 
+      # : (Hash) -> ERBUntilNode
+      def self.from_hash: (Hash) -> ERBUntilNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -750,6 +828,9 @@ module Herb
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
+
+      # : (Hash) -> ERBForNode
+      def self.from_hash: (Hash) -> ERBForNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -784,6 +865,9 @@ module Herb
       # : () -> serialized_erb_rescue_node
       def to_hash: () -> serialized_erb_rescue_node
 
+      # : (Hash) -> ERBRescueNode
+      def self.from_hash: (Hash) -> ERBRescueNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -814,6 +898,9 @@ module Herb
 
       # : () -> serialized_erb_ensure_node
       def to_hash: () -> serialized_erb_ensure_node
+
+      # : (Hash) -> ERBEnsureNode
+      def self.from_hash: (Hash) -> ERBEnsureNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -854,6 +941,9 @@ module Herb
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
 
+      # : (Hash) -> ERBBeginNode
+      def self.from_hash: (Hash) -> ERBBeginNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -889,6 +979,9 @@ module Herb
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
 
+      # : (Hash) -> ERBUnlessNode
+      def self.from_hash: (Hash) -> ERBUnlessNode
+
       # : (Visitor) -> void
       def accept: (Visitor) -> void
 
@@ -917,6 +1010,9 @@ module Herb
 
       # : () -> serialized_erb_yield_node
       def to_hash: () -> serialized_erb_yield_node
+
+      # : (Hash) -> ERBYieldNode
+      def self.from_hash: (Hash) -> ERBYieldNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -948,6 +1044,9 @@ module Herb
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node
+
+      # : (Hash) -> ERBInNode
+      def self.from_hash: (Hash) -> ERBInNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

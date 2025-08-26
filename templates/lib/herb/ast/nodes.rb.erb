@@ -1,5 +1,23 @@
 module Herb
   module AST
+    # Dynamically reopen Node class to add node_from_hash method with knowledge of all node types
+    class Node
+      #: (Hash) -> Node
+      def self.node_from_hash(data)
+        node_type = data[:type] || data["type"]
+        return nil unless node_type
+
+        case node_type
+        <%- nodes.each do |node| -%>
+        when "<%= node.type %>"
+          <%= node.name %>.from_hash(data)
+        <%- end -%>
+        else
+          nil
+        end
+      end
+    end
+
     <%- nodes.each do |node| -%>
     class <%= node.name -%> < Node
       <%- node.fields.each do |field| -%>
@@ -22,9 +40,50 @@ module Herb
       def to_hash
         super.merge({
           <%- node.fields.each do |field| -%>
+          <%- case field -%>
+          <%- when Herb::Template::NodeField -%>
+          <%= field.name %>: <%= field.name %>&.to_hash,
+          <%- when Herb::Template::ArrayField -%>
+          <%- if field.specific_kind&.end_with?("Node") -%>
+          <%= field.name %>: <%= field.name %>.map(&:to_hash),
+          <%- else -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
+          <%- when Herb::Template::TokenField -%>
+          <%= field.name %>: <%= field.name %>&.to_hash,
+          <%- else -%>
+          <%= field.name %>: <%= field.name %>,
+          <%- end -%>
+          <%- end -%>
         }) #: Herb::serialized_<%= node.human %>
+      end
+
+      #: (Hash) -> <%= node.name %>
+      def self.from_hash(data)
+        location = Location.from_hash(data[:location] || data["location"] || {})
+        errors = (data[:errors] || data["errors"] || []).map { |error| Herb::Errors::Error.from_hash(error) }
+        <%- node.fields.each do |field| -%>
+        <%- case field -%>
+        <%- when Herb::Template::StringField -%>
+        <%= field.name %> = data[:<%= field.name %>] || data["<%= field.name %>"] || ""
+        <%- when Herb::Template::TokenField -%>
+        <%= field.name %> = data[:<%= field.name %>] ? Herb::Token.from_hash(data[:<%= field.name %>] || data["<%= field.name %>"]) : nil
+        <%- when Herb::Template::BooleanField -%>
+        <%= field.name %> = data.key?(:<%= field.name %>) ? data[:<%= field.name %>] : (data.key?("<%= field.name %>") ? data["<%= field.name %>"] : false)
+        <%- when Herb::Template::NodeField -%>
+        <%= field.name %> = data[:<%= field.name %>] ? Herb::AST::Node.node_from_hash(data[:<%= field.name %>] || data["<%= field.name %>"]) : nil
+        <%- when Herb::Template::ArrayField -%>
+        <%- if field.specific_kind&.end_with?("Node") -%>
+        <%= field.name %> = (data[:<%= field.name %>] || data["<%= field.name %>"] || []).map { |node_data| Herb::AST::Node.node_from_hash(node_data) }
+        <%- else -%>
+        <%= field.name %> = data[:<%= field.name %>] || data["<%= field.name %>"] || []
+        <%- end -%>
+        <%- else -%>
+        <%= field.name %> = data[:<%= field.name %>] || data["<%= field.name %>"]
+        <%- end -%>
+        <%- end -%>
+
+        new("<%= node.type %>", location, errors, <%= node.fields.map(&:name).join(", ") %>)
       end
 
       #: (Visitor) -> void

@@ -6,7 +6,8 @@
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :indent_width,
+                :max_line_length
 
   def initialize(args)
     @args = args
@@ -86,6 +87,8 @@ class Herb::CLI
       Commands:
         bundle exec herb lex [file]         Lex a file.
         bundle exec herb parse [file]       Parse a file.
+        bundle exec herb format [file]      Format an ERB file with proper indentation and spacing.
+        bundle exec herb lint [file]        Lint an ERB file for potential issues and style violations.
         bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
         bundle exec herb ruby [file]        Extract Ruby from a file.
         bundle exec herb html [file]        Extract HTML from a file.
@@ -111,11 +114,16 @@ class Herb::CLI
                   project.no_log_file = no_log_file
                   project.no_timing = no_timing
                   has_issues = project.parse!
+
                   exit(has_issues ? 1 : 0)
                 when "parse"
                   Herb.parse(file_content)
                 when "lex"
                   Herb.lex(file_content)
+                when "format"
+                  handle_format_command
+                when "lint"
+                  handle_lint_command
                 when "ruby"
                   puts Herb.extract_ruby(file_content)
                   exit(0)
@@ -191,6 +199,15 @@ class Herb::CLI
       parser.on("--local", "Use localhost for playground command instead of herb-tools.dev") do
         self.local = true
       end
+
+      parser.on("-i", "--indent-width WIDTH", Integer, "Set indentation width for formatting (default: 2)") do |width|
+        self.indent_width = width
+      end
+
+      parser.on("-l", "--max-line-length LENGTH", Integer,
+                "Set maximum line length for formatting (default: 80)") do |length|
+        self.max_line_length = length
+      end
     end
   end
 
@@ -199,6 +216,62 @@ class Herb::CLI
   end
 
   private
+
+  def handle_format_command
+    options = {}
+    options[:indentWidth] = indent_width if indent_width
+    options[:maxLineLength] = max_line_length if max_line_length
+
+    formatted = Herb.format(file_content, **options)
+    puts formatted
+    exit(0)
+  rescue StandardError => e
+    puts "Error formatting file: #{e.message}"
+    exit(1)
+  end
+
+  def handle_lint_command
+    lint_result = Herb.lint(file_content)
+
+    if json
+      puts lint_result.to_json
+    elsif silent
+      exit(lint_result.success? ? 0 : 1)
+    else
+      puts lint_result
+
+      unless lint_result.clean?
+        puts
+        puts "Issues found:"
+
+        lint_result.error_offenses.each do |offense|
+          puts "  ❌ Error: #{offense.message}"
+          puts "     Rule: #{offense.rule}"
+          puts "     Location: Line #{offense.location.start.line}, Column #{offense.location.start.column}"
+          puts
+        end
+
+        lint_result.warning_offenses.each do |offense|
+          puts "  ⚠️  Warning: #{offense.message}"
+          puts "     Rule: #{offense.rule}"
+          puts "     Location: Line #{offense.location.start.line}, Column #{offense.location.start.column}"
+          puts
+        end
+
+        lint_result.info_offenses.each do |offense|
+          puts "  ℹ️  Info: #{offense.message}"
+          puts "     Rule: #{offense.rule}"
+          puts "     Location: Line #{offense.location.start.line}, Column #{offense.location.start.column}"
+          puts
+        end
+      end
+    end
+
+    exit(lint_result.success? ? 0 : 1)
+  rescue StandardError => e
+    puts "Error linting file: #{e.message}"
+    exit(1)
+  end
 
   def print_version
     puts Herb.version

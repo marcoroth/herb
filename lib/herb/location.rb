@@ -25,12 +25,30 @@ module Herb
       from(start_line, start_column, end_line, end_column)
     end
 
+    #: (Hash[untyped, untyped]|nil) -> Location
+    def self.from_hash(hash_data)
+      return if hash_data.nil?
+
+      start_data = hash_data[:start] || hash_data["start"]
+      end_data = hash_data[:end] || hash_data["end"]
+
+      start_pos = Position.from_hash(start_data)
+      end_pos = Position.from_hash(end_data)
+
+      new(start_pos, end_pos)
+    end
+
     #: () -> serialized_location
     def to_hash
       {
-        start: start,
-        end: self.end,
+        start: start&.to_hash,
+        end: self.end&.to_hash,
       } #: Herb::serialized_location
+    end
+
+    #: () -> serialized_location
+    def to_h
+      to_hash
     end
 
     #: (?untyped) -> String

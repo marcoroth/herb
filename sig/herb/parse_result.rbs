@@ -21,5 +21,8 @@ module Herb
 
     # : (Visitor) -> void
     def visit: (Visitor) -> void
+
+    # : (Hash) -> ParseResult
+    def self.from_hash: (Hash) -> ParseResult
   end
 end

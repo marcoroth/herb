@@ -55,6 +55,7 @@ prism_util_files = %w[
 
 core_src_files = %w[
   extension.c
+  native_backend.c
   nodes.c
   error_helpers.c
   extension_helpers.c

@@ -22,6 +22,27 @@ module Herb
       new(from, to)
     end
 
+    #: (Array|Hash|nil) -> Range
+    def self.from_hash(data)
+      return if data.nil?
+
+      case data
+      when Array
+        from = data[0].is_a?(Numeric) ? data[0].to_i : 0
+        to = data[1].is_a?(Numeric) ? data[1].to_i : 0
+
+        new(from, to)
+      when Hash
+        from_value = data[:start] || data["start"] || data[:from] || data["from"] || 0
+        to_value = data[:end] || data["end"] || data[:to] || data["to"] || 0
+
+        from = from_value.is_a?(Numeric) ? from_value.to_i : 0
+        to = to_value.is_a?(Numeric) ? to_value.to_i : 0
+
+        new(from, to)
+      end
+    end
+
     #: () -> serialized_range
     def to_a
       [from, to] #: Herb::serialized_range

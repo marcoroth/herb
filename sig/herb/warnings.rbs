@@ -15,6 +15,9 @@ module Herb
       # : () -> serialized_warning
       def to_hash: () -> serialized_warning
 
+      # : (Hash) -> Warning
+      def self.from_hash: (Hash) -> Warning
+
       # : () -> String
       def class_name: () -> String
 

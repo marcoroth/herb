@@ -1,0 +1,69 @@
+# Generated from lib/herb/backend.rb with RBS::Inline
+
+module Herb
+  class Backend
+    attr_reader loaded: untyped
+
+    def initialize: () -> untyped
+
+    def load: () -> untyped
+
+    def loaded?: () -> untyped
+
+    def lex: (untyped source) -> untyped
+
+    def lex_file: (untyped path) -> untyped
+
+    def parse: (untyped source, ?untyped options) -> untyped
+
+    def parse_file: (untyped path, ?untyped options) -> untyped
+
+    def extract_ruby: (untyped source) -> untyped
+
+    def extract_html: (untyped source) -> untyped
+
+    def version: () -> untyped
+
+    def format: (untyped source, ?untyped options) -> untyped
+
+    def format_file: (untyped path, ?untyped options) -> untyped
+
+    def lint: (untyped source, ?untyped options) -> untyped
+
+    def lint_file: (untyped path, ?untyped options) -> untyped
+
+    def print_node: (untyped node, ?untyped options) -> untyped
+
+    def backend_name: () -> untyped
+
+    def perform_load: () -> untyped
+
+    def perform_lex: (untyped source) -> untyped
+
+    def perform_lex_file: (untyped path) -> untyped
+
+    def perform_parse: (untyped source, untyped options) -> untyped
+
+    def perform_parse_file: (untyped path, untyped options) -> untyped
+
+    def perform_extract_ruby: (untyped source) -> untyped
+
+    def perform_extract_html: (untyped source) -> untyped
+
+    def backend_version: () -> untyped
+
+    def perform_format: (untyped source, untyped options) -> untyped
+
+    def perform_format_file: (untyped path, untyped options) -> untyped
+
+    def perform_lint: (untyped source, untyped options) -> untyped
+
+    def perform_lint_file: (untyped path, untyped options) -> untyped
+
+    def perform_print_node: (untyped node, untyped options) -> untyped
+
+    private
+
+    def ensure_loaded!: () -> untyped
+  end
+end

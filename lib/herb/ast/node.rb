@@ -97,6 +97,11 @@ module Herb
       def recursive_errors
         errors + compact_child_nodes.flat_map(&:recursive_errors)
       end
+
+      #: (?backend: Symbol, **untyped) -> String
+      def to_source(backend: :node, format: true, **options)
+        Herb.backend(backend).print_node(self, options)
+      end
     end
   end
 end

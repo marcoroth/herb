@@ -46,6 +46,9 @@ module Herb
 
       # : () -> Array[Herb::Errors::Error]
       def recursive_errors: () -> Array[Herb::Errors::Error]
+
+      # : (?backend: Symbol, **untyped) -> String
+      def to_source: (?backend: Symbol, **untyped) -> String
     end
   end
 end

@@ -1,0 +1,46 @@
+# Generated from lib/herb/diagnostic.rb with RBS::Inline
+
+module Herb
+  DIAGNOSTIC_SEVERITIES: Array[String]
+
+  class Diagnostic
+    attr_reader message: String
+
+    attr_reader location: Location
+
+    attr_reader severity: String
+
+    attr_reader code: String?
+
+    attr_reader source: String?
+
+    # : (message: String, location: Location, severity: String, ?code: String?, ?source: String?) -> void
+    def initialize: (message: String, location: Location, severity: String, ?code: String?, ?source: String?) -> void
+
+    # : () -> Hash[Symbol, untyped]
+    def to_h: () -> Hash[Symbol, untyped]
+
+    # : (*untyped) -> String
+    def to_json: (*untyped) -> String
+
+    # : () -> String
+    def to_s: () -> String
+
+    # : () -> bool
+    def error?: () -> bool
+
+    # : () -> bool
+    def warning?: () -> bool
+
+    # : () -> bool
+    def info?: () -> bool
+
+    # : () -> bool
+    def hint?: () -> bool
+
+    private
+
+    # : (String) -> String
+    def validate_severity: (String) -> String
+  end
+end

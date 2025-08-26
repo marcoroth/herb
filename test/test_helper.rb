@@ -14,6 +14,24 @@ require_relative "snapshot_utils"
 Minitest::Spec::DSL.send(:alias_method, :test, :it)
 Minitest::Spec::DSL.send(:alias_method, :xtest, :xit)
 
+class Minitest::Test
+  def setup
+    super
+
+    @__original_herb_backend = Herb.current_backend
+
+    Herb.switch_backend(:native) unless Herb.current_backend == :native
+  end
+
+  def teardown
+    if @__original_herb_backend && @__original_herb_backend != Herb.current_backend
+      Herb.switch_backend(@__original_herb_backend)
+    end
+
+    super
+  end
+end
+
 def cyclic_string(length)
   sequence = ("a".."z").to_a + ("0".."9").to_a
   sequence.cycle.take(length).join

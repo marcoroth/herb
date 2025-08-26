@@ -16,6 +16,9 @@ module Herb
     # : () -> serialized_token
     def to_hash: () -> serialized_token
 
+    # : (Hash) -> Token
+    def self.from_hash: (Hash) -> Token
+
     # : (?untyped) -> String
     def to_json: (?untyped) -> String
 

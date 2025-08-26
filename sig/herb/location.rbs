@@ -15,8 +15,14 @@ module Herb
     # : (Integer, Integer, Integer, Integer) -> Location
     def self.[]: (Integer, Integer, Integer, Integer) -> Location
 
+    # : (Hash[untyped, untyped]|nil) -> Location
+    def self.from_hash: (Hash[untyped, untyped] | nil) -> Location
+
     # : () -> serialized_location
     def to_hash: () -> serialized_location
+
+    # : () -> serialized_location
+    def to_h: () -> serialized_location
 
     # : (?untyped) -> String
     def to_json: (?untyped) -> String
