@@ -25,17 +25,19 @@ module Herb
       from(start_line, start_column, end_line, end_column)
     end
 
-    #: (Hash[untyped, untyped]|nil) -> Location
+    #: (Hash[untyped, untyped]|nil) -> Location?
     def self.from_hash(hash_data)
-      return if hash_data.nil?
+      return nil if hash_data.nil?
 
       start_data = hash_data[:start] || hash_data["start"]
       end_data = hash_data[:end] || hash_data["end"]
 
-      start_pos = Position.from_hash(start_data)
-      end_pos = Position.from_hash(end_data)
+      start_position = Position.from_hash(start_data)
+      end_position = Position.from_hash(end_data)
 
-      new(start_pos, end_pos)
+      return nil if start_position.nil? || end_position.nil?
+
+      new(start_position, end_position)
     end
 
     #: () -> serialized_location

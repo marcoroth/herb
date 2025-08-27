@@ -19,10 +19,13 @@ module Herb
     # : () -> String
     def pretty_errors: () -> String
 
+    # : () -> String
+    def to_source: () -> String
+
     # : (Visitor) -> void
     def visit: (Visitor) -> void
 
-    # : (Hash) -> ParseResult
-    def self.from_hash: (Hash) -> ParseResult
+    # : (Hash[untyped, untyped]) -> ParseResult
+    def self.from_hash: (Hash[untyped, untyped]) -> ParseResult
   end
 end

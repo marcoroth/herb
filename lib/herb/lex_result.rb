@@ -20,7 +20,7 @@ module Herb
       errors.any?
     end
 
-    #: (Hash) -> LexResult
+    #: (Hash[untyped, untyped]) -> LexResult
     def self.from_hash(data)
       tokens_data = data[:value] || data["value"] || []
       warnings_data = data[:warnings] || data["warnings"] || []

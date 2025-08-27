@@ -1,4 +1,4 @@
-<%- base_arguments = [["type", "String"], ["location", "Location"], ["message", "String"]] -%>
+<%- base_arguments = [["type", "String"], ["location", "Location?"], ["message", "String"]] -%>
 module Herb
   module Errors
     class Error
@@ -22,10 +22,10 @@ module Herb
         }
       end
 
-      #: (Hash) -> Error
+      #: (Hash[untyped, untyped]) -> Error
       def self.from_hash(data)
         type = data[:type] || data["type"] || ""
-        location = Location.from_hash(data[:location] || data["location"] || {})
+        location = Location.from_hash(data[:location] || data["location"])
         message = data[:message] || data["message"] || ""
 
         case type
@@ -88,10 +88,10 @@ module Herb
         }) #: Herb::serialized_<%= error.human %>
       end
 
-      #: (Hash) -> <%= error.name %>
+      #: (Hash[untyped, untyped]) -> <%= error.name %>
       def self.from_hash(data)
         type = data[:type] || data["type"] || ""
-        location = Location.from_hash(data[:location] || data["location"] || {})
+        location = Location.from_hash(data[:location] || data["location"])
         message = data[:message] || data["message"] || ""
         <%- error.fields.each do |field| -%>
         <%- case field -%>
@@ -111,7 +111,7 @@ module Herb
       def tree_inspect(indent = 0)
         output = +""
 
-        output += %(@ #{error_name} #{location.tree_inspect}\n)
+        output += %(@ #{error_name} #{location&.tree_inspect || "?"}\n)
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
         output += %(<%= symbol %> message: #{message.inspect}\n)
         <%- error.fields.each do |field| -%>

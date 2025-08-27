@@ -1,8 +1,6 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
-  attr_reader backend: untyped
-
   def self.load_backend: (?untyped backend_name) -> untyped
 
   def self.backend_loaded?: () -> untyped

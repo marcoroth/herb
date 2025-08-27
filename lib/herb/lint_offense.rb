@@ -9,7 +9,7 @@ module Herb
   class LintOffense < Diagnostic
     attr_reader :rule #: String
 
-    #: (message: String, location: Location, severity: String, rule: String, ?code: String?, ?source: String?) -> void
+    #: (message: String, location: Location?, severity: String, rule: String, ?code: String?, ?source: String?) -> void
     def initialize(message:, location:, severity:, rule:, code: nil, source: "linter")
       super(
         message: message,
@@ -41,15 +41,9 @@ module Herb
 
     #: (Hash[untyped, untyped]) -> LintOffense
     def self.from_hash(offense_data)
-      location = if offense_data[:location]
-                   Location.from_hash(offense_data[:location])
-                 else
-                   Location.new(Position.new(1, 1), Position.new(1, 1))
-                 end
-
       new(
         message: offense_data[:message] || "Unknown lint offense",
-        location: location,
+        location: Location.from_hash(offense_data[:location]),
         severity: offense_data[:severity] || "error",
         rule: offense_data[:rule] || "unknown",
         code: offense_data[:code],

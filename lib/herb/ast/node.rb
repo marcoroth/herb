@@ -5,10 +5,10 @@ module Herb
   module AST
     class Node
       attr_reader :type #: String
-      attr_reader :location #: Location
+      attr_reader :location #: Location?
       attr_reader :errors #: Array[Herb::Errors::Error]
 
-      #: (String, Location, Array[Herb::Errors::Error]) -> void
+      #: (String, Location?, Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
@@ -100,7 +100,7 @@ module Herb
 
       #: (?backend: Symbol, **untyped) -> String
       def to_source(backend: :node, format: true, **options)
-        Herb.backend(backend).print_node(self, options)
+        Herb.backend(backend).print_node(self, { format: format }.merge(options))
       end
     end
   end

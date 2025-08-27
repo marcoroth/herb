@@ -5,18 +5,18 @@ module Herb
     class Error
       attr_reader type: String
 
-      attr_reader location: Location
+      attr_reader location: Location?
 
       attr_reader message: String
 
-      # : (String, Location, String) -> void
-      def initialize: (String, Location, String) -> void
+      # : (String, Location?, String) -> void
+      def initialize: (String, Location?, String) -> void
 
       # : () -> serialized_error
       def to_hash: () -> serialized_error
 
-      # : (Hash) -> Error
-      def self.from_hash: (Hash) -> Error
+      # : (Hash[untyped, untyped]) -> Error
+      def self.from_hash: (Hash[untyped, untyped]) -> Error
 
       # : () -> String
       def class_name: () -> String
@@ -38,8 +38,8 @@ module Herb
 
       attr_reader found: String
 
-      # : (String, Location, String, String, String, String) -> void
-      def initialize: (String, Location, String, String, String, String) -> void
+      # : (String, Location?, String, String, String, String) -> void
+      def initialize: (String, Location?, String, String, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -47,8 +47,8 @@ module Herb
       # : () -> serialized_unexpected_error
       def to_hash: () -> serialized_unexpected_error
 
-      # : (Hash) -> UnexpectedError
-      def self.from_hash: (Hash) -> UnexpectedError
+      # : (Hash[untyped, untyped]) -> UnexpectedError
+      def self.from_hash: (Hash[untyped, untyped]) -> UnexpectedError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
@@ -57,10 +57,10 @@ module Herb
     class UnexpectedTokenError < Error
       attr_reader expected_type: String
 
-      attr_reader found: Herb::Token
+      attr_reader found: Herb::Token?
 
-      # : (String, Location, String, String, Herb::Token) -> void
-      def initialize: (String, Location, String, String, Herb::Token) -> void
+      # : (String, Location?, String, String, Herb::Token?) -> void
+      def initialize: (String, Location?, String, String, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -68,18 +68,18 @@ module Herb
       # : () -> serialized_unexpected_token_error
       def to_hash: () -> serialized_unexpected_token_error
 
-      # : (Hash) -> UnexpectedTokenError
-      def self.from_hash: (Hash) -> UnexpectedTokenError
+      # : (Hash[untyped, untyped]) -> UnexpectedTokenError
+      def self.from_hash: (Hash[untyped, untyped]) -> UnexpectedTokenError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class MissingOpeningTagError < Error
-      attr_reader closing_tag: Herb::Token
+      attr_reader closing_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token?) -> void
+      def initialize: (String, Location?, String, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -87,18 +87,18 @@ module Herb
       # : () -> serialized_missing_opening_tag_error
       def to_hash: () -> serialized_missing_opening_tag_error
 
-      # : (Hash) -> MissingOpeningTagError
-      def self.from_hash: (Hash) -> MissingOpeningTagError
+      # : (Hash[untyped, untyped]) -> MissingOpeningTagError
+      def self.from_hash: (Hash[untyped, untyped]) -> MissingOpeningTagError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class MissingClosingTagError < Error
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token?) -> void
+      def initialize: (String, Location?, String, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -106,20 +106,20 @@ module Herb
       # : () -> serialized_missing_closing_tag_error
       def to_hash: () -> serialized_missing_closing_tag_error
 
-      # : (Hash) -> MissingClosingTagError
-      def self.from_hash: (Hash) -> MissingClosingTagError
+      # : (Hash[untyped, untyped]) -> MissingClosingTagError
+      def self.from_hash: (Hash[untyped, untyped]) -> MissingClosingTagError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class TagNamesMismatchError < Error
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      attr_reader closing_tag: Herb::Token
+      attr_reader closing_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location?, String, Herb::Token?, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -127,20 +127,20 @@ module Herb
       # : () -> serialized_tag_names_mismatch_error
       def to_hash: () -> serialized_tag_names_mismatch_error
 
-      # : (Hash) -> TagNamesMismatchError
-      def self.from_hash: (Hash) -> TagNamesMismatchError
+      # : (Hash[untyped, untyped]) -> TagNamesMismatchError
+      def self.from_hash: (Hash[untyped, untyped]) -> TagNamesMismatchError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class QuotesMismatchError < Error
-      attr_reader opening_quote: Herb::Token
+      attr_reader opening_quote: Herb::Token?
 
-      attr_reader closing_quote: Herb::Token
+      attr_reader closing_quote: Herb::Token?
 
-      # : (String, Location, String, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location?, String, Herb::Token?, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -148,22 +148,22 @@ module Herb
       # : () -> serialized_quotes_mismatch_error
       def to_hash: () -> serialized_quotes_mismatch_error
 
-      # : (Hash) -> QuotesMismatchError
-      def self.from_hash: (Hash) -> QuotesMismatchError
+      # : (Hash[untyped, untyped]) -> QuotesMismatchError
+      def self.from_hash: (Hash[untyped, untyped]) -> QuotesMismatchError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class VoidElementClosingTagError < Error
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
       attr_reader expected: String
 
       attr_reader found: String
 
-      # : (String, Location, String, Herb::Token, String, String) -> void
-      def initialize: (String, Location, String, Herb::Token, String, String) -> void
+      # : (String, Location?, String, Herb::Token?, String, String) -> void
+      def initialize: (String, Location?, String, Herb::Token?, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -171,18 +171,18 @@ module Herb
       # : () -> serialized_void_element_closing_tag_error
       def to_hash: () -> serialized_void_element_closing_tag_error
 
-      # : (Hash) -> VoidElementClosingTagError
-      def self.from_hash: (Hash) -> VoidElementClosingTagError
+      # : (Hash[untyped, untyped]) -> VoidElementClosingTagError
+      def self.from_hash: (Hash[untyped, untyped]) -> VoidElementClosingTagError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
 
     class UnclosedElementError < Error
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token?) -> void
+      def initialize: (String, Location?, String, Herb::Token?) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -190,8 +190,8 @@ module Herb
       # : () -> serialized_unclosed_element_error
       def to_hash: () -> serialized_unclosed_element_error
 
-      # : (Hash) -> UnclosedElementError
-      def self.from_hash: (Hash) -> UnclosedElementError
+      # : (Hash[untyped, untyped]) -> UnclosedElementError
+      def self.from_hash: (Hash[untyped, untyped]) -> UnclosedElementError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
@@ -204,8 +204,8 @@ module Herb
 
       attr_reader level: String
 
-      # : (String, Location, String, String, String, String) -> void
-      def initialize: (String, Location, String, String, String, String) -> void
+      # : (String, Location?, String, String, String, String) -> void
+      def initialize: (String, Location?, String, String, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -213,8 +213,8 @@ module Herb
       # : () -> serialized_ruby_parse_error
       def to_hash: () -> serialized_ruby_parse_error
 
-      # : (Hash) -> RubyParseError
-      def self.from_hash: (Hash) -> RubyParseError
+      # : (Hash[untyped, untyped]) -> RubyParseError
+      def self.from_hash: (Hash[untyped, untyped]) -> RubyParseError
 
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String

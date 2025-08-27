@@ -6,7 +6,7 @@ module Herb
   class Diagnostic
     attr_reader message: String
 
-    attr_reader location: Location
+    attr_reader location: Location?
 
     attr_reader severity: String
 
@@ -14,8 +14,8 @@ module Herb
 
     attr_reader source: String?
 
-    # : (message: String, location: Location, severity: String, ?code: String?, ?source: String?) -> void
-    def initialize: (message: String, location: Location, severity: String, ?code: String?, ?source: String?) -> void
+    # : (message: String, location: Location?, severity: String, ?code: String?, ?source: String?) -> void
+    def initialize: (message: String, location: Location?, severity: String, ?code: String?, ?source: String?) -> void
 
     # : () -> Hash[Symbol, untyped]
     def to_h: () -> Hash[Symbol, untyped]

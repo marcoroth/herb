@@ -22,15 +22,23 @@ module Herb
       new(line, column)
     end
 
-    #: (Hash[untyped, untyped]|nil) -> Position
+    #: (Hash[untyped, untyped]|nil) -> Position?
     def self.from_hash(hash_data)
-      return if hash_data.nil?
+      return nil if hash_data.nil?
 
       line = hash_data[:line] || hash_data["line"] || 1
       column = hash_data[:column] || hash_data["column"] || 0
 
-      line = line.is_a?(Numeric) ? line.to_i : 1
-      column = column.is_a?(Numeric) ? column.to_i : 0
+      line = if line.is_a?(Integer)
+               line
+             else
+               (line.respond_to?(:to_i) ? line.to_i : 1)
+             end
+      column = if column.is_a?(Integer)
+                 column
+               else
+                 (column.respond_to?(:to_i) ? column.to_i : 0)
+               end
 
       new(line, column)
     end

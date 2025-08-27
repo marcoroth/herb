@@ -4,21 +4,21 @@ module Herb
   module AST
     # Dynamically reopen Node class to add node_from_hash method with knowledge of all node types
     class Node
-      # : (Hash) -> Node
-      def self.node_from_hash: (Hash) -> Node
+      # : (Hash[untyped, untyped]?) -> Node?
+      def self.node_from_hash: (Hash[untyped, untyped]?) -> Node?
     end
 
     class DocumentNode < Node
       attr_reader children: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_document_node
       def to_hash: () -> serialized_document_node
 
-      # : (Hash) -> DocumentNode
-      def self.from_hash: (Hash) -> DocumentNode
+      # : (Hash[untyped, untyped]) -> DocumentNode
+      def self.from_hash: (Hash[untyped, untyped]) -> DocumentNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -39,14 +39,14 @@ module Herb
     class LiteralNode < Node
       attr_reader content: String
 
-      # : (String, Location, Array[Herb::Errors::Error], String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], String) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], String) -> void
 
       # : () -> serialized_literal_node
       def to_hash: () -> serialized_literal_node
 
-      # : (Hash) -> LiteralNode
-      def self.from_hash: (Hash) -> LiteralNode
+      # : (Hash[untyped, untyped]) -> LiteralNode
+      def self.from_hash: (Hash[untyped, untyped]) -> LiteralNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -65,24 +65,24 @@ module Herb
     end
 
     class HTMLOpenTagNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
       attr_reader is_void: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], bool) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], bool) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], bool) -> void
 
       # : () -> serialized_html_open_tag_node
       def to_hash: () -> serialized_html_open_tag_node
 
-      # : (Hash) -> HTMLOpenTagNode
-      def self.from_hash: (Hash) -> HTMLOpenTagNode
+      # : (Hash[untyped, untyped]) -> HTMLOpenTagNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLOpenTagNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -101,22 +101,22 @@ module Herb
     end
 
     class HTMLCloseTagNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
 
-      # : (Hash) -> HTMLCloseTagNode
-      def self.from_hash: (Hash) -> HTMLCloseTagNode
+      # : (Hash[untyped, untyped]) -> HTMLCloseTagNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLCloseTagNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -135,24 +135,24 @@ module Herb
     end
 
     class HTMLElementNode < Node
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+      attr_reader open_tag: Herb::AST::HTMLOpenTagNode?
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader close_tag: Herb::AST::HTMLCloseTagNode
+      attr_reader close_tag: Herb::AST::HTMLCloseTagNode?
 
       attr_reader is_void: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode?, bool) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode?, bool) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
 
-      # : (Hash) -> HTMLElementNode
-      def self.from_hash: (Hash) -> HTMLElementNode
+      # : (Hash[untyped, untyped]) -> HTMLElementNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLElementNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -171,22 +171,22 @@ module Herb
     end
 
     class HTMLAttributeValueNode < Node
-      attr_reader open_quote: Herb::Token
+      attr_reader open_quote: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader close_quote: Herb::Token
+      attr_reader close_quote: Herb::Token?
 
       attr_reader quoted: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token, bool) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?, bool) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?, bool) -> void
 
       # : () -> serialized_html_attribute_value_node
       def to_hash: () -> serialized_html_attribute_value_node
 
-      # : (Hash) -> HTMLAttributeValueNode
-      def self.from_hash: (Hash) -> HTMLAttributeValueNode
+      # : (Hash[untyped, untyped]) -> HTMLAttributeValueNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLAttributeValueNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -207,14 +207,14 @@ module Herb
     class HTMLAttributeNameNode < Node
       attr_reader children: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
 
-      # : (Hash) -> HTMLAttributeNameNode
-      def self.from_hash: (Hash) -> HTMLAttributeNameNode
+      # : (Hash[untyped, untyped]) -> HTMLAttributeNameNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLAttributeNameNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -233,20 +233,20 @@ module Herb
     end
 
     class HTMLAttributeNode < Node
-      attr_reader name: Herb::AST::HTMLAttributeNameNode
+      attr_reader name: Herb::AST::HTMLAttributeNameNode?
 
-      attr_reader equals: Herb::Token
+      attr_reader equals: Herb::Token?
 
-      attr_reader value: Herb::AST::HTMLAttributeValueNode
+      attr_reader value: Herb::AST::HTMLAttributeValueNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode, Herb::Token, Herb::AST::HTMLAttributeValueNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode?, Herb::Token?, Herb::AST::HTMLAttributeValueNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::AST::HTMLAttributeNameNode?, Herb::Token?, Herb::AST::HTMLAttributeValueNode?) -> void
 
       # : () -> serialized_html_attribute_node
       def to_hash: () -> serialized_html_attribute_node
 
-      # : (Hash) -> HTMLAttributeNode
-      def self.from_hash: (Hash) -> HTMLAttributeNode
+      # : (Hash[untyped, untyped]) -> HTMLAttributeNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLAttributeNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -267,14 +267,14 @@ module Herb
     class HTMLTextNode < Node
       attr_reader content: String
 
-      # : (String, Location, Array[Herb::Errors::Error], String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], String) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], String) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], String) -> void
 
       # : () -> serialized_html_text_node
       def to_hash: () -> serialized_html_text_node
 
-      # : (Hash) -> HTMLTextNode
-      def self.from_hash: (Hash) -> HTMLTextNode
+      # : (Hash[untyped, untyped]) -> HTMLTextNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLTextNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -293,20 +293,20 @@ module Herb
     end
 
     class HTMLCommentNode < Node
-      attr_reader comment_start: Herb::Token
+      attr_reader comment_start: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader comment_end: Herb::Token
+      attr_reader comment_end: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
 
       # : () -> serialized_html_comment_node
       def to_hash: () -> serialized_html_comment_node
 
-      # : (Hash) -> HTMLCommentNode
-      def self.from_hash: (Hash) -> HTMLCommentNode
+      # : (Hash[untyped, untyped]) -> HTMLCommentNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLCommentNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -325,20 +325,20 @@ module Herb
     end
 
     class HTMLDoctypeNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
 
       # : () -> serialized_html_doctype_node
       def to_hash: () -> serialized_html_doctype_node
 
-      # : (Hash) -> HTMLDoctypeNode
-      def self.from_hash: (Hash) -> HTMLDoctypeNode
+      # : (Hash[untyped, untyped]) -> HTMLDoctypeNode
+      def self.from_hash: (Hash[untyped, untyped]) -> HTMLDoctypeNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -357,20 +357,20 @@ module Herb
     end
 
     class XMLDeclarationNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
 
       # : () -> serialized_xml_declaration_node
       def to_hash: () -> serialized_xml_declaration_node
 
-      # : (Hash) -> XMLDeclarationNode
-      def self.from_hash: (Hash) -> XMLDeclarationNode
+      # : (Hash[untyped, untyped]) -> XMLDeclarationNode
+      def self.from_hash: (Hash[untyped, untyped]) -> XMLDeclarationNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -389,20 +389,20 @@ module Herb
     end
 
     class CDATANode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Array[Herb::AST::Node], Herb::Token?) -> void
 
       # : () -> serialized_cdata_node
       def to_hash: () -> serialized_cdata_node
 
-      # : (Hash) -> CDATANode
-      def self.from_hash: (Hash) -> CDATANode
+      # : (Hash[untyped, untyped]) -> CDATANode
+      def self.from_hash: (Hash[untyped, untyped]) -> CDATANode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -421,16 +421,16 @@ module Herb
     end
 
     class WhitespaceNode < Node
-      attr_reader value: Herb::Token
+      attr_reader value: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?) -> void
 
       # : () -> serialized_whitespace_node
       def to_hash: () -> serialized_whitespace_node
 
-      # : (Hash) -> WhitespaceNode
-      def self.from_hash: (Hash) -> WhitespaceNode
+      # : (Hash[untyped, untyped]) -> WhitespaceNode
+      def self.from_hash: (Hash[untyped, untyped]) -> WhitespaceNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -449,11 +449,11 @@ module Herb
     end
 
     class ERBContentNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader analyzed_ruby: nil
 
@@ -461,14 +461,14 @@ module Herb
 
       attr_reader valid: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, nil, bool, bool) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, nil, bool, bool) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, nil, bool, bool) -> void
 
       # : () -> serialized_erb_content_node
       def to_hash: () -> serialized_erb_content_node
 
-      # : (Hash) -> ERBContentNode
-      def self.from_hash: (Hash) -> ERBContentNode
+      # : (Hash[untyped, untyped]) -> ERBContentNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBContentNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -487,20 +487,20 @@ module Herb
     end
 
     class ERBEndNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
 
       # : () -> serialized_erb_end_node
       def to_hash: () -> serialized_erb_end_node
 
-      # : (Hash) -> ERBEndNode
-      def self.from_hash: (Hash) -> ERBEndNode
+      # : (Hash[untyped, untyped]) -> ERBEndNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBEndNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -519,22 +519,22 @@ module Herb
     end
 
     class ERBElseNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_else_node
       def to_hash: () -> serialized_erb_else_node
 
-      # : (Hash) -> ERBElseNode
-      def self.from_hash: (Hash) -> ERBElseNode
+      # : (Hash[untyped, untyped]) -> ERBElseNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBElseNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -553,26 +553,26 @@ module Herb
     end
 
     class ERBIfNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::Node
+      attr_reader subsequent: Herb::AST::Node?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::Node?, Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::Node?, Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
 
-      # : (Hash) -> ERBIfNode
-      def self.from_hash: (Hash) -> ERBIfNode
+      # : (Hash[untyped, untyped]) -> ERBIfNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBIfNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -591,24 +591,24 @@ module Herb
     end
 
     class ERBBlockNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader body: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_block_node
       def to_hash: () -> serialized_erb_block_node
 
-      # : (Hash) -> ERBBlockNode
-      def self.from_hash: (Hash) -> ERBBlockNode
+      # : (Hash[untyped, untyped]) -> ERBBlockNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBBlockNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -627,22 +627,22 @@ module Herb
     end
 
     class ERBWhenNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
 
-      # : (Hash) -> ERBWhenNode
-      def self.from_hash: (Hash) -> ERBWhenNode
+      # : (Hash[untyped, untyped]) -> ERBWhenNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBWhenNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -661,28 +661,28 @@ module Herb
     end
 
     class ERBCaseNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
       attr_reader conditions: Array[Herb::AST::ERBWhenNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Array[Herb::AST::ERBWhenNode], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_case_node
       def to_hash: () -> serialized_erb_case_node
 
-      # : (Hash) -> ERBCaseNode
-      def self.from_hash: (Hash) -> ERBCaseNode
+      # : (Hash[untyped, untyped]) -> ERBCaseNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBCaseNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -701,28 +701,28 @@ module Herb
     end
 
     class ERBCaseMatchNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader children: Array[Herb::AST::Node]
 
       attr_reader conditions: Array[Herb::AST::ERBInNode]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Array[Herb::AST::ERBInNode], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_case_match_node
       def to_hash: () -> serialized_erb_case_match_node
 
-      # : (Hash) -> ERBCaseMatchNode
-      def self.from_hash: (Hash) -> ERBCaseMatchNode
+      # : (Hash[untyped, untyped]) -> ERBCaseMatchNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBCaseMatchNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -741,24 +741,24 @@ module Herb
     end
 
     class ERBWhileNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_while_node
       def to_hash: () -> serialized_erb_while_node
 
-      # : (Hash) -> ERBWhileNode
-      def self.from_hash: (Hash) -> ERBWhileNode
+      # : (Hash[untyped, untyped]) -> ERBWhileNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBWhileNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -777,24 +777,24 @@ module Herb
     end
 
     class ERBUntilNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_until_node
       def to_hash: () -> serialized_erb_until_node
 
-      # : (Hash) -> ERBUntilNode
-      def self.from_hash: (Hash) -> ERBUntilNode
+      # : (Hash[untyped, untyped]) -> ERBUntilNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBUntilNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -813,24 +813,24 @@ module Herb
     end
 
     class ERBForNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_for_node
       def to_hash: () -> serialized_erb_for_node
 
-      # : (Hash) -> ERBForNode
-      def self.from_hash: (Hash) -> ERBForNode
+      # : (Hash[untyped, untyped]) -> ERBForNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBForNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -849,24 +849,24 @@ module Herb
     end
 
     class ERBRescueNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::ERBRescueNode
+      attr_reader subsequent: Herb::AST::ERBRescueNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBRescueNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBRescueNode?) -> void
 
       # : () -> serialized_erb_rescue_node
       def to_hash: () -> serialized_erb_rescue_node
 
-      # : (Hash) -> ERBRescueNode
-      def self.from_hash: (Hash) -> ERBRescueNode
+      # : (Hash[untyped, untyped]) -> ERBRescueNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBRescueNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -885,22 +885,22 @@ module Herb
     end
 
     class ERBEnsureNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_ensure_node
       def to_hash: () -> serialized_erb_ensure_node
 
-      # : (Hash) -> ERBEnsureNode
-      def self.from_hash: (Hash) -> ERBEnsureNode
+      # : (Hash[untyped, untyped]) -> ERBEnsureNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBEnsureNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -919,30 +919,30 @@ module Herb
     end
 
     class ERBBeginNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader rescue_clause: Herb::AST::ERBRescueNode
+      attr_reader rescue_clause: Herb::AST::ERBRescueNode?
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader ensure_clause: Herb::AST::ERBEnsureNode
+      attr_reader ensure_clause: Herb::AST::ERBEnsureNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBRescueNode, Herb::AST::ERBElseNode, Herb::AST::ERBEnsureNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBRescueNode?, Herb::AST::ERBElseNode?, Herb::AST::ERBEnsureNode?, Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBRescueNode?, Herb::AST::ERBElseNode?, Herb::AST::ERBEnsureNode?, Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_begin_node
       def to_hash: () -> serialized_erb_begin_node
 
-      # : (Hash) -> ERBBeginNode
-      def self.from_hash: (Hash) -> ERBBeginNode
+      # : (Hash[untyped, untyped]) -> ERBBeginNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBBeginNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -961,26 +961,26 @@ module Herb
     end
 
     class ERBUnlessNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader else_clause: Herb::AST::ERBElseNode
+      attr_reader else_clause: Herb::AST::ERBElseNode?
 
-      attr_reader end_node: Herb::AST::ERBEndNode
+      attr_reader end_node: Herb::AST::ERBEndNode?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node], Herb::AST::ERBElseNode?, Herb::AST::ERBEndNode?) -> void
 
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
 
-      # : (Hash) -> ERBUnlessNode
-      def self.from_hash: (Hash) -> ERBUnlessNode
+      # : (Hash[untyped, untyped]) -> ERBUnlessNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBUnlessNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -999,20 +999,20 @@ module Herb
     end
 
     class ERBYieldNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?) -> void
 
       # : () -> serialized_erb_yield_node
       def to_hash: () -> serialized_erb_yield_node
 
-      # : (Hash) -> ERBYieldNode
-      def self.from_hash: (Hash) -> ERBYieldNode
+      # : (Hash[untyped, untyped]) -> ERBYieldNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBYieldNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void
@@ -1031,22 +1031,22 @@ module Herb
     end
 
     class ERBInNode < Node
-      attr_reader tag_opening: Herb::Token
+      attr_reader tag_opening: Herb::Token?
 
-      attr_reader content: Herb::Token
+      attr_reader content: Herb::Token?
 
-      attr_reader tag_closing: Herb::Token
+      attr_reader tag_closing: Herb::Token?
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location?, Array[Herb::Errors::Error], Herb::Token?, Herb::Token?, Herb::Token?, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node
 
-      # : (Hash) -> ERBInNode
-      def self.from_hash: (Hash) -> ERBInNode
+      # : (Hash[untyped, untyped]) -> ERBInNode
+      def self.from_hash: (Hash[untyped, untyped]) -> ERBInNode
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

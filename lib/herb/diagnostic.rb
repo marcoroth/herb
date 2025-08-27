@@ -8,12 +8,12 @@ module Herb
 
   class Diagnostic
     attr_reader :message #: String
-    attr_reader :location #: Location
+    attr_reader :location #: Location?
     attr_reader :severity #: String
     attr_reader :code #: String?
     attr_reader :source #: String?
 
-    #: (message: String, location: Location, severity: String, ?code: String?, ?source: String?) -> void
+    #: (message: String, location: Location?, severity: String, ?code: String?, ?source: String?) -> void
     def initialize(message:, location:, severity:, code: nil, source: nil)
       @message = message
       @location = location

@@ -119,8 +119,7 @@ module Herb
     end
 
     def perform_format(source, options)
-      raise NotImplementedError,
-            "#{self.class}#perform_format not implemented. This backend does not support formatting."
+      raise NotImplementedError, "#{self.class}#perform_format not implemented. This backend does not support formatting."
     end
 
     def perform_format_file(path, options)
@@ -138,8 +137,7 @@ module Herb
     end
 
     def perform_print_node(node, options)
-      raise NotImplementedError,
-            "#{self.class}#perform_print_node not implemented. This backend does not support node printing."
+      raise NotImplementedError, "#{self.class}#perform_print_node not implemented. This backend does not support node printing."
     end
 
     private

@@ -25,8 +25,7 @@ module Herb
         begin
           require "nodo"
         rescue LoadError
-          raise LoadError,
-                "Node backend requires the 'nodo' gem. Please add it to your Gemfile or install it with: gem install nodo"
+          raise LoadError, "Node backend requires the 'nodo' gem. Please add it to your Gemfile or install it with: gem install nodo"
         end
 
         @herb_node_class = Herb::Backends::HerbNode

@@ -4,8 +4,8 @@ module Herb
   class LintOffense < Diagnostic
     attr_reader rule: String
 
-    # : (message: String, location: Location, severity: String, rule: String, ?code: String?, ?source: String?) -> void
-    def initialize: (message: String, location: Location, severity: String, rule: String, ?code: String?, ?source: String?) -> void
+    # : (message: String, location: Location?, severity: String, rule: String, ?code: String?, ?source: String?) -> void
+    def initialize: (message: String, location: Location?, severity: String, rule: String, ?code: String?, ?source: String?) -> void
 
     # : () -> Hash[Symbol, untyped]
     def to_h: () -> Hash[Symbol, untyped]
