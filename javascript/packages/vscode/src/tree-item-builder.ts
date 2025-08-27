@@ -104,7 +104,7 @@ export class TreeItemBuilder {
     }
 
     const filesWithIssues = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
-    const label = filesWithIssues > 0 ? `Linter Issues (${parts.join(', ')})` : `Linter Issues (no offenses)`
+    const label = filesWithIssues > 0 ? `Linter Issues (${parts.join(', ')})` : `Linter Issues (0 files)`
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
     item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.orange'))
