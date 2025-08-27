@@ -106,6 +106,10 @@ export class FormatPrinter extends Printer {
     'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
   ])
 
+  private static readonly LINE_BREAKING_ELEMENTS = new Set([
+    'br', 'hr'
+  ])
+
   private static readonly CONTENT_PRESERVING_ELEMENTS = new Set([
     'script', 'style', 'pre', 'textarea'
   ])
@@ -177,7 +181,7 @@ export class FormatPrinter extends Printer {
    * Capture output from a callback into a separate lines array
    * Useful for testing what output would be generated without affecting the main output
    */
-  private capture(callback: () => void): string[] {
+  public capture(callback: () => void): string[] {
     const previousLines = this.lines
     const previousInlineMode = this.inlineMode
 
@@ -736,6 +740,17 @@ export class FormatPrinter extends Printer {
     }
 
     const analysis = this.elementFormattingAnalysis.get(element)
+    
+    // Check if we should use the new inline formatting system
+    if (this.shouldUseInlineFormatting(body, element)) {
+      // Use InlineFormatVisitor for intelligent inline formatting
+      this.withIndent(() => {
+        this.visitInlineFormattedContent(body, element)
+      })
+      return
+    }
+    
+    // Fall back to original text flow logic
     const hasTextFlow = this.isInTextFlowContext(null, body)
     const children = this.filterSignificantChildren(body, hasTextFlow)
 
@@ -1347,7 +1362,7 @@ export class FormatPrinter extends Printer {
   /**
    * Check if an element should be treated as inline based on its tag name
    */
-  private isInlineElement(tagName: string): boolean {
+  public isInlineElement(tagName: string): boolean {
     return FormatPrinter.INLINE_ELEMENTS.has(tagName.toLowerCase())
   }
 
@@ -1481,6 +1496,12 @@ export class FormatPrinter extends Printer {
     })
 
     if (!allInline) return false
+
+    const hasLineBreakingElements = nonTextChildren.some(child =>
+      isNode(child, HTMLElementNode) && FormatPrinter.LINE_BREAKING_ELEMENTS.has(getTagName(child))
+    )
+
+    if (hasLineBreakingElements) return false
 
     return true
   }
@@ -1849,4 +1870,395 @@ export class FormatPrinter extends Printer {
 
     return FormatPrinter.CONTENT_PRESERVING_ELEMENTS.has(tagName)
   }
+
+  private shouldUseInlineFormatting(children: Node[], parent: HTMLElementNode): boolean {
+    // Don't use for content-preserving elements
+    if (this.isContentPreserving(parent)) {
+      return false
+    }
+    
+    // Must have text content
+    const hasTextContent = children.some(child => 
+      isNode(child, HTMLTextNode) && child.content.trim() !== ""
+    )
+    if (!hasTextContent) return false
+    
+    // Must have inline or special elements  
+    const hasInlineOrSpecialElements = children.some(child => {
+      if (isNode(child, HTMLElementNode)) {
+        const tagName = getTagName(child)
+        return this.isInlineElement(tagName) || 
+               FormatPrinter.LINE_BREAKING_ELEMENTS.has(tagName)
+      }
+      return isNode(child, ERBContentNode)
+    })
+    if (!hasInlineOrSpecialElements) return false
+    
+    // Must not have block elements (those need regular processing)
+    const hasBlockElements = children.some(child =>
+      isNode(child, HTMLElementNode) && 
+      !this.isInlineElement(getTagName(child)) && 
+      !FormatPrinter.LINE_BREAKING_ELEMENTS.has(getTagName(child))
+    )
+    if (hasBlockElements) return false
+    
+    return true
+  }
+
+  private visitInlineFormattedContent(children: Node[], parentElement: HTMLElementNode): void {
+    // Pre-render nested elements and create content flow, but keep special elements as nodes
+    const contentFlow: (string | HTMLTextNode | ERBContentNode | HTMLElementNode)[] = []
+    
+    for (const child of children) {
+      if (isNode(child, HTMLTextNode) || isNode(child, ERBContentNode)) {
+        contentFlow.push(child)
+      } else if (isNode(child, HTMLElementNode)) {
+        const tagName = getTagName(child)
+        // Keep special line-breaking elements as nodes for special handling
+        if (FormatPrinter.LINE_BREAKING_ELEMENTS.has(tagName)) {
+          contentFlow.push(child)
+        } else {
+          // Render regular nested element using regular visitor  
+          const renderedElement = this.capture(() => {
+            this.visitHTMLElementNode(child)
+          }).join('\n')
+          contentFlow.push(renderedElement)
+        }
+      }
+    }
+    
+    const inlineVisitor = new InlineFormatVisitor(
+      this.maxLineLength,
+      this.indent
+    )
+    
+    const formattedContent = inlineVisitor.formatInlineContent(contentFlow, parentElement)
+    // Handle multi-line content properly
+    const lines = formattedContent.split('\n')
+    if (lines.length === 1) {
+      this.pushToLastLine(lines[0])
+    } else {
+      // All lines become new lines (InlineFormatVisitor already handled indentation)
+      for (const line of lines) {
+        this.lines.push(line)
+      }
+    }
+  }
+}
+
+// Inline Format Visitor - Atomic Unit System
+
+interface AtomicUnit {
+  content: string           // Rendered output
+  visualLength: number      // For line length calculation  
+  semanticType: UnitType    // text | inline-element | wbr | br-hr | erb
+  breakBehavior: BreakBehavior // can-break-after | break-opportunity | must-break-after
+  breakPriority: number     // Higher = prefer to break here (0-10)
+  sourceElement?: HTMLElementNode | ERBContentNode
+  isWhitespace?: boolean    // For space handling
+}
+
+enum UnitType {
+  TEXT = 'text',
+  INLINE_ELEMENT = 'inline-element', 
+  WORD_BREAK_OPPORTUNITY = 'wbr',
+  FORCE_LINE_BREAK = 'br-hr',
+  ERB_CONTENT = 'erb',
+  OPENING_TAG = 'opening-tag',
+  CLOSING_TAG = 'closing-tag'
+}
+
+enum BreakBehavior {
+  CAN_BREAK_AFTER = 'can-break-after',      
+  BREAK_OPPORTUNITY = 'break-opportunity',   // <wbr>
+  MUST_BREAK_AFTER = 'must-break-after',    // <br>, <hr>
+  NO_BREAK = 'no-break',                    // Inside words
+  CAN_BREAK_BEFORE = 'can-break-before'     // Closing tags
+}
+
+interface BreakPoint {
+  canBreak: boolean
+  lineUnits: AtomicUnit[]
+  remainingUnits: AtomicUnit[]
+  breakPriority: number
+}
+
+interface LineInfo {
+  units: AtomicUnit[]
+  forceBreakAfter: boolean
+}
+
+class InlineFormatVisitor {
+  constructor(
+    private maxLineLength: number,
+    private currentIndent: string
+  ) {}
+
+  formatInlineContent(contentFlow: (string | HTMLTextNode | ERBContentNode | HTMLElementNode)[], parentElement: HTMLElementNode): string {
+    const units = this.collectAtomicUnits(contentFlow)
+    return this.layoutUnits(units, parentElement)
+  }
+
+  private collectAtomicUnits(contentFlow: (string | HTMLTextNode | ERBContentNode | HTMLElementNode)[]): AtomicUnit[] {
+    const units: AtomicUnit[] = []
+    
+    for (const item of contentFlow) {
+      if (typeof item === 'string') {
+        // Pre-rendered element
+        units.push(this.processRenderedElement(item))
+      }
+      else if (isNode(item, HTMLTextNode)) {
+        units.push(...this.processTextNode(item))
+      }
+      else if (isNode(item, ERBContentNode)) {
+        units.push(this.processERBNode(item))
+      }
+      else if (isNode(item, HTMLElementNode)) {
+        // Special elements like <br>, <hr>
+        units.push(this.processSpecialElement(item))
+      }
+    }
+    
+    return units
+  }
+
+  private processTextNode(node: HTMLTextNode): AtomicUnit[] {
+    const text = node.content
+    const units: AtomicUnit[] = []
+    
+    // Split on word boundaries, keeping separators
+    const parts = text.split(/(\s+)/)
+    
+    for (const part of parts) {
+      if (part.length === 0) continue
+      
+      const isSpace = /^\s+$/.test(part)
+      
+      units.push({
+        content: part,
+        visualLength: part.length,
+        semanticType: UnitType.TEXT,
+        breakBehavior: BreakBehavior.CAN_BREAK_AFTER,
+        breakPriority: isSpace ? 8 : 3, // Prefer breaking at spaces
+        isWhitespace: isSpace
+      })
+    }
+    
+    return units
+  }
+
+  private processSpecialElement(element: HTMLElementNode): AtomicUnit {
+    const tagName = getTagName(element)
+    
+    if (tagName === 'wbr') {
+      return {
+        content: '<wbr>',
+        visualLength: 0,
+        semanticType: UnitType.WORD_BREAK_OPPORTUNITY,
+        breakBehavior: BreakBehavior.BREAK_OPPORTUNITY,
+        breakPriority: 9, // Very high priority for breaking
+      }
+    }
+    
+    if (tagName === 'br') {
+      return {
+        content: '<br>',
+        visualLength: 0,
+        semanticType: UnitType.FORCE_LINE_BREAK,
+        breakBehavior: BreakBehavior.MUST_BREAK_AFTER,
+        breakPriority: 10, // Maximum priority - must break
+      }
+    }
+    
+    if (tagName === 'hr') {
+      // For hr, we need to render it properly with attributes
+      const content = IdentityPrinter.print(element)
+      return {
+        content: content,
+        visualLength: 0,
+        semanticType: UnitType.FORCE_LINE_BREAK,
+        breakBehavior: BreakBehavior.MUST_BREAK_AFTER,
+        breakPriority: 10,
+      }
+    }
+    
+    // Fallback for other elements (shouldn't happen)
+    const content = IdentityPrinter.print(element)
+    return {
+      content: content,
+      visualLength: this.calculateVisualLength(content),
+      semanticType: UnitType.INLINE_ELEMENT,
+      breakBehavior: BreakBehavior.CAN_BREAK_AFTER,
+      breakPriority: 5,
+    }
+  }
+
+  private processRenderedElement(renderedElement: string): AtomicUnit {
+    // Check if it's a special element by looking at the content
+    if (renderedElement === '<wbr>') {
+      return {
+        content: '<wbr>',
+        visualLength: 0,
+        semanticType: UnitType.WORD_BREAK_OPPORTUNITY,
+        breakBehavior: BreakBehavior.BREAK_OPPORTUNITY,
+        breakPriority: 9, // Very high priority for breaking
+      }
+    }
+    
+    if (renderedElement === '<br>') {
+      return {
+        content: '<br>',
+        visualLength: 0,
+        semanticType: UnitType.FORCE_LINE_BREAK,
+        breakBehavior: BreakBehavior.MUST_BREAK_AFTER,
+        breakPriority: 10, // Maximum priority - must break
+      }
+    }
+    
+    if (renderedElement.startsWith('<hr')) {
+      return {
+        content: renderedElement,
+        visualLength: 0,
+        semanticType: UnitType.FORCE_LINE_BREAK,
+        breakBehavior: BreakBehavior.MUST_BREAK_AFTER,
+        breakPriority: 10,
+      }
+    }
+    
+    // Regular rendered element - treat as single atomic unit
+    return {
+      content: renderedElement,
+      visualLength: this.calculateVisualLength(renderedElement),
+      semanticType: UnitType.INLINE_ELEMENT,
+      breakBehavior: BreakBehavior.CAN_BREAK_AFTER,
+      breakPriority: 5, // Medium priority - after complete elements
+    }
+  }
+
+  private processERBNode(node: ERBContentNode): AtomicUnit {
+    // ERB content should have been pre-rendered, but if we get a node, render it simply
+    const content = IdentityPrinter.print(node)
+    return {
+      content: content,
+      visualLength: this.calculateVisualLength(content),
+      semanticType: UnitType.ERB_CONTENT,
+      breakBehavior: BreakBehavior.CAN_BREAK_AFTER,
+      breakPriority: 4,
+    }
+  }
+
+  private layoutUnits(units: AtomicUnit[], parent: HTMLElementNode): string {
+    const lines: LineInfo[] = []
+    let currentLine: AtomicUnit[] = []
+    let currentLength = this.currentIndent.length
+    
+    for (let i = 0; i < units.length; i++) {
+      const unit = units[i]
+      
+      // Handle mandatory breaks
+      if (unit.breakBehavior === BreakBehavior.MUST_BREAK_AFTER) {
+        currentLine.push(unit)
+        lines.push(this.createLine(currentLine, true)) // Force break after
+        currentLine = []
+        currentLength = this.currentIndent.length
+        continue
+      }
+      
+      // Check if unit fits on current line
+      const projectedLength = currentLength + unit.visualLength
+      
+      if (projectedLength <= this.maxLineLength || currentLine.length === 0) {
+        // Fits or must fit (first item)
+        currentLine.push(unit)
+        currentLength = projectedLength
+      } else {
+        // Need to break - find optimal break point
+        const breakPoint = this.findOptimalBreak(currentLine, unit)
+        
+        if (breakPoint.canBreak) {
+          // Break at found point
+          lines.push(this.createLine(breakPoint.lineUnits, false))
+          currentLine = [...breakPoint.remainingUnits, unit]
+          currentLength = this.currentIndent.length + this.calculateLineLength(currentLine)
+        } else {
+          // No good break point - force onto new line
+          lines.push(this.createLine(currentLine, false))
+          currentLine = [unit]
+          currentLength = this.currentIndent.length + unit.visualLength
+        }
+      }
+    }
+    
+    if (currentLine.length > 0) {
+      lines.push(this.createLine(currentLine, false))
+    }
+    
+    return this.renderLines(lines)
+  }
+
+  private findOptimalBreak(currentLine: AtomicUnit[], newUnit: AtomicUnit): BreakPoint {
+    let bestBreak: BreakPoint | null = null
+    
+    // Look for break opportunities in current line (right to left)
+    for (let i = currentLine.length - 1; i >= 0; i--) {
+      const unit = currentLine[i]
+      
+      const breakCandidate: BreakPoint = {
+        canBreak: this.canBreakAfter(unit),
+        lineUnits: currentLine.slice(0, i + 1),
+        remainingUnits: currentLine.slice(i + 1),
+        breakPriority: unit.breakPriority
+      }
+      
+      if (breakCandidate.canBreak) {
+        // Found a valid break point
+        if (!bestBreak || breakCandidate.breakPriority > bestBreak.breakPriority) {
+          bestBreak = breakCandidate
+        }
+        
+        // If we found a high-priority break (space or wbr), use it immediately
+        if (unit.breakPriority >= 8) {
+          break
+        }
+      }
+    }
+    
+    return bestBreak || {
+      canBreak: false,
+      lineUnits: currentLine,
+      remainingUnits: [],
+      breakPriority: 0
+    }
+  }
+
+  private canBreakAfter(unit: AtomicUnit): boolean {
+    return unit.breakBehavior === BreakBehavior.CAN_BREAK_AFTER ||
+           unit.breakBehavior === BreakBehavior.BREAK_OPPORTUNITY
+  }
+
+  private createLine(units: AtomicUnit[], forceBreakAfter: boolean): LineInfo {
+    return {
+      units: units,
+      forceBreakAfter: forceBreakAfter
+    }
+  }
+
+  private calculateLineLength(units: AtomicUnit[]): number {
+    return units.reduce((total, unit) => total + unit.visualLength, 0)
+  }
+
+  private renderLines(lines: LineInfo[]): string {
+    return lines.map(line => 
+      this.currentIndent + line.units.map(unit => unit.content).join('')
+    ).join('\n')
+  }
+
+  private calculateVisualLength(rendered: string): number {
+    // Remove HTML tags to get visual length
+    const withoutTags = rendered.replace(/<[^>]*>/g, '')
+    // Remove ERB tags
+    const withoutERB = withoutTags.replace(/<%.*?%>/g, '')
+    return withoutERB.length
+  }
+
 }

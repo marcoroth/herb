@@ -139,7 +139,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
@@ -151,7 +153,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
