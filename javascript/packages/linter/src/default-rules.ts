@@ -19,7 +19,7 @@ import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-bot
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
-import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
+// import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
@@ -28,7 +28,7 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
-import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
+// import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
@@ -53,7 +53,7 @@ export const defaultRules: RuleClass[] = [
   HTMLBooleanAttributesNoValueRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
-  HTMLNavigationHasLabelRule,
+  // HTMLNavigationHasLabelRule,
   HTMLNoAriaHiddenOnFocusableRule,
   // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
@@ -62,7 +62,7 @@ export const defaultRules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
-  HTMLNoTitleAttributeRule,
+  // HTMLNoTitleAttributeRule,
   HTMLTagNameLowercaseRule,
   ParserNoErrorsRule,
   SVGTagNameCapitalizationRule,
