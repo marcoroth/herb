@@ -109,6 +109,7 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stdout).toContain("Versions:")
     expect(result.stdout).toContain("@herb-tools/formatter@")
+    expect(result.stdout).toContain("@herb-tools/printer@")
   })
 
   it("should show version when -v flag is provided", async () => {
@@ -117,6 +118,7 @@ describe("CLI Binary", () => {
     expectExitCode(result, 0)
     expect(result.stdout).toContain("Versions:")
     expect(result.stdout).toContain("@herb-tools/formatter@")
+    expect(result.stdout).toContain("@herb-tools/printer@")
   })
 
   it("should format HTML/ERB from stdin", async () => {

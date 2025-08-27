@@ -6,7 +6,7 @@ import { join, resolve } from "path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
 
-import { name, version } from "../package.json"
+import { name, version, dependencies } from "../package.json"
 
 const pluralize = (count: number, singular: string, plural: string = singular + 's'): string => {
   return count === 1 ? singular : plural
@@ -52,7 +52,9 @@ export class CLI {
 
       if (args.includes("--version") || args.includes("-v")) {
         console.log("Versions:")
-        console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+        console.log(`  ${name}@${version}`)
+        console.log(`  @herb-tools/printer@${dependencies['@herb-tools/printer']}`)
+        console.log(`  ${Herb.version}`.split(", ").join("\n  "))
 
         process.exit(0)
       }
