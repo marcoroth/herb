@@ -92,6 +92,7 @@ export class TreeItemBuilder {
 
     const totalLintErrors = this.files.reduce((sum, f) => sum + f.lintErrors, 0)
     const totalLintWarnings = this.files.reduce((sum, f) => sum + f.lintWarnings, 0)
+    const filesWithIssues = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
 
     const parts = []
 
@@ -103,7 +104,6 @@ export class TreeItemBuilder {
       parts.push(`${totalLintWarnings} warning${totalLintWarnings === 1 ? '' : 's'}`)
     }
 
-    const filesWithIssues = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
     const label = filesWithIssues > 0 ? `Linter Issues (${parts.join(', ')})` : `Linter Issues (0 files)`
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
