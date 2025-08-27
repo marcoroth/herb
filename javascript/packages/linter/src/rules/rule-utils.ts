@@ -178,10 +178,12 @@ export function getTagName(node: HTMLOpenTagNode): string | null {
  * Gets the attribute name from an HTMLAttributeNode (lowercased)
  * Returns null if the attribute name contains dynamic content (ERB)
  */
-export function getAttributeName(attributeNode: HTMLAttributeNode): string | null {
+export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
   if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
     const nameNode = attributeNode.name as HTMLAttributeNameNode
     const staticName = getStaticAttributeName(nameNode)
+
+    if (!lowercase) return staticName
 
     return staticName ? staticName.toLowerCase() : null
   }
@@ -484,6 +486,7 @@ export interface StaticAttributeStaticValueParams {
   attributeName: string
   attributeValue: string
   attributeNode: HTMLAttributeNode
+  originalAttributeName: string
   parentNode: HTMLOpenTagNode
 }
 
@@ -491,6 +494,7 @@ export interface StaticAttributeDynamicValueParams {
   attributeName: string
   valueNodes: Node[]
   attributeNode: HTMLAttributeNode
+  originalAttributeName: string
   parentNode: HTMLOpenTagNode
   combinedValue?: string | null
 }
@@ -630,6 +634,7 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
   private checkAttributesOnNode(node: HTMLOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
+      const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
@@ -641,16 +646,17 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
           attributeName: staticAttributeName,
           attributeValue: staticAttributeValue,
           attributeNode,
+          originalAttributeName,
           parentNode: node
         })
       } else if (staticAttributeName && isEffectivelyStaticValue && !hasOutputERB) {
         const validatableContent = getValidatableStaticContent(valueNodes) || ""
 
-        this.checkStaticAttributeStaticValue({ attributeName: staticAttributeName, attributeValue: validatableContent, attributeNode, parentNode: node })
+        this.checkStaticAttributeStaticValue({ attributeName: staticAttributeName, attributeValue: validatableContent, attributeNode, originalAttributeName, parentNode: node })
       } else if (staticAttributeName && hasOutputERB) {
         const combinedValue = getAttributeValue(attributeNode)
 
-        this.checkStaticAttributeDynamicValue({ attributeName: staticAttributeName, valueNodes, attributeNode, parentNode: node, combinedValue })
+        this.checkStaticAttributeDynamicValue({ attributeName: staticAttributeName, valueNodes, attributeNode, parentNode: node, originalAttributeName, combinedValue })
       } else if (isDynamicName && staticAttributeValue !== null) {
         const nameNode = attributeNode.name as HTMLAttributeNameNode
         const nameNodes = nameNode.children || []

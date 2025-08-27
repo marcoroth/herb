@@ -1,27 +1,25 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
-  protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams) {
-    if (!isBooleanAttribute(attributeName)) return
-    if (!hasAttributeValue(attributeNode)) return
-
-    this.addOffense(
-      `Boolean attribute \`${attributeName}\` should not have a value. Use \`${attributeName}\` instead of \`${attributeName}="${attributeName}"\`.`,
-      attributeNode.value!.location,
-      "error"
-    )
+  protected checkStaticAttributeStaticValue({ originalAttributeName, attributeNode }: StaticAttributeStaticValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
   }
 
-  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode, combinedValue }: StaticAttributeDynamicValueParams) {
+  protected checkStaticAttributeDynamicValue({ originalAttributeName, attributeNode }: StaticAttributeDynamicValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
+  }
+
+  private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {
     if (!isBooleanAttribute(attributeName)) return
     if (!hasAttributeValue(attributeNode)) return
 
     this.addOffense(
-      `Boolean attribute \`${attributeName}\` should not have a value. Use \`${attributeName}\` instead of \`${attributeName}="${combinedValue}"\`.`,
+      `Boolean attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not have a value. Use \`${attributeName.toLowerCase()}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
       attributeNode.value!.location,
       "error"
     )

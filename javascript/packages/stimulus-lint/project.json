@@ -1,0 +1,39 @@
+{
+  "name": "stimulus-lint",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "javascript/packages/stimulus-lint/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "cwd": "javascript/packages/stimulus-lint",
+        "command": "rollup -c rollup.config.mjs"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "cwd": "javascript/packages/stimulus-lint",
+        "command": "rollup -c rollup.config.mjs --watch"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "cwd": "javascript/packages/stimulus-lint",
+        "command": "vitest --run"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "javascript/packages/stimulus-lint",
+        "command": "rimraf dist"
+      }
+    }
+  }
+}

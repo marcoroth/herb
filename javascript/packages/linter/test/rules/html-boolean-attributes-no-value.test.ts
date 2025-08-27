@@ -45,7 +45,7 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="true"`.')
   })
 
   test("passes for non-boolean attributes with values", () => {
@@ -77,7 +77,7 @@ describe("html-boolean-attributes-no-value", () => {
 
     expect(lintResult.errors).toBe(2)
     expect(lintResult.offenses[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
-    expect(lintResult.offenses[1].message).toBe('Boolean attribute `required` should not have a value. Use `required` instead of `required="required"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `required` should not have a value. Use `required` instead of `required="true"`.')
   })
 
   test("handles case insensitive boolean attributes", () => {
@@ -87,8 +87,8 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(2)
-    expect(lintResult.offenses[0].message).toBe('Boolean attribute `checked` should not have a value. Use `checked` instead of `checked="checked"`.')
-    expect(lintResult.offenses[1].message).toBe('Boolean attribute `disabled` should not have a value. Use `disabled` instead of `disabled="disabled"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `CHECKED` should not have a value. Use `checked` instead of `CHECKED="CHECKED"`.')
+    expect(lintResult.offenses[1].message).toBe('Boolean attribute `DISABLED` should not have a value. Use `disabled` instead of `DISABLED="disabled"`.')
   })
 
   test("passes for video controls", () => {
@@ -119,7 +119,7 @@ describe("html-boolean-attributes-no-value", () => {
     const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
+    expect(lintResult.offenses[0].message).toBe('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="something-else"`.')
   })
 
   test("handles mixed boolean and regular attributes", () => {

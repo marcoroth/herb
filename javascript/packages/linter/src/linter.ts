@@ -4,9 +4,9 @@ import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, Li
 import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
-  private rules: RuleClass[]
-  private herb: HerbBackend
-  private offenses: LintOffense[]
+  protected rules: RuleClass[]
+  protected herb: HerbBackend
+  protected offenses: LintOffense[]
 
   /**
    * Creates a new Linter instance.
@@ -23,7 +23,7 @@ export class Linter {
    * Returns the default set of rule classes used by the linter.
    * @returns Array of rule classes
    */
-  private getDefaultRules(): RuleClass[] {
+  protected getDefaultRules(): RuleClass[] {
     return defaultRules
   }
 
@@ -34,14 +34,14 @@ export class Linter {
   /**
    * Type guard to check if a rule is a LexerRule
    */
-  private isLexerRule(rule: Rule): rule is LexerRule {
+  protected isLexerRule(rule: Rule): rule is LexerRule {
     return (rule.constructor as any).type === "lexer"
   }
 
   /**
    * Type guard to check if a rule is a SourceRule
    */
-  private isSourceRule(rule: Rule): rule is SourceRule {
+  protected isSourceRule(rule: Rule): rule is SourceRule {
     return (rule.constructor as any).type === "source"
   }
 
