@@ -104,7 +104,7 @@ describe("@herb-tools/linter", () => {
         return false
       }
 
-      check(result: ParseResult): LintOffense[] {
+      check(_result: ParseResult): LintOffense[] {
         return [{
           message: "This should never appear",
           location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },

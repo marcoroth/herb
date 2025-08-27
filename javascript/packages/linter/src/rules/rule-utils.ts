@@ -24,8 +24,6 @@ import type {
   Node
 } from "@herb-tools/core"
 
-import { IdentityPrinter } from "@herb-tools/printer"
-
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
@@ -287,7 +285,7 @@ export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode)
  * Gets the attribute value content from an HTMLAttributeValueNode
  */
 export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
+  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
 
   if (valueNode === null) return null
 
@@ -381,7 +379,7 @@ export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): bool
 /**
  * Checks if a tag has a specific attribute
  */
-export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
+export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
   const attributes = getAttributes(node)
 
   return findAttributeByName(attributes, attributeName)
@@ -673,28 +671,28 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
   /**
    * Static attribute name with static value: class="container"
    */
-  protected checkStaticAttributeStaticValue(params: StaticAttributeStaticValueParams): void {
+  protected checkStaticAttributeStaticValue(_params: StaticAttributeStaticValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Static attribute name with dynamic value: class="<%= css_class %>"
    */
-  protected checkStaticAttributeDynamicValue(params: StaticAttributeDynamicValueParams): void {
+  protected checkStaticAttributeDynamicValue(_params: StaticAttributeDynamicValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Dynamic attribute name with static value: data-<%= key %>="foo"
    */
-  protected checkDynamicAttributeStaticValue(params: DynamicAttributeStaticValueParams): void {
+  protected checkDynamicAttributeStaticValue(_params: DynamicAttributeStaticValueParams): void {
     // Default implementation does nothing
   }
 
   /**
    * Dynamic attribute name with dynamic value: data-<%= key %>="<%= value %>"
    */
-  protected checkDynamicAttributeDynamicValue(params: DynamicAttributeDynamicValueParams): void {
+  protected checkDynamicAttributeDynamicValue(_params: DynamicAttributeDynamicValueParams): void {
     // Default implementation does nothing
   }
 }

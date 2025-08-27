@@ -132,7 +132,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`user.logged_in? ? \"Welcome\" : \"Please login\"`)
+    expect(result).toBe(`user.logged_in? ? "Welcome" : "Please login"`)
   })
 
   test("converts if/else with mixed content to ternary", () => {
@@ -140,7 +140,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`"Hello #{premium? ? \"Premium User\" : \"Guest\"}!"`)
+    expect(result).toBe(`"Hello #{premium? ? "Premium User" : "Guest"}!"`)
   })
 
   test("ignores if without else", () => {
@@ -156,7 +156,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`active? ? \"Status: \\\"active\\\"\" : \"Status: \\\"inactive\\\"\"`)
+    expect(result).toBe(`active? ? "Status: \\"active\\"" : "Status: \\"inactive\\""`)
   })
 
   test("handles empty if/else branches", () => {
@@ -164,7 +164,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`condition? ? \"\" : \"Empty\"`)
+    expect(result).toBe(`condition? ? "" : "Empty"`)
   })
 
   test("adds parentheses for complex conditions with spaces", () => {
@@ -172,7 +172,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`(user && user.active?) ? \"Active\" : \"Inactive\"`)
+    expect(result).toBe(`(user && user.active?) ? "Active" : "Inactive"`)
   })
 
   test("adds parentheses for complex conditions with spaces", () => {
@@ -180,7 +180,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value, { forceQuotes: true})
 
-    expect(result).toBe(`"#{(user && user.active?) ? \"Active\" : \"Inactive\"}"`)
+    expect(result).toBe(`"#{(user && user.active?) ? "Active" : "Inactive"}"`)
   })
 
   test("no parentheses for simple method calls", () => {
@@ -188,7 +188,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value)
 
-    expect(result).toBe(`logged_in? ? \"Welcome\" : \"Login\"`)
+    expect(result).toBe(`logged_in? ? "Welcome" : "Login"`)
   })
 
   test("no parentheses for simple method calls with force", () => {
@@ -196,7 +196,7 @@ describe("ERBToRubyStringPrinter", () => {
     const parseResult = Herb.parse(erb)
     const result = ERBToRubyStringPrinter.print(parseResult.value, { forceQuotes: true})
 
-    expect(result).toBe(`"#{logged_in? ? \"Welcome\" : \"Login\"}"`)
+    expect(result).toBe(`"#{logged_in? ? "Welcome" : "Login"}"`)
   })
 
   test("does not convert if/elsif/else to ternary", () => {

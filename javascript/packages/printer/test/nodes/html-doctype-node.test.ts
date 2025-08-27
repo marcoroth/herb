@@ -1,4 +1,3 @@
-import dedent from "dedent"
 import { describe, test, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"

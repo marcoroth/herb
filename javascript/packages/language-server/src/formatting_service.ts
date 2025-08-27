@@ -56,7 +56,7 @@ export class FormattingService {
           if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
             return false
           }
-        } catch (error) {
+        } catch {
           continue
         }
       }
@@ -71,7 +71,7 @@ export class FormattingService {
           if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
             return true
           }
-        } catch (error) {
+        } catch {
           continue
         }
       }

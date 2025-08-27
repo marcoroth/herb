@@ -46,14 +46,6 @@ async function getNodeTypes() {
 function generateNodeTest(nodeInfo) {
   const { name: nodeName, fields } = nodeInfo
 
-  const kebabCase = nodeName
-    .replace(/^HTML/, 'html-')
-    .replace(/^ERB/, 'erb-')
-    .replace(/([A-Z])/g, '-$1')
-    .toLowerCase()
-    .replace(/^-/, '')
-    .replace(/--/g, '-')
-
   let astType = nodeName
 
   if (astType.startsWith('HTML')) {
@@ -99,10 +91,6 @@ function generateNodeTest(nodeInfo) {
 
   const allProperties = [...standardProperties, ...nodeSpecificProperties]
   const formattedArgs = allProperties.map(prop => `          ${prop}`).join(',\n')
-
-  const nodeInstantiation = `const node = ${nodeName}.from({
-${formattedArgs}
-      })`
 
   return dedent`
     import dedent from "dedent"

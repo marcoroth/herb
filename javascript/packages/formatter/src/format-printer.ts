@@ -956,9 +956,9 @@ export class FormatPrinter extends Printer {
 
     if (node.children && node.children.length > 0) {
       inner = node.children.map(child => {
-        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
+        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
           return child.content
-        } else if (isERBNode(child) || isNode(child, ERBContentNode)) {
+        } else if (isERBNode(child) || isNode(child, ERBContentNode)) {
           return this.reconstructERBNode(child, false)
         } else {
           return ""
@@ -1226,7 +1226,7 @@ export class FormatPrinter extends Printer {
    * Determines if the open tag should be rendered inline
    */
   private shouldRenderOpenTagInline(node: HTMLElementNode): boolean {
-    const children = node.open_tag?.children || []
+    const children = node.open_tag?.children || []
     const attributes = filterNodes(children, HTMLAttributeNode)
     const inlineNodes = this.extractInlineNodes(children)
     const hasERBControlFlow = inlineNodes.some(node => isERBControlFlowNode(node)) || children.some(node => isERBControlFlowNode(node))
@@ -1555,7 +1555,7 @@ export class FormatPrinter extends Printer {
       let htmlTextContent = ""
 
       const content = attributeValue.children.map((child: Node) => {
-        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
+        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
           htmlTextContent += child.content
 
           return child.content

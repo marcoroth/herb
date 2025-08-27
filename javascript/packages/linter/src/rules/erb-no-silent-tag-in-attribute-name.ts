@@ -23,7 +23,7 @@ class ERBNoSilentTagInAttributeNameVisitor extends BaseRuleVisitor {
   private isSilentERBTag(node: ERBContentNode): boolean {
     const silentTags = ["<%", "<%-", "<%#"]
 
-    return silentTags.includes(node.tag_opening?.value || "")
+    return silentTags.includes(node.tag_opening?.value || "")
   }
 }
 

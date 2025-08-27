@@ -329,7 +329,7 @@ describe('Node Type Guards', () => {
       })
 
       it('should handle large arrays', () => {
-        const manyLiterals = new Array(100).fill(literalNode)
+        const manyLiterals = new Array({ length: 100 }).fill(literalNode)
         expect(areAllOfType(manyLiterals, LiteralNode)).toBe(true)
         expect(areAllOfType(manyLiterals, HTMLTextNode)).toBe(false)
       })

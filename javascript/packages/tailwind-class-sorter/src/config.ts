@@ -161,8 +161,8 @@ function createLoader<T>({
       url.searchParams.append('t', cacheKey)
 
       return await jiti.import(url.href, { default: true })
-    } catch (err) {
-      return onError(id, err, resourceType)
+    } catch (error) {
+      return onError(id, error, resourceType)
     }
   }
 

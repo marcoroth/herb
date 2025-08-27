@@ -34,7 +34,10 @@ import type { Position } from "./position.js"
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
 export function isERBOutputNode(node: Node): node is ERBContentNode {
-  return isNode(node, ERBContentNode) && ["<%=", "<%=="].includes((node as ERBContentNode).tag_opening?.value!)
+  if (!isNode(node, ERBContentNode)) return false
+  if (!node.tag_opening?.value) return false
+
+  return ["<%=", "<%=="].includes(node.tag_opening?.value)
 }
 
 /**
@@ -183,7 +186,7 @@ export function getCombinedAttributeName(attributeNameNode: HTMLAttributeNameNod
 /**
  * Gets the tag name of an HTML element node
  */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string {
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string {
   return node.tag_name?.value ?? ""
 }
 
@@ -281,7 +284,7 @@ export function getNodesBeforePosition<T extends Node>(nodes: T[], position: Pos
 }
 
 /**
- * Gets nodes that start after the specified position  
+ * Gets nodes that start after the specified position
  * @param inclusive - If true, includes nodes that start exactly at the position (default: true, matching typical boundary behavior)
  */
 export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Position, inclusive = true): T[] {

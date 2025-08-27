@@ -44,8 +44,8 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
     if (correctCamelCase && tagName !== correctCamelCase) {
       let type: string = node.type
 
-      if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
-      if (node.type == "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
+      if (node.type === "AST_HTML_OPEN_TAG_NODE") type = "Opening"
+      if (node.type === "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
 
       this.addOffense(
         `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,

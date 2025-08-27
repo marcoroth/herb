@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
-import { filterLiteralNodes } from "@herb-tools/core"
+import { filterLiteralNodes } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"

@@ -36,7 +36,7 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
     this.checkTagName(node)
   }
 
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | null): void {
+  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | null): void {
     if (!node) return
 
     const tagName = getTagName(node)

@@ -286,7 +286,7 @@ describe("FileRenderer", () => {
     })
 
     it("should handle special characters", () => {
-      const content = `line with\ttabs\nline with "quotes"\nline with \"single quotes\"`
+      const content = `line with\ttabs\nline with "quotes"\nline with "single quotes"`
       const result = renderer.renderWithLineNumbers("/test/file.erb", content)
 
       expect(stripAnsiColors(result)).toContain("tabs")

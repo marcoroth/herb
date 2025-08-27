@@ -1,6 +1,6 @@
 import type { Node, NodeType, ERBNode } from "./nodes.js"
 
-import { Token } from "./token.js"
+import { Token } from "./token.js"
 import { ParseResult } from "./parse-result.js"
 
 import {
@@ -207,22 +207,22 @@ export function areAllOfType(
  */
 
 export function filterNodes<T extends NodeType[]>(
-  nodes: Node[] | undefined | null,
+  nodes: Node[] | undefined | null,
   ...types: T
 ): NodeTypeToClass[T[number]][]
 
 export function filterNodes<T extends (new (...args: any[]) => Node)[]>(
-  nodes: Node[] | undefined | null,
+  nodes: Node[] | undefined | null,
   ...types: T
 ): ClassToInstance<T[number]>[]
 
 export function filterNodes(
-  nodes: Node[] | undefined | null,
+  nodes: Node[] | undefined | null,
   ...types: Array<(node: Node) => boolean>
 ): Node[]
 
 export function filterNodes(
-  nodes: Node[] | undefined | null,
+  nodes: Node[] | undefined | null,
   ...types: Array<NodeType | (new (...args: any[]) => Node) | ((node: Node) => boolean)>
 ): Node[] {
   if (!nodes) return []
@@ -275,7 +275,7 @@ export function isNode(
 }
 
 export function isToken(object: any): object is Token {
-  return (object instanceof Token) || (object?.constructor?.name === "Token" && "value" in object) || (object as any).type?.startsWith('TOKEN_')
+  return (object instanceof Token) || (object?.constructor?.name === "Token" && "value" in object) || (object as any).type?.startsWith('TOKEN_')
 }
 
 export function isParseResult(object: any): object is ParseResult {

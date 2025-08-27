@@ -12,7 +12,7 @@ class NoPositiveTabIndexVisitor extends AttributeVisitorMixin {
 
     if (!isNaN(tabIndexValue) && tabIndexValue > 0) {
       this.addOffense(
-        `Do not use positive \`tabindex\` values as they are error prone and can severely disrupt navigation experience for keyboard users. Use \`tabindex="0"\` to make an element focusable or \`tabindex=\"-1\"\` to remove it from the tab sequence.`,
+        `Do not use positive \`tabindex\` values as they are error prone and can severely disrupt navigation experience for keyboard users. Use \`tabindex="0"\` to make an element focusable or \`tabindex="-1"\` to remove it from the tab sequence.`,
         attributeNode.location,
         "error"
       )

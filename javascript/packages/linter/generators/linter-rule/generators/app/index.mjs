@@ -13,7 +13,7 @@ export default class extends Generator {
     try {
       execSync("which gh", { stdio: "ignore" })
       hasGH = true
-    } catch (error) {
+    } catch {
       this.log(colorize("GitHub CLI (gh) not found. Manual input will be required.", "yellow"))
     }
 
@@ -65,7 +65,7 @@ export default class extends Generator {
             issueData.issueNumber = issueChoice.issue
             issueData.issueBody = issueDetails.body
           }
-        } catch (error) {
+        } catch {
           this.log(colorize("Failed to fetch GitHub issues. Proceeding with manual input.", "yellow"))
         }
       }
@@ -148,7 +148,7 @@ export default class extends Generator {
 
     try {
       await fs.appendFile(indexPath, newExport + "\n")
-    } catch (error) {
+    } catch {
       this.log(colorize(`Warning: Could not update index.ts automatically. Please add: ${newExport}`, "yellow"))
     }
 
@@ -166,7 +166,7 @@ export default class extends Generator {
       lines.splice(arrayEndIndex, 0, `  ${this.ruleClassName},`)
 
       await fs.writeFile(defaultRulesPath, lines.join("\n"))
-    } catch (error) {
+    } catch {
       this.log(colorize(`Warning: Could not update default-rules.ts automatically. Please add import and rule class manually.`, "yellow"))
     }
 
@@ -199,7 +199,7 @@ export default class extends Generator {
           await fs.writeFile(readmePath, lines.join("\n"))
         }
       }
-    } catch (error) {
+    } catch {
       this.log(colorize(`Warning: Could not update README.md automatically. Please add: ${newRule}`, "yellow"))
     }
   }

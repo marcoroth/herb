@@ -58,7 +58,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   }
 
   private checkOpenTagWhitespace(openTag: Token, content:string):void {
-    if (content.startsWith(" ") || content.startsWith("\n")) {
+    if (content.startsWith(" ") || content.startsWith("\n")) {
       return
     }
 
@@ -70,7 +70,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor {
   }
 
   private checkCloseTagWhitespace(closeTag: Token, content:string):void {
-    if (content.endsWith(" ") || content.endsWith("\n")) {
+    if (content.endsWith(" ") || content.endsWith("\n")) {
       return
     }
 

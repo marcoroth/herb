@@ -69,7 +69,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   private isFullUrl(node: HTMLAttributeValueNode): boolean {
     const content = this.getContentofFirstChild(node)
 
-    return content.startsWith("http://") || content.startsWith("https://")
+    return content.startsWith("http://") || content.startsWith("https://")
   }
 
   private shouldFlagAsImageTagCandidate(node: HTMLAttributeValueNode): boolean {
@@ -84,7 +84,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
 
     try {
       return ERBToRubyStringPrinter.print(node, { ignoreErrors: false })
-    } catch (error) {
+    } catch {
       return "expression"
     }
   }
