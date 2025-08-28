@@ -1,7 +1,7 @@
 {
-  "name": "@herb-tools/browser",
+  "name": "@herb-tools/formatter",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "javascript/packages/browser/src",
+  "sourceRoot": "javascript/packages/formatter/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -11,7 +11,8 @@
       },
       "dependsOn": [
         "@herb-tools/core:build",
-        "wasm:build"
+        "@herb-tools/printer:build",
+        "@herb-tools/node-wasm:build"
       ]
     },
     "test": {

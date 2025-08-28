@@ -5,35 +5,29 @@
   "projectType": "library",
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "executor": "nx:run-script",
       "options": {
-        "cwd": "javascript/packages/stimulus-lint",
-        "command": "rollup -c rollup.config.mjs"
-      }
-    },
-    "dev": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
-      "options": {
-        "cwd": "javascript/packages/stimulus-lint",
-        "command": "rollup -c rollup.config.mjs --watch"
-      }
+        "script": "build"
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/node-wasm:build",
+        "@herb-tools/linter:build",
+        "@herb-tools/highlighter:build"
+      ]
     },
     "test": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "executor": "nx:run-script",
       "options": {
-        "cwd": "javascript/packages/stimulus-lint",
-        "command": "vitest --run"
+        "script": "test"
       }
     },
     "clean": {
-      "executor": "nx:run-commands",
+      "executor": "nx:run-script",
       "options": {
-        "cwd": "javascript/packages/stimulus-lint",
-        "command": "rimraf dist"
+        "script": "clean"
       }
     }
-  }
+  },
+  "tags": []
 }
