@@ -97,19 +97,6 @@ describe("html-no-empty-attributes", () => {
     expect(lintResult.offenses[0].severity).toBe("warning")
   })
 
-  test("fails for empty alt attribute", () => {
-    const html = '<img src="image.png" alt="">'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `alt` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
-  })
-
   test("fails for empty title attribute", () => {
     const html = '<a href="https://example.com" title="">Link</a>'
 

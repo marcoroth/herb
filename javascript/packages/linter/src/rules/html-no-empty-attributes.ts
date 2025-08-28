@@ -12,7 +12,6 @@ const RESTRICTED_ATTRIBUTES = new Set([
   'for',
   'src',
   'href',
-  'alt',
   'title',
   'data',
   'role'
