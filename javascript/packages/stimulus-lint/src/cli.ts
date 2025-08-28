@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 import { resolve } from "path"
 
 import { Project } from "stimulus-parser"
-import { CLI as HerbLinterCLI, FileProcessor } from "@herb-tools/linter"
+import { CLI as HerbLinterCLI, FileProcessor } from "@herb-tools/linter/cli"
 import { Herb } from "@herb-tools/node-wasm"
 import { colorize } from "@herb-tools/highlighter"
 

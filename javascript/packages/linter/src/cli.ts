@@ -7,6 +7,8 @@ import { ArgumentParser, type FormatOption } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
 
+export * from "./cli/index.js"
+
 export class CLI {
   protected argumentParser = new ArgumentParser()
   protected fileProcessor = new FileProcessor()
