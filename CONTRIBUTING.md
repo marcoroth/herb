@@ -103,7 +103,7 @@ Finished lexing in:
 We use `rake` and `rake-compiler` to compile the Ruby extension. Running rake will generate the needed templates, run make, build the needed artifacts, and run the Ruby tests.
 
 ```bash
-rake
+bundle exec rake
 ```
 
 If `rake` was successful you can use `bundle console` to interact with `Herb`:
@@ -131,7 +131,7 @@ make test && ./run_herb_tests
 #### For the Ruby Tests
 
 ```bash
-rake test
+bundle exec rake test
 ```
 
 ### Clean
