@@ -11,15 +11,10 @@
   },
   "devDependencies": {
     "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4",
-    "@nx/js": "^21.4.0",
-    "@nx/node": "^21.4.0",
-    "@nx/web": "^21.4.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
-    "@testing-library/dom": "^10.4.0",
-    "@types/glob": "^9.0.0",
     "@vitest/browser": "^3.2.4",
     "@vitest/ui": "^3.2.4",
     "concurrently": "^9.2.0",
@@ -32,10 +27,8 @@
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "rollup": "^4.47.1",
-    "tslib": "^2.8.1",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
-    "verdaccio": "^6.0.5",
     "vitest": "^3.2.4",
     "yaml": "^2.8.0",
     "yeoman-environment": "^4.4.1",
@@ -54,8 +47,7 @@
     "lint:oxc": "oxlint --config oxlint.json javascript/packages/",
     "lint:oxc:fix": "oxlint --config oxlint.json --fix javascript/packages/",
     "format": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --write",
-    "release": "tsx javascript/tools/scripts/release.ts",
-    "registry": "nx local-registry"
+    "release": "tsx javascript/tools/scripts/release.ts"
   },
   "workspaces": [
     "javascript/packages/*",
