@@ -5,15 +5,18 @@ module Herb
     class Warning
       attr_reader type: String
 
-      attr_reader location: Location
+      attr_reader location: Location?
 
       attr_reader message: String
 
-      # : (String, Location, String) -> void
-      def initialize: (String, Location, String) -> void
+      # : (String, Location?, String) -> void
+      def initialize: (String, Location?, String) -> void
 
       # : () -> serialized_warning
       def to_hash: () -> serialized_warning
+
+      # : (Hash[untyped, untyped]) -> Warning
+      def self.from_hash: (Hash[untyped, untyped]) -> Warning
 
       # : () -> String
       def class_name: () -> String

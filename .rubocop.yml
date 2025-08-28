@@ -48,6 +48,10 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - lib/herb/project.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/range.rb
+    - lib/herb/parse_result.rb
+    - lib/herb/errors.rb
+    - lib/herb/cli.rb
 
 Metrics/MethodLength:
   Max: 20
@@ -55,26 +59,33 @@ Metrics/MethodLength:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/project.rb
+    - lib/herb/errors.rb
+    - lib/herb/range.rb
     - templates/template.rb
-    - test/fork_helper.rb
-    - test/snapshot_utils.rb
+    - test/**
 
 Metrics/AbcSize:
   Exclude:
     - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/lex_result.rb
     - lib/herb/cli.rb
     - lib/herb/errors.rb
     - lib/herb/project.rb
+    - lib/herb/parse_result.rb
+    - lib/herb/range.rb
+    - lib/herb/token.rb
+    - lib/herb/lint_result.rb
     - templates/template.rb
-    - test/fork_helper.rb
-    - test/snapshot_utils.rb
+    - test/**
 
 Metrics/ClassLength:
   Exclude:
     - lib/herb/cli.rb
     - lib/herb/project.rb
     - lib/herb/visitor.rb
+    - lib/herb/backend.rb
+    - lib/herb/ast/nodes.rb
     - test/**/*_test.rb
 
 Metrics/BlockLength:
@@ -83,6 +94,7 @@ Metrics/BlockLength:
     - Rakefile
     - "*.gemspec"
     - "**/*.rake"
+    - lib/herb/cli.rb
     - lib/herb/project.rb
     - test/**/*_test.rb
 
@@ -90,12 +102,17 @@ Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/nodes.rb
     - lib/herb/errors.rb
+    - lib/herb/lint_offense.rb
 
 Metrics/PerceivedComplexity:
+  Max: 15
   Exclude:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/project.rb
+    - lib/herb/range.rb
+    # - lib/herb/errors.rb
+    # - lib/herb/lex_result.rb
     - test/snapshot_utils.rb
 
 Layout/LineLength:
@@ -104,6 +121,10 @@ Layout/LineLength:
     - test/**/*_test.rb
     - lib/herb/token.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/errors.rb
+    - lib/herb/backend.rb
+    - lib/herb/backends/native_backend.rb
+    - lib/herb/backends/node_backend.rb
 
 Layout/EmptyLines:
   Exclude:
@@ -124,6 +145,18 @@ Layout/FirstHashElementIndentation:
 
 Layout/LeadingCommentSpace:
   Enabled: false
+
+Layout/IndentationWidth:
+  Exclude:
+    - lib/herb/ast/nodes.rb
+
+Layout/ElseAlignment:
+  Exclude:
+    - lib/herb/ast/nodes.rb
+
+Layout/EndAlignment:
+  Exclude:
+    - lib/herb/ast/nodes.rb
 
 Security/Eval:
   Exclude:

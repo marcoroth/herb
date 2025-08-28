@@ -1,0 +1,17 @@
+# For methods dynamically defined when requiring the Ruby C-Extension
+#
+# See: ext/herb/native_backend.c
+
+module Herb
+  module Backends
+    class NativeBackend < Backend
+      def c_perform_lex: (String) -> untyped
+      def c_perform_lex_file: (String) -> untyped
+      def c_perform_parse: (String, Hash[untyped, untyped]) -> untyped
+      def c_perform_parse_file: (String, Hash[untyped, untyped]) -> untyped
+      def c_perform_extract_ruby: (String) -> untyped
+      def c_perform_extract_html: (String) -> untyped
+      def c_backend_version: () -> String?
+    end
+  end
+end

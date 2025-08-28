@@ -15,6 +15,9 @@ module Herb
     # : (Integer, Integer) -> Range
     def self.from: (Integer, Integer) -> Range
 
+    # : (Array[untyped]|Hash[untyped, untyped]|nil) -> Range?
+    def self.from_hash: (Array[untyped] | Hash[untyped, untyped] | nil) -> Range?
+
     # : () -> serialized_range
     def to_a: () -> serialized_range
 

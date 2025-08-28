@@ -1,4 +1,41 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
+  def self.load_backend: (?untyped backend_name) -> untyped
+
+  def self.backend_loaded?: () -> untyped
+
+  def self.ensure_backend!: () -> untyped
+
+  def self.lex: (untyped source) -> untyped
+
+  def self.lex_file: (untyped path) -> untyped
+
+  def self.parse: (untyped source, ?backend: untyped, **untyped options) -> untyped
+
+  def self.parse_file: (untyped path, ?backend: untyped, **untyped options) -> untyped
+
+  def self.extract_ruby: (untyped source) -> untyped
+
+  def self.extract_html: (untyped source) -> untyped
+
+  def self.version: () -> untyped
+
+  def self.format: (untyped source, ?backend: untyped, **untyped options) -> untyped
+
+  def self.format_file: (untyped path, ?backend: untyped, **untyped options) -> untyped
+
+  def self.lint: (untyped source, ?backend: untyped, **untyped options) -> untyped
+
+  def self.lint_file: (untyped path, ?backend: untyped, **untyped options) -> untyped
+
+  def self.print_node: (untyped node, ?backend: untyped, **untyped options) -> untyped
+
+  def self.available_backends: () -> untyped
+
+  def self.switch_backend: (untyped backend_name) -> untyped
+
+  def self.current_backend: () -> untyped
+
+  def self.backend: (untyped backend_name) -> untyped
 end

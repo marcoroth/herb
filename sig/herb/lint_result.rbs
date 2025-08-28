@@ -1,0 +1,61 @@
+# Generated from lib/herb/lint_result.rb with RBS::Inline
+
+module Herb
+  class LintResult
+    attr_reader offenses: Array[LintOffense]
+
+    # : (?Array[LintOffense | Hash[untyped, untyped]]) -> void
+    def initialize: (?Array[LintOffense | Hash[untyped, untyped]]) -> void
+
+    # : () -> Integer
+    def errors: () -> Integer
+
+    # : () -> Integer
+    def warnings: () -> Integer
+
+    # : () -> Integer
+    def infos: () -> Integer
+
+    # : () -> Integer
+    def hints: () -> Integer
+
+    # : () -> Integer
+    def total_offenses: () -> Integer
+
+    # : () -> bool
+    def success?: () -> bool
+
+    # : () -> bool
+    def clean?: () -> bool
+
+    # : (String) -> Array[LintOffense]
+    def offenses_by_severity: (String) -> Array[LintOffense]
+
+    # : () -> Array[LintOffense]
+    def error_offenses: () -> Array[LintOffense]
+
+    # : () -> Array[LintOffense]
+    def warning_offenses: () -> Array[LintOffense]
+
+    # : () -> Array[LintOffense]
+    def info_offenses: () -> Array[LintOffense]
+
+    # : () -> Array[LintOffense]
+    def hint_offenses: () -> Array[LintOffense]
+
+    # : (String) -> Array[LintOffense]
+    def offenses_for_rule: (String) -> Array[LintOffense]
+
+    # : () -> Hash[Symbol, untyped]
+    def to_h: () -> Hash[Symbol, untyped]
+
+    # : (?untyped) -> String
+    def to_json: (?untyped) -> String
+
+    # : () -> String
+    def to_s: () -> String
+
+    # : (Hash[untyped, untyped]) -> LintResult
+    def self.from_hash: (Hash[untyped, untyped]) -> LintResult
+  end
+end

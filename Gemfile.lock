@@ -77,6 +77,8 @@ GEM
     minitest-difftastic (0.2.1)
       difftastic (~> 0.6)
     mutex_m (0.3.0)
+    nodo (1.8.1)
+      logger
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
@@ -159,6 +161,7 @@ DEPENDENCIES
   lz_string
   maxitest
   minitest-difftastic (~> 0.2)
+  nodo (~> 1.8)
   prism!
   rake (~> 13.2)
   rake-compiler (~> 1.2)

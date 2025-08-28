@@ -1,0 +1,29 @@
+# Generated from lib/herb/backends/native_backend.rb with RBS::Inline
+
+module Herb
+  module Backends
+    class NativeBackend < Backend
+      def perform_load: () -> untyped
+
+      def perform_lex: (untyped source) -> untyped
+
+      def perform_lex_file: (untyped path) -> untyped
+
+      def perform_parse: (untyped source, untyped options) -> untyped
+
+      def perform_parse_file: (untyped path, untyped options) -> untyped
+
+      def perform_extract_ruby: (untyped source) -> untyped
+
+      def perform_extract_html: (untyped source) -> untyped
+
+      def backend_version: () -> untyped
+
+      def perform_format: (untyped source, untyped options) -> untyped
+
+      def perform_lint: (untyped source, untyped options) -> untyped
+
+      def perform_print_node: (untyped node, untyped options) -> untyped
+    end
+  end
+end

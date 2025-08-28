@@ -65,7 +65,7 @@ module Herb
       end
 
       def ruby_type
-        "Herb::AST::#{specific_kind || "Node"}"
+        "Herb::AST::#{specific_kind || "Node"}?"
       end
 
       def specific_kind
@@ -79,7 +79,7 @@ module Herb
 
     class TokenField < Field
       def ruby_type
-        "Herb::Token"
+        "Herb::Token?"
       end
 
       def c_type

@@ -22,6 +22,43 @@ module Herb
       new(from, to)
     end
 
+    #: (Array[untyped]|Hash[untyped, untyped]|nil) -> Range?
+    def self.from_hash(data)
+      return nil if data.nil?
+
+      case data
+      when Array
+        from = if data[0].is_a?(Integer)
+                 data[0]
+               else
+                 (data[0].respond_to?(:to_i) ? data[0].to_i : 0)
+               end
+        to = if data[1].is_a?(Integer)
+               data[1]
+             else
+               (data[1].respond_to?(:to_i) ? data[1].to_i : 0)
+             end
+
+        new(from, to)
+      when Hash
+        from_value = data[:start] || data["start"] || data[:from] || data["from"] || 0
+        to_value = data[:end] || data["end"] || data[:to] || data["to"] || 0
+
+        from = if from_value.is_a?(Integer)
+                 from_value
+               else
+                 (from_value.respond_to?(:to_i) ? from_value.to_i : 0)
+               end
+        to = if to_value.is_a?(Integer)
+               to_value
+             else
+               (to_value.respond_to?(:to_i) ? to_value.to_i : 0)
+             end
+
+        new(from, to)
+      end
+    end
+
     #: () -> serialized_range
     def to_a
       [from, to] #: Herb::serialized_range

@@ -1,0 +1,19 @@
+# Generated from lib/herb/lint_offense.rb with RBS::Inline
+
+module Herb
+  class LintOffense < Diagnostic
+    attr_reader rule: String
+
+    # : (message: String, location: Location?, severity: String, rule: String, ?code: String?, ?source: String?) -> void
+    def initialize: (message: String, location: Location?, severity: String, rule: String, ?code: String?, ?source: String?) -> void
+
+    # : () -> Hash[Symbol, untyped]
+    def to_h: () -> Hash[Symbol, untyped]
+
+    # : () -> String
+    def to_s: () -> String
+
+    # : (Hash[untyped, untyped]) -> LintOffense
+    def self.from_hash: (Hash[untyped, untyped]) -> LintOffense
+  end
+end

@@ -1,0 +1,21 @@
+# Generated from lib/herb/backend_loader.rb with RBS::Inline
+
+module Herb
+  class BackendLoader
+    BACKENDS: untyped
+
+    DEFAULT_PRIORITY: untyped
+
+    def self.load: (?untyped backend_name) -> untyped
+
+    def self.detect_backend: () -> untyped
+
+    def self.available_backends: () -> untyped
+
+    private def self.load_native_backend: () -> untyped
+
+    private def self.load_node_backend: () -> untyped
+
+    private def self.test_backend: (untyped backend_name) -> untyped
+  end
+end

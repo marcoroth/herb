@@ -5,10 +5,10 @@ module Herb
   module Warnings
     class Warning
       attr_reader :type #: String
-      attr_reader :location #: Location
+      attr_reader :location #: Location?
       attr_reader :message #: String
 
-      #: (String, Location, String) -> void
+      #: (String, Location?, String) -> void
       def initialize(type, location, message)
         @type = type
         @location = location
@@ -22,6 +22,15 @@ module Herb
           location: location&.to_hash,
           message: message,
         }
+      end
+
+      #: (Hash[untyped, untyped]) -> Warning
+      def self.from_hash(data)
+        type = data[:type] || data["type"] || ""
+        location = Location.from_hash(data[:location] || data["location"])
+        message = data[:message] || data["message"] || ""
+
+        new(type, location, message)
       end
 
       #: () -> String

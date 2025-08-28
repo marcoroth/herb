@@ -12,5 +12,8 @@ module Herb
 
     # : () -> bool
     def failed?: () -> bool
+
+    # : (Hash[untyped, untyped]) -> LexResult
+    def self.from_hash: (Hash[untyped, untyped]) -> LexResult
   end
 end

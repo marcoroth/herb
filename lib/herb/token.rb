@@ -26,6 +26,21 @@ module Herb
       } #: Herb::serialized_token
     end
 
+    #: (Hash[untyped, untyped]?) -> Token?
+    def self.from_hash(data)
+      return if data.nil?
+
+      value = data[:value] || data["value"] || ""
+      type = data[:type] || data["type"] || ""
+
+      range = Herb::Range.from_hash(data[:range] || data["range"])
+      location = Location.from_hash(data[:location] || data["location"])
+
+      return nil if range.nil? || location.nil?
+
+      new(value, range, location, type)
+    end
+
     #: (?untyped) -> String
     def to_json(state = nil)
       to_hash.to_json(state)
