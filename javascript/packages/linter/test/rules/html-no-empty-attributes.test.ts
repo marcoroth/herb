@@ -275,4 +275,25 @@ describe("html-no-empty-attributes", () => {
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
   })
+
+  test("fails for attribute with ERB that doesn't output anything", () => {
+    const html = '<div class="<% value %>"></div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+    expect(lintResult.offenses[0].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+  })
+
+  test("passes for attribute with static value and ERB that doesn't output anything", () => {
+    const html = '<div class="something.<% value %>"></div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+  })
 })
