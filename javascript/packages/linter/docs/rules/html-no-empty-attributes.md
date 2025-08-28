@@ -16,7 +16,6 @@ In most cases, if the value is not available, it's better to omit the attribute 
 - `for`
 - `src`
 - `href`
-- `alt`
 - `title`
 - `data`
 - `role`
@@ -28,7 +27,7 @@ In most cases, if the value is not available, it's better to omit the attribute 
 Many HTML attributes are only useful when they carry a value. Leaving these attributes empty can:
 
 - Produce confusing or misleading markup (e.g., `id=""`, `class=""`)
-- Create inaccessible or invalid HTML (e.g., `alt=""` on decorative images is valid, but only if intentional)
+- Create inaccessible or invalid HTML
 - Interfere with CSS or JS selectors expecting meaningful values
 - Indicate unused or unfinished logic in ERB
 
