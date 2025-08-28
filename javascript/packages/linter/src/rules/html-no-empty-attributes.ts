@@ -19,20 +19,18 @@ const RESTRICTED_ATTRIBUTES = new Set([
 
 // Check if attribute name matches any restricted patterns
 function isRestrictedAttribute(attributeName: string): boolean {
-  const lowerName = attributeName.toLowerCase()
-
   // Check direct matches
-  if (RESTRICTED_ATTRIBUTES.has(lowerName)) {
+  if (RESTRICTED_ATTRIBUTES.has(attributeName)) {
     return true
   }
 
   // Check for data-* attributes
-  if (lowerName.startsWith('data-')) {
+  if (attributeName.startsWith('data-')) {
     return true
   }
 
   // Check for aria-* attributes
-  if (lowerName.startsWith('aria-')) {
+  if (attributeName.startsWith('aria-')) {
     return true
   }
 
