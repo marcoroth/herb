@@ -9,7 +9,11 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["@herb-tools/browser:build", "@herb-tools/highlighter:build"]
+      "dependsOn": [
+        "@herb-tools/browser:build",
+        "@herb-tools/highlighter:build",
+        "@herb-tools/printer:build"
+      ]
     },
     "test": {
       "executor": "nx:run-script",

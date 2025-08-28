@@ -1,0 +1,33 @@
+{
+  "name": "stimulus-lint",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "javascript/packages/stimulus-lint/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/node-wasm:build",
+        "@herb-tools/linter:build",
+        "@herb-tools/highlighter:build"
+      ]
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "clean"
+      }
+    }
+  },
+  "tags": []
+}

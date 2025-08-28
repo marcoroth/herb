@@ -1,0 +1,12 @@
+<!-- Valid actions -->
+<div data-controller="hello">
+  <button data-action="hello#greet">Greet</button>
+  <button data-action="click->hello#reset">Reset</button>
+</div>
+
+<!-- Invalid actions -->
+<div data-controller="hello">
+  <button data-action="hello#unknown">Unknown Action</button>
+  <button data-action="invalid-controller#greet">Invalid Controller</button>
+  <button data-action="malformed-action">Malformed Action</button>
+</div>

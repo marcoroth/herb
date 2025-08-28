@@ -11,6 +11,7 @@
     "@herb-tools/node": "javascript/packages/node",
     "@herb-tools/printer": "javascript/packages/printer",
     "@herb-tools/tailwind-class-sorter": "javascript/packages/tailwind-class-sorter",
+    "stimulus-lint": "javascript/packages/stimulus-lint",
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",

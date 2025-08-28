@@ -9,7 +9,10 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["@herb-tools/core:build", "wasm:build"]
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "wasm:build"
+      ]
     },
     "test": {
       "executor": "nx:run-script",

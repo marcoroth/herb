@@ -1,0 +1,51 @@
+{
+  "name": "stimulus-lint",
+  "version": "0.0.1",
+  "description": "Linting rules for Stimulus controllers and HTML+ERB view templates.",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60stimulus-lint%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/stimulus-lint"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "stimulus-lint": "./bin/stimulus-lint"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "yarn clean && tsc -b && rollup -c",
+    "watch": "tsc -b -w",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "dependencies": {
+    "@herb-tools/linter": "0.6.1",
+    "@herb-tools/core": "0.6.1",
+    "@herb-tools/node-wasm": "0.6.1",
+    "@herb-tools/highlighter": "0.6.1",
+    "stimulus-parser": "^0.3.0"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "docs/",
+    "src/",
+    "bin/",
+    "dist/"
+  ]
+}
