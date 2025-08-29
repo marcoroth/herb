@@ -1,6 +1,6 @@
 _buf = ::String.new;
  _buf << '<div id="output">
-  '.freeze; tag.div class: "div" do; _buf << '
+  '.freeze; _buf << tag.div class: "div" do; _buf << '
     '.freeze; if Date.today.friday?; _buf << '
       <h1>
         Happy

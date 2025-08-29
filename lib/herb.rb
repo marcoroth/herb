@@ -25,6 +25,7 @@ require_relative "herb/project"
 require_relative "herb/version"
 
 require_relative "herb/visitor"
+require_relative "herb/engine"
 
 begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
@@ -34,16 +35,4 @@ rescue LoadError
 end
 
 module Herb
-  # HTML escape function for engine
-  ESCAPE_TABLE = {
-    "&" => "&amp;",
-    "<" => "&lt;",
-    ">" => "&gt;",
-    '"' => "&quot;",
-    "'" => "&#39;",
-  }.freeze
-
-  def self.h(value)
-    value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
-  end
 end
