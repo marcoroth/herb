@@ -1,21 +1,45 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
+import {
+  AttributeVisitorMixin,
+  StaticAttributeStaticValueParams,
+  StaticAttributeDynamicValueParams,
+  DynamicAttributeStaticValueParams,
+  DynamicAttributeDynamicValueParams
+} from "./rule-utils.js"
+import { getStaticContentFromNodes } from "@herb-tools/core"
 
 import type { LintContext, LintOffense } from "../types.js"
-import type { ParseResult, HTMLAttributeNameNode } from "@herb-tools/core"
-import { getStaticAttributeName } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
-class HTMLNoUnderscoresInAttributeNamesVisitor extends BaseRuleVisitor {
-  visitHTMLAttributeNameNode(node: HTMLAttributeNameNode): void {
-    const staticName = getStaticAttributeName(node)
+class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams): void {
+    this.check(attributeName, attributeNode)
+  }
 
-    if (!staticName) return
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode }: StaticAttributeDynamicValueParams): void {
+    this.check(attributeName, attributeNode)
+  }
 
-    if (staticName.includes("_")) {
+  protected checkDynamicAttributeStaticValue({ nameNodes, attributeNode }: DynamicAttributeStaticValueParams) {
+    const attributeName = getStaticContentFromNodes(nameNodes)
+
+    this.check(attributeName, attributeNode)
+  }
+
+  protected checkDynamicAttributeDynamicValue({ nameNodes, attributeNode }: DynamicAttributeDynamicValueParams) {
+    const attributeName = getStaticContentFromNodes(nameNodes)
+
+    this.check(attributeName, attributeNode)
+  }
+
+  private check(attributeName: string | null, attributeNode: HTMLAttributeNode): void {
+    if (!attributeName) return
+
+    if (attributeName.includes("_")) {
       this.addOffense(
-        `HTML attribute name \`${staticName}\` should not contain underscores. Use hyphens (-) instead.`,
-        node.location,
-        "error"
+        `Attribute \`${attributeName}\` should not contain underscores. Use hyphens (-) instead.`,
+        attributeNode.value!.location,
+        "warning"
       )
     }
   }

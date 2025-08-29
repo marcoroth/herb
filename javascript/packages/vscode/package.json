@@ -91,6 +91,7 @@
               "html-no-positive-tab-index",
               "html-no-self-closing",
               "html-no-title-attribute",
+              "html-no-underscores-in-attribute-names",
               "html-tag-name-lowercase",
               "parser-no-errors",
               "svg-tag-name-capitalization"
