@@ -61,15 +61,19 @@ describe("html-no-underscores-in-attribute-names", () => {
 
   test("fails for dynamic attribute names with underscores", () => {
     const html = dedent`
-      <div data-<%= "invalid_name"  %>="value"></div>
-      <div <%= "dynamic_name" %>="value"></div>
-      <div data-<%= "dynamic_name" %>-test="value"></div>
+      <div data_<%= key %>="value"></div>
+      <div data_<%= key %>-test="value"></div>
+      <div data-<%= key %>_test="value"></div>
     `
 
     const linter = new Linter(Herb, [HTMLNoUnderscoresInAttributeNamesRule])
     const lintResult = linter.lint(html)
 
-    // expect(lintResult.warnings).toBe(3)
-    // expect(lintResult.offenses).toHaveLength(3)
+    expect(lintResult.warnings).toBe(3)
+    expect(lintResult.offenses).toHaveLength(3)
+
+    expect(lintResult.offenses[0].message).toBe("Attribute `data_` should not contain underscores. Use hyphens (-) instead.")
+    expect(lintResult.offenses[1].message).toBe("Attribute `data_-test` should not contain underscores. Use hyphens (-) instead.")
+    expect(lintResult.offenses[2].message).toBe("Attribute `data-_test` should not contain underscores. Use hyphens (-) instead.")
   })
 })
