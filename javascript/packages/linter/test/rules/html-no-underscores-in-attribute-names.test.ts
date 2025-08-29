@@ -2,9 +2,8 @@ import dedent from "dedent"
 
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
-
-import { HTMLNoUnderscoresInAttributeNamesRule } from "../../src/rules/html-no-underscores-in-attribute-names.js"
+import { Linter } from "../../src"
+import { HTMLNoUnderscoresInAttributeNamesRule } from "../../src"
 
 describe("html-no-underscores-in-attribute-names", () => {
   beforeAll(async () => {
@@ -72,8 +71,8 @@ describe("html-no-underscores-in-attribute-names", () => {
     expect(lintResult.warnings).toBe(3)
     expect(lintResult.offenses).toHaveLength(3)
 
-    expect(lintResult.offenses[0].message).toBe("Attribute `data_` should not contain underscores. Use hyphens (-) instead.")
-    expect(lintResult.offenses[1].message).toBe("Attribute `data_-test` should not contain underscores. Use hyphens (-) instead.")
-    expect(lintResult.offenses[2].message).toBe("Attribute `data-_test` should not contain underscores. Use hyphens (-) instead.")
+    expect(lintResult.offenses[0].message).toBe("Attribute `data_<%= key %>` should not contain underscores. Use hyphens (-) instead.")
+    expect(lintResult.offenses[1].message).toBe("Attribute `data_<%= key %>-test` should not contain underscores. Use hyphens (-) instead.")
+    expect(lintResult.offenses[2].message).toBe("Attribute `data-<%= key %>_test` should not contain underscores. Use hyphens (-) instead.")
   })
 })

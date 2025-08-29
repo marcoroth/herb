@@ -7,7 +7,7 @@ import {
   DynamicAttributeDynamicValueParams
 } from "./rule-utils.js"
 import { getStaticContentFromNodes } from "@herb-tools/core"
-
+import { IdentityPrinter } from "@herb-tools/printer"
 import type { LintContext, LintOffense } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
@@ -37,7 +37,7 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
 
     if (attributeName.includes("_")) {
       this.addOffense(
-        `Attribute \`${attributeName}\` should not contain underscores. Use hyphens (-) instead.`,
+        `Attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not contain underscores. Use hyphens (-) instead.`,
         attributeNode.value!.location,
         "warning"
       )
