@@ -1,0 +1,42 @@
+{
+  "name": "@herb-tools/dev-tools",
+  "version": "0.1.0",
+  "description": "Development tools for visual ERB debugging in Herb templates",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/dev-tools%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/dev-tools"
+  },
+  "main": "./dist/herb-dev-tools.cjs",
+  "module": "./dist/herb-dev-tools.esm.js",
+  "types": "./dist/types/index.d.ts",
+  "scripts": {
+    "build": "yarn clean && rollup -c",
+    "dev": "rollup -c -w",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/herb-dev-tools.esm.js",
+      "require": "./dist/herb-dev-tools.cjs",
+      "default": "./dist/herb-dev-tools.esm.js"
+    }
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "dist/",
+    "src/"
+  ],
+  "peerDependencies": {
+    "prismjs": "^1.30.0"
+  }
+}

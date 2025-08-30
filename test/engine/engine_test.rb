@@ -77,7 +77,7 @@ module Engine
 
       engine = Herb::Engine.new(template, filename: "test.erb", bufvar: "output")
 
-      assert_equal "test.erb", engine.filename
+      assert_equal "test.erb", engine.filename.to_s
       assert_equal "output", engine.bufvar
     end
 

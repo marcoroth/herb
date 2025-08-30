@@ -20,11 +20,13 @@ module Herb
 
       def visit_html_element_node(node)
         validate_html_nesting(node)
+
         super
       end
 
       def visit_html_attribute_node(node)
         validate_attribute(node)
+
         super
       end
 
@@ -133,10 +135,6 @@ module Herb
           @location = location
           @message = message
         end
-        # 
-        # def class
-        #   OpenStruct.new(name: "Herb::Engine::Validator::#{type}")
-        # end
       end
     end
   end

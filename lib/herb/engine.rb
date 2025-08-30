@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
+require_relative "engine/debug"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :bufvar
-
-    RANGE_FIRST = 0
-    RANGE_LAST = -1
+    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head
 
     class CompilationError < StandardError
     end
@@ -51,13 +49,25 @@ module Herb
     end
 
     def initialize(input, properties = {})
-      @filename = properties[:filename]
+      @filename = properties[:filename] ? Pathname(properties[:filename]) : nil
+      @project_path = Pathname(properties[:project_path] || Dir.pwd)
+
+      if @filename
+        absolute_filename = @filename.absolute? ? @filename : Pathname(Dir.pwd) + @filename
+        @relative_file_path = absolute_filename.relative_path_from(@project_path).to_s
+      else
+        @relative_file_path = "unknown"
+      end
+
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
       @escapefunc = properties[:escapefunc]
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
+
+      @debug = properties.fetch(:debug, false)
+      @content_for_head = properties[:content_for_head]
 
       unless @escapefunc
         if @escape
@@ -137,7 +147,7 @@ module Herb
       terminate_expression
 
       @src << ' ' << code
-      @src << ';' unless code[RANGE_LAST] == "\n"
+      @src << ';' unless code[-1] == "\n"
       @buffer_on_stack = false
     end
 

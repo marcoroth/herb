@@ -3,6 +3,7 @@
   "projects": {
     "@herb-tools/browser": "javascript/packages/browser",
     "@herb-tools/core": "javascript/packages/core",
+    "@herb-tools/dev-tools": "javascript/packages/dev-tools",
     "@herb-tools/formatter": "javascript/packages/formatter",
     "@herb-tools/highlighter": "javascript/packages/highlighter",
     "@herb-tools/language-server": "javascript/packages/language-server",

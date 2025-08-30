@@ -76,7 +76,7 @@ module Engine
 
       assert_includes error.message, "app/views/test.erb"
       assert_includes error.message, "ERB output tags"
-      assert_equal "app/views/test.erb", error.filename
+      assert_equal "app/views/test.erb", error.filename.to_s
       assert_equal 1, error.line
       assert_equal 5, error.column
     end
@@ -127,4 +127,3 @@ module Engine
     end
   end
 end
-

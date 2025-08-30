@@ -6,7 +6,7 @@
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug
 
   def initialize(args)
     @args = args
@@ -209,6 +209,10 @@ class Herb::CLI
       parser.on("--freeze", "Add frozen string literal pragma (for compile command)") do
         self.freeze = true
       end
+
+      parser.on("--debug", "Enable debug mode with ERB expression wrapping (for compile command)") do
+        self.debug = true
+      end
     end
   end
 
@@ -234,6 +238,11 @@ class Herb::CLI
       end
 
       options[:freeze] = true if freeze
+
+      if debug
+        options[:debug] = true
+        options[:debug_filename] = @file if @file
+      end
 
       engine = Herb::Engine.new(file_content, options)
 
@@ -303,6 +312,11 @@ class Herb::CLI
       end
 
       options[:freeze] = true if freeze
+
+      if debug
+        options[:debug] = true
+        options[:debug_filename] = @file if @file
+      end
 
       engine = Herb::Engine.new(file_content, options)
       compiled_code = engine.src

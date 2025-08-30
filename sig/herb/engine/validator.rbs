@@ -1,0 +1,54 @@
+# Generated from lib/herb/engine/validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Semantic HTML Validator
+    #
+    # This validator focuses on semantic HTML validation such as:
+    # - Invalid HTML nesting (e.g., <p> containing block elements)
+    # - Accessibility issues (e.g., nested anchors)
+    # - Deprecated HTML attributes
+    #
+    # Syntax validation (missing ends, unclosed tags, Ruby syntax errors)
+    # is handled by the parser and should not be duplicated here.
+    class Validator < ::Herb::Visitor
+      attr_reader errors: untyped
+
+      def initialize: () -> untyped
+
+      def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_attribute_node: (untyped node) -> untyped
+
+      private
+
+      def validate_html_nesting: (untyped node) -> untyped
+
+      def validate_no_block_elements_in_paragraph: (untyped node) -> untyped
+
+      def validate_no_nested_anchors: (untyped node) -> untyped
+
+      def validate_no_interactive_in_button: (untyped node) -> untyped
+
+      def validate_attribute: (untyped node) -> untyped
+
+      def validate_id_format: (untyped node) -> untyped
+
+      def find_nested_elements: (untyped node, untyped tag_name) ?{ (?) -> untyped } -> untyped
+
+      def extract_text_value: (untyped value_node) -> untyped
+
+      def add_error: (untyped type, untyped location, untyped message) -> untyped
+
+      class ValidationError
+        attr_reader type: untyped
+
+        attr_reader location: untyped
+
+        attr_reader message: untyped
+
+        def initialize: (untyped type, untyped location, untyped message) -> untyped
+      end
+    end
+  end
+end

@@ -15,6 +15,7 @@ require_relative "herb/parse_result"
 require_relative "herb/ast"
 require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
+require_relative "herb/ast/helpers"
 
 require_relative "herb/errors"
 require_relative "herb/warnings"

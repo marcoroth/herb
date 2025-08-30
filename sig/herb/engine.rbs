@@ -1,0 +1,72 @@
+# Generated from lib/herb/engine.rb with RBS::Inline
+
+module Herb
+  class Engine
+    attr_reader src: untyped
+
+    attr_reader filename: untyped
+
+    attr_reader project_path: untyped
+
+    attr_reader relative_file_path: untyped
+
+    attr_reader bufvar: untyped
+
+    attr_reader debug: untyped
+
+    attr_reader content_for_head: untyped
+
+    class CompilationError < StandardError
+    end
+
+    class SecurityError < StandardError
+      attr_reader line: untyped
+
+      attr_reader column: untyped
+
+      attr_reader filename: untyped
+
+      attr_reader suggestion: untyped
+
+      def initialize: (untyped message, ?line: untyped, ?column: untyped, ?filename: untyped, ?suggestion: untyped) -> untyped
+
+      private
+
+      def build_error_message: (untyped message) -> untyped
+    end
+
+    def initialize: (untyped input, ?untyped properties) -> untyped
+
+    def add_text: (untyped text) -> untyped
+
+    def add_code: (untyped code) -> untyped
+
+    def add_expression: (untyped indicator, untyped code) -> untyped
+
+    def add_expression_result: (untyped code) -> untyped
+
+    def add_expression_result_escaped: (untyped code) -> untyped
+
+    def add_expression_block: (untyped indicator, untyped code) -> untyped
+
+    def add_expression_block_result: (untyped code) -> untyped
+
+    def add_expression_block_result_escaped: (untyped code) -> untyped
+
+    def add_postamble: (untyped postamble) -> untyped
+
+    def with_buffer: () -> untyped
+
+    def terminate_expression: () -> untyped
+
+    ESCAPE_TABLE: untyped
+
+    def self.h: (untyped value) -> untyped
+
+    def self.attr: (untyped value) -> untyped
+
+    def self.js: (untyped value) -> untyped
+
+    def self.css: (untyped value) -> untyped
+  end
+end
