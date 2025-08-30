@@ -18,6 +18,7 @@
         "./extension/libherb/ast_nodes.c",
         "./extension/libherb/ast_pretty_print.c",
         "./extension/libherb/buffer.c",
+        "./extension/libherb/element_source.c",
         "./extension/libherb/errors.c",
         "./extension/libherb/extract.c",
         "./extension/libherb/herb.c",
