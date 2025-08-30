@@ -26,7 +26,8 @@
     │   │   │   ├── tag_name: "path" (location: (2:3)-(2:7))
     │   │   │   ├── body: []
     │   │   │   ├── close_tag: ∅
-    │   │   │   └── is_void: true
+    │   │   │   ├── is_void: true
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:10)-(3:0))
     │   │       └── content: "\n"
@@ -38,7 +39,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

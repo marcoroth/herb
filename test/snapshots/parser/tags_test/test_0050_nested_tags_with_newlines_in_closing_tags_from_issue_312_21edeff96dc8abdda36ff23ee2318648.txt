@@ -118,7 +118,8 @@
     │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (9:10)-(9:11))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (9:11)-(10:8))
     │   │       └── content: "\n        "
@@ -130,7 +131,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (10:13)-(10:14))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (10:14)-(11:0))
         └── content: "\n"

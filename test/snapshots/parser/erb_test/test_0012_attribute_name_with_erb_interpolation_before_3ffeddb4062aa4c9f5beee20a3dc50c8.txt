@@ -39,4 +39,5 @@
         ├── tag_name: "img" (location: (1:1)-(1:4))
         ├── body: []
         ├── close_tag: ∅
-        └── is_void: true
+        ├── is_void: true
+        └── source: "HTML"

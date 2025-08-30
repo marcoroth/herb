@@ -46,7 +46,8 @@
         │       │       │       ├── children: []
         │       │       │       └── tag_closing: ">" (location: (1:31)-(1:32))
         │       │       │
-        │       │       └── is_void: false
+        │       │       ├── is_void: false
+        │       │       └── source: "HTML"
         │       │
         │       ├── close_tag:
         │       │   └── @ HTMLCloseTagNode (location: (1:32)-(1:37))
@@ -55,7 +56,8 @@
         │       │       ├── children: []
         │       │       └── tag_closing: ">" (location: (1:36)-(1:37))
         │       │
-        │       └── is_void: false
+        │       ├── is_void: false
+        │       └── source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:37)-(1:43))
@@ -64,4 +66,5 @@
         │       ├── children: []
         │       └── tag_closing: ">" (location: (1:42)-(1:43))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

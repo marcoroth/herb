@@ -40,7 +40,8 @@
     │   │   │   │   │   ├── tag_name: "path" (location: (3:5)-(3:9))
     │   │   │   │   │   ├── body: []
     │   │   │   │   │   ├── close_tag: ∅
-    │   │   │   │   │   └── is_void: true
+    │   │   │   │   │   ├── is_void: true
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:11)-(4:2))
     │   │   │   │       └── content: "\n  "
@@ -52,7 +53,8 @@
     │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:6)-(5:0))
     │   │       └── content: "\n"
@@ -64,7 +66,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:5)-(5:6))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:6)-(6:0))
         └── content: "\n"

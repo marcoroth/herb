@@ -21,7 +21,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (2:26)-(2:27))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (2:27)-(3:25))
     │   └── content: "\n  var str = \"String with "

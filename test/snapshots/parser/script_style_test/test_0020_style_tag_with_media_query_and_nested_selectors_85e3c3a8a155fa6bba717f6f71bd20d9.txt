@@ -21,7 +21,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (7:7)-(7:8))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (7:8)-(8:0))
         └── content: "\n"

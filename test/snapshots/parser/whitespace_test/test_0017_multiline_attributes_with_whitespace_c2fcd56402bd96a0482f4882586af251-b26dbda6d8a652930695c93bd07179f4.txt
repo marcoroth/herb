@@ -78,7 +78,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:25)-(3:26))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:26)-(4:0))
         └── content: "\n"

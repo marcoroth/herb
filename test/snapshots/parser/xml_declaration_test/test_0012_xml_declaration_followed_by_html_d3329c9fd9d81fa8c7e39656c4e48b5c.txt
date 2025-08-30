@@ -43,7 +43,8 @@
         │       │       ├── children: []
         │       │       └── tag_closing: ">" (location: (2:23)-(2:24))
         │       │
-        │       └── is_void: false
+        │       ├── is_void: false
+        │       └── source: "HTML"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (2:24)-(2:31))
@@ -52,4 +53,5 @@
         │       ├── children: []
         │       └── tag_closing: ">" (location: (2:30)-(2:31))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

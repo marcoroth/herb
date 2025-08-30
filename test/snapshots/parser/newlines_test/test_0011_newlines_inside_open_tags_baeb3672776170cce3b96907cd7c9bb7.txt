@@ -61,7 +61,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (6:4)-(6:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:5)-(7:0))
         └── content: "\n"

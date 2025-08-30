@@ -60,7 +60,8 @@
     │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (12:12)-(12:13))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (12:13)-(13:2))
     │   │   │   │       └── content: "\n  "
@@ -72,7 +73,8 @@
     │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (13:8)-(13:9))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (13:9)-(14:2))
     │   │   │   └── content: "\n  "
@@ -121,7 +123,8 @@
     │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (15:55)-(15:56))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (15:56)-(16:2))
     │   │   │   │       └── content: "\n  "
@@ -133,7 +136,8 @@
     │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (16:8)-(16:9))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (16:9)-(17:0))
     │   │       └── content: "\n"
@@ -145,7 +149,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (17:6)-(17:7))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (17:7)-(18:0))
         └── content: "\n"

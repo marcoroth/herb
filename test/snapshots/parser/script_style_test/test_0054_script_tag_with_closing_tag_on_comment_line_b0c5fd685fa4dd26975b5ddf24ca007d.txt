@@ -21,7 +21,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:16)-(1:17))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:17)-(3:0))
     │   └── content: "\n\n"
@@ -47,7 +48,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (4:13)-(4:14))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (4:14)-(6:0))
     │   └── content: "\n\n"
@@ -73,7 +75,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (6:15)-(6:16))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:16)-(7:0))
         └── content: "\n"

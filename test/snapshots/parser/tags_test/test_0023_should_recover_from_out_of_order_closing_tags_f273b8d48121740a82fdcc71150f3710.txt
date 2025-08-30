@@ -49,7 +49,8 @@
     │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (4:18)-(4:19))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:19)-(5:10))
     │   │       └── content: "\n          "
@@ -61,7 +62,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:15)-(5:16))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (5:16)-(6:8))
     │   └── content: "\n        "

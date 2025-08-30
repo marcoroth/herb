@@ -40,7 +40,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:36)-(3:37))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:37)-(4:6))
         └── content: "\n      "

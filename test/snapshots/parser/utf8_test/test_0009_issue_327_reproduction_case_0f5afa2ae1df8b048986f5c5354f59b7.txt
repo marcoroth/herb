@@ -21,7 +21,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:11)-(1:12))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:12)-(2:0))
     │   └── content: "\n"
@@ -47,7 +48,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (2:11)-(2:12))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (2:12)-(3:0))
         └── content: "\n"

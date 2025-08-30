@@ -35,7 +35,8 @@
     │   ├── tag_name: "img" (location: (1:9)-(1:12))
     │   ├── body: []
     │   ├── close_tag: ∅
-    │   └── is_void: true
+    │   ├── is_void: true
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:31)-(2:8))
     │   └── content: "\n        "
@@ -52,7 +53,8 @@
     │   ├── tag_name: "br" (location: (2:9)-(2:11))
     │   ├── body: []
     │   ├── close_tag: ∅
-    │   └── is_void: true
+    │   ├── is_void: true
+    │   └── source: "HTML"
     │
     ├── @ HTMLCloseTagNode (location: (2:12)-(3:9))
     │   ├── errors: (1 error)

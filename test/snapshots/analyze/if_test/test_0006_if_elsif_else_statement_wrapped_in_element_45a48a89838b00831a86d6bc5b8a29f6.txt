@@ -60,7 +60,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (9:4)-(9:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (9:5)-(10:0))
         └── content: "\n"

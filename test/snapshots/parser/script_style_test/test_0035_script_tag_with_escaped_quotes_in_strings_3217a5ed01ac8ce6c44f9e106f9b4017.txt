@@ -28,7 +28,8 @@
     │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:35)-(1:36))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:37)-(1:50))
     │   └── content: "\" yesterday\";"
