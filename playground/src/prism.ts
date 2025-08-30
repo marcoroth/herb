@@ -33,7 +33,7 @@ Prism.languages.tree = {
   // Property names
   property: {
     pattern:
-      /\b(?:errors|children|tag_opening|content|tag_closing|open_tag|tag_name|attributes|equals|value|open_quote|close_quote|quoted|is_void|body|close_tag|message|opening_tag|closing_tag|comment_start|comment_end|name|expected_type|found|description|expected|subsequent|rescue_clause|else_clause|ensure_clause|end_node|parsed|valid|error_message|diagnostic_id|level|statements|conditions)\b:/,
+      /\b(?:errors|children|tag_opening|content|tag_closing|open_tag|tag_name|attributes|equals|value|open_quote|close_quote|quoted|is_void|body|close_tag|message|opening_tag|closing_tag|comment_start|comment_end|name|expected_type|found|description|expected|subsequent|rescue_clause|else_clause|ensure_clause|end_node|parsed|valid|error_message|diagnostic_id|level|statements|conditions|source)\b:/,
     lookbehind: true,
     greedy: true,
   },

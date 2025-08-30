@@ -38,6 +38,8 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %>) ? Qtrue : Qfalse;
   <%- when Herb::Template::ArrayField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>);
+  <%- when Herb::Template::ElementSourceField -%>
+  VALUE <%= node.human %>_<%= field.name %> = rb_str_new_cstr(element_source_to_string(<%= node.human %>-><%= field.name %>));
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;
