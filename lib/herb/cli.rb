@@ -110,6 +110,7 @@ class Herb::CLI
                   project.no_interactive = no_interactive
                   project.no_log_file = no_log_file
                   project.no_timing = no_timing
+                  project.silent = silent
                   has_issues = project.parse!
                   exit(has_issues ? 1 : 0)
                 when "parse"

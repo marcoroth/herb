@@ -12,7 +12,7 @@ require "stringio"
 
 module Herb
   class Project
-    attr_accessor :project_path, :output_file, :no_interactive, :no_log_file, :no_timing
+    attr_accessor :project_path, :output_file, :no_interactive, :no_log_file, :no_timing, :silent
 
     def interactive?
       return false if no_interactive
@@ -106,7 +106,7 @@ module Herb
           else
             relative_path = file_path.sub("#{project_path}/", "")
           end
-          puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}"
+          puts "Processing [#{index + 1}/#{files.count}]: #{relative_path}" unless silent
 
           if interactive?
             if failed_files.any?
@@ -240,7 +240,7 @@ module Herb
           puts "Completed processing all files."
           print "\e[H\e[2J"
         else
-          puts "Completed processing all files."
+          puts "Completed processing all files." unless silent
         end
 
         log.puts ""
