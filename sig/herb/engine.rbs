@@ -16,23 +16,9 @@ module Herb
 
     attr_reader content_for_head: untyped
 
+    attr_reader validation_error_template: untyped
+
     class CompilationError < StandardError
-    end
-
-    class SecurityError < StandardError
-      attr_reader line: untyped
-
-      attr_reader column: untyped
-
-      attr_reader filename: untyped
-
-      attr_reader suggestion: untyped
-
-      def initialize: (untyped message, ?line: untyped, ?column: untyped, ?filename: untyped, ?suggestion: untyped) -> untyped
-
-      private
-
-      def build_error_message: (untyped message) -> untyped
     end
 
     def initialize: (untyped input, ?untyped properties) -> untyped
@@ -58,6 +44,20 @@ module Herb
     def with_buffer: () -> untyped
 
     def terminate_expression: () -> untyped
+
+    private
+
+    def run_validation: (untyped ast) -> untyped
+
+    def handle_parser_errors: (untyped parser_errors, untyped input, untyped ast) -> untyped
+
+    def handle_validation_errors: (untyped errors, untyped input) -> untyped
+
+    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
+
+    def escape_attr: (untyped text) -> untyped
+
+    def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
 
     ESCAPE_TABLE: untyped
 

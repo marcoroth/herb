@@ -146,7 +146,7 @@ module Engine
         Herb::Engine.new(template, filename: "test_template.erb")
       end
 
-      assert_includes error.message, "test_template.erb"
+      assert_includes error.message, "TagNamesMismatch: Opening tag `<div>` at (1:1) closed with `</span>` at (3:2)."
     end
 
     test "multiple errors reported" do

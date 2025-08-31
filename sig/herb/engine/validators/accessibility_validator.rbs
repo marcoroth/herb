@@ -1,0 +1,28 @@
+# Generated from lib/herb/engine/validators/accessibility_validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Validators
+      # Accessibility Validator
+      #
+      # This validator focuses on accessibility validation such as:
+      # - Missing alt attributes on images
+      # - Invalid ARIA attributes
+      # - Missing form labels
+      # - Invalid ID formats
+      class AccessibilityValidator < Validator
+        def visit_html_attribute_node: (untyped node) -> untyped
+
+        private
+
+        def validate_attribute: (untyped node) -> untyped
+
+        def validate_id_format: (untyped node) -> untyped
+
+        def extract_text_value: (untyped value_node) -> untyped
+
+        def add_validation_error: (untyped type, untyped location, untyped message) -> untyped
+      end
+    end
+  end
+end

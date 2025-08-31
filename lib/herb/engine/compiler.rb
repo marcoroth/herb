@@ -86,8 +86,6 @@ module Herb
       end
 
       def visit_html_open_tag_node(node)
-        validate_tag_security(node)
-
         add_text(node.tag_opening&.value || "<")
         add_text(node.tag_name.value) if node.tag_name
 
@@ -112,16 +110,6 @@ module Herb
       end
 
       def visit_html_attribute_name_node(node)
-        node.children.each do |child|
-          if child.is_a?(Herb::AST::ERBContentNode) && erb_outputs?(child)
-            raise_security_error(
-              "ERB output in attribute names is not allowed for security reasons.",
-              child,
-              "Use static attribute names with dynamic values instead."
-            )
-          end
-        end
-
         visit_all(node.children)
       end
 
@@ -146,7 +134,6 @@ module Herb
 
         if @engine.content_for_head && tag_name == "head"
           escaped_html = @engine.content_for_head.gsub("'", "\\\\'")
-
           @tokens << [:expr, "'#{escaped_html}'.html_safe", current_context]
         end
 
@@ -424,21 +411,6 @@ module Herb
         optimized
       end
 
-      def validate_tag_security(node)
-        node.children.each do |child|
-          next if child.is_a?(Herb::AST::HTMLAttributeNode)
-          next if child.is_a?(Herb::AST::WhitespaceNode)
-
-          if child.is_a?(Herb::AST::ERBContentNode) && erb_outputs?(child)
-            raise_security_error(
-              "ERB output tags (<%= %>) are not allowed in attribute position.",
-              child,
-              "Use control flow (<% %>) with static attributes instead."
-            )
-          end
-        end
-      end
-
       def process_erb_output(node, opening, code, is_yield = false)
         should_escape = should_escape_output?(opening)
 
@@ -468,18 +440,6 @@ module Herb
         @trim_next_whitespace = true if node.tag_closing&.value === "-%>"
       end
 
-      def raise_security_error(message, node, suggestion = nil)
-        line = node.respond_to?(:location) && node.location&.start&.line
-        column = node.respond_to?(:location) && node.location&.start&.column
-
-        raise Herb::Engine::SecurityError.new(
-          message,
-          line: line,
-          column: column,
-          filename: @engine.filename,
-          suggestion: suggestion
-        )
-      end
     end
   end
 end

@@ -99,8 +99,6 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
-      def validate_tag_security: (untyped node) -> untyped
-
       def process_erb_output: (untyped node, untyped opening, untyped code, ?untyped is_yield) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
@@ -108,8 +106,6 @@ module Herb
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
 
       def handle_whitespace_trimming: (untyped node) -> untyped
-
-      def raise_security_error: (untyped message, untyped node, ?untyped suggestion) -> untyped
     end
   end
 end

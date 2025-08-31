@@ -42,7 +42,10 @@ module Herb
           if highlighted_output
             output << highlighted_output
           else
-            errors_by_line = @errors.group_by { |error| error.location&.start&.line }.compact
+            errors_by_line = @errors.group_by do |error|
+              location = error.is_a?(Hash) ? error[:location] : error.location
+              location&.start&.line
+            end.compact
 
             errors_by_line.each_with_index do |(line_num, line_errors), group_index|
               output << "Error Group ##{group_index + 1} (Line #{line_num}):\n"
@@ -113,8 +116,9 @@ module Herb
 
       def format_source_context(error)
         output = String.new
-        line_num = error.location.start.line
-        col_num = error.location.start.column
+        location = error.is_a?(Hash) ? error[:location] : error.location
+        line_num = location.start.line
+        col_num = location.start.column
 
         start_line = [line_num - CONTEXT_LINES, 1].max
         end_line = [line_num + CONTEXT_LINES, @lines.length].min
@@ -135,8 +139,8 @@ module Herb
             if col_num.positive?
               pointer = "#{" " * (line_prefix.length + col_num - 1)}^"
 
-              if error.location.end.column && error.location.end.column > col_num
-                underline_length = error.location.end.column - col_num
+              if location.end.column && location.end.column > col_num
+                underline_length = location.end.column - col_num
                 pointer << ("~" * [underline_length - 1, 0].max)
               end
 
@@ -294,37 +298,62 @@ module Herb
       end
 
       def herb_error_to_diagnostic(error)
-        severity = case error
-                   when Herb::Errors::RubyParseError
-                     error.level == "error" ? "error" : "warning"
-                   else
-                     "error"
-                   end
+        if error.is_a?(Hash)
+          location = error[:location]
+          {
+            message: error[:message],
+            location: {
+              start: {
+                line: location&.start&.line || 1,
+                column: location&.start&.column || 1,
+              },
+              end: {
+                line: location&.end&.line || location&.start&.line || 1,
+                column: location&.end&.column || location&.start&.column || 1,
+              },
+            },
+            severity: error[:severity] || "error",
+            code: error[:code] || "UnknownError",
+            source: error[:source] || "herb-validator",
+          }
+        else
+          severity = case error
+                     when Herb::Errors::RubyParseError
+                       error.level == "error" ? "error" : "warning"
+                     else
+                       "error"
+                     end
 
-        {
-          message: error.message,
-          location: {
-            start: {
-              line: error.location&.start&.line || 1,
-              column: error.location&.start&.column || 1,
+          {
+            message: error.message,
+            location: {
+              start: {
+                line: error.location&.start&.line || 1,
+                column: error.location&.start&.column || 1,
+              },
+              end: {
+                line: error.location&.end&.line || error.location&.start&.line || 1,
+                column: error.location&.end&.column || error.location&.start&.column || 1,
+              },
             },
-            end: {
-              line: error.location&.end&.line || error.location&.start&.line || 1,
-              column: error.location&.end&.column || error.location&.start&.column || 1,
-            },
-          },
-          severity: severity,
-          code: error.class.name.split("::").last.gsub(/Error$/, ""),
-          source: "herb-compiler",
-        }
+            severity: severity,
+            code: error.class.name.split("::").last.gsub(/Error$/, ""),
+            source: "herb-compiler",
+          }
+        end
       end
 
       def format_error_header(error, number)
         output = String.new
-        output << "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
+        if error.is_a?(Hash)
+          output << "  #{number}. #{error[:code] || 'UnknownError'}: #{error[:message]}\n"
+        else
+          output << "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
+        end
 
-        if error.location
-          output << "     Location: Line #{error.location.start.line}, Column #{error.location.start.column}\n"
+        location = error.is_a?(Hash) ? error[:location] : error.location
+        if location
+          output << "     Location: Line #{location.start.line}, Column #{location.start.column}\n"
         end
 
         output

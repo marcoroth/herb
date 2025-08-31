@@ -1,51 +1,23 @@
 # frozen_string_literal: true
 
+require "json"
+require "time"
+
 require_relative "engine/debug"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
-require_relative "engine/validator"
+require_relative "engine/validation_errors"
+require_relative "engine/parser_error_overlay"
+require_relative "engine/validation_error_overlay"
+require_relative "engine/validators/security_validator"
+require_relative "engine/validators/nesting_validator"
+require_relative "engine/validators/accessibility_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head
+    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head, :validation_error_template
 
     class CompilationError < StandardError
-    end
-
-    class SecurityError < StandardError
-      attr_reader :line, :column, :filename, :suggestion
-
-      def initialize(message, line: nil, column: nil, filename: nil, suggestion: nil)
-        @line = line
-        @column = column
-        @filename = filename
-        @suggestion = suggestion
-
-        super(build_error_message(message))
-      end
-
-      private
-
-      def build_error_message(message)
-        parts = []
-
-        if @filename || (@line && @column)
-          location_parts = []
-
-          location_parts << @filename if @filename
-          location_parts << "#{@line}:#{@column}" if @line && @column
-
-          parts << location_parts.join(":")
-        end
-
-        parts << message
-
-        if @suggestion
-          parts << "Suggestion: #{@suggestion}"
-        end
-
-        parts.join(" - ")
-      end
     end
 
     def initialize(input, properties = {})
@@ -65,9 +37,14 @@ module Herb
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
-
       @debug = properties.fetch(:debug, false)
       @content_for_head = properties[:content_for_head]
+      @validation_error_template = nil
+      @validation_mode = properties.fetch(:validation_mode, :raise)
+
+      unless [:raise, :overlay, :none].include?(@validation_mode)
+        raise ArgumentError, "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
+      end
 
       unless @escapefunc
         if @escape
@@ -105,22 +82,38 @@ module Herb
 
       parse_result = ::Herb.parse(input)
       ast = parse_result.value
-      errors = parse_result.errors
+      parser_errors = parse_result.errors
 
-      validator = Validator.new
-      ast.accept(validator)
-      errors.concat(validator.errors)
+      if parser_errors.any?
+        case @validation_mode
+        when :raise
+          handle_parser_errors(parser_errors, input, ast)
+          return
+        when :overlay
+          add_parser_error_overlay(parser_errors, input)
+        when :none
+          # Skip both errors and compilation, but still need minimal Ruby code
+        end
+      else
+        validation_errors = run_validation(ast) unless @validation_mode == :none
+        all_errors = parser_errors + (validation_errors || [])
 
-      if errors.any?
-        formatter = ErrorFormatter.new(input, errors, filename: @filename)
-        message = formatter.format_all
-        raise CompilationError, "\n#{message}"
+        handle_validation_errors(all_errors, input) if @validation_mode == :raise && all_errors.any?
+
+        if @validation_mode == :overlay && validation_errors&.any?
+          add_validation_overlay(validation_errors, input)
+        end
+
+        compiler = Compiler.new(self, properties)
+        ast.accept(compiler)
+
+        compiler.generate_output
       end
 
-      compiler = Compiler.new(self, properties)
-      ast.accept(compiler)
-
-      compiler.generate_output
+      if @validation_error_template
+        escaped_html = @validation_error_template.gsub("'", "\\\\'")
+        @src << " #{@bufvar} << ('#{escaped_html}'.html_safe).to_s;"
+      end
 
       @src << "\n" unless @src.end_with?("\n")
       send(:add_postamble, postamble)
@@ -204,6 +197,127 @@ module Herb
 
     def terminate_expression
       @src << '; ' if @chain_appends && @buffer_on_stack
+    end
+
+    private
+
+    def run_validation(ast)
+      validators = [
+        Validators::SecurityValidator.new,
+        Validators::NestingValidator.new,
+        Validators::AccessibilityValidator.new
+      ]
+
+      errors = []
+      validators.each do |validator|
+        ast.accept(validator)
+        errors.concat(validator.errors)
+      end
+
+      errors
+    end
+
+    def handle_parser_errors(parser_errors, input, ast)
+      case @validation_mode
+      when :raise
+        formatter = ErrorFormatter.new(input, parser_errors, filename: @filename)
+        message = formatter.format_all
+
+        raise CompilationError, "\n#{message}"
+      when :overlay
+        add_parser_error_overlay(parser_errors)
+        @src << "\n" unless @src.end_with?("\n")
+        send(:add_postamble, "#{@bufvar}.to_s\n")
+      when :none
+        @src << "\n" unless @src.end_with?("\n")
+        send(:add_postamble, "#{@bufvar}.to_s\n")
+      end
+    end
+
+    def handle_validation_errors(errors, input)
+      return unless errors.any?
+
+      security_error = errors.find { |error|
+        error.is_a?(Hash) && error[:source] == "SecurityValidator"
+      }
+
+      if security_error
+        line = security_error[:location]&.start&.line
+        column = security_error[:location]&.start&.column
+        suggestion = security_error[:suggestion]
+
+        raise SecurityError.new(
+          security_error[:message],
+          line: line,
+          column: column,
+          filename: @filename,
+          suggestion: suggestion
+        )
+      end
+
+      formatter = ErrorFormatter.new(input, errors, filename: @filename)
+      message = formatter.format_all
+      raise CompilationError, "\n#{message}"
+    end
+
+    def add_validation_overlay(errors, input = nil)
+      return unless errors.any?
+
+      templates = errors.map { |error|
+        location = error[:location]
+        line = location&.start&.line || 0
+        column = location&.start&.column || 0
+
+        source = input || @src
+        overlay_generator = ValidationErrorOverlay.new(source, error, filename: @relative_file_path)
+        html_fragment = overlay_generator.generate_fragment
+
+        escaped_message = escape_attr(error[:message])
+        escaped_suggestion = error[:suggestion] ? escape_attr(error[:suggestion]) : ""
+
+        <<~TEMPLATE
+          <template
+            data-herb-validation-error
+            data-severity="#{error[:severity]}"
+            data-source="#{error[:source]}"
+            data-code="#{error[:code]}"
+            data-line="#{line}"
+            data-column="#{column}"
+            data-filename="#{escape_attr(@relative_file_path)}"
+            data-message="#{escaped_message}"
+            #{error[:suggestion] ? "data-suggestion=\"#{escaped_suggestion}\"" : ""}
+            data-timestamp="#{Time.now.iso8601}"
+          >#{html_fragment}</template>
+        TEMPLATE
+      }.join
+
+      @validation_error_template = templates
+    end
+
+    def escape_attr(text)
+      text.to_s
+        .gsub('&', '&amp;')
+        .gsub('"', '&quot;')
+        .gsub("'", '&#39;')
+        .gsub('<', '&lt;')
+        .gsub('>', '&gt;')
+        .gsub("\n", '&#10;')
+        .gsub("\r", '&#13;')
+        .gsub("\t", '&#9;')
+    end
+
+    def add_parser_error_overlay(parser_errors, input)
+      return unless parser_errors.any?
+
+      overlay_generator = ParserErrorOverlay.new(
+        input,
+        parser_errors,
+        filename: @relative_file_path
+      )
+
+      error_html = overlay_generator.generate_html
+      escaped_html = error_html.gsub("'", "\\'")
+      @validation_error_template = "<template data-herb-parser-error>#{escaped_html}</template>"
     end
 
     ESCAPE_TABLE = {

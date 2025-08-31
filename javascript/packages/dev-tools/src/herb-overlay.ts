@@ -1,3 +1,5 @@
+import { ErrorOverlay } from './error-overlay';
+
 export interface HerbDevToolsOptions {
   projectPath?: string;
   autoInit?: boolean;
@@ -7,12 +9,14 @@ export class HerbOverlay {
   private showingERB = false;
   private showingERBOutlines = false;
   private showingERBHoverReveal = false;
+  private showingTooltips = true;
   private showingViewOutlines = false;
   private showingPartialOutlines = false;
   private showingComponentOutlines = false;
   private menuOpen = false;
   private projectPath = '';
   private currentlyHoveredERBElement: HTMLElement | null = null;
+  private errorOverlay: ErrorOverlay | null = null;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
 
@@ -28,6 +32,7 @@ export class HerbOverlay {
     this.injectMenu();
     this.setupMenuToggle();
     this.setupToggleSwitches();
+    this.initializeErrorOverlay();
     this.setupTurboListeners();
     this.applySettings();
   }
@@ -53,6 +58,7 @@ export class HerbOverlay {
         this.showingERB = settings.showingERB || false;
         this.showingERBOutlines = settings.showingERBOutlines || false;
         this.showingERBHoverReveal = settings.showingERBHoverReveal || false;
+        this.showingTooltips = settings.showingTooltips !== undefined ? settings.showingTooltips : true;
         this.showingViewOutlines = settings.showingViewOutlines || false;
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
@@ -68,6 +74,7 @@ export class HerbOverlay {
       showingERB: this.showingERB,
       showingERBOutlines: this.showingERBOutlines,
       showingERBHoverReveal: this.showingERBHoverReveal,
+      showingTooltips: this.showingTooltips,
       showingViewOutlines: this.showingViewOutlines,
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
@@ -143,6 +150,14 @@ export class HerbOverlay {
                 <input type="checkbox" id="herbToggleERBHoverReveal" class="herb-toggle-input">
                 <span class="herb-toggle-switch herb-nested-switch"></span>
                 <span class="herb-toggle-text">Reveal ERB Output tag on hover</span>
+              </label>
+            </div>
+
+            <div class="herb-nested-toggle" id="herbTooltipsNested" style="display: none;">
+              <label class="herb-toggle-label herb-nested-label">
+                <input type="checkbox" id="herbToggleTooltips" class="herb-toggle-input">
+                <span class="herb-toggle-switch herb-nested-switch"></span>
+                <span class="herb-toggle-text">Show Tooltips</span>
               </label>
             </div>
           </div>
@@ -299,6 +314,15 @@ export class HerbOverlay {
       toggleERBHoverRevealSwitch.checked = this.showingERBHoverReveal;
       toggleERBHoverRevealSwitch.addEventListener('change', () => {
         this.toggleERBHoverReveal(toggleERBHoverRevealSwitch.checked);
+      });
+    }
+
+    const toggleTooltipsSwitch = document.getElementById('herbToggleTooltips') as HTMLInputElement;
+
+    if (toggleTooltipsSwitch) {
+      toggleTooltipsSwitch.checked = this.showingTooltips;
+      toggleTooltipsSwitch.addEventListener('change', () => {
+        this.toggleTooltips(toggleTooltipsSwitch.checked);
       });
     }
 
@@ -473,40 +497,52 @@ export class HerbOverlay {
     }
   }
 
+  private resetShowingERB() {
+    const elements = document.querySelectorAll('[data-herb-debug-showing-erb')
+
+    elements.forEach(element => {
+      const originalContent = element.getAttribute('data-herb-debug-original')  || "";
+
+      element.innerHTML = originalContent;
+      element.removeAttribute("data-herb-debug-showing-erb")
+    })
+  }
+
   private toggleERBTags(show?: boolean) {
     this.showingERB = show !== undefined ? show : !this.showingERB;
-    const erbOutputs = document.querySelectorAll('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
 
-    erbOutputs.forEach((el) => {
-      const element = el as HTMLElement;
+    erbOutputs.forEach((element) => {
       const erbCode = element.getAttribute('data-herb-debug-erb');
 
       if (this.showingERB && erbCode) {
+        // this.resetShowingERB()
+
         if (!element.hasAttribute('data-herb-debug-original')) {
           element.setAttribute('data-herb-debug-original', element.innerHTML);
         }
 
         element.textContent = erbCode;
-        element.style.display = 'inline';
+        element.setAttribute("data-herb-debug-showing-erb", "true")
+
         element.style.background = '#f3e8ff';
         element.style.color = '#7c3aed';
-        element.style.fontFamily = "inherit";
-        element.style.fontSize = "inherit";
 
-        this.createHoverTooltip(element);
+        if (this.showingTooltips) {
+          this.addTooltipHoverHandler(element);
+        }
       } else {
-        const originalContent = element.getAttribute('data-herb-debug-original');
+        const originalContent = element.getAttribute('data-herb-debug-original')  || "";
 
-        if (originalContent) {
+        if (element && element.hasAttribute("data-herb-debug-showing-erb")) {
           element.innerHTML = originalContent;
+          element.removeAttribute("data-herb-debug-showing-erb")
         }
 
-        element.style.display = 'contents';
         element.style.background = 'transparent';
         element.style.color = 'inherit';
-        element.style.fontFamily = 'inherit';
-        element.style.fontSize = 'inherit';
 
+        this.removeTooltipHoverHandler(element);
         this.removeHoverTooltip(element);
       }
     });
@@ -519,24 +555,39 @@ export class HerbOverlay {
 
     this.clearCurrentHoveredERB();
 
-    const erbOutputs = document.querySelectorAll('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
 
-    erbOutputs.forEach((el) => {
-      const element = el as HTMLElement;
+    erbOutputs.forEach(element => {
+      const realElement = element.children[0] as HTMLElement
 
       if (this.showingERBOutlines) {
-        element.style.display = 'inline';
-        element.style.outline = '2px dotted #a78bfa';
-        element.style.outlineOffset = '1px';
-        this.createHoverTooltip(element);
+        if (realElement) {
+          realElement.style.outline = '2px dotted #a78bfa';
+          realElement.style.outlineOffset = '1px';
+        } else {
+          element.style.outline = '2px dotted #a78bfa';
+          element.style.outlineOffset = '1px';
+          element.style.display = 'inline';
+        }
+
+        if (this.showingTooltips) {
+          this.addTooltipHoverHandler(element);
+        }
 
         if (this.showingERBHoverReveal) {
           this.addERBHoverReveal(element);
         }
       } else {
-        element.style.display = 'contents';
-        element.style.outline = 'none';
-        element.style.outlineOffset = '0';
+        if (realElement) {
+          realElement.style.outline = 'none';
+          realElement.style.outlineOffset = '0';
+        } else {
+          element.style.outline = 'none';
+          element.style.outlineOffset = '0';
+          element.style.display = 'contents';
+        }
+
+        this.removeTooltipHoverHandler(element);
         this.removeHoverTooltip(element);
         this.removeERBHoverReveal(element);
       }
@@ -547,14 +598,28 @@ export class HerbOverlay {
 
   private updateNestedToggleVisibility() {
     const nestedToggle = document.getElementById('herbERBHoverRevealNested');
+    const tooltipsNestedToggle = document.getElementById('herbTooltipsNested');
 
     if (nestedToggle) {
       nestedToggle.style.display = this.showingERBOutlines ? 'block' : 'none';
+    }
+
+    if (tooltipsNestedToggle) {
+      tooltipsNestedToggle.style.display = this.showingERBOutlines ? 'block' : 'none';
     }
   }
 
   private toggleERBHoverReveal(show?: boolean) {
     this.showingERBHoverReveal = show !== undefined ? show : !this.showingERBHoverReveal;
+
+    if (this.showingERBHoverReveal && this.showingTooltips) {
+      this.toggleTooltips(false);
+      const toggleTooltipsSwitch = document.getElementById('herbToggleTooltips') as HTMLInputElement;
+
+      if (toggleTooltipsSwitch) {
+        toggleTooltipsSwitch.checked = false;
+      }
+    }
 
     this.clearCurrentHoveredERB();
 
@@ -563,10 +628,10 @@ export class HerbOverlay {
     erbOutputs.forEach((el) => {
       const element = el as HTMLElement;
 
+      this.removeERBHoverReveal(element);
+
       if (this.showingERBHoverReveal && this.showingERBOutlines) {
         this.addERBHoverReveal(element);
-      } else {
-        this.removeERBHoverReveal(element);
       }
     });
 
@@ -607,11 +672,21 @@ export class HerbOverlay {
     const erbCode = element.getAttribute('data-herb-debug-erb');
     if (!erbCode) return;
 
+    this.removeERBHoverReveal(element);
+
     if (!element.hasAttribute('data-herb-debug-original')) {
       element.setAttribute('data-herb-debug-original', element.innerHTML);
     }
 
     const showERBCode = () => {
+      if (!this.showingERBHoverReveal || !this.showingERBOutlines) {
+        return;
+      }
+
+      if (this.currentlyHoveredERBElement === element) {
+        return;
+      }
+
       this.clearCurrentHoveredERB();
 
       this.currentlyHoveredERBElement = element;
@@ -651,14 +726,12 @@ export class HerbOverlay {
     (element as any)._erbHoverHandlers = { showERBCode, hideERBCode };
 
     element.addEventListener('mouseenter', showERBCode);
-    element.addEventListener('mouseleave', hideERBCode);
   }
 
   private removeERBHoverReveal(element: HTMLElement) {
     const handlers = (element as any)._erbHoverHandlers;
     if (handlers) {
       element.removeEventListener('mouseenter', handlers.showERBCode);
-      element.removeEventListener('mouseleave', handlers.hideERBCode);
 
       delete (element as any)._erbHoverHandlers;
 
@@ -666,7 +739,7 @@ export class HerbOverlay {
     }
   }
 
-  private createHoverTooltip(element: HTMLElement) {
+  private createHoverTooltip(element: HTMLElement, elementForPosition: HTMLElement) {
     this.removeHoverTooltip(element);
 
     const relativePath = element.getAttribute('data-herb-debug-file-relative-path') || element.getAttribute('data-herb-debug-file-name') || '';
@@ -678,14 +751,14 @@ export class HerbOverlay {
     if (!relativePath || !erb) return;
 
     const tooltip = document.createElement('div');
-    tooltip.className = 'erb-tooltip';
+    tooltip.className = 'herb-tooltip';
 
     tooltip.innerHTML = `
-      <div class="erb-location" data-tooltip="Open in Editor">
-        <span class="file-path">${relativePath}:${line}:${column}</span>
-        <button class="copy-path-btn" data-tooltip="Copy file path">📋</button>
+      <div class="herb-location" data-tooltip="Open in Editor">
+        <span class="herb-file-path">${relativePath}:${line}:${column}</span>
+        <button class="herb-copy-path-btn" data-tooltip="Copy file path">📋</button>
       </div>
-      <div class="erb-code">${erb}</div>
+      <div class="herb-erb-code">${erb}</div>
     `;
 
     let hideTimeout: number | null = null;
@@ -709,18 +782,20 @@ export class HerbOverlay {
     tooltip.addEventListener('mouseenter', showTooltip);
     tooltip.addEventListener('mouseleave', hideTooltip);
 
-    const locationElement = tooltip.querySelector('.erb-location');
+    const locationElement = tooltip.querySelector('.herb-location');
     const openInEditor = (e: Event) => {
-      if ((e.target as HTMLElement).closest('.copy-path-btn')) {
+      if ((e.target as HTMLElement).closest('.herb-copy-path-btn')) {
         return;
       }
+      e.preventDefault();
       e.stopPropagation();
       this.openFileInEditor(fullPath, parseInt(line), parseInt(column));
     };
     locationElement?.addEventListener('click', openInEditor);
 
-    const copyButton = tooltip.querySelector('.copy-path-btn');
+    const copyButton = tooltip.querySelector('.herb-copy-path-btn');
     const copyFilePath = (e: Event) => {
+      e.preventDefault();
       e.stopPropagation();
       const textToCopy = `${relativePath}:${line}:${column}`;
       navigator.clipboard.writeText(textToCopy).then(() => {
@@ -734,14 +809,61 @@ export class HerbOverlay {
     };
     copyButton?.addEventListener('click', copyFilePath);
 
-    (element as any)._tooltipHandlers = { showTooltip, hideTooltip, openInEditor, copyFilePath };
+    const positionTooltip = () => {
+      const elementRect = elementForPosition.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+
+      tooltip.style.position = 'fixed';
+      tooltip.style.left = '0';
+      tooltip.style.top = '0';
+      tooltip.style.transform = 'none';
+      tooltip.style.bottom = 'auto';
+
+      const actualTooltipRect = tooltip.getBoundingClientRect();
+      const tooltipWidth = actualTooltipRect.width;
+      const tooltipHeight = actualTooltipRect.height;
+
+      let left = elementRect.left + (elementRect.width / 2) - (tooltipWidth / 2);
+      let top = elementRect.top - tooltipHeight - 8;
+
+      if (left < 8) {
+        left = 8;
+      } else if (left + tooltipWidth > viewportWidth - 8) {
+        left = viewportWidth - tooltipWidth - 8;
+      }
+
+      if (top < 8) {
+        top = elementRect.bottom + 8;
+
+        if (top + tooltipHeight > viewportHeight - 8) {
+          top = Math.max(8, (viewportHeight - tooltipHeight) / 2);
+        }
+      }
+
+      if (top + tooltipHeight > viewportHeight - 8) {
+        top = viewportHeight - tooltipHeight - 8;
+      }
+
+      tooltip.style.position = 'fixed';
+      tooltip.style.left = `${left}px`;
+      tooltip.style.top = `${top}px`;
+      tooltip.style.transform = 'none';
+      tooltip.style.bottom = 'auto';
+    };
+
+    (element as any)._tooltipHandlers = { showTooltip, hideTooltip, openInEditor, copyFilePath, positionTooltip };
     (tooltip as any)._tooltipHandlers = { showTooltip, hideTooltip };
 
     element.appendChild(tooltip);
+
+    setTimeout(positionTooltip, 0);
+    window.addEventListener('scroll', positionTooltip, { passive: true });
+    window.addEventListener('resize', positionTooltip, { passive: true });
   }
 
   private removeHoverTooltip(element: HTMLElement) {
-    const tooltip = element.querySelector('.erb-tooltip');
+    const tooltip = element.querySelector('.herb-tooltip');
 
     if (tooltip) {
       const handlers = (element as any)._tooltipHandlers;
@@ -750,10 +872,18 @@ export class HerbOverlay {
       if (handlers) {
         element.removeEventListener('mouseenter', handlers.showTooltip);
         element.removeEventListener('mouseleave', handlers.hideTooltip);
-        const locationElement = tooltip.querySelector('.erb-location');
+
+        const locationElement = tooltip.querySelector('.herb-location');
         locationElement?.removeEventListener('click', handlers.openInEditor);
-        const copyButton = tooltip.querySelector('.copy-path-btn');
+
+        const copyButton = tooltip.querySelector('.herb-copy-path-btn');
         copyButton?.removeEventListener('click', handlers.copyFilePath);
+
+        if (handlers.positionTooltip) {
+          window.removeEventListener('scroll', handlers.positionTooltip);
+          window.removeEventListener('resize', handlers.positionTooltip);
+        }
+
         delete (element as any)._tooltipHandlers;
       }
 
@@ -764,6 +894,33 @@ export class HerbOverlay {
       }
 
       tooltip.remove();
+    }
+  }
+
+  private addTooltipHoverHandler(element: HTMLElement) {
+    this.removeTooltipHoverHandler(element);
+
+    const lazyTooltipHandler = () => {
+      if (!this.showingTooltips || !this.showingERBOutlines) {
+        return;
+      }
+
+      if (element.querySelector('.herb-tooltip')) {
+        return;
+      }
+
+      this.createHoverTooltip(element, element);
+    };
+
+    (element as any)._lazyTooltipHandler = lazyTooltipHandler;
+    element.addEventListener('mouseenter', lazyTooltipHandler);
+  }
+
+  private removeTooltipHoverHandler(element: HTMLElement) {
+    const handler = (element as any)._lazyTooltipHandler;
+    if (handler) {
+      element.removeEventListener('mouseenter', handler);
+      delete (element as any)._lazyTooltipHandler;
     }
   }
 
@@ -784,6 +941,30 @@ export class HerbOverlay {
     }
   }
 
+  private toggleTooltips(show?: boolean) {
+    this.showingTooltips = show !== undefined ? show : !this.showingTooltips;
+
+    if (this.showingTooltips && this.showingERBHoverReveal) {
+      this.toggleERBHoverReveal(false);
+      const toggleERBHoverRevealSwitch = document.getElementById('herbToggleERBHoverReveal') as HTMLInputElement;
+      if (toggleERBHoverRevealSwitch) {
+        toggleERBHoverRevealSwitch.checked = false;
+      }
+    }
+
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
+    erbOutputs.forEach((element) => {
+      if (this.showingERBOutlines && this.showingTooltips) {
+        this.addTooltipHoverHandler(element);
+      } else {
+        this.removeTooltipHoverHandler(element);
+        this.removeHoverTooltip(element);
+      }
+    });
+
+    this.saveSettings();
+  }
+
   private disableAll() {
     this.clearCurrentHoveredERB();
 
@@ -793,6 +974,7 @@ export class HerbOverlay {
     this.toggleERBTags(false);
     this.toggleERBOutlines(false);
     this.toggleERBHoverReveal(false);
+    this.toggleTooltips(false);
 
     const toggleViewOutlinesSwitch = document.getElementById('herbToggleViewOutlines') as HTMLInputElement;
     const togglePartialOutlinesSwitch = document.getElementById('herbTogglePartialOutlines') as HTMLInputElement;
@@ -800,6 +982,7 @@ export class HerbOverlay {
     const toggleERBSwitch = document.getElementById('herbToggleERB') as HTMLInputElement;
     const toggleERBOutlinesSwitch = document.getElementById('herbToggleERBOutlines') as HTMLInputElement;
     const toggleERBHoverRevealSwitch = document.getElementById('herbToggleERBHoverReveal') as HTMLInputElement;
+    const toggleTooltipsSwitch = document.getElementById('herbToggleTooltips') as HTMLInputElement;
 
     if (toggleViewOutlinesSwitch) toggleViewOutlinesSwitch.checked = false;
     if (togglePartialOutlinesSwitch) togglePartialOutlinesSwitch.checked = false;
@@ -807,5 +990,10 @@ export class HerbOverlay {
     if (toggleERBSwitch) toggleERBSwitch.checked = false;
     if (toggleERBOutlinesSwitch) toggleERBOutlinesSwitch.checked = false;
     if (toggleERBHoverRevealSwitch) toggleERBHoverRevealSwitch.checked = false;
+    if (toggleTooltipsSwitch) toggleTooltipsSwitch.checked = false;
+  }
+
+  private initializeErrorOverlay() {
+    this.errorOverlay = new ErrorOverlay();
   }
 }
