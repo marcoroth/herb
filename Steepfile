@@ -14,4 +14,5 @@ target :lib do
   ignore "lib/herb/libherb.rb"
   ignore "lib/herb/libherb"
   ignore "lib/herb/project.rb"
+  ignore "lib/herb/engine/error_formatter.rb"
 end
