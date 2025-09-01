@@ -1,0 +1,5 @@
+_buf = ::String.new;
+ _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-attach-to-parent="true">Hello</h1>
+<p>World</p>
+'.freeze;
+_buf.to_s

@@ -100,6 +100,18 @@ module Engine
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
 
+    test "top-level element with only ERB output as child" do
+      template = '<h1><%= hello %></h1>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "top-level element with only ERB output as child for partial" do
+      template = '<h1><%= hello %></h1>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "_test.html.erb" })
+    end
+
     test "collection render calls get outline boundaries" do
       template = '<%= render @posts %>'
 
@@ -237,6 +249,193 @@ module Engine
       engine_with_debug = Herb::Engine.new(template, debug: false)
 
       assert_equal engine_without_debug.src, engine_with_debug.src
+    end
+
+    test "turbo_frame_tag does NOT get erb-output outline type" do
+      template = '<%= turbo_frame_tag "posts" do %><p>Content</p><% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "content_for with block does NOT get erb-output outline type" do
+      template = '<%= content_for :sidebar do %><div>Sidebar content</div><% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "content_tag with block does NOT get erb-output outline type" do
+      template = '<%= content_tag :div, class: "wrapper" do %>Content<% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "link_to with block does NOT get erb-output outline type" do
+      template = '<%= link_to "/users" do %>View Users<% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "tag helper with block does NOT get erb-output outline type" do
+      template = '<%= tag.div class: "container" do %>Content<% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "form_with block does NOT get erb-output outline type" do
+      template = '<%= form_with model: @user do |f| %>Form content<% end %>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "yield expressions get NOT erb-output outline type" do
+      template = '<h1><%= yield :title %></h1>'
+
+      assert_compiled_snapshot(template, { debug: true, filename: "layout.html.erb" })
+    end
+
+    test "if with elements" do
+      template = <<~HTML
+        <div class="text-gray-500 text-center flex-grow flex flex-col">
+          <% if event.static_metadata && event.static_metadata.location != "Earth" %>
+            <%= event.static_metadata.location %>
+          <% end %>
+
+          <%= event.formatted_dates %>
+
+          <% if event.static_metadata.last_edition? %>
+            <div class="flex items-center justify-center mt-auto -mb-0.5 text-gray-400">
+              <%= fa "box-archive", size: :xs, style: :regular, class: "fill-gray-400" %>
+              <span class="text-sm mt-0.5 ml-1">Final Edition</span>
+            </div>
+          <% end %>
+        </div>
+      HTML
+
+      assert_compiled_snapshot(template, { debug: true, filename: "layout.html.erb" })
+    end
+
+    test "gets view and erb output view type for just output tag" do
+      assert_compiled_snapshot("<%= hello %>", { debug: true, filename: "test.html.erb" })
+    end
+
+    test "puts debug span on parent if HTMLTextContent is only spaces" do
+      assert_compiled_snapshot(" <h1>           <%= hello %>              </h1>", { debug: true, filename: "test.html.erb" })
+    end
+
+    test "puts debug span on parent if HTMLTextContent is only whitespace" do
+      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+        <h1>
+          <%= hello %>
+        </h1>
+      HTML
+    end
+
+    test "mulitple top-level elements should be wrapped in type=view div" do
+      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+        <h1>Hello</h1>
+        <p>World</p>
+      HTML
+    end
+
+    test "non HTML-element top-level node should be wrapped in type=view div" do
+      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+        <%= content_tag :div do %>
+          Content
+        <% end %>
+      HTML
+    end
+
+    test "script content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <script>
+          var userId = <%= @user.id %>;
+          var name = "<%= @user.name %>";
+        </script>
+      ERB
+    end
+
+    test "style content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <style>
+          .user-color { color: <%= @user.color %>; }
+          .theme { background: <%= theme_color %>; }
+        </style>
+      ERB
+    end
+
+    test "head content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <head>
+          <title><%= @page_title %></title>
+          <meta name="description" content="<%= @meta_description %>">
+        </head>
+      ERB
+    end
+
+    test "textarea content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <textarea>
+          <%= @user_input %>
+          Default text with <%= @placeholder %>
+        </textarea>
+      ERB
+    end
+
+    test "pre content erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <pre>
+          Code block:
+          <%= @code_sample %>
+
+          More code: <%= @another_sample %>
+        </pre>
+      ERB
+    end
+
+    test "nested excluded contexts do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <div>
+          <script>
+            var nested = <%= @nested_value %>;
+          </script>
+          <style>
+            .nested { color: <%= @nested_color %>; }
+          </style>
+        </div>
+      ERB
+    end
+
+    test "html comment erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <!-- Comment with <%= @dynamic_content %> -->
+        <!-- Another comment: <%= @more_content %> -->
+      ERB
+    end
+
+    test "html doctype erb expressions do NOT get debug spans" do
+      assert_compiled_snapshot(<<~ERB, debug: true)
+        <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "<%= @dtd_url %>">
+        <!DOCTYPE html <%= @some_attr %>>
+      ERB
+    end
+
+    test "complex erb with control flow and fa helper calls" do
+      template = <<~ERB
+        <div class="flex items-center gap-2 font-light">
+          <% speakers_count = talk.speakers.size %>
+          <% if speakers_count > 1 %>
+            <%= fa("users", size: :sm, style: :light, class: "shrink-0 grow-0 my-1") %>
+          <% elsif speakers_count == 1 %>
+            <%= fa("user", size: :sm, style: :regular, class: "shrink-0 grow-0 my-1") %>
+          <% end %>
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+    end
+
+    test "regular div content still gets debug spans after excluded context tests" do
+      assert_compiled_snapshot('<div><%= @content %></div>', debug: true)
     end
   end
 end

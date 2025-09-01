@@ -3,8 +3,6 @@
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
-      include Debug
-
       attr_reader :tokens
 
       def initialize(engine, options = {})
@@ -13,9 +11,7 @@ module Herb
         @tokens = []
         @element_stack = []
         @context_stack = [:html_content]
-        @top_level_elements = []
         @trim_next_whitespace = false
-        @debug_attributes_applied = false
       end
 
       def generate_output
@@ -47,19 +43,11 @@ module Herb
           when :expr_block_escaped
             indicator = @escape ? "=" : "=="
             @engine.send(:add_expression_block, indicator, value)
-          when :debug_expr_start
-            @engine.send(:add_text, value) if debug?
-          when :debug_expr_end
-            @engine.send(:add_text, value) if debug?
           end
         end
       end
 
       def visit_document_node(node)
-        if debug?
-          find_top_level_elements(node)
-        end
-
         visit_all(node.children)
       end
 
@@ -90,10 +78,6 @@ module Herb
         add_text(node.tag_name.value) if node.tag_name
 
         visit_all(node.children)
-
-        if debug? && should_add_debug_attributes_to_element?(node)
-          add_debug_attributes_to_element(node)
-        end
 
         add_text(node.tag_closing&.value || ">")
       end
@@ -265,30 +249,14 @@ module Herb
           should_escape = should_escape_output?(opening)
           code = node.content.value.strip
 
-          if should_debug_expression?(node)
-            erb_code = "#{opening} #{code} %>"
-            add_debug_expr_start(erb_code, "[BLOCK_PLACEHOLDER]", node)
-
-            if should_escape
-              @tokens << [:expr_block_escaped, code, current_context]
-            else
-              @tokens << [:expr_block, code, current_context]
-            end
-
-            visit_all(node.body)
-            visit(node.end_node)
-
-            add_debug_expr_end
+          if should_escape
+            @tokens << [:expr_block_escaped, code, current_context]
           else
-            if should_escape
-              @tokens << [:expr_block_escaped, code, current_context]
-            else
-              @tokens << [:expr_block, code, current_context]
-            end
-
-            visit_all(node.body)
-            visit(node.end_node)
+            @tokens << [:expr_block, code, current_context]
           end
+
+          visit_all(node.body)
+          visit(node.end_node)
         else
           visit_erb_control_node(node) do
             visit_all(node.body)
@@ -413,14 +381,7 @@ module Herb
 
       def process_erb_output(node, opening, code, is_yield = false)
         should_escape = should_escape_output?(opening)
-
-        if is_yield
-          add_expression_with_escaping(code, should_escape)
-        elsif should_debug_expression?(node)
-          process_debuggable_expression(node, opening, code, should_escape)
-        else
-          add_expression_with_escaping(code, should_escape)
-        end
+        add_expression_with_escaping(code, should_escape)
       end
 
       def should_escape_output?(opening)
@@ -439,7 +400,6 @@ module Herb
       def handle_whitespace_trimming(node)
         @trim_next_whitespace = true if node.tag_closing&.value === "-%>"
       end
-
     end
   end
 end

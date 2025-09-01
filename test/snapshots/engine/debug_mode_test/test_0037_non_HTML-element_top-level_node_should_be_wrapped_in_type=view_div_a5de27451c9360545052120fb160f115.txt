@@ -1,0 +1,6 @@
+_buf = ::String.new;
+ _buf << content_tag :div do; _buf << '
+  Content
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

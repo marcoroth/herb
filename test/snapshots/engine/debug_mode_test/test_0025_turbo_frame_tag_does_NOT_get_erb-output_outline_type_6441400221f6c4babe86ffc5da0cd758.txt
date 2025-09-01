@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << turbo_frame_tag "posts" do; _buf << '<p>Content</p>'.freeze; end;
+_buf.to_s

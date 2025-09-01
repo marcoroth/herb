@@ -1,0 +1,5 @@
+_buf = ::String.new;
+ _buf << '<!-- Comment with '.freeze; _buf << (@dynamic_content).to_s; _buf << ' -->
+<!-- Another comment: '.freeze; _buf << (@more_content).to_s; _buf << ' -->
+'.freeze;
+_buf.to_s

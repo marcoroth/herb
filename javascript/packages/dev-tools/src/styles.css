@@ -24,25 +24,25 @@
   z-index: 1001;
 }
 
-[data-herb-debug-outline-type="view"] > .herb-overlay-label {
+[data-herb-debug-outline-type*="view"] > .herb-overlay-label {
   background: #dbeafe;
   color: #1e40af;
   border-color: #93c5fd;
 }
 
-[data-herb-debug-outline-type="partial"] > .herb-overlay-label {
+[data-herb-debug-outline-type*="partial"] > .herb-overlay-label {
   background: #d1fae5;
   color: #065f46;
   border-color: #6ee7b7;
 }
 
-[data-herb-debug-outline-type="component"] > .herb-overlay-label {
+[data-herb-debug-outline-type*="component"] > .herb-overlay-label {
   background: #fef3c7;
   color: #92400e;
   border-color: #fcd34d;
 }
 
-[data-herb-debug-outline-type="erb-output"] {
+[data-herb-debug-outline-type*="erb-output"] {
   transition: all 0.3s ease;
 }
 
@@ -231,56 +231,6 @@
   z-index: 10000;
   pointer-events: none;
 }
-
-/* .erb-hover {
-  position: relative;
-  background: rgba(255, 193, 7, 0.1);
-  padding: 2px 6px;
-  border-radius: 3px;
-  cursor: help;
-  transition: background 0.2s ease;
-}
-
-.erb-hover:hover {
-  background: rgba(255, 193, 7, 0.2);
-}
-
-.erb-hover::after {
-  content: attr(data-erb);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background: #343a40;
-  color: #ffc107;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-.erb-hover::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-3px);
-  border: 6px solid transparent;
-  border-top-color: #343a40;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.erb-hover:hover::after,
-.erb-hover:hover::before {
-  opacity: 1;
-} */
 
 .herb-floating-menu {
   position: fixed;
@@ -505,24 +455,6 @@
 
 .herb-disable-all-btn:active {
   background: #b91c1c;
-}
-
-.herb-hidden {
-  display: none !important;
-}
-
-/* .show-outlines [data-herb-debug-outline-type="view"],
-.show-outlines [data-herb-debug-outline-type="partial"] {
-  animation: herb-pulse-border 2s infinite;
-} */
-
-@keyframes herb-pulse-border {
-  0%, 100% {
-    border-color: #8b5cf6;
-  }
-  50% {
-    border-color: #6d28d9;
-  }
 }
 
 .herb-validation-overlay {

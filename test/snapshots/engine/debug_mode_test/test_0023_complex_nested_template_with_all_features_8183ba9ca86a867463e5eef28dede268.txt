@@ -12,7 +12,7 @@ _buf = ::String.new;
 
     <main>
       '.freeze; if @user.present?; _buf << '
-        <h1>Welcome back, '.freeze; _buf << '<span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @user.name %&gt;" data-herb-debug-file-name="application.html.erb" data-herb-debug-file-relative-path="app/views/layouts/application.html.erb" data-herb-debug-file-full-path="app/views/layouts/application.html.erb" data-herb-debug-line="14" data-herb-debug-column="27" style="display: contents;">'.freeze; _buf << (@user.name).to_s; _buf << '</span>'.freeze; _buf << '!</h1>
+        <h1>Welcome back, <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @user.name %&gt;" data-herb-debug-file-name="application.html.erb" data-herb-debug-file-relative-path="app/views/layouts/application.html.erb" data-herb-debug-file-full-path="app/views/layouts/application.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="14" data-herb-debug-column="27" style="display: contents;">'.freeze; _buf << (@user.name).to_s; _buf << '</span>!</h1>
         '.freeze; _buf << (render partial: "user_dashboard", locals: { user: @user }).to_s; _buf << '
       '.freeze; else; _buf << '
         <h1>Welcome, guest!</h1>

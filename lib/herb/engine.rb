@@ -4,6 +4,7 @@ require "json"
 require "time"
 
 require_relative "engine/debug"
+require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"
@@ -25,7 +26,7 @@ module Herb
       @project_path = Pathname(properties[:project_path] || Dir.pwd)
 
       if @filename
-        absolute_filename = @filename.absolute? ? @filename : Pathname(Dir.pwd) + @filename
+        absolute_filename = @filename.absolute? ? @filename : @project_path + @filename
         @relative_file_path = absolute_filename.relative_path_from(@project_path).to_s
       else
         @relative_file_path = "unknown"
@@ -102,6 +103,12 @@ module Herb
 
         if @validation_mode == :overlay && validation_errors&.any?
           add_validation_overlay(validation_errors, input)
+        end
+
+        # If debug mode is enabled, run DebugVisitor first to mutate the AST
+        if @debug
+          debug_visitor = DebugVisitor.new(self)
+          ast.accept(debug_visitor)
         end
 
         compiler = Compiler.new(self, properties)

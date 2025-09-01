@@ -338,7 +338,7 @@ export class HerbOverlay {
 
   private toggleViewOutlines(show?: boolean) {
     this.showingViewOutlines = show !== undefined ? show : !this.showingViewOutlines;
-    const viewOutlines = document.querySelectorAll('[data-herb-debug-outline-type="view"]');
+    const viewOutlines = document.querySelectorAll('[data-herb-debug-outline-type="view"], [data-herb-debug-outline-type*="view"]');
 
     viewOutlines.forEach((outline) => {
       const element = outline as HTMLElement;
@@ -363,7 +363,7 @@ export class HerbOverlay {
 
   private togglePartialOutlines(show?: boolean) {
     this.showingPartialOutlines = show !== undefined ? show : !this.showingPartialOutlines;
-    const partialOutlines = document.querySelectorAll('[data-herb-debug-outline-type="partial"]');
+    const partialOutlines = document.querySelectorAll('[data-herb-debug-outline-type="partial"], [data-herb-debug-outline-type*="partial"]');
 
     partialOutlines.forEach((outline) => {
       const element = outline as HTMLElement;
@@ -388,7 +388,7 @@ export class HerbOverlay {
 
   private toggleComponentOutlines(show?: boolean) {
     this.showingComponentOutlines = show !== undefined ? show : !this.showingComponentOutlines;
-    const componentOutlines = document.querySelectorAll('[data-herb-debug-outline-type="component"]');
+    const componentOutlines = document.querySelectorAll('[data-herb-debug-outline-type="component"], [data-herb-debug-outline-type*="component"]');
 
     componentOutlines.forEach((outline) => {
       const element = outline as HTMLElement;
@@ -510,7 +510,7 @@ export class HerbOverlay {
 
   private toggleERBTags(show?: boolean) {
     this.showingERB = show !== undefined ? show : !this.showingERB;
-    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type*="erb-output"]');
 
     erbOutputs.forEach((element) => {
       const erbCode = element.getAttribute('data-herb-debug-erb');
@@ -555,18 +555,20 @@ export class HerbOverlay {
 
     this.clearCurrentHoveredERB();
 
-    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type*="erb-output"]');
 
     erbOutputs.forEach(element => {
-      const realElement = element.children[0] as HTMLElement
+      const inserted = element.hasAttribute("data-herb-debug-inserted")
+      const needsWrapperToggled = (inserted && !element.children[0])
+
+      const realElement = (element.children[0] as HTMLElement) || element
 
       if (this.showingERBOutlines) {
-        if (realElement) {
-          realElement.style.outline = '2px dotted #a78bfa';
-          realElement.style.outlineOffset = '1px';
-        } else {
-          element.style.outline = '2px dotted #a78bfa';
-          element.style.outlineOffset = '1px';
+
+        realElement.style.outline = '2px dotted #a78bfa';
+        realElement.style.outlineOffset = '1px';
+
+        if (needsWrapperToggled) {
           element.style.display = 'inline';
         }
 
@@ -578,12 +580,10 @@ export class HerbOverlay {
           this.addERBHoverReveal(element);
         }
       } else {
-        if (realElement) {
-          realElement.style.outline = 'none';
-          realElement.style.outlineOffset = '0';
-        } else {
-          element.style.outline = 'none';
-          element.style.outlineOffset = '0';
+        realElement.style.outline = 'none';
+        realElement.style.outlineOffset = '0';
+
+        if (needsWrapperToggled) {
           element.style.display = 'contents';
         }
 
@@ -623,7 +623,7 @@ export class HerbOverlay {
 
     this.clearCurrentHoveredERB();
 
-    const erbOutputs = document.querySelectorAll('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll('[data-herb-debug-outline-type*="erb-output"]');
 
     erbOutputs.forEach((el) => {
       const element = el as HTMLElement;
@@ -947,12 +947,14 @@ export class HerbOverlay {
     if (this.showingTooltips && this.showingERBHoverReveal) {
       this.toggleERBHoverReveal(false);
       const toggleERBHoverRevealSwitch = document.getElementById('herbToggleERBHoverReveal') as HTMLInputElement;
+
       if (toggleERBHoverRevealSwitch) {
         toggleERBHoverRevealSwitch.checked = false;
       }
     }
 
-    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type="erb-output"]');
+    const erbOutputs = document.querySelectorAll<HTMLElement>('[data-herb-debug-outline-type*="erb-output"]');
+
     erbOutputs.forEach((element) => {
       if (this.showingERBOutlines && this.showingTooltips) {
         this.addTooltipHoverHandler(element);

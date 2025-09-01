@@ -574,6 +574,11 @@ export class ErrorOverlay {
         <div class="herb-validation-content">
           ${contentSections}
         </div>
+        <div class="herb-dismiss-hint" style="padding-left: 24px; padding-right: 24px; padding-bottom: 12px;">
+          Click outside, press <kbd style="display: inline-block; padding: 2px 6px; font-family: monospace; font-size: 0.9em; color: #333; background: #f7f7f7; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 0 #ccc, 0 2px 3px rgba(0,0,0,0.2) inset;">Esc</kbd> key, or fix the code to dismiss.<br>
+
+          You can also disable this overlay by passing <code style="color: #ffeb3b; font-family: monospace; font-size: 12pt;">validation_mode: :none</code> to <code style="color: #ffeb3b; font-family: monospace; font-size: 12pt;">Herb::Engine</code>.
+        </div>
       </div>
     `;
   }
@@ -679,7 +684,6 @@ export class ErrorOverlay {
         background: #0f0f0f;
         border: 1px solid #2d2d2d;
         border-radius: 8px;
-        overflow: hidden;
       }
 
       .herb-validator-header {
