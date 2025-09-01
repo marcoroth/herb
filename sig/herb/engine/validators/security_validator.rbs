@@ -3,12 +3,6 @@
 module Herb
   class Engine
     module Validators
-      # Security Validator
-      #
-      # This validator focuses on security validation such as:
-      # - ERB output in attribute positions
-      # - ERB output in attribute names
-      # - Other ERB-related security issues
       class SecurityValidator < Validator
         def visit_html_open_tag_node: (untyped node) -> untyped
 

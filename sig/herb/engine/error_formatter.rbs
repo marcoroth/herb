@@ -21,7 +21,7 @@ module Herb
 
       def format_error_details: (untyped error) -> untyped
 
-      def has_inline_hint?: (untyped error) -> untyped
+      def inline_hint?: (untyped error) -> untyped
 
       def format_inline_hint: (untyped error) -> untyped
 

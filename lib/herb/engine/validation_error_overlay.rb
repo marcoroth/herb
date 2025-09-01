@@ -8,13 +8,13 @@ module Herb
       VALIDATOR_BADGES = {
         "SecurityValidator" => { label: "Security", color: "#dc2626" },
         "NestingValidator" => { label: "Nesting", color: "#f59e0b" },
-        "AccessibilityValidator" => { label: "A11y", color: "#3b82f6" }
+        "AccessibilityValidator" => { label: "A11y", color: "#3b82f6" },
       }.freeze
 
       SEVERITY_COLORS = {
         "error" => "#dc2626",
         "warning" => "#f59e0b",
-        "info" => "#3b82f6"
+        "info" => "#3b82f6",
       }.freeze
 
       def initialize(source, error, filename: nil)
@@ -74,8 +74,8 @@ module Herb
               </div>
             HTML
 
-            if col_num > 0
-              pointer = " " * (col_num - 1) + "^"
+            if col_num.positive?
+              pointer = "#{" " * (col_num - 1)}^"
               code_lines << <<~HTML
                 <div class="herb-error-pointer">#{escape_html(pointer)}</div>
               HTML
@@ -107,17 +107,13 @@ module Herb
       end
 
       def syntax_highlight(code)
-        begin
-          lex_result = ::Herb.lex(code)
-          if lex_result.errors.any?
-            return escape_html(code)
-          end
+        lex_result = ::Herb.lex(code)
+        return escape_html(code) if lex_result.errors.any?
 
-          tokens = lex_result.value
-          return highlight_with_tokens(tokens, code)
-        rescue
-          return escape_html(code)
-        end
+        tokens = lex_result.value
+        highlight_with_tokens(tokens, code)
+      rescue StandardError
+        escape_html(code)
       end
 
       def highlight_with_tokens(tokens, code)
@@ -130,23 +126,19 @@ module Herb
           char_offset = get_character_offset(code, token.location.start.line, token.location.start.column)
           char_end = get_character_offset(code, token.location.end_point.line, token.location.end_point.column)
 
-          if char_offset > last_end
-            highlighted += escape_html(code[last_end...char_offset])
-          end
+          highlighted += escape_html(code[last_end...char_offset]) if char_offset > last_end
 
           token_text = code[char_offset...char_end]
           highlighted += apply_token_style(token, token_text)
           last_end = char_end
         end
 
-        if last_end < code.length
-          highlighted += escape_html(code[last_end..-1])
-        end
+        highlighted += escape_html(code[last_end..]) if last_end < code.length
 
         highlighted
       end
 
-      def get_character_offset(content, line, column)
+      def get_character_offset(_content, line, column)
         return column - 1 if line == 1
 
         column - 1
@@ -160,10 +152,7 @@ module Herb
           "<span class=\"herb-erb\">#{escaped_text}</span>"
         when "TOKEN_ERB_CONTENT"
           "<span class=\"herb-erb-content\">#{escaped_text}</span>"
-        when "TOKEN_HTML_TAG_START", "TOKEN_HTML_TAG_START_CLOSE",
-             "TOKEN_HTML_TAG_END", "TOKEN_HTML_TAG_SELF_CLOSE"
-          "<span class=\"herb-tag\">#{escaped_text}</span>"
-        when "TOKEN_IDENTIFIER"
+        when "TOKEN_HTML_TAG_START", "TOKEN_HTML_TAG_START_CLOSE", "TOKEN_HTML_TAG_END", "TOKEN_HTML_TAG_SELF_CLOSE", "TOKEN_IDENTIFIER"
           "<span class=\"herb-tag\">#{escaped_text}</span>"
         when "TOKEN_HTML_ATTRIBUTE_NAME"
           "<span class=\"herb-attr\">#{escaped_text}</span>"
@@ -178,15 +167,15 @@ module Herb
 
       def escape_html(text)
         text.to_s
-          .gsub('&', '&amp;')
-          .gsub('<', '&lt;')
-          .gsub('>', '&gt;')
-          .gsub('"', '&quot;')
-          .gsub("'", '&#39;')
+            .gsub("&", "&amp;")
+            .gsub("<", "&lt;")
+            .gsub(">", "&gt;")
+            .gsub('"', "&quot;")
+            .gsub("'", "&#39;")
       end
 
       def escape_attr(text)
-        escape_html(text).gsub("\n", '&#10;').gsub("\r", '&#13;')
+        escape_html(text).gsub("\n", "&#10;").gsub("\r", "&#13;")
       end
     end
   end

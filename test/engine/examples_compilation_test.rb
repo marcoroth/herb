@@ -12,7 +12,7 @@ module Engine
 
     example_files.each do |file_path|
       basename = File.basename(file_path, ".html.erb")
-      test_name = basename.tr("-_", " ") + " compilation"
+      test_name = "#{basename.tr("-_", " ")} compilation"
 
       test test_name do
         template = File.read(file_path)

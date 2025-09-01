@@ -228,15 +228,7 @@ class Herb::CLI
     begin
       options = {}
       options[:filename] = @file if @file
-
-      if no_escape
-        options[:escape] = false
-      elsif escape
-        options[:escape] = true
-      else
-        options[:escape] = true
-      end
-
+      options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
 
       if debug
@@ -302,15 +294,7 @@ class Herb::CLI
     begin
       options = {}
       options[:filename] = @file if @file
-
-      if no_escape
-        options[:escape] = false
-      elsif escape
-        options[:escape] = true
-      else
-        options[:escape] = true
-      end
-
+      options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
 
       if debug

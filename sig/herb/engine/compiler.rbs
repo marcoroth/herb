@@ -3,8 +3,6 @@
 module Herb
   class Engine
     class Compiler < ::Herb::Visitor
-      include Debug
-
       attr_reader tokens: untyped
 
       def initialize: (untyped engine, ?untyped options) -> untyped

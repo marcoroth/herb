@@ -125,9 +125,8 @@ module Engine
     test "handles custom preamble and postamble" do
       template = "<div>Test</div>"
       engine = Herb::Engine.new(template,
-        preamble: "@buf = []",
-        postamble: "@buf.join"
-      )
+                                preamble: "@buf = []",
+                                postamble: "@buf.join")
 
       assert_includes engine.src, "@buf = []"
       assert_includes engine.src, "@buf.join"
@@ -146,9 +145,8 @@ module Engine
     test "handles custom escapefunc" do
       template = "<%== content %>"
       engine = Herb::Engine.new(template,
-        escape: false,
-        escapefunc: "CGI.escapeHTML"
-      )
+                                escape: false,
+                                escapefunc: "CGI.escapeHTML")
 
       assert_includes engine.src, "CGI.escapeHTML((content))"
       refute_includes engine.src, "::Herb::Engine.h"
@@ -216,9 +214,9 @@ module Engine
       engine = Herb::Engine.new(template)
 
       assert_includes engine.src, '<img src="photo.jpg" alt="Photo">'
-      assert_includes engine.src, '<br>'
+      assert_includes engine.src, "<br>"
       assert_includes engine.src, '<input type="text" name="'
-      assert_includes engine.src, '::Herb::Engine.attr((field_name))'
+      assert_includes engine.src, "::Herb::Engine.attr((field_name))"
     end
 
     test "handles CDATA sections" do
@@ -232,9 +230,9 @@ module Engine
 
       engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '<![CDATA['
-      assert_includes engine.src, ']]>'
-      assert_includes engine.src, '::Herb::Engine.js((@data.to_json))'
+      assert_includes engine.src, "<![CDATA["
+      assert_includes engine.src, "]]>"
+      assert_includes engine.src, "::Herb::Engine.js((@data.to_json))"
     end
 
     test "handles XML declarations" do
@@ -245,4 +243,3 @@ module Engine
     end
   end
 end
-

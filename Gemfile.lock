@@ -17,7 +17,6 @@ GIT
 PATH
   remote: .
   specs:
-    erubi (1.13.1)
     herb (0.6.1)
 
 GEM
@@ -62,6 +61,7 @@ GEM
     dispersion (0.2.0)
       prism
     drb (2.2.3)
+    erubi (1.13.1)
     ffi (1.17.2-aarch64-linux-gnu)
     ffi (1.17.2-aarch64-linux-musl)
     ffi (1.17.2-arm64-darwin)

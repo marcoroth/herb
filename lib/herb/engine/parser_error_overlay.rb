@@ -14,12 +14,14 @@ module Herb
         Herb::Errors::VoidElementClosingTagError,
         Herb::Errors::UnclosedElementError,
         Herb::Errors::MissingClosingTagError,
-        Herb::Errors::MissingOpeningTagError,
-      ]
+        Herb::Errors::MissingOpeningTagError
+      ].freeze
 
       def initialize(source, errors, filename: nil)
         @source = source
-        @errors = errors.sort_by { |error| [ERROR_CLASS_PRIORITRY.index(error.class) || -1, error.location.start.line, error.location.start.column] }
+        @errors = errors.sort_by { |error|
+          [ERROR_CLASS_PRIORITRY.index(error.class) || -1, error.location.start.line, error.location.start.column]
+        }
         @filename = filename || "unknown"
         @lines = source.lines
       end
@@ -33,7 +35,7 @@ module Herb
         primary_error = @errors.first
         error_message = primary_error.respond_to?(:message) ? primary_error.message : primary_error.to_s
 
-        html = <<~HTML
+        <<~HTML
           <div class="herb-parser-error-overlay">
             <style>
               .herb-parser-error-overlay * {
@@ -424,8 +426,6 @@ module Herb
             </script>
           </div>
         HTML
-
-        html
       end
 
       private
@@ -439,9 +439,7 @@ module Herb
 
         suggestions = @errors.map { |error| get_error_suggestion(error) }.compact
 
-        if suggestions.any?
-          sections << generate_suggestions_section(suggestions)
-        end
+        sections << generate_suggestions_section(suggestions) if suggestions.any?
 
         sections.uniq.join("\n")
       end
@@ -451,7 +449,7 @@ module Herb
         line_num = location&.start&.line || 1
         col_num = location&.start&.column || 1
 
-        error_class = error.class.name.split('::').last.gsub(/Error$/, '')
+        error_class = error.class.name.split("::").last.gsub(/Error$/, "")
         error_message = error.respond_to?(:message) ? error.message : error.to_s
 
         header_text = if @errors.length == 1
@@ -498,15 +496,15 @@ module Herb
             </div>
           HTML
 
-          if is_error_line && col_num > 0
-            pointer_text = "^" + ("~" * [line_str.length - col_num, 0].max)
-            hint = get_inline_hint(error)
-            pointer_display = hint ? "#{pointer_text} #{hint}" : pointer_text
+          next unless is_error_line && col_num.positive?
 
-            lines_html << <<~HTML
-              <div class="herb-error-pointer">#{" " * (col_num - 1)}#{escape_html(pointer_display)}</div>
-            HTML
-          end
+          pointer_text = "^#{"~" * [line_str.length - col_num, 0].max}"
+          hint = get_inline_hint(error)
+          pointer_display = hint ? "#{pointer_text} #{hint}" : pointer_text
+
+          lines_html << <<~HTML
+            <div class="herb-error-pointer">#{" " * (col_num - 1)}#{escape_html(pointer_display)}</div>
+          HTML
         end
 
         lines_html.join("\n")
@@ -544,22 +542,15 @@ module Herb
       end
 
       def syntax_highlight(code)
-        begin
-          lex_result = ::Herb.lex(code)
+        lex_result = ::Herb.lex(code)
 
-          if lex_result.errors.any?
-            return escape_html(code)
-          end
+        return escape_html(code) if lex_result.errors.any?
 
-          tokens = lex_result.value
-          return highlight_with_tokens(tokens, code)
-
-        rescue
-          return escape_html(code)
-        end
+        tokens = lex_result.value
+        highlight_with_tokens(tokens, code)
+      rescue StandardError
+        escape_html(code)
       end
-
-      private
 
       def highlight_with_tokens(tokens, code)
         return escape_html(code) if tokens.empty?
@@ -574,7 +565,7 @@ module Herb
           is_closing_tag: false,
           expecting_attribute_name: false,
           expecting_attribute_value: false,
-          in_quotes: false
+          in_quotes: false,
         }
 
         tokens.each_with_index do |token, i|
@@ -584,9 +575,7 @@ module Herb
           start_offset = get_character_offset(code, token.location.start.line, token.location.start.column)
           end_offset = get_character_offset(code, token.location.end.line, token.location.end.column)
 
-          if start_offset > last_end
-            highlighted += escape_html(code[last_end...start_offset])
-          end
+          highlighted += escape_html(code[last_end...start_offset]) if start_offset > last_end
 
           token_text = code[start_offset...end_offset]
 
@@ -594,18 +583,16 @@ module Herb
 
           css_class = get_token_css_class(state, token, token_text)
 
-          if css_class
-            highlighted += "<span class=\"herb-#{css_class}\">#{escape_html(token_text)}</span>"
-          else
-            highlighted += escape_html(token_text)
-          end
+          highlighted += if css_class
+                           "<span class=\"herb-#{css_class}\">#{escape_html(token_text)}</span>"
+                         else
+                           escape_html(token_text)
+                         end
 
           last_end = end_offset
         end
 
-        if last_end < code.length
-          highlighted += escape_html(code[last_end..-1])
-        end
+        highlighted += escape_html(code[last_end..]) if last_end < code.length
 
         highlighted
       end
@@ -621,7 +608,7 @@ module Herb
         offset + column
       end
 
-      def update_highlighting_state(state, token, token_text, next_token, prev_token)
+      def update_highlighting_state(state, token, token_text, _next_token, _prev_token)
         case token.type
         when "TOKEN_HTML_TAG_START"
           state[:in_tag] = true
@@ -652,14 +639,12 @@ module Herb
           end
 
         when "TOKEN_EQUALS"
-          if state[:in_tag]
-            state[:expecting_attribute_value] = true
-          end
+          state[:expecting_attribute_value] = true if state[:in_tag]
 
         when "TOKEN_QUOTE"
           if state[:in_tag]
             state[:in_quotes] = !state[:in_quotes]
-            if !state[:in_quotes]
+            unless state[:in_quotes]
               state[:expecting_attribute_name] = true
               state[:expecting_attribute_value] = false
             end
@@ -680,14 +665,13 @@ module Herb
       end
 
       def get_token_css_class(state, token, token_text)
-        if state[:in_comment] && !["TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END", "TOKEN_ERB_START", "TOKEN_ERB_CONTENT", "TOKEN_ERB_END"].include?(token.type)
+        if state[:in_comment] && !["TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END", "TOKEN_ERB_START",
+                                   "TOKEN_ERB_CONTENT", "TOKEN_ERB_END"].include?(token.type)
           return "comment"
         end
 
         case token.type
-        when "TOKEN_ERB_START", "TOKEN_ERB_END"
-          "erb"
-        when "TOKEN_ERB_CONTENT"
+        when "TOKEN_ERB_START", "TOKEN_ERB_CONTENT", "TOKEN_ERB_END"
           "erb"
         when "TOKEN_HTML_COMMENT_START", "TOKEN_HTML_COMMENT_END"
           "comment"
@@ -698,15 +682,11 @@ module Herb
             "tag"
           elsif state[:in_tag] && (state[:expecting_attribute_name] || state[:expecting_attribute_value])
             state[:in_quotes] ? "value" : "attr"
-          else
-            nil
           end
         when "TOKEN_QUOTE"
           state[:in_tag] ? "value" : nil
         when "TOKEN_STRING"
           state[:in_tag] ? "value" : "string"
-        else
-          nil
         end
       end
 
@@ -766,18 +746,16 @@ module Herb
           "← Quote mismatch"
         when Herb::Errors::RubyParseError
           "← Ruby syntax error"
-        else
-          nil
         end
       end
 
       def escape_html(text)
         text.to_s
-          .gsub("&", "&amp;")
-          .gsub("<", "&lt;")
-          .gsub(">", "&gt;")
-          .gsub('"', "&quot;")
-          .gsub("'", "&#39;")
+            .gsub("&", "&amp;")
+            .gsub("<", "&lt;")
+            .gsub(">", "&gt;")
+            .gsub('"', "&quot;")
+            .gsub("'", "&#39;")
       end
     end
   end

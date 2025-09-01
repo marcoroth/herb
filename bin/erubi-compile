@@ -154,6 +154,4 @@ class ErubiCompiler
   end
 end
 
-if __FILE__ == $0
-  ErubiCompiler.new.run(ARGV)
-end
+ErubiCompiler.new.run(ARGV) if __FILE__ == $PROGRAM_NAME

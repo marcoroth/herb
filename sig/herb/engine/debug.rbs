@@ -25,14 +25,14 @@ module Herb
 
       def determine_view_type: () -> untyped
 
-      def is_partial?: () -> untyped
+      def partial?: () -> untyped
 
-      def is_component?: () -> untyped
+      def component?: () -> untyped
 
       def in_head_context?: () -> untyped
 
       # TODO: convert this to analyze the Prism nodes once available
-      def is_complex_rails_helper?: (untyped code) -> untyped
+      def complex_rails_helper?: (untyped code) -> untyped
     end
   end
 end

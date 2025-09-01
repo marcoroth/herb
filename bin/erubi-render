@@ -156,6 +156,4 @@ class ErubiRenderer
   end
 end
 
-if __FILE__ == $0
-  ErubiRenderer.new.run(ARGV)
-end
+ErubiRenderer.new.run(ARGV) if __FILE__ == $PROGRAM_NAME

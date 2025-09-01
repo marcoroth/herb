@@ -6,6 +6,8 @@ module Herb
       attr_reader :tokens
 
       def initialize(engine, options = {})
+        super()
+
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
         @tokens = []
@@ -24,14 +26,14 @@ module Herb
           when :code
             @engine.send(:add_code, value)
           when :expr
-            if context == :attribute_value || context == :script_content || context == :style_content
+            if [:attribute_value, :script_content, :style_content].include?(context)
               add_context_aware_expression(value, context)
             else
               indicator = @escape ? "==" : "="
               @engine.send(:add_expression, indicator, value)
             end
           when :expr_escaped
-            if context == :attribute_value || context == :script_content || context == :style_content
+            if [:attribute_value, :script_content, :style_content].include?(context)
               add_context_aware_expression(value, context)
             else
               indicator = @escape ? "=" : "=="
@@ -66,9 +68,7 @@ module Herb
         visit_all(node.body)
         visit(node.close_tag)
 
-        if %w[script style].include?(tag_name)
-          pop_context
-        end
+        pop_context if %w[script style].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
@@ -100,15 +100,11 @@ module Herb
       def visit_html_attribute_value_node(node)
         push_context(:attribute_value)
 
-        if node.quoted
-          add_text(node.open_quote&.value)
-        end
+        add_text(node.open_quote&.value) if node.quoted
 
         visit_all(node.children)
 
-        if node.quoted
-          add_text(node.close_quote&.value)
-        end
+        add_text(node.close_quote&.value) if node.quoted
 
         pop_context
       end
@@ -239,7 +235,7 @@ module Herb
       end
 
       def visit_erb_yield_node(node)
-        process_erb_tag(node, skip_comment_check: true, is_yield: true)
+        process_erb_tag(node, skip_comment_check: true)
       end
 
       def visit_erb_block_node(node)
@@ -249,11 +245,11 @@ module Herb
           should_escape = should_escape_output?(opening)
           code = node.content.value.strip
 
-          if should_escape
-            @tokens << [:expr_block_escaped, code, current_context]
-          else
-            @tokens << [:expr_block, code, current_context]
-          end
+          @tokens << if should_escape
+                       [:expr_block_escaped, code, current_context]
+                     else
+                       [:expr_block, code, current_context]
+                     end
 
           visit_all(node.body)
           visit(node.end_node)
@@ -308,7 +304,7 @@ module Herb
         end
       end
 
-      def process_erb_tag(node, skip_comment_check: false, is_yield: false)
+      def process_erb_tag(node, skip_comment_check: false)
         opening = node.tag_opening.value
 
         return if !skip_comment_check && erb_comment?(opening)
@@ -316,7 +312,7 @@ module Herb
         code = node.content.value.strip
 
         if erb_output?(opening)
-          process_erb_output(node, opening, code, is_yield)
+          process_erb_output(opening, code)
         else
           add_code(code)
         end
@@ -361,7 +357,7 @@ module Herb
             current_text += value
             current_context ||= context
           else
-            if !current_text.empty?
+            unless current_text.empty?
               optimized << [:text, current_text, current_context]
 
               current_text = ""
@@ -372,14 +368,12 @@ module Herb
           end
         end
 
-        if !current_text.empty?
-          optimized << [:text, current_text, current_context]
-        end
+        optimized << [:text, current_text, current_context] unless current_text.empty?
 
         optimized
       end
 
-      def process_erb_output(node, opening, code, is_yield = false)
+      def process_erb_output(opening, code)
         should_escape = should_escape_output?(opening)
         add_expression_with_escaping(code, should_escape)
       end
@@ -398,7 +392,7 @@ module Herb
       end
 
       def handle_whitespace_trimming(node)
-        @trim_next_whitespace = true if node.tag_closing&.value === "-%>"
+        @trim_next_whitespace = true if node.tag_closing&.value == "-%>"
       end
     end
   end

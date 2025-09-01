@@ -3,12 +3,6 @@
 module Herb
   class Engine
     module Validators
-      # Nesting Validator
-      #
-      # This validator focuses on HTML nesting validation such as:
-      # - Invalid HTML nesting (e.g., <p> containing block elements)
-      # - Nested anchors
-      # - Interactive elements in buttons
       class NestingValidator < Validator
         def visit_html_element_node: (untyped node) -> untyped
 

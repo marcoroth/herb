@@ -12,7 +12,7 @@ module Engine
       @compiler_options = {
         escape: false,
         bufvar: "_buf",
-        escapefunc: "::Herb::Engine.h"
+        escapefunc: "::Herb::Engine.h",
       }
     end
 
@@ -34,15 +34,15 @@ module Engine
     end
 
     test "basic html content" do
-      template = '<div>Hello <%= @name %></div>'
+      template = "<div>Hello <%= @name %></div>"
       result = evaluate_template(template, name: "Alice")
-      assert_equal '<div>Hello Alice</div>', result
+      assert_equal "<div>Hello Alice</div>", result
     end
 
     test "multiple erb expressions" do
-      template = '<h1><%= @title %></h1><p><%= @description %></p>'
+      template = "<h1><%= @title %></h1><p><%= @description %></p>"
       result = evaluate_template(template, title: "Test", description: "Content")
-      assert_equal '<h1>Test</h1><p>Content</p>', result
+      assert_equal "<h1>Test</h1><p>Content</p>", result
     end
 
     test "attribute value escaping" do
@@ -92,12 +92,12 @@ module Engine
       template2 = '<button type="submit"<% if true %> disabled<% end %><% if true %> aria-busy="true"<% end %> class="btn">Submit</button>'
       result2 = evaluate_template(template2)
 
-      assert_includes result2, 'disabled'
-      assert_includes result2, 'aria-busy'
+      assert_includes result2, "disabled"
+      assert_includes result2, "aria-busy"
     end
 
     test "erb output in attribute position blocked" do
-      template = '<div <%= @malicious %>>Content</div>'
+      template = "<div <%= @malicious %>>Content</div>"
 
       error = assert_raises(Herb::Engine::SecurityError) do
         compile_template(template)
@@ -128,7 +128,7 @@ module Engine
     end
 
     test "token optimization basic" do
-      template = '<div>Hello</div><span>World</span><p><%= @name %></p>'
+      template = "<div>Hello</div><span>World</span><p><%= @name %></p>"
       compiled = compile_template(template)
 
       assert_includes compiled, "'<div>Hello</div><span>World</span><p>'"
@@ -151,8 +151,8 @@ module Engine
     test "html comments with erb" do
       template = '<!-- Generated at <%= Time.now.strftime("%Y-%m-%d") %> -->'
       result = evaluate_template(template)
-      assert_includes result, '<!-- Generated at'
-      assert_includes result, '-->'
+      assert_includes result, "<!-- Generated at"
+      assert_includes result, "-->"
     end
 
     test "mixed quote types" do
@@ -188,7 +188,7 @@ module Engine
         avatar_url: "https://example.com/avatar.jpg",
         name: "Alice Smith",
         email: "alice@example.com",
-        active: true
+        active: true,
       }
 
       result = evaluate_template(template, context)
@@ -196,9 +196,9 @@ module Engine
       assert_includes result, 'class="user-card featured"'
       assert_includes result, 'src="https://example.com/avatar.jpg"'
       assert_includes result, 'alt="Alice Smith\'s avatar"'
-      assert_includes result, '<h3>Alice Smith</h3>'
+      assert_includes result, "<h3>Alice Smith</h3>"
       assert_includes result, 'name: "Alice Smith"'
-      assert_includes result, 'isActive: true'
+      assert_includes result, "isActive: true"
     end
 
     test "security error provides location info" do

@@ -146,7 +146,7 @@ module Herb
 
               output << "\e[31m#{pointer}\e[0m"
 
-              output << " #{format_inline_hint(error)}" if has_inline_hint?(error)
+              output << " #{format_inline_hint(error)}" if inline_hint?(error)
               output << "\n"
             end
           else
@@ -216,7 +216,7 @@ module Herb
         output
       end
 
-      def has_inline_hint?(error)
+      def inline_hint?(error)
         case error
         when Herb::Errors::MissingClosingTagError,
              Herb::Errors::TagNamesMismatchError,
@@ -345,16 +345,14 @@ module Herb
 
       def format_error_header(error, number)
         output = String.new
-        if error.is_a?(Hash)
-          output << "  #{number}. #{error[:code] || 'UnknownError'}: #{error[:message]}\n"
-        else
-          output << "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
-        end
+        output << if error.is_a?(Hash)
+                    "  #{number}. #{error[:code] || "UnknownError"}: #{error[:message]}\n"
+                  else
+                    "  #{number}. #{error.class.name.split("::").last.gsub(/Error$/, "")}: #{error.message}\n"
+                  end
 
         location = error.is_a?(Hash) ? error[:location] : error.location
-        if location
-          output << "     Location: Line #{location.start.line}, Column #{location.start.column}\n"
-        end
+        output << "     Location: Line #{location.start.line}, Column #{location.start.column}\n" if location
 
         output
       end

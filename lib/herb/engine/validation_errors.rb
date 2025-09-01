@@ -31,9 +31,7 @@ module Herb
 
         parts << message
 
-        if @suggestion
-          parts << "Suggestion: #{@suggestion}"
-        end
+        parts << "Suggestion: #{@suggestion}" if @suggestion
 
         parts.join(" - ")
       end

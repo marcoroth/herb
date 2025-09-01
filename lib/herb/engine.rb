@@ -3,7 +3,6 @@
 require "json"
 require "time"
 
-require_relative "engine/debug"
 require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
@@ -16,7 +15,16 @@ require_relative "engine/validators/accessibility_validator"
 
 module Herb
   class Engine
-    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head, :validation_error_template
+    attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
+                :validation_error_template
+
+    ESCAPE_TABLE = {
+      "&" => "&amp;",
+      "<" => "&lt;",
+      ">" => "&gt;",
+      '"' => "&quot;",
+      "'" => "&#39;",
+    }.freeze
 
     class CompilationError < StandardError
     end
@@ -44,16 +52,15 @@ module Herb
       @validation_mode = properties.fetch(:validation_mode, :raise)
 
       unless [:raise, :overlay, :none].include?(@validation_mode)
-        raise ArgumentError, "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
+        raise ArgumentError,
+              "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
 
-      unless @escapefunc
-        if @escape
-          @escapefunc = "__herb.h"
-        else
-          @escapefunc = "::Herb::Engine.h"
-        end
-      end
+      @escapefunc ||= if @escape
+                        "__herb.h"
+                      else
+                        "::Herb::Engine.h"
+                      end
 
       @freeze = properties[:freeze]
       @freeze_template_literals = properties.fetch(:freeze_template_literals, true)
@@ -67,16 +74,14 @@ module Herb
 
       if properties[:ensure]
         @src << "begin; __original_outvar = #{@bufvar}"
-        if /\A@[^@]/ =~ @bufvar
-          @src << "; "
-        else
-          @src << " if defined?(#{@bufvar}); "
-        end
+        @src << if /\A@[^@]/ =~ @bufvar
+                  "; "
+                else
+                  " if defined?(#{@bufvar}); "
+                end
       end
 
-      if @escape && @escapefunc == "__herb.h"
-        @src << "__herb = ::Herb::Engine; "
-      end
+      @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
 
       @src << preamble
       @src << "\n" unless preamble.end_with?("\n")
@@ -101,11 +106,8 @@ module Herb
 
         handle_validation_errors(all_errors, input) if @validation_mode == :raise && all_errors.any?
 
-        if @validation_mode == :overlay && validation_errors&.any?
-          add_validation_overlay(validation_errors, input)
-        end
+        add_validation_overlay(validation_errors, input) if @validation_mode == :overlay && validation_errors&.any?
 
-        # If debug mode is enabled, run DebugVisitor first to mutate the AST
         if @debug
           debug_visitor = DebugVisitor.new(self)
           ast.accept(debug_visitor)
@@ -125,12 +127,46 @@ module Herb
       @src << "\n" unless @src.end_with?("\n")
       send(:add_postamble, postamble)
 
-      if properties[:ensure]
-        @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n"
-      end
+      @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
       @src.freeze
       freeze
+    end
+
+    def self.h(value)
+      value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
+    end
+
+    def self.attr(value)
+      value.to_s
+           .gsub("&", "&amp;")
+           .gsub('"', "&quot;")
+           .gsub("'", "&#39;")
+           .gsub("<", "&lt;")
+           .gsub(">", "&gt;")
+           .gsub("\n", "&#10;")
+           .gsub("\r", "&#13;")
+           .gsub("\t", "&#9;")
+    end
+
+    def self.js(value)
+      value.to_s.gsub(/[\\'"<>&\n\r\t\f\b]/) do |char|
+        case char
+        when "\n" then "\\n"
+        when "\r" then "\\r"
+        when "\t" then "\\t"
+        when "\f" then "\\f"
+        when "\b" then "\\b"
+        else
+          "\\x#{char.ord.to_s(16).rjust(2, "0")}"
+        end
+      end
+    end
+
+    def self.css(value)
+      value.to_s.gsub(/[^\w-]/) do |char|
+        "\\#{char.ord.to_s(16).rjust(6, "0")}"
+      end
     end
 
     protected
@@ -146,13 +182,13 @@ module Herb
     def add_code(code)
       terminate_expression
 
-      @src << ' ' << code
-      @src << ';' unless code[-1] == "\n"
+      @src << " " << code
+      @src << ";" unless code[-1] == "\n"
       @buffer_on_stack = false
     end
 
     def add_expression(indicator, code)
-      if ((indicator == '=') ^ @escape)
+      if (indicator == "=") ^ @escape
         add_expression_result(code)
       else
         add_expression_result_escaped(code)
@@ -160,15 +196,15 @@ module Herb
     end
 
     def add_expression_result(code)
-      with_buffer { @src << ' << (' << code << ').to_s' }
+      with_buffer { @src << " << (" << code << ").to_s" }
     end
 
     def add_expression_result_escaped(code)
-      with_buffer { @src << ' << ' << @escapefunc << '((' << code << '))' }
+      with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
     end
 
     def add_expression_block(indicator, code)
-      if ((indicator == '=') ^ @escape)
+      if (indicator == "=") ^ @escape
         add_expression_block_result(code)
       else
         add_expression_block_result_escaped(code)
@@ -176,11 +212,11 @@ module Herb
     end
 
     def add_expression_block_result(code)
-      with_buffer { @src << ' << ' << code }
+      with_buffer { @src << " << " << code }
     end
 
     def add_expression_block_result_escaped(code)
-      with_buffer { @src << ' << ' << @escapefunc << '(' << code << ')' }
+      with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
     end
 
     def add_postamble(postamble)
@@ -190,20 +226,18 @@ module Herb
 
     def with_buffer
       if @chain_appends
-        unless @buffer_on_stack
-          @src << '; ' << @bufvar
-        end
+        @src << "; " << @bufvar unless @buffer_on_stack
         yield
         @buffer_on_stack = true
       else
-        @src << ' ' << @bufvar
+        @src << " " << @bufvar
         yield
-        @src << ';'
+        @src << ";"
       end
     end
 
     def terminate_expression
-      @src << '; ' if @chain_appends && @buffer_on_stack
+      @src << "; " if @chain_appends && @buffer_on_stack
     end
 
     private
@@ -224,7 +258,7 @@ module Herb
       errors
     end
 
-    def handle_parser_errors(parser_errors, input, ast)
+    def handle_parser_errors(parser_errors, input, _ast)
       case @validation_mode
       when :raise
         formatter = ErrorFormatter.new(input, parser_errors, filename: @filename)
@@ -292,7 +326,7 @@ module Herb
             data-column="#{column}"
             data-filename="#{escape_attr(@relative_file_path)}"
             data-message="#{escaped_message}"
-            #{error[:suggestion] ? "data-suggestion=\"#{escaped_suggestion}\"" : ""}
+            #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
             data-timestamp="#{Time.now.iso8601}"
           >#{html_fragment}</template>
         TEMPLATE
@@ -303,14 +337,14 @@ module Herb
 
     def escape_attr(text)
       text.to_s
-        .gsub('&', '&amp;')
-        .gsub('"', '&quot;')
-        .gsub("'", '&#39;')
-        .gsub('<', '&lt;')
-        .gsub('>', '&gt;')
-        .gsub("\n", '&#10;')
-        .gsub("\r", '&#13;')
-        .gsub("\t", '&#9;')
+          .gsub("&", "&amp;")
+          .gsub('"', "&quot;")
+          .gsub("'", "&#39;")
+          .gsub("<", "&lt;")
+          .gsub(">", "&gt;")
+          .gsub("\n", "&#10;")
+          .gsub("\r", "&#13;")
+          .gsub("\t", "&#9;")
     end
 
     def add_parser_error_overlay(parser_errors, input)
@@ -325,50 +359,6 @@ module Herb
       error_html = overlay_generator.generate_html
       escaped_html = error_html.gsub("'", "\\'")
       @validation_error_template = "<template data-herb-parser-error>#{escaped_html}</template>"
-    end
-
-    ESCAPE_TABLE = {
-      "&" => "&amp;",
-      "<" => "&lt;",
-      ">" => "&gt;",
-      '"' => "&quot;",
-      "'" => "&#39;",
-    }.freeze
-
-    def self.h(value)
-      value.to_s.gsub(/[&<>"']/, ESCAPE_TABLE)
-    end
-
-    def self.attr(value)
-      value.to_s
-        .gsub('&', '&amp;')
-        .gsub('"', '&quot;')
-        .gsub("'", '&#39;')
-        .gsub('<', '&lt;')
-        .gsub('>', '&gt;')
-        .gsub("\n", '&#10;')
-        .gsub("\r", '&#13;')
-        .gsub("\t", '&#9;')
-    end
-
-    def self.js(value)
-      value.to_s.gsub(/[\\'"<>&\n\r\t\f\b]/) do |char|
-        case char
-        when "\n" then "\\n"
-        when "\r" then "\\r"
-        when "\t" then "\\t"
-        when "\f" then "\\f"
-        when "\b" then "\\b"
-        else
-          "\\x#{char.ord.to_s(16).rjust(2, '0')}"
-        end
-      end
-    end
-
-    def self.css(value)
-      value.to_s.gsub(/[^\w\-]/) do |char|
-        "\\#{char.ord.to_s(16).rjust(6, '0')}"
-      end
     end
   end
 end

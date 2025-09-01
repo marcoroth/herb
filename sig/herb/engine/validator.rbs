@@ -2,45 +2,31 @@
 
 module Herb
   class Engine
-    # Base class for all validators in the Herb engine
-    # Validators can emit both errors and warnings during AST traversal
     class Validator < Herb::Visitor
       attr_reader diagnostics: untyped
 
       def initialize: () -> untyped
 
-      # Default implementation visits the node
-      # Subclasses can override to customize validation behavior
       def validate: (untyped node) -> untyped
 
-      # Emit an error diagnostic
       def error: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
 
-      # Emit a warning diagnostic
       def warning: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
 
-      # Emit an info diagnostic
       def info: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
 
-      # Emit a hint diagnostic
       def hint: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
 
-      # Check if any errors have been recorded
-      def has_errors?: () -> untyped
+      def errors?: () -> untyped
 
-      # Check if any warnings have been recorded
-      def has_warnings?: () -> untyped
+      def warnings?: () -> untyped
 
-      # Get all errors
       def errors: () -> untyped
 
-      # Get all warnings
       def warnings: () -> untyped
 
-      # Clear all diagnostics
       def clear_diagnostics: () -> untyped
 
-      # Get diagnostic count by severity
       def diagnostic_count: (?untyped severity) -> untyped
 
       private

@@ -4,6 +4,8 @@ module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
       def initialize(engine)
+        super()
+
         @engine = engine
         @top_level_elements = []
         @element_stack = []
@@ -34,9 +36,7 @@ module Herb
         tag_name = node.tag_name&.value&.downcase
         @element_stack.push(tag_name) if tag_name
 
-        if should_add_debug_attributes_to_element?(node.open_tag)
-          add_debug_attributes_to_element(node.open_tag)
-        end
+        add_debug_attributes_to_element(node.open_tag) if should_add_debug_attributes_to_element?(node.open_tag)
 
         super
 
@@ -65,20 +65,14 @@ module Herb
         if debug_enabled? && !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
-          unless is_complex_rails_helper?(code)
-            @erb_nodes_to_wrap << node
-          end
+          @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
         end
 
         super
       end
 
-      def visit_erb_yield_node(node)
-        return
-      end
-
-      def visit_erb_block_node(node)
-        super
+      def visit_erb_yield_node(_node)
+        nil
       end
 
       private
@@ -91,16 +85,16 @@ module Herb
         array_properties = [:children, :body, :statements]
 
         array_properties.each do |prop|
-          if node.respond_to?(prop) && node.send(prop).is_a?(Array)
-            array = node.send(prop)
+          next unless node.respond_to?(prop) && node.send(prop).is_a?(Array)
 
-            array.each_with_index do |child, index|
-              if @erb_nodes_to_wrap.include?(child)
-                debug_span = create_debug_span_for_erb(child)
-                array[index] = debug_span
-              else
-                replace_erb_nodes_recursive(child)
-              end
+          array = node.send(prop)
+
+          array.each_with_index do |child, index|
+            if @erb_nodes_to_wrap.include?(child)
+              debug_span = create_debug_span_for_erb(child)
+              array[index] = debug_span
+            else
+              replace_erb_nodes_recursive(child)
             end
           end
         end
@@ -119,9 +113,7 @@ module Herb
         @top_level_elements = []
 
         document_node.children.each do |child|
-          if child.is_a?(Herb::AST::HTMLElementNode)
-            @top_level_elements << child
-          end
+          @top_level_elements << child if child.is_a?(Herb::AST::HTMLElementNode)
         end
       end
 
@@ -131,11 +123,7 @@ module Herb
         parent_element = find_parent_element_for_open_tag(open_tag_node)
         return false unless parent_element
 
-        if @top_level_elements.length == 1
-          return @top_level_elements.first == parent_element
-        elsif @top_level_elements.length > 1
-          return @top_level_elements.first == parent_element
-        end
+        return @top_level_elements.first == parent_element if @top_level_elements.length >= 1
 
         false
       end
@@ -172,54 +160,49 @@ module Herb
         name_node = Herb::AST::HTMLAttributeNameNode.new("HTMLAttributeNameNode", nil, [], [name_literal])
 
         value_literal = Herb::AST::LiteralNode.new("LiteralNode", nil, [], value.dup)
-        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode",nil, [], create_token(:quote, '"'), [value_literal], create_token(:quote, '"'), true)
+        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode", nil, [], create_token(:quote, '"'),
+                                                           [value_literal], create_token(:quote, '"'), true)
 
-        equals_token = create_token(:equals, '=')
+        equals_token = create_token(:equals, "=")
 
-        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode",nil, [], name_node, equals_token,value_node)
+        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", nil, [], name_node, equals_token, value_node)
       end
 
       def create_token(type, value)
         Herb::Token.new(value.dup, nil, nil, type.to_s)
       end
 
-
       def create_debug_span_for_erb(erb_node)
         opening = erb_node.tag_opening.value
         code = erb_node.content.value.strip
         erb_code = "#{opening} #{code} %>"
 
-        if is_complex_rails_helper?(code)
-          return erb_node
-        end
+        return erb_node if complex_rails_helper?(code)
 
         line = erb_node.location&.start&.line
         column = erb_node.location&.start&.column
 
-        escaped_erb = erb_code.gsub('&', '&amp;').gsub('<', '&lt;').gsub('>', '&gt;').gsub('"', '&quot;').gsub("'", '&#39;')
+        escaped_erb = erb_code.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;").gsub('"', "&quot;").gsub("'",
+                                                                                                               "&#39;")
 
         outline_type = if @top_level_elements.empty?
-          "erb-output #{determine_view_type}"
-        else
-          "erb-output"
-        end
+                         "erb-output #{determine_view_type}"
+                       else
+                         "erb-output"
+                       end
 
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", outline_type),
           create_debug_attribute("data-herb-debug-erb", escaped_erb),
-          create_debug_attribute("data-herb-debug-file-name", @engine.filename&.basename&.to_s || ""),
+          create_debug_attribute("data-herb-debug-file-name", @engine.filename&.basename.to_s),
           create_debug_attribute("data-herb-debug-file-relative-path", @engine.relative_file_path || ""),
-          create_debug_attribute("data-herb-debug-file-full-path", @engine.filename&.to_s || ""),
+          create_debug_attribute("data-herb-debug-file-full-path", @engine.filename.to_s),
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
 
-        if line
-          debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s)
-        end
+        debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
 
-        if column
-          debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s)
-        end
+        debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
 
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
@@ -246,43 +229,44 @@ module Herb
           create_token(:tag_closing, ">")
         )
 
-        Herb::AST::HTMLElementNode.new("HTMLElementNode", nil, [], open_tag, tag_name_token, [erb_node], close_tag, false)
+        Herb::AST::HTMLElementNode.new("HTMLElementNode", nil, [], open_tag, tag_name_token, [erb_node], close_tag,
+                                       false)
       end
 
       def determine_view_type
-        if is_component?
+        if component?
           "component"
-        elsif is_partial?
+        elsif partial?
           "partial"
         else
           "view"
         end
       end
 
-      def is_partial?
+      def partial?
         return false unless @engine.filename
 
         basename = @engine.filename.basename.to_s
-        basename.start_with?('_')
+        basename.start_with?("_")
       end
 
-      def is_component?
+      def component?
         return false unless @engine.filename
 
         path = @engine.filename.to_s
-        path.include?('/components/')
+        path.include?("/components/")
       end
 
       def in_head_context?
-        @element_stack.include?('head')
+        @element_stack.include?("head")
       end
 
       def in_script_or_style_context?
-        @element_stack.last == 'script' || @element_stack.last == 'style'
+        ["script", "style"].include?(@element_stack.last)
       end
 
       def in_excluded_context?
-        excluded_tags = ['script', 'style', 'head', 'textarea', 'pre']
+        excluded_tags = ["script", "style", "head", "textarea", "pre"]
         excluded_tags.any? { |tag| @element_stack.include?(tag) }
       end
 
@@ -291,20 +275,20 @@ module Herb
       end
 
       # TODO: Rewrite using Prism Nodes once available
-      def is_complex_rails_helper?(code)
-        cleaned_code = code.strip.gsub(/\s+/, ' ')
+      def complex_rails_helper?(code)
+        cleaned_code = code.strip.gsub(/\s+/, " ")
 
-        return true if cleaned_code.match?(/\bturbo_frame_tag\s*[\(\s]/)
+        return true if cleaned_code.match?(/\bturbo_frame_tag\s*[(\s]/)
 
         return true if cleaned_code.match?(/\blink_to\s.*\s+do\s*$/) ||
                        cleaned_code.match?(/\blink_to\s.*\{\s*$/) ||
                        cleaned_code.match?(/\blink_to\s.*\s+do\s*\|/) ||
                        cleaned_code.match?(/\blink_to\s.*\{\s*\|/)
 
-        return true if cleaned_code.match?(/\brender[\s\(]/)
+        return true if cleaned_code.match?(/\brender[\s(]/)
 
-        return true if cleaned_code.match?(/\bform_with\s.*\s+do\s*[\|\$]/) ||
-                       cleaned_code.match?(/\bform_with\s.*\{\s*[\|\$]/)
+        return true if cleaned_code.match?(/\bform_with\s.*\s+do\s*[|$]/) ||
+                       cleaned_code.match?(/\bform_with\s.*\{\s*[|$]/)
 
         return true if cleaned_code.match?(/\bcontent_for\s.*\s+do\s*$/) ||
                        cleaned_code.match?(/\bcontent_for\s.*\{\s*$/)

@@ -1,9 +1,13 @@
+# frozen_string_literal: true
+
 module Herb
   class Engine
     class Validator < Herb::Visitor
       attr_reader :diagnostics
 
       def initialize
+        super
+
         @diagnostics = []
       end
 
@@ -27,11 +31,11 @@ module Herb
         add_diagnostic(message, location, :hint, code: code, source: source)
       end
 
-      def has_errors?
+      def errors?
         @diagnostics.any? { |diagnostic| diagnostic[:severity] == :error }
       end
 
-      def has_warnings?
+      def warnings?
         @diagnostics.any? { |diagnostic| diagnostic[:severity] == :warning }
       end
 
@@ -61,7 +65,7 @@ module Herb
           location: location,
           severity: severity,
           code: code,
-          source: source || self.class.name
+          source: source || self.class.name,
         }
 
         @diagnostics << diagnostic

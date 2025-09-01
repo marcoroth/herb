@@ -9,41 +9,40 @@ module Engine
     include SnapshotUtils
 
     test "debug mode disabled by default" do
-      template = '<h1>Hello <%= @name %>!</h1>'
+      template = "<h1>Hello <%= @name %>!</h1>"
 
       engine = Herb::Engine.new(template)
       refute engine.debug
-      refute_includes engine.src, 'data-herb-debug'
-      refute_includes engine.src, 'erb-value'
+      refute_includes engine.src, "data-herb-debug"
+      refute_includes engine.src, "erb-value"
     end
 
     test "debug mode enabled" do
-      template = '<h1>Hello <%= @name %>!</h1>'
+      template = "<h1>Hello <%= @name %>!</h1>"
 
       engine = Herb::Engine.new(template, debug: true)
       assert engine.debug
     end
 
     test "debug mode options" do
-      template = '<div>Test</div>'
+      template = "<div>Test</div>"
 
       engine = Herb::Engine.new(template,
-        debug: true,
-        filename: "app/views/test.html.erb"
-      )
+                                debug: true,
+                                filename: "app/views/test.html.erb")
 
       assert engine.debug
       assert_equal "app/views/test.html.erb", engine.filename.to_s
     end
 
     test "visible erb expression gets debug span" do
-      template = '<h1>Welcome <%= @user.name %>!</h1>'
+      template = "<h1>Welcome <%= @user.name %>!</h1>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
 
     test "multiple visible erb expressions get debug spans" do
-      template = '<h1>Hello <%= @name %> on <%= Date.today %>!</h1>'
+      template = "<h1>Hello <%= @name %> on <%= Date.today %>!</h1>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
@@ -53,11 +52,11 @@ module Engine
 
       engine = Herb::Engine.new(template, debug: true, filename: "test.html.erb")
 
-      refute_includes engine.src, 'erb-value'
-      refute_includes engine.src, 'data-herb-debug-erb'
+      refute_includes engine.src, "erb-value"
+      refute_includes engine.src, "data-herb-debug-erb"
 
-      assert_includes engine.src, 'css_class'
-      assert_includes engine.src, '@user.id'
+      assert_includes engine.src, "css_class"
+      assert_includes engine.src, "@user.id"
     end
 
     test "script content erb expressions do NOT get debug spans" do
@@ -70,8 +69,8 @@ module Engine
 
       engine = Herb::Engine.new(template, debug: true)
 
-      refute_includes engine.src, 'erb-value'
-      refute_includes engine.src, 'data-herb-debug-erb'
+      refute_includes engine.src, "erb-value"
+      refute_includes engine.src, "data-herb-debug-erb"
     end
 
     test "style content erb expressions do NOT get debug spans" do
@@ -84,8 +83,8 @@ module Engine
 
       engine = Herb::Engine.new(template, debug: true)
 
-      refute_includes engine.src, 'erb-value'
-      refute_includes engine.src, 'data-herb-debug-erb'
+      refute_includes engine.src, "erb-value"
+      refute_includes engine.src, "data-herb-debug-erb"
     end
 
     test "render calls get outline boundaries" do
@@ -101,19 +100,19 @@ module Engine
     end
 
     test "top-level element with only ERB output as child" do
-      template = '<h1><%= hello %></h1>'
+      template = "<h1><%= hello %></h1>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
 
     test "top-level element with only ERB output as child for partial" do
-      template = '<h1><%= hello %></h1>'
+      template = "<h1><%= hello %></h1>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "_test.html.erb" })
     end
 
     test "collection render calls get outline boundaries" do
-      template = '<%= render @posts %>'
+      template = "<%= render @posts %>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
@@ -129,8 +128,8 @@ module Engine
 
       engine = Herb::Engine.new(template, debug: true)
 
-      refute_includes engine.src, 'erb-value'
-      refute_includes engine.src, 'data-herb-debug-erb'
+      refute_includes engine.src, "erb-value"
+      refute_includes engine.src, "data-herb-debug-erb"
     end
 
     test "erb comments do NOT get debug markup" do
@@ -142,8 +141,8 @@ module Engine
 
       engine = Herb::Engine.new(template, debug: true)
 
-      refute_includes engine.src, 'erb-value'
-      refute_includes engine.src, 'data-herb-debug-erb'
+      refute_includes engine.src, "erb-value"
+      refute_includes engine.src, "data-herb-debug-erb"
     end
 
     test "block expressions get debug spans" do
@@ -192,19 +191,19 @@ module Engine
     end
 
     test "debug mode with escape enabled" do
-      template = '<p>User input: <%= user_content %></p>'
+      template = "<p>User input: <%= user_content %></p>"
 
       assert_compiled_snapshot(template, { debug: true, escape: true, filename: "test.html.erb" })
     end
 
     test "debug mode with escape disabled" do
-      template = '<p>Safe content: <%= safe_html %></p>'
+      template = "<p>Safe content: <%= safe_html %></p>"
 
       assert_compiled_snapshot(template, { debug: true, escape: false, filename: "test.html.erb" })
     end
 
     test "erb yield expressions get debug spans" do
-      template = '<div><%= yield :sidebar %></div>'
+      template = "<div><%= yield :sidebar %></div>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "layout.erb" })
     end
@@ -243,7 +242,7 @@ module Engine
     end
 
     test "zero overhead when debug disabled" do
-      template = '<h1>Hello <%= @name %>!</h1>'
+      template = "<h1>Hello <%= @name %>!</h1>"
 
       engine_without_debug = Herb::Engine.new(template)
       engine_with_debug = Herb::Engine.new(template, debug: false)
@@ -258,7 +257,7 @@ module Engine
     end
 
     test "content_for with block does NOT get erb-output outline type" do
-      template = '<%= content_for :sidebar do %><div>Sidebar content</div><% end %>'
+      template = "<%= content_for :sidebar do %><div>Sidebar content</div><% end %>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
@@ -282,13 +281,13 @@ module Engine
     end
 
     test "form_with block does NOT get erb-output outline type" do
-      template = '<%= form_with model: @user do |f| %>Form content<% end %>'
+      template = "<%= form_with model: @user do |f| %>Form content<% end %>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
     end
 
     test "yield expressions get NOT erb-output outline type" do
-      template = '<h1><%= yield :title %></h1>'
+      template = "<h1><%= yield :title %></h1>"
 
       assert_compiled_snapshot(template, { debug: true, filename: "layout.html.erb" })
     end
@@ -435,7 +434,7 @@ module Engine
     end
 
     test "regular div content still gets debug spans after excluded context tests" do
-      assert_compiled_snapshot('<div><%= @content %></div>', debug: true)
+      assert_compiled_snapshot("<div><%= @content %></div>", debug: true)
     end
   end
 end

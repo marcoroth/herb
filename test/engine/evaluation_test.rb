@@ -11,6 +11,9 @@ module Engine
   class EvaluationTest < Minitest::Spec
     include SnapshotUtils
 
+    User = Struct.new(:id, :name, :score, :active?, keyword_init: true)
+    Post = Struct.new(:title, :author, :date, :excerpt, :tags, keyword_init: true)
+
     test "basic text output" do
       template = "<div>Hello World</div>"
 
@@ -116,7 +119,7 @@ module Engine
         </div>
       ERB
 
-      user = OpenStruct.new(
+      user = User.new(
         id: 123,
         name: "John Doe",
         score: 75,
@@ -342,14 +345,14 @@ module Engine
       ERB
 
       posts = [
-        OpenStruct.new(
+        Post.new(
           title: "First Post",
           author: "John Doe",
           date: Date.new(2024, 1, 15),
           excerpt: "This is the first post excerpt.",
           tags: ["ruby", "programming"]
         ),
-        OpenStruct.new(
+        Post.new(
           title: "Second Post",
           author: "Jane Smith",
           date: Date.new(2024, 2, 1),

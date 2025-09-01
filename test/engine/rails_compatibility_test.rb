@@ -8,13 +8,15 @@ require_relative "../../lib/herb/engine"
 module Engine
   class RailsCompatibilityTest < Minitest::Spec
     class RailsHerb < ::Herb::Engine
+      BLOCK_EXPR = /((\s|\))do|\{)(\s*\|[^|]*\|)?\s*\Z/
+
       def initialize(input, properties = {})
         @newline_pending = 0
 
         properties = properties.dup
         properties[:bufvar] ||= "@output_buffer"
         properties[:preamble] ||= ""
-        properties[:postamble] ||= "#{properties[:bufvar]}"
+        properties[:postamble] ||= properties[:bufvar].to_s
         properties[:freeze_template_literals] = !ActionView::Template.frozen_string_literal
         properties[:escapefunc] = ""
 
@@ -31,28 +33,22 @@ module Engine
         else
           with_buffer do
             @src << ".safe_append='"
-            @src << "\n" * @newline_pending if @newline_pending > 0
+            @src << ("\n" * @newline_pending) if @newline_pending.positive?
             @src << text.gsub(/['\\]/, '\\\\\&') << @text_end
           end
           @newline_pending = 0
         end
       end
 
-      BLOCK_EXPR = /((\s|\))do|\{)(\s*\|[^|]*\|)?\s*\Z/
-
       def add_expression(indicator, code)
         flush_newline_if_pending(@src)
 
         with_buffer do
-          if (indicator == "==") && @escape
-            @src << ".safe_expr_append="
-          elsif (indicator == "==") && !@escape
-            @src << ".append="
-          elsif (indicator == "=") && @escape
-            @src << ".append="
-          else
-            @src << ".safe_expr_append="
-          end
+          @src << if ((indicator == "==") && !@escape) || ((indicator == "=") && @escape)
+                    ".append="
+                  else
+                    ".safe_expr_append="
+                  end
 
           if BLOCK_EXPR.match?(code)
             @src << " " << code
@@ -73,15 +69,15 @@ module Engine
       end
 
       def flush_newline_if_pending(src)
-        if @newline_pending > 0
-          with_buffer { src << ".safe_append='#{"\\n" * @newline_pending}" << @text_end }
-          @newline_pending = 0
-        end
+        return unless @newline_pending.positive?
+
+        with_buffer { src << ".safe_append='#{"\\n" * @newline_pending}" << @text_end }
+        @newline_pending = 0
       end
     end
 
     test "rails erb handler basic content with escaping" do
-      template = '<h1><%= @title %></h1>'
+      template = "<h1><%= @title %></h1>"
 
       engine = RailsHerb.new(template, escape: true)
 
@@ -95,7 +91,7 @@ module Engine
     end
 
     test "rails erb handler mixed escaped and raw" do
-      template = '<div><%= @safe %> <%== @raw %></div>'
+      template = "<div><%= @safe %> <%== @raw %></div>"
 
       engine = RailsHerb.new(template, escape: true)
 
@@ -110,7 +106,7 @@ module Engine
     end
 
     test "rails erb handler block expressions" do
-      template = '<% @items.each do |item| %><li><%= item %></li><% end %>'
+      template = "<% @items.each do |item| %><li><%= item %></li><% end %>"
 
       engine = RailsHerb.new(template, escape: true)
 
@@ -150,7 +146,7 @@ module Engine
     end
 
     test "rails erb handler generates correct ruby code structure" do
-      template = '<h1><%= @title %></h1>'
+      template = "<h1><%= @title %></h1>"
 
       engine = RailsHerb.new(template, escape: true)
 
@@ -158,7 +154,7 @@ module Engine
     end
 
     test "drop-in replacement compatibility" do
-      template = '<p><%= @content %></p>'
+      template = "<p><%= @content %></p>"
 
       assert_equal ::Herb::Engine, RailsHerb.superclass
 

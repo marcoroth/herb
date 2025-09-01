@@ -14,18 +14,18 @@ module Engine
     end
 
     test "erb block expressions with escaping" do
-      template = '<%== form_for @user do %>Form content<% end %>'
+      template = "<%== form_for @user do %>Form content<% end %>"
       engine = Herb::Engine.new(template, escape: false)
 
-      assert_includes engine.src, '::Herb::Engine.h(form_for @user do)'
-      refute_includes engine.src, '::Herb::Engine.h((form_for @user do'
+      assert_includes engine.src, "::Herb::Engine.h(form_for @user do)"
+      refute_includes engine.src, "::Herb::Engine.h((form_for @user do"
     end
 
     test "regular erb expressions have parentheses" do
-      template = '<%= user.name %>'
+      template = "<%= user.name %>"
       engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '(user.name).to_s'
+      assert_includes engine.src, "(user.name).to_s"
     end
 
     test "escaped expressions use correct escape function" do
@@ -36,35 +36,35 @@ module Engine
     end
 
     test "escape function reference uses Herb::Engine" do
-      template = '<%== content %>'
+      template = "<%== content %>"
       engine = Herb::Engine.new(template, escape: false)
-      assert_includes engine.src, '::Herb::Engine.h'
+      assert_includes engine.src, "::Herb::Engine.h"
 
-      template = '<%= content %>'
+      template = "<%= content %>"
       engine = Herb::Engine.new(template, escape: true)
-      assert_includes engine.src, '__herb = ::Herb::Engine'
-      assert_includes engine.src, '__herb.h'
+      assert_includes engine.src, "__herb = ::Herb::Engine"
+      assert_includes engine.src, "__herb.h"
     end
 
     test "context-aware escaping for attributes" do
       template = '<div class="<%= css_class %>">Content</div>'
       engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '::Herb::Engine.attr'
+      assert_includes engine.src, "::Herb::Engine.attr"
     end
 
     test "script context escaping" do
-      template = '<script>var data = <%= json_data %>;</script>'
+      template = "<script>var data = <%= json_data %>;</script>"
       engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '::Herb::Engine.js'
+      assert_includes engine.src, "::Herb::Engine.js"
     end
 
     test "style context escaping" do
-      template = '<style>.class { color: <%= color %>; }</style>'
+      template = "<style>.class { color: <%= color %>; }</style>"
       engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '::Herb::Engine.css'
+      assert_includes engine.src, "::Herb::Engine.css"
     end
 
     test "security error includes file location" do
@@ -82,17 +82,17 @@ module Engine
     end
 
     test "html comments are optimized to single text token" do
-      template = '<!-- This is a comment with multiple words -->'
+      template = "<!-- This is a comment with multiple words -->"
       engine = Herb::Engine.new(template)
 
-      assert_equal 1, engine.src.scan(/<< '/).count
+      assert_equal 1, engine.src.scan("<< '").count
     end
 
     test "doctype is optimized to single text token" do
       template = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">'
       engine = Herb::Engine.new(template)
 
-      assert_equal 1, engine.src.scan(/<< '/).count
+      assert_equal 1, engine.src.scan("<< '").count
     end
 
     test "erb control structures work correctly" do
@@ -103,8 +103,8 @@ module Engine
       ERB
 
       engine = Herb::Engine.new(template)
-      assert_includes engine.src, '5.times do |i|'
-      assert_includes engine.src, 'end;'
+      assert_includes engine.src, "5.times do |i|"
+      assert_includes engine.src, "end;"
     end
 
     test "erb case statements compile correctly" do
@@ -120,10 +120,10 @@ module Engine
       ERB
 
       engine = Herb::Engine.new(template)
-      assert_includes engine.src, 'case status'
-      assert_includes engine.src, 'when :active'
-      assert_includes engine.src, 'when :pending'
-      assert_includes engine.src, 'else'
+      assert_includes engine.src, "case status"
+      assert_includes engine.src, "when :active"
+      assert_includes engine.src, "when :pending"
+      assert_includes engine.src, "else"
     end
   end
 end
