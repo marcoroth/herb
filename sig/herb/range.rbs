@@ -3,7 +3,6 @@
 module Herb
   class Range
     attr_reader from: Integer
-
     attr_reader to: Integer
 
     # : (Integer, Integer) -> void

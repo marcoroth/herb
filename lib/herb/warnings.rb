@@ -2,11 +2,21 @@
 # typed: true
 
 module Herb
+  #: type serialized_warning = {
+  #|   type: String,
+  #|   location: serialized_location?,
+  #|   message: String 
+  #| }
   module Warnings
     class Warning
-      attr_reader :type #: String
-      attr_reader :location #: Location
-      attr_reader :message #: String
+      #: String
+      attr_reader :name
+      #: String
+      attr_reader :type
+      #: Herb::Location?
+      attr_reader :location
+      #: String
+      attr_reader :message
 
       #: (String, Location, String) -> void
       def initialize(type, location, message)

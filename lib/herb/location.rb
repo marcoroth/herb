@@ -2,9 +2,12 @@
 # typed: true
 
 module Herb
+  #: type serialized_location = { start: Position, end: Position }
   class Location
-    attr_reader :start #: Position
-    attr_reader :end #: Position
+    #: Position
+    attr_reader :start
+    #: Position
+    attr_reader :end
 
     #: (Position, Position) -> void
     def initialize(start_position, end_position)
@@ -30,7 +33,7 @@ module Herb
       {
         start: start,
         end: self.end,
-      } #: Herb::serialized_location
+      }
     end
 
     #: (?untyped) -> String
