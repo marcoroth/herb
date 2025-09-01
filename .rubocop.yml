@@ -63,6 +63,7 @@ Metrics/MethodLength:
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - bin/**/*
 
 Metrics/AbcSize:
   Exclude:
@@ -76,6 +77,7 @@ Metrics/AbcSize:
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - bin/**/*
 
 Metrics/ClassLength:
   Exclude:
@@ -84,6 +86,7 @@ Metrics/ClassLength:
     - lib/herb/visitor.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - bin/**/*
     - test/**/*_test.rb
 
 Metrics/ModuleLength:
@@ -99,6 +102,7 @@ Metrics/BlockLength:
     - lib/herb/cli.rb
     - lib/herb/project.rb
     - test/**/*_test.rb
+    - bin/**/*
 
 Metrics/ParameterLists:
   Exclude:
@@ -114,6 +118,7 @@ Metrics/PerceivedComplexity:
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
     - test/**/*.rb
+    - bin/**/*
 
 Layout/LineLength:
   Max: 120
@@ -151,6 +156,7 @@ Security/Eval:
     - Rakefile
     - lib/herb/cli.rb
     - test/**/*.rb
+    - bin/erubi-render
 
 Security/MarshalLoad:
   Exclude:

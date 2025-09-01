@@ -106,16 +106,9 @@ class ErubiRenderer
 
     begin
       options = {}
+
       options[:filename] = @file if @file
-
-      options[:escape_html] = if @no_escape
-                                false
-                              elsif @escape
-                                true
-                              else
-                                true
-                              end
-
+      options[:escape_html] = @no_escape ? false : true
       options[:freeze] = true if @freeze
 
       engine = Erubi::Engine.new(file_content, options)
