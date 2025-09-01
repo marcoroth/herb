@@ -448,12 +448,10 @@ module Herb
         location = error.respond_to?(:location) && error.location ? error.location : nil
         line_num = 1
         col_num = 1
-        
-        if location && location.respond_to?(:start)
-          if location.is_a?(Herb::Location) && location.start
-            line_num = location.start.line
-            col_num = location.start.column
-          end
+
+        if location.respond_to?(:start) && location.is_a?(Herb::Location) && location.start
+          line_num = location.start.line
+          col_num = location.start.column
         end
 
         error_class = error.class.name.split("::").last.gsub(/Error$/, "")

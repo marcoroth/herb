@@ -264,8 +264,8 @@ module Herb
 
         begin
           output = `#{cmd} 2>/dev/null`
-          status = $?
-          return output.gsub(file_path, @filename) if status && status.success? && !output.strip.empty?
+          status = $CHILD_STATUS
+          return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
         rescue StandardError
           # Silently fall back to basic formatting if highlighter fails
         end
@@ -289,8 +289,9 @@ module Herb
           cmd = "#{@highlighter_path} --diagnostics \"#{diagnostics_file.path}\" --split-diagnostics --context-lines #{context_lines} \"#{file_path}\""
 
           output = `#{cmd} 2>/dev/null`
-          status = $?
-          return output.gsub(file_path, @filename) if status && status.success? && !output.strip.empty?
+          status = $CHILD_STATUS
+
+          return output.gsub(file_path, @filename) if status&.success? && !output.strip.empty?
         rescue StandardError
           # Silently fall back to basic formatting if highlighter fails
         ensure
