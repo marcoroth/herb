@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "date"
-require "ostruct"
 
 require_relative "../test_helper"
 require_relative "../snapshot_utils"
