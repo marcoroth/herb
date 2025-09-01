@@ -162,7 +162,7 @@ module Herb
         process_erb_tag(node)
       end
 
-      def visit_erb_control_node(node)
+      def visit_erb_control_node(node, &_block)
         add_code(node.content.value.strip)
 
         yield if block_given?
