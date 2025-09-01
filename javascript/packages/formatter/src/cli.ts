@@ -6,6 +6,7 @@ import { join, resolve } from "path"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
 import { parseArgs } from "util"
+import { resolveFormatOptions } from "./options.js"
 
 import { name, version, dependencies } from "../package.json"
 
@@ -61,15 +62,6 @@ export class CLI {
       process.exit(0)
     }
 
-    if (values.version) {
-      console.log("Versions:")
-      console.log(`  ${name}@${version}`)
-      console.log(`  @herb-tools/printer@${dependencies['@herb-tools/printer']}`)
-      console.log(`  ${Herb.version}`.split(", ").join("\n  "))
-
-      process.exit(0)
-    }
-
     let indentWidth: number | undefined
 
     if (values["indent-width"]) {
@@ -97,27 +89,21 @@ export class CLI {
     }
 
     return {
-      values,
       positionals,
-      check: values.check,
+      isCheckMode: values.check,
+      isVersionMode: values.version,
       indentWidth,
       maxLineLength
     }
   }
 
   async run() {
-    const args = process.argv.slice(2)
-
-    if (args.includes("--help") || args.includes("-h")) {
-      console.log(this.usage)
-
-      process.exit(0)
-    }
+    const { positionals, isCheckMode, isVersionMode, indentWidth, maxLineLength } = this.parseArguments()
 
     try {
       await Herb.load()
 
-      if (args.includes("--version") || args.includes("-v")) {
+      if (isVersionMode) {
         console.log("Versions:")
         console.log(`  ${name}@${version}`)
         console.log(`  @herb-tools/printer@${dependencies['@herb-tools/printer']}`)
@@ -129,10 +115,14 @@ export class CLI {
       console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.log()
 
-      const formatter = new Formatter(Herb)
-      const isCheckMode = args.includes("--check") || args.includes("-c")
+      const formatOptions = resolveFormatOptions({
+        indentWidth,
+        maxLineLength
+      })
 
-      const file = args.find(arg => !arg.startsWith("-"))
+      const formatter = new Formatter(Herb, formatOptions)
+
+      const file = positionals[0]
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {
