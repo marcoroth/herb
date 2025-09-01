@@ -23,13 +23,13 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    actionview (8.0.2)
-      activesupport (= 8.0.2)
+    actionview (8.0.2.1)
+      activesupport (= 8.0.2.1)
       builder (~> 3.1)
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
-    activesupport (8.0.2)
+    activesupport (8.0.2.1)
       base64
       benchmark (>= 0.3)
       bigdecimal
@@ -71,8 +71,8 @@ GEM
     fileutils (1.7.3)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
-    io-console (0.8.0)
-    json (2.12.2)
+    io-console (0.8.1)
+    json (2.13.2)
     language_server-protocol (3.17.0.5)
     lint_roller (1.1.0)
     listen (3.9.0)
@@ -103,7 +103,7 @@ GEM
       racc (~> 1.4)
     ostruct (0.6.3)
     parallel (1.27.0)
-    parser (3.3.8.0)
+    parser (3.3.9.0)
       ast (~> 2.4.1)
       racc
     pretty_please (0.2.0)
@@ -126,10 +126,10 @@ GEM
       ffi (~> 1.0)
     rbs (3.9.4)
       logger
-    regexp_parser (2.10.0)
-    reline (0.6.1)
+    regexp_parser (2.11.2)
+    reline (0.6.2)
       io-console (~> 0.5)
-    rubocop (1.77.0)
+    rubocop (1.80.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -137,19 +137,19 @@ GEM
       parser (>= 3.3.0.2)
       rainbow (>= 2.2.2, < 4.0)
       regexp_parser (>= 2.9.3, < 3.0)
-      rubocop-ast (>= 1.45.1, < 2.0)
+      rubocop-ast (>= 1.46.0, < 2.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 2.4.0, < 4.0)
-    rubocop-ast (1.45.1)
+    rubocop-ast (1.46.0)
       parser (>= 3.3.7.2)
       prism (~> 1.4)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
-    sorbet (0.5.12214)
-      sorbet-static (= 0.5.12214)
-    sorbet-static (0.5.12214-aarch64-linux)
-    sorbet-static (0.5.12214-universal-darwin)
-    sorbet-static (0.5.12214-x86_64-linux)
+    sorbet (0.6.12473)
+      sorbet-static (= 0.6.12473)
+    sorbet-static (0.6.12473-aarch64-linux)
+    sorbet-static (0.6.12473-universal-darwin)
+    sorbet-static (0.6.12473-x86_64-linux)
     steep (1.10.0)
       activesupport (>= 5.1)
       concurrent-ruby (>= 1.1.10)
@@ -172,15 +172,17 @@ GEM
       unicode-display_width (>= 1.1.1, < 4)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
-    unicode-display_width (3.1.4)
+    unicode-display_width (3.1.5)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
     uri (1.0.3)
 
 PLATFORMS
+  aarch64-linux
   aarch64-linux-gnu
   aarch64-linux-musl
   arm64-darwin
+  universal-darwin
   x86_64-darwin
   x86_64-linux
   x86_64-linux-gnu
@@ -204,4 +206,4 @@ DEPENDENCIES
   steep (~> 1.10)
 
 BUNDLED WITH
-   2.6.3
+   2.7.1
