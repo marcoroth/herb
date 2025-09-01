@@ -11,7 +11,6 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["prismjs"],
     plugins: [
       nodeResolve({ browser: true }),
       json(),
@@ -27,42 +26,14 @@ export default [
       }),
     ],
   },
-
-  {
-    input: "src/index.ts",
-    output: {
-      file: "dist/herb-dev-tools.cjs",
-      format: "cjs",
-      sourcemap: true,
-    },
-    external: ["prismjs"],
-    plugins: [
-      nodeResolve({ browser: true }),
-      json(),
-      postcss({
-        inject: true,
-        minimize: true,
-      }),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        declaration: false,
-        rootDir: "src/",
-      }),
-    ],
-  },
-
   {
     input: "src/index.ts",
     output: {
       file: "dist/herb-dev-tools.umd.js",
       format: "umd",
       name: "HerbDevTools",
-      sourcemap: true,
-      globals: {
-        'prismjs': 'Prism'
-      }
+      sourcemap: true
     },
-    external: ["prismjs"],
     plugins: [
       nodeResolve({ browser: true }),
       json(),

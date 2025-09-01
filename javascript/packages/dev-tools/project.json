@@ -8,7 +8,10 @@
       "executor": "nx:run-script",
       "options": {
         "script": "build"
-      }
+      },
+      "dependsOn": [
+        "@herb-tools/core:build"
+      ]
     },
     "dev": {
       "executor": "nx:run-script",
