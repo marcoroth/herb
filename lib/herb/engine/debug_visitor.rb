@@ -7,13 +7,13 @@ module Herb
         super()
 
         @engine = engine
-        @top_level_elements = []
-        @element_stack = []
+        @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
+        @element_stack = [] #: Array[String]
         @debug_attributes_applied = false
         @in_attribute = false
         @in_html_comment = false
         @in_html_doctype = false
-        @erb_nodes_to_wrap = []
+        @erb_nodes_to_wrap = [] #: Array[Herb::AST::ERBContentNode]
       end
 
       def debug_enabled?
@@ -81,6 +81,18 @@ module Herb
         replace_erb_nodes_recursive(node)
       end
 
+      # Creates a dummy location for AST nodes that don't need real location info
+      #: () -> Herb::Location
+      def dummy_location
+        @dummy_location ||= Herb::Location.from(0, 0, 0, 0)
+      end
+
+      # Creates a dummy range for tokens that don't need real range info
+      #: () -> Herb::Range
+      def dummy_range
+        @dummy_range ||= Herb::Range.from(0, 0)
+      end
+
       def replace_erb_nodes_recursive(node)
         array_properties = [:children, :body, :statements]
 
@@ -110,7 +122,7 @@ module Herb
       end
 
       def find_top_level_elements(document_node)
-        @top_level_elements = []
+        @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
 
         document_node.children.each do |child|
           @top_level_elements << child if child.is_a?(Herb::AST::HTMLElementNode)
@@ -156,20 +168,20 @@ module Herb
       end
 
       def create_debug_attribute(name, value)
-        name_literal = Herb::AST::LiteralNode.new("LiteralNode", nil, [], name.dup)
-        name_node = Herb::AST::HTMLAttributeNameNode.new("HTMLAttributeNameNode", nil, [], [name_literal])
+        name_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], name.dup)
+        name_node = Herb::AST::HTMLAttributeNameNode.new("HTMLAttributeNameNode", dummy_location, [], [name_literal])
 
-        value_literal = Herb::AST::LiteralNode.new("LiteralNode", nil, [], value.dup)
-        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode", nil, [], create_token(:quote, '"'),
+        value_literal = Herb::AST::LiteralNode.new("LiteralNode", dummy_location, [], value.dup)
+        value_node = Herb::AST::HTMLAttributeValueNode.new("HTMLAttributeValueNode", dummy_location, [], create_token(:quote, '"'),
                                                            [value_literal], create_token(:quote, '"'), true)
 
         equals_token = create_token(:equals, "=")
 
-        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", nil, [], name_node, equals_token, value_node)
+        Herb::AST::HTMLAttributeNode.new("HTMLAttributeNode", dummy_location, [], name_node, equals_token, value_node)
       end
 
       def create_token(type, value)
-        Herb::Token.new(value.dup, nil, nil, type.to_s)
+        Herb::Token.new(value.dup, dummy_range, dummy_location, type.to_s)
       end
 
       def create_debug_span_for_erb(erb_node)
@@ -210,7 +222,7 @@ module Herb
 
         open_tag = Herb::AST::HTMLOpenTagNode.new(
           "HTMLOpenTagNode",
-          nil,
+          dummy_location,
           [],
           create_token(:tag_opening, "<"),
           tag_name_token,
@@ -221,7 +233,7 @@ module Herb
 
         close_tag = Herb::AST::HTMLCloseTagNode.new(
           "HTMLCloseTagNode",
-          nil,
+          dummy_location,
           [],
           create_token(:tag_opening, "</"),
           create_token(:tag_name, "span"),
@@ -229,7 +241,7 @@ module Herb
           create_token(:tag_closing, ">")
         )
 
-        Herb::AST::HTMLElementNode.new("HTMLElementNode", nil, [], open_tag, tag_name_token, [erb_node], close_tag,
+        Herb::AST::HTMLElementNode.new("HTMLElementNode", dummy_location, [], open_tag, tag_name_token, [erb_node], close_tag,
                                        false)
       end
 

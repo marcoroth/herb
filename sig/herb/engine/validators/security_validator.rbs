@@ -16,8 +16,6 @@ module Herb
 
         def add_security_error: (untyped location, untyped message, untyped suggestion) -> untyped
 
-        private
-
         def add_diagnostic: (untyped message, untyped location, untyped severity, ?code: untyped, ?source: untyped, ?suggestion: untyped) -> untyped
       end
     end

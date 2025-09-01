@@ -1,5 +1,7 @@
 # frozen_string_literal: true
-# typed: true
+# typed: false
+
+# rbs_inline: disabled
 
 require_relative "../validator"
 
@@ -35,7 +37,7 @@ module Herb
             next unless child.is_a?(Herb::AST::HTMLElementNode)
 
             child_tag = child.tag_name&.value&.downcase
-            next unless block_elements.include?(child_tag)
+            next unless child_tag && block_elements.include?(child_tag)
 
             add_validation_error(
               "InvalidNestingError",
@@ -62,7 +64,7 @@ module Herb
             next unless child.is_a?(Herb::AST::HTMLElementNode)
 
             child_tag = child.tag_name&.value&.downcase
-            next unless interactive_elements.include?(child_tag)
+            next unless child_tag && interactive_elements.include?(child_tag)
 
             add_validation_error(
               "InvalidNestingError",

@@ -8,32 +8,32 @@
     <header>
       <h1>My Awesome Blog</h1>
       <nav>
-
+        
           <a href="/" class="active">
             Home
           </a>
-
+        
           <a href="/about" class="">
             About
           </a>
-
+        
           <a href="/contact" class="">
             Contact
           </a>
-
+        
       </nav>
     </header>
-
+    
     <main>
-
+      
         <div class="alert alert-success">
           Welcome!
         </div>
-
-
+      
+      
       <section class="content">
-
-
+        
+          
             <article class="post" data-index="0">
               <h2>First Post</h2>
               <p class="meta">
@@ -42,17 +42,17 @@
               <div class="content">
                 This is the first post excerpt.
               </div>
-
+              
                 <div class="tags">
-
+                  
                     <span class="tag">ruby</span>
-
+                  
                     <span class="tag">programming</span>
-
+                  
                 </div>
-
+              
             </article>
-
+          
             <article class="post" data-index="1">
               <h2>Second Post</h2>
               <p class="meta">
@@ -61,21 +61,21 @@
               <div class="content">
                 This is the second post excerpt.
               </div>
-
+              
                 <div class="tags">
-
+                  
                     <span class="tag">html</span>
-
+                  
                     <span class="tag">css</span>
-
+                  
                 </div>
-
+              
             </article>
-
-
+          
+        
       </section>
     </main>
-
+    
     <footer>
       <p>&copy; 2025 My Awesome Blog</p>
     </footer>

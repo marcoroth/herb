@@ -2,6 +2,7 @@
 
 require "json"
 require "time"
+require "pathname"
 
 require_relative "engine/debug_visitor"
 require_relative "engine/compiler"
@@ -30,8 +31,8 @@ module Herb
     end
 
     def initialize(input, properties = {})
-      @filename = properties[:filename] ? Pathname(properties[:filename]) : nil
-      @project_path = Pathname(properties[:project_path] || Dir.pwd)
+      @filename = properties[:filename] ? ::Pathname.new(properties[:filename]) : nil
+      @project_path = ::Pathname.new(properties[:project_path] || Dir.pwd)
 
       if @filename
         absolute_filename = @filename.absolute? ? @filename : @project_path + @filename
@@ -224,7 +225,7 @@ module Herb
       @src << postamble
     end
 
-    def with_buffer
+    def with_buffer(&block)
       if @chain_appends
         @src << "; " << @bufvar unless @buffer_on_stack
         yield
@@ -249,7 +250,8 @@ module Herb
         Validators::AccessibilityValidator.new
       ]
 
-      errors = []
+      errors = [] #: Array[untyped]
+
       validators.each do |validator|
         ast.accept(validator)
         errors.concat(validator.errors)
@@ -266,7 +268,7 @@ module Herb
 
         raise CompilationError, "\n#{message}"
       when :overlay
-        add_parser_error_overlay(parser_errors)
+        add_parser_error_overlay(parser_errors, input)
         @src << "\n" unless @src.end_with?("\n")
         send(:add_postamble, "#{@bufvar}.to_s\n")
       when :none

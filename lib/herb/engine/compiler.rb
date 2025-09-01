@@ -10,8 +10,8 @@ module Herb
 
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
-        @tokens = []
-        @element_stack = []
+        @tokens = [] #: Array[untyped]
+        @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
         @trim_next_whitespace = false
       end
@@ -162,7 +162,7 @@ module Herb
         process_erb_tag(node)
       end
 
-      def visit_erb_control_node(node)
+      def visit_erb_control_node(node, &block)
         add_code(node.content.value.strip)
 
         yield if block_given?
@@ -348,7 +348,7 @@ module Herb
       def optimize_tokens(tokens)
         return tokens if tokens.empty?
 
-        optimized = []
+        optimized = [] #: Array[untyped]
         current_text = ""
         current_context = nil
 

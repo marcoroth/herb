@@ -39,7 +39,7 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
-      def visit_erb_control_node: (untyped node) -> untyped
+      def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
 
       def visit_erb_if_node: (untyped node) -> untyped
 
@@ -85,7 +85,7 @@ module Herb
 
       def add_context_aware_expression: (untyped code, untyped context) -> untyped
 
-      def process_erb_tag: (untyped node, ?skip_comment_check: untyped, ?is_yield: untyped) -> untyped
+      def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
 
       def add_text: (untyped text) -> untyped
 
@@ -97,7 +97,7 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
-      def process_erb_output: (untyped node, untyped opening, untyped code, ?untyped is_yield) -> untyped
+      def process_erb_output: (untyped opening, untyped code) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 

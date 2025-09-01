@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "English"
+require "tempfile"
 
 module Herb
   class Engine
@@ -242,7 +243,7 @@ module Herb
 
       def find_highlighter_path
         possible_paths = [
-          File.expand_path("../../../javascript/packages/highlighter/bin/herb-highlight", __dir__),
+          File.expand_path("../../../javascript/packages/highlighter/bin/herb-highlight", __dir__ || "."),
           "herb-highlight" # In PATH
         ]
 
@@ -263,7 +264,8 @@ module Herb
 
         begin
           output = `#{cmd} 2>/dev/null`
-          return output.gsub(file_path, @filename) if $CHILD_STATUS.success? && !output.strip.empty?
+          status = $?
+          return output.gsub(file_path, @filename) if status && status.success? && !output.strip.empty?
         rescue StandardError
           # Silently fall back to basic formatting if highlighter fails
         end
@@ -287,7 +289,8 @@ module Herb
           cmd = "#{@highlighter_path} --diagnostics \"#{diagnostics_file.path}\" --split-diagnostics --context-lines #{context_lines} \"#{file_path}\""
 
           output = `#{cmd} 2>/dev/null`
-          return output.gsub(file_path, @filename) if $CHILD_STATUS.success? && !output.strip.empty?
+          status = $?
+          return output.gsub(file_path, @filename) if status && status.success? && !output.strip.empty?
         rescue StandardError
           # Silently fall back to basic formatting if highlighter fails
         ensure

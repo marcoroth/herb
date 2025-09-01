@@ -19,13 +19,19 @@ module Herb
 
       def visit_erb_content_node: (untyped node) -> untyped
 
-      def visit_erb_yield_node: (untyped node) -> untyped
-
-      def visit_erb_block_node: (untyped node) -> untyped
+      def visit_erb_yield_node: (untyped _node) -> untyped
 
       private
 
       def wrap_all_erb_nodes: (untyped node) -> untyped
+
+      # Creates a dummy location for AST nodes that don't need real location info
+      # : () -> Herb::Location
+      def dummy_location: () -> Herb::Location
+
+      # Creates a dummy range for tokens that don't need real range info
+      # : () -> Herb::Range
+      def dummy_range: () -> Herb::Range
 
       def replace_erb_nodes_recursive: (untyped node) -> untyped
 

@@ -431,7 +431,7 @@ module Herb
       private
 
       def generate_error_sections
-        sections = []
+        sections = [] #: Array[String]
 
         @errors.each_with_index do |error, index|
           sections << generate_code_section(error, index)
@@ -446,8 +446,15 @@ module Herb
 
       def generate_code_section(error, index)
         location = error.respond_to?(:location) && error.location ? error.location : nil
-        line_num = location&.start&.line || 1
-        col_num = location&.start&.column || 1
+        line_num = 1
+        col_num = 1
+        
+        if location && location.respond_to?(:start)
+          if location.is_a?(Herb::Location) && location.start
+            line_num = location.start.line
+            col_num = location.start.column
+          end
+        end
 
         error_class = error.class.name.split("::").last.gsub(/Error$/, "")
         error_message = error.respond_to?(:message) ? error.message : error.to_s
@@ -480,7 +487,7 @@ module Herb
         start_line = [line_num - CONTEXT_LINES, 1].max
         end_line = [line_num + CONTEXT_LINES, @lines.length].min
 
-        lines_html = []
+        lines_html = [] #: Array[String]
 
         (start_line..end_line).each do |i|
           line = @lines[i - 1] || ""

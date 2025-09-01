@@ -18,10 +18,20 @@ module Herb
 
     attr_reader validation_error_template: untyped
 
+    ESCAPE_TABLE: untyped
+
     class CompilationError < StandardError
     end
 
     def initialize: (untyped input, ?untyped properties) -> untyped
+
+    def self.h: (untyped value) -> untyped
+
+    def self.attr: (untyped value) -> untyped
+
+    def self.js: (untyped value) -> untyped
+
+    def self.css: (untyped value) -> untyped
 
     def add_text: (untyped text) -> untyped
 
@@ -41,7 +51,7 @@ module Herb
 
     def add_postamble: (untyped postamble) -> untyped
 
-    def with_buffer: () -> untyped
+    def with_buffer: () ?{ (?) -> untyped } -> untyped
 
     def terminate_expression: () -> untyped
 
@@ -49,7 +59,7 @@ module Herb
 
     def run_validation: (untyped ast) -> untyped
 
-    def handle_parser_errors: (untyped parser_errors, untyped input, untyped ast) -> untyped
+    def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
 
     def handle_validation_errors: (untyped errors, untyped input) -> untyped
 
@@ -58,15 +68,5 @@ module Herb
     def escape_attr: (untyped text) -> untyped
 
     def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
-
-    ESCAPE_TABLE: untyped
-
-    def self.h: (untyped value) -> untyped
-
-    def self.attr: (untyped value) -> untyped
-
-    def self.js: (untyped value) -> untyped
-
-    def self.css: (untyped value) -> untyped
   end
 end

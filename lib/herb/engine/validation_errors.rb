@@ -1,5 +1,7 @@
 # frozen_string_literal: true
-# typed: true
+# typed: false
+
+# rbs_inline: disabled
 
 module Herb
   class Engine
@@ -18,10 +20,10 @@ module Herb
       private
 
       def build_error_message(message)
-        parts = []
+        parts = [] #: Array[String]
 
         if @filename || (@line && @column)
-          location_parts = []
+          location_parts = [] #: Array[String]
 
           location_parts << @filename if @filename
           location_parts << "#{@line}:#{@column}" if @line && @column

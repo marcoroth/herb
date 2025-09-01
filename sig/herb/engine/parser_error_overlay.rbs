@@ -5,7 +5,7 @@ module Herb
     class ParserErrorOverlay
       CONTEXT_LINES: ::Integer
 
-      ERROR_CLASS_PRIORITRY: ::Array[untyped]
+      ERROR_CLASS_PRIORITRY: untyped
 
       def initialize: (untyped source, untyped errors, ?filename: untyped) -> untyped
 
@@ -23,13 +23,11 @@ module Herb
 
       def syntax_highlight: (untyped code) -> untyped
 
-      private
-
       def highlight_with_tokens: (untyped tokens, untyped code) -> untyped
 
       def get_character_offset: (untyped code, untyped line, untyped column) -> untyped
 
-      def update_highlighting_state: (untyped state, untyped token, untyped token_text, untyped next_token, untyped prev_token) -> untyped
+      def update_highlighting_state: (untyped state, untyped token, untyped token_text, untyped _next_token, untyped _prev_token) -> untyped
 
       def get_token_css_class: (untyped state, untyped token, untyped token_text) -> untyped
 

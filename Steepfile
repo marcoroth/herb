@@ -7,6 +7,8 @@ target :lib do
 
   library "delegate"
   library "json"
+  library "tempfile"
+  library "pathname"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/libherb.rb"

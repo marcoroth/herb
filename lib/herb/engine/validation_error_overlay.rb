@@ -59,7 +59,7 @@ module Herb
         start_line = [line_num - CONTEXT_LINES, 1].max
         end_line = [line_num + CONTEXT_LINES, @lines.length].min
 
-        code_lines = []
+        code_lines = [] #: Array[String]
         (start_line..end_line).each do |line|
           line_content = @lines[line - 1] || ""
           is_error_line = line == line_num

@@ -23,7 +23,7 @@ module Herb
 
       def highlight_with_tokens: (untyped tokens, untyped code) -> untyped
 
-      def get_character_offset: (untyped content, untyped line, untyped column) -> untyped
+      def get_character_offset: (untyped _content, untyped line, untyped column) -> untyped
 
       def apply_token_style: (untyped token, untyped text) -> untyped
 
