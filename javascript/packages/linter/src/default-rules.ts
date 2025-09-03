@@ -16,6 +16,7 @@ import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quo
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
+import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
@@ -52,6 +53,7 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeEqualsSpacingRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
+  HTMLBodyOnlyElementsRule,
   HTMLBooleanAttributesNoValueRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
