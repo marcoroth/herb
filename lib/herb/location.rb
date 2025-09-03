@@ -2,11 +2,14 @@
 # typed: true
 
 module Herb
+  #: type serialized_location = { start: Herb::Position, end: Herb::Position }
   class Location
-    attr_reader :start #: Position
-    attr_reader :end #: Position
+    #: Herb::Position
+    attr_reader :start
+    #: Herb::Position
+    attr_reader :end
 
-    #: (Position, Position) -> void
+    #: (Herb::Position, Herb::Position) -> void
     def initialize(start_position, end_position)
       @start = start_position
       @end = end_position
@@ -25,12 +28,12 @@ module Herb
       from(start_line, start_column, end_line, end_column)
     end
 
-    #: () -> serialized_location
+    #: () -> (serialized_location)
     def to_hash
       {
         start: start,
         end: self.end,
-      } #: Herb::serialized_location
+      }
     end
 
     #: (?untyped) -> String

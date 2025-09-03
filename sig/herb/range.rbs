@@ -1,9 +1,9 @@
 # Generated from lib/herb/range.rb with RBS::Inline
 
 module Herb
+  # : type serialized_range = [Integer, Integer]
   class Range
     attr_reader from: Integer
-
     attr_reader to: Integer
 
     # : (Integer, Integer) -> void
