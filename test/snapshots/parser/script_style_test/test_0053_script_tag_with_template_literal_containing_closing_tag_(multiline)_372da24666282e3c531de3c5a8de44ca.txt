@@ -1,11 +1,4 @@
 @ DocumentNode (location: (1:0)-(4:0))
-├── errors: (1 error)
-│   └── @ UnexpectedError (location: (2:12)-(2:13))
-│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_BACKTICK`."
-│       ├── description: "Unexpected token"
-│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
-│       └── found: "TOKEN_BACKTICK"
-│
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:12))
     │   ├── open_tag:
@@ -31,8 +24,8 @@
     │   ├── is_void: false
     │   └── source: "HTML"
     │
-    ├── @ HTMLTextNode (location: (2:13)-(3:0))
-    │   └── content: "\n"
+    ├── @ HTMLTextNode (location: (2:12)-(3:0))
+    │   └── content: "`\n"
     │
     ├── @ HTMLCloseTagNode (location: (3:0)-(3:9))
     │   ├── errors: (1 error)
