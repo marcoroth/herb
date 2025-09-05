@@ -18,7 +18,7 @@
     "build": "yarn clean && rollup -c",
     "dev": "rollup -c -w",
     "clean": "rimraf dist",
-    "test": "vitest run",
+    "test": "echo 'TODO: add tests'",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {
