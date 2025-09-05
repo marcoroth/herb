@@ -399,6 +399,39 @@ describe("CLI Binary", () => {
     expect(formattedLines.join('\n')).toBe('\n')
   })
 
+  it("should show --indent-width option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("herb-format --indent-width")
+    expect(result.stdout).toContain("number of spaces per indentation level")
+  })
+
+  it("should accept valid --indent-width", async () => {
+    const input = '<div>\n<p>Test</p>\n</div>'
+    const result = await execBinary(["--indent-width", "4"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("    <p>Test</p>") // 4 spaces instead of 2
+  })
+
+  it("should show --max-line-length option in help", async () => {
+    const result = await execBinary(["--help"])
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("herb-format --max-line-length")
+    expect(result.stdout).toContain("maximum line length before wrapping")
+  })
+
+  it("should accept valid --max-line-length", async () => {
+    const input = '<p>Short text that wraps</p>'
+    const result = await execBinary(["--max-line-length", "20"], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).toContain("Short text that")
+    expect(result.stdout).toContain("wraps")
+  })
+
   describe("Glob Pattern Support", () => {
     beforeEach(async () => {
       await mkdir("test-fixtures", { recursive: true })

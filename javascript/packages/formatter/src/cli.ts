@@ -5,6 +5,8 @@ import { join, resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
+import { parseArgs } from "util"
+import { resolveFormatOptions } from "./options.js"
 
 import { name, version, dependencies } from "../package.json"
 
@@ -21,9 +23,11 @@ export class CLI {
                                     glob pattern to match files, or '-' for stdin (omit to format all **/*.html.erb files in current directory)
 
     Options:
-      -c, --check      check if files are formatted without modifying them
-      -h, --help       show help
-      -v, --version    show version
+      -c, --check                     check if files are formatted without modifying them
+      -h, --help                      show help
+      -v, --version                   show version
+      --indent-width <number>         number of spaces per indentation level (default: 2)
+      --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
       herb-format                            # Format all **/*.html.erb files in current directory
@@ -35,22 +39,71 @@ export class CLI {
       herb-format "**/*.xml.erb"             # Format all .xml.erb files using glob pattern
       herb-format --check                    # Check if all **/*.html.erb files are formatted
       herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
+      herb-format --indent-width 4           # Format with 4-space indentation
+      herb-format --max-line-length 100      # Format with 100-character line limit
       cat template.html.erb | herb-format    # Format from stdin to stdout
   `
 
-  async run() {
-    const args = process.argv.slice(2)
+  private parseArguments() {
+    const { values, positionals } = parseArgs({
+      args: process.argv.slice(2),
+      options: {
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+        check: { type: "boolean", short: "c" },
+        "indent-width": { type: "string" },
+        "max-line-length": { type: "string" }
+      },
+      allowPositionals: true
+    })
 
-    if (args.includes("--help") || args.includes("-h")) {
+    if (values.help) {
       console.log(this.usage)
-
       process.exit(0)
     }
+
+    let indentWidth: number | undefined
+
+    if (values["indent-width"]) {
+      const parsed = parseInt(values["indent-width"], 10)
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(
+          `Invalid indent-width: ${values["indent-width"]}. Must be a positive integer.`,
+        )
+        process.exit(1)
+      }
+      indentWidth = parsed
+    }
+
+    let maxLineLength: number | undefined
+
+    if (values["max-line-length"]) {
+      const parsed = parseInt(values["max-line-length"], 10)
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(
+          `Invalid max-line-length: ${values["max-line-length"]}. Must be a positive integer.`,
+        )
+        process.exit(1)
+      }
+      maxLineLength = parsed
+    }
+
+    return {
+      positionals,
+      isCheckMode: values.check,
+      isVersionMode: values.version,
+      indentWidth,
+      maxLineLength
+    }
+  }
+
+  async run() {
+    const { positionals, isCheckMode, isVersionMode, indentWidth, maxLineLength } = this.parseArguments()
 
     try {
       await Herb.load()
 
-      if (args.includes("--version") || args.includes("-v")) {
+      if (isVersionMode) {
         console.log("Versions:")
         console.log(`  ${name}@${version}`)
         console.log(`  @herb-tools/printer@${dependencies['@herb-tools/printer']}`)
@@ -62,10 +115,14 @@ export class CLI {
       console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.log()
 
-      const formatter = new Formatter(Herb)
-      const isCheckMode = args.includes("--check") || args.includes("-c")
+      const formatOptions = resolveFormatOptions({
+        indentWidth,
+        maxLineLength
+      })
 
-      const file = args.find(arg => !arg.startsWith("-"))
+      const formatter = new Formatter(Herb, formatOptions)
+
+      const file = positionals[0]
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {
