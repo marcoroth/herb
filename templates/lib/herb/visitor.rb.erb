@@ -4,12 +4,12 @@ module Herb
 
     #: (Herb::AST::Node) -> void
     def visit(node)
-      node&.accept(self)
+      node.accept(self)
     end
 
     #: (Array[Herb::AST::Node]) -> void
     def visit_all(nodes)
-      nodes.each { |node| node&.accept(self) }
+      nodes.each { |node| node.accept(self) }
     end
 
     #: (Herb::AST::Node) -> void

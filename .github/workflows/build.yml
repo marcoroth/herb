@@ -50,8 +50,8 @@ jobs:
       - name: RBS Inline
         run: bundle exec rake rbs_inline
 
-      # - name: Sorbet
-      #   run: bundle exec srb tc
+      - name: Sorbet
+        run: bundle exec srb tc
 
       - name: Run C tests
         run: ./run_herb_tests
