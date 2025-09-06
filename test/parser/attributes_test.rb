@@ -159,5 +159,9 @@ module Parser
     test "attribute with backtick containing HTML (invalid)" do
       assert_parsed_snapshot(%(<div data-template=`<span>Hello</span>`></div>))
     end
+
+    test "boolean attribute before closing bracket" do
+      assert_parsed_snapshot(%(<div id="test" hidden><%= "hi" %></div>))
+    end
   end
 end

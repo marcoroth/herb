@@ -743,6 +743,39 @@ exports[`CLI Output Formatting > formats success output correctly 1`] = `
   Offenses     0 offenses"
 `;
 
+exports[`CLI Output Formatting > handles boolean attributes 1`] = `
+"[error] Unexpected token. Expected: \`TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE\`, found: \`TOKEN_ERB_CONTENT\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+
+test/fixtures/boolean-attribute.html.erb:2:5
+
+      1 │ <div id="test" hidden>
+  →   2 │   <%= "hi" %>
+        │      ~~~~~~
+      3 │ </div>
+      4 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Unexpected token. Expected: \`TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE\`, found: \`TOKEN_ERB_END\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+
+test/fixtures/boolean-attribute.html.erb:2:11
+
+      1 │ <div id="test" hidden>
+  →   2 │   <%= "hi" %>
+        │            ~~
+      3 │ </div>
+      4 │
+
+ Rule offenses:
+  parser-no-errors (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+`;
+
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
 "[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
 
