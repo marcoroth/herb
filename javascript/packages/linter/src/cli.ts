@@ -6,6 +6,7 @@ import { dirname, resolve, relative } from "path"
 import { ArgumentParser, type FormatOption } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
+import { dependencies, name, version } from "../package.json"
 
 export * from "./cli/index.js"
 
@@ -132,6 +133,18 @@ export class CLI {
   }
 
   async run() {
+    const args = process.argv.slice(2);
+
+    if (args.includes("--version") || args.includes("-v")) {
+      console.log("Versions:")
+      console.log(`  ${name}@${version}`)
+      console.log(
+        `  @herb-tools/printer@${dependencies["@herb-tools/printer"]}`,
+      )
+      console.log(`  ${version}`.split(", ").join("\n  "))
+
+      process.exit(0)
+    }
     const startTime = Date.now()
     const startDate = new Date()
 
