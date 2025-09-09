@@ -93,10 +93,10 @@ test/fixtures/multiple-rule-offenses.html.erb:5:3
 test/fixtures/multiple-rule-offenses.html.erb:10:1
 
       8 │ <h1></h1>
-      9 │
+      9 │ 
   →  10 │ <a><a>Nested</a></a>
         │  ~
-     11 │
+     11 │ 
      12 │ <div id="duplicate"></div>
 
 
@@ -107,10 +107,10 @@ test/fixtures/multiple-rule-offenses.html.erb:10:1
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
-      9 │
+      9 │ 
   →  10 │ <a><a>Nested</a></a>
         │     ~
-     11 │
+     11 │ 
      12 │ <div id="duplicate"></div>
 
 
@@ -121,7 +121,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 test/fixtures/multiple-rule-offenses.html.erb:3:20
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │
+      2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │                     ~~
       4 │   <img />
@@ -135,7 +135,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
 test/fixtures/multiple-rule-offenses.html.erb:3:8
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │
+      2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │         ~~~~~
       4 │   <img />
@@ -149,7 +149,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
 test/fixtures/multiple-rule-offenses.html.erb:3:34
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │
+      2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │                                   ~~~
       4 │   <img />
@@ -162,7 +162,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:34
 
 test/fixtures/multiple-rule-offenses.html.erb:4:3
 
-      2 │
+      2 │ 
       3 │ <div id=test1 class='' data-value=bar>
   →   4 │   <img />
         │    ~~~
@@ -191,7 +191,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
 test/fixtures/multiple-rule-offenses.html.erb:3:14
 
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
-      2 │
+      2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
         │               ~~~~~
       4 │   <img />
@@ -233,10 +233,10 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
 test/fixtures/multiple-rule-offenses.html.erb:8:0
 
       6 │ </div>
-      7 │
+      7 │ 
   →   8 │ <h1></h1>
         │ ~~~~~~~~~
-      9 │
+      9 │ 
      10 │ <a><a>Nested</a></a>
 
 
@@ -247,10 +247,10 @@ test/fixtures/multiple-rule-offenses.html.erb:8:0
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
       8 │ <h1></h1>
-      9 │
+      9 │ 
   →  10 │ <a><a>Nested</a></a>
         │     ~
-     11 │
+     11 │ 
      12 │ <div id="duplicate"></div>
 
 
@@ -260,7 +260,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 test/fixtures/multiple-rule-offenses.html.erb:4:2
 
-      2 │
+      2 │ 
       3 │ <div id=test1 class='' data-value=bar>
   →   4 │   <img />
         │   ~~~~~~~
@@ -341,7 +341,7 @@ test/fixtures/few-rule-offenses.html.erb:3:3
 
 test/fixtures/few-rule-offenses.html.erb:9:5
 
-      7 │
+      7 │ 
       8 │ <div id="duplicate"></div>
   →   9 │ <div id="duplicate"></div>
         │      ~~~~~~~~~~~~~~
@@ -355,10 +355,10 @@ test/fixtures/few-rule-offenses.html.erb:9:5
 test/fixtures/few-rule-offenses.html.erb:6:0
 
       4 │ </div>
-      5 │
+      5 │ 
   →   6 │ <h1></h1>
         │ ~~~~~~~~~
-      7 │
+      7 │ 
       8 │ <div id="duplicate"></div>
 
 
