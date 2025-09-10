@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest"
-import { Herb, HerbBackend } from "../src/index-esm.mjs"
+import { Herb, HerbBackend } from "../src/index.ts"
 
 describe("@herb-tools/node", () => {
   beforeAll(async () => {
