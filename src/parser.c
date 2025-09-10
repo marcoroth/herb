@@ -1121,6 +1121,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           parser,
           TOKEN_AMPERSAND,
           TOKEN_AT,
+          TOKEN_BACKTICK,
           TOKEN_CHARACTER,
           TOKEN_COLON,
           TOKEN_DASH,
