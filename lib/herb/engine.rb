@@ -359,8 +359,7 @@ module Herb
       )
 
       error_html = overlay_generator.generate_html
-      escaped_html = error_html.gsub("'", "\\'")
-      @validation_error_template = "<template data-herb-parser-error>#{escaped_html}</template>"
+      @validation_error_template = "<template data-herb-parser-error>#{error_html}</template>"
     end
   end
 end
