@@ -50,6 +50,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("handles boolean attributes", () => {
+    const { output, exitCode } = runLinter("boolean-attribute.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
   test("formats success output correctly", () => {
     const { output, exitCode } = runLinter("clean-file.html.erb", "--no-wrap-lines")
 
