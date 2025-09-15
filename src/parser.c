@@ -805,6 +805,20 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       continue;
     }
 
+    if (parser->current_token->type == TOKEN_COLON) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* next_token = lexer_next_token(&lexer_copy);
+
+      if (next_token && next_token->type == TOKEN_IDENTIFIER) {
+        token_free(next_token);
+        array_append(children, parser_parse_html_attribute(parser));
+
+        continue;
+      }
+
+      token_free(next_token);
+    }
+
     parser_append_unexpected_error(
       parser,
       "Unexpected Token",

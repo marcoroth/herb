@@ -159,5 +159,37 @@ module Parser
     test "attribute with backtick containing HTML (invalid)" do
       assert_parsed_snapshot(%(<div data-template=`<span>Hello</span>`></div>))
     end
+
+    test "Vue-style directive attribute with value" do
+      assert_parsed_snapshot(%(<div :value="something"></div>))
+    end
+
+    test "Vue-style directive attributes multiple" do
+      assert_parsed_snapshot(%(<input :model="user" :disabled="isDisabled" :class="className"></input>))
+    end
+
+    test "Vue-style directive attribute without value" do
+      assert_parsed_snapshot(%(<div :disabled></div>))
+    end
+
+    test "Mixed Vue directives and regular attributes" do
+      assert_parsed_snapshot(%(<div id="app" :class="dynamicClass" data-test="static"></div>))
+    end
+
+    test "Standalone colon with space is invalid" do
+      assert_parsed_snapshot(%(<div : class="hello"></div>))
+    end
+
+    test "Colon immediately followed by attribute name is valid" do
+      assert_parsed_snapshot(%(<div :class="hello"></div>))
+    end
+
+    test "Double colon is invalid" do
+      assert_parsed_snapshot(%(<div ::value="hello"></div>))
+    end
+
+    test "Vue directive with namespace-like syntax" do
+      assert_parsed_snapshot(%(<div :v-model="user"></div>))
+    end
   end
 end
