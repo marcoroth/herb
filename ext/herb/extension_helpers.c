@@ -53,11 +53,11 @@ VALUE rb_range_from_c_struct(range_T* range) {
 VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
-  VALUE value = token->value ? rb_str_new_cstr(token->value) : Qnil;
+  VALUE value = token->value ? rb_utf8_str_new_cstr(token->value) : Qnil;
 
   VALUE range = rb_range_from_c_struct(token->range);
   VALUE location = rb_location_from_c_struct(token->location);
-  VALUE type = rb_str_new_cstr(token_type_to_string(token->type));
+  VALUE type = rb_utf8_str_new_cstr(token_type_to_string(token->type));
 
   VALUE args[4] = { value, range, location, type };
 
@@ -91,7 +91,7 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
 
 VALUE read_file_to_ruby_string(const char* file_path) {
   char* source = herb_read_file(file_path);
-  VALUE source_value = rb_str_new_cstr(source);
+  VALUE source_value = rb_utf8_str_new_cstr(source);
 
   free(source);
 

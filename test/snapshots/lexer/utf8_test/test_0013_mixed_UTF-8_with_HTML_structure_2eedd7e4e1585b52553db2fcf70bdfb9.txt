@@ -5,19 +5,19 @@
 #<Herb::Token type="TOKEN_EQUALS" value="=" range=[9, 10] start=(1:9) end=(1:10)>
 #<Herb::Token type="TOKEN_QUOTE" value="\"" range=[10, 11] start=(1:10) end=(1:11)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="Caf" range=[11, 14] start=(1:11) end=(1:14)>
-#<Herb::Token type="TOKEN_CHARACTER" value="\xC3\xA9" range=[14, 16] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_CHARACTER" value="é" range=[14, 16] start=(1:14) end=(1:15)>
 #<Herb::Token type="TOKEN_QUOTE" value="\"" range=[16, 17] start=(1:15) end=(1:16)>
 #<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[17, 18] start=(1:16) end=(1:17)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="Bj" range=[18, 20] start=(1:17) end=(1:19)>
-#<Herb::Token type="TOKEN_CHARACTER" value="\xC3\xB6" range=[20, 22] start=(1:19) end=(1:20)>
+#<Herb::Token type="TOKEN_CHARACTER" value="ö" range=[20, 22] start=(1:19) end=(1:20)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="rk" range=[22, 24] start=(1:20) end=(1:22)>
 #<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[24, 25] start=(1:22) end=(1:23)>
 #<Herb::Token type="TOKEN_AMPERSAND" value="&" range=[25, 26] start=(1:23) end=(1:24)>
 #<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[26, 27] start=(1:24) end=(1:25)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="Fr" range=[27, 29] start=(1:25) end=(1:27)>
-#<Herb::Token type="TOKEN_CHARACTER" value="\xC3\xA9" range=[29, 31] start=(1:27) end=(1:28)>
+#<Herb::Token type="TOKEN_CHARACTER" value="é" range=[29, 31] start=(1:27) end=(1:28)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="d" range=[31, 32] start=(1:28) end=(1:29)>
-#<Herb::Token type="TOKEN_CHARACTER" value="\xC3\xA9" range=[32, 34] start=(1:29) end=(1:30)>
+#<Herb::Token type="TOKEN_CHARACTER" value="é" range=[32, 34] start=(1:29) end=(1:30)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="ric" range=[34, 37] start=(1:30) end=(1:33)>
 #<Herb::Token type="TOKEN_HTML_TAG_START_CLOSE" value="</" range=[37, 39] start=(1:33) end=(1:35)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="h1" range=[39, 41] start=(1:35) end=(1:37)>

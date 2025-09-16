@@ -50,7 +50,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   parser_options_T opts = { 0 };
 
   if (!NIL_P(options)) {
-    VALUE track_whitespace = rb_hash_lookup(options, rb_str_new_cstr("track_whitespace"));
+    VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
 
     if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) {
@@ -108,7 +108,7 @@ static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
 
   herb_extract_ruby_to_buffer(string, &output);
 
-  VALUE result = rb_str_new_cstr(output.value);
+  VALUE result = rb_utf8_str_new_cstr(output.value);
   buffer_free(&output);
 
   return result;
@@ -122,7 +122,7 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
 
   herb_extract_html_to_buffer(string, &output);
 
-  VALUE result = rb_str_new_cstr(output.value);
+  VALUE result = rb_utf8_str_new_cstr(output.value);
   buffer_free(&output);
 
   return result;
@@ -130,9 +130,9 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
 
 static VALUE Herb_version(VALUE self) {
   VALUE gem_version = rb_const_get(self, rb_intern("VERSION"));
-  VALUE libherb_version = rb_str_new_cstr(herb_version());
-  VALUE libprism_version = rb_str_new_cstr(herb_prism_version());
-  VALUE format_string = rb_str_new_cstr("herb gem v%s, libprism v%s, libherb v%s (Ruby C native extension)");
+  VALUE libherb_version = rb_utf8_str_new_cstr(herb_version());
+  VALUE libprism_version = rb_utf8_str_new_cstr(herb_prism_version());
+  VALUE format_string = rb_utf8_str_new_cstr("herb gem v%s, libprism v%s, libherb v%s (Ruby C native extension)");
 
   return rb_funcall(rb_mKernel, rb_intern("sprintf"), 4, format_string, gem_version, libprism_version, libherb_version);
 }
