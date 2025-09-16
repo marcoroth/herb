@@ -555,14 +555,12 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     return value;
   }
 
-  token_T* token = parser_advance(parser);
-
   append_unexpected_error(
     "Unexpected Token",
     "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START",
-    token_type_to_string(token->type),
-    token->location->start,
-    token->location->end,
+    token_type_to_string(parser->current_token->type),
+    parser->current_token->location->start,
+    parser->current_token->location->end,
     errors
   );
 
@@ -571,12 +569,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     children,
     NULL,
     false,
-    token->location->start,
-    token->location->end,
+    parser->current_token->location->start,
+    parser->current_token->location->end,
     errors
   );
-
-  token_free(token);
 
   return value;
 }

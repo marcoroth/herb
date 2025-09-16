@@ -191,5 +191,9 @@ module Parser
     test "Vue directive with namespace-like syntax" do
       assert_parsed_snapshot(%(<div :v-model="user"></div>))
     end
+
+    test "Empty attribute value with closing bracket immediatly following it" do
+      assert_parsed_snapshot(%(<div attribute-name=>div-content</div>))
+    end
   end
 end
