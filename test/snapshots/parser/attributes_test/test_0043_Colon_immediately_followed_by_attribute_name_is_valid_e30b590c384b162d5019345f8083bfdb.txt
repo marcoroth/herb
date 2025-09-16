@@ -1,0 +1,42 @@
+@ DocumentNode (location: (1:0)-(1:26))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:26))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:20))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:19)-(1:20))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:19))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:11))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:11))
+        │       │       │               └── content: ":class"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:11)-(1:12))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:19))
+        │       │               ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:13)-(1:18))
+        │       │               │       └── content: "hello"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:18)-(1:19))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:20)-(1:26))
+        │       ├── tag_opening: "</" (location: (1:20)-(1:22))
+        │       ├── tag_name: "div" (location: (1:22)-(1:25))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:25)-(1:26))
+        │
+        ├── is_void: false
+        └── source: "HTML"
