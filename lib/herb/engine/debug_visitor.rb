@@ -11,8 +11,6 @@ module Herb
                       file_path
                     when String
                       file_path.empty? ? nil : ::Pathname.new(file_path)
-                    else
-                      nil
                     end
 
         @project_path = case project_path

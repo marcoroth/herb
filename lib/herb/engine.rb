@@ -19,7 +19,6 @@ module Herb
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
                 :validation_error_template, :visitors
 
-
     ESCAPE_TABLE = {
       "&" => "&amp;",
       "<" => "&lt;",
