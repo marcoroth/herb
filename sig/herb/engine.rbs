@@ -18,6 +18,8 @@ module Herb
 
     attr_reader validation_error_template: untyped
 
+    attr_reader visitors: untyped
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError
