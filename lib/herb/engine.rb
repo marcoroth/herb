@@ -373,7 +373,7 @@ module Herb
     end
 
     #: () -> Array[Herb::Visitor]
-    def  default_visitors
+    def default_visitors
       []
     end
   end

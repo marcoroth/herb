@@ -4,7 +4,7 @@ require_relative "test_helper"
 
 class EngineVisitorsTest < Minitest::Spec
   test "engine works without any visitors" do
-    html = '<div>Hello World</div>'
+    html = "<div>Hello World</div>"
 
     engine = Herb::Engine.new(html)
 
@@ -13,7 +13,7 @@ class EngineVisitorsTest < Minitest::Spec
   end
 
   test "engine runs visitors in the order provided" do
-    html = '<div>Test</div>'
+    html = "<div>Test</div>"
 
     execution_order = []
 
@@ -52,7 +52,7 @@ class EngineVisitorsTest < Minitest::Spec
   end
 
   test "debug visitor can still be used explicitly" do
-    html = '<div>Debug test</div>'
+    html = "<div>Debug test</div>"
 
     debug_visitor = Herb::Engine::DebugVisitor.new(
       file_path: "test.html.erb",
@@ -64,15 +64,5 @@ class EngineVisitorsTest < Minitest::Spec
     engine = Herb::Engine.new(html, visitors: visitors, debug: false)
 
     refute_nil engine.src
-  end
-
-  private
-
-  def mock_engine
-    engine = Object.new
-    def engine.filename; Pathname.new("test.html.erb"); end
-    def engine.relative_file_path; "views/test.html.erb"; end
-    def engine.debug; false; end
-    engine
   end
 end
