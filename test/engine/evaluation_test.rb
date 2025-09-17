@@ -377,5 +377,17 @@ module Engine
         posts: posts,
       }, { escape: false })
     end
+
+    test "utf8 handling" do
+      template = <<~ERB
+        Sitename • Title
+
+        <% @title = "Home" %>
+
+        <title><%= [@title, "Sitename"].compact.join(" • ") %></title>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end

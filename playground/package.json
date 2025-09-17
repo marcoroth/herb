@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
-    "@herb-tools/browser": "0.7.0",
-    "@herb-tools/formatter": "0.7.0",
-    "@herb-tools/linter": "0.7.0",
+    "@herb-tools/browser": "0.7.1",
+    "@herb-tools/formatter": "0.7.1",
+    "@herb-tools/linter": "0.7.1",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.6.0",
     "express": "^5.1.0",
