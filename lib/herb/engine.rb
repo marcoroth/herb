@@ -51,7 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
-      @visitors = properties.fetch(:visitors) { [] #: Array[Herb::AST::Visitor] }
+      @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
         debug_visitor = DebugVisitor.new(
@@ -370,6 +370,11 @@ module Herb
 
       error_html = overlay_generator.generate_html
       @validation_error_template = "<template data-herb-parser-error>#{error_html}</template>"
+    end
+
+    #: () -> Array[Herb::Visitor]
+    def  default_visitors
+      []
     end
   end
 end
