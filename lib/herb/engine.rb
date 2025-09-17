@@ -51,7 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
-      @visitors = properties.fetch(:visitors, [] #: Array[Herb::AST::Visitor])
+      @visitors = properties.fetch(:visitors) { [] #: Array[Herb::AST::Visitor] }
 
       if @debug && @visitors.empty?
         debug_visitor = DebugVisitor.new(
