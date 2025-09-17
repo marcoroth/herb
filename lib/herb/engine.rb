@@ -17,7 +17,8 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template
+                :validation_error_template, :visitors
+
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -51,6 +52,16 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @visitors = properties.fetch(:visitors, [])
+
+      if @debug && @visitors.empty?
+        debug_visitor = DebugVisitor.new(
+          file_path: @filename,
+          project_path: @project_path
+        )
+
+        @visitors << debug_visitor
+      end
 
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
@@ -109,12 +120,12 @@ module Herb
 
         add_validation_overlay(validation_errors, input) if @validation_mode == :overlay && validation_errors&.any?
 
-        if @debug
-          debug_visitor = DebugVisitor.new(self)
-          ast.accept(debug_visitor)
+        @visitors.each do |visitor|
+          ast.accept(visitor)
         end
 
         compiler = Compiler.new(self, properties)
+
         ast.accept(compiler)
 
         compiler.generate_output
