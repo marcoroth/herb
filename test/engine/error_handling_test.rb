@@ -196,9 +196,9 @@ module Engine
         Herb::Engine.new(template)
       end
 
-      assert_includes error.message, "Working"
+      assert_includes error.message, "Tag mismatch"
       assert_includes error.message, "wrong_tag"
-      assert_includes error.message, "→"
+      assert_includes error.message, "←"
     end
 
     test "unclosed quotes in attributes" do
