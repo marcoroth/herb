@@ -54,7 +54,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
-      if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
+      if (false) { pretty_print_analyzed_ruby(analyzed, erb_content_node->content->value); }
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
