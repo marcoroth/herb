@@ -31,9 +31,7 @@ size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-parser_T* herb_parser_init(lexer_T* lexer, parser_options_T* options) {
-  parser_T* parser = calloc(1, parser_sizeof());
-
+void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* options) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
@@ -46,8 +44,6 @@ parser_T* herb_parser_init(lexer_T* lexer, parser_options_T* options) {
   } else {
     parser->options = NULL;
   }
-
-  return parser;
 }
 
 static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
