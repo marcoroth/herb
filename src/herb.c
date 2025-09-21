@@ -28,12 +28,12 @@ array_T* herb_lex(const char* source) {
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
-  lexer_T* lexer = lexer_init(source);
-  parser_T* parser = herb_parser_init(&lexer, options);
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source);
+  parser_T parser = { 0 };
+  herb_parser_init(&parser, &lexer, options);
 
-  AST_DOCUMENT_NODE_T* document = herb_parser_parse(parser);
-
-  parser_free(parser);
+  AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
 
   return document;
 }
