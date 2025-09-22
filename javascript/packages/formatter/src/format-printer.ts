@@ -730,7 +730,19 @@ export class FormatPrinter extends Printer {
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
     if (this.isContentPreserving(element)) {
-      element.body.map(child => this.pushToLastLine(IdentityPrinter.print(child)))
+      element.body.map(child => {
+        if (isNode(child, HTMLElementNode)) {
+          const wasInlineMode = this.inlineMode
+          this.inlineMode = true
+
+          const formattedElement = this.capture(() => this.visit(child)).join("")
+          this.pushToLastLine(formattedElement)
+
+          this.inlineMode = wasInlineMode
+        } else {
+          this.pushToLastLine(IdentityPrinter.print(child))
+        }
+      })
 
       return
     }
