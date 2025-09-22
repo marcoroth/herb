@@ -193,7 +193,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:14
       1 │ <!-- Multiple offenses of same rules to test "Most frequent rule offenses" display -->
       2 │ 
   →   3 │ <div id=test1 class='' data-value=bar>
-        │               ~~~~~
+        │               ~~~~~~~~
       4 │   <img />
       5 │   <a class="" class="">Link 1</a>
 
@@ -207,7 +207,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:5
       3 │ <div id=test1 class='' data-value=bar>
       4 │   <img />
   →   5 │   <a class="" class="">Link 1</a>
-        │      ~~~~~
+        │      ~~~~~~~~
       6 │ </div>
       7 │
 
@@ -221,7 +221,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:14
       3 │ <div id=test1 class='' data-value=bar>
       4 │   <img />
   →   5 │   <a class="" class="">Link 1</a>
-        │               ~~~~~
+        │               ~~~~~~~~
       6 │ </div>
       7 │
 
