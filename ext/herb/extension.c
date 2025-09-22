@@ -18,6 +18,9 @@ VALUE cParseResult;
 
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
+  if (NIL_P(source)) {
+    string = "";
+  }
 
   array_T* tokens = herb_lex(string);
 
@@ -45,6 +48,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   rb_scan_args(argc, argv, "1:", &source, &options);
 
   char* string = (char*) check_string(source);
+
+  if (NIL_P(source)) {
+    string = "";
+  }
 
   parser_options_T* parser_options = NULL;
   parser_options_T opts = { 0 };
