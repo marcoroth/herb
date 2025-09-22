@@ -254,7 +254,7 @@ void pretty_print_string_property(
   }
 }
 
-void pretty_print_analyed_ruby(analyzed_ruby_T* analyzed, const char* source) {
+void pretty_print_analyzed_ruby(analyzed_ruby_T* analyzed, const char* source) {
   printf(
     "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
     " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    "
