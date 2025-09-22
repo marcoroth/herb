@@ -78,6 +78,9 @@ vendor/*
 vendor/bundle/*
 vendor/cache/*
 
+# Prism Vendor
+vendor/prism/*
+
 # Bundled .gem files
 pkg/*
 
