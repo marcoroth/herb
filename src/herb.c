@@ -5,6 +5,7 @@
 #include "include/json.h"
 #include "include/lexer.h"
 #include "include/parser.h"
+#include "include/str.h"
 #include "include/token.h"
 #include "include/version.h"
 
@@ -12,8 +13,10 @@
 #include <stdlib.h>
 
 array_T* herb_lex(const char* source) {
+  str_T source_str = { .data = (char*) source, .length = strlen(source) };
+
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, source_str);
 
   token_T* token = NULL;
   array_T* tokens = array_init(128);
@@ -28,8 +31,11 @@ array_T* herb_lex(const char* source) {
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
+  str_T source_string = { .data = (char*) source, .length = strlen(source) };
+
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, source_string);
+
   parser_T parser = { 0 };
   herb_parser_init(&parser, &lexer, options);
 

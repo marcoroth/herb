@@ -1,3 +1,4 @@
+#include "include/lexer.h"
 #include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/token.h"
@@ -14,7 +15,7 @@ static bool lexer_eof(const lexer_T* lexer) {
 }
 
 static bool lexer_has_more_characters(const lexer_T* lexer) {
-  return lexer->current_position < lexer->source_length;
+  return lexer->current_position < lexer->source.length;
 }
 
 static bool lexer_stalled(lexer_T* lexer) {
@@ -30,13 +31,11 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source) {
-
+void lexer_init(lexer_T* lexer, str_T source) {
   lexer->state = STATE_DATA;
 
   lexer->source = source;
-  lexer->source_length = strlen(source);
-  lexer->current_character = source[0];
+  lexer->current_character = source.data[0];
 
   lexer->current_line = 1;
   lexer->current_column = 0;
@@ -72,7 +71,7 @@ static void lexer_advance(lexer_T* lexer) {
     if (!is_newline(lexer->current_character)) { lexer->current_column++; }
 
     lexer->current_position++;
-    lexer->current_character = lexer->source[lexer->current_position];
+    lexer->current_character = lexer->source.data[lexer->current_position];
   }
 }
 
@@ -84,11 +83,11 @@ static void lexer_advance_utf8_bytes(lexer_T* lexer, int byte_count) {
 
     lexer->current_position += byte_count;
 
-    if (lexer->current_position >= lexer->source_length) {
-      lexer->current_position = lexer->source_length;
+    if (lexer->current_position >= lexer->source.length) {
+      lexer->current_position = lexer->source.length;
       lexer->current_character = '\0';
     } else {
-      lexer->current_character = lexer->source[lexer->current_position];
+      lexer->current_character = lexer->source.data[lexer->current_position];
     }
   }
 }
@@ -126,7 +125,7 @@ static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
 }
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
-  int char_byte_length = utf8_sequence_length(lexer->source, lexer->current_position, lexer->source_length);
+  int char_byte_length = utf8_sequence_length(lexer->source.data, lexer->current_position, lexer->source.length);
 
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
 
@@ -135,12 +134,12 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
   if (!utf8_char) { return lexer_advance_current(lexer, type); }
 
   for (int i = 0; i < char_byte_length; i++) {
-    if (lexer->current_position + i >= lexer->source_length) {
+    if (lexer->current_position + i >= lexer->source.length) {
       free(utf8_char);
       return lexer_advance_current(lexer, type);
     }
 
-    utf8_char[i] = lexer->source[lexer->current_position + i];
+    utf8_char[i] = lexer->source.data[lexer->current_position + i];
   }
 
   utf8_char[char_byte_length] = '\0';
@@ -155,7 +154,7 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
 }
 
 static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
-  if (strncmp(lexer->source + lexer->current_position, value, strlen(value)) == 0) {
+  if (strncmp(lexer->source.data + lexer->current_position, value, strlen(value)) == 0) {
     return lexer_advance_with(lexer, value, type);
   }
 
@@ -231,7 +230,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     }
 
     lexer->current_position++;
-    lexer->current_character = lexer->source[lexer->current_position];
+    lexer->current_character = lexer->source.data[lexer->current_position];
   }
 
   lexer->state = STATE_ERB_CLOSE;

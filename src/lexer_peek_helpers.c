@@ -8,11 +8,11 @@
 #include <stdbool.h>
 
 char lexer_backtrack(const lexer_T* lexer, const int offset) {
-  return lexer->source[MAX(lexer->current_position - offset, 0)];
+  return lexer->source.data[MAX(lexer->current_position - offset, 0)];
 }
 
 char lexer_peek(const lexer_T* lexer, const int offset) {
-  return lexer->source[MIN(lexer->current_position + offset, lexer->source_length)];
+  return lexer->source.data[MIN(lexer->current_position + offset, lexer->source.length)];
 }
 
 bool lexer_peek_for(const lexer_T* lexer, const int offset, const char* pattern, const bool case_insensitive) {
