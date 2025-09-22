@@ -2,11 +2,21 @@
 # typed: true
 
 module Herb
+  #: type serialized_token = {
+  #|  value: String,
+  #|  range: serialized_range?,
+  #|  location: serialized_location?,
+  #|  type: String
+  #| }
   class Token
-    attr_reader :value #: String
-    attr_reader :range #: Range
-    attr_reader :location #: Location
-    attr_reader :type #: String
+    #: String
+    attr_reader :value
+    #: Range?
+    attr_reader :range
+    #: Location?
+    attr_reader :location
+    #: String
+    attr_reader :type
 
     #: (String, Range, Location, String) -> void
     def initialize(value, range, location, type)
@@ -23,7 +33,7 @@ module Herb
         range: range&.to_a,
         location: location&.to_hash,
         type: type,
-      } #: Herb::serialized_token
+      }
     end
 
     #: (?untyped) -> String
@@ -33,7 +43,7 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      %("#{value.force_encoding("utf-8")}" #{location.tree_inspect})
+      %("#{value.force_encoding("utf-8")}" #{location&.tree_inspect})
     end
 
     #: () -> String
@@ -47,7 +57,7 @@ module Herb
 
     #: () -> String
     def inspect
-      %(#<Herb::Token type="#{type}" value=#{value_inspect} range=#{range.tree_inspect} start=#{location.start.tree_inspect} end=#{location.end.tree_inspect}>)
+      %(#<Herb::Token type="#{type}" value=#{value_inspect} range=#{range&.tree_inspect} start=#{location&.start&.tree_inspect} end=#{location&.end&.tree_inspect}>)
     end
   end
 end

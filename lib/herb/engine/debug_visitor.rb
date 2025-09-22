@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 module Herb
   class Engine
@@ -30,6 +31,7 @@ module Herb
         @in_html_comment = false
         @in_html_doctype = false
         @erb_nodes_to_wrap = [] #: Array[Herb::AST::ERBContentNode]
+        @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
       end
 
       def visit_document_node(node)
@@ -142,8 +144,6 @@ module Herb
       end
 
       def find_top_level_elements(document_node)
-        @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
-
         document_node.children.each do |child|
           @top_level_elements << child if child.is_a?(Herb::AST::HTMLElementNode)
         end

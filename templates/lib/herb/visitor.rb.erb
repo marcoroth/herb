@@ -2,12 +2,12 @@ module Herb
   class Visitor
     include AST::Helpers
 
-    #: (Herb::AST::Node) -> void
+    #: (Herb::AST::Node?) -> void
     def visit(node)
       node&.accept(self)
     end
 
-    #: (Array[Herb::AST::Node]) -> void
+    #: (Array[Herb::AST::Node?]) -> void
     def visit_all(nodes)
       nodes.each { |node| node&.accept(self) }
     end

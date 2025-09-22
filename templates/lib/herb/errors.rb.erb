@@ -1,9 +1,15 @@
-<%- base_arguments = [["type", "String"], ["location", "Location"], ["message", "String"]] -%>
+<%- base_arguments = [["type", "String"], ["location", "Location?"], ["message", "String"]] -%>
 module Herb
+  #: type serialized_error = {
+  #|  type: String,
+  #|  location: serialized_location?,
+  #|  message: String
+  #| }
   module Errors
     class Error
       <%- base_arguments.each do |argument, type| -%>
-      attr_reader :<%= argument %> #: <%= type %>
+      #: <%= type %>
+      attr_reader :<%= argument %>
       <%- end -%>
 
       #: (<%= base_arguments.map { |_argument, type| type }.join(", ") %>) -> void
@@ -45,8 +51,15 @@ module Herb
 
     <%- errors.each do |error| -%>
     class <%= error.name -%> < Error
+      #: type serialized_<%= error.human %> = {
       <%- error.fields.each do |field| -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
+      #|  <%= "#{field.name}: #{field.ruby_type}?," %>
+      <%- end -%>
+      #| }
+
+      <%- error.fields.each do |field| -%>
+      #: <%= field.ruby_type %>?
+      attr_reader :<%= field.name %>
       <%- end -%>
 
       #: (<%= [*base_arguments.map(&:last), *error.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -69,14 +82,14 @@ module Herb
           <%- error.fields.each do |field| -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
-        }) #: Herb::serialized_<%= error.human %>
+        })
       end
 
       #: (?Integer) -> String
       def tree_inspect(indent = 0)
         output = +""
 
-        output += %(@ #{error_name} #{location.tree_inspect}\n)
+        output += %(@ #{error_name} #{location&.tree_inspect}\n)
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
         output += %(<%= symbol %> message: #{message.inspect}\n)
         <%- error.fields.each do |field| -%>
@@ -84,9 +97,9 @@ module Herb
         <%- name = "#{symbol} #{field.name}: " -%>
         <%- case field -%>
         <%- when Herb::Template::PositionField -%>
-        output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)
+        output += %(<%= name %>#{<%= field.name %>&.tree_inspect || "∅"}\n)
         <%- when Herb::Template::TokenField -%>
-        output += %(<%= name %>#{<%= field.name %> ? <%= field.name %>.tree_inspect : "∅"}\n)
+        output += %(<%= name %>#{<%= field.name %>&.tree_inspect || "∅"}\n)
         <%- when Herb::Template::TokenTypeField -%>
         output += %(<%= name %>#{<%= field.name %>.inspect}\n)
         <%- when Herb::Template::StringField -%>
