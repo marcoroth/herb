@@ -31,7 +31,6 @@ static bool lexer_stalled(lexer_T* lexer) {
 }
 
 void lexer_init(lexer_T* lexer, const char* source) {
-  if (source == NULL) { source = ""; }
 
   lexer->state = STATE_DATA;
 
