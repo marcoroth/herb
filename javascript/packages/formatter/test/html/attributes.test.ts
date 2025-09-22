@@ -255,4 +255,24 @@ describe("@herb-tools/formatter", () => {
       <input type="text" value="<%= @user.name %>">
     `)
   })
+
+  test("formats ERB tags in attribute values with proper whitespace (issue #482)", () => {
+    const source = dedent`
+      <a href="<%=""%>"></a>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <a href="<%= "" %>"></a>
+    `)
+  })
+
+  test("formats ERB tags in attribute values with content", () => {
+    const source = dedent`
+      <a href="<%=@post.url%>"></a>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <a href="<%= @post.url %>"></a>
+    `)
+  })
 })

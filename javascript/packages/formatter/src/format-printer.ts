@@ -1572,7 +1572,7 @@ export class FormatPrinter extends Printer {
 
           return child.content
         } else if (isNode(child, ERBContentNode)) {
-          return IdentityPrinter.print(child)
+          return this.reconstructERBNode(child, true)
         } else {
           const printed = IdentityPrinter.print(child)
 
