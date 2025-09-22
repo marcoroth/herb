@@ -132,9 +132,9 @@ describe("html-no-empty-attributes", () => {
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(2)
 
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-value` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-value` should not have an empty value. Either provide a meaningful value or use `data-value` instead of `data-value=""`.')
     expect(lintResult.offenses[0].severity).toBe("warning")
-    expect(lintResult.offenses[1].message).toBe('Attribute `data-config` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[1].message).toBe('Data attribute `data-config` should not have an empty value. Either provide a meaningful value or use `data-config` instead of `data-config=""`.')
     expect(lintResult.offenses[1].severity).toBe("warning")
   })
 
@@ -179,7 +179,7 @@ describe("html-no-empty-attributes", () => {
     expect(lintResult.offenses[0].severity).toBe("warning")
     expect(lintResult.offenses[1].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
     expect(lintResult.offenses[1].severity).toBe("warning")
-    expect(lintResult.offenses[2].message).toBe('Attribute `data-test` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[2].message).toBe('Data attribute `data-test` should not have an empty value. Either provide a meaningful value or use `data-test` instead of `data-test=""`.')
     expect(lintResult.offenses[2].severity).toBe("warning")
   })
 
@@ -226,7 +226,7 @@ describe("html-no-empty-attributes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-<%= key %>` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>` instead of `data-<%= key %>=""`.')
     expect(lintResult.offenses[0].severity).toBe("warning")
   })
 
@@ -238,7 +238,7 @@ describe("html-no-empty-attributes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>-id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-<%= key %>-id` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>-id` instead of `data-<%= key %>-id=""`.')
     expect(lintResult.offenses[0].severity).toBe("warning")
   })
 
@@ -250,7 +250,7 @@ describe("html-no-empty-attributes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-<%= key %>` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>` instead of `data-<%= key %>="   "`.')
     expect(lintResult.offenses[0].severity).toBe("warning")
   })
 
@@ -295,5 +295,68 @@ describe("html-no-empty-attributes", () => {
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
+  })
+
+  test("passes for data-* attributes without explicit values", () => {
+    const html = '<div data-test data-value data-config></div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("fails for data-* attributes with explicit empty string values", () => {
+    const html = '<div data-test="" data-value=""></div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(2)
+
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-test` should not have an empty value. Either provide a meaningful value or use `data-test` instead of `data-test=""`.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+    expect(lintResult.offenses[1].message).toBe('Data attribute `data-value` should not have an empty value. Either provide a meaningful value or use `data-value` instead of `data-value=""`.')
+    expect(lintResult.offenses[1].severity).toBe("warning")
+  })
+
+  test("mixed data attributes: passes for implicit values, fails for explicit empty values", () => {
+    const html = '<div data-test data-config="" data-value></div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-config` should not have an empty value. Either provide a meaningful value or use `data-config` instead of `data-config=""`.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
+  })
+
+  test("passes for data-turbo-permanent without value", () => {
+    const html = '<div data-turbo-permanent>Content</div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
+
+  test("fails for data-turbo-permanent with explicit empty value", () => {
+    const html = '<div data-turbo-permanent="">Content</div>'
+
+    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.warnings).toBe(1)
+
+    expect(lintResult.offenses[0].message).toBe('Data attribute `data-turbo-permanent` should not have an empty value. Either provide a meaningful value or use `data-turbo-permanent` instead of `data-turbo-permanent=""`.')
+    expect(lintResult.offenses[0].severity).toBe("warning")
   })
 })
