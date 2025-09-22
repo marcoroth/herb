@@ -1,3 +1,5 @@
+--dir
+lib/
 --ignore=/tmp/
 --ignore=/vendor/bundle
 --enable-experimental-rbs-comments

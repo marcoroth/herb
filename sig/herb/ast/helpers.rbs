@@ -3,7 +3,7 @@
 module Herb
   module AST
     module Helpers
-      # : (Herb::AST::Node) -> bool
+      # : (Herb::AST::Node?) -> bool
       def erb_outputs?: (Herb::AST::Node) -> bool
 
       # : (String) -> bool
