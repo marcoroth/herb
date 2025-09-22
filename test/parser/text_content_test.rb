@@ -141,5 +141,9 @@ module Parser
     test "at symbol in attribute value" do
       assert_parsed_snapshot('<a href="mailto:support@example.com">Contact @support</a>')
     end
+
+    test "backtick with HTML tags - issue 467" do
+      assert_parsed_snapshot("a `<b></b>` c")
+    end
   end
 end
