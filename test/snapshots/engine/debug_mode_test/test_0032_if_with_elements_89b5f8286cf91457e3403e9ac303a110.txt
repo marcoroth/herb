@@ -1,0 +1,17 @@
+_buf = ::String.new;
+ _buf << '<div class="text-gray-500 text-center flex-grow flex flex-col" data-herb-debug-outline-type="view" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb">
+  '.freeze; if event.static_metadata && event.static_metadata.location != "Earth"; _buf << '
+    <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= event.static_metadata.location %&gt;" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="3" data-herb-debug-column="5" style="display: contents;">'.freeze; _buf << (event.static_metadata.location).to_s; _buf << '</span>
+  '.freeze; end; _buf << '
+
+  <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= event.formatted_dates %&gt;" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="6" data-herb-debug-column="3" style="display: contents;">'.freeze; _buf << (event.formatted_dates).to_s; _buf << '</span>
+
+  '.freeze; if event.static_metadata.last_edition?; _buf << '
+    <div class="flex items-center justify-center mt-auto -mb-0.5 text-gray-400">
+      <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= fa &quot;box-archive&quot;, size: :xs, style: :regular, class: &quot;fill-gray-400&quot; %&gt;" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="10" data-herb-debug-column="7" style="display: contents;">'.freeze; _buf << (fa "box-archive", size: :xs, style: :regular, class: "fill-gray-400").to_s; _buf << '</span>
+      <span class="text-sm mt-0.5 ml-1">Final Edition</span>
+    </div>
+  '.freeze; end; _buf << '
+</div>
+'.freeze;
+_buf.to_s

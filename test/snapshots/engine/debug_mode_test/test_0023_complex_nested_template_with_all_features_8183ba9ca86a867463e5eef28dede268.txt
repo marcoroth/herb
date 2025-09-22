@@ -1,0 +1,29 @@
+_buf = ::String.new;
+ _buf << '<!DOCTYPE html>
+<html data-herb-debug-outline-type="view" data-herb-debug-file-name="application.html.erb" data-herb-debug-file-relative-path="app/views/layouts/application.html.erb" data-herb-debug-file-full-path="app/views/layouts/application.html.erb">
+  <head>
+    <title>'.freeze; _buf << (@page_title).to_s; _buf << '</title>
+    <style>
+      body { background-color: '.freeze; _buf << ::Herb::Engine.css((theme_color)); _buf << '; }
+    </style>
+  </head>
+  <body class="'.freeze; _buf << ::Herb::Engine.attr((body_classes)); _buf << '">
+    '.freeze; _buf << (render "shared/header").to_s; _buf << '
+
+    <main>
+      '.freeze; if @user.present?; _buf << '
+        <h1>Welcome back, <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @user.name %&gt;" data-herb-debug-file-name="application.html.erb" data-herb-debug-file-relative-path="app/views/layouts/application.html.erb" data-herb-debug-file-full-path="app/views/layouts/application.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="14" data-herb-debug-column="27" style="display: contents;">'.freeze; _buf << (@user.name).to_s; _buf << '</span>!</h1>
+        '.freeze; _buf << (render partial: "user_dashboard", locals: { user: @user }).to_s; _buf << '
+      '.freeze; else; _buf << '
+        <h1>Welcome, guest!</h1>
+        '.freeze; _buf << (render "auth/login_form").to_s; _buf << '
+      '.freeze; end; _buf << '
+    </main>
+
+    <script>
+      window.userId = '.freeze; _buf << ::Herb::Engine.js((@user&.id || 'null')); _buf << ';
+    </script>
+  </body>
+</html>
+'.freeze;
+_buf.to_s

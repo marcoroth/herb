@@ -1,0 +1,6 @@
+_buf = ::String.new;
+ _buf << render "layout" do; _buf << '
+  <div>Block content</div>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

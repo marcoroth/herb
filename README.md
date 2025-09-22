@@ -99,7 +99,7 @@ Commands:
   bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
 ```
 
-For detailed information, like how you can use Herb progamatiacally in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
+For detailed information, like how you can use Herb programatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
 
 
 ## Background and Talk

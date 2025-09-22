@@ -1,0 +1,6 @@
+_buf = ::String.new;
+ items.each do |item|; _buf << '
+  <li>'.freeze; _buf << (item).to_s; _buf << '</li>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

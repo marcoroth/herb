@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<div>'.freeze; _buf << (user_input).to_s; _buf << '</div>'.freeze;
+_buf.to_s

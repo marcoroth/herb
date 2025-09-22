@@ -4,8 +4,9 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "prism", github: "ruby/prism", tag: "v1.4.0"
+gem "prism", github: "ruby/prism", tag: "v1.5.1"
 
+gem "actionview", "~> 8.0"
 gem "lz_string"
 gem "maxitest"
 gem "minitest-difftastic", "~> 0.2"

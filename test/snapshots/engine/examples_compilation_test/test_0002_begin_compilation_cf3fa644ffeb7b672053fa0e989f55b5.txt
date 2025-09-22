@@ -1,0 +1,10 @@
+_buf = ::String.new;
+ begin; _buf << '
+  <h1>Begin</h1>
+'.freeze; rescue StandardError => e; _buf << '
+  <h1>Rescue</h1>
+'.freeze; ensure; _buf << '
+  <h1>Ensure</h1>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

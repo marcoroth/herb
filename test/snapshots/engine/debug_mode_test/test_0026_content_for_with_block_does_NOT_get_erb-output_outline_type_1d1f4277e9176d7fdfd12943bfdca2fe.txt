@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << content_for :sidebar do; _buf << '<div>Sidebar content</div>'.freeze; end;
+_buf.to_s

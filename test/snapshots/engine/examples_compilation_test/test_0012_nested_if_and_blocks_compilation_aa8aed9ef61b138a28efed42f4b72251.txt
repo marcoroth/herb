@@ -1,0 +1,33 @@
+_buf = ::String.new;
+ _buf << '<div id="output">
+  '.freeze; _buf << tag.div class: "div" do; _buf << '
+    '.freeze; if Date.today.friday?; _buf << '
+      <h1>
+        Happy
+        '.freeze; current_hour = Time.now.hour; _buf << '
+
+        '.freeze; if current_hour < 12; _buf << '
+          <b>Early Friday</b>
+        '.freeze; elsif current_hour >= 18; _buf << '
+          <b>Late Friday</b>
+        '.freeze; else; _buf << '
+          <b>Friday</b>
+        '.freeze; end; _buf << '
+      </h1>
+    '.freeze; elsif Date.today.saturday?; _buf << '
+      <h1>
+        It\'s
+        <b>Saturday</b>
+        '.freeze; _buf << (" - Time to relax!").to_s; _buf << '
+      </h1>
+    '.freeze; else; _buf << '
+      <h1>
+        Oh no, it\'s
+        <b>Not Friday</b>
+        '.freeze; _buf << (" - Keep going!").to_s; _buf << '
+      </h1>
+    '.freeze; end; _buf << '
+  '.freeze; end; _buf << '
+</div>
+'.freeze;
+_buf.to_s

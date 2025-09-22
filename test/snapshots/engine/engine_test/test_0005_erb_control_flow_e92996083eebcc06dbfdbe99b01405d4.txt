@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ if active?; _buf << '
+  <span>Active</span>
+'.freeze; else; _buf << '
+  <span>Inactive</span>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

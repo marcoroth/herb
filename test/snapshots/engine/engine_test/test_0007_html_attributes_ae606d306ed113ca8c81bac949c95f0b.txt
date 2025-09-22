@@ -1,0 +1,4 @@
+_buf = ::String.new;
+ _buf << '<div class="container" id="main">Content</div>
+'.freeze;
+_buf.to_s

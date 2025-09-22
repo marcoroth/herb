@@ -21,9 +21,9 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   VALUE Error = rb_define_class_under(Errors, "Error", rb_cObject);
   VALUE <%= error.name %> = rb_define_class_under(Errors, "<%= error.name %>", Error);
 
-  VALUE type = rb_str_new_cstr(error_type_to_string(error));
+  VALUE type = rb_utf8_str_new_cstr(error_type_to_string(error));
   VALUE location = rb_location_from_c_struct(error->location);
-  VALUE message = rb_str_new_cstr(error->message);
+  VALUE message = rb_utf8_str_new_cstr(error->message);
 
   <%- error.fields.each do |field| -%>
   <%- case field -%>
@@ -32,9 +32,9 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   <%- when Herb::Template::TokenField -%>
   VALUE <%= error.human %>_<%= field.name %> = rb_token_from_c_struct(<%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_str_new_cstr(token_type_to_string(<%= error.human %>-><%= field.name %>));
+  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(token_type_to_string(<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::StringField -%>
-  VALUE <%= error.human %>_<%= field.name %> = rb_str_new_cstr(<%= error.human %>-><%= field.name %>);
+  VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= error.human %>-><%= field.name %>);
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= error.human %>_<%= field.name %> = Qnil;

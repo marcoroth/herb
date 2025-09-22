@@ -48,6 +48,9 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - lib/herb/project.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/cli.rb
+    - lib/herb/engine.rb
+    - lib/herb/engine/**/*.rb
 
 Metrics/MethodLength:
   Max: 20
@@ -55,9 +58,12 @@ Metrics/MethodLength:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/project.rb
+    - lib/herb/engine.rb
+    - lib/herb/engine/**/*.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - bin/**/*
 
 Metrics/AbcSize:
   Exclude:
@@ -66,16 +72,26 @@ Metrics/AbcSize:
     - lib/herb/cli.rb
     - lib/herb/errors.rb
     - lib/herb/project.rb
+    - lib/herb/engine.rb
+    - lib/herb/engine/**/*.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - bin/**/*
 
 Metrics/ClassLength:
   Exclude:
     - lib/herb/cli.rb
     - lib/herb/project.rb
     - lib/herb/visitor.rb
+    - lib/herb/engine.rb
+    - lib/herb/engine/**/*.rb
+    - bin/**/*
     - test/**/*_test.rb
+
+Metrics/ModuleLength:
+  Exclude:
+    - test/**/*.rb
 
 Metrics/BlockLength:
   Max: 30
@@ -83,20 +99,26 @@ Metrics/BlockLength:
     - Rakefile
     - "*.gemspec"
     - "**/*.rake"
+    - lib/herb/cli.rb
     - lib/herb/project.rb
     - test/**/*_test.rb
+    - bin/**/*
 
 Metrics/ParameterLists:
   Exclude:
     - lib/herb/ast/nodes.rb
     - lib/herb/errors.rb
+    - lib/herb/engine/validators/security_validator.rb
 
 Metrics/PerceivedComplexity:
   Exclude:
     - lib/herb/ast/nodes.rb
     - lib/herb/cli.rb
     - lib/herb/project.rb
-    - test/snapshot_utils.rb
+    - lib/herb/engine.rb
+    - lib/herb/engine/**/*.rb
+    - test/**/*.rb
+    - bin/**/*
 
 Layout/LineLength:
   Max: 120
@@ -104,6 +126,10 @@ Layout/LineLength:
     - test/**/*_test.rb
     - lib/herb/token.rb
     - lib/herb/ast/nodes.rb
+    - lib/herb/engine/error_formatter.rb
+    - lib/herb/engine/debug_visitor.rb
+    - lib/herb/engine/parser_error_overlay.rb
+    - lib/herb/engine/validation_error_overlay.rb
 
 Layout/EmptyLines:
   Exclude:
@@ -128,7 +154,14 @@ Layout/LeadingCommentSpace:
 Security/Eval:
   Exclude:
     - Rakefile
+    - lib/herb/cli.rb
+    - test/**/*.rb
+    - bin/erubi-render
 
 Security/MarshalLoad:
   Exclude:
     - test/fork_helper.rb
+
+Lint/UnderscorePrefixedVariableName:
+  Exclude:
+    - test/engine/secure_compiler_test.rb

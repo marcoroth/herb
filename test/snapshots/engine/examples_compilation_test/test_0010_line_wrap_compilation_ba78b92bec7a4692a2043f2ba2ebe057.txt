@@ -1,0 +1,4 @@
+_buf = ::String.new;
+ _buf << '<div class="so many more classes that it has to line-wrap this line because there is so much text and that it actually covers up the diagnostic with the duplicate attribute" class="violation" data-class="this is another very long attribute value to see if it can still pinpoint the right location of the diagnostic"></div>
+'.freeze;
+_buf.to_s

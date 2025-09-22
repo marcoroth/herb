@@ -1,0 +1,5 @@
+_buf = ::String.new;
+ _buf << '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "'.freeze; _buf << (@dtd_url).to_s; _buf << '">
+<!DOCTYPE html '.freeze; _buf << (@some_attr).to_s; _buf << '>
+'.freeze;
+_buf.to_s
