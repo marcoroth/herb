@@ -1,6 +1,7 @@
 #ifndef HERB_LEXER_STRUCT_H
 #define HERB_LEXER_STRUCT_H
 
+#include "str.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -11,8 +12,7 @@ typedef enum {
 } lexer_state_T;
 
 typedef struct LEXER_STRUCT {
-  const char* source;
-  size_t source_length;
+  str_T source;
 
   size_t current_line;
   size_t current_column;
