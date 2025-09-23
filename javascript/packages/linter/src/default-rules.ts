@@ -1,5 +1,6 @@
 import type { RuleClass } from "./types.js"
 
+import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
@@ -36,6 +37,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 
 export const defaultRules: RuleClass[] = [
+  ERBCommentSyntax,
   ERBNoEmptyTagsRule,
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
