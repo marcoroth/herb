@@ -4,6 +4,7 @@ export interface SummaryData {
   files: string[]
   totalErrors: number
   totalWarnings: number
+  totalSkipped: number
   filesWithOffenses: number
   ruleCount: number
   startTime: number
@@ -19,7 +20,7 @@ export class SummaryReporter {
   }
 
   displaySummary(data: SummaryData): void {
-    const { files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount } = data
+    const { files, totalErrors, totalWarnings, totalSkipped, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount } = data
 
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
@@ -61,6 +62,10 @@ export class SummaryReporter {
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "brightYellow"), "bold"))
     } else if (totalErrors > 0) {
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "green"), "bold"))
+    }
+
+    if (totalSkipped > 0) {
+      parts.push(colorize(colorize(`${totalSkipped} ${this.pluralize(totalSkipped, "skipped")}`, "gray"), "bold"))
     }
 
     if (parts.length === 0) {

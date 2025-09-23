@@ -193,5 +193,14 @@ describe("@herb-tools/linter", () => {
       expect(result2.offenses).toHaveLength(1)
       expect(result2.offenses[0].rule).toBe("content-based-rule")
     })
+
+    test("can disable a rule with a comment", () => {
+      const html = '<DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>'
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.skipped).toBe(2)
+    })
   })
 })
