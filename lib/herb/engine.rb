@@ -194,7 +194,14 @@ module Herb
       terminate_expression
 
       @src << " " << code
-      @src << ";" unless code[-1] == "\n"
+
+      # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
+      if code.include?("#")
+        @src << "\n"
+      else
+        @src << ";" unless code[-1] == "\n"
+      end
+
       @buffer_on_stack = false
     end
 

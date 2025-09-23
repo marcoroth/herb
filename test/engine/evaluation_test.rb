@@ -389,5 +389,14 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, { escape: false })
     end
+
+    test "comment before content" do
+      template = <<~ERB
+        <% # This file contains a comment before other content %>
+        <div>Hey there</div>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end
