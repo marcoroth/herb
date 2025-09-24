@@ -5,16 +5,17 @@
 #include "token_struct.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef struct {
-  size_t position;
-  size_t line;
-  size_t column;
-  size_t previous_position;
-  size_t previous_line;
-  size_t previous_column;
+  uint32_t position;
+  uint32_t line;
+  uint32_t column;
+  uint32_t previous_position;
+  uint32_t previous_line;
+  uint32_t previous_column;
   char current_character;
   lexer_state_T state;
 } lexer_state_snapshot_T;

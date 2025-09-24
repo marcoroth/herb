@@ -569,8 +569,8 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       buffer_T equals_buffer = buffer_new();
       position_T equals_start = { 0 };
       position_T equals_end = { 0 };
-      size_t range_start = 0;
-      size_t range_end = 0;
+      uint32_t range_start = 0;
+      uint32_t range_end = 0;
 
       bool equals_start_present = false;
       while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {

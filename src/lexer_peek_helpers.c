@@ -77,9 +77,9 @@ bool lexer_peek_erb_end(const lexer_T* lexer, const int offset) {
 }
 
 bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T token_type) {
-  size_t saved_position = lexer->current_position;
-  size_t saved_line = lexer->current_line;
-  size_t saved_column = lexer->current_column;
+  uint32_t saved_position = lexer->current_position;
+  uint32_t saved_line = lexer->current_line;
+  uint32_t saved_column = lexer->current_column;
   char saved_character = lexer->current_character;
   lexer_state_T saved_state = lexer->state;
 
