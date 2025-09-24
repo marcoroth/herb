@@ -596,14 +596,14 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
 
       buffer_append(&equals_buffer, equals->value);
       equals_end = equals->location.end;
-      range_end = equals->range->to;
+      range_end = equals->range.to;
       token_free(equals);
 
       while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
         token_T* whitespace = parser_advance(parser);
         buffer_append(&equals_buffer, whitespace->value);
         equals_end = whitespace->location.end;
-        range_end = whitespace->range->to;
+        range_end = whitespace->range.to;
         token_free(whitespace);
       }
 
@@ -611,7 +611,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       equals_with_whitespace->type = TOKEN_EQUALS;
       equals_with_whitespace->value = herb_strdup(equals_buffer.value);
       equals_with_whitespace->location = (location_T) { .start = equals_start, .end = equals_end };
-      equals_with_whitespace->range = range_init(range_start, range_end);
+      equals_with_whitespace->range = (range_T) { .from = range_start, .to = range_end };
 
       buffer_free(&equals_buffer);
 

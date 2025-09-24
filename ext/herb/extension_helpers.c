@@ -36,12 +36,10 @@ VALUE rb_location_from_c_struct(location_T location) {
   return rb_class_new_instance(2, args, cLocation);
 }
 
-VALUE rb_range_from_c_struct(range_T* range) {
-  if (!range) { return Qnil; }
-
+VALUE rb_range_from_c_struct(range_T range) {
   VALUE args[2];
-  args[0] = SIZET2NUM(range->from);
-  args[1] = SIZET2NUM(range->to);
+  args[0] = UINT2NUM(range.from);
+  args[1] = UINT2NUM(range.to);
 
   return rb_class_new_instance(2, args, cRange);
 }
