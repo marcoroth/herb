@@ -162,12 +162,12 @@ static AST_NODE_T* create_control_node(
   position_T end_position = erb_node->tag_closing->location.end;
 
   if (end_node) {
-    end_position = end_node->base.location->end;
+    end_position = end_node->base.location.end;
   } else if (children && array_size(children) > 0) {
     AST_NODE_T* last_child = array_get(children, array_size(children) - 1);
-    end_position = last_child->location->end;
+    end_position = last_child->location.end;
   } else if (subsequent) {
-    end_position = subsequent->location->end;
+    end_position = subsequent->location.end;
   }
 
   token_T* tag_opening = erb_node->tag_opening;
@@ -459,8 +459,8 @@ static size_t process_control_structure(
           erb_content->content,
           erb_content->tag_closing,
           when_statements,
-          erb_content->tag_opening->location->start,
-          erb_content->tag_closing->location->end,
+          erb_content->tag_opening->location.start,
+          erb_content->tag_closing->location.end,
           array_init(8)
         );
 
@@ -495,8 +495,8 @@ static size_t process_control_structure(
           erb_content->content,
           erb_content->tag_closing,
           in_statements,
-          erb_content->tag_opening->location->start,
-          erb_content->tag_closing->location->end,
+          erb_content->tag_opening->location.start,
+          erb_content->tag_closing->location.end,
           array_init(8)
         );
 
@@ -546,8 +546,8 @@ static size_t process_control_structure(
             next_erb->content,
             next_erb->tag_closing,
             else_children,
-            next_erb->tag_opening->location->start,
-            next_erb->tag_closing->location->end,
+            next_erb->tag_opening->location.start,
+            next_erb->tag_closing->location.end,
             array_init(8)
           );
         }
@@ -567,8 +567,8 @@ static size_t process_control_structure(
             end_erb->tag_opening,
             end_erb->content,
             end_erb->tag_closing,
-            end_erb->tag_opening->location->start,
-            end_erb->tag_closing->location->end,
+            end_erb->tag_opening->location.start,
+            end_erb->tag_closing->location.end,
             end_erb->base.errors
           );
 
@@ -581,15 +581,15 @@ static size_t process_control_structure(
     position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
-      end_position = end_node->base.location->end;
+      end_position = end_node->base.location.end;
     } else if (else_clause) {
-      end_position = else_clause->base.location->end;
+      end_position = else_clause->base.location.end;
     } else if (array_size(when_conditions) > 0) {
       AST_NODE_T* last_when = array_get(when_conditions, array_size(when_conditions) - 1);
-      end_position = last_when->location->end;
+      end_position = last_when->location.end;
     } else if (array_size(in_conditions) > 0) {
       AST_NODE_T* last_in = array_get(in_conditions, array_size(in_conditions) - 1);
-      end_position = last_in->location->end;
+      end_position = last_in->location.end;
     }
 
     if (array_size(in_conditions) > 0) {
@@ -682,8 +682,8 @@ static size_t process_control_structure(
             next_erb->content,
             next_erb->tag_closing,
             else_children,
-            next_erb->tag_opening->location->start,
-            next_erb->tag_closing->location->end,
+            next_erb->tag_opening->location.start,
+            next_erb->tag_closing->location.end,
             array_init(8)
           );
         }
@@ -723,8 +723,8 @@ static size_t process_control_structure(
             next_erb->content,
             next_erb->tag_closing,
             ensure_children,
-            next_erb->tag_opening->location->start,
-            next_erb->tag_closing->location->end,
+            next_erb->tag_opening->location.start,
+            next_erb->tag_closing->location.end,
             array_init(8)
           );
         }
@@ -744,8 +744,8 @@ static size_t process_control_structure(
             end_erb->tag_opening,
             end_erb->content,
             end_erb->tag_closing,
-            end_erb->tag_opening->location->start,
-            end_erb->tag_closing->location->end,
+            end_erb->tag_opening->location.start,
+            end_erb->tag_closing->location.end,
             end_erb->base.errors
           );
 
@@ -758,13 +758,13 @@ static size_t process_control_structure(
     position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
-      end_position = end_node->base.location->end;
+      end_position = end_node->base.location.end;
     } else if (ensure_clause) {
-      end_position = ensure_clause->base.location->end;
+      end_position = ensure_clause->base.location.end;
     } else if (else_clause) {
-      end_position = else_clause->base.location->end;
+      end_position = else_clause->base.location.end;
     } else if (rescue_clause) {
-      end_position = rescue_clause->base.location->end;
+      end_position = rescue_clause->base.location.end;
     }
 
     AST_ERB_BEGIN_NODE_T* begin_node = ast_erb_begin_node_init(
@@ -802,8 +802,8 @@ static size_t process_control_structure(
             close_erb->tag_opening,
             close_erb->content,
             close_erb->tag_closing,
-            close_erb->tag_opening->location->start,
-            close_erb->tag_closing->location->end,
+            close_erb->tag_opening->location.start,
+            close_erb->tag_closing->location.end,
             close_erb->base.errors
           );
 
@@ -816,10 +816,10 @@ static size_t process_control_structure(
     position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
-      end_position = end_node->base.location->end;
+      end_position = end_node->base.location.end;
     } else if (children && array_size(children) > 0) {
       AST_NODE_T* last_child = array_get(children, array_size(children) - 1);
-      end_position = last_child->location->end;
+      end_position = last_child->location.end;
     }
 
     AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
@@ -866,8 +866,8 @@ static size_t process_control_structure(
           end_erb->tag_opening,
           end_erb->content,
           end_erb->tag_closing,
-          end_erb->tag_opening->location->start,
-          end_erb->tag_closing->location->end,
+          end_erb->tag_opening->location.start,
+          end_erb->tag_closing->location.end,
           end_erb->base.errors
         );
 

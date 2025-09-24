@@ -158,16 +158,16 @@ void pretty_print_errors(
   }
 }
 
-void pretty_print_location(location_T* location, buffer_T* buffer) {
+void pretty_print_location(location_T location, buffer_T* buffer) {
   buffer_append(buffer, "(location: (");
   char location_string[128];
   sprintf(
     location_string,
-    "%zu,%zu)-(%zu,%zu",
-    (location->start && location->start->line) ? location->start->line : 0,
-    (location->start && location->start->column) ? location->start->column : 0,
-    (location->end && location->end->line) ? location->end->line : 0,
-    (location->end && location->end->column) ? location->end->column : 0
+    "%u,%u)-(%u,%u",
+    location.start.line,
+    location.start.column,
+    location.end.line,
+    location.end.column
   );
   buffer_append(buffer, location_string);
   buffer_append(buffer, "))");

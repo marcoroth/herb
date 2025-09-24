@@ -28,12 +28,10 @@ VALUE rb_position_from_c_struct(position_T position) {
   return rb_class_new_instance(2, args, cPosition);
 }
 
-VALUE rb_location_from_c_struct(location_T* location) {
-  if (!location) { return Qnil; }
-
+VALUE rb_location_from_c_struct(location_T location) {
   VALUE args[2];
-  args[0] = rb_position_from_c_struct(location->start);
-  args[1] = rb_position_from_c_struct(location->end);
+  args[0] = rb_position_from_c_struct(location.start);
+  args[1] = rb_position_from_c_struct(location.end);
 
   return rb_class_new_instance(2, args, cLocation);
 }

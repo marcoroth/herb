@@ -21,7 +21,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   if (!error) { return; }
 
   error->type = type;
-  error->location = location_init(position_copy(start), position_copy(end));
+  error->location.start = start;
+  error->location.end = end;
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
@@ -116,7 +117,6 @@ const char* error_human_type(ERROR_T* error) {
 void error_free_base_error(ERROR_T* error) {
   if (error == NULL) { return; }
 
-  if (error->location != NULL) { location_free(error->location); }
   if (error->message != NULL) { free(error->message); }
 
   free(error);
