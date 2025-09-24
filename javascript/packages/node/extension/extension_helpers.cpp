@@ -46,19 +46,13 @@ napi_value CreateString(napi_env env, const char* str) {
   return result;
 }
 
-napi_value CreatePosition(napi_env env, position_T* position) {
-  if (!position) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreatePosition(napi_env env, position_T position) {
   napi_value result;
   napi_create_object(env, &result);
 
   napi_value line, column;
-  napi_create_uint32(env, (uint32_t)position->line, &line);
-  napi_create_uint32(env, (uint32_t)position->column, &column);
+  napi_create_uint32(env, (uint32_t)position.line, &line);
+  napi_create_uint32(env, (uint32_t)position.column, &column);
 
   napi_set_named_property(env, result, "line", line);
   napi_set_named_property(env, result, "column", column);

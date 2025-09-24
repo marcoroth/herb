@@ -188,12 +188,7 @@ void pretty_print_position_property(
 
     char position_string[128];
 
-    sprintf(
-      position_string,
-      "%zu:%zu",
-      (position->line) ? position->line : 0,
-      (position->column) ? position->column : 0
-    );
+    sprintf(position_string, "%u:%u", (position->line) ? position->line : 0, (position->column) ? position->column : 0);
 
     buffer_append(buffer, position_string);
     buffer_append(buffer, ")");

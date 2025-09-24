@@ -20,12 +20,10 @@ const char* check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
-VALUE rb_position_from_c_struct(position_T* position) {
-  if (!position) { return Qnil; }
-
+VALUE rb_position_from_c_struct(position_T position) {
   VALUE args[2];
-  args[0] = SIZET2NUM(position->line);
-  args[1] = SIZET2NUM(position->column);
+  args[0] = UINT2NUM(position.line);
+  args[1] = UINT2NUM(position.column);
 
   return rb_class_new_instance(2, args, cPosition);
 }

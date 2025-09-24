@@ -27,16 +27,12 @@ val CreateString(const char* string) {
   return string ? val(string) : val::null();
 }
 
-val CreatePosition(position_T* position) {
-  if (!position) {
-    return val::null();
-  }
-
+val CreatePosition(position_T position) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("line", position->line);
-  result.set("column", position->column);
+  result.set("line", position.line);
+  result.set("column", position.column);
 
   return result;
 }
