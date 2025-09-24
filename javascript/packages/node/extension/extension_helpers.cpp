@@ -73,19 +73,13 @@ napi_value CreateLocation(napi_env env, location_T location) {
   return result;
 }
 
-napi_value CreateRange(napi_env env, range_T* range) {
-  if (!range) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreateRange(napi_env env, range_T range) {
   napi_value result;
   napi_create_array(env, &result);
 
   napi_value from, to;
-  napi_create_uint32(env, (uint32_t)range->from, &from);
-  napi_create_uint32(env, (uint32_t)range->to, &to);
+  napi_create_uint32(env, (uint32_t)range.from, &from);
+  napi_create_uint32(env, (uint32_t)range.to, &to);
 
   napi_set_element(env, result, 0, from);
   napi_set_element(env, result, 1, to);

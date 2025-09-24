@@ -2,6 +2,7 @@
 #include "include/json.h"
 #include "include/lexer.h"
 #include "include/position.h"
+#include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 
@@ -28,7 +29,7 @@ token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) 
   }
 
   token->type = type;
-  token->range = range_init(lexer->previous_position, lexer->current_position);
+  token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
 
   location_from(
     &token->location,
@@ -89,7 +90,7 @@ const char* token_type_to_string(const token_type_T type) {
 
 char* token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
-  const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%d, %d] start=(%d:%d) end=(%d:%d)>";
+  const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
   char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
   char* escaped;
@@ -105,8 +106,8 @@ char* token_to_string(const token_T* token) {
     template,
     type_string,
     escaped,
-    token->range->from,
-    token->range->to,
+    token->range.from,
+    token->range.to,
     token->location.start.line,
     token->location.start.column,
     token->location.end.line,
@@ -127,8 +128,8 @@ char* token_to_json(const token_T* token) {
 
   buffer_T range = buffer_new();
   json_start_array(&json, "range");
-  json_add_size_t(&range, NULL, token->range->from);
-  json_add_size_t(&range, NULL, token->range->to);
+  json_add_size_t(&range, NULL, token->range.from);
+  json_add_size_t(&range, NULL, token->range.to);
   buffer_concat(&json, &range);
   buffer_free(&range);
   json_end_array(&json);
@@ -189,7 +190,7 @@ token_T* token_copy(token_T* token) {
   }
 
   new_token->type = token->type;
-  new_token->range = range_copy(token->range);
+  new_token->range = token->range;
   new_token->location = token->location;
 
   return new_token;
@@ -199,7 +200,6 @@ void token_free(token_T* token) {
   if (!token) { return; }
 
   if (token->value != NULL) { free(token->value); }
-  if (token->range != NULL) { range_free(token->range); }
 
   free(token);
 }

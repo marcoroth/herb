@@ -47,16 +47,12 @@ val CreateLocation(location_T location) {
   return result;
 }
 
-val CreateRange(range_T* range) {
-  if (!range) {
-    return val::null();
-  }
-
+val CreateRange(range_T range) {
   val Array = val::global("Array");
   val result = Array.new_();
 
-  result.call<void>("push", range->from);
-  result.call<void>("push", range->to);
+  result.call<void>("push", range.from);
+  result.call<void>("push", range.to);
 
   return result;
 }
