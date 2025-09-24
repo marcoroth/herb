@@ -163,14 +163,6 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
-position_T* token_start_position(token_T* token) {
-  return token->location->start;
-}
-
-position_T* token_end_position(token_T* token) {
-  return token->location->end;
-}
-
 token_T* token_copy(token_T* token) {
   if (!token) { return NULL; }
 
