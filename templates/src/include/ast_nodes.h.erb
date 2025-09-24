@@ -20,7 +20,7 @@ typedef enum {
 
 typedef struct AST_NODE_STRUCT {
   ast_node_type_T type;
-  location_T* location;
+  location_T location;
   // maybe a range too?
   array_T* errors;
 } AST_NODE_T;

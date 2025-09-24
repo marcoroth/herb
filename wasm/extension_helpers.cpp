@@ -37,16 +37,12 @@ val CreatePosition(position_T position) {
   return result;
 }
 
-val CreateLocation(location_T* location) {
-  if (!location) {
-    return val::null();
-  }
-
+val CreateLocation(location_T location) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("start", CreatePosition(location->start));
-  result.set("end", CreatePosition(location->end));
+  result.set("start", CreatePosition(location.start));
+  result.set("end", CreatePosition(location.end));
 
   return result;
 }

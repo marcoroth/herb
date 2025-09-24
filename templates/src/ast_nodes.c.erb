@@ -81,8 +81,6 @@ void ast_free_base_node(AST_NODE_T* node) {
     array_free(&node->errors);
   }
 
-  if (node->location) { location_free(node->location); }
-
   free(node);
 }
 
