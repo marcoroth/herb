@@ -5,6 +5,7 @@
 #include "include/json.h"
 #include "include/lexer.h"
 #include "include/parser.h"
+#include "include/str.h"
 #include "include/token.h"
 #include "include/version.h"
 
@@ -12,28 +13,33 @@
 #include <stdlib.h>
 
 array_T* herb_lex(const char* source) {
-  lexer_T* lexer = lexer_init(source);
+  str_T source_str = { .data = (char*) source, .length = strlen(source) };
+
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source_str);
+
   token_T* token = NULL;
   array_T* tokens = array_init(128);
 
-  while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
+  while ((token = lexer_next_token(&lexer))->type != TOKEN_EOF) {
     array_append(tokens, token);
   }
 
   array_append(tokens, token);
 
-  lexer_free(lexer);
-
   return tokens;
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
-  lexer_T* lexer = lexer_init(source);
-  parser_T* parser = parser_init(lexer, options);
+  str_T source_string = { .data = (char*) source, .length = strlen(source) };
 
-  AST_DOCUMENT_NODE_T* document = parser_parse(parser);
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source_string);
 
-  parser_free(parser);
+  parser_T parser = { 0 };
+  parser_init(&parser, &lexer, options);
+
+  AST_DOCUMENT_NODE_T* document = parser_parse(&parser);
 
   return document;
 }

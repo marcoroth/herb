@@ -31,9 +31,7 @@ size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
-  parser_T* parser = calloc(1, parser_sizeof());
-
+void parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* options) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
@@ -46,8 +44,6 @@ parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
   } else {
     parser->options = NULL;
   }
-
-  return parser;
 }
 
 static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
@@ -1257,7 +1253,6 @@ static void parser_consume_whitespace(parser_T* parser, array_T* children) {
 void parser_free(parser_T* parser) {
   if (parser == NULL) { return; }
 
-  if (parser->lexer != NULL) { lexer_free(parser->lexer); }
   if (parser->current_token != NULL) { token_free(parser->current_token); }
   if (parser->open_tags_stack != NULL) { array_free(&parser->open_tags_stack); }
   if (parser->options != NULL) { free(parser->options); }
