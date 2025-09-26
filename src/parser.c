@@ -31,7 +31,7 @@ size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
+parser_T* herb_parser_init(lexer_T* lexer, parser_options_T* options) {
   parser_T* parser = calloc(1, parser_sizeof());
 
   parser->lexer = lexer;
@@ -1223,7 +1223,7 @@ static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
   return document_node;
 }
 
-AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser) {
+AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser) {
   return parser_parse_document(parser);
 }
 

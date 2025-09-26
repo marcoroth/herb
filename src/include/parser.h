@@ -28,9 +28,9 @@ typedef struct PARSER_STRUCT {
   parser_options_T* options;
 } parser_T;
 
-parser_T* parser_init(lexer_T* lexer, parser_options_T* options);
+parser_T* herb_parser_init(lexer_T* lexer, parser_options_T* options);
 
-AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser);
+AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser);
 
 size_t parser_sizeof(void);
 
