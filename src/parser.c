@@ -1236,7 +1236,6 @@ static void parser_consume_whitespace(parser_T* parser, array_T* children) {
 void parser_free(parser_T* parser) {
   if (parser == NULL) { return; }
 
-  if (parser->lexer != NULL) { lexer_free(parser->lexer); }
   if (parser->current_token != NULL) { token_free(parser->current_token); }
   if (parser->open_tags_stack != NULL) { array_free(&parser->open_tags_stack); }
   if (parser->options != NULL) { free(parser->options); }

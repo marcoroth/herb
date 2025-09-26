@@ -12,24 +12,24 @@
 #include <stdlib.h>
 
 array_T* herb_lex(const char* source) {
-  lexer_T* lexer = lexer_init(source);
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source);
+
   token_T* token = NULL;
   array_T* tokens = array_init(128);
 
-  while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
+  while ((token = lexer_next_token(&lexer))->type != TOKEN_EOF) {
     array_append(tokens, token);
   }
 
   array_append(tokens, token);
-
-  lexer_free(lexer);
 
   return tokens;
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
   lexer_T* lexer = lexer_init(source);
-  parser_T* parser = herb_parser_init(lexer, options);
+  parser_T* parser = herb_parser_init(&lexer, options);
 
   AST_DOCUMENT_NODE_T* document = herb_parser_parse(parser);
 
