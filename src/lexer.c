@@ -9,10 +9,6 @@
 
 #define LEXER_STALL_LIMIT 5
 
-static size_t lexer_sizeof(void) {
-  return sizeof(struct LEXER_STRUCT);
-}
-
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
 }
@@ -34,10 +30,8 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-lexer_T* lexer_init(const char* source) {
+void lexer_init(lexer_T* lexer, const char* source) {
   if (source == NULL) { source = ""; }
-
-  lexer_T* lexer = calloc(1, lexer_sizeof());
 
   lexer->state = STATE_DATA;
 
@@ -56,8 +50,6 @@ lexer_T* lexer_init(const char* source) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
-
-  return lexer;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -352,10 +344,4 @@ token_T* lexer_next_token(lexer_T* lexer) {
       return lexer_advance_utf8_character(lexer, TOKEN_CHARACTER);
     }
   }
-}
-
-void lexer_free(lexer_T* lexer) {
-  if (lexer == NULL) { return; }
-
-  free(lexer);
 }
