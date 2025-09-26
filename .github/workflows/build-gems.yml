@@ -107,7 +107,6 @@ jobs:
     needs: build
     timeout-minutes: 30
     runs-on: ubuntu-latest
-    environment: deployment
     permissions:
       contents: write
       id-token: write
