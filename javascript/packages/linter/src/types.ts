@@ -18,6 +18,7 @@ export interface LintResult {
   offenses: LintOffense[]
   errors: number
   warnings: number
+  skipped: number
 }
 
 export abstract class ParserRule {

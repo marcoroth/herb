@@ -45,6 +45,37 @@ export class Linter {
     return (rule.constructor as any).type === "source"
   }
 
+  private filterOffenses(ruleOffenses: LintOffense[], sourceLines: string[], ruleName: string): { kept: LintOffense[], skipped: LintOffense[] } {
+    const kept: LintOffense[] = [];
+    const skipped: LintOffense[] = [];
+
+    for (const offense of ruleOffenses) {
+      const line = offense.location.start.line;
+      if (line > sourceLines.length) {
+        kept.push(offense);
+        continue;
+      }
+      const lineContent = sourceLines[line - 1];
+
+      const disableCommentRegex = /<%#\s+herb:disable\s+(.*)%>/;
+      const match = lineContent.match(disableCommentRegex);
+
+      if (match) {
+        const rulesRaw = (match && match[1]) || '';
+        const rules = rulesRaw.split(",").map((rule) => rule.trim());
+        if (rules.includes(ruleName) || rules.includes("all")) {
+          skipped.push(offense);
+        } else {
+          kept.push(offense);
+        }
+      } else {
+        kept.push(offense);
+      }
+    }
+
+    return { kept, skipped };
+  }
+
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
    * @param source - The source code to lint
@@ -52,9 +83,11 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    let skippedCount = 0;
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
+    const sourceLines = source.split("\n");
 
     for (const RuleClass of this.rules) {
       const rule = new RuleClass()
@@ -95,7 +128,10 @@ export class Linter {
         }
       }
 
-      this.offenses.push(...ruleOffenses)
+      const { kept, skipped } = this.filterOffenses(ruleOffenses, sourceLines, rule.name);
+      skippedCount += skipped.length;
+
+      this.offenses.push(...kept)
     }
 
     const errors = this.offenses.filter(offense => offense.severity === "error").length
@@ -104,7 +140,8 @@ export class Linter {
     return {
       offenses: this.offenses,
       errors,
-      warnings
+      warnings,
+      skipped: skippedCount
     }
   }
 }
