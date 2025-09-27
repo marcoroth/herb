@@ -20,32 +20,26 @@ const char* check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
-VALUE rb_position_from_c_struct(position_T* position) {
-  if (!position) { return Qnil; }
-
+VALUE rb_position_from_c_struct(position_T position) {
   VALUE args[2];
-  args[0] = SIZET2NUM(position->line);
-  args[1] = SIZET2NUM(position->column);
+  args[0] = UINT2NUM(position.line);
+  args[1] = UINT2NUM(position.column);
 
   return rb_class_new_instance(2, args, cPosition);
 }
 
-VALUE rb_location_from_c_struct(location_T* location) {
-  if (!location) { return Qnil; }
-
+VALUE rb_location_from_c_struct(location_T location) {
   VALUE args[2];
-  args[0] = rb_position_from_c_struct(location->start);
-  args[1] = rb_position_from_c_struct(location->end);
+  args[0] = rb_position_from_c_struct(location.start);
+  args[1] = rb_position_from_c_struct(location.end);
 
   return rb_class_new_instance(2, args, cLocation);
 }
 
-VALUE rb_range_from_c_struct(range_T* range) {
-  if (!range) { return Qnil; }
-
+VALUE rb_range_from_c_struct(range_T range) {
   VALUE args[2];
-  args[0] = SIZET2NUM(range->from);
-  args[1] = SIZET2NUM(range->to);
+  args[0] = UINT2NUM(range.from);
+  args[1] = UINT2NUM(range.to);
 
   return rb_class_new_instance(2, args, cRange);
 }

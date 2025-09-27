@@ -42,7 +42,7 @@ lexer_T* lexer_init(const char* source) {
   lexer->state = STATE_DATA;
 
   lexer->source = source;
-  lexer->source_length = strlen(source);
+  lexer->source_length = (uint32_t) strlen(source);
   lexer->current_character = source[0];
 
   lexer->current_line = 1;
@@ -66,7 +66,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
   snprintf(
     error_message,
     sizeof(error_message),
-    "[Lexer] Error: %s (character '%c', line %zu, col %zu)\n",
+    "[Lexer] Error: %s (character '%c', line %u, col %u)\n",
     message,
     lexer->current_character,
     lexer->current_line,
