@@ -16,7 +16,7 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
 
 napi_value CreateLocation(napi_env env, location_T* location);
 napi_value CreateToken(napi_env env, token_T* token);
-napi_value CreatePosition(napi_env env, position_T* position);
+napi_value CreatePosition(napi_env env, position_T position);
 napi_value CreateRange(napi_env env, range_T* range);
 
 #endif

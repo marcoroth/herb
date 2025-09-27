@@ -13,7 +13,7 @@
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T* start_position", "position_T* end_position", "array_T* errors"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "array_T* errors"] -%>
 
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>) {
   <%= node.struct_type %>* <%= node.human %> = malloc(sizeof(<%= node.struct_type %>));

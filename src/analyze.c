@@ -158,8 +158,8 @@ static AST_NODE_T* create_control_node(
   control_type_t control_type
 ) {
   array_T* errors = array_init(8);
-  position_T* start_position = erb_node->tag_opening->location->start;
-  position_T* end_position = erb_node->tag_closing->location->end;
+  position_T start_position = erb_node->tag_opening->location.start;
+  position_T end_position = erb_node->tag_closing->location.end;
 
   if (end_node) {
     end_position = end_node->base.location->end;
@@ -577,8 +577,8 @@ static size_t process_control_structure(
       }
     }
 
-    position_T* start_position = erb_node->tag_opening->location->start;
-    position_T* end_position = erb_node->tag_closing->location->end;
+    position_T start_position = erb_node->tag_opening->location.start;
+    position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
       end_position = end_node->base.location->end;
@@ -754,8 +754,8 @@ static size_t process_control_structure(
       }
     }
 
-    position_T* start_position = erb_node->tag_opening->location->start;
-    position_T* end_position = erb_node->tag_closing->location->end;
+    position_T start_position = erb_node->tag_opening->location.start;
+    position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
       end_position = end_node->base.location->end;
@@ -812,8 +812,8 @@ static size_t process_control_structure(
       }
     }
 
-    position_T* start_position = erb_node->tag_opening->location->start;
-    position_T* end_position = erb_node->tag_closing->location->end;
+    position_T start_position = erb_node->tag_opening->location.start;
+    position_T end_position = erb_node->tag_closing->location.end;
 
     if (end_node) {
       end_position = end_node->base.location->end;
