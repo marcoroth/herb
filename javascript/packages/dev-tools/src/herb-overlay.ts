@@ -934,6 +934,7 @@ export class HerbOverlay {
       `subl://open?url=file://${absolutePath}&line=${line}&column=${column}`,
       `atom://core/open/file?filename=${absolutePath}&line=${line}&column=${column}`,
       `txmt://open?url=file://${absolutePath}&line=${line}&column=${column}`,
+      `x-mine://open?file=//${absolutePath}&line=${line}&column=${column}`,
     ];
 
     try {
