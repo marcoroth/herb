@@ -68,6 +68,7 @@
               "erb-prefer-image-tag-helper",
               "erb-require-whitespace-inside-tags",
               "erb-requires-trailing-newline",
+              "erb-right-trim",
               "html-anchor-require-href",
               "html-aria-attribute-must-be-valid",
               "html-aria-label-is-well-formatted",
