@@ -1,32 +1,40 @@
-# Linter Rule: Disallow bad ERB comment syntax.
+# Linter Rule: Disallow Ruby comments immediately after ERB tags
 
-## Rule: `erb-comment-syntax`
+**Rule:** `erb-comment-syntax`
 
-Bad ERB comment syntax. Leaving a space between ERB tags and the Ruby comment character can cause parser errors.
+## Description
+
+Disallow ERB tags that start with `<% #` (with a space before the `#`). Use the ERB comment syntax `<%#` instead.
+
+## Rationale
+
+Ruby comments starting immediately after an ERB tag opening (e.g., `<% # comment %>`) can cause parsing issues in some contexts. The proper ERB comment syntax `<%# comment %>` is more reliable and explicitly designed for comments in templates.
+
+For multi-line comments or actual Ruby code with comments, ensure the content starts on a new line after the opening tag.
 
 ## Examples
 
-### ❌ Incorrect
+### ✅ Good
 
 ```erb
-<% # some bad ruby comment that should be changed to erb one line comment %>
-```
+<%# This is a proper ERB comment %>
 
-### ✅ Correct
-
-```erb
-<% 
- # some good multi line ruby comment
- # some good multi line ruby comment
- # some good multi line ruby comment
- # some good multi line ruby comment
+<%
+  # This is a proper ERB comment
 %>
-<%# some good erb comment %>
-<% 
- # some good ruby comment 
+
+<%
+  # Multi-line Ruby comment
+  # spanning multiple lines
 %>
 ```
 
-## Configuration
+### 🚫 Bad
 
-This rule has no configuration options.
+```erb
+<% # This should be an ERB comment %>
+
+<%= # This should also be an ERB comment %>
+
+<%== # This should also be an ERB comment %>
+```

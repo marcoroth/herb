@@ -4,6 +4,7 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+- [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
