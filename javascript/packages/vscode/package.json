@@ -62,6 +62,7 @@
             "type": "string",
             "enum": [
               "erb-comment-syntax",
+              "erb-extra-new-line",
               "erb-no-empty-tags",
               "erb-no-output-control-flow",
               "erb-no-silent-tag-in-attribute-name",
