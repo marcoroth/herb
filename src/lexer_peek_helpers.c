@@ -77,6 +77,7 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   size_t saved_line = lexer->current_line;
   size_t saved_column = lexer->current_column;
   char saved_character = lexer->current_character;
+  lexer_state_T saved_state = lexer->state;
 
   token_T* token = lexer_next_token(lexer);
 
@@ -93,6 +94,7 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   lexer->current_line = saved_line;
   lexer->current_column = saved_column;
   lexer->current_character = saved_character;
+  lexer->state = saved_state;
 
   return result;
 }

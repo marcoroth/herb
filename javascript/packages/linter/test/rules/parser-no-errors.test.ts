@@ -205,4 +205,17 @@ describe("ParserNoErrorsRule", () => {
     expect(lintResult.offenses[2].message).toBe("Opening tag `<h2>` at (1:1) doesn't have a matching closing tag `</h2>`. (`MISSING_CLOSING_TAG_ERROR`)")
     expect(lintResult.offenses[3].message).toBe("Opening tag `<h2>` at (1:25) doesn't have a matching closing tag `</h2>`. (`MISSING_CLOSING_TAG_ERROR`)")
   })
+
+  test("html element ending with boolean attribute followed by ERB tag", () => {
+    const html = dedent`
+      <link crossorigin>
+      <%= hello %>
+    `
+
+    const linter = new Linter(Herb, [ParserNoErrorsRule ])
+    const lintResult = linter.lint(html)
+
+    expect(lintResult.errors).toBe(0)
+    expect(lintResult.offenses).toHaveLength(0)
+  })
 })
