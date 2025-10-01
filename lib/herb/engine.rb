@@ -17,7 +17,7 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template
+                :validation_error_template, :visitors
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -51,6 +51,16 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @visitors = properties.fetch(:visitors, default_visitors)
+
+      if @debug && @visitors.empty?
+        debug_visitor = DebugVisitor.new(
+          file_path: @filename,
+          project_path: @project_path
+        )
+
+        @visitors << debug_visitor
+      end
 
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
@@ -109,12 +119,12 @@ module Herb
 
         add_validation_overlay(validation_errors, input) if @validation_mode == :overlay && validation_errors&.any?
 
-        if @debug
-          debug_visitor = DebugVisitor.new(self)
-          ast.accept(debug_visitor)
+        @visitors.each do |visitor|
+          ast.accept(visitor)
         end
 
         compiler = Compiler.new(self, properties)
+
         ast.accept(compiler)
 
         compiler.generate_output
@@ -184,7 +194,14 @@ module Herb
       terminate_expression
 
       @src << " " << code
-      @src << ";" unless code[-1] == "\n"
+
+      # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
+      if code.include?("#")
+        @src << "\n"
+      else
+        @src << ";" unless code[-1] == "\n"
+      end
+
       @buffer_on_stack = false
     end
 
@@ -359,8 +376,12 @@ module Herb
       )
 
       error_html = overlay_generator.generate_html
-      escaped_html = error_html.gsub("'", "\\'")
-      @validation_error_template = "<template data-herb-parser-error>#{escaped_html}</template>"
+      @validation_error_template = "<template data-herb-parser-error>#{error_html}</template>"
+    end
+
+    #: () -> Array[Herb::Visitor]
+    def default_visitors
+      []
     end
   end
 end

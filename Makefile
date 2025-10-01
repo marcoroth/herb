@@ -101,6 +101,7 @@ clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
+	rake prism:clean
 
 bundle_install:
 	bundle install
@@ -110,6 +111,7 @@ templates: bundle_install
 
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -
+	rake prism:vendor
 
 format:
 	$(clang_format) -i $(project_and_extension_files)

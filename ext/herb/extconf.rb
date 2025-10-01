@@ -9,7 +9,8 @@ end
 extension_name = "herb"
 
 include_path = File.expand_path("../../src/include", __dir__)
-prism_path = `bundle show prism`.chomp
+prism_path = File.expand_path("../../vendor/prism", __dir__)
+
 prism_src_path = "#{prism_path}/src"
 prism_include_path = "#{prism_path}/include"
 

@@ -3,9 +3,7 @@
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
-      def initialize: (untyped engine) -> untyped
-
-      def debug_enabled?: () -> untyped
+      def initialize: (?file_path: untyped, ?project_path: untyped) -> untyped
 
       def visit_document_node: (untyped node) -> untyped
 
@@ -22,6 +20,8 @@ module Herb
       def visit_erb_yield_node: (untyped _node) -> untyped
 
       private
+
+      def calculate_relative_path: () -> untyped
 
       def wrap_all_erb_nodes: (untyped node) -> untyped
 

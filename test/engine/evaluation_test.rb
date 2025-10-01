@@ -377,5 +377,26 @@ module Engine
         posts: posts,
       }, { escape: false })
     end
+
+    test "utf8 handling" do
+      template = <<~ERB
+        Sitename • Title
+
+        <% @title = "Home" %>
+
+        <title><%= [@title, "Sitename"].compact.join(" • ") %></title>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "comment before content" do
+      template = <<~ERB
+        <% # This file contains a comment before other content %>
+        <div>Hey there</div>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end

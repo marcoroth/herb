@@ -31,7 +31,7 @@ size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-parser_T* parser_init(lexer_T* lexer, parser_options_T* options) {
+parser_T* herb_parser_init(lexer_T* lexer, parser_options_T* options) {
   parser_T* parser = calloc(1, parser_sizeof());
 
   parser->lexer = lexer;
@@ -555,14 +555,12 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     return value;
   }
 
-  token_T* token = parser_advance(parser);
-
   append_unexpected_error(
     "Unexpected Token",
     "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START",
-    token_type_to_string(token->type),
-    token->location->start,
-    token->location->end,
+    token_type_to_string(parser->current_token->type),
+    parser->current_token->location->start,
+    parser->current_token->location->end,
     errors
   );
 
@@ -571,12 +569,10 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     children,
     NULL,
     false,
-    token->location->start,
-    token->location->end,
+    parser->current_token->location->start,
+    parser->current_token->location->end,
     errors
   );
-
-  token_free(token);
 
   return value;
 }
@@ -803,6 +799,20 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
     if (parser->current_token->type == TOKEN_AT) {
       array_append(children, parser_parse_html_attribute(parser));
       continue;
+    }
+
+    if (parser->current_token->type == TOKEN_COLON) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* next_token = lexer_next_token(&lexer_copy);
+
+      if (next_token && next_token->type == TOKEN_IDENTIFIER) {
+        token_free(next_token);
+        array_append(children, parser_parse_html_attribute(parser));
+
+        continue;
+      }
+
+      token_free(next_token);
     }
 
     parser_append_unexpected_error(
@@ -1121,6 +1131,7 @@ static void parser_parse_in_data_state(parser_T* parser, array_T* children, arra
           parser,
           TOKEN_AMPERSAND,
           TOKEN_AT,
+          TOKEN_BACKTICK,
           TOKEN_CHARACTER,
           TOKEN_COLON,
           TOKEN_DASH,
@@ -1212,7 +1223,7 @@ static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
   return document_node;
 }
 
-AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser) {
+AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser) {
   return parser_parse_document(parser);
 }
 

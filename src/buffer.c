@@ -114,7 +114,16 @@ bool buffer_expand_capacity(buffer_T* buffer) {
 bool buffer_expand_if_needed(buffer_T* buffer, const size_t required_length) {
   if (buffer_has_capacity(buffer, required_length)) { return true; }
 
-  return buffer_resize(buffer, buffer->capacity + (required_length * 2));
+  bool should_double_capacity = required_length < buffer->capacity;
+  size_t new_capacity = 0;
+
+  if (should_double_capacity) {
+    new_capacity = buffer->capacity * 2;
+  } else {
+    new_capacity = buffer->capacity + (required_length * 2);
+  }
+
+  return buffer_resize(buffer, new_capacity);
 }
 
 /**

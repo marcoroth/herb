@@ -54,7 +54,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
 
-      if (false) { pretty_print_analyed_ruby(analyzed, erb_content_node->content->value); }
+      if (false) { pretty_print_analyzed_ruby(analyzed, erb_content_node->content->value); }
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
@@ -1107,7 +1107,8 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
   char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
   pm_parser_t parser;
-  pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), NULL);
+  pm_options_t options = { 0, .partial_script = true };
+  pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), &options);
 
   pm_node_t* root = pm_parse(&parser);
 
@@ -1115,16 +1116,11 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
        error = (const pm_diagnostic_t*) error->node.next) {
 
     RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser);
-
-    // TODO: ideally this shouldn't be hard-coded
-    if (strcmp(parse_error->diagnostic_id, "invalid_yield") == 0) {
-      error_free((ERROR_T*) parse_error);
-    } else {
-      array_append(document->base.errors, parse_error);
-    }
+    array_append(document->base.errors, parse_error);
   }
 
   pm_node_destroy(&parser, root);
   pm_parser_free(&parser);
+  pm_options_free(&options);
   free(extracted_ruby);
 }

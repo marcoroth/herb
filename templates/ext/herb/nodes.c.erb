@@ -22,14 +22,14 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   VALUE Node = rb_define_class_under(AST, "Node", rb_cObject);
   VALUE <%= node.name %> = rb_define_class_under(AST, "<%= node.name %>", Node);
 
-  VALUE type = rb_str_new_cstr(ast_node_type_to_string(node));
+  VALUE type = rb_utf8_str_new_cstr(ast_node_type_to_string(node));
   VALUE location = rb_location_from_c_struct(node->location);
   VALUE errors = rb_errors_array_from_c_array(node->errors);
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_str_new_cstr(<%= node.human %>-><%= field.name %>);
+  VALUE <%= node.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::NodeField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenField -%>
@@ -39,7 +39,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- when Herb::Template::ArrayField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_nodes_array_from_c_array(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ElementSourceField -%>
-  VALUE <%= node.human %>_<%= field.name %> = rb_str_new_cstr(element_source_to_string(<%= node.human %>-><%= field.name %>));
+  VALUE <%= node.human %>_<%= field.name %> = rb_utf8_str_new_cstr(element_source_to_string(<%= node.human %>-><%= field.name %>));
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;

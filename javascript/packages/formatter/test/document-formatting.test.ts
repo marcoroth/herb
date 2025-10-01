@@ -785,4 +785,198 @@ describe("Document-level formatting", () => {
       </div>
     `)
   })
+
+  test("preserves space between tag name and attributes (issue #477)", () => {
+    const source = dedent`
+      <pre><tt id="id">x</tt></pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre><tt id="id">x</tt></pre>
+    `)
+  })
+
+  test("preserves space between tag name and attributes with multiple attributes", () => {
+    const source = dedent`
+      <span class="test" id="example">content</span>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span class="test" id="example">content</span>
+    `)
+  })
+
+  test("preserves space between tag name and attributes in pre tag with multiple attributes", () => {
+    const source = dedent`
+      <pre><span class="test" id="example" data-value="123">content</span></pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre><span class="test" id="example" data-value="123">content</span></pre>
+    `)
+  })
+
+  test("preserves space between tag name and attributes in pre tag with mixed content", () => {
+    const source = dedent`
+      <pre>Some text <tt id="id">code</tt> more text</pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>Some text <tt id="id">code</tt> more text</pre>
+    `)
+  })
+
+  test("preserves space for nested HTML elements in other content-preserving tags", () => {
+    const source = dedent`
+      <textarea><input type="text" id="test"></textarea>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <textarea><input type="text" id="test"></textarea>
+    `)
+  })
+
+  test("preserves multi-line content in pre tag with exact whitespace", () => {
+    const source = dedent`
+      <pre>
+      function hello() {
+        console.log("world");
+          return true;
+      }
+      </pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>
+      function hello() {
+        console.log("world");
+          return true;
+      }
+      </pre>
+    `)
+  })
+
+  test("preserves multi-line content with HTML elements and exact spacing", () => {
+    const source = dedent`
+      <pre>Line 1
+      Line 2 with <tt id="code">inline code</tt>
+        Indented line 3
+      <span class="highlight">Line 4 highlighted</span>
+      Final line</pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>Line 1
+      Line 2 with <tt id="code">inline code</tt>
+        Indented line 3
+      <span class="highlight">Line 4 highlighted</span>
+      Final line</pre>
+    `)
+  })
+
+  test("preserves leading and trailing whitespace in pre tag", () => {
+    const source = dedent`
+      <pre>
+          Leading and trailing spaces preserved
+        <code id="sample">some code</code>
+         </pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>
+          Leading and trailing spaces preserved
+        <code id="sample">some code</code>
+         </pre>
+    `)
+  })
+
+  test("preserves tabs and mixed whitespace in pre tag with HTML elements", () => {
+    const source = `<pre>\tTab indented
+\t\tDouble tab with <em id="emphasis">emphasis</em>
+   Mixed   spaces   and\ttabs
+\t<strong class="bold">Bold text</strong></pre>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<pre>\tTab indented
+\t\tDouble tab with <em id="emphasis">emphasis</em>
+   Mixed   spaces   and\ttabs
+\t<strong class="bold">Bold text</strong></pre>`)
+  })
+
+  test("preserves empty lines and spacing in pre tag with HTML", () => {
+    const source = dedent`
+      <pre>First line
+
+      Line after empty line
+      <span id="test">HTML element</span>
+
+      Another empty line above
+      </pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>First line
+
+      Line after empty line
+      <span id="test">HTML element</span>
+
+      Another empty line above
+      </pre>
+    `)
+  })
+
+  test("preserves exact indentation in code blocks with HTML elements", () => {
+    const source = dedent`
+      <pre>
+      function hello() {
+        console.log("world");
+          return true;
+      }
+      </pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>
+      function hello() {
+        console.log("world");
+          return true;
+      }
+      </pre>
+    `)
+  })
+
+  test("preserves content structure in pre with inline HTML and varied indentation", () => {
+    const source = dedent`
+      <pre>Line 1
+      Line 2 with <tt id="code">inline code</tt>
+        Indented line 3
+      <span class="highlight">Line 4 highlighted</span>
+      Final line</pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>Line 1
+      Line 2 with <tt id="code">inline code</tt>
+        Indented line 3
+      <span class="highlight">Line 4 highlighted</span>
+      Final line</pre>
+    `)
+  })
+
+  test("preserves whitespace and HTML in complex pre content", () => {
+    const source = dedent`
+      <pre>
+      Simple text content
+      <span id="highlight">HTML element with proper spacing</span>
+      More text with    multiple    spaces
+      </pre>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <pre>
+      Simple text content
+      <span id="highlight">HTML element with proper spacing</span>
+      More text with    multiple    spaces
+      </pre>
+    `)
+  })
 })

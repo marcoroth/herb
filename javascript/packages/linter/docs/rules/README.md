@@ -4,6 +4,7 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+- [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
@@ -31,7 +32,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
-- [`html-no-self-closing`](./html-no-self-closing.md.md) - Disallow self closing tags
+- [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names

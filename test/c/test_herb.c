@@ -2,7 +2,7 @@
 #include "../../src/include/herb.h"
 
 TEST(test_herb_version)
-  ck_assert_str_eq(herb_version(), "0.7.0");
+  ck_assert_str_eq(herb_version(), "0.7.4");
 END
 
 TCase *herb_tests(void) {

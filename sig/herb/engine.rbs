@@ -18,6 +18,8 @@ module Herb
 
     attr_reader validation_error_template: untyped
 
+    attr_reader visitors: untyped
+
     ESCAPE_TABLE: untyped
 
     class CompilationError < StandardError
@@ -68,5 +70,8 @@ module Herb
     def escape_attr: (untyped text) -> untyped
 
     def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
+
+    # : () -> Array[Herb::Visitor]
+    def default_visitors: () -> Array[Herb::Visitor]
   end
 end

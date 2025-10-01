@@ -3,10 +3,26 @@
 module Herb
   class Engine
     class DebugVisitor < Herb::Visitor
-      def initialize(engine)
+      def initialize(file_path: nil, project_path: nil)
         super()
 
-        @engine = engine
+        @filename = case file_path
+                    when ::Pathname
+                      file_path
+                    when String
+                      file_path.empty? ? nil : ::Pathname.new(file_path)
+                    end
+
+        @project_path = case project_path
+                        when ::Pathname
+                          project_path
+                        when String
+                          ::Pathname.new(project_path)
+                        else
+                          ::Pathname.new(Dir.pwd)
+                        end
+
+        @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
         @debug_attributes_applied = false
@@ -16,13 +32,7 @@ module Herb
         @erb_nodes_to_wrap = [] #: Array[Herb::AST::ERBContentNode]
       end
 
-      def debug_enabled?
-        @engine.debug
-      end
-
       def visit_document_node(node)
-        return unless debug_enabled?
-
         find_top_level_elements(node)
 
         super
@@ -31,8 +41,6 @@ module Herb
       end
 
       def visit_html_element_node(node)
-        return super unless debug_enabled?
-
         tag_name = node.tag_name&.value&.downcase
         @element_stack.push(tag_name) if tag_name
 
@@ -62,7 +70,7 @@ module Herb
       end
 
       def visit_erb_content_node(node)
-        if debug_enabled? && !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
+        if !@in_attribute && !@in_html_comment && !@in_html_doctype && !in_excluded_context? && erb_output?(node.tag_opening.value)
           code = node.content.value.strip
 
           @erb_nodes_to_wrap << node unless complex_rails_helper?(code)
@@ -76,6 +84,18 @@ module Herb
       end
 
       private
+
+      def calculate_relative_path
+        return "unknown" unless @filename
+
+        if @filename.absolute?
+          @filename.relative_path_from(@project_path).to_s
+        else
+          @filename.to_s
+        end
+      rescue ArgumentError
+        @filename.to_s
+      end
 
       def wrap_all_erb_nodes(node)
         replace_erb_nodes_recursive(node)
@@ -151,9 +171,9 @@ module Herb
 
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", view_type),
-          create_debug_attribute("data-herb-debug-file-name", @engine.filename&.basename&.to_s || "unknown"),
-          create_debug_attribute("data-herb-debug-file-relative-path", @engine.relative_file_path || ""),
-          create_debug_attribute("data-herb-debug-file-full-path", @engine.filename&.to_s || "unknown")
+          create_debug_attribute("data-herb-debug-file-name", @filename&.basename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
+          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown")
         ]
 
         if @top_level_elements.length > 1
@@ -206,9 +226,9 @@ module Herb
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", outline_type),
           create_debug_attribute("data-herb-debug-erb", escaped_erb),
-          create_debug_attribute("data-herb-debug-file-name", @engine.filename&.basename.to_s),
-          create_debug_attribute("data-herb-debug-file-relative-path", @engine.relative_file_path || ""),
-          create_debug_attribute("data-herb-debug-file-full-path", @engine.filename.to_s),
+          create_debug_attribute("data-herb-debug-file-name", @filename&.basename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
+          create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
           create_debug_attribute("data-herb-debug-inserted", "true")
         ]
 
@@ -256,16 +276,16 @@ module Herb
       end
 
       def partial?
-        return false unless @engine.filename
+        return false unless @filename
 
-        basename = @engine.filename.basename.to_s
+        basename = @filename.basename.to_s
         basename.start_with?("_")
       end
 
       def component?
-        return false unless @engine.filename
+        return false unless @filename
 
-        path = @engine.filename.to_s
+        path = @filename.to_s
         path.include?("/components/")
       end
 

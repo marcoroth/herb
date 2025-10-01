@@ -928,10 +928,13 @@ export class HerbOverlay {
     const absolutePath = file.startsWith('/') ? file : (this.projectPath ? `${this.projectPath}/${file}` : file);
 
     const editors = [
+      `cursor://file/${absolutePath}:${line}:${column}`,
       `vscode://file/${absolutePath}:${line}:${column}`,
+      `zed://file/${absolutePath}:${line}:${column}`,
       `subl://open?url=file://${absolutePath}&line=${line}&column=${column}`,
       `atom://core/open/file?filename=${absolutePath}&line=${line}&column=${column}`,
       `txmt://open?url=file://${absolutePath}&line=${line}&column=${column}`,
+      `x-mine://open?file=//${absolutePath}&line=${line}&column=${column}`,
     ];
 
     try {
