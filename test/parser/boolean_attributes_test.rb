@@ -37,5 +37,13 @@ module Parser
     test "boolean attribute on void element followed by ERB tag with track_whitespace" do
       assert_parsed_snapshot(%(<link crossorigin><%= hello %>), track_whitespace: true)
     end
+
+    test "boolean attribute on void element followed by ERB tag with track_whitespace" do
+      assert_parsed_snapshot(<<~HTML, track_whitespace: true)
+        <div id="test" hidden>
+          <%= "hi" %>
+        </div>
+      HTML
+    end
   end
 end
