@@ -38,6 +38,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
+- [`html-inputs-require-autocomplete`](./html-inputs-require-autocomplete.md) - Require `autocomplete` attribute on input tags
 
 ## Contributing
 
