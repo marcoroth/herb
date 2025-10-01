@@ -92,6 +92,7 @@
               "html-no-nested-links",
               "html-no-positive-tab-index",
               "html-no-self-closing",
+              "html-no-space-in-tag",
               "html-no-title-attribute",
               "html-no-underscores-in-attribute-names",
               "html-tag-name-lowercase",

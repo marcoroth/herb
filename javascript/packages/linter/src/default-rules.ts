@@ -36,6 +36,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
+import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 
 export const defaultRules: RuleClass[] = [
   ERBCommentSyntax,
@@ -74,4 +75,5 @@ export const defaultRules: RuleClass[] = [
   SVGTagNameCapitalizationRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   ERBRightTrimRule,
+  HTMLNoSpaceInTagRule,
 ]
