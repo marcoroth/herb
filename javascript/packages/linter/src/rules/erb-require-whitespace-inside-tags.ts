@@ -1,20 +1,12 @@
-import type { ParseResult, Token, Node } from "@herb-tools/core"
-import { isERBNode } from "@herb-tools/core";
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
+
+import type { LintOffense, LintContext } from "../types.js"
+import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
 
 class RequireWhitespaceInsideTags extends BaseRuleVisitor {
 
-  visitChildNodes(node: Node): void {
-    this.checkWhitespace(node)
-    super.visitChildNodes(node)
-  }
-
-  private checkWhitespace(node: Node): void {
-    if (!isERBNode(node)) {
-      return
-    }
+  visitERBNode(node: ERBNode): void {
     const openTag = node.tag_opening
     const closeTag = node.tag_closing
     const content = node.content
