@@ -6,6 +6,7 @@ import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.j
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-newline.js"
+import { ERBExtraNewLineRule } from "./rules/erb-extra-new-line.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
@@ -43,6 +44,7 @@ export const defaultRules: RuleClass[] = [
   ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,
   ERBRequiresTrailingNewlineRule,
+  ERBExtraNewLineRule,
   ERBRequireWhitespaceRule,
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,
