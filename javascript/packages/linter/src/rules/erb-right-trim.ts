@@ -1,28 +1,34 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
+import { isERBOutputNode } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ERBContentNode, ParseResult } from "@herb-tools/core"
+import type { ERBNode, ParseResult } from "@herb-tools/core"
 
 class ERBRightTrimVisitor extends BaseRuleVisitor {
-  
-  visitERBContentNode(node: ERBContentNode): void {
-    if (!node.tag_closing) {
-      return
-    }
+  visitERBNode(node: ERBNode): void {
+    if (!node.tag_closing) return
 
-    if (!node.content?.value) {
-      return
-    }
+    const trimClosing = node.tag_closing.value
 
-    if (node.tag_closing.value === "=%>") {
+    if (trimClosing !== "=%>" && trimClosing !== "-%>") return
+
+    if (!isERBOutputNode(node)) {
       this.addOffense(
-        "Prefer -%> instead of =%> for trimming on the right",
-        node.location
+        `Right-trimming with \`${trimClosing}\` has no effect on non-output ERB tags. Use \`%>\` instead`,
+        node.tag_closing.location
+      )
+
+      return
+    }
+
+    if (trimClosing === "=%>") {
+      this.addOffense(
+        "Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines",
+        node.tag_closing.location
       )
     }
   }
-
 }
 
 export class ERBRightTrimRule extends ParserRule {

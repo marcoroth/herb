@@ -13,7 +13,7 @@ import {
 } from "@herb-tools/core"
 
 import type {
-  ERBNode,
+  ERBContentNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
@@ -300,7 +300,7 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
   for (const child of valueNode.children) {
     switch (child.type) {
       case "AST_ERB_CONTENT_NODE": {
-        const erbNode = child as ERBNode
+        const erbNode = child as ERBContentNode
 
         if (erbNode.content) {
           result += `${erbNode.tag_opening?.value}${erbNode.content.value}${erbNode.tag_closing?.value}`
