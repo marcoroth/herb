@@ -256,6 +256,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
 
   if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "%%>", TOKEN_ERB_END); }
+  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "=%>", TOKEN_ERB_END); }
   if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "-%>", TOKEN_ERB_END); }
 
   return lexer_advance_with(lexer, "%>", TOKEN_ERB_END);

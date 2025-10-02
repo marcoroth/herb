@@ -65,10 +65,14 @@ bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "%%>", false);
 }
 
+bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, const int offset) {
+  return lexer_peek_for(lexer, offset, "=%>", false);
+}
+
 bool lexer_peek_erb_end(const lexer_T* lexer, const int offset) {
   return (
     lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
-    || lexer_peek_erb_percent_close_tag(lexer, offset)
+    || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset)
   );
 }
 
