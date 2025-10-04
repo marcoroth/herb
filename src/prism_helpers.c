@@ -16,15 +16,15 @@ const char* pm_error_level_to_string(pm_error_level_t level) {
   }
 }
 
-position_T* position_from_source_with_offset(const char* source, size_t offset) {
-  position_T* position = position_init(1, 0);
+position_T position_from_source_with_offset(const char* source, size_t offset) {
+  position_T position = { .line = 1, .column = 0 };
 
   for (size_t i = 0; i < offset; i++) {
     if (is_newline(source[i])) {
-      position->line++;
-      position->column = 0;
+      position.line++;
+      position.column = 0;
     } else {
-      position->column++;
+      position.column++;
     }
   }
 
@@ -40,8 +40,8 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   size_t start_offset = (size_t) (error->location.start - parser->start);
   size_t end_offset = (size_t) (error->location.end - parser->start);
 
-  position_T* start = position_from_source_with_offset(source, start_offset);
-  position_T* end = position_from_source_with_offset(source, end_offset);
+  position_T start = position_from_source_with_offset(source, start_offset);
+  position_T end = position_from_source_with_offset(source, end_offset);
 
   return ruby_parse_error_init(
     error->message,

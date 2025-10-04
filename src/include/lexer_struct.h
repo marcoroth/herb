@@ -2,6 +2,7 @@
 #define HERB_LEXER_STRUCT_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 typedef enum {
@@ -12,20 +13,20 @@ typedef enum {
 
 typedef struct LEXER_STRUCT {
   const char* source;
-  size_t source_length;
+  uint32_t source_length;
 
-  size_t current_line;
-  size_t current_column;
-  size_t current_position;
+  uint32_t current_line;
+  uint32_t current_column;
+  uint32_t current_position;
 
-  size_t previous_line;
-  size_t previous_column;
-  size_t previous_position;
+  uint32_t previous_line;
+  uint32_t previous_column;
+  uint32_t previous_position;
 
   char current_character;
   lexer_state_T state;
-  size_t stall_counter;
-  size_t last_position;
+  uint32_t stall_counter;
+  uint32_t last_position;
   bool stalled;
 } lexer_T;
 

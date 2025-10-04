@@ -27,44 +27,32 @@ val CreateString(const char* string) {
   return string ? val(string) : val::null();
 }
 
-val CreatePosition(position_T* position) {
-  if (!position) {
-    return val::null();
-  }
-
+val CreatePosition(position_T position) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("line", position->line);
-  result.set("column", position->column);
+  result.set("line", position.line);
+  result.set("column", position.column);
 
   return result;
 }
 
-val CreateLocation(location_T* location) {
-  if (!location) {
-    return val::null();
-  }
-
+val CreateLocation(location_T location) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("start", CreatePosition(location->start));
-  result.set("end", CreatePosition(location->end));
+  result.set("start", CreatePosition(location.start));
+  result.set("end", CreatePosition(location.end));
 
   return result;
 }
 
-val CreateRange(range_T* range) {
-  if (!range) {
-    return val::null();
-  }
-
+val CreateRange(range_T range) {
   val Array = val::global("Array");
   val result = Array.new_();
 
-  result.call<void>("push", range->from);
-  result.call<void>("push", range->to);
+  result.call<void>("push", range.from);
+  result.call<void>("push", range.to);
 
   return result;
 }
