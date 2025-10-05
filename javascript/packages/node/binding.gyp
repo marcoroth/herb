@@ -32,6 +32,7 @@
         "./extension/libherb/pretty_print.c",
         "./extension/libherb/prism_helpers.c",
         "./extension/libherb/range.c",
+        "./extension/libherb/str.c",
         "./extension/libherb/token_matchers.c",
         "./extension/libherb/token.c",
         "./extension/libherb/utf8.c",
