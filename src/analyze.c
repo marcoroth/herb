@@ -435,24 +435,7 @@ static size_t process_control_structure(
         array_T* when_statements = array_init(8);
         index++;
 
-        while (index < array_size(array)) {
-          AST_NODE_T* child = array_get(array, index);
-
-          if (!child) { break; }
-
-          if (child->type == AST_ERB_CONTENT_NODE) {
-            AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-            control_type_t child_type = detect_control_type(child_erb);
-
-            if (child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_ELSE
-                || child_type == CONTROL_TYPE_END) {
-              break;
-            }
-          }
-
-          array_append(when_statements, child);
-          index++;
-        }
+        index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
 
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
           erb_content->tag_opening,
@@ -471,24 +454,7 @@ static size_t process_control_structure(
         array_T* in_statements = array_init(8);
         index++;
 
-        while (index < array_size(array)) {
-          AST_NODE_T* child = array_get(array, index);
-
-          if (!child) { break; }
-
-          if (child->type == AST_ERB_CONTENT_NODE) {
-            AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-            control_type_t child_type = detect_control_type(child_erb);
-
-            if (child_type == CONTROL_TYPE_IN || child_type == CONTROL_TYPE_WHEN || child_type == CONTROL_TYPE_ELSE
-                || child_type == CONTROL_TYPE_END) {
-              break;
-            }
-          }
-
-          array_append(in_statements, child);
-          index++;
-        }
+        index = process_block_children(node, array, index, in_statements, context, CONTROL_TYPE_IN);
 
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
           erb_content->tag_opening,
