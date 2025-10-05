@@ -9,7 +9,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
 
-import { name, version } from "../../package.json"
+import { name, version, dependencies } from "../../package.json"
 
 export type FormatOption = "simple" | "detailed" | "json"
 
@@ -74,7 +74,9 @@ export class ArgumentParser {
 
     if (values.version) {
       console.log("Versions:")
-      console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+      console.log(`  ${name}@${version}`)
+      console.log(`  @herb-tools/printer@${dependencies["@herb-tools/printer"]}`)
+      console.log(`  ${Herb.version}`.split(", ").join("\n  "))
       process.exit(0)
     }
 
