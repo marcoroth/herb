@@ -8,7 +8,11 @@
 #include "include/util.h"
 
 bool buffer_init(buffer_T* buffer) {
-  buffer->capacity = 1024;
+  return buffer_init_with_capacity(buffer, 4096);
+}
+
+bool buffer_init_with_capacity(buffer_T* buffer, const size_t initial_capacity) {
+  buffer->capacity = initial_capacity;
   buffer->length = 0;
   buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
 
@@ -25,6 +29,12 @@ bool buffer_init(buffer_T* buffer) {
 buffer_T buffer_new(void) {
   buffer_T buffer;
   buffer_init(&buffer);
+  return buffer;
+}
+
+buffer_T buffer_new_with_capacity(const size_t initial_capacity) {
+  buffer_T buffer;
+  buffer_init_with_capacity(&buffer, initial_capacity);
   return buffer;
 }
 

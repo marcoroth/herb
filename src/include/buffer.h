@@ -11,7 +11,9 @@ typedef struct BUFFER_STRUCT {
 } buffer_T;
 
 bool buffer_init(buffer_T* buffer);
+bool buffer_init_with_capacity(buffer_T* buffer, size_t initial_capacity);
 buffer_T buffer_new(void);
+buffer_T buffer_new_with_capacity(size_t initial_capacity);
 
 bool buffer_increase_capacity(buffer_T* buffer, size_t additional_capacity);
 bool buffer_has_capacity(buffer_T* buffer, size_t required_length);

@@ -6,12 +6,42 @@ TEST(test_buffer_init)
   buffer_T buffer;
 
   ck_assert(buffer_init(&buffer));
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_ptr_nonnull(buffer.value);
   ck_assert_str_eq(buffer.value, "");
 
   buffer_free(&buffer);
+END
+
+// Test buffer initialization with custom capacity
+TEST(test_buffer_init_with_capacity)
+  buffer_T buffer;
+
+  ck_assert(buffer_init_with_capacity(&buffer, 512));
+  ck_assert_int_eq(buffer.capacity, 512);
+  ck_assert_int_eq(buffer.length, 0);
+  ck_assert_ptr_nonnull(buffer.value);
+  ck_assert_str_eq(buffer.value, "");
+
+  buffer_free(&buffer);
+END
+
+// Test buffer_new_with_capacity
+TEST(test_buffer_new_with_capacity)
+  buffer_T small_buffer = buffer_new_with_capacity(256);
+  ck_assert_int_eq(small_buffer.capacity, 256);
+  ck_assert_int_eq(small_buffer.length, 0);
+  ck_assert_ptr_nonnull(small_buffer.value);
+  ck_assert_str_eq(small_buffer.value, "");
+  buffer_free(&small_buffer);
+
+  buffer_T large_buffer = buffer_new_with_capacity(8192);
+  ck_assert_int_eq(large_buffer.capacity, 8192);
+  ck_assert_int_eq(large_buffer.length, 0);
+  ck_assert_ptr_nonnull(large_buffer.value);
+  ck_assert_str_eq(large_buffer.value, "");
+  buffer_free(&large_buffer);
 END
 
 // Test appending text to buffer
@@ -63,13 +93,13 @@ END
 TEST(test_buffer_increase_capacity)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
   ck_assert(buffer_increase_capacity(&buffer, 1));
-  ck_assert_int_eq(buffer.capacity, 1025);
+  ck_assert_int_eq(buffer.capacity, 4097);
 
   ck_assert(buffer_increase_capacity(&buffer, 1024 + 1));
-  ck_assert_int_eq(buffer.capacity, 2050);
+  ck_assert_int_eq(buffer.capacity, 5122);
 
   buffer_free(&buffer);
 END
@@ -78,16 +108,16 @@ END
 TEST(test_buffer_expand_capacity)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(buffer_expand_capacity(&buffer));
-  ck_assert_int_eq(buffer.capacity, 2048);
-
-  ck_assert(buffer_expand_capacity(&buffer));
   ck_assert_int_eq(buffer.capacity, 4096);
 
   ck_assert(buffer_expand_capacity(&buffer));
   ck_assert_int_eq(buffer.capacity, 8192);
+
+  ck_assert(buffer_expand_capacity(&buffer));
+  ck_assert_int_eq(buffer.capacity, 16384);
+
+  ck_assert(buffer_expand_capacity(&buffer));
+  ck_assert_int_eq(buffer.capacity, 32768);
 
   buffer_free(&buffer);
 END
@@ -96,19 +126,19 @@ END
 TEST(test_buffer_expand_if_needed)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
   ck_assert(buffer_expand_if_needed(&buffer, 1));
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1023));
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert(buffer_expand_if_needed(&buffer, 4095));
+  ck_assert_int_eq(buffer.capacity, 4096);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1024));
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert(buffer_expand_if_needed(&buffer, 4096));
+  ck_assert_int_eq(buffer.capacity, 4096);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1025));
-  ck_assert_int_eq(buffer.capacity, 3074); // initial capacity (1024) + (required (1025) * 2) = 3074
+  ck_assert(buffer_expand_if_needed(&buffer, 4097));
+  ck_assert_int_eq(buffer.capacity, 12290); // initial capacity (4096) + (required (4097) * 2) = 12290
 
   buffer_free(&buffer);
 END
@@ -116,13 +146,13 @@ END
 TEST(test_buffer_expand_if_needed_with_nearly_full_buffer)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
-  buffer_append_repeated(&buffer, ' ', 1023);
-  ck_assert_int_eq(buffer.capacity, 1024);
+  buffer_append_repeated(&buffer, ' ', 4095);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
   ck_assert(buffer_expand_if_needed(&buffer, 2));
-  ck_assert_int_eq(buffer.capacity, 2048);
+  ck_assert_int_eq(buffer.capacity, 8192);
 
   buffer_free(&buffer);
 END
@@ -131,16 +161,16 @@ END
 TEST(test_buffer_resize)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(buffer_resize(&buffer, 2048));
-  ck_assert_int_eq(buffer.capacity, 2048);
-
-  ck_assert(buffer_resize(&buffer, 4096));
   ck_assert_int_eq(buffer.capacity, 4096);
 
   ck_assert(buffer_resize(&buffer, 8192));
   ck_assert_int_eq(buffer.capacity, 8192);
+
+  ck_assert(buffer_resize(&buffer, 16384));
+  ck_assert_int_eq(buffer.capacity, 16384);
+
+  ck_assert(buffer_resize(&buffer, 32768));
+  ck_assert_int_eq(buffer.capacity, 32768);
 
   buffer_free(&buffer);
 END
@@ -149,18 +179,18 @@ END
 TEST(test_buffer_clear)
   buffer_T buffer = buffer_new();
 
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
   buffer_append(&buffer, "Hello");
   ck_assert_str_eq(buffer.value, "Hello");
   ck_assert_int_eq(buffer.length, 5);
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
 
   buffer_clear(&buffer);
 
   ck_assert_str_eq(buffer.value, "");
   ck_assert_int_eq(buffer.length, 0);
-  ck_assert_int_eq(buffer.capacity, 1024); // Capacity should remain unchanged
+  ck_assert_int_eq(buffer.capacity, 4096); // Capacity should remain unchanged
 
   buffer_free(&buffer);
 END
@@ -171,7 +201,7 @@ TEST(test_buffer_free)
 
   buffer_append(&buffer, "Test");
   ck_assert_int_eq(buffer.length, 4);
-  ck_assert_int_eq(buffer.capacity, 1024);
+  ck_assert_int_eq(buffer.capacity, 4096);
   buffer_free(&buffer);
 
   ck_assert_ptr_null(buffer.value);
@@ -237,6 +267,8 @@ TCase *buffer_tests(void) {
   TCase *buffer = tcase_create("Buffer");
 
   tcase_add_test(buffer, test_buffer_init);
+  tcase_add_test(buffer, test_buffer_init_with_capacity);
+  tcase_add_test(buffer, test_buffer_new_with_capacity);
   tcase_add_test(buffer, test_buffer_append);
   tcase_add_test(buffer, test_buffer_prepend);
   tcase_add_test(buffer, test_buffer_concat);
