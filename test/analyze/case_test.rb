@@ -154,5 +154,14 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "case with yield" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case yield(:a) %>
+        <% when 'a' %>
+          aaa
+        <% end %>
+      HTML
+    end
   end
 end

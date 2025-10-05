@@ -96,12 +96,8 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (ruby->valid) {
-    if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
-    return CONTROL_TYPE_UNKNOWN;
-  }
+  if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
   if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
   if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
@@ -119,6 +115,7 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
   if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
+  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
 
   return CONTROL_TYPE_UNKNOWN;
 }
