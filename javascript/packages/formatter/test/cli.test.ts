@@ -155,20 +155,41 @@ describe("CLI Binary", () => {
     }
   })
 
-  it("should show experimental preview message", async () => {
+  it("should show experimental preview message on stderr", async () => {
     const result = await execBinary([])
 
-    expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain("early development")
-    expect(result.stdout).toContain("github.com/marcoroth/herb/issues")
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stderr).toContain("early development")
+    expect(result.stderr).toContain("github.com/marcoroth/herb/issues")
+  })
+
+  it("should not include experimental preview message in stdout", async () => {
+    const input = '<div>test</div>'
+    const result = await execBinary([], input)
+
+    expectExitCode(result, 0)
+    expect(result.stdout).not.toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toContain('<div>test</div>')
+  })
+
+  it("stdout should contain only formatted output without warnings", async () => {
+    const input = '<div class="test"><p>Hello</p></div>'
+    const result = await execBinary([], input)
+
+    expectExitCode(result, 0)
+
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).not.toContain("⚠️")
+    expect(result.stdout).not.toContain("Experimental")
+    expect(result.stdout).toBe('<div class="test">\n  <p>Hello</p>\n</div>\n')
   })
 
   it("should format empty input from stdin when no args provided", async () => {
     const result = await execBinary([], "")
 
     expectExitCode(result, 0)
-    expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain("\n\n")
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toBe("\n")
   })
 
   it("should handle no files found in empty directory", async () => {
@@ -178,7 +199,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-empty-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("⚠️  Experimental Preview")
+      expect(result.stderr).toContain("⚠️  Experimental Preview")
       expect(result.stdout).toContain("No files found matching pattern:")
       expect(result.stdout).toContain("test-empty-dir/**/*.html.erb")
     } finally {
@@ -365,12 +386,8 @@ describe("CLI Binary", () => {
 
     expectExitCode(result, 0)
     expect(result.stdout.endsWith('\n')).toBe(true)
-    expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain('<div>Hello</div>')
-
-    const lines = result.stdout.split('\n')
-    const formattedLines = lines.slice(2) // Skip experimental preview lines
-    expect(formattedLines.join('\n')).toBe('<div>Hello</div>\n')
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toBe('<div>Hello</div>\n')
   })
 
   it("CLI should preserve existing trailing newline", async () => {
@@ -379,12 +396,8 @@ describe("CLI Binary", () => {
 
     expectExitCode(result, 0)
     expect(result.stdout.endsWith('\n')).toBe(true)
-    expect(result.stdout).toContain("⚠️  Experimental Preview")
-    expect(result.stdout).toContain('<div>Hello</div>')
-
-    const lines = result.stdout.split('\n')
-    const formattedLines = lines.slice(2) // Skip experimental preview lines
-    expect(formattedLines.join('\n')).toBe('<div>Hello</div>\n')
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toBe('<div>Hello</div>\n')
   })
 
   it("CLI should add trailing newline to empty input", async () => {
@@ -392,11 +405,8 @@ describe("CLI Binary", () => {
     const result = await execBinary([], input)
 
     expectExitCode(result, 0)
-    expect(result.stdout).toContain("⚠️  Experimental Preview")
-
-    const lines = result.stdout.split('\n')
-    const formattedLines = lines.slice(2) // Skip experimental preview lines
-    expect(formattedLines.join('\n')).toBe('\n')
+    expect(result.stderr).toContain("⚠️  Experimental Preview")
+    expect(result.stdout).toBe('\n')
   })
 
   it("should show --indent-width option in help", async () => {

@@ -112,8 +112,8 @@ export class CLI {
         process.exit(0)
       }
 
-      console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
-      console.log()
+      console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
+      console.error()
 
       const formatOptions = resolveFormatOptions({
         indentWidth,
