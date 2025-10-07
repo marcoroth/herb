@@ -10,6 +10,7 @@ TCase *lex_tests(void);
 TCase *token_tests(void);
 TCase *util_tests(void);
 TCase *hb_string_tests(void);
+TCase *hb_arena_tests(void);
 
 Suite *herb_suite(void) {
   Suite *suite = suite_create("Herb Suite");
@@ -23,6 +24,7 @@ Suite *herb_suite(void) {
   suite_add_tcase(suite, token_tests());
   suite_add_tcase(suite, util_tests());
   suite_add_tcase(suite, hb_string_tests());
+  suite_add_tcase(suite, hb_arena_tests());
 
   return suite;
 }
