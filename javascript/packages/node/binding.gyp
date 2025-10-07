@@ -28,6 +28,7 @@
         "./extension/libherb/lexer.c",
         "./extension/libherb/location.c",
         "./extension/libherb/memory.c",
+        "./extension/libherb/memory_arena.c",
         "./extension/libherb/parser_helpers.c",
         "./extension/libherb/parser.c",
         "./extension/libherb/pretty_print.c",
