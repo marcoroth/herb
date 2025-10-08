@@ -18,10 +18,10 @@ interface ExpectedOffense {
 }
 
 interface LinterTestHelpers {
-  expectNoOffenses: (html: string) => void
+  expectNoOffenses: (html: string, context?: any) => void
   expectWarning: (message: string, location?: LocationInput) => void
   expectError: (message: string, location?: LocationInput) => void
-  assertOffenses: (html: string) => void
+  assertOffenses: (html: string, context?: any) => void
 }
 
 /**
@@ -70,7 +70,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     hasAsserted = false
   })
 
-  const expectNoOffenses = (html: string) => {
+  const expectNoOffenses = (html: string, context?: any) => {
     if (expectedWarnings.length > 0 || expectedErrors.length > 0) {
       throw new Error(
         "Cannot call expectNoOffenses() after registering expectations with expectWarning() or expectError()"
@@ -79,7 +79,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
 
     hasAsserted = true
     const linter = new Linter(Herb, [ruleClass])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, context)
 
     expect(lintResult.errors).toBe(0)
     expect(lintResult.warnings).toBe(0)
@@ -104,7 +104,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     expectedErrors.push({ message, location: normalizeLocation(location) })
   }
 
-  const assertOffenses = (html: string) => {
+  const assertOffenses = (html: string, context?: any) => {
     if (expectedWarnings.length === 0 && expectedErrors.length === 0) {
       throw new Error(
         "Cannot call assertOffenses() with no expectations. Use expectNoOffenses() instead."
@@ -113,7 +113,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
 
     hasAsserted = true
     const linter = new Linter(Herb, [ruleClass])
-    const lintResult = linter.lint(html)
+    const lintResult = linter.lint(html, context)
 
     const ruleInstance = new ruleClass()
     const ruleName = ruleInstance.name
