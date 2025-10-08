@@ -85,21 +85,6 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   return result;
 }
 
-static VALUE Herb_lex_to_json(VALUE self, VALUE source) {
-  char* string = (char*) check_string(source);
-  buffer_T output;
-
-  if (!buffer_init(&output, 4096)) { return Qnil; }
-
-  herb_lex_json_to_buffer(string, &output);
-
-  VALUE result = rb_str_new(output.value, output.length);
-
-  free(output.value);
-
-  return result;
-}
-
 static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
   buffer_T output;
@@ -151,7 +136,6 @@ void Init_herb(void) {
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(mHerb, "lex_to_json", Herb_lex_to_json, 1);
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);

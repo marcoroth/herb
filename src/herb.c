@@ -2,7 +2,6 @@
 #include "include/array.h"
 #include "include/buffer.h"
 #include "include/io.h"
-#include "include/json.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/token.h"
@@ -62,27 +61,6 @@ void herb_lex_to_buffer(const char* source, buffer_T* output) {
     buffer_append(output, "\n");
   }
 
-  herb_free_tokens(&tokens);
-}
-
-void herb_lex_json_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
-
-  buffer_T json;
-  buffer_init(&json, 4096);
-  json_start_root_array(&json);
-
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    token_T* token = array_get(tokens, i);
-    char* token_json = token_to_json(token);
-    json_add_raw_string(&json, token_json);
-    free(token_json);
-  }
-
-  json_end_array(&json);
-  buffer_concat(output, &json);
-
-  free(json.value);
   herb_free_tokens(&tokens);
 }
 

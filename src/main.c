@@ -39,7 +39,6 @@ int main(const int argc, char* argv[]) {
     printf("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n\n");
 
     printf("./herb lex [file]      -  Lex a file\n");
-    printf("./herb lex_json [file] -  Lex a file and return the result as json.\n");
     printf("./herb parse [file]    -  Parse a file\n");
     printf("./herb ruby [file]     -  Extract Ruby from a file\n");
     printf("./herb html [file]     -  Extract HTML from a file\n");
@@ -86,17 +85,6 @@ int main(const int argc, char* argv[]) {
 
     printf("%s\n", output.value);
     print_time_diff(start, end, "lexing");
-
-    free(output.value);
-    free(source);
-
-    return 0;
-  }
-
-  if (strcmp(argv[1], "lex_json") == 0) {
-    herb_lex_json_to_buffer(source, &output);
-
-    printf("%s\n", output.value);
 
     free(output.value);
     free(source);
