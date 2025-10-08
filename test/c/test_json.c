@@ -5,7 +5,8 @@
 #include "../../src/include/json.h"
 
 TEST(test_json_escape_basic)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "key", "value");
@@ -13,11 +14,12 @@ TEST(test_json_escape_basic)
 
   ck_assert_str_eq(buffer_value(&json), "{\"key\": \"value\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_escape_quotes)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "quote", "This is a \"quoted\" string");
@@ -25,11 +27,12 @@ TEST(test_json_escape_quotes)
 
   ck_assert_str_eq(buffer_value(&json), "{\"quote\": \"This is a \\\"quoted\\\" string\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_escape_backslash)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "path", "C:\\Users\\Test");
@@ -37,11 +40,12 @@ TEST(test_json_escape_backslash)
 
   ck_assert_str_eq(buffer_value(&json), "{\"path\": \"C:\\\\Users\\\\Test\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_escape_newline)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "text", "Line1\nLine2");
@@ -49,11 +53,12 @@ TEST(test_json_escape_newline)
 
   ck_assert_str_eq(buffer_value(&json), "{\"text\": \"Line1\\nLine2\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_escape_tab)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "text", "Column1\tColumn2");
@@ -61,11 +66,12 @@ TEST(test_json_escape_tab)
 
   ck_assert_str_eq(buffer_value(&json), "{\"text\": \"Column1\\tColumn2\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_escape_mixed)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
   json_add_string(&json, "complex", "A \"quoted\" \\ path\nwith\ttabs.");
@@ -73,11 +79,12 @@ TEST(test_json_escape_mixed)
 
   ck_assert_str_eq(buffer_value(&json), "{\"complex\": \"A \\\"quoted\\\" \\\\ path\\nwith\\ttabs.\"}");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_root_object)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
 
@@ -86,14 +93,16 @@ TEST(test_json_root_object)
   json_add_double(&json, "score", 99.5);
   json_add_bool(&json, "active", 1);
 
-  buffer_T address = buffer_new();
+  buffer_T address;
+  buffer_init(&address, 1024);
   json_start_object(&json, "address");
   json_add_string(&address, "city", "Basel");
   json_add_string(&address, "country", "Switzerland");
   buffer_concat(&json, &address);
   json_end_object(&json);
 
-  buffer_T languages = buffer_new();
+  buffer_T languages;
+  buffer_init(&languages, 1024);
   json_start_array(&json, "languages");
   json_add_string(&languages, NULL, "Ruby");
   json_add_string(&languages, NULL, "C");
@@ -101,7 +110,8 @@ TEST(test_json_root_object)
   buffer_concat(&json, &languages);
   json_end_array(&json);
 
-  buffer_T ratings = buffer_new();
+  buffer_T ratings;
+  buffer_init(&ratings, 1024);
   json_start_array(&json, "ratings");
   json_add_double(&ratings, NULL, 4.5);
   json_add_int(&ratings, NULL, 3);
@@ -115,11 +125,15 @@ TEST(test_json_root_object)
 
   ck_assert_str_eq(buffer_value(&json), "{\"name\": \"John\", \"age\": 20, \"score\": 99.50, \"active\": true, \"address\": {\"city\": \"Basel\", \"country\": \"Switzerland\"}, \"languages\": [\"Ruby\", \"C\", \"JavaScript\"], \"ratings\": [4.50, 3, 5.0, 3.79, 5]}");
 
-  buffer_free(&json);
+  free(address.value);
+  free(languages.value);
+  free(ratings.value);
+  free(json.value);
 END
 
 TEST(test_json_root_array)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_array(&json);
 
@@ -135,19 +149,22 @@ TEST(test_json_root_array)
 
   ck_assert_str_eq(buffer_value(&json), "[\"Ruby\", \"C\", \"JavaScript\", 42, 3.14, true, false]");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_append_array_to_object)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
 
-  buffer_T object = buffer_new();
+  buffer_T object;
+  buffer_init(&object, 1024);
   json_start_object(&json, "object");
   json_add_string(&object, "key", "value");
 
-  buffer_T array = buffer_new();
+  buffer_T array;
+  buffer_init(&array, 1024);
   json_start_array(&object, "array");
   json_add_string(&array, NULL, "One");
   json_add_string(&array, NULL, "Two");
@@ -162,20 +179,25 @@ TEST(test_json_append_array_to_object)
 
   ck_assert_str_eq(buffer_value(&json), "{\"object\": {\"key\": \"value\", \"array\": [\"One\", \"Two\"]}}");
 
-  buffer_free(&json);
+  free(array.value);
+  free(object.value);
+  free(json.value);
 END
 
 TEST(test_json_append_object_array)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_start_root_object(&json);
 
-  buffer_T array = buffer_new();
+  buffer_T array;
+  buffer_init(&array, 1024);
   json_start_array(&json, "array");
   json_add_string(&array, NULL, "One");
   json_add_string(&array, NULL, "Two");
 
-  buffer_T object = buffer_new();
+  buffer_T object;
+  buffer_init(&object, 1024);
   json_start_object(&array, NULL);
   json_add_string(&object, "key", "value");
 
@@ -189,7 +211,9 @@ TEST(test_json_append_object_array)
 
   ck_assert_str_eq(buffer_value(&json), "{\"array\": [\"One\", \"Two\", {\"key\": \"value\"}]}");
 
-  buffer_free(&json);
+  free(object.value);
+  free(array.value);
+  free(json.value);
 END
 
 TEST(test_json_double_to_string_precision)
@@ -248,16 +272,18 @@ TEST(test_json_int_to_string_min_max)
 END
 
 TEST(test_json_add_size_t_basic)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_add_size_t(&json, "size", 42);
   ck_assert_str_eq(buffer_value(&json), "\"size\": 42");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_add_size_t_large_number)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_add_size_t(&json, "size", 9876543210UL);
   ck_assert_str_eq(buffer_value(&json), "\"size\": 9876543210");
@@ -266,11 +292,12 @@ TEST(test_json_add_size_t_large_number)
   json_add_size_t(&json, "size", SIZE_MAX);
   ck_assert_str_eq(buffer_value(&json), "\"size\": 18446744073709551615");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 TEST(test_json_add_size_t_in_array)
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 1024);
 
   json_add_size_t(&json, NULL, 1024);
   json_add_size_t(&json, NULL, 2048);
@@ -278,7 +305,7 @@ TEST(test_json_add_size_t_in_array)
 
   ck_assert_str_eq(buffer_value(&json), "1024, 2048, 4096");
 
-  buffer_free(&json);
+  free(json.value);
 END
 
 

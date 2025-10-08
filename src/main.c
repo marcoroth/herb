@@ -55,7 +55,7 @@ int main(const int argc, char* argv[]) {
 
   buffer_T output;
 
-  if (!buffer_init(&output)) { return 1; }
+  if (!buffer_init(&output, 4096)) { return 1; }
 
   char* source = herb_read_file(argv[2]);
 
@@ -74,7 +74,7 @@ int main(const int argc, char* argv[]) {
     print_time_diff(start, end, "visiting");
 
     ast_node_free((AST_NODE_T*) root);
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;
@@ -87,7 +87,7 @@ int main(const int argc, char* argv[]) {
     printf("%s\n", output.value);
     print_time_diff(start, end, "lexing");
 
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;
@@ -98,7 +98,7 @@ int main(const int argc, char* argv[]) {
 
     printf("%s\n", output.value);
 
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;
@@ -108,13 +108,18 @@ int main(const int argc, char* argv[]) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
-    printf("%s\n", output.value);
+    int silent = 0;
+    if (argc > 3 && strcmp(argv[3], "--silent") == 0) { silent = 1; }
 
-    print_time_diff(start, end, "parsing");
+    if (!silent) {
+      ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+      printf("%s\n", output.value);
+
+      print_time_diff(start, end, "parsing");
+    }
 
     ast_node_free((AST_NODE_T*) root);
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;
@@ -127,7 +132,7 @@ int main(const int argc, char* argv[]) {
     printf("%s\n", output.value);
     print_time_diff(start, end, "extracting Ruby");
 
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;
@@ -140,7 +145,7 @@ int main(const int argc, char* argv[]) {
     printf("%s\n", output.value);
     print_time_diff(start, end, "extracting HTML");
 
-    buffer_free(&output);
+    free(output.value);
     free(source);
 
     return 0;

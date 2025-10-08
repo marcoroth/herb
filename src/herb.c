@@ -28,6 +28,8 @@ array_T* herb_lex(const char* source) {
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
+  if (!source) { source = ""; }
+
   lexer_T* lexer = lexer_init(source);
   parser_T* parser = herb_parser_init(lexer, options);
 
@@ -66,7 +68,8 @@ void herb_lex_to_buffer(const char* source, buffer_T* output) {
 void herb_lex_json_to_buffer(const char* source, buffer_T* output) {
   array_T* tokens = herb_lex(source);
 
-  buffer_T json = buffer_new();
+  buffer_T json;
+  buffer_init(&json, 4096);
   json_start_root_array(&json);
 
   for (size_t i = 0; i < array_size(tokens); i++) {
@@ -79,7 +82,7 @@ void herb_lex_json_to_buffer(const char* source, buffer_T* output) {
   json_end_array(&json);
   buffer_concat(output, &json);
 
-  buffer_free(&json);
+  free(json.value);
   herb_free_tokens(&tokens);
 }
 

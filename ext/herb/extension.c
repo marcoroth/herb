@@ -89,13 +89,13 @@ static VALUE Herb_lex_to_json(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
   buffer_T output;
 
-  if (!buffer_init(&output)) { return Qnil; }
+  if (!buffer_init(&output, 4096)) { return Qnil; }
 
   herb_lex_json_to_buffer(string, &output);
 
   VALUE result = rb_str_new(output.value, output.length);
 
-  buffer_free(&output);
+  free(output.value);
 
   return result;
 }
@@ -104,12 +104,12 @@ static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
   buffer_T output;
 
-  if (!buffer_init(&output)) { return Qnil; }
+  if (!buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_ruby_to_buffer(string, &output);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
-  buffer_free(&output);
+  free(output.value);
 
   return result;
 }
@@ -118,12 +118,12 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
   buffer_T output;
 
-  if (!buffer_init(&output)) { return Qnil; }
+  if (!buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_html_to_buffer(string, &output);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
-  buffer_free(&output);
+  free(output.value);
 
   return result;
 }
