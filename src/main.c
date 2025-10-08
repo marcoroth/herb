@@ -106,6 +106,9 @@ int main(const int argc, char* argv[]) {
 
   if (strcmp(argv[1], "parse") == 0) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+
+    herb_analyze_parse_tree(root, source);
+
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
