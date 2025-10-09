@@ -21,7 +21,7 @@
 #include <string.h>
 
 static analyzed_ruby_T* herb_analyze_ruby(char* source) {
-  analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
+  analyzed_ruby_T* analyzed = init_analyzed_ruby(allocator, source);
 
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
   pm_visit_node(analyzed->root, search_block_nodes, analyzed);
