@@ -12,7 +12,7 @@ size_t ast_node_sizeof(void) {
   return sizeof(struct AST_NODE_STRUCT);
 }
 
-void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T start, position_T end, array_T* errors) {
+void ast_node_init(arena_allocator_T* allocator, AST_NODE_T* node, const ast_node_type_T type, position_T start, position_T end, array_T* errors) {
   if (!node) { return; }
 
   node->type = type;
@@ -29,9 +29,9 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(arena_allocator_T* allocator, const token_T* token) {
   AST_LITERAL_NODE_T* literal = arena_alloc(allocator, sizeof(AST_LITERAL_NODE_T));
 
-  ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
+  ast_node_init(allocator, &literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = herb_strdup(token->value);
+  literal->content = herb_strdup(allocator, token->value);
 
   return literal;
 }
@@ -48,8 +48,8 @@ array_T* ast_node_errors(const AST_NODE_T* node) {
   return node->errors;
 }
 
-void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error) {
-  array_append(node->errors, error);
+void ast_node_append_error(arena_allocator_T *allocator, const AST_NODE_T* node, ERROR_T* error) {
+  array_append(allocator, node->errors, error);
 }
 
 void ast_node_set_start(AST_NODE_T* node, position_T position) {
