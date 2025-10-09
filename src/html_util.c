@@ -55,7 +55,7 @@ bool is_html4_void_element(const char* tag_name) {
  * @endcode
  */
 char* html_opening_tag_string(arena_allocator_T* allocator, const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("<>"); }
+  if (tag_name == NULL) { return herb_strdup(allocator, "<>"); }
 
   size_t length = strlen(tag_name);
   char* result = (char*) arena_alloc(allocator, length + 3); // +3 for '<', '>', and '\0'
@@ -89,7 +89,7 @@ char* html_opening_tag_string(arena_allocator_T* allocator, const char* tag_name
  * @endcode
  */
 char* html_closing_tag_string(arena_allocator_T* allocator, const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("</>"); }
+  if (tag_name == NULL) { return herb_strdup(allocator, "</>"); }
 
   size_t length = strlen(tag_name);
   char* result = (char*) arena_alloc(allocator, length + 4); // +4 for '<', '/', '>', and '\0'
@@ -124,7 +124,7 @@ char* html_closing_tag_string(arena_allocator_T* allocator, const char* tag_name
  * @endcode
  */
 char* html_self_closing_tag_string(arena_allocator_T* allocator, const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("< />"); }
+  if (tag_name == NULL) { return herb_strdup(allocator, "< />"); }
 
   size_t length = strlen(tag_name);
   char* result = (char*) arena_alloc(allocator, length + 5); // +5 for '<', ' ', '/', '>', and '\0'

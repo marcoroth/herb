@@ -611,7 +611,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(arena_allocator_T*
 
       token_T* equals_with_whitespace = arena_alloc(allocator, sizeof(token_T));
       equals_with_whitespace->type = TOKEN_EQUALS;
-      equals_with_whitespace->value = herb_strdup(equals_buffer.value);
+      equals_with_whitespace->value = herb_strdup(allocator, equals_buffer.value);
       equals_with_whitespace->location = (location_T) { .start = equals_start, .end = equals_end };
       equals_with_whitespace->range = (range_T) { .from = range_start, .to = range_end };
 

@@ -61,13 +61,13 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
       <%- end -%>
     );
 
-    <%= error.human %>->base.message = herb_strdup(message);
+    <%= error.human %>->base.message = herb_strdup(allocator, message);
     free(message);
   } else {
-    <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
+    <%= error.human %>->base.message = herb_strdup(allocator, "<%= error.message_template %>");
   }
   <%- else -%>
-  <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
+  <%= error.human %>->base.message = herb_strdup(allocator, "<%= error.message_template %>");
   <%- end -%>
 
   <%- error.fields.each do |field| -%>
@@ -81,7 +81,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= error.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = herb_strdup(allocator, <%= field.name %>);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>

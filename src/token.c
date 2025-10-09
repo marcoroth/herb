@@ -23,7 +23,7 @@ token_T* token_init(arena_allocator_T* allocator, const char* value, const token
   }
 
   if (value) {
-    token->value = herb_strdup(value);
+    token->value = herb_strdup(allocator, value);
   } else {
     token->value = NULL;
   }
@@ -97,7 +97,7 @@ char* token_to_string(arena_allocator_T* allocator, const token_T* token) {
   char* escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = herb_strdup("<EOF>");
+    escaped = herb_strdup(allocator, "<EOF>");
   } else {
     escaped = escape_newlines(token->value);
   }
@@ -136,7 +136,7 @@ token_T* token_copy(arena_allocator_T* allocator, token_T* token) {
   if (!new_token) { return NULL; }
 
   if (token->value) {
-    new_token->value = herb_strdup(token->value);
+    new_token->value = herb_strdup(allocator, token->value);
 
     if (!new_token->value) {
       free(new_token);
