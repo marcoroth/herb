@@ -29,7 +29,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
 <%- arguments = ["arena_allocator_T* allocator"] + error_arguments + ["position_T start", "position_T end"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
-  <%= error.struct_type %>* <%= error.human %> = arena_allocator(allocator, sizeof(<%= error.struct_type %>));
+  <%= error.struct_type %>* <%= error.human %> = arena_alloc(allocator, sizeof(<%= error.struct_type %>));
 
   error_init(&<%= error.human %>->base, <%= error.type %>, start, end);
 
@@ -37,7 +37,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   const char* message_template = "<%= error.message_template %>";
 
   size_t message_size = <%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
-  char* message = (char*) arena_allocator(allocator, message_size);
+  char* message = (char*) arena_alloc(allocator, message_size);
 
   if (message) {
     <%- error.message_arguments.each_with_index do |argument, i| -%>
@@ -89,8 +89,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["array_T* errors"]).join(", ") %>) {
-  array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(arena_allocator_T* allocator, <%= (arguments + ["array_T* errors"]).join(", ") %>) {
+  array_append(allocator errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
 }
 <%- end -%>
 
@@ -158,6 +158,7 @@ void error_free(ERROR_T* error) {
 }
 
 void error_pretty_print_array(
+  arena_allocator_T* allocator,
   const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
   buffer_T* buffer
 ) {
@@ -175,12 +176,12 @@ void error_pretty_print_array(
 
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
-  buffer_append(buffer, "(");
+  buffer_append(allocator, buffer, "(");
 
   char count[16];
   sprintf(count, "%zu", array_size(array));
-  buffer_append(buffer, count);
-  buffer_append(buffer, ")\n");
+  buffer_append(allocator, buffer, count);
+  buffer_append(allocator, buffer, ")\n");
 
   if (indent < 20) {
     for (size_t i = 0; i < array_size(array); i++) {
@@ -189,12 +190,12 @@ void error_pretty_print_array(
       pretty_print_indent(buffer, relative_indent + 1);
 
       if (i == array_size(array) - 1) {
-        buffer_append(buffer, "└── ");
+        buffer_append(allocator, buffer, "└── ");
       } else {
-        buffer_append(buffer, "├── ");
+        buffer_append(allocator, buffer, "├── ");
       }
 
-      error_pretty_print(child, indent + 1, relative_indent + 1, buffer);
+      error_pretty_print(allocator, child, indent + 1, relative_indent + 1, buffer);
 
       if (i != array_size(array) - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
     }
@@ -202,29 +203,29 @@ void error_pretty_print_array(
 }
 
 <%- errors.each do |error| -%>
-static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+static void error_pretty_print_<%= error.human %>(arena_allocator_T* allocator, <%= error.struct_type %>* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
   if (!error) { return; }
 
-  buffer_append(buffer, "@ ");
-  buffer_append(buffer, error_human_type((ERROR_T*) error));
-  buffer_append(buffer, " ");
+  buffer_append(allocator, buffer, "@ ");
+  buffer_append(allocator, buffer, error_human_type((ERROR_T*) error));
+  buffer_append(allocator, buffer, " ");
 
   pretty_print_location(error->base.location, buffer);
-  buffer_append(buffer, "\n");
+  buffer_append(allocator, buffer, "\n");
 
-  pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
+  pretty_print_quoted_property(allocator, "message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>
-  pretty_print_position_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_position_property(allocator, error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenField -%>
-  pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_token_property(allocator, error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>
-  pretty_print_property(token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_property(allocator, token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::SizeTField -%>
-  pretty_print_size_t_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_size_t_property(allocator, error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::StringField -%>
-  pretty_print_quoted_property("<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_quoted_property(allocator, "<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -232,12 +233,12 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
 }
 
 <%- end -%>
-void error_pretty_print(ERROR_T* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+void error_pretty_print(arena_allocator_T* allocator, ERROR_T* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
   if (!error) { return; }
 
   switch (error->type) {
     <%- errors.each do |error| -%>
-    case <%= error.type %>: error_pretty_print_<%= error.human %>((<%= error.struct_type %>*) error, indent, relative_indent, buffer); break;
+    case <%= error.type %>: error_pretty_print_<%= error.human %>(allocator, (<%= error.struct_type %>*) error, indent, relative_indent, buffer); break;
     <%- end -%>
   }
 }
