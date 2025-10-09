@@ -38,26 +38,25 @@ export const INLINE_ELEMENTS = new Set([
   'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
 ])
 
-export const  CONTENT_PRESERVING_ELEMENTS = new Set([
+export const CONTENT_PRESERVING_ELEMENTS = new Set([
   'script', 'style', 'pre', 'textarea'
 ])
 
-export const  SPACEABLE_CONTAINERS = new Set([
+export const SPACEABLE_CONTAINERS = new Set([
   'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
 
-export const  TIGHT_GROUP_PARENTS = new Set([
+export const TIGHT_GROUP_PARENTS = new Set([
   'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead',
   'tbody', 'tfoot'
 ])
 
-export const  TIGHT_GROUP_CHILDREN = new Set([
+export const TIGHT_GROUP_CHILDREN = new Set([
   'li', 'option', 'td', 'th', 'dt', 'dd'
 ])
 
-export const  SPACING_THRESHOLD = 3
-
+export const SPACING_THRESHOLD = 3
 
 /**
  * Token list attributes that contain space-separated values and benefit from
