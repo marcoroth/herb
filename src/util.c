@@ -13,18 +13,6 @@ int is_newline(const int character) {
   return character == 13 || character == 10;
 }
 
-int count_in_string(const char* string, const char character) {
-  int count = 0;
-
-  while (*string != '\0') {
-    if (*string == character) { count++; }
-
-    string++;
-  }
-
-  return count;
-}
-
 char* replace_char(char* string, const char find, const char replace) {
   char* original_string = string;
 
