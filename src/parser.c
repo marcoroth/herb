@@ -935,7 +935,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   AST_HTML_CLOSE_TAG_NODE_T* close_tag = parser_parse_html_close_tag(parser);
 
   if (parser_in_svg_context(parser) == false && is_void_element(close_tag->tag_name->value)) {
-    array_push(body, close_tag);
+    array_push(allocator, body, close_tag);
     parser_parse_in_data_state(parser, body, errors);
     close_tag = parser_parse_html_close_tag(parser);
   }
