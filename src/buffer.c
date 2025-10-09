@@ -4,12 +4,13 @@
 
 #include "include/buffer.h"
 #include "include/macros.h"
+#include "include/memory_arena.h"
 #include "include/util.h"
 
-bool buffer_init(buffer_T* buffer, const size_t capacity) {
+bool buffer_init(arena_allocator_T* allocator, buffer_T* buffer, const size_t capacity) {
   buffer->capacity = capacity;
   buffer->length = 0;
-  buffer->value = calloc(sizeof(char), (buffer->capacity + 1));
+  buffer->value = arena_alloc(allocator, sizeof(char) * (buffer->capacity + 1));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -21,8 +22,8 @@ bool buffer_init(buffer_T* buffer, const size_t capacity) {
   return true;
 }
 
-buffer_T* buffer_new(const size_t capacity) {
-  buffer_T* buffer = malloc(sizeof(buffer_T));
+buffer_T* buffer_new(arena_allocator_T* allocator, const size_t capacity) {
+  buffer_T* buffer = arena_alloc(allocator, sizeof(buffer_T));
 
   if (!buffer_init(buffer, capacity)) {
     free(buffer);
@@ -75,13 +76,13 @@ bool buffer_increase_capacity(buffer_T* buffer, const size_t additional_capacity
  * @param new_capacity The new capacity to resize the buffer to
  * @return true if capacity was resized, false if reallocation failed
  */
-bool buffer_resize(buffer_T* buffer, const size_t new_capacity) {
+bool buffer_resize(arena_allocator_T* allocator, buffer_T* buffer, const size_t new_capacity) {
   if (new_capacity + 1 >= SIZE_MAX) {
     fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
     exit(1);
   }
-
-  char* new_value = realloc(buffer->value, new_capacity + 1);
+  char* new_value = arena_alloc(allocator, new_capacity + 1);
+  memcpy(new_value, buffer->value, buffer->capacity * sizeof(char));
 
   if (unlikely(new_value == NULL)) {
     fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);
@@ -184,10 +185,10 @@ void buffer_append_char(buffer_T* buffer, const char character) {
   buffer_append(buffer, string);
 }
 
-void buffer_append_repeated(buffer_T* buffer, const char character, size_t length) {
+void buffer_append_repeated(arena_allocator_T* allocator, buffer_T* buffer, const char character, size_t length) {
   if (length == 0) { return; }
 
-  char* spaces = malloc(length + 1);
+  char* spaces = arena_alloc(allocator, length + 1);
   if (!spaces) { return; }
 
   memset(spaces, character, length);
