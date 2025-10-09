@@ -442,4 +442,929 @@ describe("@herb-tools/formatter", () => {
        </p>
      `)
   })
+
+  test("https://github.com/marcoroth/herb/issues/469#issue-3379906221", () => {
+    const input = dedent`
+       <%= @user.translated_greeting %>,<br>
+     `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+       <%= @user.translated_greeting %>,<br>
+     `)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issue-3351228515", () => {
+    const input = dedent`
+      <!DOCTYPE html>
+      <html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" data-theme="light">
+        <head>
+          <meta charset="utf-8">
+          <meta http-equiv="x-ua-compatible" content="ie=edge">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no">
+          <meta name="x-apple-disable-message-reformatting">
+          <title><%= message.subject %> | Company</title>
+          <%= stylesheet_link_tag "mailer", media: "all" %>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+          </style>
+          <style>
+            @media only screen and (max-width: 600px) {
+              .hidden-mobile {
+                display: none !important;
+              }
+            }
+            @media only screen and (min-width: 601px) {
+              .hidden-desktop {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body  style="font-family: 'DM Sans', Arial, sans-serif;">
+          <% if content_for?(:preheader) %>
+            <div class="hidden">
+              <%= yield :preheader %>
+            </div>
+          <% end %>
+          <div role="article" aria-roledescription="email" aria-label="<%= message.subject %>" lang="en">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" class="bg-background leading-normal text-base">
+              <tr>
+                <td height="32"></td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <table border="0" cellpadding="0" cellspacing="0" class="w-full max-w-[684px] px-0 sm:w-[684px] sm-px-2" width="100%">
+                    <tr>
+                      <td>
+                        <div class="shadow-xl border border-border-secondary rounded-lg overflow-hidden">
+                          <div class="space-y-2 bg-primary-foreground p-4"><% if content_for?(:header) %>
+                              <%= yield :header %>
+                            <% else %>
+                              <%= hosted_image_tag('mailer/header-logo.png', class: 'h-[35px] block mb-3') %>
+                            <% end %>
+                            <%= yield %>
+                          </div>
+                          <div class="p-4 bg-primary-foreground text-center border-t border-border-secondary">
+                            <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
+                            <p class="text-muted-foreground text-sm leading-5">
+                              &copy;<%= Time.current.year %> - Company Inc, All rights reserved.
+                              <br />
+                              Main Street, San Francisco, CAs, USA 12345
+                              <br />
+                              <a href="mailto:support@company.com">Contact Support</a> | <a href="https://company.com/terms">Terms of Service</a> | <a href="https://company.com/privacy">Privacy Policy</a>
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td height="32"></td>
+              </tr>
+            </table>
+          </div>
+        </body>
+      </html>
+    `
+
+    const expected = dedent`
+      <!DOCTYPE html>
+
+      <html
+        xmlns:v="urn:schemas-microsoft-com:vml"
+        xmlns:o="urn:schemas-microsoft-com:office:office"
+        data-theme="light"
+      >
+        <head>
+          <meta charset="utf-8">
+
+          <meta http-equiv="x-ua-compatible" content="ie=edge">
+
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+
+          <meta
+            name="format-detection"
+            content="telephone=no, date=no, address=no, email=no, url=no"
+          >
+
+          <meta name="x-apple-disable-message-reformatting">
+
+          <title><%= message.subject %> | Company</title>
+
+          <%= stylesheet_link_tag "mailer", media: "all" %>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+          </style>
+
+          <style>
+            @media only screen and (max-width: 600px) {
+              .hidden-mobile {
+                display: none !important;
+              }
+            }
+            @media only screen and (min-width: 601px) {
+              .hidden-desktop {
+                display: none !important;
+              }
+            }
+          </style>
+        </head>
+        <body style="font-family: 'DM Sans', Arial, sans-serif;">
+          <% if content_for?(:preheader) %>
+            <div class="hidden"><%= yield :preheader %></div>
+          <% end %>
+          <div
+            role="article"
+            aria-roledescription="email"
+            aria-label="<%= message.subject %>"
+            lang="en"
+          >
+            <table
+              border="0"
+              cellpadding="0"
+              cellspacing="0"
+              width="100%"
+              class="bg-background leading-normal text-base"
+            >
+              <tr>
+                <td height="32"></td>
+              </tr>
+              <tr>
+                <td align="center">
+                  <table
+                    border="0"
+                    cellpadding="0"
+                    cellspacing="0"
+                    class="w-full max-w-[684px] px-0 sm:w-[684px] sm-px-2"
+                    width="100%"
+                  >
+                    <tr>
+                      <td>
+                        <div
+                          class="
+                            shadow-xl border border-border-secondary rounded-lg
+                            overflow-hidden
+                          "
+                        >
+                          <div class="space-y-2 bg-primary-foreground p-4">
+                            <% if content_for?(:header) %>
+                              <%= yield :header %>
+                            <% else %>
+                              <%= hosted_image_tag('mailer/header-logo.png', class: 'h-[35px] block mb-3') %>
+                            <% end %>
+                            <%= yield %>
+                          </div>
+                          <div
+                            class="
+                              p-4 bg-primary-foreground text-center border-t
+                              border-border-secondary
+                            "
+                          >
+                            <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
+                            <p class="text-muted-foreground text-sm leading-5">
+                              &copy; <%= Time.current.year %> - Company Inc, All
+                              rights reserved.
+                              <br />
+                              Main Street, San Francisco, CAs, USA 12345
+                              <br />
+                              <a href="mailto:support@company.com">Contact Support</a>
+                              |
+                              <a href="https://company.com/terms">Terms of Service</a>
+                              |
+                              <a href="https://company.com/privacy">Privacy Policy</a>
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td height="32"></td>
+              </tr>
+            </table>
+          </div>
+        </body>
+      </html>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 1", () => {
+    const input = dedent`
+      <% unless skip_sidebar? || sidebar_sections_for_action.blank? %>
+      <!-- <details class="d-collapse overflow-visible d-collapse-arrow border" <%= 'open' if params[:commit] == "Filter" && params[:q].present? %>> -->
+        <!-- <summary class="d-collapse-title text-xl font-medium">Filters</summary> -->
+        <!-- <div class="d-collapse-content"> </div> -->
+      <!-- </details> -->
+      <%= render "active_admin/shared/sidebar_sections" %>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% unless skip_sidebar? || sidebar_sections_for_action.blank? %>
+        <!-- <details class="d-collapse overflow-visible d-collapse-arrow border" <%= 'open' if params[:commit] == "Filter" && params[:q].present? %>> -->
+        <!-- <summary class="d-collapse-title text-xl font-medium">Filters</summary> -->
+        <!-- <div class="d-collapse-content"> </div> -->
+        <!-- </details> -->
+        <%= render "active_admin/shared/sidebar_sections" %>
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 2", () => {
+    const input = dedent`
+      <div class="relative">
+      <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
+        <span>Show/Hide Columns</span>
+      </button>
+      <div id="column-dropdown" class="absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2 hidden">
+        <div class="flex flex-col space-y-1 min-w-[200px]">
+          <% columns.each do |column| %>
+            <div class="form-control">
+              <label class="cursor-pointer label justify-start gap-2">
+                <input type="checkbox" class="column-toggle checkbox checkbox-sm" data-column="<%= column[:name] %>" <%= 'checked' if column[:default_visible] %>>
+                <span class="label-text text-muted-foreground">
+                  <%= column[:label] %>
+                </span>
+              </label>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      </div>
+
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Column toggle functionality
+        const columnToggleBtn = document.getElementById('column-toggle-btn');
+        const columnDropdown = document.getElementById('column-dropdown');
+
+        // Toggle dropdown visibility
+        columnToggleBtn.addEventListener('click', function() {
+          columnDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+          if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
+            columnDropdown.classList.add('hidden');
+          }
+        });
+
+        // Handle column visibility toggles
+        const columnToggles = document.querySelectorAll('.column-toggle');
+        columnToggles.forEach(toggle => {
+          toggle.addEventListener('change', function() {
+            const columnName = this.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+
+            columnCells.forEach(cell => {
+              if (this.checked) {
+                cell.style.display = '';
+              } else {
+                cell.style.display = 'none';
+              }
+            });
+
+            // Save column visibility preferences to localStorage
+            localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
+          });
+
+          // Apply saved preferences on load
+          const columnName = toggle.dataset.column;
+          const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
+
+          if (savedPreference === 'hidden') {
+            toggle.checked = false;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+
+         columnToggles.forEach(toggle => {
+          if (!toggle.checked) {
+            const columnName = toggle.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+      });
+      </script>
+     `
+
+     const expected = dedent`
+       <div class="relative">
+         <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
+           <span>Show/Hide Columns</span>
+         </button>
+         <div
+           id="column-dropdown"
+           class="
+             absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
+             hidden
+           "
+         >
+           <div class="flex flex-col space-y-1 min-w-[200px]">
+             <% columns.each do |column| %>
+               <div class="form-control">
+                 <label class="cursor-pointer label justify-start gap-2">
+                   <input
+                     type="checkbox"
+                     class="column-toggle checkbox checkbox-sm"
+                     data-column="<%= column[:name] %>"
+                     <%= 'checked' if column[:default_visible] %>
+                   >
+                   <span class="label-text text-muted-foreground"><%= column[:label] %></span>
+                 </label>
+               </div>
+             <% end %>
+           </div>
+         </div>
+       </div>
+
+       <script>
+       document.addEventListener('DOMContentLoaded', function() {
+         // Column toggle functionality
+         const columnToggleBtn = document.getElementById('column-toggle-btn');
+         const columnDropdown = document.getElementById('column-dropdown');
+
+         // Toggle dropdown visibility
+         columnToggleBtn.addEventListener('click', function() {
+           columnDropdown.classList.toggle('hidden');
+         });
+
+         // Close dropdown when clicking outside
+         document.addEventListener('click', function(event) {
+           if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
+             columnDropdown.classList.add('hidden');
+           }
+         });
+
+         // Handle column visibility toggles
+         const columnToggles = document.querySelectorAll('.column-toggle');
+         columnToggles.forEach(toggle => {
+           toggle.addEventListener('change', function() {
+             const columnName = this.dataset.column;
+             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+
+             columnCells.forEach(cell => {
+               if (this.checked) {
+                 cell.style.display = '';
+               } else {
+                 cell.style.display = 'none';
+               }
+             });
+
+             // Save column visibility preferences to localStorage
+             localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
+           });
+
+           // Apply saved preferences on load
+           const columnName = toggle.dataset.column;
+           const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
+
+           if (savedPreference === 'hidden') {
+             toggle.checked = false;
+             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+             columnCells.forEach(cell => {
+               cell.style.display = 'none';
+             });
+           }
+         });
+
+          columnToggles.forEach(toggle => {
+           if (!toggle.checked) {
+             const columnName = toggle.dataset.column;
+             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+             columnCells.forEach(cell => {
+               cell.style.display = 'none';
+             });
+           }
+         });
+       });
+       </script>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 3", () => {
+    const input = dedent`
+      <style>
+        [data-test-page-header] {
+          margin-bottom: 0px;
+        }
+
+        @media (max-width: 768px) {
+          [data-test-page-header] nav {
+            display: none;
+          }
+        }
+      </style>
+
+      <% content_for :head do %>
+        <%= javascript_import_module_tag "src/chat" %>
+      <% end %>
+
+      <script>
+        window.chat_id = <%= chat.id %>;
+        window.chat_display_name = <%= chat.display_name.to_json.html_safe %>;
+        window.messages = <%= messages.to_json.html_safe %>;
+        window.settings = <%= chat.settings.to_json.html_safe %>;
+      </script>
+
+      <div class="pt-3" id="chat"></div>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(input)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 4", () => {
+    const input = dedent`
+      <% prices = params.dig("subscription", "prices") || resource.price_list.dig("products")&.map { |key, value| {product_id: key, stripe_price_id: value} } || [{product_id: Product::PUBLIC_IDS[:overweight]}] %>
+      <%= semantic_form_for [:admin, resource], url: override_prices_admin_subscription_path(resource), method: :post do |f| %>
+        <div>
+          <%= f.inputs do %>
+            <div id="price-inputs-container">
+              <% prices.each_with_index do |price, index| %>
+                <% stripe_price = Rails.cache.fetch("stripe_price_#{price[:stripe_price_id]}", expires_in: 1.hour) { Stripe::Price.retrieve(price[:stripe_price_id]) } if price[:stripe_price_id].present? %>
+
+                <div class="price-override-item">
+                  <%= f.input :product_id,
+                    as: :select,
+                    collection: Product.all,
+                    selected: price[:product_id],
+                    label: "Product #{index + 1}",
+                    value_field: :public_id,
+                    input_html: {
+                      name: "subscription[prices][#{index}][product_id]",
+                    } %>
+
+                  <%= f.input :amount,
+                    as: :number,
+                    label: "Price",
+                    input_html: {
+                      name: "subscription[prices][#{index}][amount]",
+                      value: price[:amount]&.to_i || stripe_price&.unit_amount&./(100) || 0,
+                      min: 0
+                    } %>
+
+                  <% if index > 0 %>
+                    <a
+                      href="#"
+                      class="remove-price-item link text-red-500 hover:text-red-700"
+                    >
+                      Remove Product
+                    </a>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="add-price-section">
+              <%= link_to "Add Another Product", "#", id: "add-price-btn", class: "button secondary" %>
+            </div>
+          <% end %>
+        </div>
+
+        <script id="price_item_template" type="text/template">
+          <div class="price-override-item">
+            <%= f.input :product_id,
+              as: :select,
+              collection: Product.all,
+              label: "Product INDEX_LABEL",
+              class: "select required",
+              value_field: :public_id,
+              input_html: {
+                id: "subscription_prices_INDEX_product_id",
+                name: "subscription[prices][INDEX][product_id]",
+                data: {
+                  searchable_field: "name",
+                  display_field: "display_name",
+                  search_url: "/admin/products.json?order=id_desc&q%5Bname_cont%5D={{query}}&commit=Filter"
+                }
+              } %>
+            <%= f.input :amount,
+              label: "Custom Price",
+              as: :number,
+              input_html: {
+                id: "subscription_prices_INDEX_amount",
+                name: "subscription[prices][INDEX][amount]",
+                value: 0,
+                min: 0,
+              } %>
+
+            <a href="#" class="remove-price-item link text-red-500 hover:text-red-700">Remove Product</a>
+          </div>
+        </script>
+
+        <div>
+          <%= f.actions do %>
+            <%= f.action :submit, label: "Override Prices" %>
+            <%= link_to "Cancel", resource_path(resource), class: "button" %>
+          <% end %>
+        </div>
+      <% end %>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          var addPriceBtn = document.querySelector('#add-price-btn');
+          var container = document.querySelector('#price-inputs-container');
+          var template = document.querySelector('#price_item_template').innerHTML;
+          var priceItemCounter = <%= prices.length %>;
+
+          addPriceBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var newTemplate = template
+              .replace(/INDEX_LABEL/g, priceItemCounter + 1)
+              .replace(/INDEX/g, priceItemCounter);
+            container.insertAdjacentHTML('beforeend', newTemplate);
+
+            var newItem = container.querySelector('.price-override-item:last-child');
+            var selectElement = newItem.querySelector('select');
+
+            if (selectElement && selectElement.dataset.searchUrl) {
+              new TomSelect(selectElement, {
+                allowEmptyOption: true,
+                create: false,
+                itemClass: "text-foreground px-1 py-0.5 rounded",
+                valueField: selectElement.dataset.valueField,
+                labelField: selectElement.dataset.displayField,
+                searchField: [selectElement.dataset.displayField],
+                plugins: ['dropdown_input'],
+
+                render: {
+                  option: function(data, escape) {
+                    return '<div>' + escape(data[selectElement.dataset.displayField] || '[blank]') + '</div>';
+                  },
+                  item: function(data, escape) {
+                    return '<div>' + escape(data[selectElement.dataset.displayField] || '[blank]') + '</div>';
+                  },
+                },
+
+                load: function(query, callback) {
+                  if (!query.length) return callback();
+                  fetch(selectElement.dataset.searchUrl.replace('{{query}}', encodeURIComponent(query)))
+                    .then(function(response) {
+                      return response.json();
+                    })
+                    .then(function(json) {
+                      const augmentedJson = json.map(item => ({ ...item, search_term: Object.values(item).join(' ') }))
+                      callback(augmentedJson);
+                    }).catch(function() {
+                      callback();
+                    });
+                },
+              });
+            }
+
+            priceItemCounter++;
+          });
+
+          container.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('remove-price-item')) {
+              e.preventDefault();
+              var priceItem = e.target.closest('.price-override-item');
+              if (priceItem) {
+                var destroyInput = priceItem.querySelector('input[type="hidden"][name*="[_destroy]"]');
+                if (destroyInput) {
+                  destroyInput.value = '1';
+                  priceItem.style.display = 'none';
+                } else {
+                  priceItem.remove();
+                }
+              }
+            }
+          });
+        });
+      </script>
+     `
+
+     const expected = dedent`
+       <% prices = params.dig("subscription", "prices") || resource.price_list.dig("products")&.map { |key, value| {product_id: key, stripe_price_id: value} } || [{product_id: Product::PUBLIC_IDS[:overweight]}] %>
+
+       <%= semantic_form_for [:admin, resource], url: override_prices_admin_subscription_path(resource), method: :post do |f| %>
+         <div>
+           <%= f.inputs do %>
+             <div id="price-inputs-container">
+               <% prices.each_with_index do |price, index| %>
+                 <% stripe_price = Rails.cache.fetch("stripe_price_#{price[:stripe_price_id]}", expires_in: 1.hour) { Stripe::Price.retrieve(price[:stripe_price_id]) } if price[:stripe_price_id].present? %>
+
+                 <div class="price-override-item">
+                   <%= f.input :product_id,
+                     as: :select,
+                     collection: Product.all,
+                     selected: price[:product_id],
+                     label: "Product #{index + 1}",
+                     value_field: :public_id,
+                     input_html: {
+                       name: "subscription[prices][#{index}][product_id]",
+                     } %>
+
+                   <%= f.input :amount,
+                     as: :number,
+                     label: "Price",
+                     input_html: {
+                       name: "subscription[prices][#{index}][amount]",
+                       value: price[:amount]&.to_i || stripe_price&.unit_amount&./(100) || 0,
+                       min: 0
+                     } %>
+
+                   <% if index > 0 %>
+                     <a
+                       href="#"
+                       class="remove-price-item link text-red-500 hover:text-red-700"
+                     >
+                       Remove Product
+                     </a>
+                   <% end %>
+                 </div>
+               <% end %>
+             </div>
+
+             <div class="add-price-section">
+               <%= link_to "Add Another Product", "#", id: "add-price-btn", class: "button secondary" %>
+             </div>
+           <% end %>
+         </div>
+
+         <script id="price_item_template" type="text/template">
+           <div class="price-override-item">
+             <%= f.input :product_id,
+               as: :select,
+               collection: Product.all,
+               label: "Product INDEX_LABEL",
+               class: "select required",
+               value_field: :public_id,
+               input_html: {
+                 id: "subscription_prices_INDEX_product_id",
+                 name: "subscription[prices][INDEX][product_id]",
+                 data: {
+                   searchable_field: "name",
+                   display_field: "display_name",
+                   search_url: "/admin/products.json?order=id_desc&q%5Bname_cont%5D={{query}}&commit=Filter"
+                 }
+               } %>
+             <%= f.input :amount,
+               label: "Custom Price",
+               as: :number,
+               input_html: {
+                 id: "subscription_prices_INDEX_amount",
+                 name: "subscription[prices][INDEX][amount]",
+                 value: 0,
+                 min: 0,
+               } %>
+
+             <a href="#" class="remove-price-item link text-red-500 hover:text-red-700">Remove Product</a>
+           </div>
+         </script>
+
+         <div>
+           <%= f.actions do %>
+             <%= f.action :submit, label: "Override Prices" %>
+             <%= link_to "Cancel", resource_path(resource), class: "button" %>
+           <% end %>
+         </div>
+       <% end %>
+
+       <script>
+         document.addEventListener('DOMContentLoaded', function() {
+           var addPriceBtn = document.querySelector('#add-price-btn');
+           var container = document.querySelector('#price-inputs-container');
+           var template = document.querySelector('#price_item_template').innerHTML;
+           var priceItemCounter = <%= prices.length %>;
+
+           addPriceBtn.addEventListener('click', function(e) {
+             e.preventDefault();
+             var newTemplate = template
+               .replace(/INDEX_LABEL/g, priceItemCounter + 1)
+               .replace(/INDEX/g, priceItemCounter);
+             container.insertAdjacentHTML('beforeend', newTemplate);
+
+             var newItem = container.querySelector('.price-override-item:last-child');
+             var selectElement = newItem.querySelector('select');
+
+             if (selectElement && selectElement.dataset.searchUrl) {
+               new TomSelect(selectElement, {
+                 allowEmptyOption: true,
+                 create: false,
+                 itemClass: "text-foreground px-1 py-0.5 rounded",
+                 valueField: selectElement.dataset.valueField,
+                 labelField: selectElement.dataset.displayField,
+                 searchField: [selectElement.dataset.displayField],
+                 plugins: ['dropdown_input'],
+
+                 render: {
+                   option: function(data, escape) {
+                     return '<div>' + escape(data[selectElement.dataset.displayField] || '[blank]') + '</div>';
+                   },
+                   item: function(data, escape) {
+                     return '<div>' + escape(data[selectElement.dataset.displayField] || '[blank]') + '</div>';
+                   },
+                 },
+
+                 load: function(query, callback) {
+                   if (!query.length) return callback();
+                   fetch(selectElement.dataset.searchUrl.replace('{{query}}', encodeURIComponent(query)))
+                     .then(function(response) {
+                       return response.json();
+                     })
+                     .then(function(json) {
+                       const augmentedJson = json.map(item => ({ ...item, search_term: Object.values(item).join(' ') }))
+                       callback(augmentedJson);
+                     }).catch(function() {
+                       callback();
+                     });
+                 },
+               });
+             }
+
+             priceItemCounter++;
+           });
+
+           container.addEventListener('click', function(e) {
+             if (e.target && e.target.classList.contains('remove-price-item')) {
+               e.preventDefault();
+               var priceItem = e.target.closest('.price-override-item');
+               if (priceItem) {
+                 var destroyInput = priceItem.querySelector('input[type="hidden"][name*="[_destroy]"]');
+                 if (destroyInput) {
+                   destroyInput.value = '1';
+                   priceItem.style.display = 'none';
+                 } else {
+                   priceItem.remove();
+                 }
+               }
+             }
+           });
+         });
+       </script>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 5", () => {
+    const input = dedent`
+      <%# Non-link tag that stands for skipped pages...
+        - available local variables
+          current_page:  a page object for the currently displayed page
+          total_pages:   total number of pages
+          per_page:      number of items to fetch per page
+          remote:        data-remote
+      -%>
+      <span class="flex items-center justify-center px-2.5 py-3 h-8 leading-tight text-gray-500 dark:text-gray-400">
+        <%= t('views.pagination.truncate').html_safe %>
+      </span>
+     `
+    const expected = dedent`
+      <%#
+        Non-link tag that stands for skipped pages...
+        - available local variables
+          current_page:  a page object for the currently displayed page
+          total_pages:   total number of pages
+          per_page:      number of items to fetch per page
+          remote:        data-remote
+      -%>
+
+      <span
+        class="
+          flex items-center justify-center px-2.5 py-3 h-8 leading-tight
+          text-gray-500 dark:text-gray-400
+        "
+      >
+        <%= t('views.pagination.truncate').html_safe %>
+      </span>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 6", () => {
+    const input = dedent`
+      <%= render 'user_mailer/greeting' %>
+      <p>
+        Welcome back! Your subscription to the <b><%= @subscription.plan&.name || "Custom Plan" %></b> has been successfully resumed.
+      </p>
+      <p>
+      Subscription Details:<br>
+      Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b><br>
+      Resumption Date: <b><%= render_date(Time.current, format: '%B %e, %Y') %></b><br>
+      Pickups Left: <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b><br>
+      Next Billing Date: <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b><br>
+      </p>
+
+      <p>Why wait now? Schedule your next pickup today!</p>
+
+      <%= render "user_mailer/schedule_now" %>
+      <%= render "user_subscription_mailer/more_info" %>
+      <%= render "user_mailer/questions" %>
+      <p>
+      Thank you for choosing Company again. We look forward to serving you!
+      </p>
+      <%= render "user_mailer/thanks" %>
+     `
+
+    const expected = dedent`
+      <%= render 'user_mailer/greeting' %>
+
+      <p>
+        Welcome back! Your subscription to the
+        <b><%= @subscription.plan&.name || "Custom Plan" %></b> has been successfully
+        resumed.
+      </p>
+
+      <p>
+        Subscription Details:
+        <br>
+        Plan Name: <b><%= @subscription.plan&.name || "Custom Plan" %></b>
+        <br>
+        Resumption Date: <b><%= render_date(Time.current, format: '%B %e, %Y') %></b>
+        <br>
+        Pickups Left:
+        <b><%= @subscription.credit_service.available_credits.values.first || 0 %><%= " (#{@subscription.loads * 20}lbs per pickup)" if @subscription.loads > 0 %></b>
+        <br>
+        Next Billing Date:
+        <b><%= render_date(@subscription.current_period_end, format: '%B %e, %Y') %></b>
+        <br>
+      </p>
+
+      <p>Why wait now? Schedule your next pickup today!</p>
+
+      <%= render "user_mailer/schedule_now" %>
+
+      <%= render "user_subscription_mailer/more_info" %>
+
+      <%= render "user_mailer/questions" %>
+
+      <p>
+        Thank you for choosing Company again. We look forward to serving you!
+      </p>
+
+      <%= render "user_mailer/thanks" %>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("https://github.com/marcoroth/herb/issues/436#issuecomment-3356738094", () => {
+    const input = dedent`
+      <% if cover.present? %>
+        <figure class="figure">
+          <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
+          <figcaption class="figure-caption text-center">
+            <span>
+              <strong>Cover Image</strong><br>
+              Dimensions
+              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
+              &mdash;
+              <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
+            </span>
+          </figcaption>
+        </figure>
+      <% end %>
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(input)
+  })
+
+  test("", () => {
+    const input = dedent`
+
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(input)
+  })
+
+  test("", () => {
+    const input = dedent`
+
+     `
+
+    const result = formatter.format(input)
+    expect(result).toBe(input)
+  })
 })
