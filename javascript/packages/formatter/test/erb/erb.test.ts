@@ -1388,21 +1388,32 @@ describe("@herb-tools/formatter", () => {
     expect(result).toBe(input)
   })
 
-  test("", () => {
+  test("adjecent ERB text within elements", () => {
     const input = dedent`
+      <div>
+        <div>
+          <div>
+            <p><%= formatted %> text that needs <%= needs %> <%= to_be_formatted %> without being reset to the <b><i>start of the line</i></b>. Text <%= also_with %><%= ERB_tags_next_to_each_other %> and after.</p>
+          </div>
+        </div>
+      </div>
+    `
 
-     `
+    const expected = dedent`
+      <div>
+        <div>
+          <div>
+            <p>
+              <%= formatted %> text that needs <%= needs %> <%= to_be_formatted %>
+              without being reset to the <b><i>start of the line</i></b>. Text
+              <%= also_with %><%= ERB_tags_next_to_each_other %> and after.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
 
     const result = formatter.format(input)
-    expect(result).toBe(input)
-  })
-
-  test("", () => {
-    const input = dedent`
-
-     `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+    expect(result).toBe(expected)
   })
 })

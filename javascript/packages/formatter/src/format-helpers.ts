@@ -116,6 +116,7 @@ export function startsWithERBTag(text: string): boolean {
 export function needsSpaceBetween(currentLine: string, word: string): boolean {
   if (isClosingPunctuation(word)) return false
   if (lineEndsWithOpeningPunctuation(currentLine)) return false
+  if (currentLine.endsWith(' ')) return false
   if (endsWithERBTag(currentLine) && startsWithERBTag(word)) return false
 
   return true
@@ -126,6 +127,10 @@ export function needsSpaceBetween(currentLine: string, word: string): boolean {
  */
 export function buildLineWithWord(currentLine: string, word: string): string {
   if (!currentLine) return word
+
+  if (word === ' ') {
+    return currentLine.endsWith(' ') ? currentLine : `${currentLine} `
+  }
 
   return needsSpaceBetween(currentLine, word) ? `${currentLine} ${word}` : `${currentLine}${word}`
 }

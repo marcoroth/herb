@@ -760,7 +760,7 @@ export class FormatPrinter extends Printer {
 
     const analysis = this.elementFormattingAnalysis.get(element)
     const hasTextFlow = this.isInTextFlowContext(null, body)
-    const children = filterSignificantChildren(body, hasTextFlow)
+    const children = filterSignificantChildren(body)
 
     if (analysis?.elementContentInline) {
       if (children.length === 0) return
@@ -1289,7 +1289,7 @@ export class FormatPrinter extends Printer {
    */
   private shouldRenderElementContentInline(node: HTMLElementNode): boolean {
     const tagName = getTagName(node)
-    const children = filterSignificantChildren(node.body, this.isInTextFlowContext(null, node.body))
+    const children = filterSignificantChildren(node.body)
     const isInlineElement = this.isInlineElement(tagName)
     const openTagInline = this.shouldRenderOpenTagInline(node)
 
@@ -1353,7 +1353,7 @@ export class FormatPrinter extends Printer {
     if (node.open_tag?.tag_closing?.value === "/>") return true
     if (this.isContentPreserving(node)) return true
 
-    const children = filterSignificantChildren(node.body, this.isInTextFlowContext(null, node.body))
+    const children = filterSignificantChildren(node.body)
 
     if (children.length === 0) return true
 
@@ -1631,18 +1631,19 @@ export class FormatPrinter extends Printer {
     const result: Array<{ unit: ContentUnit; node: Node | null }> = []
 
     for (const child of children) {
-      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+      if (isNode(child, WhitespaceNode)) {
+        continue
+      }
+
+      if (isPureWhitespaceNode(child) && !(isNode(child, HTMLTextNode) && child.content === ' ')) {
         continue
       }
 
       if (isNode(child, HTMLTextNode)) {
+        const isAtomic = child.content === ' '
+
         result.push({
-          unit: {
-            content: child.content,
-            type: 'text',
-            isAtomic: false,
-            breaksFlow: false
-          },
+          unit: { content: child.content, type: 'text', isAtomic, breaksFlow: false },
           node: child
         })
       } else if (isNode(child, HTMLElementNode)) {
