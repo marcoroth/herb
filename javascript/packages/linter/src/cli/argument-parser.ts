@@ -21,6 +21,7 @@ export interface ParsedArguments {
   wrapLines: boolean
   truncateLines: boolean
   useGitHubActions: boolean
+  loadCustomRules: boolean
 }
 
 export class ArgumentParser {
@@ -40,6 +41,7 @@ export class ArgumentParser {
       --json           use JSON output format (shortcut for --format json)
       --github         enable GitHub Actions annotations (combines with --format)
       --no-github      disable GitHub Actions annotations (even in GitHub Actions environment)
+      --no-custom-rules disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
       --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color       disable colored output
       --no-timing      hide timing information
@@ -62,7 +64,8 @@ export class ArgumentParser {
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" }
+        "truncate-lines": { type: "boolean" },
+        "no-custom-rules": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -123,8 +126,9 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
+    const loadCustomRules = !values["no-custom-rules"]
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, loadCustomRules }
   }
 
   private getFilePattern(positionals: string[]): string {

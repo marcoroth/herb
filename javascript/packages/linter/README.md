@@ -282,6 +282,54 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
+### Custom Rules
+
+Create custom linter rules for project-specific requirements by placing JavaScript files in `.herb/rules/`:
+
+```js [.herb/rules/no-inline-styles.js]
+import { BaseRuleVisitor, getAttributes, getAttributeName } from "@herb-tools/linter"
+
+class NoInlineStylesVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node) {
+    const attributes = getAttributes(node)
+
+    for (const attribute of attributes) {
+      const attributeName = getAttributeName(attribute)
+
+      if (attributeName === "style") {
+        this.addOffense(
+          `Avoid using inline \`style\` attributes. Use CSS classes instead.`,
+          attribute.location,
+          "warning"
+        )
+      }
+    }
+
+    super.visitHTMLOpenTagNode(node)
+  }
+}
+
+export default class NoInlineStylesRule {
+  static type = "parser"
+  get name() { return "no-inline-styles" }
+  get description() { return "Disallow inline style attributes" }
+
+  check(parseResult, context) {
+    const visitor = new NoInlineStylesVisitor(this.name, context)
+
+    visitor.visit(parseResult.value)
+
+    return visitor.offenses
+  }
+}
+```
+
+Custom rules are loaded automatically by default. Use `--no-custom-rules` to disable them.
+
+::: warning Rule Name Clashes
+If a custom rule has the same name as a built-in rule or another custom rule, you'll see a warning. The custom rule will override the built-in rule.
+:::
+
 ### Language Server Integration
 
 The linter is automatically integrated into the [Herb Language Server](https://herb-tools.dev/projects/language-server), providing real-time validation in supported editors like VS Code, Zed, and Neovim.
