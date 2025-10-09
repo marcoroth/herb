@@ -393,6 +393,7 @@ static AST_NODE_T* create_control_node(
 }
 
 static size_t process_control_structure(
+  arena_allocator_T* allocator,
   AST_NODE_T* node,
   array_T* array,
   size_t index,
@@ -864,7 +865,7 @@ static size_t process_control_structure(
     }
   }
 
-  AST_NODE_T* control_node = create_control_node(erb_node, children, subsequent, end_node, initial_type);
+  AST_NODE_T* control_node = create_control_node(allocator, erb_node, children, subsequent, end_node, initial_type);
 
   if (control_node) { array_append(allocator, output_array, control_node); }
 
@@ -887,7 +888,7 @@ static size_t process_subsequent_block(
 
   index = process_block_children(node, array, index, children, context, parent_type);
 
-  AST_NODE_T* subsequent_node = create_control_node(erb_node, children, NULL, NULL, type);
+  AST_NODE_T* subsequent_node = create_control_node(allocator, erb_node, children, NULL, NULL, type);
 
   if (index < array_size(array)) {
     AST_NODE_T* next_node = array_get(array, index);
@@ -967,7 +968,7 @@ static size_t process_block_children(
         || child_type == CONTROL_TYPE_BEGIN || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE
         || child_type == CONTROL_TYPE_UNTIL || child_type == CONTROL_TYPE_FOR || child_type == CONTROL_TYPE_BLOCK) {
       array_T* temp_array = array_init(allocator, 1);
-      size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
+      size_t new_index = process_control_structure(allocator, node, array, index, temp_array, context, child_type);
 
       if (array_size(temp_array) > 0) { array_append(allocator, children_array, array_get(temp_array, 0)); }
 
@@ -1012,11 +1013,11 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
       case CONTROL_TYPE_UNTIL:
       case CONTROL_TYPE_FOR:
       case CONTROL_TYPE_BLOCK:
-        index = process_control_structure(node, array, index, new_array, context, type);
+        index = process_control_structure(allocator, node, array, index, new_array, context, type);
         continue;
 
       case CONTROL_TYPE_YIELD: {
-        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(allocator, 8), NULL, NULL, type);
+        AST_NODE_T* yield_node = create_control_node(allocator, erb_node, array_init(allocator, 8), NULL, NULL, type);
 
         if (yield_node) {
           array_append(allocator, new_array, yield_node);
