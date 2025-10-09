@@ -24,7 +24,6 @@
         "./extension/libherb/herb.c",
         "./extension/libherb/html_util.c",
         "./extension/libherb/io.c",
-        "./extension/libherb/json.c",
         "./extension/libherb/lexer_peek_helpers.c",
         "./extension/libherb/lexer.c",
         "./extension/libherb/location.c",

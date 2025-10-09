@@ -7,8 +7,8 @@
 #include "include/memory.h"
 #include "include/util.h"
 
-bool buffer_init(buffer_T* buffer) {
-  buffer->capacity = 1024;
+bool buffer_init(buffer_T* buffer, const size_t capacity) {
+  buffer->capacity = capacity;
   buffer->length = 0;
   buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
 
@@ -22,9 +22,14 @@ bool buffer_init(buffer_T* buffer) {
   return true;
 }
 
-buffer_T buffer_new(void) {
-  buffer_T buffer;
-  buffer_init(&buffer);
+buffer_T* buffer_new(const size_t capacity) {
+  buffer_T* buffer = safe_malloc(sizeof(buffer_T));
+
+  if (!buffer_init(buffer, capacity)) {
+    free(buffer);
+    return NULL;
+  }
+
   return buffer;
 }
 
@@ -231,11 +236,11 @@ void buffer_clear(buffer_T* buffer) {
   buffer->value[0] = '\0';
 }
 
-void buffer_free(buffer_T* buffer) {
-  if (!buffer) { return; }
+void buffer_free(buffer_T** buffer) {
+  if (!buffer || !*buffer) { return; }
 
-  if (buffer->value != NULL) { free(buffer->value); }
+  if ((*buffer)->value != NULL) { free((*buffer)->value); }
 
-  buffer->value = NULL;
-  buffer->length = buffer->capacity = 0;
+  free(*buffer);
+  *buffer = NULL;
 }

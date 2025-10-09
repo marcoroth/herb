@@ -73,7 +73,6 @@ The `herb` executable exposes a few commands for interacting with `.html.erb` fi
 Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
 
 ./herb lex [file]      -  Lex a file
-./herb lex_json [file] -  Lex a file and return the result as json.
 ./herb parse [file]    -  Parse a file
 ./herb ruby [file]     -  Extract Ruby from a file
 ./herb html [file]     -  Extract HTML from a file

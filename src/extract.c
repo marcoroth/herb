@@ -5,6 +5,7 @@
 #include "include/lexer.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* output) {
   array_T* tokens = herb_lex(source);
@@ -121,8 +122,10 @@ void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
 }
 
 char* herb_extract_ruby_with_semicolons(const char* source) {
+  if (!source) { return NULL; }
+
   buffer_T output;
-  buffer_init(&output);
+  buffer_init(&output, strlen(source));
 
   herb_extract_ruby_to_buffer_with_semicolons(source, &output);
 
@@ -130,8 +133,10 @@ char* herb_extract_ruby_with_semicolons(const char* source) {
 }
 
 char* herb_extract(const char* source, const herb_extract_language_T language) {
+  if (!source) { return NULL; }
+
   buffer_T output;
-  buffer_init(&output);
+  buffer_init(&output, strlen(source));
 
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;
