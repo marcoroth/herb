@@ -1,10 +1,11 @@
 #include "include/analyzed_ruby.h"
+#include "include/memory_arena.h"
 
 #include <prism.h>
 #include <string.h>
 
-analyzed_ruby_T* init_analyzed_ruby(char* source) {
-  analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
+analyzed_ruby_T* init_analyzed_ruby(arena_allocator_T* allocator, char* source) {
+  analyzed_ruby_T* analyzed = arena_alloc(allocator, sizeof(analyzed_ruby_T));
 
   pm_parser_init(&analyzed->parser, (const uint8_t*) source, strlen(source), NULL);
 

@@ -2,6 +2,7 @@
 #define HERB_ANALYZED_RUBY_H
 
 #include "array.h"
+#include "memory_arena.h"
 
 #include <prism.h>
 
@@ -30,7 +31,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   bool has_yield_node;
 } analyzed_ruby_T;
 
-analyzed_ruby_T* init_analyzed_ruby(char* source);
+analyzed_ruby_T* init_analyzed_ruby(arena_allocator_T* allocator, char* source);
 void free_analyzed_ruby(analyzed_ruby_T* analyzed);
 
 #endif
