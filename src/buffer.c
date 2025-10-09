@@ -4,13 +4,12 @@
 
 #include "include/buffer.h"
 #include "include/macros.h"
-#include "include/memory.h"
 #include "include/util.h"
 
 bool buffer_init(buffer_T* buffer, const size_t capacity) {
   buffer->capacity = capacity;
   buffer->length = 0;
-  buffer->value = nullable_safe_malloc((buffer->capacity + 1) * sizeof(char));
+  buffer->value = calloc(sizeof(char), (buffer->capacity + 1));
 
   if (!buffer->value) {
     fprintf(stderr, "Error: Failed to initialize buffer with capacity of %zu.\n", buffer->capacity);
@@ -23,7 +22,7 @@ bool buffer_init(buffer_T* buffer, const size_t capacity) {
 }
 
 buffer_T* buffer_new(const size_t capacity) {
-  buffer_T* buffer = safe_malloc(sizeof(buffer_T));
+  buffer_T* buffer = malloc(sizeof(buffer_T));
 
   if (!buffer_init(buffer, capacity)) {
     free(buffer);
@@ -82,7 +81,7 @@ bool buffer_resize(buffer_T* buffer, const size_t new_capacity) {
     exit(1);
   }
 
-  char* new_value = nullable_safe_realloc(buffer->value, new_capacity + 1);
+  char* new_value = realloc(buffer->value, new_capacity + 1);
 
   if (unlikely(new_value == NULL)) {
     fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);

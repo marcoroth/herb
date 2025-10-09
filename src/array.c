@@ -3,18 +3,17 @@
 
 #include "include/array.h"
 #include "include/macros.h"
-#include "include/memory.h"
 
 size_t array_sizeof(void) {
   return sizeof(array_T);
 }
 
 array_T* array_init(const size_t capacity) {
-  array_T* array = safe_malloc(array_sizeof());
+  array_T* array = malloc(array_sizeof());
 
   array->size = 0;
   array->capacity = capacity;
-  array->items = nullable_safe_malloc(sizeof(void*) * capacity);
+  array->items = calloc(capacity, sizeof(void*));
 
   if (!array->items) {
     free(array);
@@ -45,7 +44,7 @@ void array_append(array_T* array, void* item) {
     }
 
     size_t new_size_bytes = new_capacity * sizeof(void*);
-    void* new_items = safe_realloc(array->items, new_size_bytes);
+    void* new_items = realloc(array->items, new_size_bytes);
 
     if (unlikely(new_items == NULL)) { return; }
 
