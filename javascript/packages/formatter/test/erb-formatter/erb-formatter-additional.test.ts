@@ -69,7 +69,8 @@ describe("ERB Formatter Additional Tests", () => {
 
     test("handles complex ERB with vite and stylesheet tags", () => {
       const source = dedent`
-        <%- vite_client_tag %> <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
+        <%- vite_client_tag %>
+        <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
         <%= stylesheet_link_tag "tailwind",
         "inter-font",
         "data-turbo-track": "reload",

@@ -36,9 +36,20 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("formats HTML comments and ERB comments", () => {
+  test("formats HTML comments and ERB comments on the same line", () => {
     const source = dedent`
       <!-- HTML Comment --><%# ERB Comment %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <!-- HTML Comment --><%# ERB Comment %>
+    `)
+  })
+
+  test("formats HTML comments and ERB comments on mutli-line", () => {
+    const source = dedent`
+      <!-- HTML Comment -->
+      <%# ERB Comment %>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`

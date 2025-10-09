@@ -50,12 +50,12 @@ export function hasWhitespaceBetween(children: Node[], startIndex: number, endIn
 /**
  * Filter children to remove insignificant whitespace
  */
-export function filterSignificantChildren(body: Node[], hasTextFlow: boolean): Node[] {
+export function filterSignificantChildren(body: Node[]): Node[] {
   return body.filter(child => {
     if (isNode(child, WhitespaceNode)) return false
 
     if (isNode(child, HTMLTextNode)) {
-      if (hasTextFlow && child.content === " ") return true
+      if (child.content === " ") return true
 
       return child.content.trim() !== ""
     }

@@ -17,7 +17,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("formats simple HTML with ERB content", () => {
-    const source = '<div><%= "Hello" %> World</div>'
+    const source = `<div><%= "Hello" %> World</div>`
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div><%= "Hello" %> World</div>
@@ -25,9 +25,47 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("formats standalone ERB", () => {
-    const source = "<% title %>"
+    const source = `<% title %>`
     const result = formatter.format(source)
     expect(result).toEqual(`<% title %>`)
+  })
+
+  test("ERB output tags on two lines on top-level", () => {
+    const source = dedent`
+      <%= title %>
+      <%= title %>
+    `
+    const expected = dedent`
+      <%= title %>
+
+      <%= title %>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(expected)
+  })
+
+  test("adjecent ERB output tags without space on top-level", () => {
+    const source = `<%= title %><%= title %>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<%= title %><%= title %>`)
+  })
+
+  test("adjecent ERB output tags with space on top-level", () => {
+    const source = `<%= title %> <%= title %>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<%= title %> <%= title %>`)
+  })
+
+  test("adjecent ERB output tags without space within <p>", () => {
+    const source = `<p><%= title %><%= title %></p>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<p><%= title %><%= title %></p>`)
+  })
+
+  test("adjecent ERB output tags with space within <p>", () => {
+    const source = `<p><%= title %> <%= title %></p>`
+    const result = formatter.format(source)
+    expect(result).toEqual(`<p><%= title %> <%= title %></p>`)
   })
 
   test("formats nested blocks with final example", () => {

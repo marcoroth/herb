@@ -703,7 +703,7 @@ export class FormatPrinter extends Printer {
       }
 
       if (this.shouldAppendToLastLine(child, node.children, i)) {
-        this.appendChildToLastLine(child)
+        this.appendChildToLastLine(child, node.children, i)
         lastWasMeaningful = true
         hasHandledSpacing = false
         continue
@@ -782,10 +782,13 @@ export class FormatPrinter extends Printer {
                 this.push(' ')
               }
             } else {
-              const normalizedContent = child.content.replace(/\s+/g, ' ').trim()
+              const normalizedContent = child.content.replace(/\s+/g, ' ')
+              const trimmedContent = normalizedContent.trim()
 
-              if (normalizedContent) {
-                this.push(normalizedContent)
+              if (trimmedContent) {
+                this.push(trimmedContent)
+              } else if (normalizedContent === ' ') {
+                this.push(' ')
               }
             }
           } else if (isNode(child, WhitespaceNode)) {
@@ -1294,7 +1297,7 @@ export class FormatPrinter extends Printer {
     if (children.length === 0) return true
 
     if (isInlineElement) {
-      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), children)
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), node.body)
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
@@ -1309,7 +1312,7 @@ export class FormatPrinter extends Printer {
     const hasMixedContent = this.hasMixedTextAndInlineContent(children)
 
     if (allNestedAreInline && (!hasMultilineText || hasMixedContent)) {
-      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), children)
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), node.body)
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
@@ -1388,6 +1391,22 @@ export class FormatPrinter extends Printer {
       return this.isAdjacentToPreviousInline(siblings, index)
     }
 
+    if (isNode(child, ERBContentNode)) {
+      for (let i = index - 1; i >= 0; i--) {
+        const previousSibling = siblings[i]
+
+        if (isPureWhitespaceNode(previousSibling) || isNode(previousSibling, WhitespaceNode)) {
+          continue
+        }
+
+        if (previousSibling.location && child.location) {
+          return previousSibling.location.end.line === child.location.start.line
+        }
+
+        break
+      }
+    }
+
     return false
   }
 
@@ -1419,15 +1438,25 @@ export class FormatPrinter extends Printer {
   /**
    * Append a child node to the last output line
    */
-  private appendChildToLastLine(child: Node): void {
+  private appendChildToLastLine(child: Node, siblings?: Node[], index?: number): void {
     if (isNode(child, HTMLTextNode)) {
       this.pushToLastLine(child.content.trim())
     } else {
+      let hasSpaceBefore = false
+
+      if (siblings && index !== undefined && index > 0) {
+        const prevSibling = siblings[index - 1]
+
+        if (isPureWhitespaceNode(prevSibling) || isNode(prevSibling, WhitespaceNode)) {
+          hasSpaceBefore = true
+        }
+      }
+
       const oldInlineMode = this.inlineMode
       this.inlineMode = true
       const inlineContent = this.capture(() => this.visit(child)).join("")
       this.inlineMode = oldInlineMode
-      this.pushToLastLine(inlineContent)
+      this.pushToLastLine((hasSpaceBefore ? " " : "") + inlineContent)
     }
   }
 
@@ -1888,6 +1917,7 @@ export class FormatPrinter extends Printer {
    */
   private tryRenderChildrenInline(children: Node[]): string | null {
     let result = ""
+    let hasInternalWhitespace = false
 
     for (const child of children) {
       if (isNode(child, HTMLTextNode)) {
@@ -1911,9 +1941,15 @@ export class FormatPrinter extends Printer {
         } else if (hasLeadingSpace || hasTrailingSpace) {
           if (result && !result.endsWith(' ')) {
             result += ' '
+            hasInternalWhitespace = true
           }
         }
 
+      } else if (isNode(child, WhitespaceNode)) {
+        if (result && !result.endsWith(' ')) {
+          result += ' '
+          hasInternalWhitespace = true
+        }
       } else if (isNode(child, HTMLElementNode)) {
         const tagName = getTagName(child)
 
@@ -1943,7 +1979,7 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    return result.trim()
+    return hasInternalWhitespace ? result : result.trim()
   }
 
   /**
