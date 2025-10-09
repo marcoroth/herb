@@ -44,4 +44,20 @@ describe("html-no-underscores-in-attribute-names", () => {
       <div data-<%= key %>_test="value"></div>
     `)
   })
+
+  test("handles malformed attributes without crashing (issue #601)", () => {
+    expectWarning("Attribute `foo_bar` should not contain underscores. Use hyphens (-) instead.")
+
+    assertOffenses(dedent`
+      <input foo_bar=I18n.t('value')>
+    `)
+  })
+
+  test("handles malformed attributes without crashing - exact snippet from issue #601", () => {
+    expectWarning("Attribute `t('foo_bar')` should not contain underscores. Use hyphens (-) instead.")
+
+    assertOffenses(dedent`
+      <input title=I18n.t('foo_bar')>
+    `)
+  })
 })
