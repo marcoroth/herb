@@ -34,7 +34,7 @@ typedef enum {
   CONTROL_TYPE_UNKNOWN
 } control_type_t;
 
-void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
+void herb_analyze_parse_errors(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* document, const char* source);
 void herb_analyze_parse_tree(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* document, const char* source);
 
 #endif

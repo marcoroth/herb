@@ -73,6 +73,7 @@ static bool analyze_erb_content(arena_allocator_T* allocator, const AST_NODE_T* 
 }
 
 static size_t process_block_children(
+  arena_allocator_T *allocator,
   AST_NODE_T* node,
   array_T* array,
   size_t index,
@@ -82,6 +83,7 @@ static size_t process_block_children(
 );
 
 static size_t process_subsequent_block(
+  arena_allocator_T *allocator,
   AST_NODE_T* node,
   array_T* array,
   size_t index,
@@ -445,7 +447,7 @@ static size_t process_control_structure(
         array_T* when_statements = array_init(allocator, 8);
         index++;
 
-        index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
+        index = process_block_children(allocator, node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
 
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
           allocator,
@@ -465,7 +467,7 @@ static size_t process_control_structure(
         array_T* in_statements = array_init(allocator, 8);
         index++;
 
-        index = process_block_children(node, array, index, in_statements, context, CONTROL_TYPE_IN);
+        index = process_block_children(allocator, node, array, index, in_statements, context, CONTROL_TYPE_IN);
 
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
           allocator,
@@ -610,7 +612,7 @@ static size_t process_control_structure(
   }
 
   if (initial_type == CONTROL_TYPE_BEGIN) {
-    index = process_block_children(node, array, index, children, context, initial_type);
+    index = process_block_children(allocator, node, array, index, children, context, initial_type);
 
     AST_ERB_RESCUE_NODE_T* rescue_clause = NULL;
     AST_ERB_ELSE_NODE_T* else_clause = NULL;
@@ -625,7 +627,7 @@ static size_t process_control_structure(
 
         if (next_type == CONTROL_TYPE_RESCUE) {
           AST_NODE_T* rescue_node = NULL;
-          index = process_subsequent_block(node, array, index, &rescue_node, context, initial_type);
+          index = process_subsequent_block(allocator, node, array, index, &rescue_node, context, initial_type);
           rescue_clause = (AST_ERB_RESCUE_NODE_T*) rescue_node;
         }
       }
@@ -772,7 +774,7 @@ static size_t process_control_structure(
   }
 
   if (initial_type == CONTROL_TYPE_BLOCK) {
-    index = process_block_children(node, array, index, children, context, initial_type);
+    index = process_block_children(allocator, node, array, index, children, context, initial_type);
 
     AST_ERB_END_NODE_T* end_node = NULL;
 
@@ -825,7 +827,7 @@ static size_t process_control_structure(
     return index;
   }
 
-  index = process_block_children(node, array, index, children, context, initial_type);
+  index = process_block_children(allocator, node, array, index, children, context, initial_type);
 
   AST_NODE_T* subsequent = NULL;
   AST_ERB_END_NODE_T* end_node = NULL;
@@ -838,7 +840,7 @@ static size_t process_control_structure(
       control_type_t next_type = detect_control_type(next_erb);
 
       if (is_subsequent_type(initial_type, next_type)) {
-        index = process_subsequent_block(node, array, index, &subsequent, context, initial_type);
+        index = process_subsequent_block(allocator,node, array, index, &subsequent, context, initial_type);
       }
     }
   }
@@ -873,6 +875,7 @@ static size_t process_control_structure(
 }
 
 static size_t process_subsequent_block(
+  arena_allocator_T *allocator,
   AST_NODE_T* node,
   array_T* array,
   size_t index,
@@ -886,7 +889,7 @@ static size_t process_subsequent_block(
 
   index++;
 
-  index = process_block_children(node, array, index, children, context, parent_type);
+  index = process_block_children(allocator, node, array, index, children, context, parent_type);
 
   AST_NODE_T* subsequent_node = create_control_node(allocator, erb_node, children, NULL, NULL, type);
 
@@ -914,7 +917,7 @@ static size_t process_subsequent_block(
           case CONTROL_TYPE_RESCUE: {
             if (subsequent_node->type == AST_ERB_RESCUE_NODE && next_type == CONTROL_TYPE_RESCUE) {
               AST_NODE_T* next_rescue_node = NULL;
-              index = process_subsequent_block(node, array, index, &next_rescue_node, context, parent_type);
+              index = process_subsequent_block(allocator, node, array, index, &next_rescue_node, context, parent_type);
 
               if (next_rescue_node) {
                 ((AST_ERB_RESCUE_NODE_T*) subsequent_node)->subsequent = (AST_ERB_RESCUE_NODE_T*) next_rescue_node;
@@ -930,7 +933,7 @@ static size_t process_subsequent_block(
         }
 
         if (next_subsequent) {
-          index = process_subsequent_block(node, array, index, next_subsequent, context, parent_type);
+          index = process_subsequent_block(allocator, node, array, index, next_subsequent, context, parent_type);
         }
       }
     }
@@ -941,6 +944,7 @@ static size_t process_subsequent_block(
 }
 
 static size_t process_block_children(
+  arena_allocator_T *allocator,
   AST_NODE_T* node,
   array_T* array,
   size_t index,
@@ -985,7 +989,7 @@ static size_t process_block_children(
   return index;
 }
 
-static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
+static array_T* rewrite_node_array(arena_allocator_T *allocator, AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
   array_T* new_array = array_init(allocator, array_size(array));
   size_t index = 0;
 
@@ -1039,35 +1043,35 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
   return new_array;
 }
 
-static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
+static bool transform_erb_nodes(arena_allocator_T* allocator, const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
   context->parent = (AST_NODE_T*) node;
 
   if (node->type == AST_DOCUMENT_NODE) {
     AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
     array_T* old_array = document_node->children;
-    document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
+    document_node->children = rewrite_node_array(allocator, (AST_NODE_T*) node, document_node->children, context);
     array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ELEMENT_NODE) {
     AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
     array_T* old_array = element_node->body;
-    element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
+    element_node->body = rewrite_node_array(allocator, (AST_NODE_T*) node, element_node->body, context);
     array_free(&old_array);
   }
 
   if (node->type == AST_HTML_OPEN_TAG_NODE) {
     AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
     array_T* old_array = open_tag->children;
-    open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
+    open_tag->children = rewrite_node_array(allocator, (AST_NODE_T*) node, open_tag->children, context);
     array_free(&old_array);
   }
 
   if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
     array_T* old_array = value_node->children;
-    value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
+    value_node->children = rewrite_node_array(allocator, (AST_NODE_T*) node, value_node->children, context);
     array_free(&old_array);
   }
 
@@ -1077,22 +1081,22 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
 }
 
 void herb_analyze_parse_tree(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* document, const char* source) {
-  herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
+  herb_visit_node(allocator, (AST_NODE_T*) document, analyze_erb_content, NULL);
 
   analyze_ruby_context_T* context = arena_alloc(allocator, sizeof(analyze_ruby_context_T));
   context->document = document;
   context->parent = NULL;
   context->ruby_context_stack = array_init(allocator, 8);
 
-  herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
+  herb_visit_node(allocator, (AST_NODE_T*) document, transform_erb_nodes, context);
 
-  herb_analyze_parse_errors(document, source);
+  herb_analyze_parse_errors(allocator, document, source);
 
   array_free(&context->ruby_context_stack);
   free(context);
 }
 
-void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
+void herb_analyze_parse_errors(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* document, const char* source) {
   char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
   if (!extracted_ruby) { return; }
