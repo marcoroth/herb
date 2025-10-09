@@ -7,6 +7,7 @@
 #include "include/html_util.h"
 #include "include/lexer.h"
 #include "include/lexer_peek_helpers.h"
+#include "include/memory_arena.h"
 #include "include/parser_helpers.h"
 #include "include/token.h"
 #include "include/token_matchers.h"
@@ -31,7 +32,7 @@ size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* options) {
+void herb_parser_init(arena_allocator_T* allocator, parser_T* parser, lexer_T* lexer, parser_options_T* options) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
@@ -39,7 +40,7 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* option
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
 
   if (options) {
-    parser->options = calloc(1, sizeof(parser_options_T));
+    parser->options = arena_alloc(allocator, sizeof(parser_options_T));
     parser->options->track_whitespace = options->track_whitespace;
   } else {
     parser->options = NULL;
@@ -558,7 +559,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   return value;
 }
 
-static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) {
+static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(arena_allocator_T* allocator, parser_T* parser) {
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = parser_parse_html_attribute_name(parser);
 
   if (parser->options && parser->options->track_whitespace) {
@@ -608,7 +609,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
         token_free(whitespace);
       }
 
-      token_T* equals_with_whitespace = calloc(1, sizeof(token_T));
+      token_T* equals_with_whitespace = arena_alloc(allocator, sizeof(token_T));
       equals_with_whitespace->type = TOKEN_EQUALS;
       equals_with_whitespace->value = herb_strdup(equals_buffer.value);
       equals_with_whitespace->location = (location_T) { .start = equals_start, .end = equals_end };
