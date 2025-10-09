@@ -15,7 +15,7 @@
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
   token_T* copy = token_copy(tag_name);
-  array_push(parser->open_tags_stack, copy);
+  array_push(allocator, parser->open_tags_stack, copy);
 }
 
 bool parser_check_matching_tag(const parser_T* parser, const char* tag_name) {

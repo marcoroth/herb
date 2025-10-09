@@ -1,5 +1,6 @@
 #include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
+#include "include/memory_arena.h"
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
@@ -105,8 +106,8 @@ static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const toke
   return token_init(value, type, lexer);
 }
 
-static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
-  char* collected = malloc(count + 1);
+static token_T* lexer_advance_with_next(arena_allocator_T* allocator, lexer_T* lexer, size_t count, token_type_T type) {
+  char* collected = arena_alloc(allocator, count + 1);
   if (!collected) { return NULL; }
 
   for (size_t i = 0; i < count; i++) {
@@ -126,12 +127,12 @@ static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
   return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
 }
 
-static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
+static token_T* lexer_advance_utf8_character(arena_allocator_T* allocator, lexer_T* lexer, const token_type_T type) {
   int char_byte_length = utf8_sequence_length(lexer->source, lexer->current_position, lexer->source_length);
 
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
 
-  char* utf8_char = malloc(char_byte_length + 1);
+  char* utf8_char = arena_alloc(allocator, char_byte_length + 1);
 
   if (!utf8_char) { return lexer_advance_current(lexer, type); }
 

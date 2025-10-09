@@ -4,6 +4,7 @@
 #include "array.h"
 #include "ast_node.h"
 #include "lexer.h"
+#include "memory_arena.h"
 
 typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
@@ -28,7 +29,7 @@ typedef struct PARSER_STRUCT {
   parser_options_T* options;
 } parser_T;
 
-void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* options);
+void herb_parser_init(arena_allocator_T* allocator, parser_T* parser, lexer_T* lexer, parser_options_T* options);
 
 AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser);
 

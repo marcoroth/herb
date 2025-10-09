@@ -1,20 +1,20 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "include/array.h"
 #include "include/macros.h"
-#include "include/memory.h"
 
 size_t array_sizeof(void) {
   return sizeof(array_T);
 }
 
-array_T* array_init(const size_t capacity) {
-  array_T* array = safe_malloc(array_sizeof());
+array_T* array_init(arena_allocator_T* allocator, const size_t capacity) {
+  array_T* array = arena_alloc(allocator, array_sizeof());
 
   array->size = 0;
   array->capacity = capacity;
-  array->items = nullable_safe_malloc(sizeof(void*) * capacity);
+  array->items = arena_alloc(allocator, capacity * sizeof(void*));
 
   if (!array->items) {
     free(array);
@@ -24,7 +24,7 @@ array_T* array_init(const size_t capacity) {
   return array;
 }
 
-void array_append(array_T* array, void* item) {
+void array_append(arena_allocator_T* allocator, array_T* array, void* item) {
   if (array->size >= array->capacity) {
     size_t new_capacity;
 
@@ -45,7 +45,8 @@ void array_append(array_T* array, void* item) {
     }
 
     size_t new_size_bytes = new_capacity * sizeof(void*);
-    void* new_items = safe_realloc(array->items, new_size_bytes);
+    void* new_items = arena_alloc(allocator, new_size_bytes);
+    memcpy(new_items, array->items, array->size);
 
     if (unlikely(new_items == NULL)) { return; }
 
@@ -104,8 +105,8 @@ void array_remove_item(array_T* array, void* item) {
 }
 
 // Alias for array_append
-void array_push(array_T* array, void* item) {
-  array_append(array, item);
+void array_push(arena_allocator_T* allocator, array_T* array, void* item) {
+  array_append(allocator, array, item);
 }
 
 void* array_pop(array_T* array) {

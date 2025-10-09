@@ -3,8 +3,8 @@
 
 #include "array.h"
 #include "buffer.h"
-#include "errors.h"
 #include "location.h"
+#include "memory_arena.h"
 #include "position.h"
 #include "token.h"
 
@@ -31,7 +31,7 @@ typedef struct {
 
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
+<%- arguments = ["arena_allocator_T* allocator"] + error_arguments + ["position_T start", "position_T end"] -%>
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>);
 void append_<%= error.human %>(<%= (arguments << "array_T* errors").join(", ") %>);
 <%- end -%>

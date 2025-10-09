@@ -1,5 +1,6 @@
 #include "include/token.h"
 #include "include/lexer.h"
+#include "include/memory_arena.h"
 #include "include/position.h"
 #include "include/range.h"
 #include "include/token_struct.h"
@@ -13,8 +14,8 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+token_T* token_init(arena_allocator_T* allocator, const char* value, const token_type_T type, lexer_T* lexer) {
+  token_T* token = arena_alloc(allocator, token_sizeof());
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
@@ -22,7 +23,7 @@ token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) 
   }
 
   if (value) {
-    token->value = herb_strdup(value);
+    token->value = herb_strdup(allocator, value);
   } else {
     token->value = NULL;
   }
@@ -87,15 +88,16 @@ const char* token_type_to_string(const token_type_T type) {
   return "Unknown token_type_T";
 }
 
-char* token_to_string(const token_T* token) {
+char* token_to_string(arena_allocator_T* allocator, const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
-  char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
+  char* string =
+    arena_alloc(allocator, (strlen(type_string) + strlen(template) + strlen(token->value) + 16) * sizeof(char));
   char* escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = herb_strdup("<EOF>");
+    escaped = herb_strdup(allocator, "<EOF>");
   } else {
     escaped = escape_newlines(token->value);
   }
@@ -126,15 +128,15 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
-token_T* token_copy(token_T* token) {
+token_T* token_copy(arena_allocator_T* allocator, token_T* token) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, token_sizeof());
+  token_T* new_token = arena_alloc(allocator, token_sizeof());
 
   if (!new_token) { return NULL; }
 
   if (token->value) {
-    new_token->value = herb_strdup(token->value);
+    new_token->value = herb_strdup(allocator, token->value);
 
     if (!new_token->value) {
       free(new_token);
