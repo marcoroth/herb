@@ -26,10 +26,10 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
+<%- arguments = ["arena_allocator_T* allocator"] + error_arguments + ["position_T start", "position_T end"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
-  <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
+  <%= error.struct_type %>* <%= error.human %> = arena_allocator(allocator, sizeof(<%= error.struct_type %>));
 
   error_init(&<%= error.human %>->base, <%= error.type %>, start, end);
 
@@ -37,7 +37,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   const char* message_template = "<%= error.message_template %>";
 
   size_t message_size = <%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
-  char* message = (char*) malloc(message_size);
+  char* message = (char*) arena_allocator(allocator, message_size);
 
   if (message) {
     <%- error.message_arguments.each_with_index do |argument, i| -%>
