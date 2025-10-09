@@ -118,7 +118,7 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test.todo("indents multi-line HTML comment with ERB if", () => {
+  test.fails("indents multi-line HTML comment with ERB if", () => {
     const source = dedent`
       <!--
       <% if Rails.env.development? %>
