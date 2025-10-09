@@ -24,7 +24,7 @@ void array_remove(array_T* array, size_t index);
 size_t array_index_of(array_T* array, void* item);
 void array_remove_item(array_T* array, void* item);
 
-void array_push(array_T* array, void* item);
+void array_push(arena_allocator_T* allocator, array_T* array, void* item);
 void* array_pop(array_T* array);
 
 size_t array_capacity(const array_T* array);

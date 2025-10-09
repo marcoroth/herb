@@ -105,8 +105,8 @@ void array_remove_item(array_T* array, void* item) {
 }
 
 // Alias for array_append
-void array_push(array_T* array, void* item) {
-  array_append(array, item);
+void array_push(arena_allocator_T* allocator, array_T* array, void* item) {
+  array_append(allocator, array, item);
 }
 
 void* array_pop(array_T* array) {
