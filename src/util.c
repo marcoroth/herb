@@ -1,4 +1,5 @@
 #include "include/util.h"
+#include "include/memory_arena.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -13,8 +14,8 @@ int is_newline(const int character) {
   return character == 13 || character == 10;
 }
 
-char* escape_newlines(const char* input) {
-  char* output = calloc(strlen(input) * 2 + 1, sizeof(char));
+char* escape_newlines(arena_allocator_T* allocator, const char* input) {
+  char* output = arena_alloc(allocator, strlen(input) * 2 + 1 * sizeof(char));
   char* orig_output = output;
 
   while (*input) {
@@ -36,11 +37,11 @@ char* escape_newlines(const char* input) {
   return orig_output;
 }
 
-char* wrap_string(const char* input, const char character) {
+char* wrap_string(arena_allocator_T* allocator, const char* input, const char character) {
   if (input == NULL) { return NULL; }
 
   const size_t length = strlen(input);
-  char* wrapped = malloc(length + 3);
+  char* wrapped = arena_alloc(allocator, length + 3);
 
   if (wrapped == NULL) { return NULL; }
 
@@ -52,8 +53,8 @@ char* wrap_string(const char* input, const char character) {
   return wrapped;
 }
 
-char* quoted_string(const char* input) {
-  return wrap_string(input, '"');
+char* quoted_string(arena_allocator_T* allocator, const char* input) {
+  return wrap_string(allocator, input, '"');
 }
 
 // Check if a string is blank (NULL, empty, or only contains whitespace)
@@ -72,17 +73,17 @@ bool string_present(const char* input) {
   return !string_blank(input);
 }
 
-char* herb_strdup(const char* s) {
+char* herb_strdup(arena_allocator_T* allocator, const char* s) {
   size_t len = strlen(s) + 1;
-  char* copy = malloc(len);
+  char* copy = arena_alloc(allocator, len);
 
   if (copy) { memcpy(copy, s, len); }
 
   return copy;
 }
 
-char* size_t_to_string(const size_t value) {
-  char* buffer = malloc(21);
+char* size_t_to_string(arena_allocator_T* allocator, const size_t value) {
+  char* buffer = arena_alloc(allocator, 21);
   snprintf(buffer, 21, "%zu", value);
 
   return buffer;
