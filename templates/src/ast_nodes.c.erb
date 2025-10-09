@@ -23,7 +23,7 @@
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%= node.human %>-><%= field.name %> = token_copy(allocator, <%= field.name %>);
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
@@ -35,7 +35,7 @@
   <%- when Herb::Template::PrismNodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= node.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%= node.human %>-><%= field.name %> = herb_strdup(allocator, <%= field.name %>);
   <%- when Herb::Template::AnalyzedRubyField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
