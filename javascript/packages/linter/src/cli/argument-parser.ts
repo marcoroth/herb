@@ -23,6 +23,7 @@ export interface ParsedArguments {
   ignoreDisableComments: boolean
   force: boolean
   init: boolean
+  loadCustomRules: boolean
 }
 
 export class ArgumentParser {
@@ -46,6 +47,7 @@ export class ArgumentParser {
       --json                        use JSON output format (shortcut for --format json)
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
+      --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color                    disable colored output
       --no-timing                   hide timing information
@@ -73,7 +75,8 @@ export class ArgumentParser {
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" }
+        "truncate-lines": { type: "boolean" },
+        "no-custom-rules": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -139,8 +142,9 @@ export class ArgumentParser {
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
     const init = values.init || false
+    const loadCustomRules = !values["no-custom-rules"]
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

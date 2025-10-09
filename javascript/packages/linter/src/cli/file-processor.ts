@@ -24,6 +24,7 @@ export interface ProcessingContext {
   ignoreDisableComments?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
+  loadCustomRules?: boolean
 }
 
 export interface ProcessingResult {
@@ -43,6 +44,7 @@ export interface ProcessingResult {
 
 export class FileProcessor {
   private linter: Linter | null = null
+  private customRulesLoaded: boolean = false
 
   private isRuleAutocorrectable(ruleName: string): boolean {
     if (!this.linter) return false
@@ -77,6 +79,41 @@ export class FileProcessor {
 
       if (!this.linter) {
         this.linter = Linter.from(Herb, context?.config)
+
+        if (context?.loadCustomRules && !this.customRulesLoaded) {
+          try {
+            const { count, ruleInfo, warnings } = await this.linter.loadCustomRules({
+              baseDir: context.projectPath,
+              silent: formatOption === 'json'
+            })
+
+            this.customRulesLoaded = true
+
+            if (count > 0 && formatOption !== 'json') {
+              const ruleText = count === 1 ? 'rule' : 'rules'
+              console.log(colorize(`\nLoaded ${count} custom ${ruleText}:`, "green"))
+
+              for (const { name, path } of ruleInfo) {
+                const relativePath = context.projectPath ? path.replace(context.projectPath + '/', '') : path
+
+                console.log(colorize(`  • ${name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+              }
+
+              if (warnings.length > 0) {
+                console.log()
+                for (const warning of warnings) {
+                  console.warn(colorize(`  ⚠ ${warning}`, "yellow"))
+                }
+              }
+
+              console.log()
+            }
+          } catch (error) {
+            if (formatOption !== 'json') {
+              console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
+            }
+          }
+        }
       }
 
       const lintResult = this.linter.lint(content, {

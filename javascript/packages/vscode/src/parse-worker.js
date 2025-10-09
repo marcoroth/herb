@@ -11,6 +11,7 @@ const { Config } = require('@herb-tools/config');
   const formatterIndentWidth = parseInt(process.argv[5]) || 2;
   const formatterMaxLineLength = parseInt(process.argv[6]) || 80;
   const linterRulesJson = process.argv[7] || '{}';
+  const workspaceRoot = process.argv[8] || process.cwd();
 
   let linterRules = {};
   try {
@@ -57,8 +58,18 @@ const { Config } = require('@herb-tools/config');
             enabled: true,
             rules: linterRules
           }
-        }, { projectPath: process.cwd() });
+        }, { projectPath: workspaceRoot });
         const linter = Linter.from(Herb, config);
+
+        try {
+          await linter.loadCustomRules({
+            baseDir: workspaceRoot,
+            silent: true
+          });
+        } catch (customRuleError) {
+          // Ignore custom rule loading errors in worker
+        }
+
         const lintResult = linter.lint(content, { fileName: file });
 
         lintOffenses = lintResult.offenses || [];

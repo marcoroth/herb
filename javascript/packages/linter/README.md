@@ -413,6 +413,115 @@ herb-lint --force app/views/excluded-file.html.erb
 
 When using `--force` on an excluded file, the linter will show a warning but proceed with linting.
 
+### Custom Rules
+
+Create custom linter rules for project-specific requirements by placing ES module files (`.mjs`) in `.herb/rules/`:
+
+::: info File Extension
+Custom rules must use the `.mjs` extension to avoid Node.js module type warnings. The `.mjs` extension explicitly marks files as ES modules.
+:::
+
+::: code-group
+
+
+```js [.herb/rules/no-inline-styles.mjs]
+import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
+
+class NoDivTagsVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node) {
+    if (!node.tag_name) return
+    if (node.tag_name.value !== "div") return
+
+    this.addOffense(
+      `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
+      node.tag_name.location
+    )
+  }
+}
+
+export default class NoDivTagsRule extends ParserRule {
+  name = "no-div-tags"
+
+  check(result, context) {
+    const visitor = new NoDivTagsVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
+  }
+}
+```
+
+```js [.herb/rules/no-inline-styles.mjs]
+import { BaseRuleVisitor, getAttributes, getAttributeName } from "@herb-tools/linter"
+
+class NoInlineStylesVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node) {
+    const attributes = getAttributes(node)
+
+    for (const attribute of attributes) {
+      const attributeName = getAttributeName(attribute)
+
+      if (attributeName === "style") {
+        this.addOffense(
+          `Avoid using inline \`style\` attributes. Use CSS classes instead.`,
+          attribute.location,
+          "warning"
+        )
+      }
+    }
+
+    super.visitHTMLOpenTagNode(node)
+  }
+}
+
+export default class NoInlineStylesRule {
+  name = "no-inline-styles"
+
+  check(parseResult, context) {
+    const visitor = new NoInlineStylesVisitor(this.name, context)
+    visitor.visit(parseResult.value)
+    return visitor.offenses
+  }
+}
+```
+
+:::
+
+**Rule Configuration:**
+
+The `defaultConfig` getter is optional. If not specified, custom rules default to:
+- `enabled: true` - Rule is enabled by default
+- `severity: "error"` - Offenses are reported as errors
+- `exclude: []` - No files are excluded
+
+You can override the `defaultConfig` getter to customize these defaults, as shown in the example above where severity is set to `"warning"`.
+
+**Rule Properties:**
+
+- `static type` - Optional, defaults to `"parser"`. Can be `"parser"`, `"lexer"`, or `"source"`
+- `name` - Required, the rule identifier used in configuration and output
+- `check()` - Required, the method that checks for offenses
+- `defaultConfig` - Optional, returns the default configuration for the rule
+- `isEnabled()` - Optional, dynamically determines if the rule should run
+- `autofix()` - Optional, implements automatic fixing for the rule
+
+Custom rules are loaded automatically by default. Use `--no-custom-rules` to disable them.
+
+When custom rules are loaded, the linter will display them:
+
+```
+Loaded 2 custom rules:
+  • no-inline-styles (.herb/rules/no-inline-styles.mjs)
+  • require-aria-labels (.herb/rules/require-aria-labels.mjs)
+```
+
+::: warning Rule Name Clashes
+If a custom rule has the same name as a built-in rule or another custom rule, you'll see a warning. The custom rule will override the built-in rule.
+:::
+
+::: tip Hot Reload
+Custom rules are automatically reloaded when changed in editors with the Herb Language Server. No need to restart your editor!
+:::
+
 ### Language Server Integration
 
 The linter is automatically integrated into the [Herb Language Server](https://herb-tools.dev/projects/language-server), providing real-time validation in supported editors like VS Code, Zed, and Neovim.

@@ -1,22 +1,56 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { minimatch } from "minimatch"
+import { CustomRuleLoader } from "./custom-rule-loader.js"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
+import { DEFAULT_RULE_CONFIG } from "./types.js"
 
 import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
+export interface LinterOptions {
+  /**
+   * Array of rule classes to use. If not provided, uses default rules.
+   */
+  rules?: RuleClass[]
+
+  /**
+   * Whether to load custom rules from the project.
+   * Defaults to false for backward compatibility.
+   */
+  loadCustomRules?: boolean
+
+  /**
+   * Base directory to search for custom rules.
+   * Defaults to current working directory.
+   */
+  customRulesBaseDir?: string
+
+  /**
+   * Custom glob patterns to search for rule files.
+   */
+  customRulesPatterns?: string[]
+
+  /**
+   * Whether to suppress custom rule loading errors.
+   * Defaults to false.
+   */
+  silentCustomRules?: boolean
+}
+
 export class Linter {
   protected rules: RuleClass[]
+  protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
   protected offenses: LintOffense[]
   protected config?: Config
+  protected customRulesLoaded: boolean = false
 
   /**
    * Creates a new Linter instance with automatic rule filtering based on config.
@@ -42,11 +76,13 @@ export class Linter {
    * @param herb - The Herb backend instance for parsing and lexing
    * @param rules - Array of rule classes (Parser/AST or Lexer) to use. If not provided, uses default rules.
    * @param config - Optional full Config instance for severity overrides and path-based rule filtering
+   * @param allAvailableRules - Optional array of ALL available rules (including disabled) for herb:disable validation
    */
-  constructor(herb: HerbBackend, rules?: RuleClass[], config?: Config) {
+  constructor(herb: HerbBackend, rules?: RuleClass[], config?: Config, allAvailableRules?: RuleClass[]) {
     this.herb = herb
     this.config = config
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
+    this.allAvailableRules = allAvailableRules !== undefined ? allAvailableRules : this.rules
     this.offenses = []
   }
 
@@ -69,7 +105,7 @@ export class Linter {
       const instance = new ruleClass()
       const ruleName = instance.name
 
-      const defaultEnabled = instance.defaultConfig.enabled
+      const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
       const userRuleConfig = userRulesConfig?.[ruleName]
 
       if (userRuleConfig !== undefined) {
@@ -93,10 +129,11 @@ export class Linter {
   /**
    * Returns all available rule classes that can be referenced in herb:disable comments.
    * This includes all rules that exist, regardless of whether they're currently enabled.
+   * Includes both built-in rules and any loaded custom rules.
    * @returns Array of all available rule classes
    */
   protected getAvailableRules(): RuleClass[] {
-    return rules
+    return this.allAvailableRules
   }
 
   /**
@@ -112,6 +149,52 @@ export class Linter {
       "herb-disable-comment-missing-rules",
       "herb-disable-comment-unnecessary"
     ]
+  }
+
+  /**
+   * Asynchronously loads custom rules and adds them to the linter.
+   * This should be called after construction if loadCustomRules option is enabled.
+   *
+   * @param options - Custom rule loader options
+   * @returns Promise that resolves to information about loaded custom rules
+   */
+  async loadCustomRules(options?: {
+    baseDir?: string
+    patterns?: string[]
+    silent?: boolean
+  }): Promise<{ count: number, ruleInfo: Array<{ name: string, path: string }>, warnings: string[] }> {
+    if (this.customRulesLoaded) {
+      return { count: 0, ruleInfo: [], warnings: [] }
+    }
+
+    const loader = new CustomRuleLoader(options)
+    const { rules: customRules, ruleInfo, duplicateWarnings } = await loader.loadRulesWithInfo()
+    const warnings: string[] = [...duplicateWarnings]
+
+    if (customRules.length > 0) {
+      const defaultRuleNames = new Set(
+        this.rules.map(RuleClass => {
+          const instance = new RuleClass()
+
+          return instance.name
+        })
+      )
+
+      for (const { name } of ruleInfo) {
+        if (defaultRuleNames.has(name)) {
+          warnings.push(`Custom rule "${name}" has the same name as a built-in rule and will override it`)
+        }
+      }
+
+      this.allAvailableRules = [...this.allAvailableRules, ...customRules]
+
+      const filteredCustomRules = Linter.filterRulesByConfig(customRules, this.config?.linter?.rules)
+
+      this.rules = [...this.rules, ...filteredCustomRules]
+      this.customRulesLoaded = true
+    }
+
+    return { count: customRules.length, ruleInfo, warnings }
   }
 
   getRuleCount(): number {
@@ -150,7 +233,7 @@ export class Linter {
     }
 
     if (context?.fileName && !this.config?.linter?.rules?.[rule.name]?.exclude) {
-      const defaultExclude = rule.defaultConfig.exclude
+      const defaultExclude = rule.defaultConfig?.exclude ?? DEFAULT_RULE_CONFIG.exclude
 
       if (defaultExclude && defaultExclude.length > 0) {
         const isExcluded = defaultExclude.some((pattern: string) => minimatch(context.fileName!, pattern))
@@ -392,7 +475,7 @@ export class Linter {
     }
 
     const ruleInstance = new RuleClass()
-    const defaultSeverity = ruleInstance.defaultConfig.severity
+    const defaultSeverity = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]
     const severity = userRuleConfig?.severity ?? defaultSeverity

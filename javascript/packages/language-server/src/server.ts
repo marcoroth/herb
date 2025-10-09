@@ -90,6 +90,8 @@ export class Server {
           ...patterns,
           { globPattern: `**/.herb.yml` },
           { globPattern: `**/**/.herb-lsp/config.json` },
+          { globPattern: `**/.herb/rules/**/*.mjs` },
+          { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
       })
     })
@@ -117,8 +119,27 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        if (event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")) {
+        const isConfigChange = event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")
+        const isCustomRuleChange = event.uri.includes("/.herb/rules/")
+        const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
+
+        if (isConfigChange) {
           await this.service.refreshConfig()
+
+          const documents = this.service.documentService.getAll()
+          await Promise.all(documents.map(document =>
+            this.service.diagnostics.refreshDocument(document)
+          ))
+        } else if (isCustomRuleChange || isCustomRewriterChange) {
+          if (isCustomRuleChange) {
+            this.connection.console.log(`[Linter] Custom rule changed: ${event.uri}`)
+            this.service.linterService.rebuildLinter()
+          }
+
+          if (isCustomRewriterChange) {
+            this.connection.console.log(`[Rewriter] Custom rewriter changed: ${event.uri}`)
+            await this.service.formattingService.refreshConfig(this.service.config)
+          }
 
           const documents = this.service.documentService.getAll()
           await Promise.all(documents.map(document =>

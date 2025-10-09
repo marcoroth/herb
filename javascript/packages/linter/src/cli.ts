@@ -141,7 +141,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -247,7 +247,8 @@ export class CLI {
         fix,
         ignoreDisableComments,
         linterConfig,
-        config: processingConfig
+        config: processingConfig,
+        loadCustomRules
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)

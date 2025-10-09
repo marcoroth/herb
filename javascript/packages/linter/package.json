@@ -36,6 +36,12 @@
       "types": "./dist/types/src/cli.d.ts",
       "require": "./dist/src/cli.js",
       "default": "./dist/src/cli.js"
+    },
+    "./loader": {
+      "types": "./dist/types/loader.d.ts",
+      "import": "./dist/loader.js",
+      "require": "./dist/loader.cjs",
+      "default": "./dist/loader.js"
     }
   },
   "dependencies": {
