@@ -1,4 +1,5 @@
 #include "include/html_util.h"
+#include "include/memory_arena.h"
 #include "include/util.h"
 
 #include <ctype.h>
@@ -53,11 +54,11 @@ bool is_html4_void_element(const char* tag_name) {
  * }
  * @endcode
  */
-char* html_opening_tag_string(const char* tag_name) {
+char* html_opening_tag_string(arena_allocator_T* allocator, const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("<>"); }
 
   size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 3); // +3 for '<', '>', and '\0'
+  char* result = (char*) arena_alloc(allocator, length + 3); // +3 for '<', '>', and '\0'
 
   if (result == NULL) { return NULL; }
 
@@ -87,11 +88,11 @@ char* html_opening_tag_string(const char* tag_name) {
  * }
  * @endcode
  */
-char* html_closing_tag_string(const char* tag_name) {
+char* html_closing_tag_string(arena_allocator_T* allocator, const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("</>"); }
 
   size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 4); // +4 for '<', '/', '>', and '\0'
+  char* result = (char*) arena_alloc(allocator, length + 4); // +4 for '<', '/', '>', and '\0'
 
   if (result == NULL) { return NULL; }
 
@@ -122,11 +123,11 @@ char* html_closing_tag_string(const char* tag_name) {
  * }
  * @endcode
  */
-char* html_self_closing_tag_string(const char* tag_name) {
+char* html_self_closing_tag_string(arena_allocator_T* allocator, const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("< />"); }
 
   size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 5); // +5 for '<', ' ', '/', '>', and '\0'
+  char* result = (char*) arena_alloc(allocator, length + 5); // +5 for '<', ' ', '/', '>', and '\0'
 
   if (result == NULL) { return NULL; }
 
