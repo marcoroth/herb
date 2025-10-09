@@ -3,13 +3,14 @@
 
 #include "ast_nodes.h"
 #include "errors.h"
+#include "memory_arena.h"
 #include "position.h"
 #include "token_struct.h"
 
 void ast_node_init(AST_NODE_T* node, ast_node_type_T type, position_T start, position_T end, array_T* errors);
 void ast_node_free(AST_NODE_T* node);
 
-AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token);
+AST_LITERAL_NODE_T* ast_literal_node_init_from_token(arena_allocator_T* allocator, const token_T* token);
 
 size_t ast_node_sizeof(void);
 size_t ast_node_child_count(AST_NODE_T* node);
