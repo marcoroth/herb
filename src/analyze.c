@@ -1051,7 +1051,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
   return false;
 }
 
-void herb_analyze_parse_tree(arena_allocator_T *allocator, AST_DOCUMENT_NODE_T* document, const char* source) {
+void herb_analyze_parse_tree(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* document, const char* source) {
   herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
 
   analyze_ruby_context_T* context = arena_alloc(allocator, sizeof(analyze_ruby_context_T));
