@@ -20,7 +20,7 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
   node->location.end = end;
 
   if (errors == NULL) {
-    node->errors = array_init(8);
+    node->errors = array_init(allocator, 8);
   } else {
     node->errors = errors;
   }

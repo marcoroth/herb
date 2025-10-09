@@ -155,7 +155,7 @@ static AST_NODE_T* create_control_node(
   AST_ERB_END_NODE_T* end_node,
   control_type_t control_type
 ) {
-  array_T* errors = array_init(8);
+  array_T* errors = array_init(allocator, 8);
   position_T start_position = erb_node->tag_opening->location.start;
   position_T end_position = erb_node->tag_closing->location.end;
 
@@ -196,9 +196,9 @@ static AST_NODE_T* create_control_node(
       AST_ERB_ELSE_NODE_T* else_node = NULL;
       if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_node = (AST_ERB_ELSE_NODE_T*) subsequent; }
 
-      array_T* when_conditions = array_init(8);
-      array_T* in_conditions = array_init(8);
-      array_T* non_when_non_in_children = array_init(8);
+      array_T* when_conditions = array_init(allocator, 8);
+      array_T* in_conditions = array_init(allocator, 8);
+      array_T* non_when_non_in_children = array_init(allocator, 8);
 
       for (size_t i = 0; i < array_size(children); i++) {
         AST_NODE_T* child = array_get(children, i);
@@ -390,14 +390,14 @@ static size_t process_control_structure(
   control_type_t initial_type
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
-  array_T* children = array_init(8);
+  array_T* children = array_init(allocator, 8);
 
   index++;
 
   if (initial_type == CONTROL_TYPE_CASE || initial_type == CONTROL_TYPE_CASE_MATCH) {
-    array_T* when_conditions = array_init(8);
-    array_T* in_conditions = array_init(8);
-    array_T* non_when_non_in_children = array_init(8);
+    array_T* when_conditions = array_init(allocator, 8);
+    array_T* in_conditions = array_init(allocator, 8);
+    array_T* non_when_non_in_children = array_init(allocator, 8);
 
     while (index < array_size(array)) {
       AST_NODE_T* next_node = array_get(array, index);
@@ -430,7 +430,7 @@ static size_t process_control_structure(
       control_type_t next_type = detect_control_type(erb_content);
 
       if (next_type == CONTROL_TYPE_WHEN) {
-        array_T* when_statements = array_init(8);
+        array_T* when_statements = array_init(allocator, 8);
         index++;
 
         index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
@@ -442,14 +442,14 @@ static size_t process_control_structure(
           when_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,
-          array_init(8)
+          array_init(allocator, 8)
         );
 
         array_append(when_conditions, (AST_NODE_T*) when_node);
 
         continue;
       } else if (next_type == CONTROL_TYPE_IN) {
-        array_T* in_statements = array_init(8);
+        array_T* in_statements = array_init(allocator, 8);
         index++;
 
         index = process_block_children(node, array, index, in_statements, context, CONTROL_TYPE_IN);
@@ -461,7 +461,7 @@ static size_t process_control_structure(
           in_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,
-          array_init(8)
+          array_init(allocator, 8)
         );
 
         array_append(in_conditions, (AST_NODE_T*) in_node);
@@ -485,7 +485,7 @@ static size_t process_control_structure(
         control_type_t next_type = detect_control_type(next_erb);
 
         if (next_type == CONTROL_TYPE_ELSE) {
-          array_T* else_children = array_init(8);
+          array_T* else_children = array_init(allocator, 8);
 
           index++;
 
@@ -512,7 +512,7 @@ static size_t process_control_structure(
             else_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            array_init(8)
+            array_init(allocator, 8)
           );
         }
       }
@@ -567,7 +567,7 @@ static size_t process_control_structure(
         end_node,
         start_position,
         end_position,
-        array_init(8)
+        array_init(allocator, 8)
       );
 
       array_append(output_array, (AST_NODE_T*) case_match_node);
@@ -584,7 +584,7 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      array_init(8)
+      array_init(allocator, 8)
     );
 
     array_append(output_array, (AST_NODE_T*) case_node);
@@ -621,7 +621,7 @@ static size_t process_control_structure(
         control_type_t next_type = detect_control_type(next_erb);
 
         if (next_type == CONTROL_TYPE_ELSE) {
-          array_T* else_children = array_init(8);
+          array_T* else_children = array_init(allocator, 8);
 
           index++;
 
@@ -648,7 +648,7 @@ static size_t process_control_structure(
             else_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            array_init(8)
+            array_init(allocator, 8)
           );
         }
       }
@@ -662,7 +662,7 @@ static size_t process_control_structure(
         control_type_t next_type = detect_control_type(next_erb);
 
         if (next_type == CONTROL_TYPE_ENSURE) {
-          array_T* ensure_children = array_init(8);
+          array_T* ensure_children = array_init(allocator, 8);
 
           index++;
 
@@ -689,7 +689,7 @@ static size_t process_control_structure(
             ensure_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            array_init(8)
+            array_init(allocator, 8)
           );
         }
       }
@@ -742,7 +742,7 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      array_init(8)
+      array_init(allocator, 8)
     );
 
     array_append(output_array, (AST_NODE_T*) begin_node);
@@ -794,7 +794,7 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      array_init(8)
+      array_init(allocator, 8)
     );
 
     array_append(output_array, (AST_NODE_T*) block_node);
@@ -857,7 +857,7 @@ static size_t process_subsequent_block(
 ) {
   AST_ERB_CONTENT_NODE_T* erb_node = (AST_ERB_CONTENT_NODE_T*) array_get(array, index);
   control_type_t type = detect_control_type(erb_node);
-  array_T* children = array_init(8);
+  array_T* children = array_init(allocator, 8);
 
   index++;
 
@@ -942,7 +942,7 @@ static size_t process_block_children(
     if (child_type == CONTROL_TYPE_IF || child_type == CONTROL_TYPE_CASE || child_type == CONTROL_TYPE_CASE_MATCH
         || child_type == CONTROL_TYPE_BEGIN || child_type == CONTROL_TYPE_UNLESS || child_type == CONTROL_TYPE_WHILE
         || child_type == CONTROL_TYPE_UNTIL || child_type == CONTROL_TYPE_FOR || child_type == CONTROL_TYPE_BLOCK) {
-      array_T* temp_array = array_init(1);
+      array_T* temp_array = array_init(allocator, 1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
       if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
@@ -961,7 +961,7 @@ static size_t process_block_children(
 }
 
 static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_ruby_context_T* context) {
-  array_T* new_array = array_init(array_size(array));
+  array_T* new_array = array_init(allocator, array_size(array));
   size_t index = 0;
 
   while (index < array_size(array)) {
@@ -992,7 +992,7 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
         continue;
 
       case CONTROL_TYPE_YIELD: {
-        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(8), NULL, NULL, type);
+        AST_NODE_T* yield_node = create_control_node(erb_node, array_init(allocator, 8), NULL, NULL, type);
 
         if (yield_node) {
           array_append(new_array, yield_node);
@@ -1057,7 +1057,7 @@ void herb_analyze_parse_tree(arena_allocator_T* allocator, AST_DOCUMENT_NODE_T* 
   analyze_ruby_context_T* context = arena_alloc(allocator, sizeof(analyze_ruby_context_T));
   context->document = document;
   context->parent = NULL;
-  context->ruby_context_stack = array_init(8);
+  context->ruby_context_stack = array_init(allocator, 8);
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
 

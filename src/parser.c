@@ -35,7 +35,7 @@ size_t parser_sizeof(void) {
 void herb_parser_init(arena_allocator_T* allocator, parser_T* parser, lexer_T* lexer, parser_options_T* options) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
-  parser->open_tags_stack = array_init(16);
+  parser->open_tags_stack = array_init(allocator, 16);
   parser->state = PARSER_STATE_DATA;
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
 
@@ -48,8 +48,8 @@ void herb_parser_init(arena_allocator_T* allocator, parser_T* parser, lexer_T* l
 }
 
 static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
   buffer_T content;
   buffer_init(&content, 128);
 
@@ -90,8 +90,8 @@ static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
 }
 
 static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
   token_T* comment_start = parser_consume_expected(parser, TOKEN_HTML_COMMENT_START, errors);
   position_T start = parser->current_token->location.start;
 
@@ -136,8 +136,8 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 }
 
 static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
   buffer_T content;
   buffer_init(&content, 64);
 
@@ -181,8 +181,8 @@ static AST_HTML_DOCTYPE_NODE_T* parser_parse_html_doctype(parser_T* parser) {
 }
 
 static AST_XML_DECLARATION_NODE_T* parser_parse_xml_declaration(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
   buffer_T content;
   buffer_init(&content, 64);
 
@@ -265,7 +265,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T
     token_free(token);
   }
 
-  array_T* errors = array_init(8);
+  array_T* errors = array_init(allocator, 8);
 
   AST_HTML_TEXT_NODE_T* text_node = NULL;
 
@@ -281,8 +281,8 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, array_T
 }
 
 static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
   buffer_T buffer;
   buffer_init(&buffer, 128);
   position_T start = parser->current_token->location.start;
@@ -474,8 +474,8 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 }
 
 static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser_T* parser) {
-  array_T* children = array_init(8);
-  array_T* errors = array_init(8);
+  array_T* children = array_init(allocator, 8);
+  array_T* errors = array_init(allocator, 8);
 
   // <div id=<%= "home" %>>
   if (token_is(parser, TOKEN_ERB_START)) {
@@ -760,8 +760,8 @@ static void parser_handle_whitespace_in_open_tag(parser_T* parser, array_T* chil
 }
 
 static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
 
   token_T* tag_start = parser_consume_expected(parser, TOKEN_HTML_TAG_START, errors);
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
@@ -848,8 +848,8 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 }
 
 static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) {
-  array_T* errors = array_init(8);
-  array_T* children = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* children = array_init(allocator, 8);
 
   token_T* tag_opening = parser_consume_expected(parser, TOKEN_HTML_TAG_START_CLOSE, errors);
 
@@ -917,8 +917,8 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
-  array_T* errors = array_init(8);
-  array_T* body = array_init(8);
+  array_T* errors = array_init(allocator, 8);
+  array_T* body = array_init(allocator, 8);
 
   parser_push_open_tag(parser, open_tag->tag_name);
 
@@ -976,7 +976,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
   AST_HTML_ELEMENT_NODE_T* regular_element = parser_parse_html_regular_element(parser, open_tag);
   if (regular_element != NULL) { return regular_element; }
 
-  array_T* errors = array_init(8);
+  array_T* errors = array_init(allocator, 8);
 
   parser_append_unexpected_error(parser, "Unknown HTML open tag type", "HTMLOpenTag or HTMLSelfCloseTag", errors);
 
@@ -994,7 +994,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_element(parser_T* parser) {
 }
 
 static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
-  array_T* errors = array_init(8);
+  array_T* errors = array_init(allocator, 8);
 
   token_T* opening_tag = parser_consume_expected(parser, TOKEN_ERB_START, errors);
   token_T* content = parser_consume_expected(parser, TOKEN_ERB_CONTENT, errors);
@@ -1188,8 +1188,8 @@ static void parser_parse_stray_closing_tags(parser_T* parser, array_T* children,
 }
 
 static AST_DOCUMENT_NODE_T* parser_parse_document(parser_T* parser) {
-  array_T* children = array_init(8);
-  array_T* errors = array_init(8);
+  array_T* children = array_init(allocator, 8);
+  array_T* errors = array_init(allocator, 8);
   position_T start = parser->current_token->location.start;
 
   parser_parse_in_data_state(parser, children, errors);
@@ -1211,7 +1211,7 @@ AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser) {
 
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children) {
   if (parser->options && parser->options->track_whitespace) {
-    array_T* errors = array_init(8);
+    array_T* errors = array_init(allocator, 8);
     AST_WHITESPACE_NODE_T* whitespace_node = ast_whitespace_node_init(
       whitespace_token,
       whitespace_token->location.start,
