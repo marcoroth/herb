@@ -2,6 +2,7 @@
 #define HERB_ANALYZE_H
 
 #include "analyzed_ruby.h"
+#include "memory_arena.h"
 #include "array.h"
 #include "ast_nodes.h"
 
@@ -34,6 +35,6 @@ typedef enum {
 } control_type_t;
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source);
+void herb_analyze_parse_tree(arena_allocator_T *allocator, AST_DOCUMENT_NODE_T* document, const char* source);
 
 #endif
