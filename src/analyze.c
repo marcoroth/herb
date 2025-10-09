@@ -205,11 +205,11 @@ static AST_NODE_T* create_control_node(
       for (size_t i = 0; i < array_size(children); i++) {
         AST_NODE_T* child = array_get(children, i);
         if (child && child->type == AST_ERB_WHEN_NODE) {
-          array_append(when_conditions, child);
+          array_append(allocator, when_conditions, child);
         } else if (child && child->type == AST_ERB_IN_NODE) {
-          array_append(in_conditions, child);
+          array_append(allocator, in_conditions, child);
         } else {
-          array_append(non_when_non_in_children, child);
+          array_append(allocator, non_when_non_in_children, child);
         }
       }
 
@@ -422,7 +422,7 @@ static size_t process_control_structure(
         if (next_type == CONTROL_TYPE_WHEN || next_type == CONTROL_TYPE_IN) { break; }
       }
 
-      array_append(non_when_non_in_children, next_node);
+      array_append(allocator, non_when_non_in_children, next_node);
       index++;
     }
 
@@ -432,7 +432,7 @@ static size_t process_control_structure(
       if (!next_node) { break; }
 
       if (next_node->type != AST_ERB_CONTENT_NODE) {
-        array_append(non_when_non_in_children, next_node);
+        array_append(allocator, non_when_non_in_children, next_node);
         index++;
         continue;
       }
@@ -457,7 +457,7 @@ static size_t process_control_structure(
           array_init(allocator, 8)
         );
 
-        array_append(when_conditions, (AST_NODE_T*) when_node);
+        array_append(allocator, when_conditions, (AST_NODE_T*) when_node);
 
         continue;
       } else if (next_type == CONTROL_TYPE_IN) {
@@ -477,13 +477,13 @@ static size_t process_control_structure(
           array_init(allocator, 8)
         );
 
-        array_append(in_conditions, (AST_NODE_T*) in_node);
+        array_append(allocator, in_conditions, (AST_NODE_T*) in_node);
 
         continue;
       } else if (next_type == CONTROL_TYPE_ELSE || next_type == CONTROL_TYPE_END) {
         break;
       } else {
-        array_append(non_when_non_in_children, next_node);
+        array_append(allocator, non_when_non_in_children, next_node);
         index++;
       }
     }
@@ -514,7 +514,7 @@ static size_t process_control_structure(
               if (child_type == CONTROL_TYPE_END) { break; }
             }
 
-            array_append(else_children, child);
+            array_append(allocator, else_children, child);
             index++;
           }
 
@@ -586,7 +586,7 @@ static size_t process_control_structure(
         array_init(allocator, 8)
       );
 
-      array_append(output_array, (AST_NODE_T*) case_match_node);
+      array_append(allocator, output_array, (AST_NODE_T*) case_match_node);
       return index;
     }
 
@@ -604,7 +604,7 @@ static size_t process_control_structure(
       array_init(allocator, 8)
     );
 
-    array_append(output_array, (AST_NODE_T*) case_node);
+    array_append(allocator, output_array, (AST_NODE_T*) case_node);
     return index;
   }
 
@@ -654,7 +654,7 @@ static size_t process_control_structure(
               if (child_type == CONTROL_TYPE_ENSURE || child_type == CONTROL_TYPE_END) { break; }
             }
 
-            array_append(else_children, child);
+            array_append(allocator, else_children, child);
             index++;
           }
 
@@ -696,7 +696,7 @@ static size_t process_control_structure(
               if (child_type == CONTROL_TYPE_END) { break; }
             }
 
-            array_append(ensure_children, child);
+            array_append(allocator, ensure_children, child);
             index++;
           }
 
@@ -766,7 +766,7 @@ static size_t process_control_structure(
       array_init(allocator, 8)
     );
 
-    array_append(output_array, (AST_NODE_T*) begin_node);
+    array_append(allocator, output_array, (AST_NODE_T*) begin_node);
     return index;
   }
 
@@ -820,7 +820,7 @@ static size_t process_control_structure(
       array_init(allocator, 8)
     );
 
-    array_append(output_array, (AST_NODE_T*) block_node);
+    array_append(allocator, output_array, (AST_NODE_T*) block_node);
     return index;
   }
 
@@ -866,7 +866,7 @@ static size_t process_control_structure(
 
   AST_NODE_T* control_node = create_control_node(erb_node, children, subsequent, end_node, initial_type);
 
-  if (control_node) { array_append(output_array, control_node); }
+  if (control_node) { array_append(allocator, output_array, control_node); }
 
   return index;
 }
@@ -953,7 +953,7 @@ static size_t process_block_children(
     if (!child) { break; }
 
     if (child->type != AST_ERB_CONTENT_NODE) {
-      array_append(children_array, child);
+      array_append(allocator, children_array, child);
       index++;
       continue;
     }
@@ -969,7 +969,7 @@ static size_t process_block_children(
       array_T* temp_array = array_init(allocator, 1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
-      if (array_size(temp_array) > 0) { array_append(children_array, array_get(temp_array, 0)); }
+      if (array_size(temp_array) > 0) { array_append(allocator, children_array, array_get(temp_array, 0)); }
 
       array_free(&temp_array);
 
@@ -977,7 +977,7 @@ static size_t process_block_children(
       continue;
     }
 
-    array_append(children_array, child);
+    array_append(allocator, children_array, child);
     index++;
   }
 
@@ -994,7 +994,7 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
     if (!item) { break; }
 
     if (item->type != AST_ERB_CONTENT_NODE) {
-      array_append(new_array, item);
+      array_append(allocator, new_array, item);
       index++;
       continue;
     }
@@ -1019,9 +1019,9 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
         AST_NODE_T* yield_node = create_control_node(erb_node, array_init(allocator, 8), NULL, NULL, type);
 
         if (yield_node) {
-          array_append(new_array, yield_node);
+          array_append(allocator, new_array, yield_node);
         } else {
-          array_append(new_array, item);
+          array_append(allocator, new_array, item);
         }
 
         index++;
@@ -1029,7 +1029,7 @@ static array_T* rewrite_node_array(AST_NODE_T* node, array_T* array, analyze_rub
       }
 
       default:
-        array_append(new_array, item);
+        array_append(allocator, new_array, item);
         index++;
         break;
     }
@@ -1106,7 +1106,7 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
        error = (const pm_diagnostic_t*) error->node.next) {
 
     RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser);
-    array_append(document->base.errors, parse_error);
+    array_append(allocator, document->base.errors, parse_error);
   }
 
   pm_node_destroy(&parser, root);
