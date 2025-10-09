@@ -90,11 +90,33 @@ export function lineEndsWithOpeningPunctuation(line: string): boolean {
 }
 
 /**
+ * Check if a string is an ERB tag
+ */
+export function isERBTag(text: string): boolean {
+  return /^<%.*?%>$/.test(text.trim())
+}
+
+/**
+ * Check if a string ends with an ERB tag
+ */
+export function endsWithERBTag(text: string): boolean {
+  return /%>$/.test(text.trim())
+}
+
+/**
+ * Check if a string starts with an ERB tag
+ */
+export function startsWithERBTag(text: string): boolean {
+  return /^<%/.test(text.trim())
+}
+
+/**
  * Determine if space is needed between the current line and the next word
  */
 export function needsSpaceBetween(currentLine: string, word: string): boolean {
   if (isClosingPunctuation(word)) return false
   if (lineEndsWithOpeningPunctuation(currentLine)) return false
+  if (endsWithERBTag(currentLine) && startsWithERBTag(word)) return false
 
   return true
 }

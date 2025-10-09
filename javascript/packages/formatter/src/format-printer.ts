@@ -1932,7 +1932,14 @@ export class FormatPrinter extends Printer {
 
         result += childInline
       } else {
-        result += this.capture(() => this.visit(child)).join("")
+        const wasInlineMode = this.inlineMode
+        this.inlineMode = true
+
+        const captured = this.capture(() => this.visit(child)).join("")
+
+        this.inlineMode = wasInlineMode
+
+        result += captured
       }
     }
 
