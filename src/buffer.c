@@ -25,7 +25,7 @@ bool buffer_init(arena_allocator_T* allocator, buffer_T* buffer, const size_t ca
 buffer_T* buffer_new(arena_allocator_T* allocator, const size_t capacity) {
   buffer_T* buffer = arena_alloc(allocator, sizeof(buffer_T));
 
-  if (!buffer_init(buffer, capacity)) {
+  if (!buffer_init(allocator, buffer, capacity)) {
     free(buffer);
     return NULL;
   }
@@ -58,7 +58,7 @@ size_t buffer_sizeof(void) {
  * @param additional_capacity The additional length needed beyond current buffer capacity
  * @return true if capacity was increased, false if reallocation failed
  */
-bool buffer_increase_capacity(buffer_T* buffer, const size_t additional_capacity) {
+bool buffer_increase_capacity(arena_allocator_T* allocator, buffer_T* buffer, const size_t additional_capacity) {
   if (additional_capacity + 1 >= SIZE_MAX) {
     fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
     exit(1);
@@ -66,7 +66,7 @@ bool buffer_increase_capacity(buffer_T* buffer, const size_t additional_capacity
 
   const size_t new_capacity = buffer->capacity + additional_capacity;
 
-  return buffer_resize(buffer, new_capacity);
+  return buffer_resize(allocator, buffer, new_capacity);
 }
 
 /**
@@ -103,8 +103,8 @@ bool buffer_resize(arena_allocator_T* allocator, buffer_T* buffer, const size_t 
  * @param buffer The buffer to expand capacity for
  * @return true if capacity was increased, false if reallocation failed
  */
-bool buffer_expand_capacity(buffer_T* buffer) {
-  return buffer_resize(buffer, buffer->capacity * 2);
+bool buffer_expand_capacity(arena_allocator_T* allocator, buffer_T* buffer) {
+  return buffer_resize(allocator, buffer, buffer->capacity * 2);
 }
 
 /**
@@ -116,7 +116,7 @@ bool buffer_expand_capacity(buffer_T* buffer) {
  * @param required_length The additional length needed beyond current buffer capacity
  * @return true if capacity was increased, false if reallocation failed
  */
-bool buffer_expand_if_needed(buffer_T* buffer, const size_t required_length) {
+bool buffer_expand_if_needed(arena_allocator_T* allocator, buffer_T* buffer, const size_t required_length) {
   if (buffer_has_capacity(buffer, required_length)) { return true; }
 
   bool should_double_capacity = required_length < buffer->capacity;
@@ -128,7 +128,7 @@ bool buffer_expand_if_needed(buffer_T* buffer, const size_t required_length) {
     new_capacity = buffer->capacity + (required_length * 2);
   }
 
-  return buffer_resize(buffer, new_capacity);
+  return buffer_resize(allocator, buffer, new_capacity);
 }
 
 /**
@@ -141,13 +141,13 @@ bool buffer_expand_if_needed(buffer_T* buffer, const size_t required_length) {
  * @param text A null-terminated string to append
  * @return void
  */
-void buffer_append(buffer_T* buffer, const char* text) {
+void buffer_append(arena_allocator_T* allocator, buffer_T* buffer, const char* text) {
   if (!buffer || !text) { return; }
   if (text[0] == '\0') { return; }
 
   size_t text_length = strlen(text);
 
-  if (!buffer_expand_if_needed(buffer, text_length)) { return; }
+  if (!buffer_expand_if_needed(allocator, buffer, text_length)) { return; }
 
   memcpy(buffer->value + buffer->length, text, text_length);
   buffer->length += text_length;
@@ -166,9 +166,9 @@ void buffer_append(buffer_T* buffer, const char* text) {
  * @param length The number of bytes to append from text
  * @return void
  */
-void buffer_append_with_length(buffer_T* buffer, const char* text, const size_t length) {
+void buffer_append_with_length(arena_allocator_T* allocator, buffer_T* buffer, const char* text, const size_t length) {
   if (!buffer || !text || length == 0) { return; }
-  if (!buffer_expand_if_needed(buffer, length)) { return; }
+  if (!buffer_expand_if_needed(allocator, buffer, length)) { return; }
 
   memcpy(buffer->value + buffer->length, text, length);
 
@@ -176,13 +176,13 @@ void buffer_append_with_length(buffer_T* buffer, const char* text, const size_t 
   buffer->value[buffer->length] = '\0';
 }
 
-void buffer_append_char(buffer_T* buffer, const char character) {
+void buffer_append_char(arena_allocator_T* allocator, buffer_T* buffer, const char character) {
   static char string[2];
 
   string[0] = character;
   string[1] = '\0';
 
-  buffer_append(buffer, string);
+  buffer_append(allocator, buffer, string);
 }
 
 void buffer_append_repeated(arena_allocator_T* allocator, buffer_T* buffer, const char character, size_t length) {
@@ -194,22 +194,22 @@ void buffer_append_repeated(arena_allocator_T* allocator, buffer_T* buffer, cons
   memset(spaces, character, length);
   spaces[length] = '\0';
 
-  buffer_append(buffer, spaces);
+  buffer_append(allocator, buffer, spaces);
 
   free(spaces);
 }
 
-void buffer_append_whitespace(buffer_T* buffer, const size_t length) {
-  buffer_append_repeated(buffer, ' ', length);
+void buffer_append_whitespace(arena_allocator_T* allocator, buffer_T* buffer, const size_t length) {
+  buffer_append_repeated(allocator, buffer, ' ', length);
 }
 
-void buffer_prepend(buffer_T* buffer, const char* text) {
+void buffer_prepend(arena_allocator_T* allocator, buffer_T* buffer, const char* text) {
   if (!buffer || !text) { return; }
   if (text[0] == '\0') { return; }
 
   size_t text_length = strlen(text);
 
-  if (!buffer_expand_if_needed(buffer, text_length)) { return; }
+  if (!buffer_expand_if_needed(allocator, buffer, text_length)) { return; }
 
   memmove(buffer->value + text_length, buffer->value, buffer->length + 1);
   memcpy(buffer->value, text, text_length);
@@ -217,9 +217,9 @@ void buffer_prepend(buffer_T* buffer, const char* text) {
   buffer->length += text_length;
 }
 
-void buffer_concat(buffer_T* destination, buffer_T* source) {
+void buffer_concat(arena_allocator_T* allocator, buffer_T* destination, buffer_T* source) {
   if (source->length == 0) { return; }
-  if (!buffer_expand_if_needed(destination, source->length)) { return; }
+  if (!buffer_expand_if_needed(allocator, destination, source->length)) { return; }
 
   memcpy(destination->value + destination->length, source->value, source->length);
 
