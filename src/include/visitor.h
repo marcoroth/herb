@@ -3,9 +3,9 @@
 
 #include "array.h"
 #include "ast_node.h"
-#include "ast_nodes.h"
+#include "memory_arena.h"
 
-void herb_visit_node(const AST_NODE_T* node, bool (*visitor)(const AST_NODE_T*, void*), void* data);
-void herb_visit_child_nodes(const AST_NODE_T* node, bool (*visitor)(const AST_NODE_T* node, void* data), void* data);
+void herb_visit_node(arena_allocator_T* allocator, const AST_NODE_T* node, bool (*visitor)(arena_allocator_T* allocator, const AST_NODE_T*, void*), void* data);
+void herb_visit_child_nodes(arena_allocator_T* allocator, const AST_NODE_T* node, bool (*visitor)(arena_allocator_T* allocator, const AST_NODE_T* node, void* data), void* data);
 
 #endif

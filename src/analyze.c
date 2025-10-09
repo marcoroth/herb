@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static analyzed_ruby_T* herb_analyze_ruby(char* source) {
+static analyzed_ruby_T* herb_analyze_ruby(arena_allocator_T* allocator, char* source) {
   analyzed_ruby_T* analyzed = init_analyzed_ruby(allocator, source);
 
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
@@ -46,14 +46,14 @@ static analyzed_ruby_T* herb_analyze_ruby(char* source) {
   return analyzed;
 }
 
-static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
+static bool analyze_erb_content(arena_allocator_T* allocator, const AST_NODE_T* node, void* data) {
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
     const char* opening = erb_content_node->tag_opening->value;
 
     if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
-      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
+      analyzed_ruby_T* analyzed = herb_analyze_ruby(allocator, erb_content_node->content->value);
 
       if (false) { pretty_print_analyzed_ruby(analyzed, erb_content_node->content->value); }
 
@@ -67,7 +67,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     }
   }
 
-  herb_visit_child_nodes(node, analyze_erb_content, data);
+  herb_visit_child_nodes(allocator, node, analyze_erb_content, data);
 
   return false;
 }
@@ -149,6 +149,7 @@ static bool is_terminator_type(control_type_t parent_type, control_type_t child_
 }
 
 static AST_NODE_T* create_control_node(
+  arena_allocator_T* allocator,
   AST_ERB_CONTENT_NODE_T* erb_node,
   array_T* children,
   AST_NODE_T* subsequent,
@@ -176,6 +177,7 @@ static AST_NODE_T* create_control_node(
     case CONTROL_TYPE_IF:
     case CONTROL_TYPE_ELSIF:
       return (AST_NODE_T*) ast_erb_if_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -189,7 +191,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_ELSE:
       return (AST_NODE_T*)
-        ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+        ast_erb_else_node_init(allocator, tag_opening, content, tag_closing, children, start_position, end_position, errors);
 
     case CONTROL_TYPE_CASE:
     case CONTROL_TYPE_CASE_MATCH: {
@@ -213,6 +215,7 @@ static AST_NODE_T* create_control_node(
 
       if (array_size(in_conditions) > 0) {
         return (AST_NODE_T*) ast_erb_case_match_node_init(
+          allocator,
           tag_opening,
           content,
           tag_closing,
@@ -227,6 +230,7 @@ static AST_NODE_T* create_control_node(
       }
 
       return (AST_NODE_T*) ast_erb_case_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -242,12 +246,12 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_WHEN: {
       return (AST_NODE_T*)
-        ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+        ast_erb_when_node_init(allocator, tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_IN: {
       return (AST_NODE_T*)
-        ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+        ast_erb_in_node_init(allocator, tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -266,6 +270,7 @@ static AST_NODE_T* create_control_node(
       }
 
       return (AST_NODE_T*) ast_erb_begin_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -286,6 +291,7 @@ static AST_NODE_T* create_control_node(
       if (rescue_node && subsequent->type == AST_ERB_RESCUE_NODE) { rescue_node = (AST_ERB_RESCUE_NODE_T*) subsequent; }
 
       return (AST_NODE_T*) ast_erb_rescue_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -299,7 +305,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_ENSURE: {
       return (AST_NODE_T*)
-        ast_erb_ensure_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+        ast_erb_ensure_node_init(allocator, tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_UNLESS: {
@@ -308,6 +314,7 @@ static AST_NODE_T* create_control_node(
       if (subsequent && subsequent->type == AST_ERB_ELSE_NODE) { else_clause = (AST_ERB_ELSE_NODE_T*) subsequent; }
 
       return (AST_NODE_T*) ast_erb_unless_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -322,6 +329,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_WHILE: {
       return (AST_NODE_T*) ast_erb_while_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -335,6 +343,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_UNTIL: {
       return (AST_NODE_T*) ast_erb_until_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -348,6 +357,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_FOR: {
       return (AST_NODE_T*) ast_erb_for_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -361,6 +371,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_BLOCK: {
       return (AST_NODE_T*) ast_erb_block_node_init(
+        allocator,
         tag_opening,
         content,
         tag_closing,
@@ -374,7 +385,7 @@ static AST_NODE_T* create_control_node(
 
     case CONTROL_TYPE_YIELD: {
       return (AST_NODE_T*)
-        ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors);
+        ast_erb_yield_node_init(allocator, tag_opening, content, tag_closing, start_position, end_position, errors);
     }
 
     default: array_free(&errors); return NULL;
@@ -436,6 +447,7 @@ static size_t process_control_structure(
         index = process_block_children(node, array, index, when_statements, context, CONTROL_TYPE_WHEN);
 
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
+          allocator,
           erb_content->tag_opening,
           erb_content->content,
           erb_content->tag_closing,
@@ -455,6 +467,7 @@ static size_t process_control_structure(
         index = process_block_children(node, array, index, in_statements, context, CONTROL_TYPE_IN);
 
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
+          allocator,
           erb_content->tag_opening,
           erb_content->content,
           erb_content->tag_closing,
@@ -506,6 +519,7 @@ static size_t process_control_structure(
           }
 
           else_clause = ast_erb_else_node_init(
+            allocator,
             next_erb->tag_opening,
             next_erb->content,
             next_erb->tag_closing,
@@ -528,6 +542,7 @@ static size_t process_control_structure(
 
         if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
           end_node = ast_erb_end_node_init(
+            allocator,
             end_erb->tag_opening,
             end_erb->content,
             end_erb->tag_closing,
@@ -558,6 +573,7 @@ static size_t process_control_structure(
 
     if (array_size(in_conditions) > 0) {
       AST_ERB_CASE_MATCH_NODE_T* case_match_node = ast_erb_case_match_node_init(
+        allocator,
         erb_node->tag_opening,
         erb_node->content,
         erb_node->tag_closing,
@@ -575,6 +591,7 @@ static size_t process_control_structure(
     }
 
     AST_ERB_CASE_NODE_T* case_node = ast_erb_case_node_init(
+      allocator,
       erb_node->tag_opening,
       erb_node->content,
       erb_node->tag_closing,
@@ -642,6 +659,7 @@ static size_t process_control_structure(
           }
 
           else_clause = ast_erb_else_node_init(
+            allocator,
             next_erb->tag_opening,
             next_erb->content,
             next_erb->tag_closing,
@@ -683,6 +701,7 @@ static size_t process_control_structure(
           }
 
           ensure_clause = ast_erb_ensure_node_init(
+            allocator,
             next_erb->tag_opening,
             next_erb->content,
             next_erb->tag_closing,
@@ -705,6 +724,7 @@ static size_t process_control_structure(
 
         if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
           end_node = ast_erb_end_node_init(
+            allocator,
             end_erb->tag_opening,
             end_erb->content,
             end_erb->tag_closing,
@@ -732,6 +752,7 @@ static size_t process_control_structure(
     }
 
     AST_ERB_BEGIN_NODE_T* begin_node = ast_erb_begin_node_init(
+      allocator,
       erb_node->tag_opening,
       erb_node->content,
       erb_node->tag_closing,
@@ -763,6 +784,7 @@ static size_t process_control_structure(
 
         if (close_type == CONTROL_TYPE_BLOCK_CLOSE || close_type == CONTROL_TYPE_END) {
           end_node = ast_erb_end_node_init(
+            allocator,
             close_erb->tag_opening,
             close_erb->content,
             close_erb->tag_closing,
@@ -787,6 +809,7 @@ static size_t process_control_structure(
     }
 
     AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
+      allocator,
       erb_node->tag_opening,
       erb_node->content,
       erb_node->tag_closing,
@@ -827,6 +850,7 @@ static size_t process_control_structure(
 
       if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
         end_node = ast_erb_end_node_init(
+          allocator,
           end_erb->tag_opening,
           end_erb->content,
           end_erb->tag_closing,
