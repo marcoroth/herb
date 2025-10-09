@@ -7,7 +7,6 @@
 int is_whitespace(int character);
 int is_newline(int character);
 
-char* replace_char(char* string, char find, char replace);
 char* escape_newlines(const char* input);
 char* quoted_string(const char* input);
 char* wrap_string(const char* input, char character);

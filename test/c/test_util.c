@@ -11,13 +11,6 @@ TEST(util_is_newline)
   ck_assert_int_eq(is_newline('a'), 0);
 END
 
-TEST(util_replace_char_returns_original)
-  char str[] = "abca";
-  char *returned = replace_char(str, 'a', 'x');
-
-  ck_assert_ptr_eq(returned, str);
-  ck_assert_str_eq(str, "xbcx");
-END
 
 TCase *util_tests(void) {
   TCase *util = tcase_create("Util");

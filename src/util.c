@@ -13,18 +13,6 @@ int is_newline(const int character) {
   return character == 13 || character == 10;
 }
 
-char* replace_char(char* string, const char find, const char replace) {
-  char* original_string = string;
-
-  while (*string != '\0') {
-    if (*string == find) { *string = replace; }
-
-    string++;
-  }
-
-  return original_string;
-}
-
 char* escape_newlines(const char* input) {
   char* output = calloc(strlen(input) * 2 + 1, sizeof(char));
   char* orig_output = output;
