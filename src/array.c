@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "include/array.h"
 #include "include/macros.h"
@@ -8,12 +9,12 @@ size_t array_sizeof(void) {
   return sizeof(array_T);
 }
 
-array_T* array_init(const size_t capacity) {
-  array_T* array = malloc(array_sizeof());
+array_T* array_init(arena_allocator_T* allocator, const size_t capacity) {
+  array_T* array = arena_alloc(allocator, array_sizeof());
 
   array->size = 0;
   array->capacity = capacity;
-  array->items = calloc(capacity, sizeof(void*));
+  array->items = arena_alloc(allocator, capacity * sizeof(void*));
 
   if (!array->items) {
     free(array);
@@ -23,7 +24,7 @@ array_T* array_init(const size_t capacity) {
   return array;
 }
 
-void array_append(array_T* array, void* item) {
+void array_append(arena_allocator_T* allocator, array_T* array, void* item) {
   if (array->size >= array->capacity) {
     size_t new_capacity;
 
@@ -44,7 +45,8 @@ void array_append(array_T* array, void* item) {
     }
 
     size_t new_size_bytes = new_capacity * sizeof(void*);
-    void* new_items = realloc(array->items, new_size_bytes);
+    void* new_items = arena_alloc(allocator, new_size_bytes);
+    memcpy(new_items, array->items, array->size);
 
     if (unlikely(new_items == NULL)) { return; }
 

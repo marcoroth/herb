@@ -1,6 +1,7 @@
 #ifndef HERB_ARRAY_H
 #define HERB_ARRAY_H
 
+#include "memory_arena.h"
 #include <stdlib.h>
 
 typedef struct ARRAY_STRUCT {
@@ -9,13 +10,13 @@ typedef struct ARRAY_STRUCT {
   size_t capacity;
 } array_T;
 
-array_T* array_init(size_t capacity);
+array_T* array_init(arena_allocator_T* allocator, size_t capacity);
 
 void* array_get(const array_T* array, size_t index);
 void* array_first(array_T* array);
 void* array_last(array_T* array);
 
-void array_append(array_T* array, void* item);
+void array_append(arena_allocator_T* allocator, array_T* array, void* item);
 void array_set(const array_T* array, size_t index, void* item);
 void array_free(array_T** array);
 void array_remove(array_T* array, size_t index);
