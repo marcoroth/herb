@@ -1071,7 +1071,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     array_free(&old_array);
   }
 
-  herb_visit_child_nodes(node, transform_erb_nodes, data);
+  herb_visit_child_nodes(allocator, node, transform_erb_nodes, data);
 
   return false;
 }
