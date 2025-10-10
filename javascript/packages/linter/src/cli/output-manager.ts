@@ -27,7 +27,7 @@ export class OutputManager {
    * Output successful lint results
    */
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
-    const { allOffenses, files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, ruleOffenses } = results
+    const { allOffenses, files, totalErrors, totalWarnings, totalSkipped, filesWithOffenses, ruleCount, ruleOffenses } = results
 
     if (options.useGitHubActions) {
       const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines)
@@ -45,6 +45,7 @@ export class OutputManager {
           files,
           totalErrors,
           totalWarnings,
+          totalSkipped,
           filesWithOffenses,
           ruleCount,
           startTime: options.startTime,
@@ -68,6 +69,7 @@ export class OutputManager {
           filesWithOffenses,
           totalErrors,
           totalWarnings,
+          totalSkipped,
           totalOffenses: totalErrors + totalWarnings,
           ruleCount
         },
@@ -96,6 +98,7 @@ export class OutputManager {
         files,
         totalErrors,
         totalWarnings,
+        totalSkipped,
         filesWithOffenses,
         ruleCount,
         startTime: options.startTime,
@@ -120,6 +123,7 @@ export class OutputManager {
           filesWithOffenses: 0,
           totalErrors: 0,
           totalWarnings: 0,
+          totalSkipped: 0,
           totalOffenses: 0,
           ruleCount: 0
         },
