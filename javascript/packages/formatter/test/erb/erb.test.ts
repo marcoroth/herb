@@ -1584,7 +1584,7 @@ describe("@herb-tools/formatter", () => {
     expect(result).toBe(expected)
   })
 
-  test("TODO", () => {
+  test("keeps hyphen-attached inline element together during line wrapping", () => {
     const input = dedent`
       <div>
         This is a div where we still can assume that whitespace can be inserted-<b>infront or after of this bold you can not insert whitespace</b>. Next senctence.
