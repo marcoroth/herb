@@ -182,16 +182,16 @@ module SnapshotUtils
     [
       # ntfs reserved characters
       # https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-      ['<', 'lt'],
-      ['>', 'gt'],
-      [':', ''],
-      ['/', '_'],
-      ['\\', ''],
-      ['|', ''],
-      ['?', ''],
-      ['*', ''],
+      ["<", "lt"],
+      [">", "gt"],
+      [":", ""],
+      ["/", "_"],
+      ["\\", ""],
+      ["|", ""],
+      ["?", ""],
+      ["*", ""],
 
-      [' ', '_']
+      [" ", "_"]
     ].inject(name) { |name, substitution| name.gsub(substitution[0], substitution[1]) }
   end
 
