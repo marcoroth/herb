@@ -12,7 +12,6 @@ typedef struct ARRAY_STRUCT {
 array_T* array_init(size_t capacity);
 
 void* array_get(const array_T* array, size_t index);
-void* array_first(array_T* array);
 void* array_last(array_T* array);
 
 void array_append(array_T* array, void* item);

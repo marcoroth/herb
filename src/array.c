@@ -62,11 +62,6 @@ void* array_get(const array_T* array, const size_t index) {
   return array->items[index];
 }
 
-void* array_first(array_T* array) {
-  if (!array || array->size == 0) { return NULL; }
-  return array->items[0];
-}
-
 void* array_last(array_T* array) {
   if (!array || array->size == 0) { return NULL; }
   return array->items[array->size - 1];
