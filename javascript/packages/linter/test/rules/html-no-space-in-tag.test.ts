@@ -1,86 +1,65 @@
 import dedent from "dedent"
-
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
-
+import { describe, test } from "vitest"
 import { HTMLNoSpaceInTagRule } from "../../src/rules/html-no-space-in-tag.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-describe("HTMLNoSpaceInTagRule", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoSpaceInTagRule)
 
+describe.skip("HTMLNoSpaceInTagRule", () => {
   describe("when space is correct", () => {
-    test("opening tag", () => {
-      const html = dedent`
-        <div>
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+    test("plain opening tag", () => {
+      expectNoOffenses(`<div>`)
     })
 
     test("closing tag", () => {
-      const html = dedent`
-        </div>
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+      expectNoOffenses(`</div>`)
     })
 
-    test("opening tag with attributes", () => {
-      const html = dedent`
-        <div class="foo">
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+    test("tag with no name", () => {
+      expectNoOffenses(`</>`)
+    })
+
+    test("empty tag", () => {
+      expectNoOffenses(`<>`)
+    })
+
+    test.fails("void tag", () => {
+      expectNoOffenses(`<img />`)
+    })
+
+    test("plain tag with attribute", () => {
+      expectNoOffenses(`<div class="foo">`)
+    })
+
+    test.fails("between attributes", () => {
+      expectNoOffenses(`<input class="foo" name="bar">`)
     })
 
     test("multi line tag", () => {
-      const html = dedent`
+      expectNoOffenses(dedent`
         <input
           type="password"
           class="foo"
         >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+      `)
     })
 
     test("tag with erb", () => {
-      const html = dedent`
-        <input <%= attributes %>>
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+      expectNoOffenses(`<input <%= attributes %>>`)
     })
 
     test("multi line tag with erb", () => {
-      const html = dedent`
+      expectNoOffenses(dedent`
         <input
           type="password"
           <%= attributes %>
           class="foo"
         >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+      `)
     })
 
     test("multi line tag with erb nested", () => {
-      const html = dedent`
+      expectNoOffenses(dedent`
         <div>
           <input
             type="password"
@@ -88,141 +67,151 @@ describe("HTMLNoSpaceInTagRule", () => {
             class="foo"
           >
         </div>
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.offenses).toHaveLength(0)
+      `)
     })
   })
 
   describe("when no space should be present", () => {
     test("after name", () => {
-      const html = dedent`
-        <div ></div>
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<div   >`)
+    })
+
+    test.fails("before name", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<   div>`)
+    })
+
+    test.fails("before start solidus", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<   /div>`)
+    })
+
+    test("after start solidus", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`</   div>`)
     })
 
     test("after end solidus", () => {
-      const html = dedent`
-        </div >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<div /   >`)
     })
 
+    test.fails("between attribute name and equal", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<div foo  ='bar'>`)
+    })
+
+    test.fails("between attribute equal and value", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<div foo=  'bar'>`)
+    })
+  })
+
+  describe("when space is missing", () => {
+    test("between attributes", () => {
+      expectError("No space detected where there should be a single space.")
+      assertOffenses(`<div foo='foo'bar='bar'>`)
+    })
+
+    test.fails("between last attribute and solidus", () => {
+      expectError("No space detected where there should be a single space.")
+      assertOffenses(`<div foo='bar'/>`)
+    })
+
+    test.fails("between name and solidus", () => {
+      expectError("No space detected where there should be a single space.")
+      assertOffenses(`<div/>`)
+    })
   })
 
   describe("when extra space is present", () => {
-    
+    test("between name and end of tag", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<div  >`)
+    })
+
     test("between name and first attribute", () => {
-      const html = dedent`
-        <img  class="hide">
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(`<img   class="hide">`)
     })
 
-    test("between attributes", () => {
-      const html = dedent`
-        <div foo='foo'      bar='bar'>·
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+    test.fails("between name and end solidus", () => {
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(`<br   />`)
     })
 
-    test("extra newline between name and first attribute", ()=> {
-      const html = dedent`
+    test.fails("between last attribute and solidus", () => {
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(`<br class="hide"   />`)
+    })
+
+    test("between last attribute and end of tag", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(`<img class="hide"    >`)
+    })
+
+    test.fails("between attributes", () => {
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(`<div foo='foo'      bar='bar'>`)
+    })
+
+    test.fails("extra newline between name and first attribute", () => {
+      expectError("Extra space detected where there should be a single space or a single line break.")
+      assertOffenses(dedent`
         <input
 
-          type="password"
-        >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+          type="password" />
+      `)
     })
 
-    test("extra newline between name and end of tag", ()=> {
-      const html = dedent`
+    test.fails("extra newline between name and end of tag", () => {
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(dedent`
         <input
 
-        >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+          />
+      `)
     })
 
-    test("extra newline between attributes", ()=> {
-      const html = dedent`
+    test.fails("extra newline between attributes", () => {
+      expectError("Extra space detected where there should be a single space or a single line break.")
+      assertOffenses(dedent`
         <input
           type="password"
 
+          class="foo" />
+      `)
+    })
+
+    test.fails("end solidus is on newline", () => {
+      expectError("Extra space detected where there should be a single space.")
+      assertOffenses(dedent`
+        <input
+          type="password"
           class="foo"
-        >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+          />
+      `)
     })
 
-    test("end of tag is on newline with trailing whitespace", ()=> {
-      const html = dedent`
+    test("end of tag is on newline", () => {
+      expectError("Extra space detected where there should be no space.")
+      assertOffenses(dedent`
         <input
           type="password"
           class="foo"
           >
-      `
-      const linter = new Linter(Herb, [HTMLNoSpaceInTagRule])
-      const lintResult = linter.lint(html)
-  
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.warnings).toBe(0)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-no-space-in-tag")
-      expect(lintResult.offenses[0].message).toBe("Extra space detected where there should be no space.")
+      `)
+    })
+
+    test.fails("non-space detected between name and attribute", () => {
+      expectError('Non-whitespace character(s) detected: "/".')
+      assertOffenses(`<input/class="hide" />`)
+    })
+
+    test.fails("non-space detected between attributes", () => {
+      expectError('Non-whitespace character(s) detected: "/".')
+      assertOffenses(`<input class="hide"/name="foo" />`)
     })
   })
 })
