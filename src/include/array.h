@@ -15,9 +15,9 @@ void* array_get(const array_T* array, size_t index);
 void* array_last(array_T* array);
 
 void array_append(array_T* array, void* item);
+#define array_push(array, item) (array_append(array, item))
 void array_free(array_T** array);
 
-void array_push(array_T* array, void* item);
 void* array_pop(array_T* array);
 
 size_t array_capacity(const array_T* array);

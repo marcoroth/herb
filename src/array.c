@@ -67,11 +67,6 @@ void* array_last(array_T* array) {
   return array->items[array->size - 1];
 }
 
-// Alias for array_append
-void array_push(array_T* array, void* item) {
-  array_append(array, item);
-}
-
 void* array_pop(array_T* array) {
   if (!array || array->size == 0) { return NULL; }
 
