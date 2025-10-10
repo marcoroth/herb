@@ -145,7 +145,7 @@ module SnapshotUtils
 
     content_hash = Digest::MD5.hexdigest(source || "#{source.class}-#{source.inspect}")
 
-    test_name = name.gsub(" ", "_").gsub("/", "_")
+    test_name = sanitize_name_for_filesystem(name)
 
     if options && !options.empty?
       options_hash = Digest::MD5.hexdigest(options.inspect)
@@ -177,6 +177,23 @@ module SnapshotUtils
   end
 
   private
+
+  def sanitize_name_for_filesystem(name)
+    [
+      # ntfs reserved characters
+      # https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+      ['<', 'lt'],
+      ['>', 'gt'],
+      [':', ''],
+      ['/', '_'],
+      ['\\', ''],
+      ['|', ''],
+      ['?', ''],
+      ['*', ''],
+
+      [' ', '_']
+    ].inject(name) { |name, substitution| name.gsub(substitution[0], substitution[1]) }
+  end
 
   def underscore(string)
     string.gsub("::", "/")
