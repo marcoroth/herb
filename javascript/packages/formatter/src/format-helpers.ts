@@ -23,6 +23,14 @@ export interface ContentUnit {
   breaksFlow: boolean
 }
 
+/**
+ * Content unit paired with its source AST node
+ */
+export interface ContentUnitWithNode {
+  unit: ContentUnit
+  node: Node | null
+}
+
 // --- Constants ---
 
 // TODO: we can probably expand this list with more tags/attributes
@@ -415,7 +423,7 @@ export function shouldWrapToNextLine(testLine: string, currentLine: string, word
   if (!currentLine) return false
   if (isClosingPunctuation(word)) return false
 
-  return testLine.length > wrapWidth
+  return testLine.length >= wrapWidth
 }
 
 /**
@@ -433,4 +441,35 @@ export function isBlockLevelNode(node: Node): boolean {
   }
 
   return true
+}
+
+/**
+ * Normalize text by replacing multiple spaces with single space and trim
+ * Then split into words
+ */
+export function normalizeAndSplitWords(text: string): string[] {
+  const normalized = text.replace(/\s+/g, ' ')
+  return normalized.trim().split(' ')
+}
+
+/**
+ * Check if text starts with an alphanumeric character (not punctuation)
+ */
+export function startsWithAlphanumeric(text: string): boolean {
+  const trimmed = text.trim()
+  return /^[a-zA-Z0-9]/.test(trimmed)
+}
+
+/**
+ * Check if text ends with an alphanumeric character (not punctuation)
+ */
+export function endsWithAlphanumeric(text: string): boolean {
+  return /[a-zA-Z0-9]$/.test(text)
+}
+
+/**
+ * Check if text ends with whitespace
+ */
+export function endsWithWhitespace(text: string): boolean {
+  return /\s$/.test(text)
 }

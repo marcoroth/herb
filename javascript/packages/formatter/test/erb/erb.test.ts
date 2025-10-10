@@ -346,9 +346,9 @@ describe("@herb-tools/formatter", () => {
       <p>
         Should not be duplicated.
         <br />
-        Text with a inline element
-        <a href="mailto:something@something.com">something@something.com</a> and some
-        more text after
+        Text with a inline
+        element<a href="mailto:something@something.com">something@something.com</a>
+        and some more text after
       </p>
     `)
 
@@ -665,7 +665,7 @@ describe("@herb-tools/formatter", () => {
                           >
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
                             <p class="text-muted-foreground text-sm leading-5">
-                              &copy; <%= Time.current.year %> - Company Inc, All
+                              &copy;<%= Time.current.year %> - Company Inc, All
                               rights reserved.
                               <br />
                               Main Street, San Francisco, CAs, USA 12345
@@ -1393,7 +1393,7 @@ describe("@herb-tools/formatter", () => {
       <div>
         <div>
           <div>
-            <p><%= formatted %> text that needs <%= needs %> <%= to_be_formatted %> without being reset to the <b><i>start of the line</i></b>. Text <%= also_with %><%= ERB_tags_next_to_each_other %> and after.</p>
+            <p><%= formatted %> text that needs <%= needs %> <%= to_be_formatted %> without being reset to the <b><i>start of the line</i></b>. Text<%= also_with %><%= ERB_tags_next_to_each_other %>and after.</p>
           </div>
         </div>
       </div>
@@ -1405,11 +1405,197 @@ describe("@herb-tools/formatter", () => {
           <div>
             <p>
               <%= formatted %> text that needs <%= needs %> <%= to_be_formatted %>
-              without being reset to the <b><i>start of the line</i></b>. Text
-              <%= also_with %><%= ERB_tags_next_to_each_other %> and after.
+              without being reset to the <b><i>start of the line</i></b>.
+              Text<%= also_with %><%= ERB_tags_next_to_each_other %>and after.
             </p>
           </div>
         </div>
+      </div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output with adjecent text within HTML element", () => {
+    const input = dedent`
+      <div><%= icon("icon") %>some text some text some text some text some text</div>
+    `
+
+    const expected = dedent`
+      <div><%= icon("icon") %>some text some text some text some text some text</div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output after adjecent text within HTML element", () => {
+    const input = dedent`
+      <div>some text some text some text some text some text<%= icon("icon") %></div>
+    `
+
+    const expected = dedent`
+      <div>some text some text some text some text some text<%= icon("icon") %></div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output with adjecent text within HTML element causing line-break", () => {
+    const input = dedent`
+      <div><%= icon("icon") %>some text some text some text some text some text some text some text</div>
+    `
+
+    const expected = dedent`
+      <div>
+        <%= icon("icon") %>some text some text some text some text some text some
+        text some text
+      </div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output after adjecent text within HTML element causing line-break", () => {
+    const input = dedent`
+      <div>some text some text some text some text some text some text<%= icon("icon") %></div>
+    `
+
+    const expected = dedent`
+      <div>
+        some text some text some text some text some text some
+        text<%= icon("icon") %>
+      </div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output before and after adjecent text within HTML element causing line-break", () => {
+    const input = dedent`
+      <div>some text some text some text some text some text some text some<%= icon("icon") %>text some text</div>
+    `
+
+    const expected = dedent`
+      <div>
+        some text some text some text some text some text some text
+        some<%= icon("icon") %>text some text
+      </div>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output with adjecent text within ERB block", () => {
+    const input = dedent`
+      <%= link_to "/" do %><%= icon("icon") %>some text some text<% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        <%= icon("icon") %>some text some text
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output after adjecent text within ERB block", () => {
+    const input = dedent`
+      <%= link_to "/" do %>some text some text<%= icon("icon") %><% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        some text some text<%= icon("icon") %>
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output before and after adjecent text within ERB block", () => {
+    const input = dedent`
+      <%= link_to "/" do %>some text<%= icon("icon") %>some text<% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        some text<%= icon("icon") %>some text
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output with adjecent text within ERB block causing line-break", () => {
+    const input = dedent`
+      <%= link_to "/" do %><%= icon("icon") %>some text some text some text some text some text some text some text<% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        <%= icon("icon") %>some text some text some text some text some text some
+        text some text
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output after adjecent text within ERB block causing line-break", () => {
+    const input = dedent`
+      <%= link_to "/" do %>some text some text some text some text some text some text some text<%= icon("icon") %><% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        some text some text some text some text some text some text some
+        text<%= icon("icon") %>
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("ERB output before and after adjecent text within ERB block causing line-break", () => {
+    const input = dedent`
+      <%= link_to "/" do %>some text some text some text some text some text some text some<%= icon("icon") %>text some text<% end %>
+    `
+
+    const expected = dedent`
+      <%= link_to "/" do %>
+        some text some text some text some text some text some text
+        some<%= icon("icon") %>text some text
+      <% end %>
+    `
+
+    const result = formatter.format(input)
+    expect(result).toBe(expected)
+  })
+
+  test("TODO", () => {
+    const input = dedent`
+      <div>
+        This is a div where we still can assume that whitespace can be inserted-<b>infront or after of this bold you can not insert whitespace</b>. Next senctence.
+      </div>
+    `
+
+    const expected = dedent`
+      <div>
+        This is a div where we still can assume that whitespace can be
+        inserted-<b>infront or after of this bold you can not insert whitespace</b>.
+        Next senctence.
       </div>
     `
 

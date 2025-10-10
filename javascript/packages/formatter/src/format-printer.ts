@@ -20,20 +20,25 @@ import {
   areAllNestedElementsInline,
   buildLineWithWord,
   countAdjacentInlineElements,
+  endsWithAlphanumeric,
+  endsWithWhitespace,
   filterEmptyNodes,
   filterSignificantChildren,
   findPreviousMeaningfulSibling,
   hasComplexERBControlFlow,
   hasMixedTextAndInlineContent,
   hasMultilineTextContent,
+  hasWhitespaceBetween,
   isBlockLevelNode,
   isContentPreserving,
   isInlineElement,
   isNonWhitespaceNode,
   isPureWhitespaceNode,
+  normalizeAndSplitWords,
   shouldAppendToLastLine,
   shouldPreserveUserSpacing,
   shouldWrapToNextLine,
+  startsWithAlphanumeric,
 } from "./format-helpers.js"
 
 import {
@@ -48,6 +53,7 @@ import {
 
 import type {
   ContentUnit,
+  ContentUnitWithNode,
   ElementFormattingAnalysis,
 } from "./format-helpers.js"
 
@@ -1060,7 +1066,17 @@ export class FormatPrinter extends Printer {
 
   visitERBBlockNode(node: ERBBlockNode) {
     this.printERBNode(node)
-    this.withIndent(() => this.visitElementChildren(node.body, null))
+
+    this.withIndent(() => {
+      const hasTextFlow = this.isInTextFlowContext(null, node.body)
+
+      if (hasTextFlow) {
+        const children = filterSignificantChildren(node.body)
+        this.visitTextFlowChildren(children)
+      } else {
+        this.visitElementChildren(node.body, null)
+      }
+    })
 
     if (node.end_node) this.visit(node.end_node)
   }
@@ -1387,6 +1403,7 @@ export class FormatPrinter extends Printer {
       const attributes = filterNodes(element.open_tag?.children, HTMLAttributeNode)
       const attributesString = this.renderAttributesString(attributes)
       const isSelfClosing = element.open_tag?.tag_closing?.value === "/>"
+
       return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
     }
 
@@ -1432,7 +1449,7 @@ export class FormatPrinter extends Printer {
    * Build words array from text/inline/ERB and wrap them
    */
   private buildAndWrapTextFlow(children: Node[]): void {
-    const unitsWithNodes = this.buildContentUnitsWithNodes(children)
+    const unitsWithNodes: ContentUnitWithNode[] = this.buildContentUnitsWithNodes(children)
     const words: string[] = []
 
     for (const { unit, node } of unitsWithNodes) {
@@ -1457,47 +1474,198 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Try to merge text that follows an atomic unit (ERB/inline) with no whitespace
+   * Returns true if merge was performed
+   */
+  private tryMergeTextAfterAtomic(result: ContentUnitWithNode[], textNode: HTMLTextNode): boolean {
+    if (result.length === 0) return false
+
+    const lastUnit = result[result.length - 1]
+
+    if (!lastUnit.unit.isAtomic || (lastUnit.unit.type !== 'erb' && lastUnit.unit.type !== 'inline')) {
+      return false
+    }
+
+    const words = normalizeAndSplitWords(textNode.content)
+    if (words.length === 0 || !words[0]) return false
+    if (!startsWithAlphanumeric(words[0])) return false
+
+    lastUnit.unit.content += words[0]
+
+    if (words.length > 1) {
+      const remainingText = words.slice(1).join(' ')
+
+      result.push({
+        unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },
+        node: textNode
+      })
+    }
+
+    return true
+  }
+
+  /**
+   * Try to merge an atomic unit (ERB/inline) with preceding text that has no whitespace
+   * Returns true if merge was performed
+   */
+  private tryMergeAtomicAfterText(result: ContentUnitWithNode[], children: Node[], lastProcessedIndex: number, atomicContent: string, atomicType: 'erb' | 'inline', atomicNode: Node): boolean {
+    if (result.length === 0) return false
+
+    const lastUnit = result[result.length - 1]
+
+    if (lastUnit.unit.type !== 'text' || lastUnit.unit.isAtomic) return false
+
+    const words = normalizeAndSplitWords(lastUnit.unit.content)
+    const lastWord = words[words.length - 1]
+
+    if (!lastWord) return false
+
+    result.pop()
+
+    if (words.length > 1) {
+      const remainingText = words.slice(0, -1).join(' ')
+
+      result.push({
+        unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },
+        node: children[lastProcessedIndex]
+      })
+    }
+
+    result.push({
+      unit: { content: lastWord + atomicContent, type: atomicType, isAtomic: true, breaksFlow: false },
+      node: atomicNode
+    })
+
+    return true
+  }
+
+  /**
+   * Check if there's whitespace between current node and last processed node
+   */
+  private hasWhitespaceBeforeNode(children: Node[], lastProcessedIndex: number, currentIndex: number, currentNode: Node): boolean {
+    if (hasWhitespaceBetween(children, lastProcessedIndex, currentIndex)) {
+      return true
+    }
+
+    if (isNode(currentNode, HTMLTextNode) && /^\s/.test(currentNode.content)) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
+   * Check if last unit in result ends with whitespace
+   */
+  private lastUnitEndsWithWhitespace(result: ContentUnitWithNode[]): boolean {
+    if (result.length === 0) return false
+
+    const lastUnit = result[result.length - 1]
+
+    return lastUnit.unit.type === 'text' && endsWithWhitespace(lastUnit.unit.content)
+  }
+
+  /**
+   * Process a text node and add it to results (with potential merging)
+   */
+  private processTextNode(result: ContentUnitWithNode[], children: Node[], child: HTMLTextNode, index: number, lastProcessedIndex: number): void {
+    const isAtomic = child.content === ' '
+
+    if (!isAtomic && lastProcessedIndex >= 0) {
+      const hasWhitespace = this.hasWhitespaceBeforeNode(children, lastProcessedIndex, index, child)
+
+      if (!hasWhitespace && this.tryMergeTextAfterAtomic(result, child)) {
+        return
+      }
+    }
+
+    result.push({
+      unit: { content: child.content, type: 'text', isAtomic, breaksFlow: false },
+      node: child
+    })
+  }
+
+  /**
+   * Process an inline element and add it to results (with potential merging)
+   */
+  private processInlineElement(result: ContentUnitWithNode[], children: Node[], child: HTMLElementNode, index: number, lastProcessedIndex: number): boolean {
+    const tagName = getTagName(child)
+    const inlineContent = this.tryRenderInlineFull(child, tagName, filterNodes(child.open_tag?.children, HTMLAttributeNode), filterEmptyNodes(child.body))
+
+    if (inlineContent === null) {
+      result.push({
+        unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+        node: child
+      })
+
+      return false
+    }
+
+    if (lastProcessedIndex >= 0) {
+      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result)
+
+      if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
+        return true
+      }
+    }
+
+    result.push({
+      unit: { content: inlineContent, type: 'inline', isAtomic: true, breaksFlow: false },
+      node: child
+    })
+
+    return false
+  }
+
+  /**
+   * Process an ERB content node and add it to results (with potential merging)
+   */
+  private processERBContentNode(result: ContentUnitWithNode[], children: Node[], child: ERBContentNode, index: number, lastProcessedIndex: number): boolean {
+    const erbContent = this.renderERBAsString(child)
+
+    if (lastProcessedIndex >= 0) {
+      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result)
+
+      if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
+        return true
+      }
+    }
+
+    result.push({
+      unit: { content: erbContent, type: 'erb', isAtomic: true, breaksFlow: false },
+      node: child
+    })
+
+    return false
+  }
+
+  /**
    * Convert AST nodes to content units with node references
    */
-  private buildContentUnitsWithNodes(children: Node[]): Array<{ unit: ContentUnit; node: Node | null }> {
-    const result: Array<{ unit: ContentUnit; node: Node | null }> = []
+  private buildContentUnitsWithNodes(children: Node[]): ContentUnitWithNode[] {
+    const result: ContentUnitWithNode[] = []
+    let lastProcessedIndex = -1
 
-    for (const child of children) {
-      if (isNode(child, WhitespaceNode)) {
-        continue
-      }
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
 
-      if (isPureWhitespaceNode(child) && !(isNode(child, HTMLTextNode) && child.content === ' ')) {
-        continue
-      }
+      if (isNode(child, WhitespaceNode)) continue
+      if (isPureWhitespaceNode(child) && !(isNode(child, HTMLTextNode) && child.content === ' ')) continue
 
       if (isNode(child, HTMLTextNode)) {
-        const isAtomic = child.content === ' '
+        this.processTextNode(result, children, child, i, lastProcessedIndex)
 
-        result.push({
-          unit: { content: child.content, type: 'text', isAtomic, breaksFlow: false },
-          node: child
-        })
+        lastProcessedIndex = i
       } else if (isNode(child, HTMLElementNode)) {
         const tagName = getTagName(child)
-        if (isInlineElement(tagName)) {
-          const inlineContent = this.tryRenderInlineFull(
-            child,
-            tagName,
-            filterNodes(child.open_tag?.children, HTMLAttributeNode),
-            filterEmptyNodes(child.body)
-          )
 
-          if (inlineContent !== null) {
-            result.push({
-              unit: { content: inlineContent, type: 'inline', isAtomic: true, breaksFlow: false },
-              node: child
-            })
-          } else {
-            result.push({
-              unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
-              node: child
-            })
+        if (isInlineElement(tagName)) {
+          const merged = this.processInlineElement(result, children, child, i, lastProcessedIndex)
+
+          if (merged) {
+            lastProcessedIndex = i
+
+            continue
           }
         } else {
           result.push({
@@ -1505,16 +1673,25 @@ export class FormatPrinter extends Printer {
             node: child
           })
         }
+
+        lastProcessedIndex = i
       } else if (isNode(child, ERBContentNode)) {
-        result.push({
-          unit: { content: this.renderERBAsString(child), type: 'erb', isAtomic: true, breaksFlow: false },
-          node: child
-        })
+        const merged = this.processERBContentNode(result, children, child, i, lastProcessedIndex)
+
+        if (merged) {
+          lastProcessedIndex = i
+
+          continue
+        }
+
+        lastProcessedIndex = i
       } else {
         result.push({
           unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
           node: child
         })
+
+        lastProcessedIndex = i
       }
     }
 
