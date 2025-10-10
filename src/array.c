@@ -67,14 +67,6 @@ void* array_last(array_T* array) {
   return array->items[array->size - 1];
 }
 
-size_t array_index_of(array_T* array, void* item) {
-  for (size_t i = 0; i < array->size; i++) {
-    if (array->items[i] == item) { return i; }
-  }
-
-  return SIZE_MAX;
-}
-
 // Alias for array_append
 void array_push(array_T* array, void* item) {
   array_append(array, item);
