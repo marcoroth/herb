@@ -186,16 +186,11 @@ void buffer_append_char(buffer_T* buffer, const char character) {
 
 void buffer_append_repeated(buffer_T* buffer, const char character, size_t length) {
   if (length == 0) { return; }
+  if (!buffer_expand_if_needed(buffer, length)) { return; }
+  memset(buffer->value + buffer->length, character, length);
 
-  char* spaces = malloc(length + 1);
-  if (!spaces) { return; }
-
-  memset(spaces, character, length);
-  spaces[length] = '\0';
-
-  buffer_append(buffer, spaces);
-
-  free(spaces);
+  buffer->length += length;
+  buffer->value[buffer->length] = '\0';
 }
 
 void buffer_append_whitespace(buffer_T* buffer, const size_t length) {
