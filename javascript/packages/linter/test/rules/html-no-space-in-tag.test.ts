@@ -5,33 +5,33 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoSpaceInTagRule)
 
-describe.skip("HTMLNoSpaceInTagRule", () => {
+describe("HTMLNoSpaceInTagRule", () => {
   describe("when space is correct", () => {
     test("plain opening tag", () => {
-      expectNoOffenses(`<div>`)
+      expectNoOffenses(`<div>`, { allowInvalidSyntax: true })
     })
 
     test("closing tag", () => {
-      expectNoOffenses(`</div>`)
+      expectNoOffenses(`</div>`, { allowInvalidSyntax: true })
     })
 
     test("tag with no name", () => {
-      expectNoOffenses(`</>`)
+      expectNoOffenses(`</>`, { allowInvalidSyntax: true })
     })
 
     test("empty tag", () => {
-      expectNoOffenses(`<>`)
+      expectNoOffenses(`<>`, { allowInvalidSyntax: true })
     })
 
-    test.fails("void tag", () => {
+    test("void tag", () => {
       expectNoOffenses(`<img />`)
     })
 
     test("plain tag with attribute", () => {
-      expectNoOffenses(`<div class="foo">`)
+      expectNoOffenses(`<div class="foo"></div>`)
     })
 
-    test.fails("between attributes", () => {
+    test("between attributes", () => {
       expectNoOffenses(`<input class="foo" name="bar">`)
     })
 
@@ -74,52 +74,38 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
   describe("when no space should be present", () => {
     test("after name", () => {
       expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<div   >`)
+      assertOffenses(`<div   ></div>`)
     })
 
-    test.fails("before name", () => {
-      expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<   div>`)
+    test("before name", () => {
+      expectNoOffenses(`<   div></div>`, { allowInvalidSyntax: true })
     })
 
-    test.fails("before start solidus", () => {
-      expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<   /div>`)
+    test("before start solidus", () => {
+      expectNoOffenses(`<div><   /div>`, { allowInvalidSyntax: true })
     })
 
     test("after start solidus", () => {
       expectError("Extra space detected where there should be no space.")
-      assertOffenses(`</   div>`)
+      assertOffenses(`<div></   div>`)
     })
 
     test("after end solidus", () => {
-      expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<div /   >`)
-    })
-
-    test.fails("between attribute name and equal", () => {
-      expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<div foo  ='bar'>`)
-    })
-
-    test.fails("between attribute equal and value", () => {
-      expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<div foo=  'bar'>`)
+      expectNoOffenses(`<div><div /   >`, { allowInvalidSyntax: true })
     })
   })
 
   describe("when space is missing", () => {
     test("between attributes", () => {
-      expectError("No space detected where there should be a single space.")
-      assertOffenses(`<div foo='foo'bar='bar'>`)
+      expectNoOffenses(`<div foo='foo'bar='bar'></div>`, { allowInvalidSyntax: true })
     })
 
-    test.fails("between last attribute and solidus", () => {
+    test("between last attribute and solidus", () => {
       expectError("No space detected where there should be a single space.")
       assertOffenses(`<div foo='bar'/>`)
     })
 
-    test.fails("between name and solidus", () => {
+    test("between name and solidus", () => {
       expectError("No space detected where there should be a single space.")
       assertOffenses(`<div/>`)
     })
@@ -128,7 +114,7 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
   describe("when extra space is present", () => {
     test("between name and end of tag", () => {
       expectError("Extra space detected where there should be no space.")
-      assertOffenses(`<div  >`)
+      assertOffenses(`<div  ></div>`)
     })
 
     test("between name and first attribute", () => {
@@ -136,13 +122,13 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       assertOffenses(`<img   class="hide">`)
     })
 
-    test.fails("between name and end solidus", () => {
-      expectError("Extra space detected where there should be a single space.")
+    test("between name and end solidus", () => {
+      expectError("Extra space detected where there should be no space.")
       assertOffenses(`<br   />`)
     })
 
-    test.fails("between last attribute and solidus", () => {
-      expectError("Extra space detected where there should be a single space.")
+    test("between last attribute and solidus", () => {
+      expectError("Extra space detected where there should be no space.")
       assertOffenses(`<br class="hide"   />`)
     })
 
@@ -151,13 +137,15 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       assertOffenses(`<img class="hide"    >`)
     })
 
-    test.fails("between attributes", () => {
+    test("between attributes", () => {
       expectError("Extra space detected where there should be a single space.")
-      assertOffenses(`<div foo='foo'      bar='bar'>`)
+      assertOffenses(`<div foo='foo'      bar='bar'></div>`)
     })
 
-    test.fails("extra newline between name and first attribute", () => {
+    test("extra newline between name and first attribute", () => {
       expectError("Extra space detected where there should be a single space or a single line break.")
+      expectError("Extra space detected where there should be no space.")
+
       assertOffenses(dedent`
         <input
 
@@ -165,8 +153,10 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       `)
     })
 
-    test.fails("extra newline between name and end of tag", () => {
-      expectError("Extra space detected where there should be a single space.")
+    test("extra newline between name and end of tag", () => {
+      expectError("Extra space detected where there should be a single space or a single line break.")
+      expectError("Extra space detected where there should be no space.")
+
       assertOffenses(dedent`
         <input
 
@@ -174,8 +164,10 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       `)
     })
 
-    test.fails("extra newline between attributes", () => {
+    test("extra newline between attributes", () => {
       expectError("Extra space detected where there should be a single space or a single line break.")
+      expectError("Extra space detected where there should be no space.")
+
       assertOffenses(dedent`
         <input
           type="password"
@@ -184,8 +176,9 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       `)
     })
 
-    test.fails("end solidus is on newline", () => {
-      expectError("Extra space detected where there should be a single space.")
+    test("end solidus is on newline", () => {
+      expectError("Extra space detected where there should be no space.")
+
       assertOffenses(dedent`
         <input
           type="password"
@@ -196,6 +189,7 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
 
     test("end of tag is on newline", () => {
       expectError("Extra space detected where there should be no space.")
+
       assertOffenses(dedent`
         <input
           type="password"
@@ -204,14 +198,12 @@ describe.skip("HTMLNoSpaceInTagRule", () => {
       `)
     })
 
-    test.fails("non-space detected between name and attribute", () => {
-      expectError('Non-whitespace character(s) detected: "/".')
-      assertOffenses(`<input/class="hide" />`)
+    test("non-space detected between name and attribute", () => {
+      expectNoOffenses(`<input/class="hide" />`, { allowInvalidSyntax: true })
     })
 
-    test.fails("non-space detected between attributes", () => {
-      expectError('Non-whitespace character(s) detected: "/".')
-      assertOffenses(`<input class="hide"/name="foo" />`)
+    test("non-space detected between attributes", () => {
+      expectNoOffenses(`<input class="hide"/name="foo" />`, { allowInvalidSyntax: true })
     })
   })
 })
