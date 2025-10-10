@@ -49,22 +49,6 @@ TEST(test_array_get)
   array_free(&array);
 END
 
-// Test setting elements
-TEST(test_array_set)
-  array_T* array = array_init(3);
-
-  size_t item1 = 42, item2 = 99;
-  array_append(array, &item1);
-  array_append(array, &item2);
-
-  size_t new_item = 77;
-  array_set(array, 1, &new_item);
-
-  ck_assert_ptr_eq(array_get(array, 1), &new_item);
-
-  array_free(&array);
-END
-
 // Test removing elements
 TEST(test_array_remove)
   array_T* array = array_init(3);
@@ -97,7 +81,6 @@ TCase *array_tests(void) {
   tcase_add_test(array, test_array_init);
   tcase_add_test(array, test_array_append);
   tcase_add_test(array, test_array_get);
-  tcase_add_test(array, test_array_set);
   tcase_add_test(array, test_array_remove);
   tcase_add_test(array, test_array_free);
 

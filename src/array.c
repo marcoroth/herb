@@ -67,12 +67,6 @@ void* array_last(array_T* array) {
   return array->items[array->size - 1];
 }
 
-void array_set(const array_T* array, const size_t index, void* item) {
-  if (index >= array->size) { return; }
-
-  array->items[index] = item;
-}
-
 void array_remove(array_T* array, const size_t index) {
   if (index >= array->size) { return; }
 
