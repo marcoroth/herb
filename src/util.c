@@ -1,4 +1,5 @@
 #include "include/util.h"
+#include "include/buffer.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -10,26 +11,27 @@ int is_newline(const int character) {
 }
 
 char* escape_newlines(const char* input) {
-  char* output = calloc(strlen(input) * 2 + 1, sizeof(char));
-  char* orig_output = output;
+  buffer_T buffer;
 
-  while (*input) {
-    if (*input == '\n') {
-      *output++ = '\\';
-      *output++ = 'n';
-    } else if (*input == '\r') {
-      *output++ = '\\';
-      *output++ = 'r';
-    } else {
-      *output++ = *input;
+  buffer_init(&buffer, strlen(input));
+
+  for (size_t i = 0; i < strlen(input); ++i) {
+    switch (input[i]) {
+      case '\n': {
+        buffer_append_char(&buffer, '\\');
+        buffer_append_char(&buffer, 'n');
+      } break;
+      case '\r': {
+        buffer_append_char(&buffer, '\\');
+        buffer_append_char(&buffer, 'r');
+      } break;
+      default: {
+        buffer_append_char(&buffer, input[i]);
+      }
     }
-
-    input++;
   }
 
-  *output = '\0';
-
-  return orig_output;
+  return buffer.value;
 }
 
 char* wrap_string(const char* input, const char character) {
