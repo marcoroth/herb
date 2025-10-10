@@ -38,7 +38,7 @@ describe("html-iframe-has-title", () => {
   })
 
   test("ignores frame elements (different tag)", () => {
-    expectNoOffenses(`<frame src="https://example.com">`)
+    expectNoOffenses(`<frame src="https://example.com"></frame>`)
   })
 
   test("handles mixed case iframe tag", () => {

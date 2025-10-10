@@ -73,6 +73,26 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Offenses     1 error | 0 warnings (1 offense across 1 file)"
 `;
 
+exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
+"[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+
+test/fixtures/parser-errors.html.erb:2:16
+
+      1 │ <div id=test class=foo>
+  →   2 │   <img src=image.jpg>
+        │                 ~
+      3 │ </div>
+      4 │
+
+ Rule offenses:
+  parser-no-errors (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     1 error | 0 warnings (1 offense across 1 file)"
+`;
+
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
 "[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
 
@@ -290,11 +310,11 @@ test/fixtures/few-rule-offenses.html.erb:2:8
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │         ~~~~
-      3 │   <img src=image.jpg>
+      3 │   <img src=image>
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -303,11 +323,11 @@ test/fixtures/few-rule-offenses.html.erb:2:19
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │                    ~~~
-      3 │   <img src=image.jpg>
+      3 │   <img src=image>
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
 
 [error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
 
@@ -315,13 +335,13 @@ test/fixtures/few-rule-offenses.html.erb:3:11
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
+  →   3 │   <img src=image>
         │            ~~~~~
       4 │ </div>
       5 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -329,13 +349,13 @@ test/fixtures/few-rule-offenses.html.erb:3:3
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
+  →   3 │   <img src=image>
         │    ~~~
       4 │ </div>
       5 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
 
 [error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicate-ids)
 
@@ -348,7 +368,7 @@ test/fixtures/few-rule-offenses.html.erb:9:5
      10 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/6] ⎯⎯⎯⎯
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
@@ -361,31 +381,16 @@ test/fixtures/few-rule-offenses.html.erb:6:0
       7 │ 
       8 │ <div id="duplicate"></div>
 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/7] ⎯⎯⎯⎯
-
-[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
-
-test/fixtures/few-rule-offenses.html.erb:3:16
-
-      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
-      2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
-        │                 ~
-      4 │ </div>
-      5 │
-
  Rule offenses:
   html-attribute-values-require-quotes (3 offenses in 1 file)
   html-img-require-alt (1 offense in 1 file)
   html-no-duplicate-ids (1 offense in 1 file)
   html-no-empty-headings (1 offense in 1 file)
-  parser-no-errors (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     7 errors | 0 warnings (7 offenses across 1 file)"
+  Offenses     6 errors | 0 warnings (6 offenses across 1 file)"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `

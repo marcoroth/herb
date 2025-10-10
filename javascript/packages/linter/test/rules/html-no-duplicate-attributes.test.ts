@@ -17,16 +17,16 @@ describe("html-no-duplicate-attributes", () => {
   test("fails for multiple duplicate attributes", () => {
     expectError('Duplicate attribute `type` found on tag. Remove the duplicate occurrence.')
     expectError('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
-    assertOffenses(`<button type="submit" type="button" class="btn" class="primary">`)
+    assertOffenses(`<button type="submit" type="button" class="btn" class="primary"></button>`)
   })
 
   test("handles case-insensitive duplicates", () => {
     expectError('Duplicate attribute `class` found on tag. Remove the duplicate occurrence.')
-    assertOffenses(`<div Class="container" class="active">`)
+    assertOffenses(`<div Class="container" class="active"></div>`)
   })
 
   test("passes for different attributes", () => {
-    expectNoOffenses(`<div class="container" id="main" data-value="test">`)
+    expectNoOffenses(`<div class="container" id="main" data-value="test"></div>`)
   })
 
   test("handles self-closing tags", () => {
@@ -35,7 +35,7 @@ describe("html-no-duplicate-attributes", () => {
   })
 
   test("handles ERB templates with attributes", () => {
-    expectNoOffenses(`<div class="<%= classes %>" data-id="<%= item.id %>">`)
+    expectNoOffenses(`<div class="<%= classes %>" data-id="<%= item.id %>"></div>`)
   })
 
   test("ignores closing tags", () => {
