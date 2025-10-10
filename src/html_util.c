@@ -1,4 +1,5 @@
 #include "include/html_util.h"
+#include "include/buffer.h"
 #include "include/util.h"
 
 #include <ctype.h>
@@ -77,19 +78,14 @@ char* html_closing_tag_string(const char* tag_name) {
 char* html_self_closing_tag_string(const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("< />"); }
 
-  size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 5); // +5 for '<', ' ', '/', '>', and '\0'
+  buffer_T buffer;
+  buffer_init(&buffer, strlen(tag_name) + 4);
 
-  if (result == NULL) { return NULL; }
+  buffer_append_char(&buffer, '<');
+  buffer_append(&buffer, tag_name);
+  buffer_append_char(&buffer, ' ');
+  buffer_append_char(&buffer, '/');
+  buffer_append_char(&buffer, '>');
 
-  result[0] = '<';
-
-  memcpy(result + 1, tag_name, length);
-
-  result[length + 1] = ' ';
-  result[length + 2] = '/';
-  result[length + 3] = '>';
-  result[length + 4] = '\0';
-
-  return result;
+  return buffer.value;
 }
