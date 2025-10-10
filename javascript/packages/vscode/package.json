@@ -2,7 +2,7 @@
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -62,6 +62,7 @@
             "type": "string",
             "enum": [
               "erb-comment-syntax",
+              "erb-no-case-node-children",
               "erb-no-empty-tags",
               "erb-no-output-control-flow",
               "erb-no-silent-tag-in-attribute-name",
@@ -242,9 +243,9 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/formatter": "0.7.4",
-    "@herb-tools/linter": "0.7.4",
-    "@herb-tools/node-wasm": "0.7.4",
+    "@herb-tools/formatter": "0.7.5",
+    "@herb-tools/linter": "0.7.5",
+    "@herb-tools/node-wasm": "0.7.5",
     "@types/node": "20.x",
     "@types/vscode": "^1.43.0",
     "@typescript-eslint/eslint-plugin": "^8.40.0",

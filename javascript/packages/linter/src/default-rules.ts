@@ -1,6 +1,7 @@
 import type { RuleClass } from "./types.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
+import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
@@ -40,6 +41,7 @@ import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 
 export const defaultRules: RuleClass[] = [
   ERBCommentSyntax,
+  ERBNoCaseNodeChildrenRule,
   ERBNoEmptyTagsRule,
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,

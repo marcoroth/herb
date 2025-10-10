@@ -9,15 +9,15 @@ GIT
 
 GIT
   remote: https://github.com/ruby/prism.git
-  revision: 23f16d31a7c57c4b927e1e3ec8f1281b45e7cb9f
-  tag: v1.5.1
+  revision: 983ecaf4790a536ad26ff444ec962887ea2aa6ba
+  tag: v1.5.2
   specs:
-    prism (1.5.1)
+    prism (1.5.2)
 
 PATH
   remote: .
   specs:
-    herb (0.7.4)
+    herb (0.7.5)
 
 GEM
   remote: https://rubygems.org/

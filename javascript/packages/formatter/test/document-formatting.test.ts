@@ -692,7 +692,8 @@ describe("Document-level formatting", () => {
                 </h1>
 
                 <h2 class="text-inherit opacity-60 text-sm line-clamp-1">
-                  <%= event.static_metadata.location %> • <%= event.formatted_dates %>
+                  <%= event.static_metadata.location %> •
+                  <%= event.formatted_dates %>
                 </h2>
 
                 <h2 class="text-inherit font-medium text-sm line-clamp-3 hidden lg:block">

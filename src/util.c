@@ -5,53 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int is_whitespace(const int character) {
-  return character == ' ' || character == '\t';
-}
-
 int is_newline(const int character) {
   return character == 13 || character == 10;
-}
-
-int count_in_string(const char* string, const char character) {
-  int count = 0;
-
-  while (*string != '\0') {
-    if (*string == character) { count++; }
-
-    string++;
-  }
-
-  return count;
-}
-
-int count_newlines(const char* string) {
-  int count = 0;
-
-  while (*string) {
-    if (*string == '\r') {
-      count++;
-      if (*(string + 1) == '\n') { string++; }
-    } else if (*string == '\n') {
-      count++;
-    }
-
-    string++;
-  }
-
-  return count;
-}
-
-char* replace_char(char* string, const char find, const char replace) {
-  char* original_string = string;
-
-  while (*string != '\0') {
-    if (*string == find) { *string = replace; }
-
-    string++;
-  }
-
-  return original_string;
 }
 
 char* escape_newlines(const char* input) {
@@ -95,22 +50,6 @@ char* wrap_string(const char* input, const char character) {
 
 char* quoted_string(const char* input) {
   return wrap_string(input, '"');
-}
-
-// Check if a string is blank (NULL, empty, or only contains whitespace)
-bool string_blank(const char* input) {
-  if (input == NULL || input[0] == '\0') { return true; }
-
-  for (const char* p = input; *p != '\0'; p++) {
-    if (!isspace(*p)) { return false; }
-  }
-
-  return true;
-}
-
-// Check if a string is present (not blank)
-bool string_present(const char* input) {
-  return !string_blank(input);
 }
 
 char* herb_strdup(const char* s) {

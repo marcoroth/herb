@@ -1,5 +1,4 @@
 #include "include/token.h"
-#include "include/json.h"
 #include "include/lexer.h"
 #include "include/position.h"
 #include "include/range.h"
@@ -117,42 +116,6 @@ char* token_to_string(const token_T* token) {
   free(escaped);
 
   return string;
-}
-
-char* token_to_json(const token_T* token) {
-  buffer_T json = buffer_new();
-
-  json_start_root_object(&json);
-  json_add_string(&json, "type", token_type_to_string(token->type));
-  json_add_string(&json, "value", token->value);
-
-  buffer_T range = buffer_new();
-  json_start_array(&json, "range");
-  json_add_size_t(&range, NULL, token->range.from);
-  json_add_size_t(&range, NULL, token->range.to);
-  buffer_concat(&json, &range);
-  buffer_free(&range);
-  json_end_array(&json);
-
-  buffer_T start = buffer_new();
-  json_start_object(&json, "start");
-  json_add_size_t(&start, "line", token->location.start.line);
-  json_add_size_t(&start, "column", token->location.start.column);
-  buffer_concat(&json, &start);
-  buffer_free(&start);
-  json_end_object(&json);
-
-  buffer_T end = buffer_new();
-  json_start_object(&json, "end");
-  json_add_size_t(&end, "line", token->location.end.line);
-  json_add_size_t(&end, "column", token->location.end.column);
-  buffer_concat(&json, &end);
-  buffer_free(&end);
-  json_end_object(&json);
-
-  json_end_object(&json);
-
-  return buffer_value(&json);
 }
 
 char* token_value(const token_T* token) {

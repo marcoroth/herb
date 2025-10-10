@@ -5,18 +5,19 @@
 TEST(test_buffer_init)
   buffer_T buffer;
 
-  ck_assert(buffer_init(&buffer));
+  ck_assert(buffer_init(&buffer, 1024));
   ck_assert_int_eq(buffer.capacity, 1024);
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_ptr_nonnull(buffer.value);
   ck_assert_str_eq(buffer.value, "");
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test appending text to buffer
 TEST(test_buffer_append)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_str_eq(buffer.value, "");
 
@@ -28,25 +29,28 @@ TEST(test_buffer_append)
   ck_assert_str_eq(buffer.value, "Hello World");
   ck_assert_int_eq(buffer.length, 11);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test prepending text to buffer
 TEST(test_buffer_prepend)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   buffer_append(&buffer, "World");
   buffer_prepend(&buffer, "Hello ");
   ck_assert_str_eq(buffer.value, "Hello World");
   ck_assert_int_eq(buffer.length, 11);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test concatenating two buffers
 TEST(test_buffer_concat)
-  buffer_T buffer1 = buffer_new();
-  buffer_T buffer2 = buffer_new();
+  buffer_T buffer1;
+  buffer_init(&buffer1, 1024);
+  buffer_T buffer2;
+  buffer_init(&buffer2, 1024);
 
   buffer_append(&buffer1, "Hello");
   buffer_append(&buffer2, " World");
@@ -55,13 +59,14 @@ TEST(test_buffer_concat)
   ck_assert_str_eq(buffer1.value, "Hello World");
   ck_assert_int_eq(buffer1.length, 11);
 
-  buffer_free(&buffer1);
-  buffer_free(&buffer2);
+  free(buffer1.value);
+  free(buffer2.value);
 END
 
 // Test increating
 TEST(test_buffer_increase_capacity)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -71,12 +76,13 @@ TEST(test_buffer_increase_capacity)
   ck_assert(buffer_increase_capacity(&buffer, 1024 + 1));
   ck_assert_int_eq(buffer.capacity, 2050);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test expanding capacity
 TEST(test_buffer_expand_capacity)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -89,12 +95,13 @@ TEST(test_buffer_expand_capacity)
   ck_assert(buffer_expand_capacity(&buffer));
   ck_assert_int_eq(buffer.capacity, 8192);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test expanding if needed
 TEST(test_buffer_expand_if_needed)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -110,11 +117,12 @@ TEST(test_buffer_expand_if_needed)
   ck_assert(buffer_expand_if_needed(&buffer, 1025));
   ck_assert_int_eq(buffer.capacity, 3074); // initial capacity (1024) + (required (1025) * 2) = 3074
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 TEST(test_buffer_expand_if_needed_with_nearly_full_buffer)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -124,12 +132,13 @@ TEST(test_buffer_expand_if_needed_with_nearly_full_buffer)
   ck_assert(buffer_expand_if_needed(&buffer, 2));
   ck_assert_int_eq(buffer.capacity, 2048);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test resizing buffer
 TEST(test_buffer_resize)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -142,12 +151,13 @@ TEST(test_buffer_resize)
   ck_assert(buffer_resize(&buffer, 8192));
   ck_assert_int_eq(buffer.capacity, 8192);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test clearing buffer without freeing memory
 TEST(test_buffer_clear)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
@@ -162,17 +172,21 @@ TEST(test_buffer_clear)
   ck_assert_int_eq(buffer.length, 0);
   ck_assert_int_eq(buffer.capacity, 1024); // Capacity should remain unchanged
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test freeing buffer
 TEST(test_buffer_free)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   buffer_append(&buffer, "Test");
   ck_assert_int_eq(buffer.length, 4);
   ck_assert_int_eq(buffer.capacity, 1024);
-  buffer_free(&buffer);
+  free(buffer.value);
+  buffer.value = NULL;
+  buffer.length = 0;
+  buffer.capacity = 0;
 
   ck_assert_ptr_null(buffer.value);
   ck_assert_int_eq(buffer.length, 0);
@@ -181,7 +195,8 @@ END
 
 // Test buffer UTF-8 integrity
 TEST(test_buffer_utf8_integrity)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   // UTF-8 String
   const char *utf8_text = "こんにちは";
@@ -192,12 +207,13 @@ TEST(test_buffer_utf8_integrity)
   ck_assert_int_eq(buffer.length, 15);
   ck_assert_str_eq(buffer.value, utf8_text);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test: Buffer Appending UTF-8 Characters
 TEST(test_buffer_append_utf8)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   // Append UTF-8 string
   buffer_append(&buffer, "こんにちは"); // "Hello" in Japanese
@@ -205,12 +221,13 @@ TEST(test_buffer_append_utf8)
   ck_assert_int_eq(buffer_length(&buffer), 15);
   ck_assert_str_eq(buffer_value(&buffer), "こんにちは");
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test buffer length correctness
 TEST(test_buffer_length_correctness)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   buffer_append(&buffer, "Short");
   size_t length = buffer_length(&buffer);
@@ -220,17 +237,18 @@ TEST(test_buffer_length_correctness)
   length = buffer_length(&buffer);
   ck_assert_int_eq(length, 12);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 // Test: Buffer Null-Termination
 TEST(test_buffer_null_termination)
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   buffer_append(&buffer, "Test");
   ck_assert(buffer_value(&buffer)[buffer_length(&buffer)] == '\0'); // Ensure null termination
 
-  buffer_free(&buffer);
+  free(buffer.value);
 END
 
 TCase *buffer_tests(void) {

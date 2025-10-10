@@ -1069,6 +1069,8 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
   char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
+  if (!extracted_ruby) { return; }
+
   pm_parser_t parser;
   pm_options_t options = { 0, .partial_script = true };
   pm_parser_init(&parser, (const uint8_t*) extracted_ruby, strlen(extracted_ruby), &options);
