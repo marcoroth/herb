@@ -55,6 +55,7 @@ export class Linter {
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
+    const hasParserErrors = parseResult.recursiveErrors().length > 0
 
     for (const RuleClass of this.rules) {
       const rule = new RuleClass()
@@ -84,6 +85,12 @@ export class Linter {
           ruleOffenses = []
         }
       } else {
+        if (hasParserErrors && rule.name !== "parser-no-errors") {
+          ruleOffenses = []
+
+          continue
+        }
+
         if (rule.isEnabled) {
           isEnabled = rule.isEnabled(parseResult, context)
         }

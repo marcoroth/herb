@@ -17,11 +17,16 @@ interface ExpectedOffense {
   location?: ExpectedLocation
 }
 
+interface TestOptions {
+  context?: any
+  allowInvalidSyntax?: boolean
+}
+
 interface LinterTestHelpers {
-  expectNoOffenses: (html: string, context?: any) => void
+  expectNoOffenses: (html: string, options?: any | TestOptions) => void
   expectWarning: (message: string, location?: LocationInput) => void
   expectError: (message: string, location?: LocationInput) => void
-  assertOffenses: (html: string, context?: any) => void
+  assertOffenses: (html: string, options?: any | TestOptions) => void
 }
 
 /**
@@ -51,6 +56,8 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
   let hasAsserted = false
+  const ruleInstance = new ruleClass()
+  const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
 
   beforeAll(async () => {
     await Herb.load()
@@ -59,6 +66,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
   afterEach(() => {
     if (!hasAsserted && (expectedWarnings.length > 0 || expectedErrors.length > 0)) {
       const pendingCount = expectedWarnings.length + expectedErrors.length
+
       throw new Error(
         `Test has ${pendingCount} pending expectation(s) that were never asserted. ` +
         `Did you forget to call assertOffenses() or expectNoOffenses()?`
@@ -70,7 +78,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     hasAsserted = false
   })
 
-  const expectNoOffenses = (html: string, context?: any) => {
+  const expectNoOffenses = (html: string, options?: any | TestOptions) => {
     if (expectedWarnings.length > 0 || expectedErrors.length > 0) {
       throw new Error(
         "Cannot call expectNoOffenses() after registering expectations with expectWarning() or expectError()"
@@ -78,6 +86,33 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     }
 
     hasAsserted = true
+
+    const context = options?.context ?? options
+    const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
+
+    if (!isParserNoErrorsRule) {
+      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parserErrors = parseResult.recursiveErrors()
+
+      if (allowInvalidSyntax && parserErrors.length === 0) {
+        throw new Error(
+          `Test has 'allowInvalidSyntax: true' but the HTML is actually valid.\n` +
+          `Remove the 'allowInvalidSyntax' option since the HTML parses without errors.\n` +
+          `Source:\n${html}`
+        )
+      }
+
+      if (!allowInvalidSyntax && parserErrors.length > 0) {
+        const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
+
+        throw new Error(
+          `Test HTML has parser errors. Fix the HTML before testing the linter rule.\n` +
+          `Source:\n${html}\n\n` +
+          `Parser errors:\n${formattedErrors}`
+        )
+      }
+    }
+
     const linter = new Linter(Herb, [ruleClass])
     const lintResult = linter.lint(html, context)
 
@@ -104,7 +139,7 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     expectedErrors.push({ message, location: normalizeLocation(location) })
   }
 
-  const assertOffenses = (html: string, context?: any) => {
+  const assertOffenses = (html: string, options?: any | TestOptions) => {
     if (expectedWarnings.length === 0 && expectedErrors.length === 0) {
       throw new Error(
         "Cannot call assertOffenses() with no expectations. Use expectNoOffenses() instead."
@@ -112,10 +147,36 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
     }
 
     hasAsserted = true
+
+    const context = options?.context ?? options
+    const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
+
+    if (!isParserNoErrorsRule) {
+      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parserErrors = parseResult.recursiveErrors()
+
+      if (allowInvalidSyntax && parserErrors.length === 0) {
+        throw new Error(
+          `Test has 'allowInvalidSyntax: true' but the HTML is actually valid.\n` +
+          `Remove the 'allowInvalidSyntax' option since the HTML parses without errors.\n` +
+          `Source:\n${html}`
+        )
+      }
+
+      if (!allowInvalidSyntax && parserErrors.length > 0) {
+        const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
+
+        throw new Error(
+          `Test HTML has parser errors. Fix the HTML before testing the linter rule.\n` +
+          `Source:\n${html}\n\n` +
+          `Parser errors:\n${formattedErrors}`
+        )
+      }
+    }
+
     const linter = new Linter(Herb, [ruleClass])
     const lintResult = linter.lint(html, context)
 
-    const ruleInstance = new ruleClass()
     const ruleName = ruleInstance.name
 
     if (lintResult.errors !== expectedErrors.length) {

@@ -27,13 +27,13 @@ describe("ERBNoEmptyTagsRule", () => {
   test("should not report errors for incomplete erb tags", () => {
     expectNoOffenses(dedent`
       <%
-    `)
+    `, { allowInvalidSyntax: true })
   })
 
   test("should not report errors for incomplete erb output tags", () => {
     expectNoOffenses(dedent`
       <%=
-    `)
+    `, { allowInvalidSyntax: true })
   })
 
   test("should report errors for completely empty ERB tags", () => {

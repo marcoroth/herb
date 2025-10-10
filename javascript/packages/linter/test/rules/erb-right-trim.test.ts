@@ -48,6 +48,7 @@ describe("ERBRightTrimRule", () => {
     assertOffenses(dedent`
       <h1>
         <%= title =%>
+      </h1>
     `)
   })
 

@@ -48,26 +48,26 @@ describe("html-boolean-attributes-no-value", () => {
   })
 
   test("passes for video controls", () => {
-    expectNoOffenses('<video controls>')
+    expectNoOffenses('<video controls></video>')
   })
 
   test("fails for video controls with value", () => {
     expectError('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="controls"`.')
     expectError('Boolean attribute `autoplay` should not have a value. Use `autoplay` instead of `autoplay="autoplay"`.')
 
-    assertOffenses('<video controls="controls" autoplay="autoplay">')
+    assertOffenses('<video controls="controls" autoplay="autoplay"></video>')
   })
 
   test("fails for boolean attribute with different value", () => {
     expectError('Boolean attribute `controls` should not have a value. Use `controls` instead of `controls="something-else"`.')
 
-    assertOffenses('<video controls="something-else">')
+    assertOffenses('<video controls="something-else"></video>')
   })
 
   test("handles mixed boolean and regular attributes", () => {
     expectError('Boolean attribute `novalidate` should not have a value. Use `novalidate` instead of `novalidate="novalidate"`.')
 
-    assertOffenses('<form novalidate="novalidate" action="/submit" method="post">')
+    assertOffenses('<form novalidate="novalidate" action="/submit" method="post"></form>')
   })
 
   test("fails for boolean attributes with ERB output value", () => {
