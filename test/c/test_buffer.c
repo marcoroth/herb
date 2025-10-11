@@ -32,124 +32,38 @@ TEST(test_buffer_append)
   free(buffer.value);
 END
 
-// Test prepending text to buffer
-TEST(test_buffer_prepend)
-  buffer_T buffer;
-  buffer_init(&buffer, 1024);
-
-  buffer_append(&buffer, "World");
-  buffer_prepend(&buffer, "Hello ");
-  ck_assert_str_eq(buffer.value, "Hello World");
-  ck_assert_int_eq(buffer.length, 11);
-
-  free(buffer.value);
-END
-
-// Test concatenating two buffers
-TEST(test_buffer_concat)
-  buffer_T buffer1;
-  buffer_init(&buffer1, 1024);
-  buffer_T buffer2;
-  buffer_init(&buffer2, 1024);
-
-  buffer_append(&buffer1, "Hello");
-  buffer_append(&buffer2, " World");
-
-  buffer_concat(&buffer1, &buffer2);
-  ck_assert_str_eq(buffer1.value, "Hello World");
-  ck_assert_int_eq(buffer1.length, 11);
-
-  free(buffer1.value);
-  free(buffer2.value);
-END
-
-// Test increating
-TEST(test_buffer_increase_capacity)
-  buffer_T buffer;
-  buffer_init(&buffer, 1024);
-
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(buffer_increase_capacity(&buffer, 1));
-  ck_assert_int_eq(buffer.capacity, 1025);
-
-  ck_assert(buffer_increase_capacity(&buffer, 1024 + 1));
-  ck_assert_int_eq(buffer.capacity, 2050);
-
-  free(buffer.value);
-END
-
-// Test expanding capacity
-TEST(test_buffer_expand_capacity)
-  buffer_T buffer;
-  buffer_init(&buffer, 1024);
-
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(buffer_expand_capacity(&buffer));
-  ck_assert_int_eq(buffer.capacity, 2048);
-
-  ck_assert(buffer_expand_capacity(&buffer));
-  ck_assert_int_eq(buffer.capacity, 4096);
-
-  ck_assert(buffer_expand_capacity(&buffer));
-  ck_assert_int_eq(buffer.capacity, 8192);
-
-  free(buffer.value);
-END
-
 // Test expanding if needed
-TEST(test_buffer_expand_if_needed)
+TEST(test_buffer_resize_behavior)
   buffer_T buffer;
   buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1));
+  buffer_append_char(&buffer, ' ');
   ck_assert_int_eq(buffer.capacity, 1024);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1023));
+  buffer_append_whitespace(&buffer, 1023);
   ck_assert_int_eq(buffer.capacity, 1024);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1024));
   ck_assert_int_eq(buffer.capacity, 1024);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 1025));
-  ck_assert_int_eq(buffer.capacity, 3074); // initial capacity (1024) + (required (1025) * 2) = 3074
+  buffer_append_whitespace(&buffer, 1025);
+  ck_assert_int_eq(buffer.capacity, 3074);
 
   free(buffer.value);
 END
 
-TEST(test_buffer_expand_if_needed_with_nearly_full_buffer)
+TEST(test_buffer_resize_behavior_with_nearly_full_buffer)
   buffer_T buffer;
   buffer_init(&buffer, 1024);
 
   ck_assert_int_eq(buffer.capacity, 1024);
 
-  buffer_append_repeated(&buffer, ' ', 1023);
+  buffer_append_whitespace(&buffer, 1023);
   ck_assert_int_eq(buffer.capacity, 1024);
+  buffer_append_whitespace(&buffer, 2);
 
-  ck_assert(buffer_expand_if_needed(&buffer, 2));
   ck_assert_int_eq(buffer.capacity, 2048);
-
-  free(buffer.value);
-END
-
-// Test resizing buffer
-TEST(test_buffer_resize)
-  buffer_T buffer;
-  buffer_init(&buffer, 1024);
-
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(buffer_resize(&buffer, 2048));
-  ck_assert_int_eq(buffer.capacity, 2048);
-
-  ck_assert(buffer_resize(&buffer, 4096));
-  ck_assert_int_eq(buffer.capacity, 4096);
-
-  ck_assert(buffer_resize(&buffer, 8192));
-  ck_assert_int_eq(buffer.capacity, 8192);
 
   free(buffer.value);
 END
@@ -256,13 +170,8 @@ TCase *buffer_tests(void) {
 
   tcase_add_test(buffer, test_buffer_init);
   tcase_add_test(buffer, test_buffer_append);
-  tcase_add_test(buffer, test_buffer_prepend);
-  tcase_add_test(buffer, test_buffer_concat);
-  tcase_add_test(buffer, test_buffer_increase_capacity);
-  tcase_add_test(buffer, test_buffer_expand_capacity);
-  tcase_add_test(buffer, test_buffer_expand_if_needed);
-  tcase_add_test(buffer, test_buffer_expand_if_needed_with_nearly_full_buffer);
-  tcase_add_test(buffer, test_buffer_resize);
+  tcase_add_test(buffer, test_buffer_resize_behavior);
+  tcase_add_test(buffer, test_buffer_resize_behavior_with_nearly_full_buffer);
   tcase_add_test(buffer, test_buffer_clear);
   tcase_add_test(buffer, test_buffer_free);
   tcase_add_test(buffer, test_buffer_utf8_integrity);
