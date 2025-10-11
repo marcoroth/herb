@@ -47,6 +47,12 @@ napi_value CreateString(napi_env env, const char* str) {
 }
 
 napi_value CreatePosition(napi_env env, position_T position) {
+  if (!position) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
   napi_value result;
   napi_create_object(env, &result);
 
@@ -61,6 +67,12 @@ napi_value CreatePosition(napi_env env, position_T position) {
 }
 
 napi_value CreateLocation(napi_env env, location_T location) {
+  if (!location) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
   napi_value result;
   napi_create_object(env, &result);
 
@@ -74,6 +86,12 @@ napi_value CreateLocation(napi_env env, location_T location) {
 }
 
 napi_value CreateRange(napi_env env, range_T range) {
+  if (!range) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
   napi_value result;
   napi_create_array(env, &result);
 

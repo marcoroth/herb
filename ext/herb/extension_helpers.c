@@ -21,6 +21,8 @@ const char* check_string(VALUE value) {
 }
 
 VALUE rb_position_from_c_struct(position_T position) {
+  if (!position) { return Qnil; }
+
   VALUE args[2];
   args[0] = UINT2NUM(position.line);
   args[1] = UINT2NUM(position.column);
@@ -29,6 +31,8 @@ VALUE rb_position_from_c_struct(position_T position) {
 }
 
 VALUE rb_location_from_c_struct(location_T location) {
+  if (!location) { return Qnil; }
+
   VALUE args[2];
   args[0] = rb_position_from_c_struct(location.start);
   args[1] = rb_position_from_c_struct(location.end);
@@ -37,6 +41,8 @@ VALUE rb_location_from_c_struct(location_T location) {
 }
 
 VALUE rb_range_from_c_struct(range_T range) {
+  if (!range) { return Qnil; }
+
   VALUE args[2];
   args[0] = UINT2NUM(range.from);
   args[1] = UINT2NUM(range.to);
