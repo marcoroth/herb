@@ -135,7 +135,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions } = this.argumentParser.parse(process.argv)
+    let { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(pattern)
 
@@ -163,7 +163,8 @@ export class CLI {
 
       const context = {
         projectPath: this.projectPath,
-        pattern: pattern
+        pattern,
+        fix
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)

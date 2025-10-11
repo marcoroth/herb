@@ -10,6 +10,7 @@ export interface SummaryData {
   startDate: Date
   showTiming: boolean
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
+  autofixableCount: number
 }
 
 export class SummaryReporter {
@@ -18,7 +19,7 @@ export class SummaryReporter {
   }
 
   displaySummary(data: SummaryData): void {
-    const { files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, startTime, startDate, showTiming } = data
+    const { files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount } = data
 
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
@@ -73,6 +74,10 @@ export class SummaryReporter {
 
       if (filesWithOffenses > 0) {
         detailText = `${totalOffenses} ${this.pluralize(totalOffenses, "offense")} across ${filesWithOffenses} ${this.pluralize(filesWithOffenses, "file")}`
+
+        if (autofixableCount > 0) {
+          detailText += `, ${autofixableCount} ${this.pluralize(autofixableCount, "offense")} autofixable`
+        }
       }
 
       offensesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`

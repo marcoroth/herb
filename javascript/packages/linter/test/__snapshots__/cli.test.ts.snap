@@ -51,7 +51,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -70,7 +70,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 
  Summary:
   Checked      1 file
-  Offenses     1 error | 0 warnings (1 offense across 1 file)"
+  Offenses     1 error | 0 warnings (1 offense across 1 file, 1 offense autofixable)"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -279,7 +279,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
 
  Summary:
   Checked      1 file
-  Offenses     10 errors | 4 warnings (14 offenses across 1 file)"
+  Offenses     10 errors | 4 warnings (14 offenses across 1 file, 4 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -385,7 +385,7 @@ test/fixtures/few-rule-offenses.html.erb:3:16
 
  Summary:
   Checked      1 file
-  Offenses     7 errors | 0 warnings (7 offenses across 1 file)"
+  Offenses     7 errors | 0 warnings (7 offenses across 1 file, 3 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -418,7 +418,7 @@ test/fixtures/bad-file.html.erb:1:16
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -481,7 +481,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -514,7 +514,7 @@ test/fixtures/test-file-simple.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -703,13 +703,13 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 "test/fixtures/test-file-simple.html.erb:
-  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
-  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
@@ -717,13 +717,13 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
 "test/fixtures/bad-file.html.erb:
-  1:1  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
-  1:16 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+  1:1  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  1:16 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
@@ -731,7 +731,7 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -769,7 +769,7 @@ test/fixtures/bad-file.html.erb:1:16
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file, 2 offenses autofixable)"
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
@@ -823,5 +823,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file, 2 offenses autofixable)"
 `;
