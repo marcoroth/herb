@@ -73,14 +73,27 @@ describe("erb-requires-trailing-newline autofix", () => {
     expect(result.fixed).toHaveLength(0)
   })
 
-  test("preserves multiple trailing newlines", () => {
+  test("removes redundant trailing newline", () => {
     const input = '<div>Hello</div>\n\n'
-    const expected = '<div>Hello</div>\n\n'
+    const expected = '<div>Hello</div>\n'
 
     const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
     const result = linter.autofix(input, { fileName: 'test.html.erb' })
 
     expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(0)
+    expect(result.fixed).toHaveLength(1)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("removes redundant trailing newlines", () => {
+    const input = '<div>Hello</div>\n\n\n\n\n\n'
+    const expected = '<div>Hello</div>\n'
+
+    const linter = new Linter(Herb, [ERBRequiresTrailingNewlineRule])
+    const result = linter.autofix(input, { fileName: 'test.html.erb' })
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+    expect(result.unfixed).toHaveLength(0)
   })
 })

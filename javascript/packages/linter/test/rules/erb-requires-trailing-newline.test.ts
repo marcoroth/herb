@@ -40,14 +40,14 @@ describe("ERBRequiresTrailingNewlineRule", () => {
       </h1>
     `
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "test.html.erb" })
   })
 
   test("should report errors for single line files without newline", () => {
     const html = `<%= render partial: "header" %>`
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "test.html.erb" })
   })
 
@@ -61,7 +61,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
       </div>
     `
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "test.html.erb" })
   })
 
@@ -81,7 +81,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
   test("should handle ERB-only template without trailing newline", () => {
     const html = `<%= hello world %>`
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "test.html.erb" })
   })
 
@@ -100,7 +100,7 @@ describe("ERBRequiresTrailingNewlineRule", () => {
   test("should flag empty file with whitespace", () => {
     const html = ` `
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "test.html.erb" })
   })
 
@@ -139,7 +139,19 @@ describe("ERBRequiresTrailingNewlineRule", () => {
       </h1>
     `
 
-    expectError("File must end with trailing newline")
+    expectError("File must end with trailing newline.")
     assertOffenses(html, { fileName: "template.html.erb" })
+  })
+
+  test("", () => {
+    expectError("File must end with exactly one trailing newline.")
+
+    assertOffenses(`<div>Hello</div>\n\n`, { fileName: "template.html.erb" })
+  })
+
+  test("", () => {
+    expectError("File must end with exactly one trailing newline.")
+
+    assertOffenses(`<div>Hello</div>\n\n\n\n\n\n`, { fileName: "template.html.erb" })
   })
 })

@@ -58,16 +58,6 @@ export interface LintOffense<TAutofixContext extends BaseAutofixContext = BaseAu
   autofixContext?: TAutofixContext
 }
 
-/**
- * Represents a fix that can be applied to correct a lint offense
- */
-export interface LintFix {
-  /** The corrected source code after applying the fix */
-  correctedSource: string
-  /** Optional description of what was fixed */
-  description?: string
-}
-
 export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   offenses: LintOffense<TAutofixContext>[]
   errors: number
@@ -182,9 +172,9 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
    * @param offense - The offense to fix (includes autofixContext with node and rule-specific data)
    * @param source - The original source code
    * @param context - Optional context for linting
-   * @returns LintFix if the offense can be fixed, null otherwise
+   * @returns The corrected source if the offense can be fixed, null otherwise
    */
-  autofix?(offense: LintOffense<TAutofixContext>, source: string, context?: Partial<LintContext>): LintFix | null
+  autofix?(offense: LintOffense<TAutofixContext>, source: string, context?: Partial<LintContext>): string | null
 }
 
 export interface SourceRuleConstructor {

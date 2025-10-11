@@ -2,7 +2,7 @@ import { defaultRules } from "./default-rules.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext, AutofixResult, LintFix } from "./types.js"
+import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext, AutofixResult } from "./types.js"
 import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
@@ -205,34 +205,6 @@ export class Linter {
       }
     }
 
-    if (lexerOffenses.length > 0) {
-      let lexResult = this.herb.lex(currentSource)
-
-      for (const offense of lexerOffenses) {
-        const RuleClass = this.rules.find(rule => new rule().name === offense.rule)
-
-        if (!RuleClass) {
-          unfixed.push(offense)
-          continue
-        }
-
-        const rule = new RuleClass() as LexerRule
-
-        if (!rule.autofix) {
-          unfixed.push(offense)
-          continue
-        }
-
-        const fixedResult = rule.autofix(offense, lexResult, context)
-        if (fixedResult) {
-          lexResult = fixedResult
-          fixed.push(offense)
-        } else {
-          unfixed.push(offense)
-        }
-      }
-    }
-
     if (sourceOffenses.length > 0) {
       const sortedSourceOffenses = sourceOffenses.sort((a, b) => {
         if (a.location.start.line !== b.location.start.line) {
@@ -257,10 +229,10 @@ export class Linter {
           continue
         }
 
-        const fix = rule.autofix(offense, currentSource, context)
+        const correctedSource = rule.autofix(offense, currentSource, context)
 
-        if (fix) {
-          currentSource = fix.correctedSource
+        if (correctedSource) {
+          currentSource = correctedSource
           fixed.push(offense)
         } else {
           unfixed.push(offense)
