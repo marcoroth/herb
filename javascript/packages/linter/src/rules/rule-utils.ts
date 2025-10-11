@@ -27,7 +27,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext } from "../types.js"
+import type { LintOffense, LintSeverity, LintContext, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -37,8 +37,8 @@ export enum ControlFlowType {
 /**
  * Base visitor class that provides common functionality for rule visitors
  */
-export abstract class BaseRuleVisitor extends Visitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Visitor {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -52,7 +52,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to create a lint offense
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -60,14 +60,15 @@ export abstract class BaseRuleVisitor extends Visitor {
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 }
 
@@ -76,10 +77,11 @@ export abstract class BaseRuleVisitor extends Visitor {
  * This allows rules to track state across different control flow structures
  * like if/else branches, loops, etc.
  *
+ * @template TAutofixContext - Type for autofix context (node + custom data)
  * @template TControlFlowState - Type for state passed between onEnterControlFlow and onExitControlFlow
  * @template TBranchState - Type for state passed between onEnterBranch and onExitBranch
  */
-export abstract class ControlFlowTrackingVisitor<TControlFlowState = any, TBranchState = any> extends BaseRuleVisitor {
+export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext, TControlFlowState = any, TBranchState = any> extends BaseRuleVisitor<TAutofixContext> {
   protected isInControlFlow: boolean = false
   protected currentControlFlowType: ControlFlowType | null = null
 
@@ -621,7 +623,7 @@ export function isBooleanAttribute(attributeName: string): boolean {
  * - checkDynamicAttributeStaticValue()  - name="data-<%= key %>" value="foo"
  * - checkDynamicAttributeDynamicValue() - name="data-<%= key %>" value="<%= value %>"
  */
-export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
+export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
   constructor(ruleName: string, context?: Partial<LintContext>) {
     super(ruleName, context)
   }
@@ -735,8 +737,8 @@ export function forEachAttribute(
 /**
  * Base lexer visitor class that provides common functionality for lexer-based rule visitors
  */
-export abstract class BaseLexerRuleVisitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -748,7 +750,7 @@ export abstract class BaseLexerRuleVisitor {
   /**
    * Helper method to create a lint offense for lexer rules
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -756,14 +758,15 @@ export abstract class BaseLexerRuleVisitor {
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 
   /**
@@ -791,14 +794,13 @@ export abstract class BaseLexerRuleVisitor {
   protected visitToken(_token: Token): void {
     // Default implementation does nothing
   }
-
 }
 
 /**
  * Base source visitor class that provides common functionality for source-based rule visitors
  */
-export abstract class BaseSourceRuleVisitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -810,7 +812,7 @@ export abstract class BaseSourceRuleVisitor {
   /**
    * Helper method to create a lint offense for source rules
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -818,14 +820,15 @@ export abstract class BaseSourceRuleVisitor {
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 
   /**
@@ -841,19 +844,154 @@ export abstract class BaseSourceRuleVisitor {
    * Override this method to implement source-level checks
    */
   protected abstract visitSource(source: string): void
+}
 
-  /**
-   * Helper method to create a location for a specific position in the source
-   */
-  protected createLocationAt(source: string, position: number): Location {
-    const beforePosition = source.substring(0, position)
-    const lines = beforePosition.split('\n')
-    const line = lines.length
-    const column = lines[lines.length - 1].length + 1
+/**
+ * Autofix utilities for applying string replacements
+ */
 
-    const start = new Position(line, column)
-    const end = new Position(line, column)
+/**
+ * Checks if two locations are equal
+ * @param a - First location
+ * @param b - Second location
+ * @returns true if locations are equal
+ */
+export function locationsEqual(a: Location, b: Location): boolean {
+  return a.start.line === b.start.line &&
+         a.start.column === b.start.column &&
+         a.end.line === b.end.line &&
+         a.end.column === b.end.column
+}
 
-    return new Location(start, end)
+/**
+ * Finds a node in the AST that has a specific location
+ * Uses direct recursive traversal for reliability
+ * @param root - The root node to search from
+ * @param location - The location to match
+ * @param predicate - Optional predicate function to filter nodes (e.g., isERBNode)
+ * @returns The matching node or null if not found
+ */
+export function findNodeByLocation(root: Node, location: Location, predicate?: (node: Node) => boolean): any {
+  const visited = new Set<any>()
+
+  function search(node: any): any {
+    if (!node || visited.has(node)) return null
+    visited.add(node)
+
+    if (node.location && locationsEqual(node.location, location)) {
+      if (!predicate || predicate(node)) {
+        return node
+      }
+    }
+
+    const propsToCheck = ['tag_opening', 'tag_closing', 'tag_name', 'name', 'equals', 'value', 'content']
+    for (const prop of propsToCheck) {
+      if (node[prop]?.location && locationsEqual(node[prop].location, location)) {
+        if (!predicate || predicate(node)) {
+          return node
+        }
+      }
+    }
+
+    if (typeof node.compactChildNodes === 'function') {
+      for (const child of node.compactChildNodes()) {
+        const found = search(child)
+        if (found) return found
+      }
+    } else {
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          const found = search(child)
+          if (found) return found
+        }
+      }
+
+      if (node.body && Array.isArray(node.body)) {
+        for (const child of node.body) {
+          const found = search(child)
+          if (found) return found
+        }
+      }
+    }
+
+    return null
   }
+
+  return search(root)
+}
+
+/**
+ * AST Navigation Utilities
+ * These utilities help navigate the AST tree for complex autofix operations
+ */
+
+/**
+ * Finds the parent node of a given child node in the AST
+ * @param root - The root node to search from (typically the document node)
+ * @param target - The child node to find the parent of
+ * @returns The parent node, or null if not found
+ *
+ * @example
+ * const parent = findParent(result.value, offense.autofixContext.node)
+ * if (parent?.type === "AST_HTML_ELEMENT_NODE") {
+ *   // Modify parent...
+ * }
+ */
+export function findParent(root: Node, target: Node): Node | null {
+  let parentNode: Node | null = null
+
+  const search = (node: Node, _parent: Node | null = null): void => {
+    if (parentNode) return
+
+    const nodeAny = node as any
+
+    if (nodeAny.children) {
+      for (const child of nodeAny.children) {
+        if (child === target) {
+          parentNode = node
+          return
+        }
+      }
+    }
+
+    const propsToCheck = ['open_tag', 'close_tag', 'body', 'name', 'value']
+
+    for (const prop of propsToCheck) {
+      const value = (node as any)[prop]
+      if (value === target) {
+        parentNode = node
+        return
+      }
+      if (Array.isArray(value) && value.includes(target)) {
+        parentNode = node
+        return
+      }
+    }
+
+    if (nodeAny.children) {
+      for (const child of nodeAny.children) {
+        search(child, node)
+        if (parentNode) return
+      }
+    }
+
+    for (const prop of propsToCheck) {
+      const value = (node as any)[prop]
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item === 'object' && 'type' in item) {
+            search(item, node)
+            if (parentNode) return
+          }
+        }
+      } else if (value && typeof value === 'object' && 'type' in value) {
+        search(value, node)
+        if (parentNode) return
+      }
+    }
+  }
+
+  search(root)
+
+  return parentNode
 }

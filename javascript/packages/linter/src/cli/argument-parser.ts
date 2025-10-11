@@ -21,6 +21,7 @@ export interface ParsedArguments {
   wrapLines: boolean
   truncateLines: boolean
   useGitHubActions: boolean
+  fix: boolean
 }
 
 export class ArgumentParser {
@@ -35,6 +36,7 @@ export class ArgumentParser {
     Options:
       -h, --help       show help
       -v, --version    show version
+      --fix            automatically fix auto-correctable offenses
       --format         output format (simple|detailed|json) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
@@ -53,6 +55,7 @@ export class ArgumentParser {
       options: {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
+        fix: { type: "boolean" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -123,8 +126,9 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
+    const fix = values.fix || false
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
   }
 
   private getFilePattern(positionals: string[]): string {

@@ -1,4 +1,4 @@
-import { ParserRule } from "../types"
+import { ParserRule, BaseAutofixContext } from "../types"
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { LiteralNode } from "@herb-tools/core"
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
@@ -29,7 +29,7 @@ class OutputPrinter extends Printer {
   }
 }
 
-class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<ControlFlowState, BranchState> {
+class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
   private documentIds: Set<string> = new Set<string>()
   private currentBranchIds: Set<string> = new Set<string>()
   private controlFlowIds: Set<string> = new Set<string>()

@@ -29,6 +29,8 @@ export class OutputManager {
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
     const { allOffenses, files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, ruleOffenses } = results
 
+    const autofixableCount = allOffenses.filter(offense => offense.autocorrectable).length
+
     if (options.useGitHubActions) {
       const githubFormatter = new GitHubActionsFormatter(options.wrapLines, options.truncateLines)
       await githubFormatter.formatAnnotations(allOffenses)
@@ -50,7 +52,8 @@ export class OutputManager {
           startTime: options.startTime,
           startDate: options.startDate,
           showTiming: options.showTiming,
-          ruleOffenses
+          ruleOffenses,
+          autofixableCount,
         })
       }
     } else if (options.formatOption === "json") {
@@ -101,7 +104,8 @@ export class OutputManager {
         startTime: options.startTime,
         startDate: options.startDate,
         showTiming: options.showTiming,
-        ruleOffenses
+        ruleOffenses,
+        autofixableCount,
       })
     }
   }
