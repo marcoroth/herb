@@ -52,7 +52,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 total | 1 not autocorrectable | 2 autocorrectable"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
@@ -72,7 +72,7 @@ test/fixtures/no-trailing-newline.html.erb:1:29
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      1 total | 1 autocorrectable"
+  Fixable      1 offense | 1 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -93,7 +93,7 @@ test/fixtures/parser-errors.html.erb:2:16
  Summary:
   Checked      1 file
   Offenses     1 error | 0 warnings (1 offense across 1 file)
-  Fixable      1 total | 1 not autocorrectable"
+  Fixable      1 offense"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -303,7 +303,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
  Summary:
   Checked      1 file
   Offenses     10 errors | 4 warnings (14 offenses across 1 file)
-  Fixable      14 total | 10 not autocorrectable | 4 autocorrectable"
+  Fixable      14 offenses | 4 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
@@ -395,7 +395,7 @@ test/fixtures/few-rule-offenses.html.erb:6:0
  Summary:
   Checked      1 file
   Offenses     6 errors | 0 warnings (6 offenses across 1 file)
-  Fixable      6 total | 3 not autocorrectable | 3 autocorrectable"
+  Fixable      6 offenses | 3 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
@@ -429,7 +429,7 @@ test/fixtures/bad-file.html.erb:1:16
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 total | 2 autocorrectable"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -493,7 +493,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 total | 1 not autocorrectable | 2 autocorrectable"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
@@ -527,7 +527,7 @@ test/fixtures/test-file-simple.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 total | 2 autocorrectable"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -717,7 +717,7 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 total | 1 not autocorrectable | 2 autocorrectable"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
@@ -732,7 +732,7 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 total | 2 autocorrectable"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
@@ -747,7 +747,7 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 total | 2 autocorrectable"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -795,7 +795,7 @@ test/fixtures/bad-file.html.erb:1:16
  Summary:
   Checked      1 file
   Offenses     2 errors | 0 warnings (2 offenses across 1 file)
-  Fixable      2 total | 2 autocorrectable"
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
@@ -850,5 +850,5 @@ test/fixtures/test-file-with-errors.html.erb:2:22
  Summary:
   Checked      1 file
   Offenses     3 errors | 0 warnings (3 offenses across 1 file)
-  Fixable      3 total | 1 not autocorrectable | 2 autocorrectable"
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
