@@ -1,4 +1,4 @@
-import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
+import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
@@ -33,6 +33,59 @@ export class FormattingService {
     this.config = await Config.fromPathOrNew(this.project.projectPath)
   }
 
+  async formatOnSave(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
+    this.connection.console.log(`[Formatting] formatOnSave called for ${document.uri}`)
+
+    if (reason !== TextDocumentSaveReason.Manual) {
+      this.connection.console.log(`[Formatting] Skipping: reason=${reason} (not manual)`)
+      return []
+    }
+
+    const filePath = document.uri.replace(/^file:\/\//, '')
+
+    if (!(await this.shouldFormatFile(filePath))) {
+      this.connection.console.log(`[Formatting] Skipping: file not in formatter config`)
+      return []
+    }
+
+    return this.performFormatting({ textDocument: { uri: document.uri }, options: { tabSize: 2, insertSpaces: true } })
+  }
+
+  async formatDocumentWithAutofix(params: DocumentFormattingParams, autofixedText?: string): Promise<TextEdit[]> {
+    const document = this.documents.get(params.textDocument.uri)
+
+    if (!document) {
+      return []
+    }
+
+    try {
+      const text = autofixedText ?? document.getText()
+      const options = await this.getFormatterOptions(params.textDocument.uri)
+      const formatter = new Formatter(this.project.herbBackend, options)
+
+      let newText = formatter.format(text)
+
+      if (!newText.endsWith('\n')) {
+        newText = newText + '\n'
+      }
+
+      if (newText === document.getText()) {
+        return []
+      }
+
+      const range: Range = {
+        start: Position.create(0, 0),
+        end: Position.create(document.lineCount, 0)
+      }
+
+      return [{ range, newText }]
+    } catch (error) {
+      this.connection.console.error(`Formatting failed: ${error}`)
+
+      return []
+    }
+  }
+
   private async shouldFormatFile(filePath: string): Promise<boolean> {
     if (!this.config?.options.formatter) {
       return true
@@ -40,12 +93,10 @@ export class FormattingService {
 
     const formatter = this.config.options.formatter
 
-    // Check if formatting is disabled in project config
     if (formatter.enabled === false) {
       return false
     }
 
-    // Check exclude patterns first
     if (formatter.exclude) {
       for (const pattern of formatter.exclude) {
         try {
@@ -101,10 +152,10 @@ export class FormattingService {
     }
 
     try {
+      const text = document.getText()
       const options = await this.getFormatterOptions(params.textDocument.uri)
       const formatter = new Formatter(this.project.herbBackend, options)
 
-      const text = document.getText()
       let newText = formatter.format(text)
 
       if (!newText.endsWith('\n')) {

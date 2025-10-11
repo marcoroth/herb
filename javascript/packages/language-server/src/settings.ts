@@ -8,6 +8,7 @@ export interface HerbSettings {
   linter?: {
     enabled?: boolean
     excludedRules?: string[]
+    fixOnSave?: boolean
   }
   formatter?: {
     enabled?: boolean
@@ -23,7 +24,8 @@ export class Settings {
   defaultSettings: HerbSettings = {
     linter: {
       enabled: true,
-      excludedRules: ["parser-no-errors"] // Default exclusion since parser errors are handled by ParserService
+      excludedRules: ["parser-no-errors"], // Default exclusion since parser errors are handled by ParserService
+      fixOnSave: false
     },
     formatter: {
       enabled: false,

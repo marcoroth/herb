@@ -34,14 +34,16 @@ try {
   languageServerDefaults = {
     linter: {
       enabled: true,
-      excludedRules: ["parser-no-errors"]
+      excludedRules: ["parser-no-errors"],
+      fixOnSave: false
     }
   };
 } catch {
   languageServerDefaults = {
     linter: {
       enabled: true,
-      excludedRules: ["parser-no-errors"]
+      excludedRules: ["parser-no-errors"],
+      fixOnSave: false
     }
   };
 }
@@ -69,13 +71,18 @@ if (config['languageServerHerb.linter.excludedRules']) {
   config['languageServerHerb.linter.excludedRules'].items.enum = availableRuleNames;
 }
 
+if (config['languageServerHerb.linter.fixOnSave']) {
+  config['languageServerHerb.linter.fixOnSave'].default = languageServerDefaults.linter.fixOnSave;
+}
+
 fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
 
 console.log(`Updated VS Code settings defaults to match language server and formatter defaults:`);
-console.log(`  indentWidth: ${defaultFormatOptions.indentWidth}`);
-console.log(`  maxLineLength: ${defaultFormatOptions.maxLineLength}`);
+console.log(`  formatter.indentWidth: ${defaultFormatOptions.indentWidth}`);
+console.log(`  formatter.maxLineLength: ${defaultFormatOptions.maxLineLength}`);
 console.log(`  linter.enabled: ${languageServerDefaults.linter.enabled}`);
 console.log(`  linter.excludedRules: ${JSON.stringify(languageServerDefaults.linter.excludedRules)}`);
+console.log(`  linter.fixOnSave: ${languageServerDefaults.linter.fixOnSave}`);
 console.log(`  available linter rules: ${availableRuleNames.length} rules found for autocomplete`);
 
 if (hasNewRules) {

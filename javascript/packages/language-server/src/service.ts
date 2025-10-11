@@ -8,6 +8,8 @@ import { LinterService } from "./linter_service"
 import { Config } from "./config"
 import { Project } from "./project"
 import { FormattingService } from "./formatting_service"
+import { AutofixService } from "./autofix_service"
+import { CodeActionService } from "./code_action_service"
 
 export class Service {
   connection: Connection
@@ -19,6 +21,8 @@ export class Service {
   project: Project
   config?: Config
   formatting: FormattingService
+  autofix: AutofixService
+  codeAction: CodeActionService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -28,9 +32,10 @@ export class Service {
     this.parserService = new ParserService()
     this.linterService = new LinterService(this.settings)
     this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
+    this.autofix = new AutofixService(this.connection, this.settings)
+    this.codeAction = new CodeActionService(this.settings)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService)
 
-    // Initialize global settings from initialization options
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as HerbSettings
     }
@@ -42,13 +47,10 @@ export class Service {
 
     this.config = await Config.fromPathOrNew(this.project.projectPath)
 
-    // Only keep settings for open documents
     this.documentService.onDidClose((change) => {
       this.settings.documentSettings.delete(change.document.uri)
     })
 
-    // The content of a text document has changed. This event is emitted
-    // when the text document first opened or when its content has changed.
     this.documentService.onDidChangeContent(async (change) => {
       await this.diagnostics.refreshDocument(change.document)
     })

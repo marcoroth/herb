@@ -9,6 +9,7 @@ import {
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  CodeActionParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -29,11 +30,50 @@ export class Server {
 
       await this.service.init()
 
+      this.service.documentService.documents.onWillSaveWaitUntil(async (event) => {
+        this.connection.console.log(`[Server] willSaveWaitUntil called for ${event.document.uri}`)
+
+        const settings = await this.service.settings.getDocumentSettings(event.document.uri)
+        const formatterEnabled = settings?.formatter?.enabled ?? false
+        const fixOnSave = settings?.linter?.fixOnSave ?? false
+
+        let currentDocument = event.document
+        if (fixOnSave) {
+          const autofixEdits = await this.service.autofix.getAutofixEdits(currentDocument, event.reason)
+          if (autofixEdits.length > 0) {
+            const autofixedText = autofixEdits[0].newText
+            currentDocument = {
+              ...currentDocument,
+              getText: () => autofixedText
+            } as any
+          }
+        }
+
+        if (formatterEnabled) {
+          return this.service.formatting.formatOnSave(currentDocument, event.reason)
+        }
+
+        if (fixOnSave && currentDocument !== event.document) {
+          return [{ range: { start: { line: 0, character: 0 }, end: { line: currentDocument.lineCount, character: 0 } }, newText: currentDocument.getText() }]
+        }
+
+        return []
+      })
+
       const result: InitializeResult = {
         capabilities: {
-          textDocumentSync: TextDocumentSyncKind.Incremental,
+          textDocumentSync: {
+            openClose: true,
+            change: TextDocumentSyncKind.Incremental,
+            willSave: true,
+            willSaveWaitUntil: true,
+            save: {
+              includeText: false
+            }
+          },
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          codeActionProvider: true,
         },
       }
 
@@ -50,7 +90,6 @@ export class Server {
 
     this.connection.onInitialized(() => {
       if (this.service.settings.hasConfigurationCapability) {
-        // Register for all configuration changes.
         this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
       }
 
@@ -62,7 +101,7 @@ export class Server {
 
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: `**/**/*.html{+*,}.erb` },
+          { globPattern: `**/**/*.html.erb` },
           { globPattern: `**/**/.herb-lsp/config.json` },
         ],
       })
@@ -102,12 +141,50 @@ export class Server {
       })
     })
 
-    this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {
-      return this.service.formatting.formatDocument(params)
+    this.connection.onDocumentFormatting(async (params: DocumentFormattingParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) {
+        return []
+      }
+
+      const settings = await this.service.settings.getDocumentSettings(params.textDocument.uri)
+      const fixOnSave = settings?.linter?.fixOnSave ?? false
+      const formatterEnabled = settings?.formatter?.enabled ?? false
+
+      if (fixOnSave) {
+        this.connection.console.log(`[Server] Applying autofix${formatterEnabled ? ' before formatting' : ''}`)
+        const autofixEdits = await this.service.autofix.getAutofixEdits(document, 1) // 1 = Manual save
+
+        if (autofixEdits.length > 0) {
+          if (formatterEnabled) {
+            const autofixedText = autofixEdits[0].newText
+            return this.service.formatting.formatDocumentWithAutofix(params, autofixedText)
+          }
+
+          return autofixEdits
+        }
+      }
+
+      if (formatterEnabled) {
+        return this.service.formatting.formatDocument(params)
+      }
+
+      return []
     })
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.service.formatting.formatRange(params)
+    })
+
+    this.connection.onCodeAction(async (params: CodeActionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) {
+        return []
+      }
+
+      return this.service.codeAction.getCodeActions(params, document)
     })
   }
 

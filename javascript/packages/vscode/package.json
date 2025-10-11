@@ -47,7 +47,6 @@
       "title": "Herb LSP (HTML+ERB)",
       "properties": {
         "languageServerHerb.linter.enabled": {
-          "title": "Herb Linter",
           "scope": "window",
           "type": "boolean",
           "default": true,
@@ -55,7 +54,6 @@
           "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns."
         },
         "languageServerHerb.linter.excludedRules": {
-          "title": "Herb Linter Excluded Rules",
           "scope": "window",
           "type": "array",
           "items": {
@@ -107,6 +105,13 @@
           ],
           "description": "Array of linter rule names to exclude from diagnostics. The 'parser-no-errors' rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics.",
           "markdownDescription": "Array of linter rule names to exclude from diagnostics. The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics. See all available [rules](https://herb-tools.dev/linter/rules/)."
+        },
+        "languageServerHerb.linter.fixOnSave": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically autofix correctable linter offenses when saving files.",
+          "markdownDescription": "Automatically autofix correctable linter offenses when saving files."
         },
         "languageServerHerb.formatter.enabled": {
           "scope": "resource",
