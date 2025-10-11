@@ -28,6 +28,10 @@ val CreateString(const char* string) {
 }
 
 val CreatePosition(position_T position) {
+  if (!position) {
+    return val::null();
+  }
+
   val Object = val::global("Object");
   val result = Object.new_();
 
@@ -38,6 +42,10 @@ val CreatePosition(position_T position) {
 }
 
 val CreateLocation(location_T location) {
+  if (!location) {
+    return val::null();
+  }
+
   val Object = val::global("Object");
   val result = Object.new_();
 
@@ -48,6 +56,10 @@ val CreateLocation(location_T location) {
 }
 
 val CreateRange(range_T range) {
+  if (!range) {
+    return val::null();
+  }
+
   val Array = val::global("Array");
   val result = Array.new_();
 
