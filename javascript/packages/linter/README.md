@@ -67,7 +67,7 @@ After installing as a dev dependency, add a lint NPM script to your `package.jso
 ```json
 {
   "scripts": {
-    "herb:lint": "herb-lint '**/*.html.erb'"
+    "herb:lint": "herb-lint '**/*.html{+*,}.erb'"
   }
 }
 ```
@@ -101,7 +101,7 @@ bun run herb:lint
 Basic usage:
 ```bash
 npx @herb-tools/linter template.html.erb
-npx @herb-tools/linter "**/*.html.erb"
+npx @herb-tools/linter "**/*.html{+*,}.erb"
 npx @herb-tools/linter app/
 ```
 

@@ -29,8 +29,8 @@ export class ArgumentParser {
 
     Arguments:
       file             Single file to lint
-      glob-pattern     Files to lint (defaults to **/*.html.erb)
-      directory        Directory to lint (automatically appends **/*.html.erb)
+      glob-pattern     Files to lint (defaults to **/*.html{+*,}.erb)
+      directory        Directory to lint (automatically appends **/*.html{+*,}.erb)
 
     Options:
       -h, --help       show help
@@ -128,12 +128,12 @@ export class ArgumentParser {
   }
 
   private getFilePattern(positionals: string[]): string {
-    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html.erb"
+    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html{+*,}.erb"
 
     try {
       const stat = statSync(pattern)
       if (stat.isDirectory()) {
-        pattern = join(pattern, "**/*.html.erb")
+        pattern = join(pattern, "**/*.html{+*,}.erb")
       }
     } catch {
       // Not a file/directory, treat as glob pattern

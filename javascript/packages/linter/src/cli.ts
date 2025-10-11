@@ -105,7 +105,7 @@ export class CLI {
 
   protected adjustPattern(pattern: string | undefined): string {
     if (!pattern) {
-      return '**/*.html.erb'
+      return '**/*.html{+*,}.erb'
     }
 
     const resolvedPattern = resolve(pattern)
@@ -114,7 +114,7 @@ export class CLI {
       const stats = statSync(resolvedPattern)
 
       if (stats.isDirectory()) {
-        return '**/*.html.erb'
+        return '**/*.html{+*,}.erb'
       } else if (stats.isFile()) {
         return relative(this.projectPath, resolvedPattern)
       }

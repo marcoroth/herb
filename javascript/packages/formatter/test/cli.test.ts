@@ -201,7 +201,7 @@ describe("CLI Binary", () => {
       expectExitCode(result, 0)
       expect(result.stderr).toContain("⚠️  Experimental Preview")
       expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-empty-dir/**/*.html.erb")
+      expect(result.stdout).toContain("test-empty-dir/**/*.html{+*,}.erb")
     } finally {
       await rm("test-empty-dir", { recursive: true }).catch(() => {})
     }
@@ -253,7 +253,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-dir/**/*.html.erb")
+      expect(result.stdout).toContain("test-dir/**/*.html{+*,}.erb")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -642,7 +642,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("No files found matching pattern")
-      expect(result.stdout).toContain("test-advanced/**/*.html.erb")
+      expect(result.stdout).toContain("test-advanced/**/*.html{+*,}.erb")
     })
 
     it("should handle mixed file arguments", async () => {
