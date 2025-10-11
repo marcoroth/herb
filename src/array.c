@@ -62,49 +62,9 @@ void* array_get(const array_T* array, const size_t index) {
   return array->items[index];
 }
 
-void* array_first(array_T* array) {
-  if (!array || array->size == 0) { return NULL; }
-  return array->items[0];
-}
-
 void* array_last(array_T* array) {
   if (!array || array->size == 0) { return NULL; }
   return array->items[array->size - 1];
-}
-
-void array_set(const array_T* array, const size_t index, void* item) {
-  if (index >= array->size) { return; }
-
-  array->items[index] = item;
-}
-
-void array_remove(array_T* array, const size_t index) {
-  if (index >= array->size) { return; }
-
-  for (size_t i = index; i < array->size - 1; i++) {
-    array->items[i] = array->items[i + 1];
-  }
-
-  array->size--;
-}
-
-size_t array_index_of(array_T* array, void* item) {
-  for (size_t i = 0; i < array->size; i++) {
-    if (array->items[i] == item) { return i; }
-  }
-
-  return SIZE_MAX;
-}
-
-void array_remove_item(array_T* array, void* item) {
-  size_t index = array_index_of(array, item);
-
-  if (index != SIZE_MAX) { array_remove(array, index); }
-}
-
-// Alias for array_append
-void array_push(array_T* array, void* item) {
-  array_append(array, item);
 }
 
 void* array_pop(array_T* array) {
