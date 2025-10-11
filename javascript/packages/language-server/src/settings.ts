@@ -11,6 +11,7 @@ export interface PersonalHerbSettings {
   }
   linter?: {
     enabled?: boolean
+    fixOnSave?: boolean
   }
   formatter?: {
     enabled?: boolean
@@ -22,7 +23,8 @@ export interface PersonalHerbSettings {
 export class Settings {
   defaultSettings: PersonalHerbSettings = {
     linter: {
-      enabled: true
+      enabled: true,
+      fixOnSave: true
     },
     formatter: {
       enabled: false,
@@ -88,7 +90,8 @@ export class Settings {
       return {
         trace: settings.trace,
         linter: {
-          enabled: settings.linter?.enabled ?? this.defaultSettings.linter!.enabled!
+          enabled: settings.linter?.enabled ?? this.defaultSettings.linter!.enabled!,
+          fixOnSave: settings.linter?.fixOnSave ?? this.defaultSettings.linter!.fixOnSave!
         },
         formatter: {
           enabled: settings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
@@ -101,7 +104,8 @@ export class Settings {
     return {
       trace: settings.trace,
       linter: {
-        enabled: projectConfig.isLinterEnabled
+        enabled: projectConfig.isLinterEnabled,
+        fixOnSave: settings.linter?.fixOnSave ?? this.defaultSettings.linter!.fixOnSave!
       },
       formatter: {
         enabled: projectConfig.isFormatterEnabled,
@@ -112,7 +116,7 @@ export class Settings {
   }
 
   get projectPath(): string {
-    const uri = this.params.workspaceFolders?.at(0)?.uri || ""
+    const uri = this.params.workspaceFolders?.at(0)?.uri ?? this.params.rootUri ?? this.params.rootPath ?? ""
 
     return uri.replace(/^file:\/\//, "")
   }

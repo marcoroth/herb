@@ -9,22 +9,27 @@ import { Config } from "@herb-tools/config"
 import { Project } from "./project"
 import { FormattingService } from "./formatting_service"
 import { ConfigService } from "./config_service"
+import { AutofixService } from "./autofix_service"
 import { CodeActionService } from "./code_action_service"
+import { DocumentSaveService } from "./document_save_service"
 
 import { version } from "../package.json"
 
 export class Service {
   connection: Connection
   settings: Settings
+  project: Project
+  config?: Config
+
   diagnostics: Diagnostics
   documentService: DocumentService
   parserService: ParserService
   linterService: LinterService
-  project: Project
-  config?: Config
-  formatting: FormattingService
+  formattingService: FormattingService
+  autofixService: AutofixService
   configService: ConfigService
   codeActionService: CodeActionService
+  documentSaveService: DocumentSaveService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -33,10 +38,12 @@ export class Service {
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
     this.linterService = new LinterService(this.settings)
-    this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
+    this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
+    this.autofixService = new AutofixService(this.connection, this.config)
     this.configService = new ConfigService(this.project.projectPath)
-    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
     this.codeActionService = new CodeActionService(this.project, this.config)
+    this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
+    this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings
@@ -45,11 +52,12 @@ export class Service {
 
   async init() {
     await this.project.initialize()
-    await this.formatting.initialize()
+    await this.formattingService.initialize()
 
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
       this.codeActionService.setConfig(this.config)
+      this.autofixService.setConfig(this.config)
 
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
@@ -67,10 +75,11 @@ export class Service {
       }, { projectPath: this.project.projectPath, version })
 
       this.codeActionService.setConfig(this.config)
+      this.autofixService.setConfig(this.config)
     }
 
     await this.settings.initializeProjectConfig(this.config)
-    await this.formatting.refreshConfig(this.config)
+    await this.formattingService.refreshConfig(this.config)
     this.linterService.rebuildLinter()
 
     this.documentService.onDidClose((change) => {
@@ -92,6 +101,7 @@ export class Service {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
 
       this.codeActionService.setConfig(this.config)
+      this.autofixService.setConfig(this.config)
 
       if (this.config.version && this.config.version !== version) {
         this.connection.console.warn(
@@ -110,10 +120,11 @@ export class Service {
       }, { projectPath: this.project.projectPath, version })
 
       this.codeActionService.setConfig(this.config)
+      this.autofixService.setConfig(this.config)
     }
 
     await this.settings.refreshProjectConfig(this.config)
-    await this.formatting.refreshConfig(this.config)
+    await this.formattingService.refreshConfig(this.config)
 
     this.linterService.rebuildLinter()
   }

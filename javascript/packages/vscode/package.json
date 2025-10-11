@@ -47,12 +47,18 @@
       "title": "Herb (HTML+ERB)",
       "properties": {
         "languageServerHerb.linter.enabled": {
-          "title": "Herb Linter",
           "scope": "window",
           "type": "boolean",
           "default": true,
           "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
           "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.linter.fixOnSave": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically autofix correctable linter offenses when saving files.",
+          "markdownDescription": "Automatically autofix correctable linter offenses when saving files."
         },
         "languageServerHerb.formatter.enabled": {
           "scope": "resource",

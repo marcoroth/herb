@@ -1,6 +1,6 @@
 import * as path from "path"
 
-import { workspace, ExtensionContext, Disposable } from "vscode"
+import { workspace, ExtensionContext, Disposable, window } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
 import { Config } from "@herb-tools/config"
 
@@ -11,6 +11,7 @@ export class Client {
   private languageClientName = "Herb Language Server "
   private context: ExtensionContext
   private configurationListener?: Disposable
+  private outputChannel = window.createOutputChannel("Herb Language Server")
 
   constructor(context: ExtensionContext) {
     this.context = context
@@ -153,6 +154,7 @@ export class Client {
         configurationSection: 'languageServerHerb',
       },
       initializationOptions: await this.getInitializationOptions(),
+      outputChannel: this.outputChannel,
     }
   }
 

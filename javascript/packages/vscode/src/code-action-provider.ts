@@ -45,13 +45,16 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
       }
 
       action.isPreferred = false
+
+      // TODO: disabled for now
       // actions.push(action)
     }
 
     return actions
   }
 
-  private addFormattingActions(actions: vscode.CodeAction[], document: vscode.TextDocument) {
+  // TODO: disabled for now
+  private addFormattingActions(_actions: vscode.CodeAction[], document: vscode.TextDocument) {
     const excludeAction = new vscode.CodeAction(
       'Herb: Exclude this file from formatting',
       vscode.CodeActionKind.Source
@@ -64,7 +67,7 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     excludeAction.isPreferred = false
-    actions.push(excludeAction)
+    // actions.push(excludeAction)
 
     const folderPath = path.dirname(document.fileName)
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
@@ -84,7 +87,7 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
       }
 
       excludeFolderAction.isPreferred = false
-      actions.push(excludeFolderAction)
+      // actions.push(excludeFolderAction)
     }
   }
 }

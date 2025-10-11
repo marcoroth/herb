@@ -1,14 +1,24 @@
-import { CodeAction, CodeActionKind, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, CodeActionParams, Diagnostic, Range, Position, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { TextDocument } from "vscode-languageserver-textdocument"
+
 import { Config } from "@herb-tools/config"
 import { Project } from "./project"
+import { Herb } from "@herb-tools/node-wasm"
+import { Linter } from "@herb-tools/linter"
+
+import { getFullDocumentRange } from "./utils"
+
+import type { LintOffense } from "@herb-tools/linter"
 
 export class CodeActionService {
   private project: Project
   private config?: Config
+  private linter: Linter
 
   constructor(project: Project, config?: Config) {
     this.project = project
     this.config = config
+    this.linter = Linter.from(Herb, config)
   }
 
   setConfig(config: Config) {
@@ -65,6 +75,66 @@ export class CodeActionService {
     return actions.concat(disableAllActions)
   }
 
+  autofixCodeActions(params: CodeActionParams, document: TextDocument): CodeAction[] {
+    if (this.config && !this.config.isLinterEnabled) {
+      return []
+    }
+
+    const codeActions: CodeAction[] = []
+    const text = document.getText()
+
+    const lintResult = this.linter.lint(text, { fileName: document.uri })
+    const offenses = lintResult.offenses
+
+    const relevantDiagnostics = params.context.diagnostics.filter(diagnostic => {
+      return diagnostic.source === "Herb Linter " && this.isInRange(diagnostic.range, params.range)
+    })
+
+    for (const diagnostic of relevantDiagnostics) {
+      const offense = offenses.find(offense => this.rangesEqual(this.offenseToRange(offense), diagnostic.range) && offense.rule === diagnostic.code)
+
+      if (!offense) {
+        continue
+      }
+
+      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+
+      if (fixResult.fixed.length > 0 && fixResult.source !== text) {
+        const codeAction: CodeAction = {
+          title: `Herb Linter: Fix "${offense.message}"`,
+          kind: CodeActionKind.QuickFix,
+          diagnostics: [diagnostic],
+          edit: this.createDocumentEdit(document, fixResult.source)
+        }
+
+        codeActions.push(codeAction)
+      }
+    }
+
+    const allFixableOffenses = offenses.filter(offense => {
+      const fixResult = this.linter.autofix(text, { fileName: document.uri }, [offense])
+
+      return fixResult.fixed.length > 0
+    })
+
+    if (allFixableOffenses.length > 0) {
+      const fixAllResult = this.linter.autofix(text, { fileName: document.uri }, allFixableOffenses)
+
+      if (fixAllResult.fixed.length > 0 && fixAllResult.source !== text) {
+        const fixAllAction: CodeAction = {
+          title: `Herb Linter: Fix all ${fixAllResult.fixed.length} autocorrectable offense${fixAllResult.fixed.length === 1 ? '' : 's'}`,
+          kind: CodeActionKind.SourceFixAll,
+          edit: this.createDocumentEdit(document, fixAllResult.source)
+        }
+
+        codeActions.push(fixAllAction)
+      }
+    }
+
+    return codeActions
+  }
+
+
   private createDisableLineAction(uri: string, diagnostic: Diagnostic, ruleName: string, documentText: string): CodeAction | null {
     const line = diagnostic.range.start.line
     const edit = this.createDisableCommentEdit(uri, line, ruleName, documentText)
@@ -72,7 +142,7 @@ export class CodeActionService {
     if (!edit) return null
 
     const action: CodeAction = {
-      title: `Herb: Disable \`${ruleName}\` for this line`,
+      title: `Herb Linter: Disable \`${ruleName}\` for this line`,
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
@@ -88,7 +158,7 @@ export class CodeActionService {
     if (!edit) return null
 
     const action: CodeAction = {
-      title: "Herb: Disable all linter rules for this line",
+      title: "Herb Linter: Disable all linter rules for this line",
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
@@ -161,7 +231,7 @@ export class CodeActionService {
     const configUri = `file://${configPath}`
 
     const action: CodeAction = {
-      title: `Herb: Disable \`${ruleName}\` in \`.herb.yml\``,
+      title: `Herb Linter: Disable \`${ruleName}\` in \`.herb.yml\``,
       kind: CodeActionKind.QuickFix,
       diagnostics: [diagnostic],
       edit,
@@ -264,5 +334,39 @@ export class CodeActionService {
       console.error('[Code Action] Unexpected error:', error)
       return null
     }
+  }
+
+  private createDocumentEdit(document: TextDocument, newText: string): WorkspaceEdit {
+    return {
+      changes: {
+        [document.uri]: [{
+          range: getFullDocumentRange(document),
+          newText
+        }]
+      }
+    }
+  }
+
+  private offenseToRange(offense: LintOffense): Range {
+    return {
+      start: Position.create(offense.location.start.line - 1, offense.location.start.column),
+      end: Position.create(offense.location.end.line - 1, offense.location.end.column)
+    }
+  }
+
+  private rangesEqual(r1: Range, r2: Range): boolean {
+    return (
+      r1.start.line === r2.start.line &&
+      r1.start.character === r2.start.character &&
+      r1.end.line === r2.end.line &&
+      r1.end.character === r2.end.character
+    )
+  }
+
+  private isInRange(diagnosticRange: Range, requestedRange: Range): boolean {
+    if (diagnosticRange.start.line > requestedRange.end.line) return false
+    if (diagnosticRange.end.line < requestedRange.start.line) return false
+
+    return true
   }
 }

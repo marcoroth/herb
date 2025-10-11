@@ -1,4 +1,4 @@
-import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position } from "vscode-languageserver/node"
+import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
@@ -41,6 +41,25 @@ export class FormattingService {
     }
   }
 
+  async formatOnSave(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
+    this.connection.console.log(`[Formatting] formatOnSave called for ${document.uri}`)
+
+    if (reason !== TextDocumentSaveReason.Manual) {
+      this.connection.console.log(`[Formatting] Skipping: reason=${reason} (not manual)`)
+      return []
+    }
+
+    const filePath = document.uri.replace(/^file:\/\//, '')
+
+    if (!this.shouldFormatFile(filePath)) {
+      this.connection.console.log(`[Formatting] Skipping: file not in formatter config`)
+
+      return []
+    }
+
+    return this.performFormatting({ textDocument: { uri: document.uri }, options: { tabSize: 2, insertSpaces: true } })
+  }
+
   private shouldFormatFile(filePath: string): boolean {
     if (filePath.endsWith('.herb.yml')) return false
     if (!this.config) return true
@@ -68,10 +87,10 @@ export class FormattingService {
     }
 
     try {
+      const text = document.getText()
       const options = await this.getFormatterOptions(params.textDocument.uri)
       const formatter = new Formatter(this.project.herbBackend, options)
 
-      const text = document.getText()
       let newText = formatter.format(text)
 
       if (!newText.endsWith('\n')) {
