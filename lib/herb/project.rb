@@ -78,19 +78,23 @@ module Herb
         failed_files = []
         timeout_files = []
         error_files = []
+        compilation_failed_files = []
         error_outputs = {}
         file_contents = {}
         parse_errors = {}
+        compilation_errors = {}
 
         files.each_with_index do |file_path, index|
           total_failed = failed_files.count
           total_timeout = timeout_files.count
           total_errors = error_files.count
+          total_compilation_failed = compilation_failed_files.count
 
-          lines_to_clear = 6 + total_failed + total_timeout + total_errors
+          lines_to_clear = 6 + total_failed + total_timeout + total_errors + total_compilation_failed
           lines_to_clear += 3 if total_failed.positive?
           lines_to_clear += 3 if total_timeout.positive?
           lines_to_clear += 3 if total_errors.positive?
+          lines_to_clear += 3 if total_compilation_failed.positive?
 
           lines_to_clear.times { print "\e[1A\e[K" } if index.positive? && interactive?
 
@@ -127,6 +131,13 @@ module Herb
               puts
               puts "Files with parse errors:"
               error_files.each { |file| puts "  - #{file}" }
+              puts
+            end
+
+            if compilation_failed_files.any?
+              puts
+              puts "Files with compilation errors:"
+              compilation_failed_files.each { |file| puts "  - #{file}" }
               puts
             end
           end
@@ -173,7 +184,33 @@ module Herb
               case $CHILD_STATUS.exitstatus
               when 0
                 log.puts "✅ Parsed #{file_path} successfully"
-                successful_files << file_path
+
+                begin
+                  Herb::Engine.new(file_content, filename: file_path, escape: true)
+
+                  log.puts "✅ Compiled #{file_path} successfully"
+                  successful_files << file_path
+                rescue Herb::Engine::CompilationError => e
+                  log.puts "❌ Compilation failed for #{file_path}"
+
+                  compilation_failed_files << file_path
+                  compilation_errors[file_path] = {
+                    error: e.message,
+                    backtrace: e.backtrace&.first(10) || [],
+                  }
+
+                  file_contents[file_path] = file_content
+                rescue StandardError => e
+                  log.puts "❌ Unexpected compilation error for #{file_path}: #{e.class}: #{e.message}"
+
+                  compilation_failed_files << file_path
+                  compilation_errors[file_path] = {
+                    error: "#{e.class}: #{e.message}",
+                    backtrace: e.backtrace&.first(10) || [],
+                  }
+
+                  file_contents[file_path] = file_content
+                end
               when 2
                 message = "⚠️ Parsing #{file_path} completed with errors"
                 log.puts message
@@ -248,8 +285,11 @@ module Herb
         summary = [
           heading("Summary"),
           "Total files: #{files.count}",
-          "✅ Successful: #{successful_files.count} (#{percentage(successful_files.count, files.count)}%)",
-          "❌ Failed: #{failed_files.count} (#{percentage(failed_files.count, files.count)}%)",
+          "✅ Successful (parsed & compiled): #{successful_files.count} (#{percentage(successful_files.count,
+                                                                                      files.count)}%)",
+          "❌ Compilation errors: #{compilation_failed_files.count} (#{percentage(compilation_failed_files.count,
+                                                                                  files.count)}%)",
+          "❌ Failed to parse: #{failed_files.count} (#{percentage(failed_files.count, files.count)}%)",
           "⚠️ Parse errors: #{error_files.count} (#{percentage(error_files.count, files.count)}%)",
           "⏱️ Timed out: #{timeout_files.count} (#{percentage(timeout_files.count, files.count)}%)"
         ]
@@ -289,7 +329,17 @@ module Herb
           end
         end
 
-        problem_files = failed_files + timeout_files + error_files
+        if compilation_failed_files.any?
+          log.puts "\n#{heading("Files with compilation errors")}"
+          puts "\nFiles with compilation errors:"
+
+          compilation_failed_files.each do |f|
+            log.puts f
+            puts "  - #{f}"
+          end
+        end
+
+        problem_files = failed_files + timeout_files + error_files + compilation_failed_files
 
         if problem_files.any?
           log.puts "\n#{heading("FILE CONTENTS AND DETAILS")}"
@@ -331,28 +381,43 @@ module Herb
               end
             end
 
-            next unless parse_errors[file]
+            if parse_errors[file]
+              if parse_errors[file][:stdout].strip.length.positive?
+                log.puts "\n#{heading("STANDARD OUTPUT")}"
+                log.puts "```"
+                log.puts parse_errors[file][:stdout]
+                log.puts "```"
+              end
 
-            if parse_errors[file][:stdout].strip.length.positive?
-              log.puts "\n#{heading("STANDARD OUTPUT")}"
-              log.puts "```"
-              log.puts parse_errors[file][:stdout]
-              log.puts "```"
+              if parse_errors[file][:stderr].strip.length.positive?
+                log.puts "\n#{heading("ERROR OUTPUT")}"
+                log.puts "```"
+                log.puts parse_errors[file][:stderr]
+                log.puts "```"
+              end
+
+              if parse_errors[file][:ast]
+                log.puts "\n#{heading("AST")}"
+                log.puts "```"
+                log.puts parse_errors[file][:ast]
+                log.puts "```"
+                log.puts
+              end
             end
 
-            if parse_errors[file][:stderr].strip.length.positive?
-              log.puts "\n#{heading("ERROR OUTPUT")}"
+            next unless compilation_errors[file]
+
+            log.puts "\n#{heading("COMPILATION ERROR")}"
+            log.puts "```"
+            log.puts compilation_errors[file][:error]
+            log.puts "```"
+
+            if compilation_errors[file][:backtrace].any?
+              log.puts "\n#{heading("BACKTRACE")}"
               log.puts "```"
-              log.puts parse_errors[file][:stderr]
+              log.puts compilation_errors[file][:backtrace].join("\n")
               log.puts "```"
             end
-
-            next unless parse_errors[file][:ast]
-
-            log.puts "\n#{heading("AST")}"
-            log.puts "```"
-            log.puts parse_errors[file][:ast]
-            log.puts "```"
             log.puts
           end
         end
