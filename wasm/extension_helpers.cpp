@@ -7,12 +7,12 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../src/include/array.h"
+#include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
 #include "../src/include/pretty_print.h"
 #include "../src/include/ast_pretty_print.h"
-#include "../src/include/buffer.h"
+#include "../src/include/util/hb_buffer.h"
 #include "../src/include/herb.h"
 #include "../src/include/token.h"
 #include "../src/include/position.h"
@@ -78,7 +78,7 @@ val CreateToken(token_T* token) {
   return result;
 }
 
-val CreateLexResult(array_T* tokens, const std::string& source) {
+val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -88,8 +88,8 @@ val CreateLexResult(array_T* tokens, const std::string& source) {
   val warningsArray = Array.new_();
 
   if (tokens) {
-    for (size_t i = 0; i < array_size(tokens); i++) {
-      token_T* token = (token_T*)array_get(tokens, i);
+    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+      token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         tokensArray.call<void>("push", CreateToken(token));
       }

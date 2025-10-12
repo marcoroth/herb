@@ -1,9 +1,9 @@
 #ifndef HERB_PARSER_H
 #define HERB_PARSER_H
 
-#include "array.h"
 #include "ast_node.h"
 #include "lexer.h"
+#include "util/hb_array.h"
 
 typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
@@ -22,7 +22,7 @@ typedef struct PARSER_OPTIONS_STRUCT {
 typedef struct PARSER_STRUCT {
   lexer_T* lexer;
   token_T* current_token;
-  array_T* open_tags_stack;
+  hb_array_T* open_tags_stack;
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
   parser_options_T* options;

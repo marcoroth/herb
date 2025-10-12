@@ -1,5 +1,5 @@
 #include "include/io.h"
-#include "include/buffer.h"
+#include "include/util/hb_buffer.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -17,17 +17,17 @@ char* herb_read_file(const char* filename) {
     exit(1);
   }
 
-  buffer_T buffer;
-  buffer_init(&buffer, 4096);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 4096);
 
   char chunk[FILE_READ_CHUNK];
   size_t bytes_read;
 
   while ((bytes_read = fread(chunk, 1, FILE_READ_CHUNK, fp)) > 0) {
-    buffer_append_with_length(&buffer, chunk, bytes_read);
+    hb_buffer_append_with_length(&buffer, chunk, bytes_read);
   }
 
   fclose(fp);
 
-  return buffer_value(&buffer);
+  return hb_buffer_value(&buffer);
 }

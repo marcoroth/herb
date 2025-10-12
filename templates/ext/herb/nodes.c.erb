@@ -9,7 +9,7 @@
 #include "../../src/include/token.h"
 
 VALUE rb_node_from_c_struct(AST_NODE_T* node);
-static VALUE rb_nodes_array_from_c_array(array_T* array);
+static VALUE rb_nodes_array_from_c_array(hb_array_T* array);
 
 <%- nodes.each do |node| -%>
 static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>) {
@@ -72,12 +72,12 @@ VALUE rb_node_from_c_struct(AST_NODE_T* node) {
   return Qnil;
 }
 
-static VALUE rb_nodes_array_from_c_array(array_T* array) {
+static VALUE rb_nodes_array_from_c_array(hb_array_T* array) {
   VALUE rb_array = rb_ary_new();
 
   if (array) {
-    for (size_t i = 0; i < array_size(array); i++) {
-      AST_NODE_T* child_node = (AST_NODE_T*) array_get(array, i);
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
       if (child_node) {
         VALUE rb_child = rb_node_from_c_struct(child_node);

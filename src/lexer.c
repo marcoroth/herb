@@ -1,8 +1,8 @@
-#include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
 
 #include <ctype.h>
 #include <string.h>
@@ -166,12 +166,12 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const
 // ===== Specialized Parsers
 
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  buffer_T buffer;
-  buffer_init(&buffer, 128);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 128);
 
   while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
          && !lexer_eof(lexer)) {
-    buffer_append_char(&buffer, lexer->current_character);
+    hb_buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -183,14 +183,14 @@ static token_T* lexer_parse_whitespace(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
-  buffer_T buffer;
-  buffer_init(&buffer, 128);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 128);
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
          && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
 
-    buffer_append_char(&buffer, lexer->current_character);
+    hb_buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
@@ -217,15 +217,15 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  buffer_T buffer;
-  buffer_init(&buffer, 1024);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 1024);
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
       return token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
     }
 
-    buffer_append_char(&buffer, lexer->current_character);
+    hb_buffer_append_char(&buffer, lexer->current_character);
 
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;

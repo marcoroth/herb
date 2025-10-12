@@ -1,15 +1,15 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "include/array.h"
-#include "include/macros.h"
+#include "../include/macros.h"
+#include "../include/util/hb_array.h"
 
-size_t array_sizeof(void) {
-  return sizeof(array_T);
+size_t hb_array_sizeof(void) {
+  return sizeof(hb_array_T);
 }
 
-array_T* array_init(const size_t capacity) {
-  array_T* array = malloc(array_sizeof());
+hb_array_T* hb_array_init(const size_t capacity) {
+  hb_array_T* array = malloc(hb_array_sizeof());
 
   array->size = 0;
   array->capacity = capacity;
@@ -23,7 +23,7 @@ array_T* array_init(const size_t capacity) {
   return array;
 }
 
-void array_append(array_T* array, void* item) {
+void hb_array_append(hb_array_T* array, void* item) {
   if (array->size >= array->capacity) {
     size_t new_capacity;
 
@@ -56,29 +56,29 @@ void array_append(array_T* array, void* item) {
   array->size++;
 }
 
-void* array_get(const array_T* array, const size_t index) {
+void* hb_array_get(const hb_array_T* array, const size_t index) {
   if (index >= array->size) { return NULL; }
 
   return array->items[index];
 }
 
-void* array_first(array_T* array) {
+void* hb_array_first(hb_array_T* array) {
   if (!array || array->size == 0) { return NULL; }
   return array->items[0];
 }
 
-void* array_last(array_T* array) {
+void* hb_array_last(hb_array_T* array) {
   if (!array || array->size == 0) { return NULL; }
   return array->items[array->size - 1];
 }
 
-void array_set(const array_T* array, const size_t index, void* item) {
+void hb_array_set(const hb_array_T* array, const size_t index, void* item) {
   if (index >= array->size) { return; }
 
   array->items[index] = item;
 }
 
-void array_remove(array_T* array, const size_t index) {
+void hb_array_remove(hb_array_T* array, const size_t index) {
   if (index >= array->size) { return; }
 
   for (size_t i = index; i < array->size - 1; i++) {
@@ -88,7 +88,7 @@ void array_remove(array_T* array, const size_t index) {
   array->size--;
 }
 
-size_t array_index_of(array_T* array, void* item) {
+size_t hb_array_index_of(hb_array_T* array, void* item) {
   for (size_t i = 0; i < array->size; i++) {
     if (array->items[i] == item) { return i; }
   }
@@ -96,37 +96,37 @@ size_t array_index_of(array_T* array, void* item) {
   return SIZE_MAX;
 }
 
-void array_remove_item(array_T* array, void* item) {
-  size_t index = array_index_of(array, item);
+void hb_array_remove_item(hb_array_T* array, void* item) {
+  size_t index = hb_array_index_of(array, item);
 
-  if (index != SIZE_MAX) { array_remove(array, index); }
+  if (index != SIZE_MAX) { hb_array_remove(array, index); }
 }
 
-// Alias for array_append
-void array_push(array_T* array, void* item) {
-  array_append(array, item);
+// Alias for hb_array_append
+void hb_array_push(hb_array_T* array, void* item) {
+  hb_array_append(array, item);
 }
 
-void* array_pop(array_T* array) {
+void* hb_array_pop(hb_array_T* array) {
   if (!array || array->size == 0) { return NULL; }
 
-  void* last_item = array_last(array);
+  void* last_item = hb_array_last(array);
   array->size--;
 
   return last_item;
 }
 
-size_t array_size(const array_T* array) {
+size_t hb_array_size(const hb_array_T* array) {
   if (array == NULL) { return 0; }
 
   return array->size;
 }
 
-size_t array_capacity(const array_T* array) {
+size_t hb_array_capacity(const hb_array_T* array) {
   return array->capacity;
 }
 
-void array_free(array_T** array) {
+void hb_array_free(hb_array_T** array) {
   if (!array || !*array) { return; }
 
   free((*array)->items);

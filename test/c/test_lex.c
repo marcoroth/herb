@@ -3,8 +3,8 @@
 
 TEST(herb_lex_to_buffer_empty_file)
   char* html = "";
-  buffer_T output;
-  buffer_init(&output, 1024);
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024);
 
   herb_lex_to_buffer(html, &output);
 
@@ -15,8 +15,8 @@ END
 
 TEST(herb_lex_to_buffer_basic_tag)
   char* html = "<html></html>";
-  buffer_T output;
-  buffer_init(&output, 1024);
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024);
 
   herb_lex_to_buffer(html, &output);
 

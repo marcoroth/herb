@@ -1,12 +1,12 @@
 extern "C" {
 #include "../extension/libherb/include/analyze.h"
-#include "../extension/libherb/include/array.h"
 #include "../extension/libherb/include/ast_nodes.h"
-#include "../extension/libherb/include/buffer.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_array.h"
+#include "../extension/libherb/include/util/hb_buffer.h"
 }
 
 #include "error_helpers.h"
@@ -31,7 +31,7 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  array_T* tokens = herb_lex(string);
+  hb_array_T* tokens = herb_lex(string);
   napi_value result = CreateLexResult(env, tokens, args[0]);
 
   herb_free_tokens(&tokens);
@@ -53,7 +53,7 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   char* file_path = CheckString(env, args[0]);
   if (!file_path) { return nullptr; }
 
-  array_T* tokens = herb_lex_file(file_path);
+  hb_array_T* tokens = herb_lex_file(file_path);
   napi_value source_value = ReadFileToString(env, file_path);
   napi_value result = CreateLexResult(env, tokens, source_value);
 
@@ -155,8 +155,8 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  buffer_T output;
-  if (!buffer_init(&output, strlen(string))) {
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, strlen(string))) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;
@@ -185,8 +185,8 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  buffer_T output;
-  if (!buffer_init(&output, strlen(string))) {
+  hb_buffer_T output;
+  if (!hb_buffer_init(&output, strlen(string))) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;

@@ -1,6 +1,6 @@
 #include "include/html_util.h"
-#include "include/buffer.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -43,13 +43,13 @@ bool is_void_element(const char* tag_name) {
 char* html_closing_tag_string(const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("</>"); }
 
-  buffer_T buffer;
-  buffer_init(&buffer, strlen(tag_name) + 3);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, strlen(tag_name) + 3);
 
-  buffer_append_char(&buffer, '<');
-  buffer_append_char(&buffer, '/');
-  buffer_append(&buffer, tag_name);
-  buffer_append_char(&buffer, '>');
+  hb_buffer_append_char(&buffer, '<');
+  hb_buffer_append_char(&buffer, '/');
+  hb_buffer_append(&buffer, tag_name);
+  hb_buffer_append_char(&buffer, '>');
 
   return buffer.value;
 }
@@ -73,14 +73,14 @@ char* html_closing_tag_string(const char* tag_name) {
 char* html_self_closing_tag_string(const char* tag_name) {
   if (tag_name == NULL) { return herb_strdup("< />"); }
 
-  buffer_T buffer;
-  buffer_init(&buffer, strlen(tag_name) + 4);
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, strlen(tag_name) + 4);
 
-  buffer_append_char(&buffer, '<');
-  buffer_append(&buffer, tag_name);
-  buffer_append_char(&buffer, ' ');
-  buffer_append_char(&buffer, '/');
-  buffer_append_char(&buffer, '>');
+  hb_buffer_append_char(&buffer, '<');
+  hb_buffer_append(&buffer, tag_name);
+  hb_buffer_append_char(&buffer, ' ');
+  hb_buffer_append_char(&buffer, '/');
+  hb_buffer_append_char(&buffer, '>');
 
   return buffer.value;
 }

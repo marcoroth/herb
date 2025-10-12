@@ -2,13 +2,13 @@
 #define HERB_AST_PRETTY_PRINT_H
 
 #include "ast_nodes.h"
-#include "buffer.h"
+#include "util/hb_buffer.h"
 
 void ast_pretty_print_node(
   AST_NODE_T* node,
   size_t indent,
   size_t relative_indent,
-  buffer_T* buffer
+  hb_buffer_T* buffer
 );
 
 #endif

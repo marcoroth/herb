@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-typedef struct STRING_STRUCT {
+typedef struct HB_STRING_STRUCT {
   char* data;
   size_t length;
 } hb_string_T;

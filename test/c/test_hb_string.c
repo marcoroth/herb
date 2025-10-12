@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/hb_string.h"
+#include "../../src/include/util/hb_string.h"
 #include <string.h>
 
 TEST(hb_string_equals_tests)
@@ -122,7 +122,7 @@ TEST(hb_string_starts_with_tests)
 END
 
 TCase *hb_string_tests(void) {
-  TCase *tags = tcase_create("Str");
+  TCase *tags = tcase_create("Herb String");
 
   tcase_add_test(tags, hb_string_equals_tests);
   tcase_add_test(tags, hb_string_equals_case_insensitive_tests);

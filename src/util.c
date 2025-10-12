@@ -1,5 +1,5 @@
 #include "include/util.h"
-#include "include/buffer.h"
+#include "include/util/hb_buffer.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -11,22 +11,22 @@ int is_newline(const int character) {
 }
 
 char* escape_newlines(const char* input) {
-  buffer_T buffer;
+  hb_buffer_T buffer;
 
-  buffer_init(&buffer, strlen(input));
+  hb_buffer_init(&buffer, strlen(input));
 
   for (size_t i = 0; i < strlen(input); ++i) {
     switch (input[i]) {
       case '\n': {
-        buffer_append_char(&buffer, '\\');
-        buffer_append_char(&buffer, 'n');
+        hb_buffer_append_char(&buffer, '\\');
+        hb_buffer_append_char(&buffer, 'n');
       } break;
       case '\r': {
-        buffer_append_char(&buffer, '\\');
-        buffer_append_char(&buffer, 'r');
+        hb_buffer_append_char(&buffer, '\\');
+        hb_buffer_append_char(&buffer, 'r');
       } break;
       default: {
-        buffer_append_char(&buffer, input[i]);
+        hb_buffer_append_char(&buffer, input[i]);
       }
     }
   }
@@ -37,13 +37,13 @@ char* escape_newlines(const char* input) {
 char* wrap_string(const char* input, const char character) {
   if (input == NULL) { return NULL; }
 
-  buffer_T buffer;
+  hb_buffer_T buffer;
 
-  buffer_init(&buffer, strlen(input) + 2);
+  hb_buffer_init(&buffer, strlen(input) + 2);
 
-  buffer_append_char(&buffer, character);
-  buffer_append(&buffer, input);
-  buffer_append_char(&buffer, character);
+  hb_buffer_append_char(&buffer, character);
+  hb_buffer_append(&buffer, input);
+  hb_buffer_append_char(&buffer, character);
 
   return buffer.value;
 }

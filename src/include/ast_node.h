@@ -6,7 +6,7 @@
 #include "position.h"
 #include "token_struct.h"
 
-void ast_node_init(AST_NODE_T* node, ast_node_type_T type, position_T start, position_T end, array_T* errors);
+void ast_node_init(AST_NODE_T* node, ast_node_type_T type, position_T start, position_T end, hb_array_T* errors);
 void ast_node_free(AST_NODE_T* node);
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token);
@@ -22,7 +22,7 @@ void ast_node_set_start(AST_NODE_T* node, position_T position);
 void ast_node_set_end(AST_NODE_T* node, position_T position);
 
 size_t ast_node_errors_count(const AST_NODE_T* node);
-array_T* ast_node_errors(const AST_NODE_T* node);
+hb_array_T* ast_node_errors(const AST_NODE_T* node);
 void ast_node_append_error(const AST_NODE_T* node, ERROR_T* error);
 
 void ast_node_set_start_from_token(AST_NODE_T* node, const token_T* token);

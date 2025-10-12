@@ -8,8 +8,8 @@ TEST(test_token)
 END
 
 TEST(test_token_to_string)
-  buffer_T output;
-  buffer_init(&output, 1024);
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024);
   herb_lex_to_buffer("hello", &output);
 
   ck_assert_str_eq(

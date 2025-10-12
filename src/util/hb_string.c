@@ -1,4 +1,4 @@
-#include "include/hb_string.h"
+#include "../include/util/hb_string.h"
 
 #include <stdlib.h>
 #include <string.h>

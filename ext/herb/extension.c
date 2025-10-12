@@ -19,7 +19,7 @@ VALUE cParseResult;
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  array_T* tokens = herb_lex(string);
+  hb_array_T* tokens = herb_lex(string);
 
   VALUE result = create_lex_result(tokens, source);
 
@@ -30,7 +30,7 @@ static VALUE Herb_lex(VALUE self, VALUE source) {
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
-  array_T* tokens = herb_lex_file(file_path);
+  hb_array_T* tokens = herb_lex_file(file_path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
   VALUE result = create_lex_result(tokens, source_value);
@@ -87,9 +87,9 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
 static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
-  buffer_T output;
+  hb_buffer_T output;
 
-  if (!buffer_init(&output, strlen(string))) { return Qnil; }
+  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_ruby_to_buffer(string, &output);
 
@@ -101,9 +101,9 @@ static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
 
 static VALUE Herb_extract_html(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
-  buffer_T output;
+  hb_buffer_T output;
 
-  if (!buffer_init(&output, strlen(string))) { return Qnil; }
+  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_html_to_buffer(string, &output);
 

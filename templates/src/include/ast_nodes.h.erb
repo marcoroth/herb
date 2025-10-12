@@ -4,13 +4,13 @@
 #include <stdbool.h>
 #include <prism.h>
 
-#include "array.h"
-#include "buffer.h"
-#include "position.h"
-#include "location.h"
-#include "token_struct.h"
 #include "analyzed_ruby.h"
 #include "element_source.h"
+#include "location.h"
+#include "position.h"
+#include "token_struct.h"
+#include "util/hb_array.h"
+#include "util/hb_buffer.h"
 
 typedef enum {
 <%- nodes.each do |node| -%>
@@ -22,7 +22,7 @@ typedef struct AST_NODE_STRUCT {
   ast_node_type_T type;
   location_T location;
   // maybe a range too?
-  array_T* errors;
+  hb_array_T* errors;
 } AST_NODE_T;
 
 <%- nodes.each do |node| -%>
@@ -36,7 +36,7 @@ typedef struct <%= node.struct_name %> {
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "array_T* errors"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors"] -%>
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>);
 <%- end -%>
 
