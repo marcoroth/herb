@@ -27,23 +27,19 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer);
 static void parser_handle_erb_in_open_tag(parser_T* parser, array_T* children);
 static void parser_handle_whitespace_in_open_tag(parser_T* parser, array_T* children);
 
+const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false };
+
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
 }
 
-void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T* options) {
+void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options) {
   parser->lexer = lexer;
   parser->current_token = lexer_next_token(lexer);
   parser->open_tags_stack = array_init(16);
   parser->state = PARSER_STATE_DATA;
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
-
-  if (options) {
-    parser->options = calloc(1, sizeof(parser_options_T));
-    parser->options->track_whitespace = options->track_whitespace;
-  } else {
-    parser->options = NULL;
-  }
+  parser->options = options;
 }
 
 static AST_CDATA_NODE_T* parser_parse_cdata(parser_T* parser) {
@@ -561,7 +557,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
 static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) {
   AST_HTML_ATTRIBUTE_NAME_NODE_T* attribute_name = parser_parse_html_attribute_name(parser);
 
-  if (parser->options && parser->options->track_whitespace) {
+  if (parser->options.track_whitespace) {
     bool has_equals = (parser->current_token->type == TOKEN_EQUALS)
                    || lexer_peek_for_token_type_after_whitespace(parser->lexer, TOKEN_EQUALS);
 
@@ -1209,7 +1205,7 @@ AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser) {
 }
 
 static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token, array_T* children) {
-  if (parser->options && parser->options->track_whitespace) {
+  if (parser->options.track_whitespace) {
     array_T* errors = array_init(8);
     AST_WHITESPACE_NODE_T* whitespace_node = ast_whitespace_node_init(
       whitespace_token,
@@ -1227,7 +1223,7 @@ static void parser_consume_whitespace(parser_T* parser, array_T* children) {
   while (token_is_any_of(parser, TOKEN_WHITESPACE, TOKEN_NEWLINE)) {
     token_T* whitespace = parser_advance(parser);
 
-    if (parser->options && parser->options->track_whitespace && children != NULL) {
+    if (parser->options.track_whitespace && children != NULL) {
       parser_handle_whitespace(parser, whitespace, children);
     } else {
       token_free(whitespace);
@@ -1240,7 +1236,6 @@ void parser_free(parser_T* parser) {
 
   if (parser->current_token != NULL) { token_free(parser->current_token); }
   if (parser->open_tags_stack != NULL) { array_free(&parser->open_tags_stack); }
-  if (parser->options != NULL) { free(parser->options); }
 
   free(parser);
 }
