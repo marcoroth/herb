@@ -32,7 +32,12 @@ AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
   lexer_T lexer = { 0 };
   lexer_init(&lexer, source);
   parser_T parser = { 0 };
-  herb_parser_init(&parser, &lexer, options);
+
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  if (options != NULL) { parser_options = *options; }
+
+  herb_parser_init(&parser, &lexer, parser_options);
 
   AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
 
