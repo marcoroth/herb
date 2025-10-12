@@ -29,9 +29,11 @@ require_relative "herb/visitor"
 require_relative "herb/engine"
 
 begin
-  major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
+  # Try to load the C extension for the current Ruby version.
+  major, minor, = RUBY_VERSION.split(".").map(&:to_i)
   require_relative "herb/#{major}.#{minor}/herb"
 rescue LoadError
+  # Fall back to the generic C extension if the version-specific one fails to load.
   require_relative "herb/herb"
 end
 
