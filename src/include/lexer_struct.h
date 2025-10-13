@@ -2,6 +2,7 @@
 #define HERB_LEXER_STRUCT_H
 
 #include "util/hb_string.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
