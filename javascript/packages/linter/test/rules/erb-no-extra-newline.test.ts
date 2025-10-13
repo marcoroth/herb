@@ -41,7 +41,7 @@ describe("erb-no-extra-newline", () => {
     })
 
     test("when more than two newlines follow each other", () => {
-      expectError("Extra blank line detected.")
+      expectError("Extra blank line detected. Remove 1 blank line to maintain consistent spacing (max 2 allowed).")
 
       assertOffenses(dedent`
         line 1
@@ -70,7 +70,7 @@ describe("erb-no-extra-newline", () => {
     })
 
     test("when more than two newlines follow each other", () => {
-      expectError("Extra blank line detected.")
+      expectError("Extra blank line detected. Remove 1 blank line to maintain consistent spacing (max 2 allowed).")
 
       assertOffenses(dedent`
         <div>Hello</div>

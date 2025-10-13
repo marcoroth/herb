@@ -44,8 +44,10 @@ class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAu
       const end = positionFromOffset(source, endOffset)
       const location = new Location(start, end)
 
+      const extraLines = match[0].length - 3
+
       this.addOffense(
-        "Extra blank line detected.",
+        `Extra blank line detected. Remove ${extraLines} blank ${extraLines === 1 ? "line" : "lines"} to maintain consistent spacing (max 2 allowed).`,
         location,
         "error",
         {
