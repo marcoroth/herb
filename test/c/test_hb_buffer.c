@@ -63,22 +63,6 @@ TEST(test_hb_buffer_concat)
   free(buffer2.value);
 END
 
-// Test increating
-TEST(test_hb_buffer_increase_capacity)
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
-
-  ck_assert_int_eq(buffer.capacity, 1024);
-
-  ck_assert(hb_buffer_increase_capacity(&buffer, 1));
-  ck_assert_int_eq(buffer.capacity, 1025);
-
-  ck_assert(hb_buffer_increase_capacity(&buffer, 1024 + 1));
-  ck_assert_int_eq(buffer.capacity, 2050);
-
-  free(buffer.value);
-END
-
 // Test expanding if needed
 TEST(test_hb_buffer_expand_if_needed)
   hb_buffer_T buffer;
@@ -239,7 +223,6 @@ TCase *hb_buffer_tests(void) {
   tcase_add_test(buffer, test_hb_buffer_append);
   tcase_add_test(buffer, test_hb_buffer_prepend);
   tcase_add_test(buffer, test_hb_buffer_concat);
-  tcase_add_test(buffer, test_hb_buffer_increase_capacity);
   tcase_add_test(buffer, test_hb_buffer_expand_if_needed);
   tcase_add_test(buffer, test_hb_buffer_expand_if_needed_with_nearly_full_buffer);
   tcase_add_test(buffer, test_hb_buffer_resize);
