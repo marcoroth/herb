@@ -93,5 +93,32 @@ module Analyze
         <h1 class="<% if bold? %>bold<% else %>normal<% end %>"></h1>
       HTML
     end
+
+    test "guard clause with if modifier should not be parsed as ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <% [1,2].each do |value| %>
+          <% next if false %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with return if modifier" do
+      assert_parsed_snapshot(<<~HTML)
+        <% def some_method %>
+          <% return if true %>
+          <div>This won't render</div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with break if modifier" do
+      assert_parsed_snapshot(<<~HTML)
+        <% loop do %>
+          <% break if condition %>
+          <div>Loop content</div>
+        <% end %>
+      HTML
+    end
   end
 end

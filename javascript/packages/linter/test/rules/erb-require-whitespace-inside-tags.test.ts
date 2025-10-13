@@ -1,15 +1,12 @@
-import { describe, it, beforeAll, expect } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
+import { describe, it } from "vitest"
 import dedent from "dedent";
 
-import { Linter } from "../../src/linter";
 import { ERBRequireWhitespaceRule } from "../../src/rules/erb-require-whitespace-inside-tags";
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBRequireWhitespaceRule)
 
 describe("erb-require-whitespace-inside-tags", () => {
-
-  beforeAll(async () => {
-    await Herb.load()
-  })
 
   it("should not report for correct whitespace in ERB tags", () => {
     const html = dedent`
@@ -17,12 +14,8 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should require a space after <% and before %> in ERB tags", () => {
@@ -30,13 +23,10 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%if true%>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
+    expectError("Add whitespace after `<%`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should require a space after <%= and before %> in ERB output tags", () => {
@@ -44,13 +34,10 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%=user.name%>
       <%= user.name %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
+    expectError("Add whitespace after `<%=`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should report errors for only missing opening whitespace", () => {
@@ -59,12 +46,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, user.
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toMatch(/Add whitespace after/i)
+    expectError("Add whitespace after `<%`.")
+    assertOffenses(html)
   })
 
   it("should report errors for only missing closing whitespace", () => {
@@ -73,12 +57,9 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toMatch(/Add whitespace before/i)
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should report multiple errors for multiple offenses", () => {
@@ -88,12 +69,14 @@ describe("erb-require-whitespace-inside-tags", () => {
         Hello, admin.
       <%end%>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(6)
-    expect(lintResult.offenses).toHaveLength(6)
+    expectError("Add whitespace after `<%=`.")
+    expectError("Add whitespace before `%>`.")
+    expectError("Add whitespace after `<%`.")
+    expectError("Add whitespace before `%>`.")
+    expectError("Add whitespace after `<%`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should not report for non-ERB content", () => {
@@ -101,12 +84,8 @@ describe("erb-require-whitespace-inside-tags", () => {
       <div>Hello</div>
       <p>World</p>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should handle mixed correct and incorrect ERB tags", () => {
@@ -117,12 +96,12 @@ describe("erb-require-whitespace-inside-tags", () => {
         <h1>Hello, admin.</h1>
       <%end%>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(4)
-    expect(lintResult.offenses).toHaveLength(4)
+    expectError("Add whitespace after `<%=`.")
+    expectError("Add whitespace before `%>`.")
+    expectError("Add whitespace after `<%`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should handle empty erb tags", () => {
@@ -134,12 +113,8 @@ describe("erb-require-whitespace-inside-tags", () => {
 
       %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should require whitespace after # in ERB comment tags", () => {
@@ -148,54 +123,36 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%#This is a comment without spaces%>
       <%# %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.offenses).toHaveLength(2)
-
-    expect(lintResult.offenses[0].message).toBe("Add whitespace after `<%#`.")
-    expect(lintResult.offenses[1].message).toBe("Add whitespace before `%>`.")
+    expectError("Add whitespace after `<%#`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should not report ERB comment tags with equals signs", () => {
     const html = dedent`
       <%#= link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should report ERB comment tags with equals sign and no space after", () => {
     const html = dedent`
       <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.offenses).toHaveLength(2)
-
-    expect(lintResult.offenses[0].message).toBe("Add whitespace after `<%#=`.")
-    expect(lintResult.offenses[1].message).toBe("Add whitespace before `%>`.")
+    expectError("Add whitespace after `<%#=`.")
+    expectError("Add whitespace before `%>`.")
+    assertOffenses(html)
   })
 
   it("should not report ERB comment tags with equals followed by space", () => {
     const html = dedent`
       <%# = link_to "New watch list", new_watch_list_path, class: "btn btn-ghost" %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should handle multi-line ERB comment tags", () => {
@@ -211,11 +168,7 @@ describe("erb-require-whitespace-inside-tags", () => {
         class: "btn btn-ghost"
       %>
     `
-    
-    const linter = new Linter(Herb, [ERBRequireWhitespaceRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 })

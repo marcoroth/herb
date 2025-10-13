@@ -1,10 +1,16 @@
+import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
 
-import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
+import type { LintOffense, LintContext, BaseAutofixContext, Mutable } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
 
-class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
+interface SVGTagNameCapitalizationAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLOpenTagNode | HTMLCloseTagNode>
+  currentTagName: string
+  correctCamelCase: string
+}
+
+class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitalizationAutofixContext> {
   private insideSVG = false
 
   visitHTMLElementNode(node: HTMLElementNode): void {
@@ -22,6 +28,7 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
       if (node.open_tag) {
         this.checkTagName(node.open_tag as HTMLOpenTagNode)
       }
+
       if (node.close_tag) {
         this.checkTagName(node.close_tag as HTMLCloseTagNode)
       }
@@ -50,18 +57,38 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor {
       this.addOffense(
         `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
         node.tag_name!.location,
-        "error"
+        "error",
+        {
+          node,
+          currentTagName: tagName,
+          correctCamelCase
+        }
       )
     }
   }
 }
 
-export class SVGTagNameCapitalizationRule extends ParserRule {
+export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitalizationAutofixContext> {
+  static autocorrectable = true
   name = "svg-tag-name-capitalization"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<SVGTagNameCapitalizationAutofixContext>[] {
     const visitor = new SVGTagNameCapitalizationVisitor(this.name, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<SVGTagNameCapitalizationAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node: { tag_name }, correctCamelCase } = offense.autofixContext
+
+    if (!tag_name) return null
+
+    tag_name.value = correctCamelCase
+
+    return result
   }
 }

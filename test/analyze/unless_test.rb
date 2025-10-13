@@ -65,5 +65,56 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "guard clause with unless modifier should not be parsed as ERBUnlessNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each do |item| %>
+          <% next unless item.visible? %>
+          <div><%= item.name %></div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with return unless modifier" do
+      assert_parsed_snapshot(<<~HTML)
+        <% def some_method %>
+          <% return unless condition %>
+          <div>This will render</div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with break unless modifier" do
+      assert_parsed_snapshot(<<~HTML)
+        <% loop do %>
+          <% break unless continue? %>
+          <div>Loop content</div>
+        <% end %>
+      HTML
+    end
+
+    test "multiple unless guard clauses" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each do |item| %>
+          <% next unless item %>
+          <% next unless item.active? %>
+          <% next unless item.published? %>
+          <div><%= item.title %></div>
+        <% end %>
+      HTML
+    end
+
+    test "distinguishes between block unless and modifier unless" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each do |item| %>
+          <% next unless item.visible? %>
+          <% unless item.special? %>
+            <div class="normal"><%= item.name %></div>
+          <% else %>
+            <div class="special"><%= item.name %></div>
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end

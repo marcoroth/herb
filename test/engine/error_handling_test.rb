@@ -312,5 +312,17 @@ module Engine
       assert_instance_of Herb::Engine, engine
       assert_instance_of String, engine.src
     end
+
+    test "ruby comment at end of ERB content tag" do
+      template = <<~ERB
+        <% if true # some comment %> true <% else %> false <% end %>
+      ERB
+
+      begin
+        Herb::Engine.new(template)
+      rescue Herb::Engine::CompilationError => e
+        assert_includes e.message, "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+      end
+    end
   end
 end

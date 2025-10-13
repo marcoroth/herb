@@ -26,14 +26,6 @@ module Herb
     )
   end
 
-  def self.lex_to_json(source)
-    LibHerb::Buffer.with do |output|
-      LibHerb.herb_lex_json_to_buffer(source, output.pointer)
-
-      JSON.parse(output.read.force_encoding("utf-8"))
-    end
-  end
-
   def self.extract_ruby(source)
     LibHerb::Buffer.with do |output|
       LibHerb.herb_extract_ruby_to_buffer(source, output.pointer)

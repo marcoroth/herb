@@ -46,7 +46,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
   }
 
   async analyzeProject(): Promise<void> {
-    const uris = await workspace.findFiles('**/*.html.erb')
+    const uris = await workspace.findFiles('**/*.html{+*,}.erb')
 
     this.lastAnalysisTime = new Date()
 

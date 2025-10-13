@@ -142,37 +142,6 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
   return result;
 }
 
-napi_value Herb_lex_to_json(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
-  napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-  if (argc < 1) {
-    napi_throw_error(env, nullptr, "Wrong number of arguments");
-    return nullptr;
-  }
-
-  char* string = CheckString(env, args[0]);
-  if (!string) { return nullptr; }
-
-  buffer_T output;
-  if (!buffer_init(&output)) {
-    free(string);
-    napi_throw_error(env, nullptr, "Failed to initialize buffer");
-    return nullptr;
-  }
-
-  herb_lex_json_to_buffer(string, &output);
-
-  napi_value result;
-  napi_create_string_utf8(env, output.value, output.length, &result);
-
-  buffer_free(&output);
-  free(string);
-
-  return result;
-}
-
 napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   size_t argc = 1;
   napi_value args[1];
@@ -187,7 +156,7 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   buffer_T output;
-  if (!buffer_init(&output)) {
+  if (!buffer_init(&output, strlen(string))) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;
@@ -198,7 +167,7 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
-  buffer_free(&output);
+  free(output.value);
   free(string);
   return result;
 }
@@ -217,7 +186,7 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   buffer_T output;
-  if (!buffer_init(&output)) {
+  if (!buffer_init(&output, strlen(string))) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize buffer");
     return nullptr;
@@ -228,7 +197,7 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
-  buffer_free(&output);
+  free(output.value);
   free(string);
   return result;
 }
@@ -252,7 +221,6 @@ napi_value Init(napi_env env, napi_value exports) {
     { "lex", nullptr, Herb_lex, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "parseFile", nullptr, Herb_parse_file, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lexFile", nullptr, Herb_lex_file, nullptr, nullptr, nullptr, napi_default, nullptr },
-    { "lexToJson", nullptr, Herb_lex_to_json, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },

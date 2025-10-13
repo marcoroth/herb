@@ -13,6 +13,14 @@ import type * as Nodes from "@herb-tools/core"
  * - Verifying AST round-trip fidelity
  */
 export class IdentityPrinter extends Printer {
+  static printERBNode(node: Nodes.ERBNode) {
+    const printer = new IdentityPrinter()
+
+    printer.printERBNode(node)
+
+    return printer.context.getOutput()
+  }
+
   visitLiteralNode(node: Nodes.LiteralNode): void {
     this.write(node.content)
   }

@@ -513,10 +513,10 @@ describe("XML", () => {
               <% gallery_images.each do |image| %>
                 <GalleryImage
                   size="large"
-                  src="<%= image[:src]%>"
-                  alt="<%= image[:alt]%>"
-                  width="<%= image[:width]%>"
-                  height="<%= image[:height]%>"
+                  src="<%= image[:src] %>"
+                  alt="<%= image[:alt] %>"
+                  width="<%= image[:width] %>"
+                  height="<%= image[:height] %>"
                 ></GalleryImage>
               <% end %>
             </ImageGallery>

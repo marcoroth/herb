@@ -403,14 +403,8 @@ describe('FormattingService', () => {
 
       expect(result[0].newText).toBe(
         '      <p>\n' +
-        '        some\n' +
-        '        <%= formatted %>\n' +
-        '        text, that needs\n' +
-        '        <% needs %>\n' +
-        '        <% to_be_formatted %>\n' +
-        '        without being reset to the\n' +
-        '        <b><i>start of the line</i></b>\n' +
-        '        .\n' +
+        '        some <%= formatted %> text, that needs <% needs %> <% to_be_formatted %>\n' +
+        '        without being reset to the <b><i>start of the line</i></b>.\n' +
         '      </p>\n'
       )
     })

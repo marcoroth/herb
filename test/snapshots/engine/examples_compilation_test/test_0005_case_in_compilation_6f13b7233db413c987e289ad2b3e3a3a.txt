@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ case {}; in {}; _buf << '
+  "matched"
+'.freeze; else; _buf << '
+  "not matched"
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

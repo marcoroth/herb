@@ -181,5 +181,29 @@ module Parser
         %>
       HTML
     end
+
+    test "erb output with =%> close tag" do
+      assert_parsed_snapshot(%(<%= "hello" =%>))
+    end
+
+    test "erb if with =%> close tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true =%>
+          <p>Content</p>
+        <% end =%>
+      HTML
+    end
+
+    test "erb if-elsif-else with =%> close tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition =%>
+          <p>True</p>
+        <% elsif other =%>
+          <p>Other</p>
+        <% else =%>
+          <p>False</p>
+        <% end =%>
+      HTML
+    end
   end
 end

@@ -14,7 +14,6 @@ extern "C" {
 #endif
 
 void herb_lex_to_buffer(const char* source, buffer_T* output);
-void herb_lex_json_to_buffer(const char* source, buffer_T* output);
 
 array_T* herb_lex(const char* source);
 array_T* herb_lex_file(const char* path);

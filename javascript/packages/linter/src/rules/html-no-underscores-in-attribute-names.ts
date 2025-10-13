@@ -38,7 +38,7 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
     if (attributeName.includes("_")) {
       this.addOffense(
         `Attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not contain underscores. Use hyphens (-) instead.`,
-        attributeNode.value!.location,
+        attributeNode.name?.location ?? attributeNode.location,
         "warning"
       )
     }

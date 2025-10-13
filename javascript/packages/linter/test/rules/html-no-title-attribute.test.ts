@@ -1,188 +1,112 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { describe, test } from "vitest"
 import { HTMLNoTitleAttributeRule } from "../../src/rules/html-no-title-attribute.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoTitleAttributeRule)
 
 describe("html-no-title-attribute", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for elements without title attribute", () => {
-    const html = '<button>Click me</button>'
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses('<button>Click me</button>')
   })
 
   test("passes for iframe with title attribute", () => {
-    const html = '<iframe src="https://example.com" title="Example content"></iframe>'
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses('<iframe src="https://example.com" title="Example content"></iframe>')
   })
 
   test("passes for link with title attribute", () => {
-    const html = '<link rel="stylesheet" href="styles.css" title="Main styles">'
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses('<link rel="stylesheet" href="styles.css" title="Main styles">')
   })
 
   test("fails for button with title attribute", () => {
-    const html = '<button title="Click to submit">Submit</button>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].rule).toBe("html-no-title-attribute")
-    expect(lintResult.offenses[0].message).toBe("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
+    assertOffenses('<button title="Click to submit">Submit</button>')
   })
 
   test("fails for div with title attribute", () => {
-    const html = '<div title="Additional information">Content</div>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].rule).toBe("html-no-title-attribute")
+    assertOffenses('<div title="Additional information">Content</div>')
   })
 
   test("fails for span with title attribute", () => {
-    const html = '<span title="Tooltip text">Hover me</span>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<span title="Tooltip text">Hover me</span>')
   })
 
   test("fails for input with title attribute", () => {
-    const html = '<input type="text" title="Enter your name" placeholder="Name">'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<input type="text" title="Enter your name" placeholder="Name">')
   })
 
   test("fails for img with title attribute", () => {
-    const html = '<img src="image.jpg" alt="Description" title="Additional info">'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<img src="image.jpg" alt="Description" title="Additional info">')
   })
 
   test("fails for anchor with title attribute", () => {
-    const html = '<a href="/" title="Go to homepage">Home</a>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<a href="/" title="Go to homepage">Home</a>')
   })
 
   test("fails for abbr with title attribute", () => {
-    const html = '<abbr title="World Wide Web">WWW</abbr>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<abbr title="World Wide Web">WWW</abbr>')
   })
 
   test("handles mixed case element names", () => {
-    const html = '<BUTTON title="Submit form">Submit</BUTTON>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<BUTTON title="Submit form">Submit</BUTTON>')
   })
 
   test("handles mixed case title attribute", () => {
-    const html = '<button TITLE="Submit form">Submit</button>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<button TITLE="Submit form">Submit</button>')
   })
 
   test("passes for mixed case allowed elements", () => {
-    const html = '<IFRAME src="https://example.com" title="Content"></IFRAME>'
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses('<IFRAME src="https://example.com" title="Content"></IFRAME>')
   })
 
   test("handles multiple elements", () => {
-    const html = `
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
+
+    assertOffenses(`
       <iframe src="https://example.com" title="OK iframe"></iframe>
       <button title="Bad button">Click</button>
       <link rel="stylesheet" href="styles.css" title="OK link">
       <div title="Bad div">Content</div>
       <span>OK span</span>
-    `
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.offenses).toHaveLength(2)
+    `)
   })
 
   test("passes for empty title attribute", () => {
-    const html = '<button title="">Empty title</button>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<button title="">Empty title</button>')
   })
 
   test("passes for title attribute with ERB content", () => {
-    const html = '<button title="<%= tooltip_text %>">Dynamic tooltip</button>'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<button title="<%= tooltip_text %>">Dynamic tooltip</button>')
   })
 
   test("ignores elements with proper accessible alternatives", () => {
-    const html = '<button aria-label="Submit form">Submit</button>'
-
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses('<button aria-label="Submit form">Submit</button>')
   })
 
   test("fails for self-closing elements with title", () => {
-    const html = '<input type="text" title="Enter name" />'
+    expectError("The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.")
 
-    const linter = new Linter(Herb, [HTMLNoTitleAttributeRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
+    assertOffenses('<input type="text" title="Enter name" />')
   })
 })

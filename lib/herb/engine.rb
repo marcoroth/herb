@@ -194,8 +194,19 @@ module Herb
     def add_code(code)
       terminate_expression
 
-      @src << " " << code
-      @src << ";" unless code[-1] == "\n"
+      if code.include?("=begin") || code.include?("=end")
+        @src << "\n" << code << "\n"
+      else
+        @src << " " << code
+
+        # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
+        if code.include?("#")
+          @src << "\n"
+        else
+          @src << ";" unless code[-1] == "\n"
+        end
+      end
+
       @buffer_on_stack = false
     end
 

@@ -61,19 +61,21 @@ val Herb_parse(const std::string& source, val options) {
 
 std::string Herb_extract_ruby(const std::string& source) {
   buffer_T output;
-  buffer_init(&output);
+  buffer_init(&output, source.length());
+
   herb_extract_ruby_to_buffer(source.c_str(), &output);
   std::string result(buffer_value(&output));
-  buffer_free(&output);
+  free(output.value);
   return result;
 }
 
 std::string Herb_extract_html(const std::string& source) {
   buffer_T output;
-  buffer_init(&output);
+  buffer_init(&output, source.length());
+
   herb_extract_html_to_buffer(source.c_str(), &output);
   std::string result(buffer_value(&output));
-  buffer_free(&output);
+  free(output.value);
   return result;
 }
 

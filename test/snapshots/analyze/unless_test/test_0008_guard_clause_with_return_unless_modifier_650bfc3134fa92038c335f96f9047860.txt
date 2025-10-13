@@ -1,0 +1,58 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (8 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:21))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " def some_method " (location: (1:2)-(1:19))
+    │   ├── tag_closing: "%>" (location: (1:19)-(1:21))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    ├── @ HTMLTextNode (location: (1:21)-(2:2))
+    │   └── content: "\n  "
+    │
+    ├── @ ERBContentNode (location: (2:2)-(2:31))
+    │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   ├── content: " return unless condition " (location: (2:4)-(2:29))
+    │   ├── tag_closing: "%>" (location: (2:29)-(2:31))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (2:31)-(3:2))
+    │   └── content: "\n  "
+    │
+    ├── @ HTMLElementNode (location: (3:2)-(3:29))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:7))
+    │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │       ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   │       ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (3:7)-(3:23))
+    │   │       └── content: "This will render"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:23)-(3:29))
+    │   │       ├── tag_opening: "</" (location: (3:23)-(3:25))
+    │   │       ├── tag_name: "div" (location: (3:25)-(3:28))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (3:29)-(4:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (4:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   ├── content: " end " (location: (4:2)-(4:7))
+    │   ├── tag_closing: "%>" (location: (4:7)-(4:9))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

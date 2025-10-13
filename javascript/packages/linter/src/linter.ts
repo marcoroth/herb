@@ -1,6 +1,8 @@
 import { defaultRules } from "./default-rules.js"
+import { IdentityPrinter } from "@herb-tools/printer"
+import { findNodeByLocation } from "./rules/rule-utils.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext } from "./types.js"
+import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext, AutofixResult } from "./types.js"
 import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
@@ -55,6 +57,7 @@ export class Linter {
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
+    const hasParserErrors = parseResult.recursiveErrors().length > 0
 
     for (const RuleClass of this.rules) {
       const rule = new RuleClass()
@@ -84,6 +87,12 @@ export class Linter {
           ruleOffenses = []
         }
       } else {
+        if (hasParserErrors && rule.name !== "parser-no-errors") {
+          ruleOffenses = []
+
+          continue
+        }
+
         if (rule.isEnabled) {
           isEnabled = rule.isEnabled(parseResult, context)
         }
@@ -105,6 +114,136 @@ export class Linter {
       offenses: this.offenses,
       errors,
       warnings
+    }
+  }
+
+  /**
+   * Automatically fix offenses in the source code.
+   * Uses AST mutation for parser rules and token mutation for lexer rules.
+   * @param source - The source code to fix
+   * @param context - Optional context for linting (e.g., fileName)
+   * @param offensesToFix - Optional array of specific offenses to fix. If not provided, all fixable offenses will be fixed.
+   * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
+   */
+  autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[]): AutofixResult {
+    const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
+
+    const parserOffenses: LintOffense[] = []
+    const lexerOffenses: LintOffense[] = []
+    const sourceOffenses: LintOffense[] = []
+
+    for (const offense of lintResult.offenses) {
+      const RuleClass = this.rules.find(rule => {
+        const instance = new rule()
+        return instance.name === offense.rule
+      })
+
+      if (!RuleClass) continue
+
+      if ((RuleClass as any).type === "lexer") {
+        lexerOffenses.push(offense)
+      } else if ((RuleClass as any).type === "source") {
+        sourceOffenses.push(offense)
+      } else {
+        parserOffenses.push(offense)
+      }
+    }
+
+    let currentSource = source
+    const fixed: LintOffense[] = []
+    const unfixed: LintOffense[] = []
+
+    if (parserOffenses.length > 0) {
+      const parseResult = this.herb.parse(currentSource, { track_whitespace: true })
+
+      for (const offense of parserOffenses) {
+        const RuleClass = this.rules.find(rule => new rule().name === offense.rule)
+
+        if (!RuleClass) {
+          unfixed.push(offense)
+
+          continue
+        }
+
+        const rule = new RuleClass() as ParserRule
+
+        if (!rule.autofix) {
+          unfixed.push(offense)
+
+          continue
+        }
+
+        if (offense.autofixContext) {
+          const originalNodeType = offense.autofixContext.node.type
+
+          const freshNode = findNodeByLocation(
+            parseResult.value,
+            offense.location,
+            (node) => node.type === originalNodeType
+          )
+          if (freshNode) {
+            offense.autofixContext.node = freshNode
+          } else {
+            unfixed.push(offense)
+
+            continue
+          }
+        }
+
+        const fixedResult = rule.autofix(offense, parseResult, context)
+
+        if (fixedResult) {
+          fixed.push(offense)
+        } else {
+          unfixed.push(offense)
+        }
+      }
+
+      if (fixed.length > 0) {
+        const printer = new IdentityPrinter()
+        currentSource = printer.print(parseResult.value)
+      }
+    }
+
+    if (sourceOffenses.length > 0) {
+      const sortedSourceOffenses = sourceOffenses.sort((a, b) => {
+        if (a.location.start.line !== b.location.start.line) {
+          return b.location.start.line - a.location.start.line
+        }
+
+        return b.location.start.column - a.location.start.column
+      })
+
+      for (const offense of sortedSourceOffenses) {
+        const RuleClass = this.rules.find(rule => new rule().name === offense.rule)
+
+        if (!RuleClass) {
+          unfixed.push(offense)
+          continue
+        }
+
+        const rule = new RuleClass() as SourceRule
+
+        if (!rule.autofix) {
+          unfixed.push(offense)
+          continue
+        }
+
+        const correctedSource = rule.autofix(offense, currentSource, context)
+
+        if (correctedSource) {
+          currentSource = correctedSource
+          fixed.push(offense)
+        } else {
+          unfixed.push(offense)
+        }
+      }
+    }
+
+    return {
+      source: currentSource,
+      fixed,
+      unfixed
     }
   }
 }

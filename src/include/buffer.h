@@ -10,8 +10,8 @@ typedef struct BUFFER_STRUCT {
   size_t capacity;
 } buffer_T;
 
-bool buffer_init(buffer_T* buffer);
-buffer_T buffer_new(void);
+bool buffer_init(buffer_T* buffer, size_t capacity);
+buffer_T* buffer_new(size_t capacity);
 
 bool buffer_increase_capacity(buffer_T* buffer, size_t additional_capacity);
 bool buffer_has_capacity(buffer_T* buffer, size_t required_length);
@@ -34,6 +34,6 @@ size_t buffer_capacity(const buffer_T* buffer);
 size_t buffer_sizeof(void);
 
 void buffer_clear(buffer_T* buffer);
-void buffer_free(buffer_T* buffer);
+void buffer_free(buffer_T** buffer);
 
 #endif

@@ -1,44 +1,25 @@
 import dedent from "dedent"
-
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
-
+import { describe, test } from "vitest"
 import { <%= ruleClassName %> } from "../../src/rules/<%= ruleName %>.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, expectWarning, assertOffenses } = createLinterTest(<%= ruleClassName %>)
 
 describe("<%= ruleClassName %>", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("valid case TODO", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <h1>
         <%%= title %>
       </h1>
-    `
-    const linter = new Linter(Herb, [<%= ruleClassName %>])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("invalid case TODO", () => {
-    const html = dedent`
+    expectError("TODO: update rule message")
+
+    assertOffenses(dedent`
       <h1>
         <%%= title %>
-    `
-    const linter = new Linter(Herb, [<%= ruleClassName %>])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-    expect(lintResult.offenses[0].code).toBe("<%= ruleName %>")
-    expect(lintResult.offenses[0].message).toBe("TODO: update rule message")
-
-    // TODO: add assertions for invalid case
+    `)
   })
 })

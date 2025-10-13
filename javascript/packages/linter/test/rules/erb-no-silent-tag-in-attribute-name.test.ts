@@ -1,16 +1,13 @@
 import dedent from "dedent"
 
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { describe, test } from "vitest"
 
 import { ERBNoSilentTagInAttributeNameRule } from "../../src/rules/erb-no-silent-tag-in-attribute-name.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoSilentTagInAttributeNameRule)
 
 describe("ERBNoSilentTagInAttributeNameRule", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("valid attributes with output ERB tags", () => {
     const html = dedent`
       <div data-<%= key %>-target="value"></div>
@@ -18,12 +15,7 @@ describe("ERBNoSilentTagInAttributeNameRule", () => {
       <input data-<%= user.id %>-field="text">
     `
 
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   test("valid static attribute names", () => {
@@ -32,12 +24,8 @@ describe("ERBNoSilentTagInAttributeNameRule", () => {
       <img src="/logo.png" alt="Logo">
       <input type="text" data-target="value">
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   test("valid conditional attributes with ERB control flow", () => {
@@ -46,68 +34,45 @@ describe("ERBNoSilentTagInAttributeNameRule", () => {
       <span <% if user.admin? %>class="admin"<% end %>></span>
       <input <% unless disabled %>enabled="true"<% end %>>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   test("invalid attribute with silent ERB tag", () => {
     const html = dedent`
       <div data-<% key %>-target="value"></div>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-    expect(lintResult.offenses[0].code).toBe("erb-no-silent-tag-in-attribute-name")
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 
   test("invalid attribute with trimming silent ERB tag", () => {
     const html = dedent`
       <div data-<%- key -%>-id="thing"></div>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-    expect(lintResult.offenses[0].code).toBe("erb-no-silent-tag-in-attribute-name")
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%-`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%-`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 
   test("invalid attribute with comment ERB tag", () => {
     const html = dedent`
       <div data-<%# comment %>-target="value"></div>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-    expect(lintResult.offenses[0].code).toBe("erb-no-silent-tag-in-attribute-name")
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%#`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%#`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 
   test("multiple invalid attributes in same element", () => {
     const html = dedent`
       <div data-<% key %>-target="value" id-<% another %>-suffix="test"></div>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
-    expect(lintResult.offenses[1].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 
   test("mixed valid and invalid ERB tags in different attributes", () => {
@@ -118,14 +83,9 @@ describe("ERBNoSilentTagInAttributeNameRule", () => {
         class="<%= valid_class %>"
       ></div>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-    expect(lintResult.offenses[0].code).toBe("erb-no-silent-tag-in-attribute-name")
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 
   test("nested HTML elements with various ERB patterns", () => {
@@ -136,14 +96,9 @@ describe("ERBNoSilentTagInAttributeNameRule", () => {
         <select prefix-<%# comment %>-suffix="value"></select>
       </form>
     `
-    const linter = new Linter(Herb, [ERBNoSilentTagInAttributeNameRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
-
-    expect(lintResult.offenses[0].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
-    expect(lintResult.offenses[1].message).toBe("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%#`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%`) do not output content and should not be used in attribute names.")
+    expectError("Remove silent ERB tag from HTML attribute name. Silent ERB tags (`<%#`) do not output content and should not be used in attribute names.")
+    assertOffenses(html)
   })
 })

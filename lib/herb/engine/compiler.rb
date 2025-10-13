@@ -227,7 +227,7 @@ module Herb
       end
 
       def visit_erb_case_match_node(node)
-        visit_erb_control_with_parts(node, :children, :conditions, :else_clause, :end_node)
+        visit_erb_control_with_parts(node, :conditions, :else_clause, :end_node)
       end
 
       def visit_erb_in_node(node)

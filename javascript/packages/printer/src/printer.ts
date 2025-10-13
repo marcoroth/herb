@@ -1,6 +1,8 @@
 import { Node, Visitor, Token, ParseResult, isToken, isParseResult } from "@herb-tools/core"
 import { PrintContext } from "./print-context.js"
 
+import type { ERBNode } from "@herb-tools/core"
+
 /**
  * Options for controlling the printing behavior
  */

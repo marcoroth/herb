@@ -1,8 +1,9 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
+import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 // Attributes that must not have empty values
 const RESTRICTED_ATTRIBUTES = new Set([
@@ -37,26 +38,41 @@ function isRestrictedAttribute(attributeName: string): boolean {
   return false
 }
 
+function isDataAttribute(attributeName: string): boolean {
+  return attributeName.startsWith('data-')
+}
+
 class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
-    if (!isRestrictedAttribute(attributeName)) return
-    if (attributeValue.trim() !== "") return
-
-    this.addOffense(
-      `Attribute \`${attributeName}\` must not be empty. Either provide a meaningful value or remove the attribute entirely.`,
-      attributeNode.name!.location,
-      "warning"
-    )
+    this.checkEmptyAttribute(attributeName, attributeValue, attributeNode)
   }
 
   protected checkDynamicAttributeStaticValue({ combinedName, attributeValue, attributeNode }: DynamicAttributeStaticValueParams): void {
     const name = (combinedName || "").toLowerCase()
-    if (!isRestrictedAttribute(name)) return
+    this.checkEmptyAttribute(name, attributeValue, attributeNode)
+  }
+
+  private checkEmptyAttribute(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode): void {
+    if (!isRestrictedAttribute(attributeName)) return
     if (attributeValue.trim() !== "") return
 
+    const hasExplicitValue = attributeNode.value !== null
+
+    if (isDataAttribute(attributeName)) {
+      if (hasExplicitValue) {
+        this.addOffense(
+          `Data attribute \`${attributeName}\` should not have an empty value. Either provide a meaningful value or use \`${attributeName}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
+          attributeNode.location,
+          "warning"
+        )
+      }
+
+      return
+    }
+
     this.addOffense(
-      `Attribute \`${combinedName}\` must not be empty. Either provide a meaningful value or remove the attribute entirely.`,
-      attributeNode.name!.location,
+      `Attribute \`${attributeName}\` must not be empty. Either provide a meaningful value or remove the attribute entirely.`,
+      attributeNode.location,
       "warning"
     )
   }

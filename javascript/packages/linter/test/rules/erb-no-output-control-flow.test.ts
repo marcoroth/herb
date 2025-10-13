@@ -1,15 +1,12 @@
-import { describe, it, beforeAll, expect } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
+import { describe, it } from "vitest"
 import dedent from "dedent";
 
-import { Linter } from "../../src/linter";
 import { ERBNoOutputControlFlowRule } from "../../src/rules/erb-no-output-control-flow";
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoOutputControlFlowRule)
 
 describe("erb-no-output-control-flow", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   it("should allow if statements without output tags", () => {
     const html = dedent`
       <% if true %>
@@ -20,12 +17,8 @@ describe("erb-no-output-control-flow", () => {
         <div>Text3</div>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+
+    expectNoOffenses(html)
   })
 
   it("should not allow if statments with output tags", () => {
@@ -34,13 +27,9 @@ describe("erb-no-output-control-flow", () => {
         <div>Text1</div>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    assertOffenses(html)
   })
 
   it("should not allow unless statements with output tags", () => {
@@ -49,13 +38,9 @@ describe("erb-no-output-control-flow", () => {
         <div>Text1</div>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
+    expectError("Control flow statements like `unless` should not be used with output tags. Use `<% unless ... %>` instead.")
+    assertOffenses(html)
   })
 
   it("should not allow end statements with output tags", () => {
@@ -64,13 +49,9 @@ describe("erb-no-output-control-flow", () => {
         <div>Text1</div>
       <%= end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
+    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end ... %>` instead.")
+    assertOffenses(html)
   })
 
   it("should not allow nested control flow blocks with output tags", () => {
@@ -82,13 +63,9 @@ describe("erb-no-output-control-flow", () => {
         <% end %>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    assertOffenses(html)
   })
 
   it('should show multiple errors for multiple output tags', () => {
@@ -101,13 +78,11 @@ describe("erb-no-output-control-flow", () => {
         <div>Text3</div>
       <%= end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(3)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(3)
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    expectError("Control flow statements like `else` should not be used with output tags. Use `<% else ... %>` instead.")
+    expectError("Control flow statements like `end` should not be used with output tags. Use `<% end ... %>` instead.")
+    assertOffenses(html)
   })
 
   it("should show an error for outputting control flow blocks with nested control flow blocks", () => {
@@ -118,13 +93,9 @@ describe("erb-no-output-control-flow", () => {
         <% end %>
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
+    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    assertOffenses(html)
   })
 
   it("should not report for link to with an if condition", () => {
@@ -133,13 +104,8 @@ describe("erb-no-output-control-flow", () => {
         Click
       <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should not report on form_builder.fieldset with block", () => {
@@ -158,25 +124,15 @@ describe("erb-no-output-control-flow", () => {
          <%# ... %>
      <% end %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 
   it("should not report on yield with if in the same ERB tag", () => {
    const html = dedent`
       <%= yield(:header) if content_for?(:header) %>
     `
-    
-    const linter = new Linter(Herb, [ERBNoOutputControlFlowRule])
-    const lintResult = linter.lint(html)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(html)
   })
 })

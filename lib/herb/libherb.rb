@@ -25,7 +25,6 @@ module Herb
     ffi_lib(library_path)
 
     attach_function :herb_lex_to_buffer, [:pointer, :pointer], :void
-    attach_function :herb_lex_json_to_buffer, [:pointer, :pointer], :void
     attach_function :herb_lex, [:pointer], :pointer
     attach_function :herb_parse, [:pointer], :pointer
     attach_function :herb_extract_ruby_to_buffer, [:pointer, :pointer], :void

@@ -91,9 +91,12 @@ bool search_if_nodes(const pm_node_t* node, void* data) {
   if (node->type == PM_IF_NODE) {
     const pm_if_node_t* if_node = (const pm_if_node_t*) node;
 
-    // Handle ternary
-    if (if_node->if_keyword_loc.start != NULL && if_node->if_keyword_loc.end != NULL) {
+    bool has_if_keyword = if_node->if_keyword_loc.start != NULL && if_node->if_keyword_loc.end != NULL;
+    bool has_end_keyword = if_node->end_keyword_loc.start != NULL && if_node->end_keyword_loc.end != NULL;
+
+    if (has_if_keyword && has_end_keyword) {
       analyzed->has_if_node = true;
+
       return true;
     }
   }
@@ -198,11 +201,19 @@ bool search_unless_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
   if (node->type == PM_UNLESS_NODE) {
-    analyzed->has_unless_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_unless_nodes, analyzed);
+    const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
+
+    bool has_if_keyword = unless_node->keyword_loc.start != NULL && unless_node->keyword_loc.end != NULL;
+    bool has_end_keyword = unless_node->end_keyword_loc.start != NULL && unless_node->end_keyword_loc.end != NULL;
+
+    if (has_if_keyword && has_end_keyword) {
+      analyzed->has_unless_node = true;
+
+      return true;
+    }
   }
+
+  pm_visit_child_nodes(node, search_unless_nodes, analyzed);
 
   return false;
 }
