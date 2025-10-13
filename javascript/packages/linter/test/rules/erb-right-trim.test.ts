@@ -117,4 +117,18 @@ describe("ERBRightTrimRule", () => {
       <% end %>
     `)
   })
+
+  test("<%- with -%>", () => {
+    expectNoOffenses(dedent`
+      <%- something -%>
+    `)
+  })
+
+  test("<%- with -%> in if/end", () => {
+    expectNoOffenses(dedent`
+      <%- if true -%>
+        Something
+      <%- end -%>
+    `)
+  })
 })

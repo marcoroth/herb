@@ -7,10 +7,13 @@ import type { ERBNode, ParseResult } from "@herb-tools/core"
 
 class ERBRightTrimVisitor extends BaseRuleVisitor {
   visitERBNode(node: ERBNode): void {
+    if (!node.tag_opening) return
     if (!node.tag_closing) return
 
+    const trimOpening = node.tag_opening.value
     const trimClosing = node.tag_closing.value
 
+    if (trimOpening === "<%-") return
     if (trimClosing !== "=%>" && trimClosing !== "-%>") return
 
     if (!isERBOutputNode(node)) {
