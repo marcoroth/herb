@@ -12,7 +12,6 @@ typedef struct HB_BUFFER_STRUCT {
 
 bool hb_buffer_init(hb_buffer_T* buffer, size_t capacity);
 
-bool hb_buffer_expand_if_needed(hb_buffer_T* buffer, size_t required_length);
 bool hb_buffer_resize(hb_buffer_T* buffer, size_t new_capacity);
 
 void hb_buffer_append(hb_buffer_T* buffer, const char* text);

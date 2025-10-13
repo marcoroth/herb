@@ -10,6 +10,30 @@ static bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_le
   return (buffer->length + required_length <= buffer->capacity);
 }
 
+/**
+ * Expands the capacity of the buffer if needed to accommodate additional content.
+ * This function is a convenience function that calls hb_buffer_has_capacity and
+ * hb_buffer_expand_capacity.
+ *
+ * @param buffer The buffer to expand capacity for
+ * @param required_length The additional length needed beyond current buffer capacity
+ * @return true if capacity was increased, false if reallocation failed
+ */
+static bool hb_buffer_expand_if_needed(hb_buffer_T* buffer, const size_t required_length) {
+  if (hb_buffer_has_capacity(buffer, required_length)) { return true; }
+
+  bool should_double_capacity = required_length < buffer->capacity;
+  size_t new_capacity = 0;
+
+  if (should_double_capacity) {
+    new_capacity = buffer->capacity * 2;
+  } else {
+    new_capacity = buffer->capacity + (required_length * 2);
+  }
+
+  return hb_buffer_resize(buffer, new_capacity);
+}
+
 bool hb_buffer_init(hb_buffer_T* buffer, const size_t capacity) {
   buffer->capacity = capacity;
   buffer->length = 0;
@@ -66,30 +90,6 @@ bool hb_buffer_resize(hb_buffer_T* buffer, const size_t new_capacity) {
   buffer->capacity = new_capacity;
 
   return true;
-}
-
-/**
- * Expands the capacity of the buffer if needed to accommodate additional content.
- * This function is a convenience function that calls hb_buffer_has_capacity and
- * hb_buffer_expand_capacity.
- *
- * @param buffer The buffer to expand capacity for
- * @param required_length The additional length needed beyond current buffer capacity
- * @return true if capacity was increased, false if reallocation failed
- */
-bool hb_buffer_expand_if_needed(hb_buffer_T* buffer, const size_t required_length) {
-  if (hb_buffer_has_capacity(buffer, required_length)) { return true; }
-
-  bool should_double_capacity = required_length < buffer->capacity;
-  size_t new_capacity = 0;
-
-  if (should_double_capacity) {
-    new_capacity = buffer->capacity * 2;
-  } else {
-    new_capacity = buffer->capacity + (required_length * 2);
-  }
-
-  return hb_buffer_resize(buffer, new_capacity);
 }
 
 /**
