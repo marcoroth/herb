@@ -4,9 +4,9 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
 
-import { ERBExtraNewLineRule } from "../../src/rules/erb-extra-new-line.js"
+import { ERBNoExtraNewLineRule } from "../../src/rules/erb-no-extra-newline.js"
 
-describe("ERBExtraNewLineRule", () => {
+describe("ERBNoExtraNewLineRule", () => {
   beforeAll(async () => {
     await Herb.load()
   })
@@ -15,7 +15,7 @@ describe("ERBExtraNewLineRule", () => {
     const html = dedent`
       line 1
     `
-    const linter = new Linter(Herb, [ERBExtraNewLineRule])
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
     const lintResult = linter.lint(html)
 
     expect(lintResult.errors).toBe(0)
@@ -29,7 +29,7 @@ describe("ERBExtraNewLineRule", () => {
       line 2
       line 3
     `
-    const linter = new Linter(Herb, [ERBExtraNewLineRule])
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
     const lintResult = linter.lint(html)
 
     expect(lintResult.offenses).toHaveLength(0)
@@ -41,12 +41,12 @@ describe("ERBExtraNewLineRule", () => {
 
       line 3
     `
-    const linter = new Linter(Herb, [ERBExtraNewLineRule])
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
     const lintResult = linter.lint(html)
 
     expect(lintResult.offenses).toHaveLength(0)
   })
-  
+
   test("when two blank lines follow each other", () => {
     const html = dedent`
       line 1
@@ -54,7 +54,7 @@ describe("ERBExtraNewLineRule", () => {
 
       line 3
     `
-    const linter = new Linter(Herb, [ERBExtraNewLineRule])
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
     const lintResult = linter.lint(html)
 
     expect(lintResult.offenses).toHaveLength(1)
@@ -72,7 +72,7 @@ describe("ERBExtraNewLineRule", () => {
 
     html += "line1".repeat(300_000)
 
-    const linter = new Linter(Herb, [ERBExtraNewLineRule])
+    const linter = new Linter(Herb, [ERBNoExtraNewLineRule])
     const lintResult = linter.lint(html)
 
     expect(lintResult.offenses).toHaveLength(1)

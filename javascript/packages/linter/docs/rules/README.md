@@ -6,12 +6,12 @@ This page contains documentation for all Herb Linter rules.
 
 - [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
+- [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow adding extra new lines.
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-requires-trailing-newline`](./erb-requires-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
-- [`erb-extra-new-line`](./erb-extra-new-line.md) - Disallow adding extra new lines
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
 - [`html-aria-label-is-well-formatted`](./html-aria-label-is-well-formatted.md) - `aria-label` must be well-formatted

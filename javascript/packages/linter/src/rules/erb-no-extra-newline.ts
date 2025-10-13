@@ -1,6 +1,7 @@
 import { BaseSourceRuleVisitor } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
 import { Location, Position } from "@herb-tools/core"
+
 import type { LintOffense, LintContext } from "../types.js"
 
 function positionFromOffset(source: string, offset: number): Position {
@@ -30,7 +31,7 @@ function locationFromMatch(source: string, match: RegExpExecArray): Location {
   return new Location(start, end)
 }
 
-class ERBExtraNewLineVisitor extends BaseSourceRuleVisitor {
+class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
     if (source.length === 0) return
 
@@ -49,11 +50,11 @@ class ERBExtraNewLineVisitor extends BaseSourceRuleVisitor {
   }
 }
 
-export class ERBExtraNewLineRule extends SourceRule {
-  name = "erb-extra-new-line"
+export class ERBNoExtraNewLineRule extends SourceRule {
+  name = "erb-no-extra-newline"
 
   check(source: string, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new ERBExtraNewLineVisitor(this.name, context)
+    const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
 
     visitor.visit(source)
 

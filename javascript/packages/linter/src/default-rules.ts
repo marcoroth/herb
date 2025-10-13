@@ -2,11 +2,11 @@ import type { RuleClass } from "./types.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
+import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
 import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-newline.js"
-import { ERBExtraNewLineRule } from "./rules/erb-extra-new-line.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
@@ -40,11 +40,11 @@ import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscor
 export const defaultRules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoEmptyTagsRule,
+  ERBNoExtraNewLineRule,
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,
   ERBRequiresTrailingNewlineRule,
-  ERBExtraNewLineRule,
   ERBRequireWhitespaceRule,
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,
