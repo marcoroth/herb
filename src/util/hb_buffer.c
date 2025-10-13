@@ -6,6 +6,10 @@
 #include "../include/util.h"
 #include "../include/util/hb_buffer.h"
 
+static bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_length) {
+  return (buffer->length + required_length <= buffer->capacity);
+}
+
 bool hb_buffer_init(hb_buffer_T* buffer, const size_t capacity) {
   buffer->capacity = capacity;
   buffer->length = 0;
@@ -178,10 +182,6 @@ void hb_buffer_concat(hb_buffer_T* destination, hb_buffer_T* source) {
 
   destination->length += source->length;
   destination->value[destination->length] = '\0';
-}
-
-bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_length) {
-  return (buffer->length + required_length <= buffer->capacity);
 }
 
 void hb_buffer_clear(hb_buffer_T* buffer) {
