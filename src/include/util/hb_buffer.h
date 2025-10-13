@@ -11,7 +11,6 @@ typedef struct HB_BUFFER_STRUCT {
 } hb_buffer_T;
 
 bool hb_buffer_init(hb_buffer_T* buffer, size_t capacity);
-hb_buffer_T* hb_buffer_new(size_t capacity);
 
 bool hb_buffer_increase_capacity(hb_buffer_T* buffer, size_t additional_capacity);
 bool hb_buffer_has_capacity(hb_buffer_T* buffer, size_t required_length);

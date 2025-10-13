@@ -22,17 +22,6 @@ bool hb_buffer_init(hb_buffer_T* buffer, const size_t capacity) {
   return true;
 }
 
-hb_buffer_T* hb_buffer_new(const size_t capacity) {
-  hb_buffer_T* buffer = malloc(sizeof(hb_buffer_T));
-
-  if (!hb_buffer_init(buffer, capacity)) {
-    free(buffer);
-    return NULL;
-  }
-
-  return buffer;
-}
-
 char* hb_buffer_value(const hb_buffer_T* buffer) {
   return buffer->value;
 }
