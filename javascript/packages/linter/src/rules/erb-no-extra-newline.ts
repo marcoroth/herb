@@ -2,7 +2,13 @@ import { BaseSourceRuleVisitor } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
 import { Location, Position } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { Node } from "@herb-tools/core"
+import type { LintOffense, LintContext, BaseAutofixContext } from "../types.js"
+
+interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
+  startOffset: number
+  endOffset: number
+}
 
 function positionFromOffset(source: string, offset: number): Position {
   let line = 1
@@ -23,34 +29,37 @@ function positionFromOffset(source: string, offset: number): Position {
   return new Position(line, column)
 }
 
-function locationFromMatch(source: string, match: RegExpExecArray): Location {
-  const startOffset = match.index
-  const endOffset = match.index + match[0].length
-  const start = positionFromOffset(source, startOffset)
-  const end = positionFromOffset(source, endOffset)
-  return new Location(start, end)
-}
-
-class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor {
+class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAutofixContext> {
   protected visitSource(source: string): void {
     if (source.length === 0) return
 
-    const regex = /\n{3,}/g
+    const regex = /\n{4,}/g
+
     let match: RegExpExecArray | null
 
     while ((match = regex.exec(source)) !== null) {
-      const location = locationFromMatch(source, match)
+      const startOffset = match.index + 3
+      const endOffset = match.index + match[0].length
+      const start = positionFromOffset(source, startOffset)
+      const end = positionFromOffset(source, endOffset)
+      const location = new Location(start, end)
 
       this.addOffense(
         "Extra blank line detected.",
         location,
-        "error"
+        "error",
+        {
+          node: null as any as Node,
+          startOffset,
+          endOffset
+        }
       )
     }
   }
 }
 
 export class ERBNoExtraNewLineRule extends SourceRule {
+  static autocorrectable = true
   name = "erb-no-extra-newline"
 
   check(source: string, context?: Partial<LintContext>): LintOffense[] {
@@ -59,5 +68,16 @@ export class ERBNoExtraNewLineRule extends SourceRule {
     visitor.visit(source)
 
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<ERBNoExtraNewLineAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
+    if (!offense.autofixContext) return null
+
+    const { startOffset, endOffset } = offense.autofixContext
+
+    const before = source.substring(0, startOffset)
+    const after = source.substring(endOffset)
+
+    return before + after
   }
 }
