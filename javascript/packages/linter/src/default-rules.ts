@@ -3,6 +3,7 @@ import type { RuleClass } from "./types.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
+import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
@@ -46,6 +47,7 @@ export const defaultRules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
   ERBNoEmptyTagsRule,
+  ERBNoExtraNewLineRule,
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,

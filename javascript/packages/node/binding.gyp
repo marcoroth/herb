@@ -25,6 +25,7 @@
         "./extension/libherb/lexer_peek_helpers.c",
         "./extension/libherb/lexer.c",
         "./extension/libherb/location.c",
+        "./extension/libherb/hb_arena.c",
         "./extension/libherb/parser_helpers.c",
         "./extension/libherb/parser.c",
         "./extension/libherb/pretty_print.c",

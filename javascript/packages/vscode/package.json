@@ -64,6 +64,7 @@
               "erb-comment-syntax",
               "erb-no-case-node-children",
               "erb-no-empty-tags",
+              "erb-no-extra-newline",
               "erb-no-output-control-flow",
               "erb-no-silent-tag-in-attribute-name",
               "erb-prefer-image-tag-helper",
