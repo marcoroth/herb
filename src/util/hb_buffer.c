@@ -146,7 +146,7 @@ void hb_buffer_append_char(hb_buffer_T* buffer, const char character) {
   hb_buffer_append(buffer, string);
 }
 
-void hb_buffer_append_repeated(hb_buffer_T* buffer, const char character, size_t length) {
+static void hb_buffer_append_repeated(hb_buffer_T* buffer, const char character, size_t length) {
   if (!buffer || length == 0) { return; }
   if (!hb_buffer_expand_if_needed(buffer, length)) { return; }
 

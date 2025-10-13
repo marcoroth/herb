@@ -17,7 +17,6 @@ bool hb_buffer_resize(hb_buffer_T* buffer, size_t new_capacity);
 void hb_buffer_append(hb_buffer_T* buffer, const char* text);
 void hb_buffer_append_with_length(hb_buffer_T* buffer, const char* text, size_t length);
 void hb_buffer_append_char(hb_buffer_T* buffer, char character);
-void hb_buffer_append_repeated(hb_buffer_T* buffer, char character, size_t length);
 void hb_buffer_append_whitespace(hb_buffer_T* buffer, size_t length);
 void hb_buffer_prepend(hb_buffer_T* buffer, const char* text);
 void hb_buffer_concat(hb_buffer_T* destination, hb_buffer_T* source);
