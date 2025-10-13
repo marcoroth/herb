@@ -11,6 +11,32 @@ static bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_le
 }
 
 /**
+ * Resizes the capacity of the buffer to the specified new capacity.
+ *
+ * @param buffer The buffer to resize
+ * @param new_capacity The new capacity to resize the buffer to
+ * @return true if capacity was resized, false if reallocation failed
+ */
+static bool hb_buffer_resize(hb_buffer_T* buffer, const size_t new_capacity) {
+  if (new_capacity + 1 >= SIZE_MAX) {
+    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
+    exit(1);
+  }
+
+  char* new_value = realloc(buffer->value, new_capacity + 1);
+
+  if (unlikely(new_value == NULL)) {
+    fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);
+    exit(1);
+  }
+
+  buffer->value = new_value;
+  buffer->capacity = new_capacity;
+
+  return true;
+}
+
+/**
  * Expands the capacity of the buffer if needed to accommodate additional content.
  * This function is a convenience function that calls hb_buffer_has_capacity and
  * hb_buffer_expand_capacity.
@@ -64,32 +90,6 @@ size_t hb_buffer_capacity(const hb_buffer_T* buffer) {
 
 size_t hb_buffer_sizeof(void) {
   return sizeof(hb_buffer_T);
-}
-
-/**
- * Resizes the capacity of the buffer to the specified new capacity.
- *
- * @param buffer The buffer to resize
- * @param new_capacity The new capacity to resize the buffer to
- * @return true if capacity was resized, false if reallocation failed
- */
-bool hb_buffer_resize(hb_buffer_T* buffer, const size_t new_capacity) {
-  if (new_capacity + 1 >= SIZE_MAX) {
-    fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
-    exit(1);
-  }
-
-  char* new_value = realloc(buffer->value, new_capacity + 1);
-
-  if (unlikely(new_value == NULL)) {
-    fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);
-    exit(1);
-  }
-
-  buffer->value = new_value;
-  buffer->capacity = new_capacity;
-
-  return true;
 }
 
 /**
