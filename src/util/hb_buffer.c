@@ -96,18 +96,6 @@ bool hb_buffer_resize(hb_buffer_T* buffer, const size_t new_capacity) {
 }
 
 /**
- * Expands the capacity of the buffer by doubling its current capacity.
- * This function is a convenience function that calls hb_buffer_increase_capacity
- * with a factor of 2.
- *
- * @param buffer The buffer to expand capacity for
- * @return true if capacity was increased, false if reallocation failed
- */
-bool hb_buffer_expand_capacity(hb_buffer_T* buffer) {
-  return hb_buffer_resize(buffer, buffer->capacity * 2);
-}
-
-/**
  * Expands the capacity of the buffer if needed to accommodate additional content.
  * This function is a convenience function that calls hb_buffer_has_capacity and
  * hb_buffer_expand_capacity.

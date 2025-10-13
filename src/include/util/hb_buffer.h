@@ -15,7 +15,6 @@ hb_buffer_T* hb_buffer_new(size_t capacity);
 
 bool hb_buffer_increase_capacity(hb_buffer_T* buffer, size_t additional_capacity);
 bool hb_buffer_has_capacity(hb_buffer_T* buffer, size_t required_length);
-bool hb_buffer_expand_capacity(hb_buffer_T* buffer);
 bool hb_buffer_expand_if_needed(hb_buffer_T* buffer, size_t required_length);
 bool hb_buffer_resize(hb_buffer_T* buffer, size_t new_capacity);
 
