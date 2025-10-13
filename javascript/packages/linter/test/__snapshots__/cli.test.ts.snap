@@ -301,7 +301,9 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
 
 
  Summary:
-  Checked      1 file"
+  Checked      1 file
+  Offenses     10 errors | 4 warnings (14 offenses across 1 file)
+  Fixable      14 offenses | 4 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
