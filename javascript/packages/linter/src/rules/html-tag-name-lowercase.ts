@@ -1,9 +1,15 @@
-import { ParserRule } from "../types.js"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
-
-import { isNode, getTagName, HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
+import { isNode, getTagName, HTMLOpenTagNode } from "@herb-tools/core"
 
 import type { LintOffense, LintContext } from "../types.js"
+import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
+
+interface TagNameAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLOpenTagNode | HTMLCloseTagNode>
+  tagName: string
+  correctedTagName: string
+}
 
 class XMLDeclarationChecker extends BaseRuleVisitor {
   hasXMLDeclaration: boolean = false
@@ -18,7 +24,7 @@ class XMLDeclarationChecker extends BaseRuleVisitor {
   }
 }
 
-class TagNameLowercaseVisitor extends BaseRuleVisitor {
+class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagName(node).toLowerCase() === "svg") {
       this.checkTagName(node.open_tag)
@@ -52,13 +58,19 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor {
       this.addOffense(
         `${type} tag name \`${open}${tagName}>\` should be lowercase. Use \`${open}${lowercaseTagName}>\` instead.`,
         node.tag_name!.location,
-        "error"
+        "error",
+        {
+          node,
+          tagName,
+          correctedTagName: lowercaseTagName
+        }
       )
     }
   }
 }
 
-export class HTMLTagNameLowercaseRule extends ParserRule {
+export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> {
+  static autocorrectable = true
   name = "html-tag-name-lowercase"
 
   isEnabled(result: ParseResult, context?: Partial<LintContext>): boolean {
@@ -71,9 +83,23 @@ export class HTMLTagNameLowercaseRule extends ParserRule {
     return !checker.hasXMLDeclaration
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<TagNameAutofixContext>[] {
     const visitor = new TagNameLowercaseVisitor(this.name, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<TagNameAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node: { tag_name }, correctedTagName } = offense.autofixContext
+
+    if (!tag_name) return null
+
+    tag_name.value = correctedTagName
+
+    return result
   }
 }

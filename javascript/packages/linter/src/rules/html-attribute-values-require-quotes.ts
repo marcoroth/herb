@@ -1,10 +1,16 @@
-import { ParserRule } from "../types.js"
+import { Token, Location } from "@herb-tools/core"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
+import type { HTMLAttributeNode, ParseResult,  } from "@herb-tools/core"
 
-class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
+interface AttributeValuesRequireQuotesAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLAttributeNode>
+  unquotedValue: string
+}
+
+class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin<AttributeValuesRequireQuotesAutofixContext> {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
     if (this.hasAttributeValue(attributeNode)) return
     if (this.isQuoted(attributeNode)) return
@@ -12,7 +18,11 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     this.addOffense(
       `Attribute value should be quoted: \`${attributeName}="${attributeValue}"\`. Always wrap attribute values in quotes.`,
       attributeNode.value!.location,
-      "error"
+      "error",
+      {
+        node: attributeNode,
+        unquotedValue: attributeValue
+      }
     )
   }
 
@@ -23,7 +33,11 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
     this.addOffense(
       `Attribute value should be quoted: \`${attributeName}="${combinedValue}"\`. Always wrap attribute values in quotes.`,
       attributeNode.value!.location,
-      "error"
+      "error",
+      {
+        node: attributeNode,
+        unquotedValue: combinedValue || ""
+      }
     )
   }
 
@@ -32,20 +46,47 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin {
   }
 
   private isQuoted(attributeNode: HTMLAttributeNode): boolean {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
+    const valueNode = attributeNode.value
 
-    return valueNode.quoted
+    return valueNode ? valueNode.quoted : false
   }
 }
 
-export class HTMLAttributeValuesRequireQuotesRule extends ParserRule {
+export class HTMLAttributeValuesRequireQuotesRule extends ParserRule<AttributeValuesRequireQuotesAutofixContext> {
+  static autocorrectable = true
   name = "html-attribute-values-require-quotes"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<AttributeValuesRequireQuotesAutofixContext>[] {
     const visitor = new AttributeValuesRequireQuotesVisitor(this.name, context)
 
     visitor.visit(result.value)
 
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<AttributeValuesRequireQuotesAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node: { value } } = offense.autofixContext
+
+    if (!value) return null
+
+    const quote = Token.from({ type: "TOKEN_QUOTE", value: '"', location: Location.zero, range: [0, 0] })
+
+    if (value.open_quote) {
+      value.open_quote.value = '"'
+    } else {
+      value.open_quote = quote
+    }
+
+    if (value.close_quote) {
+      value.close_quote.value = '"'
+    } else {
+      value.close_quote = quote
+    }
+
+    value.quoted = true
+
+    return result
   }
 }

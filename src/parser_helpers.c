@@ -99,8 +99,8 @@ void parser_append_unexpected_error(parser_T* parser, const char* description, c
     description,
     expected,
     token_type_to_string(token->type),
-    token->location->start,
-    token->location->end,
+    token->location.start,
+    token->location.end,
     errors
   );
 
@@ -111,8 +111,8 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
   append_unexpected_token_error(
     expected_type,
     parser->current_token,
-    parser->current_token->location->start,
-    parser->current_token->location->end,
+    parser->current_token->location.start,
+    parser->current_token->location.end,
     errors
   );
 }
@@ -121,12 +121,12 @@ void parser_append_literal_node_from_buffer(
   const parser_T* parser,
   buffer_T* buffer,
   array_T* children,
-  position_T* start
+  position_T start
 ) {
   if (buffer_length(buffer) == 0) { return; }
 
   AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(buffer_value(buffer), start, parser->current_token->location->start, NULL);
+    ast_literal_node_init(buffer_value(buffer), start, parser->current_token->location.start, NULL);
 
   if (children != NULL) { array_append(children, literal); }
   buffer_clear(buffer);
@@ -149,7 +149,7 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
   if (token == NULL) {
     token = parser_advance(parser);
 
-    append_unexpected_token_error(expected_type, token, token->location->start, token->location->end, array);
+    append_unexpected_token_error(expected_type, token, token->location.start, token->location.end, array);
   }
 
   return token;
@@ -162,8 +162,8 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
 ) {
   append_missing_closing_tag_error(
     open_tag->tag_name,
-    open_tag->tag_name->location->start,
-    open_tag->tag_name->location->end,
+    open_tag->tag_name->location.start,
+    open_tag->tag_name->location.end,
     errors
   );
 
@@ -174,8 +174,8 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     NULL,
     false,
     ELEMENT_SOURCE_HTML,
-    open_tag->base.location->start,
-    open_tag->base.location->end,
+    open_tag->base.location.start,
+    open_tag->base.location.end,
     errors
   );
 }
@@ -192,15 +192,15 @@ void parser_handle_mismatched_tags(
     append_tag_names_mismatch_error(
       expected_tag,
       actual_tag,
-      actual_tag->location->start,
-      actual_tag->location->end,
+      actual_tag->location.start,
+      actual_tag->location.end,
       errors
     );
   } else {
     append_missing_opening_tag_error(
       close_tag->tag_name,
-      close_tag->tag_name->location->start,
-      close_tag->tag_name->location->end,
+      close_tag->tag_name->location.start,
+      close_tag->tag_name->location.end,
       errors
     );
   }

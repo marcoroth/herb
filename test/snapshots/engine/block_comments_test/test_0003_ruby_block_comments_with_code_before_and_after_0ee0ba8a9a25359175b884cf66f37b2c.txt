@@ -1,0 +1,12 @@
+_buf = ::String.new;
+ x = 1; _buf << '
+'.freeze;
+=begin
+Multi-line comment
+spanning multiple lines
+=end
+ _buf << '
+'.freeze; y = 2; _buf << '
+<div>'.freeze; _buf << (x + y).to_s; _buf << '</div>
+'.freeze;
+_buf.to_s

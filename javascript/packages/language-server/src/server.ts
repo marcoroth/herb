@@ -62,7 +62,7 @@ export class Server {
 
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: `**/**/*.html.erb` },
+          { globPattern: `**/**/*.html{+*,}.erb` },
           { globPattern: `**/**/.herb-lsp/config.json` },
         ],
       })

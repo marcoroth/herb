@@ -21,7 +21,7 @@ void pretty_print_position_property(
   buffer_T* buffer
 );
 
-void pretty_print_location(location_T* location, buffer_T* buffer);
+void pretty_print_location(location_T location, buffer_T* buffer);
 
 void pretty_print_property(
   const char* name,

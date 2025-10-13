@@ -19,8 +19,8 @@ export class CLI {
     Usage: herb-format [file|directory|glob-pattern] [options]
 
     Arguments:
-      file|directory|glob-pattern   File to format, directory to format all **/*.html.erb files within,
-                                    glob pattern to match files, or '-' for stdin (omit to format all **/*.html.erb files in current directory)
+      file|directory|glob-pattern   File to format, directory to format all **/*.html{+*,}.erb files within,
+                                    glob pattern to match files, or '-' for stdin (omit to format all **/*.html{+*,}.erb files in current directory)
 
     Options:
       -c, --check                     check if files are formatted without modifying them
@@ -30,15 +30,15 @@ export class CLI {
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
-      herb-format                            # Format all **/*.html.erb files in current directory
-      herb-format index.html.erb             # Format and write single file
-      herb-format templates/index.html.erb   # Format and write single file
-      herb-format templates/                 # Format and **/*.html.erb within the given directory
-      herb-format "templates/**/*.html.erb"  # Format all .html.erb files in templates directory using glob pattern
-      herb-format "**/*.html.erb"            # Format all .html.erb files using glob pattern
-      herb-format "**/*.xml.erb"             # Format all .xml.erb files using glob pattern
-      herb-format --check                    # Check if all **/*.html.erb files are formatted
-      herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
+      herb-format                                 # Format all **/*.html{+*,}.erb files in current directory
+      herb-format index.html.erb                  # Format and write single file
+      herb-format templates/index.html.erb        # Format and write single file
+      herb-format templates/                      # Format and **/*.html{+*,}.erb within the given directory
+      herb-format "templates/**/*.html{+*,}.erb"  # Format all .html{+*,}.erb files in templates directory using glob pattern
+      herb-format "**/*.html{+*,}.erb"            # Format all .html{+*,}.erb files using glob pattern
+      herb-format "**/*.xml.erb"                  # Format all .xml.erb files using glob pattern
+      herb-format --check                         # Check if all **/*.html{+*,}.erb files are formatted
+      herb-format --check templates/              # Check if all **/*.html{+*,}.erb files in templates/ are formatted
       herb-format --indent-width 4           # Format with 4-space indentation
       herb-format --max-line-length 100      # Format with 100-character line limit
       cat template.html.erb | herb-format    # Format from stdin to stdout
@@ -112,8 +112,8 @@ export class CLI {
         process.exit(0)
       }
 
-      console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
-      console.log()
+      console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
+      console.error()
 
       const formatOptions = resolveFormatOptions({
         indentWidth,
@@ -162,7 +162,7 @@ export class CLI {
         }
 
         if (isDirectory) {
-          pattern = join(file, "**/*.html.erb")
+          pattern = join(file, "**/*.html{+*,}.erb")
         } else if (isFile) {
           const source = readFileSync(file, "utf-8")
           const result = formatter.format(source)
@@ -245,10 +245,10 @@ export class CLI {
           process.exit(1)
         }
       } else {
-        const files = await glob("**/*.html.erb")
+        const files = await glob("**/*.html{+*,}.erb")
 
         if (files.length === 0) {
-          console.log(`No files found matching pattern: ${resolve("**/*.html.erb")}`)
+          console.log(`No files found matching pattern: ${resolve("**/*.html{+*,}.erb")}`)
 
           process.exit(0)
         }

@@ -1,7 +1,7 @@
 {
   "name": "herb-language-server",
   "description": "Placeholder package to reserve the herb-language-server name on NPM; use @herb-tools/language-server instead.",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -45,6 +45,6 @@
     "dist/"
   ],
   "dependencies": {
-    "@herb-tools/language-server": "0.7.4"
+    "@herb-tools/language-server": "0.7.5"
   }
 }

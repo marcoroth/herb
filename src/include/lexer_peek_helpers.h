@@ -5,16 +5,17 @@
 #include "token_struct.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 typedef struct {
-  size_t position;
-  size_t line;
-  size_t column;
-  size_t previous_position;
-  size_t previous_line;
-  size_t previous_column;
+  uint32_t position;
+  uint32_t line;
+  uint32_t column;
+  uint32_t previous_position;
+  uint32_t previous_line;
+  uint32_t previous_column;
   char current_character;
   lexer_state_T state;
 } lexer_state_snapshot_T;
@@ -31,6 +32,7 @@ bool lexer_peek_for_html_comment_end(const lexer_T* lexer, int offset);
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, int offset);
 bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, int offset);
 bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, int offset);
+bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, int offset);
 bool lexer_peek_erb_end(const lexer_T* lexer, int offset);
 
 char lexer_backtrack(const lexer_T* lexer, int offset);

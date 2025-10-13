@@ -9,10 +9,6 @@
 
 #define LEXER_STALL_LIMIT 5
 
-static size_t lexer_sizeof(void) {
-  return sizeof(struct LEXER_STRUCT);
-}
-
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
 }
@@ -34,15 +30,13 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-lexer_T* lexer_init(const char* source) {
+void lexer_init(lexer_T* lexer, const char* source) {
   if (source == NULL) { source = ""; }
-
-  lexer_T* lexer = calloc(1, lexer_sizeof());
 
   lexer->state = STATE_DATA;
 
   lexer->source = source;
-  lexer->source_length = strlen(source);
+  lexer->source_length = (uint32_t) strlen(source);
   lexer->current_character = source[0];
 
   lexer->current_line = 1;
@@ -56,8 +50,6 @@ lexer_T* lexer_init(const char* source) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
-
-  return lexer;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -66,7 +58,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
   snprintf(
     error_message,
     sizeof(error_message),
-    "[Lexer] Error: %s (character '%c', line %zu, col %zu)\n",
+    "[Lexer] Error: %s (character '%c', line %u, col %u)\n",
     message,
     lexer->current_character,
     lexer->current_line,
@@ -174,7 +166,8 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const
 // ===== Specialized Parsers
 
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 128);
 
   while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
          && !lexer_eof(lexer)) {
@@ -184,13 +177,14 @@ static token_T* lexer_parse_whitespace(lexer_T* lexer) {
 
   token_T* token = token_init(buffer.value, TOKEN_WHITESPACE, lexer);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 
   return token;
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 128);
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
@@ -202,7 +196,7 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   token_T* token = token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 
   return token;
 }
@@ -223,7 +217,8 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  buffer_T buffer;
+  buffer_init(&buffer, 1024);
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
@@ -247,7 +242,7 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   token_T* token = token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
 
-  buffer_free(&buffer);
+  free(buffer.value);
 
   return token;
 }
@@ -256,6 +251,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
 
   if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "%%>", TOKEN_ERB_END); }
+  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "=%>", TOKEN_ERB_END); }
   if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "-%>", TOKEN_ERB_END); }
 
   return lexer_advance_with(lexer, "%>", TOKEN_ERB_END);
@@ -352,10 +348,4 @@ token_T* lexer_next_token(lexer_T* lexer) {
       return lexer_advance_utf8_character(lexer, TOKEN_CHARACTER);
     }
   }
-}
-
-void lexer_free(lexer_T* lexer) {
-  if (lexer == NULL) { return; }
-
-  free(lexer);
 }

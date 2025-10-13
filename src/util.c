@@ -1,116 +1,55 @@
 #include "include/util.h"
+#include "include/buffer.h"
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int is_whitespace(const int character) {
-  return character == ' ' || character == '\t';
-}
-
 int is_newline(const int character) {
   return character == 13 || character == 10;
 }
 
-int count_in_string(const char* string, const char character) {
-  int count = 0;
-
-  while (*string != '\0') {
-    if (*string == character) { count++; }
-
-    string++;
-  }
-
-  return count;
-}
-
-int count_newlines(const char* string) {
-  int count = 0;
-
-  while (*string) {
-    if (*string == '\r') {
-      count++;
-      if (*(string + 1) == '\n') { string++; }
-    } else if (*string == '\n') {
-      count++;
-    }
-
-    string++;
-  }
-
-  return count;
-}
-
-char* replace_char(char* string, const char find, const char replace) {
-  char* original_string = string;
-
-  while (*string != '\0') {
-    if (*string == find) { *string = replace; }
-
-    string++;
-  }
-
-  return original_string;
-}
-
 char* escape_newlines(const char* input) {
-  char* output = calloc(strlen(input) * 2 + 1, sizeof(char));
-  char* orig_output = output;
+  buffer_T buffer;
 
-  while (*input) {
-    if (*input == '\n') {
-      *output++ = '\\';
-      *output++ = 'n';
-    } else if (*input == '\r') {
-      *output++ = '\\';
-      *output++ = 'r';
-    } else {
-      *output++ = *input;
+  buffer_init(&buffer, strlen(input));
+
+  for (size_t i = 0; i < strlen(input); ++i) {
+    switch (input[i]) {
+      case '\n': {
+        buffer_append_char(&buffer, '\\');
+        buffer_append_char(&buffer, 'n');
+      } break;
+      case '\r': {
+        buffer_append_char(&buffer, '\\');
+        buffer_append_char(&buffer, 'r');
+      } break;
+      default: {
+        buffer_append_char(&buffer, input[i]);
+      }
     }
-
-    input++;
   }
 
-  *output = '\0';
-
-  return orig_output;
+  return buffer.value;
 }
 
 char* wrap_string(const char* input, const char character) {
   if (input == NULL) { return NULL; }
 
-  const size_t length = strlen(input);
-  char* wrapped = malloc(length + 3);
+  buffer_T buffer;
 
-  if (wrapped == NULL) { return NULL; }
+  buffer_init(&buffer, strlen(input) + 2);
 
-  wrapped[0] = character;
-  strcpy(wrapped + 1, input);
-  wrapped[length + 1] = character;
-  wrapped[length + 2] = '\0';
+  buffer_append_char(&buffer, character);
+  buffer_append(&buffer, input);
+  buffer_append_char(&buffer, character);
 
-  return wrapped;
+  return buffer.value;
 }
 
 char* quoted_string(const char* input) {
   return wrap_string(input, '"');
-}
-
-// Check if a string is blank (NULL, empty, or only contains whitespace)
-bool string_blank(const char* input) {
-  if (input == NULL || input[0] == '\0') { return true; }
-
-  for (const char* p = input; *p != '\0'; p++) {
-    if (!isspace(*p)) { return false; }
-  }
-
-  return true;
-}
-
-// Check if a string is present (not blank)
-bool string_present(const char* input) {
-  return !string_blank(input);
 }
 
 char* herb_strdup(const char* s) {

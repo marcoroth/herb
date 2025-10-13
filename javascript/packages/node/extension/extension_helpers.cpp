@@ -46,19 +46,13 @@ napi_value CreateString(napi_env env, const char* str) {
   return result;
 }
 
-napi_value CreatePosition(napi_env env, position_T* position) {
-  if (!position) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreatePosition(napi_env env, position_T position) {
   napi_value result;
   napi_create_object(env, &result);
 
   napi_value line, column;
-  napi_create_uint32(env, (uint32_t)position->line, &line);
-  napi_create_uint32(env, (uint32_t)position->column, &column);
+  napi_create_uint32(env, (uint32_t)position.line, &line);
+  napi_create_uint32(env, (uint32_t)position.column, &column);
 
   napi_set_named_property(env, result, "line", line);
   napi_set_named_property(env, result, "column", column);
@@ -66,18 +60,12 @@ napi_value CreatePosition(napi_env env, position_T* position) {
   return result;
 }
 
-napi_value CreateLocation(napi_env env, location_T* location) {
-  if (!location) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreateLocation(napi_env env, location_T location) {
   napi_value result;
   napi_create_object(env, &result);
 
-  napi_value start = CreatePosition(env, location->start);
-  napi_value end = CreatePosition(env, location->end);
+  napi_value start = CreatePosition(env, location.start);
+  napi_value end = CreatePosition(env, location.end);
 
   napi_set_named_property(env, result, "start", start);
   napi_set_named_property(env, result, "end", end);
@@ -85,19 +73,13 @@ napi_value CreateLocation(napi_env env, location_T* location) {
   return result;
 }
 
-napi_value CreateRange(napi_env env, range_T* range) {
-  if (!range) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreateRange(napi_env env, range_T range) {
   napi_value result;
   napi_create_array(env, &result);
 
   napi_value from, to;
-  napi_create_uint32(env, (uint32_t)range->from, &from);
-  napi_create_uint32(env, (uint32_t)range->to, &to);
+  napi_create_uint32(env, (uint32_t)range.from, &from);
+  napi_create_uint32(env, (uint32_t)range.to, &to);
 
   napi_set_element(env, result, 0, from);
   napi_set_element(env, result, 1, to);

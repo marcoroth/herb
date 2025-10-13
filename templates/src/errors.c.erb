@@ -17,15 +17,16 @@ size_t error_sizeof(void) {
   return sizeof(struct ERROR_STRUCT);
 }
 
-void error_init(ERROR_T* error, const error_type_T type, position_T* start, position_T* end) {
+void error_init(ERROR_T* error, const error_type_T type, position_T start, position_T end) {
   if (!error) { return; }
 
   error->type = type;
-  error->location = location_init(position_copy(start), position_copy(end));
+  error->location.start = start;
+  error->location.end = end;
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T* start", "position_T* end"] -%>
+<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
   <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
@@ -72,7 +73,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T* start, posi
   <%- error.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>
-  <%= error.human %>-><%= field.name %> = position_copy(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::TokenField -%>
   <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
@@ -116,7 +117,6 @@ const char* error_human_type(ERROR_T* error) {
 void error_free_base_error(ERROR_T* error) {
   if (error == NULL) { return; }
 
-  if (error->location != NULL) { location_free(error->location); }
   if (error->message != NULL) { free(error->message); }
 
   free(error);
@@ -130,8 +130,6 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- end -%>
   <%- error.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::PositionField -%>
-  if (<%= error.human %>-><%= field.name %> != NULL) { position_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenField -%>
   if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenTypeField -%>
