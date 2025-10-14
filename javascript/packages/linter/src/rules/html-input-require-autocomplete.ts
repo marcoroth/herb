@@ -5,7 +5,7 @@ import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
 import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
 
-class HTMLInputsRequireAutocompleteVisitor extends BaseRuleVisitor {
+class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
   readonly HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE = [
     "color",
     "date",
@@ -65,11 +65,11 @@ class HTMLInputsRequireAutocompleteVisitor extends BaseRuleVisitor {
   }
 }
 
-export class HTMLInputsRequireAutocompleteRule extends ParserRule {
-  name = "html-inputs-require-autocomplete"
+export class HTMLInputRequireAutocompleteRule extends ParserRule {
+  name = "html-input-require-autocomplete"
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new HTMLInputsRequireAutocompleteVisitor(this.name, context)
+    const visitor = new HTMLInputRequireAutocompleteVisitor(this.name, context)
 
     visitor.visit(result.value)
 

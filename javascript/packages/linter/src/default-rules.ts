@@ -24,7 +24,7 @@ import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-bot
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
-import { HTMLInputsRequireAutocompleteRule } from "./rules/html-inputs-require-autocomplete.js"
+import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
 // import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
@@ -69,7 +69,7 @@ export const defaultRules: RuleClass[] = [
   HTMLBooleanAttributesNoValueRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
-  HTMLInputsRequireAutocompleteRule,
+  HTMLInputRequireAutocompleteRule,
   // HTMLNavigationHasLabelRule,
   HTMLNoAriaHiddenOnFocusableRule,
   // HTMLNoBlockInsideInlineRule,

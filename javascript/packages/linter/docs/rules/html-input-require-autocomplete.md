@@ -1,6 +1,6 @@
-# Require `autocomplete` attribute on input tags
+# Linter Rule: Require `autocomplete` attribute on `<input>` tags
 
-**Rule:** `html-inputs-require-autocomplete`
+**Rule:** `html-input-require-autocomplete`
 
 This linter prevents the usage of certain types of HTML `<input>` without an `autocomplete` argument: `color`, `date`, `datetime-local`, `email`, `month`, `number`, `password`, `range`, `search`, `tel`, `text`, `time`, `url`, or `week`.
 

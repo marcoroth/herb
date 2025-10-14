@@ -42,7 +42,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
-- [`html-inputs-require-autocomplete`](./html-inputs-require-autocomplete.md) - Require `autocomplete` attribute on input tags
+- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attribute on input tags
 
 ## Contributing
 
