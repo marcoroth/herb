@@ -1,179 +1,175 @@
-import { BaseRuleVisitor, getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
-import { ParserRule } from "../types"
+import { isHTMLElementNode } from "@herb-tools/core"
+import { getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
 
-import type { ParseResult, HTMLElementNode, HTMLAttributeNode, ERBIfNode, ERBElseNode } from "@herb-tools/core"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
+import { ParserRule, BaseAutofixContext } from "../types"
+
+import type { ParseResult, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 interface MetaTag {
   node: HTMLElementNode
   nameValue?: string
   httpEquivValue?: string
-  controlFlowPath: string[]
 }
 
-class MetaNameUniqueVisitor extends BaseRuleVisitor {
+interface ControlFlowState {
+  previousBranchMetas: MetaTag[]
+  previousControlFlowMetas: MetaTag[]
+}
+
+interface BranchState {
+  previousBranchMetas: MetaTag[]
+}
+
+class MetaNameUniqueVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
   private elementStack: string[] = []
-  private metaTags: MetaTag[] = []
-  private currentControlFlowPath: string[] = []
+  private documentMetas: MetaTag[] = []
+  private currentBranchMetas: MetaTag[] = []
+  private controlFlowMetas: MetaTag[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     const tagName = getTagName(node)?.toLowerCase()
     if (!tagName) return
 
     if (tagName === "head") {
-      this.metaTags = []
+      this.documentMetas = []
+      this.currentBranchMetas = []
+      this.controlFlowMetas = []
     } else if (tagName === "meta" && this.insideHead) {
-      this.collectMetaTag(node)
-   }
+      this.collectAndCheckMetaTag(node)
+    }
 
     this.elementStack.push(tagName)
     this.visitChildNodes(node)
     this.elementStack.pop()
-
-    if (tagName === "head") {
-      this.checkForDuplicates()
-    }
   }
+
+  protected onEnterControlFlow(_controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean): ControlFlowState {
+    const stateToRestore: ControlFlowState = {
+      previousBranchMetas: this.currentBranchMetas,
+      previousControlFlowMetas: this.controlFlowMetas
+    }
+
+    this.currentBranchMetas = []
+
+    if (!wasAlreadyInControlFlow) {
+      this.controlFlowMetas = []
+    }
+
+    return stateToRestore
+  }
+
+  protected onExitControlFlow(controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean, stateToRestore: ControlFlowState): void {
+    if (controlFlowType === ControlFlowType.CONDITIONAL && !wasAlreadyInControlFlow) {
+      this.controlFlowMetas.forEach(meta => this.documentMetas.push(meta))
+    }
+
+    this.currentBranchMetas = stateToRestore.previousBranchMetas
+    this.controlFlowMetas = stateToRestore.previousControlFlowMetas
+  }
+
+  protected onEnterBranch(): BranchState {
+    const stateToRestore: BranchState = {
+      previousBranchMetas: this.currentBranchMetas
+    }
+
+    if (this.isInControlFlow) {
+      this.currentBranchMetas = []
+    }
+
+    return stateToRestore
+  }
+
+  protected onExitBranch(_stateToRestore: BranchState): void {}
 
   private get insideHead(): boolean {
     return this.elementStack.includes("head")
   }
 
-  private collectMetaTag(node: HTMLElementNode): void {
-    const metaTag: MetaTag = {
-      node,
-      controlFlowPath: [...this.currentControlFlowPath]
-    }
-
+  private collectAndCheckMetaTag(node: HTMLElementNode): void {
+    const metaTag: MetaTag = { node }
     this.extractAttributes(node, metaTag)
 
-    if (metaTag.nameValue || metaTag.httpEquivValue) {
-      this.metaTags.push(metaTag)
+    if (!metaTag.nameValue && !metaTag.httpEquivValue) return
+
+    if (this.isInControlFlow) {
+      this.handleControlFlowMeta(metaTag)
+    } else {
+      this.handleGlobalMeta(metaTag)
     }
+
+    this.currentBranchMetas.push(metaTag)
   }
 
   private extractAttributes(node: HTMLElementNode, metaTag: MetaTag): void {
-    if (node.type === "AST_HTML_ELEMENT_NODE") {
-      const elementNode = node as HTMLElementNode
+    if (isHTMLElementNode(node) && node.open_tag) {
+      forEachAttribute(node.open_tag as any, (attributeNode: HTMLAttributeNode) => {
+        const name = getAttributeName(attributeNode)
+        const value = getAttributeValue(attributeNode)?.trim()
 
-      if (elementNode.open_tag) {
-        forEachAttribute(elementNode.open_tag as any, (attributeNode: HTMLAttributeNode) => {
-          this.processAttributeForMetaTag(attributeNode, metaTag)
-        })
-      }
-    }
-  }
-
-  private processAttributeForMetaTag(attributeNode: HTMLAttributeNode, metaTag: MetaTag): void {
-    const name = getAttributeName(attributeNode)
-    const value = getAttributeValue(attributeNode)?.trim()
-
-    if (name === "name" && value) {
-      metaTag.nameValue = value
-    } else if (name === "http-equiv" && value) {
-      metaTag.httpEquivValue = value
-    }
-  }
-
-  visitERBIfNode(node: ERBIfNode): void {
-    const content = (node.content as any)?.value || node.content?.toString() || ""
-    const branchName = content.trim().startsWith("elsif") ? "elsif" : "if"
-
-    this.currentControlFlowPath.push(branchName)
-
-    if (node.statements) {
-      for (const statement of node.statements) {
-        this.visit(statement)
-      }
-    }
-
-    this.currentControlFlowPath.pop()
-
-    if (node.subsequent) {
-      this.visit(node.subsequent)
-    }
-  }
-
-  visitERBElseNode(node: ERBElseNode): void {
-    this.currentControlFlowPath.push("else")
-
-    if (node.statements) {
-      for (const statement of node.statements) {
-        this.visit(statement)
-      }
-    }
-
-    this.currentControlFlowPath.pop()
-  }
-
-  private checkForDuplicates(): void {
-    const nameGroups = this.groupByAttribute('name')
-    const httpEquivGroups = this.groupByAttribute('http-equiv')
-
-    nameGroups.forEach((tags) => {
-      const originalValue = tags[0].nameValue!
-      this.reportConflicts(tags, `\`name="${originalValue}"\``, 'Meta names')
-    })
-
-    httpEquivGroups.forEach((tags) => {
-      const originalValue = tags[0].httpEquivValue!
-      this.reportConflicts(tags, `\`http-equiv="${originalValue}"\``, '`http-equiv` values')
-    })
-  }
-
-  private groupByAttribute(attributeType: 'name' | 'http-equiv'): Map<string, MetaTag[]> {
-    const groups = new Map<string, MetaTag[]>()
-
-    for (const tag of this.metaTags) {
-      const value = attributeType === 'name' ? tag.nameValue : tag.httpEquivValue
-
-      if (value) {
-        const key = value.toLowerCase()
-        if (!groups.has(key)) groups.set(key, [])
-        groups.get(key)!.push(tag)
-      }
-    }
-
-    return groups
-  }
-
-  private reportConflicts(tags: MetaTag[], attributeDescription: string, attributeType: string): void {
-    if (tags.length < 2) return
-
-    for (let i = 0; i < tags.length - 1; i++) {
-      for (let j = i + 1; j < tags.length; j++) {
-        if (this.canExecuteInSameContext(tags[i].controlFlowPath, tags[j].controlFlowPath)) {
-          this.addOffense(
-            `Duplicate \`<meta>\` tag with ${attributeDescription}. ${attributeType} should be unique within the \`<head>\` section.`,
-            tags[j].node.location,
-            "error"
-          )
-
-          return
+        if (name === "name" && value) {
+          metaTag.nameValue = value
+        } else if (name === "http-equiv" && value) {
+          metaTag.httpEquivValue = value
         }
+      })
+    }
+  }
+
+  private handleControlFlowMeta(metaTag: MetaTag): void {
+    if (this.currentControlFlowType === ControlFlowType.LOOP) {
+      this.checkAgainstMetaList(metaTag, this.currentBranchMetas, "within the same loop iteration")
+    } else {
+      this.checkAgainstMetaList(metaTag, this.currentBranchMetas, "within the same control flow branch")
+      this.checkAgainstMetaList(metaTag, this.documentMetas, "")
+
+      this.controlFlowMetas.push(metaTag)
+    }
+  }
+
+  private handleGlobalMeta(metaTag: MetaTag): void {
+    this.checkAgainstMetaList(metaTag, this.documentMetas, "")
+    this.documentMetas.push(metaTag)
+  }
+
+  private checkAgainstMetaList(metaTag: MetaTag, existingMetas: MetaTag[], context: string): void {
+    for (const existing of existingMetas) {
+      if (this.areMetaTagsDuplicate(metaTag, existing)) {
+        const attributeDescription = metaTag.nameValue
+          ? `\`name="${metaTag.nameValue}"\``
+          : `\`http-equiv="${metaTag.httpEquivValue}"\``
+
+        const attributeType = metaTag.nameValue ? "Meta names" : "`http-equiv` values"
+
+        const contextMsg = context ? ` ${context}` : ""
+
+        this.addOffense(
+          `Duplicate \`<meta>\` tag with ${attributeDescription}${contextMsg}. ${attributeType} should be unique within the \`<head>\` section.`,
+          metaTag.node.location,
+          "error"
+        )
+
+        return
       }
     }
   }
 
-  private canExecuteInSameContext(pathA: string[], pathB: string[]): boolean {
-    if (pathA.length === 0 || pathB.length === 0) return true
-
-    const minLength = Math.min(pathA.length, pathB.length)
-
-    for (let i = 0; i < minLength; i++) {
-      if (pathA[i] !== pathB[i]) {
-        const [branchA, branchB] = [pathA[i], pathB[i]]
-        const mutuallyExclusive = new Set(['if', 'elsif', 'else'])
-
-        return !(mutuallyExclusive.has(branchA) && mutuallyExclusive.has(branchB))
-      }
+  private areMetaTagsDuplicate(meta1: MetaTag, meta2: MetaTag): boolean {
+    if (meta1.nameValue && meta2.nameValue) {
+      return meta1.nameValue.toLowerCase() === meta2.nameValue.toLowerCase()
     }
 
-    return true
+    if (meta1.httpEquivValue && meta2.httpEquivValue) {
+      return meta1.httpEquivValue.toLowerCase() === meta2.httpEquivValue.toLowerCase()
+    }
+
+    return false
   }
 }
 
 export class HTMLMetaNameMustBeUniqueRule extends ParserRule {
+  static autocorrectable = false
   name = "html-meta-name-must-be-unique"
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {

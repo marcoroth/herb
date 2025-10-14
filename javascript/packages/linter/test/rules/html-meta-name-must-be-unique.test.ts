@@ -86,7 +86,7 @@ describe("html-meta-name-must-be-unique", () => {
   })
 
   test("handles case insensitive duplicates", () => {
-    expectError('Duplicate `<meta>` tag with `name="Description"`. Meta names should be unique within the `<head>` section.')
+    expectError('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
 
     assertOffenses(dedent`
       <html>
@@ -257,6 +257,295 @@ describe("html-meta-name-must-be-unique", () => {
         <% end %>
 
         <meta name="viewport" content="width=1024">
+      </head>
+    `)
+  })
+
+  test("handles nested erb conditionals", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% if mobile? %>
+          <% if ios? %>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <% else %>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <% end %>
+        <% end %>
+      </head>
+    `)
+  })
+
+  test.todo("detects duplicates in nested conditionals within same execution path", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the same control flow branch.')
+
+    assertOffenses(dedent`
+      <head>
+        <% if mobile? %>
+          <meta name="viewport" content="width=device-width">
+          <% if ios? %>
+            <meta name="viewport" content="width=1024">
+          <% end %>
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("detects static duplicate meta tags in loops", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"` within the same control flow branch. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <% items.each do |item| %>
+          <meta name="viewport" content="width=device-width">
+          <meta name="viewport" content="width=1024">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("allows dynamic meta tags in loops", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% keywords.each do |keyword| %>
+          <meta name="keyword" content="<%= keyword %>">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("detects duplicate in loop and outside loop", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="viewport" content="width=1024">
+        <% items.each do |item| %>
+          <meta name="viewport" content="width=device-width">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("resets checking for each head tag", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width">
+        </head>
+        <body>
+          <h1>First document</h1>
+        </body>
+      </html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=1024">
+        </head>
+        <body>
+          <h1>Second document</h1>
+        </body>
+      </html>
+    `)
+  })
+
+  test("detects duplicates within each head tag separately", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    expectError('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width">
+          <meta name="viewport" content="width=1024">
+        </head>
+      </html>
+      <html>
+        <head>
+          <meta name="description" content="First">
+          <meta name="description" content="Second">
+        </head>
+      </html>
+    `)
+  })
+
+  test("handles meta tags with whitespace in attribute values", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="  viewport  " content="width=device-width">
+        <meta name="viewport" content="width=1024">
+      </head>
+    `)
+  })
+
+  test("treats empty name attributes as different from missing", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <meta name="" content="value1">
+        <meta name="" content="value2">
+        <meta content="value3">
+        <meta content="value4">
+      </head>
+    `)
+  })
+
+  test("detects duplicates in elsif branches", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"` within the same control flow branch. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <% if mobile? %>
+          <meta name="description" content="Mobile">
+        <% elsif tablet? %>
+          <meta name="viewport" content="width=device-width">
+          <meta name="viewport" content="width=1024">
+        <% else %>
+          <meta name="description" content="Desktop">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("allows same meta across if and elsif branches", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% if mobile? %>
+          <meta name="viewport" content="width=device-width">
+        <% elsif tablet? %>
+          <meta name="viewport" content="width=1024">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("handles conditional inside loop", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% items.each do |item| %>
+          <% if item.mobile? %>
+            <meta name="viewport" content="<%= item.viewport %>">
+          <% end %>
+        <% end %>
+      </head>
+    `)
+  })
+
+  test.todo("detects static duplicate in conditional inside loop", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the same loop iteration.')
+
+    assertOffenses(dedent`
+      <head>
+        <% items.each do |item| %>
+          <% if item.mobile? %>
+            <meta name="viewport" content="mobile">
+          <% else %>
+            <meta name="viewport" content="desktop">
+          <% end %>
+          <meta name="viewport" content="always">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("handles http-equiv case insensitivity", () => {
+    expectError('Duplicate `<meta>` tag with `http-equiv="x-ua-compatible"`. `http-equiv` values should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta http-equiv="x-ua-compatible" content="chrome=1">
+      </head>
+    `)
+  })
+
+  test("detects all duplicate occurrences when there are three or more", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="viewport" content="first">
+        <meta name="viewport" content="second">
+        <meta name="viewport" content="third">
+      </head>
+    `)
+  })
+
+  test("handles ERB output in name attribute", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <meta name="<%= meta_name_1 %>" content="value1">
+        <meta name="<%= meta_name_2 %>" content="value2">
+      </head>
+    `)
+  })
+
+  test.todo("detects duplicates with partial ERB in name", () => {
+    expectError('Duplicate `<meta>` tag with `name="prefix-viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="prefix-viewport" content="value1">
+        <meta name="prefix-<%= 'viewport' %>" content="value2">
+      </head>
+    `)
+  })
+
+  test("handles unless conditionals", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% unless mobile? %>
+          <meta name="viewport" content="width=1024">
+        <% else %>
+          <meta name="viewport" content="width=device-width">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("detects duplicates in unless branch", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"` within the same control flow branch. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <% unless mobile? %>
+          <meta name="viewport" content="width=1024">
+          <meta name="viewport" content="width=768">
+        <% end %>
+      </head>
+    `)
+  })
+
+  test("handles document without head tag", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <body>
+          <meta name="viewport" content="width=device-width">
+          <meta name="viewport" content="width=1024">
+        </body>
+      </html>
+    `)
+  })
+
+  test("detects duplicate when meta has both name and http-equiv (edge case)", () => {
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
+      <head>
+        <meta name="viewport" http-equiv="refresh" content="value1">
+        <meta name="viewport" content="value2">
+      </head>
+    `)
+  })
+
+  test("allows same meta in different loop iterations with conditionals", () => {
+    expectNoOffenses(dedent`
+      <head>
+        <% items.each do |item| %>
+          <% if item.active? %>
+            <meta name="status" content="<%= item.id %>">
+          <% end %>
+        <% end %>
       </head>
     `)
   })
