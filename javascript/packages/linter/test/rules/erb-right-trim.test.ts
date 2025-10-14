@@ -131,4 +131,18 @@ describe("ERBRightTrimRule", () => {
       <%- end -%>
     `)
   })
+
+  test("passes for yield with -%>", () => {
+    expectNoOffenses(dedent`
+      <%= yield -%>
+    `)
+  })
+
+  test("passes for block with -%>", () => {
+    expectNoOffenses(dedent`
+      <%= content_for :content do -%>
+        Content
+      <%- end -%>
+    `)
+  })
 })

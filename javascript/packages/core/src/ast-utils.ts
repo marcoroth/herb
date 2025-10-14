@@ -1,6 +1,7 @@
 import {
   Node,
   LiteralNode,
+  ERBNode,
   ERBContentNode,
   ERBIfNode,
   ERBUnlessNode,
@@ -30,11 +31,17 @@ import {
 import type { Location } from "./location.js"
 import type { Position } from "./position.js"
 
+export type ERBOutputNode = ERBNode & {
+  tag_opening: {
+    value: "<%=" | "<%=="
+  }
+}
+
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
-export function isERBOutputNode(node: Node): node is ERBContentNode {
-  if (!isNode(node, ERBContentNode)) return false
+export function isERBOutputNode(node: Node): node is ERBOutputNode {
+  if (!isERBNode(node)) return false
   if (!node.tag_opening?.value) return false
 
   return ["<%=", "<%=="].includes(node.tag_opening?.value)
