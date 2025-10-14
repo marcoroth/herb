@@ -1,4 +1,4 @@
-# Linter Rule: Enforce body-only elements are placed inside `<body>`
+# Linter Rule: Require content elements inside `<body>`
 
 **Rule:** `html-body-only-elements`
 
@@ -15,15 +15,7 @@ According to the HTML specification, certain elements are meant to contain conte
 - SEO problems as search engines may not properly index misplaced content
 - Validation errors and non-compliant HTML
 
-This rule enforces proper document structure by ensuring semantic and content elements are correctly placed within the `<body>`.
-
-## Restricted Elements
-
-The following elements must be placed inside the `<body>` tag:
-
-- **Structural elements:** `<header>`, `<main>`, `<nav>`, `<section>`, `<footer>`, `<article>`, `<aside>`, `<form>`
-- **Heading elements:** `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>`, `<h6>`
-- **Content elements:** `<p>`, `<ul>`, `<table>`
+This rule enforces proper document structure by ensuring semantic and content elements are correctly placed within the `<body>` element.
 
 ## Examples
 
@@ -35,6 +27,7 @@ The following elements must be placed inside the `<body>` tag:
     <title>Page Title</title>
     <meta charset="utf-8">
   </head>
+
   <body>
     <header>
       <h1>Welcome</h1>
@@ -44,6 +37,7 @@ The following elements must be placed inside the `<body>` tag:
         </ul>
       </nav>
     </header>
+
     <main>
       <article>
         <section>
@@ -55,10 +49,11 @@ The following elements must be placed inside the `<body>` tag:
       </article>
       <aside>
         <form>
-          <input type="text">
+          <input type="text" autocomplete="on">
         </form>
       </aside>
     </main>
+
     <footer>
       <h2>Footer</h2>
     </footer>
@@ -75,7 +70,9 @@ The following elements must be placed inside the `<body>` tag:
     <h1>Welcome</h1>
 
     <p>This should not be here.</p>
+
   </head>
+
   <body>
     <main>Valid content</main>
   </body>
@@ -86,8 +83,11 @@ The following elements must be placed inside the `<body>` tag:
 <html>
   <head>
     <nav>Navigation</nav>
+
     <form>Form</form>
+
   </head>
+
   <body>
   </body>
 </html>
