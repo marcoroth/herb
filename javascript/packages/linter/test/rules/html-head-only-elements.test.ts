@@ -57,6 +57,28 @@ describe("html-head-only-elements", () => {
     `)
   })
 
+  test("passes for head-only elements on the top-level", () => {
+    expectNoOffenses(dedent`
+      <meta>
+      <link>
+      <base>
+      <title></title>
+      <style></style>
+    `)
+  })
+
+  test.todo("fails for head-only elements on the top-level when other body-elements are present", () => {
+    expectNoOffenses(dedent`
+      <meta>
+      <link>
+      <base>
+      <title></title>
+      <style></style>
+
+      <div></div>
+    `)
+  })
+
   test("fails when meta is in body", () => {
     expectError("Element `<meta>` must be placed inside the `<head>` tag.")
 
@@ -136,7 +158,8 @@ describe("html-head-only-elements", () => {
     `)
   })
 
-  test("fails when elements are outside html structure", () => {
+  // TODO: this should be handled in https://github.com/marcoroth/herb/issues/638
+  test.fails("fails when elements are outside html structure", () => {
     expectError("Element `<title>` must be placed inside the `<head>` tag.")
     expectError("Element `<meta>` must be placed inside the `<head>` tag.")
 

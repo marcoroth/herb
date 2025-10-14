@@ -20,6 +20,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
 
   private checkHeadOnlyElement(node: HTMLElementNode, tagName: string): void {
     if (this.insideHead) return
+    if (!this.insideBody) return
     if (!isHeadOnlyTag(tagName)) return
     if (tagName === "title" && this.insideSVG) return
 
@@ -32,6 +33,10 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
 
   private get insideHead(): boolean {
     return this.elementStack.includes("head")
+  }
+
+  private get insideBody(): boolean {
+    return this.elementStack.includes("body")
   }
 
   private get insideSVG(): boolean {
