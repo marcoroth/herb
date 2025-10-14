@@ -8,7 +8,7 @@ hb_string_T hb_string_from_c_string(const char* null_terminated_c_string) {
   hb_string_T string;
 
   string.data = (char*) null_terminated_c_string;
-  string.length = strlen(null_terminated_c_string);
+  string.length = (uint32_t) strlen(null_terminated_c_string);
 
   return string;
 }

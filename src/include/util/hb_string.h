@@ -3,10 +3,11 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct HB_STRING_STRUCT {
   char* data;
-  size_t length;
+  uint32_t length;
 } hb_string_T;
 
 hb_string_T hb_string_from_c_string(const char* null_terminated_c_string);
