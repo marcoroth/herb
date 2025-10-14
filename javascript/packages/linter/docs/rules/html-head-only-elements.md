@@ -8,7 +8,8 @@ Enforce that certain elements only appear inside the `<head>` section of the doc
 
 Elements like `<title>`, `<meta>`, `<base>`, `<link>`, and `<style>` are permitted only inside the `<head>` element. They must not appear inside `<body>` or outside of `<html>`. Placing them elsewhere produces invalid HTML and relies on browser error correction.
 
-**Exception:** `<title>` elements are allowed inside `<svg>` elements for accessibility purposes.
+> [!NOTE] Exception
+> `<title>` elements are allowed inside `<svg>` elements for accessibility purposes.
 
 ## Rationale
 
@@ -41,6 +42,7 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
   <%= favicon_link_tag 'favicon.ico' %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+
   <title><%= content_for?(:title) ? yield(:title) : "Default Title" %></title>
 </head>
 ```
@@ -49,7 +51,7 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
 <body>
   <svg>
     <title>Chart Title</title>
-    <rect width="100" height="100"/>
+    <rect width="100" height="100" />
   </svg>
 </body>
 ```
@@ -70,11 +72,6 @@ Placing these elements outside `<head>` leads to invalid HTML and undefined beha
 
 ```erb
 <body>
-  <%= csrf_meta_tags %>
-  <%= csp_meta_tag %>
-  <%= favicon_link_tag 'favicon.ico' %>
-  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
   <title><%= content_for?(:title) ? yield(:title) : "Default Title" %></title>
 </body>
 ```
