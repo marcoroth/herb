@@ -1,4 +1,5 @@
 import { defaultRules } from "./default-rules.js"
+import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 
@@ -175,12 +176,14 @@ export class Linter {
 
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
+          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
             parseResult.value,
-            offense.location,
+            location,
             (node) => node.type === originalNodeType
           )
+
           if (freshNode) {
             offense.autofixContext.node = freshNode
           } else {
