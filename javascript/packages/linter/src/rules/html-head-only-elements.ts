@@ -19,9 +19,9 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   }
 
   private checkHeadOnlyElement(node: HTMLElementNode, tagName: string): void {
-    if (this.isInHead) return
+    if (this.insideHead) return
     if (!isHeadOnlyTag(tagName)) return
-    if (tagName === "title" && this.isInSVG) return
+    if (tagName === "title" && this.insideSVG) return
 
     this.addOffense(
       `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
@@ -30,11 +30,11 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     )
   }
 
-  private get isInHead(): boolean {
+  private get insideHead(): boolean {
     return this.elementStack.includes("head")
   }
 
-  private get isInSVG(): boolean {
+  private get insideSVG(): boolean {
     return this.elementStack.includes("svg")
   }
 }
