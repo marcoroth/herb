@@ -12,26 +12,31 @@ interface MetaTag {
 }
 
 class MetaNameUniqueVisitor extends BaseRuleVisitor {
+  private elementStack: string[] = []
   private metaTags: MetaTag[] = []
-  private isInsideHead = false
   private currentControlFlowPath: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value?.toLowerCase()
+    const tagName = getTagName(node)?.toLowerCase()
+    if (!tagName) return
 
     if (tagName === "head") {
-      const wasInsideHead = this.isInsideHead
-      this.isInsideHead = true
       this.metaTags = []
-      super.visitHTMLElementNode(node)
-      this.checkForDuplicates()
-      this.isInsideHead = wasInsideHead
-    } else if (tagName === "meta" && this.isInsideHead) {
+    } else if (tagName === "meta" && this.insideHead) {
       this.collectMetaTag(node)
-      super.visitHTMLElementNode(node)
-    } else {
-      super.visitHTMLElementNode(node)
+   }
+
+    this.elementStack.push(tagName)
+    this.visitChildNodes(node)
+    this.elementStack.pop()
+
+    if (tagName === "head") {
+      this.checkForDuplicates()
     }
+  }
+
+  private get insideHead(): boolean {
+    return this.elementStack.includes("head")
   }
 
   private collectMetaTag(node: HTMLElementNode): void {
