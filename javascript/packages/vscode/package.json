@@ -84,6 +84,7 @@
               "html-boolean-attributes-no-value",
               "html-iframe-has-title",
               "html-img-require-alt",
+              "html-input-require-autocomplete",
               "html-navigation-has-label",
               "html-no-aria-hidden-on-focusable",
               "html-no-block-inside-inline",
