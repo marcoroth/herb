@@ -1,0 +1,109 @@
+# Generated from lib/herb/engine/compiler.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Compiler < ::Herb::Visitor
+      attr_reader tokens: untyped
+
+      def initialize: (untyped engine, ?untyped options) -> untyped
+
+      def generate_output: () -> untyped
+
+      def visit_document_node: (untyped node) -> untyped
+
+      def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_open_tag_node: (untyped node) -> untyped
+
+      def visit_html_attribute_node: (untyped node) -> untyped
+
+      def visit_html_attribute_name_node: (untyped node) -> untyped
+
+      def visit_html_attribute_value_node: (untyped node) -> untyped
+
+      def visit_html_close_tag_node: (untyped node) -> untyped
+
+      def visit_html_text_node: (untyped node) -> untyped
+
+      def visit_literal_node: (untyped node) -> untyped
+
+      def visit_whitespace_node: (untyped node) -> untyped
+
+      def visit_html_comment_node: (untyped node) -> untyped
+
+      def visit_html_doctype_node: (untyped node) -> untyped
+
+      def visit_xml_declaration_node: (untyped node) -> untyped
+
+      def visit_cdata_node: (untyped node) -> untyped
+
+      def visit_erb_content_node: (untyped node) -> untyped
+
+      def visit_erb_control_node: (untyped node) ?{ (?) -> untyped } -> untyped
+
+      def visit_erb_if_node: (untyped node) -> untyped
+
+      def visit_erb_else_node: (untyped node) -> untyped
+
+      def visit_erb_unless_node: (untyped node) -> untyped
+
+      def visit_erb_case_node: (untyped node) -> untyped
+
+      def visit_erb_when_node: (untyped node) -> untyped
+
+      def visit_erb_for_node: (untyped node) -> untyped
+
+      def visit_erb_while_node: (untyped node) -> untyped
+
+      def visit_erb_until_node: (untyped node) -> untyped
+
+      def visit_erb_begin_node: (untyped node) -> untyped
+
+      def visit_erb_rescue_node: (untyped node) -> untyped
+
+      def visit_erb_ensure_node: (untyped node) -> untyped
+
+      def visit_erb_end_node: (untyped node) -> untyped
+
+      def visit_erb_case_match_node: (untyped node) -> untyped
+
+      def visit_erb_in_node: (untyped node) -> untyped
+
+      def visit_erb_yield_node: (untyped node) -> untyped
+
+      def visit_erb_block_node: (untyped node) -> untyped
+
+      def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
+
+      private
+
+      def current_context: () -> untyped
+
+      def push_context: (untyped context) -> untyped
+
+      def pop_context: () -> untyped
+
+      def add_context_aware_expression: (untyped code, untyped context) -> untyped
+
+      def process_erb_tag: (untyped node, ?skip_comment_check: untyped) -> untyped
+
+      def add_text: (untyped text) -> untyped
+
+      def add_code: (untyped code) -> untyped
+
+      def add_expression: (untyped code) -> untyped
+
+      def add_expression_escaped: (untyped code) -> untyped
+
+      def optimize_tokens: (untyped tokens) -> untyped
+
+      def process_erb_output: (untyped opening, untyped code) -> untyped
+
+      def should_escape_output?: (untyped opening) -> untyped
+
+      def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
+
+      def handle_whitespace_trimming: (untyped node) -> untyped
+    end
+  end
+end

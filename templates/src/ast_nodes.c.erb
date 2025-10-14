@@ -4,16 +4,16 @@
 #include <prism.h>
 
 #include "include/analyzed_ruby.h"
-#include "include/array.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/token.h"
 #include "include/util.h"
+#include "include/util/hb_array.h"
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T* start_position", "position_T* end_position", "array_T* errors"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors"] -%>
 
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>) {
   <%= node.struct_type %>* <%= node.human %> = malloc(sizeof(<%= node.struct_type %>));
@@ -73,15 +73,13 @@ void ast_free_base_node(AST_NODE_T* node) {
   if (node == NULL) { return; }
 
   if (node->errors) {
-    for (size_t i = 0; i < array_size(node->errors); i++) {
-      ERROR_T* child = array_get(node->errors, i);
+    for (size_t i = 0; i < hb_array_size(node->errors); i++) {
+      ERROR_T* child = hb_array_get(node->errors, i);
       if (child != NULL) { error_free(child); }
     }
 
-    array_free(&node->errors);
+    hb_array_free(&node->errors);
   }
-
-  if (node->location) { location_free(node->location); }
 
   free(node);
 }
@@ -101,12 +99,12 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ArrayField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
-    for (size_t i = 0; i < array_size(<%= node.human %>-><%= field.name %>); i++) {
-      AST_NODE_T* child = array_get(<%= node.human %>-><%= field.name %>, i);
+    for (size_t i = 0; i < hb_array_size(<%= node.human %>-><%= field.name %>); i++) {
+      AST_NODE_T* child = hb_array_get(<%= node.human %>-><%= field.name %>, i);
       if (child) { ast_node_free(child); }
     }
 
-    array_free(&<%= node.human %>-><%= field.name %>);
+    hb_array_free(&<%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::StringField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) { free((char*) <%= node.human %>-><%= field.name %>); }

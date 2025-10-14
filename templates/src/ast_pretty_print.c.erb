@@ -1,27 +1,27 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
-#include "include/buffer.h"
 #include "include/errors.h"
 #include "include/pretty_print.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
-void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t relative_indent, hb_buffer_T* buffer) {
   if (!node) { return; }
 
   bool print_location = true;
 
-  buffer_append(buffer, "@ ");
-  buffer_append(buffer, ast_node_human_type(node));
-  buffer_append(buffer, " ");
+  hb_buffer_append(buffer, "@ ");
+  hb_buffer_append(buffer, ast_node_human_type(node));
+  hb_buffer_append(buffer, " ");
 
   if (print_location) { pretty_print_location(node->location, buffer); }
 
-  buffer_append(buffer, "\n");
+  hb_buffer_append(buffer, "\n");
 
   switch (node->type) {
     <%- nodes.each do |node| -%>
@@ -49,16 +49,16 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       pretty_print_label("<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
 
       if (<%= node.human %>-><%= field.name %>) {
-        buffer_append(buffer, "\n");
+        hb_buffer_append(buffer, "\n");
         pretty_print_indent(buffer, indent);
         pretty_print_indent(buffer, relative_indent + 1);
 
-        buffer_append(buffer, "└── ");
+        hb_buffer_append(buffer, "└── ");
         ast_pretty_print_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, indent, relative_indent + 2, buffer);
       } else {
-        buffer_append(buffer, " ∅\n");
+        hb_buffer_append(buffer, " ∅\n");
       }
-      buffer_append(buffer, "\n");
+      hb_buffer_append(buffer, "\n");
 
       <%- when Herb::Template::AnalyzedRubyField -%>
       if (<%= node.human %>-><%= field.name %>) {
@@ -79,12 +79,12 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
         pretty_print_boolean_property("unless_node", <%= node.human %>-><%= field.name %>->has_unless_node, indent, relative_indent,  <%= last %>, buffer);
       } else {
       pretty_print_label("<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
-        buffer_append(buffer, " ∅\n");
+        hb_buffer_append(buffer, " ∅\n");
       }
 
       <%- when Herb::Template::VoidPointerField -%>
       pretty_print_label("<%= field.name %>", indent, relative_indent, <%= last %>, buffer);
-      buffer_append(buffer, " ?\n");
+      hb_buffer_append(buffer, " ?\n");
 
       <%- else -%>
       <%= field.inspect %>

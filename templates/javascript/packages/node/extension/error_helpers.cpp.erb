@@ -4,16 +4,16 @@
 #include "nodes.h"
 
 extern "C" {
-#include "../extension/libherb/include/herb.h"
-#include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/array.h"
-#include "../extension/libherb/include/errors.h"
 #include "../extension/libherb/include/ast_node.h"
 #include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/errors.h"
+#include "../extension/libherb/include/herb.h"
+#include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_array.h"
 }
 
 napi_value ErrorFromCStruct(napi_env env, ERROR_T* error);
-napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
+napi_value ErrorsArrayFromCArray(napi_env env, hb_array_T* array);
 
 <%- errors.each do |error| -%>
 napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* <%= error.human %>) {
@@ -75,13 +75,13 @@ napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* 
 
 <%- end -%>
 
-napi_value ErrorsArrayFromCArray(napi_env env, array_T* array) {
+napi_value ErrorsArrayFromCArray(napi_env env, hb_array_T* array) {
   napi_value result;
   napi_create_array(env, &result);
 
   if (array) {
-    for (size_t i = 0; i < array_size(array); i++) {
-      ERROR_T* error = (ERROR_T*) array_get(array, i);
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      ERROR_T* error = (ERROR_T*) hb_array_get(array, i);
       if (error) {
         napi_value js_error = ErrorFromCStruct(env, error);
         napi_set_element(env, result, i, js_error);

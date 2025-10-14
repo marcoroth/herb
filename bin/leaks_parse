@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-  echo "Usage: $0 <file>"
+  echo "Usage: $0 <file_or_directory>"
   exit 1
 fi
 
@@ -10,4 +10,13 @@ if [[ "$(uname)" != "Darwin" ]]; then
   exit 0
 fi
 
-leaks --atExit -- ./herb parse "$1"
+TARGET="$1"
+
+if [ -d "$TARGET" ]; then
+  while IFS= read -r -d '' file; do
+    echo "Checking $file for leaks..."
+    leaks --atExit -- ./herb parse "$file" --silent || exit 1
+  done < <(find "$TARGET" -name "*.html.erb" -type f -print0)
+else
+  leaks --atExit -- ./herb parse "$TARGET" --silent
+fi

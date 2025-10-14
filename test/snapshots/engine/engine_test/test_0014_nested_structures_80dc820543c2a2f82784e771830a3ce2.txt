@@ -1,0 +1,20 @@
+_buf = ::String.new;
+ _buf << '<div>
+  '.freeze; if logged_in?; _buf << '
+    <ul>
+      '.freeze; items.each do |item|; _buf << '
+        <li>
+          '.freeze; if item.featured?; _buf << '
+            <strong>'.freeze; _buf << (item.name).to_s; _buf << '</strong>
+          '.freeze; else; _buf << '
+            '.freeze; _buf << (item.name).to_s; _buf << '
+          '.freeze; end; _buf << '
+        </li>
+      '.freeze; end; _buf << '
+    </ul>
+  '.freeze; else; _buf << '
+    <p>Please log in</p>
+  '.freeze; end; _buf << '
+</div>
+'.freeze;
+_buf.to_s

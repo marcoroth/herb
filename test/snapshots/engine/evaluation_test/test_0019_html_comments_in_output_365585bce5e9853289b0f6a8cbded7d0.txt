@@ -1,0 +1,5 @@
+<div>
+  <!-- HTML comment -->
+  <p>Content</p>
+  <!-- Comment with ERB -->
+</div>

@@ -6,7 +6,7 @@
 require "optparse"
 
 class Herb::CLI
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug
 
   def initialize(args)
     @args = args
@@ -86,6 +86,8 @@ class Herb::CLI
       Commands:
         bundle exec herb lex [file]         Lex a file.
         bundle exec herb parse [file]       Parse a file.
+        bundle exec herb compile [file]     Compile ERB template to Ruby code.
+        bundle exec herb render [file]      Compile and render ERB template to final output.
         bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
         bundle exec herb ruby [file]        Extract Ruby from a file.
         bundle exec herb html [file]        Extract HTML from a file.
@@ -115,6 +117,10 @@ class Herb::CLI
                   exit(has_issues ? 1 : 0)
                 when "parse"
                   Herb.parse(file_content)
+                when "compile"
+                  compile_template
+                when "render"
+                  render_template
                 when "lex"
                   Herb.lex(file_content)
                 when "ruby"
@@ -192,6 +198,22 @@ class Herb::CLI
       parser.on("--local", "Use localhost for playground command instead of herb-tools.dev") do
         self.local = true
       end
+
+      parser.on("--escape", "Enable HTML escaping by default (for compile command)") do
+        self.escape = true
+      end
+
+      parser.on("--no-escape", "Disable HTML escaping by default (for compile command)") do
+        self.no_escape = true
+      end
+
+      parser.on("--freeze", "Add frozen string literal pragma (for compile command)") do
+        self.freeze = true
+      end
+
+      parser.on("--debug", "Enable debug mode with ERB expression wrapping (for compile command)") do
+        self.debug = true
+      end
     end
   end
 
@@ -200,6 +222,140 @@ class Herb::CLI
   end
 
   private
+
+  def compile_template
+    require_relative "engine"
+
+    begin
+      options = {}
+      options[:filename] = @file if @file
+      options[:escape] = no_escape ? false : true
+      options[:freeze] = true if freeze
+
+      if debug
+        options[:debug] = true
+        options[:debug_filename] = @file if @file
+      end
+
+      engine = Herb::Engine.new(file_content, options)
+
+      if json
+        result = {
+          success: true,
+          source: engine.src,
+          filename: engine.filename,
+          bufvar: engine.bufvar,
+        }
+
+        puts result.to_json
+      elsif silent
+        puts "Success"
+      else
+        puts engine.src
+      end
+
+      exit(0)
+    rescue Herb::Engine::CompilationError => e
+      if json
+        result = {
+          success: false,
+          error: e.message,
+          filename: @file,
+        }
+        puts result.to_json
+      elsif silent
+        puts "Failed"
+      else
+        puts e.message
+      end
+
+      exit(1)
+    rescue StandardError => e
+      if json
+        result = {
+          success: false,
+          error: "Unexpected error: #{e.class}: #{e.message}",
+          filename: @file,
+        }
+        puts result.to_json
+      elsif silent
+        puts "Failed"
+      else
+        puts "Unexpected error: #{e.class}: #{e.message}"
+        puts e.backtrace.first(5).join("\n") unless silent
+      end
+
+      exit(1)
+    end
+  end
+
+  def render_template
+    require_relative "engine"
+
+    begin
+      options = {}
+      options[:filename] = @file if @file
+      options[:escape] = no_escape ? false : true
+      options[:freeze] = true if freeze
+
+      if debug
+        options[:debug] = true
+        options[:debug_filename] = @file if @file
+      end
+
+      engine = Herb::Engine.new(file_content, options)
+      compiled_code = engine.src
+
+      rendered_output = eval(compiled_code)
+
+      if json
+        result = {
+          success: true,
+          output: rendered_output,
+          filename: engine.filename,
+        }
+
+        puts result.to_json
+      elsif silent
+        puts "Success"
+      else
+        puts rendered_output
+      end
+
+      exit(0)
+    rescue Herb::Engine::CompilationError => e
+      if json
+        result = {
+          success: false,
+          error: e.message,
+          filename: @file,
+        }
+        puts result.to_json
+      elsif silent
+        puts "Failed"
+      else
+        puts e.message
+      end
+
+      exit(1)
+    rescue StandardError => e
+      if json
+        result = {
+          success: false,
+          error: "Unexpected error: #{e.class}: #{e.message}",
+          filename: @file,
+        }
+        puts result.to_json
+      elsif silent
+        puts "Failed"
+      else
+        puts "Unexpected error: #{e.class}: #{e.message}"
+        puts e.backtrace.first(5).join("\n") unless silent
+      end
+
+      exit(1)
+    end
+  end
 
   def print_version
     puts Herb.version

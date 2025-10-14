@@ -50,6 +50,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("handles boolean attributes", () => {
+    const { output, exitCode } = runLinter("boolean-attribute.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(0)
+  })
+
   test("formats success output correctly", () => {
     const { output, exitCode } = runLinter("clean-file.html.erb", "--no-wrap-lines")
 
@@ -73,6 +80,13 @@ describe("CLI Output Formatting", () => {
 
   test("displays rule offenses when showing all rules", () => {
     const { output, exitCode } = runLinter("few-rule-offenses.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("diplays only parsers errors if one is present", () => {
+    const { output, exitCode } = runLinter("parser-errors.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)

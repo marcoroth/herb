@@ -4,12 +4,16 @@ This page contains documentation for all Herb Linter rules.
 
 ## Available Rules
 
+- [`erb-comment-syntax`](./erb-comment-syntax.md) - Disallow Ruby comments immediately after ERB tags
+- [`erb-no-case-node-children`](./erb-no-case-node-children.md) - Don't use `children` for `case/when` and `case/in` nodes
 - [`erb-no-empty-tags`](./erb-no-empty-tags.md) - Disallow empty ERB tags
+- [`erb-no-extra-newline`](./erb-no-extra-newline.md) - Disallow extra newlines.
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-requires-trailing-newline`](./erb-requires-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
+- [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
 - [`html-aria-label-is-well-formatted`](./html-aria-label-is-well-formatted.md) - `aria-label` must be well-formatted
@@ -22,6 +26,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-avoid-both-disabled-and-aria-disabled`](./html-avoid-both-disabled-and-aria-disabled.md) - Avoid using both `disabled` and `aria-disabled` attributes
 - [`html-boolean-attributes-no-value`](./html-boolean-attributes-no-value.md) - Prevents values on boolean attributes
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
+- [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
 - [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
 - [`html-no-aria-hidden-on-focusable`](./html-no-aria-hidden-on-focusable.md) - Focusable elements should not have `aria-hidden="true"`
@@ -31,10 +36,11 @@ This page contains documentation for all Herb Linter rules.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values
-- [`html-no-self-closing`](./html-no-self-closing.md.md) - Disallow self closing tags
+- [`html-no-self-closing`](./html-no-self-closing.md) - Disallow self closing tags
+- [`html-no-space-in-tag`](./html-no-space-in-tag.md) - Disallow spaces in HTML tags
 - [`html-no-title-attribute`](./html-no-title-attribute.md) - Avoid using the `title` attribute
-- [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`html-no-underscores-in-attribute-names`](./html-no-underscores-in-attribute-names.md) - Disallow underscores in HTML attribute names
+- [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
 

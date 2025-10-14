@@ -1,0 +1,70 @@
+# Generated from lib/herb/engine/debug_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class DebugVisitor < Herb::Visitor
+      def initialize: (?file_path: untyped, ?project_path: untyped) -> untyped
+
+      def visit_document_node: (untyped node) -> untyped
+
+      def visit_html_element_node: (untyped node) -> untyped
+
+      def visit_html_attribute_node: (untyped node) -> untyped
+
+      def visit_html_comment_node: (untyped node) -> untyped
+
+      def visit_html_doctype_node: (untyped node) -> untyped
+
+      def visit_erb_content_node: (untyped node) -> untyped
+
+      def visit_erb_yield_node: (untyped _node) -> untyped
+
+      private
+
+      def calculate_relative_path: () -> untyped
+
+      def wrap_all_erb_nodes: (untyped node) -> untyped
+
+      # Creates a dummy location for AST nodes that don't need real location info
+      # : () -> Herb::Location
+      def dummy_location: () -> Herb::Location
+
+      # Creates a dummy range for tokens that don't need real range info
+      # : () -> Herb::Range
+      def dummy_range: () -> Herb::Range
+
+      def replace_erb_nodes_recursive: (untyped node) -> untyped
+
+      def find_top_level_elements: (untyped document_node) -> untyped
+
+      def should_add_debug_attributes_to_element?: (untyped open_tag_node) -> untyped
+
+      def find_parent_element_for_open_tag: (untyped open_tag_node) -> untyped
+
+      def add_debug_attributes_to_element: (untyped open_tag_node) -> untyped
+
+      def create_debug_attribute: (untyped name, untyped value) -> untyped
+
+      def create_token: (untyped type, untyped value) -> untyped
+
+      def create_debug_span_for_erb: (untyped erb_node) -> untyped
+
+      def determine_view_type: () -> untyped
+
+      def partial?: () -> untyped
+
+      def component?: () -> untyped
+
+      def in_head_context?: () -> untyped
+
+      def in_script_or_style_context?: () -> untyped
+
+      def in_excluded_context?: () -> untyped
+
+      def erb_output?: (untyped opening) -> untyped
+
+      # TODO: Rewrite using Prism Nodes once available
+      def complex_rails_helper?: (untyped code) -> untyped
+    end
+  end
+end

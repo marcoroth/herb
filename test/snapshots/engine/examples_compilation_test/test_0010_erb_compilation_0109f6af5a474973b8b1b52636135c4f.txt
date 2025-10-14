@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ _buf << '<div>
+  <h1 class="'.freeze; _buf << ::Herb::Engine.attr((classes)); _buf << '">
+    '.freeze; _buf << (title).to_s; _buf << '
+  </h1>
+</div>
+'.freeze;
+_buf.to_s

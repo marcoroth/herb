@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<!DoCTyPe '.freeze; hello world; _buf << ' hello world this is inside the doctype>
+<!DOCTYPE two>
+<!doctype>
+<!dOcTyPe>
+'.freeze;
+_buf.to_s

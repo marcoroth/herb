@@ -1,0 +1,47 @@
+# Generated from lib/herb/engine/error_formatter.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ErrorFormatter
+      CONTEXT_LINES: ::Integer
+
+      def initialize: (untyped source, untyped errors, ?untyped options) -> untyped
+
+      def format_all: () -> untyped
+
+      def format_all_with_highlighter: () -> untyped
+
+      def format_all_without_highlighter: () -> untyped
+
+      def format_error: (untyped error, untyped number) -> untyped
+
+      private
+
+      def format_source_context: (untyped error) -> untyped
+
+      def format_error_details: (untyped error) -> untyped
+
+      def inline_hint?: (untyped error) -> untyped
+
+      def format_inline_hint: (untyped error) -> untyped
+
+      def find_highlighter_path: () -> untyped
+
+      def can_use_highlighter?: () -> untyped
+
+      def run_highlighter: (untyped file_path, untyped line_num, untyped context_lines) -> untyped
+
+      def run_highlighter_with_diagnostics: (untyped file_path, ?untyped context_lines) -> untyped
+
+      def herb_error_to_diagnostic: (untyped error) -> untyped
+
+      def format_error_header: (untyped error, untyped number) -> untyped
+
+      def format_suggestions: (untyped errors) -> untyped
+
+      def format_source_context_basic: (untyped error) -> untyped
+
+      def get_error_suggestion: (untyped error) -> untyped
+    end
+  end
+end

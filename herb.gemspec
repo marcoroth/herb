@@ -26,10 +26,13 @@ Gem::Specification.new do |spec|
     "Makefile",
     "Rakefile",
     "README.md",
+    "config.yml",
     "lib/**/*.rb",
     "sig/**/*.rbs",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
+    "templates/**/*.{rb,erb}",
+    "vendor/prism/**/*",
     "exe/*"
   ]
 

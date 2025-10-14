@@ -31,6 +31,41 @@ module SnapshotUtils
     result
   end
 
+  def assert_compiled_snapshot(source, options = {})
+    require_relative "../lib/herb/engine"
+
+    engine = Herb::Engine.new(source, options)
+    expected = engine.src
+
+    snapshot_key = { source: source, options: options }.to_s
+    assert_snapshot_matches(expected, snapshot_key)
+
+    engine
+  end
+
+  def assert_evaluated_snapshot(source, locals = {}, options = {})
+    require_relative "../lib/herb/engine"
+
+    engine = Herb::Engine.new(source, options)
+    binding_context = Object.new
+
+    locals.each do |key, value|
+      binding_context.define_singleton_method(key) { value }
+    end
+
+    result = binding_context.instance_eval(engine.src)
+
+    snapshot_key = {
+      source: source,
+      locals: locals,
+      options: options,
+    }.to_s
+
+    assert_snapshot_matches(result, snapshot_key)
+
+    { engine: engine, result: result }
+  end
+
   def snapshot_changed?(content, source, options = {})
     if snapshot_file(source, options).exist?
       previous_content = snapshot_file(source, options).read
@@ -110,7 +145,7 @@ module SnapshotUtils
 
     content_hash = Digest::MD5.hexdigest(source || "#{source.class}-#{source.inspect}")
 
-    test_name = name.gsub(" ", "_").gsub("/", "_")
+    test_name = sanitize_name_for_filesystem(name)
 
     if options && !options.empty?
       options_hash = Digest::MD5.hexdigest(options.inspect)
@@ -142,6 +177,23 @@ module SnapshotUtils
   end
 
   private
+
+  def sanitize_name_for_filesystem(name)
+    [
+      # ntfs reserved characters
+      # https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+      ["<", "lt"],
+      [">", "gt"],
+      [":", ""],
+      ["/", "_"],
+      ["\\", ""],
+      ["|", ""],
+      ["?", ""],
+      ["*", ""],
+
+      [" ", "_"]
+    ].inject(name) { |name, substitution| name.gsub(substitution[0], substitution[1]) }
+  end
 
   def underscore(string)
     string.gsub("::", "/")

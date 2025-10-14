@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<!DOCTYPE html>
+<html>
+  <head><title>Test</title></head>
+</html>
+'.freeze;
+_buf.to_s

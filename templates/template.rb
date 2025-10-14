@@ -30,7 +30,7 @@ module Herb
       end
 
       def c_type
-        "array_T*"
+        "hb_array_T*"
       end
 
       def c_item_type
@@ -386,6 +386,9 @@ module Herb
 
     def self.gitignore_lines
       @gitignore_lines ||= File.readlines(".gitignore").map(&:chomp)
+    rescue Errno::ENOENT
+      puts "[Herb Templates] Couldn't find .gitignore"
+      []
     end
 
     def self.nodes

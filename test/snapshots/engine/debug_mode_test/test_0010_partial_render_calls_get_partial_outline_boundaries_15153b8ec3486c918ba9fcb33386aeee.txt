@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << (render partial: "user_card", locals: { user: @user }).to_s;
+_buf.to_s

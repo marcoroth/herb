@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ while i < 10; _buf << '
+  <b>'.freeze; _buf << (i).to_s; _buf << '</b> is less than 10
+  '.freeze; i += 1; _buf << '
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

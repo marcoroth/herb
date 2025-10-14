@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ _buf << link_to root_path do; _buf << '
+  <div class="card">
+    Test
+  </div>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

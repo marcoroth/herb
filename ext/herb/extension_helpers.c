@@ -20,32 +20,26 @@ const char* check_string(VALUE value) {
   return RSTRING_PTR(value);
 }
 
-VALUE rb_position_from_c_struct(position_T* position) {
-  if (!position) { return Qnil; }
-
+VALUE rb_position_from_c_struct(position_T position) {
   VALUE args[2];
-  args[0] = SIZET2NUM(position->line);
-  args[1] = SIZET2NUM(position->column);
+  args[0] = UINT2NUM(position.line);
+  args[1] = UINT2NUM(position.column);
 
   return rb_class_new_instance(2, args, cPosition);
 }
 
-VALUE rb_location_from_c_struct(location_T* location) {
-  if (!location) { return Qnil; }
-
+VALUE rb_location_from_c_struct(location_T location) {
   VALUE args[2];
-  args[0] = rb_position_from_c_struct(location->start);
-  args[1] = rb_position_from_c_struct(location->end);
+  args[0] = rb_position_from_c_struct(location.start);
+  args[1] = rb_position_from_c_struct(location.end);
 
   return rb_class_new_instance(2, args, cLocation);
 }
 
-VALUE rb_range_from_c_struct(range_T* range) {
-  if (!range) { return Qnil; }
-
+VALUE rb_range_from_c_struct(range_T range) {
   VALUE args[2];
-  args[0] = SIZET2NUM(range->from);
-  args[1] = SIZET2NUM(range->to);
+  args[0] = UINT2NUM(range.from);
+  args[1] = UINT2NUM(range.to);
 
   return rb_class_new_instance(2, args, cRange);
 }
@@ -53,24 +47,24 @@ VALUE rb_range_from_c_struct(range_T* range) {
 VALUE rb_token_from_c_struct(token_T* token) {
   if (!token) { return Qnil; }
 
-  VALUE value = token->value ? rb_str_new_cstr(token->value) : Qnil;
+  VALUE value = token->value ? rb_utf8_str_new_cstr(token->value) : Qnil;
 
   VALUE range = rb_range_from_c_struct(token->range);
   VALUE location = rb_location_from_c_struct(token->location);
-  VALUE type = rb_str_new_cstr(token_type_to_string(token->type));
+  VALUE type = rb_utf8_str_new_cstr(token_type_to_string(token->type));
 
   VALUE args[4] = { value, range, location, type };
 
   return rb_class_new_instance(4, args, cToken);
 }
 
-VALUE create_lex_result(array_T* tokens, VALUE source) {
+VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
   VALUE value = rb_ary_new();
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    token_T* token = hb_array_get(tokens, i);
     if (token != NULL) { rb_ary_push(value, rb_token_from_c_struct(token)); }
   }
 
@@ -91,7 +85,7 @@ VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
 
 VALUE read_file_to_ruby_string(const char* file_path) {
   char* source = herb_read_file(file_path);
-  VALUE source_value = rb_str_new_cstr(source);
+  VALUE source_value = rb_utf8_str_new_cstr(source);
 
   free(source);
 

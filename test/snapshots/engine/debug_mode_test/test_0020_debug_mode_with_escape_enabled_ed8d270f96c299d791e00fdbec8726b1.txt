@@ -1,0 +1,3 @@
+__herb = ::Herb::Engine; _buf = ::String.new;
+ _buf << '<p data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">User input: <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= user_content %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="16" style="display: contents;">'.freeze; _buf << __herb.h((user_content)); _buf << '</span></p>'.freeze;
+_buf.to_s

@@ -4,17 +4,17 @@
 #include "error_helpers.h"
 #include "extension_helpers.h"
 
-#include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
+#include "../src/include/herb.h"
 #include "../src/include/location.h"
+#include "../src/include/token.h"
+#include "../src/include/util/hb_array.h"
 
 using namespace emscripten;
 
 val NodeFromCStruct(AST_NODE_T* node);
-val NodesArrayFromCArray(array_T* array);
+val NodesArrayFromCArray(hb_array_T* array);
 
 <%- nodes.each do |node| -%>
 val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
@@ -62,13 +62,13 @@ val NodeFromCStruct(AST_NODE_T* node) {
   }
 }
 
-val NodesArrayFromCArray(array_T* array) {
+val NodesArrayFromCArray(hb_array_T* array) {
   if (!array) return val::null();
 
   val jsArray = val::array();
 
-  for (size_t i = 0; i < array_size(array); i++) {
-    AST_NODE_T* child_node = (AST_NODE_T*) array_get(array, i);
+  for (size_t i = 0; i < hb_array_size(array); i++) {
+    AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
       jsArray.set(i, NodeFromCStruct(child_node));

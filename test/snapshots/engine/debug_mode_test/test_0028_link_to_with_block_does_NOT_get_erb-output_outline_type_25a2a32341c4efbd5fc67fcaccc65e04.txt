@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << link_to "/users" do; _buf << 'View Users'.freeze; end;
+_buf.to_s

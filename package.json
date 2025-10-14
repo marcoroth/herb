@@ -27,6 +27,7 @@
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
     "rollup": "^4.47.1",
+    "rollup-plugin-postcss": "^4.0.2",
     "tsx": "^4.20.4",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",

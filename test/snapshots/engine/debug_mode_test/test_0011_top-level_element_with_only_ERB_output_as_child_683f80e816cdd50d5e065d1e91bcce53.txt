@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb"><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= hello %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="5" style="display: contents;">'.freeze; _buf << (hello).to_s; _buf << '</span></h1>'.freeze;
+_buf.to_s

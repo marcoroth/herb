@@ -11,6 +11,10 @@ export class Position {
     return new Position(position.line, position.column)
   }
 
+  static get zero() {
+    return new Position(0, 0)
+  }
+
   constructor(line: number, column: number) {
     this.line = line
     this.column = column

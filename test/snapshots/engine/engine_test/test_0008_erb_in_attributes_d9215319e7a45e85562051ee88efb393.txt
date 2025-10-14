@@ -1,0 +1,4 @@
+_buf = ::String.new;
+ _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '" data-id="'.freeze; _buf << ::Herb::Engine.attr((item.id)); _buf << '">Content</div>
+'.freeze;
+_buf.to_s
