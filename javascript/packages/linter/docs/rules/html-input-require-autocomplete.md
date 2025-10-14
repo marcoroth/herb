@@ -1,32 +1,64 @@
-# Linter Rule: Require `autocomplete` attribute on `<input>` tags
+# Linter Rule: Require `autocomplete` attributes on `<input>` tags
 
 **Rule:** `html-input-require-autocomplete`
 
-This linter prevents the usage of certain types of HTML `<input>` without an `autocomplete` argument: `color`, `date`, `datetime-local`, `email`, `month`, `number`, `password`, `range`, `search`, `tel`, `text`, `time`, `url`, or `week`.
+## Description
+
+Require an `autocomplete` attribute on `<input>` elements with types that support autocomplete functionality. This rule ensures that developers explicitly declare autocomplete behavior for form inputs.
+
+
+## Rationale
+
+The HTML `autocomplete` attribute helps users complete forms by using data stored in the browser. This is particularly useful for people with motor disabilities or cognitive impairment who may have difficulties filling out forms online. Without an explicit `autocomplete` attribute, behavior varies across browsers and can lead to inconsistent user experiences.
+
+If you prefer not to specify a specific autocomplete value, use `autocomplete="on"` to enable browser defaults or `autocomplete="off"` to explicitly disable it.
+
+## Affected Input Types
+
+This rule applies to the following input types:
+
+- `color`
+- `date`
+- `datetime-local`
+- `email`
+- `month`
+- `number`
+- `password`
+- `range`
+- `search`
+- `tel`
+- `text`
+- `time`
+- `url`
+- `week`
+
 
 ## Examples
 
-### ❌ Incorrect
+### ✅ Good
 
 ```erb
-<!-- TODO: Add incorrect example -->
+<input type="email" autocomplete="email">
+
+<input type="url" autocomplete="off">
+
+<input type="password" autocomplete="on">
 ```
 
-### ✅ Correct
+
+### 🚫 Bad
 
 ```erb
-<!-- TODO: Add correct example -->
+<input type="email">
+
+<input type="url">
+
+<input type="password">
 ```
-
-## Configuration
-
-This rule has no configuration options.
 
 ## References
 
-* [W3C: Attribute Autocomplete](https://www.w3schools.com/tags/att_autocomplete.asp)
-* [MDN: HTML attribute: autocomplete](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Attributes/autocomplete)
-* [W3C: HTML `<input>` autocomplete tag](https://www.w3schools.com/tags/att_input_autocomplete.asp)
-* [W3C: Accessibility Autocomplete](https://www.w3schools.com/accessibility/accessibility_autocomplete.php)
-* [WCAG: Technique H98](https://www.w3.org/WAI/WCAG21/Techniques/html/H98)
+* [Inspiration: ERB Lint `RequireInputAutocomplete` rule](https://github.com/shopify/erb_lint?tab=readme-ov-file#requireinputautocomplete)
+* [HTML attribute: autocomplete](https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/autocomplete)
+* [WCAG: Using HTML autocomplete attributes](https://www.w3.org/WAI/WCAG21/Techniques/html/H98)
 * [HTML Specification: Autofill](https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill)
