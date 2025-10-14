@@ -1,16 +1,15 @@
-import { Herb } from "@herb-tools/node-wasm"
-import { beforeAll, describe, expect, test } from "vitest"
 import dedent from "dedent"
-import { Linter } from "../../src/linter.js"
+
+import { describe, test } from "vitest"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
 import { HTMLMetaNameMustBeUniqueRule } from "../../src/rules/html-meta-name-must-be-unique.js"
 
-describe("html-meta-name-must-be-unique", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLMetaNameMustBeUniqueRule)
 
+describe("html-meta-name-must-be-unique", () => {
   test("passes when meta names are unique", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <html>
         <head>
           <meta name="description" content="Welcome to our site">
@@ -21,18 +20,11 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("passes when http-equiv values are unique", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <html>
         <head>
           <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
@@ -43,18 +35,11 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("passes when mixing name and http-equiv attributes", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <html>
         <head>
           <meta name="description" content="Welcome to our site">
@@ -65,18 +50,13 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("fails when meta names are duplicated", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,22 +66,13 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
-    expect(lintResult.offenses[0].severity).toBe("error")
+    `)
   })
 
   test("fails when http-equiv values are duplicated", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `http-equiv="X-UA-Compatible"`. `http-equiv` values should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -111,22 +82,13 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `http-equiv="X-UA-Compatible"`. `http-equiv` values should be unique within the `<head>` section.')
-    expect(lintResult.offenses[0].severity).toBe("error")
+    `)
   })
 
   test("handles case insensitive duplicates", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="Description"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="Description" content="Welcome to our site">
@@ -136,21 +98,14 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="Description"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("fails with multiple duplicates", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    expectError('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -162,24 +117,11 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
-
-    expect(lintResult.offenses[1].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[1].message).toBe('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("ignores meta tags without name or http-equiv attributes", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <html>
         <head>
           <meta charset="UTF-8">
@@ -191,18 +133,11 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("only checks meta tags inside head", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -212,18 +147,13 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("works with ERB templates", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="description" content="<%= @page_description %>">
@@ -233,21 +163,13 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="description"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("handles self-closing meta tags", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -257,21 +179,14 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("handles mixed name and http-equiv duplicates", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    expectError('Duplicate `<meta>` tag with `http-equiv="refresh"`. `http-equiv` values should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <html>
         <head>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -283,24 +198,11 @@ describe("html-meta-name-must-be-unique", () => {
           <h1>Welcome</h1>
         </body>
       </html>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
-
-    expect(lintResult.offenses[1].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[1].message).toBe('Duplicate `<meta>` tag with `http-equiv="refresh"`. `http-equiv` values should be unique within the `<head>` section.')
+    `)
   })
 
   test("handles erb conditionals", () => {
-    const html = dedent`
+    expectNoOffenses(dedent`
       <head>
         <% if mobile? %>
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -310,18 +212,13 @@ describe("html-meta-name-must-be-unique", () => {
           <meta name="viewport" content="width=1024">
         <% end %>
       </head>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("detects duplicates when meta tags are outside and inside erb conditionals", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <head>
         <meta name="viewport" content="width=1024">
 
@@ -329,21 +226,13 @@ describe("html-meta-name-must-be-unique", () => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <% end %>
       </head>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("detects duplicates between global meta tag and erb else branch", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <head>
         <meta name="viewport" content="width=1024">
 
@@ -353,21 +242,13 @@ describe("html-meta-name-must-be-unique", () => {
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <% end %>
       </head>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 
   test("detects duplicates when meta tag is outside erb conditional block", () => {
-    const html = dedent`
+    expectError('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+
+    assertOffenses(dedent`
       <head>
         <% if mobile? %>
           <meta http-equiv="refresh" content="30">
@@ -377,16 +258,6 @@ describe("html-meta-name-must-be-unique", () => {
 
         <meta name="viewport" content="width=1024">
       </head>
-    `
-
-    const linter = new Linter(Herb, [HTMLMetaNameMustBeUniqueRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-meta-name-must-be-unique")
-    expect(lintResult.offenses[0].message).toBe('Duplicate `<meta>` tag with `name="viewport"`. Meta names should be unique within the `<head>` section.')
+    `)
   })
 })
