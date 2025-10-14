@@ -22,7 +22,7 @@ interface BranchState {
   previousBranchMetas: MetaTag[]
 }
 
-class MetaNameUniqueVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
+class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAutofixContext, ControlFlowState, BranchState> {
   private elementStack: string[] = []
   private documentMetas: MetaTag[] = []
   private currentBranchMetas: MetaTag[] = []
@@ -168,12 +168,12 @@ class MetaNameUniqueVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
   }
 }
 
-export class HTMLMetaNameMustBeUniqueRule extends ParserRule {
+export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
-  name = "html-meta-name-must-be-unique"
+  name = "html-no-duplicate-meta-names"
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new MetaNameUniqueVisitor(this.name, context)
+    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
 
     visitor.visit(result.value)
 

@@ -27,12 +27,12 @@ import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
 import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
-import { HTMLMetaNameMustBeUniqueRule } from "./rules/html-meta-name-must-be-unique.js"
 // import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
+import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
@@ -75,12 +75,12 @@ export const defaultRules: RuleClass[] = [
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
   HTMLInputRequireAutocompleteRule,
-  HTMLMetaNameMustBeUniqueRule,
   // HTMLNavigationHasLabelRule,
   HTMLNoAriaHiddenOnFocusableRule,
   // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
+  HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoNestedLinksRule,

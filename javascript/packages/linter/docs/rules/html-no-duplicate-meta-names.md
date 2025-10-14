@@ -1,6 +1,6 @@
 # Linter Rule: Duplicate `<meta>` name attributes are not allowed
 
-**Rule:** `html-meta-name-must-be-unique`
+**Rule:** `html-no-duplicate-meta-names`
 
 ## Description
 

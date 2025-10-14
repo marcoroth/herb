@@ -30,12 +30,12 @@ This page contains documentation for all Herb Linter rules.
 - [`html-iframe-has-title`](./html-iframe-has-title.md) - `iframe` elements must have a `title` attribute
 - [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
-- [`html-meta-name-must-be-unique`](./html-meta-name-must-be-unique.md) - Duplicate `<meta>` name attributes are not allowed
 - [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
 - [`html-no-aria-hidden-on-focusable`](./html-no-aria-hidden-on-focusable.md) - Focusable elements should not have `aria-hidden="true"`
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
 - [`html-no-duplicate-attributes`](./html-no-duplicate-attributes.md) - Prevents duplicate attributes on HTML elements
 - [`html-no-duplicate-ids`](./html-no-duplicate-ids.md) - Prevents duplicate IDs within a document
+- [`html-no-duplicate-meta-names`](./html-no-duplicate-meta-names.md) - Duplicate `<meta>` name attributes are not allowed.
 - [`html-no-empty-attributes`](./html-no-empty-attributes.md) - Attributes must not have empty values
 - [`html-no-nested-links`](./html-no-nested-links.md) - Prevents nested anchor tags
 - [`html-no-positive-tab-index`](./html-no-positive-tab-index.md) - Avoid positive `tabindex` values

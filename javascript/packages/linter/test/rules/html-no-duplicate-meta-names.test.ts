@@ -3,11 +3,11 @@ import dedent from "dedent"
 import { describe, test } from "vitest"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-import { HTMLMetaNameMustBeUniqueRule } from "../../src/rules/html-meta-name-must-be-unique.js"
+import { HTMLNoDuplicateMetaNamesRule } from "../../src/rules/html-no-duplicate-meta-names.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLMetaNameMustBeUniqueRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoDuplicateMetaNamesRule)
 
-describe("html-meta-name-must-be-unique", () => {
+describe("html-no-duplicate-meta-names", () => {
   test("passes when meta names are unique", () => {
     expectNoOffenses(dedent`
       <html>
