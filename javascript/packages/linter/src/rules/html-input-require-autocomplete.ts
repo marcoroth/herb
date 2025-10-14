@@ -39,7 +39,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
     if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.has(typeValue)) return
 
     this.addOffense(
-      "`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.",
+      "Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.",
       typeAttribute.location
     )
   }

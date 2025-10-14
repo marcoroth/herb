@@ -21,7 +21,7 @@ describe("HTMLInputRequireAutocompleteRule", () => {
   })
 
   test("when input type requires autocomplete attribute and it is not present", () => {
-    expectError("`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.")
+    expectError("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
 
     assertOffenses(dedent`
       <input type="email">
@@ -53,7 +53,7 @@ describe("HTMLInputRequireAutocompleteRule", () => {
       })
 
       test(`usage of "${formHelper}" helper without autocomplete value`, () => {
-        expectError("`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.")
+        expectError("Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.")
 
         expectNoOffenses(dedent`
           <%= ${formHelper} 'foo' autocomplete: 'foo' %>
