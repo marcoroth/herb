@@ -1110,6 +1110,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
           parser,
           TOKEN_AMPERSAND,
           TOKEN_AT,
+          TOKEN_BACKSLASH,
           TOKEN_BACKTICK,
           TOKEN_CHARACTER,
           TOKEN_COLON,
@@ -1134,7 +1135,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
       parser,
       "Unexpected token",
       "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, "
-      "TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE",
+      "TOKEN_NBSP, TOKEN_AT, TOKEN_BACKSLASH, or TOKEN_NEWLINE",
       errors
     );
   }

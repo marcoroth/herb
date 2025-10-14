@@ -145,5 +145,16 @@ module Parser
     test "backtick with HTML tags - issue 467" do
       assert_parsed_snapshot("a `<b></b>` c")
     end
+
+    test "backslash-prefixed text stays literal - issue 635" do
+      assert_parsed_snapshot("<p>\\Asome-regexp\\z</p>")
+    end
+
+    # https://github.com/lobsters/lobsters/blob/75f9a53077d5aeaeadbb8271def0479dd8fcd761/app/views/domains/edit.html.erb#L11
+    test "backslash-prefixed text - issue 633" do
+      assert_parsed_snapshot <<~HTML
+        <p class="help">Regexp with captures, must consume whole string like: <kbd>\\Ahttps?://github.com/+([^/]+).*\\z</kbd></p>
+      HTML
+    end
   end
 end
