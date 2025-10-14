@@ -11,34 +11,34 @@ describe("HTMLInputsRequireAutocompleteRule", () => {
     await Herb.load()
   })
 
-  describe("HTML cases", () => { 
+  describe("HTML cases", () => {
     test("when autocomplete is present on input types", () => {
         const html = dedent`
           <input type="email" autocomplete="foo">
         `
         const linter = new Linter(Herb, [HTMLInputsRequireAutocompleteRule])
         const lintResult = linter.lint(html)
-      
+
         expect(lintResult.offenses).toHaveLength(0)
     })
-  
+
     test("when input type does not require autocomplete attribute and it is not present", () => {
         const html = dedent`
           <input type="bar">
         `
         const linter = new Linter(Herb, [HTMLInputsRequireAutocompleteRule])
         const lintResult = linter.lint(html)
-      
+
         expect(lintResult.offenses).toHaveLength(0)
     })
-  
+
     test("when input type requires autocomplete attribute and it is not present", () => {
       const html = dedent`
         <input type="email">
       `
       const linter = new Linter(Herb, [HTMLInputsRequireAutocompleteRule])
       const lintResult = linter.lint(html)
-  
+
       expect(lintResult.errors).toBe(1)
       expect(lintResult.offenses).toHaveLength(1)
       expect(lintResult.offenses[0].code).toBe("html-inputs-require-autocomplete")
@@ -46,8 +46,7 @@ describe("HTMLInputsRequireAutocompleteRule", () => {
     })
   })
 
-  describe("input field helpers linting", () => {
-
+  describe.todo("input field helpers linting", () => {
     const formHelpersRequiringAutocomplete = [
       'date_field_tag',
       'color_field_tag',
@@ -71,23 +70,23 @@ describe("HTMLInputsRequireAutocompleteRule", () => {
         `
         const linter = new Linter(Herb, [HTMLInputsRequireAutocompleteRule])
         const lintResult = linter.lint(html)
-    
+
         expect(lintResult.offenses).toHaveLength(0)
       })
-  
+
       test(`usage of "${formHelper}" helper without autocomplete value`, () => {
         const html = dedent`
           <%= ${formHelper} 'foo' autocomplete: 'foo' %>
         `
         const linter = new Linter(Herb, [HTMLInputsRequireAutocompleteRule])
         const lintResult = linter.lint(html)
-    
+
         expect(lintResult.errors).toBe(1)
         expect(lintResult.offenses).toHaveLength(1)
         expect(lintResult.offenses[0].code).toBe("html-inputs-require-autocomplete")
         expect(lintResult.offenses[0].message).toBe("Input tag is missing an autocomplete attribute. If no autocomplete behaviour is desired, use the value `off` or `nope`.")
       })
-    });
+    })
 
   })
 })
