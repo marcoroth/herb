@@ -38,3 +38,7 @@ For multi-line comments or actual Ruby code with comments, ensure the content st
 
 <%== # This should also be an ERB comment %>
 ```
+
+## References
+
+- [Inspiration: ERB Lint `CommentSyntax` rule](https://github.com/shopify/erb_lint?tab=readme-ov-file#commentsyntax)

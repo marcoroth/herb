@@ -7,9 +7,9 @@ require "forwardable"
 
 module Herb
   module LibHerb
-    attach_function :array_get, [:pointer, :int], :pointer
-    attach_function :array_capacity, [:pointer], :size_t
-    attach_function :array_size, [:pointer], :size_t
+    attach_function :hb_array_get, [:pointer, :int], :pointer
+    attach_function :hb_array_capacity, [:pointer], :size_t
+    attach_function :hb_array_size, [:pointer], :size_t
 
     class Array
       extend Forwardable
@@ -24,16 +24,16 @@ module Herb
       end
 
       def capacity
-        LibHerb.array_capacity(pointer)
+        LibHerb.hb_array_capacity(pointer)
       end
 
       def size
-        LibHerb.array_size(pointer)
+        LibHerb.hb_array_size(pointer)
       end
 
       def item_pointers
         size.times.map { |item|
-          LibHerb.array_get(pointer, item)
+          LibHerb.hb_array_get(pointer, item)
         }
       end
 

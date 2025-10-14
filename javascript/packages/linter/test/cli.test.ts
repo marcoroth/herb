@@ -85,6 +85,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("diplays only parsers errors if one is present", () => {
+    const { output, exitCode } = runLinter("parser-errors.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("enables line wrapping by default", () => {
     const { output } = runLinter("long-line.html.erb")
 

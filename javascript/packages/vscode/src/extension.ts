@@ -64,7 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
   )
 
   // Set up file watcher for HTML+ERB files
-  const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.html.erb')
+  const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.html{+*,}.erb')
 
   fileWatcher.onDidChange(async (uri) => {
     console.log(`File changed: ${uri.fsPath}`)
@@ -94,7 +94,7 @@ async function runAutoAnalysis() {
     return
   }
 
-  const erbFiles = await vscode.workspace.findFiles('**/*.html.erb')
+  const erbFiles = await vscode.workspace.findFiles('**/*.html{+*,}.erb')
   if (erbFiles.length === 0) {
     return
   }

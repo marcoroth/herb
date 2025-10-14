@@ -9,7 +9,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
 
-import { name, version } from "../../package.json"
+import { name, version, dependencies } from "../../package.json"
 
 export type FormatOption = "simple" | "detailed" | "json"
 
@@ -21,6 +21,7 @@ export interface ParsedArguments {
   wrapLines: boolean
   truncateLines: boolean
   useGitHubActions: boolean
+  fix: boolean
 }
 
 export class ArgumentParser {
@@ -29,12 +30,13 @@ export class ArgumentParser {
 
     Arguments:
       file             Single file to lint
-      glob-pattern     Files to lint (defaults to **/*.html.erb)
-      directory        Directory to lint (automatically appends **/*.html.erb)
+      glob-pattern     Files to lint (defaults to **/*.html{+*,}.erb)
+      directory        Directory to lint (automatically appends **/*.html{+*,}.erb)
 
     Options:
       -h, --help       show help
       -v, --version    show version
+      --fix            automatically fix auto-correctable offenses
       --format         output format (simple|detailed|json) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
@@ -53,6 +55,7 @@ export class ArgumentParser {
       options: {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
+        fix: { type: "boolean" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -74,7 +77,9 @@ export class ArgumentParser {
 
     if (values.version) {
       console.log("Versions:")
-      console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+      console.log(`  ${name}@${version}`)
+      console.log(`  @herb-tools/printer@${dependencies["@herb-tools/printer"]}`)
+      console.log(`  ${Herb.version}`.split(", ").join("\n  "))
       process.exit(0)
     }
 
@@ -121,17 +126,18 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
+    const fix = values.fix || false
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
   }
 
   private getFilePattern(positionals: string[]): string {
-    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html.erb"
+    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html{+*,}.erb"
 
     try {
       const stat = statSync(pattern)
       if (stat.isDirectory()) {
-        pattern = join(pattern, "**/*.html.erb")
+        pattern = join(pattern, "**/*.html{+*,}.erb")
       }
     } catch {
       // Not a file/directory, treat as glob pattern

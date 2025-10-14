@@ -8,12 +8,12 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/herb.h"
-#include "../src/include/token.h"
-#include "../src/include/array.h"
-#include "../src/include/errors.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
+#include "../src/include/errors.h"
+#include "../src/include/herb.h"
+#include "../src/include/token.h"
+#include "../src/include/util/hb_array.h"
 }
 
 using namespace emscripten;
@@ -21,9 +21,9 @@ using namespace emscripten;
 val CreateLocation(location_T* location);
 val CreateToken(token_T* token);
 val NodeFromCStruct(AST_NODE_T* node);
-val NodesArrayFromCArray(array_T* array);
+val NodesArrayFromCArray(hb_array_T* array);
 val ErrorFromCStruct(ERROR_T* error);
-val ErrorsArrayFromCArray(array_T* array);
+val ErrorsArrayFromCArray(hb_array_T* array);
 
 <%- errors.each do |error| -%>
 val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
@@ -61,13 +61,13 @@ val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
 
 <%- end -%>
 
-val ErrorsArrayFromCArray(array_T* array) {
+val ErrorsArrayFromCArray(hb_array_T* array) {
   val Array = val::global("Array");
   val result = Array.new_();
 
   if (array) {
-    for (size_t i = 0; i < array_size(array); i++) {
-      ERROR_T* error = (ERROR_T*)array_get(array, i);
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      ERROR_T* error = (ERROR_T*)hb_array_get(array, i);
       if (error) {
         result.call<void>("push", ErrorFromCStruct(error));
       }

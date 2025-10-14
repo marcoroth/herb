@@ -8,11 +8,11 @@
 #include <stdbool.h>
 
 char lexer_backtrack(const lexer_T* lexer, const int offset) {
-  return lexer->source[MAX(lexer->current_position - offset, 0)];
+  return lexer->source.data[MAX(lexer->current_position - offset, 0)];
 }
 
 char lexer_peek(const lexer_T* lexer, const int offset) {
-  return lexer->source[MIN(lexer->current_position + offset, lexer->source_length)];
+  return lexer->source.data[MIN(lexer->current_position + offset, lexer->source.length)];
 }
 
 bool lexer_peek_for(const lexer_T* lexer, const int offset, const char* pattern, const bool case_insensitive) {
@@ -65,17 +65,21 @@ bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, const int offset) {
   return lexer_peek_for(lexer, offset, "%%>", false);
 }
 
+bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, const int offset) {
+  return lexer_peek_for(lexer, offset, "=%>", false);
+}
+
 bool lexer_peek_erb_end(const lexer_T* lexer, const int offset) {
   return (
     lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
-    || lexer_peek_erb_percent_close_tag(lexer, offset)
+    || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset)
   );
 }
 
 bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T token_type) {
-  size_t saved_position = lexer->current_position;
-  size_t saved_line = lexer->current_line;
-  size_t saved_column = lexer->current_column;
+  uint32_t saved_position = lexer->current_position;
+  uint32_t saved_line = lexer->current_line;
+  uint32_t saved_column = lexer->current_column;
   char saved_character = lexer->current_character;
   lexer_state_T saved_state = lexer->state;
 

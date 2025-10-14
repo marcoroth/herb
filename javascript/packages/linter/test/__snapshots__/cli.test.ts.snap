@@ -1,11 +1,11 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
-"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.4::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -21,7 +21,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
-[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:3
 
@@ -34,7 +34,7 @@ test/fixtures/test-file-with-errors.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:22
 
@@ -51,13 +51,14 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > GitHub Actions format includes rule codes 1`] = `
-"::error file=test/fixtures/no-trailing-newline.html.erb,line=1,col=29,title=erb-requires-trailing-newline • @herb-tools/linter@0.7.4::File must end with trailing newline [erb-requires-trailing-newline]%0A%0A%0Atest/fixtures/no-trailing-newline.html.erb:1:29%0A%0A  →   1 │ <div>No trailing newline</div>%0A        │                              ~%0A
+"::error file=test/fixtures/no-trailing-newline.html.erb,line=1,col=29,title=erb-requires-trailing-newline • @herb-tools/linter@0.7.5::File must end with trailing newline. [erb-requires-trailing-newline]%0A%0A%0Atest/fixtures/no-trailing-newline.html.erb:1:29%0A%0A  →   1 │ <div>No trailing newline</div>%0A        │                              ~%0A
 
-[error] File must end with trailing newline (erb-requires-trailing-newline)
+[error] File must end with trailing newline. [Correctable] (erb-requires-trailing-newline)
 
 test/fixtures/no-trailing-newline.html.erb:1:29
 
@@ -70,7 +71,29 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 
  Summary:
   Checked      1 file
-  Offenses     1 error | 0 warnings (1 offense across 1 file)"
+  Offenses     1 error | 0 warnings (1 offense across 1 file)
+  Fixable      1 offense | 1 autocorrectable using \`--fix\`"
+`;
+
+exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
+"[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+
+test/fixtures/parser-errors.html.erb:2:16
+
+      1 │ <div id=test class=foo>
+  →   2 │   <img src=image.jpg>
+        │                 ~
+      3 │ </div>
+      4 │
+
+ Rule offenses:
+  parser-no-errors (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     1 error | 0 warnings (1 offense across 1 file)
+  Fixable      1 offense"
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
@@ -116,7 +139,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/14] ⎯⎯⎯⎯
 
-[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. (html-attribute-double-quotes)
+[warning] Attribute \`class\` uses single quotes. Prefer double quotes for HTML attribute values: \`class=""\`. [Correctable] (html-attribute-double-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:20
 
@@ -130,7 +153,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:20
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/14] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`id="test1"\`. Always wrap attribute values in quotes. [Correctable] (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:8
 
@@ -144,7 +167,7 @@ test/fixtures/multiple-rule-offenses.html.erb:3:8
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/14] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`data-value="bar"\`. Always wrap attribute values in quotes. [Correctable] (html-attribute-values-require-quotes)
 
 test/fixtures/multiple-rule-offenses.html.erb:3:34
 
@@ -256,7 +279,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:4
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [13/14] ⎯⎯⎯⎯
 
-[error] Use \`<img>\` instead of self-closing \`<img />\` for HTML compatibility. (html-no-self-closing)
+[error] Use \`<img>\` instead of self-closing \`<img />\` for HTML compatibility. [Correctable] (html-no-self-closing)
 
 test/fixtures/multiple-rule-offenses.html.erb:4:2
 
@@ -279,49 +302,50 @@ test/fixtures/multiple-rule-offenses.html.erb:4:2
 
  Summary:
   Checked      1 file
-  Offenses     10 errors | 4 warnings (14 offenses across 1 file)"
+  Offenses     10 errors | 4 warnings (14 offenses across 1 file)
+  Fixable      14 offenses | 4 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > displays rule offenses when showing all rules 1`] = `
-"[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+"[error] Attribute value should be quoted: \`id="test"\`. Always wrap attribute values in quotes. [Correctable] (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:8
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │         ~~~~
-      3 │   <img src=image.jpg>
+      3 │   <img src=image>
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/6] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`class="foo"\`. Always wrap attribute values in quotes. [Correctable] (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:2:19
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
   →   2 │ <div id=test class=foo>
         │                    ~~~
-      3 │   <img src=image.jpg>
+      3 │   <img src=image>
       4 │ </div>
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/6] ⎯⎯⎯⎯
 
-[error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. (html-attribute-values-require-quotes)
+[error] Attribute value should be quoted: \`src="image"\`. Always wrap attribute values in quotes. [Correctable] (html-attribute-values-require-quotes)
 
 test/fixtures/few-rule-offenses.html.erb:3:11
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
+  →   3 │   <img src=image>
         │            ~~~~~
       4 │ </div>
       5 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/6] ⎯⎯⎯⎯
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -329,13 +353,13 @@ test/fixtures/few-rule-offenses.html.erb:3:3
 
       1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
       2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
+  →   3 │   <img src=image>
         │    ~~~
       4 │ </div>
       5 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/6] ⎯⎯⎯⎯
 
 [error] Duplicate ID \`duplicate\` found. IDs must be unique within a document. (html-no-duplicate-ids)
 
@@ -348,7 +372,7 @@ test/fixtures/few-rule-offenses.html.erb:9:5
      10 │
 
 
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/6] ⎯⎯⎯⎯
 
 [error] Heading element \`<h1>\` must not be empty. Provide accessible text content for screen readers and SEO. (html-no-empty-headings)
 
@@ -361,39 +385,25 @@ test/fixtures/few-rule-offenses.html.erb:6:0
       7 │ 
       8 │ <div id="duplicate"></div>
 
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/7] ⎯⎯⎯⎯
-
-[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
-
-test/fixtures/few-rule-offenses.html.erb:3:16
-
-      1 │ <!-- Just a few different rule offenses to test "Rule offenses:" vs "Most frequent rule offenses:" -->
-      2 │ <div id=test class=foo>
-  →   3 │   <img src=image.jpg>
-        │                 ~
-      4 │ </div>
-      5 │
-
  Rule offenses:
   html-attribute-values-require-quotes (3 offenses in 1 file)
   html-img-require-alt (1 offense in 1 file)
   html-no-duplicate-ids (1 offense in 1 file)
   html-no-empty-headings (1 offense in 1 file)
-  parser-no-errors (1 offense in 1 file)
 
 
  Summary:
   Checked      1 file
-  Offenses     7 errors | 0 warnings (7 offenses across 1 file)"
+  Offenses     6 errors | 0 warnings (6 offenses across 1 file)
+  Fixable      6 offenses | 3 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for bad file 1`] = `
-"::error file=test/fixtures/bad-file.html.erb,line=1,col=1,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/bad-file.html.erb:1:1%0A%0A  →   1 │ <SPAN>Bad file</SPAN>%0A        │  ~~~~%0A      2 │%0A
+"::error file=test/fixtures/bad-file.html.erb,line=1,col=1,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/bad-file.html.erb:1:1%0A%0A  →   1 │ <SPAN>Bad file</SPAN>%0A        │  ~~~~%0A      2 │%0A
 
-::error file=test/fixtures/bad-file.html.erb,line=1,col=16,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/bad-file.html.erb:1:16%0A%0A  →   1 │ <SPAN>Bad file</SPAN>%0A        │                 ~~~~%0A      2 │%0A
+::error file=test/fixtures/bad-file.html.erb,line=1,col=16,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/bad-file.html.erb:1:16%0A%0A  →   1 │ <SPAN>Bad file</SPAN>%0A        │                 ~~~~%0A      2 │%0A
 
-[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:1
 
@@ -404,7 +414,7 @@ test/fixtures/bad-file.html.erb:1:1
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:16
 
@@ -418,7 +428,8 @@ test/fixtures/bad-file.html.erb:1:16
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for clean file 1`] = `
@@ -431,11 +442,11 @@ exports[`CLI Output Formatting > formats GitHub Actions output correctly for cle
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output correctly for file with errors 1`] = `
-"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.4::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -451,7 +462,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
-[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:3
 
@@ -464,7 +475,7 @@ test/fixtures/test-file-with-errors.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:22
 
@@ -481,11 +492,12 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats GitHub Actions output with --format=github option 1`] = `
-"[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+"[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-simple.html.erb:2:3
 
@@ -498,7 +510,7 @@ test/fixtures/test-file-simple.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-simple.html.erb:2:22
 
@@ -514,7 +526,8 @@ test/fixtures/test-file-simple.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] = `
@@ -561,7 +574,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 32,
+    "ruleCount": 37,
     "totalErrors": 2,
     "totalOffenses": 2,
     "totalWarnings": 0,
@@ -579,7 +592,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 32,
+    "ruleCount": 37,
     "totalErrors": 0,
     "totalOffenses": 0,
     "totalWarnings": 0,
@@ -649,7 +662,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 32,
+    "ruleCount": 37,
     "totalErrors": 3,
     "totalOffenses": 3,
     "totalWarnings": 0,
@@ -673,7 +686,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
-[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:3
 
@@ -686,7 +699,7 @@ test/fixtures/test-file-with-errors.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:22
 
@@ -703,13 +716,14 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 "test/fixtures/test-file-simple.html.erb:
-  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
-  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+  2:3  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  2:22 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
@@ -717,13 +731,14 @@ exports[`CLI Output Formatting > formats simple output correctly 1`] = `
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`] = `
 "test/fixtures/bad-file.html.erb:
-  1:1  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
-  1:16 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+  1:1  ✗ Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase) [Correctable]
+  1:16 ✗ Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase) [Correctable]
 
  Rule offenses:
   html-tag-name-lowercase (2 offenses in 1 file)
@@ -731,7 +746,8 @@ exports[`CLI Output Formatting > formats simple output for bad-file correctly 1`
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > formats success output correctly 1`] = `
@@ -753,7 +769,7 @@ exports[`CLI Output Formatting > handles boolean attributes 1`] = `
 `;
 
 exports[`CLI Output Formatting > handles multiple errors correctly 1`] = `
-"[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+"[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:1
 
@@ -764,7 +780,7 @@ test/fixtures/bad-file.html.erb:1:1
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/bad-file.html.erb:1:16
 
@@ -778,15 +794,16 @@ test/fixtures/bad-file.html.erb:1:16
 
  Summary:
   Checked      1 file
-  Offenses     2 errors | 0 warnings (2 offenses across 1 file)"
+  Offenses     2 errors | 0 warnings (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `
-"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.4::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
+"::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=3,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:3%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │    ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
-::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.4::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
+::error file=test/fixtures/test-file-with-errors.html.erb,line=2,col=22,title=html-tag-name-lowercase • @herb-tools/linter@0.7.5::Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [html-tag-name-lowercase]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:2:22%0A%0A      1 │ <div>%0A  →   2 │   <SPAN>Test content</SPAN>%0A        │                       ~~~~%0A      3 │   <img src="test.jpg">%0A      4 │ </div>%0A
 
 [error] Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. (html-img-require-alt)
 
@@ -802,7 +819,7 @@ test/fixtures/test-file-with-errors.html.erb:3:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/3] ⎯⎯⎯⎯
 
-[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. (html-tag-name-lowercase)
+[error] Opening tag name \`<SPAN>\` should be lowercase. Use \`<span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:3
 
@@ -815,7 +832,7 @@ test/fixtures/test-file-with-errors.html.erb:2:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/3] ⎯⎯⎯⎯
 
-[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. (html-tag-name-lowercase)
+[error] Closing tag name \`</SPAN>\` should be lowercase. Use \`</span>\` instead. [Correctable] (html-tag-name-lowercase)
 
 test/fixtures/test-file-with-errors.html.erb:2:22
 
@@ -832,5 +849,6 @@ test/fixtures/test-file-with-errors.html.erb:2:22
 
  Summary:
   Checked      1 file
-  Offenses     3 errors | 0 warnings (3 offenses across 1 file)"
+  Offenses     3 errors | 0 warnings (3 offenses across 1 file)
+  Fixable      3 offenses | 2 autocorrectable using \`--fix\`"
 `;

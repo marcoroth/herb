@@ -1,21 +1,22 @@
-#include "include/array.h"
-#include "include/buffer.h"
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/lexer.h"
+#include "include/util/hb_array.h"
+#include "include/util/hb_buffer.h"
 
 #include <stdlib.h>
+#include <string.h>
 
-void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
+void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
       case TOKEN_NEWLINE: {
-        buffer_append(output, token->value);
+        hb_buffer_append(output, token->value);
         break;
       }
 
@@ -24,15 +25,15 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
           skip_erb_content = true;
         }
 
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          buffer_append(output, token->value);
+          hb_buffer_append(output, token->value);
         } else {
-          buffer_append_whitespace(output, range_length(token->range));
+          hb_buffer_append_whitespace(output, range_length(token->range));
         }
 
         break;
@@ -41,13 +42,13 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
       case TOKEN_ERB_END: {
         skip_erb_content = false;
 
-        buffer_append_char(output, ';');
-        buffer_append_whitespace(output, range_length(token->range) - 1);
+        hb_buffer_append_char(output, ';');
+        hb_buffer_append_whitespace(output, range_length(token->range) - 1);
         break;
       }
 
       default: {
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
       }
     }
   }
@@ -55,16 +56,16 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
   herb_free_tokens(&tokens);
 }
 
-void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
+void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
       case TOKEN_NEWLINE: {
-        buffer_append(output, token->value);
+        hb_buffer_append(output, token->value);
         break;
       }
 
@@ -73,15 +74,15 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
           skip_erb_content = true;
         }
 
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          buffer_append(output, token->value);
+          hb_buffer_append(output, token->value);
         } else {
-          buffer_append_whitespace(output, range_length(token->range));
+          hb_buffer_append_whitespace(output, range_length(token->range));
         }
 
         break;
@@ -90,12 +91,12 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
       case TOKEN_ERB_END: {
         skip_erb_content = false;
 
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
       default: {
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
       }
     }
   }
@@ -103,17 +104,17 @@ void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
   herb_free_tokens(&tokens);
 }
 
-void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
+void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
-      case TOKEN_ERB_END: buffer_append_whitespace(output, range_length(token->range)); break;
-      default: buffer_append(output, token->value);
+      case TOKEN_ERB_END: hb_buffer_append_whitespace(output, range_length(token->range)); break;
+      default: hb_buffer_append(output, token->value);
     }
   }
 
@@ -121,8 +122,10 @@ void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
 }
 
 char* herb_extract_ruby_with_semicolons(const char* source) {
-  buffer_T output;
-  buffer_init(&output);
+  if (!source) { return NULL; }
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
 
   herb_extract_ruby_to_buffer_with_semicolons(source, &output);
 
@@ -130,8 +133,10 @@ char* herb_extract_ruby_with_semicolons(const char* source) {
 }
 
 char* herb_extract(const char* source, const herb_extract_language_T language) {
-  buffer_T output;
-  buffer_init(&output);
+  if (!source) { return NULL; }
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
 
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;
