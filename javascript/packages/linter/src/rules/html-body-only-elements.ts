@@ -5,32 +5,50 @@ import type { LintOffense, LintContext } from "../types.js"
 import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class HTMLBodyOnlyElementsVisitor extends BaseRuleVisitor {
-  private isInHead = false
+  private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node.open_tag)
+    const tagName = getTagName(node.open_tag)?.toLowerCase()
     if (!tagName) return
 
-    const previousIsInHead = this.isInHead
-    if (tagName.toLowerCase() === "head") this.isInHead = true
+    this.checkBodyOnlyElement(node, tagName)
 
-    if (this.isInHead && isBodyOnlyTag(tagName)) {
-      this.addOffense(
-        `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
-        node.location,
-        "error"
-      )
-    }
-
+    this.elementStack.push(tagName)
     this.visitChildNodes(node)
+    this.elementStack.pop()
+  }
 
-    this.isInHead = previousIsInHead
+  private checkBodyOnlyElement(node: HTMLElementNode, tagName: string): void {
+    if (this.insideBody) return
+    if (!this.insideHead) return
+    if (!isBodyOnlyTag(tagName)) return
+
+    this.addOffense(
+      `Element \`<${tagName}>\` must be placed inside the \`<body>\` tag.`,
+      node.location,
+      "error"
+    )
+  }
+
+  private get insideBody(): boolean {
+    return this.elementStack.includes("body")
+  }
+
+  private get insideHead(): boolean {
+    return this.elementStack.includes("head")
   }
 }
 
 export class HTMLBodyOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   name = "html-body-only-elements"
+
+  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
+    if (context?.fileName?.endsWith(".xml")) return false
+    if (context?.fileName?.endsWith(".xml.erb")) return false
+
+    return true
+  }
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new HTMLBodyOnlyElementsVisitor(this.name, context)
