@@ -1,8 +1,11 @@
+import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
 
-import { ParserRule } from "../types.js"
+import { ERBToRubyStringPrinter } from "@herb-tools/printer"
+import { filterNodes, ERBContentNode, LiteralNode, isNode } from "@herb-tools/core"
+
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeValueNode, ERBContentNode, LiteralNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeValueNode, ParseResult } from "@herb-tools/core"
 
 class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -10,106 +13,80 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkImgTag(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
+  private checkImgTag(openTag: HTMLOpenTagNode): void {
+    const tagName = getTagName(openTag)
 
-  private checkImgTag(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
-    const tagName = getTagName(node)
+    if (tagName !== "img") return
 
-    if (tagName !== "img") {
-      return
-    }
-
-    const attributes = getAttributes(node)
+    const attributes = getAttributes(openTag)
     const srcAttribute = findAttributeByName(attributes, "src")
 
-    if (!srcAttribute) {
-      return
-    }
+    if (!srcAttribute) return
+    if (!srcAttribute.value) return
 
-    if (!srcAttribute.value) {
-      return
-    }
-
-    const valueNode = srcAttribute.value as HTMLAttributeValueNode
-    const hasERBContent = this.containsERBContent(valueNode)
+    const node = srcAttribute.value
+    const hasERBContent = this.containsERBContent(node)
 
     if (hasERBContent) {
-      const suggestedExpression = this.buildSuggestedExpression(valueNode)
+      if (this.isDataUri(node)) return
 
-      this.addOffense(
-        `Prefer \`image_tag\` helper over manual \`<img>\` with dynamic ERB expressions. Use \`<%= image_tag ${suggestedExpression}, alt: "..." %>\` instead.`,
-        srcAttribute.location,
-        "warning"
-      )
+      if (this.shouldFlagAsImageTagCandidate(node)) {
+        const suggestedExpression = this.buildSuggestedExpression(node)
+
+        this.addOffense(
+          `Prefer \`image_tag\` helper over manual \`<img>\` with dynamic ERB expressions. Use \`<%= image_tag ${suggestedExpression}, alt: "..." %>\` instead.`,
+          srcAttribute.location,
+          "warning"
+        )
+      }
     }
   }
 
-  private containsERBContent(valueNode: HTMLAttributeValueNode): boolean {
-    if (!valueNode.children) return false
-
-    return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+  private containsERBContent(node: HTMLAttributeValueNode): boolean {
+    return filterNodes(node.children, ERBContentNode).length > 0
   }
 
-  private buildSuggestedExpression(valueNode: HTMLAttributeValueNode): string {
-    if (!valueNode.children) return "expression"
+  private isOnlyERBContent(node: HTMLAttributeValueNode): boolean {
+    return node.children.length > 0 && node.children.length === filterNodes(node.children, ERBContentNode).length
+  }
 
-    let hasText = false
-    let hasERB = false
+  private getContentofFirstChild(node: HTMLAttributeValueNode): string {
+    if (!node.children || node.children.length === 0) return ""
 
-    for (const child of valueNode.children) {
-      if (child.type === "AST_ERB_CONTENT_NODE") {
-        hasERB = true
-      } else if (child.type === "AST_LITERAL_NODE") {
-        const literalNode = child as LiteralNode
+    const firstChild = node.children[0]
 
-        if (literalNode.content && literalNode.content.trim()) {
-          hasText = true
-        }
-      }
+    if (isNode(firstChild, LiteralNode)) {
+      return (firstChild.content || "").trim()
     }
 
-    if (hasText && hasERB) {
-      let result = '"'
+    return ""
+  }
 
-      for (const child of valueNode.children) {
-        if (child.type === "AST_ERB_CONTENT_NODE") {
-          const erbNode = child as ERBContentNode
+  private isDataUri(node: HTMLAttributeValueNode): boolean {
+    return this.getContentofFirstChild(node).startsWith("data:")
+  }
 
-          result += `#{${(erbNode.content?.value || "").trim()}}`
-        } else if (child.type === "AST_LITERAL_NODE") {
-          const literalNode = child as LiteralNode
+  private isFullUrl(node: HTMLAttributeValueNode): boolean {
+    const content = this.getContentofFirstChild(node)
 
-          result += literalNode.content || ""
-        }
-      }
+    return content.startsWith("http://") || content.startsWith("https://")
+  }
 
-      result += '"'
+  private shouldFlagAsImageTagCandidate(node: HTMLAttributeValueNode): boolean {
+    if (this.isOnlyERBContent(node)) return true
+    if (this.isFullUrl(node)) return false
 
-      return result
+    return true
+  }
+
+  private buildSuggestedExpression(node: HTMLAttributeValueNode): string {
+    if (!node.children) return "expression"
+
+    try {
+      return ERBToRubyStringPrinter.print(node, { ignoreErrors: false })
+    } catch {
+      return "expression"
     }
-
-    if (hasERB && !hasText) {
-      const erbNodes = valueNode.children.filter(child => child.type === "AST_ERB_CONTENT_NODE") as ERBContentNode[]
-
-      if (erbNodes.length === 1) {
-        return (erbNodes[0].content?.value || "").trim()
-      } else if (erbNodes.length > 1) {
-        let result = '"'
-
-        for (const erbNode of erbNodes) {
-          result += `#{${(erbNode.content?.value || "").trim()}}`
-        }
-
-        result += '"'
-
-        return result
-      }
-    }
-
-    return "expression"
   }
 }
 

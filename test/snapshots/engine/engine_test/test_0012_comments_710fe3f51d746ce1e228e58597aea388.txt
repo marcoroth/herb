@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ _buf << '<!-- HTML comment -->
+<div>
+  
+  Content
+</div>
+'.freeze;
+_buf.to_s

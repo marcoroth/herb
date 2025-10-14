@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((container_class)); _buf << '" data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
+  <h1>Hello <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @name %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="13" style="display: contents;">'.freeze; _buf << (@name).to_s; _buf << '</span>!</h1>
+  <p data-id="'.freeze; _buf << ::Herb::Engine.attr((@user.id)); _buf << '">Today is <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= Date.today.strftime(&#39;%A&#39;) %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="3" data-herb-debug-column="41" style="display: contents;">'.freeze; _buf << (Date.today.strftime('%A')).to_s; _buf << '</span></p>
+</div>
+'.freeze;
+_buf.to_s

@@ -3,8 +3,10 @@ import packageJSON from "../package.json" with { type: "json" }
 import { ensureString } from "./util.js"
 import { LexResult } from "./lex-result.js"
 import { ParseResult } from "./parse-result.js"
+import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
+import type { ParserOptions } from "./parser-options.js"
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -64,13 +66,16 @@ export abstract class HerbBackend {
   /**
    * Parses the given source string into a `ParseResult`.
    * @param source - The source code to parse.
+   * @param options - Optional parsing options.
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string): ParseResult {
+  parse(source: string, options?: ParserOptions): ParseResult {
     this.ensureBackend()
 
-    return ParseResult.from(this.backend.parse(ensureString(source)))
+    const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+
+    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
   }
 
   /**

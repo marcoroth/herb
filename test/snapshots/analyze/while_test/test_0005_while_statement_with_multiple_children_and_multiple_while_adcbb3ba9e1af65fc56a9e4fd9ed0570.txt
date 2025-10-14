@@ -26,9 +26,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:10)-(2:15))
     │   │   │   │       ├── tag_opening: "</" (location: (2:10)-(2:12))
     │   │   │   │       ├── tag_name: "h1" (location: (2:12)-(2:14))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:15)-(3:2))
     │   │   │   └── content: "\n  "
@@ -51,9 +53,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (3:10)-(3:15))
     │   │   │   │       ├── tag_opening: "</" (location: (3:10)-(3:12))
     │   │   │   │       ├── tag_name: "h2" (location: (3:12)-(3:14))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (3:15)-(5:2))
     │   │   │   └── content: "\n\n  "
@@ -84,9 +88,11 @@
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (6:13)-(6:18))
     │   │   │   │   │   │       ├── tag_opening: "</" (location: (6:13)-(6:15))
     │   │   │   │   │   │       ├── tag_name: "h3" (location: (6:15)-(6:17))
+    │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (6:17)-(6:18))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (6:18)-(7:2))
     │   │   │   │       └── content: "\n  "

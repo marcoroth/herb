@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<textarea data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  '.freeze; _buf << (@user_input).to_s; _buf << '
+  Default text with '.freeze; _buf << (@placeholder).to_s; _buf << '
+</textarea>
+'.freeze;
+_buf.to_s

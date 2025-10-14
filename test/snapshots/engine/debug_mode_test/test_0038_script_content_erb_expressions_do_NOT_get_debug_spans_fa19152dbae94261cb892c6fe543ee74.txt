@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<script data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  var userId = '.freeze; _buf << ::Herb::Engine.js((@user.id)); _buf << ';
+  var name = "'.freeze; _buf << ::Herb::Engine.js((@user.name)); _buf << '";
+</script>
+'.freeze;
+_buf.to_s

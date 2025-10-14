@@ -1,14 +1,16 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest"
 import { GitHubActionsFormatter } from "../../src/cli/formatters/github-actions-formatter.js"
+import { name, version } from "../../package.json"
 import type { ProcessedFile } from "../../src/cli/file-processor.js"
 import type { Diagnostic } from "@herb-tools/core"
 
 describe("GitHubActionsFormatter", () => {
   let formatter: GitHubActionsFormatter
   let consoleLogSpy: ReturnType<typeof vi.spyOn>
+  const linterTitle = `${name}@${version}`
 
   beforeEach(() => {
-    formatter = new GitHubActionsFormatter()
+    formatter = new GitHubActionsFormatter(true, false)
     consoleLogSpy = vi.spyOn(console, "log").mockImplementation()
   })
 
@@ -45,9 +47,8 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Test error message [test-rule]"
+      `\n::error file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Test error message [test-rule]%0A%0A%0Atest.html.erb:10:5%0A%0A%0A`
     )
-    expect(consoleLogSpy).toHaveBeenCalledWith() // Final newline
   })
 
   test("formats warning diagnostics correctly", async () => {
@@ -60,7 +61,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::warning file=test.html.erb,line=10,col=5::Test error message [test-rule]"
+      `\n::warning file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Test error message [test-rule]%0A%0A%0Atest.html.erb:10:5%0A%0A%0A`
     )
   })
 
@@ -74,7 +75,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Error: 100%25 failure rate [test-rule]"
+      `\n::error file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error: 100%25 failure rate [test-rule]%0A%0A%0Atest.html.erb:10:5%0A%0A%0A`
     )
   })
 
@@ -88,7 +89,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Error on line 1%0AContinued on line 2 [test-rule]"
+      `\n::error file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error on line 1%0AContinued on line 2 [test-rule]%0A%0AContinued on line 2 (test-rule)%0A%0Atest.html.erb:10:5%0A%0A%0A`
     )
   })
 
@@ -102,7 +103,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Error%0DMessage [test-rule]"
+      `\n::error file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error%0DMessage [test-rule]%0A%0A%0Atest.html.erb:10:5%0A%0A%0A`
     )
   })
 
@@ -134,12 +135,11 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test1.html.erb,line=10,col=5::Error 1 [test-rule]"
+      `\n::error file=test1.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error 1 [test-rule]%0A%0A%0Atest1.html.erb:10:5%0A%0A%0A`
     )
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::warning file=test2.html.erb,line=5,col=10::Error 2 [test-rule]"
+      `\n::warning file=test2.html.erb,line=5,col=10,title=test-rule • ${linterTitle}::Error 2 [test-rule]%0A%0A%0Atest2.html.erb:5:10%0A%0A%0A`
     )
-    expect(consoleLogSpy).toHaveBeenCalledWith() // Final newline
   })
 
   test("handles diagnostics without code", async () => {
@@ -152,7 +152,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Test error message"
+      "\n::error file=test.html.erb,line=10,col=5::Test error message%0A%0A%0Atest.html.erb:10:5%0A%0A%0A"
     )
   })
 
@@ -171,10 +171,10 @@ describe("GitHubActionsFormatter", () => {
     formatter.formatFile("test.html.erb", diagnostics)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test.html.erb,line=10,col=5::Error 1 [test-rule]"
+      `\n::error file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error 1 [test-rule]`
     )
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::warning file=test.html.erb,line=10,col=5::Error 2 [test-rule]"
+      `\n::warning file=test.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error 2 [test-rule]`
     )
   })
 
@@ -188,7 +188,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=test%3Afile%2Cname%25.html.erb,line=10,col=5::Test error [test-rule]"
+      `\n::error file=test%3Afile%2Cname%25.html.erb,line=10,col=5,title=test-rule • ${linterTitle}::Test error [test-rule]%0A%0A%0Atest:file,name%25.html.erb:10:5%0A%0A%0A`
     )
   })
 
@@ -204,7 +204,7 @@ describe("GitHubActionsFormatter", () => {
     await formatter.format(files)
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
-      "\n::error file=path%3Awith%2Cspecial%25chars%0Aand%0Dnewlines.erb,line=10,col=5::Error: 50%25 failure%0AOn multiple%0Dlines [test-rule]"
+      `\n::error file=path%3Awith%2Cspecial%25chars%0Aand%0Dnewlines.erb,line=10,col=5,title=test-rule • ${linterTitle}::Error: 50%25 failure%0AOn multiple%0Dlines [test-rule]%0A%0AOn multiple%0Dlines (test-rule)%0A%0Apath:with,special%25chars%0Aand%0Dnewlines.erb:10:5%0A%0A%0A`
     )
   })
 })

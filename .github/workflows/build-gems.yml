@@ -1,0 +1,167 @@
+name: Build Gems
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "ext/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - "Makefile"
+      - "Rakefile"
+      - ".ruby-version"
+
+  pull_request:
+    paths:
+      - "src/**"
+      - "lib/**"
+      - "ext/**"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - "Makefile"
+      - "Rakefile"
+      - ".ruby-version"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }} gem
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - default
+          - aarch64-linux-gnu
+          - x86_64-linux-gnu
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - x86_64-darwin
+          - arm64-darwin
+          - arm-linux-gnu
+          - arm-linux-musl
+          - x86-linux-gnu
+          - x86-linux-musl
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add LLVM apt Repo
+        run: |-
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
+          sudo apt update
+
+      - name: Install APT dependencies
+        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: false
+
+      - name: bundle install
+        run: bundle install
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
+
+      - name: Build gem
+        run: |
+          if [ "${{ matrix.target }}" = "default" ]; then
+            bundle exec rake build
+          else
+            bundle exec rake gem:${{ matrix.target }}
+          fi
+
+      - name: Upload gem artifacts
+        if: github.event_name == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gem-${{ matrix.target }}
+          path: pkg/*.gem
+          if-no-files-found: error
+          retention-days: 7
+
+  push:
+    name: Push gems with trusted publishing
+    if: github.event_name == 'release' && github.repository_owner == 'marcoroth'
+    needs: build
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - default
+          - aarch64-linux-gnu
+          - x86_64-linux-gnu
+          - x86_64-linux-musl
+          - aarch64-linux-musl
+          - x86_64-darwin
+          - arm64-darwin
+          - arm-linux-gnu
+          - arm-linux-musl
+          - x86-linux-gnu
+          - x86-linux-musl
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Vendor the attestation patch from rubygems/release-gem
+      - name: Vendor release-gem patch
+        uses: actions/checkout@v4
+        with:
+          repository: rubygems/release-gem
+          ref: a25424ba2ba8b387abc8ef40807c2c85b96cbe32 # v1.1.1
+          path: .github/_release-gem
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: false
+
+      - name: Download gem artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: gem-${{ matrix.target }}
+          path: pkg/
+
+      - name: Configure trusted publishing credentials
+        uses: rubygems/configure-rubygems-credentials@v1.0.0
+
+      - name: Push gem with Sigstore attestation
+        env:
+          # Preload the attestation patch so `gem push` generates & attaches the bundle
+          RUBYOPT: "-r${{ github.workspace }}/.github/_release-gem/rubygems-attestation-patch.rb"
+        run: |
+          cd pkg
+          for gem_file in *.gem; do
+            if [ -f "$gem_file" ]; then
+              echo "Pushing $gem_file"
+              gem push "$gem_file"
+            fi
+          done

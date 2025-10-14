@@ -1,28 +1,44 @@
 import {
   Visitor,
   Position,
-  Location
+  Location,
+  getStaticAttributeName,
+  hasDynamicAttributeName as hasNodeDynamicAttributeName,
+  getCombinedAttributeName,
+  hasERBOutput,
+  getStaticContentFromNodes,
+  hasStaticContent,
+  isEffectivelyStatic,
+  getValidatableStaticContent
 } from "@herb-tools/core"
 
 import type {
-  ERBNode,
+  ERBContentNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   HTMLOpenTagNode,
-  HTMLSelfCloseTagNode,
   LiteralNode,
   LexResult,
-  Token
+  Token,
+  Node
 } from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext } from "../types.js"
+
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
+
+import type * as Nodes from "@herb-tools/core"
+import type { LintOffense, LintSeverity, LintContext, BaseAutofixContext } from "../types.js"
+
+export enum ControlFlowType {
+  CONDITIONAL,
+  LOOP
+}
 
 /**
  * Base visitor class that provides common functionality for rule visitors
  */
-export abstract class BaseRuleVisitor extends Visitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Visitor {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -36,7 +52,7 @@ export abstract class BaseRuleVisitor extends Visitor {
   /**
    * Helper method to create a lint offense
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -44,51 +60,238 @@ export abstract class BaseRuleVisitor extends Visitor {
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 }
 
 /**
- * Gets attributes from either an HTMLOpenTagNode or HTMLSelfCloseTagNode
+ * Mixin that adds control flow tracking capabilities to rule visitors
+ * This allows rules to track state across different control flow structures
+ * like if/else branches, loops, etc.
+ *
+ * @template TAutofixContext - Type for autofix context (node + custom data)
+ * @template TControlFlowState - Type for state passed between onEnterControlFlow and onExitControlFlow
+ * @template TBranchState - Type for state passed between onEnterBranch and onExitBranch
  */
-export function getAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): any[] {
-  return node.type === "AST_HTML_SELF_CLOSE_TAG_NODE"
-    ? (node as HTMLSelfCloseTagNode).attributes
-    : (node as HTMLOpenTagNode).children
+export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext, TControlFlowState = any, TBranchState = any> extends BaseRuleVisitor<TAutofixContext> {
+  protected isInControlFlow: boolean = false
+  protected currentControlFlowType: ControlFlowType | null = null
+
+  /**
+   * Handle visiting a control flow node with proper scope management
+   */
+  protected handleControlFlowNode(node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
+    const wasInControlFlow = this.isInControlFlow
+    const previousControlFlowType = this.currentControlFlowType
+
+    this.isInControlFlow = true
+    this.currentControlFlowType = controlFlowType
+
+    const stateToRestore = this.onEnterControlFlow(controlFlowType, wasInControlFlow)
+
+    visitChildren()
+
+    this.onExitControlFlow(controlFlowType, wasInControlFlow, stateToRestore)
+
+    this.isInControlFlow = wasInControlFlow
+    this.currentControlFlowType = previousControlFlowType
+  }
+
+  /**
+   * Handle visiting a branch node (like else, when) with proper scope management
+   */
+  protected startNewBranch(visitChildren: () => void): void {
+    const stateToRestore = this.onEnterBranch()
+
+    visitChildren()
+
+    this.onExitBranch(stateToRestore)
+  }
+
+  visitERBIfNode(node: Nodes.ERBIfNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBIfNode(node))
+  }
+
+  visitERBUnlessNode(node: Nodes.ERBUnlessNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBUnlessNode(node))
+  }
+
+  visitERBCaseNode(node: Nodes.ERBCaseNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBCaseNode(node))
+  }
+
+  visitERBCaseMatchNode(node: Nodes.ERBCaseMatchNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBCaseMatchNode(node))
+  }
+
+  visitERBWhileNode(node: Nodes.ERBWhileNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBWhileNode(node))
+  }
+
+  visitERBForNode(node: Nodes.ERBForNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBForNode(node))
+  }
+
+  visitERBUntilNode(node: Nodes.ERBUntilNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.LOOP, () => super.visitERBUntilNode(node))
+  }
+
+  visitERBBlockNode(node: Nodes.ERBBlockNode): void {
+    this.handleControlFlowNode(node, ControlFlowType.CONDITIONAL, () => super.visitERBBlockNode(node))
+  }
+
+  visitERBElseNode(node: Nodes.ERBElseNode): void {
+    this.startNewBranch(() => super.visitERBElseNode(node))
+  }
+
+  visitERBWhenNode(node: Nodes.ERBWhenNode): void {
+    this.startNewBranch(() => super.visitERBWhenNode(node))
+  }
+
+  protected abstract onEnterControlFlow(controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean): TControlFlowState
+  protected abstract onExitControlFlow(controlFlowType: ControlFlowType, wasAlreadyInControlFlow: boolean, stateToRestore: TControlFlowState): void
+  protected abstract onEnterBranch(): TBranchState
+  protected abstract onExitBranch(stateToRestore: TBranchState): void
+}
+
+/**
+ * Gets attributes from an HTMLOpenTagNode
+ */
+export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
+  return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
 }
 
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): string | null {
+export function getTagName(node: HTMLOpenTagNode | null | undefined): string | null {
+  if (!node) return null
+
   return node.tag_name?.value.toLowerCase() || null
 }
 
 /**
  * Gets the attribute name from an HTMLAttributeNode (lowercased)
+ * Returns null if the attribute name contains dynamic content (ERB)
  */
-export function getAttributeName(attributeNode: HTMLAttributeNode): string | null {
+export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
   if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
     const nameNode = attributeNode.name as HTMLAttributeNameNode
+    const staticName = getStaticAttributeName(nameNode)
 
-    return nameNode.name?.value.toLowerCase() || null
+    if (!lowercase) return staticName
+
+    return staticName ? staticName.toLowerCase() : null
   }
 
   return null
 }
 
 /**
+ * Checks if an attribute has a dynamic (ERB-containing) name
+ */
+export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
+  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
+    const nameNode = attributeNode.name as HTMLAttributeNameNode
+    return hasNodeDynamicAttributeName(nameNode)
+  }
+
+  return false
+}
+
+/**
+ * Gets the combined string representation of an attribute name (for debugging)
+ * This includes both static content and ERB syntax
+ */
+export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
+  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
+    const nameNode = attributeNode.name as HTMLAttributeNameNode
+
+    return getCombinedAttributeName(nameNode)
+  }
+
+  return ""
+}
+
+/**
+ * Checks if an attribute value contains only static content (no ERB)
+ */
+export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  if (!valueNode?.children) return false
+
+  return valueNode.children.every(child => child.type === "AST_LITERAL_NODE")
+}
+
+/**
+ * Checks if an attribute value contains dynamic content (ERB)
+ */
+export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  if (!valueNode?.children) return false
+
+  return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+}
+
+/**
+ * Gets the static string value of an attribute (returns null if it contains ERB)
+ */
+export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
+  if (!hasStaticAttributeValue(attributeNode)) return null
+
+  const valueNode = attributeNode.value as HTMLAttributeValueNode
+
+  const result = valueNode.children
+    ?.filter(child => child.type === "AST_LITERAL_NODE")
+    .map(child => (child as LiteralNode).content)
+    .join("") || ""
+
+  return result
+}
+
+/**
+ * Gets the value nodes array for dynamic inspection
+ */
+export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
+  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+
+  return valueNode?.children || []
+}
+
+/**
+ * Checks if an attribute value contains any static content (for validation purposes)
+ */
+export function hasStaticAttributeValueContent(attributeNode: HTMLAttributeNode): boolean {
+  const valueNodes = getAttributeValueNodes(attributeNode)
+
+  return hasStaticContent(valueNodes)
+}
+
+/**
+ * Gets the static content of an attribute value (all literal parts combined)
+ * Returns the concatenated literal content, or null if no literal nodes exist
+ */
+export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode): string | null {
+  const valueNodes = getAttributeValueNodes(attributeNode)
+
+  return getStaticContentFromNodes(valueNodes)
+}
+
+/**
  * Gets the attribute value content from an HTMLAttributeValueNode
  */
 export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
+  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
 
   if (valueNode === null) return null
 
@@ -101,7 +304,7 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
   for (const child of valueNode.children) {
     switch (child.type) {
       case "AST_ERB_CONTENT_NODE": {
-        const erbNode = child as ERBNode
+        const erbNode = child as ERBContentNode
 
         if (erbNode.content) {
           result += `${erbNode.tag_opening?.value}${erbNode.content.value}${erbNode.tag_closing?.value}`
@@ -130,9 +333,20 @@ export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
 /**
  * Gets the quote type used for an attribute value
  */
-export function getAttributeValueQuoteType(attributeNode: HTMLAttributeNode): "single" | "double" | "none" | null {
-  if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
+export function getAttributeValueQuoteType(nodeOrAttribute: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
+  let valueNode: HTMLAttributeValueNode | undefined
+
+  if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_NODE") {
+    const attributeNode = nodeOrAttribute as HTMLAttributeNode
+
+    if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
+      valueNode = attributeNode.value as HTMLAttributeValueNode
+    }
+  } else if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
+    valueNode = nodeOrAttribute as HTMLAttributeValueNode
+  }
+
+  if (valueNode) {
     if (valueNode.quoted && valueNode.open_quote) {
       return valueNode.open_quote.value === '"' ? "double" : "single"
     }
@@ -146,25 +360,35 @@ export function getAttributeValueQuoteType(attributeNode: HTMLAttributeNode): "s
 /**
  * Finds an attribute by name in a list of attributes
  */
-export function findAttributeByName(attributes: any[], attributeName: string): HTMLAttributeNode | null {
+export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
   for (const child of attributes) {
     if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
       const attributeNode = child as HTMLAttributeNode
       const name = getAttributeName(attributeNode)
+
       if (name === attributeName.toLowerCase()) {
         return attributeNode
       }
     }
   }
+
   return null
 }
 
 /**
  * Checks if a tag has a specific attribute
  */
-export function hasAttribute(node: HTMLOpenTagNode | HTMLSelfCloseTagNode, attributeName: string): boolean {
+export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
+  return getAttribute(node, attributeName) !== null
+}
+
+/**
+ * Checks if a tag has a specific attribute
+ */
+export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
   const attributes = getAttributes(node)
-  return findAttributeByName(attributes, attributeName) !== null
+
+  return findAttributeByName(attributes, attributeName)
 }
 
 /**
@@ -182,6 +406,11 @@ export const HTML_BLOCK_ELEMENTS = new Set([
   "dt", "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2",
   "h3", "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "noscript",
   "ol", "p", "pre", "section", "table", "tfoot", "ul", "video"
+])
+
+export const HTML_VOID_ELEMENTS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta",
+  "param", "source", "track", "wbr",
 ])
 
 export const HTML_BOOLEAN_ATTRIBUTES = new Set([
@@ -265,6 +494,43 @@ export const VALID_ARIA_ROLES = new Set([
   "log", "marquee"
 ]);
 
+/**
+ * Parameter types for AttributeVisitorMixin methods
+ */
+export interface StaticAttributeStaticValueParams {
+  attributeName: string
+  attributeValue: string
+  attributeNode: HTMLAttributeNode
+  originalAttributeName: string
+  parentNode: HTMLOpenTagNode
+}
+
+export interface StaticAttributeDynamicValueParams {
+  attributeName: string
+  valueNodes: Node[]
+  attributeNode: HTMLAttributeNode
+  originalAttributeName: string
+  parentNode: HTMLOpenTagNode
+  combinedValue?: string | null
+}
+
+export interface DynamicAttributeStaticValueParams {
+  nameNodes: Node[]
+  attributeValue: string
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode
+  combinedName?: string
+}
+
+export interface DynamicAttributeDynamicValueParams {
+  nameNodes: Node[]
+  valueNodes: Node[]
+  attributeNode: HTMLAttributeNode
+  parentNode: HTMLOpenTagNode
+  combinedName?: string
+  combinedValue?: string | null
+}
+
 export const ARIA_ATTRIBUTES =  new Set([
   'aria-activedescendant',
   'aria-atomic',
@@ -347,6 +613,13 @@ export function isBlockElement(tagName: string): boolean {
 }
 
 /**
+ * Checks if an element is a void element
+ */
+export function isVoidElement(tagName: string): boolean {
+  return HTML_VOID_ELEMENTS.has(tagName.toLowerCase())
+}
+
+/**
  * Checks if an attribute is a boolean attribute
  */
 export function isBooleanAttribute(attributeName: string): boolean {
@@ -354,11 +627,16 @@ export function isBooleanAttribute(attributeName: string): boolean {
 }
 
 /**
- * Abstract base class for rules that need to check individual attributes on HTML tags
- * Eliminates duplication of visitHTMLOpenTagNode/visitHTMLSelfCloseTagNode patterns
- * and attribute iteration logic. Provides simplified interface with extracted attribute info.
+ * Attribute visitor that provides granular processing based on both
+ * attribute name type (static/dynamic) and value type (static/dynamic)
+ *
+ * This gives you 4 distinct methods to override:
+ * - checkStaticAttributeStaticValue()   - name="class" value="foo"
+ * - checkStaticAttributeDynamicValue()  - name="class" value="<%= css_class %>"
+ * - checkDynamicAttributeStaticValue()  - name="data-<%= key %>" value="foo"
+ * - checkDynamicAttributeDynamicValue() - name="data-<%= key %>" value="<%= value %>"
  */
-export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
+export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends BaseRuleVisitor<TAutofixContext> {
   constructor(ruleName: string, context?: Partial<LintContext>) {
     super(ruleName, context)
   }
@@ -368,28 +646,76 @@ export abstract class AttributeVisitorMixin extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkAttributesOnNode(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
-
-  private checkAttributesOnNode(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
+  private checkAttributesOnNode(node: HTMLOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
-      const attributeName = getAttributeName(attributeNode)
-      const attributeValue = getAttributeValue(attributeNode)
+      const staticAttributeName = getAttributeName(attributeNode)
+      const originalAttributeName = getAttributeName(attributeNode, false) || ""
+      const isDynamicName = hasDynamicAttributeName(attributeNode)
+      const staticAttributeValue = getStaticAttributeValue(attributeNode)
+      const valueNodes = getAttributeValueNodes(attributeNode)
+      const hasOutputERB = hasERBOutput(valueNodes)
+      const isEffectivelyStaticValue = isEffectivelyStatic(valueNodes)
 
-      if (attributeName) {
-        this.checkAttribute(attributeName, attributeValue, attributeNode, node)
+      if (staticAttributeName && staticAttributeValue !== null) {
+        this.checkStaticAttributeStaticValue({
+          attributeName: staticAttributeName,
+          attributeValue: staticAttributeValue,
+          attributeNode,
+          originalAttributeName,
+          parentNode: node
+        })
+      } else if (staticAttributeName && isEffectivelyStaticValue && !hasOutputERB) {
+        const validatableContent = getValidatableStaticContent(valueNodes) || ""
+
+        this.checkStaticAttributeStaticValue({ attributeName: staticAttributeName, attributeValue: validatableContent, attributeNode, originalAttributeName, parentNode: node })
+      } else if (staticAttributeName && hasOutputERB) {
+        const combinedValue = getAttributeValue(attributeNode)
+
+        this.checkStaticAttributeDynamicValue({ attributeName: staticAttributeName, valueNodes, attributeNode, parentNode: node, originalAttributeName, combinedValue })
+      } else if (isDynamicName && staticAttributeValue !== null) {
+        const nameNode = attributeNode.name as HTMLAttributeNameNode
+        const nameNodes = nameNode.children || []
+        const combinedName = getCombinedAttributeNameString(attributeNode)
+
+        this.checkDynamicAttributeStaticValue({ nameNodes, attributeValue: staticAttributeValue, attributeNode, parentNode: node, combinedName })
+      } else if (isDynamicName) {
+        const nameNode = attributeNode.name as HTMLAttributeNameNode
+        const nameNodes = nameNode.children || []
+        const combinedName = getCombinedAttributeNameString(attributeNode)
+        const combinedValue = getAttributeValue(attributeNode)
+
+        this.checkDynamicAttributeDynamicValue({ nameNodes, valueNodes, attributeNode, parentNode: node, combinedName, combinedValue })
       }
     })
   }
 
-  protected abstract checkAttribute(
-    attributeName: string,
-    attributeValue: string | null,
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
-  ): void
+  /**
+   * Static attribute name with static value: class="container"
+   */
+  protected checkStaticAttributeStaticValue(_params: StaticAttributeStaticValueParams): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Static attribute name with dynamic value: class="<%= css_class %>"
+   */
+  protected checkStaticAttributeDynamicValue(_params: StaticAttributeDynamicValueParams): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Dynamic attribute name with static value: data-<%= key %>="foo"
+   */
+  protected checkDynamicAttributeStaticValue(_params: DynamicAttributeStaticValueParams): void {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Dynamic attribute name with dynamic value: data-<%= key %>="<%= value %>"
+   */
+  protected checkDynamicAttributeDynamicValue(_params: DynamicAttributeDynamicValueParams): void {
+    // Default implementation does nothing
+  }
 }
 
 /**
@@ -409,7 +735,7 @@ export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolea
  * Iterates over all attributes of a tag node, calling the callback for each attribute
  */
 export function forEachAttribute(
-  node: HTMLOpenTagNode | HTMLSelfCloseTagNode,
+  node: HTMLOpenTagNode,
   callback: (attributeNode: HTMLAttributeNode) => void
 ): void {
   const attributes = getAttributes(node)
@@ -424,8 +750,8 @@ export function forEachAttribute(
 /**
  * Base lexer visitor class that provides common functionality for lexer-based rule visitors
  */
-export abstract class BaseLexerRuleVisitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -437,7 +763,7 @@ export abstract class BaseLexerRuleVisitor {
   /**
    * Helper method to create a lint offense for lexer rules
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -445,14 +771,15 @@ export abstract class BaseLexerRuleVisitor {
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 
   /**
@@ -480,14 +807,13 @@ export abstract class BaseLexerRuleVisitor {
   protected visitToken(_token: Token): void {
     // Default implementation does nothing
   }
-
 }
 
 /**
  * Base source visitor class that provides common functionality for source-based rule visitors
  */
-export abstract class BaseSourceRuleVisitor {
-  public readonly offenses: LintOffense[] = []
+export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
+  public readonly offenses: LintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -499,22 +825,23 @@ export abstract class BaseSourceRuleVisitor {
   /**
    * Helper method to create a lint offense for source rules
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error"): LintOffense {
+  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
     return {
-      rule: this.ruleName as any, // Type assertion for compatibility
+      rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
       severity,
+      autofixContext,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error"): void {
-    this.offenses.push(this.createOffense(message, location, severity))
+  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
   }
 
   /**
@@ -530,19 +857,222 @@ export abstract class BaseSourceRuleVisitor {
    * Override this method to implement source-level checks
    */
   protected abstract visitSource(source: string): void
+}
 
-  /**
-   * Helper method to create a location for a specific position in the source
-   */
-  protected createLocationAt(source: string, position: number): Location {
-    const beforePosition = source.substring(0, position)
-    const lines = beforePosition.split('\n')
-    const line = lines.length
-    const column = lines[lines.length - 1].length + 1
+/**
+ * Autofix utilities for applying string replacements
+ */
 
-    const start = new Position(line, column)
-    const end = new Position(line, column)
+/**
+ * Checks if two locations are equal
+ * @param a - First location
+ * @param b - Second location
+ * @returns true if locations are equal
+ */
+export function locationsEqual(a: Location, b: Location): boolean {
+  return a.start.line === b.start.line &&
+         a.start.column === b.start.column &&
+         a.end.line === b.end.line &&
+         a.end.column === b.end.column
+}
 
-    return new Location(start, end)
+/**
+ * Finds a node in the AST that has a specific location
+ * Uses direct recursive traversal for reliability
+ * @param root - The root node to search from
+ * @param location - The location to match
+ * @param predicate - Optional predicate function to filter nodes (e.g., isERBNode)
+ * @returns The matching node or null if not found
+ */
+export function findNodeByLocation(root: Node, location: Location, predicate?: (node: Node) => boolean): any {
+  const visited = new Set<any>()
+
+  function search(node: any): any {
+    if (!node || visited.has(node)) return null
+    visited.add(node)
+
+    if (node.location && locationsEqual(node.location, location)) {
+      if (!predicate || predicate(node)) {
+        return node
+      }
+    }
+
+    const propsToCheck = ['tag_opening', 'tag_closing', 'tag_name', 'name', 'equals', 'value', 'content']
+    for (const prop of propsToCheck) {
+      if (node[prop]?.location && locationsEqual(node[prop].location, location)) {
+        if (!predicate || predicate(node)) {
+          return node
+        }
+      }
+    }
+
+    if (typeof node.compactChildNodes === 'function') {
+      for (const child of node.compactChildNodes()) {
+        const found = search(child)
+        if (found) return found
+      }
+    } else {
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          const found = search(child)
+          if (found) return found
+        }
+      }
+
+      if (node.body && Array.isArray(node.body)) {
+        for (const child of node.body) {
+          const found = search(child)
+          if (found) return found
+        }
+      }
+    }
+
+    return null
   }
+
+  return search(root)
+}
+
+/**
+ * AST Navigation Utilities
+ * These utilities help navigate the AST tree for complex autofix operations
+ */
+
+/**
+ * Finds the parent node of a given child node in the AST
+ * @param root - The root node to search from (typically the document node)
+ * @param target - The child node to find the parent of
+ * @returns The parent node, or null if not found
+ *
+ * @example
+ * const parent = findParent(result.value, offense.autofixContext.node)
+ * if (parent?.type === "AST_HTML_ELEMENT_NODE") {
+ *   // Modify parent...
+ * }
+ */
+export function findParent(root: Node, target: Node): Node | null {
+  let parentNode: Node | null = null
+
+  const search = (node: Node, _parent: Node | null = null): void => {
+    if (parentNode) return
+
+    const nodeAny = node as any
+
+    if (nodeAny.children) {
+      for (const child of nodeAny.children) {
+        if (child === target) {
+          parentNode = node
+          return
+        }
+      }
+    }
+
+    const propsToCheck = ['open_tag', 'close_tag', 'body', 'name', 'value']
+
+    for (const prop of propsToCheck) {
+      const value = (node as any)[prop]
+      if (value === target) {
+        parentNode = node
+        return
+      }
+      if (Array.isArray(value) && value.includes(target)) {
+        parentNode = node
+        return
+      }
+    }
+
+    if (nodeAny.children) {
+      for (const child of nodeAny.children) {
+        search(child, node)
+        if (parentNode) return
+      }
+    }
+
+    for (const prop of propsToCheck) {
+      const value = (node as any)[prop]
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item && typeof item === 'object' && 'type' in item) {
+            search(item, node)
+            if (parentNode) return
+          }
+        }
+      } else if (value && typeof value === 'object' && 'type' in value) {
+        search(value, node)
+        if (parentNode) return
+      }
+    }
+  }
+
+  search(root)
+
+  return parentNode
+}
+
+export const DOCUMENT_ONLY_TAG_NAMES = new Set<string>([
+  "html"
+])
+
+export const HTML_ONLY_TAG_NAMES = new Set<string>([
+  "head", "body"
+])
+
+export const HEAD_ONLY_TAG_NAMES = new Set<string>([
+  "base",
+  "title",
+  "style",
+  "meta",
+  "link",
+])
+
+export const HEAD_AND_BODY_TAG_NAMES = new Set<string>([
+  "script",
+  "noscript",
+  "template",
+])
+
+export function isDocumentOnlyTag(tagName: string): boolean {
+  return DOCUMENT_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHtmlOnlyTag(tagName: string): boolean {
+  return HTML_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHeadOnlyTag(tagName: string): boolean {
+  return HEAD_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHeadAndBodyTag(tagName: string): boolean {
+  return HEAD_AND_BODY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isBodyOnlyTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    !isHeadOnlyTag(tag) &&
+    !isHeadAndBodyTag(tag)
+  )
+}
+
+export function isBodyTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    (isBodyOnlyTag(tag) || isHeadAndBodyTag(tag))
+  )
+}
+
+export function isHeadTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    (isHeadOnlyTag(tag) || isHeadAndBodyTag(tag))
+  )
 }

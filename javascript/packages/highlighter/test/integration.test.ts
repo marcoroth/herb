@@ -25,7 +25,7 @@ describe("herb-highlight CLI", () => {
   afterAll(() => {
     try {
       unlinkSync(testFile)
-    } catch (e) {}
+    } catch {}
   })
 
   test("should highlight file via CLI", () => {

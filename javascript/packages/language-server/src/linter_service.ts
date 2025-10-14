@@ -58,7 +58,7 @@ export class LinterService {
     return { diagnostics }
   }
 
-  private lintToDignosticSeverity(severity: LintSeverity): DiagnosticSeverity {
+  private lintToDignosticSeverity(severity: LintSeverity): DiagnosticSeverity {
     switch (severity) {
       case "error": return DiagnosticSeverity.Error
       case "warning": return DiagnosticSeverity.Warning

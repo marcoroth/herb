@@ -1,0 +1,77 @@
+# Generated from lib/herb/engine.rb with RBS::Inline
+
+module Herb
+  class Engine
+    attr_reader src: untyped
+
+    attr_reader filename: untyped
+
+    attr_reader project_path: untyped
+
+    attr_reader relative_file_path: untyped
+
+    attr_reader bufvar: untyped
+
+    attr_reader debug: untyped
+
+    attr_reader content_for_head: untyped
+
+    attr_reader validation_error_template: untyped
+
+    attr_reader visitors: untyped
+
+    ESCAPE_TABLE: untyped
+
+    class CompilationError < StandardError
+    end
+
+    def initialize: (untyped input, ?untyped properties) -> untyped
+
+    def self.h: (untyped value) -> untyped
+
+    def self.attr: (untyped value) -> untyped
+
+    def self.js: (untyped value) -> untyped
+
+    def self.css: (untyped value) -> untyped
+
+    def add_text: (untyped text) -> untyped
+
+    def add_code: (untyped code) -> untyped
+
+    def add_expression: (untyped indicator, untyped code) -> untyped
+
+    def add_expression_result: (untyped code) -> untyped
+
+    def add_expression_result_escaped: (untyped code) -> untyped
+
+    def add_expression_block: (untyped indicator, untyped code) -> untyped
+
+    def add_expression_block_result: (untyped code) -> untyped
+
+    def add_expression_block_result_escaped: (untyped code) -> untyped
+
+    def add_postamble: (untyped postamble) -> untyped
+
+    def with_buffer: () ?{ (?) -> untyped } -> untyped
+
+    def terminate_expression: () -> untyped
+
+    private
+
+    def run_validation: (untyped ast) -> untyped
+
+    def handle_parser_errors: (untyped parser_errors, untyped input, untyped _ast) -> untyped
+
+    def handle_validation_errors: (untyped errors, untyped input) -> untyped
+
+    def add_validation_overlay: (untyped errors, ?untyped input) -> untyped
+
+    def escape_attr: (untyped text) -> untyped
+
+    def add_parser_error_overlay: (untyped parser_errors, untyped input) -> untyped
+
+    # : () -> Array[Herb::Visitor]
+    def default_visitors: () -> Array[Herb::Visitor]
+  end
+end

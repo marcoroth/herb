@@ -1,0 +1,7 @@
+_buf = ::String.new;
+ _buf << '<style data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  .user-color { color: '.freeze; _buf << ::Herb::Engine.css((@user.color)); _buf << '; }
+  .theme { background: '.freeze; _buf << ::Herb::Engine.css((theme_color)); _buf << '; }
+</style>
+'.freeze;
+_buf.to_s

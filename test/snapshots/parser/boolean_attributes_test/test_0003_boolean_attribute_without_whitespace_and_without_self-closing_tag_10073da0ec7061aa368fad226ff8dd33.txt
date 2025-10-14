@@ -10,7 +10,10 @@
         │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:15))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:15))
-        │       │       │       └── name: "required" (location: (1:7)-(1:15))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:7)-(1:15))
+        │       │       │               └── content: "required"
+        │       │       │
         │       │       │
         │       │       ├── equals: ∅
         │       │       └── value: ∅
@@ -20,4 +23,5 @@
         ├── tag_name: "input" (location: (1:1)-(1:6))
         ├── body: []
         ├── close_tag: ∅
-        └── is_void: true
+        ├── is_void: true
+        └── source: "HTML"

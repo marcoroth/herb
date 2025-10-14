@@ -65,9 +65,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (10:0)-(10:5))
     │   │       ├── tag_opening: "</" (location: (10:0)-(10:2))
     │   │       ├── tag_name: "h1" (location: (10:2)-(10:4))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (10:4)-(10:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (10:5)-(11:0))
         └── content: "\n"

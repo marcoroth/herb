@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << content_tag :div, class: "wrapper" do; _buf << 'Content'.freeze; end;
+_buf.to_s

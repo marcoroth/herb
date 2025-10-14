@@ -6,19 +6,26 @@ describe("CLI Output Formatting", () => {
     await Herb.load()
   })
 
-  function runLinter(fixture: string, ...args: string[]): { output: string, exitCode: number } {
+  function runLinter(fixture: string, ...args: (string | Record<string, string>)[]): { output: string, exitCode: number } {
     try {
       const { execSync } = require("child_process")
-      const allArgs = [...args, "--no-timing"].join(' ')
+      let env: Record<string, string> = {}
+      if (typeof args[args.length - 1] === "object") {
+        env = args.pop() as Record<string, string>
+      }
+      const allArgs = [...(args as string[]), "--no-timing"].join(' ')
 
       const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs}`, {
         encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1" }
+        env: { ...process.env, NO_COLOR: "1", GITHUB_ACTIONS: undefined, ...env }
       })
 
       return { output: output.trim(), exitCode: 0 }
     } catch (error: any) {
-      return { output: error.stdout.toString().trim(), exitCode: error.status }
+      const stderr = error.stderr ? error.stderr.toString().trim() : ""
+      const stdout = error.stdout ? error.stdout.toString().trim() : ""
+
+      return { output: stderr || stdout, exitCode: error.status }
     }
   }
 
@@ -41,6 +48,13 @@ describe("CLI Output Formatting", () => {
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
+  })
+
+  test("handles boolean attributes", () => {
+    const { output, exitCode } = runLinter("boolean-attribute.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(0)
   })
 
   test("formats success output correctly", () => {
@@ -66,6 +80,13 @@ describe("CLI Output Formatting", () => {
 
   test("displays rule offenses when showing all rules", () => {
     const { output, exitCode } = runLinter("few-rule-offenses.html.erb", "--no-wrap-lines")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("diplays only parsers errors if one is present", () => {
+    const { output, exitCode } = runLinter("parser-errors.html.erb", "--no-wrap-lines")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
@@ -141,6 +162,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("uses GitHub Actions format by default when GITHUB_ACTIONS is true", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", { GITHUB_ACTIONS: "true" })
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("GitHub Actions format escapes special characters in messages", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--github")
 
@@ -152,6 +180,28 @@ describe("CLI Output Formatting", () => {
     const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--github")
 
     expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("rejects --github with --json format", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
+
+    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(exitCode).toBe(1)
+  })
+
+  test("rejects --github with --format=json", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--format=json", "--github")
+
+    expect(output).toBe("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+    expect(exitCode).toBe(1)
+  })
+
+  test("--no-github disables GitHub Actions annotations", () => {
+    const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--no-github", { GITHUB_ACTIONS: "true" })
+
+    expect(output).not.toMatch(/^::error/)
+    expect(output).toMatch(/error.*Missing required.*alt.*attribute/)
     expect(exitCode).toBe(1)
   })
 })

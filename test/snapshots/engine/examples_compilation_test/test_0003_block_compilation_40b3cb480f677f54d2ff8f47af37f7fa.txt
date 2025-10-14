@@ -1,0 +1,10 @@
+_buf = ::String.new;
+ array = ["One", "Two", "Three"]; _buf << '
+
+<ul>
+  '.freeze; array.each do |item|; _buf << '
+    <li>'.freeze; _buf << (item).to_s; _buf << '</li>
+  '.freeze; end; _buf << '
+</ul>
+'.freeze;
+_buf.to_s

@@ -1,0 +1,38 @@
+# Generated from lib/herb/engine/debug.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Debug
+      private
+
+      def debug?: () -> untyped
+
+      def process_debuggable_expression: (untyped node, untyped opening, untyped code, untyped should_escape) -> untyped
+
+      def add_debug_expr_start: (untyped erb_code, untyped output_content, untyped node) -> untyped
+
+      def add_debug_expr_end: () -> untyped
+
+      def should_debug_expression?: (untyped node) -> untyped
+
+      def find_top_level_elements: (untyped document_node) -> untyped
+
+      def should_add_debug_attributes_to_element?: (untyped open_tag_node) -> untyped
+
+      def find_parent_element_for_open_tag: (untyped open_tag_node) -> untyped
+
+      def add_debug_attributes_to_element: (untyped open_tag_node) -> untyped
+
+      def determine_view_type: () -> untyped
+
+      def partial?: () -> untyped
+
+      def component?: () -> untyped
+
+      def in_head_context?: () -> untyped
+
+      # TODO: convert this to analyze the Prism nodes once available
+      def complex_rails_helper?: (untyped code) -> untyped
+    end
+  end
+end

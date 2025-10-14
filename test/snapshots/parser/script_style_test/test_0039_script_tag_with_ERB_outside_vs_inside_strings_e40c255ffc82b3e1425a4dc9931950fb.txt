@@ -48,9 +48,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:9))
     │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
     │   │       ├── tag_name: "script" (location: (5:2)-(5:8))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:8)-(5:9))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:9)-(6:0))
         └── content: "\n"

@@ -18,9 +18,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:6)-(1:12))
     │   │       ├── tag_opening: "</" (location: (1:6)-(1:8))
     │   │       ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:11)-(1:12))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:12)-(2:0))
     │   └── content: "\n"
@@ -43,9 +45,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (2:6)-(2:12))
     │   │       ├── tag_opening: "</" (location: (2:6)-(2:8))
     │   │       ├── tag_name: "div" (location: (2:8)-(2:11))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (2:11)-(2:12))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (2:12)-(3:0))
         └── content: "\n"

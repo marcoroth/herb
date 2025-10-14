@@ -1,7 +1,7 @@
 import { BaseRuleVisitor, getTagName, HTML_HEAD_ONLY_ELEMENTS } from "./rule-utils"
 import { ParserRule } from "../types"
 
-import type { ParseResult, HTMLElementNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 class HeadOnlyElementsVisitor extends BaseRuleVisitor {
@@ -29,7 +29,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     }
   }
 
-  private checkHeadOnlyElement(node: HTMLElementNode | HTMLSelfCloseTagNode, tagName: string): void {
+  private checkHeadOnlyElement(node: HTMLElementNode, tagName: string): void {
     if (this.isInsideHead) return
     if (tagName === "title" && this.isInsideSvg) return
 

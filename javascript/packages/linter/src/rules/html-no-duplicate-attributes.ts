@@ -1,46 +1,44 @@
-import { BaseRuleVisitor, forEachAttribute } from "./rule-utils.js"
-
 import { ParserRule } from "../types.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNameNode, ParseResult } from "@herb-tools/core"
+import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
 
-class NoDuplicateAttributesVisitor extends BaseRuleVisitor {
+class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
+  private attributeNames = new Map<string, HTMLAttributeNode[]>()
+
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    this.checkDuplicateAttributes(node)
+    this.attributeNames.clear()
     super.visitHTMLOpenTagNode(node)
+    this.reportDuplicates()
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkDuplicateAttributes(node)
-    super.visitHTMLSelfCloseTagNode(node)
+
+  protected checkStaticAttributeStaticValue({ attributeName, attributeNode }: StaticAttributeStaticValueParams): void {
+    this.trackAttributeName(attributeName, attributeNode)
   }
 
-  private checkDuplicateAttributes(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
-    const attributeNames = new Map<string, HTMLAttributeNameNode[]>()
+  protected checkStaticAttributeDynamicValue({ attributeName, attributeNode }: StaticAttributeDynamicValueParams): void {
+    this.trackAttributeName(attributeName, attributeNode)
+  }
 
-    forEachAttribute(node, (attributeNode) => {
-      if (attributeNode.name?.type !== "AST_HTML_ATTRIBUTE_NAME_NODE") return
+  private trackAttributeName(attributeName: string, attributeNode: HTMLAttributeNode): void {
+    if (!this.attributeNames.has(attributeName)) {
+      this.attributeNames.set(attributeName, [])
+    }
 
-      const nameNode = attributeNode.name as HTMLAttributeNameNode
-      if (!nameNode.name) return
+    this.attributeNames.get(attributeName)!.push(attributeNode)
+  }
 
-      const attributeName = nameNode.name.value.toLowerCase() // HTML attributes are case-insensitive
-
-      if (!attributeNames.has(attributeName)) {
-        attributeNames.set(attributeName, [])
-      }
-
-      attributeNames.get(attributeName)!.push(nameNode)
-    })
-
-    for (const [attributeName, nameNodes] of attributeNames) {
-      if (nameNodes.length > 1) {
-        for (let i = 1; i < nameNodes.length; i++) {
-          const nameNode = nameNodes[i]
+  private reportDuplicates(): void {
+    for (const [attributeName, attributeNodes] of this.attributeNames) {
+      if (attributeNodes.length > 1) {
+        for (let i = 1; i < attributeNodes.length; i++) {
+          const attributeNode = attributeNodes[i]
 
           this.addOffense(
             `Duplicate attribute \`${attributeName}\` found on tag. Remove the duplicate occurrence.`,
-            nameNode.location,
+            attributeNode.name!.location,
             "error"
           )
         }
@@ -54,7 +52,9 @@ export class HTMLNoDuplicateAttributesRule extends ParserRule {
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new NoDuplicateAttributesVisitor(this.name, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
   }
 }

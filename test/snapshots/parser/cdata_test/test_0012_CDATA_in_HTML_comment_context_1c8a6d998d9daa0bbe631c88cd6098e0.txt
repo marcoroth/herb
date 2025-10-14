@@ -1,0 +1,25 @@
+@ DocumentNode (location: (1:0)-(1:45))
+└── children: (3 items)
+    ├── @ HTMLCommentNode (location: (1:0)-(1:15))
+    │   ├── comment_start: "<!--" (location: (1:0)-(1:4))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:4)-(1:12))
+    │   │       └── content: " Before "
+    │   │
+    │   └── comment_end: "-->" (location: (1:12)-(1:15))
+    │
+    ├── @ CDATANode (location: (1:15)-(1:31))
+    │   ├── tag_opening: "<![CDATA[" (location: (1:15)-(1:24))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:24)-(1:28))
+    │   │       └── content: "Data"
+    │   │
+    │   └── tag_closing: "]]>" (location: (1:28)-(1:31))
+    │
+    └── @ HTMLCommentNode (location: (1:31)-(1:45))
+        ├── comment_start: "<!--" (location: (1:31)-(1:35))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:35)-(1:42))
+        │       └── content: " After "
+        │
+        └── comment_end: "-->" (location: (1:42)-(1:45))

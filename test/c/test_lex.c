@@ -3,18 +3,20 @@
 
 TEST(herb_lex_to_buffer_empty_file)
   char* html = "";
-  buffer_T output = buffer_new();
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024);
 
   herb_lex_to_buffer(html, &output);
 
   ck_assert_str_eq(output.value, "#<Herb::Token type=\"TOKEN_EOF\" value=\"<EOF>\" range=[0, 0] start=(1:0) end=(1:0)>\n");
 
-  buffer_free(&output);
+  free(output.value);
 END
 
 TEST(herb_lex_to_buffer_basic_tag)
   char* html = "<html></html>";
-  buffer_T output = buffer_new();
+  hb_buffer_T output;
+  hb_buffer_init(&output, 1024);
 
   herb_lex_to_buffer(html, &output);
 
@@ -29,7 +31,7 @@ TEST(herb_lex_to_buffer_basic_tag)
     "#<Herb::Token type=\"TOKEN_EOF\" value=\"<EOF>\" range=[13, 13] start=(1:13) end=(1:13)>\n"
   );
 
-  buffer_free(&output);
+  free(output.value);
 END
 
 TCase *lex_tests(void) {

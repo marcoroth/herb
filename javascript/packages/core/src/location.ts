@@ -17,6 +17,10 @@ export class Location {
     return new Location(start, end)
   }
 
+  static get zero() {
+    return new Location(Position.zero, Position.zero)
+  }
+
   constructor(start: Position, end: Position) {
     this.start = start
     this.end = end

@@ -1,0 +1,16 @@
+# Generated from lib/herb/ast/helpers.rb with RBS::Inline
+
+module Herb
+  module AST
+    module Helpers
+      # : (Herb::AST::Node) -> bool
+      def erb_outputs?: (Herb::AST::Node) -> bool
+
+      # : (String) -> bool
+      def erb_comment?: (String) -> bool
+
+      # : (String) -> bool
+      def erb_output?: (String) -> bool
+    end
+  end
+end

@@ -1,0 +1,45 @@
+@ DocumentNode (location: (1:0)-(1:39))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:39))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:29))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:28)-(1:29))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:28))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:13))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:13))
+        │       │       │               └── content: "data-msg"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:13)-(1:14))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:14)-(1:28))
+        │       │               ├── open_quote: "'" (location: (1:14)-(1:15))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:15)-(1:27))
+        │       │               │       └── content: "Don\\'t worry"
+        │       │               │
+        │       │               ├── close_quote: "'" (location: (1:27)-(1:28))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:29)-(1:33))
+        │       └── content: "Text"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:33)-(1:39))
+        │       ├── tag_opening: "</" (location: (1:33)-(1:35))
+        │       ├── tag_name: "div" (location: (1:35)-(1:38))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:38)-(1:39))
+        │
+        ├── is_void: false
+        └── source: "HTML"

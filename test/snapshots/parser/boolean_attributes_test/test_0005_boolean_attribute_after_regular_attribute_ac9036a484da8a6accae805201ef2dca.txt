@@ -10,7 +10,10 @@
         │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:17))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:9))
-        │       │   │   │       └── name: "id" (location: (1:7)-(1:9))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:7)-(1:9))
+        │       │   │   │               └── content: "id"
+        │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:9)-(1:10))
         │       │   │   └── value:
@@ -27,7 +30,10 @@
         │       │   └── @ HTMLAttributeNode (location: (1:18)-(1:26))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:18)-(1:26))
-        │       │       │       └── name: "required" (location: (1:18)-(1:26))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:18)-(1:26))
+        │       │       │               └── content: "required"
+        │       │       │
         │       │       │
         │       │       ├── equals: ∅
         │       │       └── value: ∅
@@ -37,4 +43,5 @@
         ├── tag_name: "input" (location: (1:1)-(1:6))
         ├── body: []
         ├── close_tag: ∅
-        └── is_void: true
+        ├── is_void: true
+        └── source: "HTML"

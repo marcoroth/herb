@@ -18,6 +18,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:57)-(1:65))
         │       ├── tag_opening: "</" (location: (1:57)-(1:59))
         │       ├── tag_name: "style" (location: (1:59)-(1:64))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:64)-(1:65))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

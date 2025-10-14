@@ -5,8 +5,10 @@ import { join, resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "./formatter.js"
+import { parseArgs } from "util"
+import { resolveFormatOptions } from "./options.js"
 
-import { name, version } from "../package.json"
+import { name, version, dependencies } from "../package.json"
 
 const pluralize = (count: number, singular: string, plural: string = singular + 's'): string => {
   return count === 1 ? singular : plural
@@ -14,52 +16,113 @@ const pluralize = (count: number, singular: string, plural: string = singular + 
 
 export class CLI {
   private usage = dedent`
-    Usage: herb-format [file|directory] [options]
+    Usage: herb-format [file|directory|glob-pattern] [options]
 
     Arguments:
-      file|directory   File to format, directory to format all **/*.html.erb files within,
-                       or '-' for stdin (omit to format all **/*.html.erb files in current directory)
+      file|directory|glob-pattern   File to format, directory to format all **/*.html{+*,}.erb files within,
+                                    glob pattern to match files, or '-' for stdin (omit to format all **/*.html{+*,}.erb files in current directory)
 
     Options:
-      -c, --check      check if files are formatted without modifying them
-      -h, --help       show help
-      -v, --version    show version
+      -c, --check                     check if files are formatted without modifying them
+      -h, --help                      show help
+      -v, --version                   show version
+      --indent-width <number>         number of spaces per indentation level (default: 2)
+      --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
-      herb-format                            # Format all **/*.html.erb files in current directory
-      herb-format templates/                 # Format and **/*.html.erb within the given directory
-      herb-format templates/index.html.erb   # Format and write single file
-      herb-format --check                    # Check if all **/*.html.erb files are formatted
-      herb-format --check templates/         # Check if all **/*.html.erb files in templates/ are formatted
+      herb-format                                 # Format all **/*.html{+*,}.erb files in current directory
+      herb-format index.html.erb                  # Format and write single file
+      herb-format templates/index.html.erb        # Format and write single file
+      herb-format templates/                      # Format and **/*.html{+*,}.erb within the given directory
+      herb-format "templates/**/*.html{+*,}.erb"  # Format all .html{+*,}.erb files in templates directory using glob pattern
+      herb-format "**/*.html{+*,}.erb"            # Format all .html{+*,}.erb files using glob pattern
+      herb-format "**/*.xml.erb"                  # Format all .xml.erb files using glob pattern
+      herb-format --check                         # Check if all **/*.html{+*,}.erb files are formatted
+      herb-format --check templates/              # Check if all **/*.html{+*,}.erb files in templates/ are formatted
+      herb-format --indent-width 4           # Format with 4-space indentation
+      herb-format --max-line-length 100      # Format with 100-character line limit
       cat template.html.erb | herb-format    # Format from stdin to stdout
   `
 
-  async run() {
-    const args = process.argv.slice(2)
+  private parseArguments() {
+    const { values, positionals } = parseArgs({
+      args: process.argv.slice(2),
+      options: {
+        help: { type: "boolean", short: "h" },
+        version: { type: "boolean", short: "v" },
+        check: { type: "boolean", short: "c" },
+        "indent-width": { type: "string" },
+        "max-line-length": { type: "string" }
+      },
+      allowPositionals: true
+    })
 
-    if (args.includes("--help") || args.includes("-h")) {
+    if (values.help) {
       console.log(this.usage)
-
       process.exit(0)
     }
+
+    let indentWidth: number | undefined
+
+    if (values["indent-width"]) {
+      const parsed = parseInt(values["indent-width"], 10)
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(
+          `Invalid indent-width: ${values["indent-width"]}. Must be a positive integer.`,
+        )
+        process.exit(1)
+      }
+      indentWidth = parsed
+    }
+
+    let maxLineLength: number | undefined
+
+    if (values["max-line-length"]) {
+      const parsed = parseInt(values["max-line-length"], 10)
+      if (isNaN(parsed) || parsed < 1) {
+        console.error(
+          `Invalid max-line-length: ${values["max-line-length"]}. Must be a positive integer.`,
+        )
+        process.exit(1)
+      }
+      maxLineLength = parsed
+    }
+
+    return {
+      positionals,
+      isCheckMode: values.check,
+      isVersionMode: values.version,
+      indentWidth,
+      maxLineLength
+    }
+  }
+
+  async run() {
+    const { positionals, isCheckMode, isVersionMode, indentWidth, maxLineLength } = this.parseArguments()
 
     try {
       await Herb.load()
 
-      if (args.includes("--version") || args.includes("-v")) {
+      if (isVersionMode) {
         console.log("Versions:")
-        console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+        console.log(`  ${name}@${version}`)
+        console.log(`  @herb-tools/printer@${dependencies['@herb-tools/printer']}`)
+        console.log(`  ${Herb.version}`.split(", ").join("\n  "))
 
         process.exit(0)
       }
 
-      console.log("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues")
-      console.log()
+      console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
+      console.error()
 
-      const formatter = new Formatter(Herb)
-      const isCheckMode = args.includes("--check") || args.includes("-c")
+      const formatOptions = resolveFormatOptions({
+        indentWidth,
+        maxLineLength
+      })
 
-      const file = args.find(arg => !arg.startsWith("-"))
+      const formatter = new Formatter(Herb, formatOptions)
+
+      const file = positionals[0]
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {
@@ -86,17 +149,58 @@ export class CLI {
 
         process.stdout.write(output)
       } else if (file) {
+        let isDirectory = false
+        let isFile = false
+        let pattern = file
+
         try {
           const stats = statSync(file)
+          isDirectory = stats.isDirectory()
+          isFile = stats.isFile()
+        } catch {
+          // Not a file/directory, treat as glob pattern
+        }
 
-          if (stats.isDirectory()) {
-            const pattern = join(file, "**/*.html.erb")
-            const files = await glob(pattern)
+        if (isDirectory) {
+          pattern = join(file, "**/*.html{+*,}.erb")
+        } else if (isFile) {
+          const source = readFileSync(file, "utf-8")
+          const result = formatter.format(source)
+          const output = result.endsWith('\n') ? result : result + '\n'
 
-            if (files.length === 0) {
-              console.log(`No files found matching pattern: ${resolve(pattern)}`)
-              process.exit(0)
+          if (output !== source) {
+            if (isCheckMode) {
+              console.log(`File is not formatted: ${file}`)
+              process.exit(1)
+            } else {
+              writeFileSync(file, output, "utf-8")
+              console.log(`Formatted: ${file}`)
             }
+          } else if (isCheckMode) {
+            console.log(`File is properly formatted: ${file}`)
+          }
+
+          process.exit(0)
+        }
+
+        try {
+          const files = await glob(pattern)
+
+          if (files.length === 0) {
+            try {
+              statSync(file)
+            } catch {
+              if (!file.includes('*') && !file.includes('?') && !file.includes('[') && !file.includes('{')) {
+                console.error(`Error: Cannot access '${file}': ENOENT: no such file or directory`)
+
+                process.exit(1)
+              }
+            }
+
+            console.log(`No files found matching pattern: ${resolve(pattern)}`)
+
+            process.exit(0)
+          }
 
             let formattedCount = 0
             let unformattedFiles: string[] = []
@@ -134,23 +238,6 @@ export class CLI {
             } else {
               console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
             }
-          } else {
-            const source = readFileSync(file, "utf-8")
-            const result = formatter.format(source)
-            const output = result.endsWith('\n') ? result : result + '\n'
-
-            if (output !== source) {
-              if (isCheckMode) {
-                console.log(`File is not formatted: ${file}`)
-                process.exit(1)
-              } else {
-                writeFileSync(file, output, "utf-8")
-                console.log(`Formatted: ${file}`)
-              }
-            } else if (isCheckMode) {
-              console.log(`File is properly formatted: ${file}`)
-            }
-          }
 
         } catch (error) {
           console.error(`Error: Cannot access '${file}':`, error)
@@ -158,10 +245,10 @@ export class CLI {
           process.exit(1)
         }
       } else {
-        const files = await glob("**/*.html.erb")
+        const files = await glob("**/*.html{+*,}.erb")
 
         if (files.length === 0) {
-          console.log(`No files found matching pattern: ${resolve("**/*.html.erb")}`)
+          console.log(`No files found matching pattern: ${resolve("**/*.html{+*,}.erb")}`)
 
           process.exit(0)
         }

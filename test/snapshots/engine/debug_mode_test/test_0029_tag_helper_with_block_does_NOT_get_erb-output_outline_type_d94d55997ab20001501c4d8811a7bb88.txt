@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << tag.div class: "container" do; _buf << 'Content'.freeze; end;
+_buf.to_s

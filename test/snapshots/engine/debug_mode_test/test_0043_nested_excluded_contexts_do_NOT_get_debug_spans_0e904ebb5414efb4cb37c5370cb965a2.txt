@@ -1,0 +1,11 @@
+_buf = ::String.new;
+ _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  <script>
+    var nested = '.freeze; _buf << ::Herb::Engine.js((@nested_value)); _buf << ';
+  </script>
+  <style>
+    .nested { color: '.freeze; _buf << ::Herb::Engine.css((@nested_color)); _buf << '; }
+  </style>
+</div>
+'.freeze;
+_buf.to_s

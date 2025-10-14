@@ -10,6 +10,7 @@ export interface SummaryData {
   startDate: Date
   showTiming: boolean
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
+  autofixableCount: number
 }
 
 export class SummaryReporter {
@@ -18,19 +19,16 @@ export class SummaryReporter {
   }
 
   displaySummary(data: SummaryData): void {
-    const { files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, startTime, startDate, showTiming } = data
+    const { files, totalErrors, totalWarnings, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount } = data
 
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
 
-    // Calculate padding for alignment
-    const labelWidth = 12 // Width for the longest label "Offenses"
+    const labelWidth = 12
     const pad = (label: string) => label.padEnd(labelWidth)
 
-    // Checked summary
     console.log(`  ${colorize(pad("Checked"), "gray")} ${colorize(`${files.length} ${this.pluralize(files.length, "file")}`, "cyan")}`)
 
-    // Files summary (for multiple files)
     if (files.length > 1) {
       const filesChecked = files.length
       const filesClean = filesChecked - filesWithOffenses
@@ -52,11 +50,9 @@ export class SummaryReporter {
       }
     }
 
-    // Offenses summary with file count
     let offensesSummary = ""
     const parts = []
 
-    // Build the main part with errors and warnings
     if (totalErrors > 0) {
       parts.push(colorize(colorize(`${totalErrors} ${this.pluralize(totalErrors, "error")}`, "brightRed"), "bold"))
     }
@@ -64,7 +60,6 @@ export class SummaryReporter {
     if (totalWarnings > 0) {
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "brightYellow"), "bold"))
     } else if (totalErrors > 0) {
-      // Show 0 warnings when there are errors but no warnings
       parts.push(colorize(colorize(`${totalWarnings} ${this.pluralize(totalWarnings, "warning")}`, "green"), "bold"))
     }
 
@@ -72,7 +67,7 @@ export class SummaryReporter {
       offensesSummary = colorize(colorize("0 offenses", "green"), "bold")
     } else {
       offensesSummary = parts.join(" | ")
-      // Add total count and file count
+
       let detailText = ""
 
       const totalOffenses = totalErrors + totalWarnings
@@ -81,21 +76,33 @@ export class SummaryReporter {
         detailText = `${totalOffenses} ${this.pluralize(totalOffenses, "offense")} across ${filesWithOffenses} ${this.pluralize(filesWithOffenses, "file")}`
       }
 
-      offensesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
+      if (detailText) {
+        offensesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
+      }
     }
 
     console.log(`  ${colorize(pad("Offenses"), "gray")} ${offensesSummary}`)
 
-    // Timing information (if enabled)
+    if (autofixableCount > 0 || (totalErrors + totalWarnings) > 0) {
+      const totalOffenses = totalErrors + totalWarnings
+
+      let fixableLine = `${colorize(colorize(`${totalOffenses} ${this.pluralize(totalOffenses, "offense")}`, "brightRed"), "bold")}`
+
+      if (autofixableCount > 0) {
+        fixableLine += ` | ${colorize(colorize(`${autofixableCount} autocorrectable using \`--fix\``, "green"), "bold")}`
+      }
+
+      console.log(`  ${colorize(pad("Fixable"), "gray")} ${fixableLine}`)
+    }
+
     if (showTiming) {
       const duration = Date.now() - startTime
-      const timeString = startDate.toTimeString().split(' ')[0] // HH:MM:SS format
+      const timeString = startDate.toTimeString().split(' ')[0]
 
       console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
       console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
     }
 
-    // Success message for all files clean
     if (filesWithOffenses === 0 && files.length > 1) {
       console.log("")
       console.log(` ${colorize("✓", "brightGreen")} ${colorize("All files are clean!", "green")}`)

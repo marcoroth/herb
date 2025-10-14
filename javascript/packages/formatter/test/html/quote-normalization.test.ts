@@ -21,9 +21,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div id="post">
-        Post
-      </div>
+      <div id="post">Post</div>
     `)
   })
 
@@ -33,9 +31,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div title='She said "Hello"'>
-        Text
-      </div>
+      <div title='She said "Hello"'>Text</div>
     `)
   })
 
@@ -53,9 +49,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div id="post">
-        Post
-      </div>
+      <div id="post">Post</div>
     `)
   })
 
@@ -65,9 +59,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div id="post" class="container">
-        Post
-      </div>
+      <div id="post" class="container">Post</div>
     `)
   })
 
@@ -77,9 +69,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div title='She said "Hello"' data-msg='The "best" option'>
-        Text
-      </div>
+      <div title='She said "Hello"' data-msg='The "best" option'>Text</div>
     `)
   })
 
@@ -115,9 +105,7 @@ describe("Quote normalization", () => {
     const result = formatter.format(source)
 
     expect(result).toBe(dedent`
-      <div id="<%= item.id %>" class="item-<%= index %>">
-        Item
-      </div>
+      <div id="<%= item.id %>" class="item-<%= index %>">Item</div>
     `)
   })
 
@@ -164,9 +152,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div data-value="">
-          Empty
-        </div>
+        <div data-value="">Empty</div>
       `)
     })
 
@@ -176,9 +162,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div data-value="">
-          Empty
-        </div>
+        <div data-value="">Empty</div>
       `)
     })
 
@@ -203,9 +187,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div data-config='{"items": ["one", "two"], "enabled": true}'>
-          Config
-        </div>
+        <div data-config='{"items": ["one", "two"], "enabled": true}'>Config</div>
       `)
     })
 
@@ -214,7 +196,9 @@ describe("Quote normalization", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(`<div title='It\\'s "complicated"' data-msg="She said \\"Hello\\"">Text</div>`)
+      expect(result).toBe(dedent`
+        <div title='It\'s "complicated"' data-msg="She said \"Hello\"">Text</div>
+      `)
     })
 
     test("handles URLs with query parameters", () => {
@@ -226,14 +210,14 @@ describe("Quote normalization", () => {
     })
 
     test("handles inline styles with quotes", () => {
-      const source = `<div style='font-family: "Arial", sans-serif'>Styled</div>`
+      const source = dedent`
+        <div style='font-family: "Arial", sans-serif'>Styled</div>
+      `
 
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div style='font-family: "Arial", sans-serif'>
-          Styled
-        </div>
+        <div style='font-family: "Arial", sans-serif'>Styled</div>
       `)
     })
 
@@ -255,9 +239,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div title="&quot;Quoted&quot; &amp; Special">
-          Entity test
-        </div>
+        <div title="&quot;Quoted&quot; &amp; Special">Entity test</div>
       `)
     })
 
@@ -267,9 +249,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <textarea placeholder="Line 1\nLine 2">
-          Text
-        </textarea>
+        <textarea placeholder="Line 1\nLine 2">Text</textarea>
       `)
     })
 
@@ -329,9 +309,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div role="button" aria-label='Click "here" to continue'>
-          Button
-        </div>
+        <div role="button" aria-label='Click "here" to continue'>Button</div>
       `)
     })
 
@@ -341,9 +319,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div data-tooltip='Use "Ctrl+S" to save' data-shortcut="cmd+s">
-          Save
-        </div>
+        <div data-tooltip='Use "Ctrl+S" to save' data-shortcut="cmd+s">Save</div>
       `)
     })
   })
@@ -355,9 +331,7 @@ describe("Quote normalization", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <form action="/submit" method="post" enctype="multipart/form-data">
-          Form
-        </form>
+        <form action="/submit" method="post" enctype="multipart/form-data">Form</form>
       `)
     })
 

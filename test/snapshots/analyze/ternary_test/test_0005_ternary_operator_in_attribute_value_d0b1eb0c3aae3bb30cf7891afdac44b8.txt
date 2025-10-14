@@ -10,7 +10,10 @@
     │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:51))
     │   │       │       ├── name:
     │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
-    │   │       │       │       └── name: "class" (location: (1:5)-(1:10))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
     │   │       │       │
     │   │       │       ├── equals: "=" (location: (1:10)-(1:11))
     │   │       │       └── value:
@@ -39,9 +42,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:59)-(1:65))
     │   │       ├── tag_opening: "</" (location: (1:59)-(1:61))
     │   │       ├── tag_name: "div" (location: (1:61)-(1:64))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:64)-(1:65))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:65)-(2:0))
         └── content: "\n"

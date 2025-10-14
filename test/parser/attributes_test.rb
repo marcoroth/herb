@@ -10,6 +10,10 @@ module Parser
       assert_parsed_snapshot(%(<div id="hello" class="container p-3"></div>))
     end
 
+    test "attribute with dashed name" do
+      assert_parsed_snapshot(%(<div data-id="1"></div>))
+    end
+
     test "duplicate attributes" do
       assert_parsed_snapshot(%(<div class="hello" class="container p-3"></div>))
     end
@@ -74,6 +78,18 @@ module Parser
 
     test "multiple nested quotes" do
       assert_parsed_snapshot(%(<div title="She said 'Hello' and 'Goodbye'"></div>))
+    end
+
+    test "apostrophe inside single quotes" do
+      assert_parsed_snapshot(%(<div data-msg='Don't worry'>Text</div>))
+    end
+
+    test "escaped apostrophe inside single quotes" do
+      assert_parsed_snapshot(%(<div data-msg='Don\\'t worry'>Text</div>))
+    end
+
+    test "escaped double quote inside double quotes" do
+      assert_parsed_snapshot(%(<div data-msg="She said \\"Hello\\"">Text</div>))
     end
 
     test "empty quoted attribute values" do
@@ -142,6 +158,42 @@ module Parser
 
     test "attribute with backtick containing HTML (invalid)" do
       assert_parsed_snapshot(%(<div data-template=`<span>Hello</span>`></div>))
+    end
+
+    test "Vue-style directive attribute with value" do
+      assert_parsed_snapshot(%(<div :value="something"></div>))
+    end
+
+    test "Vue-style directive attributes multiple" do
+      assert_parsed_snapshot(%(<input :model="user" :disabled="isDisabled" :class="className"></input>))
+    end
+
+    test "Vue-style directive attribute without value" do
+      assert_parsed_snapshot(%(<div :disabled></div>))
+    end
+
+    test "Mixed Vue directives and regular attributes" do
+      assert_parsed_snapshot(%(<div id="app" :class="dynamicClass" data-test="static"></div>))
+    end
+
+    test "Standalone colon with space is invalid" do
+      assert_parsed_snapshot(%(<div : class="hello"></div>))
+    end
+
+    test "Colon immediately followed by attribute name is valid" do
+      assert_parsed_snapshot(%(<div :class="hello"></div>))
+    end
+
+    test "Double colon is invalid" do
+      assert_parsed_snapshot(%(<div ::value="hello"></div>))
+    end
+
+    test "Vue directive with namespace-like syntax" do
+      assert_parsed_snapshot(%(<div :v-model="user"></div>))
+    end
+
+    test "Empty attribute value with closing bracket immediatly following it" do
+      assert_parsed_snapshot(%(<div attribute-name=>div-content</div>))
     end
   end
 end

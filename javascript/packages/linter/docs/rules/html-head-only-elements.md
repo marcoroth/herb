@@ -1,4 +1,4 @@
-# Linter Rule: Restrict certain elements to the `<head>` section
+# Linter Rule: Require head-scoped elements inside `<head>`
 
 **Rule:** `html-head-only-elements`
 

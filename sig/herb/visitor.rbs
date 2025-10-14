@@ -2,6 +2,8 @@
 
 module Herb
   class Visitor
+    include AST::Helpers
+
     # : (Herb::AST::Node) -> void
     def visit: (Herb::AST::Node) -> void
 
@@ -23,9 +25,6 @@ module Herb
     # : (Herb::AST::HTMLCloseTagNode) -> void
     def visit_html_close_tag_node: (Herb::AST::HTMLCloseTagNode) -> void
 
-    # : (Herb::AST::HTMLSelfCloseTagNode) -> void
-    def visit_html_self_close_tag_node: (Herb::AST::HTMLSelfCloseTagNode) -> void
-
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
@@ -46,6 +45,12 @@ module Herb
 
     # : (Herb::AST::HTMLDoctypeNode) -> void
     def visit_html_doctype_node: (Herb::AST::HTMLDoctypeNode) -> void
+
+    # : (Herb::AST::XMLDeclarationNode) -> void
+    def visit_xml_declaration_node: (Herb::AST::XMLDeclarationNode) -> void
+
+    # : (Herb::AST::CDATANode) -> void
+    def visit_cdata_node: (Herb::AST::CDATANode) -> void
 
     # : (Herb::AST::WhitespaceNode) -> void
     def visit_whitespace_node: (Herb::AST::WhitespaceNode) -> void

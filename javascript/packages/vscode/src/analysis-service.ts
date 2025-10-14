@@ -59,7 +59,7 @@ export class AnalysisService {
             lintOffenses: result.lintOffenses as LintOffense[] || [],
             linterDisabled: result.linterDisabled as boolean || false
           }
-        } catch (parseError) {
+        } catch {
           return { status: 'failed', errors: 1, lintWarnings: 0, lintErrors: 0, lintOffenses: [], linterDisabled: false }
         }
       }

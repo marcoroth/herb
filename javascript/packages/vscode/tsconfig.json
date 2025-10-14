@@ -6,6 +6,7 @@
       "ES2022",
       "dom"
     ],
+    "moduleDetection": "force",
     "sourceMap": true,
     "rootDir": "src",
     "strict": true,

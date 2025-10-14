@@ -1,0 +1,97 @@
+@ DocumentNode (location: (1:0)-(1:61))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:61))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:55))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:54)-(1:55))
+        │       ├── children: (4 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:18))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │   │   │               └── content: "class"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:18))
+        │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:12)-(1:17))
+        │       │   │           │       └── content: "valid"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:17)-(1:18))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:19)-(1:23))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:21))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:19)-(1:21))
+        │       │   │   │               └── content: "id"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:21)-(1:22))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:22)-(1:23))
+        │       │   │           ├── errors: (1 error)
+        │       │   │           │   └── @ UnexpectedError (location: (1:22)-(1:23))
+        │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: `single quote (') or double quote (\")`, found: `backtick (`)`."
+        │       │   │           │       ├── description: "Invalid quote character for HTML attribute"
+        │       │   │           │       ├── expected: "single quote (') or double quote (\")"
+        │       │   │           │       └── found: "backtick (`)"
+        │       │   │           │
+        │       │   │           ├── open_quote: ∅
+        │       │   │           ├── children: []
+        │       │   │           ├── close_quote: ∅
+        │       │   │           └── quoted: false
+        │       │   │
+        │       │   │
+        │       │   ├── @ HTMLAttributeNode (location: (1:23)-(1:31))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:23)-(1:31))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:23)-(1:31))
+        │       │   │   │               └── content: "invalid`"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:32)-(1:54))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:41))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:32)-(1:41))
+        │       │       │               └── content: "data-test"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:41)-(1:42))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:42)-(1:54))
+        │       │               ├── open_quote: "'" (location: (1:42)-(1:43))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:43)-(1:53))
+        │       │               │       └── content: "also-valid"
+        │       │               │
+        │       │               ├── close_quote: "'" (location: (1:53)-(1:54))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:55)-(1:61))
+        │       ├── tag_opening: "</" (location: (1:55)-(1:57))
+        │       ├── tag_name: "div" (location: (1:57)-(1:60))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:60)-(1:61))
+        │
+        ├── is_void: false
+        └── source: "HTML"

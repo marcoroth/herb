@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << form_with model: @user do |f|; _buf << 'Form content'.freeze; end;
+_buf.to_s

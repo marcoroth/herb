@@ -130,16 +130,24 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("deep nesting splits across lines", () => {
+  test("deep nesting with inline elements keeps inner elements inline", () => {
     const source = dedent`
       <h1><b><i>hello</i></b></h1>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
+      <h1><b><i>hello</i></b></h1>
+    `)
+  })
+
+  test("TODO", () => {
+    const source = dedent`
+      <h1><div><b>hello</b></div></h1>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
       <h1>
-        <b>
-          <i>hello</i>
-        </b>
+        <div><b>hello</b></div>
       </h1>
     `)
   })

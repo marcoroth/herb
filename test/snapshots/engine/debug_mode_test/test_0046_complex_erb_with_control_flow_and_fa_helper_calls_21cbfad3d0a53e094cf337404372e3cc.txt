@@ -1,0 +1,11 @@
+_buf = ::String.new;
+ _buf << '<div class="flex items-center gap-2 font-light" data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
+  '.freeze; speakers_count = talk.speakers.size; _buf << '
+  '.freeze; if speakers_count > 1; _buf << '
+    <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= fa(&quot;users&quot;, size: :sm, style: :light, class: &quot;shrink-0 grow-0 my-1&quot;) %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="4" data-herb-debug-column="5" style="display: contents;">'.freeze; _buf << (fa("users", size: :sm, style: :light, class: "shrink-0 grow-0 my-1")).to_s; _buf << '</span>
+  '.freeze; elsif speakers_count == 1; _buf << '
+    <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= fa(&quot;user&quot;, size: :sm, style: :regular, class: &quot;shrink-0 grow-0 my-1&quot;) %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="6" data-herb-debug-column="5" style="display: contents;">'.freeze; _buf << (fa("user", size: :sm, style: :regular, class: "shrink-0 grow-0 my-1")).to_s; _buf << '</span>
+  '.freeze; end; _buf << '
+</div>
+'.freeze;
+_buf.to_s

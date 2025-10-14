@@ -33,8 +33,6 @@ Omitting the `alt` attribute entirely leads to poor accessibility and can negati
 
 <img src="/avatar.jpg" alt> <!-- TODO -->
 
-<img src="/divider.png" alt=> <!-- TODO -->
-
 <%= image_tag image_path("logo.png") %> <!-- TODO -->
 ```
 

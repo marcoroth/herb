@@ -40,7 +40,8 @@
     │   │   │   │   │   ├── tag_name: "path" (location: (3:5)-(3:9))
     │   │   │   │   │   ├── body: []
     │   │   │   │   │   ├── close_tag: ∅
-    │   │   │   │   │   └── is_void: true
+    │   │   │   │   │   ├── is_void: true
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (3:11)-(4:2))
     │   │   │   │       └── content: "\n  "
@@ -49,9 +50,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (4:2)-(4:6))
     │   │   │   │       ├── tag_opening: "</" (location: (4:2)-(4:4))
     │   │   │   │       ├── tag_name: "g" (location: (4:4)-(4:5))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:6)-(5:0))
     │   │       └── content: "\n"
@@ -60,9 +63,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:6))
     │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
     │   │       ├── tag_name: "svg" (location: (5:2)-(5:5))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:5)-(5:6))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:6)-(6:0))
         └── content: "\n"

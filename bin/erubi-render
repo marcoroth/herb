@@ -1,0 +1,152 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "optparse"
+require "json"
+
+class ErubiRenderer
+  def initialize
+    @file = nil
+    @no_escape = false
+    @escape = false
+    @freeze = false
+    @json = false
+    @silent = false
+  end
+
+  def run(args)
+    parse_options(args)
+
+    unless @file
+      puts "Error: No file specified"
+      puts "Usage: erubi-render [options] <file>"
+      exit(1)
+    end
+
+    unless File.exist?(@file)
+      puts "Error: File '#{@file}' not found"
+      exit(1)
+    end
+
+    render_template
+  end
+
+  private
+
+  def parse_options(args)
+    OptionParser.new do |opts|
+      opts.banner = "Usage: erubi-render [options] <file>"
+      opts.separator ""
+      opts.separator "Render ERB templates to final output using Erubi"
+      opts.separator ""
+      opts.separator "Options:"
+
+      opts.on("--no-escape", "Disable HTML escaping") do
+        @no_escape = true
+      end
+
+      opts.on("--escape", "Enable HTML escaping (default)") do
+        @escape = true
+      end
+
+      opts.on("--freeze", "Freeze template literals") do
+        @freeze = true
+      end
+
+      opts.on("--json", "Output results as JSON") do
+        @json = true
+      end
+
+      opts.on("--silent", "Silent mode (only success/failure)") do
+        @silent = true
+      end
+
+      opts.on("-h", "--help", "Show this help message") do
+        puts opts
+        exit(0)
+      end
+
+      opts.on("--version", "Show version") do
+        begin
+          require "erubi"
+          puts "erubi-render using Erubi #{Erubi::VERSION}"
+        rescue LoadError
+          puts "erubi-render (Erubi not installed)"
+        end
+        exit(0)
+      end
+    end.parse!(args)
+
+    @file = args.first
+  end
+
+  def file_content
+    @file_content ||= File.read(@file)
+  end
+
+  def render_template
+    begin
+      require "erubi"
+    rescue LoadError
+      if @json
+        result = {
+          success: false,
+          error: "Erubi gem is not available. Install with: gem install erubi",
+          filename: @file,
+        }
+        puts result.to_json
+      elsif @silent
+        puts "Failed"
+      else
+        puts "Error: Erubi gem is not available."
+        puts "Install with: gem install erubi"
+      end
+      exit(1)
+    end
+
+    begin
+      options = {}
+
+      options[:filename] = @file if @file
+      options[:escape_html] = @no_escape ? false : true
+      options[:freeze] = true if @freeze
+
+      engine = Erubi::Engine.new(file_content, options)
+      compiled_code = engine.src
+
+      rendered_output = eval(compiled_code)
+
+      if @json
+        result = {
+          success: true,
+          output: rendered_output,
+          filename: options[:filename],
+        }
+        puts result.to_json
+      elsif @silent
+        puts "Success"
+      else
+        puts rendered_output
+      end
+
+      exit(0)
+    rescue StandardError => e
+      if @json
+        result = {
+          success: false,
+          error: e.message,
+          filename: @file,
+        }
+        puts result.to_json
+      elsif @silent
+        puts "Failed"
+      else
+        puts "Erubi render error: #{e.message}"
+      end
+
+      exit(1)
+    end
+  end
+end
+
+ErubiRenderer.new.run(ARGV) if __FILE__ == $PROGRAM_NAME

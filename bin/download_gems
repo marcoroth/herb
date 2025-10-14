@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [ -z "$1" ]; then
+  echo "Running 'gh run list --event release' ..."
+  echo ""
+  gh run list --event release
+  echo ""
+
+  echo "Invoke using last ID: $0 <publish-run-github-action-id>."
+
+  exit 1
+fi
+
+gh run download $1 --dir pkg/
+
+echo "Download to pkg/ complete. Run bin/publish_gems to push gems."
+exit 0

@@ -1,0 +1,10 @@
+_buf = ::String.new;
+ _buf << '<div class="container" data-herb-debug-outline-type="view" data-herb-debug-file-name="welcome.html.erb" data-herb-debug-file-relative-path="app/views/welcome.html.erb" data-herb-debug-file-full-path="app/views/welcome.html.erb">
+  <h1>Welcome <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @user.name %&gt;" data-herb-debug-file-name="welcome.html.erb" data-herb-debug-file-relative-path="app/views/welcome.html.erb" data-herb-debug-file-full-path="app/views/welcome.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="15" style="display: contents;">'.freeze; _buf << (@user.name).to_s; _buf << '</span>!</h1>
+  '.freeze; _buf << (render "shared/navigation").to_s; _buf << '
+  <main>
+    '.freeze; _buf << (render partial: "content", locals: { data: @data }).to_s; _buf << '
+  </main>
+</div>
+'.freeze;
+_buf.to_s
