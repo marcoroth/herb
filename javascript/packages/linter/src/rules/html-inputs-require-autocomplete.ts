@@ -1,11 +1,11 @@
+import { getTagName } from "@herb-tools/core"
 import { BaseRuleVisitor, getAttribute, getAttributeValue, getStaticAttributeValueContent } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { LintOffense, LintContext } from "../types.js"
-import { type ParseResult, type ERBContentNode, type HTMLOpenTagNode, getTagName } from "@herb-tools/core"
+import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
 
 class HTMLInputsRequireAutocompleteVisitor extends BaseRuleVisitor {
-
   readonly HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE = [
     "color",
     "date",
@@ -22,37 +22,26 @@ class HTMLInputsRequireAutocompleteVisitor extends BaseRuleVisitor {
     "url",
     "week",
   ]
-  
+
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkInputTag(node)
   }
-  
-  visitERBContentNode(node: ERBContentNode): void {
-    // TODO: Parse the ERB node with Prism
-    // and implement the same rule against the autocomplete
-    // attribute nodes in the helpers.
-    this.visitChildNodes(node)
-  }
 
   private checkInputTag(node: HTMLOpenTagNode): void {
-    
     if (!this.isInputTag(node) || this.hasAutocomplete(node)) return
 
     const typeAttribute = getAttribute(node, "type");
-
     if (!typeAttribute) return
-      
+
     const typeValue = getStaticAttributeValueContent(typeAttribute)
-    
     if (!typeValue) return
-    
+
     if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.includes(typeValue)) return
 
     this.addOffense(
       "Input tag is missing an autocomplete attribute. If no autocomplete behaviour is desired, use the value `off` or `nope`.",
       typeAttribute.location
     )
-
   }
 
   private hasAutocomplete(node: HTMLOpenTagNode) {
