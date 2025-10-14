@@ -1,52 +1,34 @@
 import dedent from "dedent"
 
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { describe, test } from "vitest"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 import { HTMLInputRequireAutocompleteRule } from "../../src/rules/html-input-require-autocomplete.js"
 
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLInputRequireAutocompleteRule)
+
 describe("HTMLInputRequireAutocompleteRule", () => {
-  beforeAll(async () => {
-    await Herb.load()
+  test("when autocomplete is present on input types", () => {
+    expectNoOffenses(dedent`
+      <input type="email" autocomplete="foo">
+    `)
   })
 
-  describe("HTML cases", () => {
-    test("when autocomplete is present on input types", () => {
-        const html = dedent`
-          <input type="email" autocomplete="foo">
-        `
-        const linter = new Linter(Herb, [HTMLInputRequireAutocompleteRule])
-        const lintResult = linter.lint(html)
-
-        expect(lintResult.offenses).toHaveLength(0)
-    })
-
-    test("when input type does not require autocomplete attribute and it is not present", () => {
-        const html = dedent`
-          <input type="bar">
-        `
-        const linter = new Linter(Herb, [HTMLInputRequireAutocompleteRule])
-        const lintResult = linter.lint(html)
-
-        expect(lintResult.offenses).toHaveLength(0)
-    })
-
-    test("when input type requires autocomplete attribute and it is not present", () => {
-      const html = dedent`
-        <input type="email">
-      `
-      const linter = new Linter(Herb, [HTMLInputRequireAutocompleteRule])
-      const lintResult = linter.lint(html)
-
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.offenses).toHaveLength(1)
-      expect(lintResult.offenses[0].code).toBe("html-input-require-autocomplete")
-      expect(lintResult.offenses[0].message).toBe("Input tag is missing an autocomplete attribute. If no autocomplete behaviour is desired, use the value `off` or `nope`.")
-    })
+  test("when input type does not require autocomplete attribute and it is not present", () => {
+    expectNoOffenses(dedent`
+      <input type="bar">
+    `)
   })
 
-  describe.todo("input field helpers linting", () => {
+  test("when input type requires autocomplete attribute and it is not present", () => {
+    expectError("`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.")
+
+    assertOffenses(dedent`
+      <input type="email">
+    `)
+  })
+
+  describe.todo("Action View Helpers", () => {
     const formHelpersRequiringAutocomplete = [
       'date_field_tag',
       'color_field_tag',
@@ -65,28 +47,18 @@ describe("HTMLInputRequireAutocompleteRule", () => {
 
     formHelpersRequiringAutocomplete.forEach(formHelper => {
       test(`usage of "${formHelper}" helper with autocomplete value`, () => {
-        const html = dedent`
+        expectNoOffenses(dedent`
           <%= text_field_tag 'foo', autocomplete: 'foo' %>
-        `
-        const linter = new Linter(Herb, [HTMLInputRequireAutocompleteRule])
-        const lintResult = linter.lint(html)
-
-        expect(lintResult.offenses).toHaveLength(0)
+        `)
       })
 
       test(`usage of "${formHelper}" helper without autocomplete value`, () => {
-        const html = dedent`
-          <%= ${formHelper} 'foo' autocomplete: 'foo' %>
-        `
-        const linter = new Linter(Herb, [HTMLInputRequireAutocompleteRule])
-        const lintResult = linter.lint(html)
+        expectError("`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.")
 
-        expect(lintResult.errors).toBe(1)
-        expect(lintResult.offenses).toHaveLength(1)
-        expect(lintResult.offenses[0].code).toBe("html-input-require-autocomplete")
-        expect(lintResult.offenses[0].message).toBe("Input tag is missing an autocomplete attribute. If no autocomplete behaviour is desired, use the value `off` or `nope`.")
+        expectNoOffenses(dedent`
+          <%= ${formHelper} 'foo' autocomplete: 'foo' %>
+        `)
       })
     })
-
   })
 })

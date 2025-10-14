@@ -6,7 +6,7 @@ import type { LintOffense, LintContext } from "../types.js"
 import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
 
 class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
-  readonly HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE = [
+  readonly HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE = new Set([
     "color",
     "date",
     "datetime-local",
@@ -21,7 +21,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
     "time",
     "url",
     "week",
-  ]
+  ])
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkInputTag(node)
@@ -36,10 +36,10 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
     const typeValue = getStaticAttributeValueContent(typeAttribute)
     if (!typeValue) return
 
-    if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.includes(typeValue)) return
+    if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.has(typeValue)) return
 
     this.addOffense(
-      "Input tag is missing an autocomplete attribute. If no autocomplete behaviour is desired, use the value `off` or `nope`.",
+      "`<input>` tag is missing an `autocomplete` attribute. If no autocomplete behavior is desired, use `autocomplete=off`.",
       typeAttribute.location
     )
   }
