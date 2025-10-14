@@ -72,8 +72,9 @@ The following elements must be placed inside the `<body>` tag:
 <html>
   <head>
     <title>Page Title</title>
-    <h1>Welcome</h1> <!-- Error: heading in head -->
-    <p>This should not be here.</p> <!-- Error: paragraph in head -->
+    <h1>Welcome</h1>
+
+    <p>This should not be here.</p>
   </head>
   <body>
     <main>Valid content</main>
@@ -82,19 +83,10 @@ The following elements must be placed inside the `<body>` tag:
 ```
 
 ```erb
-<header>Outside HTML</header> <!-- Error: header outside body -->
-<html>
-  <body>
-    <p>Inside body</p>
-  </body>
-</html>
-```
-
-```erb
 <html>
   <head>
-    <nav>Navigation</nav> <!-- Error: nav in head -->
-    <form>Form</form> <!-- Error: form in head -->
+    <nav>Navigation</nav>
+    <form>Form</form>
   </head>
   <body>
   </body>
@@ -103,6 +95,5 @@ The following elements must be placed inside the `<body>` tag:
 
 ## References
 
-- [HTML Living Standard - The body element](https://html.spec.whatwg.org/multipage/sections.html#the-body-element)
-- [MDN: HTML document structure](https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/Document_and_website_structure)
-- [W3C HTML Validator](https://validator.w3.org/)
+- [HTML Living Standard - The `body` element](https://html.spec.whatwg.org/multipage/sections.html#the-body-element)
+- [MDN: HTML `document` structure](https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML/Document_and_website_structure)

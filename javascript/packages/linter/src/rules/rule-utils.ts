@@ -172,7 +172,9 @@ export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLOpenTagNode): string | null {
+export function getTagName(node: HTMLOpenTagNode | null | undefined): string | null {
+  if (!node) return null
+
   return node.tag_name?.value.toLowerCase() || null
 }
 
@@ -994,4 +996,72 @@ export function findParent(root: Node, target: Node): Node | null {
   search(root)
 
   return parentNode
+}
+
+export const DOCUMENT_ONLY_TAG_NAMES = new Set<string>([
+  "html"
+])
+
+export const HTML_ONLY_TAG_NAMES = new Set<string>([
+  "head", "body"
+])
+
+export const HEAD_ONLY_TAG_NAMES = new Set<string>([
+  "base",
+  "title",
+  "style",
+  "meta",
+  "link",
+])
+
+export const HEAD_AND_BODY_TAG_NAMES = new Set<string>([
+  "script",
+  "noscript",
+  "template",
+])
+
+export function isDocumentOnlyTag(tagName: string): boolean {
+  return DOCUMENT_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHtmlOnlyTag(tagName: string): boolean {
+  return HTML_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHeadOnlyTag(tagName: string): boolean {
+  return HEAD_ONLY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isHeadAndBodyTag(tagName: string): boolean {
+  return HEAD_AND_BODY_TAG_NAMES.has(tagName.toLowerCase())
+}
+
+export function isBodyOnlyTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    !isHeadOnlyTag(tag) &&
+    !isHeadAndBodyTag(tag)
+  )
+}
+
+export function isBodyTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    (isBodyOnlyTag(tag) || isHeadAndBodyTag(tag))
+  )
+}
+
+export function isHeadTag(tagName: string): boolean {
+  const tag = tagName.toLowerCase()
+
+  return (
+    !isDocumentOnlyTag(tag) &&
+    !isHtmlOnlyTag(tag) &&
+    (isHeadOnlyTag(tag) || isHeadAndBodyTag(tag))
+  )
 }

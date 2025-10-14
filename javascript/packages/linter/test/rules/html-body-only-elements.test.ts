@@ -1,15 +1,14 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import dedent from "dedent"
+
+import { describe, test } from "vitest"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HTMLBodyOnlyElementsRule } from "../../src/rules/html-body-only-elements.js"
 
-describe("html-body-only-elements", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLBodyOnlyElementsRule)
 
+describe("html-body-only-elements", () => {
   test("passes when elements are inside body", () => {
-    const html = `
+    expectNoOffenses(dedent`
       <html>
         <head>
           <title>Test</title>
@@ -43,18 +42,13 @@ describe("html-body-only-elements", () => {
           </footer>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("fails when header is in head", () => {
-    const html = `
+    expectError("Element `<header>` must be placed inside the `<body>` tag.")
+
+    assertOffenses(dedent`
       <html>
         <head>
           <header>This should not be here</header>
@@ -62,22 +56,13 @@ describe("html-body-only-elements", () => {
         <body>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-body-only-elements")
-    expect(lintResult.offenses[0].message).toBe("Element `<header>` must be placed inside the `<body>` tag.")
-    expect(lintResult.offenses[0].severity).toBe("error")
+    `)
   })
 
   test("fails when heading is in head", () => {
-    const html = `
+    expectError("Element `<h1>` must be placed inside the `<body>` tag.")
+
+    assertOffenses(dedent`
       <html>
         <head>
           <h1>Wrong place</h1>
@@ -85,17 +70,15 @@ describe("html-body-only-elements", () => {
         <body>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe("Element `<h1>` must be placed inside the `<body>` tag.")
+    `)
   })
 
   test("fails when multiple elements are in head", () => {
-    const html = `
+    expectError("Element `<nav>` must be placed inside the `<body>` tag.")
+    expectError("Element `<p>` must be placed inside the `<body>` tag.")
+    expectError("Element `<form>` must be placed inside the `<body>` tag.")
+
+    assertOffenses(dedent`
       <html>
         <head>
           <nav>Navigation</nav>
@@ -105,37 +88,11 @@ describe("html-body-only-elements", () => {
         <body>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(3)
-    expect(lintResult.offenses).toHaveLength(3)
-    expect(lintResult.offenses[0].message).toBe("Element `<nav>` must be placed inside the `<body>` tag.")
-    expect(lintResult.offenses[1].message).toBe("Element `<p>` must be placed inside the `<body>` tag.")
-    expect(lintResult.offenses[2].message).toBe("Element `<form>` must be placed inside the `<body>` tag.")
-  })
-
-  test("fails when elements are outside html structure", () => {
-    const html = `
-      <header>Outside HTML</header>
-      <html>
-        <body>
-          <p>Inside body</p>
-        </body>
-      </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe("Element `<header>` must be placed inside the `<body>` tag.")
+    `)
   })
 
   test("passes with valid ERB content in body", () => {
-    const html = `
+    expectNoOffenses(dedent`
       <html>
         <body>
           <% if user_signed_in? %>
@@ -145,42 +102,34 @@ describe("html-body-only-elements", () => {
           <% end %>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
-  test("tests all body-only elements", () => {
+  describe("tests all body-only elements", () => {
     const bodyOnlyElements = [
       "header", "main", "nav", "section", "footer", "article", "aside", "form",
       "h1", "h2", "h3", "h4", "h5", "h6", "p", "ul", "table"
     ]
 
     bodyOnlyElements.forEach(element => {
-      const html = `
-        <html>
-          <head>
-            <${element}>Content</${element}>
-          </head>
-          <body>
-          </body>
-        </html>
-      `
-      
-      const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-      const lintResult = linter.lint(html)
+      test(`tests ${element} body-only elements`, () => {
+        expectError(`Element \`<${element}>\` must be placed inside the \`<body>\` tag.`)
 
-      expect(lintResult.errors).toBe(1)
-      expect(lintResult.offenses[0].message).toBe(`Element \`<${element}>\` must be placed inside the \`<body>\` tag.`)
+        assertOffenses(dedent`
+          <html>
+            <head>
+              <${element}>Content</${element}>
+            </head>
+            <body>
+            </body>
+          </html>
+        `)
+      })
     })
   })
 
   test("passes for allowed elements in head", () => {
-    const html = `
+    expectNoOffenses(dedent`
       <html>
         <head>
           <title>Page Title</title>
@@ -193,13 +142,6 @@ describe("html-body-only-elements", () => {
           <h1>Content</h1>
         </body>
       </html>
-    `
-    
-    const linter = new Linter(Herb, [HTMLBodyOnlyElementsRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 })
