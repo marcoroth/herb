@@ -18,7 +18,7 @@ function extractLinterRuleNames() {
     if (file.endsWith('.ts') && file !== 'index.ts' && file !== 'rule-utils.ts') {
       const filePath = path.join(rulesDir, file);
       const content = fs.readFileSync(filePath, 'utf8');
-      const match = content.match(/name\s*=\s*["']([^"']+)["']/);
+      const match = content.match(/  name\s*=\s*["']([^"']+)["']/);
 
       if (match) {
         ruleNames.push(match[1]);
