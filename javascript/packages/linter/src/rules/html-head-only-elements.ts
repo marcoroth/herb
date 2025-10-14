@@ -1,48 +1,54 @@
-import { BaseRuleVisitor, getTagName, HTML_HEAD_ONLY_ELEMENTS } from "./rule-utils"
 import { ParserRule } from "../types"
+import { BaseRuleVisitor, getTagName, isHeadOnlyTag } from "./rule-utils"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 class HeadOnlyElementsVisitor extends BaseRuleVisitor {
-  private isInsideHead = false
-  private isInsideSvg = false
+  private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value?.toLowerCase()
+    const tagName = getTagName(node)?.toLowerCase()
+    if (!tagName) return
 
-    if (tagName === "head") {
-      const wasInsideHead = this.isInsideHead
-      this.isInsideHead = true
-      super.visitHTMLElementNode(node)
-      this.isInsideHead = wasInsideHead
-    } else if (tagName === "svg") {
-      const wasInsideSvg = this.isInsideSvg
-      this.isInsideSvg = true
-      super.visitHTMLElementNode(node)
-      this.isInsideSvg = wasInsideSvg
-    } else if (tagName && HTML_HEAD_ONLY_ELEMENTS.has(tagName)) {
-      this.checkHeadOnlyElement(node, tagName)
-      super.visitHTMLElementNode(node)
-    } else {
-      super.visitHTMLElementNode(node)
-    }
+    this.checkHeadOnlyElement(node, tagName)
+
+    this.elementStack.push(tagName)
+    this.visitChildNodes(node)
+    this.elementStack.pop()
   }
 
   private checkHeadOnlyElement(node: HTMLElementNode, tagName: string): void {
-    if (this.isInsideHead) return
-    if (tagName === "title" && this.isInsideSvg) return
+    if (this.isInHead) return
+    if (!isHeadOnlyTag(tagName)) return
+    if (tagName === "title" && this.isInSVG) return
 
     this.addOffense(
-      `The \`<${tagName}>\` element should only be used inside the \`<head>\` section.`,
+      `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
       node.location,
       "error"
     )
   }
+
+  private get isInHead(): boolean {
+    return this.elementStack.includes("head")
+  }
+
+  private get isInSVG(): boolean {
+    return this.elementStack.includes("svg")
+  }
 }
 
 export class HTMLHeadOnlyElementsRule extends ParserRule {
+  static autocorrectable = false
   name = "html-head-only-elements"
+
+  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
+    if (context?.fileName?.endsWith(".xml")) return false
+    if (context?.fileName?.endsWith(".xml.erb")) return false
+
+    return true
+  }
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
     const visitor = new HeadOnlyElementsVisitor(this.name, context)

@@ -17,6 +17,7 @@ import type {
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
+  HTMLElementNode,
   HTMLOpenTagNode,
   LiteralNode,
   LexResult,
@@ -172,7 +173,7 @@ export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLOpenTagNode | null | undefined): string | null {
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
   if (!node) return null
 
   return node.tag_name?.value.toLowerCase() || null
@@ -422,17 +423,6 @@ export const HTML_BOOLEAN_ATTRIBUTES = new Set([
 ])
 
 export const HEADING_TAGS = new Set(["h1", "h2", "h3", "h4", "h5", "h6"])
-
-/**
- * HTML elements that are only permitted inside the <head> section
- */
-export const HTML_HEAD_ONLY_ELEMENTS = new Set([
-  "title",
-  "meta", 
-  "base",
-  "link",
-  "style"
-])
 
 /**
  * SVG elements that use camelCase naming
