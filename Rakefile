@@ -128,6 +128,51 @@ task :templates do
   end
 end
 
+prism_vendor_path = "vendor/prism"
+
+namespace :prism do
+  desc "Setup and vendor Prism"
+  task :vendor do
+    Rake::Task["prism:clean"].execute
+
+    prism_bundle_path = `bundle show prism`.chomp
+
+    puts prism_bundle_path
+
+    if prism_bundle_path.empty?
+      puts "Make sure to run `bundle install` in the herb project directory first"
+      exit 1
+    end
+
+    FileUtils.mkdir_p(prism_vendor_path)
+
+    files = [
+      "config.yml",
+      "Rakefile",
+      "src/",
+      "include/",
+      "templates/"
+    ]
+
+    files.each do |file|
+      vendored_file_path = prism_vendor_path + "/#{file}"
+      puts "Vendoring '#{file}' Prism file to #{vendored_file_path}"
+      FileUtils.cp_r(prism_bundle_path + "/#{file}", prism_vendor_path)
+    end
+  end
+
+  desc "Clean vendored Prism in vendor/prism/"
+  task :clean do
+    puts "Cleaning up vendored Prism at #{prism_vendor_path}..."
+    begin
+      FileUtils.rm_r(prism_vendor_path)
+      puts "Cleaned up vendored Prism."
+    rescue Errno::ENOENT
+      puts "Vendored prism at: #{prism_vendor_path} didn't exist. Skipping."
+    end
+  end
+end
+
 namespace :templates do
   desc "Watch template files and regenerate on changes"
   task :watch do
@@ -199,4 +244,4 @@ task rbs_inline: :templates do
   end
 end
 
-task default: [:templates, :make, :compile, :test]
+task default: [:templates, "prism:vendor", :make, :compile, :test]

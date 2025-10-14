@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << (render @posts).to_s;
+_buf.to_s

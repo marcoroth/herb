@@ -29,9 +29,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:6)-(2:11))
     │   │   │   │       ├── tag_opening: "</" (location: (2:6)-(2:8))
     │   │   │   │       ├── tag_name: "br" (location: (2:8)-(2:10))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (2:10)-(2:11))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:11)-(3:0))
     │   │       └── content: "\n"
@@ -40,9 +42,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
     │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
     │   │       ├── tag_name: "svg" (location: (3:2)-(3:5))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

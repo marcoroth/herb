@@ -1,0 +1,21 @@
+<div>
+  
+    <h3>Fruits</h3>
+    <ul>
+      
+        <li>apple</li>
+      
+        <li>banana</li>
+      
+    </ul>
+  
+    <h3>Colors</h3>
+    <ul>
+      
+        <li>red</li>
+      
+        <li>blue</li>
+      
+    </ul>
+  
+</div>

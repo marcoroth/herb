@@ -12,6 +12,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "moduleDetection": "force",
     "sourceMap": true
   },
   "include": ["src/**/*", "types/**/*"],

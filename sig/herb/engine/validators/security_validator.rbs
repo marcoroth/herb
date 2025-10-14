@@ -1,0 +1,23 @@
+# Generated from lib/herb/engine/validators/security_validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Validators
+      class SecurityValidator < Validator
+        def visit_html_open_tag_node: (untyped node) -> untyped
+
+        def visit_html_attribute_name_node: (untyped node) -> untyped
+
+        private
+
+        def validate_tag_security: (untyped node) -> untyped
+
+        def validate_attribute_name_security: (untyped node) -> untyped
+
+        def add_security_error: (untyped location, untyped message, untyped suggestion) -> untyped
+
+        def add_diagnostic: (untyped message, untyped location, untyped severity, ?code: untyped, ?source: untyped, ?suggestion: untyped) -> untyped
+      end
+    end
+  end
+end

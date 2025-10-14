@@ -1,0 +1,3 @@
+output = ::String.new;
+ output << '<div>Test</div>'.freeze;
+output.to_s

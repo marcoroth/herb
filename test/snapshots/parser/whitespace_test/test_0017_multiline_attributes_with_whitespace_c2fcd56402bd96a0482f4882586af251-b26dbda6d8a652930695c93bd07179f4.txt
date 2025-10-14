@@ -1,0 +1,85 @@
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:26))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(3:13))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (3:12)-(3:13))
+    │   │       ├── children: (7 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:4)-(2:0))
+    │   │       │   │   └── value: "
+    │   │       │   │   " (location: (1:4)-(2:0))
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (2:0)-(2:2))
+    │   │       │   │   └── value: "  " (location: (2:0)-(2:2))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (2:2)-(2:14))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:2)-(2:7))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (2:2)-(2:7))
+    │   │       │   │   │               └── content: "class"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (2:7)-(2:8))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (2:8)-(2:14))
+    │   │       │   │           ├── open_quote: """ (location: (2:8)-(2:9))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (2:9)-(2:13))
+    │   │       │   │           │       └── content: "test"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (2:13)-(2:14))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (2:14)-(3:0))
+    │   │       │   │   └── value: "
+    │   │       │   │   " (location: (2:14)-(3:0))
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (3:0)-(3:2))
+    │   │       │   │   └── value: "  " (location: (3:0)-(3:2))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (3:2)-(3:10))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (3:2)-(3:4))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (3:2)-(3:4))
+    │   │       │   │   │               └── content: "id"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (3:4)-(3:5))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (3:5)-(3:10))
+    │   │       │   │           ├── open_quote: """ (location: (3:5)-(3:6))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (3:6)-(3:9))
+    │   │       │   │           │       └── content: "foo"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (3:9)-(3:10))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ WhitespaceNode (location: (3:10)-(3:12))
+    │   │       │       └── value: "  " (location: (3:10)-(3:12))
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (3:13)-(3:20))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:20)-(3:26))
+    │   │       ├── tag_opening: "</" (location: (3:20)-(3:22))
+    │   │       ├── tag_name: "div" (location: (3:22)-(3:25))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:25)-(3:26))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (3:26)-(4:0))
+        └── content: "\n"

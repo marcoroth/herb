@@ -1,0 +1,17 @@
+@ DocumentNode (location: (1:0)-(1:47))
+└── children: (2 items)
+    ├── @ CDATANode (location: (1:0)-(1:27))
+    │   ├── tag_opening: "<![CDATA[" (location: (1:0)-(1:9))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:9)-(1:24))
+    │   │       └── content: "Content with ]]"
+    │   │
+    │   └── tag_closing: "]]>" (location: (1:24)-(1:27))
+    │
+    └── @ CDATANode (location: (1:27)-(1:47))
+        ├── tag_opening: "<![CDATA[" (location: (1:27)-(1:36))
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:36)-(1:44))
+        │       └── content: "> inside"
+        │
+        └── tag_closing: "]]>" (location: (1:44)-(1:47))

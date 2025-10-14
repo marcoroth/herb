@@ -1,11 +1,11 @@
 import { BaseRuleVisitor, getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
 import { ParserRule } from "../types"
 
-import type { ParseResult, HTMLElementNode, HTMLSelfCloseTagNode, HTMLAttributeNode, ERBIfNode, ERBElseNode } from "@herb-tools/core"
+import type { ParseResult, HTMLElementNode, HTMLAttributeNode, ERBIfNode, ERBElseNode } from "@herb-tools/core"
 import type { LintOffense, LintContext } from "../types"
 
 interface MetaTag {
-  node: HTMLElementNode | HTMLSelfCloseTagNode
+  node: HTMLElementNode
   nameValue?: string
   httpEquivValue?: string
   controlFlowPath: string[]
@@ -34,17 +34,7 @@ class MetaNameUniqueVisitor extends BaseRuleVisitor {
     }
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    const tagName = getTagName(node)
-
-    if (tagName === "meta" && this.isInsideHead) {
-      this.collectMetaTag(node)
-    }
-
-    super.visitHTMLSelfCloseTagNode(node)
-  }
-
-  private collectMetaTag(node: HTMLElementNode | HTMLSelfCloseTagNode): void {
+  private collectMetaTag(node: HTMLElementNode): void {
     const metaTag: MetaTag = {
       node,
       controlFlowPath: [...this.currentControlFlowPath]
@@ -57,7 +47,7 @@ class MetaNameUniqueVisitor extends BaseRuleVisitor {
     }
   }
 
-  private extractAttributes(node: HTMLElementNode | HTMLSelfCloseTagNode, metaTag: MetaTag): void {
+  private extractAttributes(node: HTMLElementNode, metaTag: MetaTag): void {
     if (node.type === "AST_HTML_ELEMENT_NODE") {
       const elementNode = node as HTMLElementNode
 
@@ -66,10 +56,6 @@ class MetaNameUniqueVisitor extends BaseRuleVisitor {
           this.processAttributeForMetaTag(attributeNode, metaTag)
         })
       }
-    } else {
-      forEachAttribute(node as HTMLSelfCloseTagNode, (attributeNode: HTMLAttributeNode) => {
-        this.processAttributeForMetaTag(attributeNode, metaTag)
-      })
     }
   }
 

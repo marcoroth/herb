@@ -81,7 +81,7 @@ export class Config {
   static async fromPathOrNew(projectPath: string) {
     try {
       return await this.fromPath(projectPath)
-    } catch (error: any) {
+    } catch {
       return Config.newConfig(projectPath)
     }
   }

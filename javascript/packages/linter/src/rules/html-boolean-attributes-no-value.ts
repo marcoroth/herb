@@ -1,28 +1,58 @@
-import { AttributeVisitorMixin, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { IdentityPrinter } from "@herb-tools/printer"
 
-import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLAttributeNode, ParseResult } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
-class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin {
-  protected checkAttribute(attributeName: string, _attributeValue: string | null, attributeNode: HTMLAttributeNode): void {
+interface BooleanAttributeAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLAttributeNode>
+}
+
+class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttributeAutofixContext> {
+  protected checkStaticAttributeStaticValue({ originalAttributeName, attributeNode }: StaticAttributeStaticValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
+  }
+
+  protected checkStaticAttributeDynamicValue({ originalAttributeName, attributeNode }: StaticAttributeDynamicValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
+  }
+
+  private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {
     if (!isBooleanAttribute(attributeName)) return
     if (!hasAttributeValue(attributeNode)) return
 
     this.addOffense(
-      `Boolean attribute \`${attributeName}\` should not have a value. Use \`${attributeName}\` instead of \`${attributeName}="${attributeName}"\`.`,
+      `Boolean attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not have a value. Use \`${attributeName.toLowerCase()}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
       attributeNode.value!.location,
-      "error"
+      "error",
+      {
+        node: attributeNode
+      }
     )
   }
 }
 
-export class HTMLBooleanAttributesNoValueRule extends ParserRule {
+export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttributeAutofixContext> {
+  static autocorrectable = true
   name = "html-boolean-attributes-no-value"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<BooleanAttributeAutofixContext>[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<BooleanAttributeAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node } = offense.autofixContext
+
+    node.equals = null
+    node.value = null
+
+    return result
   }
 }

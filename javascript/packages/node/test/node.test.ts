@@ -17,7 +17,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.4.3, @herb-tools/core@0.4.3, libprism@1.4.0, libherb@0.4.3 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.7.5, @herb-tools/core@0.7.5, libprism@1.5.2, libherb@0.7.5 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -55,5 +55,47 @@ describe("@herb-tools/node", () => {
     expect(result.value.inspect()).toContain(
       "@ ERBEndNode (location: (1:17)-(1:26))",
     )
+  })
+
+  test("parse() without track_whitespace option ignores whitespace", async () => {
+    const htmlWithWhitespace = '<div     class="example">content</div>'
+    const result = Herb.parse(htmlWithWhitespace)
+
+    expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.errors).toHaveLength(0)
+    expect(result.value.inspect()).not.toContain("@ WhitespaceNode")
+  })
+
+  test("parse() with track_whitespace: false ignores whitespace", async () => {
+    const htmlWithWhitespace = '<div     class="example">content</div>'
+    const result = Herb.parse(htmlWithWhitespace, { track_whitespace: false })
+
+    expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.errors).toHaveLength(0)
+    expect(result.value.inspect()).not.toContain("@ WhitespaceNode")
+  })
+
+  test("parse() with track_whitespace: true tracks whitespace", async () => {
+    const htmlWithWhitespace = '<div     class="example">content</div>'
+    const result = Herb.parse(htmlWithWhitespace, { track_whitespace: true })
+
+    expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.errors).toHaveLength(0)
+    expect(result.value.inspect()).toContain("@ WhitespaceNode")
+    expect(result.value.inspect()).toContain('"     "')
+  })
+
+  test("parse() with track_whitespace tracks whitespace in close tags", async () => {
+    const htmlWithWhitespace = '<div>content</div   >'
+    const result = Herb.parse(htmlWithWhitespace, { track_whitespace: true })
+
+    expect(result).toBeDefined()
+    expect(result.value).toBeDefined()
+    expect(result.errors).toHaveLength(0)
+    expect(result.value.inspect()).toContain("@ WhitespaceNode")
+    expect(result.value.inspect()).toContain('"   "')
   })
 })

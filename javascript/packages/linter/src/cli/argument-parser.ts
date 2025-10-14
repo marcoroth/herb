@@ -9,9 +9,9 @@ import { Herb } from "@herb-tools/node-wasm"
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
 
-import { name, version } from "../../package.json"
+import { name, version, dependencies } from "../../package.json"
 
-export type FormatOption = "simple" | "detailed" | "json" | "github"
+export type FormatOption = "simple" | "detailed" | "json"
 
 export interface ParsedArguments {
   pattern: string
@@ -20,6 +20,8 @@ export interface ParsedArguments {
   theme: ThemeInput
   wrapLines: boolean
   truncateLines: boolean
+  useGitHubActions: boolean
+  fix: boolean
 }
 
 export class ArgumentParser {
@@ -28,16 +30,18 @@ export class ArgumentParser {
 
     Arguments:
       file             Single file to lint
-      glob-pattern     Files to lint (defaults to **/*.html.erb)
-      directory        Directory to lint (automatically appends **/*.html.erb)
+      glob-pattern     Files to lint (defaults to **/*.html{+*,}.erb)
+      directory        Directory to lint (automatically appends **/*.html{+*,}.erb)
 
     Options:
       -h, --help       show help
       -v, --version    show version
-      --format         output format (simple|detailed|json|github) [default: detailed]
+      --fix            automatically fix auto-correctable offenses
+      --format         output format (simple|detailed|json) [default: detailed]
       --simple         use simple output format (shortcut for --format simple)
       --json           use JSON output format (shortcut for --format json)
-      --github         use GitHub Actions output format (shortcut for --format github)
+      --github         enable GitHub Actions annotations (combines with --format)
+      --no-github      disable GitHub Actions annotations (even in GitHub Actions environment)
       --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color       disable colored output
       --no-timing      hide timing information
@@ -51,10 +55,12 @@ export class ArgumentParser {
       options: {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
+        fix: { type: "boolean" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
         github: { type: "boolean" },
+        "no-github": { type: "boolean" },
         theme: { type: "string" },
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
@@ -71,12 +77,16 @@ export class ArgumentParser {
 
     if (values.version) {
       console.log("Versions:")
-      console.log(`  ${name}@${version}, ${Herb.version}`.split(", ").join("\n  "))
+      console.log(`  ${name}@${version}`)
+      console.log(`  @herb-tools/printer@${dependencies["@herb-tools/printer"]}`)
+      console.log(`  ${Herb.version}`.split(", ").join("\n  "))
       process.exit(0)
     }
 
+    const isGitHubActions = process.env.GITHUB_ACTIONS === "true"
+
     let formatOption: FormatOption = "detailed"
-    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json" || values.format === "github")) {
+    if (values.format && (values.format === "detailed" || values.format === "simple" || values.format === "json")) {
       formatOption = values.format
     }
 
@@ -88,8 +98,11 @@ export class ArgumentParser {
       formatOption = "json"
     }
 
-    if (values.github) {
-      formatOption = "github"
+    const useGitHubActions = (values.github || isGitHubActions) && !values["no-github"]
+
+    if (useGitHubActions && formatOption === "json") {
+      console.error("Error: --github cannot be used with --json format. JSON format is already structured for programmatic consumption.")
+      process.exit(1)
     }
 
     if (values["no-color"]) {
@@ -113,22 +126,18 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
+    const fix = values.fix || false
 
-    if (positionals.length === 0) {
-      console.error("Please specify input file.")
-      process.exit(1)
-    }
-
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
   }
 
   private getFilePattern(positionals: string[]): string {
-    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html.erb"
+    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html{+*,}.erb"
 
     try {
       const stat = statSync(pattern)
       if (stat.isDirectory()) {
-        pattern = join(pattern, "**/*.html.erb")
+        pattern = join(pattern, "**/*.html{+*,}.erb")
       }
     } catch {
       // Not a file/directory, treat as glob pattern

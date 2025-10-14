@@ -1,0 +1,49 @@
+@ DocumentNode (location: (1:0)-(1:27))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:27))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:21))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedError (location: (1:5)-(1:6))
+        │       │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_COLON`."
+        │       │       ├── description: "Unexpected Token"
+        │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"
+        │       │       └── found: "TOKEN_COLON"
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:20)-(1:21))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:7)-(1:20))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:12))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:7)-(1:12))
+        │       │       │               └── content: "class"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:12)-(1:13))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:13)-(1:20))
+        │       │               ├── open_quote: """ (location: (1:13)-(1:14))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:14)-(1:19))
+        │       │               │       └── content: "hello"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:19)-(1:20))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:21)-(1:27))
+        │       ├── tag_opening: "</" (location: (1:21)-(1:23))
+        │       ├── tag_name: "div" (location: (1:23)-(1:26))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:26)-(1:27))
+        │
+        ├── is_void: false
+        └── source: "HTML"

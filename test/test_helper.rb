@@ -7,8 +7,9 @@ require "pathname"
 require "maxitest/autorun"
 require "minitest/spec"
 
-require_relative "fork_helper" if ENV["NO_TIMEOUT"].nil?
+require "active_support/core_ext/string/output_safety"
 
+require_relative "fork_helper" if ENV["NO_TIMEOUT"].nil?
 require_relative "snapshot_utils"
 
 Minitest::Spec::DSL.send(:alias_method, :test, :it)

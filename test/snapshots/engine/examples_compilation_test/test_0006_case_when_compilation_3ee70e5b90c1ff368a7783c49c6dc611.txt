@@ -1,0 +1,20 @@
+_buf = ::String.new;
+ case Date.today.cwday; when 0; _buf << '
+  <p>Today is Sunday</p>
+'.freeze; when 1; _buf << '
+  <p>Today is Monday</p>
+'.freeze; when 2; _buf << '
+  <p>Today is Tuesday</p>
+'.freeze; when 3; _buf << '
+  <p>Today is Wednesday</p>
+'.freeze; when 4; _buf << '
+  <p>Today is Thursday</p>
+'.freeze; when 5; _buf << '
+  <p>Today is Friday</p>
+'.freeze; when 6; _buf << '
+  <p>Today is Saturday</p>
+'.freeze; else; _buf << '
+  <p>Today is not a day of the week</p>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

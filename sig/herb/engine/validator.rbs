@@ -1,0 +1,37 @@
+# Generated from lib/herb/engine/validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class Validator < Herb::Visitor
+      attr_reader diagnostics: untyped
+
+      def initialize: () -> untyped
+
+      def validate: (untyped node) -> untyped
+
+      def error: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
+
+      def warning: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
+
+      def info: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
+
+      def hint: (untyped message, untyped location, ?code: untyped, ?source: untyped) -> untyped
+
+      def errors?: () -> untyped
+
+      def warnings?: () -> untyped
+
+      def errors: () -> untyped
+
+      def warnings: () -> untyped
+
+      def clear_diagnostics: () -> untyped
+
+      def diagnostic_count: (?untyped severity) -> untyped
+
+      private
+
+      def add_diagnostic: (untyped message, untyped location, untyped severity, ?code: untyped, ?source: untyped) -> untyped
+    end
+  end
+end

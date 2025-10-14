@@ -92,5 +92,41 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "case in with block inside in clause" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case result %>
+        <% in { status: :success } %>
+          <%= content_tag(:div) do %>
+            Success!
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "case in with multiple blocks in in clause" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case data %>
+        <% in { type: :alert } %>
+          <%= content_tag(:div) do %>
+            Alert
+          <% end %>
+          <%= content_tag(:span) do %>
+            Icon
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "case in with if statement inside in clause" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case value %>
+        <% in [Integer] %>
+          <% if positive? %>
+            Positive
+          <% end %>
+        <% end %>
+      HTML
+    end
   end
 end

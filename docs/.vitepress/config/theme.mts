@@ -17,6 +17,7 @@ const defaultSidebar = [
       { text: "Formatter", link: "/projects/formatter" },
       { text: "Linter", link: "/projects/linter" },
       { text: "CLI", link: "/projects/cli" },
+      { text: "Dev Tools", link: "/projects/dev-tools" },
     ],
   },
   {
@@ -28,6 +29,14 @@ const defaultSidebar = [
       { text: "Syntax Tree Printer", link: "/projects/printer" },
       { text: "Minifier", link: "/projects/minifier" },
       { text: "Core", link: "/projects/core" },
+    ],
+  },
+  {
+    text: "HTML+ERB Rendering",
+    collapsed: false,
+    items: [
+      { text: "Engine", link: "/projects/engine" },
+      { text: "Compiler", link: "/projects/compiler" },
     ],
   },
   {

@@ -1,4 +1,4 @@
-import { Printer } from "./printer.js"
+import { FormatPrinter } from "./format-printer.js"
 import { resolveFormatOptions } from "./options.js"
 
 import type { FormatOptions } from "./options.js"
@@ -26,7 +26,7 @@ export class Formatter {
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
-    return new Printer(source, resolvedOptions).print(result.value)
+    return new FormatPrinter(source, resolvedOptions).print(result.value)
   }
 
   private parse(source: string): ParseResult {

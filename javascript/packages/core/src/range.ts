@@ -8,6 +8,10 @@ export class Range {
     return new Range(range[0], range[1])
   }
 
+  static get zero() {
+    return new Range(0, 0)
+  }
+
   constructor(start: number, end: number) {
     this.start = start
     this.end = end

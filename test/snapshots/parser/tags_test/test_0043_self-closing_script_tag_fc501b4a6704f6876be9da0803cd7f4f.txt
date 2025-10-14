@@ -12,4 +12,5 @@
         ├── tag_name: "script" (location: (1:1)-(1:7))
         ├── body: []
         ├── close_tag: ∅
-        └── is_void: true
+        ├── is_void: true
+        └── source: "HTML"

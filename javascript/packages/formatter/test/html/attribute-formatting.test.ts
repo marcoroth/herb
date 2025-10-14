@@ -22,9 +22,7 @@ describe("Attribute formatting", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div class="container flex items-center">
-          Content
-        </div>
+        <div class="container flex items-center">Content</div>
       `)
     })
 
@@ -54,9 +52,7 @@ describe("Attribute formatting", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div class="container flex items-center">
-          Content
-        </div>
+        <div class="container flex items-center">Content</div>
       `)
     })
 
@@ -89,6 +85,111 @@ describe("Attribute formatting", () => {
         <div class="base-class <%= 'active' if active? %> <%= user_class %>">
           Content
         </div>
+      `)
+    })
+  })
+
+  describe("Single class attribute rule with ERB", () => {
+    test("keeps single short class with ERB expressions inline", () => {
+      const source = `<div class="btn <%= active? ? 'active' : 'inactive' %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="btn <%= active? ? 'active' : 'inactive' %>">Content</div>
+      `)
+    })
+
+    test("keeps single class with ERB if block inline when short", () => {
+      const source = `<div class="<% if user.admin? %>admin<% else %>user<% end %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="<% if user.admin? %> admin <% else %> user <% end %>">Content</div>
+      `)
+    })
+
+    test("keeps single class with ERB inline even when long (ERB prevents multiline)", () => {
+      const source = `<div class="very-long-base-class <%= user.premium? ? 'premium-styling with-extra-classes' : 'basic-styling with-standard-classes' %> additional-long-classes">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="very-long-base-class <%= user.premium? ? 'premium-styling with-extra-classes' : 'basic-styling with-standard-classes' %> additional-long-classes">
+          Content
+        </div>
+      `)
+    })
+
+    test("keeps single class with long ERB if block inline (ERB prevents multiline)", () => {
+      const source = `<div class="<% if user.premium? && user.active? %>premium-user-styling with-special-effects and-animations<% elsif user.active? %>active-user-basic-styling with-standard-effects<% else %>inactive-user-minimal-styling<% end %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="<% if user.premium? && user.active? %> premium-user-styling with-special-effects and-animations <% elsif user.active? %> active-user-basic-styling with-standard-effects <% else %> inactive-user-minimal-styling <% end %>">
+          Content
+        </div>
+      `)
+    })
+
+    test("keeps single class inline even with mixed ERB and text when short", () => {
+      const source = `<div class="base <%= type %> secondary">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="base <%= type %> secondary">Content</div>
+      `)
+    })
+
+    test("keeps single class with multiple ERB expressions inline (ERB prevents multiline)", () => {
+      const source = `<div class="<%= base_class %> very-long-additional-class <%= modifier_class %> another-very-long-class <%= final_class %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="<%= base_class %> very-long-additional-class <%= modifier_class %> another-very-long-class <%= final_class %>">
+          Content
+        </div>
+      `)
+    })
+
+    test("single class rule only applies when element has exactly one attribute", () => {
+      const source = `<div class="short-class <%= type %>" id="test">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="short-class <%= type %>" id="test">Content</div>
+      `)
+    })
+
+    test("formats single long class without ERB as multiline", () => {
+      const source = `<div class="very-very-long-class-name another-very-long-class-name yet-another-extremely-long-class-name final-extremely-long-class-name">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          class="
+            very-very-long-class-name another-very-long-class-name
+            yet-another-extremely-long-class-name final-extremely-long-class-name
+          "
+        >
+          Content
+        </div>
+      `)
+    })
+
+    test("single class rule does not apply to other attributes", () => {
+      const source = `<div data-controller="short-controller">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-controller="short-controller">Content</div>
       `)
     })
   })
@@ -194,9 +295,7 @@ describe("Attribute formatting", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div data-config='{"key": "value", "nested": {"prop": "data"}}'>
-          Content
-        </div>
+        <div data-config='{"key": "value", "nested": {"prop": "data"}}'>Content</div>
       `)
     })
 
@@ -219,7 +318,13 @@ describe("Attribute formatting", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(`<a href="https://example.com/very/long/path/with/many/segments?param1=value1&param2=value2&param3=value3">Link</a>`)
+      expect(result).toBe(dedent`
+        <a
+          href="https://example.com/very/long/path/with/many/segments?param1=value1&param2=value2&param3=value3"
+        >
+          Link
+        </a>
+      `)
     })
   })
 
@@ -260,9 +365,7 @@ describe("Attribute formatting", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(`<div class="Line 1\\nLine 2" data-content="Actual\\nNewline">
-  Content
-</div>`)
+      expect(result).toBe(`<div class="Line 1\\nLine 2" data-content="Actual\\nNewline">Content</div>`)
     })
 
     test("handles actual newlines in class vs data attributes differently", () => {
@@ -278,9 +381,99 @@ describe("Attribute formatting", () => {
       expect(result).toBe(dedent`
         <div class="short class" data-content="preserve
         this
-        structure">
+        structure">Content</div>
+      `)
+    })
+  })
+
+  describe("Dynamic attribute names", () => {
+    test("formats elements with simple ERB in attribute names", () => {
+      const source = `<div data-<%= key %>="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>="value">Content</div>
+      `)
+    })
+
+    test("formats elements with complex ERB in attribute names", () => {
+      const source = `<div data-<%= key %>-something-<%= suffix %>="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>-something-<%= suffix %>="value">Content</div>
+      `)
+    })
+
+    test("handles multiple dynamic attributes", () => {
+      const source = `<div data-<%= prefix %>-key="value1" <%= attribute_name %>="value2" class="static">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          data-<%= prefix %>-key="value1"
+          <%= attribute_name %>="value2"
+          class="static"
+        >
           Content
         </div>
+      `)
+    })
+
+    test("breaks dynamic attributes onto multiple lines when long", () => {
+      const source = `<div data-<%= very_long_prefix %>-something-<%= another_long_suffix %>="a very long value that might cause line breaking" class="container fluid responsive grid">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div
+          data-<%= very_long_prefix %>-something-<%= another_long_suffix %>="a very long value that might cause line breaking"
+          class="container fluid responsive grid"
+        >
+          Content
+        </div>
+      `)
+    })
+
+    test("handles dynamic attribute names with dynamic values", () => {
+      const source = `<div data-<%= key %>="<%= value %>" <%= attr %>="<%= content %>">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div data-<%= key %>="<%= value %>" <%= attr %>="<%= content %>">Content</div>
+      `)
+    })
+
+    test("formats dynamic class attributes", () => {
+      const source = `<div class-<%= modifier %>="active selected" data-config="value">Content</div>`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <div class-<%= modifier %>="active selected" data-config="value">Content</div>
+      `)
+    })
+
+    test("handles mixed static and dynamic attributes with line breaking", () => {
+      const source = `<input type="text" name="user[email]" data-<%= validation_key %>="required email" class="form-input border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200" placeholder="Enter your email address">`
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <input
+          type="text"
+          name="user[email]"
+          data-<%= validation_key %>="required email"
+          class="
+            form-input border-gray-300 rounded-md shadow-sm focus:border-indigo-500
+            focus:ring focus:ring-indigo-200
+          "
+          placeholder="Enter your email address"
+        >
       `)
     })
   })
@@ -292,9 +485,7 @@ describe("Attribute formatting", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        <div class='container "special" formatting'>
-          Content
-        </div>
+        <div class='container "special" formatting'>Content</div>
       `)
     })
 

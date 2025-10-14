@@ -1,0 +1,66 @@
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(8:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case level " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:12))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 1 " (location: (2:2)-(2:10))
+    │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBBlockNode (location: (3:2)-(7:11))
+    │   │           │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │           │   ├── content: " content_tag(:div) do " (location: (3:5)-(3:27))
+    │   │           │   ├── tag_closing: "%>" (location: (3:27)-(3:29))
+    │   │           │   ├── body: (3 items)
+    │   │           │   │   ├── @ HTMLTextNode (location: (3:29)-(4:4))
+    │   │           │   │   │   └── content: "\n    "
+    │   │           │   │   │
+    │   │           │   │   ├── @ ERBBlockNode (location: (4:4)-(6:13))
+    │   │           │   │   │   ├── tag_opening: "<%=" (location: (4:4)-(4:7))
+    │   │           │   │   │   ├── content: " content_tag(:p) do " (location: (4:7)-(4:27))
+    │   │           │   │   │   ├── tag_closing: "%>" (location: (4:27)-(4:29))
+    │   │           │   │   │   ├── body: (1 item)
+    │   │           │   │   │   │   └── @ HTMLTextNode (location: (4:29)-(6:4))
+    │   │           │   │   │   │       └── content: "\n      Nested\n    "
+    │   │           │   │   │   │
+    │   │           │   │   │   └── end_node:
+    │   │           │   │   │       └── @ ERBEndNode (location: (6:4)-(6:13))
+    │   │           │   │   │           ├── tag_opening: "<%" (location: (6:4)-(6:6))
+    │   │           │   │   │           ├── content: " end " (location: (6:6)-(6:11))
+    │   │           │   │   │           └── tag_closing: "%>" (location: (6:11)-(6:13))
+    │   │           │   │   │
+    │   │           │   │   │
+    │   │           │   │   └── @ HTMLTextNode (location: (6:13)-(7:2))
+    │   │           │   │       └── content: "\n  "
+    │   │           │   │
+    │   │           │   └── end_node:
+    │   │           │       └── @ ERBEndNode (location: (7:2)-(7:11))
+    │   │           │           ├── tag_opening: "<%" (location: (7:2)-(7:4))
+    │   │           │           ├── content: " end " (location: (7:4)-(7:9))
+    │   │           │           └── tag_closing: "%>" (location: (7:9)-(7:11))
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (7:11)-(8:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (8:0)-(8:9))
+    │           ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │           ├── content: " end " (location: (8:2)-(8:7))
+    │           └── tag_closing: "%>" (location: (8:7)-(8:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (8:9)-(9:0))
+        └── content: "\n"

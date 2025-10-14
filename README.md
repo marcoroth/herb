@@ -99,7 +99,7 @@ Commands:
   bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
 ```
 
-For detailed information, like how you can use Herb progamatiacally in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
+For detailed information, like how you can use Herb programatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
 
 
 ## Background and Talk
@@ -127,6 +127,7 @@ While Herb brings a fresh approach to HTML+ERB tooling, it builds upon and learn
 - [**htmlbeautifier**](https://github.com/threedaymonk/htmlbeautifier)
 - [**vscode-erb-beautify**](https://github.com/aliariff/vscode-erb-beautify)
 - [**vscode-erb-linter**](https://github.com/manuelpuyol/vscode-erb-linter)
+- [**syntax_tree-erb**](https://github.com/davidwessman/syntax_tree-erb)
 
 Herb differentiates itself by being HTML-aware from the ground up, providing a unified parsing approach that understands both HTML and ERB as first-class citizens, rather than treating one as embedded within the other.
 

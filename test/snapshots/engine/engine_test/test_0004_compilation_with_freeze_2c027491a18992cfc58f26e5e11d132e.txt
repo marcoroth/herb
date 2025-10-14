@@ -1,0 +1,5 @@
+# frozen_string_literal: true
+_buf = ::String.new;
+ _buf << '<div>Static content</div>
+'.freeze;
+_buf.to_s

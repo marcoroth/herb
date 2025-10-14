@@ -10,7 +10,10 @@
     │   │       │   ├── @ HTMLAttributeNode (location: (2:2)-(2:13))
     │   │       │   │   ├── name:
     │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:2)-(2:4))
-    │   │       │   │   │       └── name: "id" (location: (2:2)-(2:4))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (2:2)-(2:4))
+    │   │       │   │   │               └── content: "id"
+    │   │       │   │   │
     │   │       │   │   │
     │   │       │   │   ├── equals: "=" (location: (2:4)-(2:5))
     │   │       │   │   └── value:
@@ -27,7 +30,10 @@
     │   │       │   └── @ HTMLAttributeNode (location: (3:2)-(3:23))
     │   │       │       ├── name:
     │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:2)-(3:7))
-    │   │       │       │       └── name: "class" (location: (3:2)-(3:7))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (3:2)-(3:7))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
     │   │       │       │
     │   │       │       ├── equals: "=" (location: (3:7)-(3:8))
     │   │       │       └── value:
@@ -52,9 +58,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:5))
     │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
     │   │       ├── tag_name: "h1" (location: (6:2)-(6:4))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (6:4)-(6:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:5)-(7:0))
         └── content: "\n"

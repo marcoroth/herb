@@ -12,7 +12,7 @@ If you encounter any issues when following along with this file please dont hesi
 - [**Clang 19**](https://clang.llvm.org): The compiler used to build this project.
 - [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
 - [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
-- [**Prism Ruby Parser v1.4.0**](https://github.com/ruby/prism/releases/tag/v1.4.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
+- [**Prism Ruby Parser v1.5.2**](https://github.com/ruby/prism/releases/tag/v1.5.2): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
 - [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
@@ -73,7 +73,6 @@ The `herb` executable exposes a few commands for interacting with `.html.erb` fi
 Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
 
 ./herb lex [file]      -  Lex a file
-./herb lex_json [file] -  Lex a file and return the result as json.
 ./herb parse [file]    -  Parse a file
 ./herb ruby [file]     -  Extract Ruby from a file
 ./herb html [file]     -  Extract HTML from a file
@@ -103,7 +102,7 @@ Finished lexing in:
 We use `rake` and `rake-compiler` to compile the Ruby extension. Running rake will generate the needed templates, run make, build the needed artifacts, and run the Ruby tests.
 
 ```bash
-rake
+bundle exec rake
 ```
 
 If `rake` was successful you can use `bundle console` to interact with `Herb`:
@@ -131,7 +130,7 @@ make test && ./run_herb_tests
 #### For the Ruby Tests
 
 ```bash
-rake test
+bundle exec rake test
 ```
 
 ### Clean
@@ -159,4 +158,3 @@ The integration was successful if you see:
 
 Integration successful!
 ```
-

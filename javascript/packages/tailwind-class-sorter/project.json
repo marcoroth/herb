@@ -1,0 +1,40 @@
+{
+  "name": "@herb-tools/tailwind-class-sorter",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "javascript/packages/tailwind-class-sorter/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "dev"
+      }
+    },
+    "format": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "format"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "clean"
+      }
+    }
+  },
+  "tags": []
+}

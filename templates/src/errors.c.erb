@@ -1,10 +1,10 @@
-#include "include/array.h"
 #include "include/errors.h"
 #include "include/location.h"
 #include "include/position.h"
 #include "include/pretty_print.h"
 #include "include/token.h"
 #include "include/util.h"
+#include "include/util/hb_array.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -17,15 +17,16 @@ size_t error_sizeof(void) {
   return sizeof(struct ERROR_STRUCT);
 }
 
-void error_init(ERROR_T* error, const error_type_T type, position_T* start, position_T* end) {
+void error_init(ERROR_T* error, const error_type_T type, position_T start, position_T end) {
   if (!error) { return; }
 
   error->type = type;
-  error->location = location_init(position_copy(start), position_copy(end));
+  error->location.start = start;
+  error->location.end = end;
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T* start", "position_T* end"] -%>
+<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
   <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
@@ -72,7 +73,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T* start, posi
   <%- error.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>
-  <%= error.human %>-><%= field.name %> = position_copy(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::TokenField -%>
   <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
   <%- when Herb::Template::TokenTypeField -%>
@@ -88,8 +89,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T* start, posi
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["array_T* errors"]).join(", ") %>) {
-  array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", ") %>) {
+  hb_array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
 }
 <%- end -%>
 
@@ -116,7 +117,6 @@ const char* error_human_type(ERROR_T* error) {
 void error_free_base_error(ERROR_T* error) {
   if (error == NULL) { return; }
 
-  if (error->location != NULL) { location_free(error->location); }
   if (error->message != NULL) { free(error->message); }
 
   free(error);
@@ -130,8 +130,6 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- end -%>
   <%- error.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::PositionField -%>
-  if (<%= error.human %>-><%= field.name %> != NULL) { position_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenField -%>
   if (<%= error.human %>-><%= field.name %> != NULL) { token_free(<%= error.human %>-><%= field.name %>); }
   <%- when Herb::Template::TokenTypeField -%>
@@ -160,8 +158,8 @@ void error_free(ERROR_T* error) {
 }
 
 void error_pretty_print_array(
-  const char* name, array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
-  buffer_T* buffer
+  const char* name, hb_array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
+  hb_buffer_T* buffer
 ) {
   if (array == NULL) {
     pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
@@ -169,7 +167,7 @@ void error_pretty_print_array(
     return;
   }
 
-  if (array_size(array) == 0) {
+  if (hb_array_size(array) == 0) {
     pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
 
     return;
@@ -177,42 +175,42 @@ void error_pretty_print_array(
 
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
-  buffer_append(buffer, "(");
+  hb_buffer_append(buffer, "(");
 
   char count[16];
-  sprintf(count, "%zu", array_size(array));
-  buffer_append(buffer, count);
-  buffer_append(buffer, ")\n");
+  sprintf(count, "%zu", hb_array_size(array));
+  hb_buffer_append(buffer, count);
+  hb_buffer_append(buffer, ")\n");
 
   if (indent < 20) {
-    for (size_t i = 0; i < array_size(array); i++) {
-      ERROR_T* child = array_get(array, i);
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      ERROR_T* child = hb_array_get(array, i);
       pretty_print_indent(buffer, indent);
       pretty_print_indent(buffer, relative_indent + 1);
 
-      if (i == array_size(array) - 1) {
-        buffer_append(buffer, "└── ");
+      if (i == hb_array_size(array) - 1) {
+        hb_buffer_append(buffer, "└── ");
       } else {
-        buffer_append(buffer, "├── ");
+        hb_buffer_append(buffer, "├── ");
       }
 
       error_pretty_print(child, indent + 1, relative_indent + 1, buffer);
 
-      if (i != array_size(array) - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
+      if (i != hb_array_size(array) - 1) { pretty_print_newline(indent + 1, relative_indent, buffer); }
     }
   }
 }
 
 <%- errors.each do |error| -%>
-static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* error, const size_t indent, const size_t relative_indent, hb_buffer_T* buffer) {
   if (!error) { return; }
 
-  buffer_append(buffer, "@ ");
-  buffer_append(buffer, error_human_type((ERROR_T*) error));
-  buffer_append(buffer, " ");
+  hb_buffer_append(buffer, "@ ");
+  hb_buffer_append(buffer, error_human_type((ERROR_T*) error));
+  hb_buffer_append(buffer, " ");
 
   pretty_print_location(error->base.location, buffer);
-  buffer_append(buffer, "\n");
+  hb_buffer_append(buffer, "\n");
 
   pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
@@ -234,7 +232,7 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
 }
 
 <%- end -%>
-void error_pretty_print(ERROR_T* error, const size_t indent, const size_t relative_indent, buffer_T* buffer) {
+void error_pretty_print(ERROR_T* error, const size_t indent, const size_t relative_indent, hb_buffer_T* buffer) {
   if (!error) { return; }
 
   switch (error->type) {

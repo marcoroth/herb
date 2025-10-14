@@ -9,17 +9,17 @@ export class SimpleFormatter extends BaseFormatter {
   async format(allOffenses: ProcessedFile[]): Promise<void> {
     if (allOffenses.length === 0) return
 
-    const groupedOffenses = new Map<string, Diagnostic[]>()
+    const groupedOffenses = new Map<string, ProcessedFile[]>()
 
-    for (const { filename, offense } of allOffenses) {
-      const offenses = groupedOffenses.get(filename) || []
-      offenses.push(offense)
-      groupedOffenses.set(filename, offenses)
+    for (const processedFile of allOffenses) {
+      const offenses = groupedOffenses.get(processedFile.filename) || []
+      offenses.push(processedFile)
+      groupedOffenses.set(processedFile.filename, offenses)
     }
 
-    for (const [filename, offenses] of groupedOffenses) {
+    for (const [filename, processedFiles] of groupedOffenses) {
       console.log("")
-      this.formatFile(filename, offenses)
+      this.formatFileProcessed(filename, processedFiles)
     }
   }
 
@@ -31,9 +31,25 @@ export class SimpleFormatter extends BaseFormatter {
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
       const rule = colorize(`(${offense.code})`, "blue")
       const locationString = `${offense.location.start.line}:${offense.location.start.column}`
-      const paddedLocation = locationString.padEnd(4) // Pad to 4 characters for alignment
+      const paddedLocation = locationString.padEnd(4)
 
       console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${offense.message} ${rule}`)
+    }
+    console.log("")
+  }
+
+  formatFileProcessed(filename: string, processedFiles: ProcessedFile[]): void {
+    console.log(`${colorize(filename, "cyan")}:`)
+
+    for (const { offense, autocorrectable } of processedFiles) {
+      const isError = offense.severity === "error"
+      const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
+      const rule = colorize(`(${offense.code})`, "blue")
+      const locationString = `${offense.location.start.line}:${offense.location.start.column}`
+      const paddedLocation = locationString.padEnd(4)
+      const correctable = autocorrectable ? colorize(colorize(" [Correctable]", "green"), "bold") : ""
+
+      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${offense.message} ${rule}${correctable}`)
     }
     console.log("")
   }

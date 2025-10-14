@@ -32,9 +32,11 @@
         │   │   │   └── @ HTMLCloseTagNode (location: (1:49)-(1:54))
         │   │   │       ├── tag_opening: "</" (location: (1:49)-(1:51))
         │   │   │       ├── tag_name: "em" (location: (1:51)-(1:53))
+        │   │   │       ├── children: []
         │   │   │       └── tag_closing: ">" (location: (1:53)-(1:54))
         │   │   │
-        │   │   └── is_void: false
+        │   │   ├── is_void: false
+        │   │   └── source: "HTML"
         │   │
         │   └── @ HTMLTextNode (location: (1:54)-(1:77))
         │       └── content: " to remove the receipt."
@@ -43,6 +45,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:77)-(1:81))
         │       ├── tag_opening: "</" (location: (1:77)-(1:79))
         │       ├── tag_name: "p" (location: (1:79)-(1:80))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:80)-(1:81))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

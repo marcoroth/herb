@@ -1,0 +1,56 @@
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " loop do " (location: (1:2)-(1:11))
+    │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:13)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:30))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " break unless continue? " (location: (2:4)-(2:28))
+    │   │   │   ├── tag_closing: "%>" (location: (2:28)-(2:30))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:30)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:25))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:7)-(3:19))
+    │   │   │   │       └── content: "Loop content"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:19)-(3:25))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:19)-(3:21))
+    │   │   │   │       ├── tag_name: "div" (location: (3:21)-(3:24))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:24)-(3:25))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:25)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

@@ -1,0 +1,10 @@
+_buf = ::String.new;
+ tag.div do; _buf << '
+  '.freeze; if true; _buf << '
+    Hello1
+  '.freeze; else; _buf << '
+    Hello2
+  '.freeze; end; _buf << '
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

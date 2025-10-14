@@ -1,0 +1,7 @@
+# C extension methods for Herb module
+# This file is manually maintained - not generated
+
+module Herb
+  def self.parse: (String input) -> ParseResult
+  def self.lex: (String input) -> LexResult
+end
