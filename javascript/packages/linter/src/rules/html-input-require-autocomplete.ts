@@ -40,7 +40,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 
     this.addOffense(
       "Add an `autocomplete` attribute to improve form accessibility. Use a specific value (e.g., `autocomplete=\"email\"`), `autocomplete=\"on\"` for defaults, or `autocomplete=\"off\"` to disable.",
-      typeAttribute.location
+      node.location
     )
   }
 
