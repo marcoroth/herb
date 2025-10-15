@@ -4,15 +4,13 @@
 
 ## Description
 
-This rule enforces the use of `-%>` for right-trimming ERB output tags (like `<%= %>`) instead of `=%>`. It also warns when right-trimming syntax (`-%>` or `=%>`) is used on non-output ERB tags (like `<% %>`, `<% if %>`, etc.) where it has no effect.
+This rule enforces the use of `-%>` for right-trimming ERB output tags (like `<%= %>`) instead of `=%>`.
 
 ## Rationale
 
-While `=%>` can be used for right-trimming whitespace in some ERB engines (like Erubi), it is an obscure and not well-defined syntax that lacks consistent support across most ERB implementations. The `-%>` syntax is the standard, well-documented approach for right-trimming that is universally supported and consistent with left-trimming syntax (`<%-`).
+While `=%>` can be used for right-trimming whitespace in some ERB engines (like Erubi), it is an obscure and not well-defined syntax that lacks consistent support across most ERB implementations.
 
-Additionally, right-trimming syntax only has an effect on ERB output tags (`<%=` and `<%==`). Using `-%>` or `=%>` on non-output ERB tags (control flow like `<% if %>`, `<% each %>`, etc.) has no effect and is misleading.
-
-Using `-%>` for output tags ensures compatibility across different ERB engines, improves code clarity, and aligns with established Rails and ERB conventions.
+The `-%>` syntax is the standard, well-documented approach for right-trimming that is universally supported and consistent with left-trimming syntax (`<%-`). Using `-%>` ensures compatibility across different ERB engines, improves code clarity, and aligns with established Rails and ERB conventions.
 
 ## Examples
 
@@ -21,7 +19,7 @@ Using `-%>` for output tags ensures compatibility across different ERB engines, 
 ```erb
 <%= title -%>
 
-<% if true %>
+<% if condition? %>
   <h1>Content</h1>
 <% end %>
 
@@ -39,10 +37,7 @@ Using `-%>` for output tags ensures compatibility across different ERB engines, 
 <% title =%>
 
 
-<% title -%>
-
-
-<% if true -%>
+<% if true =%>
   <h1>Content</h1>
 <% end %>
 
