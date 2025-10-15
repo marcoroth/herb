@@ -137,6 +137,10 @@ void hb_buffer_append_with_length(hb_buffer_T* buffer, const char* text, const s
   buffer->value[buffer->length] = '\0';
 }
 
+void hb_buffer_append_string(hb_buffer_T* buffer, hb_string_T string) {
+  if (!hb_string_is_empty(string)) { hb_buffer_append_with_length(buffer, string.data, string.length); }
+}
+
 void hb_buffer_append_char(hb_buffer_T* buffer, const char character) {
   static char string[2];
 

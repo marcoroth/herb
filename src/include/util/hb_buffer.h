@@ -1,6 +1,7 @@
 #ifndef HERB_BUFFER_H
 #define HERB_BUFFER_H
 
+#include "hb_string.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -14,6 +15,7 @@ bool hb_buffer_init(hb_buffer_T* buffer, size_t capacity);
 
 void hb_buffer_append(hb_buffer_T* buffer, const char* text);
 void hb_buffer_append_with_length(hb_buffer_T* buffer, const char* text, size_t length);
+void hb_buffer_append_string(hb_buffer_T* buffer, hb_string_T string);
 void hb_buffer_append_char(hb_buffer_T* buffer, char character);
 void hb_buffer_append_whitespace(hb_buffer_T* buffer, size_t length);
 void hb_buffer_prepend(hb_buffer_T* buffer, const char* text);
