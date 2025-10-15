@@ -11,34 +11,18 @@ interface ERBRightTrimAutofixContext extends BaseAutofixContext {
 
 class ERBRightTrimVisitor extends BaseRuleVisitor<ERBRightTrimAutofixContext> {
   visitERBNode(node: ERBNode): void {
-    if (!node.tag_opening) return
     if (!node.tag_closing) return
 
-    const trimOpening = node.tag_opening.value
     const trimClosing = node.tag_closing.value
 
-    if (trimOpening === "<%-") return
-    if (trimClosing !== "=%>" && trimClosing !== "-%>") return
+    if (trimClosing !== "=%>") return
 
-    if (!isERBOutputNode(node)) {
-      this.addOffense(
-        `Right-trimming with \`${trimClosing}\` has no effect on non-output ERB tags. Use \`%>\` instead.`,
-        node.tag_closing.location,
-        "error",
-        { node }
-      )
-
-      return
-    }
-
-    if (trimClosing === "=%>") {
-      this.addOffense(
-        "Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.",
-        node.tag_closing.location,
-        "error",
-        { node }
-      )
-    }
+    this.addOffense(
+      "Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.",
+      node.tag_closing.location,
+      "error",
+      { node }
+    )
   }
 }
 

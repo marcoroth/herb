@@ -42,7 +42,6 @@ describe("erb-right-trim autofix", () => {
     expect(result.unfixed).toHaveLength(0)
   })
 
-  // TODO: figure out if this is actually right
   test("when non-output tag uses -%>", () => {
     const input = dedent`
       <% if condition -%>
@@ -56,23 +55,11 @@ describe("erb-right-trim autofix", () => {
       <% end -%>
     `
 
-    const expected = dedent`
-      <% if condition %>
-        <p>Content</p>
-      <% elsif other_condition %>
-        <p>Content</p>
-      <% elsif yet_another_condition %>
-        <p>Content</p>
-      <% else %>
-        <p>Content</p>
-      <% end %>
-    `
-
     const linter = new Linter(Herb, [ERBRightTrimRule])
     const result = linter.autofix(input, { fileName: 'test.html.erb' })
 
-    expect(result.source).toBe(expected)
-    expect(result.fixed).toHaveLength(5)
+    expect(result.source).toBe(input)
+    expect(result.fixed).toHaveLength(0)
     expect(result.unfixed).toHaveLength(0)
   })
 
