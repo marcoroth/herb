@@ -398,5 +398,23 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, { escape: false })
     end
+
+    test "left trim" do
+      template = File.read("examples/left-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "right trim" do
+      template = File.read("examples/right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "left and right trim" do
+      template = File.read("examples/left-right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end
