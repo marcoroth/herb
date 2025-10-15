@@ -12,7 +12,7 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
-- [`erb-requires-trailing-newline`](./erb-requires-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
+- [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.

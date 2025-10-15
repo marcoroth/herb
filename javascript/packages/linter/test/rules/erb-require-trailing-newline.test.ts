@@ -2,12 +2,12 @@ import dedent from "dedent"
 
 import { describe, test } from "vitest"
 
-import { ERBRequiresTrailingNewlineRule } from "../../src/rules/erb-requires-trailing-newline.js"
+import { ERBRequireTrailingNewlineRule } from "../../src/rules/erb-require-trailing-newline.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBRequiresTrailingNewlineRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBRequireTrailingNewlineRule)
 
-describe("ERBRequiresTrailingNewlineRule", () => {
+describe("ERBRequireTrailingNewlineRule", () => {
   test("should not report errors for files ending with a trailing newline", () => {
     const html = dedent`
       <h1>

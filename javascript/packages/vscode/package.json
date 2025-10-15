@@ -69,7 +69,7 @@
               "erb-no-silent-tag-in-attribute-name",
               "erb-prefer-image-tag-helper",
               "erb-require-whitespace-inside-tags",
-              "erb-requires-trailing-newline",
+              "erb-require-trailing-newline",
               "erb-right-trim",
               "html-anchor-require-href",
               "html-aria-attribute-must-be-valid",

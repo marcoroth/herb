@@ -7,7 +7,7 @@ import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
-import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-newline.js"
+import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 
@@ -55,7 +55,7 @@ export const defaultRules: RuleClass[] = [
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,
-  ERBRequiresTrailingNewlineRule,
+  ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
 

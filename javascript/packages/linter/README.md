@@ -250,7 +250,7 @@ npx @herb-tools/linter template.html.erb --json
         "end": { "line": 1, "column": 22 }
       },
       "severity": "error",
-      "code": "erb-requires-trailing-newline",
+      "code": "erb-require-trailing-newline",
       "source": "Herb Linter"
     }
   ],

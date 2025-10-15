@@ -3,7 +3,7 @@ import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
 
-class ERBRequiresTrailingNewlineVisitor extends BaseSourceRuleVisitor {
+class ERBRequireTrailingNewlineVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
     if (source.length === 0) return
     if (!this.context.fileName) return
@@ -24,12 +24,12 @@ class ERBRequiresTrailingNewlineVisitor extends BaseSourceRuleVisitor {
   }
 }
 
-export class ERBRequiresTrailingNewlineRule extends SourceRule {
+export class ERBRequireTrailingNewlineRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-requires-trailing-newline"
+  name = "erb-require-trailing-newline"
 
   check(source: string, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new ERBRequiresTrailingNewlineVisitor(this.name, context)
+    const visitor = new ERBRequireTrailingNewlineVisitor(this.name, context)
 
     visitor.visit(source)
 

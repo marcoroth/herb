@@ -105,7 +105,7 @@ describe("CLI Output Formatting", () => {
   test("correctly passes filename context for file-specific rules", () => {
     const { output, exitCode } = runLinter("no-trailing-newline.html.erb", "--simple", "--no-wrap-lines")
 
-    expect(output).toContain("erb-requires-trailing-newline")
+    expect(output).toContain("erb-require-trailing-newline")
     expect(output).toContain("File must end with trailing newline")
     expect(exitCode).toBe(1)
   })
