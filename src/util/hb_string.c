@@ -13,6 +13,21 @@ hb_string_T hb_string_from_c_string(const char* null_terminated_c_string) {
   return string;
 }
 
+hb_string_T hb_string_slice(hb_string_T string, uint32_t offset) {
+  hb_string_T slice;
+  if (string.length < offset) {
+    slice.data = NULL;
+    slice.length = 0;
+
+    return slice;
+  }
+
+  slice.data = string.data + offset;
+  slice.length = string.length - offset;
+
+  return slice;
+}
+
 bool hb_string_equals(hb_string_T a, hb_string_T b) {
   if (a.length != b.length) { return false; }
 
