@@ -5,6 +5,8 @@ import { VersionService } from './version-service'
 
 import { workspace, window, EventEmitter, ProgressLocation } from 'vscode'
 
+import { HERB_FILES_GLOB } from "@herb-tools/core"
+
 import type { FileStatus, TreeNode } from './types'
 import type { TreeDataProvider, Event, ExtensionContext, TreeItem, Uri } from 'vscode'
 
@@ -46,7 +48,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
   }
 
   async analyzeProject(): Promise<void> {
-    const uris = await workspace.findFiles('**/*.html{+*,}.erb')
+    const uris = await workspace.findFiles(HERB_FILES_GLOB)
 
     this.lastAnalysisTime = new Date()
 

@@ -14,6 +14,8 @@ import {
 import { Service } from "./service"
 import { HerbSettings } from "./settings"
 
+import { HERB_FILES_GLOB } from "@herb-tools/core"
+
 export class Server {
   private service!: Service
   private connection: Connection
@@ -62,7 +64,7 @@ export class Server {
 
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: `**/**/*.html{+*,}.erb` },
+          { globPattern: HERB_FILES_GLOB },
           { globPattern: `**/**/.herb-lsp/config.json` },
         ],
       })
