@@ -1,11 +1,15 @@
 import { glob } from "glob"
 import { Herb } from "@herb-tools/node-wasm"
+import { HERB_FILES_GLOB } from "@herb-tools/core"
+
 import { existsSync, statSync } from "fs"
 import { dirname, resolve, relative } from "path"
 
-import { ArgumentParser, type FormatOption } from "./cli/argument-parser.js"
+import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
+
+import type { FormatOption } from "./cli/argument-parser.js"
 
 export * from "./cli/index.js"
 
@@ -105,7 +109,7 @@ export class CLI {
 
   protected adjustPattern(pattern: string | undefined): string {
     if (!pattern) {
-      return '**/*.html{+*,}.erb'
+      return HERB_FILES_GLOB
     }
 
     const resolvedPattern = resolve(pattern)
@@ -114,7 +118,7 @@ export class CLI {
       const stats = statSync(resolvedPattern)
 
       if (stats.isDirectory()) {
-        return '**/*.html{+*,}.erb'
+        return HERB_FILES_GLOB
       } else if (stats.isFile()) {
         return relative(this.projectPath, resolvedPattern)
       }

@@ -5,6 +5,7 @@ import { statSync } from "fs"
 import { join } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { HERB_FILES_GLOB } from "@herb-tools/core"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
@@ -30,8 +31,8 @@ export class ArgumentParser {
 
     Arguments:
       file             Single file to lint
-      glob-pattern     Files to lint (defaults to **/*.html{+*,}.erb)
-      directory        Directory to lint (automatically appends **/*.html{+*,}.erb)
+      glob-pattern     Files to lint (defaults to \`${HERB_FILES_GLOB}\`)
+      directory        Directory to lint (automatically appends \`${HERB_FILES_GLOB}\`)
 
     Options:
       -h, --help       show help
@@ -132,12 +133,12 @@ export class ArgumentParser {
   }
 
   private getFilePattern(positionals: string[]): string {
-    let pattern = positionals.length > 0 ? positionals[0] : "**/*.html{+*,}.erb"
+    let pattern = positionals.length > 0 ? positionals[0] : HERB_FILES_GLOB
 
     try {
       const stat = statSync(pattern)
       if (stat.isDirectory()) {
-        pattern = join(pattern, "**/*.html{+*,}.erb")
+        pattern = join(pattern, HERB_FILES_GLOB)
       }
     } catch {
       // Not a file/directory, treat as glob pattern
