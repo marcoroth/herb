@@ -12,7 +12,7 @@ interface JSONSummary {
   filesWithOffenses: number
   totalErrors: number
   totalWarnings: number
-  totalSkipped: number
+  totalIgnored: number
   totalOffenses: number
   ruleCount: number
 }
@@ -35,7 +35,7 @@ interface JSONFormatOptions {
   files: string[]
   totalErrors: number
   totalWarnings: number
-  totalSkipped: number
+  totalIgnored: number
   filesWithOffenses: number
   ruleCount: number
   startTime: number
@@ -81,7 +81,7 @@ export class JSONFormatter extends BaseFormatter {
       filesWithOffenses: options.filesWithOffenses,
       totalErrors: options.totalErrors,
       totalWarnings: options.totalWarnings,
-      totalSkipped: options.totalSkipped,
+      totalIgnored: options.totalIgnored,
       totalOffenses: options.totalErrors + options.totalWarnings,
       ruleCount: options.ruleCount
     }

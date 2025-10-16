@@ -48,9 +48,9 @@ export class Linter {
     return (rule.constructor as any).type === "source"
   }
 
-  private filterOffenses(ruleOffenses: LintOffense[], sourceLines: string[], ruleName: string): { kept: LintOffense[], skipped: LintOffense[] } {
+  private filterOffenses(ruleOffenses: LintOffense[], sourceLines: string[], ruleName: string): { kept: LintOffense[], ignored: LintOffense[] } {
     const kept: LintOffense[] = [];
-    const skipped: LintOffense[] = [];
+    const ignored: LintOffense[] = [];
 
     for (const offense of ruleOffenses) {
       const line = offense.location.start.line;
@@ -67,7 +67,7 @@ export class Linter {
         const rulesRaw = (match && match[1]) || '';
         const rules = rulesRaw.split(",").map((rule) => rule.trim());
         if (rules.includes(ruleName) || rules.includes("all")) {
-          skipped.push(offense);
+          ignored.push(offense);
         } else {
           kept.push(offense);
         }
@@ -76,7 +76,7 @@ export class Linter {
       }
     }
 
-    return { kept, skipped };
+    return { kept, ignored };
   }
 
   /**
@@ -86,7 +86,7 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
-    let skippedCount = 0;
+    let ignoredCount = 0;
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
@@ -138,8 +138,8 @@ export class Linter {
         }
       }
 
-      const { kept, skipped } = this.filterOffenses(ruleOffenses, sourceLines, rule.name);
-      skippedCount += skipped.length;
+      const { kept, ignored } = this.filterOffenses(ruleOffenses, sourceLines, rule.name);
+      ignoredCount += ignored.length;
 
       this.offenses.push(...kept)
     }
@@ -151,7 +151,7 @@ export class Linter {
       offenses: this.offenses,
       errors,
       warnings,
-      skipped: skippedCount
+      ignored: ignoredCount
     }
   }
 

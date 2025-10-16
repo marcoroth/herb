@@ -200,7 +200,7 @@ describe("@herb-tools/linter", () => {
       const lintResult = linter.lint(html)
 
       expect(lintResult.offenses).toHaveLength(0)
-      expect(lintResult.skipped).toBe(2)
+      expect(lintResult.ignored).toBe(2)
     })
   })
 })

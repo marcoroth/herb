@@ -62,7 +62,7 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   offenses: LintOffense<TAutofixContext>[]
   errors: number
   warnings: number
-  skipped: number
+  ignored: number
 }
 
 /**

@@ -24,7 +24,7 @@ export interface ProcessingContext {
 export interface ProcessingResult {
   totalErrors: number
   totalWarnings: number
-  totalSkipped: number
+  totalIgnored: number
   filesWithOffenses: number
   filesFixed: number
   ruleCount: number
@@ -53,7 +53,7 @@ export class FileProcessor {
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
-    let totalSkipped = 0
+    let totalIgnored = 0
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
@@ -151,9 +151,9 @@ export class FileProcessor {
         totalWarnings += lintResult.warnings
         filesWithOffenses++
       }
-      totalSkipped += lintResult.skipped
+      totalIgnored += lintResult.ignored
     }
 
-    return { totalErrors, totalWarnings, totalSkipped, filesWithOffenses, filesFixed, ruleCount, allOffenses, ruleOffenses, context }
+    return { totalErrors, totalWarnings, totalIgnored, filesWithOffenses, filesFixed, ruleCount, allOffenses, ruleOffenses, context }
   }
 }

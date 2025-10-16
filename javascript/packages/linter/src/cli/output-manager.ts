@@ -27,7 +27,7 @@ export class OutputManager {
    * Output successful lint results
    */
   async outputResults(results: LintResults, options: OutputOptions): Promise<void> {
-    const { allOffenses, files, totalErrors, totalWarnings, totalSkipped, filesWithOffenses, ruleCount, ruleOffenses } = results
+    const { allOffenses, files, totalErrors, totalWarnings, totalIgnored, filesWithOffenses, ruleCount, ruleOffenses } = results
 
     const autofixableCount = allOffenses.filter(offense => offense.autocorrectable).length
 
@@ -47,7 +47,7 @@ export class OutputManager {
           files,
           totalErrors,
           totalWarnings,
-          totalSkipped,
+          totalIgnored,
           filesWithOffenses,
           ruleCount,
           startTime: options.startTime,
@@ -72,7 +72,7 @@ export class OutputManager {
           filesWithOffenses,
           totalErrors,
           totalWarnings,
-          totalSkipped,
+          totalIgnored,
           totalOffenses: totalErrors + totalWarnings,
           ruleCount
         },
@@ -101,7 +101,7 @@ export class OutputManager {
         files,
         totalErrors,
         totalWarnings,
-        totalSkipped,
+        totalIgnored,
         filesWithOffenses,
         ruleCount,
         startTime: options.startTime,
@@ -127,7 +127,7 @@ export class OutputManager {
           filesWithOffenses: 0,
           totalErrors: 0,
           totalWarnings: 0,
-          totalSkipped: 0,
+          totalIgnored: 0,
           totalOffenses: 0,
           ruleCount: 0
         },
