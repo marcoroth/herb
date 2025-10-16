@@ -75,6 +75,42 @@ test/fixtures/no-trailing-newline.html.erb:1:29
   Fixable      1 offense | 1 autocorrectable using \`--fix\`"
 `;
 
+exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
+"[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:3
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │    ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:14
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │               ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+ Rule offenses:
+  html-tag-name-lowercase (2 offenses in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     2 errors | 0 warnings | 3 ignored (2 offenses across 1 file)
+  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+`;
+
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
 "[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
 
@@ -576,8 +612,8 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
     "filesWithOffenses": 1,
     "ruleCount": 40,
     "totalErrors": 2,
-    "totalOffenses": 2,
     "totalIgnored": 0,
+    "totalOffenses": 2,
     "totalWarnings": 0,
   },
   "timing": null,
@@ -595,8 +631,8 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
     "filesWithOffenses": 0,
     "ruleCount": 40,
     "totalErrors": 0,
-    "totalOffenses": 0,
     "totalIgnored": 0,
+    "totalOffenses": 0,
     "totalWarnings": 0,
   },
   "timing": null,
@@ -666,8 +702,8 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
     "filesWithOffenses": 1,
     "ruleCount": 40,
     "totalErrors": 3,
-    "totalOffenses": 3,
     "totalIgnored": 0,
+    "totalOffenses": 3,
     "totalWarnings": 0,
   },
   "timing": null,

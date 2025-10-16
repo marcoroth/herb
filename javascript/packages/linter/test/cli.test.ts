@@ -183,6 +183,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("Ignores disabled rules", () => {
+    const { output, exitCode } = runLinter("ignored.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("rejects --github with --json format", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
 

@@ -65,7 +65,7 @@ export class SummaryReporter {
     }
 
     if (totalIgnored > 0) {
-      parts.push(colorize(colorize(`${totalIgnored} ${this.pluralize(totalIgnored, "ignored")}`, "gray"), "bold"))
+      parts.push(colorize(colorize(`${totalIgnored} ignored`, "gray"), "bold"))
     }
 
     if (parts.length === 0) {
