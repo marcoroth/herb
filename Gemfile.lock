@@ -9,10 +9,10 @@ GIT
 
 GIT
   remote: https://github.com/ruby/prism.git
-  revision: 983ecaf4790a536ad26ff444ec962887ea2aa6ba
-  tag: v1.5.2
+  revision: 2924f8f8832d57def7895cd7e2cc199ee58b3a3b
+  tag: v1.6.0
   specs:
-    prism (1.5.2)
+    prism (1.6.0)
 
 PATH
   remote: .
