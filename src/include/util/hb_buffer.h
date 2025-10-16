@@ -2,6 +2,7 @@
 #define HERB_BUFFER_H
 
 #include "hb_string.h"
+
 #include <stdbool.h>
 #include <stdlib.h>
 

@@ -63,7 +63,7 @@ TEST(test_hb_buffer_concat)
   free(buffer2.value);
 END
 
-// Test concatenating two buffers
+// Test appending a string to the buffer
 TEST(test_hb_buffer_append_string)
   hb_buffer_T buffer;
   hb_buffer_init(&buffer, 1);
