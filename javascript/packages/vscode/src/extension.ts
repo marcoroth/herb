@@ -1,5 +1,7 @@
 import * as vscode from "vscode"
 
+import { HERB_FILES_GLOB } from "@herb-tools/core"
+
 import { Client } from "./client"
 import { HerbAnalysisProvider } from "./herb-analysis-provider"
 import { HerbCodeActionProvider } from "./code-action-provider"
@@ -63,8 +65,7 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   )
 
-  // Set up file watcher for HTML+ERB files
-  const fileWatcher = vscode.workspace.createFileSystemWatcher('**/*.html{+*,}.erb')
+  const fileWatcher = vscode.workspace.createFileSystemWatcher(HERB_FILES_GLOB)
 
   fileWatcher.onDidChange(async (uri) => {
     console.log(`File changed: ${uri.fsPath}`)
@@ -83,7 +84,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(fileWatcher)
 
-  // Auto-run analyze project if HTML+ERB files exist
   await runAutoAnalysis()
 
   console.log("Herb LSP is now active!")
@@ -94,12 +94,13 @@ async function runAutoAnalysis() {
     return
   }
 
-  const erbFiles = await vscode.workspace.findFiles('**/*.html{+*,}.erb')
-  if (erbFiles.length === 0) {
+  const files = await vscode.workspace.findFiles(HERB_FILES_GLOB)
+  if (files.length === 0) {
     return
   }
 
-  console.log(`Found ${erbFiles.length} HTML+ERB files. Running auto-analysis...`)
+  console.log(`Found ${files.length} HTML+ERB files. Running auto-analysis...`)
+
   await analysisProvider.analyzeProject()
 }
 

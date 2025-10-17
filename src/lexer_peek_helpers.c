@@ -3,73 +3,71 @@
 #include "include/lexer_struct.h"
 #include "include/macros.h"
 #include "include/token.h"
+#include "include/util/hb_string.h"
 
 #include <ctype.h>
 #include <stdbool.h>
 
-char lexer_backtrack(const lexer_T* lexer, const int offset) {
+char lexer_backtrack(const lexer_T* lexer, uint32_t offset) {
   return lexer->source.data[MAX(lexer->current_position - offset, 0)];
 }
 
-char lexer_peek(const lexer_T* lexer, const int offset) {
+char lexer_peek(const lexer_T* lexer, uint32_t offset) {
   return lexer->source.data[MIN(lexer->current_position + offset, lexer->source.length)];
 }
 
-bool lexer_peek_for(const lexer_T* lexer, const int offset, const char* pattern, const bool case_insensitive) {
-  for (int index = 0; pattern[index]; index++) {
-    const char character = lexer_peek(lexer, offset + index);
+bool lexer_peek_for(const lexer_T* lexer, uint32_t offset, hb_string_T pattern, const bool case_insensitive) {
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position + offset);
+  remaining_source.length = MIN(pattern.length, remaining_source.length);
 
-    if (case_insensitive) {
-      if (tolower(character) != tolower(pattern[index])) { return false; }
-    } else {
-      if (character != pattern[index]) { return false; }
-    }
+  if (case_insensitive) {
+    return hb_string_equals_case_insensitive(remaining_source, pattern);
+  } else {
+    return hb_string_equals(remaining_source, pattern);
   }
-
-  return true;
 }
 
-bool lexer_peek_for_doctype(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "<!DOCTYPE", true);
+bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<!DOCTYPE"), true);
 }
 
-bool lexer_peek_for_xml_declaration(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "<?xml", true);
+bool lexer_peek_for_xml_declaration(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<?xml"), true);
 }
 
-bool lexer_peek_for_cdata_start(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "<![CDATA[", false);
+bool lexer_peek_for_cdata_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<![CDATA["), false);
 }
 
-bool lexer_peek_for_cdata_end(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "]]>", false);
+bool lexer_peek_for_cdata_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("]]>"), false);
 }
 
-bool lexer_peek_for_html_comment_start(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "<!--", false);
+bool lexer_peek_for_html_comment_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<!--"), false);
 }
 
-bool lexer_peek_for_html_comment_end(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "-->", false);
+bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("-->"), false);
 }
 
-bool lexer_peek_erb_close_tag(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "%>", false);
+bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("%>"), false);
 }
 
-bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "-%>", false);
+bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("-%>"), false);
 }
 
-bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "%%>", false);
+bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("%%>"), false);
 }
 
-bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, const int offset) {
-  return lexer_peek_for(lexer, offset, "=%>", false);
+bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string_from_c_string("=%>"), false);
 }
 
-bool lexer_peek_erb_end(const lexer_T* lexer, const int offset) {
+bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
   return (
     lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
     || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset)
@@ -103,7 +101,7 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   return result;
 }
 
-bool lexer_peek_for_close_tag_start(const lexer_T* lexer, const int offset) {
+bool lexer_peek_for_close_tag_start(const lexer_T* lexer, uint32_t offset) {
   if (lexer_peek(lexer, offset) != '<' || lexer_peek(lexer, offset + 1) != '/') { return false; }
 
   int pos = offset + 2;

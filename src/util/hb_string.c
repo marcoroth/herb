@@ -51,9 +51,9 @@ bool hb_string_is_empty(hb_string_T string) {
   return string.length == 0;
 }
 
-char* hb_string_to_c_string(hb_string_T string) {
+char* hb_string_to_c_string(hb_arena_T* allocator, hb_string_T string) {
   size_t string_length_in_bytes = sizeof(char) * (string.length);
-  char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
+  char* buffer = hb_arena_alloc(allocator, string_length_in_bytes + sizeof(char) * 1);
 
   if (!hb_string_is_empty(string)) { memcpy(buffer, string.data, string_length_in_bytes); }
 
