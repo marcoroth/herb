@@ -34,6 +34,14 @@ module Herb
     end
   end
 
+  def self.extract_ruby_with_semicolons(source)
+    LibHerb::Buffer.with do |output|
+      LibHerb.herb_extract_ruby_to_buffer_with_semicolons(source, output.pointer)
+
+      output.read
+    end
+  end
+
   def self.extract_html(source)
     LibHerb::Buffer.with do |output|
       LibHerb.herb_extract_html_to_buffer(source, output.pointer)
