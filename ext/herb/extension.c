@@ -99,6 +99,20 @@ static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
   return result;
 }
 
+static VALUE Herb_extract_ruby_with_semicolons(VALUE self, VALUE source) {
+  char* string = (char*) check_string(source);
+  hb_buffer_T output;
+
+  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
+
+  herb_extract_ruby_to_buffer_with_semicolons(string, &output);
+
+  VALUE result = rb_utf8_str_new_cstr(output.value);
+  free(output.value);
+
+  return result;
+}
+
 static VALUE Herb_extract_html(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
   hb_buffer_T output;
@@ -137,6 +151,7 @@ void Init_herb(void) {
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
+  rb_define_singleton_method(mHerb, "extract_ruby_with_semicolons", Herb_extract_ruby_with_semicolons, 1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }
