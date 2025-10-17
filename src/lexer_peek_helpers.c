@@ -17,17 +17,14 @@ char lexer_peek(const lexer_T* lexer, uint32_t offset) {
 }
 
 bool lexer_peek_for(const lexer_T* lexer, uint32_t offset, hb_string_T pattern, const bool case_insensitive) {
-  for (uint32_t index = 0; index < pattern.length; index++) {
-    const char character = lexer_peek(lexer, offset + index);
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position + offset);
+  remaining_source.length = MIN(pattern.length, remaining_source.length);
 
-    if (case_insensitive) {
-      if (tolower(character) != tolower(pattern.data[index])) { return false; }
-    } else {
-      if (character != pattern.data[index]) { return false; }
-    }
+  if (case_insensitive) {
+    return hb_string_equals_case_insensitive(remaining_source, pattern);
+  } else {
+    return hb_string_equals(remaining_source, pattern);
   }
-
-  return true;
 }
 
 bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset) {
