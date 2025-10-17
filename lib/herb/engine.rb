@@ -5,6 +5,7 @@ require "time"
 require "pathname"
 
 require_relative "engine/debug_visitor"
+require_relative "engine/component_visitor"
 require_relative "engine/compiler"
 require_relative "engine/error_formatter"
 require_relative "engine/validation_errors"

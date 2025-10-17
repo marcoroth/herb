@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << (render Button.new(class: "btn-primary", type: "submit")).to_s;
+_buf.to_s

@@ -1,0 +1,37 @@
+# Generated from lib/herb/engine/component_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ComponentVisitor < Herb::Visitor
+      def visit_document_node: (untyped node) -> untyped
+
+      private
+
+      # : () -> Herb::Location
+      def dummy_location: () -> Herb::Location
+
+      # : () -> Herb::Range
+      def dummy_range: () -> Herb::Range
+
+      def replace_component_nodes_recursive: (untyped node) -> untyped
+
+      def should_transform_to_component?: (untyped node) -> untyped
+
+      def transform_to_erb_component: (untyped element_node) -> untyped
+
+      def extract_attributes_from_element: (untyped element_node) -> untyped
+
+      def build_component_code: (untyped tag_name, untyped attributes, untyped element_node) -> untyped
+
+      def format_attribute_value: (untyped value, ?untyped is_directive) -> untyped
+
+      def has_complex_content?: (untyped element_node) -> untyped
+
+      def extract_simple_content: (untyped element_node) -> untyped
+
+      def extract_content_as_erb: (untyped element_node) -> untyped
+
+      def create_token: (untyped type, untyped value) -> untyped
+    end
+  end
+end

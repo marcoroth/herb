@@ -22,6 +22,11 @@ module Herb
       new(from, to)
     end
 
+    #: () -> Range
+    def self.zero
+      new(0, 0)
+    end
+
     #: () -> serialized_range
     def to_a
       [from, to] #: Herb::serialized_range
