@@ -11,6 +11,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 #include "include/util/hb_array.h"
+#include "include/util/hb_string.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -19,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static analyzed_ruby_T* herb_analyze_ruby(char* source) {
+static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
 
   pm_visit_node(analyzed->root, search_if_nodes, analyzed);
@@ -52,7 +53,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
     const char* opening = erb_content_node->tag_opening->value;
 
     if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
-      analyzed_ruby_T* analyzed = herb_analyze_ruby(erb_content_node->content->value);
+      analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string_from_c_string(erb_content_node->content->value));
 
       if (false) { pretty_print_analyzed_ruby(analyzed, erb_content_node->content->value); }
 
