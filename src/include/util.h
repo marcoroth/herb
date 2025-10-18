@@ -8,7 +8,6 @@ int is_newline(int character);
 
 char* escape_newlines(const char* input);
 char* quoted_string(const char* input);
-char* wrap_string(const char* input, char character);
 char* herb_strdup(const char* s);
 
 #endif

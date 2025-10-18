@@ -34,7 +34,7 @@ char* escape_newlines(const char* input) {
   return buffer.value;
 }
 
-char* wrap_string(const char* input, const char character) {
+static char* wrap_string(const char* input, char character) {
   if (input == NULL) { return NULL; }
 
   hb_buffer_T buffer;
