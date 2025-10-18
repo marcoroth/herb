@@ -1,4 +1,5 @@
 #include "include/token.h"
+#include "include/hb_arena.h"
 #include "include/lexer.h"
 #include "include/position.h"
 #include "include/range.h"
@@ -14,7 +15,7 @@ size_t token_sizeof(void) {
 }
 
 token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+  token_T* token = hb_arena_alloc(lexer->allocator, token_sizeof());
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
@@ -155,6 +156,4 @@ void token_free(token_T* token) {
   if (!token) { return; }
 
   if (token->value != NULL) { free(token->value); }
-
-  free(token);
 }
