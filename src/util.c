@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-int is_newline(const int character) {
-  return character == 13 || character == 10;
+int is_newline(int character) {
+  return character == '\n' || character == '\r';
 }
 
 char* escape_newlines(const char* input) {
