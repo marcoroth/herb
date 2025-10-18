@@ -7,6 +7,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -52,9 +53,9 @@ void pretty_print_quoted_property(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  char* quoted = quoted_string(value);
-  pretty_print_property(name, quoted, indent, relative_indent, last_property, buffer);
-  free(quoted);
+  hb_string_T quoted = quoted_string(hb_string_from_c_string(value));
+  pretty_print_property(name, quoted.data, indent, relative_indent, last_property, buffer);
+  free(quoted.data);
 }
 
 void pretty_print_boolean_property(
@@ -212,9 +213,9 @@ void pretty_print_token_property(
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
   if (token != NULL && token->value != NULL) {
-    char* quoted = quoted_string(token->value);
-    hb_buffer_append(buffer, quoted);
-    free(quoted);
+    hb_string_T quoted = quoted_string(hb_string_from_c_string(token->value));
+    hb_buffer_append_string(buffer, quoted);
+    free(quoted.data);
 
     hb_buffer_append(buffer, " ");
     pretty_print_location(token->location, buffer);
@@ -235,18 +236,18 @@ void pretty_print_string_property(
 ) {
   const char* value = "∅";
   char* escaped = NULL;
-  char* quoted = NULL;
+  hb_string_T quoted;
 
   if (string != NULL) {
     escaped = escape_newlines(string);
-    quoted = quoted_string(escaped);
-    value = quoted;
+    quoted = quoted_string(hb_string_from_c_string(escaped));
+    value = quoted.data;
   }
 
   pretty_print_property(name, value, indent, relative_indent, last_property, buffer);
 
   if (string != NULL) {
     if (escaped != NULL) { free(escaped); }
-    if (quoted != NULL) { free(quoted); }
+    if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
 }
