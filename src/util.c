@@ -1,5 +1,6 @@
 #include "include/util.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -34,21 +35,19 @@ char* escape_newlines(const char* input) {
   return buffer.value;
 }
 
-static char* wrap_string(const char* input, char character) {
-  if (input == NULL) { return NULL; }
-
+static hb_string_T wrap_string(hb_string_T input, char character) {
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, strlen(input) + 2);
+  hb_buffer_init(&buffer, input.length + 2);
 
   hb_buffer_append_char(&buffer, character);
-  hb_buffer_append(&buffer, input);
+  hb_buffer_append_string(&buffer, input);
   hb_buffer_append_char(&buffer, character);
 
-  return buffer.value;
+  return hb_string_from_c_string(buffer.value);
 }
 
-char* quoted_string(const char* input) {
+hb_string_T quoted_string(hb_string_T input) {
   return wrap_string(input, '"');
 }
 
