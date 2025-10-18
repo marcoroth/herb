@@ -29,6 +29,7 @@ module Herb
     attach_function :herb_parse, [:pointer], :pointer
     attach_function :herb_extract_ruby_to_buffer, [:pointer, :pointer], :void
     attach_function :herb_extract_html_to_buffer, [:pointer, :pointer], :void
+    attach_function :herb_extract_ruby_to_buffer_with_semicolons, [:pointer, :pointer], :void
     attach_function :herb_version, [], :pointer
   end
 end
