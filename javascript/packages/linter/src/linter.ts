@@ -49,35 +49,38 @@ export class Linter {
   }
 
   private filterOffenses(ruleOffenses: LintOffense[], sourceLines: string[], ruleName: string): { kept: LintOffense[], ignored: LintOffense[] } {
-    const kept: LintOffense[] = [];
-    const ignored: LintOffense[] = [];
+    const kept: LintOffense[] = []
+    const ignored: LintOffense[] = []
 
     for (const offense of ruleOffenses) {
-      const line = offense.location.start.line;
+      const line = offense.location.start.line
       if (line > sourceLines.length) {
-        kept.push(offense);
-        continue;
+        kept.push(offense)
+        continue
       }
-      const lineContent = sourceLines[line - 1];
+      const lineContent = sourceLines[line - 1]
 
-      const disableCommentRegex = /<%#\s+herb:disable\s+(.*)%>/;
-      const match = lineContent.match(disableCommentRegex);
+      const disabledRules = this.parseHerbDisable(lineContent)
 
-      if (match) {
-        const rulesRaw = (match && match[1]) || '';
-        const rules = rulesRaw.split(",").map((rule) => rule.trim());
-        if (rules.includes(ruleName) || rules.includes("all")) {
-          ignored.push(offense);
-        } else {
-          kept.push(offense);
-        }
-      } else {
-        kept.push(offense);
+      if (disabledRules.includes(ruleName) || disabledRules.includes("all")) {
+        ignored.push(offense)
+        continue
       }
+
+      kept.push(offense)
     }
 
-    return { kept, ignored };
+    return { kept, ignored }
   }
+
+  private parseHerbDisable(sourceLine: string) {
+    // Matches <%# herb:disable rule1, rule2, ... %> anywhere in the string
+    const regex = /<%#\s*herb:disable\s*([a-zA-Z0-9_-]+(?:\s*,\s*[a-zA-Z0-9_-]+)*)\s*%>/
+    const match = sourceLine.match(regex)
+    if (!match) return []
+    return match[1].split(/\s*,\s*/)
+  }
+
 
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
@@ -213,7 +216,7 @@ export class Linter {
 
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
-          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
+          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
             parseResult.value,
