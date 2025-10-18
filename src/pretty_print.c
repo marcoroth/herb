@@ -90,10 +90,12 @@ void pretty_print_size_t_property(
   hb_buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
-  char* string = size_t_to_string(value);
-  hb_buffer_append(buffer, string);
+
+  char size_string[21];
+  snprintf(size_string, 21, "%zu", value);
+
+  hb_buffer_append(buffer, size_string);
   hb_buffer_append(buffer, "\n");
-  free(string);
 }
 
 void pretty_print_array(

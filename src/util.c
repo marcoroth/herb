@@ -60,10 +60,3 @@ char* herb_strdup(const char* s) {
 
   return copy;
 }
-
-char* size_t_to_string(const size_t value) {
-  char* buffer = malloc(21);
-  snprintf(buffer, 21, "%zu", value);
-
-  return buffer;
-}
