@@ -7,6 +7,8 @@ import { colorize } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
+import { LintOffense } from "../types.js"
+import { LinterTodo } from "../linter-todo.js"
 
 export interface ProcessedFile {
   filename: string
@@ -19,6 +21,7 @@ export interface ProcessingContext {
   projectPath?: string
   pattern?: string
   fix?: boolean
+  generateTodo?: boolean
 }
 
 export interface ProcessingResult {
@@ -35,6 +38,7 @@ export interface ProcessingResult {
 
 export class FileProcessor {
   private linter: Linter | null = null
+  private linterTodo: LinterTodo | null = null
 
   private isRuleAutocorrectable(ruleName: string): boolean {
     if (!this.linter) return false
@@ -51,6 +55,15 @@ export class FileProcessor {
   }
 
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
+
+    if (context?.projectPath) {
+      this.linterTodo = new LinterTodo(context.projectPath)
+    }
+
+    if (context?.generateTodo) {
+      this.linterTodo?.clearTodoFile()
+    }
+
     let totalErrors = 0
     let totalWarnings = 0
     let totalIgnored = 0
@@ -60,7 +73,9 @@ export class FileProcessor {
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
 
-    for (const filename of files) {
+  const todoOffenses: Record<string, LintOffense[]> = {}
+
+  for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       let content = readFileSync(filePath, "utf-8")
       const parseResult = Herb.parse(content)
@@ -85,10 +100,13 @@ export class FileProcessor {
       }
 
       if (!this.linter) {
-        this.linter = new Linter(Herb)
+        this.linter = new Linter(Herb, undefined, this.linterTodo)
       }
 
       const lintResult = this.linter.lint(content, { fileName: filename })
+      if (context?.generateTodo) {
+        todoOffenses[filename] = lintResult.offenses
+      }
 
       if (ruleCount === 0) {
         ruleCount = this.linter.getRuleCount()
@@ -152,6 +170,10 @@ export class FileProcessor {
         filesWithOffenses++
       }
       totalIgnored += lintResult.ignored
+    }
+
+    if (context?.generateTodo) {
+      this.linterTodo?.generateTodoConfig(todoOffenses)
     }
 
     return { totalErrors, totalWarnings, totalIgnored, filesWithOffenses, filesFixed, ruleCount, allOffenses, ruleOffenses, context }

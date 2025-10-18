@@ -1,9 +1,15 @@
 import { describe, test, expect, beforeAll } from "vitest"
+import dedent from "dedent"
+import { mkdtempSync, writeFileSync, rmSync } from "fs"
+import { tmpdir } from "os"
+import { join as pathJoin } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../src/linter.js"
+import { LinterTodo } from "../src/linter-todo.js"
 
 import { HTMLTagNameLowercaseRule } from "../src/rules/html-tag-name-lowercase.js"
+import { HTMLAttributeDoubleQuotesRule } from "../src/rules/html-attribute-double-quotes.js"
 import { ParserRule, SourceRule } from "../src/types.js"
 
 import type { LintOffense, LintContext } from "../src/types.js"
@@ -201,6 +207,42 @@ describe("@herb-tools/linter", () => {
 
       expect(lintResult.offenses).toHaveLength(0)
       expect(lintResult.ignored).toBe(2)
+    })
+  })
+
+  describe("Todo disabling with .herb-todo.yml", () => {
+    test("omits offenses listed in todo", () => {
+      const tmpDir = mkdtempSync(pathJoin(tmpdir(), "herb-todo-test-"))
+      const todoPath = pathJoin(tmpDir, ".herb-todo.yml")
+      const fileName = "test.html"
+      const todoContent = dedent`
+        excludes:
+          html-tag-name-lowercase:
+            ${fileName}:
+              errors: 2
+              warnings: 0
+      `
+      writeFileSync(todoPath, todoContent)
+
+      const html = dedent(`
+        <DIV id='1'>
+          <SPAN>Hello</SPAN>
+        </DIV>
+      `)
+
+      try {
+        const linterTodo = new LinterTodo(tmpDir)
+        const linter = new Linter(Herb, [HTMLTagNameLowercaseRule, HTMLAttributeDoubleQuotesRule], linterTodo)
+        const lintResult = linter.lint(html, { fileName })
+
+        expect(lintResult.errors).toBe(2)
+        expect(lintResult.warnings).toBe(1)
+        expect(lintResult.offenses).toHaveLength(3)
+        expect(lintResult.offenses.filter(o => o.rule === "html-tag-name-lowercase")).toHaveLength(2)
+        expect(lintResult.offenses.filter(o => o.rule === "html-attribute-double-quotes")).toHaveLength(1)
+      } finally {
+        rmSync(tmpDir, { recursive: true, force: true })
+      }
     })
   })
 })
