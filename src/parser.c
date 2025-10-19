@@ -1238,6 +1238,4 @@ void parser_free(parser_T* parser) {
 
   if (parser->current_token != NULL) { token_free(parser->current_token); }
   if (parser->open_tags_stack != NULL) { hb_array_free(&parser->open_tags_stack); }
-
-  free(parser);
 }
