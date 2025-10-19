@@ -24,6 +24,11 @@ jobs:
       - name: Install APT dependencies
         run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
 
+      - name: Install valgrind
+        run: |-
+          sudo apt install -y libc6-dbg
+          sudo snap install --classic valgrind
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -55,6 +60,9 @@ jobs:
 
       - name: Run C tests
         run: ./run_herb_tests
+
+      - name: Leak check examples
+        run: ./bin/leak_check_examples
 
       - name: clang-format version
         run: clang-format-19 --version
