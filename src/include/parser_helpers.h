@@ -9,7 +9,7 @@
 #include "util/hb_buffer.h"
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name);
-bool parser_check_matching_tag(const parser_T* parser, const char* tag_name);
+bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name);
 token_T* parser_pop_open_tag(const parser_T* parser);
 
 void parser_append_unexpected_error(
