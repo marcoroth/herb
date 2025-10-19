@@ -918,8 +918,9 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
 
   parser_push_open_tag(parser, open_tag->tag_name);
 
-  if (open_tag->tag_name->value && parser_is_foreign_content_tag(open_tag->tag_name->value)) {
-    foreign_content_type_T content_type = parser_get_foreign_content_type(open_tag->tag_name->value);
+  if (open_tag->tag_name->value && parser_is_foreign_content_tag(hb_string_from_c_string(open_tag->tag_name->value))) {
+    foreign_content_type_T content_type =
+      parser_get_foreign_content_type(hb_string_from_c_string(open_tag->tag_name->value));
     parser_enter_foreign_content(parser, content_type);
     parser_parse_foreign_content(parser, body, errors);
   } else {
