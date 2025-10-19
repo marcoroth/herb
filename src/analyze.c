@@ -186,8 +186,9 @@ static AST_NODE_T* create_control_node(
       );
 
     case CONTROL_TYPE_ELSE:
-      return (AST_NODE_T*)
-        ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (
+        AST_NODE_T*
+      ) ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
 
     case CONTROL_TYPE_CASE:
     case CONTROL_TYPE_CASE_MATCH: {
@@ -239,13 +240,15 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_WHEN: {
-      return (AST_NODE_T*)
-        ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (
+        AST_NODE_T*
+      ) ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_IN: {
-      return (AST_NODE_T*)
-        ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (
+        AST_NODE_T*
+      ) ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -296,8 +299,9 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_ENSURE: {
-      return (AST_NODE_T*)
-        ast_erb_ensure_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (
+        AST_NODE_T*
+      ) ast_erb_ensure_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
     }
 
     case CONTROL_TYPE_UNLESS: {
@@ -371,8 +375,9 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_YIELD: {
-      return (AST_NODE_T*)
-        ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors);
+      return (
+        AST_NODE_T*
+      ) ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors);
     }
 
     default: hb_array_free(&errors); return NULL;
