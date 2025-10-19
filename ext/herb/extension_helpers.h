@@ -18,7 +18,7 @@ VALUE rb_location_from_c_struct(location_T location);
 VALUE rb_token_from_c_struct(token_T* token);
 VALUE rb_range_from_c_struct(range_T range);
 
-VALUE create_lex_result(array_T* tokens, VALUE source);
+VALUE create_lex_result(hb_array_T* tokens, VALUE source);
 VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source);
 
 #endif

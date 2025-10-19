@@ -4,11 +4,11 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
-#include "include/buffer.h"
 #include "include/extract.h"
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/ruby_parser.h"
+#include "include/util/hb_buffer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -52,9 +52,9 @@ int main(const int argc, char* argv[]) {
     return 1;
   }
 
-  buffer_T output;
+  hb_buffer_T output;
 
-  if (!buffer_init(&output, 4096)) { return 1; }
+  if (!hb_buffer_init(&output, 4096)) { return 1; }
 
   char* source = herb_read_file(argv[2]);
 

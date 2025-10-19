@@ -4,15 +4,15 @@
 #include <string.h>
 
 extern "C" {
-#include "../extension/libherb/include/array.h"
 #include "../extension/libherb/include/ast_nodes.h"
-#include "../extension/libherb/include/buffer.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/io.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/position.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_array.h"
+#include "../extension/libherb/include/util/hb_buffer.h"
 }
 
 #include "error_helpers.h"
@@ -136,7 +136,7 @@ napi_value ReadFileToString(napi_env env, const char* file_path) {
   return result;
 }
 
-napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
+napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) {
   napi_value result, tokens_array, errors_array, warnings_array;
 
   napi_create_object(env, &result);
@@ -146,8 +146,8 @@ napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
 
   // Add tokens to array
   if (tokens) {
-    for (size_t i = 0; i < array_size(tokens); i++) {
-      token_T* token = (token_T*)array_get(tokens, i);
+    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+      token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         napi_value token_obj = CreateToken(env, token);
         napi_set_element(env, tokens_array, i, token_obj);

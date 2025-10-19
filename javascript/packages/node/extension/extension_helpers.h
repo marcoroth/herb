@@ -4,14 +4,14 @@
 #include <node_api.h>
 
 extern "C" {
-#include "../extension/libherb/include/array.h"
 #include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/util/hb_array.h"
 }
 
 char* CheckString(napi_env env, napi_value value);
 napi_value CreateString(napi_env env, const char* str);
 napi_value ReadFileToString(napi_env env, const char* file_path);
-napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source);
+napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source);
 napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value source);
 
 napi_value CreateLocation(napi_env env, location_T location);

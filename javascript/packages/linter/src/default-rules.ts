@@ -3,10 +3,11 @@ import type { RuleClass } from "./types.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
+import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
 import { ERBNoSilentTagInAttributeNameRule } from "./rules/erb-no-silent-tag-in-attribute-name.js"
 import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper.js"
-import { ERBRequiresTrailingNewlineRule } from "./rules/erb-requires-trailing-newline.js"
+import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 
@@ -20,14 +21,18 @@ import { HTMLAttributeDoubleQuotesRule } from "./rules/html-attribute-double-quo
 import { HTMLAttributeEqualsSpacingRule } from "./rules/html-attribute-equals-spacing.js"
 import { HTMLAttributeValuesRequireQuotesRule } from "./rules/html-attribute-values-require-quotes.js"
 import { HTMLAvoidBothDisabledAndAriaDisabledRule } from "./rules/html-avoid-both-disabled-and-aria-disabled.js"
+import { HTMLBodyOnlyElementsRule } from "./rules/html-body-only-elements.js"
 import { HTMLBooleanAttributesNoValueRule } from "./rules/html-boolean-attributes-no-value.js"
+import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
+import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
 // import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 // import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
+import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
 import { HTMLNoEmptyAttributesRule } from "./rules/html-no-empty-attributes.js"
 import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
@@ -46,10 +51,11 @@ export const defaultRules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
   ERBNoEmptyTagsRule,
+  ERBNoExtraNewLineRule,
   ERBNoOutputControlFlowRule,
   ERBNoSilentTagInAttributeNameRule,
   ERBPreferImageTagHelperRule,
-  ERBRequiresTrailingNewlineRule,
+  ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
 
@@ -63,14 +69,18 @@ export const defaultRules: RuleClass[] = [
   HTMLAttributeEqualsSpacingRule,
   HTMLAttributeValuesRequireQuotesRule,
   HTMLAvoidBothDisabledAndAriaDisabledRule,
+  HTMLBodyOnlyElementsRule,
   HTMLBooleanAttributesNoValueRule,
+  HTMLHeadOnlyElementsRule,
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
+  HTMLInputRequireAutocompleteRule,
   // HTMLNavigationHasLabelRule,
   HTMLNoAriaHiddenOnFocusableRule,
   // HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
+  HTMLNoDuplicateMetaNamesRule,
   HTMLNoEmptyAttributesRule,
   HTMLNoEmptyHeadingsRule,
   HTMLNoNestedLinksRule,

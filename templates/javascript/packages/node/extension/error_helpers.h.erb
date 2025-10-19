@@ -8,7 +8,7 @@ extern "C" {
 }
 
 napi_value ErrorFromCStruct(napi_env env, ERROR_T* error);
-napi_value ErrorsArrayFromCArray(napi_env env, array_T* array);
+napi_value ErrorsArrayFromCArray(napi_env env, hb_array_T* array);
 
 <%- errors.each do |error| -%>
 napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* <%= error.human %>);

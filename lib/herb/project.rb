@@ -30,7 +30,7 @@ module Herb
     end
 
     def glob
-      "**/*.html{+*,}.erb"
+      "**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb}"
     end
 
     def full_path_glob

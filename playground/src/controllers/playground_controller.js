@@ -12,6 +12,7 @@ import { replaceTextareaWithMonaco } from "../monaco"
 import { findTreeLocationItemWithSmallestRangeFromPosition } from "../ranges"
 
 import { Herb } from "@herb-tools/browser"
+import { Linter } from "@herb-tools/linter"
 import { analyze } from "../analyze"
 
 window.Herb = Herb
@@ -61,6 +62,8 @@ export default class extends Controller {
     "formatVerification",
     "formatButton",
     "formatTooltip",
+    "autofixButton",
+    "autofixTooltip",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -156,6 +159,7 @@ export default class extends Controller {
 
     this.setupThemeListener()
     this.setupTooltip()
+    this.setupAutofixTooltip()
     this.setupShareTooltip()
     this.setupGitHubTooltip()
     this.setupCopyTooltip()
@@ -191,6 +195,7 @@ export default class extends Controller {
   disconnect() {
     window.removeEventListener("popstate", this.handlePopState)
     this.removeTooltip()
+    this.removeAutofixTooltip()
     this.removeShareTooltip()
     this.removeGitHubTooltip()
     this.removeCopyTooltip()
@@ -621,6 +626,58 @@ export default class extends Controller {
     }
   }
 
+  async autofixEditor(event) {
+    const button = this.getClosestButton(event.target)
+
+    if (button.disabled) {
+      return
+    }
+
+    const wandIcon = button.querySelector(".fa-wand-magic-sparkles")
+    const checkIcon = button.querySelector(".fa-circle-check")
+
+    try {
+      const value = this.editor ? this.editor.getValue() : this.inputTarget.value
+      const linter = new Linter(Herb)
+      const result = linter.autofix(value)
+
+      if (result && typeof result === "object" && "source" in result) {
+        const fixedCount = Array.isArray(result.fixed) ? result.fixed.length : 0
+
+        if (fixedCount > 0 && typeof result.source === "string") {
+          if (this.editor) {
+            this.editor.setValue(result.source)
+          } else {
+            this.inputTarget.value = result.source
+          }
+
+          if (wandIcon && checkIcon) {
+            wandIcon.classList.add("hidden")
+            checkIcon.classList.remove("hidden")
+            checkIcon.style.display = ""
+
+            setTimeout(() => {
+              this.resetAutofixButtonIcons()
+            }, 1000)
+          }
+
+          const offensesLabel = fixedCount === 1 ? "offense" : "offenses"
+          this.showTemporaryMessage(`Autofixed ${fixedCount} linter ${offensesLabel}`, "success")
+
+          await this.analyze()
+          this.resetAutofixButtonIcons()
+        } else {
+          this.showTemporaryMessage("No autocorrectable linter offenses found", "info")
+        }
+      } else {
+        this.showTemporaryMessage("Failed to autofix linter offenses", "error")
+      }
+    } catch (error) {
+      console.error("Autofix error:", error)
+      this.showTemporaryMessage("Failed to autofix linter offenses", "error")
+    }
+  }
+
   async analyze() {
     this.updateURL()
 
@@ -813,6 +870,24 @@ export default class extends Controller {
         this.formatButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
         this.formatButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
         this.updateFormatTooltipText('Format the editor content using the Herb Formatter')
+      }
+    }
+
+    if (this.hasAutofixButtonTarget) {
+      const hasParserErrors = result.parseResult ? result.parseResult.recursiveErrors().length > 0 : false
+      const hasLintOffenses = !!(result.lintResult && Array.isArray(result.lintResult.offenses) && result.lintResult.offenses.length > 0)
+
+      if (hasParserErrors) {
+        this.disableAutofixButton()
+        this.setupAutofixTooltip()
+        this.updateAutofixTooltipText('Cannot autofix code due to parser errors. Fix parser errors in Diagnostics tab first.')
+      } else if (!hasLintOffenses) {
+        this.disableAutofixButton()
+        this.setupAutofixTooltip()
+        this.updateAutofixTooltipText('No Herb Linter offenses found to autofix.')
+      } else {
+        this.enableAutofixButton()
+        this.updateAutofixTooltipText('Autocorrect autocorrectable Herb Linter offenses')
       }
     }
 
@@ -1233,6 +1308,72 @@ export default class extends Controller {
       if (textNode && textNode.nodeType === Node.TEXT_NODE) {
         textNode.textContent = text
       }
+    }
+  }
+
+  setupAutofixTooltip() {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixButtonTarget.addEventListener('mouseenter', this.showAutofixTooltip)
+      this.autofixButtonTarget.addEventListener('mouseleave', this.hideAutofixTooltip)
+    }
+  }
+
+  removeAutofixTooltip() {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixButtonTarget.removeEventListener('mouseenter', this.showAutofixTooltip)
+      this.autofixButtonTarget.removeEventListener('mouseleave', this.hideAutofixTooltip)
+
+      this.hideAutofixTooltip()
+    }
+  }
+
+  showAutofixTooltip = () => {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixTooltipTarget.classList.remove('hidden')
+    }
+  }
+
+  hideAutofixTooltip = () => {
+    if (this.hasAutofixTooltipTarget) {
+      this.autofixTooltipTarget.classList.add('hidden')
+    }
+  }
+
+  updateAutofixTooltipText(text) {
+    if (this.hasAutofixTooltipTarget) {
+      const textNode = this.autofixTooltipTarget.firstChild
+      if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+        textNode.textContent = text
+      }
+    }
+  }
+
+  enableAutofixButton() {
+    this.autofixButtonTarget.disabled = false
+    this.autofixButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+    this.autofixButtonTarget.classList.add('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+  }
+
+  disableAutofixButton() {
+    this.autofixButtonTarget.disabled = true
+    this.autofixButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
+    this.autofixButtonTarget.classList.remove('hover:bg-gray-200', 'dark:hover:bg-gray-700')
+    this.resetAutofixButtonIcons()
+  }
+
+  resetAutofixButtonIcons() {
+    if (!this.hasAutofixButtonTarget) return
+
+    const wandIcon = this.autofixButtonTarget.querySelector(".fa-wand-magic-sparkles")
+    const checkIcon = this.autofixButtonTarget.querySelector(".fa-circle-check")
+
+    if (wandIcon) {
+      wandIcon.classList.remove("hidden")
+    }
+
+    if (checkIcon) {
+      checkIcon.classList.add("hidden")
+      checkIcon.style.display = ""
     }
   }
 

@@ -23,13 +23,7 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when non-output tag uses -%>", () => {
-    expectError("Right-trimming with `-%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `-%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `-%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `-%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `-%>` has no effect on non-output ERB tags. Use `%>` instead")
-
-    assertOffenses(dedent`
+    expectNoOffenses(dedent`
       <% if condition -%>
         <p>Content</p>
       <% elsif other_condition -%>
@@ -43,7 +37,7 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when the erb tag close with =%>", () => {
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <h1>
@@ -53,8 +47,8 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when an if block uses =%>", () => {
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <% if condition =%>
@@ -64,7 +58,7 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when a loop uses =%>", () => {
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <% items.each do |item| =%>
@@ -74,9 +68,9 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when multiple lines use =%>", () => {
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <%= first =%>
@@ -86,8 +80,8 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when mixed valid and invalid syntax is used", () => {
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
-    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <%= valid %>
@@ -98,7 +92,7 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("when silent ERB uses =%>", () => {
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <% silent_operation =%>
@@ -106,8 +100,8 @@ describe("ERBRightTrimRule", () => {
   })
 
   test("handles =%> in nested structures", () => {
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
-    expectError("Right-trimming with `=%>` has no effect on non-output ERB tags. Use `%>` instead")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
+    expectError("Use `-%>` instead of `=%>` for right-trimming. The `=%>` syntax is obscure and not well-supported in most ERB engines.")
 
     assertOffenses(dedent`
       <% if outer_condition =%>
@@ -115,6 +109,34 @@ describe("ERBRightTrimRule", () => {
           <p>Nested content</p>
         <% end %>
       <% end %>
+    `)
+  })
+
+  test("<%- with -%>", () => {
+    expectNoOffenses(dedent`
+      <%- something -%>
+    `)
+  })
+
+  test("<%- with -%> in if/end", () => {
+    expectNoOffenses(dedent`
+      <%- if true -%>
+        Something
+      <%- end -%>
+    `)
+  })
+
+  test("passes for yield with -%>", () => {
+    expectNoOffenses(dedent`
+      <%= yield -%>
+    `)
+  })
+
+  test("passes for block with -%>", () => {
+    expectNoOffenses(dedent`
+      <%= content_for :content do -%>
+        Content
+      <%- end -%>
     `)
   })
 })

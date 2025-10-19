@@ -1,4 +1,4 @@
-#include "include/hb_string.h"
+#include "../include/util/hb_string.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -8,9 +8,24 @@ hb_string_T hb_string_from_c_string(const char* null_terminated_c_string) {
   hb_string_T string;
 
   string.data = (char*) null_terminated_c_string;
-  string.length = strlen(null_terminated_c_string);
+  string.length = (uint32_t) strlen(null_terminated_c_string);
 
   return string;
+}
+
+hb_string_T hb_string_slice(hb_string_T string, uint32_t offset) {
+  hb_string_T slice;
+  if (string.length < offset) {
+    slice.data = NULL;
+    slice.length = 0;
+
+    return slice;
+  }
+
+  slice.data = string.data + offset;
+  slice.length = string.length - offset;
+
+  return slice;
 }
 
 bool hb_string_equals(hb_string_T a, hb_string_T b) {
@@ -36,9 +51,9 @@ bool hb_string_is_empty(hb_string_T string) {
   return string.length == 0;
 }
 
-char* hb_string_to_c_string(hb_string_T string) {
+char* hb_string_to_c_string(hb_arena_T* allocator, hb_string_T string) {
   size_t string_length_in_bytes = sizeof(char) * (string.length);
-  char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
+  char* buffer = hb_arena_alloc(allocator, string_length_in_bytes + sizeof(char) * 1);
 
   if (!hb_string_is_empty(string)) { memcpy(buffer, string.data, string_length_in_bytes); }
 

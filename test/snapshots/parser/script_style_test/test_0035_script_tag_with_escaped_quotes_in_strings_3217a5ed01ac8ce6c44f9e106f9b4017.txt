@@ -1,11 +1,4 @@
 @ DocumentNode (location: (1:0)-(1:59))
-├── errors: (1 error)
-│   └── @ UnexpectedError (location: (1:36)-(1:37))
-│       ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_BACKSLASH`."
-│       ├── description: "Unexpected token"
-│       ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
-│       └── found: "TOKEN_BACKSLASH"
-│
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:36))
     │   ├── open_tag:
@@ -31,8 +24,8 @@
     │   ├── is_void: false
     │   └── source: "HTML"
     │
-    ├── @ HTMLTextNode (location: (1:37)-(1:50))
-    │   └── content: "\" yesterday\";"
+    ├── @ HTMLTextNode (location: (1:36)-(1:50))
+    │   └── content: "\\\" yesterday\";"
     │
     └── @ HTMLCloseTagNode (location: (1:50)-(1:59))
         ├── errors: (1 error)

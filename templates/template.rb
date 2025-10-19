@@ -30,7 +30,7 @@ module Herb
       end
 
       def c_type
-        "array_T*"
+        "hb_array_T*"
       end
 
       def c_item_type

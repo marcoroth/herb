@@ -1,6 +1,6 @@
 # Linter Rule: Enforce trailing newline
 
-**Rule:** `erb-requires-trailing-newline`
+**Rule:** `erb-require-trailing-newline`
 
 ## Description
 

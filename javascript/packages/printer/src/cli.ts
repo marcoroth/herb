@@ -7,6 +7,8 @@ import { resolve } from "path"
 import { glob } from "glob"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { HERB_FILES_GLOB } from "@herb-tools/core"
+
 import { IdentityPrinter } from "./index.js"
 
 interface CLIOptions {
@@ -74,7 +76,7 @@ export class CLI {
         -o, --output <file>          Output file path (defaults to stdout)
         --verify                     Verify that output matches input exactly
         --stats                      Show parsing and printing statistics
-        --glob                       Treat input as glob pattern (default: **/*.html{+*,}.erb)
+        --glob                       Treat input as glob pattern (default: ${HERB_FILES_GLOB})
         -h, --help                   Show this help message
 
       Examples:
@@ -84,11 +86,11 @@ export class CLI {
         herb-print input.html.erb --stats
 
         # Glob patterns (batch verification)
-        herb-print --glob --verify                         # All .html{+*,}.erb files
-        herb-print "app/views/**/*.html{+*,}.erb" --glob --verify --stats
+        herb-print --glob --verify                         # All .html.erb files
+        herb-print "app/views/**/*.html.erb" --glob --verify --stats
         herb-print "*.erb" --glob --verify
-        herb-print "/path/to/templates" --glob --verify    # Directory (auto-appends /**/*.html{+*,}.erb)
-        herb-print "/path/to/templates/**/*.html{+*,}.erb" --glob --verify
+        herb-print "/path/to/templates" --glob --verify    # Directory (auto-appends /${HERB_FILES_GLOB})
+        herb-print "/path/to/templates/**/*.html.erb" --glob --verify
 
         # The --verify flag is useful to test parser fidelity:
         herb-print input.html.erb --verify
@@ -108,7 +110,7 @@ export class CLI {
       await Herb.load()
 
       if (options.glob) {
-        const pattern = options.input || "**/*.html{+*,}.erb"
+        const pattern = options.input || HERB_FILES_GLOB
         const files = await glob(pattern)
 
         if (files.length === 0) {

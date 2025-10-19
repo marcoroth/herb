@@ -1,4 +1,5 @@
 import { defaultRules } from "./default-rules.js"
+import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 
@@ -47,6 +48,37 @@ export class Linter {
     return (rule.constructor as any).type === "source"
   }
 
+  private filterOffenses(ruleOffenses: LintOffense[], sourceLines: string[], ruleName: string): { kept: LintOffense[], ignored: LintOffense[] } {
+    const kept: LintOffense[] = [];
+    const ignored: LintOffense[] = [];
+
+    for (const offense of ruleOffenses) {
+      const line = offense.location.start.line;
+      if (line > sourceLines.length) {
+        kept.push(offense);
+        continue;
+      }
+      const lineContent = sourceLines[line - 1];
+
+      const disableCommentRegex = /<%#\s+herb:disable\s+(.*)%>/;
+      const match = lineContent.match(disableCommentRegex);
+
+      if (match) {
+        const rulesRaw = (match && match[1]) || '';
+        const rules = rulesRaw.split(",").map((rule) => rule.trim());
+        if (rules.includes(ruleName) || rules.includes("all")) {
+          ignored.push(offense);
+        } else {
+          kept.push(offense);
+        }
+      } else {
+        kept.push(offense);
+      }
+    }
+
+    return { kept, ignored };
+  }
+
   /**
    * Lint source code using Parser/AST, Lexer, and Source rules.
    * @param source - The source code to lint
@@ -54,10 +86,12 @@ export class Linter {
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
+    let ignoredCount = 0;
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
+    const sourceLines = source.split("\n");
 
     for (const RuleClass of this.rules) {
       const rule = new RuleClass()
@@ -104,7 +138,10 @@ export class Linter {
         }
       }
 
-      this.offenses.push(...ruleOffenses)
+      const { kept, ignored } = this.filterOffenses(ruleOffenses, sourceLines, rule.name);
+      ignoredCount += ignored.length;
+
+      this.offenses.push(...kept)
     }
 
     const errors = this.offenses.filter(offense => offense.severity === "error").length
@@ -113,7 +150,8 @@ export class Linter {
     return {
       offenses: this.offenses,
       errors,
-      warnings
+      warnings,
+      ignored: ignoredCount
     }
   }
 
@@ -175,12 +213,14 @@ export class Linter {
 
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
+          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
             parseResult.value,
-            offense.location,
+            location,
             (node) => node.type === originalNodeType
           )
+
           if (freshNode) {
             offense.autofixContext.node = freshNode
           } else {

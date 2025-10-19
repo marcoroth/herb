@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/hb_string.h"
+#include "../../src/include/util/hb_string.h"
 #include <string.h>
 
 TEST(hb_string_equals_tests)
@@ -24,6 +24,41 @@ TEST(hb_string_equals_tests)
     ck_assert(!hb_string_equals(a, b));
   }
 END
+
+TEST(hb_string_offset_based_slice_tests)
+  {
+    hb_string_T source = hb_string_from_c_string("01234");
+    hb_string_T expected_slice = hb_string_from_c_string("234");
+
+    hb_string_T slice = hb_string_slice(source, 2);
+
+    ck_assert(hb_string_equals(slice, expected_slice));
+  }
+
+  {
+    hb_string_T source = hb_string_from_c_string("01234");
+    hb_string_T expected_slice = hb_string_from_c_string("4");
+
+    hb_string_T slice = hb_string_slice(source, 4);
+
+    ck_assert(hb_string_equals(slice, expected_slice));
+  }
+
+  {
+    hb_string_T source = hb_string_from_c_string("01234");
+    hb_string_T slice = hb_string_slice(source, 5);
+
+    ck_assert(hb_string_is_empty(slice));
+  }
+
+  {
+    hb_string_T source = hb_string_from_c_string("01234");
+    hb_string_T slice = hb_string_slice(source, 6);
+
+    ck_assert(hb_string_is_empty(slice));
+  }
+END
+
 
 TEST(hb_string_equals_case_insensitive_tests)
   {
@@ -122,9 +157,10 @@ TEST(hb_string_starts_with_tests)
 END
 
 TCase *hb_string_tests(void) {
-  TCase *tags = tcase_create("Str");
+  TCase *tags = tcase_create("Herb String");
 
   tcase_add_test(tags, hb_string_equals_tests);
+  tcase_add_test(tags, hb_string_offset_based_slice_tests);
   tcase_add_test(tags, hb_string_equals_case_insensitive_tests);
   tcase_add_test(tags, hb_string_is_empty_tests);
   tcase_add_test(tags, hb_string_starts_with_tests);

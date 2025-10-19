@@ -67,12 +67,12 @@ VALUE rb_error_from_c_struct(ERROR_T* error) {
   return Qnil;
 }
 
-VALUE rb_errors_array_from_c_array(array_T* array) {
+VALUE rb_errors_array_from_c_array(hb_array_T* array) {
   VALUE rb_array = rb_ary_new();
 
   if (array) {
-    for (size_t i = 0; i < array_size(array); i++) {
-      ERROR_T* child_node = (ERROR_T*) array_get(array, i);
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      ERROR_T* child_node = (ERROR_T*) hb_array_get(array, i);
 
       if (child_node) {
         VALUE rb_child = rb_error_from_c_struct(child_node);

@@ -8,7 +8,7 @@ extern "C" {
 }
 
 napi_value NodeFromCStruct(napi_env env, AST_NODE_T* node);
-napi_value NodesArrayFromCArray(napi_env env, array_T* array);
+napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array);
 
 <%- nodes.each do |node| -%>
 napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %>* <%= node.human %>);

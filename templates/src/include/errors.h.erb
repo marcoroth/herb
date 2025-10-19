@@ -1,12 +1,12 @@
 #ifndef HERB_ERRORS_H
 #define HERB_ERRORS_H
 
-#include "array.h"
-#include "buffer.h"
 #include "errors.h"
 #include "location.h"
 #include "position.h"
 #include "token.h"
+#include "util/hb_array.h"
+#include "util/hb_buffer.h"
 
 typedef enum {
 <%- errors.each do |error| -%>
@@ -33,7 +33,7 @@ typedef struct {
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
 <%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>);
-void append_<%= error.human %>(<%= (arguments << "array_T* errors").join(", ") %>);
+void append_<%= error.human %>(<%= (arguments << "hb_array_T* errors").join(", ") %>);
 <%- end -%>
 
 void error_init(ERROR_T* error, error_type_T type, position_T start, position_T end);
@@ -48,11 +48,11 @@ const char* error_human_type(ERROR_T* error);
 
 void error_free(ERROR_T* error);
 
-void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, buffer_T* buffer);
+void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, hb_buffer_T* buffer);
 
 void error_pretty_print_array(
-  const char* name, array_T* array, size_t indent, size_t relative_indent, bool last_property,
-  buffer_T* buffer
+  const char* name, hb_array_T* array, size_t indent, size_t relative_indent, bool last_property,
+  hb_buffer_T* buffer
 );
 
 #endif

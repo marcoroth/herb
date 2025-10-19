@@ -18,7 +18,7 @@ emscripten::val CreatePosition(position_T position);
 emscripten::val CreateLocation(location_T location);
 emscripten::val CreateRange(range_T range);
 emscripten::val CreateToken(token_T* token);
-emscripten::val CreateLexResult(array_T* tokens, const std::string& source);
+emscripten::val CreateLexResult(hb_array_T* tokens, const std::string& source);
 emscripten::val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source);
 
 #endif

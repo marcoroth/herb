@@ -8,11 +8,11 @@
 
 extern "C" {
 #include "../src/include/analyze.h"
-#include "../src/include/array.h"
+#include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
 #include "../src/include/ast_pretty_print.h"
-#include "../src/include/buffer.h"
+#include "../src/include/util/hb_buffer.h"
 #include "../src/include/extract.h"
 #include "../src/include/herb.h"
 #include "../src/include/location.h"
@@ -25,7 +25,7 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  array_T* tokens = herb_lex(source.c_str());
+  hb_array_T* tokens = herb_lex(source.c_str());
 
   val result = CreateLexResult(tokens, source);
 
@@ -60,21 +60,21 @@ val Herb_parse(const std::string& source, val options) {
 }
 
 std::string Herb_extract_ruby(const std::string& source) {
-  buffer_T output;
-  buffer_init(&output, source.length());
+  hb_buffer_T output;
+  hb_buffer_init(&output, source.length());
 
   herb_extract_ruby_to_buffer(source.c_str(), &output);
-  std::string result(buffer_value(&output));
+  std::string result(hb_buffer_value(&output));
   free(output.value);
   return result;
 }
 
 std::string Herb_extract_html(const std::string& source) {
-  buffer_T output;
-  buffer_init(&output, source.length());
+  hb_buffer_T output;
+  hb_buffer_init(&output, source.length());
 
   herb_extract_html_to_buffer(source.c_str(), &output);
-  std::string result(buffer_value(&output));
+  std::string result(hb_buffer_value(&output));
   free(output.value);
   return result;
 }
