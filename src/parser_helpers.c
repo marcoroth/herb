@@ -9,6 +9,7 @@
 #include "include/token_matchers.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <stdio.h>
 #include <strings.h>
@@ -57,11 +58,11 @@ bool parser_in_svg_context(const parser_T* parser) {
 
 // ===== Foreign Content Handling =====
 
-foreign_content_type_T parser_get_foreign_content_type(const char* tag_name) {
-  if (tag_name == NULL) { return FOREIGN_CONTENT_UNKNOWN; }
+foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
 
-  if (strcasecmp(tag_name, "script") == 0) { return FOREIGN_CONTENT_SCRIPT; }
-  if (strcasecmp(tag_name, "style") == 0) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals(tag_name, hb_string_from_c_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
+  if (hb_string_equals(tag_name, hb_string_from_c_string("style"))) { return FOREIGN_CONTENT_STYLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
