@@ -18,13 +18,13 @@ void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
   hb_array_push(parser->open_tags_stack, copy);
 }
 
-bool parser_check_matching_tag(const parser_T* parser, const char* tag_name) {
+bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   if (hb_array_size(parser->open_tags_stack) == 0) { return false; }
 
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || top_token->value == NULL) { return false; };
 
-  return (strcasecmp(top_token->value, tag_name) == 0);
+  return hb_string_equals(hb_string_from_c_string(top_token->value), tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {

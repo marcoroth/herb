@@ -936,7 +936,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
     close_tag = parser_parse_html_close_tag(parser);
   }
 
-  bool matches_stack = parser_check_matching_tag(parser, close_tag->tag_name->value);
+  bool matches_stack = parser_check_matching_tag(parser, hb_string_from_c_string(close_tag->tag_name->value));
 
   if (matches_stack) {
     token_T* popped_token = parser_pop_open_tag(parser);
