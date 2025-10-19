@@ -1,0 +1,13 @@
+#!/bin/bash
+
+failure=0
+
+for path in examples/*
+do
+  if ! valgrind --error-exitcode=1 --leak-check=full ./herb parse $path > /dev/null
+  then
+    failure=1
+  fi
+done
+
+exit $failure
