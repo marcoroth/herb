@@ -1233,7 +1233,7 @@ static void parser_consume_whitespace(parser_T* parser, hb_array_T* children) {
   }
 }
 
-void parser_free(parser_T* parser) {
+void herb_parser_deinit(parser_T* parser) {
   if (parser == NULL) { return; }
 
   if (parser->current_token != NULL) { token_free(parser->current_token); }

@@ -41,7 +41,7 @@ AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
 
   AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
 
-  parser_free(&parser);
+  herb_parser_deinit(&parser);
 
   return document;
 }
