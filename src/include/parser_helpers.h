@@ -31,7 +31,7 @@ void parser_append_literal_node_from_buffer(
 bool parser_in_svg_context(const parser_T* parser);
 
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name);
-bool parser_is_foreign_content_tag(const char* tag_name);
+bool parser_is_foreign_content_tag(hb_string_T tag_name);
 const char* parser_get_foreign_content_closing_tag(foreign_content_type_T type);
 
 void parser_enter_foreign_content(parser_T* parser, foreign_content_type_T type);

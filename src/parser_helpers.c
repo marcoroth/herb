@@ -67,7 +67,7 @@ foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   return FOREIGN_CONTENT_UNKNOWN;
 }
 
-bool parser_is_foreign_content_tag(const char* tag_name) {
+bool parser_is_foreign_content_tag(hb_string_T tag_name) {
   return parser_get_foreign_content_type(tag_name) != FOREIGN_CONTENT_UNKNOWN;
 }
 
