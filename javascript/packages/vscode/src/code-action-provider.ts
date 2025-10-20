@@ -7,18 +7,13 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
     context: vscode.CodeActionContext,
     _token: vscode.CancellationToken
   ): vscode.CodeAction[] {
+    if (context.diagnostics.length === 0) {
+      return []
+    }
+
     const actions: vscode.CodeAction[] = []
 
-    if (!document.fileName.endsWith('.html.erb')) {
-      return actions
-    }
-
-    const diagnostics = context.diagnostics
-    if (diagnostics.length === 0) {
-      return actions
-    }
-
-    for (const diagnostic of diagnostics) {
+    for (const diagnostic of context.diagnostics) {
       const source = typeof diagnostic.source === 'string' ? diagnostic.source.trim() : undefined
 
       if (!source || !source.includes('Herb')) {
