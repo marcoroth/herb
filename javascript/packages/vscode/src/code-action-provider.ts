@@ -19,6 +19,12 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     for (const diagnostic of diagnostics) {
+      const source = typeof diagnostic.source === 'string' ? diagnostic.source.trim() : undefined
+
+      if (!source || !source.includes('Herb')) {
+        continue
+      }
+
       let errorType = 'UNKNOWN_ERROR'
       if (typeof diagnostic.code === 'string' && diagnostic.code) {
         errorType = diagnostic.code
