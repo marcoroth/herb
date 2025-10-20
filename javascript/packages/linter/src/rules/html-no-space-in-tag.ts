@@ -142,7 +142,8 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 }
 
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
-  static autocorrectable = true
+  // TODO: enable and fix autofix
+  static autocorrectable = false
   name = "html-no-space-in-tag"
 
   check(result: ParseResult, context?: Partial<LintContext>): LintOffense<HTMLNoSpaceInTagAutofixContext>[] {
