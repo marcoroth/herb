@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../hb_arena.h"
+#include "hb_arena.h"
 
 typedef struct HB_STRING_STRUCT {
   char* data;
