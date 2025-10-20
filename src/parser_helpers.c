@@ -22,9 +22,9 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   if (hb_array_size(parser->open_tags_stack) == 0) { return false; }
 
   token_T* top_token = hb_array_last(parser->open_tags_stack);
-  if (top_token == NULL || top_token->value == NULL) { return false; };
+  if (top_token == NULL || hb_string_is_empty(top_token->value)) { return false; };
 
-  return hb_string_equals(hb_string_from_c_string(top_token->value), tag_name);
+  return hb_string_equals(top_token->value, tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
@@ -47,9 +47,8 @@ bool parser_in_svg_context(const parser_T* parser) {
   for (size_t i = 0; i < stack_size; i++) {
     token_T* tag = (token_T*) hb_array_get(parser->open_tags_stack, i);
 
-    if (tag && tag->value) {
-      hb_string_T tag_value_string = hb_string_from_c_string(tag->value);
-      if (hb_string_equals(tag_value_string, hb_string_from_c_string("svg"))) { return true; }
+    if (tag && !hb_string_is_empty(tag->value)) {
+      if (hb_string_equals_case_insensitive(tag->value, hb_string_from_c_string("svg"))) { return true; }
     }
   }
 

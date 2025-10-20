@@ -5,9 +5,6 @@
 #include <stdbool.h>
 #include <sys/mman.h>
 
-#define KB(kb) (1024 * kb)
-#define MB(mb) (1024 * KB(mb))
-
 bool hb_arena_init(hb_arena_T* allocator, size_t size) {
   allocator->memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 

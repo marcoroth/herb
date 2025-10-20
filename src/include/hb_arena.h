@@ -10,6 +10,9 @@ typedef struct HB_ARENA_ALLOCATOR_STRUCT {
   size_t position;
 } hb_arena_T;
 
+#define KB(kb) (1024 * (kb))
+#define MB(mb) (1024 * KB((mb)))
+
 bool hb_arena_init(hb_arena_T* allocator, size_t size);
 void* hb_arena_alloc(hb_arena_T* allocator, size_t size);
 size_t hb_arena_position(hb_arena_T* allocator);

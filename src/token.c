@@ -1,9 +1,12 @@
 #include "include/token.h"
+#include "include/hb_arena.h"
 #include "include/lexer.h"
 #include "include/position.h"
 #include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,19 +16,15 @@ size_t token_sizeof(void) {
   return sizeof(struct TOKEN_STRUCT);
 }
 
-token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
+  token_T* token = hb_arena_alloc(lexer->allocator, token_sizeof());
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
     lexer->current_column = 0;
   }
 
-  if (value) {
-    token->value = herb_strdup(value);
-  } else {
-    token->value = NULL;
-  }
+  token->value = value;
 
   token->type = type;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
@@ -91,13 +90,13 @@ char* token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
-  char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
+  char* string = calloc(strlen(type_string) + strlen(template) + token->value.length + 16, sizeof(char));
   char* escaped;
 
   if (token->type == TOKEN_EOF) {
     escaped = herb_strdup("<EOF>");
   } else {
-    escaped = escape_newlines(token->value);
+    escaped = escape_newlines(token_value(token));
   }
 
   sprintf(
@@ -119,7 +118,11 @@ char* token_to_string(const token_T* token) {
 }
 
 char* token_value(const token_T* token) {
-  return token->value;
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, token->value.length);
+  hb_buffer_append_string(&buffer, token->value);
+
+  return buffer.value;
 }
 
 int token_type(const token_T* token) {
@@ -133,16 +136,7 @@ token_T* token_copy(token_T* token) {
 
   if (!new_token) { return NULL; }
 
-  if (token->value) {
-    new_token->value = herb_strdup(token->value);
-
-    if (!new_token->value) {
-      free(new_token);
-      return NULL;
-    }
-  } else {
-    new_token->value = NULL;
-  }
+  new_token->value = token->value;
 
   new_token->type = token->type;
   new_token->range = token->range;
@@ -152,9 +146,5 @@ token_T* token_copy(token_T* token) {
 }
 
 void token_free(token_T* token) {
-  if (!token) { return; }
-
-  if (token->value != NULL) { free(token->value); }
-
-  free(token);
+  // TODO: Remove method
 }
