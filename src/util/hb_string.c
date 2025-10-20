@@ -4,7 +4,7 @@
 #include <string.h>
 #include <strings.h>
 
-hb_string_T hb_string_from_c_string(const char* null_terminated_c_string) {
+hb_string_T hb_string(const char* null_terminated_c_string) {
   hb_string_T string;
 
   string.data = (char*) null_terminated_c_string;

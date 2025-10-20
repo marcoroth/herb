@@ -14,11 +14,9 @@ bool is_void_element(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return false; }
 
   hb_string_T void_tags[14] = {
-    hb_string_from_c_string("area"),  hb_string_from_c_string("base"),  hb_string_from_c_string("br"),
-    hb_string_from_c_string("col"),   hb_string_from_c_string("embed"), hb_string_from_c_string("hr"),
-    hb_string_from_c_string("img"),   hb_string_from_c_string("input"), hb_string_from_c_string("link"),
-    hb_string_from_c_string("meta"),  hb_string_from_c_string("param"), hb_string_from_c_string("source"),
-    hb_string_from_c_string("track"), hb_string_from_c_string("wbr"),
+    hb_string("area"),  hb_string("base"),   hb_string("br"),    hb_string("col"),  hb_string("embed"),
+    hb_string("hr"),    hb_string("img"),    hb_string("input"), hb_string("link"), hb_string("meta"),
+    hb_string("param"), hb_string("source"), hb_string("track"), hb_string("wbr"),
   };
 
   for (size_t i = 0; i < 14; i++) {
@@ -37,7 +35,7 @@ bool is_void_element(hb_string_T tag_name) {
  *
  * Example:
  * @code
- * hb_string_T tag = html_closing_tag_string(hb_string_from_c_string("div"));
+ * hb_string_T tag = html_closing_tag_string(hb_string("div"));
  *
  * printf("%.*s\n", tag.length, tag.data); // Prints: </div>
  * free(tag.data);
@@ -52,7 +50,7 @@ hb_string_T html_closing_tag_string(hb_string_T tag_name) {
   hb_buffer_append_string(&buffer, tag_name);
   hb_buffer_append_char(&buffer, '>');
 
-  return hb_string_from_c_string(buffer.value);
+  return hb_string(buffer.value);
 }
 
 /**
@@ -64,7 +62,7 @@ hb_string_T html_closing_tag_string(hb_string_T tag_name) {
  *
  * Example:
  * @code
- * hb_string_T tag = html_self_closing_tag_string(hb_string_from_c_string("br"));
+ * hb_string_T tag = html_self_closing_tag_string(hb_string("br"));
  * printf("%.*s\n", tag.length, tag.data); // Prints: <br />
  * free(tag);
  * @endcode
@@ -79,5 +77,5 @@ hb_string_T html_self_closing_tag_string(hb_string_T tag_name) {
   hb_buffer_append_char(&buffer, '/');
   hb_buffer_append_char(&buffer, '>');
 
-  return hb_string_from_c_string(buffer.value);
+  return hb_string(buffer.value);
 }

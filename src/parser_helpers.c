@@ -24,7 +24,7 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || top_token->value == NULL) { return false; };
 
-  return hb_string_equals(hb_string_from_c_string(top_token->value), tag_name);
+  return hb_string_equals(hb_string(top_token->value), tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
@@ -48,8 +48,8 @@ bool parser_in_svg_context(const parser_T* parser) {
     token_T* tag = (token_T*) hb_array_get(parser->open_tags_stack, i);
 
     if (tag && tag->value) {
-      hb_string_T tag_value_string = hb_string_from_c_string(tag->value);
-      if (hb_string_equals(tag_value_string, hb_string_from_c_string("svg"))) { return true; }
+      hb_string_T tag_value_string = hb_string(tag->value);
+      if (hb_string_equals(tag_value_string, hb_string("svg"))) { return true; }
     }
   }
 
@@ -61,8 +61,8 @@ bool parser_in_svg_context(const parser_T* parser) {
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
 
-  if (hb_string_equals(tag_name, hb_string_from_c_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals(tag_name, hb_string_from_c_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
+  if (hb_string_equals(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -73,9 +73,9 @@ bool parser_is_foreign_content_tag(hb_string_T tag_name) {
 
 hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type) {
   switch (type) {
-    case FOREIGN_CONTENT_SCRIPT: return hb_string_from_c_string("script");
-    case FOREIGN_CONTENT_STYLE: return hb_string_from_c_string("style");
-    default: return hb_string_from_c_string("");
+    case FOREIGN_CONTENT_SCRIPT: return hb_string("script");
+    case FOREIGN_CONTENT_STYLE: return hb_string("style");
+    default: return hb_string("");
   }
 }
 

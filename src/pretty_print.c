@@ -53,7 +53,7 @@ void pretty_print_quoted_property(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  hb_string_T quoted = quoted_string(hb_string_from_c_string(value));
+  hb_string_T quoted = quoted_string(hb_string(value));
   pretty_print_property(name, quoted.data, indent, relative_indent, last_property, buffer);
   free(quoted.data);
 }
@@ -213,7 +213,7 @@ void pretty_print_token_property(
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
   if (token != NULL && token->value != NULL) {
-    hb_string_T quoted = quoted_string(hb_string_from_c_string(token->value));
+    hb_string_T quoted = quoted_string(hb_string(token->value));
     hb_buffer_append_string(buffer, quoted);
     free(quoted.data);
 
@@ -240,7 +240,7 @@ void pretty_print_string_property(
 
   if (string != NULL) {
     escaped = escape_newlines(string);
-    quoted = quoted_string(hb_string_from_c_string(escaped));
+    quoted = quoted_string(hb_string(escaped));
     value = quoted.data;
   }
 

@@ -44,7 +44,7 @@ static hb_string_T wrap_string(hb_string_T input, char character) {
   hb_buffer_append_string(&buffer, input);
   hb_buffer_append_char(&buffer, character);
 
-  return hb_string_from_c_string(buffer.value);
+  return hb_string(buffer.value);
 }
 
 hb_string_T quoted_string(hb_string_T input) {
