@@ -77,7 +77,9 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   hb_arena_page_T* page = hb_arena_allocate_page(total_size);
   if (page == NULL) { return false; }
 
-  *page = (hb_arena_page_T) { .next = NULL, .capacity = page_size, .position = 0 };
+  page->next = NULL;
+  page->capacity = page_size;
+  page->position = 0;
 
   if (allocator->head == NULL) {
     allocator->head = page;
