@@ -124,11 +124,13 @@ TEST(test_arena_reset_to_multipage)
   size_t checkpoint = hb_arena_position(&allocator);
 
   hb_arena_alloc(&allocator, 64);
+  hb_arena_alloc(&allocator, 128);
   ck_assert_ptr_nonnull(allocator.head->next);
 
   hb_arena_reset_to(&allocator, checkpoint);
   ck_assert_int_eq(hb_arena_position(&allocator), checkpoint);
-  ck_assert_ptr_eq(allocator.tail, allocator.head);
+  ck_assert_ptr_eq(allocator.tail, allocator.head->next);
+  ck_assert_int_eq(allocator.head->next->capacity, 192);
 
   hb_arena_free(&allocator);
 END
@@ -308,7 +310,9 @@ TEST(test_arena_page_reuse_after_reset)
 
   hb_arena_reset_to(&allocator, checkpoint);
   ck_assert_int_eq(hb_arena_position(&allocator), checkpoint);
-  ck_assert_ptr_eq(allocator.tail, allocator.head);
+  ck_assert_ptr_eq(allocator.tail, allocator.head->next);
+  ck_assert_int_eq(allocator.head->next->capacity, 128);
+
 
   char *memory = hb_arena_alloc(&allocator, 64);
   ck_assert_ptr_nonnull(memory);
