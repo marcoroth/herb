@@ -1,7 +1,9 @@
 #ifdef __linux__
 #define _GNU_SOURCE
 #endif
-#include "include/hb_arena.h"
+
+#include "../include/util/hb_arena.h"
+
 #include <stdbool.h>
 #include <sys/mman.h>
 
@@ -15,11 +17,13 @@ bool hb_arena_init(hb_arena_T* allocator, size_t size) {
     allocator->memory = NULL;
     allocator->position = 0;
     allocator->capacity = 0;
+
     return false;
   }
 
   allocator->position = 0;
   allocator->capacity = size;
+
   return true;
 }
 
@@ -50,6 +54,7 @@ void hb_arena_reset_to(hb_arena_T* allocator, size_t new_position) {
 void hb_arena_free(hb_arena_T* allocator) {
   if (allocator->memory != NULL) {
     munmap(allocator->memory, allocator->capacity);
+
     allocator->memory = NULL;
     allocator->position = 0;
     allocator->capacity = 0;

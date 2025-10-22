@@ -1,5 +1,5 @@
 #include "include/test.h"
-#include "../../src/include/hb_arena.h"
+#include "../../src/include/util/hb_arena.h"
 
 // Test appending text to buffer
 TEST(test_arena_alloc)

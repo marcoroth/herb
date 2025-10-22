@@ -33,9 +33,9 @@ static bool lexer_stalled(lexer_T* lexer) {
 
 void lexer_init(lexer_T* lexer, const char* source) {
   if (source != NULL) {
-    lexer->source = hb_string_from_c_string(source);
+    lexer->source = hb_string(source);
   } else {
-    lexer->source = hb_string_from_c_string("");
+    lexer->source = hb_string("");
   }
 
   lexer->current_character = lexer->source.data[0];

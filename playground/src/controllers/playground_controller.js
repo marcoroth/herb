@@ -1020,7 +1020,7 @@ export default class extends Controller {
   }
 
   getOptionsFromURL() {
-    const urlParams = new URLSearchParams(window.location.search)
+    const urlParams = new URLSearchParams(window.parent.location.search)
     const optionsString = urlParams.get('options')
 
     if (optionsString) {
@@ -1035,7 +1035,7 @@ export default class extends Controller {
   }
 
   setOptionsInURL(options) {
-    const url = new URL(window.location)
+    const url = new URL(window.parent.location)
 
     const nonDefaultOptions = {}
 
@@ -1051,11 +1051,11 @@ export default class extends Controller {
       url.searchParams.delete('options')
     }
 
-    window.history.replaceState({}, '', url)
+    window.parent.history.replaceState({}, '', url)
   }
 
   setPrinterOptionsInURL(printerOptions) {
-    const url = new URL(window.location)
+    const url = new URL(window.parent.location)
 
     const nonDefaultPrinterOptions = {}
 
@@ -1071,11 +1071,11 @@ export default class extends Controller {
       url.searchParams.delete('printerOptions')
     }
 
-    window.history.replaceState({}, '', url)
+    window.parent.history.replaceState({}, '', url)
   }
 
   getPrinterOptionsFromURL() {
-    const urlParams = new URLSearchParams(window.location.search)
+    const urlParams = new URLSearchParams(window.parent.location.search)
     const printerOptionsString = urlParams.get('printerOptions')
 
     if (printerOptionsString) {

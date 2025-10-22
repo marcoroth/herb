@@ -610,7 +610,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 40,
+    "ruleCount": 39,
     "totalErrors": 2,
     "totalIgnored": 0,
     "totalOffenses": 2,
@@ -629,7 +629,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 40,
+    "ruleCount": 39,
     "totalErrors": 0,
     "totalIgnored": 0,
     "totalOffenses": 0,
@@ -700,7 +700,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 40,
+    "ruleCount": 39,
     "totalErrors": 3,
     "totalIgnored": 0,
     "totalOffenses": 3,

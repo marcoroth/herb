@@ -1,7 +1,7 @@
 check
-clang-19
-clang-format-19
-clang-tidy-19
+clang-21
+clang-format-21
+clang-tidy-21
 emscripten
 doxygen
 xvfb
