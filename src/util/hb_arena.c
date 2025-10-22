@@ -156,12 +156,7 @@ size_t hb_arena_capacity(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset(hb_arena_T* allocator) {
-  hb_arena_for_each_page(allocator) {
-    hb_arena_page_reset(page);
-  }
-
-  allocator->tail = allocator->head;
-  allocator->allocation_count = 0;
+  hb_arena_reset_to(allocator, 0);
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
