@@ -6,7 +6,7 @@ _buf = ::String.new;
   data-code="SecurityViolation"
   data-line="1"
   data-column="5"
-  data-filename="../../../../path/to/template.html.erb"
+  data-filename="to/template.html.erb"
   data-message="ERB output tags (&lt;%= %&gt;) are not allowed in attribute position."
   data-suggestion="Use control flow (&lt;% %&gt;) with static attributes instead."
   data-timestamp="2025-01-01T12:00:00Z"
@@ -16,7 +16,7 @@ _buf = ::String.new;
       Security
     </span>
     <span class="herb-validation-location">
-      ../../../../path/to/template.html.erb:1:5
+      to/template.html.erb:1:5
     </span>
   </div>
   <div class="herb-validation-message" style="color: #dc2626">

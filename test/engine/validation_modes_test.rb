@@ -72,8 +72,9 @@ module Engine
 
     test ":overlay mode includes filename in HTML" do
       filename = "/path/to/template.html.erb"
+      project_path = "/path"
 
-      assert_compiled_snapshot(@invalid_security_template, validation_mode: :overlay, filename: filename)
+      assert_compiled_snapshot(@invalid_security_template, validation_mode: :overlay, filename: filename, project_path: project_path)
     end
 
     test ":overlay mode with multiple validation errors" do
