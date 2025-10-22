@@ -59,14 +59,14 @@ module Engine
     test "handles escape option" do
       template = "<%= content %>"
 
-      assert_compiled_snapshot(template, {escape: true})
-      assert_compiled_snapshot(template, {escape: false})
+      assert_compiled_snapshot(template, { escape: true })
+      assert_compiled_snapshot(template, { escape: false })
     end
 
     test "handles double equals for inverse escaping" do
       template = "<%== content %>"
 
-      assert_compiled_snapshot(template, {escape: true})
+      assert_compiled_snapshot(template, { escape: true })
       assert_compiled_snapshot(template, { escape: false })
     end
 
@@ -79,20 +79,20 @@ module Engine
     test "handles freeze option" do
       template = "<div>Static content</div>"
 
-      assert_compiled_snapshot(template, {freeze: true})
+      assert_compiled_snapshot(template, { freeze: true })
     end
 
     test "handles freeze_template_literals option" do
       template = "<div>Content</div>"
 
       assert_compiled_snapshot(template)
-      assert_compiled_snapshot(template, {freeze_template_literals: false})
+      assert_compiled_snapshot(template, { freeze_template_literals: false })
     end
 
     test "handles custom preamble and postamble" do
       template = "<div>Test</div>"
 
-      assert_compiled_snapshot(template, {preamble: "@buf = []", postamble: "@buf.join"})
+      assert_compiled_snapshot(template, { preamble: "@buf = []", postamble: "@buf.join" })
     end
 
     test "handles ensure option" do
@@ -104,7 +104,7 @@ module Engine
     test "handles custom escapefunc" do
       template = "<%== content %>"
 
-      assert_compiled_snapshot(template, {escape: false, escapefunc: "CGI.escapeHTML"})
+      assert_compiled_snapshot(template, { escape: false, escapefunc: "CGI.escapeHTML" })
     end
 
     test "handles chain_appends option" do
@@ -113,8 +113,8 @@ module Engine
         <%= b %>
       ERB
 
-      assert_compiled_snapshot(template, {chain_appends: true})
-      assert_compiled_snapshot(template, {chain_appends: false})
+      assert_compiled_snapshot(template, { chain_appends: true })
+      assert_compiled_snapshot(template, { chain_appends: false })
     end
 
     test "handles multiple erb constructs in complex template" do

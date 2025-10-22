@@ -42,7 +42,6 @@ module Engine
       template = '<div class="<%= css_class %>" data-id="<%= @user.id %>">Content</div>'
 
       assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
-
     end
 
     test "script content erb expressions do NOT get debug spans" do
