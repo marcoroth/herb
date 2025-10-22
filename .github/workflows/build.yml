@@ -61,8 +61,8 @@ jobs:
       - name: Run C tests
         run: ./run_herb_tests
 
-      - name: Leak check examples
-        run: ./bin/leak_check_examples
+      - name: Run valgrind on examples/
+        run: ./bin/valgrind_check_examples
 
       - name: clang-format version
         run: clang-format-21 --version
