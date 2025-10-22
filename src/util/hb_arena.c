@@ -160,27 +160,7 @@ void hb_arena_reset(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
-  if (target_position == 0) {
-    hb_arena_reset(allocator);
-
-    return;
-  }
-
-  size_t accumulated = 0;
-
-  hb_arena_for_each_page(allocator) {
-    if (accumulated + page->capacity >= target_position) {
-      page->position = target_position - accumulated;
-      allocator->tail = page;
-
-      hb_arena_reset_pages_after(page->next);
-
-      return;
-    }
-
-    accumulated += page->capacity;
-    page->position = page->capacity;
-  }
+  // TODO
 }
 
 static size_t hb_arena_page_free(hb_arena_page_T* starting_page) {
