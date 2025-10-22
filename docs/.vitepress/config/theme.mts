@@ -131,7 +131,15 @@ export function createThemeConfig() {
       copyright: "Copyright © 2024-2025 Marco Roth and the Herb Contributors.",
     },
     editLink: {
-      pattern: "https://github.com/marcoroth/herb/edit/main/docs/docs/:path",
+      pattern: ({ filePath }) => {
+        if (filePath.startsWith('linter/rules/')) {
+          const fileName = filePath.replace('linter/rules/', '')
+
+          return `https://github.com/marcoroth/herb/edit/main/javascript/packages/linter/docs/rules/${fileName}`
+        }
+
+        return `https://github.com/marcoroth/herb/edit/main/docs/docs/${filePath}`
+      },
       text: "Edit this page on GitHub",
     },
     sidebar: {
