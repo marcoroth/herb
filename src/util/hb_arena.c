@@ -56,16 +56,6 @@ static inline void* hb_arena_page_alloc(hb_arena_page_T* page, size_t size) {
   return result;
 }
 
-static inline void hb_arena_page_reset(hb_arena_page_T* page) {
-  page->position = 0;
-}
-
-static inline void hb_arena_reset_pages_after(hb_arena_page_T* start_page) {
-  for (hb_arena_page_T* page = start_page; page != NULL; page = page->next) {
-    hb_arena_page_reset(page);
-  }
-}
-
 static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   assert(minimum_size > 0);
 
