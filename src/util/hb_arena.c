@@ -46,7 +46,7 @@ static inline bool hb_arena_page_has_capacity(hb_arena_page_T* page, size_t requ
   return page->position + required_size <= page->capacity;
 }
 
-static inline void* hb_arena_page_alloc_from(hb_arena_page_T* page, size_t size) {
+static inline void* hb_arena_page_alloc(hb_arena_page_T* page, size_t size) {
   assert(size > 0);
   assert(page->position + size <= page->capacity);
 
@@ -118,21 +118,17 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   allocator->allocation_count++;
 
   if (hb_arena_page_has_capacity(allocator->tail, required_size)) {
-    return hb_arena_page_alloc_from(allocator->tail, required_size);
+    return hb_arena_page_alloc(allocator->tail, required_size);
   }
 
   for (hb_arena_page_T* page = allocator->tail->next; page != NULL; page = page->next) {
     if (hb_arena_page_has_capacity(page, required_size)) {
       allocator->tail = page;
-      return hb_arena_page_alloc_from(allocator->tail, required_size);
+      return hb_arena_page_alloc(allocator->tail, required_size);
     }
   }
 
-  bool allocated = hb_arena_append_page(allocator, required_size);
-
-  if (!allocated) { return NULL; }
-
-  return hb_arena_page_alloc_from(allocator->tail, required_size);
+  return hb_arena_page_alloc(allocator->tail, required_size);
 }
 
 size_t hb_arena_position(hb_arena_T* allocator) {
