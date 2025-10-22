@@ -6,6 +6,8 @@
 
 This rule enforces the use of `-%>` for right-trimming ERB output tags (like `<%= %>`) instead of `=%>`.
 
+Additionally, this rule enforces the use of `%>` instead of `-%>` or `=%>` when right-trimming has no effect.
+
 ## Rationale
 
 While `=%>` can be used for right-trimming whitespace in some ERB engines (like Erubi), it is an obscure and not well-defined syntax that lacks consistent support across most ERB implementations.
@@ -26,6 +28,8 @@ The `-%>` syntax is the standard, well-documented approach for right-trimming th
 <% items.each do |item| %>
   <li><%= item -%></li>
 <% end %>
+
+<%# locals: () %>
 ```
 
 ### 🚫 Bad
@@ -45,6 +49,8 @@ The `-%>` syntax is the standard, well-documented approach for right-trimming th
 <% items.each do |item| =%>
   <li><%= item %></li>
 <% end %>
+
+<%# locals: () -%>
 ```
 
 ## References
