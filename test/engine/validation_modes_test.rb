@@ -13,7 +13,7 @@ module Engine
     end
 
     around do |test|
-      @fixed_time = Time.new(2025, 1, 1, 12, 0, 0)
+      @fixed_time = Time.utc(2025, 1, 1, 12, 0, 0)
 
       Time.stub :now, @fixed_time do
         test.call

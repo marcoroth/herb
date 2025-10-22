@@ -344,7 +344,7 @@ module Herb
             data-filename="#{escape_attr(@relative_file_path)}"
             data-message="#{escaped_message}"
             #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
-            data-timestamp="#{Time.now.iso8601}"
+            data-timestamp="#{Time.now.utc.iso8601}"
           >#{html_fragment}</template>
         TEMPLATE
       }.join

@@ -9,7 +9,7 @@ _buf = ::String.new;
   data-filename="meta_test.html.erb"
   data-message="ERB output tags (&lt;%= %&gt;) are not allowed in attribute position."
   data-suggestion="Use control flow (&lt;% %&gt;) with static attributes instead."
-  data-timestamp="2025-01-01T12:00:00+01:00"
+  data-timestamp="2025-01-01T12:00:00Z"
 ><div class="herb-validation-item" data-severity="error">
   <div class="herb-validation-header">
     <span class="herb-validation-badge" style="background: #dc2626">
