@@ -130,7 +130,7 @@ module Herb
       end
 
       @src << "\n" unless @src.end_with?("\n")
-      send(:add_postamble, postamble)
+      add_postamble(postamble)
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
@@ -285,10 +285,10 @@ module Herb
       when :overlay
         add_parser_error_overlay(parser_errors, input)
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       when :none
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       end
     end
 
