@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<div data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze;
+_buf.to_s

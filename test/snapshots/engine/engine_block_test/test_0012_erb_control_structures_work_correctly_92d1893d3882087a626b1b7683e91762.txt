@@ -1,0 +1,6 @@
+_buf = ::String.new;
+ 5.times do |i|; _buf << '
+  <div>'.freeze; _buf << (i).to_s; _buf << '</div>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

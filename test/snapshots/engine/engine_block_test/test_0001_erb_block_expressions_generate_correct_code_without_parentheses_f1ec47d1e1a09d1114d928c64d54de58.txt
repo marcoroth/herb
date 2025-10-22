@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << link_to "/path", class: "btn" do; _buf << 'Click me'.freeze; end;
+_buf.to_s

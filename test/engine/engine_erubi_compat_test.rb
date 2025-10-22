@@ -5,12 +5,12 @@ require_relative "../../lib/herb/engine"
 
 module Engine
   class EngineErubiCompatTest < Minitest::Spec
+    include SnapshotUtils
+
     test "handles no tags" do
       template = "a\n"
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "_buf << 'a"
-      assert_includes engine.src, "_buf.to_s"
+      assert_compiled_snapshot(template)
     end
 
     test "handles basic erb expressions" do
@@ -29,22 +29,13 @@ module Engine
         <%== i+1 %>
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      assert_includes engine.src, "i = 0"
-      assert_includes engine.src, "list.each_with_index do |item, i|"
-
-      assert_includes engine.src, "(i+1).to_s"
-      assert_includes engine.src, "::Herb::Engine.h((item))"
-      assert_includes engine.src, "::Herb::Engine.h((i+1))"
+      assert_compiled_snapshot(template)
     end
 
     test "escapes backslashes and apostrophes in text" do
       template = "<table>\n <tbody>' ' \\\\ \\\\\n</tbody>\n</table>"
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "\\' \\'"
-      assert_includes engine.src, "\\\\\\\\"
+      assert_compiled_snapshot(template)
     end
 
     test "strips whitespace with -%> tag" do
@@ -53,11 +44,7 @@ module Engine
         text
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      assert_includes engine.src, "a = 1"
-      assert_includes engine.src, "_buf << 'text"
-      refute_includes engine.src, "_buf << '\\ntext"
+      assert_compiled_snapshot(template)
     end
 
     test "handles erb comments" do
@@ -66,90 +53,58 @@ module Engine
         <div>Content</div>
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      refute_includes engine.src, "This is a comment"
-      assert_includes engine.src, "<div>Content</div>"
+      assert_compiled_snapshot(template)
     end
 
     test "handles escape option" do
       template = "<%= content %>"
 
-      engine = Herb::Engine.new(template, escape: true)
-      assert_includes engine.src, "__herb = ::Herb::Engine"
-      assert_includes engine.src, "__herb.h((content))"
-
-      engine = Herb::Engine.new(template, escape: false)
-      assert_includes engine.src, "(content).to_s"
-      refute_includes engine.src, "::Herb::Engine.h"
+      assert_compiled_snapshot(template, {escape: true})
+      assert_compiled_snapshot(template, {escape: false})
     end
 
     test "handles double equals for inverse escaping" do
       template = "<%== content %>"
 
-      engine = Herb::Engine.new(template, escape: true)
-      assert_includes engine.src, "(content).to_s"
-      refute_includes engine.src, "__herb.h"
-
-      engine = Herb::Engine.new(template, escape: false)
-      assert_includes engine.src, "::Herb::Engine.h((content))"
+      assert_compiled_snapshot(template, {escape: true})
+      assert_compiled_snapshot(template, { escape: false })
     end
 
     test "handles custom bufvar" do
       template = "<div>Test</div>"
-      engine = Herb::Engine.new(template, bufvar: "@output")
 
-      assert_includes engine.src, "@output = ::String.new"
-      assert_includes engine.src, "@output << '"
-      assert_includes engine.src, "@output.to_s"
+      assert_compiled_snapshot(template, { bufvar: "@output" })
     end
 
     test "handles freeze option" do
       template = "<div>Static content</div>"
-      engine = Herb::Engine.new(template, freeze: true)
 
-      assert_includes engine.src, "# frozen_string_literal: true"
-      assert_includes engine.src, "'.freeze"
+      assert_compiled_snapshot(template, {freeze: true})
     end
 
     test "handles freeze_template_literals option" do
       template = "<div>Content</div>"
 
-      engine = Herb::Engine.new(template)
-      assert_includes engine.src, "'.freeze"
-
-      engine = Herb::Engine.new(template, freeze_template_literals: false)
-      refute_includes engine.src, "'.freeze"
+      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, {freeze_template_literals: false})
     end
 
     test "handles custom preamble and postamble" do
       template = "<div>Test</div>"
-      engine = Herb::Engine.new(template,
-                                preamble: "@buf = []",
-                                postamble: "@buf.join")
 
-      assert_includes engine.src, "@buf = []"
-      assert_includes engine.src, "@buf.join"
+      assert_compiled_snapshot(template, {preamble: "@buf = []", postamble: "@buf.join"})
     end
 
     test "handles ensure option" do
       template = "<div>Test</div>"
-      engine = Herb::Engine.new(template, ensure: true)
 
-      assert_includes engine.src, "begin; __original_outvar = _buf"
-      assert_includes engine.src, "; ensure"
-      assert_includes engine.src, "_buf = __original_outvar"
-      assert_includes engine.src, "end"
+      assert_compiled_snapshot(template, ensure: true)
     end
 
     test "handles custom escapefunc" do
       template = "<%== content %>"
-      engine = Herb::Engine.new(template,
-                                escape: false,
-                                escapefunc: "CGI.escapeHTML")
 
-      assert_includes engine.src, "CGI.escapeHTML((content))"
-      refute_includes engine.src, "::Herb::Engine.h"
+      assert_compiled_snapshot(template, {escape: false, escapefunc: "CGI.escapeHTML"})
     end
 
     test "handles chain_appends option" do
@@ -158,12 +113,8 @@ module Engine
         <%= b %>
       ERB
 
-      engine = Herb::Engine.new(template, chain_appends: true)
-      assert_includes engine.src, "; _buf"
-
-      engine = Herb::Engine.new(template, chain_appends: false)
-      assert_includes engine.src, "_buf << ("
-      assert_includes engine.src, ").to_s;"
+      assert_compiled_snapshot(template, {chain_appends: true})
+      assert_compiled_snapshot(template, {chain_appends: false})
     end
 
     test "handles multiple erb constructs in complex template" do
@@ -190,18 +141,7 @@ module Engine
         </html>
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      assert_includes engine.src, "<!DOCTYPE html>"
-      assert_includes engine.src, "if @user"
-      assert_includes engine.src, "@user.posts.each do |post|"
-      assert_includes engine.src, "(@title).to_s"
-      assert_includes engine.src, "(@user.name).to_s"
-      assert_includes engine.src, "::Herb::Engine.h((post.title))"
-      assert_includes engine.src, "(post.content).to_s"
-      assert_includes engine.src, "else"
-      assert_includes engine.src, "Please log in"
-      refute_includes engine.src, "This comment should not appear"
+      assert_compiled_snapshot(template)
     end
 
     test "handles void elements correctly" do
@@ -211,12 +151,7 @@ module Engine
         <input type="text" name="<%= field_name %>">
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      assert_includes engine.src, '<img src="photo.jpg" alt="Photo">'
-      assert_includes engine.src, "<br>"
-      assert_includes engine.src, '<input type="text" name="'
-      assert_includes engine.src, "::Herb::Engine.attr((field_name))"
+      assert_compiled_snapshot(template)
     end
 
     test "handles CDATA sections" do
@@ -228,18 +163,13 @@ module Engine
         </script>
       ERB
 
-      engine = Herb::Engine.new(template)
-
-      assert_includes engine.src, "<![CDATA["
-      assert_includes engine.src, "]]>"
-      assert_includes engine.src, "::Herb::Engine.js((@data.to_json))"
+      assert_compiled_snapshot(template)
     end
 
     test "handles XML declarations" do
       template = '<?xml version="1.0" encoding="UTF-8"?>'
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, '<?xml version="1.0" encoding="UTF-8"?>'
+      assert_compiled_snapshot(template)
     end
   end
 end

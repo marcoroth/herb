@@ -1,0 +1,81 @@
+_buf = ::String.new;
+ _buf << '<div '.freeze; _buf << (@attr).to_s; _buf << ' data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze; _buf << ('<template
+  data-herb-validation-error
+  data-severity="error"
+  data-source="SecurityValidator"
+  data-code="SecurityViolation"
+  data-line="1"
+  data-column="5"
+  data-filename="unknown"
+  data-message="ERB output in attribute names is not allowed for security reasons."
+  data-suggestion="Use static attribute names with dynamic values instead."
+  data-timestamp="2025-01-01T12:00:00+01:00"
+><div class="herb-validation-item" data-severity="error">
+  <div class="herb-validation-header">
+    <span class="herb-validation-badge" style="background: #dc2626">
+      Security
+    </span>
+    <span class="herb-validation-location">
+      unknown:1:5
+    </span>
+  </div>
+  <div class="herb-validation-message" style="color: #dc2626">
+    ERB output in attribute names is not allowed for security reasons.
+  </div>
+  <div class="herb-code-snippet">
+  <div class="herb-code-line herb-error-line">
+  <div class="herb-line-number">1</div>
+  <div class="herb-line-content">&lt;div &lt;%= @attr %&gt; data-&lt;%= @name %&gt;=&quot;value&quot;&gt;Content&lt;/div&gt;</div>
+</div>
+<div class="herb-error-pointer">    ^</div>
+
+</div>
+
+  <div class="herb-validation-suggestion">
+  <span class="herb-suggestion-icon">💡</span>
+  Use static attribute names with dynamic values instead.
+</div>
+
+</div>
+</template>
+<template
+  data-herb-validation-error
+  data-severity="error"
+  data-source="SecurityValidator"
+  data-code="SecurityViolation"
+  data-line="1"
+  data-column="23"
+  data-filename="unknown"
+  data-message="ERB output in attribute names is not allowed for security reasons."
+  data-suggestion="Use static attribute names with dynamic values instead."
+  data-timestamp="2025-01-01T12:00:00+01:00"
+><div class="herb-validation-item" data-severity="error">
+  <div class="herb-validation-header">
+    <span class="herb-validation-badge" style="background: #dc2626">
+      Security
+    </span>
+    <span class="herb-validation-location">
+      unknown:1:23
+    </span>
+  </div>
+  <div class="herb-validation-message" style="color: #dc2626">
+    ERB output in attribute names is not allowed for security reasons.
+  </div>
+  <div class="herb-code-snippet">
+  <div class="herb-code-line herb-error-line">
+  <div class="herb-line-number">1</div>
+  <div class="herb-line-content">&lt;div &lt;%= @attr %&gt; data-&lt;%= @name %&gt;=&quot;value&quot;&gt;Content&lt;/div&gt;</div>
+</div>
+<div class="herb-error-pointer">                      ^</div>
+
+</div>
+
+  <div class="herb-validation-suggestion">
+  <span class="herb-suggestion-icon">💡</span>
+  Use static attribute names with dynamic values instead.
+</div>
+
+</div>
+</template>
+'.html_safe).to_s;
+_buf.to_s

@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<?xml version="1.0" encoding="UTF-8"?>'.freeze;
+_buf.to_s

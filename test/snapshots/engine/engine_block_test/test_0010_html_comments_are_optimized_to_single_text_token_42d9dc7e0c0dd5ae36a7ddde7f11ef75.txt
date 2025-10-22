@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<!-- This is a comment with multiple words -->'.freeze;
+_buf.to_s
