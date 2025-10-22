@@ -43,7 +43,7 @@ module Herb
 
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
-      @escapefunc = properties[:escapefunc]
+      @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -66,12 +66,6 @@ module Herb
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
-
-      @escapefunc ||= if @escape
-                        "__herb.h"
-                      else
-                        "::Herb::Engine.h"
-                      end
 
       @freeze = properties[:freeze]
       @freeze_template_literals = properties.fetch(:freeze_template_literals, true)

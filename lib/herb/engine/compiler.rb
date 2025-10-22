@@ -10,6 +10,9 @@ module Herb
 
         @engine = engine
         @escape = options.fetch(:escape) { options.fetch(:escape_html, false) }
+        @attrfunc = options.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
+        @jsfunc = options.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
+        @cssfunc = options.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
         @tokens = [] #: Array[untyped]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -294,11 +297,17 @@ module Herb
       def add_context_aware_expression(code, context)
         case context
         when :attribute_value
-          @engine.send(:with_buffer) { @engine.instance_variable_get(:@src) << " << ::Herb::Engine.attr((" << code << "))" }
+          @engine.send(:with_buffer) {
+            @engine.src << " << #{@attrfunc}((" << code << "))"
+          }
         when :script_content
-          @engine.send(:with_buffer) { @engine.instance_variable_get(:@src) << " << ::Herb::Engine.js((" << code << "))" }
+          @engine.send(:with_buffer) {
+            @engine.src << " << #{@jsfunc}((" << code << "))"
+          }
         when :style_content
-          @engine.send(:with_buffer) { @engine.instance_variable_get(:@src) << " << ::Herb::Engine.css((" << code << "))" }
+          @engine.send(:with_buffer) {
+            @engine.src << " << #{@cssfunc}((" << code << "))"
+          }
         else
           @engine.send(:add_expression_result_escaped, code)
         end

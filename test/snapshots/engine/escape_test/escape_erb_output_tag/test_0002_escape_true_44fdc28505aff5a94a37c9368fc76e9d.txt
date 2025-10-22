@@ -1,0 +1,3 @@
+__herb = ::Herb::Engine; _buf = ::String.new;
+ _buf << '<h1>'.freeze; _buf << __herb.h((value)); _buf << '</h1>'.freeze;
+_buf.to_s

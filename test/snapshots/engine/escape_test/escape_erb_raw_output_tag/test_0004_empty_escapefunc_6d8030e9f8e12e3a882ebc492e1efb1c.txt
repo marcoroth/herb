@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<h1>'.freeze; _buf << ((value)); _buf << '</h1>'.freeze;
+_buf.to_s
