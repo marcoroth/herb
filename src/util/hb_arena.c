@@ -188,16 +188,27 @@ void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
   }
 }
 
+static size_t hb_arena_page_free(hb_arena_page_T* starting_page) {
+  size_t freed_capacity = 0;
+
+  for (hb_arena_page_T* current_page = starting_page; current_page != NULL;) {
+    hb_arena_page_T* next_page = current_page->next;
+
+    freed_capacity += current_page->capacity;
+
+    size_t total_size = sizeof(hb_arena_page_T) + current_page->capacity;
+    hb_arena_free_page(current_page, total_size);
+
+    current_page = next_page;
+  }
+
+  return freed_capacity;
+}
+
 void hb_arena_free(hb_arena_T* allocator) {
   if (allocator->head == NULL) { return; }
 
-  for (hb_arena_page_T* current = allocator->head; current != NULL;) {
-    hb_arena_page_T* next = current->next;
-    size_t total_size = sizeof(hb_arena_page_T) + current->capacity;
-    hb_arena_free_page(current, total_size);
-
-    current = next;
-  }
+  hb_arena_page_free(allocator->head);
 
   allocator->head = NULL;
   allocator->tail = NULL;
