@@ -56,6 +56,8 @@ static inline void* hb_arena_page_alloc(hb_arena_page_T* page, size_t size) {
   return result;
 }
 
+static size_t hb_arena_page_free(hb_arena_page_T* starting_page);
+
 static bool hb_arena_append_page(hb_arena_T* allocator, size_t page_size) {
   assert(page_size <= SIZE_MAX - sizeof(hb_arena_page_T));
   size_t page_size_with_meta_data = page_size + sizeof(hb_arena_page_T);
@@ -142,7 +144,27 @@ void hb_arena_reset(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
-  // TODO
+  hb_arena_page_T* current_page = allocator->head;
+  size_t current_position = 0;
+
+  while (current_page != NULL) {
+    current_position += current_page->position;
+
+    if (current_position >= target_position) {
+      current_page->position -= current_position - target_position;
+      break;
+    }
+
+    current_page = current_page->next;
+  }
+
+  if (current_page->next != NULL) {
+    size_t freed_size = hb_arena_page_free(current_page->next);
+    allocator->tail = current_page;
+    current_page->next = NULL;
+
+    hb_arena_append_page(allocator, freed_size);
+  }
 }
 
 static size_t hb_arena_page_free(hb_arena_page_T* starting_page) {
