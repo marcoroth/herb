@@ -96,15 +96,15 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   return true;
 }
 
-bool hb_arena_init(hb_arena_T* allocator, size_t initial_size) {
-  assert(initial_size > 0);
+bool hb_arena_init(hb_arena_T* allocator, size_t default_page_size) {
+  assert(default_page_size > 0);
 
   allocator->head = NULL;
   allocator->tail = NULL;
-  allocator->default_page_size = initial_size;
+  allocator->default_page_size = default_page_size;
   allocator->allocation_count = 0;
 
-  return hb_arena_append_page(allocator, initial_size);
+  return hb_arena_append_page(allocator, default_page_size);
 }
 
 void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
