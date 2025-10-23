@@ -3,8 +3,9 @@
 
 #include "lexer_struct.h"
 #include "token_struct.h"
+#include "util/hb_arena.h"
 
-void lexer_init(lexer_T* lexer, const char* source);
+void lexer_init(lexer_T* lexer, const char* source, hb_arena_T* arena);
 token_T* lexer_next_token(lexer_T* lexer);
 token_T* lexer_error(lexer_T* lexer, const char* message);
 

@@ -8,6 +8,8 @@
 
 extern "C" {
 #include "../src/include/analyze.h"
+#include "../src/include/macros.h"
+#include "../src/include/util/hb_arena.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -25,11 +27,28 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  hb_array_T* tokens = herb_lex(source.c_str());
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
 
-  val result = CreateLexResult(tokens, source);
+  if (!arena) {
+    return val::null();
+  }
 
-  herb_free_tokens(&tokens);
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return val::null();
+  }
+
+  herb_lex_result_T* lex_result = herb_lex(source.c_str(), arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    return val::null();
+  }
+
+  val result = CreateLexResult(lex_result->tokens, source);
+
+  herb_free_lex_result(&lex_result);
 
   return result;
 }
@@ -48,7 +67,24 @@ val Herb_parse(const std::string& source, val options) {
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options);
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    return val::null();
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return val::null();
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    return val::null();
+  }
 
   herb_analyze_parse_tree(root, source.c_str());
 
