@@ -83,6 +83,7 @@ bool hb_arena_init(hb_arena_T* allocator, size_t initial_size) {
   allocator->head = NULL;
   allocator->tail = NULL;
   allocator->default_page_size = initial_size;
+  allocator->allocation_count = 0;
 
   return hb_arena_append_page(allocator, initial_size);
 }
@@ -92,6 +93,8 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   assert(size > 0);
 
   size_t required_size = hb_arena_align_size(size, 8);
+
+  allocator->allocation_count++;
 
   if (hb_arena_page_has_capacity(allocator->tail, required_size)) {
     return hb_arena_page_alloc_from(allocator->tail, required_size);
@@ -137,6 +140,7 @@ void hb_arena_reset(hb_arena_T* allocator) {
   }
 
   allocator->tail = allocator->head;
+  allocator->allocation_count = 0;
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {

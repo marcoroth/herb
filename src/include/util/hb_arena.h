@@ -17,6 +17,7 @@ typedef struct HB_ARENA_STRUCT {
   hb_arena_page_T* head;
   hb_arena_page_T* tail;
   size_t default_page_size;
+  size_t allocation_count;
 } hb_arena_T;
 
 bool hb_arena_init(hb_arena_T* allocator, size_t initial_size);
