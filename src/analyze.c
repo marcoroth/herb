@@ -11,6 +11,7 @@
 #include "include/prism_helpers.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_arena.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_string.h"
 #include "include/visitor.h"
@@ -152,10 +153,16 @@ static AST_NODE_T* create_control_node(
   hb_array_T* children,
   AST_NODE_T* subsequent,
   AST_ERB_END_NODE_T* end_node,
-  control_type_t control_type
+  control_type_t control_type,
+  hb_arena_T* arena
 ) {
   hb_array_T* errors = erb_node->base.errors;
   erb_node->base.errors = NULL;
+
+  if (erb_node->analyzed_ruby != NULL) {
+    free_analyzed_ruby(erb_node->analyzed_ruby);
+    erb_node->analyzed_ruby = NULL;
+  }
 
   position_T start_position = erb_node->tag_opening->location.start;
   position_T end_position = erb_node->tag_closing->location.end;
@@ -185,14 +192,22 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
     case CONTROL_TYPE_ELSE: {
-      return (
-        AST_NODE_T*
-      ) ast_erb_else_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (AST_NODE_T*) ast_erb_else_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        start_position,
+        end_position,
+        errors,
+        arena
+      );
     }
 
     case CONTROL_TYPE_CASE:
@@ -231,7 +246,8 @@ static AST_NODE_T* create_control_node(
           end_node,
           start_position,
           end_position,
-          errors
+          errors,
+          arena
         );
       } else {
         hb_array_free(&in_conditions);
@@ -246,21 +262,29 @@ static AST_NODE_T* create_control_node(
           end_node,
           start_position,
           end_position,
-          errors
+          errors,
+          arena
         );
       }
     }
 
     case CONTROL_TYPE_WHEN: {
-      return (
-        AST_NODE_T*
-      ) ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (AST_NODE_T*) ast_erb_when_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        start_position,
+        end_position,
+        errors,
+        arena
+      );
     }
 
     case CONTROL_TYPE_IN: {
       return (
         AST_NODE_T*
-      ) ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      ) ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors, arena);
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -289,7 +313,8 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
@@ -306,14 +331,22 @@ static AST_NODE_T* create_control_node(
         rescue_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
     case CONTROL_TYPE_ENSURE: {
-      return (
-        AST_NODE_T*
-      ) ast_erb_ensure_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (AST_NODE_T*) ast_erb_ensure_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        children,
+        start_position,
+        end_position,
+        errors,
+        arena
+      );
     }
 
     case CONTROL_TYPE_UNLESS: {
@@ -330,7 +363,8 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
@@ -343,7 +377,8 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
@@ -356,7 +391,8 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
@@ -369,7 +405,8 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
@@ -382,14 +419,15 @@ static AST_NODE_T* create_control_node(
         end_node,
         start_position,
         end_position,
-        errors
+        errors,
+        arena
       );
     }
 
     case CONTROL_TYPE_YIELD: {
       return (
         AST_NODE_T*
-      ) ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors);
+      ) ast_erb_yield_node_init(tag_opening, content, tag_closing, start_position, end_position, errors, arena);
     }
 
     default: return NULL;
@@ -453,6 +491,11 @@ static size_t process_control_structure(
         hb_array_T* when_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
 
+        if (erb_content->analyzed_ruby != NULL) {
+          free_analyzed_ruby(erb_content->analyzed_ruby);
+          erb_content->analyzed_ruby = NULL;
+        }
+
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
           erb_content->tag_opening,
           erb_content->content,
@@ -460,10 +503,9 @@ static size_t process_control_structure(
           when_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,
-          when_errors
+          when_errors,
+          context->arena
         );
-
-        ast_node_free((AST_NODE_T*) erb_content);
 
         hb_array_append(when_conditions, (AST_NODE_T*) when_node);
 
@@ -477,6 +519,11 @@ static size_t process_control_structure(
         hb_array_T* in_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
 
+        if (erb_content->analyzed_ruby != NULL) {
+          free_analyzed_ruby(erb_content->analyzed_ruby);
+          erb_content->analyzed_ruby = NULL;
+        }
+
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
           erb_content->tag_opening,
           erb_content->content,
@@ -484,10 +531,9 @@ static size_t process_control_structure(
           in_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,
-          in_errors
+          in_errors,
+          context->arena
         );
-
-        ast_node_free((AST_NODE_T*) erb_content);
 
         hb_array_append(in_conditions, (AST_NODE_T*) in_node);
 
@@ -540,10 +586,9 @@ static size_t process_control_structure(
             else_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            else_errors
+            else_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) next_erb);
         }
       }
     }
@@ -566,10 +611,9 @@ static size_t process_control_structure(
             end_erb->tag_closing,
             end_erb->tag_opening->location.start,
             end_erb->tag_closing->location.end,
-            end_errors
+            end_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) end_erb);
 
           index++;
         }
@@ -595,6 +639,11 @@ static size_t process_control_structure(
       hb_array_T* case_match_errors = erb_node->base.errors;
       erb_node->base.errors = NULL;
 
+      if (erb_node->analyzed_ruby != NULL) {
+        free_analyzed_ruby(erb_node->analyzed_ruby);
+        erb_node->analyzed_ruby = NULL;
+      }
+
       AST_ERB_CASE_MATCH_NODE_T* case_match_node = ast_erb_case_match_node_init(
         erb_node->tag_opening,
         erb_node->content,
@@ -605,10 +654,9 @@ static size_t process_control_structure(
         end_node,
         start_position,
         end_position,
-        case_match_errors
+        case_match_errors,
+        context->arena
       );
-
-      ast_node_free((AST_NODE_T*) erb_node);
 
       hb_array_append(output_array, (AST_NODE_T*) case_match_node);
       hb_array_free(&when_conditions);
@@ -620,6 +668,11 @@ static size_t process_control_structure(
     hb_array_T* case_errors = erb_node->base.errors;
     erb_node->base.errors = NULL;
 
+    if (erb_node->analyzed_ruby != NULL) {
+      free_analyzed_ruby(erb_node->analyzed_ruby);
+      erb_node->analyzed_ruby = NULL;
+    }
+
     AST_ERB_CASE_NODE_T* case_node = ast_erb_case_node_init(
       erb_node->tag_opening,
       erb_node->content,
@@ -630,10 +683,9 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      case_errors
+      case_errors,
+      context->arena
     );
-
-    ast_node_free((AST_NODE_T*) erb_node);
 
     hb_array_append(output_array, (AST_NODE_T*) case_node);
     hb_array_free(&in_conditions);
@@ -702,10 +754,9 @@ static size_t process_control_structure(
             else_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            else_errors
+            else_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) next_erb);
         }
       }
     }
@@ -748,10 +799,9 @@ static size_t process_control_structure(
             ensure_children,
             next_erb->tag_opening->location.start,
             next_erb->tag_closing->location.end,
-            ensure_errors
+            ensure_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) next_erb);
         }
       }
     }
@@ -774,10 +824,9 @@ static size_t process_control_structure(
             end_erb->tag_closing,
             end_erb->tag_opening->location.start,
             end_erb->tag_closing->location.end,
-            end_errors
+            end_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) end_erb);
 
           index++;
         }
@@ -800,6 +849,11 @@ static size_t process_control_structure(
     hb_array_T* begin_errors = erb_node->base.errors;
     erb_node->base.errors = NULL;
 
+    if (erb_node->analyzed_ruby != NULL) {
+      free_analyzed_ruby(erb_node->analyzed_ruby);
+      erb_node->analyzed_ruby = NULL;
+    }
+
     AST_ERB_BEGIN_NODE_T* begin_node = ast_erb_begin_node_init(
       erb_node->tag_opening,
       erb_node->content,
@@ -811,12 +865,12 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      begin_errors
+      begin_errors,
+      context->arena
     );
 
-    ast_node_free((AST_NODE_T*) erb_node);
-
     hb_array_append(output_array, (AST_NODE_T*) begin_node);
+
     return index;
   }
 
@@ -842,10 +896,9 @@ static size_t process_control_structure(
             close_erb->tag_closing,
             close_erb->tag_opening->location.start,
             close_erb->tag_closing->location.end,
-            end_errors
+            end_errors,
+            context->arena
           );
-
-          ast_node_free((AST_NODE_T*) close_erb);
 
           index++;
         }
@@ -865,6 +918,11 @@ static size_t process_control_structure(
     hb_array_T* block_errors = erb_node->base.errors;
     erb_node->base.errors = NULL;
 
+    if (erb_node->analyzed_ruby != NULL) {
+      free_analyzed_ruby(erb_node->analyzed_ruby);
+      erb_node->analyzed_ruby = NULL;
+    }
+
     AST_ERB_BLOCK_NODE_T* block_node = ast_erb_block_node_init(
       erb_node->tag_opening,
       erb_node->content,
@@ -873,12 +931,12 @@ static size_t process_control_structure(
       end_node,
       start_position,
       end_position,
-      block_errors
+      block_errors,
+      context->arena
     );
 
-    ast_node_free((AST_NODE_T*) erb_node);
-
     hb_array_append(output_array, (AST_NODE_T*) block_node);
+
     return index;
   }
 
@@ -916,20 +974,19 @@ static size_t process_control_structure(
           end_erb->tag_closing,
           end_erb->tag_opening->location.start,
           end_erb->tag_closing->location.end,
-          end_errors
+          end_errors,
+          context->arena
         );
-
-        ast_node_free((AST_NODE_T*) end_erb);
 
         index++;
       }
     }
   }
 
-  AST_NODE_T* control_node = create_control_node(erb_node, children, subsequent, end_node, initial_type);
+  AST_NODE_T* control_node =
+    create_control_node(erb_node, children, subsequent, end_node, initial_type, context->arena);
 
   if (control_node) {
-    ast_node_free((AST_NODE_T*) erb_node);
     hb_array_append(output_array, control_node);
   } else {
     hb_array_free(&children);
@@ -954,10 +1011,10 @@ static size_t process_subsequent_block(
 
   index = process_block_children(node, array, index, children, context, parent_type);
 
-  AST_NODE_T* subsequent_node = create_control_node(erb_node, children, NULL, NULL, type);
+  AST_NODE_T* subsequent_node = create_control_node(erb_node, children, NULL, NULL, type, context->arena);
 
   if (subsequent_node) {
-    ast_node_free((AST_NODE_T*) erb_node);
+    // no-op
   } else {
     hb_array_free(&children);
   }
@@ -1089,10 +1146,9 @@ static hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analy
         continue;
 
       case CONTROL_TYPE_YIELD: {
-        AST_NODE_T* yield_node = create_control_node(erb_node, NULL, NULL, NULL, type);
+        AST_NODE_T* yield_node = create_control_node(erb_node, NULL, NULL, NULL, type, context->arena);
 
         if (yield_node) {
-          ast_node_free((AST_NODE_T*) erb_node);
           hb_array_append(new_array, yield_node);
         } else {
           hb_array_append(new_array, item);
@@ -1112,6 +1168,21 @@ static hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analy
   return new_array;
 }
 
+static void free_analyzed_ruby_from_array(hb_array_T* array) {
+  if (!array) { return; }
+
+  for (size_t i = 0; i < hb_array_size(array); i++) {
+    AST_NODE_T* node = hb_array_get(array, i);
+    if (node && node->type == AST_ERB_CONTENT_NODE) {
+      AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) node;
+      if (erb_content->analyzed_ruby != NULL) {
+        free_analyzed_ruby(erb_content->analyzed_ruby);
+        erb_content->analyzed_ruby = NULL;
+      }
+    }
+  }
+}
+
 static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
   context->parent = (AST_NODE_T*) node;
@@ -1120,6 +1191,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
     hb_array_T* old_array = document_node->children;
     document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
+    free_analyzed_ruby_from_array(old_array);
     hb_array_free(&old_array);
   }
 
@@ -1127,6 +1199,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
     hb_array_T* old_array = element_node->body;
     element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
+    free_analyzed_ruby_from_array(old_array);
     hb_array_free(&old_array);
   }
 
@@ -1134,6 +1207,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
     hb_array_T* old_array = open_tag->children;
     open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
+    free_analyzed_ruby_from_array(old_array);
     hb_array_free(&old_array);
   }
 
@@ -1141,6 +1215,7 @@ static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
     hb_array_T* old_array = value_node->children;
     value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
+    free_analyzed_ruby_from_array(old_array);
     hb_array_free(&old_array);
   }
 
@@ -1156,12 +1231,14 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
   context->document = document;
   context->parent = NULL;
   context->ruby_context_stack = hb_array_init(8);
+  context->arena = document->arena;
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
 
   herb_analyze_parse_errors(document, source);
 
   hb_array_free(&context->ruby_context_stack);
+
   free(context);
 }
 

@@ -1,6 +1,8 @@
 #ifndef HERB_TOKEN_STRUCT_H
 #define HERB_TOKEN_STRUCT_H
 
+#include <stdbool.h>
+
 #include "location.h"
 #include "range.h"
 
@@ -53,6 +55,7 @@ typedef struct TOKEN_STRUCT {
   range_T range;
   location_T location;
   token_type_T type;
+  bool arena_allocated;
 } token_T;
 
 #endif

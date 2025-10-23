@@ -7,8 +7,10 @@
 #include "include/extract.h"
 #include "include/herb.h"
 #include "include/io.h"
+#include "include/macros.h"
 #include "include/ruby_parser.h"
 #include "include/util/hb_arena.h"
+#include "include/util/hb_arena_debug.h"
 #include "include/util/hb_arena_instrumentation.h"
 #include "include/util/hb_buffer.h"
 
@@ -32,6 +34,23 @@ void print_time_diff(const struct timespec start, const struct timespec end, con
   printf("  %8.0f µs\n", us);
   printf("  %8.3f ms\n", ms);
   printf("  %8.6f  s\n\n", s);
+}
+
+static hb_arena_T* allocate_arena(void) {
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    fprintf(stderr, "Failed to allocate arena\n");
+    return NULL;
+  }
+
+  if (!hb_arena_init(arena, KB(16))) {
+    fprintf(stderr, "Failed to initialize arena\n");
+    free(arena);
+    return NULL;
+  }
+
+  return arena;
 }
 
 int main(const int argc, char* argv[]) {
@@ -95,7 +114,13 @@ int main(const int argc, char* argv[]) {
   clock_gettime(CLOCK_MONOTONIC, &start);
 
   if (strcmp(argv[1], "visit") == 0) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, arena);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     herb_analyze_parse_tree(root, source);
@@ -126,7 +151,13 @@ int main(const int argc, char* argv[]) {
   }
 
   if (strcmp(argv[1], "parse") == 0) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, arena);
 
     herb_analyze_parse_tree(root, source);
 
@@ -140,6 +171,9 @@ int main(const int argc, char* argv[]) {
       printf("%s\n", output.value);
 
       print_time_diff(start, end, "parsing");
+
+      printf("\n");
+      hb_arena_print_stats(arena);
     }
 
     ast_node_free((AST_NODE_T*) root);
@@ -182,6 +216,10 @@ int main(const int argc, char* argv[]) {
     printf("Extracted Ruby: \n%s\n", ruby_source);
 
     herb_parse_ruby_to_stdout(ruby_source);
+
+    free(ruby_source);
+    free(output.value);
+    free(source);
 
     return 0;
   }

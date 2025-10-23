@@ -3,6 +3,7 @@
 
 #include "ast_node.h"
 #include "lexer.h"
+#include "util/hb_arena.h"
 #include "util/hb_array.h"
 
 typedef enum {
@@ -28,6 +29,7 @@ typedef struct PARSER_STRUCT {
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
   parser_options_T options;
+  hb_arena_T* arena;
 } parser_T;
 
 void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options);
