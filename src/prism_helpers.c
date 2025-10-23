@@ -37,7 +37,8 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
     pm_diagnostic_id_human(error->diag_id),
     pm_error_level_to_string(error->level),
     start,
-    end
+    end,
+    NULL
   );
 }
 

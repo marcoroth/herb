@@ -9,6 +9,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
+  hb_arena_T* arena;
 } analyze_ruby_context_T;
 
 typedef enum {

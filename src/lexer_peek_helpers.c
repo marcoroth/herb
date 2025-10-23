@@ -92,13 +92,10 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   token_T* token = lexer_next_token(lexer);
 
   while (token && (token->type == TOKEN_WHITESPACE || token->type == TOKEN_NEWLINE)) {
-    token_free(token);
     token = lexer_next_token(lexer);
   }
 
   bool result = (token && token->type == token_type);
-
-  if (token) { token_free(token); }
 
   lexer->current_position = saved_position;
   lexer->current_line = saved_line;

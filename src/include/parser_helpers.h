@@ -44,6 +44,7 @@ token_T* parser_consume_if_present(parser_T* parser, token_type_T type);
 token_T* parser_consume_expected(parser_T* parser, token_type_T type, hb_array_T* array);
 
 AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
+  const parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag,
   hb_array_T* body,
   hb_array_T* errors

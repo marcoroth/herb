@@ -5,6 +5,10 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
+#include "../../src/include/macros.h"
+#include "../../src/include/util/hb_arena.h"
+
+
 VALUE mHerb;
 VALUE cPosition;
 VALUE cLocation;
@@ -17,23 +21,52 @@ VALUE cParseResult;
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  hb_array_T* tokens = herb_lex(string);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
 
-  VALUE result = create_lex_result(tokens, source);
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
 
-  herb_free_tokens(&tokens);
+  herb_lex_result_T* lex_result = herb_lex(string, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
+
+  VALUE result = create_lex_result(lex_result->tokens, source);
+
+  herb_free_lex_result(&lex_result);
 
   return result;
 }
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
-  hb_array_T* tokens = herb_lex_file(file_path);
+
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE source_value = read_file_to_ruby_string(file_path);
-  VALUE result = create_lex_result(tokens, source_value);
+  VALUE result = create_lex_result(lex_result->tokens, source_value);
 
-  herb_free_tokens(&tokens);
+  herb_free_lex_result(&lex_result);
 
   return result;
 }
@@ -60,7 +93,21 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE result = create_parse_result(root, source);
 
@@ -94,7 +141,21 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE result = create_parse_result(root, source_value);
 

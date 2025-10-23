@@ -3,6 +3,7 @@
 
 #include "ast_node.h"
 #include "lexer.h"
+#include "util/hb_arena.h"
 #include "util/hb_array.h"
 
 typedef enum {
@@ -37,6 +38,7 @@ typedef struct PARSER_STRUCT {
   parser_options_T options;
   size_t consecutive_error_count;
   bool in_recovery_mode;
+  hb_arena_T* arena;
 } parser_T;
 
 size_t parser_sizeof(void);
