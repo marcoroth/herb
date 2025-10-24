@@ -76,39 +76,182 @@ test/fixtures/no-trailing-newline.html.erb:1:29
 `;
 
 exports[`CLI Output Formatting > Ignores disabled rules 1`] = `
-"[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+"[error] Use \`<%#\` instead of \`<% #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`). (erb-comment-syntax)
 
-test/fixtures/ignored.html.erb:6:3
+test/fixtures/ignored.html.erb:32:19
 
-      4 │   </h1>
-      5 │ 
-  →   6 │   <DIV>hello</DIV>
-        │    ~~~
-      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
-      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
-
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/2] ⎯⎯⎯⎯
-
-[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
-
-test/fixtures/ignored.html.erb:6:14
-
-      4 │   </h1>
-      5 │ 
-  →   6 │   <DIV>hello</DIV>
-        │               ~~~
-      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
-      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
-
- Rule offenses:
-  html-tag-name-lowercase (2 offenses in 1 file)
+     30 │   <div>hello</div> <%# herb:disable %>
+     31 │ 
+  →  32 │   <div>hello</div> <% # herb:disable %>
+        │                    ~~~~~~~~~~~~~~~~~~~~
+     33 │ 
+     34 │   <div>hello</div> <%# herb:disable html-tag-name-lowercase %>
 
 
- Summary:
-  Checked      1 file
-  Offenses     2 errors | 0 warnings | 3 ignored (2 offenses across 1 file)
-  Fixable      2 offenses | 2 autocorrectable using \`--fix\`"
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/23] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+
+test/fixtures/ignored.html.erb:12:30
+
+     10 │   <% %> <%# herb:disable erb-no-empty-tags, html-tag-name-lowercase %>
+     11 │ 
+  →  12 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+        │                               ~~~~~~~~~~~~~~~~~~~~~~
+     13 │ 
+     14 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/23] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+
+test/fixtures/ignored.html.erb:14:35
+
+     12 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+     13 │ 
+  →  14 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+        │                                    ~~~~~~~~~~~~~~~~~~~~~~
+     15 │ 
+     16 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+        │ this-rule-doesnt-exist %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/23] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`this-rule-doesnt-exist\`. Did you mean \`erb-no-empty-tags\`? (herb-disable-comment-valid-rule-name)
+
+test/fixtures/ignored.html.erb:16:55
+
+     14 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+     15 │ 
+  →  16 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+        │ this-rule-doesnt-exist %>
+        │                                                        ~~~~~~~~~~~~~~~~~~~~~~
+     17 │ 
+     18 │   <DIV></DIV><%# herb:disable herb %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/23] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`herb\`. Did you mean \`all\`? (herb-disable-comment-valid-rule-name)
+
+test/fixtures/ignored.html.erb:18:30
+
+     16 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+        │ this-rule-doesnt-exist %>
+     17 │ 
+  →  18 │   <DIV></DIV><%# herb:disable herb %>
+        │                               ~~~~
+     19 │ 
+     20 │   <DIV></DIV><%# herb:disable disable %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/23] ⎯⎯⎯⎯
+
+[warning] Unknown rule \`disable\`. Did you mean \`all\`? (herb-disable-comment-valid-rule-name)
+
+test/fixtures/ignored.html.erb:20:30
+
+     18 │   <DIV></DIV><%# herb:disable herb %>
+     19 │ 
+  →  20 │   <DIV></DIV><%# herb:disable disable %>
+        │                               ~~~~~~~
+     21 │ 
+     22 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/23] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/ignored.html.erb:14:30
+
+     12 │   <DIV></DIV><%# herb:disable this-rule-doesnt-exist %>
+     13 │ 
+  →  14 │   <DIV></DIV><%# herb:disable all, this-rule-doesnt-exist %>
+        │                               ~~~
+     15 │ 
+     16 │   <DIV></DIV><%# herb:disable html-tag-name-lowercase, 
+        │ this-rule-doesnt-exist %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/23] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/ignored.html.erb:22:36
+
+     20 │   <DIV></DIV><%# herb:disable disable %>
+     21 │ 
+  →  22 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
+        │                                     ~~~
+     23 │ 
+     24 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [8/23] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/ignored.html.erb:24:61
+
+     22 │   <DIV>hello</DIV> <%# herb:disable all, html-tag-name-lowercase %>
+     23 │ 
+  →  24 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+        │                                                              ~~~
+     25 │ 
+     26 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [9/23] ⎯⎯⎯⎯
+
+[warning] Using \`all\` with specific rules is redundant. Use \`herb:disable all\` by itself or list only specific rules. (herb-disable-comment-no-redundant-all)
+
+test/fixtures/ignored.html.erb:26:36
+
+     24 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+     25 │ 
+  →  26 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+        │                                     ~~~
+     27 │ 
+     28 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+        │ html-tag-name-lowercase %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [10/23] ⎯⎯⎯⎯
+
+[warning] Duplicate rule \`all\` in \`herb:disable\` comment. Remove the duplicate. (herb-disable-comment-no-duplicate-rules)
+
+test/fixtures/ignored.html.erb:26:41
+
+     24 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, all %>
+     25 │ 
+  →  26 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+        │                                          ~~~
+     27 │ 
+     28 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+        │ html-tag-name-lowercase %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [11/23] ⎯⎯⎯⎯
+
+[warning] Duplicate rule \`html-tag-name-lowercase\` in \`herb:disable\` comment. Remove the duplicate. (herb-disable-comment-no-duplicate-rules)
+
+test/fixtures/ignored.html.erb:28:61
+
+     26 │   <DIV>hello</DIV> <%# herb:disable all, all %>
+     27 │ 
+  →  28 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase, 
+        │ html-tag-name-lowercase %>
+        │                                                              ~~~~~~~~~~~~~~~~~~~~~~~
+     29 │ 
+     30 │   <div>hello</div> <%# herb:disable %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [12/23] ⎯⎯⎯⎯
+
+[error]"
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
@@ -610,7 +753,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for bad file 1`] 
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 39,
+    "ruleCount": 45,
     "totalErrors": 2,
     "totalIgnored": 0,
     "totalOffenses": 2,
@@ -629,7 +772,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for clean file 1`
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 0,
-    "ruleCount": 39,
+    "ruleCount": 45,
     "totalErrors": 0,
     "totalIgnored": 0,
     "totalOffenses": 0,
@@ -700,7 +843,7 @@ exports[`CLI Output Formatting > formats JSON output correctly for file with err
   "summary": {
     "filesChecked": 1,
     "filesWithOffenses": 1,
-    "ruleCount": 39,
+    "ruleCount": 45,
     "totalErrors": 3,
     "totalIgnored": 0,
     "totalOffenses": 3,

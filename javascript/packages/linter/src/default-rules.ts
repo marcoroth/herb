@@ -11,6 +11,13 @@ import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newl
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 
+import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
+import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
+import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-comment-no-duplicate-rules.js"
+import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
+import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
+import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
+
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
 import { HTMLAriaLabelIsWellFormattedRule } from "./rules/html-aria-label-is-well-formatted.js"
@@ -58,6 +65,13 @@ export const defaultRules: RuleClass[] = [
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
+
+  HerbDisableCommentValidRuleNameRule,
+  HerbDisableCommentNoRedundantAllRule,
+  HerbDisableCommentNoDuplicateRulesRule,
+  HerbDisableCommentMissingRulesRule,
+  HerbDisableCommentMalformedRule,
+  HerbDisableCommentUnnecessaryRule,
 
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,

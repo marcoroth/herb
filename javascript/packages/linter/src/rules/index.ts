@@ -1,4 +1,5 @@
 export * from "./rule-utils.js"
+export * from "./herb-disable-comment-base.js"
 
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"
@@ -9,6 +10,13 @@ export * from "./erb-no-silent-tag-in-attribute-name.js"
 export * from "./erb-prefer-image-tag-helper.js"
 export * from "./erb-require-trailing-newline.js"
 export * from "./erb-right-trim.js"
+
+export * from "./herb-disable-comment-valid-rule-name.js"
+export * from "./herb-disable-comment-no-redundant-all.js"
+export * from "./herb-disable-comment-no-duplicate-rules.js"
+export * from "./herb-disable-comment-missing-rules.js"
+export * from "./herb-disable-comment-malformed.js"
+export * from "./herb-disable-comment-unnecessary.js"
 
 export * from "./html-anchor-require-href.js"
 export * from "./html-aria-label-is-well-formatted.js"

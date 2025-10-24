@@ -142,13 +142,17 @@ export interface LexerRuleConstructor {
  */
 export interface LintContext {
   fileName: string | undefined
+  validRuleNames: string[] | undefined
+  ignoredOffensesByLine: Map<number, Set<string>> | undefined
 }
 
 /**
  * Default context object with all keys defined but set to undefined
  */
 export const DEFAULT_LINT_CONTEXT: LintContext = {
-  fileName: undefined
+  fileName: undefined,
+  validRuleNames: undefined,
+  ignoredOffensesByLine: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {

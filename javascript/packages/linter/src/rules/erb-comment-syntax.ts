@@ -6,13 +6,22 @@ import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
 class ERBCommentSyntaxVisitor extends BaseRuleVisitor {
   visitERBContentNode(node: ERBContentNode): void {
-    if (node.content?.value.startsWith(" #")) {
+    const content = node.content?.value || ""
+
+    if (content.match(/^ +#/)) {
       const openingTag = node.tag_opening?.value
 
-      this.addOffense(
-        `Use \`<%#\` instead of \`${openingTag} #\`. Ruby comments immediately after ERB tags can cause parsing issues.`,
-        node.location
-      )
+      if (content.includes("herb:disable")) {
+        this.addOffense(
+          `Use \`<%#\` instead of \`${openingTag} #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`).`,
+          node.location
+        )
+      } else {
+        this.addOffense(
+          `Use \`<%#\` instead of \`${openingTag} #\`. Ruby comments immediately after ERB tags can cause parsing issues.`,
+          node.location
+        )
+      }
     }
   }
 }

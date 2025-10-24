@@ -32,12 +32,20 @@ interface LinterTestHelpers {
 /**
  * Creates a test helper for linter rules that reduces boilerplate in tests.
  *
- * @param ruleClass - The rule class to test
+ * @param rules - A single rule class or array of rule classes to test. When multiple rules are provided,
+ *                the first rule is considered the primary rule being tested.
  * @returns Object with helper functions for testing
  *
  * @example
  * ```ts
+ * // Single rule
  * const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(MyRule)
+ *
+ * // Multiple rules (e.g., for testing disable comments)
+ * const { expectNoOffenses, expectError, assertOffenses } = createLinterTest([
+ *   HerbDisableCommentUnnecessaryRule,
+ *   HTMLTagNameLowercaseRule
+ * ])
  *
  * test("valid case", () => {
  *   expectNoOffenses(`<%= title %>`)
@@ -52,11 +60,14 @@ interface LinterTestHelpers {
  * })
  * ```
  */
-export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
+export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelpers {
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
   let hasAsserted = false
-  const ruleInstance = new ruleClass()
+
+  const ruleClasses = Array.isArray(rules) ? rules : [rules]
+  const primaryRuleClass = ruleClasses[0]
+  const ruleInstance = new primaryRuleClass()
   const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
 
   beforeAll(async () => {
@@ -113,16 +124,18 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
       }
     }
 
-    const linter = new Linter(Herb, [ruleClass])
+    const linter = new Linter(Herb, ruleClasses)
     const lintResult = linter.lint(html, context)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    const ruleName = ruleInstance.name
+    const primaryOffenses = lintResult.offenses.filter(offense => offense.rule === ruleName)
+
+    expect(primaryOffenses).toHaveLength(0)
   }
 
   const normalizeLocation = (location?: LocationInput): ExpectedLocation | undefined => {
     if (!location) return undefined
+
     if (Array.isArray(location)) {
       return location.length === 2
         ? { line: location[0], column: location[1] }
@@ -174,33 +187,37 @@ export function createLinterTest(ruleClass: RuleClass): LinterTestHelpers {
       }
     }
 
-    const linter = new Linter(Herb, [ruleClass])
+    const linter = new Linter(Herb, ruleClasses)
     const lintResult = linter.lint(html, context)
 
     const ruleName = ruleInstance.name
 
-    if (lintResult.errors !== expectedErrors.length) {
+    const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
+    const primaryErrors = primaryOffenses.filter(o => o.severity === "error")
+    const primaryWarnings = primaryOffenses.filter(o => o.severity === "warning")
+
+    if (primaryErrors.length !== expectedErrors.length) {
       throw new Error(
-        `Expected ${expectedErrors.length} error(s) but found ${lintResult.errors}.\n` +
+        `Expected ${expectedErrors.length} error(s) from rule "${ruleName}" but found ${primaryErrors.length}.\n` +
         `Expected:\n${expectedErrors.map(e => `  - "${e.message}"`).join('\n')}\n` +
-        `Actual:\n${lintResult.offenses.filter(o => o.severity === 'error').map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
+        `Actual:\n${primaryErrors.map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
       )
     }
 
-    if (lintResult.warnings !== expectedWarnings.length) {
+    if (primaryWarnings.length !== expectedWarnings.length) {
       throw new Error(
-        `Expected ${expectedWarnings.length} warning(s) but found ${lintResult.warnings}.\n` +
+        `Expected ${expectedWarnings.length} warning(s) from rule "${ruleName}" but found ${primaryWarnings.length}.\n` +
         `Expected:\n${expectedWarnings.map(w => `  - "${w.message}"`).join('\n')}\n` +
-        `Actual:\n${lintResult.offenses.filter(o => o.severity === 'warning').map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
+        `Actual:\n${primaryWarnings.map(o => `  - "${o.message}" at ${o.location.start.line}:${o.location.start.column}`).join('\n')}`
       )
     }
 
-    lintResult.offenses.forEach(offense => {
+    primaryOffenses.forEach(offense => {
       expect(offense.rule).toBe(ruleName)
     })
 
-    const actualErrors = lintResult.offenses.filter(o => o.severity === "error")
-    const actualWarnings = lintResult.offenses.filter(o => o.severity === "warning")
+    const actualErrors = primaryErrors
+    const actualWarnings = primaryWarnings
 
     matchOffenses(expectedErrors, actualErrors, "error")
     matchOffenses(expectedWarnings, actualWarnings, "warning")

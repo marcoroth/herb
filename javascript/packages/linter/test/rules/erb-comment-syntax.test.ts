@@ -46,4 +46,36 @@ describe("ERBCommentSyntax", () => {
       <%= # second bad comment %>
     `)
   })
+
+  test("when herb:disable is used with incorrect ERB syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><% # herb:disable html-tag-name-lowercase %>
+    `)
+  })
+
+  test("when herb:disable all is used with incorrect ERB syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><% # herb:disable all %>
+    `)
+  })
+
+  test("when herb:disable is used with incorrect ERB output syntax", () => {
+    expectError("Use `<%#` instead of `<%= #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><%= # herb:disable html-tag-name-lowercase %>
+    `)
+  })
+
+  test("when herb:disable has extra whitespace with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><%  #  herb:disable html-tag-name-lowercase %>
+    `)
+  })
 })
