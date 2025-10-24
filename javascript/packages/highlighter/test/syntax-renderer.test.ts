@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest"
 import { themes } from "../src/themes.js"
 
+import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
 
-// Helper function to strip ANSI color codes for testing
 function stripAnsiColors(text: string): string {
   return text.replace(/\x1b\[[0-9;]*m/g, '')
 }
@@ -34,7 +34,6 @@ describe("SyntaxRenderer", () => {
       await renderer.initialize()
       expect(renderer.initialized).toBe(true)
 
-      // Should not throw or cause issues
       await renderer.initialize()
       expect(renderer.initialized).toBe(true)
     })
@@ -52,7 +51,7 @@ describe("SyntaxRenderer", () => {
         isLoaded: false,
       }
       const uninitializedRenderer = new SyntaxRenderer(themes.onedark, uninitializedHerb as any)
-      // Don't initialize the renderer
+
       expect(() => uninitializedRenderer.highlight("<div>test</div>")).toThrow(
         "SyntaxRenderer must be initialized before use",
       )
@@ -136,7 +135,7 @@ describe("SyntaxRenderer", () => {
 
         const content = "<div>test</div>"
         const result = noColorRenderer.highlight(content)
-        // Should not contain ANSI escape codes
+
         expect(result).not.toMatch(/\x1b\\[[0-9;]*m/)
       } finally {
         if (originalNoColor === undefined) {
@@ -155,9 +154,9 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_ERB_START", range: { start: 0, end: 2 } },
-            { type: "TOKEN_ERB_CONTENT", range: { start: 2, end: 12 } },
-            { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
+            { type: "TOKEN_ERB_START", range: Range.from(0, 2) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(2, 12) },
+            { type: "TOKEN_ERB_END", range: Range.from(12, 14) },
           ],
         }),
         isLoaded: true,
@@ -181,9 +180,9 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_HTML_COMMENT_START", range: { start: 0, end: 4 } },
-            { type: "TOKEN_IDENTIFIER", range: { start: 4, end: 11 } },
-            { type: "TOKEN_HTML_COMMENT_END", range: { start: 11, end: 14 } },
+            { type: "TOKEN_HTML_COMMENT_START", range: Range.from(0, 4) },
+            { type: "TOKEN_IDENTIFIER", range: Range.from(4, 11) },
+            { type: "TOKEN_HTML_COMMENT_END", range: Range.from(11, 14) },
           ],
         }),
       }
@@ -206,11 +205,11 @@ describe("SyntaxRenderer", () => {
         lex: () => ({
           errors: [],
           value: [
-            { type: "TOKEN_HTML_COMMENT_START", range: { start: 0, end: 4 } },
-            { type: "TOKEN_ERB_START", range: { start: 5, end: 7 } },
-            { type: "TOKEN_ERB_CONTENT", range: { start: 7, end: 12 } },
-            { type: "TOKEN_ERB_END", range: { start: 12, end: 14 } },
-            { type: "TOKEN_HTML_COMMENT_END", range: { start: 15, end: 18 } },
+            { type: "TOKEN_HTML_COMMENT_START", range: Range.from(0, 4) },
+            { type: "TOKEN_ERB_START", range: Range.from(5, 7) },
+            { type: "TOKEN_ERB_CONTENT", range: Range.from(7, 12) },
+            { type: "TOKEN_ERB_END", range: Range.from(12, 14) },
+            { type: "TOKEN_HTML_COMMENT_END", range: Range.from(15, 18) },
           ],
         }),
       }

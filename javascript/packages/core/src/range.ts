@@ -4,8 +4,14 @@ export class Range {
   readonly start: number
   readonly end: number
 
-  static from(range: SerializedRange) {
-    return new Range(range[0], range[1])
+  static from(range: SerializedRange): Range
+  static from(start: number, end: number): Range
+  static from(rangeOrStart: SerializedRange | number, end?: number): Range {
+    if (typeof rangeOrStart === "number") {
+      return new Range(rangeOrStart, end!)
+    } else {
+      return new Range(rangeOrStart[0], rangeOrStart[1])
+    }
   }
 
   static get zero() {

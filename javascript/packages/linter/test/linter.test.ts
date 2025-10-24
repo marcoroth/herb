@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { Location } from "@herb-tools/core"
 import { Linter } from "../src/linter.js"
 
 import { HTMLTagNameLowercaseRule } from "../src/rules/html-tag-name-lowercase.js"
@@ -88,7 +89,7 @@ describe("@herb-tools/linter", () => {
       check(_result: ParseResult): LintOffense[] {
         return [{
           message: "Test offense",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+          location: Location.from(1, 1, 1, 1),
           severity: "error",
           rule: this.name,
           code: this.name,
@@ -107,7 +108,7 @@ describe("@herb-tools/linter", () => {
       check(_result: ParseResult): LintOffense[] {
         return [{
           message: "This should never appear",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+          location: Location.from(1, 1, 1, 1),
           severity: "error",
           rule: this.name,
           code: this.name,
@@ -126,7 +127,7 @@ describe("@herb-tools/linter", () => {
       check(_source: string): LintOffense[] {
         return [{
           message: "ERB file detected",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+          location: Location.from(1, 1, 1, 1),
           severity: "info",
           rule: this.name,
           code: this.name,
@@ -145,7 +146,7 @@ describe("@herb-tools/linter", () => {
       check(_result: ParseResult): LintOffense[] {
         return [{
           message: "Div found",
-          location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+          location: Location.from(1, 1, 1, 1),
           severity: "info",
           rule: this.name,
           code: this.name,
