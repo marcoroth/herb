@@ -582,10 +582,8 @@ export function createEndOfFileLocation(source: string): Location {
   const lastColumnNumber = lastLine.length
 
   const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
-  const start = new Position(lastLineNumber, startColumn)
-  const end = new Position(lastLineNumber, lastColumnNumber)
 
-  return new Location(start, end)
+  return Location.from(lastLineNumber, startColumn, lastLineNumber, lastColumnNumber)
 }
 
 /**

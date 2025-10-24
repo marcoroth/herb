@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<script>var data = '.freeze; _buf << ::Herb::Engine.js((json_data)); _buf << ';</script>'.freeze;
+_buf.to_s

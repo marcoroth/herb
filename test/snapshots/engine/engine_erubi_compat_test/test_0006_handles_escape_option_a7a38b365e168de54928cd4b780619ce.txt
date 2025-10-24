@@ -1,0 +1,3 @@
+__herb = ::Herb::Engine; _buf = ::String.new;
+ _buf << __herb.h((content));
+_buf.to_s

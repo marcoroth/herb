@@ -1,0 +1,42 @@
+_buf = ::String.new;
+ _buf << '<div'.freeze; _buf << (@test).to_s; _buf << '></div>'.freeze; _buf << ('<template
+  data-herb-validation-error
+  data-severity="error"
+  data-source="SecurityValidator"
+  data-code="SecurityViolation"
+  data-line="1"
+  data-column="5"
+  data-filename="meta_test.html.erb"
+  data-message="ERB output tags (&lt;%= %&gt;) are not allowed in attribute position."
+  data-suggestion="Use control flow (&lt;% %&gt;) with static attributes instead."
+  data-timestamp="2025-01-01T12:00:00Z"
+><div class="herb-validation-item" data-severity="error">
+  <div class="herb-validation-header">
+    <span class="herb-validation-badge" style="background: #dc2626">
+      Security
+    </span>
+    <span class="herb-validation-location">
+      meta_test.html.erb:1:5
+    </span>
+  </div>
+  <div class="herb-validation-message" style="color: #dc2626">
+    ERB output tags (&lt;%= %&gt;) are not allowed in attribute position.
+  </div>
+  <div class="herb-code-snippet">
+  <div class="herb-code-line herb-error-line">
+  <div class="herb-line-number">1</div>
+  <div class="herb-line-content">&lt;div &lt;%= @test %&gt;&gt;&lt;/div&gt;</div>
+</div>
+<div class="herb-error-pointer">    ^</div>
+
+</div>
+
+  <div class="herb-validation-suggestion">
+  <span class="herb-suggestion-icon">💡</span>
+  Use control flow (&lt;% %&gt;) with static attributes instead.
+</div>
+
+</div>
+</template>
+'.html_safe).to_s;
+_buf.to_s

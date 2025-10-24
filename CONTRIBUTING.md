@@ -2,16 +2,16 @@
 
 Pull request, bug reports, and any other forms of contribution are welcomed and highly encouraged.
 
-If you encounter any issues when following along with this file please dont hesitate to reach out and file an issue!
+If you encounter any issues when following along with this file please don't hesitate to reach out and file an issue!
 
 ## Running Locally
 
 ### Requirements
 
 - [**Check**](https://libcheck.github.io/check/): For unit testing.
-- [**Clang 19**](https://clang.llvm.org): The compiler used to build this project.
-- [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
-- [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
+- [**Clang 21**](https://clang.llvm.org): The compiler used to build this project.
+- [**Clang Format 21**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
+- [**Clang Tidy 21**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
 - [**Prism Ruby Parser v1.6.0**](https://github.com/ruby/prism/releases/tag/v1.6.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
@@ -27,7 +27,7 @@ xargs sudo apt-get install < Aptfile
 or:
 
 ```bash
-sudo apt-get install check clang-19 clang-tidy-19 clang-format-19 emscripten doxygen
+sudo apt-get install check clang-21 clang-tidy-21 clang-format-21 emscripten doxygen
 ```
 
 ##### For macOS (using Homebrew)
@@ -38,7 +38,7 @@ brew bundle
 or:
 
 ```bash
-brew install check llvm@19 emscripten doxygen
+brew install check llvm@21 emscripten doxygen
 ```
 
 ### Building

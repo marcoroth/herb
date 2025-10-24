@@ -1,0 +1,31 @@
+@ DocumentNode (location: (1:0)-(14:0))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:8))
+    │   └── content: "        "
+    │
+    ├── @ HTMLElementNode (location: (1:8)-(13:17))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:8)-(1:16))
+    │   │       ├── tag_opening: "<" (location: (1:8)-(1:9))
+    │   │       ├── tag_name: "script" (location: (1:9)-(1:15))
+    │   │       ├── tag_closing: ">" (location: (1:15)-(1:16))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:9)-(1:15))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:16)-(13:8))
+    │   │       └── content: "\n          function createElements() {\n            const div = \"<div class='container'>\";\n\n            const span = \"<span>text</span>\";\n\n            if (elements.length > maxCount) {\n              return \"<ul><li>Item</li></ul>\";\n            }\n\n            return div + span + \"</div>\";\n          }\n        "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (13:8)-(13:17))
+    │   │       ├── tag_opening: "</" (location: (13:8)-(13:10))
+    │   │       ├── tag_name: "script" (location: (13:10)-(13:16))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (13:16)-(13:17))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (13:17)-(14:0))
+        └── content: "\n"

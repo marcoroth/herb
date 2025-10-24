@@ -33,9 +33,9 @@ static bool lexer_stalled(lexer_T* lexer) {
 
 void lexer_init(lexer_T* lexer, const char* source) {
   if (source != NULL) {
-    lexer->source = hb_string_from_c_string(source);
+    lexer->source = hb_string(source);
   } else {
-    lexer->source = hb_string_from_c_string("");
+    lexer->source = hb_string("");
   }
 
   lexer->current_character = lexer->source.data[0];
@@ -224,7 +224,11 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      return token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
+      token_T* token = token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
+
+      free(buffer.value);
+
+      return token;
     }
 
     hb_buffer_append_char(&buffer, lexer->current_character);

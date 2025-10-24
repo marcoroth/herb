@@ -100,6 +100,4 @@ void pretty_print_errors(
   hb_buffer_T* buffer
 );
 
-void pretty_print_analyzed_ruby(analyzed_ruby_T* analyzed, const char* source);
-
 #endif

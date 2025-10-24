@@ -1,0 +1,6 @@
+_buf = ::String.new;
+ _buf << '<table>
+ <tbody>\' \' \\\\ \\\\
+</tbody>
+</table>'.freeze;
+_buf.to_s

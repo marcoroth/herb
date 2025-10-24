@@ -1,0 +1,23 @@
+_buf = ::String.new;
+ _buf << '<!DOCTYPE html>
+<html>
+<head>
+  <title>'.freeze; _buf << (@title).to_s; _buf << '</title>
+</head>
+<body>
+  '.freeze; if @user; _buf << '
+    <h1>Welcome '.freeze; _buf << (@user.name).to_s; _buf << '!</h1>
+    '.freeze; @user.posts.each do |post|; _buf << '
+      <article>
+        <h2>'.freeze; _buf << ::Herb::Engine.h((post.title)); _buf << '</h2>
+        <div>'.freeze; _buf << (post.content).to_s; _buf << '</div>
+      </article>
+    '.freeze; end; _buf << '
+  '.freeze; else; _buf << '
+    <p>Please log in</p>
+  '.freeze; end; _buf << '
+  
+</body>
+</html>
+'.freeze;
+_buf.to_s

@@ -7,6 +7,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -52,9 +53,9 @@ void pretty_print_quoted_property(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  char* quoted = quoted_string(value);
-  pretty_print_property(name, quoted, indent, relative_indent, last_property, buffer);
-  free(quoted);
+  hb_string_T quoted = quoted_string(hb_string(value));
+  pretty_print_property(name, quoted.data, indent, relative_indent, last_property, buffer);
+  free(quoted.data);
 }
 
 void pretty_print_boolean_property(
@@ -212,9 +213,9 @@ void pretty_print_token_property(
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
   if (token != NULL && token->value != NULL) {
-    char* quoted = quoted_string(token->value);
-    hb_buffer_append(buffer, quoted);
-    free(quoted);
+    hb_string_T quoted = quoted_string(hb_string(token->value));
+    hb_buffer_append_string(buffer, quoted);
+    free(quoted.data);
 
     hb_buffer_append(buffer, " ");
     pretty_print_location(token->location, buffer);
@@ -235,45 +236,18 @@ void pretty_print_string_property(
 ) {
   const char* value = "∅";
   char* escaped = NULL;
-  char* quoted = NULL;
+  hb_string_T quoted;
 
   if (string != NULL) {
     escaped = escape_newlines(string);
-    quoted = quoted_string(escaped);
-    value = quoted;
+    quoted = quoted_string(hb_string(escaped));
+    value = quoted.data;
   }
 
   pretty_print_property(name, value, indent, relative_indent, last_property, buffer);
 
   if (string != NULL) {
     if (escaped != NULL) { free(escaped); }
-    if (quoted != NULL) { free(quoted); }
+    if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
-}
-
-void pretty_print_analyzed_ruby(analyzed_ruby_T* analyzed, const char* source) {
-  printf(
-    "------------------------\nanalyzed (%p)\n------------------------\n%s\n------------------------\n  if:     %i\n "
-    " elsif:  %i\n  else:   %i\n  end:    %i\n  block:  %i\n  block_closing: %i\n  case:   %i\n  when:   %i\n  for:    "
-    "%i\n  while:  %i\n "
-    " until:  %i\n  begin:  %i\n  "
-    "rescue: %i\n  ensure: %i\n  unless: %i\n==================\n\n",
-    (void*) analyzed,
-    source,
-    analyzed->has_if_node,
-    analyzed->has_elsif_node,
-    analyzed->has_else_node,
-    analyzed->has_end,
-    analyzed->has_block_node,
-    analyzed->has_block_closing,
-    analyzed->has_case_node,
-    analyzed->has_when_node,
-    analyzed->has_for_node,
-    analyzed->has_while_node,
-    analyzed->has_until_node,
-    analyzed->has_begin_node,
-    analyzed->has_rescue_node,
-    analyzed->has_ensure_node,
-    analyzed->has_unless_node
-  );
 }

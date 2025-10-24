@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<style>.class { color: '.freeze; _buf << ::Herb::Engine.css((color)); _buf << '; }</style>'.freeze;
+_buf.to_s

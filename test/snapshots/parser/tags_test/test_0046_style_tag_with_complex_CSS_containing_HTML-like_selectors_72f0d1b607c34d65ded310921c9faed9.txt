@@ -1,0 +1,31 @@
+@ DocumentNode (location: (1:0)-(12:0))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(1:8))
+    │   └── content: "        "
+    │
+    ├── @ HTMLElementNode (location: (1:8)-(11:16))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:8)-(1:15))
+    │   │       ├── tag_opening: "<" (location: (1:8)-(1:9))
+    │   │       ├── tag_name: "style" (location: (1:9)-(1:14))
+    │   │       ├── tag_closing: ">" (location: (1:14)-(1:15))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "style" (location: (1:9)-(1:14))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:15)-(11:8))
+    │   │       └── content: "\n          /* CSS comment */\n\n          .component > .header {\n            content: \"<i class='icon'></i>\";\n          }\n\n          .component[data-type=\"<special>\"] {\n            background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n          }\n        "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (11:8)-(11:16))
+    │   │       ├── tag_opening: "</" (location: (11:8)-(11:10))
+    │   │       ├── tag_name: "style" (location: (11:10)-(11:15))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (11:15)-(11:16))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (11:16)-(12:0))
+        └── content: "\n"

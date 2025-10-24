@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << '<div>Valid template</div>'.freeze;
+_buf.to_s

@@ -38,7 +38,7 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
-import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
+// import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 // import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
@@ -86,7 +86,7 @@ export const defaultRules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
-  HTMLNoSpaceInTagRule,
+  // HTMLNoSpaceInTagRule,
   // HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLTagNameLowercaseRule,

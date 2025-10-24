@@ -42,8 +42,9 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
       case TOKEN_ERB_END: {
         skip_erb_content = false;
 
+        hb_buffer_append_char(output, ' ');
         hb_buffer_append_char(output, ';');
-        hb_buffer_append_whitespace(output, range_length(token->range) - 1);
+        hb_buffer_append_whitespace(output, range_length(token->range) - 2);
         break;
       }
 

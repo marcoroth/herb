@@ -61,16 +61,16 @@ shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
 ifeq ($(os),Linux)
   test_cflags = $(test_flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags)
-  cc = clang-19
-  clang_format = clang-format-19
-  clang_tidy = clang-tidy-19
+  cc = clang-21
+  clang_format = clang-format-21
+  clang_tidy = clang-tidy-21
 endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(test_flags) -I$(brew_prefix)/include
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(prism_ldflags)
-  llvm_path = $(shell brew --prefix llvm@19)
+  llvm_path = $(shell brew --prefix llvm@21)
   cc = $(llvm_path)/bin/clang
   clang_format = $(llvm_path)/bin/clang-format
   clang_tidy = $(llvm_path)/bin/clang-tidy

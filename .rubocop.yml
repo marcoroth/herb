@@ -77,6 +77,7 @@ Metrics/AbcSize:
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - test/engine/rails_compatibility_test.rb
     - bin/**/*
 
 Metrics/ClassLength:

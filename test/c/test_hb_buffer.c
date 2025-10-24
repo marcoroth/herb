@@ -68,7 +68,7 @@ TEST(test_hb_buffer_append_string)
   hb_buffer_T buffer;
   hb_buffer_init(&buffer, 1);
 
-  hb_buffer_append_string(&buffer, hb_string_from_c_string("Hello, world"));
+  hb_buffer_append_string(&buffer, hb_string("Hello, world"));
 
   ck_assert_str_eq(buffer.value, "Hello, world");
   ck_assert_int_eq(buffer.length, 12);

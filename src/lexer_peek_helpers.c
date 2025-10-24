@@ -28,43 +28,43 @@ bool lexer_peek_for(const lexer_T* lexer, uint32_t offset, hb_string_T pattern, 
 }
 
 bool lexer_peek_for_doctype(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<!DOCTYPE"), true);
+  return lexer_peek_for(lexer, offset, hb_string("<!DOCTYPE"), true);
 }
 
 bool lexer_peek_for_xml_declaration(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<?xml"), true);
+  return lexer_peek_for(lexer, offset, hb_string("<?xml"), true);
 }
 
 bool lexer_peek_for_cdata_start(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<![CDATA["), false);
+  return lexer_peek_for(lexer, offset, hb_string("<![CDATA["), false);
 }
 
 bool lexer_peek_for_cdata_end(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("]]>"), false);
+  return lexer_peek_for(lexer, offset, hb_string("]]>"), false);
 }
 
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("<!--"), false);
+  return lexer_peek_for(lexer, offset, hb_string("<!--"), false);
 }
 
 bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("-->"), false);
+  return lexer_peek_for(lexer, offset, hb_string("-->"), false);
 }
 
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("%>"), false);
+  return lexer_peek_for(lexer, offset, hb_string("%>"), false);
 }
 
 bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("-%>"), false);
+  return lexer_peek_for(lexer, offset, hb_string("-%>"), false);
 }
 
 bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("%%>"), false);
+  return lexer_peek_for(lexer, offset, hb_string("%%>"), false);
 }
 
 bool lexer_peek_erb_equals_close_tag(const lexer_T* lexer, uint32_t offset) {
-  return lexer_peek_for(lexer, offset, hb_string_from_c_string("=%>"), false);
+  return lexer_peek_for(lexer, offset, hb_string("=%>"), false);
 }
 
 bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
