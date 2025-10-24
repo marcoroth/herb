@@ -284,7 +284,7 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
-### Disabling Rules Inline
+### Disabling Rules Inline <Badge type="info" text="v0.8.0+" />
 
 You can disable linting rules for specific lines using inline comments. This is useful when you need to allow certain code that would otherwise trigger a linting offense.
 
@@ -301,7 +301,7 @@ Add a comment at the end of the line with `herb:disable` followed by the rule na
 You can disable multiple rules on the same line by separating rule names with commas:
 
 ```erb
-<DIV id='test' class="<%= "hello" %>">test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+<DIV id='test' class="<%= "hello" %>">test</DIV> <%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
 ```
 
 #### Disabling All Rules
