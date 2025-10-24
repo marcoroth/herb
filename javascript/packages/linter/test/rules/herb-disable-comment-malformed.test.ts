@@ -89,4 +89,20 @@ describe("HerbDisableCommentMalformedRule", () => {
       <div>test</div> <%# This mentions herb:disable but doesn't start with it %>
     `)
   })
+
+  test("flags missing space after herb:disable", () => {
+    expectError("`herb:disable` comment is missing a space after `herb:disable`. Add a space before the rule names.")
+
+    assertOffenses(dedent`
+      <div>test</div> <%# herb:disableall %>
+    `)
+  })
+
+  test("flags missing space with rule name", () => {
+    expectError("`herb:disable` comment is missing a space after `herb:disable`. Add a space before the rule names.")
+
+    assertOffenses(dedent`
+      <div>test</div> <%# herb:disablehtml-tag-name-lowercase %>
+    `)
+  })
 })

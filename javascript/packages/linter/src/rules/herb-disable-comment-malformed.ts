@@ -1,27 +1,45 @@
 import { ParserRule } from "../types.js"
 import { HerbDisableCommentBaseVisitor } from "./herb-disable-comment-base.js"
+import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
 import type { LintOffense, LintContext } from "../types.js"
 import type { ERBContentNode, ParseResult } from "@herb-tools/core"
 
 class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
   protected checkHerbDisableComment(node: ERBContentNode, content: string): void {
-    const looksLikeHerbDisable = content.trim().startsWith("herb:disable")
+    const trimmed = content.trim()
+    const looksLikeHerbDisable = trimmed.startsWith("herb:disable")
     if (!looksLikeHerbDisable) return
 
-    const validFormat = /^\s*herb:disable\s+([a-zA-Z0-9_-]+(?:\s*,\s*[a-zA-Z0-9_-]+)*)\s*$/
-    const emptyFormat = /^\s*herb:disable\s*$/
+    if (trimmed.length > "herb:disable".length) {
+      const charAfterPrefix = trimmed["herb:disable".length]
 
-    if (validFormat.test(content)) return
-    if (emptyFormat.test(content)) return
+      if (charAfterPrefix !== ' ' && charAfterPrefix !== '\t' && charAfterPrefix !== '\n') {
+        this.addOffense(
+          "`herb:disable` comment is missing a space after `herb:disable`. Add a space before the rule names.",
+          node.location,
+          "error"
+        )
+
+        return
+      }
+    }
+
+    const afterPrefix = trimmed.substring("herb:disable".length).trim()
+    if (afterPrefix.length === 0) return
+
+    const parsed = parseHerbDisableContent(content)
+    if (parsed !== null) return
 
     let message = "`herb:disable` comment is malformed."
 
-    if (content.match(/,\s*$/)) {
+    const rulesString = afterPrefix.trim()
+
+    if (rulesString.endsWith(',')) {
       message = "`herb:disable` comment has a trailing comma. Remove the trailing comma."
-    } else if (content.match(/,\s*,/)) {
+    } else if (rulesString.includes(',,') || rulesString.match(/,\s*,/)) {
       message = "`herb:disable` comment has consecutive commas. Remove extra commas."
-    } else if (content.match(/^\s*herb:disable\s*,/)) {
+    } else if (rulesString.startsWith(',')) {
       message = "`herb:disable` comment starts with a comma. Remove the leading comma."
     }
 

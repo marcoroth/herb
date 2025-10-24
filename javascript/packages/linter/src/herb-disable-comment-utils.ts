@@ -29,18 +29,9 @@ export interface HerbDisableComment {
 }
 
 /**
- * Regex pattern for matching herb:disable comments in ERB comment content.
- * Matches: herb:disable rule1, rule2, ...
- * Note: This pattern is for use with ERBContentNode.content.value (the content inside <%# ... %>)
+ * Prefix for herb:disable comments
  */
-export const HERB_DISABLE_CONTENT_REGEX = /^\s*herb:disable\s+([a-zA-Z0-9_-]+(?:\s*,\s*[a-zA-Z0-9_-]+)*)\s*$/
-
-/**
- * Regex pattern for matching herb:disable comments in a full source line.
- * Matches: <%# herb:disable rule1, rule2, ... %>
- * Note: This pattern includes the ERB comment delimiters and can match anywhere in a line
- */
-export const HERB_DISABLE_LINE_REGEX = /<%#\s*herb:disable\s*([a-zA-Z0-9_-]+(?:\s*,\s*[a-zA-Z0-9_-]+)*)\s*%>/
+const HERB_DISABLE_PREFIX = "herb:disable"
 
 /**
  * Parse a herb:disable comment from ERB comment content.
@@ -56,14 +47,21 @@ export const HERB_DISABLE_LINE_REGEX = /<%#\s*herb:disable\s*([a-zA-Z0-9_-]+(?:\
  * ```
  */
 export function parseHerbDisableContent(content: string): HerbDisableComment | null {
-  const match = content.match(HERB_DISABLE_CONTENT_REGEX)
-  if (!match) return null
+  const trimmed = content.trim()
 
-  const rulesString = match[1]
-  const ruleNames = rulesString.split(/\s*,\s*/)
+  if (!trimmed.startsWith(HERB_DISABLE_PREFIX)) return null
 
-  const herbDisablePrefix = content.indexOf("herb:disable")
-  const searchStart = herbDisablePrefix + "herb:disable".length
+  const afterPrefix = trimmed.substring(HERB_DISABLE_PREFIX.length).trimStart()
+  if (afterPrefix.length === 0) return null
+
+  const rulesString = afterPrefix.trimEnd()
+  const ruleNames = rulesString.split(',').map(name => name.trim())
+
+  if (ruleNames.some(name => name.length === 0)) return null
+  if (ruleNames.length === 0) return null
+
+  const herbDisablePrefix = content.indexOf(HERB_DISABLE_PREFIX)
+  const searchStart = herbDisablePrefix + HERB_DISABLE_PREFIX.length
   const rulesStringOffset = content.indexOf(rulesString, searchStart)
 
   const ruleNameDetails: HerbDisableRuleName[] = []
@@ -83,7 +81,7 @@ export function parseHerbDisableContent(content: string): HerbDisableComment | n
   }
 
   return {
-    match: match[0],
+    match: trimmed,
     ruleNames,
     ruleNameDetails,
     rulesString
@@ -104,14 +102,30 @@ export function parseHerbDisableContent(content: string): HerbDisableComment | n
  * ```
  */
 export function parseHerbDisableLine(line: string): HerbDisableComment | null {
-  const match = line.match(HERB_DISABLE_LINE_REGEX)
-  if (!match) return null
+  const startTag = "<%#"
+  const endTag = "%>"
 
-  const rulesString = match[1]
-  const ruleNames = rulesString.split(/\s*,\s*/)
+  const startIndex = line.indexOf(startTag)
+  if (startIndex === -1) return null
 
-  const herbDisablePrefix = line.indexOf("herb:disable")
-  const searchStart = herbDisablePrefix + "herb:disable".length
+  const endIndex = line.indexOf(endTag, startIndex)
+  if (endIndex === -1) return null
+
+  const content = line.substring(startIndex + startTag.length, endIndex).trim()
+
+  if (!content.startsWith(HERB_DISABLE_PREFIX)) return null
+
+  const afterPrefix = content.substring(HERB_DISABLE_PREFIX.length).trimStart()
+  if (afterPrefix.length === 0) return null
+
+  const rulesString = afterPrefix.trimEnd()
+  const ruleNames = rulesString.split(',').map(name => name.trim())
+
+  if (ruleNames.some(name => name.length === 0)) return null
+  if (ruleNames.length === 0) return null
+
+  const herbDisablePrefix = line.indexOf(HERB_DISABLE_PREFIX)
+  const searchStart = herbDisablePrefix + HERB_DISABLE_PREFIX.length
   const rulesStringOffset = line.indexOf(rulesString, searchStart)
 
   const ruleNameDetails: HerbDisableRuleName[] = []
@@ -130,8 +144,10 @@ export function parseHerbDisableLine(line: string): HerbDisableComment | null {
     currentOffset = ruleOffset + ruleName.length
   }
 
+  const fullMatch = line.substring(startIndex, endIndex + endTag.length)
+
   return {
-    match: match[0],
+    match: fullMatch,
     ruleNames,
     ruleNameDetails,
     rulesString
@@ -145,7 +161,7 @@ export function parseHerbDisableLine(line: string): HerbDisableComment | null {
  * @returns true if the content contains a herb:disable directive
  */
 export function isHerbDisableContent(content: string): boolean {
-  return HERB_DISABLE_CONTENT_REGEX.test(content)
+  return parseHerbDisableContent(content) !== null
 }
 
 /**
@@ -155,5 +171,5 @@ export function isHerbDisableContent(content: string): boolean {
  * @returns true if the line contains a herb:disable comment
  */
 export function isHerbDisableLine(line: string): boolean {
-  return HERB_DISABLE_LINE_REGEX.test(line)
+  return parseHerbDisableLine(line) !== null
 }
