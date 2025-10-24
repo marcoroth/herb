@@ -1,6 +1,7 @@
 #ifndef HERB_LEXER_STRUCT_H
 #define HERB_LEXER_STRUCT_H
 
+#include "util/hb_arena.h"
 #include "util/hb_string.h"
 
 #include <stdbool.h>
@@ -14,6 +15,7 @@ typedef enum {
 } lexer_state_T;
 
 typedef struct LEXER_STRUCT {
+  hb_arena_T* allocator;
   hb_string_T source;
 
   uint32_t current_line;
