@@ -284,6 +284,38 @@ JSON output fields:
 - `clean`: Whether there were no offenses (`null` when `completed=false`)
 - `message`: Error or informational message (`null` on success)
 
+### Disabling Rules Inline
+
+You can disable linting rules for specific lines using inline comments. This is useful when you need to allow certain code that would otherwise trigger a linting offense.
+
+#### Disabling a Single Rule
+
+Add a comment at the end of the line with `herb:disable` followed by the rule name:
+
+```erb
+<DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+```
+
+#### Disabling Multiple Rules
+
+You can disable multiple rules on the same line by separating rule names with commas:
+
+```erb
+<DIV id='test' class="<%= "hello" %>">test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+```
+
+#### Disabling All Rules
+
+To disable all linting rules for a specific line, use `all`:
+
+```erb
+<DIV id='test' class="<%= "hello" %>">test</DIV> <%# herb:disable all %>
+```
+
+::: warning Important
+Inline disable comments only affect the line they appear on. Each line that needs linting disabled must have its own disable comment.
+:::
+
 ### Language Server Integration
 
 The linter is automatically integrated into the [Herb Language Server](https://herb-tools.dev/projects/language-server), providing real-time validation in supported editors like VS Code, Zed, and Neovim.
