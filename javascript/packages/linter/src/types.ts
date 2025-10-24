@@ -142,6 +142,7 @@ export interface LexerRuleConstructor {
  */
 export interface LintContext {
   fileName: string | undefined
+  generateTodo?: boolean
 }
 
 /**

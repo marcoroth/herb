@@ -22,7 +22,8 @@ export interface ParsedArguments {
   wrapLines: boolean
   truncateLines: boolean
   useGitHubActions: boolean
-  fix: boolean
+  fix: boolean,
+  generateTodo: boolean,
 }
 
 export class ArgumentParser {
@@ -48,6 +49,7 @@ export class ArgumentParser {
       --no-timing      hide timing information
       --no-wrap-lines  disable line wrapping
       --truncate-lines enable line truncation (mutually exclusive with line wrapping)
+      --generate-todo   generate a .herb-todo.yml file with current diagnostics
   `
 
   parse(argv: string[]): ParsedArguments {
@@ -66,7 +68,8 @@ export class ArgumentParser {
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" }
+        "truncate-lines": { type: "boolean" },
+        "generate-todo": { type: "boolean" },
       },
       allowPositionals: true
     })
@@ -125,11 +128,23 @@ export class ArgumentParser {
       process.exit(1)
     }
 
+    const generateTodo = values["generate-todo"] || false
+
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
     const fix = values.fix || false
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
+    return { 
+      pattern,
+      formatOption,
+      showTiming,
+      theme,
+      wrapLines,
+      truncateLines,
+      useGitHubActions,
+      fix,
+      generateTodo,
+    }
   }
 
   private getFilePattern(positionals: string[]): string {

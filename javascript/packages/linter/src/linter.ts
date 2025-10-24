@@ -4,22 +4,25 @@ import { IdentityPrinter } from "@herb-tools/printer"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 
 import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext, AutofixResult } from "./types.js"
+import { LinterTodo } from "./linter-todo.js"
 import type { HerbBackend } from "@herb-tools/core"
 
 export class Linter {
   protected rules: RuleClass[]
   protected herb: HerbBackend
   protected offenses: LintOffense[]
+  private linterTodo: LinterTodo | null
 
   /**
    * Creates a new Linter instance.
    * @param herb - The Herb backend instance for parsing and lexing
    * @param rules - Array of rule classes (Parser/AST or Lexer) to use. If not provided, uses default rules.
    */
-  constructor(herb: HerbBackend, rules?: RuleClass[]) {
+  constructor(herb: HerbBackend, rules?: RuleClass[], LinterTodo?: LinterTodo | null) {
     this.herb = herb
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.offenses = []
+    this.linterTodo = LinterTodo || null
   }
 
   /**
@@ -144,6 +147,11 @@ export class Linter {
       this.offenses.push(...kept)
     }
 
+    if (this.linterTodo && context?.fileName) {
+      const filtered: LintOffense[] = this.linterTodo.filterOffenses(this.offenses, context.fileName)
+      this.offenses = filtered
+    }
+
     const errors = this.offenses.filter(offense => offense.severity === "error").length
     const warnings = this.offenses.filter(offense => offense.severity === "warning").length
 
@@ -213,7 +221,7 @@ export class Linter {
 
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
-          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
+          const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
             parseResult.value,
