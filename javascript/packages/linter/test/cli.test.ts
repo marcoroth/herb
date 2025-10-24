@@ -190,6 +190,16 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("herb:disable rules", () => {
+    const result1 = runLinter("disabled-1.html.erb")
+    expect(result1.output).toMatchSnapshot()
+    expect(result1.exitCode).toBe(1)
+
+    const result2 = runLinter("disabled-2.html.erb")
+    expect(result2.output).toMatchSnapshot()
+    expect(result2.exitCode).toBe(1)
+  })
+
   test("rejects --github with --json format", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
 
