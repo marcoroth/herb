@@ -25,5 +25,7 @@ export interface StimulusLintContext extends LintContext {
 
 export const DEFAULT_STIMULUS_LINT_CONTEXT: StimulusLintContext = {
   fileName: undefined,
+  validRuleNames: undefined,
+  ignoredOffensesByLine: undefined,
   stimulusProject: undefined
 } as const
