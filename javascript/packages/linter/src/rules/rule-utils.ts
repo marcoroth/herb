@@ -1,6 +1,5 @@
 import {
   Visitor,
-  Position,
   Location,
   getStaticAttributeName,
   hasDynamicAttributeName as hasNodeDynamicAttributeName,
@@ -89,7 +88,7 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   /**
    * Handle visiting a control flow node with proper scope management
    */
-  protected handleControlFlowNode(node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
+  protected handleControlFlowNode(_node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
     const wasInControlFlow = this.isInControlFlow
     const previousControlFlowType = this.currentControlFlowType
 

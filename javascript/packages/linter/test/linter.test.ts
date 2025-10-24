@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
@@ -198,7 +199,10 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can disable a rule with a comment", () => {
-      const html = '<DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>'
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
       const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
       const lintResult = linter.lint(html)
 
@@ -207,10 +211,9 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can disable multiple rules with a comment", () => {
-      const html = [
-        "<DIV id='1' class=<%= 'hello' %> >test</DIV>",
-        "<%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>",
-      ].join(" ")
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+      `
 
       const linter = new Linter(
         Herb,
@@ -227,8 +230,33 @@ describe("@herb-tools/linter", () => {
       expect(lintResult.ignored).toBe(3)
     })
 
+    test("can disable multiple rules with a comment and whitespace between comma and rules", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase,  html-attribute-double-quotes %>
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase  ,html-attribute-double-quotes %>
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable  html-tag-name-lowercase  ,  html-attribute-double-quotes %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule,
+        ],
+      )
+
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(3)
+      expect(lintResult.ignored).toBe(9)
+    })
+
     test("can disable all rules with a comment", () => {
-      const html = "<DIV id='1' class=<%= 'hello' %> >test</DIV> <%# herb:disable all %>"
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV> <%# herb:disable all %>
+      `
+
       const linter = new Linter(
         Herb,
         [
