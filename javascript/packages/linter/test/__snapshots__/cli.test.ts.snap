@@ -1,5 +1,113 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`CLI Output Formatting > --ignore-disable-comments 1`] = `
+"[error] ERB tag should not be empty. Remove empty ERB tags or add content. (erb-no-empty-tags)
+
+test/fixtures/ignored.html.erb:8:2
+
+      6 │   <DIV>hello</DIV>
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+  →   8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+        │   ~~~~~
+      9 │ </div>
+     10 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
+
+[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:3
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │    ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:14
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │               ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
+
+[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:7:3
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │    ~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:7:14
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │               ~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
+
+[warning] No offenses from \`html-tag-name-lowercase\` on this line. Remove the \`herb:disable\` comment. (herb-disable-comment-unnecessary)
+
+test/fixtures/ignored.html.erb:7:19
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/7] ⎯⎯⎯⎯
+
+[warning] No offenses from \`erb-no-empty-tags\` on this line. Remove the \`herb:disable\` comment. (herb-disable-comment-unnecessary)
+
+test/fixtures/ignored.html.erb:8:8
+
+      6 │   <DIV>hello</DIV>
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+  →   8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+        │         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      9 │ </div>
+     10 │
+
+ Rule offenses:
+  html-tag-name-lowercase (4 offenses in 1 file)
+  herb-disable-comment-unnecessary (2 offenses in 1 file)
+  erb-no-empty-tags (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     5 errors | 2 warnings (7 offenses across 1 file)
+  Fixable      7 offenses | 4 autocorrectable using \`--fix\`"
+`;
+
 exports[`CLI Output Formatting > GitHub Actions format escapes special characters in messages 1`] = `
 "::error file=test/fixtures/test-file-with-errors.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required \`alt\` attribute on \`<img>\` tag. Add \`alt=""\` for decorative images or \`alt="description"\` for informative images. [html-img-require-alt]%0A%0A%0Atest/fixtures/test-file-with-errors.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <SPAN>Test content</SPAN>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A      5 │%0A
 
@@ -1160,6 +1268,114 @@ test/fixtures/disabled-2.html.erb:2:44
   Checked      1 file
   Offenses     6 errors | 7 warnings | 5 ignored (13 offenses across 1 file)
   Fixable      13 offenses | 6 autocorrectable using \`--fix\`"
+`;
+
+exports[`CLI Output Formatting > ignored herb:disable rules 1`] = `
+"[error] ERB tag should not be empty. Remove empty ERB tags or add content. (erb-no-empty-tags)
+
+test/fixtures/ignored.html.erb:8:2
+
+      6 │   <DIV>hello</DIV>
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+  →   8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+        │   ~~~~~
+      9 │ </div>
+     10 │
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/7] ⎯⎯⎯⎯
+
+[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:3
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │    ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/7] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:6:14
+
+      4 │   </h1>
+      5 │ 
+  →   6 │   <DIV>hello</DIV>
+        │               ~~~
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [3/7] ⎯⎯⎯⎯
+
+[error] Opening tag name \`<DIV>\` should be lowercase. Use \`<div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:7:3
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │    ~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [4/7] ⎯⎯⎯⎯
+
+[error] Closing tag name \`</DIV>\` should be lowercase. Use \`</div>\` instead. [Correctable] (html-tag-name-lowercase)
+
+test/fixtures/ignored.html.erb:7:14
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │               ~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [5/7] ⎯⎯⎯⎯
+
+[warning] No offenses from \`html-tag-name-lowercase\` on this line. Remove the \`herb:disable\` comment. (herb-disable-comment-unnecessary)
+
+test/fixtures/ignored.html.erb:7:19
+
+      5 │ 
+      6 │   <DIV>hello</DIV>
+  →   7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+        │                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+      9 │ </div>
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [6/7] ⎯⎯⎯⎯
+
+[warning] No offenses from \`erb-no-empty-tags\` on this line. Remove the \`herb:disable\` comment. (herb-disable-comment-unnecessary)
+
+test/fixtures/ignored.html.erb:8:8
+
+      6 │   <DIV>hello</DIV>
+      7 │   <DIV>hello</DIV> <%# herb:disable html-tag-name-lowercase %>
+  →   8 │   <% %> <%# herb:disable erb-no-empty-tags %>
+        │         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      9 │ </div>
+     10 │
+
+ Rule offenses:
+  html-tag-name-lowercase (4 offenses in 1 file)
+  herb-disable-comment-unnecessary (2 offenses in 1 file)
+  erb-no-empty-tags (1 offense in 1 file)
+
+
+ Summary:
+  Checked      1 file
+  Offenses     5 errors | 2 warnings (7 offenses across 1 file)
+  Fixable      7 offenses | 4 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > uses GitHub Actions format by default when GITHUB_ACTIONS is true 1`] = `

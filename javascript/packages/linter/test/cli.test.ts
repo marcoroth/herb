@@ -200,6 +200,13 @@ describe("CLI Output Formatting", () => {
     expect(result2.exitCode).toBe(1)
   })
 
+  test("--ignore-disable-comments", () => {
+    const { output, exitCode } = runLinter("ignored.html.erb", "--ignore-disable-comments")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("rejects --github with --json format", () => {
     const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--json", "--github")
 

@@ -134,12 +134,17 @@ export class Linter {
     ruleOffenses: LintOffense[],
     ruleName: string,
     ignoredOffensesByLine?: Map<number, Set<string>>,
-    herbDisableCache?: Map<number, string[]>
+    herbDisableCache?: Map<number, string[]>,
+    ignoreDisableComments?: boolean
   ): { kept: LintOffense[], ignored: LintOffense[] } {
     const kept: LintOffense[] = []
     const ignored: LintOffense[] = []
 
     if (this.nonExcludableRules.includes(ruleName)) {
+      return { kept: ruleOffenses, ignored: [] }
+    }
+
+    if (ignoreDisableComments) {
       return { kept: ruleOffenses, ignored: [] }
     }
 
@@ -211,7 +216,13 @@ export class Linter {
       const rule = new RuleClass()
       const ruleOffenses = this.executeRule(rule, parseResult, lexResult, source, hasParserErrors, context)
 
-      const { kept, ignored } = this.filterOffenses(ruleOffenses, rule.name, ignoredOffensesByLine, herbDisableCache)
+      const { kept, ignored } = this.filterOffenses(
+        ruleOffenses,
+        rule.name,
+        ignoredOffensesByLine,
+        herbDisableCache,
+        context?.ignoreDisableComments
+      )
 
       ignoredCount += ignored.length
       this.offenses.push(...kept)

@@ -1,5 +1,6 @@
 import type { Project } from "stimulus-parser"
 import type { LintContext } from "@herb-tools/linter"
+import { DEFAULT_LINT_CONTEXT } from "@herb-tools/linter"
 
 export * from "@herb-tools/linter"
 
@@ -24,8 +25,6 @@ export interface StimulusLintContext extends LintContext {
 }
 
 export const DEFAULT_STIMULUS_LINT_CONTEXT: StimulusLintContext = {
-  fileName: undefined,
-  validRuleNames: undefined,
-  ignoredOffensesByLine: undefined,
+  ...DEFAULT_LINT_CONTEXT,
   stimulusProject: undefined
 } as const

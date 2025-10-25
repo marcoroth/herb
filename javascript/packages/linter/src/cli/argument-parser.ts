@@ -23,6 +23,7 @@ export interface ParsedArguments {
   truncateLines: boolean
   useGitHubActions: boolean
   fix: boolean
+  ignoreDisableComments: boolean
 }
 
 export class ArgumentParser {
@@ -35,19 +36,20 @@ export class ArgumentParser {
       directory        Directory to lint (automatically appends \`${HERB_FILES_GLOB}\`)
 
     Options:
-      -h, --help       show help
-      -v, --version    show version
-      --fix            automatically fix auto-correctable offenses
-      --format         output format (simple|detailed|json) [default: detailed]
-      --simple         use simple output format (shortcut for --format simple)
-      --json           use JSON output format (shortcut for --format json)
-      --github         enable GitHub Actions annotations (combines with --format)
-      --no-github      disable GitHub Actions annotations (even in GitHub Actions environment)
-      --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
-      --no-color       disable colored output
-      --no-timing      hide timing information
-      --no-wrap-lines  disable line wrapping
-      --truncate-lines enable line truncation (mutually exclusive with line wrapping)
+      -h, --help                    show help
+      -v, --version                 show version
+      --fix                         automatically fix auto-correctable offenses
+      --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
+      --format                      output format (simple|detailed|json) [default: detailed]
+      --simple                      use simple output format (shortcut for --format simple)
+      --json                        use JSON output format (shortcut for --format json)
+      --github                      enable GitHub Actions annotations (combines with --format)
+      --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
+      --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --no-color                    disable colored output
+      --no-timing                   hide timing information
+      --no-wrap-lines               disable line wrapping
+      --truncate-lines              enable line truncation (mutually exclusive with line wrapping)
   `
 
   parse(argv: string[]): ParsedArguments {
@@ -57,6 +59,7 @@ export class ArgumentParser {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
         fix: { type: "boolean" },
+        "ignore-disable-comments": { type: "boolean" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -128,8 +131,9 @@ export class ArgumentParser {
     const theme = values.theme || DEFAULT_THEME
     const pattern = this.getFilePattern(positionals)
     const fix = values.fix || false
+    const ignoreDisableComments = values["ignore-disable-comments"] || false
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
+    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments }
   }
 
   private getFilePattern(positionals: string[]): string {

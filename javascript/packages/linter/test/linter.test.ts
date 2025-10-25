@@ -272,4 +272,83 @@ describe("@herb-tools/linter", () => {
       expect(lintResult.ignored).toBe(4)
     })
   })
+
+  describe("ignoreDisableComments option", () => {
+    test("reports offenses even when suppressed with herb:disable comment", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(2)
+      expect(lintResult.ignored).toBe(0)
+      expect(lintResult.errors).toBe(2)
+    })
+
+    test("reports multiple rule offenses even when suppressed", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV><%# herb:disable html-tag-name-lowercase, html-attribute-double-quotes %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule,
+        ],
+      )
+
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(4)
+      expect(lintResult.ignored).toBe(0)
+    })
+
+    test("reports all offenses even when disabled with 'all'", () => {
+      const html = dedent`
+        <DIV id='1' class=<%= "hello" %>>test</DIV> <%# herb:disable all %>
+      `
+
+      const linter = new Linter(
+        Herb,
+        [
+          HTMLTagNameLowercaseRule,
+          HTMLAttributeDoubleQuotesRule,
+          HTMLAttributeValuesRequireQuotesRule
+        ],
+      )
+
+      const lintResult = linter.lint(html, { ignoreDisableComments: true })
+
+      expect(lintResult.offenses).toHaveLength(4)
+      expect(lintResult.ignored).toBe(0)
+    })
+
+    test("respects ignoreDisableComments:false (default behavior)", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html, { ignoreDisableComments: false })
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.ignored).toBe(2)
+    })
+
+    test("default behavior without option still honors disable comments", () => {
+      const html = dedent`
+        <DIV>test</DIV> <%# herb:disable html-tag-name-lowercase %>
+      `
+
+      const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+      const lintResult = linter.lint(html)
+
+      expect(lintResult.offenses).toHaveLength(0)
+      expect(lintResult.ignored).toBe(2)
+    })
+  })
 })

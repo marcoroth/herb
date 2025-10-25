@@ -19,6 +19,7 @@ export interface ProcessingContext {
   projectPath?: string
   pattern?: string
   fix?: boolean
+  ignoreDisableComments?: boolean
 }
 
 export interface ProcessingResult {
@@ -88,14 +89,20 @@ export class FileProcessor {
         this.linter = new Linter(Herb)
       }
 
-      const lintResult = this.linter.lint(content, { fileName: filename })
+      const lintResult = this.linter.lint(content, {
+        fileName: filename,
+        ignoreDisableComments: context?.ignoreDisableComments
+      })
 
       if (ruleCount === 0) {
         ruleCount = this.linter.getRuleCount()
       }
 
       if (context?.fix && lintResult.offenses.length > 0) {
-        const autofixResult = this.linter.autofix(content, { fileName: filename })
+        const autofixResult = this.linter.autofix(content, {
+          fileName: filename,
+          ignoreDisableComments: context?.ignoreDisableComments
+        })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")
