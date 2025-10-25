@@ -5,7 +5,7 @@
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#define KB(kb) (1024 * kb)
+#define KB(kb) (1024 * (kb))
 
 #define MB(mb) (1024 * KB(mb))
 

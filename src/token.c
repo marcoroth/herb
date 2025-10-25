@@ -14,7 +14,7 @@ size_t token_sizeof(void) {
 }
 
 token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+  token_T* token = hb_arena_alloc(lexer->arena, token_sizeof());
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
@@ -22,12 +22,21 @@ token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) 
   }
 
   if (value) {
-    token->value = herb_strdup(value);
+    size_t value_length = strlen(value);
+    char* arena_value = hb_arena_alloc(lexer->arena, value_length + 1);
+    if (arena_value) {
+      memcpy(arena_value, value, value_length);
+      arena_value[value_length] = '\0';
+      token->value = arena_value;
+    } else {
+      token->value = NULL;
+    }
   } else {
     token->value = NULL;
   }
 
   token->type = type;
+  token->arena_allocated = true;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
 
   location_from(
@@ -126,19 +135,32 @@ int token_type(const token_T* token) {
   return token->type;
 }
 
-token_T* token_copy(token_T* token) {
+token_T* token_copy(token_T* token, hb_arena_T* arena) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, token_sizeof());
+  token_T* new_token = arena ? hb_arena_alloc(arena, token_sizeof()) : calloc(1, token_sizeof());
 
   if (!new_token) { return NULL; }
 
   if (token->value) {
-    new_token->value = herb_strdup(token->value);
+    if (arena) {
+      size_t value_length = strlen(token->value);
+      char* arena_value = hb_arena_alloc(arena, value_length + 1);
 
-    if (!new_token->value) {
-      free(new_token);
-      return NULL;
+      if (arena_value) {
+        memcpy(arena_value, token->value, value_length);
+        arena_value[value_length] = '\0';
+        new_token->value = arena_value;
+      } else {
+        new_token->value = NULL;
+      }
+    } else {
+      new_token->value = herb_strdup(token->value);
+
+      if (!new_token->value) {
+        free(new_token);
+        return NULL;
+      }
     }
   } else {
     new_token->value = NULL;
@@ -147,6 +169,7 @@ token_T* token_copy(token_T* token) {
   new_token->type = token->type;
   new_token->range = token->range;
   new_token->location = token->location;
+  new_token->arena_allocated = arena != NULL;
 
   return new_token;
 }
@@ -154,7 +177,9 @@ token_T* token_copy(token_T* token) {
 void token_free(token_T* token) {
   if (!token) { return; }
 
-  if (token->value != NULL) { free(token->value); }
+  if (!token->arena_allocated) {
+    if (token->value != NULL) { free(token->value); }
 
-  free(token);
+    free(token);
+  }
 }

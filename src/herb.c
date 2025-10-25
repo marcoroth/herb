@@ -1,8 +1,10 @@
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/lexer.h"
+#include "include/macros.h"
 #include "include/parser.h"
 #include "include/token.h"
+#include "include/util/hb_arena.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/version.h"
@@ -10,9 +12,11 @@
 #include <prism.h>
 #include <stdlib.h>
 
-hb_array_T* herb_lex(const char* source) {
+herb_lex_result_T* herb_lex(const char* source, hb_arena_T* arena) {
+  if (!arena) { return NULL; }
+
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, source, arena);
 
   token_T* token = NULL;
   hb_array_T* tokens = hb_array_init(128);
@@ -23,14 +27,24 @@ hb_array_T* herb_lex(const char* source) {
 
   hb_array_append(tokens, token);
 
-  return tokens;
+  herb_lex_result_T* result = malloc(sizeof(herb_lex_result_T));
+  if (!result) {
+    hb_array_free(&tokens);
+    return NULL;
+  }
+
+  result->tokens = tokens;
+  result->arena = arena;
+
+  return result;
 }
 
-AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
+AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options, hb_arena_T* arena) {
   if (!source) { source = ""; }
+  if (!arena) { return NULL; }
 
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, source, arena);
   parser_T parser = { 0 };
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
@@ -46,20 +60,34 @@ AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
   return document;
 }
 
-hb_array_T* herb_lex_file(const char* path) {
+herb_lex_result_T* herb_lex_file(const char* path, hb_arena_T* arena) {
   char* source = herb_read_file(path);
-  hb_array_T* tokens = herb_lex(source);
+  herb_lex_result_T* result = herb_lex(source, arena);
 
   free(source);
 
-  return tokens;
+  return result;
 }
 
 void herb_lex_to_buffer(const char* source, hb_buffer_T* output) {
-  hb_array_T* tokens = herb_lex(source);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return; }
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
-    token_T* token = hb_array_get(tokens, i);
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return;
+  }
+
+  herb_lex_result_T* result = herb_lex(source, arena);
+
+  if (!result) {
+    hb_arena_free(arena);
+    free(arena);
+    return;
+  }
+
+  for (size_t i = 0; i < hb_array_size(result->tokens); i++) {
+    token_T* token = hb_array_get(result->tokens, i);
 
     char* type = token_to_string(token);
     hb_buffer_append(output, type);
@@ -68,7 +96,23 @@ void herb_lex_to_buffer(const char* source, hb_buffer_T* output) {
     hb_buffer_append(output, "\n");
   }
 
-  herb_free_tokens(&tokens);
+  herb_free_lex_result(&result);
+}
+
+void herb_free_lex_result(herb_lex_result_T** result) {
+  if (!result || !*result) { return; }
+
+  herb_lex_result_T* r = *result;
+
+  if (r->tokens) { hb_array_free(&r->tokens); }
+
+  if (r->arena) {
+    hb_arena_free(r->arena);
+    free(r->arena);
+  }
+
+  free(r);
+  *result = NULL;
 }
 
 void herb_free_tokens(hb_array_T** tokens) {

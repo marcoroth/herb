@@ -31,7 +31,7 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source) {
+void lexer_init(lexer_T* lexer, const char* source, hb_arena_T* arena) {
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {
@@ -52,6 +52,8 @@ void lexer_init(lexer_T* lexer, const char* source) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
+
+  lexer->arena = arena;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -108,7 +110,7 @@ static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const toke
 }
 
 static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
-  char* collected = malloc(count + 1);
+  char* collected = hb_arena_alloc(lexer->arena, count + 1);
   if (!collected) { return NULL; }
 
   for (size_t i = 0; i < count; i++) {
@@ -119,7 +121,6 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
   collected[count] = '\0';
 
   token_T* token = token_init(collected, type, lexer);
-  free(collected);
 
   return token;
 }
@@ -133,15 +134,12 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
 
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
 
-  char* utf8_char = malloc(char_byte_length + 1);
+  char* utf8_char = hb_arena_alloc(lexer->arena, char_byte_length + 1);
 
   if (!utf8_char) { return lexer_advance_current(lexer, type); }
 
   for (int i = 0; i < char_byte_length; i++) {
-    if (lexer->current_position + i >= lexer->source.length) {
-      free(utf8_char);
-      return lexer_advance_current(lexer, type);
-    }
+    if (lexer->current_position + i >= lexer->source.length) { return lexer_advance_current(lexer, type); }
 
     utf8_char[i] = lexer->source.data[lexer->current_position + i];
   }
@@ -151,8 +149,6 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
   lexer_advance_utf8_bytes(lexer, char_byte_length);
 
   token_T* token = token_init(utf8_char, type, lexer);
-
-  free(utf8_char);
 
   return token;
 }
