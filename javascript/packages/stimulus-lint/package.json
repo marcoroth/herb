@@ -34,11 +34,11 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "dependencies": {
-    "@herb-tools/linter": "0.7.5",
     "@herb-tools/core": "0.7.5",
-    "@herb-tools/node-wasm": "0.7.5",
     "@herb-tools/highlighter": "0.7.5",
-    "stimulus-parser": "^0.3.0"
+    "@herb-tools/linter": "0.7.5",
+    "@herb-tools/node-wasm": "0.7.5",
+    "stimulus-parser": "^0.3.1"
   },
   "files": [
     "package.json",
