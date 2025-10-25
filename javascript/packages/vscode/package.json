@@ -78,6 +78,7 @@
               "herb-disable-comment-unnecessary",
               "herb-disable-comment-valid-rule-name",
               "html-anchor-require-href",
+              "html-turbo-permanent",
               "html-aria-attribute-must-be-valid",
               "html-aria-label-is-well-formatted",
               "html-aria-level-must-be-valid",
