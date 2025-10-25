@@ -63,6 +63,7 @@ export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAut
   errors: number
   warnings: number
   ignored: number
+  wouldBeIgnored?: number
 }
 
 /**

@@ -5,6 +5,7 @@ export interface SummaryData {
   totalErrors: number
   totalWarnings: number
   totalIgnored: number
+  totalWouldBeIgnored?: number
   filesWithOffenses: number
   ruleCount: number
   startTime: number
@@ -12,6 +13,7 @@ export interface SummaryData {
   showTiming: boolean
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
   autofixableCount: number
+  ignoreDisableComments?: boolean
 }
 
 export class SummaryReporter {
@@ -20,7 +22,7 @@ export class SummaryReporter {
   }
 
   displaySummary(data: SummaryData): void {
-    const { files, totalErrors, totalWarnings, totalIgnored, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount } = data
+    const { files, totalErrors, totalWarnings, totalIgnored, totalWouldBeIgnored, filesWithOffenses, ruleCount, startTime, startDate, showTiming, autofixableCount, ignoreDisableComments } = data
 
     console.log("\n")
     console.log(` ${colorize("Summary:", "bold")}`)
@@ -87,6 +89,11 @@ export class SummaryReporter {
     }
 
     console.log(`  ${colorize(pad("Offenses"), "gray")} ${offensesSummary}`)
+
+    if (ignoreDisableComments && totalWouldBeIgnored && totalWouldBeIgnored > 0) {
+      const message = `${colorize(colorize(`${totalWouldBeIgnored} additional ${this.pluralize(totalWouldBeIgnored, "offense")} reported (would have been ignored)`, "cyan"), "bold")}`
+      console.log(`  ${colorize(pad("Note"), "gray")} ${message}`)
+    }
 
     if (autofixableCount > 0 || (totalErrors + totalWarnings) > 0) {
       const totalOffenses = totalErrors + totalWarnings
