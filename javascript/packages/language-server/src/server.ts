@@ -9,6 +9,7 @@ import {
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  CodeActionParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -36,6 +37,7 @@ export class Server {
           textDocumentSync: TextDocumentSyncKind.Incremental,
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          codeActionProvider: true,
         },
       }
 
@@ -110,6 +112,23 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.service.formatting.formatRange(params)
+    })
+
+    this.connection.onCodeAction((params: CodeActionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) {
+        return []
+      }
+
+      const diagnostics = params.context.diagnostics
+      const documentText = document.getText()
+
+      return this.service.codeActionService.createCodeActions(
+        params.textDocument.uri,
+        diagnostics,
+        documentText
+      )
     })
   }
 
