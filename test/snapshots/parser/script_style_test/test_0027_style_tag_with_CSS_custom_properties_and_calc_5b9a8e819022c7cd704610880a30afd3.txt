@@ -11,8 +11,31 @@
     │   │
     │   ├── tag_name: "style" (location: (1:1)-(1:6))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:7)-(9:0))
-    │   │       └── content: "\n  :root {\n    --arrow: \"<\";\n    --content: \">\";\n  }\n  .element {\n    width: calc(100% - 20px);\n  }\n"
+    │   │   └── @ CSSStyleNode (location: (1:7)-(9:0))
+    │   │       ├── content: "\n  :root {\n    --arrow: \"<\";\n    --content: \">\";\n  }\n  .element {\n    width: calc(100% - 20px);\n  }\n"
+    │   │       ├── rules: (2 items)
+    │   │       │   ├── @ CSSRuleNode (location: (1:7)-(9:0))
+    │   │       │   │   ├── selector: "SelectorList([Selector(:root, specificity = 0x400)])"
+    │   │       │   │   └── declarations: (2 items)
+    │   │       │   │       ├── @ CSSDeclarationNode (location: (1:7)-(9:0))
+    │   │       │   │       │   ├── property: "--arrow"
+    │   │       │   │       │   └── value: "Custom(CustomProperty { name: Custom(DashedIdent(\"--arrow\")), value: TokenList([Token(String(\"<\"))]) })"
+    │   │       │   │       │
+    │   │       │   │       └── @ CSSDeclarationNode (location: (1:7)-(9:0))
+    │   │       │   │           ├── property: "--content"
+    │   │       │   │           └── value: "Custom(CustomProperty { name: Custom(DashedIdent(\"--content\")), value: TokenList([Token(String(\">\"))]) })"
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ CSSRuleNode (location: (1:7)-(9:0))
+    │   │       │       ├── selector: "SelectorList([Selector(.element, specificity = 0x400)])"
+    │   │       │       └── declarations: (1 item)
+    │   │       │           └── @ CSSDeclarationNode (location: (1:7)-(9:0))
+    │   │       │               ├── property: "width"
+    │   │       │               └── value: "Width(LengthPercentage(Calc(Function(Calc(Sum(Value(Percentage(Percentage(1.0))), Value(Dimension(Px(-20.0)))))))))"
+    │   │       │
+    │   │       │
+    │   │       ├── valid: true
+    │   │       └── parse_error: ""
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (9:0)-(9:8))

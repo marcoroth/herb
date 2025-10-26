@@ -37,6 +37,10 @@ prism_build = $(prism_path)/build
 prism_flags = -I$(prism_include)
 prism_ldflags = $(prism_build)/libprism.a
 
+css_parser_dir = src/css
+css_parser_lib = $(css_parser_dir)/target/release/libherb_css_parser.a
+css_parser_flags = -I$(css_parser_dir)
+
 # Enable strict warnings
 warning_flags = -Wall -Wextra -Werror -pedantic
 
@@ -50,42 +54,44 @@ production_flags = $(warning_flags) -O3 -march=native -flto
 shared_library_flags = -fPIC
 
 # Default build mode (change this as needed)
-flags = $(warning_flags) $(debug_flags) $(prism_flags) -std=c99
+flags = $(warning_flags) $(debug_flags) $(prism_flags) $(css_parser_flags) -std=c99
 
 # Separate test compilation flags
-test_flags = $(debug_flags) $(prism_flags) -std=gnu99
+test_flags = $(debug_flags) $(prism_flags) $(css_parser_flags) -std=gnu99
 
 # Shared library build (if needed)
-shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
+shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags) $(css_parser_flags)
 
 ifeq ($(os),Linux)
+  css_parser_ldflags = $(css_parser_lib) -ldl -lpthread -lm
   test_cflags = $(test_flags) -I/usr/include/check
-  test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags)
+  test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags) $(css_parser_ldflags)
   cc = clang-21
   clang_format = clang-format-21
   clang_tidy = clang-tidy-21
 endif
 
 ifeq ($(os),Darwin)
+  css_parser_ldflags = $(css_parser_lib) -lresolv -framework Security -framework CoreFoundation
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(test_flags) -I$(brew_prefix)/include
-  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(prism_ldflags)
+  test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(prism_ldflags) $(css_parser_ldflags)
   llvm_path = $(shell brew --prefix llvm@21)
   cc = $(llvm_path)/bin/clang
   clang_format = $(llvm_path)/bin/clang-format
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm
+all: templates prism css_parser $(exec) $(lib_name) $(static_lib_name) test wasm
 
-$(exec): $(objects)
-	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
+$(exec): $(objects) $(css_parser_lib)
+	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) $(css_parser_ldflags) -o $(exec)
 
-$(lib_name): $(objects)
-	$(cc) -shared $(objects) $(shared_flags) $(ldflags) $(prism_ldflags) -o $(lib_name)
+$(lib_name): $(objects) $(css_parser_lib)
+	$(cc) -shared $(objects) $(shared_flags) $(ldflags) $(prism_ldflags) $(css_parser_ldflags) -o $(lib_name)
 	# cp $(lib_name) $(ruby_extension)
 
-$(static_lib_name): $(objects)
+$(static_lib_name): $(objects) $(css_parser_lib)
 	ar rcs $(static_lib_name) $(objects)
 
 src/%.o: src/%.c templates
@@ -102,6 +108,7 @@ clean:
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
 	rake prism:clean
+	cd $(css_parser_dir) && cargo clean
 
 bundle_install:
 	bundle install
@@ -112,6 +119,12 @@ templates: bundle_install
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -
 	rake prism:vendor
+
+css_parser: $(css_parser_lib)
+
+$(css_parser_lib):
+	cd $(css_parser_dir) && cargo build --release
+	cbindgen --config $(css_parser_dir)/cbindgen.toml --output src/include/css_parser.h $(css_parser_dir)
 
 format:
 	$(clang_format) -i $(project_and_extension_files)

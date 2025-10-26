@@ -11,8 +11,19 @@
         │
         ├── tag_name: "style" (location: (1:1)-(1:6))
         ├── body: (1 item)
-        │   └── @ LiteralNode (location: (1:7)-(1:38))
-        │       └── content: ".parent > .child { margin: 0; }"
+        │   └── @ CSSStyleNode (location: (1:7)-(1:38))
+        │       ├── content: ".parent > .child { margin: 0; }"
+        │       ├── rules: (1 item)
+        │       │   └── @ CSSRuleNode (location: (1:7)-(1:38))
+        │       │       ├── selector: "SelectorList([Selector(.parent > .child, specificity = 0x800)])"
+        │       │       └── declarations: (1 item)
+        │       │           └── @ CSSDeclarationNode (location: (1:7)-(1:38))
+        │       │               ├── property: "margin"
+        │       │               └── value: "Margin(Margin { top: LengthPercentage(Dimension(Px(0.0))), right: LengthPercentage(Dimension(Px(0.0))), bottom: LengthPercentage(Dimension(Px(0.0))), left: LengthPercentage(Dimension(Px(0.0))) })"
+        │       │
+        │       │
+        │       ├── valid: true
+        │       └── parse_error: ""
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:38)-(1:46))

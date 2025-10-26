@@ -105,5 +105,14 @@ module Herb
 
     # : (Herb::AST::ERBInNode) -> void
     def visit_erb_in_node: (Herb::AST::ERBInNode) -> void
+
+    # : (Herb::AST::CSSDeclarationNode) -> void
+    def visit_css_declaration_node: (Herb::AST::CSSDeclarationNode) -> void
+
+    # : (Herb::AST::CSSRuleNode) -> void
+    def visit_css_rule_node: (Herb::AST::CSSRuleNode) -> void
+
+    # : (Herb::AST::CSSStyleNode) -> void
+    def visit_css_style_node: (Herb::AST::CSSStyleNode) -> void
   end
 end

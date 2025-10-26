@@ -34,11 +34,25 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install Rust WASM target
+        run: rustup target add wasm32-unknown-emscripten
+
+      - name: Build CSS Parser
+        run: cd src/css && cargo build --release
+
       - name: bundle install
         run: bundle install
 
       - name: Render Templates
         run: bundle exec rake templates
+
+      - name: make all
+        run: make all
 
       - name: Compile Herb
         run: bundle exec rake make
