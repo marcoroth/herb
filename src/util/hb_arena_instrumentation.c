@@ -5,8 +5,9 @@
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
+
 #define HB_ARENA_INSTRUMENTATION_FILE "arena_instrumentation.bin"
-#define HB_ARENA_INSTRUMENTATION_MAP_SIZE (1024 * 1024 * 64)
+#define HB_ARENA_INSTRUMENTATION_MAP_SIZE (1024UL * 1024UL * 1024UL * 24UL)
 
 typedef struct HB_ARENA_INSTRUMENTATION_STRUCT {
   size_t current_position;
@@ -56,7 +57,19 @@ void hb_arena_instrumentation_log_init(const hb_arena_T* arena) {
 }
 
 void hb_arena_instrumentation_log_alloc(const hb_arena_T* arena, size_t allocation_size) {
-  assert(hb_arena_instrumentation.memory != NULL);
+  if (hb_arena_instrumentation.memory == NULL) { return; }
+
+  size_t page_count = 0;
+  for (hb_arena_page_T* page = arena->head; page != NULL; page = page->next) {
+    page_count++;
+  }
+
+  size_t event_size = sizeof(hb_arena_instrumentation_event_T) + page_count * sizeof(hb_arena_instrumentation_page_state_T);
+  size_t needed_size = hb_arena_instrumentation.current_position + event_size;
+
+  if (needed_size >= hb_arena_instrumentation.map_size) {
+    return;
+  }
 
   size_t *count = (size_t*)hb_arena_instrumentation.memory;
   *count += 1;
@@ -66,6 +79,7 @@ void hb_arena_instrumentation_log_alloc(const hb_arena_T* arena, size_t allocati
   event->type = HB_ARENA_INSTRUMENTATION_EVENT_ALLOC;
   event->time = hb_arena_instrumentation.current_position;
   event->data.alloc_data.allocation_size = allocation_size;
+  event->data.alloc_data.page_count = 0;
 
   hb_arena_page_T *current_page = arena->head;
 
@@ -82,7 +96,19 @@ void hb_arena_instrumentation_log_alloc(const hb_arena_T* arena, size_t allocati
 }
 
 void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_position) {
-  assert(hb_arena_instrumentation.memory != NULL);
+  if (hb_arena_instrumentation.memory == NULL) { return; }
+
+  size_t page_count = 0;
+  for (hb_arena_page_T* page = arena->head; page != NULL; page = page->next) {
+    page_count++;
+  }
+
+  size_t event_size = sizeof(hb_arena_instrumentation_event_T) + page_count * sizeof(hb_arena_instrumentation_page_state_T);
+  size_t needed_size = hb_arena_instrumentation.current_position + event_size;
+
+  if (needed_size >= hb_arena_instrumentation.map_size) {
+    return;
+  }
 
   size_t *count = (size_t*)hb_arena_instrumentation.memory;
   *count += 1;
@@ -92,6 +118,7 @@ void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_po
   event->type = HB_ARENA_INSTRUMENTATION_EVENT_RESET;
   event->time = hb_arena_instrumentation.current_position;
   event->data.reset_data.reset_position = reset_position;
+  event->data.reset_data.page_count = 0;
 
   hb_arena_page_T *current_page = arena->head;
 
@@ -108,10 +135,11 @@ void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_po
 }
 
 void hb_arena_instrumentation_done(void) {
-  assert(hb_arena_instrumentation.memory != NULL);
+  if (hb_arena_instrumentation.memory == NULL) { return; }
+
   msync(hb_arena_instrumentation.memory, hb_arena_instrumentation.map_size, MS_SYNC);
   munmap(hb_arena_instrumentation.memory, hb_arena_instrumentation.map_size);
-  ftruncate(hb_arena_instrumentation.file, hb_arena_instrumentation.current_position);
+  ftruncate(hb_arena_instrumentation.file, (off_t)hb_arena_instrumentation.current_position);
   close(hb_arena_instrumentation.file);
 
   hb_arena_instrumentation.memory = NULL;

@@ -59,8 +59,8 @@ int main(const int argc, char* argv[]) {
 
     printf("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n\n");
 
-    printf("./herb lex [file]         -  Lex a file\n");
-    printf("./herb parse [file]       -  Parse a file\n");
+    printf("./herb lex [file]         -  Lex a file (generates arena_instrumentation.bin)\n");
+    printf("./herb parse [file]       -  Parse a file (generates arena_instrumentation.bin)\n");
     printf("./herb ruby [file]        -  Extract Ruby from a file\n");
     printf("./herb html [file]        -  Extract HTML from a file\n");
     printf("./herb prism [file]       -  Extract Ruby from a file and parse the Ruby source with Prism\n");
@@ -131,8 +131,12 @@ int main(const int argc, char* argv[]) {
     print_time_diff(start, end, "visiting");
 
     ast_node_free((AST_NODE_T*) root);
+    hb_arena_free(arena);
+    free(arena);
     free(output.value);
     free(source);
+
+    hb_arena_instrumentation_done();
 
     return 0;
   }
@@ -146,6 +150,8 @@ int main(const int argc, char* argv[]) {
 
     free(output.value);
     free(source);
+
+    hb_arena_instrumentation_done();
 
     return 0;
   }
@@ -177,8 +183,12 @@ int main(const int argc, char* argv[]) {
     }
 
     ast_node_free((AST_NODE_T*) root);
+    hb_arena_free(arena);
+    free(arena);
     free(output.value);
     free(source);
+
+    hb_arena_instrumentation_done();
 
     return 0;
   }
