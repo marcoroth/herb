@@ -8,6 +8,8 @@
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/ruby_parser.h"
+#include "include/util/hb_arena.h"
+#include "include/util/hb_arena_instrumentation.h"
 #include "include/util/hb_buffer.h"
 
 #include <stdio.h>
@@ -38,13 +40,44 @@ int main(const int argc, char* argv[]) {
 
     printf("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n\n");
 
-    printf("./herb lex [file]      -  Lex a file\n");
-    printf("./herb parse [file]    -  Parse a file\n");
-    printf("./herb ruby [file]     -  Extract Ruby from a file\n");
-    printf("./herb html [file]     -  Extract HTML from a file\n");
-    printf("./herb prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./herb lex [file]         -  Lex a file\n");
+    printf("./herb parse [file]       -  Parse a file\n");
+    printf("./herb ruby [file]        -  Extract Ruby from a file\n");
+    printf("./herb html [file]        -  Extract HTML from a file\n");
+    printf("./herb prism [file]       -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./herb arena-demo         -  Demonstrate arena allocator with instrumentation\n");
 
     return 1;
+  }
+
+  if (strcmp(argv[1], "arena-demo") == 0) {
+    printf("Arena Allocator Instrumentation Demo\n");
+    printf("=====================================\n\n");
+
+    hb_arena_T arena;
+    hb_arena_init(&arena, 1024);
+
+    printf("Allocating various sizes and resetting...\n\n");
+
+    for (int i = 0; i < 100; i++) {
+      hb_arena_alloc(&arena, i + 1);
+    }
+
+    hb_arena_reset_to(&arena, 0);
+
+    for (int i = 0; i < 50; i++) {
+      hb_arena_alloc(&arena, (i + 1) * 2);
+    }
+
+    hb_arena_free(&arena);
+
+    printf("Arena operations completed.\n");
+    printf("Instrumentation data written to: arena_instrumentation.bin\n\n");
+    printf("You can analyze this data with your own visualization tools.\n");
+
+    hb_arena_instrumentation_done();
+
+    return 0;
   }
 
   if (argc < 3) {

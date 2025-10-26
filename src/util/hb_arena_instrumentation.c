@@ -50,7 +50,7 @@ void hb_arena_instrumentation_log_init(const hb_arena_T* arena) {
 
   event->type = HB_ARENA_INSTRUMENTATION_EVENT_INIT;
   event->time = hb_arena_instrumentation.current_position;
-  event->init_data.default_size = arena->default_page_size;
+  event->data.init_data.default_size = arena->default_page_size;
 
   hb_arena_instrumentation.current_position += sizeof(hb_arena_instrumentation_event_T);
 }
@@ -65,20 +65,20 @@ void hb_arena_instrumentation_log_alloc(const hb_arena_T* arena, size_t allocati
 
   event->type = HB_ARENA_INSTRUMENTATION_EVENT_ALLOC;
   event->time = hb_arena_instrumentation.current_position;
-  event->alloc_data.allocation_size = allocation_size;
+  event->data.alloc_data.allocation_size = allocation_size;
 
   hb_arena_page_T *current_page = arena->head;
 
   while(current_page != NULL) {
-    event->alloc_data.page_states[event->alloc_data.page_count].address = (uintptr_t)current_page->memory;
-    event->alloc_data.page_states[event->alloc_data.page_count].capacity = current_page->capacity;
-    event->alloc_data.page_states[event->alloc_data.page_count].position = current_page->position;
+    event->page_states[event->data.alloc_data.page_count].address = (uintptr_t)current_page->memory;
+    event->page_states[event->data.alloc_data.page_count].capacity = current_page->capacity;
+    event->page_states[event->data.alloc_data.page_count].position = current_page->position;
 
-    event->alloc_data.page_count += 1;
+    event->data.alloc_data.page_count += 1;
     current_page = current_page->next;
   }
 
-  hb_arena_instrumentation.current_position += sizeof(hb_arena_instrumentation_event_T) + event->alloc_data.page_count * sizeof(hb_arena_instrumentation_page_state_T);
+  hb_arena_instrumentation.current_position += sizeof(hb_arena_instrumentation_event_T) + event->data.alloc_data.page_count * sizeof(hb_arena_instrumentation_page_state_T);
 }
 
 void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_position) {
@@ -91,23 +91,23 @@ void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_po
 
   event->type = HB_ARENA_INSTRUMENTATION_EVENT_RESET;
   event->time = hb_arena_instrumentation.current_position;
-  event->reset_data.reset_position = reset_position;
+  event->data.reset_data.reset_position = reset_position;
 
   hb_arena_page_T *current_page = arena->head;
 
   while(current_page != NULL) {
-    event->reset_data.page_states[event->reset_data.page_count].address = (uintptr_t)current_page->memory;
-    event->reset_data.page_states[event->reset_data.page_count].capacity = current_page->capacity;
-    event->reset_data.page_states[event->reset_data.page_count].position = current_page->position;
+    event->page_states[event->data.reset_data.page_count].address = (uintptr_t)current_page->memory;
+    event->page_states[event->data.reset_data.page_count].capacity = current_page->capacity;
+    event->page_states[event->data.reset_data.page_count].position = current_page->position;
 
-    event->reset_data.page_count += 1;
+    event->data.reset_data.page_count += 1;
     current_page = current_page->next;
   }
 
-  hb_arena_instrumentation.current_position += sizeof(hb_arena_instrumentation_event_T) + event->reset_data.page_count * sizeof(hb_arena_instrumentation_page_state_T);
+  hb_arena_instrumentation.current_position += sizeof(hb_arena_instrumentation_event_T) + event->data.reset_data.page_count * sizeof(hb_arena_instrumentation_page_state_T);
 }
 
-void hb_arena_instrumentation_done() {
+void hb_arena_instrumentation_done(void) {
   assert(hb_arena_instrumentation.memory != NULL);
   msync(hb_arena_instrumentation.memory, hb_arena_instrumentation.map_size, MS_SYNC);
   munmap(hb_arena_instrumentation.memory, hb_arena_instrumentation.map_size);

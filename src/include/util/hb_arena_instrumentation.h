@@ -26,19 +26,18 @@ typedef struct HB_ARENA_INSTRUMENTATION_EVENT_STRUCT {
     struct {
       size_t allocation_size;
       size_t page_count;
-      hb_arena_instrumentation_page_state_T page_states[];
     } alloc_data;
     struct {
       size_t reset_position;
       size_t page_count;
-      hb_arena_instrumentation_page_state_T page_states[];
     } reset_data;
-  };
+  } data;
+  hb_arena_instrumentation_page_state_T page_states[];
 } hb_arena_instrumentation_event_T;
 
 void hb_arena_instrumentation_log_init(const hb_arena_T* arena);
 void hb_arena_instrumentation_log_alloc(const hb_arena_T* arena, size_t allocation_size);
 void hb_arena_instrumentation_log_reset(const hb_arena_T* arena, size_t reset_position);
-void hb_arena_instrumentation_done();
+void hb_arena_instrumentation_done(void);
 
 #endif
