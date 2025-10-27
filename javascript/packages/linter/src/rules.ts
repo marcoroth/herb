@@ -34,9 +34,9 @@ import { HTMLHeadOnlyElementsRule } from "./rules/html-head-only-elements.js"
 import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
 import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
-// import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
+import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
-// import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
+import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
@@ -45,8 +45,8 @@ import { HTMLNoEmptyHeadingsRule } from "./rules/html-no-empty-headings.js"
 import { HTMLNoNestedLinksRule } from "./rules/html-no-nested-links.js"
 import { HTMLNoPositiveTabIndexRule } from "./rules/html-no-positive-tab-index.js"
 import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
-// import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
-// import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
+import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
+import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
@@ -54,7 +54,7 @@ import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalizatio
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
-export const defaultRules: RuleClass[] = [
+export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
   ERBNoEmptyTagsRule,
@@ -89,9 +89,9 @@ export const defaultRules: RuleClass[] = [
   HTMLIframeHasTitleRule,
   HTMLImgRequireAltRule,
   HTMLInputRequireAutocompleteRule,
-  // HTMLNavigationHasLabelRule,
+  HTMLNavigationHasLabelRule,
   HTMLNoAriaHiddenOnFocusableRule,
-  // HTMLNoBlockInsideInlineRule,
+  HTMLNoBlockInsideInlineRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
@@ -100,8 +100,8 @@ export const defaultRules: RuleClass[] = [
   HTMLNoNestedLinksRule,
   HTMLNoPositiveTabIndexRule,
   HTMLNoSelfClosingRule,
-  // HTMLNoSpaceInTagRule,
-  // HTMLNoTitleAttributeRule,
+  HTMLNoSpaceInTagRule,
+  HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLTagNameLowercaseRule,
 

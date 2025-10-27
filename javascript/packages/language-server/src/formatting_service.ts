@@ -3,8 +3,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
 import { Settings } from "./settings"
-import { Config } from "./config"
-import { glob } from "glob"
+import { Config } from "@herb-tools/config"
+import { minimatch } from "minimatch"
+import { version } from "../package.json"
 
 export class FormattingService {
   private connection: Connection
@@ -22,7 +23,10 @@ export class FormattingService {
 
   async initialize() {
     try {
-      this.config = await Config.fromPathOrNew(this.project.projectPath)
+      this.config = await Config.load(this.project.projectPath, {
+        silent: true,
+        version
+      })
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
       this.connection.console.error(`Failed to initialize Herb formatter: ${error}`)
@@ -30,49 +34,38 @@ export class FormattingService {
   }
 
   async refreshConfig() {
-    this.config = await Config.fromPathOrNew(this.project.projectPath)
+    this.config = await Config.load(this.project.projectPath, {
+      silent: true,
+      version
+    })
   }
 
   private async shouldFormatFile(filePath: string): Promise<boolean> {
-    if (!this.config?.options.formatter) {
+    if (!this.config?.formatter) {
       return true
     }
 
-    const formatter = this.config.options.formatter
+    const formatter = this.config.formatter
 
-    // Check if formatting is disabled in project config
     if (formatter.enabled === false) {
       return false
     }
 
-    // Check exclude patterns first
-    if (formatter.exclude) {
-      for (const pattern of formatter.exclude) {
-        try {
-          const matches = await new Promise<string[]>((resolve, reject) => {
-            glob(pattern, { cwd: this.project.projectPath }).then(resolve).catch(reject)
-          })
+    const relativePath = filePath.replace('file://', '').replace(this.project.projectPath + '/', '')
+    const excludePatterns = this.config.getExcludePatterns('formatter')
 
-          if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
-            return false
-          }
-        } catch {
-          continue
+    if (excludePatterns.length > 0) {
+      for (const pattern of excludePatterns) {
+        if (minimatch(relativePath, pattern)) {
+          return false
         }
       }
     }
 
-    if (formatter.include && formatter.include.length > 0) {
-      for (const pattern of formatter.include) {
-        try {
-          const matches = await new Promise<string[]>((resolve, reject) => {
-            glob(pattern, { cwd: this.project.projectPath }).then(resolve).catch(reject)
-          })
-          if (Array.isArray(matches) && matches.some((match: string) => filePath.includes(match) || filePath.endsWith(match))) {
-            return true
-          }
-        } catch {
-          continue
+    if (formatter.files?.patterns && formatter.files.patterns.length > 0) {
+      for (const pattern of formatter.files.patterns) {
+        if (minimatch(relativePath, pattern)) {
+          return true
         }
       }
 
@@ -85,7 +78,7 @@ export class FormattingService {
   private async getFormatterOptions(uri: string) {
     const settings = await this.settings.getDocumentSettings(uri)
 
-    const projectFormatter = this.config?.options.formatter || {}
+    const projectFormatter = this.config?.formatter || {}
 
     return {
       indentWidth: projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
@@ -129,6 +122,10 @@ export class FormattingService {
   }
 
   async formatDocument(params: DocumentFormattingParams): Promise<TextEdit[]> {
+    if (params.textDocument.uri.endsWith('.herb.yml')) {
+      return []
+    }
+
     const settings = await this.settings.getDocumentSettings(params.textDocument.uri)
 
     if (settings?.formatter?.enabled === false) {
@@ -225,6 +222,10 @@ export class FormattingService {
   }
 
   async formatRange(params: DocumentRangeFormattingParams): Promise<TextEdit[]> {
+    if (params.textDocument.uri.endsWith('.herb.yml')) {
+      return []
+    }
+
     const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
 
     if (!(await this.shouldFormatFile(filePath))) {

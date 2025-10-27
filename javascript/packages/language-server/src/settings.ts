@@ -1,13 +1,14 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
 import { defaultFormatOptions } from "@herb-tools/formatter"
+import { Config } from "@herb-tools/config"
+import { version } from "../package.json"
 
-export interface HerbSettings {
+export interface PersonalHerbSettings {
   trace?: {
     server?: string
   }
   linter?: {
     enabled?: boolean
-    excludedRules?: string[]
   }
   formatter?: {
     enabled?: boolean
@@ -17,13 +18,10 @@ export interface HerbSettings {
 }
 
 export class Settings {
-  // The global settings, used when the `workspace/configuration` request is not supported by the client.
-  // Please note that this is not the case when using this server with the client provided in this example
-  // but could happen with other clients.
-  defaultSettings: HerbSettings = {
+
+  defaultSettings: PersonalHerbSettings = {
     linter: {
-      enabled: true,
-      excludedRules: ["parser-no-errors"] // Default exclusion since parser errors are handled by ParserService
+      enabled: true
     },
     formatter: {
       enabled: false,
@@ -31,8 +29,9 @@ export class Settings {
       maxLineLength: defaultFormatOptions.maxLineLength
     }
   }
-  globalSettings: HerbSettings = this.defaultSettings
-  documentSettings: Map<string, Thenable<HerbSettings>> = new Map()
+  globalSettings: PersonalHerbSettings = this.defaultSettings
+  documentSettings: Map<string, Thenable<PersonalHerbSettings>> = new Map()
+  projectConfig?: Config
 
   hasConfigurationCapability = false
   hasWorkspaceFolderCapability = false
@@ -47,8 +46,6 @@ export class Settings {
     this.capabilities = params.capabilities
     this.connection = connection
 
-    // Does the client support the `workspace/configuration` request?
-    // If not, we fall back using global settings.
     this.hasConfigurationCapability = !!(this.capabilities.workspace && !!this.capabilities.workspace.configuration)
 
     this.hasWorkspaceFolderCapability = !!(
@@ -62,13 +59,55 @@ export class Settings {
     )
   }
 
-  get projectPath(): string {
-    return this.params.workspaceFolders?.at(0)?.uri || ""
+  async initializeProjectConfig(config?: Config) {
+    if (config) {
+      this.projectConfig = config
+      return
+    }
+
+    try {
+      this.projectConfig = await Config.load(this.projectPath, { silent: true, version })
+    } catch (error) {
+      this.connection.console.warn(`Failed to load project config: ${error}`)
+      this.projectConfig = undefined
+    }
   }
 
-  getDocumentSettings(resource: string): Thenable<HerbSettings> {
+  async refreshProjectConfig(config?: Config) {
+    await this.initializeProjectConfig(config)
+
+    this.documentSettings.clear()
+  }
+
+  private mergeSettings(userSettings: PersonalHerbSettings, projectConfig?: Config): PersonalHerbSettings {
+    if (!projectConfig) {
+      return userSettings
+    }
+
+    return {
+      trace: userSettings.trace,
+      linter: {
+        enabled: projectConfig.linter?.enabled ?? userSettings.linter?.enabled ?? this.defaultSettings.linter!.enabled!
+      },
+      formatter: {
+        enabled: projectConfig.formatter?.enabled ?? userSettings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
+        indentWidth: projectConfig.formatter?.indentWidth ?? userSettings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+        maxLineLength: projectConfig.formatter?.maxLineLength ?? userSettings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
+      }
+    }
+  }
+
+  get projectPath(): string {
+    const uri = this.params.workspaceFolders?.at(0)?.uri || ""
+
+    return uri.replace(/^file:\/\//, "")
+  }
+
+  getDocumentSettings(resource: string): Thenable<PersonalHerbSettings> {
     if (!this.hasConfigurationCapability) {
-      return Promise.resolve(this.globalSettings)
+      const merged = this.mergeSettings(this.globalSettings, this.projectConfig)
+
+      return Promise.resolve(merged)
     }
 
     let result = this.documentSettings.get(resource)
@@ -77,6 +116,8 @@ export class Settings {
       result = this.connection.workspace.getConfiguration({
         scopeUri: resource,
         section: "languageServerHerb",
+      }).then((userSettings: PersonalHerbSettings) => {
+        return this.mergeSettings(userSettings, this.projectConfig)
       })
 
       this.documentSettings.set(resource, result)

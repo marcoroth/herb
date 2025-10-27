@@ -39,6 +39,7 @@
     }
   },
   "dependencies": {
+    "@herb-tools/config": "0.7.5",
     "@herb-tools/core": "0.7.5",
     "@herb-tools/highlighter": "0.7.5",
     "@herb-tools/node-wasm": "0.7.5",

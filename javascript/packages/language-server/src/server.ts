@@ -10,12 +10,12 @@ import {
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
   CodeActionParams,
+  CodeActionKind,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
-import { HerbSettings } from "./settings"
-
-import { HERB_FILES_GLOB } from "@herb-tools/core"
+import { PersonalHerbSettings } from "./settings"
+import { Config } from "@herb-tools/config"
 
 export class Server {
   private service!: Service
@@ -37,7 +37,9 @@ export class Server {
           textDocumentSync: TextDocumentSyncKind.Incremental,
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
-          codeActionProvider: true,
+          codeActionProvider: {
+            codeActionKinds: [CodeActionKind.QuickFix]
+          },
         },
       }
 
@@ -64,9 +66,13 @@ export class Server {
         })
       }
 
+      const extensions = Config.DEFAULT_EXTENSIONS.map(extension => extension.startsWith('.') ? extension.slice(1) : extension).join(',')
+      const fileGlobPattern = `**/*.{${extensions}}`
+
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: HERB_FILES_GLOB },
+          { globPattern: fileGlobPattern },
+          { globPattern: `**/.herb.yml` },
           { globPattern: `**/**/.herb-lsp/config.json` },
         ],
       })
@@ -79,7 +85,7 @@ export class Server {
       } else {
         this.service.settings.globalSettings = (
           (change.settings.languageServerHerb || this.service.settings.defaultSettings)
-        ) as HerbSettings
+        ) as PersonalHerbSettings
       }
 
       await this.service.refresh()
@@ -95,7 +101,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles((params) => {
       params.changes.forEach(async (event) => {
-        if (event.uri.endsWith("/.herb-lsp/config.json")) {
+        if (event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")) {
           await this.service.refreshConfig()
 
           const documents = this.service.documentService.getAll()

@@ -42,7 +42,7 @@ async function main() {
       esbuildProblemMatcherPlugin,
       copy({
         assets: [
-          { from: '../language-server/dist/herb-language-server.js', to: ['./'] },
+          { from: '../language-server/dist/herb-language-server.js', to: ['herb-language-server.js'] },
         ],
       })
     ],

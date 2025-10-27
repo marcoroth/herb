@@ -4,7 +4,7 @@ import { glob } from "glob"
 import { join, resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { HERB_FILES_GLOB } from "@herb-tools/core"
+import { Config } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
 import { parseArgs } from "util"
@@ -21,28 +21,32 @@ export class CLI {
     Usage: herb-format [file|directory|glob-pattern] [options]
 
     Arguments:
-      file|directory|glob-pattern   File to format, directory to format all \`${HERB_FILES_GLOB}\` files within,
-                                    glob pattern to match files, or '-' for stdin (omit to format all \`${HERB_FILES_GLOB}\` files in current directory)
+      file|directory|glob-pattern   File to format, directory to format all configured files within,
+                                    glob pattern to match files, or '-' for stdin (omit to format all configured files in current directory)
 
     Options:
       -c, --check                     check if files are formatted without modifying them
       -h, --help                      show help
       -v, --version                   show version
+      --init                          create a .herb.yml configuration file in the current directory
+      --config-file <path>            explicitly specify path to .herb.yml config file
+      --force                         force formatting even if disabled in .herb.yml
       --indent-width <number>         number of spaces per indentation level (default: 2)
       --max-line-length <number>      maximum line length before wrapping (default: 80)
 
     Examples:
-      herb-format                                 # Format all \`${HERB_FILES_GLOB}\` files in current directory
+      herb-format                                 # Format all configured files in current directory
       herb-format index.html.erb                  # Format and write single file
       herb-format templates/index.html.erb        # Format and write single file
-      herb-format templates/                      # Format all \`${HERB_FILES_GLOB}\` within the given directory
+      herb-format templates/                      # Format all configured files within the given directory
       herb-format "templates/**/*.html.erb"       # Format all \`**/*.html.erb\` files in the templates/ directory
       herb-format "**/*.html.erb"                 # Format all \`*.html.erb\` files using glob pattern
       herb-format "**/*.xml.erb"                  # Format all \`*.xml.erb\` files using glob pattern
 
-      herb-format --check                         # Check if all \`${HERB_FILES_GLOB}\` files are formatted
-      herb-format --check templates/              # Check if all \`${HERB_FILES_GLOB}\` files in templates/ are formatted
+      herb-format --check                         # Check if all configured files are formatted
+      herb-format --check templates/              # Check if all configured files in templates/ are formatted
 
+      herb-format --force                         # Format even if disabled in project config
       herb-format --indent-width 4                # Format with 4-space indentation
       herb-format --max-line-length 100           # Format with 100-character line limit
       cat template.html.erb | herb-format         # Format from stdin to stdout
@@ -53,8 +57,11 @@ export class CLI {
       args: process.argv.slice(2),
       options: {
         help: { type: "boolean", short: "h" },
+        force: { type: "boolean" },
         version: { type: "boolean", short: "v" },
         check: { type: "boolean", short: "c" },
+        init: { type: "boolean" },
+        "config-file": { type: "string" },
         "indent-width": { type: "string" },
         "max-line-length": { type: "string" }
       },
@@ -96,13 +103,16 @@ export class CLI {
       positionals,
       isCheckMode: values.check,
       isVersionMode: values.version,
+      isForceMode: values.force,
+      isInitMode: values.init,
+      configFile: values["config-file"],
       indentWidth,
       maxLineLength
     }
   }
 
   async run() {
-    const { positionals, isCheckMode, isVersionMode, indentWidth, maxLineLength } = this.parseArguments()
+    const { positionals, isCheckMode, isVersionMode, isForceMode, isInitMode, configFile, indentWidth, maxLineLength } = this.parseArguments()
 
     try {
       await Herb.load()
@@ -116,6 +126,52 @@ export class CLI {
         process.exit(0)
       }
 
+      const file = positionals[0]
+      const startPath = file || process.cwd()
+
+      if (isInitMode) {
+        const configPath = configFile || startPath
+
+        if (Config.exists(configPath)) {
+          const fullPath = configFile || Config.configPathFromProjectPath(startPath)
+          console.log(`\n✗ Configuration file already exists at ${fullPath}`)
+          console.log(`  Use --config-file to specify a different location.\n`)
+          process.exit(1)
+        }
+
+        const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: true, silent: true })
+
+        await Config.mutateConfigFile(config.path, {
+          formatter: {
+            enabled: true
+          }
+        })
+
+        console.log(`\n✓ Configuration initialized at ${config.path}`)
+        console.log(`  Formatter is enabled by default.`)
+        console.log(`  Edit this file to customize linter and formatter settings.\n`)
+
+        process.exit(0)
+      }
+
+      const config = await Config.load(configFile || startPath, { version, exitOnError: true, createIfMissing: false })
+      const formatterConfig = config.formatter || {}
+      const globPattern = config.getGlobPattern('formatter')
+      const excludePatterns = config.getExcludePatterns('formatter')
+
+      if (formatterConfig.enabled === false && !isForceMode) {
+        console.log("Formatter is disabled in .herb.yml configuration.")
+        console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
+        console.log("Or use --force to format anyway.")
+
+        process.exit(0)
+      }
+
+      if (isForceMode && formatterConfig.enabled === false) {
+        console.error("⚠️  Forcing formatter run (disabled in .herb.yml)")
+        console.error()
+      }
+
       console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.error()
 
@@ -125,8 +181,6 @@ export class CLI {
       })
 
       const formatter = new Formatter(Herb, formatOptions)
-
-      const file = positionals[0]
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {
@@ -166,7 +220,7 @@ export class CLI {
         }
 
         if (isDirectory) {
-          pattern = join(file, HERB_FILES_GLOB)
+          pattern = join(file, globPattern)
         } else if (isFile) {
           const source = readFileSync(file, "utf-8")
           const result = formatter.format(source)
@@ -188,7 +242,7 @@ export class CLI {
         }
 
         try {
-          const files = await glob(pattern)
+          const files = await glob(pattern, { ignore: excludePatterns })
 
           if (files.length === 0) {
             try {
@@ -249,10 +303,10 @@ export class CLI {
           process.exit(1)
         }
       } else {
-        const files = await glob(HERB_FILES_GLOB)
+        const files = await glob(globPattern, { ignore: excludePatterns })
 
         if (files.length === 0) {
-          console.log(`No files found matching pattern: ${resolve(HERB_FILES_GLOB)}`)
+          console.log(`No files found matching pattern: ${resolve(globPattern)}`)
 
           process.exit(0)
         }

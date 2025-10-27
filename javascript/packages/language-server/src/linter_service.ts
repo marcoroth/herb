@@ -1,12 +1,11 @@
-import { Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
+import { Diagnostic, Range, Position, CodeDescription } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter } from "@herb-tools/linter"
 import { Herb } from "@herb-tools/node-wasm"
 
 import { Settings } from "./settings"
-
-import type { LintSeverity  } from "@herb-tools/linter"
+import { lintToDignosticSeverity } from "./utils"
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
@@ -15,11 +14,18 @@ export interface LintServiceResult {
 export class LinterService {
   private readonly settings: Settings
   private readonly source = "Herb Linter "
-  private linter: Linter
+  private linter?: Linter
 
   constructor(settings: Settings) {
     this.settings = settings
-    this.linter = new Linter(Herb)
+  }
+
+  /**
+   * Rebuild the linter when config changes
+   * This ensures the linter uses the latest rule configuration
+   */
+  rebuildLinter(): void {
+    this.linter = undefined
   }
 
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
@@ -30,11 +36,26 @@ export class LinterService {
       return { diagnostics: [] }
     }
 
-    const lintResult = this.linter.lint(textDocument.getText(), { fileName: textDocument.uri })
-    const excludedRules = settings?.linter?.excludedRules ?? ["parser-no-errors"]
-    const offenses = lintResult.offenses.filter(offense => !excludedRules.includes(offense.rule))
+    const projectConfig = this.settings.projectConfig
 
-    const diagnostics: Diagnostic[] = offenses.map(offense => {
+    if (!this.linter) {
+      const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
+
+      const config = {
+        ...linterConfig,
+        rules: {
+          ...linterConfig.rules,
+          'parser-no-errors': { enabled: false }
+        }
+      }
+
+      this.linter = Linter.from(Herb, config)
+    }
+
+    const content = textDocument.getText()
+    const lintResult = this.linter.lint(content, { fileName: textDocument.uri })
+
+    const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {
       const range = Range.create(
         Position.create(offense.location.start.line - 1, offense.location.start.column),
         Position.create(offense.location.end.line - 1, offense.location.end.column),
@@ -46,7 +67,7 @@ export class LinterService {
 
       return {
         source: this.source,
-        severity: this.lintToDignosticSeverity(offense.severity),
+        severity: lintToDignosticSeverity(offense.severity),
         range,
         message: offense.message,
         code: offense.rule,
@@ -56,14 +77,5 @@ export class LinterService {
     })
 
     return { diagnostics }
-  }
-
-  private lintToDignosticSeverity(severity: LintSeverity): DiagnosticSeverity {
-    switch (severity) {
-      case "error": return DiagnosticSeverity.Error
-      case "warning": return DiagnosticSeverity.Warning
-      case "info": return DiagnosticSeverity.Information
-      case "hint": return DiagnosticSeverity.Hint
-    }
   }
 }

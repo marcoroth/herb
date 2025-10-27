@@ -3,7 +3,7 @@ import { SourceRule } from "../types.js"
 import { Location, Position } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
-import type { LintOffense, LintContext, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
   startOffset: number
@@ -49,7 +49,6 @@ class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAu
       this.addOffense(
         `Extra blank line detected. Remove ${extraLines} blank ${extraLines === 1 ? "line" : "lines"} to maintain consistent spacing (max 2 allowed).`,
         location,
-        "error",
         {
           node: null as any as Node,
           startOffset,
@@ -64,7 +63,14 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   static autocorrectable = true
   name = "erb-no-extra-newline"
 
-  check(source: string, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
 
     visitor.visit(source)

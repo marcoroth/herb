@@ -1,4 +1,4 @@
-import { colorize } from "./color.js"
+import { colorize, severityColor } from "./color.js"
 import { applyDimToStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
@@ -141,11 +141,10 @@ export class DiagnosticRenderer {
 
     const shouldWrap = wrapLines && !truncateLines
     const shouldTruncate = truncateLines
-    const isError = diagnostic.severity === "error"
     const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
-    const severityText = isError
-      ? colorize("error", "brightRed")
-      : colorize("warning", "brightYellow")
+
+    const text = diagnostic.severity
+    const color = severityColor(diagnostic.severity)
     const diagnosticId = colorize(diagnostic.code || "-", "gray")
 
     const originalLines = content.split("\n")
@@ -189,7 +188,7 @@ export class DiagnosticRenderer {
         : colorize(i.toString().padStart(3, " "), "gray")
 
       const prefix = isTargetLine
-        ? colorize("  → ", isError ? "brightRed" : "brightYellow")
+        ? colorize("  → ", color)
         : "    "
 
       const separator = colorize("│", "gray")
@@ -240,7 +239,7 @@ export class DiagnosticRenderer {
         const pointerSpacing = " ".repeat(adjustedColumn + 2)
         const adjustedPointer = colorize(
           "~".repeat(adjustedPointerLength),
-          isError ? "brightRed" : "brightYellow",
+          color,
         )
         contextOutput += `${pointerPrefix}${pointerSpacing}${adjustedPointer}\n`
       }
@@ -248,7 +247,7 @@ export class DiagnosticRenderer {
 
     const highlightedMessage = this.highlightBackticks(diagnostic.message)
 
-    return `[${severityText}] ${highlightedMessage} (${diagnosticId})
+    return `[${text}] ${highlightedMessage} (${diagnosticId})
 
 ${fileHeader}
 

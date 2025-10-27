@@ -1,24 +1,54 @@
-import { CodeAction, CodeActionKind, Diagnostic, Range, TextEdit, WorkspaceEdit } from "vscode-languageserver/node"
+import { CodeAction, CodeActionKind, Diagnostic, Range, TextEdit, WorkspaceEdit, CreateFile, TextDocumentEdit, OptionalVersionedTextDocumentIdentifier } from "vscode-languageserver/node"
+import { Config } from "@herb-tools/config"
+import { Project } from "./project"
 
 export class CodeActionService {
+  private project: Project
+  private config?: Config
+
+  constructor(project: Project, config?: Config) {
+    this.project = project
+    this.config = config
+  }
+
+  setConfig(config: Config) {
+    this.config = config
+  }
+
   createCodeActions(uri: string, diagnostics: Diagnostic[], documentText: string): CodeAction[] {
     const actions: CodeAction[] = []
+    const linesWithDisableAll = new Set<number>()
+    const disableAllActions: CodeAction[] = []
 
-    for (const diagnostic of diagnostics) {
-      if (diagnostic.source === "Herb Linter " && diagnostic.data?.rule) {
-        const ruleName = diagnostic.data.rule as string
+    const linterDiagnostics = diagnostics.filter(diagnostic => diagnostic.source === "Herb Linter ")
 
-        const disableLineAction = this.createDisableLineAction(
-          uri,
-          diagnostic,
-          ruleName,
-          documentText
-        )
+    for (const diagnostic of linterDiagnostics) {
+      const ruleName = (diagnostic.data?.rule as string) || (typeof diagnostic.code === 'string' ? diagnostic.code : undefined)
+      if (!ruleName) continue
 
-        if (disableLineAction) {
-          actions.push(disableLineAction)
-        }
+      const disableLineAction = this.createDisableLineAction(
+        uri,
+        diagnostic,
+        ruleName,
+        documentText
+      )
 
+      if (disableLineAction) {
+        actions.push(disableLineAction)
+      }
+
+      const disableInConfigAction = this.createDisableInConfigAction(
+        diagnostic,
+        ruleName
+      )
+
+      if (disableInConfigAction) {
+        actions.push(disableInConfigAction)
+      }
+
+      const line = diagnostic.range.start.line
+
+      if (!linesWithDisableAll.has(line)) {
         const disableAllAction = this.createDisableAllAction(
           uri,
           diagnostic,
@@ -26,12 +56,13 @@ export class CodeActionService {
         )
 
         if (disableAllAction) {
-          actions.push(disableAllAction)
+          disableAllActions.push(disableAllAction)
+          linesWithDisableAll.add(line)
         }
       }
     }
 
-    return actions
+    return actions.concat(disableAllActions)
   }
 
   private createDisableLineAction(uri: string, diagnostic: Diagnostic, ruleName: string, documentText: string): CodeAction | null {
@@ -118,5 +149,120 @@ export class CodeActionService {
     }
 
     return workspaceEdit
+  }
+
+  private createDisableInConfigAction(diagnostic: Diagnostic, ruleName: string): CodeAction | null {
+    const edit = this.createConfigDisableEdit(ruleName)
+
+    if (!edit) return null
+
+    const projectPath = this.project.projectPath
+    const configPath = Config.configPathFromProjectPath(projectPath)
+    const configUri = `file://${configPath}`
+
+    const action: CodeAction = {
+      title: `Herb: Disable \`${ruleName}\` in \`.herb.yml\``,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit,
+      command: {
+        title: 'Open .herb.yml',
+        command: 'vscode.open',
+        arguments: [configUri]
+      }
+    }
+
+    return action
+  }
+
+  private createConfigDisableEdit(ruleName: string): WorkspaceEdit | null {
+    try {
+      const projectPath = this.project.projectPath
+
+      if (!projectPath) {
+        return null
+      }
+
+      if (this.config?.config.linter?.rules?.[ruleName]?.enabled === false) {
+        return null
+      }
+
+      const configPath = Config.configPathFromProjectPath(projectPath)
+      const configUri = `file://${configPath}`
+
+      const mutation = {
+        linter: {
+          rules: {
+            [ruleName]: { enabled: false }
+          }
+        }
+      }
+
+      const configExists = Config.exists(configPath)
+      let newContent = ''
+      let textEdit: TextEdit
+
+      if (configExists) {
+        try {
+          const existingYaml = Config.readRawYaml(configPath)
+
+          newContent = Config.applyMutationToYamlString(existingYaml, mutation)
+
+          const lines = existingYaml.split('\n')
+          const endLine = lines.length
+          const endCharacter = lines[lines.length - 1]?.length || 0
+
+          textEdit = TextEdit.replace(
+            Range.create(0, 0, endLine, endCharacter),
+            newContent
+          )
+        } catch (error) {
+          console.error('[Code Action] Error processing existing config:', error)
+          return null
+        }
+      } else {
+        try {
+          newContent = Config.createConfigYamlString(mutation)
+
+          textEdit = TextEdit.insert(
+            { line: 0, character: 0 },
+            newContent
+          )
+        } catch (error) {
+          console.error('[Code Action] Error creating new config:', error)
+
+          return null
+        }
+      }
+
+      let workspaceEdit: WorkspaceEdit
+
+      if (configExists) {
+        workspaceEdit = {
+          changes: {
+            [configUri]: [textEdit]
+          }
+        }
+      } else {
+        const createFile: CreateFile = {
+          kind: 'create',
+          uri: configUri
+        }
+
+        const textDocumentEdit: TextDocumentEdit = {
+          textDocument: OptionalVersionedTextDocumentIdentifier.create(configUri, null),
+          edits: [textEdit]
+        }
+
+        workspaceEdit = {
+          documentChanges: [createFile, textDocumentEdit]
+        }
+      }
+
+      return workspaceEdit
+    } catch (error) {
+      console.error('[Code Action] Unexpected error:', error)
+      return null
+    }
   }
 }

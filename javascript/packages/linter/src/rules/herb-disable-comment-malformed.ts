@@ -2,7 +2,7 @@ import { ParserRule } from "../types.js"
 import { HerbDisableCommentBaseVisitor } from "./herb-disable-comment-base.js"
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBContentNode, ParseResult } from "@herb-tools/core"
 
 class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
@@ -18,7 +18,6 @@ class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
         this.addOffense(
           "`herb:disable` comment is missing a space after `herb:disable`. Add a space before the rule names.",
           node.location,
-          "error"
         )
 
         return
@@ -43,14 +42,21 @@ class HerbDisableCommentMalformedVisitor extends HerbDisableCommentBaseVisitor {
       message = "`herb:disable` comment starts with a comma. Remove the leading comma."
     }
 
-    this.addOffense(message, node.location, "error")
+    this.addOffense(message, node.location)
   }
 }
 
 export class HerbDisableCommentMalformedRule extends ParserRule {
   name = "herb-disable-comment-malformed"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HerbDisableCommentMalformedVisitor(this.name, context)
 
     visitor.visit(result.value)

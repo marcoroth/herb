@@ -5,7 +5,7 @@ import { findParent, BaseRuleVisitor } from "./rule-utils.js"
 import { filterWhitespaceNodes, isWhitespaceNode, isHTMLOpenTagNode } from "@herb-tools/core"
 
 import type { ParseResult, Node, HTMLCloseTagNode, HTMLOpenTagNode } from "@herb-tools/core"
-import type { LintOffense, LintContext, Mutable } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, Mutable, FullRuleConfig } from "../types.js"
 
 const MESSAGES = {
   EXTRA_SPACE_NO_SPACE: "Extra space detected where there should be no space.",
@@ -54,7 +54,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
       }
 
       if (content.length > 1) {
-        this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_SPACE, whitespace.location, "error", { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_SPACE })
+        this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_SPACE })
       }
     })
   }
@@ -62,7 +62,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
   private checkTrailingWhitespace(whitespace: WhitespaceNode, content: string, isSelfClosing: boolean): void {
     if (isSelfClosing && content === ' ') return
 
-    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, "error", { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
+    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
   }
 
   private checkMissingSpaceBeforeSelfClosing(node: HTMLOpenTagNode, children: Node[], isSelfClosing: boolean): void {
@@ -74,7 +74,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
     const lastNonWhitespace = children.filter(child => !isWhitespaceNode(child)).pop()
     const locationToReport = lastNonWhitespace?.location ?? node.tag_name?.location ?? node.location
 
-    this.addOffense(MESSAGES.NO_SPACE_SINGLE_SPACE, locationToReport, "error", { node, message: MESSAGES.NO_SPACE_SINGLE_SPACE })
+    this.addOffense(MESSAGES.NO_SPACE_SINGLE_SPACE, locationToReport, { node, message: MESSAGES.NO_SPACE_SINGLE_SPACE })
   }
 
   private checkMultilineTag(node: HTMLOpenTagNode): void {
@@ -86,7 +86,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
       if (!content) return
 
       if (this.hasConsecutiveNewlines(content, previousWhitespace)) {
-        this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_BREAK, whitespace.location, "error", { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_BREAK })
+        this.addOffense(MESSAGES.EXTRA_SPACE_SINGLE_BREAK, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_SINGLE_BREAK })
         previousWhitespace = whitespace
 
         return
@@ -119,7 +119,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 
     if (whitespace.location.end.column === expectedIndent) return
 
-    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, "error", { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
+    this.addOffense(MESSAGES.EXTRA_SPACE_NO_SPACE, whitespace.location, { node: whitespace, message: MESSAGES.EXTRA_SPACE_NO_SPACE })
   }
 
   private isSelfClosing(tag_closing: Token): boolean {
@@ -136,7 +136,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
       : nodes as WhitespaceNode[]
 
     whitespaceNodes.forEach(whitespace => {
-      this.addOffense(message, whitespace.location, "error", { node: whitespace, message })
+      this.addOffense(message, whitespace.location, { node: whitespace, message })
     })
   }
 }
@@ -146,7 +146,14 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
   static autocorrectable = false
   name = "html-no-space-in-tag"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<HTMLNoSpaceInTagAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: false,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<HTMLNoSpaceInTagAutofixContext>[] {
     const visitor = new HTMLNoSpaceInTagVisitor(this.name, context)
 
     visitor.visit(result.value)

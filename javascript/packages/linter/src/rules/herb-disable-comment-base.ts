@@ -3,7 +3,7 @@ import { ERBContentNode, Location } from "@herb-tools/core"
 
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
-import type { LintContext, LintSeverity } from "../types.js"
+import type { LintContext } from "../types.js"
 import type { HerbDisableComment, HerbDisableRuleName } from "../herb-disable-comment-utils.js"
 
 /**
@@ -52,8 +52,8 @@ export abstract class HerbDisableCommentBaseVisitor extends BaseRuleVisitor {
   /**
    * Helper to add an offense with a fallback to node location if precise location unavailable.
    */
-  protected addOffenseWithFallback(message: string, preciseLocation: Location | null, node: ERBContentNode, severity: LintSeverity = "warning"): void {
-    this.addOffense(message, preciseLocation || node.location, severity)
+  protected addOffenseWithFallback(message: string, preciseLocation: Location | null, node: ERBContentNode): void {
+    this.addOffense(message, preciseLocation || node.location)
   }
 }
 

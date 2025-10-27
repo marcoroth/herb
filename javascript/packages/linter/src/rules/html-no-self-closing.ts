@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
 import { getTagName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
 
-import type { LintContext, LintOffense } from "../types.js"
+import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
 import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult } from "@herb-tools/core"
 
 interface NoSelfClosingAutofixContext extends BaseAutofixContext {
@@ -28,7 +28,6 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
       this.addOffense(
         `Use \`${instead}\` instead of self-closing \`<${tagName} />\` for HTML compatibility.`,
         node.location,
-        "error",
         {
           node,
           tagName,
@@ -43,7 +42,14 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
   static autocorrectable = true
   name = "html-no-self-closing"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<NoSelfClosingAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
     const visitor = new NoSelfClosingVisitor(this.name, context)
 
     visitor.visit(result.value)

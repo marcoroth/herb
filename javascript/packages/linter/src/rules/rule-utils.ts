@@ -27,7 +27,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -38,7 +38,7 @@ export enum ControlFlowType {
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Visitor {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -50,16 +50,16 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
   }
 
   /**
-   * Helper method to create a lint offense
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -67,8 +67,8 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 }
 
@@ -738,7 +738,7 @@ export function forEachAttribute(
  * Base lexer visitor class that provides common functionality for lexer-based rule visitors
  */
 export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -748,16 +748,16 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
   }
 
   /**
-   * Helper method to create a lint offense for lexer rules
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -765,8 +765,8 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 
   /**
@@ -800,7 +800,7 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
  * Base source visitor class that provides common functionality for source-based rule visitors
  */
 export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -810,16 +810,16 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
   }
 
   /**
-   * Helper method to create a lint offense for source rules
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -827,8 +827,8 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 
   /**

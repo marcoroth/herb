@@ -7,13 +7,15 @@ import { resolve } from "path"
 import { glob } from "glob"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { HERB_FILES_GLOB } from "@herb-tools/core"
+import { Config } from "@herb-tools/config"
 
 import { IdentityPrinter } from "./index.js"
+import { version } from "../package.json"
 
 interface CLIOptions {
   input?: string
   output?: string
+  configFile?: string
   verify?: boolean
   stats?: boolean
   help?: boolean
@@ -35,6 +37,9 @@ export class CLI {
         case '-o':
         case '--output':
           options.output = args[++i]
+          break
+        case '--config-file':
+          options.configFile = args[++i]
           break
         case '--verify':
           options.verify = true
@@ -74,9 +79,10 @@ export class CLI {
       Options:
         -i, --input <file>           Input file path
         -o, --output <file>          Output file path (defaults to stdout)
+        --config-file <path>         Explicitly specify path to .herb.yml config file
         --verify                     Verify that output matches input exactly
         --stats                      Show parsing and printing statistics
-        --glob                       Treat input as glob pattern (default: ${HERB_FILES_GLOB})
+        --glob                       Treat input as glob pattern
         -h, --help                   Show this help message
 
       Examples:
@@ -89,7 +95,7 @@ export class CLI {
         herb-print --glob --verify                         # All .html.erb files
         herb-print "app/views/**/*.html.erb" --glob --verify --stats
         herb-print "*.erb" --glob --verify
-        herb-print "/path/to/templates" --glob --verify    # Directory (auto-appends /${HERB_FILES_GLOB})
+        herb-print "/path/to/templates" --glob --verify    # Directory
         herb-print "/path/to/templates/**/*.html.erb" --glob --verify
 
         # The --verify flag is useful to test parser fidelity:
@@ -110,7 +116,10 @@ export class CLI {
       await Herb.load()
 
       if (options.glob) {
-        const pattern = options.input || HERB_FILES_GLOB
+        const startPath = options.input || process.cwd()
+        const config = await Config.load(options.configFile || startPath, { version, createIfMissing: true })
+        const globPattern = config.getGlobPattern('linter')
+        const pattern = options.input || globPattern
         const files = await glob(pattern)
 
         if (files.length === 0) {

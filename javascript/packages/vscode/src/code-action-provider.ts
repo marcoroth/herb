@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
 
 export class HerbCodeActionProvider implements vscode.CodeActionProvider {
   provideCodeActions(
@@ -12,6 +13,8 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
     }
 
     const actions: vscode.CodeAction[] = []
+
+    this.addFormattingActions(actions, document)
 
     for (const diagnostic of context.diagnostics) {
       const source = typeof diagnostic.source === 'string' ? diagnostic.source.trim() : undefined
@@ -42,9 +45,46 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
       }
 
       action.isPreferred = false
-      actions.push(action)
+      // actions.push(action)
     }
 
     return actions
+  }
+
+  private addFormattingActions(actions: vscode.CodeAction[], document: vscode.TextDocument) {
+    const excludeAction = new vscode.CodeAction(
+      'Herb: Exclude this file from formatting',
+      vscode.CodeActionKind.Source
+    )
+
+    excludeAction.command = {
+      command: 'herb.excludeFileFromFormatting',
+      title: 'Exclude this file from formatting',
+      arguments: [document.uri]
+    }
+
+    excludeAction.isPreferred = false
+    actions.push(excludeAction)
+
+    const folderPath = path.dirname(document.fileName)
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+
+    if (workspaceRoot && folderPath !== workspaceRoot) {
+      const relativeFolderPath = path.relative(workspaceRoot, folderPath)
+
+      const excludeFolderAction = new vscode.CodeAction(
+        `Herb: Exclude folder "${relativeFolderPath}" from formatting`,
+        vscode.CodeActionKind.Source
+      )
+
+      excludeFolderAction.command = {
+        command: 'herb.excludeFolderFromFormatting',
+        title: 'Exclude folder from formatting',
+        arguments: [document.uri]
+      }
+
+      excludeFolderAction.isPreferred = false
+      actions.push(excludeFolderAction)
+    }
   }
 }

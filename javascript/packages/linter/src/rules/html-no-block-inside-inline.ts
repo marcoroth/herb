@@ -1,7 +1,7 @@
 import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
@@ -26,7 +26,6 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
     this.addOffense(
       `${elementType} element \`<${tagName}>\` cannot be placed inside inline element \`<${parentInline}>\`.`,
       openTag.tag_name!.location,
-      "error"
     )
   }
 
@@ -77,7 +76,14 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
 export class HTMLNoBlockInsideInlineRule extends ParserRule {
   name = "html-no-block-inside-inline"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: false,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new BlockInsideInlineVisitor(this.name, context)
     visitor.visit(result.value)
     return visitor.offenses

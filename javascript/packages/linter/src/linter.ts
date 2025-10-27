@@ -1,36 +1,92 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import { defaultRules } from "./default-rules.js"
+import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, LintContext, AutofixResult } from "./types.js"
+import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
+
+import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
+import type { RuleConfig, LinterConfig } from "@herb-tools/config"
 
 export class Linter {
   protected rules: RuleClass[]
   protected herb: HerbBackend
   protected offenses: LintOffense[]
+  protected config?: LinterConfig
+
+  /**
+   * Creates a new Linter instance with automatic rule filtering based on config.
+   *
+   * @param herb - The Herb backend instance for parsing and lexing
+   * @param config - Linter configuration for rule filtering and severity overrides
+   * @returns A configured Linter instance
+   */
+  static from(herb: HerbBackend, config?: LinterConfig): Linter {
+    const filteredRules = config?.rules
+      ? Linter.filterRulesByConfig(rules, config.rules)
+      : undefined
+
+    return new Linter(herb, filteredRules, config)
+  }
 
   /**
    * Creates a new Linter instance.
+   *
+   * For most use cases, prefer `Linter.from()` which handles config-based filtering.
+   * Use this constructor directly when you need explicit control over rules.
+   *
    * @param herb - The Herb backend instance for parsing and lexing
    * @param rules - Array of rule classes (Parser/AST or Lexer) to use. If not provided, uses default rules.
+   * @param config - Optional linter configuration for severity overrides
    */
-  constructor(herb: HerbBackend, rules?: RuleClass[]) {
+  constructor(herb: HerbBackend, rules?: RuleClass[], config?: LinterConfig) {
     this.herb = herb
+    this.config = config
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
     this.offenses = []
   }
 
   /**
+   * Filters rules based on default config and optional user config overrides.
+   *
+   * Priority:
+   * 1. User config override (if rule config exists in userRulesConfig)
+   * 2. Default config from rule's defaultConfig getter
+   *
+   * @param allRules - All available rule classes to filter from
+   * @param userRulesConfig - Optional user configuration for rules
+   * @returns Filtered array of rule classes that should be enabled
+   */
+  static filterRulesByConfig(
+    allRules: RuleClass[],
+    userRulesConfig?: Record<string, RuleConfig>
+  ): RuleClass[] {
+    return allRules.filter(ruleClass => {
+      const instance = new ruleClass()
+      const ruleName = instance.name
+
+      const defaultEnabled = instance.defaultConfig.enabled
+      const userRuleConfig = userRulesConfig?.[ruleName]
+
+      if (userRuleConfig !== undefined) {
+        return userRuleConfig.enabled !== false
+      }
+
+      return defaultEnabled
+    })
+  }
+
+  /**
    * Returns the default set of rule classes used by the linter.
    * These are the rules enabled when no custom rules are provided.
+   * Filters all available rules to only include those enabled by default.
    * @returns Array of default rule classes
    */
   protected getDefaultRules(): RuleClass[] {
-    return defaultRules
+    return Linter.filterRulesByConfig(rules)
   }
 
   /**
@@ -39,7 +95,7 @@ export class Linter {
    * @returns Array of all available rule classes
    */
   protected getAvailableRules(): RuleClass[] {
-    return defaultRules
+    return rules
   }
 
   /**
@@ -76,7 +132,7 @@ export class Linter {
   }
 
   /**
-   * Execute a single rule and return its offenses.
+   * Execute a single rule and return its unbound offenses.
    * Handles rule type checking (Lexer/Parser/Source) and isEnabled checks.
    */
   private executeRule(
@@ -84,11 +140,10 @@ export class Linter {
     parseResult: ParseResult,
     lexResult: LexResult,
     source: string,
-    hasParserErrors: boolean,
     context?: Partial<LintContext>
-  ): LintOffense[] {
+  ): UnboundLintOffense[] {
     let isEnabled = true
-    let ruleOffenses: LintOffense[]
+    let ruleOffenses: UnboundLintOffense[]
 
     if (this.isLexerRule(rule)) {
       if (rule.isEnabled) {
@@ -112,10 +167,6 @@ export class Linter {
         ruleOffenses = []
       }
     } else {
-      if (hasParserErrors && rule.name !== "parser-no-errors") {
-        return []
-      }
-
       if (rule.isEnabled) {
         isEnabled = rule.isEnabled(parseResult, context)
       }
@@ -202,6 +253,25 @@ export class Linter {
     const ignoredOffensesByLine = new Map<number, Set<string>>()
     const herbDisableCache = new Map<number, string[]>()
 
+    if (hasParserErrors) {
+      const hasParserRule = this.rules.find(RuleClass => (new RuleClass()).name === "parser-no-errors")
+
+      if (hasParserRule) {
+        const rule = new ParserNoErrorsRule()
+        const offenses = rule.check(parseResult)
+        this.offenses.push(...offenses)
+      }
+
+      return {
+        offenses: this.offenses,
+        errors: this.offenses.filter(o => o.severity === "error").length,
+        warnings: this.offenses.filter(o => o.severity === "warning").length,
+        info: this.offenses.filter(o => o.severity === "info").length,
+        hints: this.offenses.filter(o => o.severity === "hint").length,
+        ignored: 0
+      }
+    }
+
     for (let i = 0; i < sourceLines.length; i++) {
       const line = sourceLines[i]
 
@@ -225,10 +295,11 @@ export class Linter {
 
     for (const RuleClass of regularRules) {
       const rule = new RuleClass()
-      const ruleOffenses = this.executeRule(rule, parseResult, lexResult, source, hasParserErrors, context)
+      const unboundOffenses = this.executeRule(rule, parseResult, lexResult, source, context)
+      const boundOffenses = this.bindSeverity(unboundOffenses, rule.name)
 
       const { kept, ignored, wouldBeIgnored } = this.filterOffenses(
-        ruleOffenses,
+        boundOffenses,
         rule.name,
         ignoredOffensesByLine,
         herbDisableCache,
@@ -248,18 +319,25 @@ export class Linter {
 
     if (unnecessaryRuleClass) {
       const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
-      const ruleOffenses = unnecessaryRule.check(parseResult, context)
+      const unboundOffenses = unnecessaryRule.check(parseResult, context)
+      const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRule.name)
 
-      this.offenses.push(...ruleOffenses)
+      this.offenses.push(...boundOffenses)
     }
 
-    const errors = this.offenses.filter(offense => offense.severity === "error").length
-    const warnings = this.offenses.filter(offense => offense.severity === "warning").length
+    const finalOffenses = this.offenses
+
+    const errors = finalOffenses.filter(offense => offense.severity === "error").length
+    const warnings = finalOffenses.filter(offense => offense.severity === "warning").length
+    const info = finalOffenses.filter(offense => offense.severity === "info").length
+    const hints = finalOffenses.filter(offense => offense.severity === "hint").length
 
     const result: LintResult = {
-      offenses: this.offenses,
+      offenses: finalOffenses,
       errors,
       warnings,
+      info,
+      hints,
       ignored: ignoredCount
     }
 
@@ -268,6 +346,42 @@ export class Linter {
     }
 
     return result
+  }
+
+  /**
+   * Bind severity to unbound offenses based on rule's defaultConfig and user config overrides.
+   *
+   * Priority:
+   * 1. User config severity override (if specified in config)
+   * 2. Rule's default severity (from defaultConfig.severity)
+   *
+   * @param unboundOffenses - Array of offenses without severity
+   * @param ruleName - Name of the rule that produced the offenses
+   * @returns Array of offenses with severity bound
+   */
+  protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string): LintOffense[] {
+    const RuleClass = this.rules.find(rule => {
+      const instance = new rule()
+      return instance.name === ruleName
+    })
+
+    if (!RuleClass) {
+      return unboundOffenses.map(offense => ({
+        ...offense,
+        severity: "error" as const
+      }))
+    }
+
+    const ruleInstance = new RuleClass()
+    const defaultSeverity = ruleInstance.defaultConfig.severity
+
+    const userRuleConfig = this.config?.rules?.[ruleName]
+    const severity = userRuleConfig?.severity ?? defaultSeverity
+
+    return unboundOffenses.map(offense => ({
+      ...offense,
+      severity
+    }))
   }
 
   /**

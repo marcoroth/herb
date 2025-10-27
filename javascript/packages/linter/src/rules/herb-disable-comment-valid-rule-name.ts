@@ -3,7 +3,7 @@ import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 
 import { didyoumean } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBContentNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
@@ -28,7 +28,7 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
         : `Unknown rule \`${ruleDetail.name}\`.`
 
       const location = this.createRuleNameLocation(node, ruleDetail)
-      this.addOffenseWithFallback(message, location, node, "warning")
+      this.addOffenseWithFallback(message, location, node)
     })
   }
 }
@@ -36,7 +36,14 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
 export class HerbDisableCommentValidRuleNameRule extends ParserRule {
   name = "herb-disable-comment-valid-rule-name"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const validRuleNames = context?.validRuleNames
 
     if (!validRuleNames) return []

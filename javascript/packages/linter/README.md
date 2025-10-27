@@ -107,6 +107,12 @@ npx @herb-tools/linter "**/*.rhtml"
 npx @herb-tools/linter "**/*.xml.erb"
 ```
 
+**Initialize configuration:**
+```bash
+# Create a .herb.yml configuration file
+npx @herb-tools/linter --init
+```
+
 #### Options
 
 **Output Format:**

@@ -6,6 +6,7 @@ const defaultSidebar = [
     collapsed: false,
     items: [
       { text: "Overview", link: "/overview" },
+      { text: "Configuration", link: "/configuration" },
       { text: "Projects", link: "/projects" },
     ],
   },
@@ -28,6 +29,7 @@ const defaultSidebar = [
       { text: "Highlighter", link: "/projects/highlighter" },
       { text: "Syntax Tree Printer", link: "/projects/printer" },
       { text: "Minifier", link: "/projects/minifier" },
+      { text: "Config", link: "/projects/config" },
       { text: "Core", link: "/projects/core" },
     ],
   },

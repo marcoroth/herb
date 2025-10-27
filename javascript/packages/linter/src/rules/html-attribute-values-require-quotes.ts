@@ -2,7 +2,7 @@ import { Token, Location } from "@herb-tools/core"
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLAttributeNode, ParseResult,  } from "@herb-tools/core"
 
 interface AttributeValuesRequireQuotesAutofixContext extends BaseAutofixContext {
@@ -18,7 +18,6 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin<Attribut
     this.addOffense(
       `Attribute value should be quoted: \`${attributeName}="${attributeValue}"\`. Always wrap attribute values in quotes.`,
       attributeNode.value!.location,
-      "error",
       {
         node: attributeNode,
         unquotedValue: attributeValue
@@ -33,7 +32,6 @@ class AttributeValuesRequireQuotesVisitor extends AttributeVisitorMixin<Attribut
     this.addOffense(
       `Attribute value should be quoted: \`${attributeName}="${combinedValue}"\`. Always wrap attribute values in quotes.`,
       attributeNode.value!.location,
-      "error",
       {
         node: attributeNode,
         unquotedValue: combinedValue || ""
@@ -56,7 +54,14 @@ export class HTMLAttributeValuesRequireQuotesRule extends ParserRule<AttributeVa
   static autocorrectable = true
   name = "html-attribute-values-require-quotes"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<AttributeValuesRequireQuotesAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeValuesRequireQuotesAutofixContext>[] {
     const visitor = new AttributeValuesRequireQuotesVisitor(this.name, context)
 
     visitor.visit(result.value)

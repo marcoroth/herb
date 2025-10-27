@@ -28,4 +28,5 @@ These specialized libraries provide additional functionality for working with HT
 * [Highlighter](/projects/highlighter)
 * [Syntax Tree Printer](/projects/minifier)
 * [Printer](/projects/printer)
+* [Config](/projects/config)
 * [Core](/projects/core)

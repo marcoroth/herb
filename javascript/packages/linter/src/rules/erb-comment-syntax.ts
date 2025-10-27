@@ -1,7 +1,7 @@
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
 class ERBCommentSyntaxVisitor extends BaseRuleVisitor {
@@ -29,7 +29,14 @@ class ERBCommentSyntaxVisitor extends BaseRuleVisitor {
 export class ERBCommentSyntax extends ParserRule {
   name = "erb-comment-syntax"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBCommentSyntaxVisitor(this.name, context)
 
     visitor.visit(result.value)

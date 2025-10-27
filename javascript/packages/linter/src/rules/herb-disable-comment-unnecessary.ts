@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { HerbDisableCommentParsedVisitor } from "./herb-disable-comment-base.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBContentNode, ParseResult } from "@herb-tools/core"
 import type { HerbDisableComment } from "../herb-disable-comment-utils.js"
 
@@ -27,7 +27,6 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
       this.addOffense(
         `No offenses to disable on this line. Remove the \`herb:disable all\` comment.`,
         node.location,
-        "warning"
       )
 
       return
@@ -48,7 +47,6 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
         this.addOffense(
           `No offenses from \`${ruleName}\` on this line. Remove the \`herb:disable\` comment.`,
           node.location,
-          "warning"
         )
 
         return
@@ -59,7 +57,6 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
       this.addOffense(
         `No offenses from rules ${unnecessaryRuleNames} on this line. Remove them from the \`herb:disable\` comment.`,
         node.location,
-        "warning"
       )
 
       return
@@ -69,7 +66,7 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
       const location = this.createRuleNameLocation(node, unnecessaryRule)
       const message = `No offenses from \`${unnecessaryRule.name}\` on this line. Remove it from the \`herb:disable\` comment.`
 
-      this.addOffenseWithFallback(message, location, node, "warning")
+      this.addOffenseWithFallback(message, location, node)
     }
   }
 }
@@ -77,7 +74,14 @@ class HerbDisableCommentUnnecessaryVisitor extends HerbDisableCommentParsedVisit
 export class HerbDisableCommentUnnecessaryRule extends ParserRule {
   name = "herb-disable-comment-unnecessary"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const validRuleNames = context?.validRuleNames
     const ignoredOffensesByLine = context?.ignoredOffensesByLine
 

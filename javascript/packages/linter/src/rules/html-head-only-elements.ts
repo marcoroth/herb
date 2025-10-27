@@ -2,7 +2,7 @@ import { ParserRule } from "../types"
 import { BaseRuleVisitor, getTagName, isHeadOnlyTag } from "./rule-utils"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   private elementStack: string[] = []
@@ -27,7 +27,6 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     this.addOffense(
       `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
       node.location,
-      "error"
     )
   }
 
@@ -48,6 +47,14 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   name = "html-head-only-elements"
 
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml","**/*.xml.erb"] // TODO: this is not respected yet
+    }
+  }
+
   isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
     if (context?.fileName?.endsWith(".xml")) return false
     if (context?.fileName?.endsWith(".xml.erb")) return false
@@ -55,7 +62,7 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
     return true
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HeadOnlyElementsVisitor(this.name, context)
 
     visitor.visit(result.value)

@@ -116,6 +116,12 @@ herb-format template.html.erb
 herb-format templates/
 ```
 
+**Initialize configuration:**
+```bash
+# Create a .herb.yml configuration file
+herb-format --init
+```
+
 #### Options
 
 **Check Mode:**

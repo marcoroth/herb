@@ -3,7 +3,7 @@ import { HerbDisableCommentBaseVisitor } from "./herb-disable-comment-base.js"
 
 import { parseHerbDisableContent } from "../herb-disable-comment-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ERBContentNode, ParseResult } from "@herb-tools/core"
 
 class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisitor {
@@ -17,7 +17,6 @@ class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisito
     this.addOffense(
       `\`herb:disable\` comment is missing rule names. Specify \`all\` or list specific rules to disable.`,
       node.location,
-      "error"
     )
   }
 }
@@ -25,7 +24,14 @@ class HerbDisableCommentMissingRulesVisitor extends HerbDisableCommentBaseVisito
 export class HerbDisableCommentMissingRulesRule extends ParserRule {
   name = "herb-disable-comment-missing-rules"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HerbDisableCommentMissingRulesVisitor(this.name, context)
 
     visitor.visit(result.value)
