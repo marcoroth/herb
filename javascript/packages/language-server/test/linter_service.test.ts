@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeAll } from "vitest"
+import { describe, test, expect, vi, beforeAll, beforeEach } from "vitest"
 
 import { TextDocument } from "vscode-languageserver-textdocument"
 
@@ -6,11 +6,34 @@ import { LinterService } from "../src/linter_service"
 import { Settings } from "../src/settings"
 import { Herb } from "@herb-tools/node-wasm"
 
-import type { Connection, InitializeParams } from "vscode-languageserver/node"
+import type { Connection, InitializeParams, TextDocuments } from "vscode-languageserver/node"
+import { Project } from "../src/project"
 
 describe("LinterService", () => {
+  let documents: TextDocuments<TextDocument>
+  let connection: Connection
+  let project: Project
+
   beforeAll(async () => {
     await Herb.load()
+  })
+
+  beforeEach(() => {
+    connection = {
+      console: {
+        log: vi.fn(),
+        error: vi.fn()
+      }
+    } as unknown as Connection
+
+    documents = {
+      get: vi.fn()
+    } as unknown as TextDocuments<TextDocument>
+
+    project = {
+      projectPath: '/test/project',
+      herbBackend: Herb
+    } as unknown as Project
   })
 
   const mockConnection = {
@@ -35,7 +58,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -51,7 +74,7 @@ describe("LinterService", () => {
         // linter is undefined
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -66,7 +89,7 @@ describe("LinterService", () => {
         linter: { enabled: false }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -80,7 +103,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<DIV><SPAN>Hello</SPAN></DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -92,7 +115,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.hasConfigurationCapability = false
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<DIV>Test</DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -106,7 +129,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<h2>Content<h3>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -129,7 +152,7 @@ describe("LinterService", () => {
         }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(connection, project, settings)
       const textDocument = createTestDocument("<DIV>Content</DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -139,6 +162,26 @@ describe("LinterService", () => {
       )
 
       expect(lowercaseDiagnostics).toHaveLength(0)
+    })
+
+    test('should ignore anchor issues due to excluded rule', async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      const textDocument = createTestDocument('<a>Click me</a>')
+      const linterService = new LinterService(connection, project, settings)
+
+
+      vi.spyOn(linterService, 'getLinterOptions' as any).mockReturnValue({
+          enabled: true,
+          excludedRules: ["parser-no-errors", "html-anchor-require-href"]
+      });
+
+      const result = await linterService.lintDocument(textDocument)
+
+      const requiredAnchorDiagnostics = result.diagnostics.filter(
+        diagnostic => diagnostic.code === "html-anchor-require-href"
+      )
+
+      expect(requiredAnchorDiagnostics).toHaveLength(0)
     })
   })
 })

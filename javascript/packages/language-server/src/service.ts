@@ -28,7 +28,7 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
-    this.linterService = new LinterService(this.settings)
+    this.linterService = new LinterService(this.connection, this.project, this.settings)
     this.formatting = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
     this.codeActionService = new CodeActionService()
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService)
@@ -41,6 +41,7 @@ export class Service {
 
   async init() {
     await this.project.initialize()
+    await this.linterService.initialize()
     await this.formatting.initialize()
 
     this.config = await Config.fromPathOrNew(this.project.projectPath)
@@ -64,6 +65,7 @@ export class Service {
 
   async refreshConfig() {
     this.config = await Config.fromPathOrNew(this.project.projectPath)
+    await this.linterService.refreshConfig();
     await this.formatting.refreshConfig()
   }
 }

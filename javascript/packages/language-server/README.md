@@ -111,13 +111,31 @@ npx @herb-tools/language-server --stdio
 
 The language server can be configured using a `.herb-lsp/config.json` file in your project root. This file is automatically created when the language server starts if it doesn't exist.
 
+### Linter Configuration
+
+You can configure formatting behavior by adding a `linter` section to your config:
+
+```json
+{
+  "version": "0.7.5",
+  "createdAt": "2025-06-29T00:00:00.000Z",
+  "updatedAt": "2025-06-29T00:00:00.000Z",
+  "options": {
+    "linter": {
+      "enabled": true,
+      "excludedRules": ["parser-no-errors"]
+    }
+  }
+}
+```
+
 ### Formatter Configuration
 
 You can configure formatting behavior by adding a `formatter` section to your config:
 
 ```json
 {
-  "version": "0.3.1",
+  "version": "0.7.5",
   "createdAt": "2025-06-29T00:00:00.000Z",
   "updatedAt": "2025-06-29T00:00:00.000Z",
   "options": {

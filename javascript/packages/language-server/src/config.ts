@@ -1,4 +1,10 @@
+import type { RuleClass } from '@herb-tools/linter';
+
 export type HerbConfigOptions = {
+  linter?: {
+    enabled?: boolean;
+    excludedRules?: string[]
+  }
   formatter?: {
     enabled?: boolean
     include?: string[]

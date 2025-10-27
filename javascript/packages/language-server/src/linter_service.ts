@@ -1,4 +1,4 @@
-import { Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription } from "vscode-languageserver/node"
+import { Diagnostic, DiagnosticSeverity, Range, Position, CodeDescription, Connection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter } from "@herb-tools/linter"
@@ -6,7 +6,9 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { Settings } from "./settings"
 
-import type { LintSeverity  } from "@herb-tools/linter"
+import type { LintSeverity } from "@herb-tools/linter"
+import { Project } from "./project"
+import { Config } from "./config"
 
 export interface LintServiceResult {
   diagnostics: Diagnostic[]
@@ -15,23 +17,53 @@ export interface LintServiceResult {
 export class LinterService {
   private readonly settings: Settings
   private readonly source = "Herb Linter "
+  private connection: Connection
+  private project: Project
   private linter: Linter
+  private config?: Config
 
-  constructor(settings: Settings) {
+  constructor(connection: Connection, project: Project, settings: Settings) {
+    this.connection = connection
+    this.project = project
     this.settings = settings
     this.linter = new Linter(Herb)
   }
 
-  async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
-    const settings = await this.settings.getDocumentSettings(textDocument.uri)
-    const linterEnabled = settings?.linter?.enabled ?? true
+  async initialize() {
+    try {
+      this.config = await Config.fromPathOrNew(this.project.projectPath)
 
-    if (!linterEnabled) {
+      this.connection.console.log("Herb linter initialized successfully")
+    } catch (error) {
+      this.connection.console.error(`Failed to initialize Herb linter: ${error}`)
+    }
+  }
+
+  async refreshConfig() {
+    this.config = await Config.fromPathOrNew(this.project.projectPath)
+  }
+
+  private async getLinterOptions(uri: string) {
+    const settings = await this.settings.getDocumentSettings(uri)
+    const projectLinter = this.config?.options.linter || {}
+
+    const enabled = projectLinter.enabled ?? settings?.linter?.enabled ?? true
+    const excludedRules = projectLinter.excludedRules ?? settings?.linter?.excludedRules ?? ["parser-no-errors"]
+
+    return {
+      enabled,
+      excludedRules,
+    }
+  }
+
+  async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
+    const { enabled, excludedRules } = await this.getLinterOptions(textDocument.uri);
+
+    if (!enabled) {
       return { diagnostics: [] }
     }
 
     const lintResult = this.linter.lint(textDocument.getText(), { fileName: textDocument.uri })
-    const excludedRules = settings?.linter?.excludedRules ?? ["parser-no-errors"]
     const offenses = lintResult.offenses.filter(offense => !excludedRules.includes(offense.rule))
 
     const diagnostics: Diagnostic[] = offenses.map(offense => {
