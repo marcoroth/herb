@@ -1,4 +1,5 @@
 #include "../include/util/hb_string.h"
+#include "../include/macros.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -49,6 +50,12 @@ bool hb_string_starts_with(hb_string_T string, hb_string_T expected_prefix) {
 
 bool hb_string_is_empty(hb_string_T string) {
   return string.length == 0;
+}
+
+hb_string_T hb_string_truncate(hb_string_T string, uint32_t max_length) {
+  hb_string_T truncated_string = { .data = string.data, .length = MIN(string.length, max_length) };
+
+  return truncated_string;
 }
 
 char* hb_string_to_c_string(hb_arena_T* allocator, hb_string_T string) {
