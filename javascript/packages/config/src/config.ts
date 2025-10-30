@@ -887,7 +887,8 @@ export class Config {
         extensions: Config.DEFAULT_EXTENSIONS,
         exclude: [
           'node_modules/**/*',
-          'vendor/bundle/**/*'
+          'vendor/bundle/**/*',
+          'coverage/**/*',
         ]
       },
       linter: {

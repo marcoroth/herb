@@ -1,4 +1,4 @@
-# Configuration
+# Configuration <Badge type="tip" text="^0.8.0" />
 
 Herb uses a `.herb.yml` configuration file to customize how the tools behave in your project. This configuration is shared across all Herb tools including the linter, formatter, and language server.
 

@@ -2,6 +2,7 @@
   "version": 2,
   "projects": {
     "@herb-tools/browser": "javascript/packages/browser",
+    "@herb-tools/config": "javascript/packages/config",
     "@herb-tools/core": "javascript/packages/core",
     "@herb-tools/dev-tools": "javascript/packages/dev-tools",
     "@herb-tools/formatter": "javascript/packages/formatter",

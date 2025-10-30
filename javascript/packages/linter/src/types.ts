@@ -96,10 +96,6 @@ export interface AutofixResult<TAutofixContext extends BaseAutofixContext = Base
 
 /**
  * Base class for parser rules.
- * All subclasses MUST implement the defaultConfig getter.
- *
- * Using an abstract getter instead of static property provides true enforcement:
- * TypeScript will error if a subclass doesn't implement this getter.
  */
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "parser" as const
@@ -132,10 +128,6 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
 
 /**
  * Base class for lexer rules.
- * All subclasses MUST implement the defaultConfig getter.
- *
- * Using an abstract getter instead of static property provides true enforcement:
- * TypeScript will error if a subclass doesn't implement this getter.
  */
 export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "lexer" as const

@@ -33,14 +33,14 @@
     "@herb-tools/core": "0.7.5",
     "yaml": "^2.3.4"
   },
+  "devDependencies": {
+    "zod": "^4.1.12",
+    "zod-validation-error": "^4.0.2"
+  },
   "files": [
     "package.json",
     "README.md",
     "src/",
     "dist/"
-  ],
-  "devDependencies": {
-    "zod": "^4.1.12",
-    "zod-validation-error": "^4.0.2"
-  }
+  ]
 }
