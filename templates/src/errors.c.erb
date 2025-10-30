@@ -42,10 +42,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   if (message) {
     <%- error.message_arguments.each_with_index do |argument, i| -%>
     <%- if error.message_template.scan(/%[sdulfz]/)[i] == "%s" -%>
-    char truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH + 1];
-    strncpy(truncated_argument_<%= i %>, <%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
-    truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH] = '\0';
-
+    hb_string_T truncated_argument_<%= i %> = hb_string_truncate(<%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
     <%- end -%>
     <%- end -%>
     snprintf(
@@ -81,7 +78,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= error.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -137,7 +134,6 @@ static void error_free_<%= error.human %>(<%= error.struct_type %>* <%= error.hu
   <%- when Herb::Template::SizeTField -%>
   // size_t is part of struct
   <%- when Herb::Template::StringField -%>
-  if (<%= error.human %>-><%= field.name %> != NULL) { free((char*) <%= error.human %>-><%= field.name %>); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -220,11 +216,11 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   <%- when Herb::Template::TokenField -%>
   pretty_print_token_property(error-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>
-  pretty_print_property(hb_string(token_type_to_string(error-><%= field.name %>)), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_property(token_type_to_string(error-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::SizeTField -%>
   pretty_print_size_t_property(hb_string(error-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::StringField -%>
-  pretty_print_quoted_property(hb_string("<%= field.name %>"), hb_string(error-><%= field.name %>), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_quoted_property(hb_string("<%= field.name %>"), error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
