@@ -21,7 +21,7 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   if (!<%= node.human %>) return val::null();
 
   val result = val::object();
-  result.set("type", CreateString(ast_node_type_to_string(&<%= node.human %>->base)));
+  result.set("type", CreateStringFromHbString(ast_node_type_to_string(&<%= node.human %>->base)));
   result.set("location", CreateLocation(<%= node.human %>->base.location));
   result.set("errors", ErrorsArrayFromCArray(<%= node.human %>->base.errors));
 

@@ -25,7 +25,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_value result;
   napi_create_object(env, &result);
 
-  napi_value type = CreateString(env, ast_node_type_to_string(&<%= node.human %>->base));
+  napi_value type = CreateStringFromHbString(env, ast_node_type_to_string(&<%= node.human %>->base));
   napi_set_named_property(env, result, "type", type);
 
   napi_value location = CreateLocation(env, <%= node.human %>->base.location);

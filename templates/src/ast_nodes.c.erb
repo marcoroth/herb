@@ -49,14 +49,14 @@
 }
 <%- end -%>
 
-const char* ast_node_type_to_string(AST_NODE_T* node) {
+hb_string_T ast_node_type_to_string(AST_NODE_T* node) {
   switch (node->type) {
     <%- nodes.each do |node| -%>
-    case <%= node.type %>: return "<%= node.type %>";
+    case <%= node.type %>: return hb_string("<%= node.type %>");
     <%- end -%>
   }
 
-  return "Unknown ast_node_type_T";
+  return hb_string("Unknown ast_node_type_T");
 }
 
 hb_string_T ast_node_human_type(AST_NODE_T* node) {
