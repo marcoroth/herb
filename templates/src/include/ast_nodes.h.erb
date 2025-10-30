@@ -11,6 +11,7 @@
 #include "token_struct.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
+#include "util/hb_string.h"
 
 typedef enum {
 <%- nodes.each do |node| -%>
@@ -41,6 +42,6 @@ typedef struct <%= node.struct_name %> {
 <%- end -%>
 
 const char* ast_node_type_to_string(AST_NODE_T* node);
-const char* ast_node_human_type(AST_NODE_T* node);
+hb_string_T ast_node_human_type(AST_NODE_T* node);
 
 #endif

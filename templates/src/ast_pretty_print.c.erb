@@ -16,7 +16,7 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
   bool print_location = true;
 
   hb_buffer_append(buffer, "@ ");
-  hb_buffer_append(buffer, ast_node_human_type(node));
+  hb_buffer_append_string(buffer, ast_node_human_type(node));
   hb_buffer_append(buffer, " ");
 
   if (print_location) { pretty_print_location(node->location, buffer); }
