@@ -4,7 +4,7 @@ import { glob } from "glob"
 import { join, resolve } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { Config } from "@herb-tools/config"
+import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
 import { parseArgs } from "util"
@@ -147,7 +147,16 @@ export class CLI {
           }
         })
 
+        const projectPath = configFile ? resolve(configFile) : startPath
+        const projectDir = statSync(projectPath).isDirectory() ? projectPath : resolve(projectPath, '..')
+        const extensionAdded = addHerbExtensionRecommendation(projectDir)
+
         console.log(`\n✓ Configuration initialized at ${config.path}`)
+
+        if (extensionAdded) {
+          console.log(`✓ VSCode extension recommended in ${getExtensionsJsonRelativePath()}`)
+        }
+
         console.log(`  Formatter is enabled by default.`)
         console.log(`  Edit this file to customize linter and formatter settings.\n`)
 

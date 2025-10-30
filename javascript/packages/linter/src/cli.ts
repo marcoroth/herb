@@ -1,6 +1,6 @@
 import { glob } from "glob"
 import { Herb } from "@herb-tools/node-wasm"
-import { Config } from "@herb-tools/config"
+import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { existsSync, statSync } from "fs"
 import { dirname, resolve, relative } from "path"
@@ -120,7 +120,14 @@ export class CLI {
       }
 
       const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: true, silent: true })
+      const extensionAdded = addHerbExtensionRecommendation(this.projectPath)
+
       console.log(`\n✓ Configuration initialized at ${config.path}`)
+
+      if (extensionAdded) {
+        console.log(`✓ VSCode extension recommended in ${getExtensionsJsonRelativePath()}`)
+      }
+
       console.log(`  Edit this file to customize linter and formatter settings.\n`)
       process.exit(0)
     }
