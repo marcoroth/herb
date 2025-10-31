@@ -202,7 +202,7 @@ export class FormattingService {
 
     const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
 
-    if (this.shouldFormatFile(filePath)) {
+    if (!this.shouldFormatFile(filePath)) {
       return []
     }
 

@@ -66,7 +66,15 @@ describe("Settings", () => {
       const settings = new Settings(paramsWithConfig, mockConnection)
       const result = await settings.getDocumentSettings("file:///test.erb")
 
-      expect(result).toEqual(customSettings)
+      expect(result).toEqual({
+        trace: undefined,
+        linter: { enabled: false },
+        formatter: {
+          enabled: true,
+          indentWidth: 2,
+          maxLineLength: 80
+        }
+      })
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
         scopeUri: "file:///test.erb",
         section: "languageServerHerb"
@@ -88,7 +96,15 @@ describe("Settings", () => {
       const settings = new Settings(paramsWithConfig, mockConnection)
       const result = await settings.getDocumentSettings("file:///test.erb")
 
-      expect(result).toBeNull()
+      expect(result).toEqual({
+        trace: undefined,
+        linter: { enabled: true },
+        formatter: {
+          enabled: false,
+          indentWidth: 2,
+          maxLineLength: 80
+        }
+      })
     })
   })
 })
