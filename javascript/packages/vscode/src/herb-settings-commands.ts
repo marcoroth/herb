@@ -31,7 +31,7 @@ export class HerbSettingsCommands {
     }
 
     try {
-      return await Config.load(workspaceRoot, { silent: true, createIfMissing: false })
+      return await Config.loadForEditor(workspaceRoot)
     } catch (error) {
       vscode.window.showErrorMessage(`Failed to load config: ${error}`)
 
@@ -58,7 +58,7 @@ export class HerbSettingsCommands {
     const configPath = await this.getConfigPath()
     if (!configPath) {return}
 
-    const currentState = config.config.linter?.enabled ?? true
+    const currentState = config.isLinterEnabled
 
     const choice = await vscode.window.showQuickPick([
       {
@@ -104,7 +104,7 @@ export class HerbSettingsCommands {
     const configPath = await this.getConfigPath()
     if (!configPath) {return}
 
-    const currentState = config.config.formatter?.enabled ?? false
+    const currentState = config.isFormatterEnabled
 
     const choice = await vscode.window.showQuickPick([
       {

@@ -30,11 +30,6 @@ bun add -g @herb-tools/linter
 
 :::
 
-Then run directly:
-```bash
-herb-lint template.html.erb
-```
-
 ### One-time Usage
 For occasional use without installing:
 ```bash
@@ -63,8 +58,30 @@ bun add -D @herb-tools/linter
 
 :::
 
-After installing as a dev dependency, add a lint NPM script to your `package.json`:
-```json
+After installing as a dev dependency, initialize the configuration:
+
+:::code-group
+
+```shell [npm]
+npx herb-lint --init
+```
+
+```shell [pnpm]
+pnpm herb-lint --init
+```
+
+```shell [yarn]
+yarn herb-lint --init
+```
+
+```shell [bun]
+bunx herb-lint --init
+```
+
+:::
+
+Then add a lint NPM script to your `package.json`:
+```json [package.json]
 {
   "scripts": {
     "herb:lint": "herb-lint"
@@ -321,6 +338,80 @@ To disable all linting rules for a specific line, use `all`:
 ::: warning Important
 Inline disable comments only affect the line they appear on. Each line that needs linting disabled must have its own disable comment.
 :::
+
+## Configuration
+
+Create a `.herb.yml` file in your project root to configure the linter:
+
+```bash
+npx @herb-tools/linter --init
+```
+
+### Basic Configuration
+
+```yaml [.herb.yml]
+linter:
+  enabled: true
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+
+  # Glob patterns to exclude from linting
+  exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+
+  rules:
+    # Disable a rule
+    erb-no-extra-newline:
+      enabled: false
+
+    # Change rule severity
+    html-tag-name-lowercase:
+      severity: warning  # error, warning, info, or hint
+```
+
+### Rule-Level File Patterns
+
+Apply rules to specific files using `include`, `only`, and `exclude` patterns:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    # Apply rule only to component files
+    html-img-require-alt:
+      include:
+        - 'app/components/**/*'
+      exclude:
+        - 'app/components/legacy/**/*'
+
+    # Restrict rule to specific directory (overrides include)
+    html-tag-name-lowercase:
+      only:
+        - 'app/views/**/*'
+      exclude:
+        - 'app/views/admin/**/*'
+```
+
+**Pattern precedence:**
+1. `only` - When present, rule applies ONLY to these files (ignores all `include`)
+2. `include` - When `only` is absent, rule applies only to these files (additive)
+3. `exclude` - Always applied regardless of `include` or `only`
+
+### Force Flag
+
+Process files even when excluded or when linter is disabled:
+
+```bash
+# Force linting when disabled in config
+herb-lint --force
+
+# Force linting on an excluded file
+herb-lint --force app/views/excluded-file.html.erb
+```
+
+When using `--force` on an excluded file, the linter will show a warning but proceed with linting.
 
 ### Language Server Integration
 

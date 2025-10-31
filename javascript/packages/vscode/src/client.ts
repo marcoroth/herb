@@ -70,7 +70,7 @@ export class Client {
 
     if (workspaceRoot) {
       try {
-        const projectConfig = await Config.load(workspaceRoot, { silent: true, createIfMissing: false })
+        const projectConfig = await Config.loadForEditor(workspaceRoot)
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         settings = {
@@ -161,7 +161,7 @@ export class Client {
 
     if (workspaceRoot) {
       try {
-        const projectConfig = await Config.load(workspaceRoot, { silent: true, createIfMissing: false })
+        const projectConfig = await Config.loadForEditor(workspaceRoot)
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         return {

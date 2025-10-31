@@ -23,10 +23,7 @@ export class FormattingService {
 
   async initialize() {
     try {
-      this.config = await Config.load(this.project.projectPath, {
-        silent: true,
-        version
-      })
+      this.config = await Config.loadForEditor(this.project.projectPath, version)
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
       this.connection.console.error(`Failed to initialize Herb formatter: ${error}`)
@@ -34,10 +31,7 @@ export class FormattingService {
   }
 
   async refreshConfig() {
-    this.config = await Config.load(this.project.projectPath, {
-      silent: true,
-      version
-    })
+    this.config = await Config.loadForEditor(this.project.projectPath, version)
   }
 
   private async shouldFormatFile(filePath: string): Promise<boolean> {

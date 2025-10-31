@@ -14,20 +14,57 @@
 version: 0.7.5
 
 # files:
-#   extensions:
-#     - .xml.erb
+#   # Additional patterns beyond the defaults (**.html, **.rhtml, **.html.erb, etc.)
+#   include:
+#     - '**/*.xml.erb'
+#     - 'custom/**/*.html'
 #
+#   # Patterns to exclude (can exclude defaults too)
 #   exclude:
-#     - public/**/*
+#     - 'public/**/*'
+#     - 'tmp/**/*'
 
 linter:
   enabled: true
 
+  # # Additional patterns beyond the defaults for linting
+  # include:
+  #   - '**/*.xml.erb'
+  #
+  # # Patterns to exclude from linting
+  # exclude:
+  #   - 'app/views/admin/**/*'
+
   # rules:
   #   erb-no-extra-newline:
-  #   enabled: false
+  #     enabled: false
+  #
+  #   # Rules can have 'include', 'only', and 'exclude' patterns
+  #   some-rule:
+  #     # Additional patterns to check (additive, ignored when 'only' is present)
+  #     include:
+  #       - 'app/components/**/*'
+  #     # Don't apply this rule to files matching these patterns
+  #     exclude:
+  #       - 'app/views/admin/**/*'
+  #
+  #   another-rule:
+  #     # Only apply this rule to files matching these patterns (overrides all 'include')
+  #     only:
+  #       - 'app/views/**/*'
+  #     # Exclude still applies even with 'only'
+  #     exclude:
+  #       - 'app/views/admin/**/*'
 
 formatter:
   enabled: false
   indentWidth: 2
   maxLineLength: 80
+
+  # # Additional patterns beyond the defaults for formatting
+  # include:
+  #   - '**/*.xml.erb'
+  #
+  # # Patterns to exclude from formatting
+  # exclude:
+  #   - 'app/views/admin/**/*'

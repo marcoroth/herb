@@ -28,7 +28,7 @@ export class AnalysisService {
       try {
         const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
         if (workspaceRoot) {
-          const projectConfig = await Config.load(workspaceRoot, { silent: true, createIfMissing: false })
+          const projectConfig = await Config.loadForEditor(workspaceRoot)
           linterEnabled = projectConfig.linter?.enabled ?? true
           formatterEnabled = projectConfig.formatter?.enabled ?? false
           formatterIndentWidth = projectConfig.formatter?.indentWidth ?? 2

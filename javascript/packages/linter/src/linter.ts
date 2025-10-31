@@ -9,24 +9,24 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
-import type { RuleConfig, LinterConfig } from "@herb-tools/config"
+import type { RuleConfig, Config } from "@herb-tools/config"
 
 export class Linter {
   protected rules: RuleClass[]
   protected herb: HerbBackend
   protected offenses: LintOffense[]
-  protected config?: LinterConfig
+  protected config?: Config
 
   /**
    * Creates a new Linter instance with automatic rule filtering based on config.
    *
    * @param herb - The Herb backend instance for parsing and lexing
-   * @param config - Linter configuration for rule filtering and severity overrides
+   * @param config - Optional full Config instance for rule filtering, severity overrides, and path-based filtering
    * @returns A configured Linter instance
    */
-  static from(herb: HerbBackend, config?: LinterConfig): Linter {
-    const filteredRules = config?.rules
-      ? Linter.filterRulesByConfig(rules, config.rules)
+  static from(herb: HerbBackend, config?: Config): Linter {
+    const filteredRules = config?.linter?.rules
+      ? Linter.filterRulesByConfig(rules, config.linter.rules)
       : undefined
 
     return new Linter(herb, filteredRules, config)
@@ -40,9 +40,9 @@ export class Linter {
    *
    * @param herb - The Herb backend instance for parsing and lexing
    * @param rules - Array of rule classes (Parser/AST or Lexer) to use. If not provided, uses default rules.
-   * @param config - Optional linter configuration for severity overrides
+   * @param config - Optional full Config instance for severity overrides and path-based rule filtering
    */
-  constructor(herb: HerbBackend, rules?: RuleClass[], config?: LinterConfig) {
+  constructor(herb: HerbBackend, rules?: RuleClass[], config?: Config) {
     this.herb = herb
     this.config = config
     this.rules = rules !== undefined ? rules : this.getDefaultRules()
@@ -142,6 +142,12 @@ export class Linter {
     source: string,
     context?: Partial<LintContext>
   ): UnboundLintOffense[] {
+    if (this.config && context?.fileName) {
+      if (!this.config.isRuleEnabledForPath(rule.name, context.fileName)) {
+        return []
+      }
+    }
+
     let isEnabled = true
     let ruleOffenses: UnboundLintOffense[]
 
@@ -375,7 +381,7 @@ export class Linter {
     const ruleInstance = new RuleClass()
     const defaultSeverity = ruleInstance.defaultConfig.severity
 
-    const userRuleConfig = this.config?.rules?.[ruleName]
+    const userRuleConfig = this.config?.linter?.rules?.[ruleName]
     const severity = userRuleConfig?.severity ?? defaultSeverity
 
     return unboundOffenses.map(offense => ({

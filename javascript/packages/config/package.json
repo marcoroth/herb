@@ -34,6 +34,9 @@
     "yaml": "^2.3.4"
   },
   "devDependencies": {
+    "@types/minimatch": "^6.0.0",
+    "glob": "^11.0.3",
+    "minimatch": "^10.1.1",
     "zod": "^4.1.12",
     "zod-validation-error": "^4.0.2"
   },

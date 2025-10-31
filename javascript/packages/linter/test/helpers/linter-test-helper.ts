@@ -2,6 +2,7 @@ import { beforeAll, afterEach, expect } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
+import { Config } from "@herb-tools/config"
 
 import type { RuleClass } from "../../src/types.js"
 
@@ -124,7 +125,20 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
       }
     }
 
-    const linter = new Linter(Herb, ruleClasses)
+    const rulesConfig: Record<string, any> = {}
+
+    ruleClasses.forEach(ruleClass => {
+      const instance = new ruleClass()
+      rulesConfig[instance.name] = instance.defaultConfig
+    })
+
+    const config = Config.fromObject({
+      linter: {
+        rules: rulesConfig
+      }
+    })
+
+    const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
 
     const ruleName = ruleInstance.name
@@ -187,9 +201,21 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
       }
     }
 
-    const linter = new Linter(Herb, ruleClasses)
-    const lintResult = linter.lint(html, context)
+    const rulesConfig: Record<string, any> = {}
 
+    ruleClasses.forEach(ruleClass => {
+      const instance = new ruleClass()
+      rulesConfig[instance.name] = instance.defaultConfig
+    })
+
+    const config = Config.fromObject({
+      linter: {
+        rules: rulesConfig
+      }
+    })
+
+    const linter = new Linter(Herb, ruleClasses, config)
+    const lintResult = linter.lint(html, context)
     const ruleName = ruleInstance.name
 
     const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)

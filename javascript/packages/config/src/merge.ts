@@ -25,7 +25,11 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Deep
       }
 
       if (Array.isArray(sourceValue)) {
-        ;(output as any)[key] = [...sourceValue]
+        if (key === 'include' && Array.isArray(targetValue)) {
+          ;(output as any)[key] = [...targetValue, ...sourceValue]
+        } else {
+          ;(output as any)[key] = [...sourceValue]
+        }
         continue
       }
 

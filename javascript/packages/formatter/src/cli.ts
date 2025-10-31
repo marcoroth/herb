@@ -1,7 +1,7 @@
 import dedent from "dedent"
 import { readFileSync, writeFileSync, statSync } from "fs"
 import { glob } from "glob"
-import { join, resolve } from "path"
+import { join, resolve, relative } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
@@ -139,7 +139,7 @@ export class CLI {
           process.exit(1)
         }
 
-        const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: true, silent: true })
+        const config = await Config.loadForCLI(configPath, version, true)
 
         await Config.mutateConfigFile(config.path, {
           formatter: {
@@ -163,10 +163,9 @@ export class CLI {
         process.exit(0)
       }
 
-      const config = await Config.load(configFile || startPath, { version, exitOnError: true, createIfMissing: false })
+      const config = await Config.loadForCLI(configFile || startPath, version)
       const formatterConfig = config.formatter || {}
-      const globPattern = config.getGlobPattern('formatter')
-      const excludePatterns = config.getExcludePatterns('formatter')
+      const filesConfig = config.getFilesConfigForTool('formatter')
 
       if (formatterConfig.enabled === false && !isForceMode) {
         console.log("Formatter is disabled in .herb.yml configuration.")
@@ -228,9 +227,72 @@ export class CLI {
           // Not a file/directory, treat as glob pattern
         }
 
+        const filesConfig = config.getFilesConfigForTool('formatter')
+
         if (isDirectory) {
-          pattern = join(file, globPattern)
+          const files = await config.findFilesForTool('formatter', resolve(file))
+
+          if (files.length === 0) {
+            console.log(`No files found in directory: ${resolve(file)}`)
+            process.exit(0)
+          }
+
+          let formattedCount = 0
+          let unformattedFiles: string[] = []
+
+          for (const filePath of files) {
+            const displayPath = relative(process.cwd(), filePath)
+
+            try {
+              const source = readFileSync(filePath, "utf-8")
+              const result = formatter.format(source)
+              const output = result.endsWith('\n') ? result : result + '\n'
+
+              if (output !== source) {
+                if (isCheckMode) {
+                  unformattedFiles.push(displayPath)
+                } else {
+                  writeFileSync(filePath, output, "utf-8")
+                  console.log(`Formatted: ${displayPath}`)
+                }
+                formattedCount++
+              }
+            } catch (error) {
+              console.error(`Error formatting ${displayPath}:`, error)
+            }
+          }
+
+          if (isCheckMode) {
+            if (unformattedFiles.length > 0) {
+              console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
+              unformattedFiles.forEach(file => console.log(`  ${file}`))
+              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
+              process.exit(1)
+            } else {
+              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
+            }
+          } else {
+            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
+          }
+
+          process.exit(0)
         } else if (isFile) {
+          const testFiles = await glob(file, {
+            cwd: process.cwd(),
+            ignore: filesConfig.exclude || []
+          })
+
+          if (testFiles.length === 0) {
+            if (!isForceMode) {
+              console.error(`⚠️  File ${file} is excluded by configuration patterns.`)
+              console.error(`   Use --force to format it anyway.\n`)
+              process.exit(0)
+            } else {
+              console.error(`⚠️  Forcing formatter on excluded file: ${file}`)
+              console.error()
+            }
+          }
+
           const source = readFileSync(file, "utf-8")
           const result = formatter.format(source)
           const output = result.endsWith('\n') ? result : result + '\n'
@@ -251,7 +313,7 @@ export class CLI {
         }
 
         try {
-          const files = await glob(pattern, { ignore: excludePatterns })
+          const files = await glob(pattern, { ignore: filesConfig.exclude || [] })
 
           if (files.length === 0) {
             try {
@@ -312,10 +374,10 @@ export class CLI {
           process.exit(1)
         }
       } else {
-        const files = await glob(globPattern, { ignore: excludePatterns })
+        const files = await config.findFilesForTool('formatter', process.cwd())
 
         if (files.length === 0) {
-          console.log(`No files found matching pattern: ${resolve(globPattern)}`)
+          console.log(`No files found matching configured patterns`)
 
           process.exit(0)
         }
@@ -324,6 +386,8 @@ export class CLI {
         let unformattedFiles: string[] = []
 
         for (const filePath of files) {
+          const displayPath = relative(process.cwd(), filePath)
+
           try {
             const source = readFileSync(filePath, "utf-8")
             const result = formatter.format(source)
@@ -331,15 +395,15 @@ export class CLI {
 
             if (output !== source) {
               if (isCheckMode) {
-                unformattedFiles.push(filePath)
+                unformattedFiles.push(displayPath)
               } else {
                 writeFileSync(filePath, output, "utf-8")
-                console.log(`Formatted: ${filePath}`)
+                console.log(`Formatted: ${displayPath}`)
               }
               formattedCount++
             }
           } catch (error) {
-            console.error(`Error formatting ${filePath}:`, error)
+            console.error(`Error formatting ${displayPath}:`, error)
           }
         }
 

@@ -4,6 +4,7 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Location } from "@herb-tools/core"
 import { Linter } from "../src/linter.js"
+import { Config } from "@herb-tools/config"
 
 import { HTMLTagNameLowercaseRule } from "../src/rules/html-tag-name-lowercase.js"
 import { HTMLAttributeDoubleQuotesRule } from "../src/rules/html-attribute-double-quotes.js"
@@ -12,7 +13,6 @@ import { ParserRule, SourceRule } from "../src/types.js"
 
 import type { LintOffense, UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
 import type { ParseResult } from "@herb-tools/core"
-import type { LinterConfig } from "@herb-tools/config"
 
 describe("@herb-tools/linter", () => {
   beforeAll(async () => {
@@ -372,10 +372,12 @@ describe("@herb-tools/linter", () => {
     })
 
     test("can create linter with config", () => {
-      const config: LinterConfig = {
-        enabled: true,
-        rules: {}
-      }
+      const config = Config.fromObject({
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      })
       const linter = Linter.from(Herb, config)
       expect(linter).toBeInstanceOf(Linter)
     })
@@ -455,16 +457,18 @@ describe("@herb-tools/linter", () => {
       }
 
       const html = '<div>test</div>'
-      const config: LinterConfig = {
-        rules: {
-          "disabled-by-default-rule": {
-            enabled: true
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "disabled-by-default-rule": {
+              enabled: true
+            }
           }
         }
-      }
+      })
 
       const linter = Linter.from(Herb, config)
-      const filteredRules = Linter.filterRulesByConfig([DisabledByDefaultRule], config.rules)
+      const filteredRules = Linter.filterRulesByConfig([DisabledByDefaultRule], config.linter?.rules)
       const linterWithRules = new Linter(Herb, filteredRules)
       const lintResult = linterWithRules.lint(html)
 
@@ -474,16 +478,18 @@ describe("@herb-tools/linter", () => {
 
     test("user config can disable an enabled-by-default rule", () => {
       const html = '<DIV>test</DIV>'
-      const config: LinterConfig = {
-        rules: {
-          "html-tag-name-lowercase": {
-            enabled: false
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: false
+            }
           }
         }
-      }
+      })
 
       const linter = Linter.from(Herb, config)
-      const filteredRules = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.rules)
+      const filteredRules = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.linter?.rules)
       const linterWithRules = new Linter(Herb, filteredRules)
       const lintResult = linterWithRules.lint(html)
 
@@ -492,14 +498,16 @@ describe("@herb-tools/linter", () => {
 
     test("applies severity overrides automatically", () => {
       const html = '<DIV>test</DIV>'
-      const config: LinterConfig = {
-        rules: {
-          "html-tag-name-lowercase": {
-            enabled: true,
-            severity: "warning"
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              enabled: true,
+              severity: "warning"
+            }
           }
         }
-      }
+      })
 
       const linter = new Linter(Herb, [HTMLTagNameLowercaseRule], config)
       const lintResult = linter.lint(html)
@@ -513,19 +521,21 @@ describe("@herb-tools/linter", () => {
 
     test("applies multiple severity overrides", () => {
       const html = '<DIV id=\'1\' class=<%= "hello" %>>test</DIV>'
-      const config: LinterConfig = {
-        rules: {
-          "html-tag-name-lowercase": {
-            severity: "warning"
-          },
-          "html-attribute-double-quotes": {
-            severity: "info"
-          },
-          "html-attribute-values-require-quotes": {
-            severity: "hint"
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-tag-name-lowercase": {
+              severity: "warning"
+            },
+            "html-attribute-double-quotes": {
+              severity: "info"
+            },
+            "html-attribute-values-require-quotes": {
+              severity: "hint"
+            }
           }
         }
-      }
+      })
 
       const linter = new Linter(
         Herb,
@@ -568,16 +578,18 @@ describe("@herb-tools/linter", () => {
       }
 
       const html = '<div>test</div>'
-      const config: LinterConfig = {
-        rules: {
-          "test-rule": {
-            enabled: true,
-            severity: "warning"
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "test-rule": {
+              enabled: true,
+              severity: "warning"
+            }
           }
         }
-      }
+      })
 
-      const filteredRules = Linter.filterRulesByConfig([TestRule], config.rules)
+      const filteredRules = Linter.filterRulesByConfig([TestRule], config.linter?.rules)
       const linter = new Linter(Herb, filteredRules, config)
       const lintResult = linter.lint(html)
 
@@ -589,9 +601,11 @@ describe("@herb-tools/linter", () => {
 
     test("config with no rules uses default enabled rules", () => {
       const html = '<DIV>test</DIV>'
-      const config: LinterConfig = {
-        enabled: true
-      }
+      const config = Config.fromObject({
+        linter: {
+          enabled: true
+        }
+      })
 
       const linter = Linter.from(Herb, config)
       const lintResult = linter.lint(html)

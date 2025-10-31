@@ -62,9 +62,14 @@ The CLIs support a `--force` flag to override project configuration:
 # Force linting even if disabled in .herb.yml
 herb-lint --force app/views/
 
+# Force linting on a file excluded by configuration
+herb-lint --force app/views/excluded-file.html.erb
+
 # Force formatting even if disabled in .herb.yml
 herb-format --force --check app/views/
 ```
+
+When using `--force` on an explicitly specified file that is excluded by configuration patterns, the CLI will show a warning but proceed with processing the file.
 
 ## Linter Configuration
 
@@ -73,28 +78,56 @@ Configure the linter behavior and rules:
 ```yaml [.herb.yml]
 linter:
   enabled: true  # Enable/disable linter globally
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+    - 'custom/**/*.html'
+
+  # Glob patterns to exclude from linting
+  exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'app/views/admin/**/*'
+
   rules:
+    # Disable a specific rule
     erb-no-extra-newline:
-      enabled: false # Disable a specific rule
+      enabled: false
 
     # Override rule severity
     html-tag-name-lowercase:
       severity: warning  # Options: error, warning, info, hint
 
-    # File patterns to include for linting
-    patterns:
-      - app/views/**/*.html.erb
+    # Rule with file pattern restrictions
+    html-img-require-alt:
+      # Only apply this rule to files matching these patterns
+      only:
+        - 'app/views/**/*'
+      # Don't apply this rule to these files (even if they match 'only')
+      exclude:
+        - 'app/views/admin/**/*'
 
-    # File patterns to exclude from linting
-    exclude:
-      - vendor/**/*
-      - node_modules/**/*
-
-    # File patterns and extensions
-    extensions:
-      - .xml.erb
-      - .rhtml
+    # Rule with additive include patterns
+    erb-no-extra-newline:
+      # Apply this rule to additional file patterns (ignored if 'only' is present)
+      include:
+        - 'app/components/**/*'
+      # Exclude specific files from this rule
+      exclude:
+        - 'app/components/legacy/**/*'
 ```
+
+### Default File Patterns
+
+By default, Herb processes these file patterns:
+- `**/*.html`
+- `**/*.rhtml`
+- `**/*.html.erb`
+- `**/*.html+*.erb`
+- `**/*.turbo_stream.erb`
+
+The `include` patterns are **additive** - they add to the defaults rather than replacing them.
 
 ### Rule Configuration Options
 
@@ -102,6 +135,39 @@ Each rule can be configured with the following options:
 
 - **`enabled`**: `true` or `false` - Enable or disable the rule
 - **`severity`**: `error`, `warning`, `info`, or `hint` - Set the severity level
+- **`include`**: Array of glob patterns - Apply rule to additional files (additive, ignored when `only` is present)
+- **`only`**: Array of glob patterns - Restrict rule to ONLY these files (overrides all `include` patterns)
+- **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
+
+#### Pattern Precedence
+
+When configuring rule-level file patterns, the precedence is:
+
+1. If **`only`** is specified: Rule applies ONLY to files matching `only` patterns (all `include` patterns are ignored)
+2. If **`only`** is NOT specified but **`include`** is: Rule applies ONLY to files matching `include` patterns
+3. **`exclude`** is always applied regardless of `include` or `only`
+
+Example:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    # This rule only runs on component files, excluding legacy ones
+    some-rule:
+      include:
+        - 'app/components/**/*'
+      exclude:
+        - 'app/components/legacy/**/*'
+
+    # This rule only runs on views, with 'only' overriding any includes
+    another-rule:
+      include:
+        - 'app/components/**/*'  # This is ignored because 'only' is present
+      only:
+        - 'app/views/**/*'
+      exclude:
+        - 'app/views/admin/**/*'
+```
 
 ## Formatter Configuration
 
@@ -113,13 +179,14 @@ formatter:
   indentWidth: 2     # Number of spaces for indentation
   maxLineLength: 80  # Maximum line length before wrapping
 
-  # File patterns to exclude from formatting
-  exclude:
-    - app/views/generated/**/*
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
 
-  # File patterns and extensions
-  patterns:
-    - app/views/**/*.html.erb
+  # Glob patterns to exclude from formatting
+  exclude:
+    - 'app/views/generated/**/*'
+    - 'vendor/**/*'
 ```
 
 ### Formatter Options
@@ -127,29 +194,54 @@ formatter:
 - **`enabled`**: `true` or `false` - Enable or disable the formatter
 - **`indentWidth`**: Number (default: `2`) - Spaces per indent level
 - **`maxLineLength`**: Number (default: `80`) - Maximum line length
+- **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
+- **`exclude`**: Array of glob patterns - Patterns to exclude from formatting
 
 ::: warning Experimental Feature
 The formatter is currently experimental. Enable it in `.herb.yml` and test thoroughly before using in production.
 :::
 
-## File Configuration
+## Top-Level File Configuration
 
 Global file configuration that applies to both linter and formatter:
 
 ```yaml [.herb.yml]
 files:
-  # Additional file extensions to process
-  extensions:
-    - .xml.erb
-    - .rss.erb
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+    - '**/*.rss.erb'
 
-  # Global exclude patterns
+  # Global exclude patterns (applies to all tools)
   exclude:
-    - public/**/*
-    - tmp/**/*
-    - vendor/**/*
+    - 'public/**/*'
+    - 'tmp/**/*'
+    - 'vendor/**/*'
 ```
 
-::: warning Tool-specific Configurations
-The configurations under `files:` have no effect if you also define `extensions`, `exclude`, or `patterns` under `linter:` or `formatter:` too.
-:::
+### Configuration Merging
+
+File patterns are merged in the following order:
+
+1. **Defaults**: Built-in patterns (`**/*.html.erb`, etc.)
+2. **Top-level `files.include`**: Added to defaults
+3. **Tool-level `include`** (e.g., `linter.include`): Added to the combined list
+4. **Exclusions**: Tool-level `exclude` takes precedence over top-level `files.exclude`
+
+Example:
+
+```yaml [.herb.yml]
+files:
+  include:
+    - '**/*.xml.erb'    # Applies to both linter and formatter
+
+linter:
+  include:
+    - '**/*.custom.erb' # Only applies to linter
+  exclude:
+    - 'vendor/**/*'     # Linter-specific exclusion
+```
+
+Result for linter:
+- Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
+- Excludes: `vendor/**/*`

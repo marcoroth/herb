@@ -53,10 +53,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
 
     if (workspaceRoot) {
       try {
-        const config = await Config.load(workspaceRoot, {
-          silent: true,
-          createIfMissing: false
-        })
+        const config = await Config.loadForEditor(workspaceRoot)
 
         includePattern = config.getGlobPattern('linter')
 

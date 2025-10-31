@@ -76,17 +76,15 @@ export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> 
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml","**/*.xml.erb"] // TODO: this is not respected yet
+      exclude: ["**/*.xml", "**/*.xml.erb"]
     }
   }
 
-  isEnabled(result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml") || context?.fileName?.endsWith(".xml.erb")) {
-      return false
-    }
-
+  isEnabled(result: ParseResult, _context?: Partial<LintContext>): boolean {
     const checker = new XMLDeclarationChecker(this.name)
+
     checker.visit(result.value)
+
     return !checker.hasXMLDeclaration
   }
 

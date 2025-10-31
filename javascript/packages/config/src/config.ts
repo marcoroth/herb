@@ -4,6 +4,8 @@ import { promises as fs } from "fs"
 import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
+import { minimatch } from "minimatch"
+import { glob } from "glob"
 
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
@@ -13,7 +15,6 @@ import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
 
 const DEFAULT_VERSION = packageJson.version
-const CONFIG_FILE_TEMPLATE = configTemplate
 
 export interface ConfigValidationError {
   message: string
@@ -25,28 +26,30 @@ export interface ConfigValidationError {
 }
 
 export type FilesConfig = {
-  extensions?: string[]
-  patterns?: string[]
+  include?: string[]
   exclude?: string[]
 }
 
-export type RuleConfig = FilesConfig & {
+export type RuleConfig = {
   enabled?: boolean
   severity?: DiagnosticSeverity
   autoCorrect?: boolean
+  include?: string[]
+  only?: string[]
+  exclude?: string[]
 }
 
 export type LinterConfig = {
   enabled?: boolean
+  include?: string[]
   exclude?: string[]
-  files?: FilesConfig
   rules?: Record<string, RuleConfig>
 }
 
 export type FormatterConfig = {
   enabled?: boolean
+  include?: string[]
   exclude?: string[]
-  files?: FilesConfig
   indentWidth?: number
   maxLineLength?: number
 }
@@ -75,14 +78,6 @@ export type FromObjectOptions = {
 
 export class Config {
   static configPath = ".herb.yml"
-
-  static DEFAULT_EXTENSIONS = [
-    '.html',
-    '.rhtml',
-    '.html.erb',
-    '.html+*.erb',
-    '.turbo_stream.erb'
-  ]
 
   private static PROJECT_INDICATORS = [
     '.git',
@@ -121,78 +116,234 @@ export class Config {
     return this.config.formatter
   }
 
-  /**
-   * Generate glob pattern for a specific tool
-   * Priority: tool.files > top-level files > defaults
-   */
-  getGlobPattern(tool: 'linter' | 'formatter'): string {
-    const toolExtensions = this.config[tool]?.files?.extensions
-    const topLevelExtensions = this.config.files?.extensions
-    const extensions = toolExtensions || topLevelExtensions
-
-    const toolPatterns = this.config[tool]?.files?.patterns
-    const topLevelPatterns = this.config.files?.patterns
-    const configPatterns = toolPatterns || topLevelPatterns
-
-    if (!extensions || (!extensions?.length && !configPatterns?.length)) {
-      return this.generateGlobFromExtensions(Config.DEFAULT_EXTENSIONS)
-    }
-
-    const patterns: string[] = []
-
-    if (extensions && extensions.length > 0) {
-      patterns.push(this.generateGlobFromExtensions(extensions))
-    }
-
-    if (configPatterns && configPatterns.length > 0) {
-      patterns.push(...configPatterns)
-    }
-
-    if (patterns.length === 1) {
-      return patterns[0]
-    }
-
-    return `{${patterns.join(',')}}`
-  }
-
-  /**
-   * Get exclude patterns for a specific tool
-   * Priority: tool.exclude > tool.files.exclude > top-level files.exclude > empty array
-   */
-  getExcludePatterns(tool: 'linter' | 'formatter'): string[] {
-    const toolDirectExcludes = this.config[tool]?.exclude
-    const toolFilesExcludes = this.config[tool]?.files?.exclude
-    const topLevelExcludes = this.config.files?.exclude
-
-    if (toolDirectExcludes && toolDirectExcludes?.length > 0) {
-      return toolDirectExcludes
-    }
-
-    if (toolFilesExcludes && toolFilesExcludes?.length > 0) {
-      return toolFilesExcludes
-    }
-
-    if (topLevelExcludes && topLevelExcludes.length > 0) {
-      return topLevelExcludes
-    }
-
-    return []
-  }
-
-  private generateGlobFromExtensions(extensions: string[]): string {
-    const cleaned = extensions.map(extension =>
-      extension.startsWith('.') ? extension.slice(1) : extension
-    )
-
-    if (cleaned.length === 1) {
-      return `**/*.${cleaned[0]}`
-    }
-
-    return `**/*.{${cleaned.join(',')}}`
-  }
-
   public toJSON() {
     return JSON.stringify(this.config, null, "  ")
+  }
+
+  /**
+   * Check if the linter is enabled.
+   * @returns true if linter is enabled (default), false if explicitly disabled
+   */
+  public get isLinterEnabled(): boolean {
+    return this.config.linter?.enabled ?? Config.getDefaultConfig().linter?.enabled ?? true
+  }
+
+  /**
+   * Check if the formatter is enabled.
+   * @returns true if formatter is enabled (default), false if explicitly disabled
+   */
+  public get isFormatterEnabled(): boolean {
+    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? true
+  }
+
+  /**
+   * Check if a specific rule is disabled.
+   * @param ruleName - The name of the rule to check
+   * @returns true if the rule is explicitly disabled, false otherwise
+   */
+  public isRuleDisabled(ruleName: string): boolean {
+    return this.config.linter?.rules?.[ruleName]?.enabled === false
+  }
+
+  /**
+   * Check if a specific rule is enabled.
+   * @param ruleName - The name of the rule to check
+   * @returns true if the rule is enabled, false otherwise
+   */
+  public isRuleEnabled(ruleName: string): boolean {
+    return !this.isRuleDisabled(ruleName)
+  }
+
+  /**
+   * Get the files configuration for a specific tool.
+   * Tool-specific file config takes precedence over top-level config.
+   * Include patterns are additive (defaults are already merged in this.config).
+   * @param tool - The tool to get files config for ('linter' or 'formatter')
+   * @returns The merged files configuration
+   */
+  public getFilesConfigForTool(tool: 'linter' | 'formatter'): FilesConfig {
+    const toolConfig = tool === 'linter' ? this.config.linter : this.config.formatter
+    const topLevelFiles = this.config.files || {}
+
+    const topLevelInclude = topLevelFiles.include || []
+    const toolInclude = toolConfig?.include || []
+    const include = [...topLevelInclude, ...toolInclude]
+
+    const exclude = toolConfig?.exclude || topLevelFiles.exclude || []
+
+    return {
+      include,
+      exclude
+    }
+  }
+
+  /**
+   * Get the files configuration for the linter.
+   * Linter-specific file config takes precedence over top-level config.
+   * @returns The merged files configuration for linter
+   */
+  public get filesConfigForLinter(): FilesConfig {
+    return this.getFilesConfigForTool('linter')
+  }
+
+  /**
+   * Get the files configuration for the formatter.
+   * Formatter-specific file config takes precedence over top-level config.
+   * @returns The merged files configuration for formatter
+   */
+  public get filesConfigForFormatter(): FilesConfig {
+    return this.getFilesConfigForTool('formatter')
+  }
+
+  /**
+   * Find files for a specific tool based on its configuration.
+   * Uses include patterns from config, applies exclude patterns.
+   * @param tool - The tool to find files for ('linter' or 'formatter')
+   * @param cwd - The directory to search from (defaults to project path)
+   * @returns Promise resolving to array of absolute file paths
+   */
+  public async findFilesForTool(tool: 'linter' | 'formatter', cwd?: string): Promise<string[]> {
+    const searchDir = cwd || path.dirname(this.path)
+    const filesConfig = this.getFilesConfigForTool(tool)
+
+    const patterns = filesConfig.include || []
+
+    if (patterns.length === 0) {
+      return []
+    }
+
+    return await glob(patterns, {
+      cwd: searchDir,
+      absolute: true,
+      nodir: true,
+      ignore: filesConfig.exclude || []
+    })
+  }
+
+  /**
+   * Find files for the linter based on linter configuration.
+   * @param cwd - The directory to search from (defaults to project path)
+   * @returns Promise resolving to array of absolute file paths
+   */
+  public async findFilesForLinter(cwd?: string): Promise<string[]> {
+    return this.findFilesForTool('linter', cwd)
+  }
+
+  /**
+   * Find files for the formatter based on formatter configuration.
+   * @param cwd - The directory to search from (defaults to project path)
+   * @returns Promise resolving to array of absolute file paths
+   */
+  public async findFilesForFormatter(cwd?: string): Promise<string[]> {
+    return this.findFilesForTool('formatter', cwd)
+  }
+
+  /**
+   * Check if a file path is excluded by glob patterns.
+   * @param filePath - The file path to check
+   * @param excludePatterns - Array of glob patterns to check against
+   * @returns true if the path matches any exclude pattern
+   */
+  private isPathExcluded(filePath: string, excludePatterns?: string[]): boolean {
+    if (!excludePatterns || excludePatterns.length === 0) {
+      return false
+    }
+
+    return excludePatterns.some(pattern => minimatch(filePath, pattern))
+  }
+
+  /**
+   * Check if a file path matches any of the include patterns.
+   * @param filePath - The file path to check
+   * @param includePatterns - Array of glob patterns to check against
+   * @returns true if the path matches any include pattern, or true if no patterns specified
+   */
+  private isPathIncluded(filePath: string, includePatterns?: string[]): boolean {
+    if (!includePatterns || includePatterns.length === 0) {
+      return true
+    }
+
+    return includePatterns.some(pattern => minimatch(filePath, pattern))
+  }
+
+  /**
+   * Check if a tool (linter or formatter) is enabled for a specific file path.
+   * Respects both the tool's enabled state and its exclude patterns.
+   * @param filePath - The file path to check
+   * @param tool - The tool to check ('linter' or 'formatter')
+   * @returns true if the tool is enabled for this path
+   */
+  public isEnabledForPath(filePath: string, tool: 'linter' | 'formatter'): boolean {
+    const isEnabled = tool === 'linter' ? this.isLinterEnabled : this.isFormatterEnabled
+
+    if (!isEnabled) {
+      return false
+    }
+
+    const toolConfig = tool === 'linter' ? this.config.linter : this.config.formatter
+    const excludePatterns = toolConfig?.exclude || []
+
+    return !this.isPathExcluded(filePath, excludePatterns)
+  }
+
+  /**
+   * Check if the linter is enabled for a specific file path.
+   * Respects both linter.enabled and linter.exclude patterns.
+   * @param filePath - The file path to check
+   * @returns true if the linter is enabled for this path
+   */
+  public isLinterEnabledForPath(filePath: string): boolean {
+    return this.isEnabledForPath(filePath, 'linter')
+  }
+
+  /**
+   * Check if the formatter is enabled for a specific file path.
+   * Respects both formatter.enabled and formatter.exclude patterns.
+   * @param filePath - The file path to check
+   * @returns true if the formatter is enabled for this path
+   */
+  public isFormatterEnabledForPath(filePath: string): boolean {
+    return this.isEnabledForPath(filePath, 'formatter')
+  }
+
+  /**
+   * Check if a specific rule is enabled for a specific file path.
+   * Respects linter.enabled, linter.exclude, rule.enabled, rule.include, rule.only, and rule.exclude patterns.
+   *
+   * Pattern precedence:
+   * - If rule.only is specified: Only files matching 'only' patterns (ignores all 'include' patterns)
+   * - If rule.only is NOT specified: Files matching 'include' patterns (if specified, additive)
+   * - rule.exclude is always applied regardless of 'only' or 'include'
+   *
+   * @param ruleName - The name of the rule to check
+   * @param filePath - The file path to check
+   * @returns true if the rule is enabled for this path
+   */
+  public isRuleEnabledForPath(ruleName: string, filePath: string): boolean {
+    if (!this.isLinterEnabledForPath(filePath)) {
+      return false
+    }
+
+    if (this.isRuleDisabled(ruleName)) {
+      return false
+    }
+
+    const ruleConfig = this.config.linter?.rules?.[ruleName]
+    const ruleOnlyPatterns = ruleConfig?.only || []
+    const ruleIncludePatterns = ruleConfig?.include || []
+    const ruleExcludePatterns = ruleConfig?.exclude || []
+
+    if (ruleOnlyPatterns.length > 0) {
+      if (!this.isPathIncluded(filePath, ruleOnlyPatterns)) {
+        return false
+      }
+    } else if (ruleIncludePatterns.length > 0) {
+      if (!this.isPathIncluded(filePath, ruleIncludePatterns)) {
+        return false
+      }
+    }
+
+    return !this.isPathExcluded(filePath, ruleExcludePatterns)
   }
 
   /**
@@ -225,20 +376,6 @@ export class Config {
       }
       return offense
     })
-  }
-
-  updateVersionIfDifferent(currentVersion: string): boolean {
-    if (this.config.version !== currentVersion) {
-      this.config.version = currentVersion
-
-      return true
-    }
-
-    return false
-  }
-
-  async read() {
-    return await fs.readFile(this.path, "utf8")
   }
 
   static configPathFromProjectPath(projectPath: string) {
@@ -329,6 +466,45 @@ export class Config {
   }
 
   /**
+   * Load config for editor/language server use (silent mode, no file creation).
+   * This is a convenience method for the common pattern used in editors.
+   *
+   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param version - Optional version string (defaults to package version)
+   * @returns Config instance or throws on errors
+   */
+  static async loadForEditor(pathOrFile: string, version?: string): Promise<Config> {
+    return await this.load(pathOrFile, {
+      silent: true,
+      version,
+      createIfMissing: false,
+      exitOnError: false
+    })
+  }
+
+  /**
+   * Load config for CLI use (may create file, show errors).
+   * This is a convenience method for the common pattern used in CLI tools.
+   *
+   * @param pathOrFile - Directory path or explicit .herb.yml file path
+   * @param version - Optional version string (defaults to package version)
+   * @param createIfMissing - Whether to create config if missing (default: false)
+   * @returns Config instance or throws on errors
+   */
+  static async loadForCLI(
+    pathOrFile: string,
+    version?: string,
+    createIfMissing: boolean = false
+  ): Promise<Config> {
+    return await this.load(pathOrFile, {
+      silent: false,
+      version,
+      createIfMissing,
+      exitOnError: false
+    })
+  }
+
+  /**
    * Mutate an existing config file by reading it, validating, merging with a mutation, and writing back.
    * This preserves the user's YAML file structure and only writes what's explicitly configured.
    *
@@ -383,7 +559,7 @@ export class Config {
       }
 
       if (Object.keys(mutation).length === 0) {
-        yamlContent = CONFIG_FILE_TEMPLATE.replace(
+        yamlContent = configTemplate.replace(
           /^version:\s*[\d.]+$/m,
           `version: ${DEFAULT_VERSION}`
         )
@@ -438,7 +614,7 @@ export class Config {
     mutation: Partial<HerbConfigOptions>,
     version: string = DEFAULT_VERSION
   ): string {
-    let yamlContent = CONFIG_FILE_TEMPLATE.replace(
+    let yamlContent = configTemplate.replace(
       /^version:\s*[\d.]+$/m,
       `version: ${version}`
     )
@@ -884,7 +1060,13 @@ export class Config {
     return {
       version,
       files: {
-        extensions: Config.DEFAULT_EXTENSIONS,
+        include: [
+          '**/*.html',
+          '**/*.rhtml',
+          '**/*.html.erb',
+          '**/*.html+*.erb',
+          '**/*.turbo_stream.erb'
+        ],
         exclude: [
           'node_modules/**/*',
           'vendor/bundle/**/*',

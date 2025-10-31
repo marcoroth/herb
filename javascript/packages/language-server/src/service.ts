@@ -47,11 +47,7 @@ export class Service {
     await this.formatting.initialize()
 
     try {
-      this.config = await Config.load(this.project.projectPath, {
-        silent: true,
-        version,
-        createIfMissing: false
-      })
+      this.config = await Config.loadForEditor(this.project.projectPath, version)
       this.codeActionService.setConfig(this.config)
 
       if (this.config.version && this.config.version !== version) {
@@ -86,11 +82,7 @@ export class Service {
 
   async refreshConfig() {
     try {
-      this.config = await Config.load(this.project.projectPath, {
-        silent: true,
-        version,
-        createIfMissing: false
-      })
+      this.config = await Config.loadForEditor(this.project.projectPath, version)
 
       this.codeActionService.setConfig(this.config)
 

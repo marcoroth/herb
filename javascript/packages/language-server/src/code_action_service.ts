@@ -183,7 +183,7 @@ export class CodeActionService {
         return null
       }
 
-      if (this.config?.config.linter?.rules?.[ruleName]?.enabled === false) {
+      if (this.config?.isRuleDisabled(ruleName)) {
         return null
       }
 

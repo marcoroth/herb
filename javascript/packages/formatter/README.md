@@ -35,11 +35,6 @@ bun add -g @herb-tools/formatter
 
 :::
 
-Then run directly:
-```bash
-herb-format template.html.erb
-```
-
 ### One-time Usage
 For occasional use without installing:
 
@@ -69,8 +64,30 @@ bun add -D @herb-tools/formatter
 
 :::
 
-After installing as a dev dependency, add format scripts to your `package.json`:
-```json
+After installing as a dev dependency, initialize the configuration:
+
+:::code-group
+
+```shell [npm]
+npx herb-format --init
+```
+
+```shell [pnpm]
+pnpm herb-format --init
+```
+
+```shell [yarn]
+yarn herb-format --init
+```
+
+```shell [bun]
+bunx herb-format --init
+```
+
+:::
+
+Then add format scripts to your `package.json`:
+```json [package.json]
 {
   "scripts": {
     "herb:format": "herb-format",
@@ -157,10 +174,62 @@ herb-format --help
 herb-format --version
 ```
 
-<!-- #### Configuration Options -->
+## Configuration
 
-<!-- TODO -->
+Create a `.herb.yml` file in your project root to configure the formatter:
 
-<!-- #### CLI Usage -->
+```bash
+herb-format --init
+```
 
-<!-- TODO -->
+### Basic Configuration
+
+```yaml [.herb.yml]
+formatter:
+  enabled: true  # Must be enabled for formatting to work
+  indentWidth: 2
+  maxLineLength: 80
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+
+  # Glob patterns to exclude from formatting
+  exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'app/views/generated/**/*'
+```
+
+### Default File Patterns
+
+By default, the formatter processes:
+- `**/*.html`
+- `**/*.rhtml`
+- `**/*.html.erb`
+- `**/*.html+*.erb`
+- `**/*.turbo_stream.erb`
+
+The `include` patterns are **additive** - they add to the defaults.
+
+### Configuration Options
+
+- **`enabled`**: `true` or `false` - Must be `true` to enable formatting
+- **`indentWidth`**: Number (default: `2`) - Spaces per indentation level
+- **`maxLineLength`**: Number (default: `80`) - Maximum line length before wrapping
+- **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
+- **`exclude`**: Array of glob patterns - Patterns to exclude from formatting
+
+### Force Flag
+
+Format files even when formatter is disabled:
+
+```bash
+# Force formatting when disabled in config
+herb-format --force
+
+# Force formatting on an excluded file
+herb-format --force app/views/excluded-file.html.erb
+```
+
+When using `--force` on an excluded file, the formatter will show a warning but proceed with formatting.

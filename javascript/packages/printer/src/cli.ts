@@ -2,7 +2,7 @@
 
 import dedent from "dedent"
 
-import { readFileSync, writeFileSync } from "fs"
+import { readFileSync, writeFileSync, existsSync } from "fs"
 import { resolve } from "path"
 import { glob } from "glob"
 
@@ -20,6 +20,7 @@ interface CLIOptions {
   stats?: boolean
   help?: boolean
   glob?: boolean
+  force?: boolean
 }
 
 export class CLI {
@@ -49,6 +50,9 @@ export class CLI {
           break
         case '--glob':
           options.glob = true
+          break
+        case '--force':
+          options.force = true
           break
         case '-h':
         case '--help':
@@ -83,6 +87,7 @@ export class CLI {
         --verify                     Verify that output matches input exactly
         --stats                      Show parsing and printing statistics
         --glob                       Treat input as glob pattern
+        --force                      Process files even if excluded by configuration
         -h, --help                   Show this help message
 
       Examples:
@@ -115,15 +120,22 @@ export class CLI {
     try {
       await Herb.load()
 
+      const startPath = options.input || process.cwd()
+      const config = await Config.loadForCLI(options.configFile || startPath, version, true)
+
       if (options.glob) {
-        const startPath = options.input || process.cwd()
-        const config = await Config.load(options.configFile || startPath, { version, createIfMissing: true })
-        const globPattern = config.getGlobPattern('linter')
-        const pattern = options.input || globPattern
-        const files = await glob(pattern)
+
+        let files: string[]
+        if (options.input) {
+          const filesConfig = config.getFilesConfigForTool('linter')
+          files = await glob(options.input, { ignore: filesConfig.exclude || [] })
+        } else {
+          files = await config.findFilesForTool('linter', startPath)
+        }
 
         if (files.length === 0) {
-          console.error(`No files found matching pattern: ${pattern}`)
+          const patternDesc = options.input || 'configured patterns'
+          console.error(`No files found matching: ${patternDesc}`)
           process.exit(1)
         }
 
@@ -184,6 +196,25 @@ export class CLI {
 
       } else {
         const inputPath = resolve(options.input!)
+
+        const filesConfig = config.getFilesConfigForTool('linter')
+        const testFiles = await glob(options.input!, {
+          cwd: process.cwd(),
+          ignore: filesConfig.exclude || []
+        })
+
+        if (testFiles.length === 0 && existsSync(inputPath)) {
+          if (!options.force) {
+            console.error(`⚠️  File ${options.input} is excluded by configuration patterns.`)
+            console.error(`   Use --force to print it anyway.\n`)
+
+            process.exit(0)
+          } else {
+            console.error(`⚠️  Forcing printer on excluded file: ${options.input}`)
+            console.error()
+          }
+        }
+
         const input = readFileSync(inputPath, 'utf-8')
 
         const parseResult = Herb.parse(input, { track_whitespace: true })

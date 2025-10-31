@@ -76,7 +76,7 @@ export class FileProcessor {
       let content = readFileSync(filePath, "utf-8")
 
       if (!this.linter) {
-        this.linter = Linter.from(Herb, context?.linterConfig)
+        this.linter = Linter.from(Herb, context?.config)
       }
 
       const lintResult = this.linter.lint(content, {

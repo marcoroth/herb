@@ -20,7 +20,7 @@ export async function showConfigDetails() {
       await vscode.workspace.fs.stat(vscode.Uri.file(configPath))
 
       hasConfigFile = true
-      config = await Config.load(workspaceRoot!, { silent: true, createIfMissing: false })
+      config = await Config.loadForEditor(workspaceRoot!)
     } catch (error) {
       // No config file or failed to load
     }

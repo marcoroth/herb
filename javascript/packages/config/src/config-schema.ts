@@ -3,29 +3,31 @@ import { z } from "zod"
 export const SeveritySchema = z.enum(["error", "warning", "info", "hint"])
 
 export const FilesConfigSchema = z.object({
-  extensions: z.array(z.string()).optional().describe("File extensions to match (e.g., ['.html.erb', '.rhtml'])"),
-  patterns: z.array(z.string()).optional().describe("Custom glob patterns (e.g., ['views/**/*.xml'])"),
-  exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*'])"),
+  include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
+  exclude: z.array(z.string()).optional().describe("Glob patterns to exclude (e.g., ['node_modules/**/*', 'vendor/**/*', '**/*.html.erb'])"),
 }).strict().optional()
 
 const RuleConfigBaseSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the rule is enabled"),
   severity: SeveritySchema.optional().describe("Severity level for the rule"),
+  include: z.array(z.string()).optional().describe("Additional glob patterns to include for this rule (additive, ignored when 'only' is present)"),
+  only: z.array(z.string()).optional().describe("Only apply this rule to files matching these glob patterns (overrides all 'include' patterns)"),
+  exclude: z.array(z.string()).optional().describe("Don't apply this rule to files matching these glob patterns"),
 })
 
 export const RuleConfigSchema = RuleConfigBaseSchema.optional()
 
 export const LinterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the linter is enabled"),
+  include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from linting"),
-  files: FilesConfigSchema.describe("File configuration for linter (overrides top-level)"),
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),
 }).strict().optional()
 
 export const FormatterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the formatter is enabled"),
+  include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from formatting"),
-  files: FilesConfigSchema.describe("File configuration for formatter (overrides top-level)"),
   indentWidth: z.number().int().positive().optional().describe("Number of spaces per indentation level"),
   maxLineLength: z.number().int().positive().optional().describe("Maximum line length before wrapping"),
 }).strict().optional()

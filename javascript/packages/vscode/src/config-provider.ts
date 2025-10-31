@@ -94,11 +94,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     }
 
     try {
-      this.config = await Config.load(configPath, {
-        silent: true,
-        version: this.extensionVersion,
-        createIfMissing: false
-      })
+      this.config = await Config.loadForEditor(configPath, this.extensionVersion)
       this.configError = null
 
       vscode.commands.executeCommand('setContext', 'herb.hasProjectConfig', true)
@@ -141,7 +137,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
 
       items.push(configFileItem)
 
-      const linterEnabled = this.config.linter?.enabled ?? true
+      const linterEnabled = this.config.isLinterEnabled
       const disabledRulesCount = this.config.linter?.rules
         ? Object.values(this.config.linter.rules).filter(r => r.enabled === false).length
         : 0
@@ -164,7 +160,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
       }
       items.push(linterItem)
 
-      const formatterEnabled = this.config.formatter?.enabled ?? false
+      const formatterEnabled = this.config.isFormatterEnabled
       const formatterItem = new ConfigItem(
         `Herb Formatter: ${formatterEnabled ? 'Enabled' : 'Disabled'}`,
         formatterEnabled

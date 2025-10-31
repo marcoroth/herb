@@ -119,7 +119,7 @@ export class CLI {
         process.exit(1)
       }
 
-      const config = await Config.load(configPath, { version, exitOnError: true, createIfMissing: true, silent: true })
+      const config = await Config.loadForCLI(configPath, version, true)
       const extensionAdded = addHerbExtensionRecommendation(this.projectPath)
 
       console.log(`\n✓ Configuration initialized at ${config.path}`)
@@ -135,9 +135,6 @@ export class CLI {
     const silent = formatOption === 'json'
     const config = await Config.load(configFile || this.projectPath, { version, exitOnError: true, createIfMissing: false, silent })
     const linterConfig = config.options.linter || {}
-    const configGlobPattern = config.getGlobPattern('linter')
-
-    pattern = this.adjustPattern(pattern, configGlobPattern)
 
     const outputOptions = {
       formatOption,
@@ -162,13 +159,63 @@ export class CLI {
         console.log()
       }
 
-      const files = await glob(pattern, {
-        cwd: this.projectPath,
-        ignore: config.getExcludePatterns('linter')
-      })
+      let files: string[]
+      let explicitSingleFile: string | undefined
+
+      if (!pattern) {
+        files = await config.findFilesForTool('linter', this.projectPath)
+      } else {
+        const resolvedPattern = resolve(pattern)
+        const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
+
+        if (isExplicitFile) {
+          explicitSingleFile = pattern
+        }
+
+        const filesConfig = config.getFilesConfigForTool('linter')
+        const configGlobPattern = filesConfig.include && filesConfig.include.length > 0
+          ? (filesConfig.include.length === 1 ? filesConfig.include[0] : `{${filesConfig.include.join(',')}}`)
+          : '**/*.html.erb'
+        const adjustedPattern = this.adjustPattern(pattern, configGlobPattern)
+
+        files = await glob(adjustedPattern, {
+          cwd: this.projectPath,
+          ignore: filesConfig.exclude || []
+        })
+
+        if (explicitSingleFile && files.length === 0) {
+          if (!force) {
+            console.error(`⚠️  File ${explicitSingleFile} is excluded by configuration patterns.`)
+            console.error(`   Use --force to lint it anyway.\n`)
+            process.exit(0)
+          } else {
+            console.log(`⚠️  Forcing linter on excluded file: ${explicitSingleFile}`)
+            console.log()
+
+            files = [adjustedPattern]
+          }
+        }
+      }
 
       if (files.length === 0) {
-        this.exitWithInfo(`No files found matching pattern: ${pattern}`, formatOption, 0, { startTime, startDate, showTiming })
+        this.exitWithInfo(`No files found matching pattern: ${pattern || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
+      }
+
+      let processingConfig = config
+
+      if (force && explicitSingleFile && files.length === 1) {
+        const modifiedConfig = Object.create(Object.getPrototypeOf(config))
+        Object.assign(modifiedConfig, config)
+
+        modifiedConfig.config = {
+          ...config.config,
+          linter: {
+            ...config.config.linter,
+            exclude: []
+          }
+        }
+
+        processingConfig = modifiedConfig
       }
 
       const context: ProcessingContext = {
@@ -177,7 +224,7 @@ export class CLI {
         fix,
         ignoreDisableComments,
         linterConfig,
-        config
+        config: processingConfig
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)

@@ -46,15 +46,8 @@ export class HTMLBodyOnlyElementsRule extends ParserRule {
     return {
       enabled: true,
       severity: "error",
-      exclude: ["**/*.xml","**/*.xml.erb"] // TODO: this is not respected yet
+      exclude: ["**/*.xml", "**/*.xml.erb"]
     }
-  }
-
-  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml")) return false
-    if (context?.fileName?.endsWith(".xml.erb")) return false
-
-    return true
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {

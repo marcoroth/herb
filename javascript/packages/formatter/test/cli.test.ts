@@ -200,8 +200,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("⚠️  Experimental Preview")
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-empty-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     } finally {
       await rm("test-empty-dir", { recursive: true }).catch(() => {})
     }
@@ -252,8 +251,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -641,8 +639,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-advanced/"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("No files found matching pattern")
-      expect(result.stdout).toContain("test-advanced/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     })
 
     it("should handle mixed file arguments", async () => {

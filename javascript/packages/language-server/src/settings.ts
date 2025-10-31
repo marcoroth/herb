@@ -66,7 +66,7 @@ export class Settings {
     }
 
     try {
-      this.projectConfig = await Config.load(this.projectPath, { silent: true, version })
+      this.projectConfig = await Config.loadForEditor(this.projectPath, version)
     } catch (error) {
       this.connection.console.warn(`Failed to load project config: ${error}`)
       this.projectConfig = undefined
