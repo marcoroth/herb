@@ -17,7 +17,7 @@ gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 
 group :development do
-  gem "rbs-inline", require: false, github: "marcoroth/rbs-inline", branch: "prism"
+  gem "rbs-inline", "~> 0.12"
   gem "sorbet"
   gem "steep", "~> 1.10"
 end
