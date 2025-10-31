@@ -66,12 +66,13 @@ export class Server {
         })
       }
 
-      const extensions = Config.DEFAULT_EXTENSIONS.map(extension => extension.startsWith('.') ? extension.slice(1) : extension).join(',')
-      const fileGlobPattern = `**/*.{${extensions}}`
+      const patterns = Config.getDefaultFilePatterns().map(globPattern => ({
+        globPattern
+      }))
 
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: fileGlobPattern },
+          ...patterns,
           { globPattern: `**/.herb.yml` },
           { globPattern: `**/**/.herb-lsp/config.json` },
         ],
@@ -99,8 +100,8 @@ export class Server {
       }
     })
 
-    this.connection.onDidChangeWatchedFiles((params) => {
-      params.changes.forEach(async (event) => {
+    this.connection.onDidChangeWatchedFiles(async (params) => {
+      for (const event of params.changes) {
         if (event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")) {
           await this.service.refreshConfig()
 
@@ -109,7 +110,7 @@ export class Server {
             this.service.diagnostics.refreshDocument(document)
           ))
         }
-      })
+      }
     })
 
     this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {

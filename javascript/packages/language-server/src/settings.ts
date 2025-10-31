@@ -1,8 +1,10 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
-import { defaultFormatOptions } from "@herb-tools/formatter"
 import { Config } from "@herb-tools/config"
+
+import { defaultFormatOptions } from "@herb-tools/formatter"
 import { version } from "../package.json"
 
+// TODO: ideally we could just Config all the way through
 export interface PersonalHerbSettings {
   trace?: {
     server?: string
@@ -18,7 +20,6 @@ export interface PersonalHerbSettings {
 }
 
 export class Settings {
-
   defaultSettings: PersonalHerbSettings = {
     linter: {
       enabled: true
@@ -79,20 +80,33 @@ export class Settings {
     this.documentSettings.clear()
   }
 
-  private mergeSettings(userSettings: PersonalHerbSettings, projectConfig?: Config): PersonalHerbSettings {
+  // TODO: ideally we can just use Config all the way through
+  private mergeSettings(userSettings: PersonalHerbSettings | null, projectConfig?: Config): PersonalHerbSettings {
+    const settings = userSettings || this.defaultSettings
+
     if (!projectConfig) {
-      return userSettings
+      return {
+        trace: settings.trace,
+        linter: {
+          enabled: settings.linter?.enabled ?? this.defaultSettings.linter!.enabled!
+        },
+        formatter: {
+          enabled: settings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
+          indentWidth: settings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+          maxLineLength: settings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
+        }
+      }
     }
 
     return {
-      trace: userSettings.trace,
+      trace: settings.trace,
       linter: {
-        enabled: projectConfig.linter?.enabled ?? userSettings.linter?.enabled ?? this.defaultSettings.linter!.enabled!
+        enabled: projectConfig.isLinterEnabled
       },
       formatter: {
-        enabled: projectConfig.formatter?.enabled ?? userSettings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
-        indentWidth: projectConfig.formatter?.indentWidth ?? userSettings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
-        maxLineLength: projectConfig.formatter?.maxLineLength ?? userSettings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
+        enabled: projectConfig.isFormatterEnabled,
+        indentWidth: projectConfig.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+        maxLineLength: projectConfig.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
       }
     }
   }

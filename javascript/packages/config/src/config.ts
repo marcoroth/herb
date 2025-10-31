@@ -85,6 +85,7 @@ export class Config {
     'package.json',
     'Rakefile',
     'README.md',
+    '*.gemspec',
     'config/application.rb'
   ]
 
@@ -94,6 +95,10 @@ export class Config {
   constructor(projectPath: string, config: HerbConfig) {
     this.path = Config.configPathFromProjectPath(projectPath)
     this.config = config
+  }
+
+  get projectPath(): string {
+    return path.dirname(this.path)
   }
 
   get version(): string {
@@ -380,6 +385,15 @@ export class Config {
 
   static configPathFromProjectPath(projectPath: string) {
     return path.join(projectPath, this.configPath)
+  }
+
+  /**
+   * Get the default file patterns that Herb recognizes.
+   * These are the default extensions/patterns used when no custom patterns are specified.
+   * @returns Array of glob patterns for HTML+ERB files
+   */
+  static getDefaultFilePatterns(): string[] {
+    return this.getDefaultConfig().files?.include || []
   }
 
   /**

@@ -2,6 +2,7 @@ const fs = require('fs');
 const { Herb } = require('@herb-tools/node-wasm');
 const { Linter } = require('@herb-tools/linter');
 const { Formatter } = require('@herb-tools/formatter');
+const { Config } = require('@herb-tools/config');
 
 (async () => {
   const file = process.argv[2];
@@ -51,11 +52,13 @@ const { Formatter } = require('@herb-tools/formatter');
 
     if (parseErrors === 0 && linterEnabled) {
       try {
-        const linterConfig = {
-          enabled: true,
-          rules: linterRules
-        };
-        const linter = Linter.from(Herb, linterConfig);
+        const config = Config.fromObject({
+          linter: {
+            enabled: true,
+            rules: linterRules
+          }
+        }, { projectPath: process.cwd() });
+        const linter = Linter.from(Herb, config);
         const lintResult = linter.lint(content, { fileName: file });
 
         lintOffenses = lintResult.offenses || [];

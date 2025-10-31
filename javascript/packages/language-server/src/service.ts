@@ -10,6 +10,7 @@ import { Project } from "./project"
 import { FormattingService } from "./formatting_service"
 import { ConfigService } from "./config_service"
 import { CodeActionService } from "./code_action_service"
+
 import { version } from "../package.json"
 
 export class Service {
@@ -58,13 +59,19 @@ export class Service {
       }
     } catch (error) {
       this.connection.console.warn(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using defaults.`
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using personal settings with defaults.`
       )
-      this.config = Config.fromObject({}, { projectPath: this.project.projectPath, version })
+      this.config = Config.fromObject({
+        linter: this.settings.globalSettings.linter,
+        formatter: this.settings.globalSettings.formatter
+      }, { projectPath: this.project.projectPath, version })
+
       this.codeActionService.setConfig(this.config)
     }
 
     await this.settings.initializeProjectConfig(this.config)
+    await this.formatting.refreshConfig(this.config)
+    this.linterService.rebuildLinter()
 
     this.documentService.onDidClose((change) => {
       this.settings.documentSettings.delete(change.document.uri)
@@ -94,17 +101,19 @@ export class Service {
       }
     } catch (error) {
       this.connection.console.warn(
-        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using defaults.`
+        `Failed to load config: ${error instanceof Error ? error.message : String(error)}. Using personal settings with defaults.`
       )
 
-      if (!this.config) {
-        this.config = Config.fromObject({}, { projectPath: this.project.projectPath, version })
-        this.codeActionService.setConfig(this.config)
-      }
+      this.config = Config.fromObject({
+        linter: this.settings.globalSettings.linter,
+        formatter: this.settings.globalSettings.formatter
+      }, { projectPath: this.project.projectPath, version })
+
+      this.codeActionService.setConfig(this.config)
     }
 
     await this.settings.refreshProjectConfig(this.config)
-    await this.formatting.refreshConfig()
+    await this.formatting.refreshConfig(this.config)
 
     this.linterService.rebuildLinter()
   }

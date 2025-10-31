@@ -4,7 +4,6 @@ import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
-import { minimatch } from "minimatch"
 import { version } from "../package.json"
 
 export class FormattingService {
@@ -30,43 +29,24 @@ export class FormattingService {
     }
   }
 
-  async refreshConfig() {
-    this.config = await Config.loadForEditor(this.project.projectPath, version)
+  async refreshConfig(config?: Config) {
+    if (config) {
+      this.config = config
+    } else {
+      try {
+        this.config = await Config.loadForEditor(this.project.projectPath, version)
+      } catch (error) {
+        this.connection.console.error(`Failed to refresh Herb formatter config: ${error}`)
+      }
+    }
   }
 
-  private async shouldFormatFile(filePath: string): Promise<boolean> {
-    if (!this.config?.formatter) {
-      return true
-    }
-
-    const formatter = this.config.formatter
-
-    if (formatter.enabled === false) {
-      return false
-    }
+  private shouldFormatFile(filePath: string): boolean {
+    if (filePath.endsWith('.herb.yml')) return false
+    if (!this.config) return true
 
     const relativePath = filePath.replace('file://', '').replace(this.project.projectPath + '/', '')
-    const excludePatterns = this.config.getExcludePatterns('formatter')
-
-    if (excludePatterns.length > 0) {
-      for (const pattern of excludePatterns) {
-        if (minimatch(relativePath, pattern)) {
-          return false
-        }
-      }
-    }
-
-    if (formatter.files?.patterns && formatter.files.patterns.length > 0) {
-      for (const pattern of formatter.files.patterns) {
-        if (minimatch(relativePath, pattern)) {
-          return true
-        }
-      }
-
-      return false
-    }
-
-    return true
+    return this.config.isFormatterEnabledForPath(relativePath)
   }
 
   private async getFormatterOptions(uri: string) {
@@ -128,7 +108,7 @@ export class FormattingService {
 
     const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
 
-    if (!(await this.shouldFormatFile(filePath))) {
+    if (!this.shouldFormatFile(filePath)) {
       return []
     }
 
@@ -222,7 +202,7 @@ export class FormattingService {
 
     const filePath = params.textDocument.uri.replace(/^file:\/\//, '')
 
-    if (!(await this.shouldFormatFile(filePath))) {
+    if (this.shouldFormatFile(filePath)) {
       return []
     }
 

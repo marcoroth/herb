@@ -46,8 +46,8 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
   }
 
   async analyzeProject(): Promise<void> {
-    // Load config to get file patterns and exclude patterns
     const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
+
     let includePattern: string
     let excludePattern: string | undefined
 
@@ -55,12 +55,24 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
       try {
         const config = await Config.loadForEditor(workspaceRoot)
 
-        includePattern = config.getGlobPattern('linter')
+        const linterFiles = config.getFilesConfigForTool('linter')
+        const formatterFiles = config.getFilesConfigForTool('formatter')
 
-        const excludePatterns = config.getExcludePatterns('linter')
+        const allIncludePatterns = [...new Set([...(linterFiles.include || []), ...(formatterFiles.include || [])])]
 
-        if (excludePatterns.length > 0) {
-          excludePattern = `{${excludePatterns.join(',')}}`
+        if (allIncludePatterns.length > 0) {
+          includePattern = allIncludePatterns.length === 1 ? allIncludePatterns[0] : `{${allIncludePatterns.join(',')}}`
+        } else {
+          const patterns = Config.getDefaultFilePatterns()
+          includePattern = patterns.length === 1 ? patterns[0] : `{${patterns.join(',')}}`
+        }
+
+        const linterExclude = linterFiles.exclude || []
+        const formatterExclude = formatterFiles.exclude || []
+        const commonExclude = linterExclude.filter(pattern => formatterExclude.includes(pattern))
+
+        if (commonExclude.length > 0) {
+          excludePattern = `{${commonExclude.join(',')}}`
         }
       } catch (error) {
         window.showErrorMessage(
@@ -75,11 +87,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
         return
       }
     } else {
-      const extensions = Config.DEFAULT_EXTENSIONS.map(ext =>
-        ext.startsWith('.') ? ext.slice(1) : ext
-      ).join(',')
-
-      includePattern = `**/*.{${extensions}}`
+      includePattern = Config.getDefaultFilePatterns().join(",")
     }
 
     const uris = await workspace.findFiles(includePattern, excludePattern)

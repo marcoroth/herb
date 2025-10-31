@@ -1,5 +1,6 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
+
 import type { LintSeverity, LinterRule } from '@herb-tools/linter'
 import type { FileStatus, TreeNode, Status, FolderGroup, FormatterFileNode } from './types'
 

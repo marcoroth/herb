@@ -3,6 +3,7 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter } from "@herb-tools/linter"
 import { Herb } from "@herb-tools/node-wasm"
+import { Config } from "@herb-tools/config"
 
 import { Settings } from "./settings"
 import { lintToDignosticSeverity } from "./utils"
@@ -41,13 +42,15 @@ export class LinterService {
     if (!this.linter) {
       const linterConfig = projectConfig?.config?.linter || { enabled: true, rules: {} }
 
-      const config = {
-        ...linterConfig,
-        rules: {
-          ...linterConfig.rules,
-          'parser-no-errors': { enabled: false }
+      const config = Config.fromObject({
+        linter: {
+          ...linterConfig,
+          rules: {
+            ...linterConfig.rules,
+            'parser-no-errors': { enabled: false }
+          }
         }
-      }
+      }, { projectPath: projectConfig?.projectPath || process.cwd() })
 
       this.linter = Linter.from(Herb, config)
     }

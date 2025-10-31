@@ -28,9 +28,7 @@ let settingsCommands: HerbSettingsCommands
 let configStatusBarItem: vscode.StatusBarItem
 
 function getFileGlobPattern(): string {
-  const extensions = Config.DEFAULT_EXTENSIONS.map(extension => extension.startsWith('.') ? extension.slice(1) : extension).join(',')
-
-  return `**/*.{${extensions}}`
+  return Config.getDefaultFilePatterns().join(",")
 }
 
 async function updateConfigStatusBarItem() {
