@@ -1,0 +1,8 @@
+_buf = ::String.new;
+ _buf << '<input required/>
+
+<h1 class="bg-gray-300 text-gray" id=\'\' data-controller="example">
+  Hello World '.freeze; _buf << (RUBY_VERSION).to_s; _buf << '
+</h1>
+'.freeze;
+_buf.to_s
