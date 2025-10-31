@@ -20,7 +20,7 @@ describe("CLI Output Formatting", () => {
 
       const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs} 2>&1`, {
         encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1", GITHUB_ACTIONS: undefined, ...env }
+        env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined, ...env }
       })
 
       return { output: output.trim(), exitCode: 0 }
