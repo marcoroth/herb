@@ -104,7 +104,7 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
 bool lexer_peek_for_close_tag_start(const lexer_T* lexer, uint32_t offset) {
   if (lexer_peek(lexer, offset) != '<' || lexer_peek(lexer, offset + 1) != '/') { return false; }
 
-  int pos = offset + 2;
+  uint32_t pos = offset + 2;
 
   while (lexer_peek(lexer, pos) == ' ' || lexer_peek(lexer, pos) == '\t' || lexer_peek(lexer, pos) == '\n'
          || lexer_peek(lexer, pos) == '\r') {
