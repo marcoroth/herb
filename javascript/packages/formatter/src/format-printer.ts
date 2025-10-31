@@ -1058,6 +1058,8 @@ export class FormatPrinter extends Printer {
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode) {
     this.printERBNode(node)
+
+    this.withIndent(() => this.visitAll(node.children))
     this.visitAll(node.conditions)
 
     if (node.else_clause) this.visit(node.else_clause)
@@ -1137,6 +1139,8 @@ export class FormatPrinter extends Printer {
 
   visitERBCaseNode(node: ERBCaseNode) {
     this.printERBNode(node)
+
+    this.withIndent(() => this.visitAll(node.children))
     this.visitAll(node.conditions)
 
     if (node.else_clause) this.visit(node.else_clause)
