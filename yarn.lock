@@ -562,7 +562,7 @@
 
 "@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.3.4":
   version "2.3.4"
-  resolved "git+ssh://git@github.com/jothepro/doxygen-awesome-css.git#568f56cde6ac78b6dfcc14acd380b2e745c301ea"
+  resolved "https://github.com/jothepro/doxygen-awesome-css#568f56cde6ac78b6dfcc14acd380b2e745c301ea"
 
 "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.13"
