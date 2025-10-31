@@ -48,4 +48,6 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/herb"
   spec.metadata["bug_tracker_uri"] = "https://github.com/marcoroth/herb/issues"
   spec.metadata["documentation_uri"] = "https://docs.herb-tools.dev"
+
+  # spec.add_dependency "ffi"
 end
