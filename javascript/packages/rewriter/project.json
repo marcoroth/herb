@@ -11,6 +11,7 @@
       },
       "dependsOn": [
         "@herb-tools/core:build",
+        "@herb-tools/printer:build",
         "@herb-tools/tailwind-class-sorter:build"
       ]
     },
