@@ -187,6 +187,13 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("GitHub Actions format includes rule codes", () => {
+    const { output, exitCode } = runLinter("erb-no-extra-whitespace-inside-tags.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("Ignores disabled rules", () => {
     const { output, exitCode } = runLinter("ignored.html.erb")
 
