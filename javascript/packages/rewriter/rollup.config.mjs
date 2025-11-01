@@ -27,7 +27,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core"],
+    external: [],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -47,7 +47,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core"],
+    external: [],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -58,6 +58,7 @@ export default [
       }),
     ],
   },
+
   // Loader entry point (includes built-in rewriters and custom rewriter loader)
   {
     input: "src/loader.ts",
