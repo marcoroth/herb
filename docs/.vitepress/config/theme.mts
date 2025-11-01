@@ -30,6 +30,7 @@ const defaultSidebar = [
       { text: "Syntax Tree Printer", link: "/projects/printer" },
       { text: "Minifier", link: "/projects/minifier" },
       { text: "Config", link: "/projects/config" },
+      { text: "Rewriter", link: "/projects/rewriter" },
       { text: "Core", link: "/projects/core" },
     ],
   },

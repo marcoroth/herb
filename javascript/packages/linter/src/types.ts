@@ -3,6 +3,9 @@ import { Diagnostic, LexResult, ParseResult } from "@herb-tools/core"
 import type { rules } from "./rules.js"
 import type { Node } from "@herb-tools/core"
 import type { RuleConfig } from "@herb-tools/config"
+import type { Mutable } from "@herb-tools/rewriter"
+
+export type { Mutable } from "@herb-tools/rewriter"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
 
@@ -13,35 +16,6 @@ export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> 
  * This type extracts the 'name' property from each rule class instance.
  */
 export type LinterRule = InstanceType<typeof rules[number]>['name']
-
-/**
- * Recursively removes readonly modifiers from a type, making it mutable.
- * Used internally during autofix to allow direct AST node mutation.
- *
- * @example
- * const node: HTMLOpenTagNode = ...  // readonly properties
- * const mutable = node as Mutable<HTMLOpenTagNode>  // can mutate
- * mutable.tag_name!.value = 'div'  // ✓ allowed
- */
-export type Mutable<T> = T extends ReadonlyArray<infer U>
-  ? Array<Mutable<U>>
-  : T extends object
-    ? { -readonly [K in keyof T]: Mutable<T[K]> }
-    : T
-
-/**
- * Converts a readonly node or object to a mutable version.
- * Use this in autofix methods to enable direct mutation of AST nodes.
- * Follows the TypeScript pattern of 'as const' but for mutability.
- *
- * @example
- * const mutable = asMutable(node)
- * mutable.tag_name.value = 'div'
- * mutable.content.value = 'updated'
- */
-export function asMutable<T>(node: T): Mutable<T> {
-  return node as Mutable<T>
-}
 
 
 /**

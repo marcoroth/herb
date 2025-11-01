@@ -1,0 +1,28 @@
+import type { RewriterClass } from "../type-guards.js"
+
+/**
+ * All built-in rewriters available in the package
+ */
+export const builtinRewriters: RewriterClass[] = []
+
+/**
+ * Get a built-in rewriter by name
+ */
+export function getBuiltinRewriter(name: string): RewriterClass | undefined {
+  return builtinRewriters.find(RewriterClass => {
+    const instance = new RewriterClass()
+
+    return instance.name === name
+  })
+}
+
+/**
+ * Get all built-in rewriter names
+ */
+export function getBuiltinRewriterNames(): string[] {
+  return builtinRewriters.map(RewriterClass => {
+    const instance = new RewriterClass()
+
+    return instance.name
+  })
+}

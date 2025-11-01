@@ -1,7 +1,7 @@
 {
-  "name": "@herb-tools/linter",
+  "name": "@herb-tools/rewriter",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "javascript/packages/linter/src",
+  "sourceRoot": "javascript/packages/rewriter/src",
   "projectType": "library",
   "targets": {
     "build": {
@@ -10,12 +10,8 @@
         "script": "build"
       },
       "dependsOn": [
-        "@herb-tools/config:build",
         "@herb-tools/core:build",
-        "@herb-tools/browser:build",
-        "@herb-tools/highlighter:build",
-        "@herb-tools/printer:build",
-        "@herb-tools/rewriter:build"
+        "@herb-tools/tailwind-class-sorter:build"
       ]
     },
     "test": {
