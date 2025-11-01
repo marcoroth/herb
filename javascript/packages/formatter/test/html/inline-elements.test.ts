@@ -197,7 +197,7 @@ describe("@herb-tools/formatter - inline elements", () => {
     `)
   })
 
-  test("TODO", () => {
+  test("Element with ERB interpolation in text content", () => {
     const source = dedent`
       <h2 class="title">Posts (<%= @posts.count %>)</h2>
     `

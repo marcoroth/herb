@@ -235,6 +235,12 @@ export function buildLineWithWord(currentLine: string, word: string): string {
     return currentLine.endsWith(' ') ? currentLine : `${currentLine} `
   }
 
+  if (isClosingPunctuation(word)) {
+    currentLine = currentLine.trimEnd()
+
+    return `${currentLine}${word}`
+  }
+
   return needsSpaceBetween(currentLine, word) ? `${currentLine} ${word}` : `${currentLine}${word}`
 }
 

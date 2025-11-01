@@ -641,6 +641,21 @@ export class FormatPrinter extends Printer {
   // --- Visitor methods ---
 
   visitDocumentNode(node: DocumentNode) {
+    const hasTextFlow = this.isInTextFlowContext(null, node.children)
+
+    if (hasTextFlow) {
+      const children = filterSignificantChildren(node.children)
+
+      const wasInlineMode = this.inlineMode
+      this.inlineMode = true
+
+      this.visitTextFlowChildren(children)
+
+      this.inlineMode = wasInlineMode
+
+      return
+    }
+
     let lastWasMeaningful = false
     let hasHandledSpacing = false
 
@@ -680,6 +695,14 @@ export class FormatPrinter extends Printer {
   visitHTMLElementNode(node: HTMLElementNode) {
     this.elementStack.push(node)
     this.elementFormattingAnalysis.set(node, this.analyzeElementFormatting(node))
+
+    if (this.inlineMode && node.is_void && this.indentLevel === 0) {
+      const openTag = this.capture(() => this.visit(node.open_tag)).join('')
+      this.pushToLastLine(openTag)
+      this.elementStack.pop()
+
+      return
+    }
 
     this.visit(node.open_tag)
 
@@ -1591,11 +1614,36 @@ export class FormatPrinter extends Printer {
       } else if (unit.isAtomic) {
         words.push({ word: unit.content, isHerbDisable: unit.isHerbDisable || false })
       } else {
-        const text = unit.content.replace(/\s+/g, ' ').trim()
+        const text = unit.content.replace(/\s+/g, ' ')
+        const hasLeadingSpace = text.startsWith(' ')
+        const hasTrailingSpace = text.endsWith(' ')
+        const trimmedText = text.trim()
 
-        if (text) {
-          const textWords = text.split(' ').map(w => ({ word: w, isHerbDisable: false }))
+        if (trimmedText) {
+          if (hasLeadingSpace && words.length > 0) {
+            const lastWord = words[words.length - 1]
+
+            if (!lastWord.word.endsWith(' ')) {
+              lastWord.word += ' '
+            }
+          }
+
+          const textWords = trimmedText.split(' ').map(w => ({ word: w, isHerbDisable: false }))
           words.push(...textWords)
+
+          if (hasTrailingSpace && words.length > 0) {
+            const lastWord = words[words.length - 1]
+
+            if (!isClosingPunctuation(lastWord.word)) {
+              lastWord.word += ' '
+            }
+          }
+        } else if (text === ' ' && words.length > 0) {
+          const lastWord = words[words.length - 1]
+
+          if (!lastWord.word.endsWith(' ')) {
+            lastWord.word += ' '
+          }
         }
       }
     }
@@ -1862,7 +1910,7 @@ export class FormatPrinter extends Printer {
       }
 
       if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength >= wrapWidth) {
-        lines.push(this.indent + currentLine)
+        lines.push(this.indent + currentLine.trimEnd())
 
         currentLine = word
         effectiveLength = isHerbDisable ? 0 : word.length
@@ -1873,7 +1921,7 @@ export class FormatPrinter extends Printer {
     }
 
     if (currentLine) {
-      lines.push(this.indent + currentLine)
+      lines.push(this.indent + currentLine.trimEnd())
     }
 
     lines.forEach(line => this.push(line))
@@ -2015,7 +2063,7 @@ export class FormatPrinter extends Printer {
   /**
    * Try to render a complete element inline including opening tag, children, and closing tag
    */
-  private tryRenderInlineFull(_node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
+  private tryRenderInlineFull(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
     let result = `<${tagName}`
 
     result += this.renderAttributesString(attributes)
@@ -2057,9 +2105,6 @@ export class FormatPrinter extends Printer {
     let addedLeadingSpace = false
 
     for (const child of children) {
-      const isWhitespace = isNode(child, WhitespaceNode) ||
-        (isNode(child, HTMLTextNode) && child.content.trim() === "")
-
       if (isNode(child, HTMLTextNode)) {
         const normalizedContent = child.content.replace(/\s+/g, ' ')
         const hasLeadingSpace = /^\s/.test(child.content)
@@ -2076,12 +2121,12 @@ export class FormatPrinter extends Printer {
           if (hasTrailingSpace) {
             result += ' '
           }
-        } else if (isWhitespace) {
-          // Fall through to whitespace handling
-        } else {
+
           continue
         }
       }
+
+      const isWhitespace = isNode(child, WhitespaceNode) || (isNode(child, HTMLTextNode) && child.content.trim() === "")
 
       if (isWhitespace && !result.endsWith(' ')) {
         if (!result && hasHerbDisable && !addedLeadingSpace) {
@@ -2118,8 +2163,12 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    if (hasInternalWhitespace || (hasHerbDisable && result.startsWith(' '))) {
-      return result
+    if (hasHerbDisable && result.startsWith(' ')) {
+      return result.trimEnd()
+    }
+
+    if (hasInternalWhitespace) {
+      return result.trimEnd()
     }
 
     return result.trim()
