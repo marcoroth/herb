@@ -1,11 +1,14 @@
 import type { RewriterClass } from "../type-guards.js"
 
 export { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
+import { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
 
 /**
  * All built-in rewriters available in the package
  */
-export const builtinRewriters: RewriterClass[] = []
+export const builtinRewriters: RewriterClass[] = [
+  TailwindClassSorterRewriter
+]
 
 /**
  * Get a built-in rewriter by name

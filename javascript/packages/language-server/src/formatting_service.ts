@@ -68,15 +68,21 @@ export class FormattingService {
     return this.config.isFormatterEnabledForPath(relativePath)
   }
 
-  private async getFormatterOptions(uri: string) {
+  private async getConfigWithSettings(uri: string): Promise<Config | undefined> {
     const settings = await this.settings.getDocumentSettings(uri)
 
-    const projectFormatter = this.config?.formatter || {}
+    if (!this.config) return undefined
+
+    const projectFormatter = this.config.formatter || {}
 
     return {
-      indentWidth: projectFormatter.indentWidth ?? settings?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth,
-      maxLineLength: projectFormatter.maxLineLength ?? settings?.formatter?.maxLineLength ?? defaultFormatOptions.maxLineLength
-    }
+      ...this.config,
+      formatter: {
+        ...projectFormatter,
+        indentWidth: settings?.formatter?.indentWidth ?? projectFormatter.indentWidth,
+        maxLineLength: settings?.formatter?.maxLineLength ?? projectFormatter.maxLineLength
+      }
+    } as Config
   }
 
   private async performFormatting(params: DocumentFormattingParams): Promise<TextEdit[]> {
@@ -88,8 +94,8 @@ export class FormattingService {
 
     try {
       const text = document.getText()
-      const options = await this.getFormatterOptions(params.textDocument.uri)
-      const formatter = new Formatter(this.project.herbBackend, options)
+      const config = await this.getConfigWithSettings(params.textDocument.uri)
+      const formatter = await Formatter.from(this.project.herbBackend, config)
 
       let newText = formatter.format(text)
 
@@ -146,20 +152,21 @@ export class FormattingService {
     }
 
     try {
-      const options = await this.getFormatterOptions(params.textDocument.uri)
-      const formatter = new Formatter(this.project.herbBackend, options)
+      const config = await this.getConfigWithSettings(params.textDocument.uri)
+      const formatter = await Formatter.from(this.project.herbBackend, config)
 
       const rangeText = document.getText(params.range)
       const lines = rangeText.split('\n')
 
       let minIndentLevel = Infinity
+      const indentWidth = config?.formatter?.indentWidth ?? defaultFormatOptions.indentWidth
 
       for (const line of lines) {
         const trimmedLine = line.trim()
 
         if (trimmedLine !== '') {
           const indent = line.match(/^\s*/)?.[0] || ''
-          const indentLevel = Math.floor(indent.length / options.indentWidth)
+          const indentLevel = Math.floor(indent.length / indentWidth)
 
           minIndentLevel = Math.min(minIndentLevel, indentLevel)
         }
@@ -172,7 +179,7 @@ export class FormattingService {
       let textToFormat = rangeText
 
       if (minIndentLevel > 0) {
-        const minIndentString = ' '.repeat(minIndentLevel * options.indentWidth)
+        const minIndentString = ' '.repeat(minIndentLevel * indentWidth)
 
         textToFormat = lines.map(line => {
           if (line.trim() === '') {
@@ -183,11 +190,11 @@ export class FormattingService {
         }).join('\n')
       }
 
-      let formattedText = formatter.format(textToFormat, { ...options })
+      let formattedText = formatter.format(textToFormat)
 
       if (minIndentLevel > 0) {
         const formattedLines = formattedText.split('\n')
-        const indentString = ' '.repeat(minIndentLevel * options.indentWidth)
+        const indentString = ' '.repeat(minIndentLevel * indentWidth)
 
         formattedText = formattedLines.map((line, _index) => {
           if (line.trim() === '') {

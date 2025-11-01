@@ -37,10 +37,8 @@
   "dependencies": {
     "@herb-tools/config": "0.7.5",
     "@herb-tools/core": "0.7.5",
-    "@herb-tools/printer": "0.7.5"
-  },
-  "devDependencies": {
-    "glob": "^11.0.3"
+    "@herb-tools/printer": "0.7.5",
+    "@herb-tools/rewriter": "0.7.5"
   },
   "files": [
     "package.json",

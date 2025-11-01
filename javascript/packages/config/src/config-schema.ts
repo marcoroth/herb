@@ -24,12 +24,18 @@ export const LinterConfigSchema = z.object({
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),
 }).strict().optional()
 
+const RewriterConfigSchema = z.object({
+  pre: z.array(z.string()).optional().describe("Pre-format rewriters to run (in order) before formatting the AST"),
+  post: z.array(z.string()).optional().describe("Post-format rewriters to run (in order) after formatting the document"),
+}).strict().optional()
+
 export const FormatterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the formatter is enabled"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from formatting"),
   indentWidth: z.number().int().positive().optional().describe("Number of spaces per indentation level"),
   maxLineLength: z.number().int().positive().optional().describe("Maximum line length before wrapping"),
+  rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
 export const HerbConfigSchema = z.object({

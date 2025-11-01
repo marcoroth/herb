@@ -52,6 +52,10 @@ export type FormatterConfig = {
   exclude?: string[]
   indentWidth?: number
   maxLineLength?: number
+  rewriter?: {
+    pre?: string[]
+    post?: string[]
+  }
 }
 
 export type HerbConfigOptions = {

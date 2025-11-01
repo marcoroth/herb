@@ -12,8 +12,9 @@
       "dependsOn": [
         "@herb-tools/config:build",
         "@herb-tools/core:build",
+        "@herb-tools/node-wasm:build",
         "@herb-tools/printer:build",
-        "@herb-tools/node-wasm:build"
+        "@herb-tools/rewriter:build"
       ]
     },
     "test": {

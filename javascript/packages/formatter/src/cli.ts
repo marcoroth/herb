@@ -1,14 +1,13 @@
 import dedent from "dedent"
 import { readFileSync, writeFileSync, statSync } from "fs"
 import { glob } from "glob"
-import { join, resolve, relative } from "path"
+import { resolve, relative } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
 import { parseArgs } from "util"
-import { resolveFormatOptions } from "./options.js"
 
 import { name, version, dependencies } from "../package.json"
 
@@ -165,7 +164,6 @@ export class CLI {
 
       const config = await Config.loadForCLI(configFile || startPath, version)
       const formatterConfig = config.formatter || {}
-      const filesConfig = config.getFilesConfigForTool('formatter')
 
       if (formatterConfig.enabled === false && !isForceMode) {
         console.log("Formatter is disabled in .herb.yml configuration.")
@@ -183,12 +181,35 @@ export class CLI {
       console.error("⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md")
       console.error()
 
-      const formatOptions = resolveFormatOptions({
-        indentWidth,
-        maxLineLength
-      })
+      if (indentWidth !== undefined) {
+        formatterConfig.indentWidth = indentWidth
+      }
 
-      const formatter = new Formatter(Herb, formatOptions)
+      if (maxLineLength !== undefined) {
+        formatterConfig.maxLineLength = maxLineLength
+      }
+
+      const { formatter, rewriterInfo } = await Formatter.from(Herb, config)
+
+      if (rewriterInfo.preCount > 0 || rewriterInfo.postCount > 0) {
+        const parts: string[] = []
+
+        if (rewriterInfo.preCount > 0) {
+          parts.push(`${rewriterInfo.preCount} pre-format ${pluralize(rewriterInfo.preCount, 'rewriter')}: ${rewriterInfo.preNames.join(', ')}`)
+        }
+
+        if (rewriterInfo.postCount > 0) {
+          parts.push(`${rewriterInfo.postCount} post-format ${pluralize(rewriterInfo.postCount, 'rewriter')}: ${rewriterInfo.postNames.join(', ')}`)
+        }
+
+        console.error(`Using ${parts.join(', ')}`)
+        console.error()
+      }
+
+      if (rewriterInfo.warnings.length > 0) {
+        rewriterInfo.warnings.forEach(warning => console.error(`⚠️  ${warning}`))
+        console.error()
+      }
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {

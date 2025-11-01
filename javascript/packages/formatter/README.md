@@ -233,3 +233,33 @@ herb-format --force app/views/excluded-file.html.erb
 ```
 
 When using `--force` on an excluded file, the formatter will show a warning but proceed with formatting.
+
+## Rewriters
+
+The formatter supports **rewriters** that allow you to transform templates before and after formatting.
+
+Configure rewriters in your `.herb.yml`:
+
+```yaml [.herb.yml]
+formatter:
+  enabled: true
+  indentWidth: 2
+
+  rewriter:
+    # Pre-format rewriters (run before formatting)
+    pre:
+      - tailwind-class-sorter
+
+    # Post-format rewriters (run after formatting)
+    post: []
+```
+
+### Built-in Rewriters
+
+- **`tailwind-class-sorter`** - Automatically sorts Tailwind CSS classes according to the recommended order
+
+### Custom Rewriters
+
+You can create custom rewriters by placing them in `.herb/rewriters/` and referencing them in your config.
+
+For detailed documentation on creating and using rewriters, see the [Rewriter Documentation](/projects/rewriter).
