@@ -95,7 +95,7 @@ export class FormattingService {
     try {
       const text = document.getText()
       const config = await this.getConfigWithSettings(params.textDocument.uri)
-      const formatter = await Formatter.from(this.project.herbBackend, config)
+      const { formatter } = await Formatter.from(this.project.herbBackend, config)
 
       let newText = formatter.format(text)
 
@@ -153,7 +153,7 @@ export class FormattingService {
 
     try {
       const config = await this.getConfigWithSettings(params.textDocument.uri)
-      const formatter = await Formatter.from(this.project.herbBackend, config)
+      const { formatter } = await Formatter.from(this.project.herbBackend, config)
 
       const rangeText = document.getText(params.range)
       const lines = rangeText.split('\n')
@@ -196,7 +196,7 @@ export class FormattingService {
         const formattedLines = formattedText.split('\n')
         const indentString = ' '.repeat(minIndentLevel * indentWidth)
 
-        formattedText = formattedLines.map((line, _index) => {
+        formattedText = formattedLines.map((line: string, _index: number) => {
           if (line.trim() === '') {
             return line
           }
