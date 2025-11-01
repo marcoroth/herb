@@ -8,6 +8,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "@herb-tools/tailwind-class-sorter"
 ]
 
 function isExternal(id) {

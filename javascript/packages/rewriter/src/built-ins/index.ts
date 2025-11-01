@@ -1,5 +1,7 @@
 import type { RewriterClass } from "../type-guards.js"
 
+export { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
+
 /**
  * All built-in rewriters available in the package
  */

@@ -1,7 +1,7 @@
 export { ASTRewriter } from "./ast-rewriter.js"
 export { StringRewriter } from "./string-rewriter.js"
 export { CustomRewriterLoader } from "./loader.js"
-export * from "./built-ins/index.js"
+export { TailwindClassSorterRewriter } from "./built-ins/index.js"
 
 export { asMutable } from "./mutable.js"
 export { isASTRewriterClass, isStringRewriterClass, isRewriterClass, } from "./type-guards.js"
