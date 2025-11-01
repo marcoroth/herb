@@ -712,3 +712,35 @@ nodes:
         - name: statements
           type: array
           kind: Node
+
+    - name: CSSDeclarationNode
+      fields:
+        - name: property
+          type: string
+
+        - name: value
+          type: string
+
+    - name: CSSRuleNode
+      fields:
+        - name: selector
+          type: string
+
+        - name: declarations
+          type: array
+          kind: CSSDeclarationNode
+
+    - name: CSSStyleNode
+      fields:
+        - name: content
+          type: string
+
+        - name: rules
+          type: array
+          kind: CSSRuleNode
+
+        - name: valid
+          type: boolean
+
+        - name: parse_error
+          type: string

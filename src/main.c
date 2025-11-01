@@ -4,6 +4,7 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
+#include "include/css_parser.h"
 #include "include/extract.h"
 #include "include/herb.h"
 #include "include/io.h"
@@ -11,6 +12,7 @@
 #include "include/util/hb_buffer.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -43,6 +45,7 @@ int main(const int argc, char* argv[]) {
     printf("./herb ruby [file]     -  Extract Ruby from a file\n");
     printf("./herb html [file]     -  Extract HTML from a file\n");
     printf("./herb prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    printf("./herb css [file]      -  Parse CSS using Lightning CSS\n");
 
     return 1;
   }
@@ -151,6 +154,40 @@ int main(const int argc, char* argv[]) {
     herb_parse_ruby_to_stdout(ruby_source);
 
     return 0;
+  }
+
+  if (strcmp(argv[1], "css") == 0) {
+    printf("CSS Input:\n%s\n\n", source);
+
+    struct css_parse_result_T* result = herb_css_parse(source);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    if (result->success) {
+      printf("CSS parsed successfully!\n");
+      printf("Found %zu CSS rule(s):\n\n", result->rule_count);
+
+      for (size_t i = 0; i < result->rule_count; i++) {
+        struct CSSRule* rule = result->rules[i];
+        printf("Rule %zu:\n", i + 1);
+        printf("  Selector: %s\n", rule->selector);
+        printf("  Declarations (%zu):\n", rule->declaration_count);
+
+        for (size_t j = 0; j < rule->declaration_count; j++) {
+          struct CSSDeclaration* decl = rule->declarations[j];
+          printf("    %s: %s\n", decl->property, decl->value);
+        }
+        printf("\n");
+      }
+    } else {
+      printf("CSS Parse Error:\n%s\n\n", result->error_message);
+    }
+
+    print_time_diff(start, end, "parsing CSS");
+
+    herb_css_free_result(result);
+    free(source);
+
+    return result->success ? 0 : 1;
   }
 
   printf("Unknown Command: %s\n", argv[1]);

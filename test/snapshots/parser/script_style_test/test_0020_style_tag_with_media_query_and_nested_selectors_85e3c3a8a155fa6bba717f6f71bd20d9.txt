@@ -11,8 +11,11 @@
     │   │
     │   ├── tag_name: "style" (location: (1:1)-(1:6))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:7)-(7:0))
-    │   │       └── content: "\n  @media (max-width: 768px) {\n    .nav > ul > li {\n      display: block;\n    }\n  }\n"
+    │   │   └── @ CSSStyleNode (location: (1:7)-(7:0))
+    │   │       ├── content: "\n  @media (max-width: 768px) {\n    .nav > ul > li {\n      display: block;\n    }\n  }\n"
+    │   │       ├── rules: []
+    │   │       ├── valid: true
+    │   │       └── parse_error: ""
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:8))

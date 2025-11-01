@@ -137,6 +137,10 @@ module Herb
         add_text(node.value.value) if node.value
       end
 
+      def visit_css_style_node(node)
+        add_text(node.content)
+      end
+
       def visit_html_comment_node(node)
         add_text(node.comment_start.value)
         visit_all(node.children)

@@ -134,3 +134,7 @@ docs/docs/public/c-reference
 
 # NPM
 **/node_modules/**/*
+
+# Rust (CSS Parser)
+src/css/target/
+src/include/css_parser.h

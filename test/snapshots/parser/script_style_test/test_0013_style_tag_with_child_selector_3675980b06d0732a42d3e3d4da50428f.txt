@@ -11,8 +11,19 @@
         │
         ├── tag_name: "style" (location: (1:1)-(1:6))
         ├── body: (1 item)
-        │   └── @ LiteralNode (location: (1:7)-(1:39))
-        │       └── content: ".parent > .child { color: red; }"
+        │   └── @ CSSStyleNode (location: (1:7)-(1:39))
+        │       ├── content: ".parent > .child { color: red; }"
+        │       ├── rules: (1 item)
+        │       │   └── @ CSSRuleNode (location: (1:7)-(1:39))
+        │       │       ├── selector: "SelectorList([Selector(.parent > .child, specificity = 0x800)])"
+        │       │       └── declarations: (1 item)
+        │       │           └── @ CSSDeclarationNode (location: (1:7)-(1:39))
+        │       │               ├── property: "color"
+        │       │               └── value: "Color(RGBA(RGBA { red: 255, green: 0, blue: 0, alpha: 255 }))"
+        │       │
+        │       │
+        │       ├── valid: true
+        │       └── parse_error: ""
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:39)-(1:47))

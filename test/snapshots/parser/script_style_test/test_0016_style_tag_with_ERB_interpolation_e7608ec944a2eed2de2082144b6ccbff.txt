@@ -11,8 +11,11 @@
         │
         ├── tag_name: "style" (location: (1:1)-(1:6))
         ├── body: (5 items)
-        │   ├── @ LiteralNode (location: (1:7)-(1:13))
-        │   │   └── content: ".user-"
+        │   ├── @ CSSStyleNode (location: (1:7)-(1:13))
+        │   │   ├── content: ".user-"
+        │   │   ├── rules: []
+        │   │   ├── valid: false
+        │   │   └── parse_error: "CSS parse error: Error { kind: EndOfInput, loc: Some(ErrorLocation { filename: \"\", line: 0, column: 7 }) }"
         │   │
         │   ├── @ ERBContentNode (location: (1:13)-(1:28))
         │   │   ├── tag_opening: "<%=" (location: (1:13)-(1:16))
@@ -21,8 +24,11 @@
         │   │   ├── parsed: true
         │   │   └── valid: true
         │   │
-        │   ├── @ LiteralNode (location: (1:28)-(1:38))
-        │   │   └── content: " { color: "
+        │   ├── @ CSSStyleNode (location: (1:28)-(1:38))
+        │   │   ├── content: " { color: "
+        │   │   ├── rules: []
+        │   │   ├── valid: false
+        │   │   └── parse_error: "CSS parse error: Error { kind: SelectorError(EmptySelector), loc: Some(ErrorLocation { filename: \"\", line: 0, column: 2 }) }"
         │   │
         │   ├── @ ERBContentNode (location: (1:38)-(1:57))
         │   │   ├── tag_opening: "<%=" (location: (1:38)-(1:41))
@@ -31,8 +37,11 @@
         │   │   ├── parsed: true
         │   │   └── valid: true
         │   │
-        │   └── @ LiteralNode (location: (1:57)-(1:60))
-        │       └── content: "; }"
+        │   └── @ CSSStyleNode (location: (1:57)-(1:60))
+        │       ├── content: "; }"
+        │       ├── rules: []
+        │       ├── valid: false
+        │       └── parse_error: "CSS parse error: Error { kind: EndOfInput, loc: Some(ErrorLocation { filename: \"\", line: 0, column: 4 }) }"
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:60)-(1:68))

@@ -38,8 +38,19 @@
     │   │
     │   ├── tag_name: "style" (location: (6:1)-(6:6))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (6:7)-(10:0))
-    │   │       └── content: "\n  .mobile > .header {\n    font-size: 14px;\n  }\n"
+    │   │   └── @ CSSStyleNode (location: (6:7)-(10:0))
+    │   │       ├── content: "\n  .mobile > .header {\n    font-size: 14px;\n  }\n"
+    │   │       ├── rules: (1 item)
+    │   │       │   └── @ CSSRuleNode (location: (6:7)-(10:0))
+    │   │       │       ├── selector: "SelectorList([Selector(.mobile > .header, specificity = 0x800)])"
+    │   │       │       └── declarations: (1 item)
+    │   │       │           └── @ CSSDeclarationNode (location: (6:7)-(10:0))
+    │   │       │               ├── property: "font-size"
+    │   │       │               └── value: "FontSize(Length(Dimension(Px(14.0))))"
+    │   │       │
+    │   │       │
+    │   │       ├── valid: true
+    │   │       └── parse_error: ""
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (10:0)-(10:8))

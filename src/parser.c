@@ -1021,6 +1021,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
   hb_buffer_init(&content, 1024);
   position_T start = parser->current_token->location.start;
   hb_string_T expected_closing_tag = parser_get_foreign_content_closing_tag(parser->foreign_content_type);
+  bool is_style_tag = (parser->foreign_content_type == FOREIGN_CONTENT_STYLE);
 
   if (hb_string_is_empty(expected_closing_tag)) {
     parser_exit_foreign_content(parser);
@@ -1031,7 +1032,11 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
 
   while (!token_is(parser, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
-      parser_append_literal_node_from_buffer(parser, &content, children, start);
+      if (is_style_tag) {
+        parser_append_css_node_from_buffer(parser, &content, children, start);
+      } else {
+        parser_append_literal_node_from_buffer(parser, &content, children, start);
+      }
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
       hb_array_append(children, erb_node);
@@ -1057,7 +1062,12 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
       if (next_token) { token_free(next_token); }
 
       if (is_potential_match) {
-        parser_append_literal_node_from_buffer(parser, &content, children, start);
+        if (is_style_tag) {
+          parser_append_css_node_from_buffer(parser, &content, children, start);
+        } else {
+          parser_append_literal_node_from_buffer(parser, &content, children, start);
+        }
+
         parser_exit_foreign_content(parser);
 
         free(content.value);
@@ -1071,7 +1081,12 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
     token_free(token);
   }
 
-  parser_append_literal_node_from_buffer(parser, &content, children, start);
+  if (is_style_tag) {
+    parser_append_css_node_from_buffer(parser, &content, children, start);
+  } else {
+    parser_append_literal_node_from_buffer(parser, &content, children, start);
+  }
+
   parser_exit_foreign_content(parser);
   free(content.value);
 }

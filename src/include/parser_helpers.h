@@ -28,6 +28,13 @@ void parser_append_literal_node_from_buffer(
   position_T start
 );
 
+void parser_append_css_node_from_buffer(
+  const parser_T* parser,
+  hb_buffer_T* buffer,
+  hb_array_T* children,
+  position_T start
+);
+
 bool parser_in_svg_context(const parser_T* parser);
 
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name);

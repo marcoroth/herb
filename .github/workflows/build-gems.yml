@@ -75,6 +75,14 @@ jobs:
         with:
           bundler-cache: false
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Build CSS Parser
+        run: cd src/css && cargo build --release
+
       - name: bundle install
         run: bundle install
 

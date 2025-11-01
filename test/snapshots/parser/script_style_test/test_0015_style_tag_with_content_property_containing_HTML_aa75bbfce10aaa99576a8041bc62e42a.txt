@@ -11,8 +11,19 @@
         │
         ├── tag_name: "style" (location: (1:1)-(1:6))
         ├── body: (1 item)
-        │   └── @ LiteralNode (location: (1:7)-(1:51))
-        │       └── content: ".icon::before { content: \"<span>★</span>\"; }"
+        │   └── @ CSSStyleNode (location: (1:7)-(1:51))
+        │       ├── content: ".icon::before { content: \"<span>★</span>\"; }"
+        │       ├── rules: (1 item)
+        │       │   └── @ CSSRuleNode (location: (1:7)-(1:51))
+        │       │       ├── selector: "SelectorList([Selector(.icon:before, specificity = 0x401)])"
+        │       │       └── declarations: (1 item)
+        │       │           └── @ CSSDeclarationNode (location: (1:7)-(1:51))
+        │       │               ├── property: "content"
+        │       │               └── value: "Custom(CustomProperty { name: Unknown(Ident(\"content\")), value: TokenList([Token(String(\"<span>★</span>\"))]) })"
+        │       │
+        │       │
+        │       ├── valid: true
+        │       └── parse_error: ""
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:51)-(1:59))

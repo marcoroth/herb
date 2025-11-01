@@ -14,6 +14,9 @@ PRISM_MAIN_SOURCES = $(wildcard $(PRISM_PATH)/src/*.c)
 PRISM_UTIL_SOURCES = $(wildcard $(PRISM_PATH)/src/util/*.c)
 ALL_C_SOURCES = $(C_SOURCES) $(PRISM_MAIN_SOURCES) $(PRISM_UTIL_SOURCES)
 
+CSS_PARSER_DIR = ../src/css
+CSS_PARSER_LIB = $(CSS_PARSER_DIR)/target/wasm32-unknown-emscripten/release/libherb_css_parser.a
+
 OBJ_DIR = obj
 C_OBJECTS = $(patsubst ../src/%.c,$(OBJ_DIR)/herb/%.o,$(C_SOURCES))
 CPP_OBJECTS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(CPP_SOURCES))
@@ -27,7 +30,9 @@ PRISM_INCLUDE = $(PRISM_PATH)/include
 PRISM_SRC = $(PRISM_PATH)/src
 PRISM_UTIL = $(PRISM_PATH)/src/util
 
-CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -I$(PRISM_UTIL) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static
+CSS_PARSER_INCLUDE = $(CSS_PARSER_DIR)
+
+CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -I$(PRISM_UTIL) -I$(CSS_PARSER_INCLUDE) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static
 WASM_FLAGS = -s WASM=1 \
              -s SINGLE_FILE=1 \
              -s EXPORT_ES6=1 \
@@ -37,7 +42,11 @@ WASM_FLAGS = -s WASM=1 \
              -s ERROR_ON_UNDEFINED_SYMBOLS=0 \
              --bind
 
-all: $(BROWSER_WASM_OUTPUT) $(NODE_WASM_OUTPUT)
+all: css_parser $(BROWSER_WASM_OUTPUT) $(NODE_WASM_OUTPUT)
+
+.PHONY: css_parser
+css_parser:
+	cd $(CSS_PARSER_DIR) && cargo build --release --target wasm32-unknown-emscripten
 
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)/herb
@@ -59,13 +68,13 @@ $(OBJ_DIR)/prism/util/%.o: $(PRISM_PATH)/src/util/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
 	emcc -c $< -o $@ $(CFLAGS)
 
-$(BROWSER_WASM_OUTPUT): $(ALL_OBJECTS)
+$(BROWSER_WASM_OUTPUT): $(ALL_OBJECTS) $(CSS_PARSER_LIB)
 	mkdir -p $(BROWSER_BUILD_DIR)
-	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='web' -o $(BROWSER_WASM_OUTPUT)
+	em++ $(ALL_OBJECTS) $(CSS_PARSER_LIB) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='web' -o $(BROWSER_WASM_OUTPUT)
 
-$(NODE_WASM_OUTPUT): $(ALL_OBJECTS)
+$(NODE_WASM_OUTPUT): $(ALL_OBJECTS) $(CSS_PARSER_LIB)
 	mkdir -p $(NODE_BUILD_DIR)
-	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
+	em++ $(ALL_OBJECTS) $(CSS_PARSER_LIB) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
 
 clean: clean_objects clean_browser clean_node
 

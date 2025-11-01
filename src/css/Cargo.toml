@@ -1,0 +1,13 @@
+[package]
+name = "herb_css_parser"
+version = "0.7.5"
+edition = "2021"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+lightningcss = "1.0.0-alpha.59"
+
+[build-dependencies]
+cbindgen = "0.27"

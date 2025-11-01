@@ -10,9 +10,12 @@ extension_name = "herb"
 
 include_path = File.expand_path("../../src/include", __dir__)
 prism_path = File.expand_path("../../vendor/prism", __dir__)
+css_parser_path = File.expand_path("../../src/css", __dir__)
 
 prism_src_path = "#{prism_path}/src"
 prism_include_path = "#{prism_path}/include"
+
+css_parser_lib = "#{css_parser_path}/target/release/libherb_css_parser.a"
 
 $VPATH << "$(srcdir)/../../src"
 $VPATH << "$(srcdir)/../../src/util"
@@ -23,8 +26,16 @@ $INCFLAGS << " -I#{prism_include_path}"
 $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 $INCFLAGS << " -I#{prism_src_path}/util"
+$INCFLAGS << " -I#{css_parser_path}"
 
 $CFLAGS << " -DPRISM_EXPORT_SYMBOLS=static "
+
+$LDFLAGS << " #{css_parser_lib}"
+if RUBY_PLATFORM.match?(/darwin/)
+  $LDFLAGS << " -lresolv -framework Security -framework CoreFoundation"
+elsif RUBY_PLATFORM.match?(/linux/)
+  $LDFLAGS << " -ldl -lpthread -lm"
+end
 
 herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 

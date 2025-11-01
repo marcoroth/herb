@@ -52,6 +52,8 @@ function generateNodeTest(nodeInfo) {
     astType = astType.replace(/^HTML/, 'HTML_')
   } else if (astType.startsWith('ERB')) {
     astType = astType.replace(/^ERB/, 'ERB_')
+  } else if (astType.startsWith('CSS')) {
+    astType = astType.replace(/^CSS/, 'C_S_S_')
   }
 
   astType = astType
@@ -148,6 +150,7 @@ async function main() {
       const kebabCase = nodeTypeName
         .replace(/^HTML/, 'html-')
         .replace(/^ERB/, 'erb-')
+        .replace(/^CSS/, 'css-')
         .replace(/([A-Z])/g, '-$1')
         .toLowerCase()
         .replace(/^-/, '')

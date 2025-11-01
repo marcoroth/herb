@@ -14,8 +14,27 @@
     │   │
     │   ├── tag_name: "style" (location: (1:9)-(1:14))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:15)-(11:8))
-    │   │       └── content: "\n          /* CSS comment */\n\n          .component > .header {\n            content: \"<i class='icon'></i>\";\n          }\n\n          .component[data-type=\"<special>\"] {\n            background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n          }\n        "
+    │   │   └── @ CSSStyleNode (location: (1:15)-(11:8))
+    │   │       ├── content: "\n          /* CSS comment */\n\n          .component > .header {\n            content: \"<i class='icon'></i>\";\n          }\n\n          .component[data-type=\"<special>\"] {\n            background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n          }\n        "
+    │   │       ├── rules: (2 items)
+    │   │       │   ├── @ CSSRuleNode (location: (1:15)-(11:8))
+    │   │       │   │   ├── selector: "SelectorList([Selector(.component > .header, specificity = 0x800)])"
+    │   │       │   │   └── declarations: (1 item)
+    │   │       │   │       └── @ CSSDeclarationNode (location: (1:15)-(11:8))
+    │   │       │   │           ├── property: "content"
+    │   │       │   │           └── value: "Custom(CustomProperty { name: Unknown(Ident(\"content\")), value: TokenList([Token(String(\"<i class='icon'></i>\"))]) })"
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ CSSRuleNode (location: (1:15)-(11:8))
+    │   │       │       ├── selector: "SelectorList([Selector(.component[data-type=\"<special>\"], specificity = 0x800)])"
+    │   │       │       └── declarations: (1 item)
+    │   │       │           └── @ CSSDeclarationNode (location: (1:15)-(11:8))
+    │   │       │               ├── property: "background"
+    │   │       │               └── value: "Background([Background { image: Url(Url { url: \"data:image/svg+xml,<svg><rect/></svg>\", loc: Location { line: 9, column: 25 } }), color: RGBA(RGBA { red: 0, green: 0, blue: 0, alpha: 0 }), position: BackgroundPosition { x: Length(Percentage(Percentage(0.0))), y: Length(Percentage(Percentage(0.0))) }, repeat: BackgroundRepeat { x: Repeat, y: Repeat }, size: Explicit { width: Auto, height: Auto }, attachment: Scroll, origin: PaddingBox, clip: BorderBox }])"
+    │   │       │
+    │   │       │
+    │   │       ├── valid: true
+    │   │       └── parse_error: ""
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (11:8)-(11:16))

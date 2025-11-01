@@ -11,8 +11,19 @@
         │
         ├── tag_name: "style" (location: (1:1)-(1:6))
         ├── body: (1 item)
-        │   └── @ LiteralNode (location: (1:7)-(1:57))
-        │       └── content: "input[placeholder=\"<enter text>\"] { color: blue; }"
+        │   └── @ CSSStyleNode (location: (1:7)-(1:57))
+        │       ├── content: "input[placeholder=\"<enter text>\"] { color: blue; }"
+        │       ├── rules: (1 item)
+        │       │   └── @ CSSRuleNode (location: (1:7)-(1:57))
+        │       │       ├── selector: "SelectorList([Selector(input[placeholder=\"<enter text>\"], specificity = 0x401)])"
+        │       │       └── declarations: (1 item)
+        │       │           └── @ CSSDeclarationNode (location: (1:7)-(1:57))
+        │       │               ├── property: "color"
+        │       │               └── value: "Color(RGBA(RGBA { red: 0, green: 0, blue: 255, alpha: 255 }))"
+        │       │
+        │       │
+        │       ├── valid: true
+        │       └── parse_error: ""
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:57)-(1:65))

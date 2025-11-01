@@ -29,6 +29,8 @@ module Herb
 
       def visit_whitespace_node: (untyped node) -> untyped
 
+      def visit_css_style_node: (untyped node) -> untyped
+
       def visit_html_comment_node: (untyped node) -> untyped
 
       def visit_html_doctype_node: (untyped node) -> untyped

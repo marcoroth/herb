@@ -354,6 +354,20 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitCSSStyleNode(node: Nodes.CSSStyleNode): void {
+    if (node.content) {
+      this.write(node.content)
+    }
+  }
+
+  visitCSSRuleNode(node: Nodes.CSSRuleNode): void {
+    // CSS rules are contained within CSSStyleNode, not rendered separately
+  }
+
+  visitCSSDeclarationNode(node: Nodes.CSSDeclarationNode): void {
+    // CSS declarations are contained within CSSRuleNode, not rendered separately
+  }
+
   visitERBCaseMatchNode(node: Nodes.ERBCaseMatchNode): void {
     this.printERBNode(node)
 
