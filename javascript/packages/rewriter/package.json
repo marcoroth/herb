@@ -29,6 +29,12 @@
       "import": "./dist/index.esm.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.esm.js"
+    },
+    "./loader": {
+      "types": "./dist/types/loader.d.ts",
+      "import": "./dist/loader.esm.js",
+      "require": "./dist/loader.cjs",
+      "default": "./dist/loader.esm.js"
     }
   },
   "dependencies": {

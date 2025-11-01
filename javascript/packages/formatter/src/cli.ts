@@ -7,6 +7,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { Formatter } from "./formatter.js"
+import { ASTRewriter, StringRewriter, CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
 import { parseArgs } from "util"
 
 import { name, version, dependencies } from "../package.json"
@@ -189,27 +190,105 @@ export class CLI {
         formatterConfig.maxLineLength = maxLineLength
       }
 
-      const { formatter, rewriterInfo } = await Formatter.from(Herb, config)
+      let preRewriters: ASTRewriter[] = []
+      let postRewriters: StringRewriter[] = []
+      const rewriterNames = { pre: formatterConfig.rewriter?.pre || [], post: formatterConfig.rewriter?.post || [] }
 
-      if (rewriterInfo.preCount > 0 || rewriterInfo.postCount > 0) {
-        const parts: string[] = []
+      if (formatterConfig.rewriter && (rewriterNames.pre.length > 0 || rewriterNames.post.length > 0)) {
+        const baseDir = config.projectPath || process.cwd()
+        const warnings: string[] = []
+        const allRewriterClasses: any[] = []
 
-        if (rewriterInfo.preCount > 0) {
-          parts.push(`${rewriterInfo.preCount} pre-format ${pluralize(rewriterInfo.preCount, 'rewriter')}: ${rewriterInfo.preNames.join(', ')}`)
+        allRewriterClasses.push(...builtinRewriters)
+
+        const loader = new CustomRewriterLoader({ baseDir })
+        const { rewriters: customRewriters, duplicateWarnings } = await loader.loadRewritersWithInfo()
+
+        allRewriterClasses.push(...customRewriters)
+        warnings.push(...duplicateWarnings)
+
+        const rewriterMap = new Map<string, any>()
+        for (const RewriterClass of allRewriterClasses) {
+          const instance = new RewriterClass()
+
+          if (rewriterMap.has(instance.name)) {
+            warnings.push(`Rewriter "${instance.name}" is defined multiple times. Using the last definition.`)
+          }
+
+          rewriterMap.set(instance.name, RewriterClass)
         }
 
-        if (rewriterInfo.postCount > 0) {
-          parts.push(`${rewriterInfo.postCount} post-format ${pluralize(rewriterInfo.postCount, 'rewriter')}: ${rewriterInfo.postNames.join(', ')}`)
+        for (const name of rewriterNames.pre) {
+          const RewriterClass = rewriterMap.get(name)
+
+          if (!RewriterClass) {
+            warnings.push(`Pre-format rewriter "${name}" not found. Skipping.`)
+            continue
+          }
+
+          if (!isASTRewriterClass(RewriterClass)) {
+            warnings.push(`Rewriter "${name}" is not a pre-format rewriter. Skipping.`)
+
+            continue
+          }
+
+          const instance = new RewriterClass()
+          try {
+            await instance.initialize({ baseDir })
+            preRewriters.push(instance)
+          } catch (error) {
+            warnings.push(`Failed to initialize pre-format rewriter "${name}": ${error}`)
+          }
         }
 
-        console.error(`Using ${parts.join(', ')}`)
-        console.error()
+        for (const name of rewriterNames.post) {
+          const RewriterClass = rewriterMap.get(name)
+
+          if (!RewriterClass) {
+            warnings.push(`Post-format rewriter "${name}" not found. Skipping.`)
+
+            continue
+          }
+
+          if (!isStringRewriterClass(RewriterClass)) {
+            warnings.push(`Rewriter "${name}" is not a post-format rewriter. Skipping.`)
+
+            continue
+          }
+
+          const instance = new RewriterClass()
+
+          try {
+            await instance.initialize({ baseDir })
+
+            postRewriters.push(instance)
+          } catch (error) {
+            warnings.push(`Failed to initialize post-format rewriter "${name}": ${error}`)
+          }
+        }
+
+        if (preRewriters.length > 0 || postRewriters.length > 0) {
+          const parts: string[] = []
+
+          if (preRewriters.length > 0) {
+            parts.push(`${preRewriters.length} pre-format ${pluralize(preRewriters.length, 'rewriter')}: ${rewriterNames.pre.join(', ')}`)
+          }
+
+          if (postRewriters.length > 0) {
+            parts.push(`${postRewriters.length} post-format ${pluralize(postRewriters.length, 'rewriter')}: ${rewriterNames.post.join(', ')}`)
+          }
+
+          console.error(`Using ${parts.join(', ')}`)
+          console.error()
+        }
+
+        if (warnings.length > 0) {
+          warnings.forEach(warning => console.error(`⚠️  ${warning}`))
+          console.error()
+        }
       }
 
-      if (rewriterInfo.warnings.length > 0) {
-        rewriterInfo.warnings.forEach(warning => console.error(`⚠️  ${warning}`))
-        console.error()
-      }
+      const formatter = Formatter.from(Herb, config, { preRewriters, postRewriters })
 
       if (!file && !process.stdin.isTTY) {
         if (isCheckMode) {

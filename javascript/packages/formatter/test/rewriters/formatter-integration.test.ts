@@ -1,8 +1,10 @@
+import dedent from "dedent"
+
 import { describe, test, expect, beforeAll } from "vitest"
+import { loadRewritersHelper } from "./helpers"
+
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src/formatter"
-
-import dedent from "dedent"
 
 describe("Formatter with Rewriters Integration", () => {
   beforeAll(async () => {
@@ -23,9 +25,7 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("loadRewriters with empty options succeeds", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    const info = await formatter.loadRewriters({
+    const info = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: [],
       post: []
@@ -37,9 +37,7 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("loadRewriters with Tailwind class sorter", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    const info = await formatter.loadRewriters({
+    const info = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       post: [],
@@ -51,13 +49,13 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("formats with Tailwind class sorter enabled", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80 })
-
-    await formatter.loadRewriters({
+    const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
+
+    const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
 
     const source = dedent`
       <div class="px-4 bg-blue-500 text-white rounded py-2"></div>
@@ -70,9 +68,7 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("handles unknown rewriter gracefully", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    const info = await formatter.loadRewriters({
+    const info = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["non-existent-rewriter"],
       loadCustomRewriters: false
@@ -84,32 +80,29 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("loadRewriters is idempotent", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    const info1 = await formatter.loadRewriters({
+    const info1 = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
-    const info2 = await formatter.loadRewriters({
+    const info2 = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
 
     expect(info1.preCount).toBe(info2.preCount)
-    expect(info2.warnings).toEqual([])
   })
 
   test("format works with file path parameter", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    await formatter.loadRewriters({
+    const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
+
+    const formatter = new Formatter(Herb, { indentWidth: 2, preRewriters, postRewriters })
 
     const source = dedent`
       <div class="px-4 bg-blue-500"></div>
@@ -121,13 +114,13 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("continues formatting even if rewriter fails", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    await formatter.loadRewriters({
+    const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
+
+    const formatter = new Formatter(Herb, { indentWidth: 2, preRewriters, postRewriters })
 
     const source = dedent`
       <div class="px-4">
@@ -141,9 +134,7 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("loadCustomRewriters defaults to true", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-    const info = await formatter.loadRewriters({
+    const info = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: []
     })
@@ -152,13 +143,13 @@ describe("Formatter with Rewriters Integration", () => {
   })
 
   test("formats complex ERB with rewriters", async () => {
-    const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80 })
-
-    await formatter.loadRewriters({
+    const { preRewriters, postRewriters } = await loadRewritersHelper({
       baseDir: process.cwd(),
       pre: ["tailwind-class-sorter"],
       loadCustomRewriters: false
     })
+
+    const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
 
     const source = dedent`
       <div class="px-4 bg-blue-500">

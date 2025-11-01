@@ -1,6 +1,8 @@
 import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeFormattingParams, TextEdit, Range, Position, TextDocumentSaveReason } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
+import { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
+import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
@@ -12,6 +14,8 @@ export class FormattingService {
   private project: Project
   private settings: Settings
   private config?: Config
+  private preRewriters: ASTRewriter[] = []
+  private postRewriters: StringRewriter[] = []
 
   constructor(connection: Connection, documents: TextDocuments<TextDocument>, project: Project, settings: Settings) {
     this.connection = connection
@@ -23,6 +27,7 @@ export class FormattingService {
   async initialize() {
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
+      await this.loadConfiguredRewriters()
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
       this.connection.console.error(`Failed to initialize Herb formatter: ${error}`)
@@ -39,6 +44,107 @@ export class FormattingService {
         this.connection.console.error(`Failed to refresh Herb formatter config: ${error}`)
       }
     }
+
+    await this.loadConfiguredRewriters()
+  }
+
+  private async loadConfiguredRewriters() {
+    if (!this.config?.formatter?.rewriter) {
+      this.preRewriters = []
+      this.postRewriters = []
+
+      return
+    }
+
+    try {
+      const baseDir = this.config.projectPath || this.project.projectPath
+      const preNames = this.config.formatter.rewriter.pre || []
+      const postNames = this.config.formatter.rewriter.post || []
+      const warnings: string[] = []
+      const allRewriterClasses: any[] = []
+
+      allRewriterClasses.push(...builtinRewriters)
+
+      const loader = new CustomRewriterLoader({ baseDir })
+      const { rewriters: customRewriters, duplicateWarnings } = await loader.loadRewritersWithInfo()
+
+      allRewriterClasses.push(...customRewriters)
+      warnings.push(...duplicateWarnings)
+
+      const rewriterMap = new Map<string, any>()
+
+      for (const RewriterClass of allRewriterClasses) {
+        const instance = new RewriterClass()
+        if (rewriterMap.has(instance.name)) {
+          warnings.push(`Rewriter "${instance.name}" is defined multiple times. Using the last definition.`)
+        }
+        rewriterMap.set(instance.name, RewriterClass)
+      }
+
+      const preRewriters: ASTRewriter[] = []
+      const postRewriters: StringRewriter[] = []
+
+      for (const name of preNames) {
+        const RewriterClass = rewriterMap.get(name)
+
+        if (!RewriterClass) {
+          warnings.push(`Pre-format rewriter "${name}" not found. Skipping.`)
+
+          continue
+        }
+
+        if (!isASTRewriterClass(RewriterClass)) {
+          warnings.push(`Rewriter "${name}" is not a pre-format rewriter. Skipping.`)
+
+          continue
+        }
+
+        const instance = new RewriterClass()
+        try {
+          await instance.initialize({ baseDir })
+
+          preRewriters.push(instance)
+        } catch (error) {
+          warnings.push(`Failed to initialize pre-format rewriter "${name}": ${error}`)
+        }
+      }
+
+      for (const name of postNames) {
+        const RewriterClass = rewriterMap.get(name)
+
+        if (!RewriterClass) {
+          warnings.push(`Post-format rewriter "${name}" not found. Skipping.`)
+
+          continue
+        }
+
+        if (!isStringRewriterClass(RewriterClass)) {
+          warnings.push(`Rewriter "${name}" is not a post-format rewriter. Skipping.`)
+
+          continue
+        }
+
+        const instance = new RewriterClass()
+        try {
+          await instance.initialize({ baseDir })
+
+          postRewriters.push(instance)
+        } catch (error) {
+          warnings.push(`Failed to initialize post-format rewriter "${name}": ${error}`)
+        }
+      }
+
+      this.preRewriters = preRewriters
+      this.postRewriters = postRewriters
+
+      if (warnings.length > 0) {
+        warnings.forEach(warning => this.connection.console.warn(`Rewriter: ${warning}`))
+      }
+    } catch (error) {
+      this.connection.console.error(`Failed to load rewriters: ${error}`)
+      this.preRewriters = []
+      this.postRewriters = []
+    }
   }
 
   async formatOnSave(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
@@ -46,6 +152,7 @@ export class FormattingService {
 
     if (reason !== TextDocumentSaveReason.Manual) {
       this.connection.console.log(`[Formatting] Skipping: reason=${reason} (not manual)`)
+
       return []
     }
 
@@ -65,6 +172,7 @@ export class FormattingService {
     if (!this.config) return true
 
     const relativePath = filePath.replace('file://', '').replace(this.project.projectPath + '/', '')
+
     return this.config.isFormatterEnabledForPath(relativePath)
   }
 
@@ -95,7 +203,10 @@ export class FormattingService {
     try {
       const text = document.getText()
       const config = await this.getConfigWithSettings(params.textDocument.uri)
-      const { formatter } = await Formatter.from(this.project.herbBackend, config)
+      const formatter = Formatter.from(this.project.herbBackend, config, {
+        preRewriters: this.preRewriters,
+        postRewriters: this.postRewriters
+      })
 
       let newText = formatter.format(text)
 
@@ -153,7 +264,10 @@ export class FormattingService {
 
     try {
       const config = await this.getConfigWithSettings(params.textDocument.uri)
-      const { formatter } = await Formatter.from(this.project.herbBackend, config)
+      const formatter = Formatter.from(this.project.herbBackend, config, {
+        preRewriters: this.preRewriters,
+        postRewriters: this.postRewriters
+      })
 
       const rangeText = document.getText(params.range)
       const lines = rangeText.split('\n')

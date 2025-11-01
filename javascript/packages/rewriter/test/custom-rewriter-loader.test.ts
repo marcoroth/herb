@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, afterEach } from "vitest"
 
-import { CustomRewriterLoader, ASTRewriter } from "@herb-tools/rewriter"
+import { CustomRewriterLoader } from "@herb-tools/rewriter/loader"
+import { ASTRewriter } from "@herb-tools/rewriter"
 
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "fs"
 import { tmpdir } from "os"

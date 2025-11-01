@@ -19,10 +19,50 @@ function isExternal(id) {
 }
 
 export default [
+  // Browser-compatible entry point (core APIs only)
   {
     input: "src/index.ts",
     output: {
       file: "dist/index.esm.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external: ["@herb-tools/core"],
+    plugins: [
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
+        rootDir: "src/",
+      }),
+    ],
+  },
+  {
+    input: "src/index.ts",
+    output: {
+      file: "dist/index.cjs",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: ["@herb-tools/core"],
+    plugins: [
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+      }),
+    ],
+  },
+  // Loader entry point (includes built-in rewriters and custom rewriter loader)
+  {
+    input: "src/loader.ts",
+    output: {
+      file: "dist/loader.esm.js",
       format: "esm",
       sourcemap: true,
     },
@@ -40,9 +80,9 @@ export default [
     ],
   },
   {
-    input: "src/index.ts",
+    input: "src/loader.ts",
     output: {
-      file: "dist/index.cjs",
+      file: "dist/loader.cjs",
       format: "cjs",
       sourcemap: true,
     },

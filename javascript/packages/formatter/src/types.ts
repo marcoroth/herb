@@ -1,4 +1,4 @@
-import type { CustomRewriterLoaderOptions } from "@herb-tools/rewriter"
+import type { CustomRewriterLoaderOptions } from "@herb-tools/rewriter/loader"
 
 export interface FormatterRewriterOptions extends CustomRewriterLoaderOptions {
   /**

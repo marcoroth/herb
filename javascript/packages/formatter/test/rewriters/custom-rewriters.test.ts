@@ -1,4 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
+import { loadRewritersHelper } from "./helpers"
+
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src/formatter"
 
@@ -9,9 +11,7 @@ describe("Formatter with Rewriters Integration", () => {
 
   describe("Custom Rewriters", () => {
     test("loads custom rewriter from fixtures directory", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-      const info = await formatter.loadRewriters({
+      const info = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["uppercase-tags"],
@@ -24,13 +24,13 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("formats with custom rewriter", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-      await formatter.loadRewriters({
+      const { preRewriters, postRewriters } = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["uppercase-tags"]
       })
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, preRewriters, postRewriters })
 
       const source = `<div><span>Hello</span></div>`
       const result = formatter.format(source)
@@ -39,16 +39,16 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("combines custom rewriter with built-in Tailwind sorter", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80 })
-
-      const info = await formatter.loadRewriters({
+      const { preRewriters, postRewriters, preCount, warnings } = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["tailwind-class-sorter", "uppercase-tags"]
       })
 
-      expect(info.preCount).toBe(2)
-      expect(info.warnings).toEqual([])
+      expect(preCount).toBe(2)
+      expect(warnings).toEqual([])
+
+      const formatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 80, preRewriters, postRewriters })
 
       const source = `<div class="px-4 bg-blue-500 text-white"><span>Hello</span></div>`
       const result = formatter.format(source)
@@ -57,9 +57,7 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("custom rewriter overrides built-in with same name", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-      const info = await formatter.loadRewriters({
+      const info = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["uppercase-tags"]
@@ -70,9 +68,7 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("warns when custom rewriter not found", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-      const info = await formatter.loadRewriters({
+      const info = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["non-existent-custom-rewriter"]
@@ -84,9 +80,7 @@ describe("Formatter with Rewriters Integration", () => {
     })
 
     test("loadCustomRewriters: false skips custom rewriters", async () => {
-      const formatter = new Formatter(Herb, { indentWidth: 2 })
-
-      const info = await formatter.loadRewriters({
+      const info = await loadRewritersHelper({
         baseDir: process.cwd(),
         patterns: ["test/rewriters/fixtures/**/*.js"],
         pre: ["uppercase-tags"],
