@@ -26,14 +26,11 @@ jobs:
         with:
           bundler-cache: true
 
-      # - name: bundle install
-      #   run: bundle install
-
-      # - name: Render Templates
-      #   run: bundle exec rake templates
-
       - name: Render Templates
-        run: rake templates
+        run: bundle exec rake templates
+
+      - name: Compile Herb
+        run: bundle exec rake make
 
       - name: Build JNI library
         run: make jni
