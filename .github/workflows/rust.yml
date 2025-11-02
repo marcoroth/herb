@@ -24,7 +24,13 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          components: rustfmt, clippy
+          components: clippy
+
+      - name: Set up Rust Nightly (for rustfmt)
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+          components: rustfmt
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -43,7 +49,7 @@ jobs:
         run: bundle exec rake templates
 
       - name: Check Rust formatting
-        run: cargo fmt --check
+        run: cargo +nightly fmt --check
         working-directory: rust
 
       - name: Clippy

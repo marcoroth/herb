@@ -29,7 +29,7 @@ test: build
 	cargo test
 
 format:
-	cargo fmt
+	cargo +nightly fmt
 	@echo "Formatted Rust code"
 
 clean:
