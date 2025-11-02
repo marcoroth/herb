@@ -113,7 +113,6 @@ rust/src/errors.rs
 rust/src/nodes.rs
 sig/serialized_ast_errors.rbs
 sig/serialized_ast_nodes.rbs
-sig/serialized_ast_nodes.rbs
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c
