@@ -1,102 +1,21 @@
+use crate::bindings::*;
 use crate::convert::token_from_c;
 use crate::errors::*;
-use crate::ffi::{CToken, HbArray};
 use crate::nodes::*;
 use crate::{Location, Position};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_void};
 
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-struct CPosition {
-  line: u32,
-  column: u32,
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-struct CLocation {
-  start: CPosition,
-  end: CPosition,
-}
-
-#[repr(C)]
-struct CAstNode {
-  node_type: c_int,
-  location: CLocation,
-  errors: *mut HbArray,
-}
-
-<%- nodes.each_with_index do |node, index| -%>
-const <%= node.type %>: c_int = <%= index %>;
-<%- end -%>
-
-<%- nodes.each do |node| -%>
-#[repr(C)]
-struct C<%= node.name %> {
-  base: CAstNode,
-  <%- node.fields.each do |field| -%>
-  <%- case field -%>
-  <%- when Herb::Template::StringField -%>
-  <%= field.name %>: *const c_char,
-  <%- when Herb::Template::ElementSourceField -%>
-  <%= field.name %>: c_int,
-  <%- when Herb::Template::TokenField -%>
-  <%= field.name %>: *mut CToken,
-  <%- when Herb::Template::BooleanField -%>
-  <%= field.name %>: bool,
-  <%- when Herb::Template::ArrayField -%>
-  <%= field.name %>: *mut HbArray,
-  <%- when Herb::Template::NodeField -%>
-  <%= field.name %>: *mut c_void,
-  <%- end -%>
-  <%- end -%>
-}
-
-<%- end -%>
-
-extern "C" {
-  fn hb_array_size(array: *const HbArray) -> usize;
-  fn hb_array_get(array: *const HbArray, index: usize) -> *mut c_void;
-}
-
-unsafe fn convert_location(c_loc: CLocation) -> Location {
+unsafe fn convert_location(c_location: location_T) -> Location {
   Location::new(
-    Position::new(c_loc.start.line, c_loc.start.column),
-    Position::new(c_loc.end.line, c_loc.end.column),
+    Position::new(c_location.start.line, c_location.start.column),
+    Position::new(c_location.end.line, c_location.end.column),
   )
 }
 
-#[repr(C)]
-#[derive(Debug)]
-struct CErrorBase {
-  error_type: c_int,
-  location: CLocation,
-  message: *const c_char,
-}
-
-<%- errors.each_with_index do |error, index| -%>
-const <%= error.type %>: c_int = <%= index %>;
-<%- end -%>
-
 <%- errors.each do |error| -%>
 <%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
-#[repr(C)]
-struct C<%= error.name %> {
-  base: CErrorBase,
-  <%- error.fields.each do |field| -%>
-  <%- case field -%>
-  <%- when Herb::Template::StringField -%>
-  <%= field.name %>: *const c_char,
-  <%- when Herb::Template::TokenField -%>
-  <%= field.name %>: *mut CToken,
-  <%- when Herb::Template::TokenTypeField -%>
-  <%= field.name %>: c_int,
-  <%- end -%>
-  <%- end -%>
-}
-
-unsafe fn convert_<%= snake_name %>(error_ptr: *const C<%= error.name %>) -> <%= error.name %> {
+unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%= error.name %> {
   let error_ref = &*error_ptr;
   let message = if error_ref.base.message.is_null() {
     String::new()
@@ -115,10 +34,10 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const C<%= error.name %>) -> <%=
     <%- when Herb::Template::TokenField -%>
     convert_token_field(error_ref.<%= field.name %>),
     <%- when Herb::Template::TokenTypeField -%>
-    if error_ref.<%= field.name %> == -1 {
+    if error_ref.<%= field.name %> == u32::MAX {
       None
     } else {
-      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %> as u32)).to_string_lossy().into_owned())
+      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)).to_string_lossy().into_owned())
     },
     <%- end -%>
     <%- end -%>
@@ -127,7 +46,7 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const C<%= error.name %>) -> <%=
 
 <%- end -%>
 
-unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<AnyError> {
+unsafe fn convert_errors(errors_array: *mut hb_array_T) -> Vec<AnyError> {
   if errors_array.is_null() {
     return Vec::new();
   }
@@ -135,19 +54,19 @@ unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<AnyError> {
   let count = hb_array_size(errors_array);
   let mut errors = Vec::with_capacity(count);
 
-  for i in 0..count {
-    let error_base_ptr = hb_array_get(errors_array, i) as *const CErrorBase;
+  for index in 0..count {
+    let error_base_ptr = hb_array_get(errors_array, index) as *const ERROR_T;
     if error_base_ptr.is_null() {
       continue;
     }
 
     let error_base = &*error_base_ptr;
 
-    let error = match error_base.error_type {
+    let error = match error_base.type_ {
         <%- errors.each do |error| -%>
         <%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
         <%= error.type %> => {
-          let error_ptr = error_base_ptr as *const C<%= error.name %>;
+          let error_ptr = error_base_ptr as *const <%= error.c_type %>;
           AnyError::<%= error.name %>(convert_<%= snake_name %>(error_ptr))
         }
         <%- end -%>
@@ -160,15 +79,15 @@ unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<AnyError> {
   errors
 }
 
-unsafe fn get_string_field(ptr: *const c_char) -> String {
-  if ptr.is_null() {
+unsafe fn get_string_field(string_ptr: *const c_char) -> String {
+  if string_ptr.is_null() {
     String::new()
   } else {
-    CStr::from_ptr(ptr).to_string_lossy().into_owned()
+    CStr::from_ptr(string_ptr).to_string_lossy().into_owned()
   }
 }
 
-unsafe fn convert_element_source(source: c_int) -> String {
+unsafe fn convert_element_source(source: u32) -> String {
   let hb_string = crate::ffi::element_source_to_string(source);
   if hb_string.data.is_null() {
     String::new()
@@ -178,15 +97,15 @@ unsafe fn convert_element_source(source: c_int) -> String {
   }
 }
 
-unsafe fn convert_token_field(ptr: *mut CToken) -> Option<crate::Token> {
-  if ptr.is_null() {
+unsafe fn convert_token_field(token_ptr: *mut token_T) -> Option<crate::Token> {
+  if token_ptr.is_null() {
     None
   } else {
-    Some(token_from_c(ptr))
+    Some(token_from_c(token_ptr))
   }
 }
 
-unsafe fn convert_children(children_array: *mut HbArray) -> Vec<AnyNode> {
+unsafe fn convert_children(children_array: *mut hb_array_T) -> Vec<AnyNode> {
   if children_array.is_null() {
     return Vec::new();
   }
@@ -194,8 +113,8 @@ unsafe fn convert_children(children_array: *mut HbArray) -> Vec<AnyNode> {
   let count = hb_array_size(children_array);
   let mut children = Vec::with_capacity(count);
 
-  for i in 0..count {
-    let child_ptr = hb_array_get(children_array, i);
+  for index in 0..count {
+    let child_ptr = hb_array_get(children_array, index);
     if !child_ptr.is_null() {
       if let Some(node) = convert_node(child_ptr as *const c_void) {
         children.push(node);
@@ -206,28 +125,28 @@ unsafe fn convert_children(children_array: *mut HbArray) -> Vec<AnyNode> {
   children
 }
 
-unsafe fn convert_node_field(ptr: *mut c_void) -> Option<Box<AnyNode>> {
-  if ptr.is_null() {
+unsafe fn convert_node_field(node_ptr: *mut c_void) -> Option<Box<AnyNode>> {
+  if node_ptr.is_null() {
     None
   } else {
-    convert_node(ptr).map(Box::new)
+    convert_node(node_ptr).map(Box::new)
   }
 }
 
 macro_rules! convert_specific_node_field {
-  ($ptr:expr, $expected_type:expr, $convert_fn:ident, $node_type:ty) => {
-    if $ptr.is_null() {
+  ($node_ptr:expr, $expected_type:expr, $convert_fn:ident, $node_type:ty) => {
+    if $node_ptr.is_null() {
       None
     } else {
-      let base = $ptr as *const CAstNode;
-      let base_ref = &*base;
-      let node_type = base_ref.node_type;
+      let ast_base_ptr = $node_ptr as *const AST_NODE_T;
+      let ast_base_ref = &*ast_base_ptr;
+      let node_type = ast_base_ref.type_;
 
       if node_type != $expected_type {
         eprintln!("Warning: Expected node type {} but got {}", $expected_type, node_type);
         None
       } else {
-        $convert_fn($ptr).map(Box::new)
+        $convert_fn($node_ptr as *const c_void).map(Box::new)
       }
     }
   };
@@ -238,9 +157,9 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
     return None;
   }
 
-  let base = node_ptr as *const CAstNode;
-  let base_ref = &*base;
-  let node_type = base_ref.node_type;
+  let ast_base_ptr = node_ptr as *const AST_NODE_T;
+  let ast_base_ref = &*ast_base_ptr;
+  let node_type = ast_base_ref.type_;
 
   match node_type {
     <%- nodes.each do |node| -%>
@@ -267,31 +186,31 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
       return None;
     }
 
-    let c_node = node_ptr as *const C<%= node.name %>;
-    let base_ref = &(*c_node).base;
+    let c_node_ptr = node_ptr as *const <%= node.c_type %>;
+    let node_base_ref = &(*c_node_ptr).base;
 
     Some(<%= node.name %> {
       node_type: "<%= node.name %>".to_string(),
-      location: convert_location(base_ref.location),
-      errors: convert_errors(base_ref.errors),
+      location: convert_location(node_base_ref.location),
+      errors: convert_errors(node_base_ref.errors),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
       <%- when Herb::Template::StringField -%>
-      <%= field.name %>: get_string_field((*c_node).<%= field.name %>),
+      <%= field.name %>: get_string_field((*c_node_ptr).<%= field.name %>),
       <%- when Herb::Template::ElementSourceField -%>
-      <%= field.name %>: convert_element_source((*c_node).<%= field.name %>),
+      <%= field.name %>: convert_element_source((*c_node_ptr).<%= field.name %>),
       <%- when Herb::Template::TokenField -%>
-      <%= field.name %>: convert_token_field((*c_node).<%= field.name %>),
+      <%= field.name %>: convert_token_field((*c_node_ptr).<%= field.name %>),
       <%- when Herb::Template::BooleanField -%>
-      <%= field.name %>: (*c_node).<%= field.name %>,
+      <%= field.name %>: (*c_node_ptr).<%= field.name %>,
       <%- when Herb::Template::ArrayField -%>
-      <%= field.name %>: convert_children((*c_node).<%= field.name %>),
+      <%= field.name %>: convert_children((*c_node_ptr).<%= field.name %>),
       <%- when Herb::Template::NodeField -%>
       <%- if field.specific_kind && field.specific_kind != "Node" -%>
       <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
-      <%= field.name %>: convert_specific_node_field!((*c_node).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
+      <%= field.name %>: convert_specific_node_field!((*c_node_ptr).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
       <%- else -%>
-      <%= field.name %>: convert_node_field((*c_node).<%= field.name %>),
+      <%= field.name %>: convert_node_field((*c_node_ptr).<%= field.name %> as *mut c_void),
       <%- end -%>
       <%- end -%>
       <%- end -%>

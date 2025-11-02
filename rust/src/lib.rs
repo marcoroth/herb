@@ -1,4 +1,5 @@
 pub mod ast;
+pub mod bindings;
 pub mod convert;
 pub mod errors;
 pub mod ffi;

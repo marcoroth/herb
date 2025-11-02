@@ -35,7 +35,7 @@ pub unsafe fn token_from_c(c_token: *const CToken) -> Token {
     CStr::from_ptr(token.value).to_string_lossy().into_owned()
   };
 
-  let token_type = CStr::from_ptr(crate::ffi::token_type_to_string(token.token_type))
+  let token_type = CStr::from_ptr(crate::ffi::token_type_to_string(token.type_))
     .to_string_lossy()
     .into_owned();
 

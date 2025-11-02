@@ -245,6 +245,10 @@ module Herb
           type.new(name: field_name, kind: kind)
         end
       end
+
+      def c_type
+        @struct_type
+      end
     end
 
     class NodeType
@@ -267,6 +271,10 @@ module Herb
 
           type.new(name: field_name, kind: kind)
         end
+      end
+
+      def c_type
+        @struct_type
       end
     end
 

@@ -33,15 +33,62 @@ fn main() {
     .flag("-fPIC")
     .opt_level(2)
     .include(src_dir.join("include"))
-    .include(prism_include)
+    .include(&prism_include)
     .files(&c_sources);
 
   build.compile("herb");
+
+  let bindings = bindgen::Builder::default()
+    .header(src_dir.join("include/herb.h").to_str().unwrap())
+    .header(src_dir.join("include/ast_nodes.h").to_str().unwrap())
+    .header(src_dir.join("include/errors.h").to_str().unwrap())
+    .header(src_dir.join("include/element_source.h").to_str().unwrap())
+    .header(src_dir.join("include/token_struct.h").to_str().unwrap())
+    .header(src_dir.join("include/util/hb_string.h").to_str().unwrap())
+    .header(src_dir.join("include/util/hb_array.h").to_str().unwrap())
+    .clang_arg(format!("-I{}", src_dir.join("include").display()))
+    .clang_arg(format!("-I{}", prism_include.display()))
+    .allowlist_function("herb_.*")
+    .allowlist_function("hb_array_.*")
+    .allowlist_function("token_type_to_string")
+    .allowlist_function("ast_node_free")
+    .allowlist_function("element_source_to_string")
+    .allowlist_type("AST_.*")
+    .allowlist_type("ERROR_.*")
+    .allowlist_type(".*_ERROR_T")
+    .allowlist_type("element_source_t")
+    .allowlist_type("ast_node_type_T")
+    .allowlist_type("error_type_T")
+    .allowlist_type("hb_array_T")
+    .allowlist_type("hb_string_T")
+    .allowlist_type("token_T")
+    .allowlist_type("position_T")
+    .allowlist_type("location_T")
+    .allowlist_type("herb_extract_language_T")
+    .allowlist_var("AST_.*")
+    .allowlist_var("ERROR_.*")
+    .allowlist_var("ELEMENT_SOURCE_.*")
+    .allowlist_var("HERB_EXTRACT_.*")
+    .derive_debug(true)
+    .derive_default(false)
+    .prepend_enum_name(false)
+    .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+    .generate()
+    .expect("Unable to generate bindings");
+
+  let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+  bindings
+    .write_to_file(out_path.join("bindings.rs"))
+    .expect("Couldn't write bindings!");
 
   for source in &c_sources {
     println!("cargo:rerun-if-changed={}", source.display());
   }
 
+  println!(
+    "cargo:rerun-if-changed={}",
+    src_dir.join("include").display()
+  );
   println!("cargo:rerun-if-changed=build.rs");
 }
 

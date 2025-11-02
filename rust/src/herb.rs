@@ -44,7 +44,7 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
 
     let result = ParseResult::new(document_node, source.to_string(), Vec::new());
 
-    crate::ffi::ast_node_free(ast);
+    crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T);
 
     Ok(result)
   }
@@ -53,7 +53,10 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
 pub fn extract_ruby(source: &str) -> Result<String, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let result = crate::ffi::herb_extract(c_source.as_ptr(), crate::ffi::HerbExtractLanguage::Ruby);
+    let result = crate::ffi::herb_extract(
+      c_source.as_ptr(),
+      crate::bindings::HERB_EXTRACT_LANGUAGE_RUBY,
+    );
 
     if result.is_null() {
       return Ok(String::new());
@@ -71,7 +74,10 @@ pub fn extract_ruby(source: &str) -> Result<String, String> {
 pub fn extract_html(source: &str) -> Result<String, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let result = crate::ffi::herb_extract(c_source.as_ptr(), crate::ffi::HerbExtractLanguage::Html);
+    let result = crate::ffi::herb_extract(
+      c_source.as_ptr(),
+      crate::bindings::HERB_EXTRACT_LANGUAGE_HTML,
+    );
 
     if result.is_null() {
       return Ok(String::new());
