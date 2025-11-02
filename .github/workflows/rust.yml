@@ -48,6 +48,9 @@ jobs:
       - name: Render Templates
         run: bundle exec rake templates
 
+      - name: Compile Herb
+        run: bundle exec rake make
+
       - name: Check Rust formatting
         run: cargo +nightly fmt --check
         working-directory: rust
