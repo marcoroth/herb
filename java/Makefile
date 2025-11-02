@@ -6,16 +6,20 @@ JNI_INCLUDES = -I$(JAVA_HOME)/include
 os := $(shell uname -s)
 
 ifeq ($(os),Darwin)
-    JNI_INCLUDES += -I$(JAVA_HOME)/include/darwin
-    JNI_LIB_EXT = dylib
-    JNI_LIB_PREFIX = lib
+  JNI_INCLUDES += -I$(JAVA_HOME)/include/darwin
+  JNI_LIB_EXT = dylib
+  JNI_LIB_PREFIX = lib
+  LLVM_PATH = $(shell brew --prefix llvm@21)
+  CC = $(LLVM_PATH)/bin/clang
 else ifeq ($(os),Linux)
-    JNI_INCLUDES += -I$(JAVA_HOME)/include/linux
-    JNI_LIB_EXT = so
-    JNI_LIB_PREFIX = lib
+  JNI_INCLUDES += -I$(JAVA_HOME)/include/linux
+  JNI_LIB_EXT = so
+  JNI_LIB_PREFIX = lib
+  CC = clang
 else
-    JNI_LIB_EXT = dll
-    JNI_LIB_PREFIX =
+  JNI_LIB_EXT = dll
+  JNI_LIB_PREFIX =
+  CC = clang
 endif
 
 BUILD_DIR = ../build
@@ -24,7 +28,6 @@ PRISM_PATH = $(shell cd .. && bundle show prism)
 PRISM_INCLUDE = $(PRISM_PATH)/include
 PRISM_BUILD = $(PRISM_PATH)/build
 
-CC = clang
 JAVAC = $(JAVA_HOME)/bin/javac
 JAVA_CMD = $(JAVA_HOME)/bin/java
 CFLAGS = -std=c99 -Wall -Wextra -fPIC -O2

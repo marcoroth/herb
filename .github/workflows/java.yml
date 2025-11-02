@@ -1,0 +1,52 @@
+name: Java
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      # - name: bundle install
+      #   run: bundle install
+
+      # - name: Render Templates
+      #   run: bundle exec rake templates
+
+      - name: Render Templates
+        run: rake templates
+
+      - name: Build JNI library
+        run: make jni
+        working-directory: java
+
+      - name: Compile Java classes
+        run: make java
+        working-directory: java
+
+      - name: Run tests
+        run: ./run_tests.sh
+        working-directory: java
+
+      - name: Test CLI version command
+        run: ./bin/herb-java version
+        working-directory: java
