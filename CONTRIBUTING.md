@@ -21,6 +21,17 @@ If you encounter any issues when following along with this file please don't hes
 
 ##### For Linux
 
+Before installing the dependencies, you need to add the LLVM repository and GPG key to get Clang 21:
+
+```bash
+wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
+sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+sudo apt update
+```
+
+Then install the required packages:
+
 ```bash
 xargs sudo apt-get install < Aptfile
 ```
