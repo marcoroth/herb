@@ -90,6 +90,14 @@ const defaultSidebar = [
           { text: "Reference", link: "/bindings/javascript/reference" },
         ],
       },
+      {
+        text: "Java",
+        collapsed: false,
+        items: [
+          { text: "Installation", link: "/bindings/java/" },
+          { text: "Reference", link: "/bindings/java/reference" },
+        ],
+      },
       { text: "WebAssembly", link: "/projects/webassembly" },
     ],
   },

@@ -13,10 +13,9 @@ public class CLI {
     }
 
     String command = args[0];
-    Herb parser = Herb.create();
 
     if (command.equals("version")) {
-      System.out.println(parser.getFullVersion());
+      System.out.println(Herb.version());
 
       return;
     }
@@ -41,7 +40,7 @@ public class CLI {
     switch (command) {
 
       case "lex":
-        LexResult lexResult = parser.lex(source);
+        LexResult lexResult = Herb.lex(source);
 
         if (lexResult.getTokens() != null) {
           for (Token token : lexResult.getTokens()) {
@@ -51,7 +50,7 @@ public class CLI {
         break;
 
       case "parse":
-        ParseResult parseResult = parser.parse(source);
+        ParseResult parseResult = Herb.parse(source);
 
         if (parseResult.getValue() != null) {
           System.out.print(parseResult.getValue().treeInspect());
@@ -72,13 +71,13 @@ public class CLI {
         break;
 
       case "ruby":
-        String ruby = parser.extractRuby(source);
+        String ruby = Herb.extractRuby(source);
         System.out.println(ruby);
 
         break;
 
       case "html":
-        String html = parser.extractHTML(source);
+        String html = Herb.extractHTML(source);
         System.out.println(html);
 
         break;

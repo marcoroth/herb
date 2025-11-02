@@ -7,12 +7,12 @@
 extern "C" {
 #endif
 
-JNIEXPORT jstring JNICALL Java_com_herb_Herb_version(JNIEnv*, jobject);
-JNIEXPORT jstring JNICALL Java_com_herb_Herb_prismVersion(JNIEnv*, jobject);
-JNIEXPORT jobject JNICALL Java_com_herb_Herb_parse(JNIEnv*, jobject, jstring, jobject);
-JNIEXPORT jobject JNICALL Java_com_herb_Herb_lex(JNIEnv*, jobject, jstring);
-JNIEXPORT jstring JNICALL Java_com_herb_Herb_extractRuby(JNIEnv*, jobject, jstring);
-JNIEXPORT jstring JNICALL Java_com_herb_Herb_extractHTML(JNIEnv*, jobject, jstring);
+JNIEXPORT jstring JNICALL Java_org_herb_Herb_herbVersion(JNIEnv*, jclass);
+JNIEXPORT jstring JNICALL Java_org_herb_Herb_prismVersion(JNIEnv*, jclass);
+JNIEXPORT jobject JNICALL Java_org_herb_Herb_parse(JNIEnv*, jclass, jstring, jobject);
+JNIEXPORT jobject JNICALL Java_org_herb_Herb_lex(JNIEnv*, jclass, jstring);
+JNIEXPORT jstring JNICALL Java_org_herb_Herb_extractRuby(JNIEnv*, jclass, jstring);
+JNIEXPORT jstring JNICALL Java_org_herb_Herb_extractHTML(JNIEnv*, jclass, jstring);
 
 #ifdef __cplusplus
 }

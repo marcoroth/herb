@@ -9,21 +9,21 @@
 #include <string.h>
 
 JNIEXPORT jstring JNICALL
-Java_org_herb_Herb_version(JNIEnv* env, jobject obj) {
+Java_org_herb_Herb_herbVersion(JNIEnv* env, jclass clazz) {
   const char* version = herb_version();
 
   return (*env)->NewStringUTF(env, version);
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_herb_Herb_prismVersion(JNIEnv* env, jobject obj) {
+Java_org_herb_Herb_prismVersion(JNIEnv* env, jclass clazz) {
   const char* version = herb_prism_version();
 
   return (*env)->NewStringUTF(env, version);
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_herb_Herb_parse(JNIEnv* env, jobject object, jstring source, jobject options) {
+Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject options) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   parser_options_T* parser_options = NULL;
@@ -56,7 +56,7 @@ Java_org_herb_Herb_parse(JNIEnv* env, jobject object, jstring source, jobject op
 }
 
 JNIEXPORT jobject JNICALL
-Java_org_herb_Herb_lex(JNIEnv* env, jobject object, jstring source) {
+Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   hb_array_T* tokens = herb_lex(src);
@@ -70,7 +70,7 @@ Java_org_herb_Herb_lex(JNIEnv* env, jobject object, jstring source) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_herb_Herb_extractRuby(JNIEnv* env, jobject object, jstring source) {
+Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   hb_buffer_T output;
@@ -92,7 +92,7 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jobject object, jstring source) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_herb_Herb_extractHTML(JNIEnv* env, jobject object, jstring source) {
+Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   hb_buffer_T output;

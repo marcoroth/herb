@@ -14,22 +14,18 @@ public class Herb {
     }
   }
 
-  public native String version();
-  public native String prismVersion();
-  public native ParseResult parse(String source, ParserOptions options);
-  public native LexResult lex(String source);
-  public native String extractRuby(String source);
-  public native String extractHTML(String source);
+  public static native String herbVersion();
+  public static native String prismVersion();
+  public static native ParseResult parse(String source, ParserOptions options);
+  public static native LexResult lex(String source);
+  public static native String extractRuby(String source);
+  public static native String extractHTML(String source);
 
-  public ParseResult parse(String source) {
+  public static ParseResult parse(String source) {
     return parse(source, null);
   }
 
-  public String getFullVersion() {
-    return String.format("herb java v%s, libprism v%s, libherb v%s (Java JNI)", version(), prismVersion(), version());
-  }
-
-  public static Herb create() {
-    return new Herb();
+  public static String version() {
+    return String.format("herb java v%s, libprism v%s, libherb v%s (Java JNI)", herbVersion(), prismVersion(), herbVersion());
   }
 }
