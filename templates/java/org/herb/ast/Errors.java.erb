@@ -1,0 +1,121 @@
+package org.herb.ast;
+
+import org.herb.Location;
+import org.herb.Token;
+
+/**
+ * Base class for all Herb parsing errors.
+ */
+abstract class HerbError {
+  private final String type;
+  private final String message;
+  private final Location location;
+
+  public HerbError(String type, String message, Location location) {
+    this.type = type;
+    this.message = message;
+    this.location = location;
+  }
+
+  public String getType() {
+    return type;
+  }
+
+  public String getMessage() {
+    return message;
+  }
+
+  public Location getLocation() {
+    return location;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("HerbError{type='%s', message='%s', location=%s}", type, message, location);
+  }
+
+  public abstract String treeInspect();
+
+  protected String indent(String str, int level) {
+    if (level == 0) return str;
+    String prefix = "    ".repeat(level);
+    return str.lines()
+              .map(line -> prefix + line)
+              .collect(java.util.stream.Collectors.joining("\n"));
+  }
+}
+
+<%- errors.each do |error| -%>
+/**
+ * <%= error.name %>: <%= error.message_template %>
+ */
+class <%= error.name %> extends HerbError {
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  private final String <%= field.name %>;
+  <%- when Herb::Template::TokenField -%>
+  private final Token <%= field.name %>;
+  <%- when Herb::Template::TokenTypeField -%>
+  private final String <%= field.name %>;
+  <%- else -%>
+  // Unsupported field type: <%= field.class %>
+  <%- end -%>
+  <%- end -%>
+
+  public <%= error.name %>(String type, String message, Location location<%- error.fields.each do |field| -%><%- case field -%><%- when Herb::Template::StringField -%>, String <%= field.name %><%- when Herb::Template::TokenField -%>, Token <%= field.name %><%- when Herb::Template::TokenTypeField -%>, String <%= field.name %><%- end -%><%- end -%>) {
+    super(type, message, location);
+    <%- error.fields.each do |field| -%>
+    this.<%= field.name %> = <%= field.name %>;
+    <%- end -%>
+  }
+
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  public String get<%= field.name.capitalize %>() {
+    return <%= field.name %>;
+  }
+
+  <%- when Herb::Template::TokenField -%>
+  public Token get<%= field.name.capitalize %>() {
+    return <%= field.name %>;
+  }
+
+  <%- when Herb::Template::TokenTypeField -%>
+  public String get<%= field.name.capitalize %>() {
+    return <%= field.name %>;
+  }
+
+  <%- end -%>
+  <%- end -%>
+  @Override
+  public String treeInspect() {
+    StringBuilder output = new StringBuilder();
+
+    output.append("@ <%= error.name %> ");
+    output.append(getLocation() != null ? "(location: " + getLocation().toString() + ")" : "no-location");
+    output.append("\n");
+    <%- symbol = error.fields.any? ? "├──" : "└──" -%>
+    output.append("<%= symbol %> message: ");
+    output.append("\"").append(getMessage()).append("\"");
+    output.append("\n");
+    <%- error.fields.each do |field| -%>
+    <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField, Herb::Template::TokenTypeField -%>
+    output.append("<%= symbol %> <%= field.name %>: ");
+    output.append("\"").append(<%= field.name %>).append("\"");
+    output.append("\n");
+    <%- when Herb::Template::TokenField -%>
+    output.append("<%= symbol %> <%= field.name %>: ");
+    output.append(<%= field.name %> != null ? <%= field.name %>.treeInspect() : "∅");
+    output.append("\n");
+    <%- end -%>
+    <%- end -%>
+
+    return output.toString();
+  }
+}
+
+<%- end -%>
