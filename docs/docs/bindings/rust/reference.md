@@ -114,17 +114,63 @@ match parse(source) {
 
 ### `ParseResult`
 
-The `ParseResult` struct provides access to the parsed AST tree inspect output:
+The `ParseResult` struct provides access to the parsed AST and any parse-level errors:
 
 ```rust
 pub struct ParseResult {
-  pub tree_inspect: String,
+  pub value: DocumentNode,
+  pub source: String,
+  pub errors: Vec<ErrorNode>,
 }
 
 impl ParseResult {
-  pub fn tree_inspect(&self) -> &str;
+  pub fn tree_inspect(&self) -> String;
+  pub fn errors(&self) -> &[ErrorNode];
+  pub fn recursive_errors(&self) -> Vec<ErrorNode>;
+  pub fn failed(&self) -> bool;
+  pub fn success(&self) -> bool;
 }
 ```
+
+**Methods:**
+
+- `tree_inspect()` - Returns a string representation of the AST
+- `errors()` - Returns only the parse-level errors
+- `recursive_errors()` - Returns parse-level errors combined with all node errors recursively
+- `failed()` - Returns `true` if there are any errors (parse-level or node errors)
+- `success()` - Returns `true` if there are no errors
+
+**Example with error handling:**
+
+:::code-group
+```rust
+use herb::parse;
+
+let source = "<div></span>"; // Mismatched tags
+
+match parse(source) {
+  Ok(result) => {
+    if result.failed() {
+      println!("Parsing failed with {} errors:", result.recursive_errors().len());
+
+      for error in result.recursive_errors() {
+        println!("  {} at {}: {}",
+          error.error_type,
+          error.location,
+          error.message
+        );
+      }
+    } else {
+      println!("Parse successful!");
+      println!("{}", result.tree_inspect());
+    }
+  }
+  Err(e) => {
+    eprintln!("Parse error: {}", e);
+  }
+}
+```
+:::
 
 ## Extracting Code
 
@@ -241,9 +287,20 @@ pub trait Node {
   fn node_type(&self) -> &str;
   fn location(&self) -> &Location;
   fn errors(&self) -> &[ErrorNode];
+  fn child_nodes(&self) -> Vec<&dyn Node>;
+  fn recursive_errors(&self) -> Vec<ErrorNode>;
   fn tree_inspect(&self) -> String;
 }
 ```
+
+**Methods:**
+
+- `node_type()` - Returns the type of the node (e.g., "DocumentNode", "HTMLElementNode")
+- `location()` - Returns the source location span of the node
+- `errors()` - Returns direct errors on this node
+- `child_nodes()` - Returns all child nodes as trait objects (`&dyn Node`), including both generic and specific-typed fields
+- `recursive_errors()` - Returns all errors from this node and its children recursively
+- `tree_inspect()` - Returns a formatted string representation of the node and its children
 
 ### Error Handling
 

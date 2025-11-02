@@ -88,6 +88,8 @@ pub trait Node {
   fn node_type(&self) -> &str;
   fn location(&self) -> &Location;
   fn errors(&self) -> &[ErrorNode];
+  fn child_nodes(&self) -> Vec<&dyn Node>;
+  fn recursive_errors(&self) -> Vec<ErrorNode>;
   fn tree_inspect(&self) -> String;
 }
 
@@ -130,6 +132,48 @@ impl AnyNode {
       <%- end -%>
     }
   }
+
+  pub fn child_nodes(&self) -> Vec<&dyn Node> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.child_nodes(),
+      <%- end -%>
+    }
+  }
+
+  pub fn recursive_errors(&self) -> Vec<ErrorNode> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.recursive_errors(),
+      <%- end -%>
+    }
+  }
+}
+
+impl Node for AnyNode {
+  fn node_type(&self) -> &str {
+    self.node_type()
+  }
+
+  fn location(&self) -> &Location {
+    self.location()
+  }
+
+  fn errors(&self) -> &[ErrorNode] {
+    self.errors()
+  }
+
+  fn child_nodes(&self) -> Vec<&dyn Node> {
+    self.child_nodes()
+  }
+
+  fn recursive_errors(&self) -> Vec<ErrorNode> {
+    self.recursive_errors()
+  }
+
+  fn tree_inspect(&self) -> String {
+    self.tree_inspect()
+  }
 }
 
 <%- nodes.each do |node| -%>
@@ -171,6 +215,62 @@ impl Node for <%= node.name %> {
 
   fn errors(&self) -> &[ErrorNode] {
     &self.errors
+  }
+
+  fn child_nodes(&self) -> Vec<&dyn Node> {
+    <%- has_children = node.fields.any? { |field|
+      case field
+      when Herb::Template::ArrayField
+        true
+      when Herb::Template::NodeField
+        true
+      else
+        false
+      end
+    } -%>
+    <%- if has_children -%>
+    let mut children: Vec<&dyn Node> = Vec::new();
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::ArrayField -%>
+    children.extend(self.<%= field.name %>.iter().map(|n| n as &dyn Node));
+    <%- when Herb::Template::NodeField -%>
+    if let Some(ref node) = self.<%= field.name %> {
+      <%- if field.specific_kind && field.specific_kind != "Node" -%>
+      children.push(node.as_ref() as &dyn Node);
+      <%- else -%>
+      children.push(node.as_ref() as &dyn Node);
+      <%- end -%>
+    }
+    <%- end -%>
+    <%- end -%>
+    children
+    <%- else -%>
+    Vec::new()
+    <%- end -%>
+  }
+
+  fn recursive_errors(&self) -> Vec<ErrorNode> {
+    let mut all_errors = self.errors.clone();
+
+    all_errors.extend(
+      self.child_nodes()
+        .iter()
+        .flat_map(|child| child.recursive_errors())
+    );
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::NodeField -%>
+    <%- if field.specific_kind && field.specific_kind != "Node" -%>
+
+    if let Some(ref node) = self.<%= field.name %> {
+      all_errors.extend(node.recursive_errors());
+    }
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+
+    all_errors
   }
 
   fn tree_inspect(&self) -> String {

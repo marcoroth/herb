@@ -39,14 +39,16 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
       return Err("Failed to parse source".to_string());
     }
 
-    let doc_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
+    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
       .ok_or_else(|| "Failed to convert AST".to_string())?;
 
     crate::ffi::ast_node_free(ast);
 
-    let tree_inspect = crate::nodes::Node::tree_inspect(&doc_node);
-
-    Ok(ParseResult::new(tree_inspect))
+    Ok(ParseResult::new(
+      document_node,
+      source.to_string(),
+      Vec::new(),
+    ))
   }
 }
 

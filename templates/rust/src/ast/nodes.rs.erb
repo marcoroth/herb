@@ -198,47 +198,47 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
   }
 }
 
-<%- nodes.each do |node| -%>
-<%- if node.name == "DocumentNode" -%>
-/// Converts a C document node pointer to a Rust DocumentNode.
-///
-/// # Safety
-///
-/// The caller must ensure that `node_ptr` is a valid pointer to a C document node
-/// structure with properly initialized fields.
-<%- end -%>
+  <%- nodes.each do |node| -%>
+  <%- if node.name == "DocumentNode" -%>
+  /// Converts a C document node pointer to a Rust DocumentNode.
+  ///
+  /// # Safety
+  ///
+  /// The caller must ensure that `node_ptr` is a valid pointer to a C document node
+  /// structure with properly initialized fields.
+  <%- end -%>
   <%= node.name == "DocumentNode" ? "pub " : "" %>unsafe fn convert_<%= node.human %>(node_ptr: *const c_void) -> Option<<%= node.name %>> {
-  if node_ptr.is_null() {
-    return None;
+    if node_ptr.is_null() {
+      return None;
+    }
+
+    let c_node = node_ptr as *const C<%= node.name %>;
+    let base_ref = &(*c_node).base;
+
+    Some(<%= node.name %> {
+      node_type: "<%= node.name %>".to_string(),
+      location: convert_location(base_ref.location),
+      errors: convert_errors(base_ref.errors),
+      <%- node.fields.each do |field| -%>
+      <%- case field -%>
+      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      <%= field.name %>: get_string_field((*c_node).<%= field.name %>),
+      <%- when Herb::Template::TokenField -%>
+      <%= field.name %>: convert_token_field((*c_node).<%= field.name %>),
+      <%- when Herb::Template::BooleanField -%>
+      <%= field.name %>: (*c_node).<%= field.name %>,
+      <%- when Herb::Template::ArrayField -%>
+      <%= field.name %>: convert_children((*c_node).<%= field.name %>),
+      <%- when Herb::Template::NodeField -%>
+      <%- if field.specific_kind && field.specific_kind != "Node" -%>
+      <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
+      <%= field.name %>: convert_specific_node_field!((*c_node).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
+      <%- else -%>
+      <%= field.name %>: convert_node_field((*c_node).<%= field.name %>),
+      <%- end -%>
+      <%- end -%>
+      <%- end -%>
+    })
   }
-
-  let c_node = node_ptr as *const C<%= node.name %>;
-  let base_ref = &(*c_node).base;
-
-  Some(<%= node.name %> {
-    node_type: "<%= node.name %>".to_string(),
-    location: convert_location(base_ref.location),
-    errors: convert_errors(base_ref.errors),
-    <%- node.fields.each do |field| -%>
-    <%- case field -%>
-    <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
-    <%= field.name %>: get_string_field((*c_node).<%= field.name %>),
-    <%- when Herb::Template::TokenField -%>
-    <%= field.name %>: convert_token_field((*c_node).<%= field.name %>),
-    <%- when Herb::Template::BooleanField -%>
-    <%= field.name %>: (*c_node).<%= field.name %>,
-    <%- when Herb::Template::ArrayField -%>
-    <%= field.name %>: convert_children((*c_node).<%= field.name %>),
-    <%- when Herb::Template::NodeField -%>
-    <%- if field.specific_kind && field.specific_kind != "Node" -%>
-    <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
-    <%= field.name %>: convert_specific_node_field!((*c_node).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
-    <%- else -%>
-    <%= field.name %>: convert_node_field((*c_node).<%= field.name %>),
-    <%- end -%>
-    <%- end -%>
-    <%- end -%>
-  })
-}
 
 <%- end -%>
