@@ -1,5 +1,5 @@
+use crate::bindings::{hb_array_T, token_T};
 use crate::convert::token_from_c;
-use crate::ffi::{CToken, HbArray};
 use crate::{LexResult, ParseResult};
 use std::ffi::CString;
 
@@ -15,16 +15,16 @@ pub fn lex(source: &str) -> LexResult {
     let array_size = crate::ffi::hb_array_size(c_tokens);
     let mut tokens = Vec::with_capacity(array_size);
 
-    for i in 0..array_size {
-      let c_token = crate::ffi::hb_array_get(c_tokens, i) as *const CToken;
+    for index in 0..array_size {
+      let token_ptr = crate::ffi::hb_array_get(c_tokens, index) as *const token_T;
 
-      if !c_token.is_null() {
-        tokens.push(token_from_c(c_token));
+      if !token_ptr.is_null() {
+        tokens.push(token_from_c(token_ptr));
       }
     }
 
     let mut c_tokens_ptr = c_tokens;
-    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut HbArray);
+    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T);
 
     LexResult::new(tokens)
   }

@@ -1,22 +1,22 @@
-use crate::ffi::{CLocation, CPosition, CRange, CToken};
+use crate::bindings::{location_T, position_T, range_T, token_T};
 use crate::{Location, Position, Range, Token};
 use std::ffi::CStr;
 
-impl From<CPosition> for Position {
-  fn from(c_pos: CPosition) -> Self {
-    Position::new(c_pos.line, c_pos.column)
+impl From<position_T> for Position {
+  fn from(c_position: position_T) -> Self {
+    Position::new(c_position.line, c_position.column)
   }
 }
 
-impl From<CRange> for Range {
-  fn from(c_range: CRange) -> Self {
+impl From<range_T> for Range {
+  fn from(c_range: range_T) -> Self {
     Range::new(c_range.from as usize, c_range.to as usize)
   }
 }
 
-impl From<CLocation> for Location {
-  fn from(c_loc: CLocation) -> Self {
-    Location::new(c_loc.start.into(), c_loc.end.into())
+impl From<location_T> for Location {
+  fn from(c_location: location_T) -> Self {
+    Location::new(c_location.start.into(), c_location.end.into())
   }
 }
 
@@ -24,10 +24,10 @@ impl From<CLocation> for Location {
 ///
 /// # Safety
 ///
-/// The caller must ensure that `c_token` is a valid, non-null pointer to a `CToken`
+/// The caller must ensure that `token_ptr` is a valid, non-null pointer to a `token_T`
 /// and that the token's string fields (`value`, `token_type`) point to valid C strings.
-pub unsafe fn token_from_c(c_token: *const CToken) -> Token {
-  let token = &*c_token;
+pub unsafe fn token_from_c(token_ptr: *const token_T) -> Token {
+  let token = &*token_ptr;
 
   let value = if token.value.is_null() {
     String::new()
