@@ -62,6 +62,8 @@ pub fn extract_ruby(source: &str) -> Result<String, String> {
     let c_str = std::ffi::CStr::from_ptr(result);
     let rust_str = c_str.to_string_lossy().into_owned();
 
+    libc::free(result as *mut std::ffi::c_void);
+
     Ok(rust_str)
   }
 }
@@ -77,6 +79,8 @@ pub fn extract_html(source: &str) -> Result<String, String> {
 
     let c_str = std::ffi::CStr::from_ptr(result);
     let rust_str = c_str.to_string_lossy().into_owned();
+
+    libc::free(result as *mut std::ffi::c_void);
 
     Ok(rust_str)
   }
