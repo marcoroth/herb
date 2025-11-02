@@ -120,13 +120,13 @@ The `ParseResult` struct provides access to the parsed AST and any parse-level e
 pub struct ParseResult {
   pub value: DocumentNode,
   pub source: String,
-  pub errors: Vec<ErrorNode>,
+  pub errors: Vec<AnyError>,
 }
 
 impl ParseResult {
   pub fn tree_inspect(&self) -> String;
-  pub fn errors(&self) -> &[ErrorNode];
-  pub fn recursive_errors(&self) -> Vec<ErrorNode>;
+  pub fn errors(&self) -> &[AnyError];
+  pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode>;
   pub fn failed(&self) -> bool;
   pub fn success(&self) -> bool;
 }
@@ -135,8 +135,8 @@ impl ParseResult {
 **Methods:**
 
 - `tree_inspect()` - Returns a string representation of the AST
-- `errors()` - Returns only the parse-level errors
-- `recursive_errors()` - Returns parse-level errors combined with all node errors recursively
+- `errors()` - Returns only the parse-level errors as `AnyError` enum variants
+- `recursive_errors()` - Returns parse-level errors combined with all node errors recursively as trait objects (`&dyn ErrorNode`)
 - `failed()` - Returns `true` if there are any errors (parse-level or node errors)
 - `success()` - Returns `true` if there are no errors
 
@@ -155,9 +155,9 @@ match parse(source) {
 
       for error in result.recursive_errors() {
         println!("  {} at {}: {}",
-          error.error_type,
-          error.location,
-          error.message
+          error.error_type(),
+          error.location(),
+          error.message()
         );
       }
     } else {
@@ -286,9 +286,9 @@ All AST nodes implement the `Node` trait:
 pub trait Node {
   fn node_type(&self) -> &str;
   fn location(&self) -> &Location;
-  fn errors(&self) -> &[ErrorNode];
+  fn errors(&self) -> &[AnyError];
   fn child_nodes(&self) -> Vec<&dyn Node>;
-  fn recursive_errors(&self) -> Vec<ErrorNode>;
+  fn recursive_errors(&self) -> Vec<&dyn ErrorNode>;
   fn tree_inspect(&self) -> String;
 }
 ```
@@ -297,21 +297,22 @@ pub trait Node {
 
 - `node_type()` - Returns the type of the node (e.g., "DocumentNode", "HTMLElementNode")
 - `location()` - Returns the source location span of the node
-- `errors()` - Returns direct errors on this node
+- `errors()` - Returns direct errors on this node as `AnyError` enum variants
 - `child_nodes()` - Returns all child nodes as trait objects (`&dyn Node`), including both generic and specific-typed fields
-- `recursive_errors()` - Returns all errors from this node and its children recursively
+- `recursive_errors()` - Returns all errors from this node and its children recursively as trait objects (`&dyn ErrorNode`)
 - `tree_inspect()` - Returns a formatted string representation of the node and its children
 
 ### Error Handling
 
-Parse errors are included in the AST as `ErrorNode` structs:
+Parse errors use a trait-based system for flexibility and type safety. All errors implement the `ErrorNode` trait:
 
 ```rust
-pub struct ErrorNode {
-  pub error_type: String,
-  pub location: Location,
-  pub message: String,
+pub trait ErrorNode {
+  fn error_type(&self) -> &str;
+  fn message(&self) -> &str;
+  fn location(&self) -> &Location;
+  fn tree_inspect(&self) -> String;
 }
 ```
 
-Errors remain accessible through the `errors()` method on nodes, allowing you to handle them as needed.
+Errors remain accessible through the `errors()` method on nodes (returning `&[AnyError]`) or `recursive_errors()` (returning `Vec<&dyn ErrorNode>`), allowing you to handle them as needed.
