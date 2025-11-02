@@ -52,17 +52,17 @@ jobs:
         run: bundle exec rake make
 
       - name: Check Rust formatting
-        run: cargo +nightly fmt --check
+        run: make format-check
         working-directory: rust
 
       - name: Clippy
-        run: cargo +stable clippy --all-targets --all-features
+        run: make lint
         working-directory: rust
 
       - name: Build Rust
-        run: cargo +stable build --verbose
+        run: make build
         working-directory: rust
 
       - name: Run Rust tests
-        run: cargo +stable test --verbose -- --test-threads=1
+        run: make test
         working-directory: rust

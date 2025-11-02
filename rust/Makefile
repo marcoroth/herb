@@ -1,7 +1,7 @@
 # Rust Makefile for Herb
 
 BUILD_DIR = target
-BIN_NAME = herb-rs
+BIN_NAME = herb-rust
 BIN_PATH = $(BUILD_DIR)/debug/$(BIN_NAME)
 RELEASE_BIN_PATH = $(BUILD_DIR)/release/$(BIN_NAME)
 
@@ -13,7 +13,7 @@ templates:
 	cd .. && bundle exec rake templates
 
 build: templates
-	cargo build --bin $(BIN_NAME)
+	cargo +stable build --verbose --bin $(BIN_NAME)
 	@echo "Built debug binary: $(BIN_PATH)"
 
 release: templates
@@ -21,16 +21,24 @@ release: templates
 	@echo "Built release binary: $(RELEASE_BIN_PATH)"
 
 cli: build
-	@echo "CLI ready! Use: ./bin/herb-rs [command] [file]"
+	@echo "CLI ready! Use: ./bin/$(BIN_NAME) [command] [file]"
 	@echo ""
-	@./bin/herb-rs || true
+	@./bin/$(BIN_NAME) || true
 
 test: build
-	cargo test
+	cargo +stable test --verbose -- --test-threads=1
 
 format:
 	cargo +nightly fmt
 	@echo "Formatted Rust code"
+
+format-check:
+	cargo +nightly fmt --check
+	@echo "Checked Rust code formatting"
+
+lint:
+	cargo +stable clippy --all-targets --all-features
+	@echo "Linted Rust code"
 
 clean:
 	cargo clean

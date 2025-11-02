@@ -1,5 +1,35 @@
 use crate::{Location, Token};
 
+fn escape_string(s: &str) -> String {
+  s.replace('\\', "\\\\")
+    .replace('\n', "\\n")
+    .replace('\r', "\\r")
+    .replace('\t', "\\t")
+    .replace('"', "\\\"")
+}
+
+fn format_string_value(value: &str) -> String {
+  format!("\"{}\"", escape_string(value))
+}
+
+fn format_token_value(token: &Option<Token>) -> String {
+  token.as_ref().map(|t| t.tree_inspect()).unwrap_or_else(|| "∅".to_string())
+}
+
+fn format_token_type_value(token_type: &Option<String>) -> String {
+  token_type.as_ref().map(|t| format!("\"{}\"", t)).unwrap_or_else(|| "∅".to_string())
+}
+
+#[allow(dead_code)]
+fn format_position_value(position: &Option<crate::Position>) -> String {
+  position.as_ref().map(|p| p.to_string()).unwrap_or_else(|| "∅".to_string())
+}
+
+#[allow(dead_code)]
+fn format_size_value(value: usize) -> String {
+  value.to_string()
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ErrorType {
   <%- errors.each do |error| -%>
@@ -17,7 +47,7 @@ impl ErrorType {
   }
 }
 
-pub trait Error {
+pub trait ErrorNode {
   fn error_type(&self) -> &str;
   fn message(&self) -> &str;
   fn location(&self) -> &Location;
@@ -62,6 +92,24 @@ impl AnyError {
       AnyError::<%= error.name %>(e) => e.tree_inspect(),
       <%- end -%>
     }
+  }
+}
+
+impl ErrorNode for AnyError {
+  fn error_type(&self) -> &str {
+    self.error_type()
+  }
+
+  fn message(&self) -> &str {
+    self.message()
+  }
+
+  fn location(&self) -> &Location {
+    self.location()
+  }
+
+  fn tree_inspect(&self) -> String {
+    self.tree_inspect()
   }
 }
 
@@ -118,47 +166,23 @@ impl <%= error.name %> {
 
   pub fn tree_inspect(&self) -> String {
     let mut output = String::new();
-    output.push_str(&format!("@ {} {}\n", self.error_type, self.location));
+
+    output.push_str(&format!("@ <%= error.type %> {}\n", self.location));
     <%- symbol = error.fields.any? ? "├──" : "└──" -%>
-    output.push_str(&format!("<%= symbol %> message: \"{}\"\\n",
-      self.message
-        .replace('\\', "\\\\")
-        .replace('\n', "\\n")
-        .replace('\r', "\\r")
-        .replace('\t', "\\t")
-        .replace('"', "\\\"")));
+    output.push_str(&format!("<%= symbol %> message: {}\n", format_string_value(&self.message)));
     <%- error.fields.each do |field| -%>
     <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
-    <%- name = "#{symbol} #{field.name}: " -%>
     <%- case field -%>
     <%- when Herb::Template::StringField -%>
-    output.push_str(&format!("<%= name %>\"{}\"\\n",
-      self.<%= field.name %>
-        .replace('\\', "\\\\")
-        .replace('\n', "\\n")
-        .replace('\r', "\\r")
-        .replace('\t', "\\t")
-        .replace('"', "\\\"")));
+    output.push_str(&format!("<%= symbol %> <%= field.name %>: {}\n", format_string_value(&self.<%= field.name %>)));
     <%- when Herb::Template::TokenField -%>
-    if let Some(ref token) = self.<%= field.name %> {
-      output.push_str(&format!("<%= name %>{}\\n", token.tree_inspect()));
-    } else {
-      output.push_str("<%= name %>∅\\n");
-    }
+    output.push_str(&format!("<%= symbol %> <%= field.name %>: {}\n", format_token_value(&self.<%= field.name %>)));
     <%- when Herb::Template::TokenTypeField -%>
-    if let Some(ref token_type) = self.<%= field.name %> {
-      output.push_str(&format!("<%= name %>\"{}\"\\n", token_type));
-    } else {
-      output.push_str("<%= name %>∅\\n");
-    }
+    output.push_str(&format!("<%= symbol %> <%= field.name %>: {}\n", format_token_type_value(&self.<%= field.name %>)));
     <%- when Herb::Template::PositionField -%>
-    if let Some(ref pos) = self.<%= field.name %> {
-      output.push_str(&format!("<%= name %>{}\\n", pos));
-    } else {
-      output.push_str("<%= name %>∅\\n");
-    }
+    output.push_str(&format!("<%= symbol %> <%= field.name %>: {}\n", format_position_value(&self.<%= field.name %>)));
     <%- when Herb::Template::SizeTField -%>
-    output.push_str(&format!("<%= name %>{}\\n", self.<%= field.name %>));
+    output.push_str(&format!("<%= symbol %> <%= field.name %>: {}\n", format_size_value(self.<%= field.name %>)));
     <%- end -%>
     <%- end -%>
 
@@ -166,7 +190,7 @@ impl <%= error.name %> {
   }
 }
 
-impl Error for <%= error.name %> {
+impl ErrorNode for <%= error.name %> {
   fn error_type(&self) -> &str {
     &self.error_type
   }

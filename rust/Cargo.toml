@@ -16,7 +16,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 [[bin]]
-name = "herb-rs"
+name = "herb-rust"
 path = "src/main.rs"
 
 [dependencies]

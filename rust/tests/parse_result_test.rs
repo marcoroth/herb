@@ -45,11 +45,11 @@ fn test_parse_result_failed_with_unclosed_element() {
 
   assert!(errors
     .iter()
-    .any(|e| e.error_type == "UNCLOSED_ELEMENT_ERROR"));
+    .any(|e| e.error_type() == "UNCLOSED_ELEMENT_ERROR"));
 
   assert!(errors
     .iter()
-    .any(|e| e.error_type == "MISSING_CLOSING_TAG_ERROR"));
+    .any(|e| e.error_type() == "MISSING_CLOSING_TAG_ERROR"));
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn test_parse_result_failed_with_tag_mismatch() {
 
   assert!(errors
     .iter()
-    .any(|e| e.error_type == "TAG_NAMES_MISMATCH_ERROR"));
+    .any(|e| e.error_type() == "TAG_NAMES_MISMATCH_ERROR"));
 }
 
 #[test]

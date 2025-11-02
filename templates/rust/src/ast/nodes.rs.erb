@@ -1,4 +1,5 @@
 use crate::convert::token_from_c;
+use crate::errors::*;
 use crate::ffi::{CToken, HbArray};
 use crate::nodes::*;
 use crate::{Location, Position};
@@ -64,10 +65,8 @@ unsafe fn convert_location(c_loc: CLocation) -> Location {
   )
 }
 
-use crate::nodes::ErrorNode;
-
 #[repr(C)]
-struct CErrorNode {
+struct CErrorBase {
   error_type: u32,
   location: CLocation,
   message: *const c_char,
@@ -77,16 +76,55 @@ struct CErrorNode {
 const <%= error.type %>: u32 = <%= index %>;
 <%- end -%>
 
-unsafe fn error_type_to_string(error_type: u32) -> String {
-  match error_type {
-    <%- errors.each do |error| -%>
-    <%= error.type %> => "<%= error.type %>".to_string(),
-    <%- end -%>
-    _ => format!("UNKNOWN_ERROR_{}", error_type),
-  }
+<%- errors.each do |error| -%>
+<%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
+#[repr(C)]
+struct C<%= error.name %> {
+  base: CErrorBase,
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  <%= field.name %>: *const c_char,
+  <%- when Herb::Template::TokenField -%>
+  <%= field.name %>: *mut CToken,
+  <%- when Herb::Template::TokenTypeField -%>
+  <%= field.name %>: u32,
+  <%- end -%>
+  <%- end -%>
 }
 
-unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<ErrorNode> {
+unsafe fn convert_<%= snake_name %>(error_ptr: *const C<%= error.name %>) -> <%= error.name %> {
+  let error_ref = &*error_ptr;
+  let message = if error_ref.base.message.is_null() {
+    String::new()
+  } else {
+    CStr::from_ptr(error_ref.base.message).to_string_lossy().into_owned()
+  };
+  let location = convert_location(error_ref.base.location);
+
+  <%= error.name %>::new(
+    message,
+    location,
+    <%- error.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField -%>
+    get_string_field(error_ref.<%= field.name %>),
+    <%- when Herb::Template::TokenField -%>
+    convert_token_field(error_ref.<%= field.name %>),
+    <%- when Herb::Template::TokenTypeField -%>
+    if error_ref.<%= field.name %> == u32::MAX {
+      None
+    } else {
+      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)).to_string_lossy().into_owned())
+    },
+    <%- end -%>
+    <%- end -%>
+  )
+}
+
+<%- end -%>
+
+unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<AnyError> {
   if errors_array.is_null() {
     return Vec::new();
   }
@@ -95,20 +133,22 @@ unsafe fn convert_errors(errors_array: *mut HbArray) -> Vec<ErrorNode> {
   let mut errors = Vec::with_capacity(count);
 
   for i in 0..count {
-    let error_ptr = hb_array_get(errors_array, i) as *const CErrorNode;
-    if !error_ptr.is_null() {
-      let error_ref = &*error_ptr;
-      let message = if error_ref.message.is_null() {
-        String::new()
-      } else {
-        CStr::from_ptr(error_ref.message).to_string_lossy().into_owned()
+    let error_base_ptr = hb_array_get(errors_array, i) as *const CErrorBase;
+    if !error_base_ptr.is_null() {
+      let error_base = &*error_base_ptr;
+
+      let error = match error_base.error_type {
+        <%- errors.each do |error| -%>
+        <%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
+        <%= error.type %> => {
+          let error_ptr = error_base_ptr as *const C<%= error.name %>;
+          AnyError::<%= error.name %>(convert_<%= snake_name %>(error_ptr))
+        }
+        <%- end -%>
+        _ => continue,
       };
 
-      errors.push(ErrorNode::new(
-        error_type_to_string(error_ref.error_type),
-        convert_location(error_ref.location),
-        message,
-      ));
+      errors.push(error);
     }
   }
 

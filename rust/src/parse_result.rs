@@ -1,13 +1,14 @@
-use crate::nodes::{DocumentNode, ErrorNode, Node};
+use crate::errors::{AnyError, ErrorNode};
+use crate::nodes::{DocumentNode, Node};
 
 pub struct ParseResult {
   pub value: DocumentNode,
   pub source: String,
-  pub errors: Vec<ErrorNode>,
+  pub errors: Vec<AnyError>,
 }
 
 impl ParseResult {
-  pub fn new(value: DocumentNode, source: String, errors: Vec<ErrorNode>) -> Self {
+  pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>) -> Self {
     Self {
       value,
       source,
@@ -19,12 +20,13 @@ impl ParseResult {
     self.value.tree_inspect()
   }
 
-  pub fn errors(&self) -> &[ErrorNode] {
+  pub fn errors(&self) -> &[AnyError] {
     &self.errors
   }
 
-  pub fn recursive_errors(&self) -> Vec<ErrorNode> {
-    let mut all_errors = self.errors.clone();
+  pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    let mut all_errors: Vec<&dyn ErrorNode> = Vec::new();
+    all_errors.extend(self.errors.iter().map(|e| e as &dyn ErrorNode));
     all_errors.extend(self.value.recursive_errors());
     all_errors
   }

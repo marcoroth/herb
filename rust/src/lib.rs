@@ -11,11 +11,11 @@ pub mod position;
 pub mod range;
 pub mod token;
 
-pub use errors::{AnyError, Error, ErrorType};
+pub use errors::{AnyError, ErrorNode, ErrorType};
 pub use herb::{extract_html, extract_ruby, herb_version, lex, parse, prism_version, version};
 pub use lex_result::LexResult;
 pub use location::Location;
-pub use nodes::{AnyNode, ErrorNode, Node};
+pub use nodes::{AnyNode, Node};
 pub use parse_result::ParseResult;
 pub use position::Position;
 pub use range::Range;

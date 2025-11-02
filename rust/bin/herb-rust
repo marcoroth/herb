@@ -3,10 +3,10 @@
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 RUST_DIR="$( cd "$SCRIPT_DIR/.." && pwd )"
 
-BINARY_PATH="$RUST_DIR/target/debug/herb-rs"
+BINARY_PATH="$RUST_DIR/target/debug/herb-rust"
 
 if [ ! -f "$BINARY_PATH" ]; then
-  echo "Error: herb-rs binary not found at $BINARY_PATH"
+  echo "Error: herb-rust binary not found at $BINARY_PATH"
   echo "Please run 'make build' in the rust/ directory first."
 
   exit 1
