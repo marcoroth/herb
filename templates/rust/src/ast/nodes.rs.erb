@@ -4,7 +4,7 @@ use crate::ffi::{CToken, HbArray};
 use crate::nodes::*;
 use crate::{Location, Position};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -67,13 +67,13 @@ unsafe fn convert_location(c_loc: CLocation) -> Location {
 
 #[repr(C)]
 struct CErrorBase {
-  error_type: u32,
+  error_type: c_int,
   location: CLocation,
   message: *const c_char,
 }
 
 <%- errors.each_with_index do |error, index| -%>
-const <%= error.type %>: u32 = <%= index %>;
+const <%= error.type %>: c_int = <%= index %>;
 <%- end -%>
 
 <%- errors.each do |error| -%>
@@ -88,7 +88,7 @@ struct C<%= error.name %> {
   <%- when Herb::Template::TokenField -%>
   <%= field.name %>: *mut CToken,
   <%- when Herb::Template::TokenTypeField -%>
-  <%= field.name %>: u32,
+  <%= field.name %>: c_int,
   <%- end -%>
   <%- end -%>
 }
@@ -112,10 +112,10 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const C<%= error.name %>) -> <%=
     <%- when Herb::Template::TokenField -%>
     convert_token_field(error_ref.<%= field.name %>),
     <%- when Herb::Template::TokenTypeField -%>
-    if error_ref.<%= field.name %> == u32::MAX {
+    if error_ref.<%= field.name %> == -1 {
       None
     } else {
-      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)).to_string_lossy().into_owned())
+      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %> as u32)).to_string_lossy().into_owned())
     },
     <%- end -%>
     <%- end -%>
