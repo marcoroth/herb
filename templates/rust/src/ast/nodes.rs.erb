@@ -22,13 +22,13 @@ struct CLocation {
 
 #[repr(C)]
 struct CAstNode {
-  node_type: u32,
+  node_type: c_int,
   location: CLocation,
   errors: *mut HbArray,
 }
 
 <%- nodes.each_with_index do |node, index| -%>
-const <%= node.type %>: u32 = <%= index %>;
+const <%= node.type %>: c_int = <%= index %>;
 <%- end -%>
 
 <%- nodes.each do |node| -%>
@@ -37,8 +37,10 @@ struct C<%= node.name %> {
   base: CAstNode,
   <%- node.fields.each do |field| -%>
   <%- case field -%>
-  <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+  <%- when Herb::Template::StringField -%>
   <%= field.name %>: *const c_char,
+  <%- when Herb::Template::ElementSourceField -%>
+  <%= field.name %>: c_int,
   <%- when Herb::Template::TokenField -%>
   <%= field.name %>: *mut CToken,
   <%- when Herb::Template::BooleanField -%>
@@ -166,6 +168,16 @@ unsafe fn get_string_field(ptr: *const c_char) -> String {
   }
 }
 
+unsafe fn convert_element_source(source: c_int) -> String {
+  let hb_string = crate::ffi::element_source_to_string(source);
+  if hb_string.data.is_null() {
+    String::new()
+  } else {
+    let slice = std::slice::from_raw_parts(hb_string.data as *const u8, hb_string.length as usize);
+    String::from_utf8_lossy(slice).into_owned()
+  }
+}
+
 unsafe fn convert_token_field(ptr: *mut CToken) -> Option<crate::Token> {
   if ptr.is_null() {
     None
@@ -264,8 +276,10 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
       errors: convert_errors(base_ref.errors),
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+      <%- when Herb::Template::StringField -%>
       <%= field.name %>: get_string_field((*c_node).<%= field.name %>),
+      <%- when Herb::Template::ElementSourceField -%>
+      <%= field.name %>: convert_element_source((*c_node).<%= field.name %>),
       <%- when Herb::Template::TokenField -%>
       <%= field.name %>: convert_token_field((*c_node).<%= field.name %>),
       <%- when Herb::Template::BooleanField -%>

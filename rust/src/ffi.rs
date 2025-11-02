@@ -52,6 +52,12 @@ pub enum HerbExtractLanguage {
   Html = 1,
 }
 
+#[repr(C)]
+pub struct HbString {
+  pub data: *mut c_char,
+  pub length: u32,
+}
+
 extern "C" {
   pub fn herb_lex(source: *const c_char) -> *mut HbArray;
   pub fn herb_parse(source: *const c_char, options: *mut ParserOptions) -> *mut CDocumentNode;
@@ -67,4 +73,6 @@ extern "C" {
   pub fn ast_node_free(node: *mut CDocumentNode);
 
   pub fn herb_extract(source: *const c_char, language: HerbExtractLanguage) -> *mut c_char;
+
+  pub fn element_source_to_string(source: std::os::raw::c_int) -> HbString;
 }
