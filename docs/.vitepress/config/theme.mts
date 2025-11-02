@@ -91,6 +91,14 @@ const defaultSidebar = [
         ],
       },
       {
+        text: "Java",
+        collapsed: false,
+        items: [
+          { text: "Installation", link: "/bindings/java/" },
+          { text: "Reference", link: "/bindings/java/reference" },
+        ],
+      },
+      {
         text: "Rust",
         collapsed: false,
         items: [

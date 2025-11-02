@@ -1,0 +1,103 @@
+# Java JNI Makefile for Herb
+
+JAVA_HOME ?= $(shell /usr/libexec/java_home 2>/dev/null || dirname $$(dirname $$(which java)))
+JNI_INCLUDES = -I$(JAVA_HOME)/include
+
+os := $(shell uname -s)
+
+ifeq ($(os),Darwin)
+  JNI_INCLUDES += -I$(JAVA_HOME)/include/darwin
+  JNI_LIB_EXT = dylib
+  JNI_LIB_PREFIX = lib
+  LLVM_PATH = $(shell brew --prefix llvm@21)
+  CC = $(LLVM_PATH)/bin/clang
+else ifeq ($(os),Linux)
+  JNI_INCLUDES += -I$(JAVA_HOME)/include/linux
+  JNI_LIB_EXT = so
+  JNI_LIB_PREFIX = lib
+  CC = clang
+else
+  JNI_LIB_EXT = dll
+  JNI_LIB_PREFIX =
+  CC = clang
+endif
+
+BUILD_DIR = ../build
+SRC_DIR = ../src
+PRISM_PATH = $(shell cd .. && bundle show prism)
+PRISM_INCLUDE = $(PRISM_PATH)/include
+PRISM_BUILD = $(PRISM_PATH)/build
+
+JAVAC = $(JAVA_HOME)/bin/javac
+JAVA_CMD = $(JAVA_HOME)/bin/java
+CFLAGS = -std=c99 -Wall -Wextra -fPIC -O2
+INCLUDES = -I. -I$(SRC_DIR)/include -I$(PRISM_INCLUDE) $(JNI_INCLUDES)
+LDFLAGS = -shared
+LIBS = $(PRISM_BUILD)/libprism.a
+
+HERB_SOURCES = $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/**/*.c)
+HERB_OBJECTS = $(filter-out $(SRC_DIR)/main.o, $(HERB_SOURCES:.c=.o))
+
+JNI_SOURCES = herb_jni.c extension_helpers.c
+JNI_GENERATED_SOURCES = nodes.c error_helpers.c
+
+JNI_OBJECTS = $(JNI_SOURCES:.c=.o) $(JNI_GENERATED_SOURCES:.c=.o)
+
+JNI_LIB = $(BUILD_DIR)/$(JNI_LIB_PREFIX)herb_jni.$(JNI_LIB_EXT)
+
+JAVA_SOURCES = $(shell find org -name "*.java" 2>/dev/null)
+JAVA_TIMESTAMP = target/.java_compiled
+
+.PHONY: all clean java jni test
+
+all: templates jni java
+
+templates:
+	cd .. && bundle exec rake templates
+
+jni: $(JNI_LIB)
+
+$(JNI_LIB): $(JNI_OBJECTS) $(HERB_OBJECTS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(LDFLAGS) -o $@ $(JNI_OBJECTS) $(HERB_OBJECTS) $(LIBS)
+	@echo "Built JNI library: $(JNI_LIB)"
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+java: $(JAVA_TIMESTAMP)
+
+$(JAVA_TIMESTAMP): $(JAVA_SOURCES)
+	@mkdir -p target/classes
+	@if [ -n "$(JAVA_SOURCES)" ]; then \
+		$(JAVAC) -d target/classes $(JAVA_SOURCES); \
+		touch $(JAVA_TIMESTAMP); \
+		echo "Compiled Java classes"; \
+	fi
+
+cli: all
+	@echo "CLI ready! Use: ./bin/herb-java [command] [file]"
+	@echo ""
+	@./bin/herb-java || true
+
+clean:
+	rm -f $(JNI_OBJECTS) $(JNI_LIB)
+	rm -rf target/
+	rm -f nodes.o error_helpers.o
+
+help:
+	@echo "Herb Java/JNI Build System"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all        - Build everything (templates + JNI + Java)"
+	@echo "  templates  - Generate code from ERB templates"
+	@echo "  jni        - Build JNI shared library"
+	@echo "  java       - Compile Java classes"
+	@echo "  cli        - Show CLI usage"
+	@echo "  clean      - Remove built files"
+	@echo "  help       - Show this help"
+	@echo ""
+	@echo "Environment:"
+	@echo "  JAVA_HOME   = $(JAVA_HOME)"
+	@echo "  OS          = $(os)"
+	@echo "  JNI_LIB     = $(JNI_LIB)"

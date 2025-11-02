@@ -37,6 +37,12 @@ typescript:
       - '**/javascript/**/*.ts'
       - '**/javascript/**/*.ts.erb'
 
+java:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.java'
+      - '**/*.java.erb'
+
 ruby:
   - changed-files:
     - any-glob-to-any-file:
