@@ -1,0 +1,271 @@
+use crate::{Location, Token};
+
+#[derive(Debug, Clone)]
+pub struct ErrorNode {
+  pub error_type: String,
+  pub location: Location,
+  pub message: String,
+}
+
+impl ErrorNode {
+  pub fn new(error_type: String, location: Location, message: String) -> Self {
+    Self {
+      error_type,
+      location,
+      message,
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    format!(
+      "@ {} {}\n└── message: \"{}\"",
+      self.error_type, self.location, self.message
+    )
+  }
+}
+
+fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
+  if array.is_empty() {
+    return "[]\n".to_string();
+  }
+
+  let mut output = String::new();
+  output.push_str(&format!("({} item{})\n", array.len(), if array.len() == 1 { "" } else { "s" }));
+
+  for (i, item) in array.iter().enumerate() {
+    let is_last = i == array.len() - 1;
+    let symbol = if is_last { "└── " } else { "├── " };
+    let next_prefix = if is_last { "    " } else { "│   " };
+
+    let tree = item.tree_inspect();
+    let tree = tree.trim_end_matches('\n');
+
+    output.push_str(prefix);
+    output.push_str(symbol);
+    output.push_str(&tree.replace('\n', &format!("\n{}{}", prefix, next_prefix)));
+    output.push('\n');
+
+    if !is_last {
+      output.push_str(prefix);
+      output.push_str(&next_prefix);
+      output.push('\n');
+    }
+  }
+
+  output
+}
+
+fn inspect_node(node: &AnyNode, prefix: &str) -> String {
+  let tree = node.tree_inspect();
+  let tree = tree.trim_end_matches('\n');
+
+  let lines: Vec<&str> = tree.split('\n').collect();
+  if lines.is_empty() {
+    return "∅\n".to_string();
+  }
+
+  let mut result = String::new();
+  result.push_str("└── ");
+  result.push_str(lines[0]);
+  result.push('\n');
+
+  for line in lines.iter().skip(1) {
+    if line.is_empty() {
+      result.push_str(prefix);
+      result.push('\n');
+    } else {
+      result.push_str(prefix);
+      result.push_str("    ");
+      result.push_str(line);
+      result.push('\n');
+    }
+  }
+
+  result
+}
+
+pub trait Node {
+  fn node_type(&self) -> &str;
+  fn location(&self) -> &Location;
+  fn errors(&self) -> &[ErrorNode];
+  fn tree_inspect(&self) -> String;
+}
+
+#[derive(Debug, Clone)]
+pub enum AnyNode {
+  <%- nodes.each do |node| -%>
+  <%= node.name %>(<%= node.name %>),
+  <%- end -%>
+}
+
+impl AnyNode {
+  pub fn node_type(&self) -> &str {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.node_type,
+      <%- end -%>
+    }
+  }
+
+  pub fn location(&self) -> &Location {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.location,
+      <%- end -%>
+    }
+  }
+
+  pub fn errors(&self) -> &[ErrorNode] {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.errors,
+      <%- end -%>
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.tree_inspect(),
+      <%- end -%>
+    }
+  }
+}
+
+<%- nodes.each do |node| -%>
+#[derive(Debug, Clone)]
+pub struct <%= node.name %> {
+  pub node_type: String,
+  pub location: Location,
+  pub errors: Vec<ErrorNode>,
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  pub <%= field.name %>: String,
+  <%- when Herb::Template::TokenField -%>
+  pub <%= field.name %>: Option<Token>,
+  <%- when Herb::Template::BooleanField -%>
+  pub <%= field.name %>: bool,
+  <%- when Herb::Template::ArrayField -%>
+  pub <%= field.name %>: Vec<AnyNode>,
+  <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind && field.specific_kind != "Node" -%>
+  pub <%= field.name %>: Option<Box<<%= field.specific_kind %>>>,
+  <%- else -%>
+  pub <%= field.name %>: Option<Box<AnyNode>>,
+  <%- end -%>
+  <%- when Herb::Template::ElementSourceField -%>
+  pub <%= field.name %>: String,
+  <%- end -%>
+  <%- end -%>
+}
+
+impl Node for <%= node.name %> {
+  fn node_type(&self) -> &str {
+    &self.node_type
+  }
+
+  fn location(&self) -> &Location {
+    &self.location
+  }
+
+  fn errors(&self) -> &[ErrorNode] {
+    &self.errors
+  }
+
+  fn tree_inspect(&self) -> String {
+    let mut output = String::new();
+    output.push_str(&format!("@ {} (location: {})\n", self.node_type, self.location));
+
+    if !self.errors.is_empty() {
+      let prefix = <%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>;
+
+      output.push_str(&format!("├── errors: ({} error{})\n",
+        self.errors.len(),
+        if self.errors.len() == 1 { "" } else { "s" }
+      ));
+
+      for (i, error) in self.errors.iter().enumerate() {
+        let is_last = i == self.errors.len() - 1;
+        let symbol = if is_last { "└── " } else { "├── " };
+        let next_prefix = if is_last { "    " } else { "│   " };
+
+        let tree = error.tree_inspect();
+        let tree = tree.trim_end_matches('\n');
+        output.push_str(&format!("{}{}{}\n", prefix, symbol, tree.replace('\n', &format!("\n{}{}", prefix, next_prefix))));
+
+        if !is_last {
+          output.push_str(&format!("{}│   \n", prefix));
+        }
+      }
+
+      output.push_str(&format!("{}\n", prefix));
+    }
+
+    <%- if node.fields.any? -%>
+    <%- node.fields.each_with_index do |field, index| -%>
+
+    <%- is_last = index == node.fields.length - 1 -%>
+    <%- symbol = is_last ? "└── " : "├── " -%>
+
+    <%- case field -%>
+    <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+    output.push_str(&format!("<%= symbol %><%= field.name %>: \"{}\"\n", self.<%= field.name %>.replace('\\', "\\\\").replace('\n', "\\n").replace('\r', "\\r").replace('\t', "\\t").replace('"', "\\\"")));
+    <%- when Herb::Template::TokenField -%>
+    if let Some(ref token) = self.<%= field.name %> {
+      output.push_str(&format!("<%= symbol %><%= field.name %>: {}\n", token.tree_inspect()));
+    } else {
+      output.push_str("<%= symbol %><%= field.name %>: ∅\n");
+    }
+    <%- when Herb::Template::BooleanField -%>
+    output.push_str(&format!("<%= symbol %><%= field.name %>: {}\n", self.<%= field.name %>));
+    <%- when Herb::Template::ArrayField -%>
+    output.push_str("<%= symbol %><%= field.name %>: ");
+    output.push_str(&inspect_array(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>"));
+    <%- when Herb::Template::NodeField -%>
+    if let Some(ref node) = self.<%= field.name %> {
+      output.push_str("<%= symbol %><%= field.name %>:\n");
+      <%- if field.specific_kind && field.specific_kind != "Node" -%>
+      // Specific node type - call tree_inspect directly
+      let prefix = "<%= is_last ? "    " : "│   " %>";
+      let tree = node.tree_inspect();
+      let tree = tree.trim_end_matches('\n');
+      let lines: Vec<&str> = tree.split('\n').collect();
+      if !lines.is_empty() {
+        output.push_str(prefix);
+        output.push_str("└── ");
+        output.push_str(lines[0]);
+        output.push('\n');
+        for line in lines.iter().skip(1) {
+          if line.is_empty() {
+            output.push_str(prefix);
+            output.push('\n');
+          } else {
+            output.push_str(prefix);
+            output.push_str("    ");
+            output.push_str(line);
+            output.push_str("\n");
+          }
+        }
+      }
+      <%- else -%>
+      output.push_str("<%= is_last ? "    " : "│   " %>");
+      output.push_str(&inspect_node(node, "<%= is_last ? "    " : "│   " %>"));
+      <%- end -%>
+      <%- unless is_last -%>
+      output.push_str("<%= "│   " %>\n");
+      <%- end -%>
+    } else {
+      output.push_str("<%= symbol %><%= field.name %>: ∅\n");
+    }
+    <%- end -%>
+    <%- end -%>
+    <%- else -%>
+    output.push_str("└── (no fields)\n");
+    <%- end -%>
+
+    output
+  }
+}
+
+<%- end -%>

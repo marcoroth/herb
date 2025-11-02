@@ -1,0 +1,187 @@
+use crate::{Location, Token};
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum ErrorType {
+  <%- errors.each do |error| -%>
+  <%= error.name %>,
+  <%- end -%>
+}
+
+impl ErrorType {
+  pub fn as_str(&self) -> &str {
+    match self {
+      <%- errors.each do |error| -%>
+      ErrorType::<%= error.name %> => "<%= error.type %>",
+      <%- end -%>
+    }
+  }
+}
+
+pub trait Error {
+  fn error_type(&self) -> &str;
+  fn message(&self) -> &str;
+  fn location(&self) -> &Location;
+  fn tree_inspect(&self) -> String;
+}
+
+#[derive(Debug, Clone)]
+pub enum AnyError {
+  <%- errors.each do |error| -%>
+  <%= error.name %>(<%= error.name %>),
+  <%- end -%>
+}
+
+impl AnyError {
+  pub fn error_type(&self) -> &str {
+    match self {
+      <%- errors.each do |error| -%>
+      AnyError::<%= error.name %>(e) => &e.error_type,
+      <%- end -%>
+    }
+  }
+
+  pub fn message(&self) -> &str {
+    match self {
+      <%- errors.each do |error| -%>
+      AnyError::<%= error.name %>(e) => &e.message,
+      <%- end -%>
+    }
+  }
+
+  pub fn location(&self) -> &Location {
+    match self {
+      <%- errors.each do |error| -%>
+      AnyError::<%= error.name %>(e) => &e.location,
+      <%- end -%>
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    match self {
+      <%- errors.each do |error| -%>
+      AnyError::<%= error.name %>(e) => e.tree_inspect(),
+      <%- end -%>
+    }
+  }
+}
+
+<%- errors.each do |error| -%>
+#[derive(Debug, Clone)]
+pub struct <%= error.name %> {
+  pub error_type: String,
+  pub message: String,
+  pub location: Location,
+  <%- error.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  pub <%= field.name %>: String,
+  <%- when Herb::Template::TokenField -%>
+  pub <%= field.name %>: Option<Token>,
+  <%- when Herb::Template::TokenTypeField -%>
+  pub <%= field.name %>: Option<String>,
+  <%- when Herb::Template::PositionField -%>
+  pub <%= field.name %>: Option<Position>,
+  <%- when Herb::Template::SizeTField -%>
+  pub <%= field.name %>: usize,
+  <%- end -%>
+  <%- end -%>
+}
+
+impl <%= error.name %> {
+  pub fn new(
+    message: String,
+    location: Location,
+    <%- error.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField -%>
+    <%= field.name %>: String,
+    <%- when Herb::Template::TokenField -%>
+    <%= field.name %>: Option<Token>,
+    <%- when Herb::Template::TokenTypeField -%>
+    <%= field.name %>: Option<String>,
+    <%- when Herb::Template::PositionField -%>
+    <%= field.name %>: Option<Position>,
+    <%- when Herb::Template::SizeTField -%>
+    <%= field.name %>: usize,
+    <%- end -%>
+    <%- end -%>
+  ) -> Self {
+    Self {
+      error_type: "<%= error.type %>".to_string(),
+      message,
+      location,
+      <%- error.fields.each do |field| -%>
+      <%= field.name %>,
+      <%- end -%>
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    let mut output = String::new();
+    output.push_str(&format!("@ {} {}\n", self.error_type, self.location));
+    <%- symbol = error.fields.any? ? "├──" : "└──" -%>
+    output.push_str(&format!("<%= symbol %> message: \"{}\"\\n",
+      self.message
+        .replace('\\', "\\\\")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+        .replace('\t', "\\t")
+        .replace('"', "\\\"")));
+    <%- error.fields.each do |field| -%>
+    <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
+    <%- name = "#{symbol} #{field.name}: " -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField -%>
+    output.push_str(&format!("<%= name %>\"{}\"\\n",
+      self.<%= field.name %>
+        .replace('\\', "\\\\")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+        .replace('\t', "\\t")
+        .replace('"', "\\\"")));
+    <%- when Herb::Template::TokenField -%>
+    if let Some(ref token) = self.<%= field.name %> {
+      output.push_str(&format!("<%= name %>{}\\n", token.tree_inspect()));
+    } else {
+      output.push_str("<%= name %>∅\\n");
+    }
+    <%- when Herb::Template::TokenTypeField -%>
+    if let Some(ref token_type) = self.<%= field.name %> {
+      output.push_str(&format!("<%= name %>\"{}\"\\n", token_type));
+    } else {
+      output.push_str("<%= name %>∅\\n");
+    }
+    <%- when Herb::Template::PositionField -%>
+    if let Some(ref pos) = self.<%= field.name %> {
+      output.push_str(&format!("<%= name %>{}\\n", pos));
+    } else {
+      output.push_str("<%= name %>∅\\n");
+    }
+    <%- when Herb::Template::SizeTField -%>
+    output.push_str(&format!("<%= name %>{}\\n", self.<%= field.name %>));
+    <%- end -%>
+    <%- end -%>
+
+    output
+  }
+}
+
+impl Error for <%= error.name %> {
+  fn error_type(&self) -> &str {
+    &self.error_type
+  }
+
+  fn message(&self) -> &str {
+    &self.message
+  }
+
+  fn location(&self) -> &Location {
+    &self.location
+  }
+
+  fn tree_inspect(&self) -> String {
+    <%= error.name %>::tree_inspect(self)
+  }
+}
+
+<%- end -%>

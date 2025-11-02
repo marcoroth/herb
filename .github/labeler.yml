@@ -22,6 +22,7 @@ rust:
   - changed-files:
     - any-glob-to-any-file:
       - '**/*.rs'
+      - '**/*.rs.erb'
       - '**/Cargo.toml'
       - '**/Cargo.lock'
 

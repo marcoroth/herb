@@ -1,0 +1,57 @@
+name: Rust
+
+on:
+  push: [main]
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: bundle install
+        run: bundle install
+
+      - name: Render Templates
+        run: bundle exec rake templates
+
+      - name: Check Rust formatting
+        run: cargo fmt --check
+        working-directory: rust
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features
+        working-directory: rust
+
+      - name: Build Rust
+        run: cargo build --verbose
+        working-directory: rust
+
+      - name: Run Rust tests
+        run: cargo test --verbose -- --test-threads=1
+        working-directory: rust
