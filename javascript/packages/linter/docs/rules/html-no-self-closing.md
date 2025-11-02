@@ -22,6 +22,21 @@ Self-closing syntax is an XHTML artifact. In HTML:
 Removing the slash ensures HTML5-compliant, cleaner markup and avoids mixing
 XHTML and HTML styles.
 
+## Exception for Email Templates
+
+::: info
+This rule is automatically disabled for ActionMailer view files (paths matching `**/views/**/*_mailer/**/*`) because older email clients, particularly legacy versions of Microsoft Outlook, require self-closing syntax for proper rendering of void elements like `<br />`.
+:::
+
+If you want to enable this rule for email templates as well, you can override the default exclusion in your `.herb.yml` configuration:
+
+```yaml [.herb.yml]
+linter:
+  rules:
+    html-no-self-closing:
+      exclude: []  # Override to enable for all files including ActionMailer views
+```
+
 ## Examples
 
 ### ✅ Good
