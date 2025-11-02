@@ -53,13 +53,13 @@ jobs:
         working-directory: rust
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo +stable clippy --all-targets --all-features
         working-directory: rust
 
       - name: Build Rust
-        run: cargo build --verbose
+        run: cargo +stable build --verbose
         working-directory: rust
 
       - name: Run Rust tests
-        run: cargo test --verbose -- --test-threads=1
+        run: cargo +stable test --verbose -- --test-threads=1
         working-directory: rust
