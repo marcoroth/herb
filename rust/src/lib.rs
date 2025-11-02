@@ -34,7 +34,7 @@ mod tests {
 
     let text_node = HTMLTextNode {
       node_type: "HTMLTextNode".to_string(),
-      location: loc.clone(),
+      location: loc,
       errors: vec![],
       content: "Hello".to_string(),
     };

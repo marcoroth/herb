@@ -47,7 +47,7 @@ fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
 
     if !is_last {
       output.push_str(prefix);
-      output.push_str(&next_prefix);
+      output.push_str(next_prefix);
       output.push('\n');
     }
   }
@@ -244,7 +244,7 @@ impl Node for <%= node.name %> {
             output.push_str(prefix);
             output.push_str("    ");
             output.push_str(line);
-            output.push_str("\n");
+            output.push('\n');
           }
         }
       }

@@ -20,6 +20,12 @@ impl From<CLocation> for Location {
   }
 }
 
+/// Converts a C token pointer to a Rust Token.
+///
+/// # Safety
+///
+/// The caller must ensure that `c_token` is a valid, non-null pointer to a `CToken`
+/// and that the token's string fields (`value`, `token_type`) point to valid C strings.
 pub unsafe fn token_from_c(c_token: *const CToken) -> Token {
   let token = &*c_token;
 
