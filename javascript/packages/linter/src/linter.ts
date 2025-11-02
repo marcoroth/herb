@@ -1,5 +1,6 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
+import { minimatch } from "minimatch"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -145,6 +146,18 @@ export class Linter {
     if (this.config && context?.fileName) {
       if (!this.config.isRuleEnabledForPath(rule.name, context.fileName)) {
         return []
+      }
+    }
+
+    if (context?.fileName && !this.config?.linter?.rules?.[rule.name]?.exclude) {
+      const defaultExclude = rule.defaultConfig.exclude
+
+      if (defaultExclude && defaultExclude.length > 0) {
+        const isExcluded = defaultExclude.some((pattern: string) => minimatch(context.fileName!, pattern))
+
+        if (isExcluded) {
+          return []
+        }
       }
     }
 

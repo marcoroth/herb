@@ -45,7 +45,8 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      exclude: ["**/views/**/*_mailer/**/*"]
     }
   }
 
