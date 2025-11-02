@@ -42,13 +42,11 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
     let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
       .ok_or_else(|| "Failed to convert AST".to_string())?;
 
+    let result = ParseResult::new(document_node, source.to_string(), Vec::new());
+
     crate::ffi::ast_node_free(ast);
 
-    Ok(ParseResult::new(
-      document_node,
-      source.to_string(),
-      Vec::new(),
-    ))
+    Ok(result)
   }
 }
 
