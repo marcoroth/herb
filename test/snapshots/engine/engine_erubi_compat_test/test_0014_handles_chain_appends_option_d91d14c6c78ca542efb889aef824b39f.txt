@@ -2,8 +2,7 @@
 source: "Engine::EngineErubiCompatTest#test_0014_handles chain_appends option"
 input: "{source: \"<%= a %>\\n<%= b %>\\n\", options: {chain_appends: true}}"
 ---
-_buf = ::String.new;
-; _buf << (a).to_s << '
+_buf = ::String.new;; _buf << (a).to_s << '
 '.freeze << (b).to_s << '
 '.freeze
 ; _buf.to_s

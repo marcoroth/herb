@@ -2,6 +2,6 @@
 source: "Engine::ERBCommentsTest#test_0005_inline ruby comment with spaces"
 input: "{source: \"<%  # Comment %> <% code = \\\"test\\\" %><%= code %>\", options: {}}"
 ---
-_buf = ::String.new;
- _buf << ' '.freeze; code = "test"; _buf << (code).to_s;
+_buf = ::String.new;  code = "test" 
+ _buf << (code).to_s;
 _buf.to_s

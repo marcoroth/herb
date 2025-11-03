@@ -2,7 +2,6 @@
 source: "Engine::ERBCommentsTest#test_0002_inline ruby comment with newline"
 input: "{source: \"<% if true %><% # Comment here %>\\n<% end %>\", options: {}}"
 ---
-_buf = ::String.new;
- if true; _buf << '
-'.freeze; end;
+_buf = ::String.new; if true 
+ end 
 _buf.to_s

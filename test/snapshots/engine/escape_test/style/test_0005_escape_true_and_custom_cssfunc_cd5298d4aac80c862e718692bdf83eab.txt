@@ -2,6 +2,5 @@
 source: "Engine::EscapeTest::style#test_0005_escape: true and custom cssfunc"
 input: "{source: \"<style><%= value %></style>\", options: {escape: true, cssfunc: \"CustomEscape.css\"}}"
 ---
-__herb = ::Herb::Engine; _buf = ::String.new;
- _buf << '<style>'.freeze; _buf << CustomEscape.css((value)); _buf << '</style>'.freeze;
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<style>'.freeze; _buf << CustomEscape.css((value)); _buf << '</style>'.freeze;
 _buf.to_s

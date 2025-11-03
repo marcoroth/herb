@@ -2,15 +2,14 @@
 source: "Engine::BlockCommentsTest#test_0003_ruby block comments with code before and after"
 input: "{source: \"<% x = 1 %>\\n<%\\n=begin\\nMulti-line comment\\nspanning multiple lines\\n=end\\n%>\\n<% y = 2 %>\\n<div><%= x + y %></div>\\n\", options: {}}"
 ---
-_buf = ::String.new;
- x = 1; _buf << '
-'.freeze;
+_buf = ::String.new; x = 1 
+
 =begin
 Multi-line comment
 spanning multiple lines
-=end
- _buf << '
-'.freeze; y = 2; _buf << '
-<div>'.freeze; _buf << (x + y).to_s; _buf << '</div>
+=end 
+
+ y = 2 
+ _buf << '<div>'.freeze; _buf << (x + y).to_s; _buf << '</div>
 '.freeze;
 _buf.to_s

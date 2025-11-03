@@ -274,9 +274,9 @@ module Engine
 
         output = captured_output
 
-        assert_includes output, "'<ul>\n  '.freeze"
-        assert_includes output, "'\n    <li>'.freeze"
-        assert_includes output, "'\n</ul>\n'.freeze"
+        assert_includes output, "'<ul>\n'.freeze"
+        assert_includes output, "'    <li>'.freeze"
+        assert_includes output, "'</ul>\n'.freeze"
       end
     end
 

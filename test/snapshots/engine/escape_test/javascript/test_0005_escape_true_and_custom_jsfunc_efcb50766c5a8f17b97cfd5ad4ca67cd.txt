@@ -2,6 +2,5 @@
 source: "Engine::EscapeTest::javascript#test_0005_escape: true and custom jsfunc"
 input: "{source: \"<script><%= value %></script>\", options: {escape: true, jsfunc: \"CustomEscape.js\"}}"
 ---
-__herb = ::Herb::Engine; _buf = ::String.new;
- _buf << '<script>'.freeze; _buf << CustomEscape.js((value)); _buf << '</script>'.freeze;
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << '<script>'.freeze; _buf << CustomEscape.js((value)); _buf << '</script>'.freeze;
 _buf.to_s

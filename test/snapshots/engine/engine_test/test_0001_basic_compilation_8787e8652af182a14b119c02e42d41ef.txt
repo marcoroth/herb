@@ -2,6 +2,5 @@
 source: "Engine::EngineTest#test_0001_basic compilation"
 input: "{source: \"<div>Hello <%= name %>!</div>\", options: {}}"
 ---
-_buf = ::String.new;
- _buf << '<div>Hello '.freeze; _buf << (name).to_s; _buf << '!</div>'.freeze;
+_buf = ::String.new; _buf << '<div>Hello '.freeze; _buf << (name).to_s; _buf << '!</div>'.freeze;
 _buf.to_s

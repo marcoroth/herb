@@ -2,6 +2,5 @@
 source: "Engine::ValidationModesTest#test_0004_:none mode skips all validation"
 input: "{source: \"<div data-<%= @name %>=\\\"value\\\">Content</div>\", options: {validation_mode: :none}}"
 ---
-_buf = ::String.new;
- _buf << '<div data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze;
+_buf = ::String.new; _buf << '<div data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze;
 _buf.to_s

@@ -2,4 +2,4 @@
 source: "Engine::ERBCommentsTest#test_0012_evaluation: inline ruby comment multiline"
 input: "{source: \"<% # Comment\\nmore %> <% code = \\\"test\\\" %><%= code %>\", locals: {more: \"ignored\"}, options: {}}"
 ---
- test
+test

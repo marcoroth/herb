@@ -2,6 +2,5 @@
 source: "Engine::EngineBlockTest#test_0006_context-aware escaping for attributes"
 input: "{source: \"<div class=\\\"<%= css_class %>\\\">Content</div>\", options: {}}"
 ---
-_buf = ::String.new;
- _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '">Content</div>'.freeze;
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '">Content</div>'.freeze;
 _buf.to_s

@@ -3,14 +3,13 @@ source: "Engine::ExamplesCompilationTest#test_0004_block comment compilation"
 input: "{source: \"<%\\n=begin %>\\n  This, while unusual, is a legal form of commenting.\\n<%\\n=end %>\\n\\n<div>Content</div>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new;
+=begin 
 
-=begin
- _buf << '
-  This, while unusual, is a legal form of commenting.
+ _buf << '  This, while unusual, is a legal form of commenting.
 '.freeze;
-=end
- _buf << '
+=end 
 
+ _buf << '
 <div>Content</div>
 '.freeze;
 _buf.to_s

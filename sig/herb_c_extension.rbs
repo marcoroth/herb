@@ -2,6 +2,6 @@
 # This file is manually maintained - not generated
 
 module Herb
-  def self.parse: (String input) -> ParseResult
+  def self.parse: (String input, ?track_whitespace: bool) -> ParseResult
   def self.lex: (String input) -> LexResult
 end
