@@ -78,4 +78,36 @@ describe("ERBCommentSyntax", () => {
       <DIV></DIV><%  #  herb:disable html-tag-name-lowercase %>
     `)
   })
+
+  test("when ERB escaped output tag is used with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<%== #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%== # escaped output comment %>
+    `)
+  })
+
+  test("when ERB tag has multiple spaces before #", () => {
+    expectError("Use `<%#` instead of `<%= #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%=   # comment with multiple spaces %>
+    `)
+  })
+
+  test("when ERB trim tag is used with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<%- #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%-  # trim tag comment %>
+    `)
+  })
+
+  test("when ERB tag has many spaces before #", () => {
+    expectError("Use `<%#` instead of `<% #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%    # comment with many spaces %>
+    `)
+  })
 })
