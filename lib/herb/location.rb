@@ -3,6 +3,8 @@
 
 module Herb
   class Location
+    using Colors
+
     attr_reader :start #: Position
     attr_reader :end #: Position
 
@@ -40,12 +42,12 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      %((location: #{start.tree_inspect}-#{self.end.tree_inspect}))
+      "#{start.tree_inspect}-#{self.end.tree_inspect}"
     end
 
     #: () -> String
     def inspect
-      %(#<Herb::Location #{tree_inspect}>)
+      %(#<Herb::Location (location: #{tree_inspect})>)
     end
   end
 end

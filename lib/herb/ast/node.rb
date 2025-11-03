@@ -4,6 +4,8 @@
 module Herb
   module AST
     class Node
+      using Colors
+
       attr_reader :type #: String
       attr_reader :location #: Location
       attr_reader :errors #: Array[Herb::Errors::Error]
