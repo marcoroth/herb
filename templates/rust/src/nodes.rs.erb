@@ -345,7 +345,7 @@ impl Node for <%= node.name %> {
       "<%= node.name %>".yellow().bold(),
       format!("(location: {})", self.location).dimmed()
     ));
-    output.push_str(&format_errors_field(&self.errors, <%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>));
+    output.push_str(&format_errors_field(&self.errors, &<%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>.white().to_string()));
     <%- if node.fields.any? -%>
     <%- node.fields.each_with_index do |field, index| -%>
     <%- is_last = index == node.fields.length - 1 -%>
@@ -358,9 +358,9 @@ impl Node for <%= node.name %> {
     <%- when Herb::Template::BooleanField -%>
     output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
     <%- when Herb::Template::ArrayField -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>")));
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
     <%- when Herb::Template::NodeField -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>", <%= !is_last %>)));
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
     <%- end -%>
     <%- end -%>
     <%- else -%>
