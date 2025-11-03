@@ -94,7 +94,7 @@ elsif render_result
 else
   puts "✗ Comparisons failed"
   puts ""
-  puts "  • Rendered output: #{render_result ? '✓ Match' : '✗ Differ'}"
-  puts "  • Compiled source: #{compile_result ? '✓ Match' : '✗ Differ'}"
+  puts "  • Rendered output: #{render_result ? "✓ Match" : "✗ Differ"}"
+  puts "  • Compiled source: #{compile_result ? "✓ Match" : "✗ Differ"}"
   exit(1)
 end

@@ -12,6 +12,12 @@ Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
 
+Style/MixinUsage:
+  Exclude:
+    - bin/compare
+    - bin/compare-render
+    - bin/compare-compile
+
 Style/ClassAndModuleChildren:
   Enabled: false
 
@@ -94,6 +100,7 @@ Metrics/ModuleLength:
   Exclude:
     - test/**/*.rb
     - templates/**/*.rb
+    - bin/lib/compare_helpers.rb
 
 Metrics/BlockLength:
   Max: 30
@@ -160,6 +167,8 @@ Security/Eval:
     - lib/herb/cli.rb
     - test/**/*.rb
     - bin/erubi-render
+    - bin/compare-render
+    - bin/compare-render
 
 Security/MarshalLoad:
   Exclude:

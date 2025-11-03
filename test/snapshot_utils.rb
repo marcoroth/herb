@@ -195,10 +195,11 @@ module SnapshotUtils
 
   def should_compare_with_erubi?
     return false if class_name.include?("DebugMode")
+
     !ENV["COMPARE_WITH_ERUBI"].nil?
   end
 
-  def compare_with_erubi_compiled(source, herb_src, options, enforce_equality = false)
+  def compare_with_erubi_compiled(source, herb_src, options, enforce_equality: false)
     require_erubi_silently
 
     begin
@@ -208,15 +209,15 @@ module SnapshotUtils
       diff_output = diff_compiled_sources(erubi_src, herb_src)
       return unless diff_output
 
-      message = "\n" + "=" * 80 + "\n"
+      message = "\n#{"=" * 80}\n"
       message += "WARNING: Herb compiled output differs from Erubi\n"
-      message += "=" * 80 + "\n"
+      message += "#{"=" * 80}\n"
       message += "Test: #{class_name} #{name}\n"
       message += "\nTemplate:\n#{source.inspect}\n"
       message += "\n"
       message += diff_output
       message += "\n"
-      message += "=" * 80 + "\n"
+      message += "#{"=" * 80}\n"
 
       if ENV["FAIL_ON_ERUBI_MISMATCH"] || enforce_equality
         flunk(message)
@@ -224,11 +225,11 @@ module SnapshotUtils
         puts message
       end
     rescue StandardError
-      return
+      nil
     end
   end
 
-  def compare_with_erubi_evaluated(source, herb_result, locals, options, enforce_equality = false)
+  def compare_with_erubi_evaluated(source, herb_result, locals, options, enforce_equality: false)
     require_erubi_silently
 
     begin
@@ -244,16 +245,16 @@ module SnapshotUtils
       diff_output = diff_rendered_outputs(erubi_result, herb_result)
       return unless diff_output
 
-      message = "\n" + "=" * 80 + "\n"
+      message = "\n#{"=" * 80}\n"
       message += "WARNING: Herb evaluated output differs from Erubi\n"
-      message += "=" * 80 + "\n"
+      message += "#{"=" * 80}\n"
       message += "Test: #{class_name} #{name}\n"
       message += "\nTemplate:\n#{source.inspect}\n"
       message += "\nLocals: #{locals.inspect}\n"
       message += "\n"
       message += diff_output
       message += "\n"
-      message += "=" * 80 + "\n"
+      message += "#{"=" * 80}\n"
 
       if ENV["FAIL_ON_ERUBI_MISMATCH"] || enforce_equality
         flunk(message)
@@ -261,7 +262,7 @@ module SnapshotUtils
         puts message
       end
     rescue StandardError
-      return
+      nil
     end
   end
 

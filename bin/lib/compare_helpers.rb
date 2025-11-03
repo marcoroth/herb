@@ -6,9 +6,9 @@ module CompareHelpers
     left_pad = padding / 2
     right_pad = padding - left_pad
 
-    puts "╔#{'═' * (width - 2)}╗"
-    puts "║#{' ' * left_pad}#{title}#{' ' * right_pad}║"
-    puts "╚#{'═' * (width - 2)}╝"
+    puts "╔#{"═" * (width - 2)}╗"
+    puts "║#{" " * left_pad}#{title}#{" " * right_pad}║"
+    puts "╚#{"═" * (width - 2)}╝"
   end
 
   def box_with_content(title, content, width = 80)
@@ -16,11 +16,11 @@ module CompareHelpers
     left_pad = padding / 2
     right_pad = padding - left_pad
 
-    puts "╔#{'═' * (width - 2)}╗"
-    puts "║#{' ' * left_pad}#{title}#{' ' * right_pad}║"
-    puts "╠#{'═' * (width - 2)}╣"
+    puts "╔#{"═" * (width - 2)}╗"
+    puts "║#{" " * left_pad}#{title}#{" " * right_pad}║"
+    puts "╠#{"═" * (width - 2)}╣"
     puts content
-    puts "╚#{'═' * (width - 2)}╝"
+    puts "╚#{"═" * (width - 2)}╝"
   end
 
   def section_header(title, width = 80)
@@ -94,7 +94,7 @@ module CompareHelpers
 
     output = ""
     output += "String Comparison (including formatting differences):\n"
-    output += "─" * 80 + "\n"
+    output += "#{"─" * 80}\n"
 
     string_diff = Difftastic::Differ.new(
       color: :always,
@@ -107,7 +107,7 @@ module CompareHelpers
     if !string_diff.strip.empty? && !string_diff.include?("No changes.")
       output += "\n\n"
       output += "Ruby AST Comparison (semantic differences only):\n"
-      output += "─" * 80 + "\n"
+      output += "#{"─" * 80}\n"
 
       begin
         ast_diff = Difftastic::Differ.new(
@@ -116,11 +116,11 @@ module CompareHelpers
           right_label: "Herb::Engine compiled"
         ).diff_ruby(erubi_src, herb_src)
 
-        if ast_diff.strip.empty? || ast_diff.include?("No changes.")
-          output += "✓ ASTs are identical (only formatting differs)"
-        else
-          output += ast_diff
-        end
+        output += if ast_diff.strip.empty? || ast_diff.include?("No changes.")
+                    "✓ ASTs are identical (only formatting differs)"
+                  else
+                    ast_diff
+                  end
       rescue StandardError => e
         output += "Could not parse as Ruby: #{e.message}"
       end
@@ -134,7 +134,7 @@ module CompareHelpers
 
     output = ""
     output += "String Comparison:\n"
-    output += "─" * 80 + "\n"
+    output += "#{"─" * 80}\n"
 
     string_diff = Difftastic::Differ.new(
       color: :always,
@@ -147,7 +147,7 @@ module CompareHelpers
     if !string_diff.strip.empty? && !string_diff.include?("No changes.")
       output += "\n\n"
       output += "HTML Semantic Comparison:\n"
-      output += "─" * 80 + "\n"
+      output += "#{"─" * 80}\n"
 
       begin
         html_diff = Difftastic::Differ.new(
@@ -156,11 +156,11 @@ module CompareHelpers
           right_label: "Herb::Engine output"
         ).diff_html(erubi_output, herb_output)
 
-        if html_diff.strip.empty? || html_diff.include?("No changes.")
-          output += "✓ HTML semantics are identical (only formatting/whitespace differs)"
-        else
-          output += html_diff
-        end
+        output += if html_diff.strip.empty? || html_diff.include?("No changes.")
+                    "✓ HTML semantics are identical (only formatting/whitespace differs)"
+                  else
+                    html_diff
+                  end
       rescue StandardError => e
         output += "Could not parse as HTML: #{e.message}"
       end
