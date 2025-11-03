@@ -6,9 +6,9 @@ fn test_unclosed_element_error() {
   let result = parse(source).unwrap();
 
   let tree_inspect = result.tree_inspect();
-  assert!(tree_inspect.contains("UNCLOSED_ELEMENT_ERROR"));
+  assert!(tree_inspect.contains("UnclosedElementError"));
   assert!(tree_inspect.contains("Tag `<div>` opened at (1:1) was never closed"));
-  assert!(tree_inspect.contains("MISSING_CLOSING_TAG_ERROR"));
+  assert!(tree_inspect.contains("MissingClosingTagError"));
   assert!(tree_inspect.contains("Opening tag `<div>` at (1:1) doesn't have a matching closing tag"));
 }
 
@@ -18,7 +18,7 @@ fn test_tag_names_mismatch_error() {
   let result = parse(source).unwrap();
 
   let tree_inspect = result.tree_inspect();
-  assert!(tree_inspect.contains("TAG_NAMES_MISMATCH_ERROR"));
+  assert!(tree_inspect.contains("TagNamesMismatchError"));
   assert!(tree_inspect.contains("Opening tag `<div>` at (1:1) closed with `</span>`"));
 }
 

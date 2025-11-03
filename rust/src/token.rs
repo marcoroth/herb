@@ -1,5 +1,6 @@
 use crate::location::Location;
 use crate::range::Range;
+use colored::*;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -48,7 +49,11 @@ impl Token {
   }
 
   pub fn tree_inspect(&self) -> String {
-    format!("\"{}\" (location: {})", self.escaped_value(), self.location)
+    format!(
+      "{} {}",
+      format!("\"{}\"", self.escaped_value()).green(),
+      format!("(location: {})", self.location).dimmed()
+    )
   }
 }
 

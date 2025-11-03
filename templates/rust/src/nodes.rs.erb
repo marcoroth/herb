@@ -1,5 +1,6 @@
 use crate::errors::{AnyError, ErrorNode};
 use crate::{Location, Token};
+use colored::*;
 
 fn escape_string(s: &str) -> String {
   s.replace('\\', "\\\\")
@@ -10,15 +11,15 @@ fn escape_string(s: &str) -> String {
 }
 
 fn format_string_value(value: &str) -> String {
-  format!("\"{}\"", escape_string(value))
+  format!("\"{}\"", escape_string(value)).green().to_string()
 }
 
 fn format_token_value(token: &Option<Token>) -> String {
-  token.as_ref().map(|t| t.tree_inspect()).unwrap_or_else(|| "∅".to_string())
+  token.as_ref().map(|t| t.tree_inspect()).unwrap_or_else(|| "∅".magenta().to_string())
 }
 
 fn format_bool_value(value: bool) -> String {
-  value.to_string()
+  value.to_string().magenta().bold().to_string()
 }
 
 fn format_node_value<T: Node + ?Sized>(node: &Option<Box<T>>, prefix: &str, add_spacing: bool) -> String {
@@ -31,7 +32,7 @@ fn format_node_value<T: Node + ?Sized>(node: &Option<Box<T>>, prefix: &str, add_
     }
     output
   } else {
-    "∅\n".to_string()
+    format!("{}\n", "∅".magenta())
   }
 }
 
@@ -49,9 +50,10 @@ fn inspect_errors(errors: &[AnyError], prefix: &str) -> String {
   }
 
   let mut output = String::new();
-  output.push_str(&format!("├── errors: ({} error{})\n",
-    errors.len(),
-    if errors.len() == 1 { "" } else { "s" }
+  output.push_str(&format!("{} {}: {}\n",
+    "├──".white(),
+    "errors".red().bold(),
+    format!("({} error{})", errors.len(), if errors.len() == 1 { "" } else { "s" }).dimmed()
   ));
 
   for (i, error) in errors.iter().enumerate() {
@@ -61,10 +63,10 @@ fn inspect_errors(errors: &[AnyError], prefix: &str) -> String {
 
     let tree = error.tree_inspect();
     let tree = tree.trim_end_matches('\n');
-    output.push_str(&format!("{}{}{}\n", prefix, symbol, tree.replace('\n', &format!("\n{}{}", prefix, next_prefix))));
+    output.push_str(&format!("{}{}{}\n", prefix, symbol.white(), tree.replace('\n', &format!("\n{}{}", prefix, next_prefix))));
 
     if !is_last {
-      output.push_str(&format!("{}│   \n", prefix));
+      output.push_str(&format!("{}{}\n", prefix, "│   ".white()));
     }
   }
 
@@ -74,11 +76,11 @@ fn inspect_errors(errors: &[AnyError], prefix: &str) -> String {
 
 fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
   if array.is_empty() {
-    return "[]\n".to_string();
+    return format!("{}\n", "[]".dimmed());
   }
 
   let mut output = String::new();
-  output.push_str(&format!("({} item{})\n", array.len(), if array.len() == 1 { "" } else { "s" }));
+  output.push_str(&format!("{}\n", format!("({} item{})", array.len(), if array.len() == 1 { "" } else { "s" }).dimmed()));
 
   for (i, item) in array.iter().enumerate() {
     let is_last = i == array.len() - 1;
@@ -89,13 +91,13 @@ fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
     let tree = tree.trim_end_matches('\n');
 
     output.push_str(prefix);
-    output.push_str(symbol);
+    output.push_str(&symbol.white().to_string());
     output.push_str(&tree.replace('\n', &format!("\n{}{}", prefix, next_prefix)));
     output.push('\n');
 
     if !is_last {
       output.push_str(prefix);
-      output.push_str(next_prefix);
+      output.push_str(&next_prefix.white().to_string());
       output.push('\n');
     }
   }
@@ -109,12 +111,12 @@ fn inspect_node_field<T: Node + ?Sized>(node: &T, prefix: &str) -> String {
 
   let lines: Vec<&str> = tree.split('\n').collect();
   if lines.is_empty() {
-    return "∅\n".to_string();
+    return format!("{}\n", "∅".magenta());
   }
 
   let mut result = String::new();
   result.push_str(prefix);
-  result.push_str("└── ");
+  result.push_str(&"└── ".white().to_string());
   result.push_str(lines[0]);
   result.push('\n');
 
@@ -336,7 +338,11 @@ impl Node for <%= node.name %> {
   fn tree_inspect(&self) -> String {
     let mut output = String::new();
 
-    output.push_str(&format!("@ <%= node.name %> (location: {})\n", self.location));
+    output.push_str(&format!("{} {} {}\n",
+      "@".white(),
+      "<%= node.name %>".yellow().bold(),
+      format!("(location: {})", self.location).dimmed()
+    ));
     output.push_str(&format_errors_field(&self.errors, <%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>));
     <%- if node.fields.any? -%>
     <%- node.fields.each_with_index do |field, index| -%>
@@ -344,19 +350,19 @@ impl Node for <%= node.name %> {
     <%- symbol = is_last ? "└── " : "├── " -%>
     <%- case field -%>
     <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
-    output.push_str(&format!("<%= symbol %><%= field.name %>: {}\n", format_string_value(&self.<%= field.name %>)));
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_string_value(&self.<%= field.name %>)));
     <%- when Herb::Template::TokenField -%>
-    output.push_str(&format!("<%= symbol %><%= field.name %>: {}\n", format_token_value(&self.<%= field.name %>)));
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_token_value(&self.<%= field.name %>)));
     <%- when Herb::Template::BooleanField -%>
-    output.push_str(&format!("<%= symbol %><%= field.name %>: {}\n", format_bool_value(self.<%= field.name %>)));
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
     <%- when Herb::Template::ArrayField -%>
-    output.push_str(&format!("<%= symbol %><%= field.name %>: {}", format_array_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>")));
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>")));
     <%- when Herb::Template::NodeField -%>
-    output.push_str(&format!("<%= symbol %><%= field.name %>: {}", format_node_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>", <%= !is_last %>)));
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, "<%= is_last ? "    " : "│   " %>", <%= !is_last %>)));
     <%- end -%>
     <%- end -%>
     <%- else -%>
-    output.push_str("└── (no fields)\n");
+    output.push_str(&format!("{} {}\n", "└──".white(), "(no fields)".dimmed()));
     <%- end -%>
 
     output

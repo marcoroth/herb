@@ -21,6 +21,7 @@ path = "src/main.rs"
 
 [dependencies]
 libc = "0.2"
+colored = "2"
 
 [dev-dependencies]
 insta = "1.40"
