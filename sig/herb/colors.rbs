@@ -1,0 +1,25 @@
+# Generated from lib/herb/colors.rb with RBS::Inline
+
+module Herb
+  module Colors
+    def self?.enabled?: () -> untyped
+
+    def self?.white: (untyped string) -> untyped
+
+    def self?.yellow: (untyped string) -> untyped
+
+    def self?.green: (untyped string) -> untyped
+
+    def self?.red: (untyped string) -> untyped
+
+    def self?.magenta: (untyped string) -> untyped
+
+    def self?.cyan: (untyped string) -> untyped
+
+    def self?.bright_magenta: (untyped string) -> untyped
+
+    def self?.dimmed: (untyped string) -> untyped
+
+    def self?.bold: (untyped string) -> untyped
+  end
+end

@@ -3,7 +3,9 @@
 
 module Herb
   module Colors
-    def self.enabled?
+    module_function
+
+    def enabled?
       return false if ENV["NO_COLOR"]
       return false if defined?(IRB)
       return false if defined?(Minitest)
@@ -11,60 +13,58 @@ module Herb
       $stdout.tty?
     end
 
-    refine String do
-      def white
-        return self unless Herb::Colors.enabled?
+    def white(string)
+      return string unless enabled?
 
-        "\e[37m#{self}\e[0m"
-      end
+      "\e[37m#{string}\e[0m"
+    end
 
-      def yellow
-        return self unless Herb::Colors.enabled?
+    def yellow(string)
+      return string unless enabled?
 
-        "\e[33m#{self}\e[0m"
-      end
+      "\e[33m#{string}\e[0m"
+    end
 
-      def green
-        return self unless Herb::Colors.enabled?
+    def green(string)
+      return string unless enabled?
 
-        "\e[32m#{self}\e[0m"
-      end
+      "\e[32m#{string}\e[0m"
+    end
 
-      def red
-        return self unless Herb::Colors.enabled?
+    def red(string)
+      return string unless enabled?
 
-        "\e[31m#{self}\e[0m"
-      end
+      "\e[31m#{string}\e[0m"
+    end
 
-      def magenta
-        return self unless Herb::Colors.enabled?
+    def magenta(string)
+      return string unless enabled?
 
-        "\e[35m#{self}\e[0m"
-      end
+      "\e[35m#{string}\e[0m"
+    end
 
-      def cyan
-        return self unless Herb::Colors.enabled?
+    def cyan(string)
+      return string unless enabled?
 
-        "\e[36m#{self}\e[0m"
-      end
+      "\e[36m#{string}\e[0m"
+    end
 
-      def bright_magenta
-        return self unless Herb::Colors.enabled?
+    def bright_magenta(string)
+      return string unless enabled?
 
-        "\e[95m#{self}\e[0m"
-      end
+      "\e[95m#{string}\e[0m"
+    end
 
-      def dimmed
-        return self unless Herb::Colors.enabled?
+    def dimmed(string)
+      return string unless enabled?
 
-        "\e[2m#{self}\e[0m"
-      end
+      "\e[2m#{string}\e[0m"
+    end
 
-      def bold
-        return self unless Herb::Colors.enabled?
+    def bold(string)
+      return string unless enabled?
 
-        "\e[1m#{self}\e[0m"
-      end
+      "\e[1m#{string}\e[0m"
     end
   end
 end
