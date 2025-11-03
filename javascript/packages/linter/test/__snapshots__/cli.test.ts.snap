@@ -999,7 +999,7 @@ bad-file.html.erb:1:16
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 1`] = `
-"[error] Use \`<%#\` instead of \`<% #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`). (erb-comment-syntax)
+"[error] Use \`<%#\` instead of \`<% #\` for \`herb:disable\` directives. Herb directives only work with ERB comment syntax (\`<%# ... %>\`). [Correctable] (erb-comment-syntax)
 
 disabled-1.html.erb:12:19
 
@@ -1122,7 +1122,7 @@ disabled-1.html.erb:14:19
  Summary:
   Checked      1 file
   Offenses     2 errors | 6 warnings | 8 ignored (8 offenses across 1 file)
-  Fixable      8 offenses"
+  Fixable      8 offenses | 1 autocorrectable using \`--fix\`"
 `;
 
 exports[`CLI Output Formatting > herb:disable rules 2`] = `
