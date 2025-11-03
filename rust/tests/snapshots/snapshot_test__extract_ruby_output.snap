@@ -1,0 +1,15 @@
+---
+source: tests/snapshot_test.rs
+expression: result
+---
+                  
+
+   if valid?   
+                                     
+        "Valid"   
+       
+   else   
+                                    
+           
+       
+   end
