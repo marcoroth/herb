@@ -5,19 +5,19 @@ require_relative "../test_helper"
 module Extractor
   class ExtractRubySemicolonsTest < Minitest::Spec
     test "basic silent" do
-      ruby = Herb.extract_ruby_with_semicolons("<h1><% RUBY_VERSION %></h1>")
+      ruby = Herb.extract_ruby("<h1><% RUBY_VERSION %></h1>", with_semicolon: true)
 
       assert_equal "       RUBY_VERSION ;      ", ruby
     end
 
     test "basic loud" do
-      ruby = Herb.extract_ruby_with_semicolons("<h1><%= RUBY_VERSION %></h1>")
+      ruby = Herb.extract_ruby("<h1><%= RUBY_VERSION %></h1>", with_semicolon: true)
 
       assert_equal "        RUBY_VERSION ;      ", ruby
     end
 
     test "with newlines" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <h1>
           <% RUBY_VERSION %>
         </h1>
@@ -27,7 +27,7 @@ module Extractor
     end
 
     test "nested" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <% array = [1, 2, 3] %>
 
         <ul>
@@ -43,7 +43,7 @@ module Extractor
     end
 
     test "erb comment" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <%# comment ' %>
       HTML
 
@@ -53,7 +53,7 @@ module Extractor
     end
 
     test "erb comment with ruby keyword" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <%# end %>
       HTML
 
@@ -63,7 +63,7 @@ module Extractor
     end
 
     test "erb comment broken up over multiple lines" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <%#
           end
         %>
@@ -75,7 +75,7 @@ module Extractor
     end
 
     test "multi-line erb comment" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <%#
           end
           end
@@ -90,7 +90,7 @@ module Extractor
     end
 
     test "erb if/end and comment on same line" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <% if %><%# comment %><% end %>
       HTML
 
@@ -100,7 +100,7 @@ module Extractor
     end
 
     xtest "erb if/end and Ruby comment on same line" do
-      actual = Herb.extract_ruby_with_semicolons(<<~HTML)
+      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
         <% if %><% # comment %><% end %>
       HTML
 

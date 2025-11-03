@@ -26,17 +26,13 @@ module Herb
     )
   end
 
-  def self.extract_ruby(source)
+  def self.extract_ruby(source, with_semicolon: false)
     LibHerb::Buffer.with do |output|
-      LibHerb.herb_extract_ruby_to_buffer(source, output.pointer)
-
-      output.read
-    end
-  end
-
-  def self.extract_ruby_with_semicolons(source)
-    LibHerb::Buffer.with do |output|
-      LibHerb.herb_extract_ruby_to_buffer_with_semicolons(source, output.pointer)
+      if with_semicolon
+        LibHerb.herb_extract_ruby_to_buffer_with_semicolons(source, output.pointer)
+      else
+        LibHerb.herb_extract_ruby_to_buffer(source, output.pointer)
+      end
 
       output.read
     end
