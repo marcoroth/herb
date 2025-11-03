@@ -59,7 +59,8 @@ fn inspect_errors(errors: &[AnyError], prefix: &str) -> String {
   for (i, error) in errors.iter().enumerate() {
     let is_last = i == errors.len() - 1;
     let symbol = if is_last { "└── " } else { "├── " };
-    let next_prefix = if is_last { "    " } else { "│   " };
+    let next_prefix_str = if is_last { "    " } else { "│   " };
+    let next_prefix = next_prefix_str.white().to_string();
 
     let tree = error.tree_inspect();
     let tree = tree.trim_end_matches('\n');
@@ -85,7 +86,8 @@ fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
   for (i, item) in array.iter().enumerate() {
     let is_last = i == array.len() - 1;
     let symbol = if is_last { "└── " } else { "├── " };
-    let next_prefix = if is_last { "    " } else { "│   " };
+    let next_prefix_str = if is_last { "    " } else { "│   " };
+    let next_prefix = next_prefix_str.white().to_string();
 
     let tree = item.tree_inspect();
     let tree = tree.trim_end_matches('\n');
@@ -97,7 +99,7 @@ fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
 
     if !is_last {
       output.push_str(prefix);
-      output.push_str(&next_prefix.white().to_string());
+      output.push_str(&next_prefix);
       output.push('\n');
     }
   }
