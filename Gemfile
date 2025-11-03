@@ -7,6 +7,8 @@ gemspec
 gem "prism", github: "ruby/prism", tag: "v1.6.0"
 
 gem "actionview", "~> 8.0"
+gem "difftastic", "~> 0.7"
+gem "erubi"
 gem "lz_string"
 gem "maxitest"
 gem "minitest-difftastic", "~> 0.2"

@@ -183,6 +183,8 @@ PLATFORMS
 
 DEPENDENCIES
   actionview (~> 8.0)
+  difftastic (~> 0.7)
+  erubi
   herb!
   lz_string
   maxitest

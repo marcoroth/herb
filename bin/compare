@@ -1,0 +1,100 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "pathname"
+require "optparse"
+
+require_relative "lib/compare_helpers"
+
+include CompareHelpers
+
+def usage
+  puts "Usage: #{$PROGRAM_NAME} [options] <file>"
+  puts ""
+  puts "Compares an ERB template with both Herb and Erubi (compile and render)."
+  puts ""
+  puts "Options:"
+  puts "  --no-escape              Disable HTML escaping"
+  puts "  --escape                 Enable HTML escaping (default: false)"
+  puts "  -h, --help               Show this help message"
+  exit(1)
+end
+
+options = {}
+options[:escape] = false
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options] <file>"
+
+  opts.on("--no-escape", "Disable HTML escaping") do
+    options[:escape] = false
+  end
+
+  opts.on("--escape", "Enable HTML escaping") do
+    options[:escape] = true
+  end
+
+  opts.on("-h", "--help", "Show this help message") do
+    usage
+  end
+end.parse!
+
+file_path = ARGV[0]
+
+unless file_path
+  puts "Error: No file specified"
+  usage
+end
+
+unless File.exist?(file_path)
+  puts "Error: File '#{file_path}' not found"
+  exit(1)
+end
+
+bin_dir = File.expand_path(__dir__)
+
+template = File.read(file_path)
+show_template(file_path, template)
+
+args = []
+args << "--escape" if options[:escape]
+args << "--no-escape" unless options[:escape]
+args << "--no-template"
+args << file_path
+
+box_header("Compiled HTML+ERB Template Output")
+puts ""
+
+compile_result = system(File.join(bin_dir, "compare-compile"), *args)
+
+puts ""
+box_header("Rendered HTML+ERB Template Output")
+puts ""
+
+render_result = system(File.join(bin_dir, "compare-render"), *args)
+
+puts ""
+box_header("Summary")
+
+if render_result && compile_result
+  puts "✓ All comparisons passed!"
+  puts ""
+  puts "  • Rendered outputs match"
+  puts "  • Compiled sources match"
+  exit(0)
+elsif render_result
+  puts "⚠ Rendered outputs match, but compiled sources differ"
+  puts ""
+  puts "  • ✓ Rendered outputs match (what matters!)"
+  puts "  • ✗ Compiled sources differ (different formatting is OK)"
+  puts ""
+  puts "This is usually fine. Herb and Erubi format generated code differently,"
+  puts "but produce the same final output."
+  exit(0)
+else
+  puts "✗ Comparisons failed"
+  puts ""
+  puts "  • Rendered output: #{render_result ? '✓ Match' : '✗ Differ'}"
+  puts "  • Compiled source: #{compile_result ? '✓ Match' : '✗ Differ'}"
+  exit(1)
+end

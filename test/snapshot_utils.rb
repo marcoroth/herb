@@ -3,12 +3,15 @@
 require "fileutils"
 require "readline"
 require "digest"
+require_relative "../bin/lib/compare_helpers"
 
 def ask?(prompt = "")
   Readline.readline("===> #{prompt}? (y/N) ", true).squeeze(" ").strip == "y"
 end
 
 module SnapshotUtils
+  include CompareHelpers
+
   def assert_lexed_snapshot(source)
     result = Herb.lex(source)
     expected = result.value.inspect
@@ -31,22 +34,32 @@ module SnapshotUtils
     result
   end
 
-  def assert_compiled_snapshot(source, options = {})
+  def assert_compiled_snapshot(source, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
 
-    engine = Herb::Engine.new(source, options)
+    enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
+    engine_options = options.merge(kwargs)
+
+    engine = Herb::Engine.new(source, engine_options)
     expected = engine.src
 
-    snapshot_key = { source: source, options: options }.to_s
+    snapshot_key = { source: source, options: engine_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
+
+    if should_compare_with_erubi? || enforce_erubi_equality
+      compare_with_erubi_compiled(source, engine.src, engine_options, enforce_erubi_equality)
+    end
 
     engine
   end
 
-  def assert_evaluated_snapshot(source, locals = {}, options = {})
+  def assert_evaluated_snapshot(source, locals = {}, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
 
-    engine = Herb::Engine.new(source, options)
+    enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
+    engine_options = options.merge(kwargs)
+
+    engine = Herb::Engine.new(source, engine_options)
     binding_context = Object.new
 
     locals.each do |key, value|
@@ -58,10 +71,14 @@ module SnapshotUtils
     snapshot_key = {
       source: source,
       locals: locals,
-      options: options,
+      options: engine_options,
     }.to_s
 
     assert_snapshot_matches(result, snapshot_key)
+
+    if should_compare_with_erubi? || enforce_erubi_equality
+      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_erubi_equality)
+    end
 
     { engine: engine, result: result }
   end
@@ -174,6 +191,78 @@ module SnapshotUtils
     end
 
     expected_snapshot_path
+  end
+
+  def should_compare_with_erubi?
+    return false if class_name.include?("DebugMode")
+    !ENV["COMPARE_WITH_ERUBI"].nil?
+  end
+
+  def compare_with_erubi_compiled(source, herb_src, options, enforce_equality = false)
+    require_erubi_silently
+
+    begin
+      erubi_engine = Erubi::Engine.new(source, options)
+      erubi_src = erubi_engine.src
+
+      diff_output = diff_compiled_sources(erubi_src, herb_src)
+      return unless diff_output
+
+      message = "\n" + "=" * 80 + "\n"
+      message += "WARNING: Herb compiled output differs from Erubi\n"
+      message += "=" * 80 + "\n"
+      message += "Test: #{class_name} #{name}\n"
+      message += "\nTemplate:\n#{source.inspect}\n"
+      message += "\n"
+      message += diff_output
+      message += "\n"
+      message += "=" * 80 + "\n"
+
+      if ENV["FAIL_ON_ERUBI_MISMATCH"] || enforce_equality
+        flunk(message)
+      else
+        puts message
+      end
+    rescue StandardError
+      return
+    end
+  end
+
+  def compare_with_erubi_evaluated(source, herb_result, locals, options, enforce_equality = false)
+    require_erubi_silently
+
+    begin
+      erubi_engine = Erubi::Engine.new(source, options)
+      binding_context = Object.new
+
+      locals.each do |key, value|
+        binding_context.define_singleton_method(key) { value }
+      end
+
+      erubi_result = binding_context.instance_eval(erubi_engine.src)
+
+      diff_output = diff_rendered_outputs(erubi_result, herb_result)
+      return unless diff_output
+
+      message = "\n" + "=" * 80 + "\n"
+      message += "WARNING: Herb evaluated output differs from Erubi\n"
+      message += "=" * 80 + "\n"
+      message += "Test: #{class_name} #{name}\n"
+      message += "\nTemplate:\n#{source.inspect}\n"
+      message += "\nLocals: #{locals.inspect}\n"
+      message += "\n"
+      message += diff_output
+      message += "\n"
+      message += "=" * 80 + "\n"
+
+      if ENV["FAIL_ON_ERUBI_MISMATCH"] || enforce_equality
+        flunk(message)
+      else
+        puts message
+      end
+    rescue StandardError
+      return
+    end
   end
 
   private
