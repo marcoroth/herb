@@ -1,5 +1,6 @@
 import { FormatPrinter } from "./format-printer.js"
 
+import { isScaffoldTemplate } from "./scaffold-template-detector.js"
 import { resolveFormatOptions } from "./options.js"
 
 import type { Config } from "@herb-tools/config"
@@ -57,7 +58,9 @@ export class Formatter {
    */
   format(source: string, options: FormatOptions = {}, filePath?: string): string {
     let result = this.parse(source)
+
     if (result.failed) return source
+    if (isScaffoldTemplate(result)) return source
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
