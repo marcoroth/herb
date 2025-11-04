@@ -30,7 +30,7 @@ class ColorsTest < Minitest::Spec
   end
 
   test "NO_COLOR environment variable disables colors" do
-    original = ENV["NO_COLOR"]
+    original = ENV.fetch("NO_COLOR", nil)
 
     begin
       ENV["NO_COLOR"] = "1"
