@@ -3,8 +3,6 @@
 
 module Herb
   class Location
-    include Colors
-
     attr_reader :start #: Position
     attr_reader :end #: Position
 

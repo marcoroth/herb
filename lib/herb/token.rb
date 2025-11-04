@@ -35,7 +35,7 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      green("\"#{value.force_encoding("utf-8")}\"") + " " + dimmed("(location: #{location.tree_inspect})")
+      "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location.tree_inspect})")}"
     end
 
     #: () -> String
@@ -49,12 +49,12 @@ module Herb
 
     #: () -> String
     def colorize_range
-      white("[") + cyan(range.from.to_s) + white(",") + white(" ") + cyan(range.to.to_s) + white("]")
+      white("[") + cyan(range.from.to_s) + white(", ") + cyan(range.to.to_s) + white("]")
     end
 
     #: (Position) -> String
-    def colorize_position(pos)
-      white("(") + cyan(pos.line.to_s) + white(":") + cyan(pos.column.to_s) + white(")")
+    def colorize_position(position)
+      white("(") + cyan(position.line.to_s) + white(":") + cyan(position.column.to_s) + white(")")
     end
 
     #: () -> String
