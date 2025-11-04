@@ -7,7 +7,7 @@ input: "</div>"
     └── @ HTMLCloseTagNode (location: (1:0)-(1:6))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:0)-(1:6))
-        │       ├── message: "Found closing tag `</div>` at (1:2) without a matching opening tag."
+        │       ├── message: "Found closing tag `</div>` at (1:2) without a matching opening tag in the same scope."
         │       └── closing_tag: "div" (location: (1:2)-(1:5))
         │
         ├── tag_opening: "</" (location: (1:0)-(1:2))

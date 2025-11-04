@@ -217,5 +217,9 @@ module Parser
     test "erb tag followed by literal closing delimiter" do
       assert_parsed_snapshot(%(<% content %> %>))
     end
+
+    test "TODO" do
+      assert_parsed_snapshot(%(<%= 1 + %>))
+    end
   end
 end

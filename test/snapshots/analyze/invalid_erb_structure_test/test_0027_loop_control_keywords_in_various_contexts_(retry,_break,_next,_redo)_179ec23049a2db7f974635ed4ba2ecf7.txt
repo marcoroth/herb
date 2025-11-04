@@ -1,0 +1,339 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0027_loop control keywords in various contexts (retry, break, next, redo)"
+input: |2-
+<% while true %>
+  <% retry %>
+  <% break %>
+  <% next %>
+  <% redo %>
+<% end %>
+
+<% loop do %>
+  <% retry %>
+  <% break %>
+  <% next %>
+  <% redo %>
+<% end %>
+
+<% begin %>
+  <% retry %>
+<% rescue %>
+  <% retry %>
+  <% break %>
+  <% next %>
+  <% redo %>
+<% end %>
+
+<% break %>
+<% next %>
+<% retry %>
+<% redo %>
+---
+@ DocumentNode (location: (1:0)-(28:0))
+├── errors: (4 errors)
+│   ├── @ RubyParseError (location: (2:5)-(2:10))
+│   │   ├── message: "invalid_retry_without_rescue: Invalid retry without rescue"
+│   │   ├── error_message: "Invalid retry without rescue"
+│   │   ├── diagnostic_id: "invalid_retry_without_rescue"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (9:5)-(9:10))
+│   │   ├── message: "invalid_retry_without_rescue: Invalid retry without rescue"
+│   │   ├── error_message: "Invalid retry without rescue"
+│   │   ├── diagnostic_id: "invalid_retry_without_rescue"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (16:5)-(16:10))
+│   │   ├── message: "invalid_retry_without_rescue: Invalid retry without rescue"
+│   │   ├── error_message: "Invalid retry without rescue"
+│   │   ├── diagnostic_id: "invalid_retry_without_rescue"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (26:3)-(26:8))
+│       ├── message: "invalid_retry_without_rescue: Invalid retry without rescue"
+│       ├── error_message: "Invalid retry without rescue"
+│       ├── diagnostic_id: "invalid_retry_without_rescue"
+│       └── level: "syntax"
+│
+└── children: (14 items)
+    ├── @ ERBWhileNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while true " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── statements: (9 items)
+    │   │   ├── @ HTMLTextNode (location: (1:16)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:13))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (2:2)-(2:13))
+    │   │   │   │       ├── message: "`<% retry %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% retry %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " retry " (location: (2:4)-(2:11))
+    │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:13)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:13))
+    │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
+    │   │   │   ├── content: " break " (location: (3:4)-(3:11))
+    │   │   │   ├── tag_closing: "%>" (location: (3:11)-(3:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:13)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:2)-(4:12))
+    │   │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   ├── content: " next " (location: (4:4)-(4:10))
+    │   │   │   ├── tag_closing: "%>" (location: (4:10)-(4:12))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (4:12)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (5:2)-(5:12))
+    │   │   │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │   │   ├── content: " redo " (location: (5:4)-(5:10))
+    │   │   │   ├── tag_closing: "%>" (location: (5:10)-(5:12))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:12)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (6:9)-(8:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBBlockNode (location: (8:0)-(13:9))
+    │   ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │   ├── content: " loop do " (location: (8:2)-(8:11))
+    │   ├── tag_closing: "%>" (location: (8:11)-(8:13))
+    │   ├── body: (9 items)
+    │   │   ├── @ HTMLTextNode (location: (8:13)-(9:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (9:2)-(9:13))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (9:2)-(9:13))
+    │   │   │   │       ├── message: "`<% retry %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% retry %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (9:2)-(9:4))
+    │   │   │   ├── content: " retry " (location: (9:4)-(9:11))
+    │   │   │   ├── tag_closing: "%>" (location: (9:11)-(9:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (9:13)-(10:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (10:2)-(10:13))
+    │   │   │   ├── tag_opening: "<%" (location: (10:2)-(10:4))
+    │   │   │   ├── content: " break " (location: (10:4)-(10:11))
+    │   │   │   ├── tag_closing: "%>" (location: (10:11)-(10:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (10:13)-(11:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (11:2)-(11:12))
+    │   │   │   ├── tag_opening: "<%" (location: (11:2)-(11:4))
+    │   │   │   ├── content: " next " (location: (11:4)-(11:10))
+    │   │   │   ├── tag_closing: "%>" (location: (11:10)-(11:12))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (11:12)-(12:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (12:2)-(12:12))
+    │   │   │   ├── tag_opening: "<%" (location: (12:2)-(12:4))
+    │   │   │   ├── content: " redo " (location: (12:4)-(12:10))
+    │   │   │   ├── tag_closing: "%>" (location: (12:10)-(12:12))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (12:12)-(13:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (13:0)-(13:9))
+    │           ├── tag_opening: "<%" (location: (13:0)-(13:2))
+    │           ├── content: " end " (location: (13:2)-(13:7))
+    │           └── tag_closing: "%>" (location: (13:7)-(13:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (13:9)-(15:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBBeginNode (location: (15:0)-(22:9))
+    │   ├── tag_opening: "<%" (location: (15:0)-(15:2))
+    │   ├── content: " begin " (location: (15:2)-(15:9))
+    │   ├── tag_closing: "%>" (location: (15:9)-(15:11))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (15:11)-(16:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (16:2)-(16:13))
+    │   │   │   ├── tag_opening: "<%" (location: (16:2)-(16:4))
+    │   │   │   ├── content: " retry " (location: (16:4)-(16:11))
+    │   │   │   ├── tag_closing: "%>" (location: (16:11)-(16:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (16:13)-(17:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── rescue_clause:
+    │   │   └── @ ERBRescueNode (location: (17:0)-(22:0))
+    │   │       ├── tag_opening: "<%" (location: (17:0)-(17:2))
+    │   │       ├── content: " rescue " (location: (17:2)-(17:10))
+    │   │       ├── tag_closing: "%>" (location: (17:10)-(17:12))
+    │   │       ├── statements: (9 items)
+    │   │       │   ├── @ HTMLTextNode (location: (17:12)-(18:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (18:2)-(18:13))
+    │   │       │   │   ├── tag_opening: "<%" (location: (18:2)-(18:4))
+    │   │       │   │   ├── content: " retry " (location: (18:4)-(18:11))
+    │   │       │   │   ├── tag_closing: "%>" (location: (18:11)-(18:13))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   ├── @ HTMLTextNode (location: (18:13)-(19:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (19:2)-(19:13))
+    │   │       │   │   ├── errors: (1 error)
+    │   │       │   │   │   └── @ ERBControlFlowScopeError (location: (19:2)-(19:13))
+    │   │       │   │   │       ├── message: "`<% break %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       │   │   │       └── keyword: "`<% break %>`"
+    │   │       │   │   │
+    │   │       │   │   ├── tag_opening: "<%" (location: (19:2)-(19:4))
+    │   │       │   │   ├── content: " break " (location: (19:4)-(19:11))
+    │   │       │   │   ├── tag_closing: "%>" (location: (19:11)-(19:13))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   ├── @ HTMLTextNode (location: (19:13)-(20:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (20:2)-(20:12))
+    │   │       │   │   ├── errors: (1 error)
+    │   │       │   │   │   └── @ ERBControlFlowScopeError (location: (20:2)-(20:12))
+    │   │       │   │   │       ├── message: "`<% next %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       │   │   │       └── keyword: "`<% next %>`"
+    │   │       │   │   │
+    │   │       │   │   ├── tag_opening: "<%" (location: (20:2)-(20:4))
+    │   │       │   │   ├── content: " next " (location: (20:4)-(20:10))
+    │   │       │   │   ├── tag_closing: "%>" (location: (20:10)-(20:12))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   ├── @ HTMLTextNode (location: (20:12)-(21:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ ERBContentNode (location: (21:2)-(21:12))
+    │   │       │   │   ├── errors: (1 error)
+    │   │       │   │   │   └── @ ERBControlFlowScopeError (location: (21:2)-(21:12))
+    │   │       │   │   │       ├── message: "`<% redo %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       │   │   │       └── keyword: "`<% redo %>`"
+    │   │       │   │   │
+    │   │       │   │   ├── tag_opening: "<%" (location: (21:2)-(21:4))
+    │   │       │   │   ├── content: " redo " (location: (21:4)-(21:10))
+    │   │       │   │   ├── tag_closing: "%>" (location: (21:10)-(21:12))
+    │   │       │   │   ├── parsed: true
+    │   │       │   │   └── valid: false
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (21:12)-(22:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       └── subsequent: ∅
+    │   │
+    │   ├── else_clause: ∅
+    │   ├── ensure_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (22:0)-(22:9))
+    │           ├── tag_opening: "<%" (location: (22:0)-(22:2))
+    │           ├── content: " end " (location: (22:2)-(22:7))
+    │           └── tag_closing: "%>" (location: (22:7)-(22:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (22:9)-(24:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBContentNode (location: (24:0)-(24:11))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (24:0)-(24:11))
+    │   │       ├── message: "`<% break %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% break %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (24:0)-(24:2))
+    │   ├── content: " break " (location: (24:2)-(24:9))
+    │   ├── tag_closing: "%>" (location: (24:9)-(24:11))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    ├── @ HTMLTextNode (location: (24:11)-(25:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (25:0)-(25:10))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (25:0)-(25:10))
+    │   │       ├── message: "`<% next %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% next %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (25:0)-(25:2))
+    │   ├── content: " next " (location: (25:2)-(25:8))
+    │   ├── tag_closing: "%>" (location: (25:8)-(25:10))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    ├── @ HTMLTextNode (location: (25:10)-(26:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (26:0)-(26:11))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (26:0)-(26:11))
+    │   │       ├── message: "`<% retry %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% retry %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (26:0)-(26:2))
+    │   ├── content: " retry " (location: (26:2)-(26:9))
+    │   ├── tag_closing: "%>" (location: (26:9)-(26:11))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    ├── @ HTMLTextNode (location: (26:11)-(27:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (27:0)-(27:10))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (27:0)-(27:10))
+    │   │       ├── message: "`<% redo %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% redo %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (27:0)-(27:2))
+    │   ├── content: " redo " (location: (27:2)-(27:8))
+    │   ├── tag_closing: "%>" (location: (27:8)-(27:10))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (27:10)-(28:0))
+        └── content: "\n"

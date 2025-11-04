@@ -34,7 +34,7 @@ input: "<script>var template = `</script>`;</script>"
     └── @ HTMLCloseTagNode (location: (1:35)-(1:44))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:35)-(1:44))
-        │       ├── message: "Found closing tag `</script>` at (1:37) without a matching opening tag."
+        │       ├── message: "Found closing tag `</script>` at (1:37) without a matching opening tag in the same scope."
         │       └── closing_tag: "script" (location: (1:37)-(1:43))
         │
         ├── tag_opening: "</" (location: (1:35)-(1:37))

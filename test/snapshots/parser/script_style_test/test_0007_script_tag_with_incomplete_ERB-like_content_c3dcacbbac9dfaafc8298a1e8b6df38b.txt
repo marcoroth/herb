@@ -3,16 +3,11 @@ source: "Parser::ScriptStyleTest#test_0007_script tag with incomplete ERB-like c
 input: "<script>console.log(\"<%= incomplete\");</script>"
 ---
 @ DocumentNode (location: (1:0)-(1:47))
-├── errors: (1 error)
-│   └── @ UnclosedElementError (location: (1:47)-(1:47))
-│       ├── message: "Tag `<script>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "script" (location: (1:1)-(1:7))
-│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))
         ├── errors: (1 error)
         │   └── @ MissingClosingTagError (location: (1:1)-(1:7))
-        │       ├── message: "Opening tag `<script>` at (1:1) doesn't have a matching closing tag `</script>`."
+        │       ├── message: "Opening tag `<script>` at (1:1) doesn't have a matching closing tag `</script>` in the same scope."
         │       └── opening_tag: "script" (location: (1:1)-(1:7))
         │
         ├── open_tag:

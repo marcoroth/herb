@@ -34,7 +34,7 @@ input: "<style>.icon::before { content: \"</style>\"; }</style>"
     └── @ HTMLCloseTagNode (location: (1:45)-(1:53))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:45)-(1:53))
-        │       ├── message: "Found closing tag `</style>` at (1:47) without a matching opening tag."
+        │       ├── message: "Found closing tag `</style>` at (1:47) without a matching opening tag in the same scope."
         │       └── closing_tag: "style" (location: (1:47)-(1:52))
         │
         ├── tag_opening: "</" (location: (1:45)-(1:47))

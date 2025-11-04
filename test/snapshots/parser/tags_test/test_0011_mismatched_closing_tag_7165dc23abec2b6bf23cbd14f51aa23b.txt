@@ -3,35 +3,26 @@ source: "Parser::TagsTest#test_0011_mismatched closing tag"
 input: "<html></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:12))
-├── errors: (1 error)
-│   └── @ UnclosedElementError (location: (1:12)-(1:12))
-│       ├── message: "Tag `<html>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "html" (location: (1:1)-(1:5))
-│
-└── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:12))
+└── children: (2 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(1:6))
+    │   │       ├── message: "Opening tag `<html>` at (1:1) doesn't have a matching closing tag `</html>` in the same scope."
+    │   │       └── opening_tag: "html" (location: (1:1)-(1:5))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "html" (location: (1:1)-(1:5))
+    │   ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   ├── children: []
+    │   └── is_void: false
+    │
+    └── @ HTMLCloseTagNode (location: (1:6)-(1:12))
         ├── errors: (1 error)
-        │   └── @ TagNamesMismatchError (location: (1:8)-(1:11))
-        │       ├── message: "Opening tag `<html>` at (1:1) closed with `</div>` at (1:8)."
-        │       ├── opening_tag: "html" (location: (1:1)-(1:5))
+        │   └── @ MissingOpeningTagError (location: (1:6)-(1:12))
+        │       ├── message: "Found closing tag `</div>` at (1:8) without a matching opening tag in the same scope."
         │       └── closing_tag: "div" (location: (1:8)-(1:11))
         │
-        ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
-        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
-        │       ├── tag_name: "html" (location: (1:1)-(1:5))
-        │       ├── tag_closing: ">" (location: (1:5)-(1:6))
-        │       ├── children: []
-        │       └── is_void: false
-        │
-        ├── tag_name: "html" (location: (1:1)-(1:5))
-        ├── body: []
-        ├── close_tag:
-        │   └── @ HTMLCloseTagNode (location: (1:6)-(1:12))
-        │       ├── tag_opening: "</" (location: (1:6)-(1:8))
-        │       ├── tag_name: "div" (location: (1:8)-(1:11))
-        │       ├── children: []
-        │       └── tag_closing: ">" (location: (1:11)-(1:12))
-        │
-        ├── is_void: false
-        └── source: "HTML"
+        ├── tag_opening: "</" (location: (1:6)-(1:8))
+        ├── tag_name: "div" (location: (1:8)-(1:11))
+        ├── children: []
+        └── tag_closing: ">" (location: (1:11)-(1:12))

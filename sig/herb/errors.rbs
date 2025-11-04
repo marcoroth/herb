@@ -207,5 +207,41 @@ module Herb
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
+
+    class ERBControlFlowScopeError < Error
+      include Colors
+
+      attr_reader keyword: String
+
+      # : (String, Location, String, String) -> void
+      def initialize: (String, Location, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_erb_control_flow_scope_error
+      def to_hash: () -> serialized_erb_control_flow_scope_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class MissingERBEndTagError < Error
+      include Colors
+
+      attr_reader keyword: String
+
+      # : (String, Location, String, String) -> void
+      def initialize: (String, Location, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missingerb_end_tag_error
+      def to_hash: () -> serialized_missingerb_end_tag_error
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
   end
 end

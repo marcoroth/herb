@@ -43,3 +43,23 @@ void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
 
   free(analyzed);
 }
+
+const char* erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed) {
+  if (analyzed->has_end) {
+    return "`<% end %>`";
+  } else if (analyzed->has_else_node) {
+    return "`<% else %>`";
+  } else if (analyzed->has_elsif_node) {
+    return "`<% elsif %>`";
+  } else if (analyzed->has_when_node) {
+    return "`<% when %>`";
+  } else if (analyzed->has_in_node) {
+    return "`<% in %>`";
+  } else if (analyzed->has_rescue_node) {
+    return "`<% rescue %>`";
+  } else if (analyzed->has_ensure_node) {
+    return "`<% ensure %>`";
+  }
+
+  return NULL;
+}

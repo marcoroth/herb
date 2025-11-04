@@ -238,6 +238,11 @@ bool search_else_nodes(analyzed_ruby_T* analyzed) {
 
 bool search_end_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'end', ignoring it")) {
+    if (has_error_message(analyzed, "unexpected '=', ignoring it")) {
+      // `=end`
+      return false;
+    }
+
     analyzed->has_end = true;
     return true;
   }

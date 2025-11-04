@@ -37,6 +37,7 @@ class VisitorTest < Minitest::Spec
       "Herb::AST::HTMLCloseTagNode"
     ]
 
+    assert result.success?
     assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
   end
 
@@ -48,11 +49,11 @@ class VisitorTest < Minitest::Spec
 
     expected_nodes = [
       "Herb::AST::DocumentNode",
-      "Herb::AST::HTMLElementNode",
       "Herb::AST::HTMLOpenTagNode",
       "Herb::AST::HTMLTextNode"
     ]
 
+    assert result.failed?
     assert_equal expected_nodes, visitor.visited_nodes.map(&:class).map(&:to_s)
   end
 end

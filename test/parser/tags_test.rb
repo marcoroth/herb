@@ -104,17 +104,8 @@ module Parser
       ))
     end
 
-    # TODO: ideal parse result
-    #
-    # - match up the <main> and <div> tags
-    # - <p> should have a missing closing tag
-    # - </span> should have a missing opening tag
-    # - </p> should have a missing opening tag
-    # - no other errors
-    #
     test "should recover from multiple out of order closing tags" do
-      skip
-      assert_parsed_snapshot(%(
+      assert_parsed_snapshot(<<~HTML)
         <main>
           <div>
             <p>
@@ -122,7 +113,7 @@ module Parser
             </div>
           </p>
         </main>
-      ))
+      HTML
     end
 
     test "should recover from void elements used as closing tag" do
@@ -137,16 +128,8 @@ module Parser
       ))
     end
 
-    # TODO: ideal parse result
-    #
-    # - matched up <main> and <div> tags
-    # - </br> VoidElementClosingTagError
-    # - </br> VoidElementClosingTagError
-    # - no other errors
-    #
     test "should recover from multiple void elements used as closing tag" do
-      skip
-      assert_parsed_snapshot(%(
+      assert_parsed_snapshot(<<~HTML)
         <main>
           <div>
             </br>
@@ -155,7 +138,7 @@ module Parser
             <p>World</p>
           </div>
         </main>
-      ))
+      HTML
     end
 
     test "stray closing tag with whitespace" do

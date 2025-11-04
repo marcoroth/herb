@@ -1,0 +1,98 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0008_invalid erb structure - attribute quote closes in if branch with else/end outside"
+input: |2-
+<div class="a <% if some_condition %>"
+  <% else %>
+>
+<% end %>
+
+</div>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(3:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (3:0)-(3:1))
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:38))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │   │   │               └── content: "class"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:38))
+    │   │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │   │           ├── children: (2 items)
+    │   │       │   │           │   ├── @ LiteralNode (location: (1:12)-(1:14))
+    │   │       │   │           │   │   └── content: "a "
+    │   │       │   │           │   │
+    │   │       │   │           │   └── @ ERBIfNode (location: (1:14)-(1:37))
+    │   │       │   │           │       ├── errors: (1 error)
+    │   │       │   │           │       │   └── @ MissingERBEndTagError (location: (1:14)-(1:37))
+    │   │       │   │           │       │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+    │   │       │   │           │       │       └── keyword: "`<% if %>`"
+    │   │       │   │           │       │
+    │   │       │   │           │       ├── tag_opening: "<%" (location: (1:14)-(1:16))
+    │   │       │   │           │       ├── content: " if some_condition " (location: (1:16)-(1:35))
+    │   │       │   │           │       ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   │       │   │           │       ├── statements: []
+    │   │       │   │           │       ├── subsequent: ∅
+    │   │       │   │           │       └── end_node: ∅
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:37)-(1:38))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ ERBContentNode (location: (2:2)-(2:12))
+    │   │       │       ├── errors: (1 error)
+    │   │       │       │   └── @ ERBControlFlowScopeError (location: (2:2)-(2:12))
+    │   │       │       │       ├── message: "`<% else %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       │       │       └── keyword: "`<% else %>`"
+    │   │       │       │
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " else " (location: (2:4)-(2:10))
+    │   │       │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       │       ├── parsed: true
+    │   │       │       └── valid: false
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (3:1)-(4:0))
+    │   │   │   └── content: "\n"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:0)-(4:9))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (4:0)-(4:9))
+    │   │   │   │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% end %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │   │   ├── content: " end " (location: (4:2)-(4:7))
+    │   │   │   ├── tag_closing: "%>" (location: (4:7)-(4:9))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:9)-(6:0))
+    │   │       └── content: "\n\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:6))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "div" (location: (6:2)-(6:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:5)-(6:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:6)-(7:0))
+        └── content: "\n"

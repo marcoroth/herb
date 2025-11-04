@@ -14,4 +14,6 @@ token_T* token_copy(token_T* token);
 
 void token_free(token_T* token);
 
+bool token_value_empty(const token_T* token);
+
 #endif

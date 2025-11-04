@@ -6,6 +6,7 @@
 #include "include/errors.h"
 #include "include/extract.h"
 #include "include/location.h"
+#include "include/parser.h"
 #include "include/position.h"
 #include "include/pretty_print.h"
 #include "include/prism_helpers.h"
@@ -1057,7 +1058,7 @@ static size_t process_block_children(
   return index;
 }
 
-static hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
+hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
   hb_array_T* new_array = hb_array_init(hb_array_size(array));
   size_t index = 0;
 
@@ -1112,41 +1113,178 @@ static hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analy
   return new_array;
 }
 
-static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
-  analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
-  context->parent = (AST_NODE_T*) node;
+static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
+  invalid_erb_context_T* context = (invalid_erb_context_T*) data;
 
-  if (node->type == AST_DOCUMENT_NODE) {
-    AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
-    hb_array_T* old_array = document_node->children;
-    document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
-    hb_array_free(&old_array);
+  if (node->type == AST_HTML_ATTRIBUTE_NAME_NODE) { return false; }
+
+  bool is_loop_node =
+    (node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE || node->type == AST_ERB_FOR_NODE
+     || node->type == AST_ERB_BLOCK_NODE);
+
+  bool is_begin_node = (node->type == AST_ERB_BEGIN_NODE);
+
+  if (is_loop_node) { context->loop_depth++; }
+
+  if (is_begin_node) { context->rescue_depth++; }
+
+  if (node->type == AST_ERB_CONTENT_NODE) {
+    const AST_ERB_CONTENT_NODE_T* content_node = (const AST_ERB_CONTENT_NODE_T*) node;
+
+    if (content_node->parsed && !content_node->valid && content_node->analyzed_ruby != NULL) {
+      analyzed_ruby_T* analyzed = content_node->analyzed_ruby;
+
+      // =begin
+      if (has_error_message(analyzed, "embedded document meets end of file")) {
+        if (is_loop_node) { context->loop_depth--; }
+        if (is_begin_node) { context->rescue_depth--; }
+
+        return true;
+      }
+
+      // =end
+      if (has_error_message(analyzed, "unexpected '=', ignoring it")
+          && has_error_message(analyzed, "unexpected 'end', ignoring it")) {
+        if (is_loop_node) { context->loop_depth--; }
+        if (is_begin_node) { context->rescue_depth--; }
+
+        return true;
+      }
+
+      const char* keyword = NULL;
+
+      if (context->loop_depth == 0) {
+        if (has_error_message(analyzed, "Invalid break")) {
+          keyword = "`<% break %>`";
+        } else if (has_error_message(analyzed, "Invalid next")) {
+          keyword = "`<% next %>`";
+        } else if (has_error_message(analyzed, "Invalid redo")) {
+          keyword = "`<% redo %>`";
+        }
+      } else {
+        if (has_error_message(analyzed, "Invalid redo") || has_error_message(analyzed, "Invalid break")
+            || has_error_message(analyzed, "Invalid next")) {
+
+          if (is_loop_node) { context->loop_depth--; }
+          if (is_begin_node) { context->rescue_depth--; }
+
+          return true;
+        }
+      }
+
+      if (context->rescue_depth == 0) {
+        if (has_error_message(analyzed, "Invalid retry without rescue")) { keyword = "`<% retry %>`"; }
+      } else {
+        if (has_error_message(analyzed, "Invalid retry without rescue")) {
+          if (is_loop_node) { context->loop_depth--; }
+          if (is_begin_node) { context->rescue_depth--; }
+
+          return true;
+        }
+      }
+
+      if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
+
+      if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
+        append_erb_control_flow_scope_error(keyword, node->location.start, node->location.end, node->errors);
+      }
+    }
   }
 
-  if (node->type == AST_HTML_ELEMENT_NODE) {
-    AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
-    hb_array_T* old_array = element_node->body;
-    element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
-    hb_array_free(&old_array);
+  if (node->type == AST_ERB_IF_NODE) {
+    const AST_ERB_IF_NODE_T* if_node = (const AST_ERB_IF_NODE_T*) node;
+
+    if (if_node->end_node == NULL) { check_erb_node_for_missing_end(node); }
+
+    if (if_node->statements != NULL) {
+      for (size_t i = 0; i < hb_array_size(if_node->statements); i++) {
+        AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(if_node->statements, i);
+
+        if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+      }
+    }
+
+    AST_NODE_T* subsequent = if_node->subsequent;
+
+    while (subsequent != NULL) {
+      if (subsequent->type == AST_ERB_CONTENT_NODE) {
+        const AST_ERB_CONTENT_NODE_T* content_node = (const AST_ERB_CONTENT_NODE_T*) subsequent;
+
+        if (content_node->parsed && !content_node->valid && content_node->analyzed_ruby != NULL) {
+          analyzed_ruby_T* analyzed = content_node->analyzed_ruby;
+          const char* keyword = erb_keyword_from_analyzed_ruby(analyzed);
+
+          if (!token_value_empty(content_node->tag_closing)) {
+            append_erb_control_flow_scope_error(
+              keyword,
+              subsequent->location.start,
+              subsequent->location.end,
+              subsequent->errors
+            );
+          }
+        }
+      }
+
+      if (subsequent->type == AST_ERB_IF_NODE) {
+        const AST_ERB_IF_NODE_T* elsif_node = (const AST_ERB_IF_NODE_T*) subsequent;
+
+        if (elsif_node->statements != NULL) {
+          for (size_t i = 0; i < hb_array_size(elsif_node->statements); i++) {
+            AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(elsif_node->statements, i);
+
+            if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+          }
+        }
+
+        subsequent = elsif_node->subsequent;
+      } else if (subsequent->type == AST_ERB_ELSE_NODE) {
+        const AST_ERB_ELSE_NODE_T* else_node = (const AST_ERB_ELSE_NODE_T*) subsequent;
+
+        if (else_node->statements != NULL) {
+          for (size_t i = 0; i < hb_array_size(else_node->statements); i++) {
+            AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(else_node->statements, i);
+
+            if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+          }
+        }
+
+        break;
+      } else {
+        break;
+      }
+    }
   }
 
-  if (node->type == AST_HTML_OPEN_TAG_NODE) {
-    AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
-    hb_array_T* old_array = open_tag->children;
-    open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
-    hb_array_free(&old_array);
+  if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
+      || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+    herb_visit_child_nodes(node, detect_invalid_erb_structures, context);
   }
 
-  if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
-    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
-    hb_array_T* old_array = value_node->children;
-    value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
-    hb_array_free(&old_array);
+  if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
+      || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+    check_erb_node_for_missing_end(node);
+
+    if (is_loop_node) { context->loop_depth--; }
+    if (is_begin_node) { context->rescue_depth--; }
+
+    return false;
   }
 
-  herb_visit_child_nodes(node, transform_erb_nodes, data);
+  if (node->type == AST_ERB_IF_NODE) {
+    if (is_loop_node) { context->loop_depth--; }
+    if (is_begin_node) { context->rescue_depth--; }
 
-  return false;
+    return false;
+  }
+
+  bool result = true;
+
+  if (is_loop_node) { context->loop_depth--; }
+  if (is_begin_node) { context->rescue_depth--; }
+
+  return result;
 }
 
 void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) {
@@ -1159,10 +1297,20 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
 
+  invalid_erb_context_T* invalid_context = malloc(sizeof(invalid_erb_context_T));
+  invalid_context->loop_depth = 0;
+  invalid_context->rescue_depth = 0;
+
+  herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, invalid_context);
+
   herb_analyze_parse_errors(document, source);
 
+  herb_parser_match_html_tags_post_analyze(document);
+
   hb_array_free(&context->ruby_context_stack);
+
   free(context);
+  free(invalid_context);
 }
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {

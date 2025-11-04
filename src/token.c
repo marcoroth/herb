@@ -5,6 +5,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -138,6 +139,10 @@ token_T* token_copy(token_T* token) {
   new_token->location = token->location;
 
   return new_token;
+}
+
+bool token_value_empty(const token_T* token) {
+  return token == NULL || token->value == NULL || token->value[0] == '\0';
 }
 
 void token_free(token_T* token) {

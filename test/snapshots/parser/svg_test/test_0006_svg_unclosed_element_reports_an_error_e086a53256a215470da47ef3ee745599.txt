@@ -6,68 +6,45 @@ input: |2-
 </svg>
 ---
 @ DocumentNode (location: (1:0)-(4:0))
-├── errors: (2 errors)
-│   ├── @ UnclosedElementError (location: (4:0)-(4:0))
-│   │   ├── message: "Tag `<g>` opened at (2:3) was never closed before the end of document."
-│   │   └── opening_tag: "g" (location: (2:3)-(2:4))
-│   │
-│   └── @ UnclosedElementError (location: (4:0)-(4:0))
-│       ├── message: "Tag `<svg>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "svg" (location: (1:1)-(1:4))
-│
-└── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:5))
-        ├── errors: (1 error)
-        │   └── @ MissingClosingTagError (location: (1:1)-(1:4))
-        │       ├── message: "Opening tag `<svg>` at (1:1) doesn't have a matching closing tag `</svg>`."
-        │       └── opening_tag: "svg" (location: (1:1)-(1:4))
-        │
-        ├── open_tag:
-        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
-        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
-        │       ├── tag_name: "svg" (location: (1:1)-(1:4))
-        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
-        │       ├── children: []
-        │       └── is_void: false
-        │
-        ├── tag_name: "svg" (location: (1:1)-(1:4))
-        ├── body: (3 items)
-        │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
-        │   │   └── content: "\n  "
-        │   │
-        │   ├── @ HTMLElementNode (location: (2:2)-(3:6))
-        │   │   ├── errors: (1 error)
-        │   │   │   └── @ TagNamesMismatchError (location: (3:2)-(3:5))
-        │   │   │       ├── message: "Opening tag `<g>` at (2:3) closed with `</svg>` at (3:2)."
-        │   │   │       ├── opening_tag: "g" (location: (2:3)-(2:4))
-        │   │   │       └── closing_tag: "svg" (location: (3:2)-(3:5))
-        │   │   │
-        │   │   ├── open_tag:
-        │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
-        │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
-        │   │   │       ├── tag_name: "g" (location: (2:3)-(2:4))
-        │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
-        │   │   │       ├── children: []
-        │   │   │       └── is_void: false
-        │   │   │
-        │   │   ├── tag_name: "g" (location: (2:3)-(2:4))
-        │   │   ├── body: (1 item)
-        │   │   │   └── @ HTMLTextNode (location: (2:5)-(3:0))
-        │   │   │       └── content: "\n"
-        │   │   │
-        │   │   ├── close_tag:
-        │   │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
-        │   │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
-        │   │   │       ├── tag_name: "svg" (location: (3:2)-(3:5))
-        │   │   │       ├── children: []
-        │   │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
-        │   │   │
-        │   │   ├── is_void: false
-        │   │   └── source: "HTML"
-        │   │
-        │   └── @ HTMLTextNode (location: (3:6)-(4:0))
-        │       └── content: "\n"
-        │
-        ├── close_tag: ∅
-        ├── is_void: false
-        └── source: "HTML"
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "svg" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "svg" (location: (1:1)-(1:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (2:2)-(2:5))
+    │   │   │   │       ├── message: "Opening tag `<g>` at (2:3) doesn't have a matching closing tag `</g>` in the same scope."
+    │   │   │   │       └── opening_tag: "g" (location: (2:3)-(2:4))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   ├── tag_name: "g" (location: (2:3)-(2:4))
+    │   │   │   ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   ├── children: []
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:5)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
+    │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
+    │   │       ├── tag_name: "svg" (location: (3:2)-(3:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (3:6)-(4:0))
+        └── content: "\n"

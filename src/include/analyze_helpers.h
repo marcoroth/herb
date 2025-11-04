@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "analyzed_ruby.h"
+#include "ast_node.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);
 bool has_elsif_node(analyzed_ruby_T* analyzed);
@@ -45,5 +46,7 @@ bool search_in_nodes(analyzed_ruby_T* analyzed);
 bool search_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_ensure_nodes(analyzed_ruby_T* analyzed);
 bool search_yield_nodes(const pm_node_t* node, void* data);
+
+void check_erb_node_for_missing_end(const AST_NODE_T* node);
 
 #endif

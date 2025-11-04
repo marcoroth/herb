@@ -1,0 +1,43 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0026_invalid break at document root after while loop"
+input: |2-
+<% while true %>
+  content
+<% end %>
+
+<% break %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (4 items)
+    ├── @ ERBWhileNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while true " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(3:0))
+    │   │       └── content: "\n  content\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (3:9)-(5:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBContentNode (location: (5:0)-(5:11))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (5:0)-(5:11))
+    │   │       ├── message: "`<% break %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% break %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   ├── content: " break " (location: (5:2)-(5:9))
+    │   ├── tag_closing: "%>" (location: (5:9)-(5:11))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (5:11)-(6:0))
+        └── content: "\n"

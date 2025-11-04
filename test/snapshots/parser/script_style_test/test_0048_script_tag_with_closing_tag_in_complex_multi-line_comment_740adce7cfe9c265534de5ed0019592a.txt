@@ -41,7 +41,7 @@ input: |2-
     ├── @ HTMLCloseTagNode (location: (4:27)-(4:35))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (4:27)-(4:35))
-    │   │       ├── message: "Found closing tag `</style>` at (4:29) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</style>` at (4:29) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "style" (location: (4:29)-(4:34))
     │   │
     │   ├── tag_opening: "</" (location: (4:27)-(4:29))
@@ -55,7 +55,7 @@ input: |2-
     ├── @ HTMLCloseTagNode (location: (7:0)-(7:9))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (7:0)-(7:9))
-    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "script" (location: (7:2)-(7:8))
     │   │
     │   ├── tag_opening: "</" (location: (7:0)-(7:2))

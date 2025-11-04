@@ -34,7 +34,7 @@ input: "<script>document.write('<script>alert(\"nested\")</script>');</script>"
     └── @ HTMLCloseTagNode (location: (1:59)-(1:68))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:59)-(1:68))
-        │       ├── message: "Found closing tag `</script>` at (1:61) without a matching opening tag."
+        │       ├── message: "Found closing tag `</script>` at (1:61) without a matching opening tag in the same scope."
         │       └── closing_tag: "script" (location: (1:61)-(1:67))
         │
         ├── tag_opening: "</" (location: (1:59)-(1:61))

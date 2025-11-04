@@ -78,6 +78,8 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
 
+  herb_analyze_parse_tree(root, string);
+
   VALUE result = create_parse_result(root, source_value);
 
   ast_node_free((AST_NODE_T*) root);

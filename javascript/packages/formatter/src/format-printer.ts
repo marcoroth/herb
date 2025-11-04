@@ -1056,8 +1056,8 @@ export class FormatPrinter extends Printer {
       inner = node.children.map(child => {
         if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
           return child.content
-        } else if (isERBNode(child) || isNode(child, ERBContentNode)) {
-          return this.reconstructERBNode(child, false)
+        } else if (isERBNode(child)) {
+          return IdentityPrinter.print(child)
         } else {
           return ""
         }

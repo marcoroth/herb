@@ -34,7 +34,7 @@ input: "<script>var s1 = '</script>'; var s2 = '</style>';</script>"
     ├── @ HTMLCloseTagNode (location: (1:40)-(1:48))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (1:40)-(1:48))
-    │   │       ├── message: "Found closing tag `</style>` at (1:42) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</style>` at (1:42) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "style" (location: (1:42)-(1:47))
     │   │
     │   ├── tag_opening: "</" (location: (1:40)-(1:42))
@@ -48,7 +48,7 @@ input: "<script>var s1 = '</script>'; var s2 = '</style>';</script>"
     └── @ HTMLCloseTagNode (location: (1:50)-(1:59))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:50)-(1:59))
-        │       ├── message: "Found closing tag `</script>` at (1:52) without a matching opening tag."
+        │       ├── message: "Found closing tag `</script>` at (1:52) without a matching opening tag in the same scope."
         │       └── closing_tag: "script" (location: (1:52)-(1:58))
         │
         ├── tag_opening: "</" (location: (1:50)-(1:52))

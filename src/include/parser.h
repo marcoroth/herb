@@ -30,12 +30,16 @@ typedef struct PARSER_STRUCT {
   parser_options_T options;
 } parser_T;
 
+size_t parser_sizeof(void);
+
 void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options);
 
 AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser);
 
-size_t parser_sizeof(void);
-
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document);
 void herb_parser_deinit(parser_T* parser);
+
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors);
+bool match_tags_visitor(const AST_NODE_T* node, void* data);
 
 #endif

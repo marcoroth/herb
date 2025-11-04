@@ -46,7 +46,7 @@ errors:
 
     - name: MissingOpeningTagError
       message:
-        template: "Found closing tag `</%s>` at (%u:%u) without a matching opening tag."
+        template: "Found closing tag `</%s>` at (%u:%u) without a matching opening tag in the same scope."
         arguments:
           - closing_tag->value
           - closing_tag->location.start.line
@@ -58,7 +58,7 @@ errors:
 
     - name: MissingClosingTagError
       message:
-        template: "Opening tag `<%s>` at (%u:%u) doesn't have a matching closing tag `</%s>`."
+        template: "Opening tag `<%s>` at (%u:%u) doesn't have a matching closing tag `</%s>` in the same scope."
         arguments:
           - opening_tag->value
           - opening_tag->location.start.line
@@ -149,6 +149,26 @@ errors:
           type: string
 
         - name: level
+          type: string
+
+    - name: ERBControlFlowScopeError
+      message:
+        template: "%s appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+        arguments:
+          - keyword
+
+      fields:
+        - name: keyword
+          type: string
+
+    - name: MissingERBEndTagError
+      message:
+        template: "%s started here but never closed with an end tag. The end tag may be in a different scope."
+        arguments:
+          - keyword
+
+      fields:
+        - name: keyword
           type: string
 
 warnings:

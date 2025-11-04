@@ -1,0 +1,95 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0009_valid erb structure - if/else/end inside tag attributes"
+input: |2-
+<div
+  <% if some_condition %>
+    class="a"
+  <% else %>
+    class="b"
+  <% end %>
+></div>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(7:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (7:0)-(7:1))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ ERBIfNode (location: (2:2)-(6:11))
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " if some_condition " (location: (2:4)-(2:23))
+    │   │       │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       │       ├── statements: (1 item)
+    │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(3:13))
+    │   │       │       │       ├── name:
+    │   │       │       │       │   └── @ HTMLAttributeNameNode (location: (3:4)-(3:9))
+    │   │       │       │       │       └── children: (1 item)
+    │   │       │       │       │           └── @ LiteralNode (location: (3:4)-(3:9))
+    │   │       │       │       │               └── content: "class"
+    │   │       │       │       │
+    │   │       │       │       │
+    │   │       │       │       ├── equals: "=" (location: (3:9)-(3:10))
+    │   │       │       │       └── value:
+    │   │       │       │           └── @ HTMLAttributeValueNode (location: (3:10)-(3:13))
+    │   │       │       │               ├── open_quote: """ (location: (3:10)-(3:11))
+    │   │       │       │               ├── children: (1 item)
+    │   │       │       │               │   └── @ LiteralNode (location: (3:11)-(3:12))
+    │   │       │       │               │       └── content: "a"
+    │   │       │       │               │
+    │   │       │       │               ├── close_quote: """ (location: (3:12)-(3:13))
+    │   │       │       │               └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── subsequent:
+    │   │       │       │   └── @ ERBElseNode (location: (4:2)-(5:13))
+    │   │       │       │       ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │       │       │       ├── content: " else " (location: (4:4)-(4:10))
+    │   │       │       │       ├── tag_closing: "%>" (location: (4:10)-(4:12))
+    │   │       │       │       └── statements: (1 item)
+    │   │       │       │           └── @ HTMLAttributeNode (location: (5:4)-(5:13))
+    │   │       │       │               ├── name:
+    │   │       │       │               │   └── @ HTMLAttributeNameNode (location: (5:4)-(5:9))
+    │   │       │       │               │       └── children: (1 item)
+    │   │       │       │               │           └── @ LiteralNode (location: (5:4)-(5:9))
+    │   │       │       │               │               └── content: "class"
+    │   │       │       │               │
+    │   │       │       │               │
+    │   │       │       │               ├── equals: "=" (location: (5:9)-(5:10))
+    │   │       │       │               └── value:
+    │   │       │       │                   └── @ HTMLAttributeValueNode (location: (5:10)-(5:13))
+    │   │       │       │                       ├── open_quote: """ (location: (5:10)-(5:11))
+    │   │       │       │                       ├── children: (1 item)
+    │   │       │       │                       │   └── @ LiteralNode (location: (5:11)-(5:12))
+    │   │       │       │                       │       └── content: "b"
+    │   │       │       │                       │
+    │   │       │       │                       ├── close_quote: """ (location: (5:12)-(5:13))
+    │   │       │       │                       └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       │
+    │   │       │       └── end_node:
+    │   │       │           └── @ ERBEndNode (location: (6:2)-(6:11))
+    │   │       │               ├── tag_opening: "<%" (location: (6:2)-(6:4))
+    │   │       │               ├── content: " end " (location: (6:4)-(6:9))
+    │   │       │               └── tag_closing: "%>" (location: (6:9)-(6:11))
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:1)-(7:7))
+    │   │       ├── tag_opening: "</" (location: (7:1)-(7:3))
+    │   │       ├── tag_name: "div" (location: (7:3)-(7:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:6)-(7:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:7)-(8:0))
+        └── content: "\n"

@@ -5,16 +5,20 @@ input: "<% if true %"
 @ DocumentNode (location: (1:0)-(1:12))
 └── children: (1 item)
     └── @ ERBIfNode (location: (1:0)-(1:12))
-        ├── errors: (2 errors)
+        ├── errors: (3 errors)
         │   ├── @ UnexpectedTokenError (location: (1:2)-(1:12))
         │   │   ├── message: "Found `TOKEN_ERROR` when expecting `TOKEN_ERB_CONTENT` at (1:2)."
         │   │   ├── expected_type: "TOKEN_ERB_CONTENT"
         │   │   └── found: " if true %" (location: (1:2)-(1:12))
         │   │
-        │   └── @ UnexpectedTokenError (location: (1:12)-(1:12))
-        │       ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:12)."
-        │       ├── expected_type: "TOKEN_ERB_END"
-        │       └── found: "" (location: (1:12)-(1:12))
+        │   ├── @ UnexpectedTokenError (location: (1:12)-(1:12))
+        │   │   ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:12)."
+        │   │   ├── expected_type: "TOKEN_ERB_END"
+        │   │   └── found: "" (location: (1:12)-(1:12))
+        │   │
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:12))
+        │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% if %>`"
         │
         ├── tag_opening: "<%" (location: (1:0)-(1:2))
         ├── content: " if true %" (location: (1:2)-(1:12))

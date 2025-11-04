@@ -33,5 +33,6 @@ typedef struct ANALYZED_RUBY_STRUCT {
 
 analyzed_ruby_T* init_analyzed_ruby(hb_string_T source);
 void free_analyzed_ruby(analyzed_ruby_T* analyzed);
+const char* erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed);
 
 #endif
