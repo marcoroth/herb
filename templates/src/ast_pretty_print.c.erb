@@ -41,7 +41,7 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       <%- when Herb::Template::ElementSourceField -%>
       pretty_print_string_property(element_source_to_string(<%= node.human %>-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::StringField -%>
-      pretty_print_string_property(hb_string(<%= node.human %>-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+      pretty_print_string_property(<%= node.human %>-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::PrismNodeField -%>
       pretty_print_string_property(hb_string("<%= field.name %>"), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::NodeField -%>

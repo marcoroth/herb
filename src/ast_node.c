@@ -31,7 +31,7 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = herb_strdup(token->value);
+  literal->content = token->value;
 
   return literal;
 }

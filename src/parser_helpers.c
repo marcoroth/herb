@@ -22,9 +22,9 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   if (hb_array_size(parser->open_tags_stack) == 0) { return false; }
 
   token_T* top_token = hb_array_last(parser->open_tags_stack);
-  if (top_token == NULL || top_token->value == NULL) { return false; };
+  if (top_token == NULL || hb_string_is_empty(top_token->value)) { return false; };
 
-  return hb_string_equals(hb_string(top_token->value), tag_name);
+  return hb_string_equals(top_token->value, tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
@@ -47,9 +47,8 @@ bool parser_in_svg_context(const parser_T* parser) {
   for (size_t i = 0; i < stack_size; i++) {
     token_T* tag = (token_T*) hb_array_get(parser->open_tags_stack, i);
 
-    if (tag && tag->value) {
-      hb_string_T tag_value_string = hb_string(tag->value);
-      if (hb_string_equals(tag_value_string, hb_string("svg"))) { return true; }
+    if (tag && !hb_string_is_empty(tag->value)) {
+      if (hb_string_equals_case_insensitive(tag->value, hb_string("svg"))) { return true; }
     }
   }
 
@@ -95,8 +94,8 @@ void parser_exit_foreign_content(parser_T* parser) {
 
 void parser_append_unexpected_error(
   parser_T* parser,
-  const char* description,
-  const char* expected,
+  hb_string_T description,
+  hb_string_T expected,
   hb_array_T* errors
 ) {
   token_T* token = parser_advance(parser);
@@ -129,10 +128,9 @@ void parser_append_literal_node_from_buffer(
   hb_array_T* children,
   position_T start
 ) {
-  if (hb_buffer_length(buffer) == 0) { return; }
-
+  if (buffer->length == 0) { return; }
   AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(hb_buffer_value(buffer), start, parser->current_token->location.start, NULL);
+    ast_literal_node_init(hb_string(buffer->value), start, parser->current_token->location.start, NULL);
 
   if (children != NULL) { hb_array_append(children, literal); }
   hb_buffer_clear(buffer);

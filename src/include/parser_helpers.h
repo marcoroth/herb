@@ -15,8 +15,8 @@ token_T* parser_pop_open_tag(const parser_T* parser);
 
 void parser_append_unexpected_error(
   parser_T* parser,
-  const char* description,
-  const char* expected,
+  hb_string_T description,
+  hb_string_T expected,
   hb_array_T* errors
 );
 void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T* errors);

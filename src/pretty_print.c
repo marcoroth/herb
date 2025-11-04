@@ -212,8 +212,8 @@ void pretty_print_token_property(
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
 
-  if (token != NULL && token->value != NULL) {
-    hb_string_T quoted = quoted_string(hb_string(token->value));
+  if (token != NULL && !hb_string_is_empty(token->value)) {
+    hb_string_T quoted = quoted_string(token->value);
     hb_buffer_append_string(buffer, quoted);
     free(quoted.data);
 

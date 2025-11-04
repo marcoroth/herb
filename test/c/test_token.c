@@ -4,7 +4,7 @@
 #include "../../src/include/token.h"
 
 TEST(test_token)
-  ck_assert_str_eq(token_type_to_string(TOKEN_IDENTIFIER), "TOKEN_IDENTIFIER");
+  ck_assert(hb_string_equals(token_type_to_string(TOKEN_IDENTIFIER), hb_string("TOKEN_IDENTIFIER")));
 END
 
 TEST(test_token_to_string)

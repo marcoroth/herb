@@ -1,8 +1,8 @@
 #include "include/herb.h"
 #include "include/io.h"
-#include "include/lexer.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -16,12 +16,14 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
 
     switch (token->type) {
       case TOKEN_NEWLINE: {
-        hb_buffer_append(output, token->value);
+        hb_buffer_append_string(output, token->value);
         break;
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+        if (hb_string_equals(token->value, hb_string("<%#"))
+            || hb_string_equals(token->value, hb_string("<%%"))
+            || hb_string_equals(token->value, hb_string("<%%="))) {
           skip_erb_content = true;
         }
 
@@ -31,7 +33,7 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          hb_buffer_append(output, token->value);
+          hb_buffer_append_string(output, token->value);
         } else {
           hb_buffer_append_whitespace(output, range_length(token->range));
         }
@@ -66,12 +68,14 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 
     switch (token->type) {
       case TOKEN_NEWLINE: {
-        hb_buffer_append(output, token->value);
+        hb_buffer_append_string(output, token->value);
         break;
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+        if (hb_string_equals(token->value, hb_string("<%#"))
+            || hb_string_equals(token->value, hb_string("<%%"))
+            || hb_string_equals(token->value, hb_string("<%%="))) {
           skip_erb_content = true;
         }
 
@@ -81,7 +85,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          hb_buffer_append(output, token->value);
+          hb_buffer_append_string(output, token->value);
         } else {
           hb_buffer_append_whitespace(output, range_length(token->range));
         }
@@ -115,7 +119,7 @@ void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
       case TOKEN_ERB_END: hb_buffer_append_whitespace(output, range_length(token->range)); break;
-      default: hb_buffer_append(output, token->value);
+      default: hb_buffer_append_string(output, token->value);
     }
   }
 
