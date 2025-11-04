@@ -83,7 +83,7 @@ const char* token_type_to_string(const token_type_T type) {
   return "Unknown token_type_T";
 }
 
-char* token_to_string(const token_T* token) {
+hb_string_T token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Herb::Token type=\"%s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
@@ -112,7 +112,7 @@ char* token_to_string(const token_T* token) {
 
   free(escaped.data);
 
-  return string;
+  return hb_string(string);
 }
 
 token_T* token_copy(token_T* token) {
