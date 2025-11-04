@@ -2,24 +2,34 @@
 
 module Herb
   module Colors
-    def self?.enabled?: () -> untyped
+    # : () -> bool
+    def self?.enabled?: () -> bool
 
-    def self?.white: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.white: (String) -> String
 
-    def self?.yellow: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.yellow: (String) -> String
 
-    def self?.green: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.green: (String) -> String
 
-    def self?.red: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.red: (String) -> String
 
-    def self?.magenta: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.magenta: (String) -> String
 
-    def self?.cyan: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.cyan: (String) -> String
 
-    def self?.bright_magenta: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.bright_magenta: (String) -> String
 
-    def self?.dimmed: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.dimmed: (String) -> String
 
-    def self?.bold: (untyped string) -> untyped
+    # : (String) -> String
+    def self?.bold: (String) -> String
   end
 end
