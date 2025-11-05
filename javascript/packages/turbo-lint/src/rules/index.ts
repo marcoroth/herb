@@ -1,0 +1,1 @@
+export { HtmlTurboPermanentRule } from "./html-turbo-permanent.js"
