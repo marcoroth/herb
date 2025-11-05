@@ -32,14 +32,19 @@ make all          # Generate templates and build
 ### As a Library
 
 ```rust
-use herb::{lex, Token};
+use herb::{lex, parse};
 
 fn main() {
-  let source = r#"<div><%= name %></div>"#;
-  let result = lex(source);
+  let template = "<h1><%= title %></h1>";
 
-  for token in result.tokens() {
-    println!("{}", token.inspect());
+  match lex(template) {
+    Ok(result) => { println!("{}", result); }
+    Err(error) => { eprintln!("Lex error: {}", error); }
+  }
+
+  match parse(template) {
+    Ok(result) => { println!("{}", result); }
+    Err(error) => { eprintln!("Parse error: {}", error); }
   }
 }
 ```

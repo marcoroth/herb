@@ -20,19 +20,27 @@ The `herb` crate exposes functions for lexing, parsing, and extracting Ruby and 
 
 ## Lexing
 
-The `herb::lex` function tokenizes an HTML document with embedded Ruby and returns a `LexResult` containing all tokens.
+The `herb::lex` function tokenizes an HTML document with embedded Ruby and returns a `Result<LexResult, String>` containing all tokens.
 
-### `herb::lex(source: &str) -> LexResult`
+### `herb::lex(source: &str) -> Result<LexResult, String>`
 
 :::code-group
 ```rust
 use herb::lex;
 
 let source = "<p>Hello <%= user.name %></p>";
-let result = lex(source);
 
-for token in result.tokens() {
-  println!("{}", token.inspect());
+match lex(source) {
+  Ok(result) => {
+    println!("{}", result);
+
+    for token in result.tokens() {
+      // do something with each token
+    }
+  }
+  Err(e) => {
+    eprintln!("Lex error: {}", e);
+  }
 }
 // Output:
 // #<Herb::Token type="TOKEN_HTML_TAG_START" value="<" range=[0, 1] start=(1:0) end=(1:1)>

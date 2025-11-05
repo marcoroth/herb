@@ -3,13 +3,13 @@ use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
 use std::ffi::CString;
 
-pub fn lex(source: &str) -> LexResult {
+pub fn lex(source: &str) -> Result<LexResult, String> {
   unsafe {
-    let c_source = CString::new(source).expect("Failed to create CString");
+    let c_source = CString::new(source).map_err(|e| e.to_string())?;
     let c_tokens = crate::ffi::herb_lex(c_source.as_ptr());
 
     if c_tokens.is_null() {
-      return LexResult::new(Vec::new());
+      return Err("Failed to lex source".to_string());
     }
 
     let array_size = crate::ffi::hb_array_size(c_tokens);
@@ -26,7 +26,7 @@ pub fn lex(source: &str) -> LexResult {
     let mut c_tokens_ptr = c_tokens;
     crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T);
 
-    LexResult::new(tokens)
+    Ok(LexResult::new(tokens))
   }
 }
 
