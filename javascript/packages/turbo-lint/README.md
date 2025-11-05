@@ -36,4 +36,4 @@ npx turbo-lint
 
 ## Rules
 
-Rules are documented [here](./docs/rules/)
+Rules are documented [here](./docs/rules/README.md)
