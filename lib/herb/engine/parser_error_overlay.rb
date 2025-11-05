@@ -529,7 +529,7 @@ module Herb
           HTML
         end
 
-        section_id = "suggestions-#{rand(1000)}"
+        section_id = "suggestions-#{Digest::MD5.hexdigest(suggestions.inspect)}"
 
         <<~HTML
           <div class="herb-section">

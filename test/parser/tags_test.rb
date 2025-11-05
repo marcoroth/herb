@@ -179,12 +179,10 @@ module Parser
     end
 
     test "script tag with nested script tags in string" do
-      skip
       assert_parsed_snapshot(%(<script>document.write('<script>alert("nested")</script>');</script>))
     end
 
     test "script tag with mixed HTML tags and JavaScript" do
-      skip
       assert_parsed_snapshot(%(<script><span>function test() { return x > y; }</span></script>))
     end
 
@@ -197,17 +195,14 @@ module Parser
     end
 
     test "style tag with CSS attribute selectors containing HTML-like content" do
-      skip
       assert_parsed_snapshot(%(<style>input[placeholder="<enter text>"] { color: blue; }</style>))
     end
 
     test "style tag with CSS content property containing HTML" do
-      skip
       assert_parsed_snapshot(%(<style>.element::before { content: "<div>Generated</div>"; }</style>))
     end
 
     test "style tag with media queries and nested rules" do
-      skip
       assert_parsed_snapshot(%(<style>@media (max-width: 768px) { .class > .nested { display: none; } }</style>))
     end
 
@@ -236,7 +231,6 @@ module Parser
     end
 
     test "script tag with complex JavaScript containing multiple HTML-like patterns" do
-      skip
       assert_parsed_snapshot(<<-HTML)
         <script>
           function createElements() {
@@ -255,7 +249,6 @@ module Parser
     end
 
     test "style tag with complex CSS containing HTML-like selectors" do
-      skip
       assert_parsed_snapshot(<<-HTML)
         <style>
           /* CSS comment */

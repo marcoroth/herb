@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << ::Herb::Engine.h(("<script>alert(1)</script>"));
+_buf.to_s

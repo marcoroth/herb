@@ -367,9 +367,9 @@ describe("@herb-tools/formatter", () => {
     expect(result).toBe(dedent`
        <p>
          Visit
-         <a href="/products">our amazing product catalog with hundreds of items</a> or
-         <a href="/support">contact our customer support team</a> for assistance with
-         your order.
+         <a href="/products">our amazing product catalog with hundreds of items</a>
+         or <a href="/support">contact our customer support team</a> for assistance
+         with your order.
        </p>
      `)
   })
@@ -478,18 +478,6 @@ describe("@herb-tools/formatter", () => {
          <a href="https://example.com/very/long/path/to/documentation/page/so/long/that/it/should/break/the/content/of/the/tag">our comprehensive documentation</a>
          or contact support.
        </p>
-     `)
-  })
-
-  test("https://github.com/marcoroth/herb/issues/469#issue-3379906221", () => {
-    const input = dedent`
-       <%= @user.translated_greeting %>,<br>
-     `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(dedent`
-       <%= @user.translated_greeting %>,<br>
      `)
   })
 

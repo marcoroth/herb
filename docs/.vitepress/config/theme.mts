@@ -6,6 +6,7 @@ const defaultSidebar = [
     collapsed: false,
     items: [
       { text: "Overview", link: "/overview" },
+      { text: "Configuration", link: "/configuration" },
       { text: "Projects", link: "/projects" },
     ],
   },
@@ -28,6 +29,8 @@ const defaultSidebar = [
       { text: "Highlighter", link: "/projects/highlighter" },
       { text: "Syntax Tree Printer", link: "/projects/printer" },
       { text: "Minifier", link: "/projects/minifier" },
+      { text: "Config", link: "/projects/config" },
+      { text: "Rewriter", link: "/projects/rewriter" },
       { text: "Core", link: "/projects/core" },
     ],
   },
@@ -87,6 +90,22 @@ const defaultSidebar = [
           { text: "Reference", link: "/bindings/javascript/reference" },
         ],
       },
+      {
+        text: "Java",
+        collapsed: false,
+        items: [
+          { text: "Installation", link: "/bindings/java/" },
+          { text: "Reference", link: "/bindings/java/reference" },
+        ],
+      },
+      {
+        text: "Rust",
+        collapsed: false,
+        items: [
+          { text: "Installation", link: "/bindings/rust/" },
+          { text: "Reference", link: "/bindings/rust/reference" },
+        ],
+      },
       { text: "WebAssembly", link: "/projects/webassembly" },
     ],
   },
@@ -131,7 +150,15 @@ export function createThemeConfig() {
       copyright: "Copyright © 2024-2025 Marco Roth and the Herb Contributors.",
     },
     editLink: {
-      pattern: "https://github.com/marcoroth/herb/edit/main/docs/docs/:path",
+      pattern: ({ filePath }) => {
+        if (filePath.startsWith('linter/rules/')) {
+          const fileName = filePath.replace('linter/rules/', '')
+
+          return `https://github.com/marcoroth/herb/edit/main/javascript/packages/linter/docs/rules/${fileName}`
+        }
+
+        return `https://github.com/marcoroth/herb/edit/main/docs/docs/${filePath}`
+      },
       text: "Edit this page on GitHub",
     },
     sidebar: {

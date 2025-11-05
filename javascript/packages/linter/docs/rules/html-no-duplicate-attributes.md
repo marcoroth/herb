@@ -17,7 +17,7 @@ Catching duplicates early helps prevent subtle bugs, improves code correctness, 
 ### ✅ Good
 
 ```erb
-<input type="text" name="username" id="user-id">
+<input type="text" name="username" id="user-id" autocomplete="off">
 
 <button type="submit" disabled>Submit</button>
 ```
@@ -25,7 +25,7 @@ Catching duplicates early helps prevent subtle bugs, improves code correctness, 
 ### 🚫 Bad
 
 ```erb
-<input type="text" type="password" name="username">
+<input type="text" type="password" name="username" autocomplete="off">
 
 <button type="submit" type="button" disabled>Submit</button>
 ```

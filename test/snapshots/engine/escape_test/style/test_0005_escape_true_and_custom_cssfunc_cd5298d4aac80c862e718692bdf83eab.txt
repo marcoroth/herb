@@ -1,0 +1,3 @@
+__herb = ::Herb::Engine; _buf = ::String.new;
+ _buf << '<style>'.freeze; _buf << CustomEscape.css((value)); _buf << '</style>'.freeze;
+_buf.to_s

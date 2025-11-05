@@ -1,0 +1,17 @@
+edition = "2021"
+max_width = 100
+hard_tabs = false
+tab_spaces = 2
+newline_style = "Unix"
+use_small_heuristics = "Default"
+reorder_imports = true
+reorder_modules = true
+remove_nested_parens = true
+
+# Ignore generated files from templates
+# run using `cargo +nightly fmt`
+ignore = [
+  "src/ast/nodes.rs",
+  "src/errors.rs",
+  "src/nodes.rs",
+]

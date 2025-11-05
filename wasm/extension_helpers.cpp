@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 #include "nodes.h"
 
@@ -25,6 +26,16 @@ using namespace emscripten;
 
 val CreateString(const char* string) {
   return string ? val(string) : val::null();
+}
+
+val CreateStringFromHbString(hb_string_T string) {
+  if (hb_string_is_empty(string)) {
+    return val::null();
+  } else {
+    std::string cppString(string.data, string.length);
+
+    return val(cppString);
+  }
 }
 
 val CreatePosition(position_T position) {

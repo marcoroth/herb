@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, getAttributeName, getAttributes, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
@@ -15,7 +15,6 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
     this.addOffense(
       `Element with \`role="heading"\` must have an \`aria-level\` attribute.`,
       attributeNode.location,
-      "error"
     )
   }
 }
@@ -23,7 +22,14 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
   name = "html-aria-role-heading-requires-level"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new AriaRoleHeadingRequiresLevel(this.name, context)
 
     visitor.visit(result.value)

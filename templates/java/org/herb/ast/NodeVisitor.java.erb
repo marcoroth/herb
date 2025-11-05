@@ -1,0 +1,14 @@
+package org.herb.ast;
+
+/**
+ * Visitor interface for traversing AST nodes.
+ *
+ * @param <R> the return type
+ * @param <C> the context type
+ */
+public interface NodeVisitor<R, C> {
+  R visitNode(Node node, C context);
+  <%- nodes.each do |node| -%>
+  R visit<%= node.name %>(<%=node.name %> node, C context);
+  <%- end -%>
+}

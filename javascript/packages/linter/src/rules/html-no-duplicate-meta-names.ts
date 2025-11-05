@@ -5,7 +5,7 @@ import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { ParserRule, BaseAutofixContext } from "../types"
 
 import type { ParseResult, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface MetaTag {
   node: HTMLElementNode
@@ -147,7 +147,6 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
         this.addOffense(
           `Duplicate \`<meta>\` tag with ${attributeDescription}${contextMsg}. ${attributeType} should be unique within the \`<head>\` section.`,
           metaTag.node.location,
-          "error"
         )
 
         return
@@ -172,7 +171,14 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
   name = "html-no-duplicate-meta-names"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
 
     visitor.visit(result.value)

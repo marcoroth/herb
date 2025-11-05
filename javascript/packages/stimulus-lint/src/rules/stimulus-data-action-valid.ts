@@ -1,6 +1,6 @@
 import { StimulusRuleVisitor, HerbParserRule, didyoumean, getAttribute, getStaticAttributeValue, hasStaticAttributeValue, parseActionDescriptor } from "./rule-utils.js"
 
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLOpenTagNode, HTMLAttributeNode } from "@herb-tools/core"
 
 class DataActionValidVisitor extends StimulusRuleVisitor {
@@ -29,12 +29,12 @@ class DataActionValidVisitor extends StimulusRuleVisitor {
       const descriptor = parseActionDescriptor(action)
 
       if (!descriptor.valid || !descriptor.identifier || !descriptor.methodName) {
-        this.addOffense(`Invalid action descriptor \`${action}\`. Expected format: \`[event->]controller#action\``, attributeNode.location, "error")
+        this.addOffense(`Invalid action descriptor \`${action}\`. Expected format: \`[event->]controller#action\``, attributeNode.location)
         continue
       }
 
       if (!this.isControllerAvailable(descriptor.identifier)) {
-        this.addOffense(`Unknown Stimulus controller \`${descriptor.identifier}\` in action \`${action}\`. Make sure the controller is defined in your project.`, attributeNode.location, "error")
+        this.addOffense(`Unknown Stimulus controller \`${descriptor.identifier}\` in action \`${action}\`. Make sure the controller is defined in your project.`, attributeNode.location)
         continue
       }
 
@@ -43,7 +43,7 @@ class DataActionValidVisitor extends StimulusRuleVisitor {
 
         if (controller && controller.controllerDefinition.actionNames && !controller.controllerDefinition.actionNames.includes(descriptor.methodName)) {
           const suggestion = didyoumean(descriptor.methodName, controller.controllerDefinition.actionNames)
-          this.addOffense(`Unknown action method \`${descriptor.methodName}\` on controller "${descriptor.identifier}".${suggestion}`, attributeNode.location, "error")
+          this.addOffense(`Unknown action method \`${descriptor.methodName}\` on controller "${descriptor.identifier}".${suggestion}`, attributeNode.location)
         }
       }
     }
@@ -54,7 +54,14 @@ class DataActionValidVisitor extends StimulusRuleVisitor {
 export class StimulusDataActionValidRule extends HerbParserRule {
   name = "stimulus-data-action-valid"
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
     const visitor = new DataActionValidVisitor(this.name, context)
     visitor.visit(result.value)
     return visitor.offenses

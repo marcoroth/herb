@@ -17,30 +17,32 @@ import {
   hasStaticAttributeName,
   hasDynamicAttributeName,
   getStaticAttributeName,
-  getCombinedAttributeName
+  getCombinedAttributeName,
+  Location,
+  HTMLAttributeNameNode
 } from "../src"
 
-import type { Node, LiteralNode, ERBContentNode, HTMLAttributeNameNode } from "../src/nodes.js"
+import type { Node, LiteralNode, ERBContentNode } from "../src/nodes.js"
 
 describe("ast-utils", () => {
   const createLiteralNode = (content: string): LiteralNode => ({
     type: "AST_LITERAL_NODE",
     content,
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    location: Location.from(1, 1, 1, 1)
   })
 
   const createERBContentNode = (tagOpening: string, content: string = "", tagClosing: string = "%>"): ERBContentNode => ({
     type: "AST_ERB_CONTENT_NODE",
-    tag_opening: { type: "AST_TOKEN", value: tagOpening, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } },
-    content: content ? { type: "AST_TOKEN", value: content, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } } : undefined,
-    tag_closing: { type: "AST_TOKEN", value: tagClosing, location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } } },
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    tag_opening: { type: "AST_TOKEN", value: tagOpening, location: Location.from(1, 1, 1, 1) },
+    content: content ? { type: "AST_TOKEN", value: content, location: Location.from(1, 1, 1, 1) } : undefined,
+    tag_closing: { type: "AST_TOKEN", value: tagClosing, location: Location.from(1, 1, 1, 1) },
+    location: Location.from(1, 1, 1, 1)
   })
 
   const createAttributeNameNode = (children: Node[]): HTMLAttributeNameNode => ({
     type: "AST_HTML_ATTRIBUTE_NAME_NODE",
     children,
-    location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+    location: Location.from(1, 1, 1, 1)
   })
 
   describe("isLiteralNode", () => {
@@ -321,7 +323,7 @@ describe("ast-utils", () => {
     test("handles unknown node types", () => {
       const unknownNode: Node = {
         type: "UNKNOWN_NODE" as any,
-        location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } }
+        location: Location.from(1, 1, 1, 1)
       }
 
       const nodes = [createLiteralNode("test"), unknownNode]

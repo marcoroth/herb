@@ -1,0 +1,5 @@
+---
+source: tests/snapshot_test.rs
+expression: output
+---
+0.7.5

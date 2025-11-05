@@ -4,12 +4,14 @@ import { Connection, Diagnostic } from "vscode-languageserver/node"
 import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
+import { ConfigService } from "./config_service"
 
 export class Diagnostics {
   private readonly connection: Connection
   private readonly documentService: DocumentService
   private readonly parserService: ParserService
   private readonly linterService: LinterService
+  private readonly configService: ConfigService
   private diagnostics: Map<TextDocument, Diagnostic[]> = new Map()
 
   constructor(
@@ -17,21 +19,29 @@ export class Diagnostics {
     documentService: DocumentService,
     parserService: ParserService,
     linterService: LinterService,
+    configService: ConfigService,
   ) {
     this.connection = connection
     this.documentService = documentService
     this.parserService = parserService
     this.linterService = linterService
+    this.configService = configService
   }
 
   async validate(textDocument: TextDocument) {
-    const parseResult = this.parserService.parseDocument(textDocument)
-    const lintResult = await this.linterService.lintDocument(textDocument)
+    let allDiagnostics: Diagnostic[] = []
 
-    const allDiagnostics = [
-      ...parseResult.diagnostics,
-      ...lintResult.diagnostics,
-    ]
+    if (textDocument.uri.endsWith('.herb.yml')) {
+      allDiagnostics = await this.configService.validateDocument(textDocument)
+    } else {
+      const parseResult = this.parserService.parseDocument(textDocument)
+      const lintResult = await this.linterService.lintDocument(textDocument)
+
+      allDiagnostics = [
+        ...parseResult.diagnostics,
+        ...lintResult.diagnostics,
+      ]
+    }
 
     this.diagnostics.set(textDocument, allDiagnostics)
     this.sendDiagnosticsFor(textDocument)

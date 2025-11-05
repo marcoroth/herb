@@ -1,6 +1,6 @@
 import { StimulusRuleVisitor, HerbParserRule, getAttributeName, getAttributeValue, getStaticAttributeValue, hasStaticAttributeValue } from "./rule-utils.js"
 
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class DataControllerValidVisitor extends StimulusRuleVisitor {
@@ -31,7 +31,14 @@ class DataControllerValidVisitor extends StimulusRuleVisitor {
 export class StimulusDataControllerValidRule extends HerbParserRule {
   name = "stimulus-data-controller-valid"
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
     const visitor = new DataControllerValidVisitor(this.name, context)
 
     visitor.visit(result.value)

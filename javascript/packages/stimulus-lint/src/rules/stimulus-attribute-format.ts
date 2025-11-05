@@ -1,7 +1,7 @@
 import { ParserRule, AttributeVisitorMixin } from "@herb-tools/linter"
 
 import type { StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "@herb-tools/linter"
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 export class AttributeFormatVisitor extends AttributeVisitorMixin {
@@ -55,8 +55,7 @@ export class AttributeFormatVisitor extends AttributeVisitorMixin {
 
       this.addOffense(
         `Attribute \`${attributeName}\` should use dasherized format. Did you mean \`${dasherized}\`?`,
-        attributeNode.location,
-        "error"
+        attributeNode.location
       )
     }
   }
@@ -66,8 +65,7 @@ export class AttributeFormatVisitor extends AttributeVisitorMixin {
       const dasherized = this.dasherize(name)
       this.addOffense(
         `The \`${type}\` \`${name}\` should be dasherized. Did you mean \`${dasherized}\`?`,
-        attributeNode.location,
-        "error"
+        attributeNode.location
       )
     }
   }
@@ -86,11 +84,14 @@ export class AttributeFormatVisitor extends AttributeVisitorMixin {
 export class StimulusAttributeFormatRule extends ParserRule {
   name = "stimulus-attribute-format"
 
-  isEnabled(): boolean {
-    return true
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
   }
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
     const visitor = new AttributeFormatVisitor(this.name, context)
 
     visitor.visit(result.value)

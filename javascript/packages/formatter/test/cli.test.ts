@@ -1,62 +1,9 @@
 import dedent from "dedent"
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { spawn } from "child_process"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
 import { join } from "path"
 
-type ExecResult = {
-  stdout: string
-  stderr: string
-  exitCode: number
-}
-
-const expectExitCode = (result: ExecResult, expectedCode: number) => {
-  if (result.exitCode !== expectedCode) {
-    const errorInfo = {
-      expectedExitCode: expectedCode,
-      actualExitCode: result.exitCode,
-      stdout: result.stdout,
-      stderr: result.stderr
-    }
-
-    expect.fail(`Exit code mismatch:\n${JSON.stringify(errorInfo, null, 2)}`)
-  }
-}
-
-const execBinary = (args: string[] = [], input?: string): Promise<ExecResult> => {
-  return new Promise((resolve) => {
-    const child = spawn("node", ["bin/herb-format", ...args], {
-      stdio: ["pipe", "pipe", "pipe"]
-    })
-
-    let stdout = ""
-    let stderr = ""
-
-    const timeout = setTimeout(() => {
-      child.kill()
-      resolve({ stdout, stderr, exitCode: 1 })
-    }, 5000)
-
-    child.stdout.on("data", (data) => {
-      stdout += data.toString()
-    })
-
-    child.stderr.on("data", (data) => {
-      stderr += data.toString()
-    })
-
-    child.on("close", (code) => {
-      clearTimeout(timeout)
-      resolve({ stdout, stderr, exitCode: code || 0 })
-    })
-
-    if (input) {
-      child.stdin.write(input)
-    }
-
-    child.stdin.end()
-  })
-}
+import { execBinary, expectExitCode } from "./cli/cli-helpers"
 
 describe("CLI Binary", () => {
   beforeEach(async () => {
@@ -200,8 +147,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("⚠️  Experimental Preview")
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-empty-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     } finally {
       await rm("test-empty-dir", { recursive: true }).catch(() => {})
     }
@@ -252,8 +198,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -641,8 +586,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-advanced/"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("No files found matching pattern")
-      expect(result.stdout).toContain("test-advanced/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found in directory:")
     })
 
     it("should handle mixed file arguments", async () => {

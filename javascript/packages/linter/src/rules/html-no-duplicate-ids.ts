@@ -6,7 +6,7 @@ import { Printer, IdentityPrinter } from "@herb-tools/printer"
 import { hasERBOutput, getValidatableStaticContent, isEffectivelyStatic, isNode, getStaticAttributeName, isERBOutputNode } from "@herb-tools/core"
 
 import type { ParseResult, HTMLAttributeNode, ERBContentNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface ControlFlowState {
   previousBranchIds: Set<string>
@@ -180,7 +180,6 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     this.addOffense(
       `Duplicate ID \`${identifier}\` found. IDs must be unique within a document.`,
       location,
-      "error"
     )
   }
 
@@ -188,7 +187,6 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     this.addOffense(
       `Duplicate ID \`${identifier}\` found within the same loop iteration. IDs must be unique within the same loop iteration.`,
       location,
-      "error"
     )
   }
 
@@ -196,7 +194,6 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     this.addOffense(
       `Duplicate ID \`${identifier}\` found within the same control flow branch. IDs must be unique within the same control flow branch.`,
       location,
-      "error"
     )
   }
 }
@@ -204,7 +201,14 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 export class HTMLNoDuplicateIdsRule extends ParserRule {
   name = "html-no-duplicate-ids"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoDuplicateIdsVisitor(this.name, context)
 
     visitor.visit(result.value)

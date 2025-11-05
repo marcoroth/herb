@@ -1,32 +1,35 @@
 import * as path from "path"
 
-import { workspace, ExtensionContext, Disposable } from "vscode"
+import { workspace, ExtensionContext, Disposable, window } from "vscode"
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node"
+import { Config } from "@herb-tools/config"
 
 export class Client {
-  private client: LanguageClient
+  private client!: LanguageClient
   private serverModule: string
   private languageClientId = "languageServerHerb"
   private languageClientName = "Herb Language Server "
   private context: ExtensionContext
   private configurationListener?: Disposable
+  private outputChannel = window.createOutputChannel("Herb Language Server")
 
   constructor(context: ExtensionContext) {
     this.context = context
-
     this.serverModule = this.context.asAbsolutePath(path.join("dist", "herb-language-server.js"))
     console.log(this.serverModule)
-
-    this.client = new LanguageClient(
-      this.languageClientId,
-      this.languageClientName,
-      this.serverOptions,
-      this.clientOptions,
-    )
   }
 
   async start() {
     try {
+      const clientOptions = await this.getClientOptions()
+
+      this.client = new LanguageClient(
+        this.languageClientId,
+        this.languageClientName,
+        this.serverOptions,
+        clientOptions,
+      )
+
       await this.client.start()
       this.setupConfigurationListener()
     } catch (error: any) {
@@ -39,7 +42,7 @@ export class Client {
   private setupConfigurationListener() {
     this.configurationListener = workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration('languageServerHerb')) {
-        console.log("Herb LSP configuration changed, updating...")
+        console.log("Herb configuration changed, updating...")
         await this.updateConfiguration()
       }
     })
@@ -63,14 +66,51 @@ export class Client {
   }
 
   async updateConfiguration() {
-    const config = workspace.getConfiguration('languageServerHerb')
-    const settings = {
-      linter: {
-        enabled: config.get('linter.enabled', true),
-      },
-      trace: {
-        server: config.get('trace.server', 'verbose'),
-      },
+    const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
+    let settings: any
+
+    if (workspaceRoot) {
+      try {
+        const projectConfig = await Config.loadForEditor(workspaceRoot)
+        const vscodeConfig = workspace.getConfiguration('languageServerHerb')
+
+        settings = {
+          linter: {
+            enabled: projectConfig.linter?.enabled ?? true
+          },
+          formatter: {
+            enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
+            indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
+            exclude: projectConfig.formatter?.exclude,
+          },
+          trace: {
+            server: vscodeConfig.get('trace.server', 'verbose'),
+          },
+        }
+      } catch (error) {
+        const vscodeConfig = workspace.getConfiguration('languageServerHerb')
+
+        settings = {
+          linter: {
+            enabled: vscodeConfig.get('linter.enabled', true)
+          },
+          formatter: {
+            enabled: vscodeConfig.get('formatter.enabled', false),
+            indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
+          },
+          trace: {
+            server: vscodeConfig.get('trace.server', 'verbose'),
+          },
+        }
+      }
+    } else {
+      settings = {
+        linter: { enabled: true },
+        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        trace: { server: 'verbose' },
+      }
     }
 
     await this.client.sendNotification('workspace/didChangeConfiguration', {
@@ -102,29 +142,67 @@ export class Client {
     }
   }
 
-  private get clientOptions(): LanguageClientOptions {
+  private async getClientOptions(): Promise<LanguageClientOptions> {
     return {
       documentSelector: [
         { scheme: "file", language: "erb" },
         { scheme: "file", language: "html" },
+        { scheme: "file", language: "yaml", pattern: "**/.herb.yml" },
       ],
       synchronize: {
         fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
         configurationSection: 'languageServerHerb',
       },
-      initializationOptions: this.getInitializationOptions(),
+      initializationOptions: await this.getInitializationOptions(),
+      outputChannel: this.outputChannel,
     }
   }
 
-  private getInitializationOptions() {
-    const config = workspace.getConfiguration('languageServerHerb')
-    return {
-      linter: {
-        enabled: config.get('linter.enabled', true),
-      },
-      trace: {
-        server: config.get('trace.server', 'verbose'),
-      },
+  private async getInitializationOptions() {
+    const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
+
+    if (workspaceRoot) {
+      try {
+        const projectConfig = await Config.loadForEditor(workspaceRoot)
+        const vscodeConfig = workspace.getConfiguration('languageServerHerb')
+
+        return {
+          linter: {
+            enabled: projectConfig.linter?.enabled ?? true
+          },
+          formatter: {
+            enabled: projectConfig.formatter?.enabled ?? vscodeConfig.get('formatter.enabled', false),
+            indentWidth: projectConfig.formatter?.indentWidth ?? 2,
+            maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
+            exclude: projectConfig.formatter?.exclude,
+          },
+          trace: {
+            server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
+          },
+        }
+      } catch (error) {
+        const vscodeConfig = workspace.getConfiguration('languageServerHerb')
+
+        return {
+          linter: {
+            enabled: vscodeConfig.get('linter.enabled', true)
+          },
+          formatter: {
+            enabled: vscodeConfig.get('formatter.enabled', false),
+            indentWidth: vscodeConfig.get('formatter.indentWidth', 2),
+            maxLineLength: vscodeConfig.get('formatter.maxLineLength', 80),
+          },
+          trace: {
+            server: vscodeConfig.get('trace.server', 'verbose'),
+          },
+        }
+      }
+    } else {
+      return {
+        linter: { enabled: true },
+        formatter: { enabled: false, indentWidth: 2, maxLineLength: 80 },
+        trace: { server: 'verbose' },
+      }
     }
   }
 }

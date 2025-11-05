@@ -1,10 +1,17 @@
-import { describe, test } from "vitest"
+import { describe, test, beforeAll, expect } from "vitest"
+import { Herb } from "@herb-tools/node-wasm"
+import { Config } from "@herb-tools/config"
+import { Linter } from "../../src/linter.js"
 import { HTMLNoSelfClosingRule } from "../../src/rules/html-no-self-closing.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoSelfClosingRule)
 
 describe("html-no-self-closing", () => {
+  beforeAll(async () => {
+    await Herb.load()
+  })
+
   test("passes for standard HTML tags", () => {
     expectNoOffenses(`
       <div></div>
@@ -125,5 +132,61 @@ describe("html-no-self-closing", () => {
       </svg>
       <span />
     `)
+  })
+
+  describe("ActionMailer exclusion", () => {
+    test("excludes ActionMailer view files without any config", () => {
+      const linter = Linter.from(Herb)
+      const source = '<br />'
+
+      const result1 = linter.lint(source, { fileName: "app/views/home/index.html.erb" })
+      expect(result1.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(true)
+
+      const result2 = linter.lint(source, { fileName: "app/views/user_mailer/welcome.html.erb" })
+      expect(result2.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(false)
+
+      const result3 = linter.lint(source, { fileName: "app/views/notifications_mailer/alert.html.erb" })
+      expect(result3.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(false)
+    })
+
+    test("excludes ActionMailer view files from the rule by default", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-no-self-closing": {}
+          }
+        }
+      }, { projectPath: "/test/project" })
+
+      const linter = Linter.from(Herb, config)
+      const source = '<br />'
+
+      const result1 = linter.lint(source, { fileName: "app/views/home/index.html.erb" })
+      expect(result1.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(true)
+
+      const result2 = linter.lint(source, { fileName: "app/views/user_mailer/welcome.html.erb" })
+      expect(result2.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(false)
+
+      const result3 = linter.lint(source, { fileName: "app/views/notifications_mailer/alert.html.erb" })
+      expect(result3.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(false)
+    })
+
+    test("can override default exclusion pattern if needed", () => {
+      const config = Config.fromObject({
+        linter: {
+          rules: {
+            "html-no-self-closing": {
+              exclude: [] // Override the default exclusion
+            }
+          }
+        }
+      }, { projectPath: "/test/project" })
+
+      const linter = Linter.from(Herb, config)
+      const source = '<br />'
+
+      const result = linter.lint(source, { fileName: "app/views/user_mailer/welcome.html.erb" })
+      expect(result.offenses.some(offense => offense.rule === "html-no-self-closing")).toBe(true)
+    })
   })
 })

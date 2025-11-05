@@ -140,7 +140,7 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("TODO", () => {
+  test("Block element nested inside inline context", () => {
     const source = dedent`
       <h1><div><b>hello</b></div></h1>
     `
@@ -150,5 +150,21 @@ describe("@herb-tools/formatter", () => {
         <div><b>hello</b></div>
       </h1>
     `)
+  })
+
+  test("root-level text with ERB interpolation", () => {
+    const source = dedent`
+      Hello, <%= @name %>, it is <%= @time %>.
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
+  })
+
+  test("text with ERB interpolation inside element", () => {
+    const source = dedent`
+      <div>Hello, <%= @name %>, it is <%= @time %>.</div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
   })
 })

@@ -245,6 +245,10 @@ module Herb
           type.new(name: field_name, kind: kind)
         end
       end
+
+      def c_type
+        @struct_type
+      end
     end
 
     class NodeType
@@ -267,6 +271,10 @@ module Herb
 
           type.new(name: field_name, kind: kind)
         end
+      end
+
+      def c_type
+        @struct_type
       end
     end
 
@@ -331,6 +339,8 @@ module Herb
     end
 
     def self.render(template_file)
+      template_file_display = template_file.delete_prefix("#{File.expand_path("../", __dir__)}/")
+
       name = Pathname.new(template_file)
       name = if name.absolute?
                template_file.gsub(
@@ -351,8 +361,6 @@ module Herb
                       )
                     end
 
-      puts "Rendering #{template_file.delete_prefix("#{File.expand_path("../", __dir__)}/")} → #{destination}"
-
       template_file = Pathname.new(template_file)
       template_path = if template_file.absolute?
                         template_file
@@ -366,6 +374,17 @@ module Herb
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
+
+      if File.exist?(destination)
+        existing_content = File.read(destination, encoding: Encoding::UTF_8)
+
+        if existing_content == content
+          puts "[unchanged] #{destination}"
+          return
+        end
+      end
+
+      puts "Rendering #{template_file_display} → #{destination}"
 
       FileUtils.mkdir_p(File.dirname(destination))
       File.write(destination, content)

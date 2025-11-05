@@ -9,12 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-size_t token_sizeof(void) {
-  return sizeof(struct TOKEN_STRUCT);
-}
-
 token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+  token_T* token = calloc(1, sizeof(token_T));
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
@@ -87,24 +83,25 @@ const char* token_type_to_string(const token_type_T type) {
   return "Unknown token_type_T";
 }
 
-char* token_to_string(const token_T* token) {
+hb_string_T token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
-  const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
+  const char* template = "#<Herb::Token type=\"%s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
   char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
-  char* escaped;
+  hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = herb_strdup("<EOF>");
+    escaped = hb_string(herb_strdup("<EOF>"));
   } else {
-    escaped = escape_newlines(token->value);
+    escaped = escape_newlines(hb_string(token->value));
   }
 
   sprintf(
     string,
     template,
     type_string,
-    escaped,
+    escaped.length,
+    escaped.data,
     token->range.from,
     token->range.to,
     token->location.start.line,
@@ -113,23 +110,15 @@ char* token_to_string(const token_T* token) {
     token->location.end.column
   );
 
-  free(escaped);
+  free(escaped.data);
 
-  return string;
-}
-
-char* token_value(const token_T* token) {
-  return token->value;
-}
-
-int token_type(const token_T* token) {
-  return token->type;
+  return hb_string(string);
 }
 
 token_T* token_copy(token_T* token) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, token_sizeof());
+  token_T* new_token = calloc(1, sizeof(token_T));
 
   if (!new_token) { return NULL; }
 

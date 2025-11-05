@@ -1,0 +1,3 @@
+@buf = []
+ _buf << '<div>Test</div>'.freeze;
+@buf.join

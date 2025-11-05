@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
+import dedent from "dedent"
 
 describe("CLI Output Formatting", () => {
   beforeAll(async () => {
@@ -10,22 +11,25 @@ describe("CLI Output Formatting", () => {
     try {
       const { execSync } = require("child_process")
       let env: Record<string, string> = {}
+
       if (typeof args[args.length - 1] === "object") {
         env = args.pop() as Record<string, string>
       }
+
       const allArgs = [...(args as string[]), "--no-timing"].join(' ')
 
-      const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs}`, {
+      const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs} 2>&1`, {
         encoding: "utf-8",
-        env: { ...process.env, NO_COLOR: "1", GITHUB_ACTIONS: undefined, ...env }
+        env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined, ...env }
       })
 
       return { output: output.trim(), exitCode: 0 }
     } catch (error: any) {
       const stderr = error.stderr ? error.stderr.toString().trim() : ""
       const stdout = error.stdout ? error.stdout.toString().trim() : ""
+      const combined = (stdout + "\n" + stderr).trim()
 
-      return { output: stderr || stdout, exitCode: error.status }
+      return { output: combined || stderr || stdout, exitCode: error.status }
     }
   }
 
@@ -183,8 +187,32 @@ describe("CLI Output Formatting", () => {
     expect(exitCode).toBe(1)
   })
 
+  test("GitHub Actions format includes rule codes", () => {
+    const { output, exitCode } = runLinter("erb-no-extra-whitespace-inside-tags.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
   test("Ignores disabled rules", () => {
     const { output, exitCode } = runLinter("ignored.html.erb")
+
+    expect(output).toMatchSnapshot()
+    expect(exitCode).toBe(1)
+  })
+
+  test("herb:disable rules", () => {
+    const result1 = runLinter("disabled-1.html.erb")
+    expect(result1.output).toMatchSnapshot()
+    expect(result1.exitCode).toBe(1)
+
+    const result2 = runLinter("disabled-2.html.erb")
+    expect(result2.output).toMatchSnapshot()
+    expect(result2.exitCode).toBe(1)
+  })
+
+  test("--ignore-disable-comments", () => {
+    const { output, exitCode } = runLinter("ignored.html.erb", "--ignore-disable-comments")
 
     expect(output).toMatchSnapshot()
     expect(exitCode).toBe(1)
@@ -209,6 +237,47 @@ describe("CLI Output Formatting", () => {
 
     expect(output).not.toMatch(/^::error/)
     expect(output).toMatch(/error.*Missing required.*alt.*attribute/)
-    expect(exitCode).toBe(1)
+    expect(exitCode) .toBe(1)
+  })
+
+  describe("Excluded Files", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("warns and skips excluded file without --force", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            exclude:
+              - "test-file-with-errors.html.erb"
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+
+        expect(output).toContain("File test/fixtures/test-file-with-errors.html.erb is excluded by configuration patterns")
+        expect(output).toContain("Use --force to lint it anyway")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("processes excluded file with --force", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            exclude:
+              - "test-file-with-errors.html.erb"
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--force")
+
+        expect(output).toContain("Forcing linter on excluded file")
+        expect(output).toContain("Missing required")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
   })
 })

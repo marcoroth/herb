@@ -1,12 +1,13 @@
 #include "include/analyzed_ruby.h"
+#include "include/util/hb_string.h"
 
 #include <prism.h>
 #include <string.h>
 
-analyzed_ruby_T* init_analyzed_ruby(char* source) {
+analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
 
-  pm_parser_init(&analyzed->parser, (const uint8_t*) source, strlen(source), NULL);
+  pm_parser_init(&analyzed->parser, (const uint8_t*) source.data, source.length, NULL);
 
   analyzed->root = pm_parse(&analyzed->parser);
   analyzed->valid = (analyzed->parser.error_list.size == 0);

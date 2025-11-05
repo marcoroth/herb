@@ -1,4 +1,6 @@
 import * as vscode from "vscode"
+import * as path from "path"
+import { promises as fs } from "fs"
 
 export interface EnvironmentInfo {
   extensionVersion: string
@@ -7,9 +9,12 @@ export interface EnvironmentInfo {
   nodeVersion: string
 }
 
-export interface HerbSettings {
-  'linter.enabled': boolean | undefined
-  'trace.server': string | undefined
+export interface PersonalHerbSettings {
+  vscodeSettings: {
+    'linter.enabled': boolean | undefined
+    'trace.server': string | undefined
+  }
+  projectConfig: string | null
 }
 
 export function getEnvironmentInfo(): EnvironmentInfo {
@@ -26,11 +31,29 @@ export function getEnvironmentInfo(): EnvironmentInfo {
   }
 }
 
-export function getHerbSettings(): HerbSettings {
+export async function getHerbSettings(): Promise<PersonalHerbSettings> {
   const config = vscode.workspace.getConfiguration('languageServerHerb')
+
+  const vscodeSettings = {
+    'linter.enabled': config.get('linter.enabled') as boolean | undefined,
+    'trace.server': config.get('trace.server') as string | undefined
+  }
+
+  let projectConfig: string | null = null
+
+  try {
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+    if (workspaceRoot) {
+      const configPath = path.join(workspaceRoot, '.herb.yml')
+      projectConfig = await fs.readFile(configPath, 'utf8')
+    }
+  } catch (error) {
+    projectConfig = null
+  }
+
   return {
-    'linter.enabled': config.get('linter.enabled'),
-    'trace.server': config.get('trace.server')
+    vscodeSettings,
+    projectConfig
   }
 }
 
@@ -48,8 +71,8 @@ export function extractErrorCode(diagnostic: vscode.Diagnostic): string {
   } else if (diagnostic.code && typeof diagnostic.code === 'object' && 'value' in diagnostic.code) {
     return String(diagnostic.code.value)
   } else {
-    // Fallback: extract from message
     const codeMatch = diagnostic.message.match(/([A-Z_]+[A-Z0-9_]*)/)
+
     return codeMatch ? codeMatch[1] : 'DIAGNOSTIC_ERROR'
   }
 }

@@ -142,4 +142,36 @@ describe("@herb-tools/formatter", () => {
     const output = formatter.format(input)
     expect(output).toEqual(expected)
   })
+
+  test("case/when with children", () => {
+    const input = dedent`
+      <% case variable %>
+        <h1>Children</h1>
+      <% when Integer %>
+        <h1>Integer</h1>
+      <% when String %>
+        <h1>String</h1>
+      <% else %>
+        <h1>else</h1>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(input)
+  })
+
+  test("case/in with children", () => {
+    const input = dedent`
+      <% case { hash: { nested: '4' } } %>
+        <span>children</span>
+      <% in { hash: { nested: } } %>
+        <span>nested</span>
+      <% else %>
+        <span>else</span>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(input)
+  })
 })

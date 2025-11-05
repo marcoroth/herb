@@ -1,44 +1,21 @@
 import { Diagnostic, LexResult, ParseResult } from "@herb-tools/core"
 
-import type { defaultRules } from "./default-rules.js"
+import type { rules } from "./rules.js"
 import type { Node } from "@herb-tools/core"
+import type { RuleConfig } from "@herb-tools/config"
+import type { Mutable } from "@herb-tools/rewriter"
+
+export type { Mutable } from "@herb-tools/rewriter"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
+
+export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> & Omit<RuleConfig, 'enabled' | 'severity'>
 
 /**
  * Automatically inferred union type of all available linter rule names.
  * This type extracts the 'name' property from each rule class instance.
  */
-export type LinterRule = InstanceType<typeof defaultRules[number]>['name']
-
-/**
- * Recursively removes readonly modifiers from a type, making it mutable.
- * Used internally during autofix to allow direct AST node mutation.
- *
- * @example
- * const node: HTMLOpenTagNode = ...  // readonly properties
- * const mutable = node as Mutable<HTMLOpenTagNode>  // can mutate
- * mutable.tag_name!.value = 'div'  // ✓ allowed
- */
-export type Mutable<T> = T extends ReadonlyArray<infer U>
-  ? Array<Mutable<U>>
-  : T extends object
-    ? { -readonly [K in keyof T]: Mutable<T[K]> }
-    : T
-
-/**
- * Converts a readonly node or object to a mutable version.
- * Use this in autofix methods to enable direct mutation of AST nodes.
- * Follows the TypeScript pattern of 'as const' but for mutability.
- *
- * @example
- * const mutable = asMutable(node)
- * mutable.tag_name.value = 'div'
- * mutable.content.value = 'updated'
- */
-export function asMutable<T>(node: T): Mutable<T> {
-  return node as Mutable<T>
-}
+export type LinterRule = InstanceType<typeof rules[number]>['name']
 
 
 /**
@@ -51,18 +28,32 @@ export interface BaseAutofixContext {
   node: Mutable<Node>
 }
 
-export interface LintOffense<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Diagnostic {
+/**
+ * A lint offense without severity bound. Rules produce these, and the Linter
+ * binds severity based on the rule's defaultConfig and user config overrides.
+ */
+export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Omit<Diagnostic, 'severity'> {
   rule: LinterRule
-  severity: LintSeverity
   /** Context data for autofix, including the offending node and rule-specific data */
   autofixContext?: TAutofixContext
+}
+
+/**
+ * A lint offense with severity bound. The Linter produces these by binding
+ * severity to UnboundLintOffenses based on rule configuration.
+ */
+export interface LintOffense<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends UnboundLintOffense<TAutofixContext> {
+  severity: LintSeverity
 }
 
 export interface LintResult<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   offenses: LintOffense<TAutofixContext>[]
   errors: number
   warnings: number
+  info: number
+  hints: number
   ignored: number
+  wouldBeIgnored?: number
 }
 
 /**
@@ -77,12 +68,17 @@ export interface AutofixResult<TAutofixContext extends BaseAutofixContext = Base
   unfixed: LintOffense<TAutofixContext>[]
 }
 
+/**
+ * Base class for parser rules.
+ */
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "parser" as const
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   abstract name: string
-  abstract check(result: ParseResult, context?: Partial<LintContext>): LintOffense<TAutofixContext>[]
+
+  abstract get defaultConfig(): FullRuleConfig
+  abstract check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
    * Optional method to determine if this rule should run.
@@ -104,12 +100,17 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   autofix?(offense: LintOffense<TAutofixContext>, result: ParseResult, context?: Partial<LintContext>): ParseResult | null
 }
 
+/**
+ * Base class for lexer rules.
+ */
 export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "lexer" as const
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   abstract name: string
-  abstract check(lexResult: LexResult, context?: Partial<LintContext>): LintOffense<TAutofixContext>[]
+
+  abstract get defaultConfig(): FullRuleConfig
+  abstract check(lexResult: LexResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
    * Optional method to determine if this rule should run.
@@ -142,13 +143,19 @@ export interface LexerRuleConstructor {
  */
 export interface LintContext {
   fileName: string | undefined
+  validRuleNames: string[] | undefined
+  ignoredOffensesByLine: Map<number, Set<string>> | undefined
+  ignoreDisableComments: boolean | undefined
 }
 
 /**
  * Default context object with all keys defined but set to undefined
  */
 export const DEFAULT_LINT_CONTEXT: LintContext = {
-  fileName: undefined
+  fileName: undefined,
+  validRuleNames: undefined,
+  ignoredOffensesByLine: undefined,
+  ignoreDisableComments: undefined
 } as const
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -156,7 +163,9 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
   abstract name: string
-  abstract check(source: string, context?: Partial<LintContext>): LintOffense<TAutofixContext>[]
+
+  abstract get defaultConfig(): FullRuleConfig
+  abstract check(source: string, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
    * Optional method to determine if this rule should run.

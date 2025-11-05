@@ -1,0 +1,56 @@
+package org.herb.ast;
+
+import java.util.List;
+
+/**
+ * Abstract base class for node visitors that provides default implementations.
+ * Subclasses can override specific visit methods to customize behavior.
+ *
+ * @param <R> the return type
+ * @param <C> the context type
+ */
+public abstract class Visitor<R, C> implements NodeVisitor<R, C> {
+
+  /**
+   * Default visit method that can be overridden by subclasses.
+   */
+  @Override
+  public R visitNode(Node node, C context) {
+    visitChildNodes(node, context);
+
+    return null;
+  }
+
+  /**
+   * Visit all child nodes of a given node.
+   * Subclasses can call this to recursively visit children.
+   */
+  protected void visitChildNodes(Node node, C context) {
+    if (node != null) {
+      node.visitChildren(this, context);
+    }
+  }
+
+  /**
+   * Visit a list of nodes.
+   */
+  protected void visitAll(List<Node> nodes, C context) {
+    if (nodes == null) return;
+
+    for (Node node : nodes) {
+      if (node != null) node.accept(this, context);
+    }
+  }
+
+  <%- nodes.each do |node| -%>
+  /**
+   * Default implementation for <%= node.name %>.
+   * Delegates to visitNode by default.
+   */
+  @Override
+  public R visit<%= node.name %>(<%= node.name %> node, C context) {
+    return visitNode(node, context);
+  }
+
+  <%- end -%>
+}

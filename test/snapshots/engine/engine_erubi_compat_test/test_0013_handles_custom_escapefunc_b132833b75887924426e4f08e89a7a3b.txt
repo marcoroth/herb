@@ -1,0 +1,3 @@
+_buf = ::String.new;
+ _buf << CGI.escapeHTML((content));
+_buf.to_s

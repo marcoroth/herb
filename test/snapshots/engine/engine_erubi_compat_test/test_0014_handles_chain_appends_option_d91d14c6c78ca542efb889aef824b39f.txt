@@ -1,0 +1,5 @@
+_buf = ::String.new;
+; _buf << (a).to_s << '
+'.freeze << (b).to_s << '
+'.freeze
+; _buf.to_s

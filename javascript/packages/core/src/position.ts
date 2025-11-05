@@ -7,8 +7,14 @@ export class Position {
   readonly line: number
   readonly column: number
 
-  static from(position: SerializedPosition) {
-    return new Position(position.line, position.column)
+  static from(position: SerializedPosition): Position
+  static from(line: number, column: number): Position
+  static from(positionOrLine: SerializedPosition | number, column?: number): Position {
+    if (typeof positionOrLine === "number") {
+      return new Position(positionOrLine, column!)
+    } else {
+      return new Position(positionOrLine.line, positionOrLine.column)
+    }
   }
 
   static get zero() {

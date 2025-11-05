@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "pathname"
+require "optparse"
+require_relative "lib/compare_helpers"
+
+include CompareHelpers
+
+def usage
+  puts "Usage: #{$PROGRAM_NAME} [options] <file>"
+  puts ""
+  puts "Compiles an ERB template with both Erubi::Engine and Herb::Engine and shows the diff."
+  puts ""
+  puts "Options:"
+  puts "  --no-escape              Disable HTML escaping"
+  puts "  --escape                 Enable HTML escaping (default: false)"
+  puts "  -h, --help               Show this help message"
+  exit(1)
+end
+
+options = {}
+options[:escape] = false
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options] <file>"
+  parse_common_options(opts, options) { usage }
+end.parse!
+
+options[:show_template] = true unless options.key?(:show_template)
+
+file_path = ARGV[0]
+
+unless file_path
+  puts "Error: No file specified"
+  usage
+end
+
+unless File.exist?(file_path)
+  puts "Error: File '#{file_path}' not found"
+  exit(1)
+end
+
+load_dependencies
+
+template = File.read(file_path)
+show_template(file_path, template) if options[:show_template]
+
+begin
+  herb_engine = Herb::Engine.new(template, options)
+  herb_src = herb_engine.src
+rescue StandardError => e
+  puts "Herb compile error: #{e.message}"
+  exit(1)
+end
+
+begin
+  erubi_engine = Erubi::Engine.new(template, options)
+  erubi_src = erubi_engine.src
+rescue StandardError => e
+  puts "Erubi compile error: #{e.message}"
+  exit(1)
+end
+
+herb_normalized = herb_src.gsub("__herb", "__engine")
+erubi_normalized = erubi_src.gsub("__erubi", "__engine")
+
+if herb_normalized == erubi_normalized
+  puts "✓ Compiled sources match (after normalization)!"
+  puts ""
+  puts "Herb output:"
+  puts herb_src
+  exit(0)
+elsif herb_src == erubi_src
+  puts "✓ Compiled sources match exactly!"
+  puts ""
+  puts "Output:"
+  puts herb_src
+  exit(0)
+else
+  puts "✗ Compiled sources differ!"
+  puts ""
+  puts ""
+
+  diff_output = diff_compiled_sources(erubi_src, herb_src)
+  puts diff_output if diff_output
+
+  exit(1)
+end

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { Location } from '../src/location.js'
-import { Position } from '../src/position.js'
+
 import {
   DocumentNode,
   LiteralNode,
@@ -27,37 +27,30 @@ import {
 } from '../src/node-type-guards.js'
 
 describe('Node Type Guards', () => {
-  // Helper to create a basic location for nodes
-  const createLocation = () => new Location(
-    new Position(1, 1),
-    new Position(1, 2)
-  )
-
-  // Create sample nodes for testing
   const documentNode = new DocumentNode({
     type: 'AST_DOCUMENT_NODE',
-    location: createLocation(),
+    location: Location.zero,
     errors: [],
     children: []
   })
 
   const literalNode = new LiteralNode({
     type: 'AST_LITERAL_NODE',
-    location: createLocation(),
+    location: Location.zero,
     errors: [],
     content: 'test'
   })
 
   const htmlTextNode = new HTMLTextNode({
     type: 'AST_HTML_TEXT_NODE',
-    location: createLocation(),
+    location: Location.zero,
     errors: [],
     content: 'text'
   })
 
   const erbContentNode = new ERBContentNode({
     type: 'AST_ERB_CONTENT_NODE',
-    location: createLocation(),
+    location: Location.zero,
     errors: [],
     tag_opening: null,
     content: null,

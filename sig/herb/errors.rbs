@@ -29,6 +29,8 @@ module Herb
     end
 
     class UnexpectedError < Error
+      include Colors
+
       attr_reader description: String
 
       attr_reader expected: String
@@ -49,6 +51,8 @@ module Herb
     end
 
     class UnexpectedTokenError < Error
+      include Colors
+
       attr_reader expected_type: String
 
       attr_reader found: Herb::Token
@@ -67,6 +71,8 @@ module Herb
     end
 
     class MissingOpeningTagError < Error
+      include Colors
+
       attr_reader closing_tag: Herb::Token
 
       # : (String, Location, String, Herb::Token) -> void
@@ -83,6 +89,8 @@ module Herb
     end
 
     class MissingClosingTagError < Error
+      include Colors
+
       attr_reader opening_tag: Herb::Token
 
       # : (String, Location, String, Herb::Token) -> void
@@ -99,6 +107,8 @@ module Herb
     end
 
     class TagNamesMismatchError < Error
+      include Colors
+
       attr_reader opening_tag: Herb::Token
 
       attr_reader closing_tag: Herb::Token
@@ -117,6 +127,8 @@ module Herb
     end
 
     class QuotesMismatchError < Error
+      include Colors
+
       attr_reader opening_quote: Herb::Token
 
       attr_reader closing_quote: Herb::Token
@@ -135,6 +147,8 @@ module Herb
     end
 
     class VoidElementClosingTagError < Error
+      include Colors
+
       attr_reader tag_name: Herb::Token
 
       attr_reader expected: String
@@ -155,6 +169,8 @@ module Herb
     end
 
     class UnclosedElementError < Error
+      include Colors
+
       attr_reader opening_tag: Herb::Token
 
       # : (String, Location, String, Herb::Token) -> void
@@ -171,6 +187,8 @@ module Herb
     end
 
     class RubyParseError < Error
+      include Colors
+
       attr_reader error_message: String
 
       attr_reader diagnostic_id: String

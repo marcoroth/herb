@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, getTagName, hasAttribute, getAttributes, findAttributeByName } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLAttributeValueNode, ParseResult, Node } from "@herb-tools/core"
 
 const ELEMENTS_WITH_NATIVE_DISABLED_ATTRIBUTE_SUPPORT = new Set([
@@ -32,7 +32,6 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
       this.addOffense(
         "aria-disabled may be used in place of native HTML disabled to allow tab-focus on an otherwise ignored element. Setting both attributes is contradictory and confusing. Choose either disabled or aria-disabled, not both.",
         node.tag_name!.location,
-        "error"
       )
     }
   }
@@ -56,7 +55,14 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
 export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
   name = "html-avoid-both-disabled-and-aria-disabled"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new AvoidBothDisabledAndAriaDisabledVisitor(this.name, context)
 
     visitor.visit(result.value)

@@ -21,6 +21,7 @@ export interface ContentUnit {
   type: 'text' | 'inline' | 'erb' | 'block'
   isAtomic: boolean
   breaksFlow: boolean
+  isHerbDisable?: boolean
 }
 
 /**
@@ -147,6 +148,34 @@ export function filterEmptyNodes(nodes: Node[]): Node[] {
   )
 }
 
+/**
+ * Smart filter that preserves exactly ONE whitespace before herb:disable comments
+ */
+export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
+  const result: Node[] = []
+  let pendingWhitespace: Node | null = null
+
+  for (const node of nodes) {
+    const isWhitespace = isNode(node, WhitespaceNode) || (isNode(node, HTMLTextNode) && node.content.trim() === "")
+    const isHerbDisable = isNode(node, ERBContentNode) && isHerbDisableComment(node)
+
+    if (isWhitespace) {
+      if (!pendingWhitespace) {
+        pendingWhitespace = node
+      }
+    } else {
+      if (isHerbDisable && pendingWhitespace) {
+        result.push(pendingWhitespace)
+      }
+
+      pendingWhitespace = null
+      result.push(node)
+    }
+  }
+
+  return result
+}
+
 // --- Punctuation and Word Spacing Functions ---
 
 /**
@@ -204,6 +233,12 @@ export function buildLineWithWord(currentLine: string, word: string): string {
 
   if (word === ' ') {
     return currentLine.endsWith(' ') ? currentLine : `${currentLine} `
+  }
+
+  if (isClosingPunctuation(word)) {
+    currentLine = currentLine.trimEnd()
+
+    return `${currentLine}${word}`
   }
 
   return needsSpaceBetween(currentLine, word) ? `${currentLine} ${word}` : `${currentLine}${word}`
@@ -472,4 +507,17 @@ export function endsWithAlphanumeric(text: string): boolean {
  */
 export function endsWithWhitespace(text: string): boolean {
   return /\s$/.test(text)
+}
+
+/**
+ * Check if an ERB content node is a herb:disable comment
+ */
+export function isHerbDisableComment(node: Node): boolean {
+  if (!isNode(node, ERBContentNode)) return false
+  if (node.tag_opening?.value !== "<%#") return false
+
+  const content = node?.content?.value || ""
+  const trimmed = content.trim()
+
+  return trimmed.startsWith("herb:disable")
 }

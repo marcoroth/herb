@@ -1,0 +1,208 @@
+# This file configures the GitHub Actions labeler to automatically apply labels to pull requests
+# based on the files that are modified.
+#
+# See: https://github.com/actions/labeler
+
+c:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.c'
+      - '**/*.h'
+      - 'test/c/**/*'
+      - 'templates/**/*.c.erb'
+      - 'templates/**/*.h.erb'
+
+cpp:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.cpp'
+      - 'templates/**/*.cpp.erb'
+
+rust:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.rs'
+      - '**/*.rs.erb'
+      - '**/Cargo.toml'
+      - '**/Cargo.lock'
+
+javascript:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'javascript/**/*'
+      - 'templates/javascript/**/*'
+
+typescript:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/**/*.ts'
+      - '**/javascript/**/*.ts.erb'
+
+java:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/*.java'
+      - '**/*.java.erb'
+
+ruby:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/**/*.rb'
+      - 'ext/**/*.rb'
+
+c-extension:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'ext/**/*'
+
+sorbet:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'sorbet/**/*'
+
+rbs:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'sig/**/*.rbs'
+
+parser:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/parser.c'
+      - 'src/parser_*.c'
+      - 'src/include/parser.h'
+      - 'src/include/parser_*.h'
+      - 'test/parser/**/*'
+
+lexer:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/lexer.c'
+      - 'src/lexer_*.c'
+      - 'src/include/lexer.h'
+      - 'src/include/lexer_*.h'
+      - 'test/lexer/**/*'
+
+engine:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'lib/herb/engine/**/*'
+      - 'test/engine/**/*'
+
+browser:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/browser/**/*'
+
+node-wasm:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/node-wasm/**/*'
+
+formatter:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/formatter/**/*'
+
+linter:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/**/*'
+
+linter-rule:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/src/rules/**/*'
+      - '**/javascript/packages/linter/docs/rules/**/*'
+
+linter-autofix:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/linter/test/autofix/**/*'
+
+language-server:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/language-server/**/*'
+      - '**/javascript/packages/herb-language-server/**/*'
+
+language-service:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/language-service/**/*'
+
+printer:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/printer/**/*'
+
+highlighter:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/highlighter/**/*'
+
+node:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/node/**/*'
+
+stimulus-lint:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/stimulus-lint/**/*'
+
+vscode:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/vscode/**/*'
+
+dev-tools:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/dev-tools/**/*'
+
+config:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/config/**/*'
+
+tailwind-class-sorter:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/tailwind-class-sorter/**/*'
+
+minifier:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/minifier/**/*'
+
+rewriter:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/rewriter/**/*'
+
+core:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/core/**/*'
+
+wasm:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'wasm/**/*'
+
+playground:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'playground/**/*'
+
+rubygem:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'herb.gemspec'
+      - 'lib/**/*'
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/docs/**/*'
