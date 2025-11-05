@@ -11,8 +11,27 @@
     │   │
     │   ├── tag_name: "style" (location: (1:1)-(1:6))
     │   ├── body: (1 item)
-    │   │   └── @ LiteralNode (location: (1:7)-(9:0))
-    │   │       └── content: "\n  /* <div>Comment with HTML</div> */\n  .tooltip::after {\n    content: \"<div class='arrow'></div>\";\n  }\n  .container > .item:first-child {\n    background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n  }\n"
+    │   │   └── @ CSSStyleNode (location: (1:7)-(9:0))
+    │   │       ├── content: "\n  /* <div>Comment with HTML</div> */\n  .tooltip::after {\n    content: \"<div class='arrow'></div>\";\n  }\n  .container > .item:first-child {\n    background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n  }\n"
+    │   │       ├── rules: (2 items)
+    │   │       │   ├── @ CSSRuleNode (location: (1:7)-(9:0))
+    │   │       │   │   ├── selector: "SelectorList([Selector(.tooltip:after, specificity = 0x401)])"
+    │   │       │   │   └── declarations: (1 item)
+    │   │       │   │       └── @ CSSDeclarationNode (location: (1:7)-(9:0))
+    │   │       │   │           ├── property: "content"
+    │   │       │   │           └── value: "Custom(CustomProperty { name: Unknown(Ident(\"content\")), value: TokenList([Token(String(\"<div class='arrow'></div>\"))]) })"
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ CSSRuleNode (location: (1:7)-(9:0))
+    │   │       │       ├── selector: "SelectorList([Selector(.container > .item:first-child, specificity = 0xc00)])"
+    │   │       │       └── declarations: (1 item)
+    │   │       │           └── @ CSSDeclarationNode (location: (1:7)-(9:0))
+    │   │       │               ├── property: "background"
+    │   │       │               └── value: "Background([Background { image: Url(Url { url: \"data:image/svg+xml,<svg><rect/></svg>\", loc: Location { line: 7, column: 17 } }), color: RGBA(RGBA { red: 0, green: 0, blue: 0, alpha: 0 }), position: BackgroundPosition { x: Length(Percentage(Percentage(0.0))), y: Length(Percentage(Percentage(0.0))) }, repeat: BackgroundRepeat { x: Repeat, y: Repeat }, size: Explicit { width: Auto, height: Auto }, attachment: Scroll, origin: PaddingBox, clip: BorderBox }])"
+    │   │       │
+    │   │       │
+    │   │       ├── valid: true
+    │   │       └── parse_error: ""
     │   │
     │   ├── close_tag:
     │   │   └── @ HTMLCloseTagNode (location: (9:0)-(9:8))

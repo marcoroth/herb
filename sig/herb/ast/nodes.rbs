@@ -1028,5 +1028,90 @@ module Herb
       # : (?Integer) -> String
       def tree_inspect: (?Integer) -> String
     end
+
+    class CSSDeclarationNode < Node
+      attr_reader property: String
+
+      attr_reader value: String
+
+      # : (String, Location, Array[Herb::Errors::Error], String, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, String) -> void
+
+      # : () -> serialized_css_declaration_node
+      def to_hash: () -> serialized_css_declaration_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class CSSRuleNode < Node
+      attr_reader selector: String
+
+      attr_reader declarations: Array[Herb::AST::CSSDeclarationNode]
+
+      # : (String, Location, Array[Herb::Errors::Error], String, Array[Herb::AST::CSSDeclarationNode]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, Array[Herb::AST::CSSDeclarationNode]) -> void
+
+      # : () -> serialized_css_rule_node
+      def to_hash: () -> serialized_css_rule_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
+
+    class CSSStyleNode < Node
+      attr_reader content: String
+
+      attr_reader rules: Array[Herb::AST::CSSRuleNode]
+
+      attr_reader valid: bool
+
+      attr_reader parse_error: String
+
+      # : (String, Location, Array[Herb::Errors::Error], String, Array[Herb::AST::CSSRuleNode], bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, Array[Herb::AST::CSSRuleNode], bool, String) -> void
+
+      # : () -> serialized_css_style_node
+      def to_hash: () -> serialized_css_style_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?Integer) -> String
+      def tree_inspect: (?Integer) -> String
+    end
   end
 end

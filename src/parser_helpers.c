@@ -1,6 +1,7 @@
 #include "include/parser_helpers.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
+#include "include/css_node_helpers.h"
 #include "include/errors.h"
 #include "include/html_util.h"
 #include "include/lexer.h"
@@ -135,6 +136,21 @@ void parser_append_literal_node_from_buffer(
     ast_literal_node_init(hb_buffer_value(buffer), start, parser->current_token->location.start, NULL);
 
   if (children != NULL) { hb_array_append(children, literal); }
+  hb_buffer_clear(buffer);
+}
+
+void parser_append_css_node_from_buffer(
+  const parser_T* parser,
+  hb_buffer_T* buffer,
+  hb_array_T* children,
+  position_T start
+) {
+  if (hb_buffer_length(buffer) == 0) { return; }
+
+  AST_CSS_STYLE_NODE_T* css_node =
+    create_css_style_node(hb_buffer_value(buffer), start, parser->current_token->location.start);
+
+  if (children != NULL) { hb_array_append(children, css_node); }
   hb_buffer_clear(buffer);
 }
 

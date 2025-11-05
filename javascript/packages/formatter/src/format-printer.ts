@@ -95,6 +95,9 @@ import {
   ERBInNode,
   XMLDeclarationNode,
   CDATANode,
+  CSSStyleNode,
+  CSSRuleNode,
+  CSSDeclarationNode,
   Token
 } from "@herb-tools/core"
 
@@ -1324,6 +1327,20 @@ export class FormatPrinter extends Printer {
 
     if (node.else_clause) this.visit(node.else_clause)
     if (node.end_node) this.visit(node.end_node)
+  }
+
+  visitCSSStyleNode(node: CSSStyleNode) {
+    if (node.content) {
+      this.push(node.content)
+    }
+  }
+
+  visitCSSRuleNode(_node: CSSRuleNode) {
+    // CSS rules are contained within CSSStyleNode, not rendered separately
+  }
+
+  visitCSSDeclarationNode(_node: CSSDeclarationNode) {
+    // CSS declarations are contained within CSSRuleNode, not rendered separately
   }
 
   // --- Element Formatting Analysis Helpers ---
