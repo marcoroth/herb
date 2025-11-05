@@ -23,12 +23,12 @@ class HTMLTurboPermanentVisitor extends Visitor {
     const attribute = findAttributeByName(getAttributes(node), "data-turbo-permanent")
     if (!attribute) return
 
-    if (getAttributeValue(attribute) === "false") {
+    if (getAttributeValue(attribute) !== null) {
       this.offenses.push({
         rule: this.ruleName,
         code: this.ruleName,
         source: "Turbo Linter",
-        message: 'Attribute `data-turbo-permanent` should not contain value "false"',
+        message: 'Attribute `data-turbo-permanent` should not contain any value',
         location: node.tag_name!.location,
         severity: "error"
       })

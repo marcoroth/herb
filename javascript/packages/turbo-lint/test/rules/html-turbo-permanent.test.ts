@@ -9,16 +9,18 @@ describe("html-turbo-permanent", () => {
     expectNoOffenses('<div id="cart-counter" data-turbo-permanent>1 item</div>')
   })
 
-  test("passes when empty explicit value is given", () => {
-    expectNoOffenses('<div id="cart-counter" data-turbo-permanent="">1 item</div>')
-  })
-
-  test("passes when string true value is given", () => {
-    expectNoOffenses('<div id="cart-counter" data-turbo-permanent="true">1 item</div>')
+  test("fails when string true value is given", () => {
+    expectError('Attribute `data-turbo-permanent` should not contain any value')
+    assertOffenses('<div id="cart-counter" data-turbo-permanent="true">1 item</div>')
   })
 
   test("fails when passing permanent=false", () => {
-    expectError('Attribute `data-turbo-permanent` should not contain value "false"')
+    expectError('Attribute `data-turbo-permanent` should not contain any value')
     assertOffenses('<div id="cart-counter" data-turbo-permanent="false">1 item</div>')
+  })
+
+  test("fails when other value is passed", () => {
+    expectError('Attribute `data-turbo-permanent` should not contain any value')
+    assertOffenses('<div id="cart-counter" data-turbo-permanent="foo">1 item</div>')
   })
 })
