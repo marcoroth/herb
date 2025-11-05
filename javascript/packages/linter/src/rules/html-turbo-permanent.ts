@@ -1,4 +1,4 @@
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { LintOffense, LintContext } from "../types.js"
@@ -11,7 +11,10 @@ class HTMLTurboPermanentVisitor extends BaseRuleVisitor {
   }
 
   private checkTurboPermanentAttribute(node: HTMLOpenTagNode): void {
-    if (hasAttribute(node, "data-turbo-permanent") && getAttributeValue(node, "data-turbo-permanent") == "true") {
+    const attribute = findAttributeByName(getAttributes(node), "data-turbo-permanent")
+    if (!attribute) return
+
+    if (getAttributeValue(attribute) === "true") {
       this.addOffense(
         'Attribute `data-turbo-permanent` should not contain value "false"',
         node.tag_name!.location,
@@ -19,6 +22,7 @@ class HTMLTurboPermanentVisitor extends BaseRuleVisitor {
       )
     }
   }
+}
 
 export class HTMLTurboPermanentRule extends ParserRule {
   name = "html-turbo-permanent"

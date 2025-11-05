@@ -1,5 +1,5 @@
 import { describe, test } from "vitest"
-import { HTMLImgRequireAltRule } from "../../src/rules/html-turbo-permanent.js"
+import { HTMLTurboPermanentRule } from "../../src/rules/html-turbo-permanent.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLTurboPermanentRule)
@@ -10,7 +10,8 @@ describe("html-tubro-permanent", () => {
   })
 
   test("passes when empty explicit value is given", () => {
-    expectNoOffenses('<div id="cart-counter" data-turbo-permanent="">1 item</div>')
+    expectError('')
+    assertOffenses('<div id="cart-counter" data-turbo-permanent="">1 item</div>')
   })
 
   test("passes when string true value is given", () => {
