@@ -1,0 +1,50 @@
+{
+  "name": "turbo-lint",
+  "version": "0.1.0",
+  "description": "Linting rules for Turbo HTML+ERB view templates.",
+  "license": "MIT",
+  "homepage": "https://herb-tools.dev",
+  "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60turbo-lint%60:%20",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcoroth/herb.git",
+    "directory": "javascript/packages/turbo-lint"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "turbo-lint": "./bin/turbo-lint"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "yarn clean && tsc -b && rollup -c",
+    "watch": "tsc -b -w",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "yarn clean && yarn build && yarn test"
+  },
+  "dependencies": {
+    "@herb-tools/core": "0.7.5",
+    "@herb-tools/highlighter": "0.7.5",
+    "@herb-tools/linter": "0.7.5",
+    "@herb-tools/node-wasm": "0.7.5"
+  },
+  "files": [
+    "package.json",
+    "README.md",
+    "docs/",
+    "src/",
+    "bin/",
+    "dist/"
+  ]
+}
