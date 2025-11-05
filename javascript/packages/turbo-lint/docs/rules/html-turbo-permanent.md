@@ -16,14 +16,14 @@ Data turbo permanent is active if the attribute is present, `data-turbo-permanen
 
 ```html
 <div id="cart-counter" data-turbo-permanent>1 item</div>
-
-<div id="cart-counter" data-turbo-permanent="true">1 item</div>
 ```
 
 ### 🚫 Bad
 
 ```html
+<div id="cart-counter" data-turbo-permanent="true">1 item</div>
 <div id="cart-counter" data-turbo-permanent="false">1 item</div>
+<div id="cart-counter" data-turbo-permanent="foo">1 item</div>
 ```
 
 ## References
