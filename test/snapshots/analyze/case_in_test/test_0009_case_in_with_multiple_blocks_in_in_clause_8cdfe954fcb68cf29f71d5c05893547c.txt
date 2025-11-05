@@ -1,3 +1,16 @@
+---
+source: "Analyze::CaseInTest#test_0009_case in with multiple blocks in in clause"
+input: |2-
+<% case data %>
+<% in { type: :alert } %>
+  <%= content_tag(:div) do %>
+    Alert
+  <% end %>
+  <%= content_tag(:span) do %>
+    Icon
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(9:9))

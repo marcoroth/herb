@@ -1,3 +1,13 @@
+---
+source: "Analyze::CaseTest#test_0012_case with if statement inside when"
+input: |2-
+<% case status %>
+<% when :active %>
+  <% if admin? %>
+    Admin view
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(6:9))

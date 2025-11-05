@@ -1,2 +1,6 @@
+---
+source: "Lexer::Utf8Test#test_0003_single UTF-8 character - emoji (4 bytes)"
+input: "🌿"
+---
 #<Herb::Token type="TOKEN_CHARACTER" value="🌿" range=[0, 4] start=(1:0) end=(1:1)>
 #<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[4, 4] start=(1:1) end=(1:1)>

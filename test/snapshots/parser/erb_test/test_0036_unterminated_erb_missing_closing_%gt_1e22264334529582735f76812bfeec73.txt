@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0036_unterminated erb missing closing %>"
+input: "<% if true"
+---
 @ DocumentNode (location: (1:0)-(1:10))
 └── children: (1 item)
     └── @ ERBIfNode (location: (1:0)-(1:10))

@@ -1,3 +1,10 @@
+---
+source: "Parser::ScriptStyleTest#test_0018_nested script tags (inner in string)"
+input: |2-
+<script>
+  document.write('<script src="other.js"><' + '/script>');
+</script>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:9))

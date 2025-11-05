@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineBlockTest#test_0013_erb case statements compile correctly"
+input: "{source: \"<% case status %>\\n<% when :active %>\\n  <span>Active</span>\\n<% when :pending %>\\n  <span>Pending</span>\\n<% else %>\\n  <span>Unknown</span>\\n<% end %>\\n\", options: {}}"
+---
 _buf = ::String.new;
  case status; when :active; _buf << '
   <span>Active</span>

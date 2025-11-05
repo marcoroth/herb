@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0014_nested structures"
+input: "{source: \"<div>\\n  <% if logged_in? %>\\n    <ul>\\n      <% items.each do |item| %>\\n        <li>\\n          <% if item.featured? %>\\n            <strong><%= item.name %></strong>\\n          <% else %>\\n            <%= item.name %>\\n          <% end %>\\n        </li>\\n      <% end %>\\n    </ul>\\n  <% else %>\\n    <p>Please log in</p>\\n  <% end %>\\n</div>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<div>
   '.freeze; if logged_in?; _buf << '

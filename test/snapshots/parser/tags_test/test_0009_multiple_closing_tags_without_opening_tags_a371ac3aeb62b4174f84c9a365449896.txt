@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0009_multiple closing tags without opening tags"
+input: "</div></div></span>"
+---
 @ DocumentNode (location: (1:0)-(1:19))
 └── children: (3 items)
     ├── @ HTMLCloseTagNode (location: (1:0)-(1:6))

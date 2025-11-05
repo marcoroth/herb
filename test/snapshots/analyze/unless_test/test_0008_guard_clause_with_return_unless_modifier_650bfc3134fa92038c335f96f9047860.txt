@@ -1,3 +1,11 @@
+---
+source: "Analyze::UnlessTest#test_0008_guard clause with return unless modifier"
+input: |2-
+<% def some_method %>
+  <% return unless condition %>
+  <div>This will render</div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (8 items)
     ├── @ ERBContentNode (location: (1:0)-(1:21))

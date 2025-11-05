@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0015_handles multiple erb constructs in complex template"
+input: "{source: \"<!DOCTYPE html>\\n<html>\\n<head>\\n  <title><%= @title %></title>\\n</head>\\n<body>\\n  <% if @user %>\\n    <h1>Welcome <%= @user.name %>!</h1>\\n    <% @user.posts.each do |post| %>\\n      <article>\\n        <h2><%== post.title %></h2>\\n        <div><%= post.content %></div>\\n      </article>\\n    <% end %>\\n  <% else %>\\n    <p>Please log in</p>\\n  <% end %>\\n  <%# This comment should not appear %>\\n</body>\\n</html>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<!DOCTYPE html>
 <html>

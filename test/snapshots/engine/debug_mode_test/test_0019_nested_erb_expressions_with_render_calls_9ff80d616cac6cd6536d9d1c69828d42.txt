@@ -1,3 +1,7 @@
+---
+source: "Engine::DebugModeTest#test_0019_nested erb expressions with render calls"
+input: "{source: \"<div class=\\\"container\\\">\\n  <h1>Welcome <%= @user.name %>!</h1>\\n  <%= render \\\"shared/navigation\\\" %>\\n  <main>\\n    <%= render partial: \\\"content\\\", locals: { data: @data } %>\\n  </main>\\n</div>\\n\", options: {debug: true, filename: \"app/views/welcome.html.erb\"}}"
+---
 _buf = ::String.new;
  _buf << '<div class="container" data-herb-debug-outline-type="view" data-herb-debug-file-name="welcome.html.erb" data-herb-debug-file-relative-path="app/views/welcome.html.erb" data-herb-debug-file-full-path="app/views/welcome.html.erb">
   <h1>Welcome <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @user.name %&gt;" data-herb-debug-file-name="welcome.html.erb" data-herb-debug-file-relative-path="app/views/welcome.html.erb" data-herb-debug-file-full-path="app/views/welcome.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="15" style="display: contents;">'.freeze; _buf << (@user.name).to_s; _buf << '</span>!</h1>

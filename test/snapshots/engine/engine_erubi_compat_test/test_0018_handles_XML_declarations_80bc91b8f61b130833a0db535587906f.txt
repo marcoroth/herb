@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0018_handles XML declarations"
+input: "{source: \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<?xml version="1.0" encoding="UTF-8"?>'.freeze;
 _buf.to_s

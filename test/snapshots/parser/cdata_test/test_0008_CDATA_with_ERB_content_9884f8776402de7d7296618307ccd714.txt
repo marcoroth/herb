@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0008_CDATA with ERB content"
+input: "<![CDATA[<%= @variable %>]]>"
+---
 @ DocumentNode (location: (1:0)-(1:28))
 └── children: (1 item)
     └── @ CDATANode (location: (1:0)-(1:28))

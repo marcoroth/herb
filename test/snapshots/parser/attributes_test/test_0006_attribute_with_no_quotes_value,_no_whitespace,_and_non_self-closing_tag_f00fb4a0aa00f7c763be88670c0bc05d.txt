@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0006_attribute with no quotes value, no whitespace, and non self-closing tag"
+input: "<div value=hello>"
+---
 @ DocumentNode (location: (1:0)-(1:17))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (1:17)-(1:17))

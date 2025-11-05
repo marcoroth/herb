@@ -1,3 +1,12 @@
+---
+source: "Parser::TagsTest#test_0049_multiple closing tags with newlines before >"
+input: |2-
+        <div>
+          <span>Text</span
+          >
+        </div
+        >
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:8))

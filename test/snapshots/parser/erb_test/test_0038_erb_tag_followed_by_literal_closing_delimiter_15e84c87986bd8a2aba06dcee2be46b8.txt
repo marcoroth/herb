@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0038_erb tag followed by literal closing delimiter"
+input: "<% content %> %>"
+---
 @ DocumentNode (location: (1:0)-(1:16))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:13))

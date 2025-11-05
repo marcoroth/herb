@@ -1,3 +1,7 @@
+---
+source: "Engine::ValidationDeduplicationTest#test_0002_multiple identical errors at different locations generate separate templates"
+input: "{source: \"<div <%= @bad1 %>></div>\\n<div <%= @bad1 %>></div>\\n<div <%= @bad2 %>></div>\\n\", options: {validation_mode: :overlay, filename: \"multi_test.html.erb\"}}"
+---
 _buf = ::String.new;
  _buf << '<div'.freeze; _buf << (@bad1).to_s; _buf << '></div>
 <div'.freeze; _buf << (@bad1).to_s; _buf << '></div>

@@ -1,3 +1,7 @@
+---
+source: "Engine::EscapeTest::attributes#test_0001_default"
+input: "{source: \"<div class=\\\"<%= value %>\\\"></div>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((value)); _buf << '"></div>'.freeze;
 _buf.to_s

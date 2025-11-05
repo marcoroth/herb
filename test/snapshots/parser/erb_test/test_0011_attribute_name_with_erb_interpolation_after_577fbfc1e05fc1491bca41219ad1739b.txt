@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0011_attribute name with erb interpolation after"
+input: "<img data-<%= key %>=\"example\">"
+---
 @ DocumentNode (location: (1:0)-(1:31))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:31))

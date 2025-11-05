@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0002_handles basic erb expressions"
+input: "{source: \"<table>\\n <tbody>\\n  <% i = 0\\n     list.each_with_index do |item, i| %>\\n  <tr>\\n   <td><%= i+1 %></td>\\n   <td><%== item %></td>\\n  </tr>\\n <% end %>\\n </tbody>\\n</table>\\n<%== i+1 %>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<table>
  <tbody>

@@ -1,3 +1,10 @@
+---
+source: "Parser::ScriptStyleTest#test_0053_script tag with template literal containing closing tag (multiline)"
+input: |2-
+<script>
+  `</script>`
+</script>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:12))

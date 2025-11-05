@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0048_script tag with closing tag in complex multi-line comment"
+input: |2-
+<script>
+  /*
+   * This is a comment with </script> inside
+   * and some more content </style>
+   */
+  console.log("actual code");
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (6 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:37))

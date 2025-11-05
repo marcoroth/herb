@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0009_complex expressions"
+input: "{source: \"<div class=\\\"user-<%= user.id %>\\\" data-active=\\\"<%= user.active? %>\\\">\\n  <h1><%= user.name.upcase %></h1>\\n  <p>Score: <%= user.score * 2 %></p>\\n  <% if user.score > 50 %>\\n    <span class=\\\"high-score\\\">Excellent!</span>\\n  <% end %>\\n</div>\\n\", locals: {user: #<struct Engine::EvaluationTest::User id=123, name=\"John Doe\", score=75, :active?=true>}, options: {escape: false}}"
+---
 <div class="user-123" data-active="true">
   <h1>JOHN DOE</h1>
   <p>Score: 150</p>

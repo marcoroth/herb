@@ -1,3 +1,13 @@
+---
+source: "Analyze::CaseTest#test_0002_case statement with multiple when"
+input: |2-
+<% case variable %>
+<% when String %>
+  String
+<% when Integer %>
+  Integer
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(6:9))

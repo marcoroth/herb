@@ -1,3 +1,12 @@
+---
+source: "Parser::ScriptStyleTest#test_0037_script tag with mixed quote types and closing tags"
+input: |2-
+<script>
+  var single = '</script>';
+  var double = "</script>";
+  console.log("All strings parsed correctly");
+</script>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (6 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:25))

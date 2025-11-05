@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0006_handles escape option"
+input: "{source: \"<%= content %>\", options: {escape: true}}"
+---
 __herb = ::Herb::Engine; _buf = ::String.new;
  _buf << __herb.h((content));
 _buf.to_s

@@ -1,3 +1,15 @@
+---
+source: "Analyze::CaseTest#test_0010_case with nested blocks in when"
+input: |2-
+<% case level %>
+<% when 1 %>
+  <%= content_tag(:div) do %>
+    <%= content_tag(:p) do %>
+      Nested
+    <% end %>
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(9:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(8:9))

@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0006_script tag with ERB-like content in string"
+input: "<script>console.log(\"<%\");</script>"
+---
 @ DocumentNode (location: (1:0)-(1:35))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (1:35)-(1:35))

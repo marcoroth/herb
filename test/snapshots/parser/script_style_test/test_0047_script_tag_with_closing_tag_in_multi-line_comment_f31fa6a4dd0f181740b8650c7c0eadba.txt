@@ -1,3 +1,10 @@
+---
+source: "Parser::ScriptStyleTest#test_0047_script tag with closing tag in multi-line comment"
+input: |2-
+<script>
+  /* </script> */
+</script>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:14))

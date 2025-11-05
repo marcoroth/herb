@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0016_handles void elements correctly"
+input: "{source: \"<img src=\\\"photo.jpg\\\" alt=\\\"Photo\\\">\\n<br>\\n<input type=\\\"text\\\" name=\\\"<%= field_name %>\\\">\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<img src="photo.jpg" alt="Photo">
 <br>

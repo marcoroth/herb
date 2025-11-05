@@ -1,3 +1,7 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0007_case when compilation"
+input: "{source: \"<% case Date.today.cwday %>\\n<% when 0 %>\\n  <p>Today is Sunday</p>\\n<% when 1 %>\\n  <p>Today is Monday</p>\\n<% when 2 %>\\n  <p>Today is Tuesday</p>\\n<% when 3 %>\\n  <p>Today is Wednesday</p>\\n<% when 4 %>\\n  <p>Today is Thursday</p>\\n<% when 5 %>\\n  <p>Today is Friday</p>\\n<% when 6 %>\\n  <p>Today is Saturday</p>\\n<% else %>\\n  <p>Today is not a day of the week</p>\\n<% end %>\\n\", options: {escape: false}}"
+---
 _buf = ::String.new;
  case Date.today.cwday; when 0; _buf << '
   <p>Today is Sunday</p>

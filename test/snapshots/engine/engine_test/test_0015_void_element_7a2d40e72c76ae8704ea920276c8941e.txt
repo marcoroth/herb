@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0015_void element"
+input: "{source: \"<input type=\\\"text\\\" name=\\\"name\\\" value=\\\"<%= @name %>\\\" />\\n<input type=\\\"text\\\" name=\\\"name\\\" value=\\\"<%= @name %>\\\"/>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<input type="text" name="name" value="'.freeze; _buf << ::Herb::Engine.attr((@name)); _buf << '"/>
 <input type="text" name="name" value="'.freeze; _buf << ::Herb::Engine.attr((@name)); _buf << '"/>

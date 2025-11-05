@@ -1,3 +1,10 @@
+---
+source: "Parser::SVGTest#test_0006_svg unclosed element reports an error"
+input: |2-
+<svg>
+  <g>
+</svg>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 ├── errors: (2 errors)
 │   ├── @ UnclosedElementError (location: (4:0)-(4:0))

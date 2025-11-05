@@ -1,3 +1,7 @@
+---
+source: "Engine::EscapeTest::style#test_0001_default"
+input: "{source: \"<style><%= value %></style>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<style>'.freeze; _buf << ::Herb::Engine.css((value)); _buf << '</style>'.freeze;
 _buf.to_s

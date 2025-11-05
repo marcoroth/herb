@@ -1,3 +1,7 @@
+---
+source: "Engine::BlockCommentsTest#test_0006_evaluation: ruby block comments with code before and after"
+input: "{source: \"<% x = 1 %>\\n<%\\n=begin\\nMulti-line comment\\nspanning multiple lines\\n=end\\n%>\\n<% y = 2 %>\\n<div><%= x + y %></div>\\n\", locals: {x: 1, y: 2}, options: {}}"
+---
 
 
 

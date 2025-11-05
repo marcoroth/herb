@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0005_erb control flow"
+input: "{source: \"<% if active? %>\\n  <span>Active</span>\\n<% else %>\\n  <span>Inactive</span>\\n<% end %>\\n\", options: {}}"
+---
 _buf = ::String.new;
  if active?; _buf << '
   <span>Active</span>

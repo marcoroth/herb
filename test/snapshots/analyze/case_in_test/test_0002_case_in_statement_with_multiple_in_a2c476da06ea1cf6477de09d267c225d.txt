@@ -1,3 +1,13 @@
+---
+source: "Analyze::CaseInTest#test_0002_case in statement with multiple in"
+input: |2-
+<% case variable %>
+<% in [String] %>
+  String
+<% in [Integer] %>
+  Integer
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(6:9))

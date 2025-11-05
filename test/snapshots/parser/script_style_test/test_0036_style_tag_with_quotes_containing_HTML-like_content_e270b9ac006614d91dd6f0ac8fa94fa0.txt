@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0036_style tag with quotes containing HTML-like content"
+input: "<style>.icon::before { content: \"</style>\"; }</style>"
+---
 @ DocumentNode (location: (1:0)-(1:53))
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:41))

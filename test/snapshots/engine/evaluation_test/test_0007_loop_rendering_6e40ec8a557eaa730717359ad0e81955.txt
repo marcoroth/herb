@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0007_loop rendering"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <li><%= item %></li>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"apple\", \"banana\", \"cherry\"]}, options: {escape: false}}"
+---
 <ul>
   
     <li>apple</li>

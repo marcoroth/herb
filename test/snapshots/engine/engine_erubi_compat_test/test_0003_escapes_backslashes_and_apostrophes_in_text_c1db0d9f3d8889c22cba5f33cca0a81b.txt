@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0003_escapes backslashes and apostrophes in text"
+input: "{source: \"<table>\\n <tbody>' ' \\\\\\\\ \\\\\\\\\\n</tbody>\\n</table>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<table>
  <tbody>\' \' \\\\ \\\\

@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0017_conditional tags"
+input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% end %></div>"
+---
 @ DocumentNode (location: (1:0)-(1:82))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:82))

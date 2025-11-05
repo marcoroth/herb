@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0013_handles custom escapefunc"
+input: "{source: \"<%== content %>\", options: {escape: false, escapefunc: \"CGI.escapeHTML\"}}"
+---
 _buf = ::String.new;
  _buf << CGI.escapeHTML((content));
 _buf.to_s

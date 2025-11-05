@@ -1,3 +1,7 @@
+---
+source: "Engine::ValidationDeduplicationTest#test_0003_validation overlay includes deduplication metadata"
+input: "{source: \"<div <%= @test %>></div>\", options: {validation_mode: :overlay, filename: \"meta_test.html.erb\"}}"
+---
 _buf = ::String.new;
  _buf << '<div'.freeze; _buf << (@test).to_s; _buf << '></div>'.freeze; _buf << ('<template
   data-herb-validation-error

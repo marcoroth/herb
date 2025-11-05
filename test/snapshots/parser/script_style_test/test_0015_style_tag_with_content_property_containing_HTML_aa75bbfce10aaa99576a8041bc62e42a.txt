@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0015_style tag with content property containing HTML"
+input: "<style>.icon::before { content: \"<span>★</span>\"; }</style>"
+---
 @ DocumentNode (location: (1:0)-(1:59))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:59))

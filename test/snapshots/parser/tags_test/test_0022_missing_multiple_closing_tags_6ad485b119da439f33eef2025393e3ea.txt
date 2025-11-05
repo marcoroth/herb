@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0022_missing multiple closing tags"
+input: "<div><span><p></p>"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 ├── errors: (2 errors)
 │   ├── @ UnclosedElementError (location: (1:18)-(1:18))

@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineBlockTest#test_0003_regular erb expressions have parentheses"
+input: "{source: \"<%= user.name %>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << (user.name).to_s;
 _buf.to_s

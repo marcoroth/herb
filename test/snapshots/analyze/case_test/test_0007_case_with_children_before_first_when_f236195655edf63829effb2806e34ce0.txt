@@ -1,3 +1,12 @@
+---
+source: "Analyze::CaseTest#test_0007_case with children before first when"
+input: |2-
+<% case variable %>
+  before when
+<% when String %>
+  String
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(5:9))

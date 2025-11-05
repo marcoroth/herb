@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0006_br self-closing tag"
+input: "<br/>"
+---
 @ DocumentNode (location: (1:0)-(1:5))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:5))

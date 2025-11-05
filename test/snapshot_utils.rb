@@ -85,15 +85,15 @@ module SnapshotUtils
 
   def snapshot_changed?(content, source, options = {})
     if snapshot_file(source, options).exist?
-      previous_content = snapshot_file(source, options).read
+      previous_full_snapshot = snapshot_file(source, options).read
+      current_full_snapshot = format_snapshot_with_metadata(content, source, options)
 
-      if previous_content == content
+      if previous_full_snapshot == current_full_snapshot
         puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file(source, options)}\n"
         false
       else
         puts "\n\nSnapshot for '#{class_name} #{name}' changed:\n"
-
-        puts Difftastic::Differ.new(color: :always).diff_strings(previous_content, content)
+        puts Difftastic::Differ.new(color: :always).diff_strings(previous_full_snapshot, current_full_snapshot)
         puts "==============="
         true
       end
@@ -116,7 +116,7 @@ module SnapshotUtils
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source, options)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source, options).dirname)
-      snapshot_file(source, options).write(content)
+      snapshot_file(source, options).write(format_snapshot_with_metadata(content, source, options))
 
       puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file(source, options)}\n"
     else
@@ -128,13 +128,19 @@ module SnapshotUtils
     assert snapshot_file(source, options).exist?,
            "Expected snapshot file to exist: \n#{snapshot_file(source, options).to_path}"
 
-    assert_equal snapshot_file(source, options).read, actual
+    expected_full_snapshot = snapshot_file(source, options).read
+    actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
+
+    assert_equal expected_full_snapshot, actual_full_snapshot
   rescue Minitest::Assertion => e
     save_failures_to_snapshot(actual, source, options) if ENV["UPDATE_SNAPSHOTS"] || ENV["FORCE_UPDATE_SNAPSHOTS"]
 
     raise unless snapshot_file(source, options).exist?
 
-    if snapshot_file(source, options)&.read != actual
+    expected_full_snapshot = snapshot_file(source, options).read
+    actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
+
+    if expected_full_snapshot != actual_full_snapshot
       puts
 
       divider = "=" * `tput cols`.strip.to_i
@@ -142,7 +148,7 @@ module SnapshotUtils
       flunk(<<~MESSAGE)
         \e[0m
         #{divider}
-        #{Difftastic::Differ.new(color: :always).diff_strings(snapshot_file(source, options).read, actual)}
+        #{Difftastic::Differ.new(color: :always).diff_strings(expected_full_snapshot, actual_full_snapshot)}
         \e[31m#{divider}
 
         Snapshots for "#{class_name} #{name}" didn't match.
@@ -264,6 +270,42 @@ module SnapshotUtils
     rescue StandardError
       nil
     end
+  end
+
+  def format_snapshot_with_metadata(content, source, options = {})
+    metadata = build_snapshot_metadata(source, options)
+
+    frontmatter = "---\n"
+    frontmatter += "source: #{metadata["source"].inspect}\n"
+
+    # Use YAML literal block scalar for input (preserves formatting)
+    input_value = metadata["input"]
+    if input_value.include?("\n")
+      # Multiline: use |2- which means start content at column 0 (strip trailing newline)
+      frontmatter += "input: |2-\n"
+      frontmatter += input_value
+      # Ensure there's a newline after the multiline block
+      frontmatter += "\n" unless frontmatter.end_with?("\n")
+    else
+      # Single line: use regular quoted format
+      frontmatter += "input: #{input_value.inspect}\n"
+    end
+
+    frontmatter += "options: #{metadata["options"].inspect}\n" if metadata["options"]
+
+    frontmatter += "---\n"
+
+    frontmatter + content
+  end
+
+  def build_snapshot_metadata(source, options = {})
+    metadata = {
+      "source" => "#{class_name}##{name}",
+      "input" => source.to_s,
+    }
+
+    metadata["options"] = options unless options.empty?
+    metadata
   end
 
   private

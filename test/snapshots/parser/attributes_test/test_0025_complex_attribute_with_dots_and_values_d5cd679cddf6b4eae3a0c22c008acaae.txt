@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0025_complex attribute with dots and values"
+input: "<div x-transition.duration.500ms=\"fast\" data-component.option=\"value\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:76))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:76))

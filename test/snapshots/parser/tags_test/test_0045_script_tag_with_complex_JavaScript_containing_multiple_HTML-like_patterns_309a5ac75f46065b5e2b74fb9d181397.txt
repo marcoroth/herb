@@ -1,3 +1,20 @@
+---
+source: "Parser::TagsTest#test_0045_script tag with complex JavaScript containing multiple HTML-like patterns"
+input: |2-
+        <script>
+          function createElements() {
+            const div = "<div class='container'>";
+
+            const span = "<span>text</span>";
+
+            if (elements.length > maxCount) {
+              return "<ul><li>Item</li></ul>";
+            }
+
+            return div + span + "</div>";
+          }
+        </script>
+---
 @ DocumentNode (location: (1:0)-(14:0))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:8))

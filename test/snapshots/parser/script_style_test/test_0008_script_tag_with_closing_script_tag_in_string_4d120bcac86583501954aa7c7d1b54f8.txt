@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0008_script tag with closing script tag in string"
+input: "<script>var s = \"</script>\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:37))
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:26))

@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0017_whitespace handling"
+input: "{source: \"<div>\\n  <% items.each do |item| -%>\\n  <span><%= item %></span>\\n  <% end -%>\\n</div>\\n\", locals: {items: [\"a\", \"b\"]}, options: {escape: false}}"
+---
 <div>
   
   <span>a</span>

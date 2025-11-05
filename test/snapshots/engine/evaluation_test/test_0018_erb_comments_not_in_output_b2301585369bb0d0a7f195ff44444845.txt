@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0018_erb comments not in output"
+input: "{source: \"<div>\\n  <%# This is a comment %>\\n  <p>Visible content</p>\\n  <%# Another comment with <%= \\\"erb\\\" %> inside %>\\n  <p>More content</p>\\n</div>\\n\", locals: {}, options: {escape: false}}"
+---
 <div>
   
   <p>Visible content</p>

@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0009_xml declaration with spaces"
+input: "<?xml  version = \"1.0\"  ?>"
+---
 @ DocumentNode (location: (1:0)-(1:26))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:26))

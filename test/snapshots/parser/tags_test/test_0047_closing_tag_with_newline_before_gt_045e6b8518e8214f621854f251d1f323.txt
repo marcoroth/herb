@@ -1,3 +1,9 @@
+---
+source: "Parser::TagsTest#test_0047_closing tag with newline before >"
+input: |2-
+        <a href="https://example.com/">Link Text</a
+        >
+---
 @ DocumentNode (location: (1:0)-(3:0))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:8))

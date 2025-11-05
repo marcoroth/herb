@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0027_@ attributes with various patterns"
+input: "<div @submit.prevent @change.debounce.100ms=\"update\" @mouseover></div>"
+---
 @ DocumentNode (location: (1:0)-(1:70))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:70))

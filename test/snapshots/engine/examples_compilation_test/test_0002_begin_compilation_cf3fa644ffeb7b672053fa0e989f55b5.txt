@@ -1,3 +1,7 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0002_begin compilation"
+input: "{source: \"<% begin %>\\n  <h1>Begin</h1>\\n<% rescue StandardError => e %>\\n  <h1>Rescue</h1>\\n<% ensure %>\\n  <h1>Ensure</h1>\\n<% end %>\\n\", options: {escape: false}}"
+---
 _buf = ::String.new;
  begin; _buf << '
   <h1>Begin</h1>

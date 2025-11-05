@@ -1,3 +1,14 @@
+---
+source: "Analyze::IfTest#test_0007_nested if statements"
+input: |2-
+<% if true %>
+  <% if false %>
+    <% if nil %>
+      true & false & nil
+    <% end %>
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBIfNode (location: (1:0)-(7:9))

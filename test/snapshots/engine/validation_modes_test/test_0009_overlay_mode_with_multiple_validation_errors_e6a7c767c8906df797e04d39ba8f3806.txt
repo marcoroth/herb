@@ -1,3 +1,7 @@
+---
+source: "Engine::ValidationModesTest#test_0009_:overlay mode with multiple validation errors"
+input: "{source: \"<div <%= @attr %> data-<%= @name %>=\\\"value\\\">Content</div>\", options: {validation_mode: :overlay}}"
+---
 _buf = ::String.new;
  _buf << '<div '.freeze; _buf << (@attr).to_s; _buf << ' data-'.freeze; _buf << (@name).to_s; _buf << '="value">Content</div>'.freeze; _buf << ('<template
   data-herb-validation-error

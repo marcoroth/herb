@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0026_attributes starting with @ symbol"
+input: "<div @click=\"handleClick\" @keyup.enter=\"submit\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:54))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:54))

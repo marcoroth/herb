@@ -1,3 +1,7 @@
+---
+source: "Engine::EscapeTest::escape ERB output tag#test_0007_escape: false and custom escapefunc"
+input: "{source: \"<h1><%= value %></h1>\", options: {escape: false, escapefunc: \"CustomEscape.h\"}}"
+---
 _buf = ::String.new;
  _buf << '<h1>'.freeze; _buf << (value).to_s; _buf << '</h1>'.freeze;
 _buf.to_s

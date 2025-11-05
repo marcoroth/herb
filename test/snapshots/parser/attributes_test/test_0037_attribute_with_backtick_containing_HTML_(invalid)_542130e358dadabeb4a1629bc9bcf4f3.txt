@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0037_attribute with backtick containing HTML (invalid)"
+input: "<div data-template=`<span>Hello</span>`></div>"
+---
 @ DocumentNode (location: (1:0)-(1:46))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (1:40)-(1:42))

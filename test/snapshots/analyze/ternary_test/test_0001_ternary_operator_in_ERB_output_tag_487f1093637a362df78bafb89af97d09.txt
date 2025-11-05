@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0001_ternary operator in ERB output tag"
+input: |2-
+<%= condition ? true_value : false_value %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:43))

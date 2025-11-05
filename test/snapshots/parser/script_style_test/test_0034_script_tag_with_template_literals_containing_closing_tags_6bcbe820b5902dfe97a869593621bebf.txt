@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0034_script tag with template literals containing closing tags"
+input: "<script>var template = `</script>`;</script>"
+---
 @ DocumentNode (location: (1:0)-(1:44))
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:33))

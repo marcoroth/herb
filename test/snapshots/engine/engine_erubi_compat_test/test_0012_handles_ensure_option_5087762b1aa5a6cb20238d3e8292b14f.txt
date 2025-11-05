@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0012_handles ensure option"
+input: "{source: \"<div>Test</div>\", options: {ensure: true}}"
+---
 begin; __original_outvar = _buf if defined?(_buf); _buf = ::String.new;
  _buf << '<div>Test</div>'.freeze;
 _buf.to_s

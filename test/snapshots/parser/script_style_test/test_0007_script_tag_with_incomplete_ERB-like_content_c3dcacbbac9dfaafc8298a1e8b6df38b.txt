@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0007_script tag with incomplete ERB-like content"
+input: "<script>console.log(\"<%= incomplete\");</script>"
+---
 @ DocumentNode (location: (1:0)-(1:47))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (1:47)-(1:47))

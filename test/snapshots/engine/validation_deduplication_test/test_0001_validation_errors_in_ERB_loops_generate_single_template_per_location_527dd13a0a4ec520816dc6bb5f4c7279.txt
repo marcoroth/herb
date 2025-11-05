@@ -1,3 +1,7 @@
+---
+source: "Engine::ValidationDeduplicationTest#test_0001_validation errors in ERB loops generate single template per location"
+input: "{source: \"<% 10.times do |i| %><div <%= i %>></div><% end %>\", options: {validation_mode: :overlay, filename: \"loop_test.html.erb\"}}"
+---
 _buf = ::String.new;
  10.times do |i|; _buf << '<div'.freeze; _buf << (i).to_s; _buf << '></div>'.freeze; end; _buf << ('<template
   data-herb-validation-error

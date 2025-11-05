@@ -1,3 +1,11 @@
+---
+source: "Analyze::TernaryTest#test_0008_form_with helper with ternary in url parameter"
+input: |2-
+<%= form_with model: @user, url: @user.new_record? ? users_path : user_path(@user), method: @user.new_record? ? :post : :patch do |form| %>
+  <%= form.text_field :name %>
+  <%= form.submit %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))

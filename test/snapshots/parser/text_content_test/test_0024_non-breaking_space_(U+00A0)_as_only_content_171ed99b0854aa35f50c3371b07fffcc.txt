@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0024_non-breaking space (U+00A0) as only content"
+input: "<b> </b>"
+---
 @ DocumentNode (location: (1:0)-(1:8))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))

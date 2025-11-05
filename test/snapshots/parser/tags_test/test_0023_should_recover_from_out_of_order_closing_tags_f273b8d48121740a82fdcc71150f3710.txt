@@ -1,3 +1,14 @@
+---
+source: "Parser::TagsTest#test_0023_should recover from out of order closing tags"
+input: |2-
+
+        <main>
+          <div>
+            </span>
+          </div>
+        </main>
+      
+---
 @ DocumentNode (location: (1:0)-(7:6))
 ├── errors: (1 error)
 │   └── @ UnclosedElementError (location: (6:8)-(6:10))

@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0032_script tag with single quote strings containing closing tags"
+input: "<script>var s1 = '</script>'; var s2 = '</style>';</script>"
+---
 @ DocumentNode (location: (1:0)-(1:59))
 └── children: (5 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:27))

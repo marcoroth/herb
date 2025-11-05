@@ -1,3 +1,7 @@
+---
+source: "Engine::ValidationModesTest#test_0005_:overlay mode compiles successfully with validation errors"
+input: "{source: \"<div <%= @malicious %>>Content</div>\", options: {validation_mode: :overlay}}"
+---
 _buf = ::String.new;
  _buf << '<div'.freeze; _buf << (@malicious).to_s; _buf << '>Content</div>'.freeze; _buf << ('<template
   data-herb-validation-error

@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0023_utf8 handling"
+input: "{source: \"Sitename • Title\\n\\n<% @title = \\\"Home\\\" %>\\n\\n<title><%= [@title, \\\"Sitename\\\"].compact.join(\\\" • \\\") %></title>\\n\", locals: {}, options: {escape: false}}"
+---
 Sitename • Title
 
 

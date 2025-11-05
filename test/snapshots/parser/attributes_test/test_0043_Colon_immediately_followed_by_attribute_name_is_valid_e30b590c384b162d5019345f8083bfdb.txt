@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0043_Colon immediately followed by attribute name is valid"
+input: "<div :class=\"hello\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:26))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:26))

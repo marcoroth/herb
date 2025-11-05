@@ -1,3 +1,10 @@
+---
+source: "Parser::SVGTest#test_0005_HTML void can be non-void within svg"
+input: |2-
+<svg>
+  <br></br>
+</svg>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:6))

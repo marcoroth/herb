@@ -1,2 +1,6 @@
+---
+source: "Parser::ParserTest#test_0002_empty file"
+input: ""
+---
 @ DocumentNode (location: (1:0)-(1:0))
 └── children: []

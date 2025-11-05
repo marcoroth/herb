@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0010_handles freeze_template_literals option"
+input: "{source: \"<div>Content</div>\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<div>Content</div>'.freeze;
 _buf.to_s

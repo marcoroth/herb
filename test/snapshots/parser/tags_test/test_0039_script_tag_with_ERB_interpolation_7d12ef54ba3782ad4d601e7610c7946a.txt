@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0039_script tag with ERB interpolation"
+input: "<script>var userId = <%= current_user.id %>; if (userId > 0) { login(); }</script>"
+---
 @ DocumentNode (location: (1:0)-(1:82))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:82))

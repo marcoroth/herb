@@ -1,3 +1,11 @@
+---
+source: "Analyze::IfTest#test_0010_guard clause with if modifier should not be parsed as ERBIfNode"
+input: |2-
+<% [1,2].each do |value| %>
+  <% next if false %>
+  <div></div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))

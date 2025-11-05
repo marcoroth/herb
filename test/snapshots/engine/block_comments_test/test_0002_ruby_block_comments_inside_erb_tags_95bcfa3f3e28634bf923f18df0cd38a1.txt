@@ -1,3 +1,7 @@
+---
+source: "Engine::BlockCommentsTest#test_0002_ruby block comments inside erb tags"
+input: "{source: \"<%\\n=begin\\nThis is a comment\\n=end\\n%>\\n<p>Content</p>\\n\", options: {}}"
+---
 _buf = ::String.new;
 
 =begin

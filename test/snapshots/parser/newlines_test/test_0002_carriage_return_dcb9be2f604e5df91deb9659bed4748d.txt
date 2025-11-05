@@ -1,3 +1,7 @@
+---
+source: "Parser::NewlinesTest#test_0002_carriage return"
+input: "\r"
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (1 item)
     └── @ HTMLTextNode (location: (1:0)-(2:0))

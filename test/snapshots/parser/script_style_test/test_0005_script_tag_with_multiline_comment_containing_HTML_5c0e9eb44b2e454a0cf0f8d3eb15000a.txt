@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0005_script tag with multiline comment containing HTML"
+input: |2-
+<script>
+  /*
+   * <div>This is in a comment</div>
+   * <span>Also ignored</span>
+   */
+  console.log("test");
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(7:9))

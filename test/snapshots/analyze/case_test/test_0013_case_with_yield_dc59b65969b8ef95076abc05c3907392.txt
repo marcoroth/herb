@@ -1,3 +1,11 @@
+---
+source: "Analyze::CaseTest#test_0013_case with yield"
+input: |2-
+<% case yield(:a) %>
+<% when 'a' %>
+  aaa
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(4:9))

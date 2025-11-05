@@ -1,3 +1,12 @@
+---
+source: "Analyze::WhileTest#test_0007_while statement with next"
+input: |2-
+<% while true %>
+  true
+
+  <% next %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBWhileNode (location: (1:0)-(5:9))

@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0032_script tag with nested script tags in string"
+input: "<script>document.write('<script>alert(\"nested\")</script>');</script>"
+---
 @ DocumentNode (location: (1:0)-(1:68))
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:56))

@@ -1,3 +1,8 @@
+---
+source: "Analyze::BeginTest#test_0001_single-line begin"
+input: |2-
+<% begin; end; %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:17))

@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0027_stray closing tag with whitespace"
+input: "<div>Hello</div>< /span>"
+---
 @ DocumentNode (location: (1:0)-(1:24))
 ├── errors: (1 error)
 │   └── @ UnexpectedError (location: (1:16)-(1:17))

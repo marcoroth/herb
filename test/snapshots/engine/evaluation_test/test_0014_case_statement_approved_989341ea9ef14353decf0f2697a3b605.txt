@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0014_case statement approved"
+input: "{source: \"<div>\\n  <% case status %>\\n  <% when \\\"pending\\\" %>\\n    <span class=\\\"yellow\\\">Pending</span>\\n  <% when \\\"approved\\\" %>\\n    <span class=\\\"green\\\">Approved</span>\\n  <% when \\\"rejected\\\" %>\\n    <span class=\\\"red\\\">Rejected</span>\\n  <% else %>\\n    <span class=\\\"gray\\\">Unknown</span>\\n  <% end %>\\n</div>\\n\", locals: {status: \"approved\"}, options: {escape: false}}"
+---
 <div>
   
     <span class="green">Approved</span>

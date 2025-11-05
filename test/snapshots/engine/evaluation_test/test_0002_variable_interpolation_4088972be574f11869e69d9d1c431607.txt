@@ -1,1 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0002_variable interpolation"
+input: "{source: \"<div>Hello <%= name %>!</div>\", locals: {name: \"Alice\"}, options: {escape: false}}"
+---
 <div>Hello Alice!</div>

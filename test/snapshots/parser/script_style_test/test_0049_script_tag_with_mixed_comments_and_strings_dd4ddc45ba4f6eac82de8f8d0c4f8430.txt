@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0049_script tag with mixed comments and strings"
+input: |2-
+<script>
+  // Comment with </script>
+  var str = "String with </script>";
+  /* Multi-line comment
+     with </script> inside */
+  var another = 'Single quote </script>';
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (10 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:27))

@@ -1,3 +1,10 @@
+---
+source: "Parser::ERBTest#test_0034_erb if with =%> close tag"
+input: |2-
+<% if true =%>
+  <p>Content</p>
+<% end =%>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBIfNode (location: (1:0)-(3:10))
