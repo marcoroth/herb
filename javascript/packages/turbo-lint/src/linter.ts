@@ -46,6 +46,13 @@ export class TurboLinter {
   }
 
   /**
+   * Get the number of rules loaded in the linter
+   */
+  getRuleCount(): number {
+    return this.rules.length
+  }
+
+  /**
    * Lint an HTML file
    */
   async lintFile(filePath: string): Promise<LintResult> {
