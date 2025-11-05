@@ -72,7 +72,6 @@
               "erb-require-whitespace-inside-tags",
               "erb-right-trim",
               "html-anchor-require-href",
-              "html-turbo-permanent",
               "html-aria-attribute-must-be-valid",
               "html-aria-label-is-well-formatted",
               "html-aria-level-must-be-valid",
@@ -103,6 +102,7 @@
               "html-no-title-attribute",
               "html-no-underscores-in-attribute-names",
               "html-tag-name-lowercase",
+              "html-turbo-permanent",
               "parser-no-errors",
               "svg-tag-name-capitalization"
             ]
