@@ -3,6 +3,7 @@ import type { HerbBackend, ParseResult, LexResult, ParserOptions } from "@herb-t
 import { Formatter } from "@herb-tools/formatter"
 import { Linter } from "@herb-tools/linter"
 import { IdentityPrinter } from "@herb-tools/printer"
+import { Minifier } from "@herb-tools/minifier"
 
 import type { LintResult } from "@herb-tools/linter"
 
@@ -60,6 +61,13 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
     new Promise((resolve) => resolve((new IdentityPrinter()).print(parseResult.value, printerOptions))),
   )
 
+  const minifier = new Minifier(herb)
+  await minifier.initialize()
+
+  const minified = await safeExecute<string>(
+    new Promise((resolve) => resolve(minifier.minifyString(source))),
+  )
+
   let lintResult: LintResult | null = null
 
   if (parseResult && parseResult.value) {
@@ -82,6 +90,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
     html,
     formatted,
     printed,
+    minified,
     version,
     lintResult,
     duration: endTime - startTime,

@@ -9,6 +9,7 @@
     "@herb-tools/highlighter": "javascript/packages/highlighter",
     "@herb-tools/language-server": "javascript/packages/language-server",
     "@herb-tools/linter": "javascript/packages/linter",
+    "@herb-tools/minifier": "javascript/packages/minifier",
     "@herb-tools/node-wasm": "javascript/packages/node-wasm",
     "@herb-tools/node": "javascript/packages/node",
     "@herb-tools/printer": "javascript/packages/printer",
