@@ -13,7 +13,8 @@ export interface TailwindClassSorterOptions {
  *
  * @example
  * ```typescript
- * import { rewrite, tailwindClassSorter } from '@herb-tools/rewriter'
+ * import { rewrite } from '@herb-tools/rewriter'
+ * import { tailwindClassSorter } from '@herb-tools/rewriter/loader'
  *
  * const template = '<div class="text-red-500 p-4 mt-2"></div>'
  * const result = await rewrite(template, [tailwindClassSorter()])

@@ -42,7 +42,8 @@ export interface RewriteResult {
  * @example
  * ```typescript
  * import { Herb } from '@herb-tools/node-wasm'
- * import { rewrite, tailwindClassSorter } from '@herb-tools/rewriter'
+ * import { rewrite } from '@herb-tools/rewriter'
+ * import { tailwindClassSorter } from '@herb-tools/rewriter/loader'
  *
  * await Herb.load()
  *
@@ -102,29 +103,34 @@ export async function rewrite<T extends Node>(node: T, rewriters: Rewriter[], op
  * @example
  * ```typescript
  * import { Herb } from '@herb-tools/node-wasm'
- * import { rewriteString, tailwindClassSorter } from '@herb-tools/rewriter'
+ * import { rewriteString } from '@herb-tools/rewriter'
+ * import { tailwindClassSorter } from '@herb-tools/rewriter/loader'
  *
  * await Herb.load()
  *
  * const template = '<div class="text-red-500 p-4 mt-2"></div>'
- * const { output, node } = await rewriteString(Herb, template, [tailwindClassSorter()])
+ * const output = await rewriteString(Herb, template, [tailwindClassSorter()])
+ * // output: '<div class="mt-2 p-4 text-red-500"></div>'
  * ```
  *
  * @param herb - The Herb backend instance for parsing
  * @param template - The HTML+ERB template string to rewrite
  * @param rewriters - Array of rewriter instances to apply
  * @param options - Optional configuration for the rewrite operation
- * @returns Object containing the rewritten string and Node
+ * @returns The rewritten template string
  */
-export async function rewriteString(herb: HerbBackend, template: string, rewriters: Rewriter[], options: RewriteOptions = {}): Promise<RewriteResult> {
+export async function rewriteString(herb: HerbBackend, template: string, rewriters: Rewriter[], options: RewriteOptions = {}): Promise<string> {
   const parseResult = herb.parse(template, { track_whitespace: true })
 
   if (parseResult.failed) {
-    return {
-      output: template,
-      node: parseResult.value
-    }
+    return template
   }
 
-  return await rewrite(parseResult.value, rewriters, options)
+  const { output } = await rewrite(
+    parseResult.value,
+    rewriters,
+    options
+  )
+
+  return output
 }

@@ -49,26 +49,23 @@ describe("rewrite", () => {
   describe("rewriteString", () => {
     test("rewrites string with tailwindClassSorter", async () => {
       const template = '<div class="text-red-500 p-4 mt-2"></div>'
-      const { output, node } = await rewriteString(Herb, template, [tailwindClassSorter()])
+      const output = await rewriteString(Herb, template, [tailwindClassSorter()])
 
       expect(output).toBe('<div class="mt-2 p-4 text-red-500"></div>')
-      expect(node.type).toBe("AST_DOCUMENT_NODE")
     })
 
     test("handles empty rewriters array", async () => {
       const template = '<div class="text-red-500 p-4 mt-2"></div>'
-      const { output, node } = await rewriteString(Herb, template, [])
+      const output = await rewriteString(Herb, template, [])
 
       expect(output).toBe(template)
-      expect(node.type).toBe("AST_DOCUMENT_NODE")
     })
 
     test("returns original template on parse failure", async () => {
       const template = '<div class="unclosed'
-      const { output, node } = await rewriteString(Herb, template, [tailwindClassSorter()])
+      const output = await rewriteString(Herb, template, [tailwindClassSorter()])
 
       expect(output).toBe(template)
-      expect(node.type).toBe("AST_DOCUMENT_NODE")
     })
   })
 
