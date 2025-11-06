@@ -64,6 +64,7 @@ export default class extends Controller {
     "formatTooltip",
     "autofixButton",
     "autofixTooltip",
+    "minifyViewer",
     "printerViewer",
     "printerOutput",
     "printerVerification",
@@ -312,6 +313,9 @@ export default class extends Controller {
           content = blurredPre ? blurredPre.textContent : ''
         }
         break
+      case 'minify':
+        content = this.minifyViewerTarget.textContent
+        break
       case 'printer':
         content = this.printerOutputTarget.textContent
         break
@@ -439,7 +443,7 @@ export default class extends Controller {
   }
 
   isValidTab(tab) {
-    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'printer', 'diagnostics', 'full']
+    const validTabs = ['parse', 'lex', 'ruby', 'html', 'format', 'minify', 'printer', 'diagnostics', 'full']
     return validTabs.includes(tab)
   }
 
@@ -903,6 +907,13 @@ export default class extends Controller {
       this.lexViewerTarget.textContent = result.lex
 
       Prism.highlightElement(this.lexViewerTarget)
+    }
+
+    if (this.hasMinifyViewerTarget) {
+      this.minifyViewerTarget.classList.add("language-html")
+      this.minifyViewerTarget.textContent = result.minified
+
+      Prism.highlightElement(this.minifyViewerTarget)
     }
 
     if (this.hasPrinterViewerTarget) {

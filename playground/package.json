@@ -22,6 +22,7 @@
     "@herb-tools/browser": "0.7.5",
     "@herb-tools/formatter": "0.7.5",
     "@herb-tools/linter": "0.7.5",
+    "@herb-tools/minifier": "0.7.5",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.6.0",
     "express": "^5.1.0",

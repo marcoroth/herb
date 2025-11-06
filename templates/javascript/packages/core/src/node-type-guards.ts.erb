@@ -20,7 +20,9 @@ import {
 /**
  * Checks if a node is a <%= node.name %>
  */
-export function is<%= node.name %>(node: Node): node is <%= node.name %> {
+export function is<%= node.name %>(node: Node | null | undefined): node is <%= node.name %> {
+  if (!node) return false
+
   return node instanceof <%= node.name %> || node.type === "<%= node.type %>" || (node.constructor as any).type === "<%= node.type %>"
 }
 
@@ -32,7 +34,9 @@ export function is<%= node.name %>(node: Node): node is <%= node.name %> {
 /**
  * Checks if a node is any HTML node type
  */
-export function isHTMLNode(node: Node): boolean {
+export function isHTMLNode(node: Node | undefined | null): boolean {
+  if (!node) return false
+
 <%- html_nodes = nodes.select { |n| n.name.start_with?("HTML") } -%>
   return <%= html_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
@@ -40,7 +44,9 @@ export function isHTMLNode(node: Node): boolean {
 /**
  * Checks if a node is any ERB node type
  */
-export function isERBNode(node: Node): node is ERBNode {
+export function isERBNode(node: Node | undefined | null): node is ERBNode {
+  if (!node) return false
+
 <%- erb_nodes = nodes.select { |n| n.name.start_with?("ERB") } -%>
   return <%= erb_nodes.map { |n| "is#{n.name}(node)" }.join(" ||\n         ") %>
 }
