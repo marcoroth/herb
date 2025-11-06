@@ -59,7 +59,8 @@ await Herb.load()
 const template = `<div class="text-red-500 p-4 mt-2"></div>`
 const parseResult = Herb.parse(template, { track_whitespace: true })
 
-const { output, node } = await rewrite(parseResult.value, [tailwindClassSorter()])
+const sorter = await tailwindClassSorter()
+const { output, node } = rewrite(parseResult.value, [sorter])
 // output: "<div class="mt-2 p-4 text-red-500"></div>"
 // node: The rewritten AST node
 ```
@@ -77,7 +78,8 @@ await Herb.load()
 
 const template = `<div class="text-red-500 p-4 mt-2"></div>`
 
-const output = await rewriteString(Herb, template, [tailwindClassSorter()])
+const sorter = await tailwindClassSorter()
+const output = rewriteString(Herb, template, [sorter])
 // output: "<div class="mt-2 p-4 text-red-500"></div>"
 ```
 
@@ -98,7 +100,8 @@ import { tailwindClassSorter } from "@herb-tools/rewriter/loader"
 await Herb.load()
 
 const template = `<div class="px-4 bg-blue-500 text-white rounded py-2"></div>`
-const output = await rewriteString(Herb, template, [tailwindClassSorter()])
+const sorter = await tailwindClassSorter()
+const output = rewriteString(Herb, template, [sorter])
 // output: "<div class="rounded bg-blue-500 px-4 py-2 text-white"></div>"
 ```
 
@@ -211,16 +214,16 @@ Which means you can just reference and configure them in `.herb.yml` using their
 Transform an AST node using the provided rewriters.
 
 ```typescript
-async function rewrite<T extends Node>(
+function rewrite<T extends Node>(
   node: T,
   rewriters: Rewriter[],
   options?: RewriteOptions
-): Promise<RewriteResult>
+): RewriteResult
 ```
 
 **Parameters:**
 - `node`: The AST node to transform
-- `rewriters`: Array of rewriter instances to apply
+- `rewriters`: Array of rewriter instances to apply (must be already initialized)
 - `options`: Optional configuration
   - `baseDir`: Base directory for resolving config files (defaults to `process.cwd()`)
   - `filePath`: Optional file path for context
@@ -234,18 +237,18 @@ async function rewrite<T extends Node>(
 Convenience wrapper around `rewrite()` that parses the template string first and returns just the output string.
 
 ```typescript
-async function rewriteString(
+function rewriteString(
   herb: HerbBackend,
   template: string,
   rewriters: Rewriter[],
   options?: RewriteOptions
-): Promise<string>
+): string
 ```
 
 **Parameters:**
 - `herb`: The Herb backend instance for parsing
 - `template`: The HTML+ERB template string to rewrite
-- `rewriters`: Array of rewriter instances to apply
+- `rewriters`: Array of rewriter instances to apply (must be already initialized)
 - `options`: Optional configuration (same as `rewrite()`)
 
 **Returns:** The rewritten template string

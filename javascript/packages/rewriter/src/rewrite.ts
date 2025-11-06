@@ -49,7 +49,7 @@ export interface RewriteResult {
  *
  * const template = '<div class="text-red-500 p-4 mt-2"></div>'
  * const parseResult = Herb.parse(template)
- * const { output, document } = await rewrite(parseResult.value, [tailwindClassSorter()])
+ * const { output, node } = rewrite(parseResult.value, [tailwindClassSorter()])
  * ```
  *
  * @param node - The AST Node to rewrite
@@ -57,14 +57,10 @@ export interface RewriteResult {
  * @param options - Optional configuration for the rewrite operation
  * @returns Object containing the rewritten string and Node
  */
-export async function rewrite<T extends Node>(node: T, rewriters: Rewriter[], options: RewriteOptions = {}): Promise<RewriteResult & { node: T }> {
+export function rewrite<T extends Node>(node: T, rewriters: Rewriter[], options: RewriteOptions = {}): RewriteResult & { node: T } {
   const { baseDir = process.cwd(), filePath } = options
 
   const context: RewriteContext = { baseDir, filePath }
-
-  for (const rewriter of rewriters) {
-    await rewriter.initialize(context)
-  }
 
   let currentNode = node
 
@@ -109,7 +105,7 @@ export async function rewrite<T extends Node>(node: T, rewriters: Rewriter[], op
  * await Herb.load()
  *
  * const template = '<div class="text-red-500 p-4 mt-2"></div>'
- * const output = await rewriteString(Herb, template, [tailwindClassSorter()])
+ * const output = rewriteString(Herb, template, [tailwindClassSorter()])
  * // output: '<div class="mt-2 p-4 text-red-500"></div>'
  * ```
  *
@@ -119,14 +115,14 @@ export async function rewrite<T extends Node>(node: T, rewriters: Rewriter[], op
  * @param options - Optional configuration for the rewrite operation
  * @returns The rewritten template string
  */
-export async function rewriteString(herb: HerbBackend, template: string, rewriters: Rewriter[], options: RewriteOptions = {}): Promise<string> {
+export function rewriteString(herb: HerbBackend, template: string, rewriters: Rewriter[], options: RewriteOptions = {}): string {
   const parseResult = herb.parse(template, { track_whitespace: true })
 
   if (parseResult.failed) {
     return template
   }
 
-  const { output } = await rewrite(
+  const { output } = rewrite(
     parseResult.value,
     rewriters,
     options
