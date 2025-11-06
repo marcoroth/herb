@@ -231,7 +231,7 @@ async function rewrite<T extends Node>(
 
 #### `rewriteString()`
 
-Convenience wrapper around `rewrite()` that parses the template string first.
+Convenience wrapper around `rewrite()` that parses the template string first and returns just the output string.
 
 ```typescript
 async function rewriteString(
@@ -239,7 +239,7 @@ async function rewriteString(
   template: string,
   rewriters: Rewriter[],
   options?: RewriteOptions
-): Promise<RewriteResult>
+): Promise<string>
 ```
 
 **Parameters:**
@@ -248,9 +248,7 @@ async function rewriteString(
 - `rewriters`: Array of rewriter instances to apply
 - `options`: Optional configuration (same as `rewrite()`)
 
-**Returns:** Object with:
-- `output`: The rewritten template string
-- `node`: The transformed AST node
+**Returns:** The rewritten template string
 
 ### Base Classes
 

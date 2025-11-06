@@ -102,14 +102,14 @@ describe("rewrite", () => {
   describe("complex templates", () => {
     test("handles ERB expressions", async () => {
       const template = '<div class="px-4 <%= extra_classes %> bg-blue-500"></div>'
-      const { output } = await rewriteString(Herb, template, [tailwindClassSorter()])
+      const output = await rewriteString(Herb, template, [tailwindClassSorter()])
 
       expect(output).toBe('<div class="bg-blue-500 px-4 <%= extra_classes %>"></div>')
     })
 
     test("handles ERB conditionals", async () => {
       const template = '<div class="px-4 <% if admin? %> text-red-500 font-bold <% end %> bg-blue-500"></div>'
-      const { output } = await rewriteString(Herb, template, [tailwindClassSorter()])
+      const output = await rewriteString(Herb, template, [tailwindClassSorter()])
 
       expect(output).toBe('<div class="bg-blue-500 px-4 <% if admin? %> font-bold text-red-500 <% end %>"></div>')
     })
@@ -134,7 +134,7 @@ describe("rewrite", () => {
         </div>
       `
 
-      const { output } = await rewriteString(Herb, template, [tailwindClassSorter()])
+      const output = await rewriteString(Herb, template, [tailwindClassSorter()])
 
       expect(output).toBe(expected)
     })
