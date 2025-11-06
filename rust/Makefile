@@ -26,7 +26,7 @@ cli: build
 	@./bin/$(BIN_NAME) || true
 
 test: build
-	NO_COLOR=1 cargo +stable test --verbose -- --test-threads=1
+	NO_COLOR=1 cargo +stable test --verbose
 
 format:
 	cargo +nightly fmt

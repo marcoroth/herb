@@ -142,7 +142,7 @@ void hb_buffer_append_string(hb_buffer_T* buffer, hb_string_T string) {
 }
 
 void hb_buffer_append_char(hb_buffer_T* buffer, const char character) {
-  static char string[2];
+  char string[2];
 
   string[0] = character;
   string[1] = '\0';
