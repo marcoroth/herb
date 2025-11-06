@@ -64,29 +64,27 @@ export class Formatter {
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 
+    const context: RewriteContext = {
+      filePath,
+      baseDir: process.cwd()
+    }
+
+    let node = result.value
+
     if (resolvedOptions.preRewriters.length > 0) {
-      const context: RewriteContext = {
-        filePath,
-        baseDir: process.cwd()
-      }
 
       for (const rewriter of resolvedOptions.preRewriters) {
         try {
-          result = rewriter.rewrite(result, context)
+          node = rewriter.rewrite(node, context)
         } catch (error) {
           console.error(`Pre-format rewriter "${rewriter.name}" failed:`, error)
         }
       }
     }
 
-    let formatted = new FormatPrinter(source, resolvedOptions).print(result.value)
+    let formatted = new FormatPrinter(source, resolvedOptions).print(node)
 
     if (resolvedOptions.postRewriters.length > 0) {
-      const context: RewriteContext = {
-        filePath,
-        baseDir: process.cwd()
-      }
-
       for (const rewriter of resolvedOptions.postRewriters) {
         try {
           formatted = rewriter.rewrite(formatted, context)

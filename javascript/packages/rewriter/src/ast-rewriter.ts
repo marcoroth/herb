@@ -1,11 +1,11 @@
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 import type { RewriteContext } from "./context.js"
 
 /**
- * Base class for AST rewriters that transform the parsed AST before formatting
+ * Base class for AST rewriters that transform AST nodes before formatting
  *
- * AST rewriters receive a ParseResult and can mutate the AST nodes in place
- * or return a modified ParseResult. They run before the formatting step.
+ * AST rewriters receive a Node and can mutate it in place or return a modified Node.
+ * They run before the formatting step.
  *
  * @example
  * ```typescript
@@ -20,14 +20,12 @@ import type { RewriteContext } from "./context.js"
  *     // Load config, initialize dependencies, etc.
  *   }
  *
- *   rewrite(parseResult, context) {
- *     if (parseResult.failed) return parseResult
- *
+ *   rewrite(node, context) {
  *     // Use visitor pattern to traverse and modify AST
  *     const visitor = new MyVisitor()
- *     visitor.visit(parseResult.value)
+ *     visitor.visit(node)
  *
- *     return parseResult
+ *     return node
  *   }
  * }
  * ```
@@ -59,14 +57,14 @@ export abstract class ASTRewriter {
   }
 
   /**
-   * Transform the parsed AST
+   * Transform the AST node
    *
    * This method is called synchronously for each file being formatted.
-   * Modify the AST in place or return a new ParseResult.
+   * Modify the AST in place or return a new Node.
    *
-   * @param parseResult - The parsed AST from @herb-tools/core
+   * @param node - The AST node from @herb-tools/core
    * @param context - Context with filePath and baseDir
-   * @returns The modified ParseResult (can be the same object mutated in place)
+   * @returns The modified Node (can be the same object mutated in place)
    */
-  abstract rewrite(parseResult: ParseResult, context: RewriteContext): ParseResult
+  abstract rewrite<T extends Node>(node: T, context: RewriteContext): T
 }

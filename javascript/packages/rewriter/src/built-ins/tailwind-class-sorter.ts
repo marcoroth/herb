@@ -7,7 +7,6 @@ import { asMutable } from "../mutable.js"
 
 import type { RewriteContext } from "../context.js"
 import type {
-  ParseResult,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   Node,
@@ -249,15 +248,15 @@ export class TailwindClassSorterRewriter extends ASTRewriter {
     })
   }
 
-  rewrite(parseResult: ParseResult, _context: RewriteContext): ParseResult {
+  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
     if (!this.sorter) {
-      return parseResult
+      return node
     }
 
     const visitor = new TailwindClassSorterVisitor(this.sorter)
 
-    visitor.visit(parseResult.value)
+    visitor.visit(node)
 
-    return parseResult
+    return node
   }
 }

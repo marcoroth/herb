@@ -37,22 +37,21 @@ describe("tailwind-class-sorter", () => {
       const rewriter = new TailwindClassSorterRewriter()
 
       const parseResult = Herb.parse(input, { track_whitespace: true })
-      const rewritten = rewriter.rewrite(parseResult, { baseDir: process.cwd() })
+      const document = rewriter.rewrite(parseResult.value, { baseDir: process.cwd() })
 
-      expect(rewritten).toBe(parseResult)
+      expect(document).toBe(parseResult.value)
 
-      const output = IdentityPrinter.print(rewritten.value)
+      const output = IdentityPrinter.print(document)
       expect(output).toBe(input)
     })
 
     test("returns rewritten AST for inspection", async () => {
-      const result = await expectTransform(
+      const document = await expectTransform(
         `<div class="px-4 bg-blue-500"></div>`,
         `<div class="bg-blue-500 px-4"></div>`
       )
 
-      expect(result.value.type).toBe("AST_DOCUMENT_NODE")
-      expect(result.failed).toBe(false)
+      expect(document.type).toBe("AST_DOCUMENT_NODE")
     })
   })
 
