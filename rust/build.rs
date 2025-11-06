@@ -39,6 +39,7 @@ fn main() {
   build.compile("herb");
 
   let bindings = bindgen::Builder::default()
+    .header(src_dir.join("include/analyze.h").to_str().unwrap())
     .header(src_dir.join("include/herb.h").to_str().unwrap())
     .header(src_dir.join("include/ast_nodes.h").to_str().unwrap())
     .header(src_dir.join("include/errors.h").to_str().unwrap())

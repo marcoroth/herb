@@ -25,6 +25,7 @@ colored = "2"
 
 [dev-dependencies]
 insta = "1.40"
+cargo-insta = "1.43.2"
 
 [build-dependencies]
 cc = "1.0"

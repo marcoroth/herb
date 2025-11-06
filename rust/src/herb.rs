@@ -39,6 +39,8 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
       return Err("Failed to parse source".to_string());
     }
 
+    crate::ffi::herb_analyze_parse_tree(ast, c_source.as_ptr());
+
     let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
       .ok_or_else(|| "Failed to convert AST".to_string())?;
 
