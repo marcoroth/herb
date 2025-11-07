@@ -102,9 +102,9 @@ static void lexer_advance_by(lexer_T* lexer, const size_t count) {
   }
 }
 
-static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const token_type_T type) {
-  lexer_advance_by(lexer, strlen(value));
-  return token_init(hb_string(value), type, lexer);
+static token_T* lexer_advance_with(lexer_T* lexer, hb_string_T value, const token_type_T type) {
+  lexer_advance_by(lexer, value.length);
+  return token_init(value, type, lexer);
 }
 
 static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
@@ -120,7 +120,11 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
 }
 
 static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
-  return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
+  char buffer[2];
+  buffer[0] = lexer->current_character;
+  buffer[1] = '\0';
+
+  return lexer_advance_with(lexer, hb_string(buffer), type);
 }
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
@@ -141,7 +145,7 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
 
 static token_T* lexer_match_and_advance(lexer_T* lexer, hb_string_T value, const token_type_T type) {
   hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position);
-  if (hb_string_starts_with(remaining_source, value)) { return lexer_advance_with(lexer, value.data, type); }
+  if (hb_string_starts_with(remaining_source, value)) { return lexer_advance_with(lexer, value, type); }
 
   return NULL;
 }
@@ -230,11 +234,11 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
 
-  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "%%>", TOKEN_ERB_END); }
-  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "=%>", TOKEN_ERB_END); }
-  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "-%>", TOKEN_ERB_END); }
+  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("-%>"), TOKEN_ERB_END); }
 
-  return lexer_advance_with(lexer, "%>", TOKEN_ERB_END);
+  return lexer_advance_with(lexer, hb_string("%>"), TOKEN_ERB_END);
 }
 
 // ===== Tokenizing Function
@@ -277,11 +281,11 @@ token_T* lexer_next_token(lexer_T* lexer) {
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
-        return lexer_advance_with(lexer, "<!--", TOKEN_HTML_COMMENT_START);
+        return lexer_advance_with(lexer, hb_string("<!--"), TOKEN_HTML_COMMENT_START);
       }
 
       if (lexer_peek_for_close_tag_start(lexer, 0)) {
-        return lexer_advance_with(lexer, "</", TOKEN_HTML_TAG_START_CLOSE);
+        return lexer_advance_with(lexer, hb_string("</"), TOKEN_HTML_TAG_START_CLOSE);
       }
 
       return lexer_advance_current(lexer, TOKEN_LT);
