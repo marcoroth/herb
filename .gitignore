@@ -156,3 +156,6 @@ docs/docs/public/c-reference
 
 # NPM
 **/node_modules/**/*
+
+# Clangd config
+compile_flags.txt
