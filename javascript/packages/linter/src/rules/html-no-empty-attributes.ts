@@ -95,7 +95,9 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
   private checkEmptyAttribute(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode): void {
     if (!isRestrictedAttribute(attributeName)) return
     if (attributeValue.trim() !== "") return
-    if (containsOutputContent(attributeNode)) return
+
+    if (!attributeNode?.value) return
+    if (containsOutputContent(attributeNode.value)) return
 
     const hasExplicitValue = attributeNode.value !== null
 
