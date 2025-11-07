@@ -212,4 +212,18 @@ describe("@herb-tools/formatter", () => {
       <div>Content</div>
     `)
   })
+
+  // TODO: maybe we can improve this in the future
+  test("frontmatter with text after ---", () => {
+    const source = dedent`
+      ---
+      title: My Page
+      ---
+      Content
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      --- title: My Page --- Content
+    `)
+  })
 })
