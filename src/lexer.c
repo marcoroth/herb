@@ -67,7 +67,7 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
     lexer->current_column
   );
 
-  return token_init(error_message, TOKEN_ERROR, lexer);
+  return token_init(hb_string(error_message), TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
@@ -104,22 +104,17 @@ static void lexer_advance_by(lexer_T* lexer, const size_t count) {
 
 static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const token_type_T type) {
   lexer_advance_by(lexer, strlen(value));
-  return token_init(value, type, lexer);
+  return token_init(hb_string(value), type, lexer);
 }
 
 static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
-  char* collected = malloc(count + 1);
-  if (!collected) { return NULL; }
+  uint32_t start_position = lexer->current_position;
 
   for (size_t i = 0; i < count; i++) {
-    collected[i] = lexer->current_character;
     lexer_advance(lexer);
   }
 
-  collected[count] = '\0';
-
-  token_T* token = token_init(collected, type, lexer);
-  free(collected);
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
   return token;
 }
@@ -130,29 +125,16 @@ static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
   int char_byte_length = utf8_sequence_length(lexer->source.data, lexer->current_position, lexer->source.length);
-
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
-
-  char* utf8_char = malloc(char_byte_length + 1);
-
-  if (!utf8_char) { return lexer_advance_current(lexer, type); }
+  uint32_t start_position = lexer->current_position;
 
   for (int i = 0; i < char_byte_length; i++) {
-    if (lexer->current_position + i >= lexer->source.length) {
-      free(utf8_char);
-      return lexer_advance_current(lexer, type);
-    }
-
-    utf8_char[i] = lexer->source.data[lexer->current_position + i];
+    if (lexer->current_position + i >= lexer->source.length) { return lexer_advance_current(lexer, type); }
   }
-
-  utf8_char[char_byte_length] = '\0';
 
   lexer_advance_utf8_bytes(lexer, char_byte_length);
 
-  token_T* token = token_init(utf8_char, type, lexer);
-
-  free(utf8_char);
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
   return token;
 }
@@ -168,37 +150,31 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const
 // ===== Specialized Parsers
 
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 128);
+  uint32_t start_position = lexer->current_position;
 
   while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
          && !lexer_eof(lexer)) {
-    hb_buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  token_T* token = token_init(buffer.value, TOKEN_WHITESPACE, lexer);
-
-  free(buffer.value);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_WHITESPACE, lexer);
 
   return token;
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 128);
+  uint32_t start_position = lexer->current_position;
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
          && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
 
-    hb_buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  token_T* token = token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
-
-  free(buffer.value);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_IDENTIFIER, lexer);
 
   return token;
 }
@@ -219,19 +195,18 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
+  uint32_t start_position = lexer->current_position;
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      token_T* token = token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
-
-      free(buffer.value);
+      token_T* token = token_init(
+        hb_string_range(lexer->source, start_position, lexer->current_position),
+        TOKEN_ERROR,
+        lexer
+      ); // Handle unexpected EOF
 
       return token;
     }
-
-    hb_buffer_append_char(&buffer, lexer->current_character);
 
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;
@@ -246,9 +221,8 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   lexer->state = STATE_ERB_CLOSE;
 
-  token_T* token = token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
-
-  free(buffer.value);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
   return token;
 }
@@ -266,7 +240,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {
-  if (lexer_eof(lexer)) { return token_init("", TOKEN_EOF, lexer); }
+  if (lexer_eof(lexer)) { return token_init(hb_string(""), TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }
