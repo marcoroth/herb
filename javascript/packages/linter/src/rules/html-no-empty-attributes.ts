@@ -1,9 +1,10 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, DynamicAttributeStaticValueParams } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
+import { Visitor, isERBOutputNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
+import type { ParseResult, HTMLAttributeNode, ERBContentNode, LiteralNode, Node } from "@herb-tools/core"
 
 const RESTRICTED_ATTRIBUTES = new Set([
   'id',
@@ -37,6 +38,50 @@ function isDataAttribute(attributeName: string): boolean {
   return attributeName.startsWith('data-')
 }
 
+/**
+ * Visitor that checks if a node tree contains any output content.
+ * Output content includes:
+ * - Non-whitespace literal text (LiteralNode)
+ * - ERB output tags (<%= %>, <%== %>)
+ */
+class ContainsOutputContentVisitor extends Visitor {
+  public hasOutputContent: boolean = false
+
+  visitLiteralNode(node: LiteralNode): void {
+    if (this.hasOutputContent) return
+
+    if (node.content && node.content.trim() !== "") {
+      this.hasOutputContent = true
+
+      return
+    }
+
+    this.visitChildNodes(node)
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    if (this.hasOutputContent) return
+
+    if (isERBOutputNode(node)) {
+      this.hasOutputContent = true
+
+      return
+    }
+
+    this.visitChildNodes(node)
+  }
+}
+
+
+function containsOutputContent(node: Node): boolean {
+  const visitor = new ContainsOutputContentVisitor()
+
+  visitor.visit(node)
+
+  return visitor.hasOutputContent
+}
+
+
 class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
   protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode }: StaticAttributeStaticValueParams): void {
     this.checkEmptyAttribute(attributeName, attributeValue, attributeNode)
@@ -50,6 +95,7 @@ class NoEmptyAttributesVisitor extends AttributeVisitorMixin {
   private checkEmptyAttribute(attributeName: string, attributeValue: string, attributeNode: HTMLAttributeNode): void {
     if (!isRestrictedAttribute(attributeName)) return
     if (attributeValue.trim() !== "") return
+    if (containsOutputContent(attributeNode)) return
 
     const hasExplicitValue = attributeNode.value !== null
 
