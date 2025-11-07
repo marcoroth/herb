@@ -139,10 +139,9 @@ static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T 
   return token;
 }
 
-static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
-  if (strncmp(lexer->source.data + lexer->current_position, value, strlen(value)) == 0) {
-    return lexer_advance_with(lexer, value, type);
-  }
+static token_T* lexer_match_and_advance(lexer_T* lexer, hb_string_T value, const token_type_T type) {
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position);
+  if (hb_string_starts_with(remaining_source, value)) { return lexer_advance_with(lexer, value.data, type); }
 
   return NULL;
 }
@@ -182,7 +181,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  const char* erb_patterns[] = { "<%==", "<%%=", "<%=", "<%#", "<%-", "<%%", "<%" };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="), hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
 
@@ -288,22 +288,22 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
 
     case '/': {
-      token_T* token = lexer_match_and_advance(lexer, "/>", TOKEN_HTML_TAG_SELF_CLOSE);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("/>"), TOKEN_HTML_TAG_SELF_CLOSE);
       return token ? token : lexer_advance_current(lexer, TOKEN_SLASH);
     }
 
     case '?': {
-      token_T* token = lexer_match_and_advance(lexer, "?>", TOKEN_XML_DECLARATION_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("?>"), TOKEN_XML_DECLARATION_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
 
     case '-': {
-      token_T* token = lexer_match_and_advance(lexer, "-->", TOKEN_HTML_COMMENT_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
     }
 
     case ']': {
-      token_T* token = lexer_match_and_advance(lexer, "]]>", TOKEN_CDATA_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("]]>"), TOKEN_CDATA_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
 
