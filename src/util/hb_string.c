@@ -58,6 +58,17 @@ hb_string_T hb_string_truncate(hb_string_T string, uint32_t max_length) {
   return truncated_string;
 }
 
+char* hb_string_to_c_string_using_malloc(hb_string_T string) {
+  size_t string_length_in_bytes = sizeof(char) * (string.length);
+  char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
+
+  if (!hb_string_is_empty(string)) { memcpy(buffer, string.data, string_length_in_bytes); }
+
+  buffer[string_length_in_bytes] = '\0';
+
+  return buffer;
+}
+
 char* hb_string_to_c_string(hb_arena_T* allocator, hb_string_T string) {
   size_t string_length_in_bytes = sizeof(char) * (string.length);
   char* buffer = hb_arena_alloc(allocator, string_length_in_bytes + sizeof(char) * 1);
