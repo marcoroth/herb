@@ -33,6 +33,7 @@ import {
   isBlockLevelNode,
   isClosingPunctuation,
   isContentPreserving,
+  isFrontmatter,
   isHerbDisableComment,
   isInlineElement,
   isNonWhitespaceNode,
@@ -641,15 +642,16 @@ export class FormatPrinter extends Printer {
   // --- Visitor methods ---
 
   visitDocumentNode(node: DocumentNode) {
-    const hasTextFlow = this.isInTextFlowContext(null, node.children)
+    const children = this.formatFrontmatter(node)
+    const hasTextFlow = this.isInTextFlowContext(null, children)
 
     if (hasTextFlow) {
-      const children = filterSignificantChildren(node.children)
+      const filteredChildren = filterSignificantChildren(children)
 
       const wasInlineMode = this.inlineMode
       this.inlineMode = true
 
-      this.visitTextFlowChildren(children)
+      this.visitTextFlowChildren(filteredChildren)
 
       this.inlineMode = wasInlineMode
 
@@ -659,10 +661,10 @@ export class FormatPrinter extends Printer {
     let lastWasMeaningful = false
     let hasHandledSpacing = false
 
-    for (let i = 0; i < node.children.length; i++) {
-      const child = node.children[i]
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i]
 
-      if (shouldPreserveUserSpacing(child, node.children, i)) {
+      if (shouldPreserveUserSpacing(child, children, i)) {
         this.push("")
         hasHandledSpacing = true
         continue
@@ -672,8 +674,8 @@ export class FormatPrinter extends Printer {
         continue
       }
 
-      if (shouldAppendToLastLine(child, node.children, i)) {
-        this.appendChildToLastLine(child, node.children, i)
+      if (shouldAppendToLastLine(child, children, i)) {
+        this.appendChildToLastLine(child, children, i)
         lastWasMeaningful = true
         hasHandledSpacing = false
         continue
@@ -1472,6 +1474,21 @@ export class FormatPrinter extends Printer {
 
 
   // --- Utility methods ---
+
+  private formatFrontmatter(node: DocumentNode): Node[] {
+    const firstChild = node.children[0]
+    const hasFrontmatter = firstChild && isFrontmatter(firstChild)
+
+    if (!hasFrontmatter) return node.children
+
+    this.push(firstChild.content.trimEnd())
+
+    const remaining = node.children.slice(1)
+
+    if (remaining.length > 0) this.push("")
+
+    return remaining
+  }
 
   /**
    * Append a child node to the last output line

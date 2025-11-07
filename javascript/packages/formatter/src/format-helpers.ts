@@ -521,3 +521,14 @@ export function isHerbDisableComment(node: Node): boolean {
 
   return trimmed.startsWith("herb:disable")
 }
+
+/**
+ * Check if a text node is YAML frontmatter (starts and ends with ---)
+ */
+export function isFrontmatter(node: Node): node is HTMLTextNode {
+  if (!isNode(node, HTMLTextNode)) return false
+
+  const content = node.content.trim()
+
+  return content.startsWith("---") && /---\s*$/.test(content)
+}
