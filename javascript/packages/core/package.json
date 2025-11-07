@@ -11,7 +11,7 @@
     "directory": "javascript/packages/core"
   },
   "main": "./dist/herb-core.cjs",
-  "module": "./dist/herb-core.esm.js",
+  "module": "./dist/herb-core.esm.mjs",
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "yarn clean && rollup -c",
@@ -24,9 +24,9 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-core.esm.js",
+      "import": "./dist/herb-core.esm.mjs",
       "require": "./dist/herb-core.cjs",
-      "default": "./dist/herb-core.esm.js"
+      "default": "./dist/herb-core.esm.mjs"
     }
   },
   "dependencies": {},

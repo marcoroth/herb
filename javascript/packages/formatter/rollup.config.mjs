@@ -23,7 +23,7 @@ export default [
   {
     input: "src/herb-format.ts",
     output: {
-      file: "dist/herb-format.js",
+      file: "dist/herb-format.mjs",
       format: "cjs",
       sourcemap: true,
     },
@@ -42,7 +42,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/index.esm.js",
+      file: "dist/index.esm.mjs",
       format: "esm",
       sourcemap: true,
     },

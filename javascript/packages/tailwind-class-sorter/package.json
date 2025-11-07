@@ -5,15 +5,15 @@
   "version": "0.7.5",
   "license": "MIT",
   "main": "./dist/tailwind-class-sorter.cjs",
-  "module": "./dist/tailwind-class-sorter.esm.js",
+  "module": "./dist/tailwind-class-sorter.esm.mjs",
   "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/tailwind-class-sorter.esm.js",
+      "import": "./dist/tailwind-class-sorter.esm.mjs",
       "require": "./dist/tailwind-class-sorter.cjs",
-      "default": "./dist/tailwind-class-sorter.esm.js"
+      "default": "./dist/tailwind-class-sorter.esm.mjs"
     }
   },
   "files": [

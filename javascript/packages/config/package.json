@@ -11,7 +11,7 @@
     "directory": "javascript/packages/config"
   },
   "main": "./dist/herb-config.cjs",
-  "module": "./dist/herb-config.esm.js",
+  "module": "./dist/herb-config.esm.mjs",
   "types": "./dist/types/index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
@@ -24,9 +24,9 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/herb-config.esm.js",
+      "import": "./dist/herb-config.esm.mjs",
       "require": "./dist/herb-config.cjs",
-      "default": "./dist/herb-config.esm.js"
+      "default": "./dist/herb-config.esm.mjs"
     }
   },
   "dependencies": {
