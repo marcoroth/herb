@@ -30,4 +30,4 @@ cargo-insta = "1.43.2"
 [build-dependencies]
 cc = "1.0"
 glob = "0.3"
-bindgen = "0.70"
+bindgen = "0.72"
