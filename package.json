@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "@jothepro/doxygen-awesome-css": "https://github.com/jothepro/doxygen-awesome-css#v2.3.4",
-    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
