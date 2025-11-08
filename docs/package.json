@@ -24,7 +24,7 @@
     "@herb-tools/node": "0.7.5"
   },
   "devDependencies": {
-    "@shikijs/vitepress-twoslash": "^3.4.2",
+    "@shikijs/vitepress-twoslash": "^3.15.0",
     "vitepress": "^2.0.0-alpha.5",
     "vitepress-plugin-group-icons": "^1.5.5"
   }
