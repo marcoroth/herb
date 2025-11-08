@@ -254,5 +254,24 @@ describe("@herb-tools/formatter", () => {
       const output = formatter.format(input)
       expect(output).toEqual(expected)
     })
+
+    test("if inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% else %>
+            Invalid
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% else %>Invalid<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
   })
 })

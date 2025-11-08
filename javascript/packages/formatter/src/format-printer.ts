@@ -1245,7 +1245,7 @@ export class FormatPrinter extends Printer {
         this.lines.push(" ")
       }
 
-      if (node.subsequent) this.visit(node.end_node)
+      if (node.subsequent) this.visit(node.subsequent)
       if (node.end_node) this.visit(node.end_node)
     } else {
       this.printERBNode(node)
@@ -1260,8 +1260,13 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBElseNode(node: ERBElseNode) {
-    this.printERBNode(node)
-    this.withIndent(() => node.statements.forEach(statement => this.visit(statement)))
+    if (this.inlineMode) {
+      this.printERBNode(node)
+      node.statements.forEach(statement => this.visit(statement))
+    } else {
+      this.printERBNode(node)
+      this.withIndent(() => node.statements.forEach(statement => this.visit(statement)))
+    }
   }
 
   visitERBWhenNode(node: ERBWhenNode) {
