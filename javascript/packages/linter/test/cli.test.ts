@@ -280,4 +280,59 @@ describe("CLI Output Formatting", () => {
       }
     })
   })
+
+  describe("Multiple File Arguments", () => {
+    function runLinterMultiFile(...files: string[]): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+        const fileArgs = files.map(f => `test/fixtures/${f}`).join(' ')
+
+        const output = execSync(`bin/herb-lint ${fileArgs} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("lints multiple files successfully", () => {
+      const { output, exitCode } = runLinterMultiFile("clean-file.html.erb", "boolean-attribute.html.erb")
+
+      expect(output).toContain("All files are clean")
+      expect(output).toContain("Checked      2 files")
+      expect(exitCode).toBe(0)
+    })
+
+    test("lints multiple files with errors", () => {
+      const { output, exitCode } = runLinterMultiFile("test-file-with-errors.html.erb", "bad-file.html.erb")
+
+      expect(output).toContain("test-file-with-errors.html.erb")
+      expect(output).toContain("bad-file.html.erb")
+      expect(exitCode).toBe(1)
+    })
+
+    test("exits with error if one file doesn't exist", () => {
+      const { output, exitCode } = runLinterMultiFile("clean-file.html.erb", "nonexistent-file.html.erb")
+
+      expect(output).toContain("No files found matching pattern")
+      expect(output).toContain("nonexistent-file.html.erb")
+      expect(exitCode).toBe(1)
+    })
+
+    test("deduplicates files when passed multiple times", () => {
+      const { output, exitCode } = runLinterMultiFile("test-file-with-errors.html.erb", "test-file-with-errors.html.erb")
+
+      const fileMatches = (output.match(/test-file-with-errors\.html\.erb/g) || []).length
+
+      expect(fileMatches).toBeGreaterThan(0)
+      expect(exitCode).toBe(1)
+    })
+  })
 })

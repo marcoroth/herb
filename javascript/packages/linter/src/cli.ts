@@ -55,7 +55,8 @@ export class CLI {
     process.exit(exitCode)
   }
 
-  protected determineProjectPath(pattern: string | undefined): void {
+  protected determineProjectPath(patterns: string[]): void {
+    const pattern = patterns[0]
     if (pattern) {
       const resolvedPattern = resolve(pattern)
 
@@ -91,6 +92,41 @@ export class CLI {
     return pattern
   }
 
+  protected async resolvePatternToFiles(pattern: string, config: Config, force: boolean): Promise<{ files: string[], explicitFile: string | undefined }> {
+    const resolvedPattern = resolve(pattern)
+    const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
+    let explicitFile: string | undefined
+
+    if (isExplicitFile) {
+      explicitFile = pattern
+    }
+
+    const filesConfig = config.getFilesConfigForTool('linter')
+    const configGlobPattern = filesConfig.include && filesConfig.include.length > 0
+      ? (filesConfig.include.length === 1 ? filesConfig.include[0] : `{${filesConfig.include.join(',')}}`)
+      : '**/*.html.erb'
+    const adjustedPattern = this.adjustPattern(pattern, configGlobPattern)
+
+    let files = await glob(adjustedPattern, {
+      cwd: this.projectPath,
+      ignore: filesConfig.exclude || []
+    })
+
+    if (explicitFile && files.length === 0) {
+      if (!force) {
+        console.error(`⚠️  File ${explicitFile} is excluded by configuration patterns.`)
+        console.error(`   Use --force to lint it anyway.\n`)
+        process.exit(0)
+      } else {
+        console.log(`⚠️  Forcing linter on excluded file: ${explicitFile}`)
+        console.log()
+        files = [adjustedPattern]
+      }
+    }
+
+    return { files, explicitFile }
+  }
+
   protected async beforeProcess(): Promise<void> {
     // Hook for subclasses to add custom output before processing
   }
@@ -105,9 +141,9 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { pattern, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init } = this.argumentParser.parse(process.argv)
 
-    this.determineProjectPath(pattern)
+    this.determineProjectPath(patterns)
 
     if (init) {
       const configPath = configFile || this.projectPath
@@ -160,50 +196,37 @@ export class CLI {
       }
 
       let files: string[]
-      let explicitSingleFile: string | undefined
+      let explicitFiles: string[] = []
 
-      if (!pattern) {
+      if (patterns.length === 0) {
         files = await config.findFilesForTool('linter', this.projectPath)
       } else {
-        const resolvedPattern = resolve(pattern)
-        const isExplicitFile = existsSync(resolvedPattern) && statSync(resolvedPattern).isFile()
+        const allFiles: string[] = []
 
-        if (isExplicitFile) {
-          explicitSingleFile = pattern
-        }
+        for (const pattern of patterns) {
+          const { files: patternFiles, explicitFile } = await this.resolvePatternToFiles(pattern, config, force)
 
-        const filesConfig = config.getFilesConfigForTool('linter')
-        const configGlobPattern = filesConfig.include && filesConfig.include.length > 0
-          ? (filesConfig.include.length === 1 ? filesConfig.include[0] : `{${filesConfig.include.join(',')}}`)
-          : '**/*.html.erb'
-        const adjustedPattern = this.adjustPattern(pattern, configGlobPattern)
+          if (patternFiles.length === 0) {
+            console.error(`✗ No files found matching pattern: ${pattern}`)
+            process.exit(1)
+          }
 
-        files = await glob(adjustedPattern, {
-          cwd: this.projectPath,
-          ignore: filesConfig.exclude || []
-        })
-
-        if (explicitSingleFile && files.length === 0) {
-          if (!force) {
-            console.error(`⚠️  File ${explicitSingleFile} is excluded by configuration patterns.`)
-            console.error(`   Use --force to lint it anyway.\n`)
-            process.exit(0)
-          } else {
-            console.log(`⚠️  Forcing linter on excluded file: ${explicitSingleFile}`)
-            console.log()
-
-            files = [adjustedPattern]
+          allFiles.push(...patternFiles)
+          if (explicitFile) {
+            explicitFiles.push(explicitFile)
           }
         }
+
+        files = [...new Set(allFiles)]
       }
 
       if (files.length === 0) {
-        this.exitWithInfo(`No files found matching pattern: ${pattern || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
+        this.exitWithInfo(`No files found matching patterns: ${patterns.join(', ') || 'from config'}`, formatOption, 0, { startTime, startDate, showTiming })
       }
 
       let processingConfig = config
 
-      if (force && explicitSingleFile && files.length === 1) {
+      if (force && explicitFiles.length > 0) {
         const modifiedConfig = Object.create(Object.getPrototypeOf(config))
         Object.assign(modifiedConfig, config)
 
@@ -220,7 +243,7 @@ export class CLI {
 
       const context: ProcessingContext = {
         projectPath: this.projectPath,
-        pattern,
+        pattern: patterns.join(' '),
         fix,
         ignoreDisableComments,
         linterConfig,

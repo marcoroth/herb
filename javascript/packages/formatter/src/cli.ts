@@ -18,11 +18,12 @@ const pluralize = (count: number, singular: string, plural: string = singular + 
 
 export class CLI {
   private usage = dedent`
-    Usage: herb-format [file|directory|glob-pattern] [options]
+    Usage: herb-format [files|directories|glob-patterns...] [options]
 
     Arguments:
-      file|directory|glob-pattern   File to format, directory to format all configured files within,
-                                    glob pattern to match files, or '-' for stdin (omit to format all configured files in current directory)
+      files|directories|glob-patterns  Files, directories, or glob patterns to format, or '-' for stdin
+                                       Multiple arguments are supported (e.g., herb-format file1.erb file2.erb dir/)
+                                       Omit to format all configured files in current directory
 
     Options:
       -c, --check                     check if files are formatted without modifying them
@@ -124,6 +125,11 @@ export class CLI {
         console.log(`  ${Herb.version}`.split(", ").join("\n  "))
 
         process.exit(0)
+      }
+
+      if (positionals.includes('-') && positionals.length > 1) {
+        console.error("Error: Cannot mix stdin ('-') with file arguments")
+        process.exit(1)
       }
 
       const file = positionals[0]
@@ -314,165 +320,85 @@ export class CLI {
         const output = result.endsWith('\n') ? result : result + '\n'
 
         process.stdout.write(output)
-      } else if (file) {
-        let isDirectory = false
-        let isFile = false
-        let pattern = file
+      } else if (positionals.length > 0) {
+        const allFiles: string[] = []
 
-        try {
-          const stats = statSync(file)
-          isDirectory = stats.isDirectory()
-          isFile = stats.isFile()
-        } catch {
-          // Not a file/directory, treat as glob pattern
-        }
+        let hasErrors = false
 
-        const filesConfig = config.getFilesConfigForTool('formatter')
+        for (const pattern of positionals) {
+          try {
+            const files = await this.resolvePatternToFiles(pattern, config, isForceMode)
 
-        if (isDirectory) {
-          const files = await config.findFilesForTool('formatter', resolve(file))
+            if (files.length === 0) {
+              const isLikelySpecificFile = !pattern.includes('*') && !pattern.includes('?') &&
+                                           !pattern.includes('[') && !pattern.includes('{')
 
-          if (files.length === 0) {
-            console.log(`No files found in directory: ${resolve(file)}`)
-            process.exit(0)
-          }
-
-          let formattedCount = 0
-          let unformattedFiles: string[] = []
-
-          for (const filePath of files) {
-            const displayPath = relative(process.cwd(), filePath)
-
-            try {
-              const source = readFileSync(filePath, "utf-8")
-              const result = formatter.format(source)
-              const output = result.endsWith('\n') ? result : result + '\n'
-
-              if (output !== source) {
-                if (isCheckMode) {
-                  unformattedFiles.push(displayPath)
-                } else {
-                  writeFileSync(filePath, output, "utf-8")
-                  console.log(`Formatted: ${displayPath}`)
-                }
-                formattedCount++
-              }
-            } catch (error) {
-              console.error(`Error formatting ${displayPath}:`, error)
-            }
-          }
-
-          if (isCheckMode) {
-            if (unformattedFiles.length > 0) {
-              console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-              unformattedFiles.forEach(file => console.log(`  ${file}`))
-              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-              process.exit(1)
-            } else {
-              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
-            }
-          } else {
-            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
-          }
-
-          process.exit(0)
-        } else if (isFile) {
-          const testFiles = await glob(file, {
-            cwd: process.cwd(),
-            ignore: filesConfig.exclude || []
-          })
-
-          if (testFiles.length === 0) {
-            if (!isForceMode) {
-              console.error(`⚠️  File ${file} is excluded by configuration patterns.`)
-              console.error(`   Use --force to format it anyway.\n`)
-              process.exit(0)
-            } else {
-              console.error(`⚠️  Forcing formatter on excluded file: ${file}`)
-              console.error()
-            }
-          }
-
-          const source = readFileSync(file, "utf-8")
-          const result = formatter.format(source)
-          const output = result.endsWith('\n') ? result : result + '\n'
-
-          if (output !== source) {
-            if (isCheckMode) {
-              console.log(`File is not formatted: ${file}`)
-              process.exit(1)
-            } else {
-              writeFileSync(file, output, "utf-8")
-              console.log(`Formatted: ${file}`)
-            }
-          } else if (isCheckMode) {
-            console.log(`File is properly formatted: ${file}`)
-          }
-
-          process.exit(0)
-        }
-
-        try {
-          const files = await glob(pattern, { ignore: filesConfig.exclude || [] })
-
-          if (files.length === 0) {
-            try {
-              statSync(file)
-            } catch {
-              if (!file.includes('*') && !file.includes('?') && !file.includes('[') && !file.includes('{')) {
-                console.error(`Error: Cannot access '${file}': ENOENT: no such file or directory`)
-
-                process.exit(1)
-              }
-            }
-
-            console.log(`No files found matching pattern: ${resolve(pattern)}`)
-
-            process.exit(0)
-          }
-
-            let formattedCount = 0
-            let unformattedFiles: string[] = []
-
-            for (const filePath of files) {
-              try {
-                const source = readFileSync(filePath, "utf-8")
-                const result = formatter.format(source)
-                const output = result.endsWith('\n') ? result : result + '\n'
-
-                if (output !== source) {
-                  if (isCheckMode) {
-                    unformattedFiles.push(filePath)
-                  } else {
-                    writeFileSync(filePath, output, "utf-8")
-                    console.log(`Formatted: ${filePath}`)
-                  }
-
-                  formattedCount++
-                }
-              } catch (error) {
-                console.error(`Error formatting ${filePath}:`, error)
-              }
-            }
-
-            if (isCheckMode) {
-              if (unformattedFiles.length > 0) {
-                console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
-                unformattedFiles.forEach(file => console.log(`  ${file}`))
-                console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
-                process.exit(1)
+              if (isLikelySpecificFile) {
+                continue
               } else {
-                console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
+                console.log(`No files found matching pattern: ${pattern}`)
+                process.exit(0)
               }
-            } else {
-              console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
             }
 
-        } catch (error) {
-          console.error(`Error: Cannot access '${file}':`, error)
+            allFiles.push(...files)
+          } catch (error: any) {
+            console.error(`Error: ${error.message}`)
+            hasErrors = true
+            break
+          }
+        }
 
+        if (hasErrors) {
           process.exit(1)
         }
+
+        const files = [...new Set(allFiles)]
+
+        if (files.length === 0) {
+          console.log(`No files found matching patterns: ${positionals.join(', ')}`)
+          process.exit(0)
+        }
+
+        let formattedCount = 0
+        let unformattedFiles: string[] = []
+
+        for (const filePath of files) {
+          const displayPath = relative(process.cwd(), filePath)
+
+          try {
+            const source = readFileSync(filePath, "utf-8")
+            const result = formatter.format(source)
+            const output = result.endsWith('\n') ? result : result + '\n'
+
+            if (output !== source) {
+              if (isCheckMode) {
+                unformattedFiles.push(displayPath)
+              } else {
+                writeFileSync(filePath, output, "utf-8")
+                console.log(`Formatted: ${displayPath}`)
+              }
+              formattedCount++
+            }
+          } catch (error) {
+            console.error(`Error formatting ${displayPath}:`, error)
+          }
+        }
+
+        if (isCheckMode) {
+          if (unformattedFiles.length > 0) {
+            console.log(`\nThe following ${pluralize(unformattedFiles.length, 'file is', 'files are')} not formatted:`)
+            unformattedFiles.forEach(file => console.log(`  ${file}`))
+            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, found ${unformattedFiles.length} unformatted ${pluralize(unformattedFiles.length, 'file')}`)
+            process.exit(1)
+          } else {
+            console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, all files are properly formatted`)
+          }
+        } else {
+          console.log(`\nChecked ${files.length} ${pluralize(files.length, 'file')}, formatted ${formattedCount} ${pluralize(formattedCount, 'file')}`)
+        }
+
+        process.exit(0)
       } else {
         const files = await config.findFilesForTool('formatter', process.cwd())
 
@@ -536,5 +462,58 @@ export class CLI {
     }
 
     return Buffer.concat(chunks).toString("utf8")
+  }
+
+  private async resolvePatternToFiles(pattern: string, config: Config, isForceMode: boolean | undefined): Promise<string[]> {
+    let isDirectory = false
+    let isFile = false
+
+    try {
+      const stats = statSync(pattern)
+      isDirectory = stats.isDirectory()
+      isFile = stats.isFile()
+    } catch {
+      // Not a file/directory, treat as glob pattern
+    }
+
+    const filesConfig = config.getFilesConfigForTool('formatter')
+
+    if (isDirectory) {
+      const files = await config.findFilesForTool('formatter', resolve(pattern))
+      return files
+    } else if (isFile) {
+      const testFiles = await glob(pattern, {
+        cwd: process.cwd(),
+        ignore: filesConfig.exclude || []
+      })
+
+      if (testFiles.length === 0) {
+        if (!isForceMode) {
+          console.error(`⚠️  File ${pattern} is excluded by configuration patterns.`)
+          console.error(`   Use --force to format it anyway.\n`)
+          process.exit(0)
+        } else {
+          console.error(`⚠️  Forcing formatter on excluded file: ${pattern}`)
+          console.error()
+          return [pattern]
+        }
+      }
+
+      return [pattern]
+    }
+
+    const files = await glob(pattern, { ignore: filesConfig.exclude || [] })
+
+    if (files.length === 0) {
+      try {
+        statSync(pattern)
+      } catch {
+        if (!pattern.includes('*') && !pattern.includes('?') && !pattern.includes('[') && !pattern.includes('{')) {
+          throw new Error(`Cannot access '${pattern}': ENOENT: no such file or directory`)
+        }
+      }
+    }
+
+    return files
   }
 }

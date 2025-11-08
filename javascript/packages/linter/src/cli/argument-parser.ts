@@ -11,7 +11,7 @@ import { name, version, dependencies } from "../../package.json"
 export type FormatOption = "simple" | "detailed" | "json"
 
 export interface ParsedArguments {
-  pattern: string
+  patterns: string[]
   configFile?: string
   formatOption: FormatOption
   showTiming: boolean
@@ -27,12 +27,11 @@ export interface ParsedArguments {
 
 export class ArgumentParser {
   private readonly usage = dedent`
-    Usage: herb-lint [file|glob-pattern|directory] [options]
+    Usage: herb-lint [files|directories|glob-patterns...] [options]
 
     Arguments:
-      file             Single file to lint
-      glob-pattern     Files to lint (defaults to configured extensions in .herb.yml)
-      directory        Directory to lint (automatically appends configured glob pattern)
+      files            Files, directories, or glob patterns to lint (defaults to configured extensions in .herb.yml)
+                       Multiple arguments are supported (e.g., herb-lint file1.erb file2.erb dir/ "**/*.erb")
 
     Options:
       -h, --help                    show help
@@ -134,17 +133,17 @@ export class ArgumentParser {
     }
 
     const theme = values.theme || DEFAULT_THEME
-    const pattern = this.getFilePattern(positionals)
+    const patterns = this.getFilePatterns(positionals)
     const fix = values.fix || false
     const force = !!values.force
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
     const init = values.init || false
 
-    return { pattern, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init }
   }
 
-  private getFilePattern(positionals: string[]): string {
-    return positionals.length > 0 ? positionals[0] : ""
+  private getFilePatterns(positionals: string[]): string[] {
+    return positionals
   }
 }
