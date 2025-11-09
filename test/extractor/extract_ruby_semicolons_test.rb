@@ -4,109 +4,115 @@ require_relative "../test_helper"
 
 module Extractor
   class ExtractRubySemicolonsTest < Minitest::Spec
-    test "basic silent" do
-      ruby = Herb.extract_ruby("<h1><% RUBY_VERSION %></h1>", with_semicolon: true)
+    test "extract_ruby_single_erb_no_semicolon" do
+      source = "<% if %>\n<% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      assert_equal "       RUBY_VERSION ;      ", ruby
+      expected = "   if   \n   end   "
+      assert_equal expected, result
     end
 
-    test "basic loud" do
-      ruby = Herb.extract_ruby("<h1><%= RUBY_VERSION %></h1>", with_semicolon: true)
+    test "extract_ruby_multiple_erb_same_line_with_semicolon" do
+      source = "<% x = 1 %> <% y = 2 %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      assert_equal "        RUBY_VERSION ;      ", ruby
+      assert_equal "   x = 1  ;    y = 2   ", result
     end
 
-    test "with newlines" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <h1>
-          <% RUBY_VERSION %>
-        </h1>
-      HTML
+    test "extract_ruby_three_erb_same_line_with_semicolons" do
+      source = "<% a = 1 %> <% b = 2 %> <% c = 3 %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      assert_equal "    \n     RUBY_VERSION ; \n     \n", actual
+      assert_equal "   a = 1  ;    b = 2  ;    c = 3   ", result
     end
 
-    test "nested" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <% array = [1, 2, 3] %>
+    test "extract_ruby_different_lines_no_semicolons" do
+      source = "<% x = 1 %>\n<% y = 2 %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-        <ul>
-          <% array.each do |item| %>
-            <li><%= item %></li>
-          <% end %>
-        </ul>
-      HTML
-
-      expected = "   array = [1, 2, 3] ; \n\n    \n     array.each do |item| ; \n            item ;      \n     end ; \n     \n"
-
-      assert_equal expected, actual
+      expected = "   x = 1   \n   y = 2   "
+      assert_equal expected, result
     end
 
-    test "erb comment" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <%# comment ' %>
-      HTML
+    test "extract_ruby_mixed_lines" do
+      source = "<% a = 1 %> <% b = 2 %>\n<% c = 3 %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "              ; \n"
-
-      assert_equal expected, actual
+      expected = "   a = 1  ;    b = 2   \n   c = 3   "
+      assert_equal expected, result
     end
 
-    test "erb comment with ruby keyword" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <%# end %>
-      HTML
+    test "extract_ruby_output_tags_same_line" do
+      source = "<%= x %> <%= y %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "        ; \n"
-
-      assert_equal expected, actual
+      assert_equal "    x  ;     y   ", result
     end
 
-    test "erb comment broken up over multiple lines" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <%#
-          end
-        %>
-      HTML
+    test "extract_ruby_empty_erb_same_line" do
+      source = "<%  %> <%  %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "          ; \n"
-
-      assert_equal expected, actual
+      assert_equal "     ;       ", result
     end
 
-    test "multi-line erb comment" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <%#
-          end
-          end
-          end
-          end
-        %>
-      HTML
+    test "extract_ruby_comments_skipped" do
+      source = "<%# comment %> <% code %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "                            ; \n"
-
-      assert_equal expected, actual
+      assert_equal "                  code   ", result
     end
 
-    test "erb if/end and comment on same line" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <% if %><%# comment %><% end %>
-      HTML
+    test "extract_ruby_issue_135_if_without_condition" do
+      source = "<% if %>\n<% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "   if ;             ;    end ; \n"
-
-      assert_equal expected, actual
+      expected = "   if   \n   end   "
+      assert_equal expected, result
     end
 
-    xtest "erb if/end and Ruby comment on same line" do
-      actual = Herb.extract_ruby(<<~HTML, with_semicolon: true)
-        <% if %><% # comment %><% end %>
-      HTML
+    test "extract_ruby_inline_comment_same_line" do
+      source = "<% if true %><% # Comment here %><% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
 
-      expected = "   if      # comment      end   \n"
+      assert_equal "   if true  ;                       end   ", result
+    end
 
-      assert_equal expected, actual
+    test "extract_ruby_inline_comment_with_newline" do
+      source = "<% if true %><% # Comment here %>\n<% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
+
+      expected = "   if true  ;                    \n   end   "
+      assert_equal expected, result
+    end
+
+    test "extract_ruby_inline_comment_with_spaces" do
+      source = "<%  # Comment %> <% code %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
+
+      assert_equal "                    code   ", result
+    end
+
+    test "extract_ruby_inline_comment_multiline" do
+      source = "<% # Comment\nmore %> <% code %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
+
+      expected = "   # Comment\nmore  ;    code   "
+      assert_equal expected, result
+    end
+
+    test "extract_ruby_inline_comment_between_code" do
+      source = "<% if true %><% # Comment here %><%= hello %><% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
+
+      assert_equal "   if true  ;                        hello  ;   end   ", result
+    end
+
+    test "extract_ruby_inline_comment_complex" do
+      source = "<% # Comment here %><% if true %><% # Comment here %><%= hello %><% end %>"
+      result = Herb.extract_ruby(source, with_semicolon: true)
+
+      assert_equal "                       if true  ;                        hello  ;   end   ", result
     end
   end
 end
