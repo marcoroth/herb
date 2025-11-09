@@ -103,9 +103,7 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
       with_semicolon_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons")));
     }
 
-    if (!NIL_P(with_semicolon_value) && RTEST(with_semicolon_value)) {
-      semicolons = true;
-    }
+    if (!NIL_P(with_semicolon_value) && RTEST(with_semicolon_value)) { semicolons = true; }
   }
 
   if (semicolons) {
