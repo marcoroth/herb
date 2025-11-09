@@ -274,6 +274,27 @@ describe("@herb-tools/formatter", () => {
       expect(output).toEqual(expected)
     })
 
+    test("if/elsif/else inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if status == 'active' %>
+            Active
+          <% elsif status == 'pending' %>
+            Pending
+          <% else %>
+            Inactive
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if status == 'active' %>Active<% elsif status == 'pending' %>Pending<% else %>Inactive<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
     test("if/elseif inside <span>", () => {
       const input = dedent`
         <span>

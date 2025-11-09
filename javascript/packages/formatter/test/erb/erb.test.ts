@@ -294,7 +294,8 @@ describe("@herb-tools/formatter", () => {
       <p>
         This will be the all-in-one home for everything to do with
         <a href="https://hanamirb.org">Hanami</a>,
-        <a href="https://dry-rb.org">Dry</a> and <a href="https://rom-rb.org">Rom</a>.
+        <a href="https://dry-rb.org">Dry</a> and
+        <a href="https://rom-rb.org">Rom</a>.
       </p>
     `)
 
@@ -328,7 +329,7 @@ describe("@herb-tools/formatter", () => {
         Here is some text.
         <br />
         Tel:
-        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone">08-123 456 78</a>
+        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone"> 08-123 456 78 </a>
       </p>
     `)
 
