@@ -1,0 +1,38 @@
+---
+source: "Parser::ERBTest#test_0044_inline ruby comment before and between code"
+input: "<% # Comment here %><% if true %><% # Comment here %><%= hello %><% end %>"
+---
+@ DocumentNode (location: (1:0)-(1:74))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:20))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " # Comment here " (location: (1:2)-(1:18))
+    │   ├── tag_closing: "%>" (location: (1:18)-(1:20))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ ERBIfNode (location: (1:20)-(1:74))
+        ├── tag_opening: "<%" (location: (1:20)-(1:22))
+        ├── content: " if true " (location: (1:22)-(1:31))
+        ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        ├── statements: (2 items)
+        │   ├── @ ERBContentNode (location: (1:33)-(1:53))
+        │   │   ├── tag_opening: "<%" (location: (1:33)-(1:35))
+        │   │   ├── content: " # Comment here " (location: (1:35)-(1:51))
+        │   │   ├── tag_closing: "%>" (location: (1:51)-(1:53))
+        │   │   ├── parsed: true
+        │   │   └── valid: true
+        │   │
+        │   └── @ ERBContentNode (location: (1:53)-(1:65))
+        │       ├── tag_opening: "<%=" (location: (1:53)-(1:56))
+        │       ├── content: " hello " (location: (1:56)-(1:63))
+        │       ├── tag_closing: "%>" (location: (1:63)-(1:65))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        ├── subsequent: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:65)-(1:74))
+                ├── tag_opening: "<%" (location: (1:65)-(1:67))
+                ├── content: " end " (location: (1:67)-(1:72))
+                └── tag_closing: "%>" (location: (1:72)-(1:74))

@@ -39,7 +39,26 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          hb_buffer_append(output, token->value);
+          bool is_inline_comment = false;
+
+          if (!is_comment_tag && token->value != NULL) {
+            const char* content = token->value;
+
+            while (*content == ' ' || *content == '\t') {
+              content++;
+            }
+
+            if (*content == '#' && token->location.start.line == token->location.end.line) {
+              is_comment_tag = true;
+              is_inline_comment = true;
+            }
+          }
+
+          if (is_inline_comment) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          } else {
+            hb_buffer_append(output, token->value);
+          }
         } else {
           hb_buffer_append_whitespace(output, range_length(token->range));
         }

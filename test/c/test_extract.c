@@ -89,6 +89,62 @@ TEST(extract_ruby_issue_135_if_without_condition)
   free(result);
 END
 
+TEST(extract_ruby_inline_comment_same_line)
+  char* source = "<% if true %><% # Comment here %><% end %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  ck_assert_str_eq(result, "   if true  ;                       end   ");
+
+  free(result);
+END
+
+TEST(extract_ruby_inline_comment_with_newline)
+  char* source = "<% if true %><% # Comment here %>\n<% end %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  char expected[] = "   if true  ;                    \n   end   ";
+  ck_assert_str_eq(result, expected);
+
+  free(result);
+END
+
+TEST(extract_ruby_inline_comment_with_spaces)
+  char* source = "<%  # Comment %> <% code %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  ck_assert_str_eq(result, "                    code   ");
+
+  free(result);
+END
+
+TEST(extract_ruby_inline_comment_multiline)
+  char* source = "<% # Comment\nmore %> <% code %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  char expected[] = "   # Comment\nmore  ;    code   ";
+  ck_assert_str_eq(result, expected);
+
+  free(result);
+END
+
+TEST(extract_ruby_inline_comment_between_code)
+  char* source = "<% if true %><% # Comment here %><%= hello %><% end %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  ck_assert_str_eq(result, "   if true  ;                        hello  ;   end   ");
+
+  free(result);
+END
+
+TEST(extract_ruby_inline_comment_complex)
+  char* source = "<% # Comment here %><% if true %><% # Comment here %><%= hello %><% end %>";
+  char* result = herb_extract_ruby_with_semicolons(source);
+
+  ck_assert_str_eq(result, "                       if true  ;                        hello  ;   end   ");
+
+  free(result);
+END
+
 TCase *extract_tests(void) {
   TCase *extract = tcase_create("Extract");
 
@@ -101,6 +157,12 @@ TCase *extract_tests(void) {
   tcase_add_test(extract, extract_ruby_empty_erb_same_line);
   tcase_add_test(extract, extract_ruby_comments_skipped);
   tcase_add_test(extract, extract_ruby_issue_135_if_without_condition);
+  tcase_add_test(extract, extract_ruby_inline_comment_same_line);
+  tcase_add_test(extract, extract_ruby_inline_comment_with_newline);
+  tcase_add_test(extract, extract_ruby_inline_comment_with_spaces);
+  tcase_add_test(extract, extract_ruby_inline_comment_multiline);
+  tcase_add_test(extract, extract_ruby_inline_comment_between_code);
+  tcase_add_test(extract, extract_ruby_inline_comment_complex);
 
   return extract;
 }

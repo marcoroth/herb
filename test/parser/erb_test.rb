@@ -228,5 +228,35 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "inline ruby comment on same line" do
+      assert_parsed_snapshot(%(<% if true %><% # Comment here %><% end %>))
+    end
+
+    test "inline ruby comment with newline" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %><% # Comment here %>
+        <% end %>
+      HTML
+    end
+
+    test "inline ruby comment between code" do
+      assert_parsed_snapshot(%(<% if true %><% # Comment here %><%= hello %><% end %>))
+    end
+
+    test "inline ruby comment before and between code" do
+      assert_parsed_snapshot(%(<% # Comment here %><% if true %><% # Comment here %><%= hello %><% end %>))
+    end
+
+    test "inline ruby comment with spaces" do
+      assert_parsed_snapshot(%(<%  # Comment %> <% code %>))
+    end
+
+    test "inline ruby comment multiline" do
+      assert_parsed_snapshot(<<~HTML)
+        <% # Comment
+        more %> <% code %>
+      HTML
+    end
   end
 end
