@@ -162,6 +162,8 @@ module Herb
       end
 
       def visit_erb_content_node(node)
+        return if inline_ruby_comment?(node)
+
         process_erb_tag(node)
       end
 

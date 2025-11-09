@@ -11,6 +11,9 @@ module Herb
 
       # : (String) -> bool
       def erb_output?: (String) -> bool
+
+      # : (Herb::AST::ERBContentNode) -> bool
+      def inline_ruby_comment?: (Herb::AST::ERBContentNode) -> bool
     end
   end
 end
