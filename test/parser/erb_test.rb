@@ -218,8 +218,15 @@ module Parser
       assert_parsed_snapshot(%(<% content %> %>))
     end
 
-    test "TODO" do
+    test "incomplete erb tag" do
       assert_parsed_snapshot(%(<%= 1 + %>))
+    end
+
+    test "if without condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if %>
+        <% end %>
+      HTML
     end
   end
 end

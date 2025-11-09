@@ -10,6 +10,7 @@
 void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
+  bool is_comment_tag = false;
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
@@ -21,8 +22,15 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+        if (strcmp(token->value, "<%#") == 0) {
           skip_erb_content = true;
+          is_comment_tag = true;
+        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+          skip_erb_content = true;
+          is_comment_tag = false;
+        } else {
+          skip_erb_content = false;
+          is_comment_tag = false;
         }
 
         hb_buffer_append_whitespace(output, range_length(token->range));
@@ -40,11 +48,36 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
       }
 
       case TOKEN_ERB_END: {
+        bool was_comment = is_comment_tag;
         skip_erb_content = false;
+        is_comment_tag = false;
 
-        hb_buffer_append_char(output, ' ');
-        hb_buffer_append_char(output, ';');
-        hb_buffer_append_whitespace(output, range_length(token->range) - 2);
+        if (was_comment) {
+          hb_buffer_append_whitespace(output, range_length(token->range));
+          break;
+        }
+
+        bool needs_semicolon = false;
+        uint32_t current_line = token->location.end.line;
+
+        for (size_t j = i + 1; j < hb_array_size(tokens); j++) {
+          const token_T* next_token = hb_array_get(tokens, j);
+
+          if (next_token->type == TOKEN_NEWLINE) { break; }
+
+          if (next_token->type == TOKEN_ERB_START && next_token->location.start.line == current_line) {
+            needs_semicolon = true;
+            break;
+          }
+        }
+
+        if (needs_semicolon) {
+          hb_buffer_append_char(output, ' ');
+          hb_buffer_append_char(output, ';');
+          hb_buffer_append_whitespace(output, range_length(token->range) - 2);
+        } else {
+          hb_buffer_append_whitespace(output, range_length(token->range));
+        }
         break;
       }
 
