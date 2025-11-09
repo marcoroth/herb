@@ -1,8 +1,10 @@
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/lexer.h"
+#include "include/macros.h"
 #include "include/parser.h"
 #include "include/token.h"
+#include "include/util/hb_arena.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/version.h"
@@ -11,8 +13,11 @@
 #include <stdlib.h>
 
 hb_array_T* herb_lex(const char* source) {
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, KB(32));
+
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, &allocator, source);
 
   token_T* token = NULL;
   hb_array_T* tokens = hb_array_init(128);
@@ -23,14 +28,19 @@ hb_array_T* herb_lex(const char* source) {
 
   hb_array_append(tokens, token);
 
+  hb_arena_free(&allocator);
+
   return tokens;
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
   if (!source) { source = ""; }
 
+  hb_arena_T allocator;
+  hb_arena_init(&allocator, MB(512));
+
   lexer_T lexer = { 0 };
-  lexer_init(&lexer, source);
+  lexer_init(&lexer, &allocator, source);
   parser_T parser = { 0 };
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;

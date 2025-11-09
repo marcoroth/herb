@@ -2,6 +2,7 @@
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
+#include "include/util/hb_arena.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
@@ -31,7 +32,9 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source) {
+void lexer_init(lexer_T* lexer, hb_arena_T* allocator, const char* source) {
+  lexer->allocator = allocator;
+
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {
