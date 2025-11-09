@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0020_style tag with media query and nested selectors"
+input: |2-
+<style>
+  @media (max-width: 768px) {
+    .nav > ul > li {
+      display: block;
+    }
+  }
+</style>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(7:8))

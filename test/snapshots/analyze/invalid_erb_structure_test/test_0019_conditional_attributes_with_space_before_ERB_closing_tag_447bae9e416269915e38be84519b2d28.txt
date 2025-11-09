@@ -1,0 +1,135 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0019_conditional attributes with space before ERB closing tag"
+input: |2-
+<button
+  type="submit"
+  <% if false %> disabled <% end %>
+  <% if false %> aria-busy="true" <% end %>
+  class="btn"
+>Submit</button>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:16))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(6:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "button" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (6:0)-(6:1))
+    │   │       ├── children: (4 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (2:2)-(2:15))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (2:2)-(2:6))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (2:2)-(2:6))
+    │   │       │   │   │               └── content: "type"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (2:6)-(2:7))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (2:7)-(2:15))
+    │   │       │   │           ├── open_quote: """ (location: (2:7)-(2:8))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (2:8)-(2:14))
+    │   │       │   │           │       └── content: "submit"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (2:14)-(2:15))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ ERBIfNode (location: (3:2)-(3:35))
+    │   │       │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
+    │   │       │   │   ├── content: " if false " (location: (3:4)-(3:14))
+    │   │       │   │   ├── tag_closing: "%>" (location: (3:14)-(3:16))
+    │   │       │   │   ├── statements: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (3:17)-(3:25))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (3:17)-(3:25))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (3:17)-(3:25))
+    │   │       │   │   │       │               └── content: "disabled"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: ∅
+    │   │       │   │   │       └── value: ∅
+    │   │       │   │   │
+    │   │       │   │   ├── subsequent: ∅
+    │   │       │   │   └── end_node:
+    │   │       │   │       └── @ ERBEndNode (location: (3:26)-(3:35))
+    │   │       │   │           ├── tag_opening: "<%" (location: (3:26)-(3:28))
+    │   │       │   │           ├── content: " end " (location: (3:28)-(3:33))
+    │   │       │   │           └── tag_closing: "%>" (location: (3:33)-(3:35))
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ ERBIfNode (location: (4:2)-(4:43))
+    │   │       │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │       │   │   ├── content: " if false " (location: (4:4)-(4:14))
+    │   │       │   │   ├── tag_closing: "%>" (location: (4:14)-(4:16))
+    │   │       │   │   ├── statements: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (4:17)-(4:33))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (4:17)-(4:26))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (4:17)-(4:26))
+    │   │       │   │   │       │               └── content: "aria-busy"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: "=" (location: (4:26)-(4:27))
+    │   │       │   │   │       └── value:
+    │   │       │   │   │           └── @ HTMLAttributeValueNode (location: (4:27)-(4:33))
+    │   │       │   │   │               ├── open_quote: """ (location: (4:27)-(4:28))
+    │   │       │   │   │               ├── children: (1 item)
+    │   │       │   │   │               │   └── @ LiteralNode (location: (4:28)-(4:32))
+    │   │       │   │   │               │       └── content: "true"
+    │   │       │   │   │               │
+    │   │       │   │   │               ├── close_quote: """ (location: (4:32)-(4:33))
+    │   │       │   │   │               └── quoted: true
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── subsequent: ∅
+    │   │       │   │   └── end_node:
+    │   │       │   │       └── @ ERBEndNode (location: (4:34)-(4:43))
+    │   │       │   │           ├── tag_opening: "<%" (location: (4:34)-(4:36))
+    │   │       │   │           ├── content: " end " (location: (4:36)-(4:41))
+    │   │       │   │           └── tag_closing: "%>" (location: (4:41)-(4:43))
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (5:2)-(5:13))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (5:2)-(5:7))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (5:2)-(5:7))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (5:7)-(5:8))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (5:8)-(5:13))
+    │   │       │               ├── open_quote: """ (location: (5:8)-(5:9))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (5:9)-(5:12))
+    │   │       │               │       └── content: "btn"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (5:12)-(5:13))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "button" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (6:1)-(6:7))
+    │   │       └── content: "Submit"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:7)-(6:16))
+    │   │       ├── tag_opening: "</" (location: (6:7)-(6:9))
+    │   │       ├── tag_name: "button" (location: (6:9)-(6:15))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:15)-(6:16))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:16)-(7:0))
+        └── content: "\n"

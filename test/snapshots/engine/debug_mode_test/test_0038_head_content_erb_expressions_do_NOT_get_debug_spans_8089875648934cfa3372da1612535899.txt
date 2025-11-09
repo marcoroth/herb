@@ -1,0 +1,11 @@
+---
+source: "Engine::DebugModeTest#test_0038_head content erb expressions do NOT get debug spans"
+input: "{source: \"<head>\\n  <title><%= @page_title %></title>\\n  <meta name=\\\"description\\\" content=\\\"<%= @meta_description %>\\\">\\n</head>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new;
+ _buf << '<head data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  <title>'.freeze; _buf << (@page_title).to_s; _buf << '</title>
+  <meta name="description" content="'.freeze; _buf << ::Herb::Engine.attr((@meta_description)); _buf << '">
+</head>
+'.freeze;
+_buf.to_s

@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0006_erb loops"
+input: "{source: \"<% items.each do |item| %>\\n  <li><%= item %></li>\\n<% end %>\\n\", options: {}}"
+---
 _buf = ::String.new;
  items.each do |item|; _buf << '
   <li>'.freeze; _buf << (item).to_s; _buf << '</li>

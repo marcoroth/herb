@@ -3,6 +3,8 @@
 module Herb
   module AST
     class DocumentNode < Node
+      include Colors
+
       attr_reader children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
@@ -28,6 +30,8 @@ module Herb
     end
 
     class LiteralNode < Node
+      include Colors
+
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -53,6 +57,8 @@ module Herb
     end
 
     class HTMLOpenTagNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader tag_name: Herb::Token
@@ -86,6 +92,8 @@ module Herb
     end
 
     class HTMLCloseTagNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader tag_name: Herb::Token
@@ -117,6 +125,8 @@ module Herb
     end
 
     class HTMLElementNode < Node
+      include Colors
+
       attr_reader open_tag: Herb::AST::HTMLOpenTagNode
 
       attr_reader tag_name: Herb::Token
@@ -152,6 +162,8 @@ module Herb
     end
 
     class HTMLAttributeValueNode < Node
+      include Colors
+
       attr_reader open_quote: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -183,6 +195,8 @@ module Herb
     end
 
     class HTMLAttributeNameNode < Node
+      include Colors
+
       attr_reader children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
@@ -208,6 +222,8 @@ module Herb
     end
 
     class HTMLAttributeNode < Node
+      include Colors
+
       attr_reader name: Herb::AST::HTMLAttributeNameNode
 
       attr_reader equals: Herb::Token
@@ -237,6 +253,8 @@ module Herb
     end
 
     class HTMLTextNode < Node
+      include Colors
+
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -262,6 +280,8 @@ module Herb
     end
 
     class HTMLCommentNode < Node
+      include Colors
+
       attr_reader comment_start: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -291,6 +311,8 @@ module Herb
     end
 
     class HTMLDoctypeNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -320,6 +342,8 @@ module Herb
     end
 
     class XMLDeclarationNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -349,6 +373,8 @@ module Herb
     end
 
     class CDATANode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -378,6 +404,8 @@ module Herb
     end
 
     class WhitespaceNode < Node
+      include Colors
+
       attr_reader value: Herb::Token
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
@@ -403,6 +431,8 @@ module Herb
     end
 
     class ERBContentNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -438,6 +468,8 @@ module Herb
     end
 
     class ERBEndNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -467,6 +499,8 @@ module Herb
     end
 
     class ERBElseNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -498,6 +532,8 @@ module Herb
     end
 
     class ERBIfNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -533,6 +569,8 @@ module Herb
     end
 
     class ERBBlockNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -566,6 +604,8 @@ module Herb
     end
 
     class ERBWhenNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -597,6 +637,8 @@ module Herb
     end
 
     class ERBCaseNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -634,6 +676,8 @@ module Herb
     end
 
     class ERBCaseMatchNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -671,6 +715,8 @@ module Herb
     end
 
     class ERBWhileNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -704,6 +750,8 @@ module Herb
     end
 
     class ERBUntilNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -737,6 +785,8 @@ module Herb
     end
 
     class ERBForNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -770,6 +820,8 @@ module Herb
     end
 
     class ERBRescueNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -803,6 +855,8 @@ module Herb
     end
 
     class ERBEnsureNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -834,6 +888,8 @@ module Herb
     end
 
     class ERBBeginNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -873,6 +929,8 @@ module Herb
     end
 
     class ERBUnlessNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -908,6 +966,8 @@ module Herb
     end
 
     class ERBYieldNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -937,6 +997,8 @@ module Herb
     end
 
     class ERBInNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token

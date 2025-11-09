@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0008_nested loops"
+input: "{source: \"<div>\\n  <% categories.each do |category| %>\\n    <h3><%= category[:name] %></h3>\\n    <ul>\\n      <% category[:items].each do |item| %>\\n        <li><%= item %></li>\\n      <% end %>\\n    </ul>\\n  <% end %>\\n</div>\\n\", locals: {categories: [{name: \"Fruits\", items: [\"apple\", \"banana\"]}, {name: \"Colors\", items: [\"red\", \"blue\"]}]}, options: {escape: false}}"
+---
 <div>
   
     <h3>Fruits</h3>

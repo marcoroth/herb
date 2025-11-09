@@ -10,6 +10,7 @@ import { Project } from '../src/project'
 import { Settings } from '../src/settings'
 
 import { Herb } from '@herb-tools/node-wasm'
+import { Config } from '@herb-tools/config'
 
 describe('FormattingService', () => {
   let connection: Connection
@@ -44,6 +45,16 @@ describe('FormattingService', () => {
     } as unknown as Settings
 
     formattingService = new FormattingService(connection, documents, project, settings)
+
+    formattingService['config'] = {
+      projectPath: '/test/project',
+      formatter: {
+        enabled: true,
+        indentWidth: 2,
+        maxLineLength: 80
+      },
+      isFormatterEnabledForPath: () => true
+    } as unknown as Config
   })
 
   describe('formatDocument', () => {

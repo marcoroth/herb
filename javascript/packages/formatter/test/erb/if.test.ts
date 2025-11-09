@@ -254,5 +254,85 @@ describe("@herb-tools/formatter", () => {
       const output = formatter.format(input)
       expect(output).toEqual(expected)
     })
+
+    test("if inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% else %>
+            Invalid
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% else %>Invalid<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elsif/else inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if status == 'active' %>
+            Active
+          <% elsif status == 'pending' %>
+            Pending
+          <% else %>
+            Inactive
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if status == 'active' %>Active<% elsif status == 'pending' %>Pending<% else %>Inactive<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elseif inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% elsif invalid? %>
+            Invalid
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% elsif invalid? %>Invalid<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elseif/else inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% elsif invalid? %>
+            Invalid
+          <% else %>
+            Unknown
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% elsif invalid? %>Invalid<% else %>Unknown<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
   })
 })

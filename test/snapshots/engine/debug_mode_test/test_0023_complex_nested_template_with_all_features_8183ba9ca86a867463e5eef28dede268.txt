@@ -1,3 +1,7 @@
+---
+source: "Engine::DebugModeTest#test_0023_complex nested template with all features"
+input: "{source: \"<!DOCTYPE html>\\n<html>\\n  <head>\\n    <title><%= @page_title %></title>\\n    <style>\\n      body { background-color: <%= theme_color %>; }\\n    </style>\\n  </head>\\n  <body class=\\\"<%= body_classes %>\\\">\\n    <%= render \\\"shared/header\\\" %>\\n\\n    <main>\\n      <% if @user.present? %>\\n        <h1>Welcome back, <%= @user.name %>!</h1>\\n        <%= render partial: \\\"user_dashboard\\\", locals: { user: @user } %>\\n      <% else %>\\n        <h1>Welcome, guest!</h1>\\n        <%= render \\\"auth/login_form\\\" %>\\n      <% end %>\\n    </main>\\n\\n    <script>\\n      window.userId = <%= @user&.id || 'null' %>;\\n    </script>\\n  </body>\\n</html>\\n\", options: {debug: true, filename: \"app/views/layouts/application.html.erb\"}}"
+---
 _buf = ::String.new;
  _buf << '<!DOCTYPE html>
 <html data-herb-debug-outline-type="view" data-herb-debug-file-name="application.html.erb" data-herb-debug-file-relative-path="app/views/layouts/application.html.erb" data-herb-debug-file-full-path="app/views/layouts/application.html.erb">

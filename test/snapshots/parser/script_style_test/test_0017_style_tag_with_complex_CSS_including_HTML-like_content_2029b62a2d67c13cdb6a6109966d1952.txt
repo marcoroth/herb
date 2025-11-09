@@ -1,3 +1,16 @@
+---
+source: "Parser::ScriptStyleTest#test_0017_style tag with complex CSS including HTML-like content"
+input: |2-
+<style>
+  /* <div>Comment with HTML</div> */
+  .tooltip::after {
+    content: "<div class='arrow'></div>";
+  }
+  .container > .item:first-child {
+    background: url("data:image/svg+xml,<svg><rect/></svg>");
+  }
+</style>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(9:8))

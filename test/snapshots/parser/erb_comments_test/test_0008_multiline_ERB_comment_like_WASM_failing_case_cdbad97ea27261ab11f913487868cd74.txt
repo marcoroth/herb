@@ -1,3 +1,13 @@
+---
+source: "Parser::ERBCommentsTest#test_0008_multiline ERB comment like WASM failing case"
+input: |2-
+<%#
+hello
+this is a
+multi-line ERB
+comment
+%>
+---
 @ DocumentNode (location: (1:0)-(6:2))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(6:2))

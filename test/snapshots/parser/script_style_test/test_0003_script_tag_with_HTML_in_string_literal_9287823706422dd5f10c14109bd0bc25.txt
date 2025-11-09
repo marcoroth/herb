@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0003_script tag with HTML in string literal"
+input: "<script>var html = \"<div class='test'>content</div>\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:62))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:62))

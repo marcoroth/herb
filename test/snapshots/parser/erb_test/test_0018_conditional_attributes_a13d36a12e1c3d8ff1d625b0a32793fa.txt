@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0018_conditional attributes"
+input: "<div <% if odd? %> data-odd=true <% else %> data-odd=false <% end %>></div>"
+---
 @ DocumentNode (location: (1:0)-(1:75))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:75))

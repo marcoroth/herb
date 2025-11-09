@@ -1,7 +1,7 @@
 import { SourceRule } from "../types.js"
 import { BaseSourceRuleVisitor, createEndOfFileLocation } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 class ERBRequireTrailingNewlineVisitor extends BaseSourceRuleVisitor {
   protected visitSource(source: string): void {
@@ -12,13 +12,11 @@ class ERBRequireTrailingNewlineVisitor extends BaseSourceRuleVisitor {
       this.addOffense(
         "File must end with trailing newline.",
         createEndOfFileLocation(source),
-        "error"
       )
     } else if (source.endsWith('\n\n')) {
       this.addOffense(
         "File must end with exactly one trailing newline.",
         createEndOfFileLocation(source),
-        "error"
       )
     }
   }
@@ -28,7 +26,14 @@ export class ERBRequireTrailingNewlineRule extends SourceRule {
   static autocorrectable = true
   name = "erb-require-trailing-newline"
 
-  check(source: string, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBRequireTrailingNewlineVisitor(this.name, context)
 
     visitor.visit(source)

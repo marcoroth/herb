@@ -2,6 +2,8 @@ module Herb
   module AST
     <%- nodes.each do |node| -%>
     class <%= node.name -%> < Node
+      include Colors
+
       <%- node.fields.each do |field| -%>
       attr_reader :<%= field.name %> #: <%= field.ruby_type %>
       <%- end -%>
@@ -59,34 +61,32 @@ module Herb
       def tree_inspect(indent = 0)
         output = +""
 
-        output += "@ #{node_name} "
-        output += location.tree_inspect
+        output += white("@ #{bold(yellow(node_name.to_s))} #{dimmed("(location: #{location.tree_inspect})")}")
         output += "\n"
 
         output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")
 
         <%- node.fields.each do |field| -%>
         <%- symbol = node.fields.last == field ? "└──" : "├──" -%>
-        <%- name = "#{symbol} #{field.name}: " -%>
         <%- case field -%>
         <%- when Herb::Template::StringField -%>
-        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        output += white("<%= symbol %> <%= field.name %>: ") + green("#{<%= field.name %>.inspect}\n")
         <%- when Herb::Template::TokenField -%>
-        output += "<%= name %>"
-        output += <%= field.name %> ? <%= field.name %>.tree_inspect : "∅"
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? <%= field.name %>.tree_inspect : magenta("∅")
         output += "\n"
         <%- when Herb::Template::BooleanField -%>
-        output += "<%= name %>"
-        output += [true, false].include?(<%= field.name %>) ? <%= field.name %>.to_s : "∅"
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += [true, false].include?(<%= field.name %>) ? bold(magenta(<%= field.name %>.to_s)) : magenta("∅")
         output += "\n"
         <%- when Herb::Template::ElementSourceField -%>
-        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::PrismNodeField -%>
         # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>
         # no-op for <%= field.name %>
         <%- when Herb::Template::NodeField -%>
-        output += "<%= name %>"
+        output += white("<%= symbol %> <%= field.name %>: ")
         if <%= field.name %>
           <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
           output += "\n"
@@ -96,11 +96,17 @@ module Herb
           output += "│   └── "
           <%- end -%>
           output += <%= field.name %>.tree_inspect(indent).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
+          <%- if false -%>
+          <%- unless node.fields.last == field -%>
+          output += "\n"
+          output += white("<%= prefix %>\n")
+          <%- end -%>
+          <%- end -%>
         else
-          output += "∅\n"
+          output += magenta("∅\n")
         end
         <%- when Herb::Template::ArrayField -%>
-        output += "<%= name %>"
+        output += white("<%= symbol %> <%= field.name %>: ")
         output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>")
         <%- else -%>
         <%- raise "Unhandled type: #{field.class}" -%>

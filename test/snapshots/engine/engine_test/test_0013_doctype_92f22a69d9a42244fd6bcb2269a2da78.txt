@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0013_doctype"
+input: "{source: \"<!DOCTYPE html>\\n<html>\\n  <head><title>Test</title></head>\\n</html>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<!DOCTYPE html>
 <html>

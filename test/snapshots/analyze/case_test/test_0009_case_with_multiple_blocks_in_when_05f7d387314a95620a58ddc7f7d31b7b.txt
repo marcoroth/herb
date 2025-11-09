@@ -1,3 +1,16 @@
+---
+source: "Analyze::CaseTest#test_0009_case with multiple blocks in when"
+input: |2-
+<% case status %>
+<% when :active %>
+  <%= content_tag(:div) do %>
+    Active
+  <% end %>
+  <%= content_tag(:span) do %>
+    Badge
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(9:9))

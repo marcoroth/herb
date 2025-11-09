@@ -24,5 +24,15 @@ module Parser
         <h1><!-- Hello World --></h1>
       ))
     end
+
+    test "HTML comment with if" do
+      assert_parsed_snapshot(<<~HTML)
+        <!--
+          <% if Rails.env.development? %>
+            Debug info: <%= current_user&.email %>
+          <% end %>
+        -->
+      HTML
+    end
   end
 end

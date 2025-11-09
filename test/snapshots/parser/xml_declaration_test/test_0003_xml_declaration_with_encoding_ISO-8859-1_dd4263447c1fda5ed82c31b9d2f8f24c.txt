@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0003_xml declaration with encoding ISO-8859-1"
+input: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+---
 @ DocumentNode (location: (1:0)-(1:43))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:43))

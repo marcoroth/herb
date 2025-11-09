@@ -44,93 +44,42 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Herb LSP (HTML+ERB)",
+      "title": "Herb (HTML+ERB)",
       "properties": {
         "languageServerHerb.linter.enabled": {
-          "title": "Herb Linter",
           "scope": "window",
           "type": "boolean",
           "default": true,
           "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
-          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns."
+          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
-        "languageServerHerb.linter.excludedRules": {
-          "title": "Herb Linter Excluded Rules",
-          "scope": "window",
-          "type": "array",
-          "items": {
-            "type": "string",
-            "enum": [
-              "erb-comment-syntax",
-              "erb-no-case-node-children",
-              "erb-no-empty-tags",
-              "erb-no-extra-newline",
-              "erb-no-output-control-flow",
-              "erb-no-silent-tag-in-attribute-name",
-              "erb-prefer-image-tag-helper",
-              "erb-require-whitespace-inside-tags",
-              "erb-require-trailing-newline",
-              "erb-right-trim",
-              "html-anchor-require-href",
-              "html-aria-attribute-must-be-valid",
-              "html-aria-label-is-well-formatted",
-              "html-aria-level-must-be-valid",
-              "html-aria-role-heading-requires-level",
-              "html-aria-role-must-be-valid",
-              "html-attribute-double-quotes",
-              "html-attribute-equals-spacing",
-              "html-attribute-values-require-quotes",
-              "html-avoid-both-disabled-and-aria-disabled",
-              "html-body-only-elements",
-              "html-boolean-attributes-no-value",
-              "html-head-only-elements",
-              "html-iframe-has-title",
-              "html-img-require-alt",
-              "html-input-require-autocomplete",
-              "html-navigation-has-label",
-              "html-no-aria-hidden-on-focusable",
-              "html-no-block-inside-inline",
-              "html-no-duplicate-attributes",
-              "html-no-duplicate-ids",
-              "html-no-duplicate-meta-names",
-              "html-no-empty-attributes",
-              "html-no-empty-headings",
-              "html-no-nested-links",
-              "html-no-positive-tab-index",
-              "html-no-self-closing",
-              "html-no-space-in-tag",
-              "html-no-title-attribute",
-              "html-no-underscores-in-attribute-names",
-              "html-tag-name-lowercase",
-              "parser-no-errors",
-              "svg-tag-name-capitalization"
-            ]
-          },
-          "uniqueItems": true,
-          "default": [
-            "parser-no-errors"
-          ],
-          "description": "Array of linter rule names to exclude from diagnostics. The 'parser-no-errors' rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics.",
-          "markdownDescription": "Array of linter rule names to exclude from diagnostics. The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting since parser errors are already displayed through the language server's built-in diagnostics. See all available [rules](https://herb-tools.dev/linter/rules/)."
+        "languageServerHerb.linter.fixOnSave": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically autofix correctable linter offenses when saving files.",
+          "markdownDescription": "Automatically autofix correctable linter offenses when saving files."
         },
         "languageServerHerb.formatter.enabled": {
           "scope": "resource",
           "type": "boolean",
           "default": false,
           "description": "Enable/disable document formatting using the Herb Formatter (Experimental Preview). WARNING: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.",
-          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control."
+          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.formatter.indentWidth": {
           "scope": "resource",
           "type": "number",
           "default": 2,
-          "description": "Number of spaces for each indentation level."
+          "description": "Number of spaces for each indentation level.",
+          "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.formatter.maxLineLength": {
           "scope": "resource",
           "type": "number",
           "default": 80,
-          "description": "Maximum line length before wrapping."
+          "description": "Maximum line length before wrapping.",
+          "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
         },
         "languageServerHerb.trace.server": {
           "scope": "window",
@@ -141,7 +90,7 @@
             "verbose"
           ],
           "default": "verbose",
-          "description": "Traces the communication between Visual Studio Code and the Herb Language Server."
+          "description": "Traces the communication between Visual Studio Code and the Herb language server (for debugging)."
         }
       }
     },
@@ -155,6 +104,16 @@
         "command": "herb.reprocessFile",
         "title": "Herb: Re-analyze File",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "herb.createConfig",
+        "title": "Herb: Create Herb Configuration",
+        "icon": "$(file-add)"
+      },
+      {
+        "command": "herb.editConfig",
+        "title": "Herb: Edit Herb Configuration",
+        "icon": "$(edit)"
       },
       {
         "command": "herb.reportIssue",
@@ -176,6 +135,26 @@
         "title": "Herb: Report Issue with Diagnostic",
         "icon": "$(github)",
         "when": "false"
+      },
+      {
+        "command": "herb.toggleLinter",
+        "title": "Herb: Toggle Linter",
+        "icon": "$(symbol-boolean)"
+      },
+      {
+        "command": "herb.toggleFormatter",
+        "title": "Herb: Toggle Formatter",
+        "icon": "$(symbol-boolean)"
+      },
+      {
+        "command": "herb.setIndentWidth",
+        "title": "Herb: Set Indent Width",
+        "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.setMaxLineLength",
+        "title": "Herb: Set Max Line Length",
+        "icon": "$(symbol-numeric)"
       }
     ],
     "viewsContainers": {
@@ -191,7 +170,23 @@
       "herbExplorer": [
         {
           "id": "herbFileStatus",
-          "name": "Project Analysis"
+          "name": "Project Analysis",
+          "visibility": "visible"
+        },
+        {
+          "id": "herbConfiguration",
+          "name": "Configuration",
+          "visibility": "visible"
+        },
+        {
+          "id": "herbInformation",
+          "name": "Information",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "herbSupport",
+          "name": "Support",
+          "visibility": "collapsed"
         }
       ]
     },
@@ -200,6 +195,16 @@
         {
           "command": "herb.analyzeProject",
           "when": "view == herbFileStatus",
+          "group": "navigation"
+        },
+        {
+          "command": "herb.createConfig",
+          "when": "view == herbConfiguration && !herb.hasProjectConfig",
+          "group": "navigation"
+        },
+        {
+          "command": "herb.editConfig",
+          "when": "view == herbConfiguration && herb.hasProjectConfig",
           "group": "navigation"
         }
       ],
@@ -224,6 +229,11 @@
           "title": "Analyze Project",
           "command": "herb.analyzeProject"
         }
+      },
+      {
+        "view": "herbConfiguration",
+        "contents": "Create a Herb configuration file to share Herb settings with your team.\n\n[Create .herb.yml](command:herb.createConfig)",
+        "when": "!herb.hasProjectConfig"
       }
     ]
   },
@@ -248,6 +258,7 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
+    "@herb-tools/config": "0.7.5",
     "@herb-tools/formatter": "0.7.5",
     "@herb-tools/linter": "0.7.5",
     "@herb-tools/node-wasm": "0.7.5",
@@ -255,10 +266,10 @@
     "@types/vscode": "^1.43.0",
     "@typescript-eslint/eslint-plugin": "^8.40.0",
     "@typescript-eslint/parser": "^8.40.0",
-    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.5.0",
-    "esbuild": "^0.25.10",
+    "esbuild": "^0.25.11",
     "esbuild-plugin-copy": "^2.1.1",
     "eslint": "^9.25.1",
     "npm-run-all": "^4.1.5",

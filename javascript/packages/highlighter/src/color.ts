@@ -1,3 +1,5 @@
+import { DiagnosticSeverity } from "@herb-tools/core"
+
 export const colors = {
   reset: "\x1b[0m",
   bold: "\x1b[1m",
@@ -73,4 +75,14 @@ export const colorize = (
   }
 
   return text
+}
+
+export const severityColor = (severity: DiagnosticSeverity): Color => {
+  switch (severity) {
+    case "error": return "brightRed"
+    case "warning": return "brightYellow"
+    case "info": return "cyan"
+    case "hint": return "gray"
+    default: return "brightYellow"
+  }
 }

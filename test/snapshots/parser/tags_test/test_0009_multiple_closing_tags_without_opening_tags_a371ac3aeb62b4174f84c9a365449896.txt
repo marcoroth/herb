@@ -1,9 +1,13 @@
+---
+source: "Parser::TagsTest#test_0009_multiple closing tags without opening tags"
+input: "</div></div></span>"
+---
 @ DocumentNode (location: (1:0)-(1:19))
 └── children: (3 items)
     ├── @ HTMLCloseTagNode (location: (1:0)-(1:6))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (1:0)-(1:6))
-    │   │       ├── message: "Found closing tag `</div>` at (1:2) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</div>` at (1:2) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "div" (location: (1:2)-(1:5))
     │   │
     │   ├── tag_opening: "</" (location: (1:0)-(1:2))
@@ -14,7 +18,7 @@
     ├── @ HTMLCloseTagNode (location: (1:6)-(1:12))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (1:6)-(1:12))
-    │   │       ├── message: "Found closing tag `</div>` at (1:8) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</div>` at (1:8) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "div" (location: (1:8)-(1:11))
     │   │
     │   ├── tag_opening: "</" (location: (1:6)-(1:8))
@@ -25,7 +29,7 @@
     └── @ HTMLCloseTagNode (location: (1:12)-(1:19))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:12)-(1:19))
-        │       ├── message: "Found closing tag `</span>` at (1:14) without a matching opening tag."
+        │       ├── message: "Found closing tag `</span>` at (1:14) without a matching opening tag in the same scope."
         │       └── closing_tag: "span" (location: (1:14)-(1:18))
         │
         ├── tag_opening: "</" (location: (1:12)-(1:14))

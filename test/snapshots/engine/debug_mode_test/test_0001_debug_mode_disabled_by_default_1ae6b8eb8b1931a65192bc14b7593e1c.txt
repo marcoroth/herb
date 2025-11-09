@@ -1,0 +1,7 @@
+---
+source: "Engine::DebugModeTest#test_0001_debug mode disabled by default"
+input: "{source: \"<h1>Hello <%= @name %>!</h1>\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << '<h1>Hello '.freeze; _buf << (@name).to_s; _buf << '!</h1>'.freeze;
+_buf.to_s

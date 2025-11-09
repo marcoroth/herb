@@ -1,3 +1,14 @@
+---
+source: "Analyze::UnlessTest#test_0006_nested unless statements"
+input: |2-
+<% unless true %>
+  true
+
+  <% unless false %>
+    false
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBUnlessNode (location: (1:0)-(7:9))

@@ -1,3 +1,11 @@
+---
+source: "Parser::CommentsTest#test_0004_HTML comment followed by html tag with nested comment"
+input: |2-
+
+        <!--Hello World-->
+        <h1><!-- Hello World --></h1>
+      
+---
 @ DocumentNode (location: (1:0)-(4:6))
 └── children: (5 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:8))

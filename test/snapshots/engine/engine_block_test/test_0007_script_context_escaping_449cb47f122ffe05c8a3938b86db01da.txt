@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineBlockTest#test_0007_script context escaping"
+input: "{source: \"<script>var data = <%= json_data %>;</script>\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << '<script>var data = '.freeze; _buf << ::Herb::Engine.js((json_data)); _buf << ';</script>'.freeze;
+_buf.to_s

@@ -1,0 +1,104 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0011_invalid erb structure - rescue outside begin scope"
+input: |2-
+<div
+  <% begin %>
+    data-value="test"
+>
+  <% rescue %>
+  <% end %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(4:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (4:0)-(4:1))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ ERBBeginNode (location: (2:2)-(2:13))
+    │   │       │       ├── errors: (1 error)
+    │   │       │       │   └── @ MissingERBEndTagError (location: (2:2)-(2:13))
+    │   │       │       │       ├── message: "`<% begin %>` started here but never closed with an end tag. The end tag may be in a different scope."
+    │   │       │       │       └── keyword: "`<% begin %>`"
+    │   │       │       │
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " begin " (location: (2:4)-(2:11))
+    │   │       │       ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │       │       ├── statements: (1 item)
+    │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(3:21))
+    │   │       │       │       ├── name:
+    │   │       │       │       │   └── @ HTMLAttributeNameNode (location: (3:4)-(3:14))
+    │   │       │       │       │       └── children: (1 item)
+    │   │       │       │       │           └── @ LiteralNode (location: (3:4)-(3:14))
+    │   │       │       │       │               └── content: "data-value"
+    │   │       │       │       │
+    │   │       │       │       │
+    │   │       │       │       ├── equals: "=" (location: (3:14)-(3:15))
+    │   │       │       │       └── value:
+    │   │       │       │           └── @ HTMLAttributeValueNode (location: (3:15)-(3:21))
+    │   │       │       │               ├── open_quote: """ (location: (3:15)-(3:16))
+    │   │       │       │               ├── children: (1 item)
+    │   │       │       │               │   └── @ LiteralNode (location: (3:16)-(3:20))
+    │   │       │       │               │       └── content: "test"
+    │   │       │       │               │
+    │   │       │       │               ├── close_quote: """ (location: (3:20)-(3:21))
+    │   │       │       │               └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── rescue_clause: ∅
+    │   │       │       ├── else_clause: ∅
+    │   │       │       ├── ensure_clause: ∅
+    │   │       │       └── end_node: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (4:1)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (5:2)-(5:14))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (5:2)-(5:14))
+    │   │   │   │       ├── message: "`<% rescue %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% rescue %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │   │   ├── content: " rescue " (location: (5:4)-(5:12))
+    │   │   │   ├── tag_closing: "%>" (location: (5:12)-(5:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (5:14)-(6:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (6:2)-(6:11))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (6:2)-(6:11))
+    │   │   │   │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% end %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (6:2)-(6:4))
+    │   │   │   ├── content: " end " (location: (6:4)-(6:9))
+    │   │   │   ├── tag_closing: "%>" (location: (6:9)-(6:11))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:11)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "div" (location: (7:2)-(7:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

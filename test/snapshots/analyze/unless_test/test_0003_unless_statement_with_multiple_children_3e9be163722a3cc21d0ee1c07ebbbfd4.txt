@@ -1,3 +1,11 @@
+---
+source: "Analyze::UnlessTest#test_0003_unless statement with multiple children"
+input: |2-
+<% unless true %>
+  <h1>true</h1>
+  <h2>true</h2>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBUnlessNode (location: (1:0)-(4:9))

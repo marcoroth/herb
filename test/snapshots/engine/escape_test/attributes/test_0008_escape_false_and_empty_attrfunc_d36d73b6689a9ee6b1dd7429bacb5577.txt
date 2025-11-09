@@ -1,0 +1,7 @@
+---
+source: "Engine::EscapeTest::attributes#test_0008_escape: false and empty attrfunc"
+input: "{source: \"<div class=\\\"<%= value %>\\\"></div>\", options: {escape: false, attrfunc: \"\"}}"
+---
+_buf = ::String.new;
+ _buf << '<div class="'.freeze; _buf << ((value)); _buf << '"></div>'.freeze;
+_buf.to_s

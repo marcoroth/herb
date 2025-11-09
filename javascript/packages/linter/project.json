@@ -10,9 +10,12 @@
         "script": "build"
       },
       "dependsOn": [
+        "@herb-tools/config:build",
+        "@herb-tools/core:build",
         "@herb-tools/browser:build",
         "@herb-tools/highlighter:build",
-        "@herb-tools/printer:build"
+        "@herb-tools/printer:build",
+        "@herb-tools/rewriter:build"
       ]
     },
     "test": {

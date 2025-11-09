@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0014_interpolate inside attribute value with static content after"
+input: "<h1 class=\"<%= \"bg-black\" %> text-white\"></h1>"
+---
 @ DocumentNode (location: (1:0)-(1:46))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:46))

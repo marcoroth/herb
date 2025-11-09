@@ -1,3 +1,10 @@
+---
+source: "Analyze::TernaryTest#test_0003_ternary operator in form_with"
+input: |2-
+<%= form_with model: @post, url: @post.new_record? ? posts_path : post_path(@post) do |f| %>
+  Content
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

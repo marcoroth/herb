@@ -21,6 +21,7 @@ export interface ContentUnit {
   type: 'text' | 'inline' | 'erb' | 'block'
   isAtomic: boolean
   breaksFlow: boolean
+  isHerbDisable?: boolean
 }
 
 /**
@@ -41,7 +42,7 @@ export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
 
 export const INLINE_ELEMENTS = new Set([
   'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
-  'dfn', 'em', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
+  'dfn', 'em', 'hr', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
   'samp', 'small', 'span', 'strong', 'sub', 'sup',
   'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
 ])
@@ -139,12 +140,31 @@ export function filterSignificantChildren(body: Node[]): Node[] {
 }
 
 /**
- * Filter out empty text nodes and whitespace nodes
+ * Smart filter that preserves exactly ONE whitespace before herb:disable comments
  */
-export function filterEmptyNodes(nodes: Node[]): Node[] {
-  return nodes.filter(child =>
-    !isNode(child, WhitespaceNode) && !(isNode(child, HTMLTextNode) && child.content.trim() === "")
-  )
+export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
+  const result: Node[] = []
+  let pendingWhitespace: Node | null = null
+
+  for (const node of nodes) {
+    const isWhitespace = isNode(node, WhitespaceNode) || (isNode(node, HTMLTextNode) && node.content.trim() === "")
+    const isHerbDisable = isNode(node, ERBContentNode) && isHerbDisableComment(node)
+
+    if (isWhitespace) {
+      if (!pendingWhitespace) {
+        pendingWhitespace = node
+      }
+    } else {
+      if (isHerbDisable && pendingWhitespace) {
+        result.push(pendingWhitespace)
+      }
+
+      pendingWhitespace = null
+      result.push(node)
+    }
+  }
+
+  return result
 }
 
 // --- Punctuation and Word Spacing Functions ---
@@ -191,6 +211,7 @@ export function needsSpaceBetween(currentLine: string, word: string): boolean {
   if (isClosingPunctuation(word)) return false
   if (lineEndsWithOpeningPunctuation(currentLine)) return false
   if (currentLine.endsWith(' ')) return false
+  if (word.startsWith(' ')) return false
   if (endsWithERBTag(currentLine) && startsWithERBTag(word)) return false
 
   return true
@@ -204,6 +225,12 @@ export function buildLineWithWord(currentLine: string, word: string): string {
 
   if (word === ' ') {
     return currentLine.endsWith(' ') ? currentLine : `${currentLine} `
+  }
+
+  if (isClosingPunctuation(word)) {
+    currentLine = currentLine.trimEnd()
+
+    return `${currentLine}${word}`
   }
 
   return needsSpaceBetween(currentLine, word) ? `${currentLine} ${word}` : `${currentLine}${word}`
@@ -300,12 +327,8 @@ export function hasMultilineTextContent(children: Node[]): boolean {
       return child.content.includes('\n')
     }
 
-    if (isNode(child, HTMLElementNode)) {
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (hasMultilineTextContent(nestedChildren)) {
-        return true
-      }
+    if (isNode(child, HTMLElementNode) && hasMultilineTextContent(child.body)) {
+      return true
     }
   }
 
@@ -322,9 +345,7 @@ export function areAllNestedElementsInline(children: Node[]): boolean {
         return false
       }
 
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (!areAllNestedElementsInline(nestedChildren)) {
+      if (!areAllNestedElementsInline(child.body)) {
         return false
       }
     } else if (isAnyOf(child, HTMLDoctypeNode, HTMLCommentNode, isERBControlFlowNode)) {
@@ -417,16 +438,6 @@ export function countAdjacentInlineElements(children: Node[]): number {
 }
 
 /**
- * Determine if we should wrap to the next line
- */
-export function shouldWrapToNextLine(testLine: string, currentLine: string, word: string, wrapWidth: number): boolean {
-  if (!currentLine) return false
-  if (isClosingPunctuation(word)) return false
-
-  return testLine.length >= wrapWidth
-}
-
-/**
  * Check if a node represents a block-level element
  */
 export function isBlockLevelNode(node: Node): boolean {
@@ -444,6 +455,19 @@ export function isBlockLevelNode(node: Node): boolean {
 }
 
 /**
+ * Check if an element is a line-breaking element (br or hr)
+ */
+export function isLineBreakingElement(node: Node): boolean {
+  if (!isNode(node, HTMLElementNode)) {
+    return false
+  }
+
+  const tagName = getTagName(node)
+
+  return tagName === 'br' || tagName === 'hr'
+}
+
+/**
  * Normalize text by replacing multiple spaces with single space and trim
  * Then split into words
  */
@@ -453,23 +477,32 @@ export function normalizeAndSplitWords(text: string): string[] {
 }
 
 /**
- * Check if text starts with an alphanumeric character (not punctuation)
- */
-export function startsWithAlphanumeric(text: string): boolean {
-  const trimmed = text.trim()
-  return /^[a-zA-Z0-9]/.test(trimmed)
-}
-
-/**
- * Check if text ends with an alphanumeric character (not punctuation)
- */
-export function endsWithAlphanumeric(text: string): boolean {
-  return /[a-zA-Z0-9]$/.test(text)
-}
-
-/**
  * Check if text ends with whitespace
  */
 export function endsWithWhitespace(text: string): boolean {
   return /\s$/.test(text)
+}
+
+/**
+ * Check if an ERB content node is a herb:disable comment
+ */
+export function isHerbDisableComment(node: Node): boolean {
+  if (!isNode(node, ERBContentNode)) return false
+  if (node.tag_opening?.value !== "<%#") return false
+
+  const content = node?.content?.value || ""
+  const trimmed = content.trim()
+
+  return trimmed.startsWith("herb:disable")
+}
+
+/**
+ * Check if a text node is YAML frontmatter (starts and ends with ---)
+ */
+export function isFrontmatter(node: Node): node is HTMLTextNode {
+  if (!isNode(node, HTMLTextNode)) return false
+
+  const content = node.content.trim()
+
+  return content.startsWith("---") && /---\s*$/.test(content)
 }

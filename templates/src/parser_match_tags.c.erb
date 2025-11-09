@@ -1,0 +1,31 @@
+#include "include/parser.h"
+#include "include/ast_nodes.h"
+#include "include/util/hb_array.h"
+#include "include/visitor.h"
+
+bool match_tags_visitor(const AST_NODE_T* node, void* data) {
+  hb_array_T* errors = (hb_array_T*) data;
+
+  if (node == NULL) { return false; }
+
+  switch (node->type) {
+    <%- nodes.each do |node| -%>
+    <%- array_fields = node.fields.select { |f| f.is_a?(Herb::Template::ArrayField) && f.name != "errors" } -%>
+    <%- if array_fields.any? -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* <%= node.human %> = (const <%= node.struct_type %>*) node;
+
+      <%- array_fields.each do |field| -%>
+      if (<%= node.human %>-><%= field.name %> != NULL) {
+        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, errors);
+      }
+      <%- end -%>
+    } break;
+
+    <%- end -%>
+    <%- end -%>
+    default: break;
+  }
+
+  return true;
+}

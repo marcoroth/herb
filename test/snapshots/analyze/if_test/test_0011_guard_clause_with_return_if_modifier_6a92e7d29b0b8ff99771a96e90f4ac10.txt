@@ -1,3 +1,11 @@
+---
+source: "Analyze::IfTest#test_0011_guard clause with return if modifier"
+input: |2-
+<% def some_method %>
+  <% return if true %>
+  <div>This won't render</div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (8 items)
     ├── @ ERBContentNode (location: (1:0)-(1:21))

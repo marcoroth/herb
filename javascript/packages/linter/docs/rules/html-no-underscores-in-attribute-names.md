@@ -23,7 +23,7 @@ Underscores in attribute names violate the HTML specification and are not suppor
 ```html
 <div data-user-id="123"></div>
 
-<img aria-label="Close">
+<img aria-label="Close" alt="Close">
 
 <div data-<%= key %>-attribute="value"></div>
 ```
@@ -33,7 +33,7 @@ Underscores in attribute names violate the HTML specification and are not suppor
 ```html
 <div data_user_id="123"></div>
 
-<img aria_label="Close">
+<img aria_label="Close" alt="Close">
 
 <div data-<%= key %>_attribute="value"></div>
 ```

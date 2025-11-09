@@ -1,3 +1,7 @@
+---
+source: "Parser::SVGTest#test_0001_svg"
+input: "<svg></svg>"
+---
 @ DocumentNode (location: (1:0)-(1:11))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:11))

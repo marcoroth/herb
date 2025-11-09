@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0005_text content with tag around"
+input: "Hello<span></span>World"
+---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:5))

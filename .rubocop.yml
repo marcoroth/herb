@@ -12,6 +12,12 @@ Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
 
+Style/MixinUsage:
+  Exclude:
+    - bin/compare
+    - bin/compare-render
+    - bin/compare-compile
+
 Style/ClassAndModuleChildren:
   Enabled: false
 
@@ -74,9 +80,11 @@ Metrics/AbcSize:
     - lib/herb/project.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - lib/herb/token.rb
     - templates/template.rb
     - test/fork_helper.rb
     - test/snapshot_utils.rb
+    - test/engine/rails_compatibility_test.rb
     - bin/**/*
 
 Metrics/ClassLength:
@@ -92,6 +100,8 @@ Metrics/ClassLength:
 Metrics/ModuleLength:
   Exclude:
     - test/**/*.rb
+    - templates/**/*.rb
+    - bin/lib/compare_helpers.rb
 
 Metrics/BlockLength:
   Max: 30
@@ -117,6 +127,7 @@ Metrics/PerceivedComplexity:
     - lib/herb/project.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
+    - templates/template.rb
     - test/**/*.rb
     - bin/**/*
 
@@ -157,6 +168,8 @@ Security/Eval:
     - lib/herb/cli.rb
     - test/**/*.rb
     - bin/erubi-render
+    - bin/compare-render
+    - bin/compare-render
 
 Security/MarshalLoad:
   Exclude:

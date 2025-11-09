@@ -3,6 +3,8 @@
 
 module Herb
   class Token
+    include Colors
+
     attr_reader :value #: String
     attr_reader :range #: Range
     attr_reader :location #: Location
@@ -33,7 +35,7 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      %("#{value.force_encoding("utf-8")}" #{location.tree_inspect})
+      "#{green("\"#{value.force_encoding("utf-8")}\"")} #{dimmed("(location: #{location.tree_inspect})")}"
     end
 
     #: () -> String
@@ -46,8 +48,18 @@ module Herb
     end
 
     #: () -> String
+    def colorize_range
+      white("[") + cyan(range.from.to_s) + white(", ") + cyan(range.to.to_s) + white("]")
+    end
+
+    #: (Position) -> String
+    def colorize_position(position)
+      white("(") + cyan(position.line.to_s) + white(":") + cyan(position.column.to_s) + white(")")
+    end
+
+    #: () -> String
     def inspect
-      %(#<Herb::Token type="#{type}" value=#{value_inspect} range=#{range.tree_inspect} start=#{location.start.tree_inspect} end=#{location.end.tree_inspect}>)
+      "#{white("#<")}#{bold(yellow("Herb::Token"))} #{white("type=")}#{bright_magenta("\"#{type}\"")} #{white("value=")}#{green(value_inspect)} #{white("range=")}#{colorize_range} #{white("start=")}#{colorize_position(location.start)} #{white("end=")}#{colorize_position(location.end)}#{white(">")}"
     end
   end
 end

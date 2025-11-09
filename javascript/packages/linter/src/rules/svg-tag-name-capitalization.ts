@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
 
-import type { LintOffense, LintContext, BaseAutofixContext, Mutable } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, Mutable, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
 
 interface SVGTagNameCapitalizationAutofixContext extends BaseAutofixContext {
@@ -57,7 +57,6 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
       this.addOffense(
         `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
         node.tag_name!.location,
-        "error",
         {
           node,
           currentTagName: tagName,
@@ -72,7 +71,14 @@ export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitaliz
   static autocorrectable = true
   name = "svg-tag-name-capitalization"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<SVGTagNameCapitalizationAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<SVGTagNameCapitalizationAutofixContext>[] {
     const visitor = new SVGTagNameCapitalizationVisitor(this.name, context)
 
     visitor.visit(result.value)

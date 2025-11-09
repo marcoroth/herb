@@ -162,18 +162,18 @@ void error_pretty_print_array(
   hb_buffer_T* buffer
 ) {
   if (array == NULL) {
-    pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
+    pretty_print_property(hb_string(name), hb_string("∅"), indent, relative_indent, last_property, buffer);
 
     return;
   }
 
   if (hb_array_size(array) == 0) {
-    pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
+    pretty_print_property(hb_string(name), hb_string("[]"), indent, relative_indent, last_property, buffer);
 
     return;
   }
 
-  pretty_print_label(name, indent, relative_indent, last_property, buffer);
+  pretty_print_label(hb_string(name), indent, relative_indent, last_property, buffer);
 
   hb_buffer_append(buffer, "(");
 
@@ -212,19 +212,19 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   pretty_print_location(error->base.location, buffer);
   hb_buffer_append(buffer, "\n");
 
-  pretty_print_quoted_property("message", error->base.message, indent, relative_indent, <%= error.fields.none? %>, buffer);
+  pretty_print_quoted_property(hb_string("message"), hb_string(error->base.message), indent, relative_indent, <%= error.fields.none? %>, buffer);
   <%- error.fields.each_with_index do |field, index| -%>
   <%- case field -%>
   <%- when Herb::Template::PositionField -%>
-  pretty_print_position_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_position_property(hb_string(error-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenField -%>
-  pretty_print_token_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_token_property(error-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::TokenTypeField -%>
-  pretty_print_property(token_type_to_string(error-><%= field.name %>), "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_property(hb_string(token_type_to_string(error-><%= field.name %>)), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::SizeTField -%>
-  pretty_print_size_t_property(error-><%= field.name %>, "<%= field.name %>", indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_size_t_property(hb_string(error-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::StringField -%>
-  pretty_print_quoted_property("<%= field.name %>", error-><%= field.name %>, indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_quoted_property(hb_string("<%= field.name %>"), hb_string(error-><%= field.name %>), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>

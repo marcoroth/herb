@@ -1,7 +1,8 @@
 import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
@@ -38,7 +39,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       this.addOffense(
         `Heading element ${elementDescription} must not be empty. Provide accessible text content for screen readers and SEO.`,
         node.location,
-        "error"
       )
     }
   }
@@ -49,7 +49,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       return true
     }
 
-    // Check if all content is just whitespace or inaccessible
     let hasAccessibleContent = false
 
     for (const child of node.body) {
@@ -70,13 +69,11 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       } else if (child.type === "AST_HTML_ELEMENT_NODE") {
         const elementNode = child as HTMLElementNode
 
-        // Check if this element is accessible (not aria-hidden="true")
         if (this.isElementAccessible(elementNode)) {
           hasAccessibleContent = true
           break
         }
       } else {
-        // If there's any non-literal/non-text/non-element content (like ERB), consider it accessible
         hasAccessibleContent = true
         break
       }
@@ -98,7 +95,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private isElementAccessible(node: HTMLElementNode): boolean {
-    // Check if the element has aria-hidden="true"
     if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
       return true
     }
@@ -115,7 +111,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       }
     }
 
-    // Recursively check if the element has any accessible content
     if (!node.body || node.body.length === 0) {
       return false
     }
@@ -149,7 +144,14 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
   name = "html-no-empty-headings"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoEmptyHeadingsVisitor(this.name, context)
     visitor.visit(result.value)
     return visitor.offenses

@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0046_Empty attribute value with closing bracket immediatly following it"
+input: "<div attribute-name=>div-content</div>"
+---
 @ DocumentNode (location: (1:0)-(1:38))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:38))

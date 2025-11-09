@@ -120,14 +120,27 @@ describe("LinterService", () => {
       expect(parserErrorDiagnostics).toHaveLength(0)
     })
 
-    test("respects custom excludedRules configuration", async () => {
+    test("respects custom disabled rules configuration", async () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue({
-        linter: {
-          enabled: true,
-          excludedRules: ["html-tag-name-lowercase", "parser-no-errors"]
-        }
+        linter: { enabled: true }
       })
+
+      settings.projectConfig = {
+        path: "/test/.herb.yml",
+        config: {
+          version: "0.7.5",
+          linter: {
+            enabled: true,
+            rules: {
+              "html-tag-name-lowercase": { enabled: false }
+            }
+          }
+        },
+        toJSON: () => "{}",
+        getConfiguredSeverity: () => "error",
+        applySeverityOverrides: (offenses) => offenses
+      } as any
 
       const linterService = new LinterService(settings)
       const textDocument = createTestDocument("<DIV>Content</DIV>")

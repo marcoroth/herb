@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0016_erb in attribute values"
+input: "{source: \"<a href=\\\"<%= link_url %>\\\" class=\\\"btn <%= css_classes.join(' ') %>\\\" data-count=\\\"<%= items.length %>\\\">\\n  <%= link_text %>\\n</a>\\n\", locals: {link_url: \"/users/123\", css_classes: [\"primary\", \"large\"], items: [1, 2, 3, 4, 5], link_text: \"View Profile\"}, options: {escape: false}}"
+---
 <a href="/users/123" class="btn primary large" data-count="5">
   View Profile
 </a>

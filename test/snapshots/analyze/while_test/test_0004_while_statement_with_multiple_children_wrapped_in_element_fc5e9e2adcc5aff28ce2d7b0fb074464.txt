@@ -1,3 +1,13 @@
+---
+source: "Analyze::WhileTest#test_0004_while statement with multiple children wrapped in element"
+input: |2-
+<h1>
+  <% while true %>
+    <h2>true</h2>
+    <h3>true</h3>
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(6:5))

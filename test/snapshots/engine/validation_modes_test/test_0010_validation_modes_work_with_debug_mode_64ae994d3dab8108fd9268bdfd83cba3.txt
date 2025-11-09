@@ -1,0 +1,7 @@
+---
+source: "Engine::ValidationModesTest#test_0010_validation modes work with debug mode"
+input: "{source: \"<div>Valid template</div>\", options: {validation_mode: :none, debug: true}}"
+---
+_buf = ::String.new;
+ _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">Valid template</div>'.freeze;
+_buf.to_s

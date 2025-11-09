@@ -16,7 +16,7 @@ The `aria-label` attribute provides an accessible name for elements that will be
 
 ```erb
 <button aria-label="Close dialog">X</button>
-<input aria-label="Search products" type="search">
+<input aria-label="Search products" type="search" autocomplete="off">
 <button aria-label="Page 2 of 10">2</button>
 ```
 

@@ -1,0 +1,19 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0002_handles basic erb expressions"
+input: "{source: \"<table>\\n <tbody>\\n  <% i = 0\\n     list.each_with_index do |item, i| %>\\n  <tr>\\n   <td><%= i+1 %></td>\\n   <td><%== item %></td>\\n  </tr>\\n <% end %>\\n </tbody>\\n</table>\\n<%== i+1 %>\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << '<table>
+ <tbody>
+  '.freeze; i = 0
+     list.each_with_index do |item, i|; _buf << '
+  <tr>
+   <td>'.freeze; _buf << (i+1).to_s; _buf << '</td>
+   <td>'.freeze; _buf << ::Herb::Engine.h((item)); _buf << '</td>
+  </tr>
+ '.freeze; end; _buf << '
+ </tbody>
+</table>
+'.freeze; _buf << ::Herb::Engine.h((i+1)); _buf << '
+'.freeze;
+_buf.to_s

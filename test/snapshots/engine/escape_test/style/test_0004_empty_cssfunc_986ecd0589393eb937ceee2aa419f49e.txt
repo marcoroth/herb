@@ -1,0 +1,7 @@
+---
+source: "Engine::EscapeTest::style#test_0004_empty cssfunc"
+input: "{source: \"<style><%= value %></style>\", options: {cssfunc: \"\"}}"
+---
+_buf = ::String.new;
+ _buf << '<style>'.freeze; _buf << ((value)); _buf << '</style>'.freeze;
+_buf.to_s

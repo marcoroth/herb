@@ -19,6 +19,9 @@ module Engine
         properties[:postamble] ||= properties[:bufvar].to_s
         properties[:freeze_template_literals] = !ActionView::Template.frozen_string_literal
         properties[:escapefunc] = ""
+        properties[:attrfunc] = ""
+        properties[:jsfunc] = ""
+        properties[:cssfunc] = ""
 
         super
       end

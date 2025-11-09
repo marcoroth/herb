@@ -1,13 +1,17 @@
 import { ClientCapabilities, Connection, InitializeParams } from "vscode-languageserver/node"
-import { defaultFormatOptions } from "@herb-tools/formatter"
+import { Config } from "@herb-tools/config"
 
-export interface HerbSettings {
+import { defaultFormatOptions } from "@herb-tools/formatter"
+import { version } from "../package.json"
+
+// TODO: ideally we could just Config all the way through
+export interface PersonalHerbSettings {
   trace?: {
     server?: string
   }
   linter?: {
     enabled?: boolean
-    excludedRules?: string[]
+    fixOnSave?: boolean
   }
   formatter?: {
     enabled?: boolean
@@ -17,13 +21,10 @@ export interface HerbSettings {
 }
 
 export class Settings {
-  // The global settings, used when the `workspace/configuration` request is not supported by the client.
-  // Please note that this is not the case when using this server with the client provided in this example
-  // but could happen with other clients.
-  defaultSettings: HerbSettings = {
+  defaultSettings: PersonalHerbSettings = {
     linter: {
       enabled: true,
-      excludedRules: ["parser-no-errors"] // Default exclusion since parser errors are handled by ParserService
+      fixOnSave: true
     },
     formatter: {
       enabled: false,
@@ -31,8 +32,9 @@ export class Settings {
       maxLineLength: defaultFormatOptions.maxLineLength
     }
   }
-  globalSettings: HerbSettings = this.defaultSettings
-  documentSettings: Map<string, Thenable<HerbSettings>> = new Map()
+  globalSettings: PersonalHerbSettings = this.defaultSettings
+  documentSettings: Map<string, Thenable<PersonalHerbSettings>> = new Map()
+  projectConfig?: Config
 
   hasConfigurationCapability = false
   hasWorkspaceFolderCapability = false
@@ -47,8 +49,6 @@ export class Settings {
     this.capabilities = params.capabilities
     this.connection = connection
 
-    // Does the client support the `workspace/configuration` request?
-    // If not, we fall back using global settings.
     this.hasConfigurationCapability = !!(this.capabilities.workspace && !!this.capabilities.workspace.configuration)
 
     this.hasWorkspaceFolderCapability = !!(
@@ -62,13 +62,70 @@ export class Settings {
     )
   }
 
-  get projectPath(): string {
-    return this.params.workspaceFolders?.at(0)?.uri || ""
+  async initializeProjectConfig(config?: Config) {
+    if (config) {
+      this.projectConfig = config
+      return
+    }
+
+    try {
+      this.projectConfig = await Config.loadForEditor(this.projectPath, version)
+    } catch (error) {
+      this.connection.console.warn(`Failed to load project config: ${error}`)
+      this.projectConfig = undefined
+    }
   }
 
-  getDocumentSettings(resource: string): Thenable<HerbSettings> {
+  async refreshProjectConfig(config?: Config) {
+    await this.initializeProjectConfig(config)
+
+    this.documentSettings.clear()
+  }
+
+  // TODO: ideally we can just use Config all the way through
+  private mergeSettings(userSettings: PersonalHerbSettings | null, projectConfig?: Config): PersonalHerbSettings {
+    const settings = userSettings || this.defaultSettings
+
+    if (!projectConfig) {
+      return {
+        trace: settings.trace,
+        linter: {
+          enabled: settings.linter?.enabled ?? this.defaultSettings.linter!.enabled!,
+          fixOnSave: settings.linter?.fixOnSave ?? this.defaultSettings.linter!.fixOnSave!
+        },
+        formatter: {
+          enabled: settings.formatter?.enabled ?? this.defaultSettings.formatter!.enabled!,
+          indentWidth: settings.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+          maxLineLength: settings.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
+        }
+      }
+    }
+
+    return {
+      trace: settings.trace,
+      linter: {
+        enabled: projectConfig.isLinterEnabled,
+        fixOnSave: settings.linter?.fixOnSave ?? this.defaultSettings.linter!.fixOnSave!
+      },
+      formatter: {
+        enabled: projectConfig.isFormatterEnabled,
+        indentWidth: projectConfig.formatter?.indentWidth ?? this.defaultSettings.formatter!.indentWidth!,
+        maxLineLength: projectConfig.formatter?.maxLineLength ?? this.defaultSettings.formatter!.maxLineLength!
+      }
+    }
+  }
+
+  get projectPath(): string {
+    const uri = this.params.workspaceFolders?.at(0)?.uri ?? this.params.rootUri ?? this.params.rootPath ?? ""
+
+    return uri.replace(/^file:\/\//, "")
+  }
+
+  getDocumentSettings(resource: string): Thenable<PersonalHerbSettings> {
     if (!this.hasConfigurationCapability) {
-      return Promise.resolve(this.globalSettings)
+      const merged = this.mergeSettings(this.globalSettings, this.projectConfig)
+
+      return Promise.resolve(merged)
     }
 
     let result = this.documentSettings.get(resource)
@@ -77,6 +134,8 @@ export class Settings {
       result = this.connection.workspace.getConfiguration({
         scopeUri: resource,
         section: "languageServerHerb",
+      }).then((userSettings: PersonalHerbSettings) => {
+        return this.mergeSettings(userSettings, this.projectConfig)
       })
 
       this.documentSettings.set(resource, result)

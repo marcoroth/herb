@@ -1,2 +1,6 @@
+---
+source: "Lexer::TokenTest#test_0002_multiple whitespace"
+input: "    "
+---
 #<Herb::Token type="TOKEN_WHITESPACE" value="    " range=[0, 4] start=(1:0) end=(1:4)>
 #<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[4, 4] start=(1:4) end=(1:4)>

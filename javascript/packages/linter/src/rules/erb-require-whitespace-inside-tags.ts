@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 interface ERBRequireWhitespaceAutofixContext extends BaseAutofixContext {
   node: Mutable<ERBNode>
@@ -38,7 +38,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
       this.addOffense(
         `Add whitespace after \`${openTag.value}\`.`,
         openTag.location,
-        "error",
         {
           node,
           openTag,
@@ -51,7 +50,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
       this.addOffense(
         `Add whitespace after \`<%#=\`.`,
         openTag.location,
-        "error",
         {
           node,
           openTag,
@@ -66,7 +64,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
       this.addOffense(
         `Add whitespace before \`${closeTag.value}\`.`,
         closeTag.location,
-        "error",
         {
           node,
           openTag,
@@ -86,7 +83,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
     this.addOffense(
       `Add whitespace after \`${openTag.value}\`.`,
       openTag.location,
-      "error",
       {
         node,
         openTag,
@@ -105,7 +101,6 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
     this.addOffense(
       `Add whitespace before \`${closeTag.value}\`.`,
       closeTag.location,
-      "error",
       {
         node,
         openTag,
@@ -121,7 +116,14 @@ export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAut
   static autocorrectable = true
   name = "erb-require-whitespace-inside-tags"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<ERBRequireWhitespaceAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBRequireWhitespaceAutofixContext>[] {
     const visitor = new RequireWhitespaceInsideTags(this.name, context)
 
     visitor.visit(result.value)

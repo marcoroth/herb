@@ -1,3 +1,14 @@
+---
+source: "Analyze::BeginTest#test_0011_nested begin statements"
+input: |2-
+<% begin %>
+  Level 1
+
+  <% begin %>
+    Level 2
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBBeginNode (location: (1:0)-(7:9))

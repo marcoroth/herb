@@ -1,6 +1,6 @@
 import { StimulusRuleVisitor, HerbParserRule, didyoumean, getStaticAttributeValue, hasStaticAttributeValue, getAttributeName } from "./rule-utils.js"
 
-import type { LintOffense, StimulusLintContext } from "../types.js"
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class DataTargetValidVisitor extends StimulusRuleVisitor {
@@ -35,7 +35,7 @@ class DataTargetValidVisitor extends StimulusRuleVisitor {
 
         if (controller && controller.controllerDefinition.targetNames && !controller.controllerDefinition.targetNames.includes(targetName)) {
           const suggestion = didyoumean(targetName, controller.controllerDefinition.targetNames)
-          this.addOffense(`Unknown target \`${targetName}\` on controller \`${identifier}\`.${suggestion}`, attributeNode.location, "error")
+          this.addOffense(`Unknown target \`${targetName}\` on controller \`${identifier}\`.${suggestion}`, attributeNode.location)
         }
       }
     }
@@ -45,7 +45,14 @@ class DataTargetValidVisitor extends StimulusRuleVisitor {
 export class StimulusDataTargetValidRule extends HerbParserRule {
   name = "stimulus-data-target-valid"
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
     const visitor = new DataTargetValidVisitor(this.name, context)
 
     visitor.visit(result.value)

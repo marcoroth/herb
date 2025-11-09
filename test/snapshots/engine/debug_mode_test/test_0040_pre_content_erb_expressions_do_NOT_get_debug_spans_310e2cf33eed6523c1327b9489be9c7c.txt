@@ -1,0 +1,13 @@
+---
+source: "Engine::DebugModeTest#test_0040_pre content erb expressions do NOT get debug spans"
+input: "{source: \"<pre>\\n  Code block:\\n  <%= @code_sample %>\\n\\n  More code: <%= @another_sample %>\\n</pre>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new;
+ _buf << '<pre data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  Code block:
+  '.freeze; _buf << (@code_sample).to_s; _buf << '
+
+  More code: '.freeze; _buf << (@another_sample).to_s; _buf << '
+</pre>
+'.freeze;
+_buf.to_s

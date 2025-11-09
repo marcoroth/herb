@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0016_if elsif else compilation"
+input: "{source: \"<h1>\\n  <% if true %>\\n    <div>Text1</div>\\n  <% elsif false %>\\n    <div>Text2</div>\\n  <% else %>\\n    <div>Text3</div>\\n  <% end %>\\n</h1>\\n\", options: {escape: false}}"
+---
 _buf = ::String.new;
  _buf << '<h1>
   '.freeze; if true; _buf << '

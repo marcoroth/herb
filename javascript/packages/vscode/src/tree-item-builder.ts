@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import * as path from 'path'
 
-import type { FileStatus, TreeNode, Status } from './types'
+import type { FileStatus, TreeNode, Status, FormatterFileNode } from './types'
 import type { LintSeverity } from '@herb-tools/linter'
 
 export class TreeItemBuilder {
@@ -13,6 +13,8 @@ export class TreeItemBuilder {
         case 'statusGroup':        return this.buildStatusGroupItem(element)
         case 'parseErrorGroup':    return this.buildParseErrorGroupItem()
         case 'lintIssueGroup':     return this.buildLintIssueGroupItem()
+        case 'parserGroup':        return this.buildParserGroupItem()
+        case 'formatterIssueGroup': return this.buildFormatterIssueGroupItem()
         case 'lintSeverityGroup':  return this.buildLintSeverityGroupItem(element)
         case 'lintRuleGroup':      return this.buildLintRuleGroupItem(element)
         case 'folderGroup':        return this.buildFolderGroupItem(element)
@@ -25,6 +27,8 @@ export class TreeItemBuilder {
         case 'documentation':      return this.buildDocumentationItem()
         case 'noParseErrors':      return this.buildNoParseErrorsItem()
         case 'noLintIssues':       return this.buildNoLintIssuesItem()
+        case 'noFormatterIssues':  return this.buildNoFormatterIssuesItem()
+        case 'formatterFile':      return this.buildFormatterFileItem(element)
       }
     }
 
@@ -56,7 +60,11 @@ export class TreeItemBuilder {
     } else if (element.status === 'failed') {
       item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
     } else if (element.status === 'timeout') {
-      item.iconPath = new vscode.ThemeIcon('clock', new vscode.ThemeColor('charts.yellow'))
+      if (timeoutCount > 0) {
+        item.iconPath = new vscode.ThemeIcon('clock', new vscode.ThemeColor('charts.yellow'))
+      } else {
+        item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+      }
     } else if (element.status === 'processing') {
       item.iconPath = new vscode.ThemeIcon('sync~spin', new vscode.ThemeColor('charts.blue'))
     }
@@ -67,9 +75,18 @@ export class TreeItemBuilder {
   private buildParseErrorGroupItem(): vscode.TreeItem {
     const parseErrorCount = this.files.filter(f => f.errors > 0).length
     const label = `Parse Errors (${parseErrorCount} file${parseErrorCount === 1 ? '' : 's'})`
-    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
-    item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
+    const collapsibleState = parseErrorCount > 0
+      ? vscode.TreeItemCollapsibleState.Collapsed
+      : vscode.TreeItemCollapsibleState.None
+
+    const item = new vscode.TreeItem(label, collapsibleState)
+
+    if (parseErrorCount > 0) {
+      item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
+    } else {
+      item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    }
 
     return item
   }
@@ -78,21 +95,26 @@ export class TreeItemBuilder {
     const linterDisabled = this.files.some(f => f.linterDisabled)
 
     if (linterDisabled) {
-      const label = 'Linter Issues (Disabled)'
-      const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
+      const item = new vscode.TreeItem(
+        'Herb Linter (disabled)',
+        vscode.TreeItemCollapsibleState.None
+      )
+
       item.iconPath = new vscode.ThemeIcon('circle-slash', new vscode.ThemeColor('charts.gray'))
-      item.tooltip = 'Linting is disabled in VS Code settings. Click to open settings.'
+      item.tooltip = 'Linting is disabled in the Herb configuration (.herb.yml). Click to toggle linter setting.'
       item.command = {
-        command: 'workbench.action.openSettings',
-        title: 'Open Settings',
-        arguments: ['languageServerHerb.linter.enabled']
+        command: 'herb.toggleLinter',
+        title: 'Toggle Linter'
       }
+
       return item
     }
 
     const totalLintErrors = this.files.reduce((sum, f) => sum + f.lintErrors, 0)
     const totalLintWarnings = this.files.reduce((sum, f) => sum + f.lintWarnings, 0)
-    const filesWithIssues = this.files.filter(f => f.lintErrors > 0 || f.lintWarnings > 0).length
+    const totalLintInfo = this.files.reduce((sum, f) => sum + f.lintOffenses.filter(o => o.severity === 'info').length, 0)
+    const totalLintHints = this.files.reduce((sum, f) => sum + f.lintOffenses.filter(o => o.severity === 'hint').length, 0)
+    const filesWithIssues = this.files.filter(f => f.lintOffenses.length > 0).length
 
     const parts = []
 
@@ -104,18 +126,36 @@ export class TreeItemBuilder {
       parts.push(`${totalLintWarnings} warning${totalLintWarnings === 1 ? '' : 's'}`)
     }
 
-    const label = filesWithIssues > 0 ? `Linter Issues (${parts.join(', ')})` : `Linter Issues (0 files)`
+    if (totalLintInfo > 0) {
+      parts.push(`${totalLintInfo} info`)
+    }
+
+    if (totalLintHints > 0) {
+      parts.push(`${totalLintHints} hint${totalLintHints === 1 ? '' : 's'}`)
+    }
+
+    const label = filesWithIssues > 0 ? `Herb Linter (${parts.join(', ')})` : `Herb Linter (${this.files.length} file${this.files.length === 1 ? '' : 's'})`
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
 
-    item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.orange'))
+    if (totalLintErrors > 0) {
+      item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
+    } else if (totalLintWarnings > 0) {
+      item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.orange'))
+    } else if (totalLintInfo > 0) {
+      item.iconPath = new vscode.ThemeIcon('info', new vscode.ThemeColor('charts.blue'))
+    } else if (totalLintHints > 0) {
+      item.iconPath = new vscode.ThemeIcon('lightbulb', new vscode.ThemeColor('charts.gray'))
+    } else {
+      item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    }
 
     return item
   }
 
   private buildLintSeverityGroupItem(element: { severity: LintSeverity }): vscode.TreeItem {
-    const count = element.severity === 'error'
-      ? this.files.filter(f => f.lintErrors > 0).length
-      : this.files.filter(f => f.lintWarnings > 0).length
+    const count = this.files.filter(f =>
+      f.lintOffenses.some(o => o.severity === element.severity)
+    ).length
 
     const label = element.severity === 'error'
       ? `Errors (${count})`
@@ -125,9 +165,15 @@ export class TreeItemBuilder {
       ? `Info (${count})`
       : `Hints (${count})`
 
-    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
+    const collapsibleState = count > 0
+      ? vscode.TreeItemCollapsibleState.Collapsed
+      : vscode.TreeItemCollapsibleState.None
 
-    if (element.severity === 'error') {
+    const item = new vscode.TreeItem(label, collapsibleState)
+
+    if (count === 0) {
+      item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    } else if (element.severity === 'error') {
       item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
     } else if (element.severity === 'warning') {
       item.iconPath = new vscode.ThemeIcon('warning', new vscode.ThemeColor('charts.yellow'))
@@ -259,6 +305,71 @@ export class TreeItemBuilder {
     return item
   }
 
+  private buildParserGroupItem(): vscode.TreeItem {
+    const okCount = this.files.filter(f => this.matchesGroup(f, 'ok')).length
+    const failCount = this.files.filter(f => f.errors > 0).length
+    const timeoutCount = this.files.filter(f => this.matchesGroup(f, 'timeout')).length
+
+    let label = 'Herb Parser'
+    if (failCount > 0 || timeoutCount > 0) {
+      const parts = []
+      if (failCount > 0) {
+        parts.push(`${failCount} error${failCount === 1 ? '' : 's'}`)
+      }
+      if (timeoutCount > 0) {
+        parts.push(`${timeoutCount} timeout${timeoutCount === 1 ? '' : 's'}`)
+      }
+      label = `Herb Parser (${parts.join(', ')})`
+    } else {
+      label = `Herb Parser (${okCount} file${okCount === 1 ? '' : 's'})`
+    }
+
+    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Expanded)
+
+    if (failCount > 0) {
+      item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('charts.red'))
+    } else if (timeoutCount > 0) {
+      item.iconPath = new vscode.ThemeIcon('clock', new vscode.ThemeColor('charts.yellow'))
+    } else {
+      item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    }
+
+    return item
+  }
+
+  private buildFormatterIssueGroupItem(): vscode.TreeItem {
+    const formatterDisabled = this.files.some(f => f.formatterDisabled)
+
+    if (formatterDisabled) {
+      const item = new vscode.TreeItem(
+        'Herb Formatter (disabled)',
+        vscode.TreeItemCollapsibleState.None
+      )
+
+      item.iconPath = new vscode.ThemeIcon('circle-slash', new vscode.ThemeColor('charts.gray'))
+      item.tooltip = 'Formatting is disabled in the Herb configuration (.herb.yml). Click to toggle formatter setting.'
+      item.command = {
+        command: 'herb.toggleFormatter',
+        title: 'Toggle Formatter'
+      }
+
+      return item
+    }
+
+    const formatterIssueCount = this.files.filter(f => f.formatterIssues).length
+    const label = `Herb Formatter (${formatterIssueCount} file${formatterIssueCount === 1 ? '' : 's'})`
+
+    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed)
+
+    if (formatterIssueCount > 0) {
+      item.iconPath = new vscode.ThemeIcon('symbol-color', new vscode.ThemeColor('charts.orange'))
+    } else {
+      item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    }
+
+    return item
+  }
+
   private buildNoLintIssuesItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(
       '🌿 No linter issues, great job!',
@@ -271,7 +382,24 @@ export class TreeItemBuilder {
     return item
   }
 
-  private buildFileItem(element: FileStatus): vscode.TreeItem {
+  private buildNoFormatterIssuesItem(): vscode.TreeItem {
+    const item = new vscode.TreeItem(
+      '🌿 All files are properly formatted, great job!',
+      vscode.TreeItemCollapsibleState.None
+    )
+
+    item.iconPath = new vscode.ThemeIcon('check', new vscode.ThemeColor('charts.green'))
+    item.tooltip = 'All files are properly formatted.'
+
+    return item
+  }
+
+  private buildFormatterFileItem(element: FormatterFileNode): vscode.TreeItem {
+    return this.buildFileItem(element.file, 'formatter')
+  }
+
+
+  private buildFileItem(element: FileStatus, context?: string): vscode.TreeItem {
     const relativePath = vscode.workspace.asRelativePath(element.uri)
     const fileName = path.basename(relativePath)
     const directory = path.dirname(relativePath)
@@ -283,17 +411,23 @@ export class TreeItemBuilder {
 
     item.resourceUri = element.uri
 
-    if (directory !== '.' && (element.lintErrors > 0 || element.lintWarnings > 0)) {
+    const hasAnyLintOffenses = element.lintOffenses.length > 0
+
+    if (directory !== '.' && (hasAnyLintOffenses || element.formatterIssues)) {
       item.description = `(${directory})`
     } else {
-      item.description =
-        element.status === 'processing'
-          ? 'Processing'
-          : element.status === 'ok'
-          ? 'OK'
-          : element.status === 'timeout'
-          ? 'Timeout'
-          : this.buildFileDescription(element)
+      if (context === 'formatter' && element.formatterIssues) {
+        item.description = 'needs formatting'
+      } else {
+        item.description =
+          element.status === 'processing'
+            ? 'Processing'
+            : element.status === 'ok'
+            ? 'OK'
+            : element.status === 'timeout'
+            ? 'Timeout'
+            : this.buildFileDescription(element)
+      }
     }
 
     item.command = {
@@ -302,8 +436,10 @@ export class TreeItemBuilder {
       arguments: [element.uri]
     }
 
-    const hasIssues = element.errors > 0 || element.lintErrors > 0 || element.lintWarnings > 0 || element.status === 'failed' || element.status === 'timeout'
-    item.contextValue = hasIssues ? 'herbFileWithIssues' : 'herbFileOk'
+    const hasIssues = element.errors > 0 || hasAnyLintOffenses || element.status === 'failed' || element.status === 'timeout'
+    const hasOnlyInfoOrHints = hasAnyLintOffenses && element.lintErrors === 0 && element.lintWarnings === 0
+
+    item.contextValue = hasIssues ? (hasOnlyInfoOrHints ? 'herbFileWithMinorIssues' : 'herbFileWithIssues') : 'herbFileOk'
 
     return item
   }
@@ -323,6 +459,21 @@ export class TreeItemBuilder {
       parts.push(`${element.lintWarnings} warning${element.lintWarnings === 1 ? '' : 's'}`)
     }
 
+    const lintInfo = element.lintOffenses.filter(o => o.severity === 'info').length
+    const lintHints = element.lintOffenses.filter(o => o.severity === 'hint').length
+
+    if (lintInfo > 0) {
+      parts.push(`${lintInfo} info`)
+    }
+
+    if (lintHints > 0) {
+      parts.push(`${lintHints} hint${lintHints === 1 ? '' : 's'}`)
+    }
+
+    if (element.formatterIssues) {
+      parts.push('needs formatting')
+    }
+
     return parts.join(', ')
   }
 
@@ -331,7 +482,8 @@ export class TreeItemBuilder {
       case 'processing': return file.status === 'processing'
       case 'timeout': return file.status === 'timeout'
       case 'failed': return file.status === 'failed' && (file.errors > 0 || file.lintErrors > 0)
-      case 'ok': return file.status === 'ok' && file.errors === 0 && file.lintErrors === 0
+      case 'ok': return file.status === 'ok' && file.errors === 0 && file.lintErrors === 0 && file.lintWarnings === 0 && file.lintOffenses.length === 0
+      case 'formatter': return file.formatterIssues === true
     }
   }
 }

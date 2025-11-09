@@ -6,7 +6,7 @@
 
 AST printer infrastructure for lossless HTML+ERB reconstruction and AST-to-source code conversion for the Herb Parser Syntax Tree.
 
-### Installation
+## Installation
 
 :::code-group
 ```shell [npm]

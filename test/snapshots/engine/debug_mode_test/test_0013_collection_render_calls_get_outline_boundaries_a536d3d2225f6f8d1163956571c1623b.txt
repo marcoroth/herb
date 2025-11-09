@@ -1,3 +1,7 @@
+---
+source: "Engine::DebugModeTest#test_0013_collection render calls get outline boundaries"
+input: "{source: \"<%= render @posts %>\", options: {debug: true, filename: \"test.html.erb\"}}"
+---
 _buf = ::String.new;
  _buf << (render @posts).to_s;
 _buf.to_s

@@ -7,9 +7,10 @@
 #include "token.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
+#include "util/hb_string.h"
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name);
-bool parser_check_matching_tag(const parser_T* parser, const char* tag_name);
+bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name);
 token_T* parser_pop_open_tag(const parser_T* parser);
 
 void parser_append_unexpected_error(
@@ -29,14 +30,14 @@ void parser_append_literal_node_from_buffer(
 
 bool parser_in_svg_context(const parser_T* parser);
 
-foreign_content_type_T parser_get_foreign_content_type(const char* tag_name);
-bool parser_is_foreign_content_tag(const char* tag_name);
-const char* parser_get_foreign_content_closing_tag(foreign_content_type_T type);
+foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name);
+bool parser_is_foreign_content_tag(hb_string_T tag_name);
+hb_string_T parser_get_foreign_content_closing_tag(foreign_content_type_T type);
 
 void parser_enter_foreign_content(parser_T* parser, foreign_content_type_T type);
 void parser_exit_foreign_content(parser_T* parser);
 
-bool parser_is_expected_closing_tag_name(const char* tag_name, foreign_content_type_T expected_type);
+bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_type_T expected_type);
 
 token_T* parser_advance(parser_T* parser);
 token_T* parser_consume_if_present(parser_T* parser, token_type_T type);

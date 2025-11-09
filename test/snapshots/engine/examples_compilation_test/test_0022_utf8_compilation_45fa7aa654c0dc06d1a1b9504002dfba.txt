@@ -1,0 +1,12 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0022_utf8 compilation"
+input: "{source: \"Sitename • Title\\n\\n<% @title = \\\"Home\\\" %>\\n\\n<title><%= [@title, \\\"Sitename\\\"].compact.join(\\\" • \\\") %></title>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new;
+ _buf << 'Sitename • Title
+
+'.freeze; @title = "Home"; _buf << '
+
+<title>'.freeze; _buf << ([@title, "Sitename"].compact.join(" • ")).to_s; _buf << '</title>
+'.freeze;
+_buf.to_s

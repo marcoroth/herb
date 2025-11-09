@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineBlockTest#test_0005_escape function reference uses Herb::Engine"
+input: "{source: \"<%== content %>\", options: {escape: false}}"
+---
+_buf = ::String.new;
+ _buf << ::Herb::Engine.h((content));
+_buf.to_s

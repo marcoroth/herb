@@ -1,3 +1,10 @@
+---
+source: "Parser::BooleanAttributesTest#test_0007_boolean attribute on void element followed by newline and ERB tag with track_whitespace"
+input: |2-
+<link crossorigin>
+<%= hello %>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:12))
 └── children: (3 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:18))

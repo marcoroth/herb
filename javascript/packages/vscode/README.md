@@ -1,6 +1,6 @@
 # Using Herb with Visual Studio Code
 
-A Visual Studio Code extension for connecting with the [Herb Language Server](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) and Language Tools for HTML+ERB files using the [Herb](https://herb-tools.dev) HTML-aware ERB parser.
+A Visual Studio Code extension that provides HTML+ERB language support with linting, formatting, and intelligent code analysis using the [Herb](https://herb-tools.dev) HTML-aware ERB parser.
 
 [![Herb + Visual Studio Code](https://github.com/marcoroth/herb/raw/main/javascript/packages/vscode/assets/herb-vscode.png)](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp)
 
@@ -10,7 +10,7 @@ A Visual Studio Code extension for connecting with the [Herb Language Server](ht
 
 #### Visual Studio Code
 
-Install the [Herb LSP extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace, or [**click here to open it directly in VS Code**](vscode:extension/marcoroth.herb-lsp).
+Install the [Herb extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace, or [**click here to open it directly in VS Code**](vscode:extension/marcoroth.herb-lsp).
 
 #### Other editors
 

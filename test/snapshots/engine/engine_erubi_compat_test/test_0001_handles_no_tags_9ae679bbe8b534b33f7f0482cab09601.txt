@@ -1,0 +1,8 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0001_handles no tags"
+input: "{source: \"a\\n\", options: {}}"
+---
+_buf = ::String.new;
+ _buf << 'a
+'.freeze;
+_buf.to_s

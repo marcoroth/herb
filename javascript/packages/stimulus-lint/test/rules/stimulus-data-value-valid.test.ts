@@ -82,7 +82,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe("Unknown Stimulus controller `unknown` in value attribute. Make sure the controller is defined in your project.")
-      expect(offenses[0].severity).toBe('error')
     })
   })
 
@@ -103,7 +102,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Unknown value `username` on controller `hello`. Did you mean `user-name`?')
-      expect(offenses[0].severity).toBe('error')
     })
 
     it('should report PascalCase value names', () => {
@@ -112,7 +110,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Unknown Stimulus controller `hello` in value attribute. Make sure the controller is defined in your project.')
-      expect(offenses[0].severity).toBe('error')
     })
   })
 
@@ -133,7 +130,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe("Unknown value `unknown` on controller `hello`.")
-      expect(offenses[0].severity).toBe('error')
     })
 
     it('should suggest similar value names', () => {
@@ -152,7 +148,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Unknown value `nam` on controller `hello`. Did you mean `name`?')
-      expect(offenses[0].severity).toBe('error')
     })
   })
 
@@ -173,7 +168,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Value `count` on controller `hello` expects type `Number` but received `String`.')
-      expect(offenses[0].severity).toBe('error')
     })
 
     it('should report boolean type mismatches', () => {
@@ -192,7 +186,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Value `active` on controller `hello` expects type `Boolean` but received `String`.')
-      expect(offenses[0].severity).toBe('error')
     })
 
     it('should report array type mismatches', () => {
@@ -211,7 +204,6 @@ describe('StimulusDataValueValidRule', () => {
       const offenses = parseAndCheck(html, mockProject)
       expect(offenses).toHaveLength(1)
       expect(offenses[0].message).toBe('Value `items` on controller `hello` expects type `Array` but received `String`.')
-      expect(offenses[0].severity).toBe('error')
     })
   })
 

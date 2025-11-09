@@ -1,3 +1,17 @@
+---
+source: "Analyze::CaseTest#test_0011_case with block in multiple when clauses"
+input: |2-
+<% case type %>
+<% when :a %>
+  <%= form_for(obj) do |f| %>
+    Form A
+  <% end %>
+<% when :b %>
+  <%= form_for(obj) do |f| %>
+    Form B
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(10:9))

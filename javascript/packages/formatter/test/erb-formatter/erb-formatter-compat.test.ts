@@ -306,6 +306,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       expect(result).toBe(dedent`
         <% case status
            when 'active' %>
+          <span class="badge-active">Active</span>
         <% when 'inactive' %>
           <span class="badge-inactive">Inactive</span>
         <% else %>

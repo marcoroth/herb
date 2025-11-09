@@ -3,7 +3,7 @@ import { ParserRule } from "../types.js"
 import { isWhitespaceNode, isLiteralNode, isHTMLTextNode, isCommentNode, isERBNode } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBCaseNode, ERBCaseMatchNode, Node } from "@herb-tools/core"
 
 class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
@@ -31,7 +31,6 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
         this.addOffense(
           `Do not place \`${childCode}\` between \`${caseCode}\` and \`${conditionCode}\`. Content here is not part of any branch and will not be rendered.`,
           child.location,
-          "error"
         )
       }
     }
@@ -52,7 +51,14 @@ class ERBNoCaseNodeChildrenVisitor extends BaseRuleVisitor {
 export class ERBNoCaseNodeChildrenRule extends ParserRule {
   name = "erb-no-case-node-children"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBNoCaseNodeChildrenVisitor(this.name, context)
 
     visitor.visit(result.value)

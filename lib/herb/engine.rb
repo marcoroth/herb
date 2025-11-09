@@ -43,7 +43,7 @@ module Herb
 
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
-      @escapefunc = properties[:escapefunc]
+      @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -66,12 +66,6 @@ module Herb
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
-
-      @escapefunc ||= if @escape
-                        "__herb.h"
-                      else
-                        "::Herb::Engine.h"
-                      end
 
       @freeze = properties[:freeze]
       @freeze_template_literals = properties.fetch(:freeze_template_literals, true)
@@ -136,7 +130,7 @@ module Herb
       end
 
       @src << "\n" unless @src.end_with?("\n")
-      send(:add_postamble, postamble)
+      add_postamble(postamble)
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
@@ -291,10 +285,10 @@ module Herb
       when :overlay
         add_parser_error_overlay(parser_errors, input)
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       when :none
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       end
     end
 
@@ -350,7 +344,7 @@ module Herb
             data-filename="#{escape_attr(@relative_file_path)}"
             data-message="#{escaped_message}"
             #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
-            data-timestamp="#{Time.now.iso8601}"
+            data-timestamp="#{Time.now.utc.iso8601}"
           >#{html_fragment}</template>
         TEMPLATE
       }.join

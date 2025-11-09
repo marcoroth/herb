@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0007_times block"
+input: |2-
+<% 5.times do |i| %>
+  <%= i %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

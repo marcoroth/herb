@@ -6,6 +6,8 @@
 require "optparse"
 
 class Herb::CLI
+  include Herb::Colors
+
   attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug
 
   def initialize(args)
@@ -27,6 +29,8 @@ class Herb::CLI
       puts result.value.to_json
     else
       puts result.value.inspect
+
+      print_error_summary(result.errors) if @command == "parse" && result.respond_to?(:errors) && result.errors.any?
     end
   end
 
@@ -222,6 +226,33 @@ class Herb::CLI
   end
 
   private
+
+  def print_error_summary(errors)
+    puts
+    puts white("#{bold(red("Errors"))} #{dimmed("(#{errors.size} total)")}")
+    puts
+
+    errors.each_with_index do |error, index|
+      error_type = error.error_name
+      error_location = format_location_for_copy(error.location)
+      error_message = error.message
+
+      puts white("  #{bold("#{index + 1}.")} #{bold(red(error_type))} #{dimmed("at #{error_location}")}")
+      puts white("     #{error_message}")
+      puts unless index == errors.size - 1
+    end
+  end
+
+  def format_location_for_copy(location)
+    line = location.start.line
+    column = location.start.column
+
+    if @file
+      "#{@file}:#{line}:#{column}"
+    else
+      "#{line}:#{column}"
+    end
+  end
 
   def compile_template
     require_relative "engine"

@@ -46,6 +46,13 @@ napi_value CreateString(napi_env env, const char* str) {
   return result;
 }
 
+napi_value CreateStringFromHbString(napi_env env, hb_string_T string) {
+  napi_value result;
+  napi_create_string_utf8(env, string.data, string.length, &result);
+  return result;
+}
+
+
 napi_value CreatePosition(napi_env env, position_T position) {
   napi_value result;
   napi_create_object(env, &result);

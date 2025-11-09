@@ -1,0 +1,11 @@
+---
+source: "Lexer::ERBTest#test_0017_erb tag followed by literal closing delimiter"
+input: "<% content %> %>"
+---
+#<Herb::Token type="TOKEN_ERB_START" value="<%" range=[0, 2] start=(1:0) end=(1:2)>
+#<Herb::Token type="TOKEN_ERB_CONTENT" value=" content " range=[2, 11] start=(1:2) end=(1:11)>
+#<Herb::Token type="TOKEN_ERB_END" value="%>" range=[11, 13] start=(1:11) end=(1:13)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[13, 14] start=(1:13) end=(1:14)>
+#<Herb::Token type="TOKEN_PERCENT" value="%" range=[14, 15] start=(1:14) end=(1:15)>
+#<Herb::Token type="TOKEN_HTML_TAG_END" value=">" range=[15, 16] start=(1:15) end=(1:16)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[16, 16] start=(1:16) end=(1:16)>

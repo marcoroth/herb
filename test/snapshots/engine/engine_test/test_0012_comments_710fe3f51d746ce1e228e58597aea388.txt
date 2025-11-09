@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0012_comments"
+input: "{source: \"<!-- HTML comment -->\\n<div>\\n  <%# ERB comment %>\\n  Content\\n</div>\\n\", options: {}}"
+---
 _buf = ::String.new;
  _buf << '<!-- HTML comment -->
 <div>

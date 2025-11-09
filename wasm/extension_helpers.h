@@ -14,6 +14,7 @@ extern "C" {
 }
 
 emscripten::val CreateString(const char* string);
+emscripten::val CreateStringFromHbString(hb_string_T string);
 emscripten::val CreatePosition(position_T position);
 emscripten::val CreateLocation(location_T location);
 emscripten::val CreateRange(range_T range);

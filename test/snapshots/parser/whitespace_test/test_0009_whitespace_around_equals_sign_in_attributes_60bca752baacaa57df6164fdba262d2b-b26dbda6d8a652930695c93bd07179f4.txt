@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0009_whitespace around equals sign in attributes"
+input: |2-
+<div class  =  ""></div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:24))

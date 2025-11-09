@@ -1,62 +1,9 @@
 import dedent from "dedent"
 import { describe, it, expect, beforeEach, afterEach } from "vitest"
-import { spawn } from "child_process"
 import { writeFile, unlink, mkdir, rm, readFile } from "fs/promises"
 import { join } from "path"
 
-type ExecResult = {
-  stdout: string
-  stderr: string
-  exitCode: number
-}
-
-const expectExitCode = (result: ExecResult, expectedCode: number) => {
-  if (result.exitCode !== expectedCode) {
-    const errorInfo = {
-      expectedExitCode: expectedCode,
-      actualExitCode: result.exitCode,
-      stdout: result.stdout,
-      stderr: result.stderr
-    }
-
-    expect.fail(`Exit code mismatch:\n${JSON.stringify(errorInfo, null, 2)}`)
-  }
-}
-
-const execBinary = (args: string[] = [], input?: string): Promise<ExecResult> => {
-  return new Promise((resolve) => {
-    const child = spawn("node", ["bin/herb-format", ...args], {
-      stdio: ["pipe", "pipe", "pipe"]
-    })
-
-    let stdout = ""
-    let stderr = ""
-
-    const timeout = setTimeout(() => {
-      child.kill()
-      resolve({ stdout, stderr, exitCode: 1 })
-    }, 5000)
-
-    child.stdout.on("data", (data) => {
-      stdout += data.toString()
-    })
-
-    child.stderr.on("data", (data) => {
-      stderr += data.toString()
-    })
-
-    child.on("close", (code) => {
-      clearTimeout(timeout)
-      resolve({ stdout, stderr, exitCode: code || 0 })
-    })
-
-    if (input) {
-      child.stdin.write(input)
-    }
-
-    child.stdin.end()
-  })
-}
+import { execBinary, expectExitCode } from "./cli/cli-helpers"
 
 describe("CLI Binary", () => {
   beforeEach(async () => {
@@ -86,7 +33,7 @@ describe("CLI Binary", () => {
 
     expectExitCode(result, 0)
     expect(result.stdout).toContain("Usage: herb-format")
-    expect(result.stdout).toContain("file|directory")
+    expect(result.stdout).toContain("files|directories|glob-patterns")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
     expect(result.stdout).toContain("Examples:")
@@ -97,7 +44,7 @@ describe("CLI Binary", () => {
 
     expectExitCode(result, 0)
     expect(result.stdout).toContain("Usage: herb-format")
-    expect(result.stdout).toContain("file|directory")
+    expect(result.stdout).toContain("files|directories|glob-patterns")
     expect(result.stdout).toContain("Arguments:")
     expect(result.stdout).toContain("Options:")
     expect(result.stdout).toContain("Examples:")
@@ -200,8 +147,7 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stderr).toContain("⚠️  Experimental Preview")
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-empty-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found matching pattern")
     } finally {
       await rm("test-empty-dir", { recursive: true }).catch(() => {})
     }
@@ -252,8 +198,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["test-dir"])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("No files found matching pattern:")
-      expect(result.stdout).toContain("test-dir/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
+      expect(result.stdout).toContain("No files found matching pattern")
     } finally {
       await rm("test-dir", { recursive: true }).catch(() => {})
     }
@@ -337,7 +282,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["--check", testFile])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("File is properly formatted")
+      expect(result.stdout).toContain("all files are properly formatted")
     } finally {
       await unlink(testFile).catch(() => {})
     }
@@ -353,7 +298,7 @@ describe("CLI Binary", () => {
       const result = await execBinary(["--check", testFile])
 
       expectExitCode(result, 1)
-      expect(result.stdout).toContain("File is not formatted")
+      expect(result.stdout).toContain("not formatted")
     } finally {
       await unlink(testFile).catch(() => {})
     }
@@ -642,7 +587,6 @@ describe("CLI Binary", () => {
 
       expectExitCode(result, 0)
       expect(result.stdout).toContain("No files found matching pattern")
-      expect(result.stdout).toContain("test-advanced/**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb")
     })
 
     it("should handle mixed file arguments", async () => {
@@ -692,6 +636,110 @@ describe("CLI Binary", () => {
       expect(result.stdout).not.toContain("good1.xml.erb")
       expect(result.stdout).not.toContain("good2.xml.erb")
       expect(result.stdout).toContain("Checked 3 files, found 1 unformatted file")
+    })
+  })
+
+  describe("Multiple File Arguments", () => {
+    beforeEach(async () => {
+      await mkdir("test-multi", { recursive: true })
+    })
+
+    afterEach(async () => {
+      await rm("test-multi", { recursive: true }).catch(() => {})
+    })
+
+    it("should format multiple files successfully", async () => {
+      const unformattedContent = '<div><p>Test</p></div>'
+
+      await writeFile("test-multi/file1.html.erb", unformattedContent)
+      await writeFile("test-multi/file2.html.erb", unformattedContent)
+
+      const result = await execBinary(["test-multi/file1.html.erb", "test-multi/file2.html.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-multi/file1.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/file2.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+    })
+
+    it("should handle multiple files with mixed formatting states", async () => {
+      const formattedContent = '<div>\n  <p>Test</p>\n</div>\n'
+      const unformattedContent = '<div><p>Test</p></div>'
+
+      await writeFile("test-multi/formatted.html.erb", formattedContent)
+      await writeFile("test-multi/unformatted.html.erb", unformattedContent)
+
+      const result = await execBinary(["test-multi/formatted.html.erb", "test-multi/unformatted.html.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).not.toContain("Formatted: test-multi/formatted.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/unformatted.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, formatted 1 file")
+    })
+
+    it("should exit with error if one file doesn't exist", async () => {
+      const content = '<div><p>Test</p></div>'
+      await writeFile("test-multi/exists.html.erb", content)
+
+      const result = await execBinary(["test-multi/exists.html.erb", "test-multi/nonexistent.html.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stderr).toContain("Cannot access")
+      expect(result.stderr).toContain("nonexistent.html.erb")
+    })
+
+    it("should deduplicate files passed multiple times", async () => {
+      const unformattedContent = '<div><p>Test</p></div>'
+      await writeFile("test-multi/duplicate.html.erb", unformattedContent)
+
+      const result = await execBinary(["test-multi/duplicate.html.erb", "test-multi/duplicate.html.erb"])
+
+      expectExitCode(result, 0)
+      // Should only format once
+      expect(result.stdout).toContain("Checked 1 file, formatted 1 file")
+    })
+
+    it("should handle --check with multiple files", async () => {
+      const formattedContent = '<div>\n  <p>Test</p>\n</div>\n'
+      const unformattedContent = '<div><p>Test</p></div>'
+
+      await writeFile("test-multi/file1.html.erb", formattedContent)
+      await writeFile("test-multi/file2.html.erb", unformattedContent)
+
+      const result = await execBinary(["--check", "test-multi/file1.html.erb", "test-multi/file2.html.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stdout).toContain("The following")
+      expect(result.stdout).toContain("not formatted")
+      expect(result.stdout).toContain("file2.html.erb")
+      expect(result.stdout).not.toContain("file1.html.erb")
+      expect(result.stdout).toContain("Checked 2 files, found 1 unformatted file")
+    })
+
+    it("should reject stdin mixed with file arguments", async () => {
+      const content = '<div><p>Test</p></div>'
+      await writeFile("test-multi/file.html.erb", content)
+
+      const result = await execBinary(["-", "test-multi/file.html.erb"])
+
+      expectExitCode(result, 1)
+      expect(result.stderr).toContain("Cannot mix stdin ('-') with file arguments")
+    })
+
+    it("should handle mix of files and globs", async () => {
+      const unformattedContent = '<div><p>Test</p></div>'
+
+      await writeFile("test-multi/specific.html.erb", unformattedContent)
+      await writeFile("test-multi/pattern1.xml.erb", '<?xml version="1.0"?><root></root>')
+      await writeFile("test-multi/pattern2.xml.erb", '<?xml version="1.0"?><config></config>')
+
+      const result = await execBinary(["test-multi/specific.html.erb", "test-multi/*.xml.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stdout).toContain("Formatted: test-multi/specific.html.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/pattern1.xml.erb")
+      expect(result.stdout).toContain("Formatted: test-multi/pattern2.xml.erb")
+      expect(result.stdout).toContain("Checked 3 files, formatted 3 files")
     })
   })
 })

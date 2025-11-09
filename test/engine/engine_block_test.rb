@@ -5,66 +5,56 @@ require_relative "../../lib/herb/engine"
 
 module Engine
   class EngineBlockTest < Minitest::Spec
+    include SnapshotUtils
+
     test "erb block expressions generate correct code without parentheses" do
       template = '<%= link_to "/path", class: "btn" do %>Click me<% end %>'
-      engine = Herb::Engine.new(template)
 
-      refute_includes engine.src, '(link_to "/path", class: "btn" do'
-      assert_includes engine.src, '<< link_to "/path", class: "btn" do'
+      assert_compiled_snapshot(template)
     end
 
     test "erb block expressions with escaping" do
       template = "<%== form_for @user do %>Form content<% end %>"
-      engine = Herb::Engine.new(template, escape: false)
 
-      assert_includes engine.src, "::Herb::Engine.h(form_for @user do)"
-      refute_includes engine.src, "::Herb::Engine.h((form_for @user do"
+      assert_compiled_snapshot(template, escape: false)
     end
 
     test "regular erb expressions have parentheses" do
       template = "<%= user.name %>"
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "(user.name).to_s"
+      assert_compiled_snapshot(template)
     end
 
     test "escaped expressions use correct escape function" do
       template = '<%== "<script>alert(1)</script>" %>'
-      engine = Herb::Engine.new(template, escape: false)
 
-      assert_includes engine.src, '::Herb::Engine.h(("<script>alert(1)</script>"))'
+      assert_compiled_snapshot(template, escape: false)
     end
 
     test "escape function reference uses Herb::Engine" do
       template = "<%== content %>"
-      engine = Herb::Engine.new(template, escape: false)
-      assert_includes engine.src, "::Herb::Engine.h"
+      assert_compiled_snapshot(template, escape: false)
 
       template = "<%= content %>"
-      engine = Herb::Engine.new(template, escape: true)
-      assert_includes engine.src, "__herb = ::Herb::Engine"
-      assert_includes engine.src, "__herb.h"
+      assert_compiled_snapshot(template, escape: true)
     end
 
     test "context-aware escaping for attributes" do
       template = '<div class="<%= css_class %>">Content</div>'
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "::Herb::Engine.attr"
+      assert_compiled_snapshot(template)
     end
 
     test "script context escaping" do
       template = "<script>var data = <%= json_data %>;</script>"
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "::Herb::Engine.js"
+      assert_compiled_snapshot(template)
     end
 
     test "style context escaping" do
       template = "<style>.class { color: <%= color %>; }</style>"
-      engine = Herb::Engine.new(template)
 
-      assert_includes engine.src, "::Herb::Engine.css"
+      assert_compiled_snapshot(template)
     end
 
     test "security error includes file location" do
@@ -83,16 +73,14 @@ module Engine
 
     test "html comments are optimized to single text token" do
       template = "<!-- This is a comment with multiple words -->"
-      engine = Herb::Engine.new(template)
 
-      assert_equal 1, engine.src.scan("<< '").count
+      assert_compiled_snapshot(template)
     end
 
     test "doctype is optimized to single text token" do
       template = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">'
-      engine = Herb::Engine.new(template)
 
-      assert_equal 1, engine.src.scan("<< '").count
+      assert_compiled_snapshot(template)
     end
 
     test "erb control structures work correctly" do
@@ -102,9 +90,7 @@ module Engine
         <% end %>
       ERB
 
-      engine = Herb::Engine.new(template)
-      assert_includes engine.src, "5.times do |i|"
-      assert_includes engine.src, "end;"
+      assert_compiled_snapshot(template)
     end
 
     test "erb case statements compile correctly" do
@@ -119,11 +105,7 @@ module Engine
         <% end %>
       ERB
 
-      engine = Herb::Engine.new(template)
-      assert_includes engine.src, "case status"
-      assert_includes engine.src, "when :active"
-      assert_includes engine.src, "when :pending"
-      assert_includes engine.src, "else"
+      assert_compiled_snapshot(template)
     end
   end
 end

@@ -1,0 +1,10 @@
+---
+source: "Engine::EngineBlockTest#test_0012_erb control structures work correctly"
+input: "{source: \"<% 5.times do |i| %>\\n  <div><%= i %></div>\\n<% end %>\\n\", options: {}}"
+---
+_buf = ::String.new;
+ 5.times do |i|; _buf << '
+  <div>'.freeze; _buf << (i).to_s; _buf << '</div>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

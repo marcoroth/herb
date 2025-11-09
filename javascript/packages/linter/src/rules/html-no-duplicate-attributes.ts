@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult } from "@herb-tools/core"
 
 class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
@@ -39,7 +39,6 @@ class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
           this.addOffense(
             `Duplicate attribute \`${attributeName}\` found on tag. Remove the duplicate occurrence.`,
             attributeNode.name!.location,
-            "error"
           )
         }
       }
@@ -50,7 +49,14 @@ class NoDuplicateAttributesVisitor extends AttributeVisitorMixin {
 export class HTMLNoDuplicateAttributesRule extends ParserRule {
   name = "html-no-duplicate-attributes"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoDuplicateAttributesVisitor(this.name, context)
 
     visitor.visit(result.value)

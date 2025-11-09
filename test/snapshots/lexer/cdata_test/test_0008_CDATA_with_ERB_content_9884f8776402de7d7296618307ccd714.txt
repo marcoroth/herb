@@ -1,3 +1,7 @@
+---
+source: "Lexer::CDATATest#test_0008_CDATA with ERB content"
+input: "<![CDATA[<%= @variable %>]]>"
+---
 #<Herb::Token type="TOKEN_CDATA_START" value="<![CDATA[" range=[0, 9] start=(1:0) end=(1:9)>
 #<Herb::Token type="TOKEN_ERB_START" value="<%=" range=[9, 12] start=(1:9) end=(1:12)>
 #<Herb::Token type="TOKEN_ERB_CONTENT" value=" @variable " range=[12, 23] start=(1:12) end=(1:23)>

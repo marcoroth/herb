@@ -1,5 +1,6 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { Config } from "@herb-tools/config"
 
 import { readFileSync, writeFileSync } from "fs"
 import { resolve } from "path"
@@ -7,6 +8,7 @@ import { colorize } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
+import type { HerbConfigOptions } from "@herb-tools/config"
 
 export interface ProcessedFile {
   filename: string
@@ -19,12 +21,18 @@ export interface ProcessingContext {
   projectPath?: string
   pattern?: string
   fix?: boolean
+  ignoreDisableComments?: boolean
+  linterConfig?: HerbConfigOptions['linter']
+  config?: Config
 }
 
 export interface ProcessingResult {
   totalErrors: number
   totalWarnings: number
+  totalInfo: number
+  totalHints: number
   totalIgnored: number
+  totalWouldBeIgnored?: number
   filesWithOffenses: number
   filesFixed: number
   ruleCount: number
@@ -53,7 +61,10 @@ export class FileProcessor {
   async processFiles(files: string[], formatOption: FormatOption = 'detailed', context?: ProcessingContext): Promise<ProcessingResult> {
     let totalErrors = 0
     let totalWarnings = 0
+    let totalInfo = 0
+    let totalHints = 0
     let totalIgnored = 0
+    let totalWouldBeIgnored = 0
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
@@ -63,39 +74,25 @@ export class FileProcessor {
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       let content = readFileSync(filePath, "utf-8")
-      const parseResult = Herb.parse(content)
-
-      if (parseResult.errors.length > 0) {
-        if (formatOption !== 'json') {
-          console.error(`${colorize(filename, "cyan")} - ${colorize("Parse errors:", "brightRed")}`)
-
-          for (const error of parseResult.errors) {
-            console.error(`  ${colorize("✗", "brightRed")} ${error.message}`)
-          }
-        }
-
-        for (const error of parseResult.errors) {
-          allOffenses.push({ filename, offense: error, content })
-        }
-
-        totalErrors++
-        filesWithOffenses++
-
-        continue
-      }
 
       if (!this.linter) {
-        this.linter = new Linter(Herb)
+        this.linter = Linter.from(Herb, context?.config)
       }
 
-      const lintResult = this.linter.lint(content, { fileName: filename })
+      const lintResult = this.linter.lint(content, {
+        fileName: filename,
+        ignoreDisableComments: context?.ignoreDisableComments
+      })
 
       if (ruleCount === 0) {
         ruleCount = this.linter.getRuleCount()
       }
 
       if (context?.fix && lintResult.offenses.length > 0) {
-        const autofixResult = this.linter.autofix(content, { fileName: filename })
+        const autofixResult = this.linter.autofix(content, {
+          fileName: filename,
+          ignoreDisableComments: context?.ignoreDisableComments
+        })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")
@@ -126,6 +123,8 @@ export class FileProcessor {
         if (autofixResult.unfixed.length > 0) {
           totalErrors += autofixResult.unfixed.filter(offense => offense.severity === "error").length
           totalWarnings += autofixResult.unfixed.filter(offense => offense.severity === "warning").length
+          totalInfo += autofixResult.unfixed.filter(offense => offense.severity === "info").length
+          totalHints += autofixResult.unfixed.filter(offense => offense.severity === "hint").length
           filesWithOffenses++
         }
       } else if (lintResult.offenses.length === 0) {
@@ -149,11 +148,34 @@ export class FileProcessor {
 
         totalErrors += lintResult.errors
         totalWarnings += lintResult.warnings
+        totalInfo += lintResult.offenses.filter(o => o.severity === "info").length
+        totalHints += lintResult.offenses.filter(o => o.severity === "hint").length
         filesWithOffenses++
       }
       totalIgnored += lintResult.ignored
+      if (lintResult.wouldBeIgnored) {
+        totalWouldBeIgnored += lintResult.wouldBeIgnored
+      }
     }
 
-    return { totalErrors, totalWarnings, totalIgnored, filesWithOffenses, filesFixed, ruleCount, allOffenses, ruleOffenses, context }
+    const result: ProcessingResult = {
+      totalErrors,
+      totalWarnings,
+      totalInfo,
+      totalHints,
+      totalIgnored,
+      filesWithOffenses,
+      filesFixed,
+      ruleCount,
+      allOffenses,
+      ruleOffenses,
+      context
+    }
+
+    if (totalWouldBeIgnored > 0) {
+      result.totalWouldBeIgnored = totalWouldBeIgnored
+    }
+
+    return result
   }
 }

@@ -11,6 +11,8 @@
 
         # Herb main source files
         "./extension/libherb/analyze_helpers.c",
+        "./extension/libherb/analyze_missing_end.c",
+        "./extension/libherb/analyze_transform.c",
         "./extension/libherb/analyze.c",
         "./extension/libherb/analyzed_ruby.c",
         "./extension/libherb/ast_node.c",
@@ -25,8 +27,8 @@
         "./extension/libherb/lexer_peek_helpers.c",
         "./extension/libherb/lexer.c",
         "./extension/libherb/location.c",
-        "./extension/libherb/hb_arena.c",
         "./extension/libherb/parser_helpers.c",
+        "./extension/libherb/parser_match_tags.c",
         "./extension/libherb/parser.c",
         "./extension/libherb/pretty_print.c",
         "./extension/libherb/prism_helpers.c",
@@ -35,9 +37,11 @@
         "./extension/libherb/token.c",
         "./extension/libherb/utf8.c",
         "./extension/libherb/util.c",
+        "./extension/libherb/util/hb_arena.c",
         "./extension/libherb/util/hb_array.c",
         "./extension/libherb/util/hb_buffer.c",
         "./extension/libherb/util/hb_string.c",
+        "./extension/libherb/util/hb_system.c",
         "./extension/libherb/visitor.c",
 
         # Prism main source files

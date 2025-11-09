@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class NoTitleAttributeVisitor extends BaseRuleVisitor {
@@ -23,7 +23,6 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
       this.addOffense(
         "The `title` attribute should never be used as it is inaccessible for several groups of users. Use `aria-label` or `aria-describedby` instead. Exceptions are provided for `<iframe>` and `<link>` elements.",
         node.tag_name!.location,
-        "error"
       )
     }
   }
@@ -32,7 +31,14 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
 export class HTMLNoTitleAttributeRule extends ParserRule {
   name = "html-no-title-attribute"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: false,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new NoTitleAttributeVisitor(this.name, context)
 
     visitor.visit(result.value)

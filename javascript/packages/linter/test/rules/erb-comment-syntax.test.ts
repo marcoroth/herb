@@ -46,4 +46,68 @@ describe("ERBCommentSyntax", () => {
       <%= # second bad comment %>
     `)
   })
+
+  test("when herb:disable is used with incorrect ERB syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><% # herb:disable html-tag-name-lowercase %>
+    `)
+  })
+
+  test("when herb:disable all is used with incorrect ERB syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><% # herb:disable all %>
+    `)
+  })
+
+  test("when herb:disable is used with incorrect ERB output syntax", () => {
+    expectError("Use `<%#` instead of `<%= #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><%= # herb:disable html-tag-name-lowercase %>
+    `)
+  })
+
+  test("when herb:disable has extra whitespace with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<% #` for `herb:disable` directives. Herb directives only work with ERB comment syntax (`<%# ... %>`).")
+
+    assertOffenses(dedent`
+      <DIV></DIV><%  #  herb:disable html-tag-name-lowercase %>
+    `)
+  })
+
+  test("when ERB escaped output tag is used with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<%== #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%== # escaped output comment %>
+    `)
+  })
+
+  test("when ERB tag has multiple spaces before #", () => {
+    expectError("Use `<%#` instead of `<%= #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%=   # comment with multiple spaces %>
+    `)
+  })
+
+  test("when ERB trim tag is used with incorrect syntax", () => {
+    expectError("Use `<%#` instead of `<%- #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%-  # trim tag comment %>
+    `)
+  })
+
+  test("when ERB tag has many spaces before #", () => {
+    expectError("Use `<%#` instead of `<% #`. Ruby comments immediately after ERB tags can cause parsing issues.")
+
+    assertOffenses(dedent`
+      <%    # comment with many spaces %>
+    `)
+  })
 })

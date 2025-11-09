@@ -1,0 +1,12 @@
+---
+source: "Engine::DebugModeTest#test_0014_erb control flow does NOT get debug markup"
+input: "{source: \"<% if @user.present? %>\\n  <p>User found</p>\\n<% else %>\\n  <p>No user</p>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new;
+ if @user.present?; _buf << '
+  <p>User found</p>
+'.freeze; else; _buf << '
+  <p>No user</p>
+'.freeze; end; _buf << '
+'.freeze;
+_buf.to_s

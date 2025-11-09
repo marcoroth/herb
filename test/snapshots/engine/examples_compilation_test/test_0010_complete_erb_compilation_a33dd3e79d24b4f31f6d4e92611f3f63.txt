@@ -1,0 +1,8 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0010_complete erb compilation"
+input: "{source: \"<%= hello %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new;
+ _buf << (hello).to_s; _buf << '
+'.freeze;
+_buf.to_s

@@ -1,0 +1,53 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0025_invalid next in case statement outside of loop"
+input: |2-
+<% case value %>
+<% when 1 %>
+  <% next %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case value " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:12))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 1 " (location: (2:2)-(2:10))
+    │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBContentNode (location: (3:2)-(3:12))
+    │   │           │   ├── errors: (1 error)
+    │   │           │   │   └── @ ERBControlFlowScopeError (location: (3:2)-(3:12))
+    │   │           │   │       ├── message: "`<% next %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │           │   │       └── keyword: "`<% next %>`"
+    │   │           │   │
+    │   │           │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
+    │   │           │   ├── content: " next " (location: (3:4)-(3:10))
+    │   │           │   ├── tag_closing: "%>" (location: (3:10)-(3:12))
+    │   │           │   ├── parsed: true
+    │   │           │   └── valid: false
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (3:12)-(4:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

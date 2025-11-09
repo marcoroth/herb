@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0005_xml declaration with all attributes"
+input: "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
+---
 @ DocumentNode (location: (1:0)-(1:55))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:55))

@@ -1,0 +1,20 @@
+#ifndef HERB_JNI_ERROR_HELPERS_H
+#define HERB_JNI_ERROR_HELPERS_H
+
+#include <jni.h>
+
+#include "../../src/include/ast_node.h"
+#include "../../src/include/util/hb_array.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+jobject CreateErrorNode(JNIEnv* env, AST_NODE_T* error_node);
+jobject ErrorsArrayFromCArray(JNIEnv* env, hb_array_T* array);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

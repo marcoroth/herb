@@ -1,3 +1,14 @@
+---
+source: "Analyze::IfTest#test_0005_if/elsif/else statement with children"
+input: |2-
+<% if true %>
+  <h1>true</h1>
+<% elsif false %>
+  <h1>false</h1>
+<% else %>
+  <h1>else</h1>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBIfNode (location: (1:0)-(7:9))

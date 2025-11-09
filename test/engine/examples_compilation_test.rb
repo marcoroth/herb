@@ -11,6 +11,8 @@ module Engine
     example_files = Dir.glob(File.join(examples_dir, "*.html.erb"))
 
     example_files.each do |file_path|
+      next if file_path.end_with?(".invalid.html.erb")
+
       basename = File.basename(file_path, ".html.erb")
       test_name = "#{basename.tr("-_", " ")} compilation"
 

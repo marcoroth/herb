@@ -1,0 +1,28 @@
+---
+source: "Parser::ERBTest#test_0046_inline ruby comment multiline"
+input: |2-
+<% # Comment
+more %> <% code %>
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (4 items)
+    ├── @ ERBContentNode (location: (1:0)-(2:7))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " # Comment
+    │   more " (location: (1:2)-(2:5))
+    │   ├── tag_closing: "%>" (location: (2:5)-(2:7))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (2:7)-(2:8))
+    │   └── content: " "
+    │
+    ├── @ ERBContentNode (location: (2:8)-(2:18))
+    │   ├── tag_opening: "<%" (location: (2:8)-(2:10))
+    │   ├── content: " code " (location: (2:10)-(2:16))
+    │   ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (2:18)-(3:0))
+        └── content: "\n"

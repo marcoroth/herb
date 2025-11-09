@@ -1,0 +1,7 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0008_handles custom bufvar"
+input: "{source: \"<div>Test</div>\", options: {bufvar: \"@output\"}}"
+---
+@output = ::String.new;
+ @output << '<div>Test</div>'.freeze;
+@output.to_s

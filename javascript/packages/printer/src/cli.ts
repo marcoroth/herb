@@ -2,22 +2,25 @@
 
 import dedent from "dedent"
 
-import { readFileSync, writeFileSync } from "fs"
+import { readFileSync, writeFileSync, existsSync } from "fs"
 import { resolve } from "path"
 import { glob } from "glob"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { HERB_FILES_GLOB } from "@herb-tools/core"
+import { Config } from "@herb-tools/config"
 
 import { IdentityPrinter } from "./index.js"
+import { version } from "../package.json"
 
 interface CLIOptions {
   input?: string
   output?: string
+  configFile?: string
   verify?: boolean
   stats?: boolean
   help?: boolean
   glob?: boolean
+  force?: boolean
 }
 
 export class CLI {
@@ -36,6 +39,9 @@ export class CLI {
         case '--output':
           options.output = args[++i]
           break
+        case '--config-file':
+          options.configFile = args[++i]
+          break
         case '--verify':
           options.verify = true
           break
@@ -44,6 +50,9 @@ export class CLI {
           break
         case '--glob':
           options.glob = true
+          break
+        case '--force':
+          options.force = true
           break
         case '-h':
         case '--help':
@@ -74,9 +83,11 @@ export class CLI {
       Options:
         -i, --input <file>           Input file path
         -o, --output <file>          Output file path (defaults to stdout)
+        --config-file <path>         Explicitly specify path to .herb.yml config file
         --verify                     Verify that output matches input exactly
         --stats                      Show parsing and printing statistics
-        --glob                       Treat input as glob pattern (default: ${HERB_FILES_GLOB})
+        --glob                       Treat input as glob pattern
+        --force                      Process files even if excluded by configuration
         -h, --help                   Show this help message
 
       Examples:
@@ -89,7 +100,7 @@ export class CLI {
         herb-print --glob --verify                         # All .html.erb files
         herb-print "app/views/**/*.html.erb" --glob --verify --stats
         herb-print "*.erb" --glob --verify
-        herb-print "/path/to/templates" --glob --verify    # Directory (auto-appends /${HERB_FILES_GLOB})
+        herb-print "/path/to/templates" --glob --verify    # Directory
         herb-print "/path/to/templates/**/*.html.erb" --glob --verify
 
         # The --verify flag is useful to test parser fidelity:
@@ -109,12 +120,22 @@ export class CLI {
     try {
       await Herb.load()
 
+      const startPath = options.input || process.cwd()
+      const config = await Config.loadForCLI(options.configFile || startPath, version, true)
+
       if (options.glob) {
-        const pattern = options.input || HERB_FILES_GLOB
-        const files = await glob(pattern)
+
+        let files: string[]
+        if (options.input) {
+          const filesConfig = config.getFilesConfigForTool('linter')
+          files = await glob(options.input, { ignore: filesConfig.exclude || [] })
+        } else {
+          files = await config.findFilesForTool('linter', startPath)
+        }
 
         if (files.length === 0) {
-          console.error(`No files found matching pattern: ${pattern}`)
+          const patternDesc = options.input || 'configured patterns'
+          console.error(`No files found matching: ${patternDesc}`)
           process.exit(1)
         }
 
@@ -175,6 +196,25 @@ export class CLI {
 
       } else {
         const inputPath = resolve(options.input!)
+
+        const filesConfig = config.getFilesConfigForTool('linter')
+        const testFiles = await glob(options.input!, {
+          cwd: process.cwd(),
+          ignore: filesConfig.exclude || []
+        })
+
+        if (testFiles.length === 0 && existsSync(inputPath)) {
+          if (!options.force) {
+            console.error(`⚠️  File ${options.input} is excluded by configuration patterns.`)
+            console.error(`   Use --force to print it anyway.\n`)
+
+            process.exit(0)
+          } else {
+            console.error(`⚠️  Forcing printer on excluded file: ${options.input}`)
+            console.error()
+          }
+        }
+
         const input = readFileSync(inputPath, 'utf-8')
 
         const parseResult = Herb.parse(input, { track_whitespace: true })

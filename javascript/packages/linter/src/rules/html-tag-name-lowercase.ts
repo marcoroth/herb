@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 import { isNode, getTagName, HTMLOpenTagNode } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
 
 interface TagNameAutofixContext extends BaseAutofixContext {
@@ -58,7 +58,6 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
       this.addOffense(
         `${type} tag name \`${open}${tagName}>\` should be lowercase. Use \`${open}${lowercaseTagName}>\` instead.`,
         node.tag_name!.location,
-        "error",
         {
           node,
           tagName,
@@ -73,17 +72,23 @@ export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> 
   static autocorrectable = true
   name = "html-tag-name-lowercase"
 
-  isEnabled(result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml") || context?.fileName?.endsWith(".xml.erb")) {
-      return false
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml", "**/*.xml.erb"]
     }
+  }
 
+  isEnabled(result: ParseResult, _context?: Partial<LintContext>): boolean {
     const checker = new XMLDeclarationChecker(this.name)
+
     checker.visit(result.value)
+
     return !checker.hasXMLDeclaration
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<TagNameAutofixContext>[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TagNameAutofixContext>[] {
     const visitor = new TagNameLowercaseVisitor(this.name, context)
 
     visitor.visit(result.value)

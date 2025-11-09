@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0023_empty script and style tags"
+input: "<script></script><style></style>"
+---
 @ DocumentNode (location: (1:0)-(1:32))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:17))

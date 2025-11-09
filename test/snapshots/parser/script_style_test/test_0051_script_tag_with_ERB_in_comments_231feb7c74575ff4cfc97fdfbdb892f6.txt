@@ -1,3 +1,12 @@
+---
+source: "Parser::ScriptStyleTest#test_0051_script tag with ERB in comments"
+input: |2-
+<script>
+  // ERB in comment: <%= @value %>
+  /* Multi-line ERB: <%= @data %> */
+  var result = <%= @actual_erb %>;
+</script>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:9))

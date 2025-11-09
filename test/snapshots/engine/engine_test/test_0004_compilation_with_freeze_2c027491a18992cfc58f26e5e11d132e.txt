@@ -1,3 +1,7 @@
+---
+source: "Engine::EngineTest#test_0004_compilation with freeze"
+input: "{source: \"<div>Static content</div>\\n\", options: {freeze: true}}"
+---
 # frozen_string_literal: true
 _buf = ::String.new;
  _buf << '<div>Static content</div>
