@@ -96,19 +96,19 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
 
   if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
-  bool with_semicolon = false;
+  bool semicolons = false;
   if (!NIL_P(options)) {
-    VALUE with_semicolon_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("with_semicolon"));
+    VALUE with_semicolon_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
     if (NIL_P(with_semicolon_value)) {
-      with_semicolon_value = rb_hash_lookup(options, ID2SYM(rb_intern("with_semicolon"))); 
+      with_semicolon_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons")));
     }
 
     if (!NIL_P(with_semicolon_value) && RTEST(with_semicolon_value)) {
-      with_semicolon = true;
+      semicolons = true;
     }
   }
 
-  if (with_semicolon) {
+  if (semicolons) {
     herb_extract_ruby_to_buffer_with_semicolons(string, &output);
   } else {
     herb_extract_ruby_to_buffer(string, &output);
