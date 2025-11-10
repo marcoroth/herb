@@ -37,13 +37,19 @@ export default defineConfig({
 
     const pageTitle = pageData.frontmatter.title || pageData.title
 
-    pageData.frontmatter.head.push([
-      'meta',
-      {
-        property: 'og:title',
-        content: pageTitle ? `${pageTitle} | ${title}` : `${title} - ${description}`
-      }
-    ])
+    const hasOgTitle = pageData.frontmatter.head.some(
+      (item: any) => item[0] === 'meta' && item[1].property === 'og:title'
+    )
+
+    if (!hasOgTitle) {
+      pageData.frontmatter.head.push([
+        'meta',
+        {
+          property: 'og:title',
+          content: pageTitle ? `${pageTitle} | ${title}` : `${title} - ${description}`
+        }
+      ])
+    }
   },
 
   async buildEnd() {
