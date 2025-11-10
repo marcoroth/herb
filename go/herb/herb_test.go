@@ -34,9 +34,9 @@ func TestLex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tokens := Lex(tt.source)
-			t.Logf("Tokens: %v", tokens)
 			if tokens == nil {
 				t.Errorf("Lex(%q) returned nil", tt.source)
+				return
 			}
 		})
 	}
@@ -57,7 +57,6 @@ func TestParse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ast := Parse(tt.source, nil)
-			t.Logf("AST: %v", ast)
 			if ast == nil {
 				t.Errorf("Parse(%q, nil) returned nil", tt.source)
 			}
