@@ -1301,17 +1301,15 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
 
   hb_array_T* processed = parser_build_elements_from_tags(nodes, errors);
 
-  while (hb_array_size(nodes) > 0) {
-    hb_array_remove(nodes, 0);
-  }
+  nodes->size = 0;
 
-  for (size_t i = 0; i < hb_array_size(processed); i++) {
+  for (size_t i = 0; i < processed->size; i++) {
     hb_array_append(nodes, hb_array_get(processed, i));
   }
 
   hb_array_free(&processed);
 
-  for (size_t i = 0; i < hb_array_size(nodes); i++) {
+  for (size_t i = 0; i < nodes->size; i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (node == NULL) { continue; }
 
