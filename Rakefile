@@ -151,7 +151,8 @@ namespace :prism do
       "Rakefile",
       "src/",
       "include/",
-      "templates/"
+      "templates/",
+      "build/"
     ]
 
     files.each do |file|

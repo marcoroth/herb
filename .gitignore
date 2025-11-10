@@ -159,3 +159,6 @@ docs/docs/public/c-reference
 
 # Clangd config
 compile_flags.txt
+
+# Go
+!/go/herb/go.mod

@@ -1,0 +1,59 @@
+---
+GENERATOR:
+  PackageName: herb
+  PackageDescription: "Go bindings for Herb - HTML-aware ERB parser"
+  PackageLicense: "MIT"
+  Includes:
+    - herb_go.h
+  Options:
+    SafeStrings: true
+  FlagGroups:
+    - {name: CFLAGS, flags: ["-I..", "-I../src/include", "-I../src"]}
+    - {name: LDFLAGS, flags: ["${SRCDIR}/../../build/libherb.a", "${SRCDIR}/../../vendor/prism/build/libprism.a"]}
+
+PARSER:
+  IncludePaths:
+    - "."
+  SourcesPaths:
+    - ./herb/herb_go.h
+
+TRANSLATOR:
+  Rules:
+    global:
+      - { action: accept, from: "^herb_" }
+      - { action: accept, from: "^hb_" }
+      - { action: accept, from: "^AST_" }
+      - { action: accept, from: "^parser_" }
+
+    function:
+      - { action: accept, from: "^herb_" }
+      - { action: replace, from: "^herb_", to: "" }
+      - { load: snakecase, transform: lower }
+      - { transform: export }
+
+    type:
+      - { action: accept, from: "_[tT]$" }
+      - { action: replace, from: "_[tT]$", to: "" }
+      - { load: snakecase, transform: pascalcase }
+
+  MemTips:
+    - { target: "^hb_", self: raw }
+    - { target: "^AST_", self: raw }
+    - { target: "^parser_", self: raw }
+    - { target: "char$", self: raw }
+
+  PtrTips:
+    function:
+      - { target: "^herb_lex$", tips: [0, ref] }
+      - { target: "^herb_lex_file$", tips: [0, ref] }
+      - { target: "^herb_lex_to_buffer$", tips: [0, ref] }
+      - { target: "^herb_parse$", tips: [0, ref, ref] }
+      - { target: "^herb_version$", tips: [ref] }
+      - { target: "^herb_prism_version$", tips: [ref] }
+      - { target: "^herb_free_tokens$", tips: [ref] }
+      - { target: "^herb_extract_ruby_to_buffer$", tips: [0, ref] }
+      - { target: "^herb_extract_html_to_buffer$", tips: [0, ref] }
+      - { target: "^herb_extract_ruby_with_semicolons$", tips: [0, ref, ref] }
+      - { target: "^herb_extract_ruby_to_buffer_with_semicolons$", tips: [0, ref] }
+      - { target: "^herb_extract$", tips: [0, ref, ref] }
+      - { target: "^herb_extract_from_file$", tips: [0, ref, ref] }
