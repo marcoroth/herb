@@ -18,7 +18,7 @@
     "@vitest/browser-playwright": "^4.0.0",
     "@vitest/ui": "^4.0.0",
     "concurrently": "^9.2.0",
-    "dedent": "^1.6.0",
+    "dedent": "^1.7.0",
     "esbuild-plugin-copy": "^2.1.1",
     "minimatch": "^10.0.3",
     "nx": "21.1.2",
