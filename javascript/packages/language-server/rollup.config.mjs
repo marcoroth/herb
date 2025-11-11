@@ -41,6 +41,29 @@ export default [
     ],
   },
 
+  // Library exports (ESM)
+  {
+    input: "src/index.ts",
+    output: {
+      file: "dist/index.mjs",
+      format: "esm",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
+        rootDir: "src/",
+        module: "esnext",
+      }),
+    ],
+  },
+
   // Library exports (CommonJS)
   {
     input: "src/index.ts",

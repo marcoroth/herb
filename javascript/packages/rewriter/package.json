@@ -11,7 +11,7 @@
     "directory": "javascript/packages/rewriter"
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.esm.js",
+  "module": "./dist/index.esm.mjs",
   "require": "./dist/index.cjs",
   "types": "./dist/types/index.d.ts",
   "scripts": {
@@ -26,15 +26,15 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.esm.js",
+      "import": "./dist/index.esm.mjs",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.esm.js"
+      "default": "./dist/index.esm.mjs"
     },
     "./loader": {
       "types": "./dist/types/loader.d.ts",
-      "import": "./dist/loader.esm.js",
+      "import": "./dist/loader.esm.mjs",
       "require": "./dist/loader.cjs",
-      "default": "./dist/loader.esm.js"
+      "default": "./dist/loader.esm.mjs"
     }
   },
   "dependencies": {

@@ -24,7 +24,7 @@ export default [
   {
     input: "src/herb-lint.ts",
     output: {
-      file: "dist/herb-lint.js",
+      file: "dist/herb-lint.mjs",
       format: "cjs",
       sourcemap: true,
     },
@@ -45,7 +45,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/index.js",
+      file: "dist/index.mjs",
       format: "esm",
       sourcemap: true,
     },

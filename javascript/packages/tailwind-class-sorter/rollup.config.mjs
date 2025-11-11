@@ -7,11 +7,11 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/tailwind-class-sorter.esm.js",
+      file: "dist/tailwind-class-sorter.esm.mjs",
       format: "esm",
       sourcemap: true,
     },
-    external: ["tailwindcss", "tailwindcss/loadConfig", "tailwindcss/resolveConfig", "fs/promises", "path", "url"],
+    external: ["tailwindcss", "tailwindcss/loadConfig.js", "tailwindcss/resolveConfig.js", "fs/promises", "path", "url"],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -32,7 +32,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["tailwindcss", "tailwindcss/loadConfig", "tailwindcss/resolveConfig", "fs/promises", "path", "url"],
+    external: ["tailwindcss", "tailwindcss/loadConfig.js", "tailwindcss/resolveConfig.js", "fs/promises", "path", "url"],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),

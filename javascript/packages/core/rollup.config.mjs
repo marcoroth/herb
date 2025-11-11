@@ -6,7 +6,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-core.esm.js",
+      file: "dist/herb-core.esm.mjs",
       format: "esm",
       sourcemap: true,
     },
@@ -44,7 +44,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-core.browser.js",
+      file: "dist/herb-core.browser.mjs",
       format: "esm",
       sourcemap: true,
     },
@@ -61,7 +61,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-core.umd.js",
+      file: "dist/herb-core.umd.mjs",
       format: "umd",
       name: "Herb",
       sourcemap: true,

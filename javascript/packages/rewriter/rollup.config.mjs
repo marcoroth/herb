@@ -23,7 +23,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/index.esm.js",
+      file: "dist/index.esm.mjs",
       format: "esm",
       sourcemap: true,
     },
@@ -63,7 +63,7 @@ export default [
   {
     input: "src/loader.ts",
     output: {
-      file: "dist/loader.esm.js",
+      file: "dist/loader.esm.mjs",
       format: "esm",
       sourcemap: true,
     },
