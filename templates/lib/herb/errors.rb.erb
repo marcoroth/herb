@@ -37,8 +37,8 @@ module Herb
         to_hash.to_json(state)
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(_indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         raise NotImplementedError
       end
     end
@@ -74,8 +74,8 @@ module Herb
         }) #: Herb::serialized_<%= error.human %>
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         output = +""
 
         output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location.tree_inspect})\n")}")

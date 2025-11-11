@@ -57,12 +57,18 @@ module Herb
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 10)
         output = +""
 
         output += white("@ #{bold(yellow(node_name.to_s))} #{dimmed("(location: #{location.tree_inspect})")}")
         output += "\n"
+
+        if depth >= depth_limit
+          output += dimmed("└── [depth limit reached ...]\n\n")
+
+          return output.gsub(/^/, "    " * indent)
+        end
 
         output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")
 
@@ -95,7 +101,7 @@ module Herb
           <%- else -%>
           output += "│   └── "
           <%- end -%>
-          output += <%= field.name %>.tree_inspect(indent).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
+          output += <%= field.name %>.tree_inspect(indent: indent, depth: depth + 1, depth_limit: depth_limit).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
           <%- if false -%>
           <%- unless node.fields.last == field -%>
           output += "\n"
@@ -107,7 +113,7 @@ module Herb
         end
         <%- when Herb::Template::ArrayField -%>
         output += white("<%= symbol %> <%= field.name %>: ")
-        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>")
+        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>", indent: indent, depth: depth + 1, depth_limit: depth_limit)
         <%- else -%>
         <%- raise "Unhandled type: #{field.class}" -%>
         <%- end -%>
