@@ -8,7 +8,7 @@ export default [
   {
     input: "src/index.ts",
     output: {
-      file: "dist/herb-config.esm.js",
+      file: "dist/herb-config.esm.mjs",
       format: "esm",
       sourcemap: true,
     },

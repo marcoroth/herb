@@ -11,7 +11,7 @@
     "directory": "javascript/packages/linter"
   },
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/types/index.d.ts",
   "bin": {
     "herb-lint": "./bin/herb-lint"
@@ -28,14 +28,14 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/types/index.d.ts",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
-      "default": "./dist/index.js"
+      "default": "./dist/index.mjs"
     },
     "./cli": {
       "types": "./dist/types/src/cli.d.ts",
       "require": "./dist/src/cli.js",
-      "default": "./dist/src/cli.js"
+      "default": "./dist/src/cli.mjs"
     }
   },
   "dependencies": {
