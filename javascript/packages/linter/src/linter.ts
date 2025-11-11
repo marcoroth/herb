@@ -1,6 +1,6 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { minimatch } from "minimatch"
+import picomatch from "picomatch"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -153,7 +153,7 @@ export class Linter {
       const defaultExclude = rule.defaultConfig.exclude
 
       if (defaultExclude && defaultExclude.length > 0) {
-        const isExcluded = defaultExclude.some((pattern: string) => minimatch(context.fileName!, pattern))
+        const isExcluded = defaultExclude.some(pattern => picomatch.isMatch(context.fileName!, pattern))
 
         if (isExcluded) {
           return []

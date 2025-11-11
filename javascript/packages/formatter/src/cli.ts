@@ -1,6 +1,6 @@
 import dedent from "dedent"
 import { readFileSync, writeFileSync, statSync } from "fs"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { resolve, relative } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"

@@ -45,7 +45,8 @@
     "@herb-tools/node-wasm": "0.7.5",
     "@herb-tools/printer": "0.7.5",
     "@herb-tools/rewriter": "0.7.5",
-    "glob": "^11.0.3"
+    "picomatch": "^4.0.2",
+    "tinyglobby": "^0.2.15"
   },
   "files": [
     "package.json",

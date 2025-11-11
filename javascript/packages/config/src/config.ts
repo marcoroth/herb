@@ -4,8 +4,8 @@ import { promises as fs } from "fs"
 import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
-import { minimatch } from "minimatch"
-import { glob } from "glob"
+import picomatch from "picomatch"
+import { glob } from "tinyglobby"
 
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
@@ -224,7 +224,6 @@ export class Config {
     return await glob(patterns, {
       cwd: searchDir,
       absolute: true,
-      nodir: true,
       ignore: filesConfig.exclude || []
     })
   }
@@ -258,7 +257,7 @@ export class Config {
       return false
     }
 
-    return excludePatterns.some(pattern => minimatch(filePath, pattern))
+    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**
@@ -272,7 +271,7 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => minimatch(filePath, pattern))
+    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**

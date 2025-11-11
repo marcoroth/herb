@@ -1,4 +1,4 @@
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
