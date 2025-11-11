@@ -34,7 +34,7 @@ import org.herb.Token;
 String source = "<p>Hello <%= user.name %></p>";
 LexResult result = Herb.lex(source);
 
-for (Token token : result.getTokens()) {
+for (Token token : result.tokens) {
   System.out.println(token.inspect());
 }
 // Output:
@@ -51,8 +51,8 @@ The `LexResult` class provides access to the lexed tokens:
 
 ```java
 public class LexResult {
-  public List<Token> getTokens();
-  public String getSource();
+  public List<Token> tokens;
+  public String source;
   public int getTokenCount();
   public boolean isEmpty();
 }
@@ -73,9 +73,7 @@ String source = "<p>Hello <%= user.name %></p>";
 
 ParseResult result = Herb.parse(source);
 
-if (result.getValue() != null) {
-  System.out.println(result.getValue().treeInspect());
-}
+System.out.println(result.inspect();
 // Output:
 // @ DocumentNode (location: (1:0)-(1:29))
 // └── children: (1 item)
@@ -133,12 +131,12 @@ The `ParseResult` class provides access to the parsed AST and any errors:
 
 ```java
 public class ParseResult {
-  public Node getValue();
-  public List<Node> getErrors();
-  public String getSource();
+  public Node value;
+  public List<Node> errors;
+  public String source;
   public boolean hasErrors();
   public int getErrorCount();
-  public boolean isSuccess();
+  public boolean isSuccessful();
 }
 ```
 
@@ -278,7 +276,7 @@ public interface Node {
   String getNodeType();
   Location getLocation();
   List<Node> getErrors();
-  String treeInspect();
+  String inspect();
   <T> T accept(Visitor<T> visitor);
 }
 ```
@@ -291,8 +289,8 @@ Parse errors are accessible through the `ParseResult`:
 ParseResult result = Herb.parse(source);
 
 if (result.hasErrors()) {
-  for (Node error : result.getErrors()) {
-    System.out.println(error.treeInspect());
+  for (Node error : result.recursiveErrors()) {
+    System.out.println(error.inspect());
   }
 }
 ```
