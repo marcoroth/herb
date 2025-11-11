@@ -1,14 +1,19 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
 import { Config } from "@herb-tools/config"
+import { WorkerPool } from "./worker-pool.js"
 
 import { readFileSync, writeFileSync } from "fs"
-import { resolve } from "path"
+import { resolve, dirname, join } from "path"
+import { fileURLToPath } from "url"
 import { colorize } from "@herb-tools/highlighter"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 export interface ProcessedFile {
   filename: string
@@ -41,8 +46,33 @@ export interface ProcessingResult {
   context?: ProcessingContext
 }
 
+interface WorkerMessage {
+  filename: string
+  filePath: string
+  context: ProcessingContext
+  formatOption: string
+}
+
+interface WorkerResult {
+  filename: string
+  fileErrors: number
+  fileWarnings: number
+  fileInfo: number
+  fileHints: number
+  fileIgnored: number
+  fileWouldBeIgnored: number
+  hasOffenses: boolean
+  wasFixed: boolean
+  fileOffenses: any[]
+  fileRuleOffenses: [string, number][]
+  fixMessage: string | null
+  error?: string
+}
+
 export class FileProcessor {
   private linter: Linter | null = null
+  private workerPool: WorkerPool<WorkerMessage, WorkerResult> | null = null
+  private useWorkers: boolean = true
 
   private isRuleAutocorrectable(ruleName: string): boolean {
     if (!this.linter) return false
@@ -71,94 +101,78 @@ export class FileProcessor {
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
 
-    for (const filename of files) {
-      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
-      let content = readFileSync(filePath, "utf-8")
+    if (!this.linter) {
+      this.linter = Linter.from(Herb, context?.config)
+    }
 
-      if (!this.linter) {
-        this.linter = Linter.from(Herb, context?.config)
+    ruleCount = this.linter.getRuleCount()
+
+    const shouldUseWorkers = this.useWorkers && files.length >= 3
+
+    let fileResults: WorkerResult[]
+
+    if (shouldUseWorkers) {
+      try {
+        const workerScriptPath = join(__dirname, 'cli/linter-worker.js')
+        this.workerPool = new WorkerPool<WorkerMessage, WorkerResult>(workerScriptPath)
+
+        const tasks: WorkerMessage[] = files.map(filename => ({
+          filename,
+          filePath: context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename),
+          context: context || {},
+          formatOption
+        }))
+
+        fileResults = await this.workerPool.executeAll(tasks)
+
+        this.workerPool = null
+      } catch (error) {
+        console.warn(`Worker pool error, falling back to single-threaded: ${error}`)
+        fileResults = await this.processSingleThreaded(files, formatOption, context)
+      }
+    } else {
+      fileResults = await this.processSingleThreaded(files, formatOption, context)
+    }
+
+    for (const fileResult of fileResults) {
+      if (fileResult.fixMessage && formatOption !== 'json') {
+        if (fileResult.wasFixed) {
+          console.log(`${colorize("✓", "brightGreen")} ${colorize(fileResult.filename, "cyan")} - ${colorize(fileResult.fixMessage, "green")}`)
+        } else if (files.length === 1) {
+          console.log(`${colorize("✓", "brightGreen")} ${colorize(fileResult.filename, "cyan")} - ${colorize(fileResult.fixMessage, "green")}`)
+        }
       }
 
-      const lintResult = this.linter.lint(content, {
-        fileName: filename,
-        ignoreDisableComments: context?.ignoreDisableComments
-      })
+      totalErrors += fileResult.fileErrors
+      totalWarnings += fileResult.fileWarnings
+      totalInfo += fileResult.fileInfo
+      totalHints += fileResult.fileHints
+      totalIgnored += fileResult.fileIgnored
+      totalWouldBeIgnored += fileResult.fileWouldBeIgnored
 
-      if (ruleCount === 0) {
-        ruleCount = this.linter.getRuleCount()
-      }
-
-      if (context?.fix && lintResult.offenses.length > 0) {
-        const autofixResult = this.linter.autofix(content, {
-          fileName: filename,
-          ignoreDisableComments: context?.ignoreDisableComments
-        })
-
-        if (autofixResult.fixed.length > 0) {
-          writeFileSync(filePath, autofixResult.source, "utf-8")
-
-          filesFixed++
-
-          if (formatOption !== 'json') {
-            console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize(`Fixed ${autofixResult.fixed.length} offense(s)`, "green")}`)
-          }
-        }
-
-        content = autofixResult.source
-
-        for (const offense of autofixResult.unfixed) {
-          allOffenses.push({
-            filename,
-            offense: offense,
-            content,
-            autocorrectable: this.isRuleAutocorrectable(offense.rule)
-          })
-
-          const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
-          ruleData.count++
-          ruleData.files.add(filename)
-          ruleOffenses.set(offense.rule, ruleData)
-        }
-
-        if (autofixResult.unfixed.length > 0) {
-          totalErrors += autofixResult.unfixed.filter(offense => offense.severity === "error").length
-          totalWarnings += autofixResult.unfixed.filter(offense => offense.severity === "warning").length
-          totalInfo += autofixResult.unfixed.filter(offense => offense.severity === "info").length
-          totalHints += autofixResult.unfixed.filter(offense => offense.severity === "hint").length
-          filesWithOffenses++
-        }
-      } else if (lintResult.offenses.length === 0) {
-        if (files.length === 1 && formatOption !== 'json') {
-          console.log(`${colorize("✓", "brightGreen")} ${colorize(filename, "cyan")} - ${colorize("No issues found", "green")}`)
-        }
-      } else {
-        for (const offense of lintResult.offenses) {
-          allOffenses.push({
-            filename,
-            offense: offense,
-            content,
-            autocorrectable: this.isRuleAutocorrectable(offense.rule)
-          })
-
-          const ruleData = ruleOffenses.get(offense.rule) || { count: 0, files: new Set() }
-          ruleData.count++
-          ruleData.files.add(filename)
-          ruleOffenses.set(offense.rule, ruleData)
-        }
-
-        totalErrors += lintResult.errors
-        totalWarnings += lintResult.warnings
-        totalInfo += lintResult.offenses.filter(o => o.severity === "info").length
-        totalHints += lintResult.offenses.filter(o => o.severity === "hint").length
+      if (fileResult.hasOffenses) {
         filesWithOffenses++
       }
-      totalIgnored += lintResult.ignored
-      if (lintResult.wouldBeIgnored) {
-        totalWouldBeIgnored += lintResult.wouldBeIgnored
+
+      if (fileResult.wasFixed) {
+        filesFixed++
+      }
+
+      allOffenses.push(...fileResult.fileOffenses)
+
+      const ruleOffensesArray = Array.isArray(fileResult.fileRuleOffenses)
+        ? fileResult.fileRuleOffenses
+        : Object.entries(fileResult.fileRuleOffenses || {})
+
+      for (const [rule, count] of ruleOffensesArray) {
+        const ruleData = ruleOffenses.get(rule) || { count: 0, files: new Set() }
+        ruleData.count += (count as number)
+        ruleData.files.add(fileResult.filename)
+        ruleOffenses.set(rule, ruleData)
       }
     }
 
-    const result: ProcessingResult = {
+    const processResult: ProcessingResult = {
       totalErrors,
       totalWarnings,
       totalInfo,
@@ -173,9 +187,117 @@ export class FileProcessor {
     }
 
     if (totalWouldBeIgnored > 0) {
-      result.totalWouldBeIgnored = totalWouldBeIgnored
+      processResult.totalWouldBeIgnored = totalWouldBeIgnored
     }
 
-    return result
+    return processResult
+  }
+
+  private async processSingleThreaded(files: string[], formatOption: FormatOption, context?: ProcessingContext): Promise<WorkerResult[]> {
+    const results: WorkerResult[] = []
+
+    for (const filename of files) {
+      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
+      let content = readFileSync(filePath, "utf-8")
+
+      const lintResult = this.linter!.lint(content, {
+        fileName: filename,
+        ignoreDisableComments: context?.ignoreDisableComments
+      })
+
+      let fileErrors = 0
+      let fileWarnings = 0
+      let fileInfo = 0
+      let fileHints = 0
+      let fileIgnored = lintResult.ignored
+      let fileWouldBeIgnored = lintResult.wouldBeIgnored || 0
+      let hasOffenses = false
+      let wasFixed = false
+      let fixMessage: string | null = null
+
+      const fileOffenses: ProcessedFile[] = []
+      const fileRuleOffenses: [string, number][] = []
+
+      if (context?.fix && lintResult.offenses.length > 0) {
+        const autofixResult = this.linter!.autofix(content, {
+          fileName: filename,
+          ignoreDisableComments: context?.ignoreDisableComments
+        })
+
+        if (autofixResult.fixed.length > 0) {
+          writeFileSync(filePath, autofixResult.source, "utf-8")
+          wasFixed = true
+
+          if (formatOption !== 'json') {
+            fixMessage = `Fixed ${autofixResult.fixed.length} offense(s)`
+          }
+        }
+
+        content = autofixResult.source
+
+        const ruleMap = new Map<string, number>()
+        for (const offense of autofixResult.unfixed) {
+          fileOffenses.push({
+            filename,
+            offense: offense,
+            content,
+            autocorrectable: this.isRuleAutocorrectable(offense.rule)
+          })
+
+          ruleMap.set(offense.rule, (ruleMap.get(offense.rule) || 0) + 1)
+        }
+
+        fileRuleOffenses.push(...Array.from(ruleMap.entries()))
+
+        if (autofixResult.unfixed.length > 0) {
+          fileErrors = autofixResult.unfixed.filter(offense => offense.severity === "error").length
+          fileWarnings = autofixResult.unfixed.filter(offense => offense.severity === "warning").length
+          fileInfo = autofixResult.unfixed.filter(offense => offense.severity === "info").length
+          fileHints = autofixResult.unfixed.filter(offense => offense.severity === "hint").length
+          hasOffenses = true
+        }
+      } else if (lintResult.offenses.length === 0) {
+        if (files.length === 1 && formatOption !== 'json') {
+          fixMessage = "No issues found"
+        }
+      } else {
+        const ruleMap = new Map<string, number>()
+        for (const offense of lintResult.offenses) {
+          fileOffenses.push({
+            filename,
+            offense: offense,
+            content,
+            autocorrectable: this.isRuleAutocorrectable(offense.rule)
+          })
+
+          ruleMap.set(offense.rule, (ruleMap.get(offense.rule) || 0) + 1)
+        }
+
+        fileRuleOffenses.push(...Array.from(ruleMap.entries()))
+
+        fileErrors = lintResult.errors
+        fileWarnings = lintResult.warnings
+        fileInfo = lintResult.offenses.filter(o => o.severity === "info").length
+        fileHints = lintResult.offenses.filter(o => o.severity === "hint").length
+        hasOffenses = true
+      }
+
+      results.push({
+        filename,
+        fileErrors,
+        fileWarnings,
+        fileInfo,
+        fileHints,
+        fileIgnored,
+        fileWouldBeIgnored,
+        hasOffenses,
+        wasFixed,
+        fileOffenses,
+        fileRuleOffenses,
+        fixMessage
+      })
+    }
+
+    return results
   }
 }

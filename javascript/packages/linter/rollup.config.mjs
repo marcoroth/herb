@@ -41,6 +41,31 @@ export default [
     ],
   },
 
+  // Worker thread (CommonJS)
+  {
+    input: "src/cli/linter-worker.ts",
+    output: {
+      file: "dist/cli/linter-worker.js",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external: isExternal,
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
+        module: "esnext",
+        compilerOptions: {
+          declaration: false,
+          declarationDir: undefined,
+        }
+      }),
+    ],
+  },
+
   // Library exports (ESM)
   {
     input: "src/index.ts",
