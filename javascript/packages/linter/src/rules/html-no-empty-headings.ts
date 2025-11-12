@@ -11,7 +11,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     super.visitHTMLElementNode(node)
   }
 
-
   private checkHeadingElement(node: HTMLElementNode): void {
     if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
       return
@@ -45,6 +44,27 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 
 
   private isEmptyHeading(node: HTMLElementNode): boolean {
+    if (node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE") {
+      const openTag = node.open_tag as HTMLOpenTagNode
+      const attributes = getAttributes(openTag)
+
+      const ariaLabel = findAttributeByName(attributes, "aria-label")
+      if (ariaLabel) {
+        const ariaLabelValue = getAttributeValue(ariaLabel)
+        if (ariaLabelValue && ariaLabelValue.trim().length > 0) {
+          return false
+        }
+      }
+
+      const ariaLabelledBy = findAttributeByName(attributes, "aria-labelledby")
+      if (ariaLabelledBy) {
+        const ariaLabelledByValue = getAttributeValue(ariaLabelledBy)
+        if (ariaLabelledByValue && ariaLabelledByValue.trim().length > 0) {
+          return false
+        }
+      }
+    }
+
     if (!node.body || node.body.length === 0) {
       return true
     }
@@ -100,6 +120,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     }
 
     const openTag = node.open_tag as HTMLOpenTagNode
+    const tagName = getTagName(openTag)
     const attributes = getAttributes(openTag)
     const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
 
@@ -109,6 +130,32 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       if (ariaHiddenValue === "true") {
         return false
       }
+    }
+
+    const ariaLabel = findAttributeByName(attributes, "aria-label")
+    if (ariaLabel) {
+      const ariaLabelValue = getAttributeValue(ariaLabel)
+      if (ariaLabelValue && ariaLabelValue.trim().length > 0) {
+        return true
+      }
+    }
+
+    const ariaLabelledBy = findAttributeByName(attributes, "aria-labelledby")
+    if (ariaLabelledBy) {
+      const ariaLabelledByValue = getAttributeValue(ariaLabelledBy)
+      if (ariaLabelledByValue && ariaLabelledByValue.trim().length > 0) {
+        return true
+      }
+    }
+
+    if (tagName === "img") {
+      const altAttribute = findAttributeByName(attributes, "alt")
+      if (altAttribute) {
+        const altValue = getAttributeValue(altAttribute)
+
+        return altValue !== null && altValue.trim().length > 0
+      }
+      return false
     }
 
     if (!node.body || node.body.length === 0) {
@@ -132,7 +179,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
           return true
         }
       } else {
-        // If there's any non-literal/non-text/non-element content (like ERB), consider it accessible
         return true
       }
     }

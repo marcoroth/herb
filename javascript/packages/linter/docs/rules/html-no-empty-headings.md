@@ -19,6 +19,16 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 
 <h1><span>Text</span></h1>
 
+<h1><img src="logo.png" alt="Company Name"></h1>
+
+<h1><a href="/"><img src="logo.png" alt="Home"></a></h1>
+
+<h1 aria-label="Welcome"></h1>
+
+<h1 aria-labelledby="heading-id"></h1>
+
+<h1><button aria-label="Menu">☰</button></h1>
+
 <div role="heading" aria-level="1">Heading Content</div>
 
 <h1 aria-hidden="true">Heading Content</h1>
@@ -44,6 +54,18 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 <div role="heading" aria-level="1"></div>
 
 <h1><span aria-hidden="true">Inaccessible text</span></h1>
+
+<h1><img src="logo.png" alt=""></h1>
+
+<h1><img src="logo.png"></h1>
+
+<h1><img src="logo.png" alt="Logo" aria-hidden="true"></h1>
+
+<h1 aria-label=""></h1>
+
+<h1 aria-label="   "></h1>
+
+<h1><span aria-label=""></span></h1>
 ```
 
 ## References
@@ -51,6 +73,8 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 - [`<h1>`–`<h6>`: The HTML Section Heading elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/Heading_Elements)
 - [ARIA: `heading` role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/heading_role)
 - [ARIA: `aria-hidden` attribute](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-hidden)
+- [ARIA: `aria-label` attribute](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-label)
+- [ARIA: `aria-labelledby` attribute](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-labelledby)
 - [ARIA: `aria-level` attribute](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-level)
 
 Inspired by [ember-template-lint](https://github.com/ember-template-lint/ember-template-lint/blob/master/docs/rule/no-empty-headings.md)

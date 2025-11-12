@@ -135,4 +135,102 @@ describe("html-no-empty-headings", () => {
   test("passes for heading with nested span containing text", () => {
     expectNoOffenses('<h2 class="class" data-turbo-temporary><%= content %></h2>')
   })
+
+  test("passes for heading with img element with non-empty alt text", () => {
+    expectNoOffenses('<h1><img src="logo.png" alt="Company Name"></h1>')
+  })
+
+  test("passes for heading with link containing img with alt text", () => {
+    expectNoOffenses('<h1><a href="/"><img src="logo.png" alt="Home"></a></h1>')
+  })
+
+  test("passes for heading with link (with title) containing img with alt text", () => {
+    expectNoOffenses('<h1><a href="example.com" title="My site"><img src="my-image" alt="My site"></a></h1>')
+  })
+
+  test("passes for heading with img element with alt text containing spaces", () => {
+    expectNoOffenses('<h1><img src="logo.png" alt="My Site Logo"></h1>')
+  })
+
+  test("fails for heading with img element with empty alt text", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><img src="logo.png" alt=""></h1>')
+  })
+
+  test("fails for heading with img element with whitespace-only alt text", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><img src="logo.png" alt="   "></h1>')
+  })
+
+  test("fails for heading with img element without alt attribute", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><img src="logo.png"></h1>')
+  })
+
+  test("fails for heading with img element with aria-hidden and alt text", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><img src="logo.png" alt="Logo" aria-hidden="true"></h1>')
+  })
+
+  test("passes for heading with img and additional text", () => {
+    expectNoOffenses('<h1><img src="icon.png" alt="Icon"> Heading Text</h1>')
+  })
+
+  test("passes for heading with nested elements containing img with alt", () => {
+    expectNoOffenses('<h1><span><img src="logo.png" alt="Logo"></span></h1>')
+  })
+
+  test("passes for heading with aria-label", () => {
+    expectNoOffenses('<h1 aria-label="Welcome"></h1>')
+  })
+
+  test("passes for heading with aria-label and no body", () => {
+    expectNoOffenses('<h1 aria-label="Home" />')
+  })
+
+  test("passes for heading with aria-labelledby", () => {
+    expectNoOffenses('<h1 aria-labelledby="heading-id"></h1>')
+  })
+
+  test("passes for heading with child element that has aria-label", () => {
+    expectNoOffenses('<h1><span aria-label="Icon">🏠</span></h1>')
+  })
+
+  test("passes for heading with button that has aria-label", () => {
+    expectNoOffenses('<h1><button aria-label="Menu">☰</button></h1>')
+  })
+
+  test("passes for heading with nested element having aria-labelledby", () => {
+    expectNoOffenses('<h1><div aria-labelledby="label-id">Content</div></h1>')
+  })
+
+  test("fails for heading with empty aria-label", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1 aria-label=""></h1>')
+  })
+
+  test("fails for heading with whitespace-only aria-label", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1 aria-label="   "></h1>')
+  })
+
+  test("fails for heading with child having empty aria-label and no text", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><span aria-label=""></span></h1>')
+  })
+
+  test("passes for heading with aria-label and visible text", () => {
+    expectNoOffenses('<h1 aria-label="Custom label">Visible Text</h1>')
+  })
+
+  test("passes for heading with multiple children, one having aria-label", () => {
+    expectNoOffenses('<h1><span aria-hidden="true">Hidden</span><button aria-label="Action">⚙</button></h1>')
+  })
 })
