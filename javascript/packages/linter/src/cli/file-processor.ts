@@ -1,5 +1,6 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { loadCustomRules } from "../loader.js"
 import { Config } from "@herb-tools/config"
 
 import { readFileSync, writeFileSync } from "fs"
@@ -70,51 +71,59 @@ export class FileProcessor {
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
+
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
+
+    if (!this.linter) {
+      let customRules = undefined
+      let customRuleInfo: Array<{ name: string, path: string }> = []
+      let customRuleWarnings: string[] = []
+
+      if (context?.loadCustomRules && !this.customRulesLoaded) {
+        try {
+          const result = await loadCustomRules({
+            baseDir: context.projectPath,
+            silent: formatOption === 'json'
+          })
+
+          customRules = result.rules
+          customRuleInfo = result.ruleInfo
+          customRuleWarnings = result.warnings
+
+          this.customRulesLoaded = true
+
+          if (customRules.length > 0 && formatOption !== 'json') {
+            const ruleText = customRules.length === 1 ? 'rule' : 'rules'
+            console.log(colorize(`\nLoaded ${customRules.length} custom ${ruleText}:`, "green"))
+
+            for (const { name, path } of customRuleInfo) {
+              const relativePath = context.projectPath ? path.replace(context.projectPath + '/', '') : path
+              console.log(colorize(`  • ${name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+            }
+
+            if (customRuleWarnings.length > 0) {
+              console.log()
+              for (const warning of customRuleWarnings) {
+                console.warn(colorize(`  ⚠ ${warning}`, "yellow"))
+              }
+            }
+
+            console.log()
+          }
+        } catch (error) {
+          if (formatOption !== 'json') {
+            console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
+          }
+        }
+      }
+
+      this.linter = Linter.from(Herb, context?.config, customRules)
+    }
 
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       let content = readFileSync(filePath, "utf-8")
-
-      if (!this.linter) {
-        this.linter = Linter.from(Herb, context?.config)
-
-        if (context?.loadCustomRules && !this.customRulesLoaded) {
-          try {
-            const { count, ruleInfo, warnings } = await this.linter.loadCustomRules({
-              baseDir: context.projectPath,
-              silent: formatOption === 'json'
-            })
-
-            this.customRulesLoaded = true
-
-            if (count > 0 && formatOption !== 'json') {
-              const ruleText = count === 1 ? 'rule' : 'rules'
-              console.log(colorize(`\nLoaded ${count} custom ${ruleText}:`, "green"))
-
-              for (const { name, path } of ruleInfo) {
-                const relativePath = context.projectPath ? path.replace(context.projectPath + '/', '') : path
-
-                console.log(colorize(`  • ${name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
-              }
-
-              if (warnings.length > 0) {
-                console.log()
-                for (const warning of warnings) {
-                  console.warn(colorize(`  ⚠ ${warning}`, "yellow"))
-                }
-              }
-
-              console.log()
-            }
-          } catch (error) {
-            if (formatOption !== 'json') {
-              console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
-            }
-          }
-        }
-      }
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,

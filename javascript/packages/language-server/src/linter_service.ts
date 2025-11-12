@@ -2,7 +2,7 @@ import { Diagnostic, Range, Position, CodeDescription, Connection } from "vscode
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter, rules, type RuleClass } from "@herb-tools/linter"
-import { CustomRuleLoader } from "@herb-tools/linter/loader"
+import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loader"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
 
@@ -56,10 +56,9 @@ export class LinterService {
     }
 
     const baseDir = this.project.projectPath
-    const loader = new CustomRuleLoader({ baseDir, silent: true })
 
     try {
-      const { rules: customRules, ruleInfo, duplicateWarnings } = await loader.loadRulesWithInfo()
+      const { rules: customRules, ruleInfo, warnings: duplicateWarnings } = await loadCustomRulesFromFs({ baseDir, silent: true })
 
       if (customRules.length > 0) {
         this.connection.console.log(`[Linter] Loaded ${customRules.length} custom rules: ${ruleInfo.map(r => r.name).join(', ')}`)

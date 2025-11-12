@@ -1,7 +1,6 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import { minimatch } from "minimatch"
-import { CustomRuleLoader } from "./custom-rule-loader.js"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -50,21 +49,22 @@ export class Linter {
   protected herb: HerbBackend
   protected offenses: LintOffense[]
   protected config?: Config
-  protected customRulesLoaded: boolean = false
 
   /**
    * Creates a new Linter instance with automatic rule filtering based on config.
    *
    * @param herb - The Herb backend instance for parsing and lexing
    * @param config - Optional full Config instance for rule filtering, severity overrides, and path-based filtering
+   * @param customRules - Optional array of custom rules to include alongside built-in rules
    * @returns A configured Linter instance
    */
-  static from(herb: HerbBackend, config?: Config): Linter {
+  static from(herb: HerbBackend, config?: Config, customRules?: RuleClass[]): Linter {
+    const allRules = customRules ? [...rules, ...customRules] : rules
     const filteredRules = config?.linter?.rules
-      ? Linter.filterRulesByConfig(rules, config.linter.rules)
+      ? Linter.filterRulesByConfig(allRules, config.linter.rules)
       : undefined
 
-    return new Linter(herb, filteredRules, config)
+    return new Linter(herb, filteredRules, config, allRules)
   }
 
   /**
@@ -149,52 +149,6 @@ export class Linter {
       "herb-disable-comment-missing-rules",
       "herb-disable-comment-unnecessary"
     ]
-  }
-
-  /**
-   * Asynchronously loads custom rules and adds them to the linter.
-   * This should be called after construction if loadCustomRules option is enabled.
-   *
-   * @param options - Custom rule loader options
-   * @returns Promise that resolves to information about loaded custom rules
-   */
-  async loadCustomRules(options?: {
-    baseDir?: string
-    patterns?: string[]
-    silent?: boolean
-  }): Promise<{ count: number, ruleInfo: Array<{ name: string, path: string }>, warnings: string[] }> {
-    if (this.customRulesLoaded) {
-      return { count: 0, ruleInfo: [], warnings: [] }
-    }
-
-    const loader = new CustomRuleLoader(options)
-    const { rules: customRules, ruleInfo, duplicateWarnings } = await loader.loadRulesWithInfo()
-    const warnings: string[] = [...duplicateWarnings]
-
-    if (customRules.length > 0) {
-      const defaultRuleNames = new Set(
-        this.rules.map(RuleClass => {
-          const instance = new RuleClass()
-
-          return instance.name
-        })
-      )
-
-      for (const { name } of ruleInfo) {
-        if (defaultRuleNames.has(name)) {
-          warnings.push(`Custom rule "${name}" has the same name as a built-in rule and will override it`)
-        }
-      }
-
-      this.allAvailableRules = [...this.allAvailableRules, ...customRules]
-
-      const filteredCustomRules = Linter.filterRulesByConfig(customRules, this.config?.linter?.rules)
-
-      this.rules = [...this.rules, ...filteredCustomRules]
-      this.customRulesLoaded = true
-    }
-
-    return { count: customRules.length, ruleInfo, warnings }
   }
 
   getRuleCount(): number {
