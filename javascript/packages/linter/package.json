@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/linter",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -45,12 +45,12 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.7.5",
-    "@herb-tools/core": "0.7.5",
-    "@herb-tools/highlighter": "0.7.5",
-    "@herb-tools/node-wasm": "0.7.5",
-    "@herb-tools/printer": "0.7.5",
-    "@herb-tools/rewriter": "0.7.5",
+    "@herb-tools/config": "0.8.0",
+    "@herb-tools/core": "0.8.0",
+    "@herb-tools/highlighter": "0.8.0",
+    "@herb-tools/node-wasm": "0.8.0",
+    "@herb-tools/printer": "0.8.0",
+    "@herb-tools/rewriter": "0.8.0",
     "glob": "^11.0.3"
   },
   "files": [
