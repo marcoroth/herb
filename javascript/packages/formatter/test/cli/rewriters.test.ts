@@ -5,6 +5,15 @@ import { join } from "path"
 
 import { execBinary, expectExitCode, } from "./cli-helpers"
 
+/**
+ * Normalizes stderr output by replacing absolute paths with relative paths
+ * This makes snapshots consistent across different environments (local vs CI)
+ */
+function normalizeStderr(stderr: string): string {
+  const cwd = process.cwd()
+  return stderr.replace(new RegExp(cwd + '/', 'g'), '')
+}
+
 describe("CLI", () => {
   describe("Rewriters", () => {
     const testDir = "test-rewriters"
@@ -35,7 +44,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
     })
 
     it("should show multiple rewriters on stderr", async () => {
@@ -55,7 +64,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
     })
 
     it("should actually apply Tailwind class sorting", async () => {
@@ -77,7 +86,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
 
       const formattedContent = await readFile(testFile, 'utf-8')
       expect(formattedContent).toBe(`<div class="rounded bg-blue-500 px-4 text-white"></div>\n`)
@@ -98,7 +107,7 @@ describe("CLI", () => {
       const result = await execBinary(["--config-file", configPath], input)
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
       expect(result.stdout).toMatchSnapshot()
     })
 
@@ -119,7 +128,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
     })
 
     it("should not show rewriter info when no rewriters are configured", async () => {
@@ -136,7 +145,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
     })
 
     it("should handle both pre and post rewriters", async () => {
@@ -156,7 +165,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toMatchSnapshot()
+      expect(normalizeStderr(result.stderr)).toMatchSnapshot()
     })
   })
 })
