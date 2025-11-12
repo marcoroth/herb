@@ -30,7 +30,7 @@ class UppercaseTagsVisitor extends Visitor {
   }
 }
 
-export class UppercaseTagsRewriter extends ASTRewriter {
+export default class UppercaseTagsRewriter extends ASTRewriter {
   get name() {
     return "uppercase-tags"
   }

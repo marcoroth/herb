@@ -1,0 +1,77 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CLI > Rewriters > should actually apply Tailwind class sorting 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+[32m
+Using 1 pre-format rewriter:[0m
+[36m  • tailwind-class-sorter[0m[2m (built-in)[0m
+
+"
+`;
+
+exports[`CLI > Rewriters > should format from stdin with rewriters configured 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+[32m
+Using 1 pre-format rewriter:[0m
+[36m  • tailwind-class-sorter[0m[2m (built-in)[0m
+
+"
+`;
+
+exports[`CLI > Rewriters > should format from stdin with rewriters configured 2`] = `
+"<div class="bg-blue-500 px-4 text-white"></div>
+"
+`;
+
+exports[`CLI > Rewriters > should handle both pre and post rewriters 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+[32m
+Using 1 pre-format rewriter:[0m
+[36m  • tailwind-class-sorter[0m[2m (built-in)[0m
+
+"
+`;
+
+exports[`CLI > Rewriters > should not show rewriter info when no rewriters are configured 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+"
+`;
+
+exports[`CLI > Rewriters > should show multiple rewriters on stderr 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+[32m
+Using 1 pre-format rewriter:[0m
+[36m  • tailwind-class-sorter[0m[2m (built-in)[0m
+
+"
+`;
+
+exports[`CLI > Rewriters > should show rewriter info on stderr when pre-format rewriters are configured 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+[32m
+Using 1 pre-format rewriter:[0m
+[36m  • tailwind-class-sorter[0m[2m (built-in)[0m
+
+"
+`;
+
+exports[`CLI > Rewriters > should show warning for unknown rewriters on stderr 1`] = `
+"✓ Using Herb config file at /Users/marcoroth/Development/herb-linter/javascript/packages/formatter/test-rewriters/.herb.yml
+⚠️  Experimental Preview: The formatter is in early development. Please report any unexpected behavior or bugs to https://github.com/marcoroth/herb/issues/new?template=formatting-issue.md
+
+⚠️  Pre-format rewriter "non-existent-rewriter" not found. Skipping.
+
+"
+`;

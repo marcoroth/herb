@@ -35,7 +35,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toContain("Using 1 pre-format rewriter: tailwind-class-sorter")
+      expect(result.stderr).toMatchSnapshot()
     })
 
     it("should show multiple rewriters on stderr", async () => {
@@ -55,7 +55,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toContain("Using 1 pre-format rewriter: tailwind-class-sorter")
+      expect(result.stderr).toMatchSnapshot()
     })
 
     it("should actually apply Tailwind class sorting", async () => {
@@ -77,7 +77,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stdout).toContain("Formatted: test-rewriters/test.html.erb")
+      expect(result.stderr).toMatchSnapshot()
 
       const formattedContent = await readFile(testFile, 'utf-8')
       expect(formattedContent).toBe(`<div class="rounded bg-blue-500 px-4 text-white"></div>\n`)
@@ -98,8 +98,8 @@ describe("CLI", () => {
       const result = await execBinary(["--config-file", configPath], input)
 
       expectExitCode(result, 0)
-      expect(result.stderr).toContain(`Using 1 pre-format rewriter: tailwind-class-sorter`)
-      expect(result.stdout).toContain(`class="bg-blue-500 px-4 text-white"`)
+      expect(result.stderr).toMatchSnapshot()
+      expect(result.stdout).toMatchSnapshot()
     })
 
     it("should show warning for unknown rewriters on stderr", async () => {
@@ -119,9 +119,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toContain("⚠️")
-      expect(result.stderr).toContain("non-existent-rewriter")
-      expect(result.stderr).toContain("not found")
+      expect(result.stderr).toMatchSnapshot()
     })
 
     it("should not show rewriter info when no rewriters are configured", async () => {
@@ -138,9 +136,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).not.toContain("pre-format rewriter")
-      expect(result.stderr).not.toContain("post-format rewriter")
-      expect(result.stderr).toContain("⚠️  Experimental Preview")
+      expect(result.stderr).toMatchSnapshot()
     })
 
     it("should handle both pre and post rewriters", async () => {
@@ -160,8 +156,7 @@ describe("CLI", () => {
       const result = await execBinary([testFile])
 
       expectExitCode(result, 0)
-      expect(result.stderr).toContain("Using 1 pre-format rewriter: tailwind-class-sorter")
-      expect(result.stderr).not.toContain("post-format")
+      expect(result.stderr).toMatchSnapshot()
     })
   })
 })
