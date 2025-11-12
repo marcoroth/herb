@@ -39,6 +39,7 @@ export class Settings {
   hasConfigurationCapability = false
   hasWorkspaceFolderCapability = false
   hasDiagnosticRelatedInformationCapability = false
+  hasShowDocumentCapability = false
 
   params: InitializeParams
   capabilities: ClientCapabilities
@@ -50,6 +51,7 @@ export class Settings {
     this.connection = connection
 
     this.hasConfigurationCapability = !!(this.capabilities.workspace && !!this.capabilities.workspace.configuration)
+    this.hasShowDocumentCapability = !!(this.capabilities.window?.showDocument)
 
     this.hasWorkspaceFolderCapability = !!(
       this.capabilities.workspace && !!this.capabilities.workspace.workspaceFolders

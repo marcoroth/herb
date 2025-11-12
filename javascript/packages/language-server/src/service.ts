@@ -93,6 +93,7 @@ export class Service {
 
   async refresh() {
     await this.project.refresh()
+    await this.formattingService.refreshConfig(this.config)
     await this.diagnostics.refreshAllDocuments()
   }
 
