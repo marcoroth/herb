@@ -3,7 +3,9 @@ import { TreeChildrenProvider } from './tree-children-provider'
 import { AnalysisService } from './analysis-service'
 import { VersionService } from './version-service'
 
-import { workspace, window, EventEmitter, ProgressLocation } from 'vscode'
+import { workspace, window, commands, EventEmitter, ProgressLocation } from 'vscode'
+
+import { Config } from "@herb-tools/config"
 
 import type { FileStatus, TreeNode } from './types'
 import type { TreeDataProvider, Event, ExtensionContext, TreeItem, Uri } from 'vscode'
@@ -19,8 +21,12 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
   private treeChildrenProvider!: TreeChildrenProvider
   private analysisService: AnalysisService
   private versionService: VersionService
+  private onAnalysisTimeUpdate?: (time: Date | null) => void
+  private onVersionUpdate?: () => void
 
-  constructor(context: ExtensionContext) {
+  constructor(context: ExtensionContext, onAnalysisTimeUpdate?: (time: Date | null) => void, onVersionUpdate?: () => void) {
+    this.onAnalysisTimeUpdate = onAnalysisTimeUpdate
+    this.onVersionUpdate = onVersionUpdate
     this.versionService = new VersionService(context)
     this.analysisService = new AnalysisService(context, (version) => this.updateHerbVersions(version))
     this.updateProviders()
@@ -28,13 +34,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
 
   private updateProviders(): void {
     this.treeItemBuilder = new TreeItemBuilder(this.files)
-    this.treeChildrenProvider = new TreeChildrenProvider(
-      this.files,
-      this.lastAnalysisTime,
-      () => this.versionService.parseHerbVersion(),
-      this.versionService.extensionVersion,
-      this.versionService.linterVersion
-    )
+    this.treeChildrenProvider = new TreeChildrenProvider(this.files)
   }
 
   getTreeItem(element: TreeNode): TreeItem {
@@ -46,7 +46,51 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
   }
 
   async analyzeProject(): Promise<void> {
-    const uris = await workspace.findFiles('**/*.html.erb')
+    const workspaceRoot = workspace.workspaceFolders?.[0]?.uri.fsPath
+
+    let includePattern: string
+    let excludePattern: string | undefined
+
+    if (workspaceRoot) {
+      try {
+        const config = await Config.loadForEditor(workspaceRoot)
+
+        const linterFiles = config.getFilesConfigForTool('linter')
+        const formatterFiles = config.getFilesConfigForTool('formatter')
+
+        const allIncludePatterns = [...new Set([...(linterFiles.include || []), ...(formatterFiles.include || [])])]
+
+        if (allIncludePatterns.length > 0) {
+          includePattern = allIncludePatterns.length === 1 ? allIncludePatterns[0] : `{${allIncludePatterns.join(',')}}`
+        } else {
+          const patterns = Config.getDefaultFilePatterns()
+          includePattern = patterns.length === 1 ? patterns[0] : `{${patterns.join(',')}}`
+        }
+
+        const linterExclude = linterFiles.exclude || []
+        const formatterExclude = formatterFiles.exclude || []
+        const commonExclude = linterExclude.filter(pattern => formatterExclude.includes(pattern))
+
+        if (commonExclude.length > 0) {
+          excludePattern = `{${commonExclude.join(',')}}`
+        }
+      } catch (error) {
+        window.showErrorMessage(
+          'Cannot run Herb analysis: Configuration file has errors. Please fix .herb.yml and try again.',
+          'Edit Config'
+        ).then(selection => {
+          if (selection === 'Edit Config') {
+            commands.executeCommand('herb.editConfig')
+          }
+        })
+
+        return
+      }
+    } else {
+      includePattern = Config.getDefaultFilePatterns().join(",")
+    }
+
+    const uris = await workspace.findFiles(includePattern, excludePattern)
 
     this.lastAnalysisTime = new Date()
 
@@ -62,6 +106,10 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
 
     this.updateProviders()
     this._onDidChangeTreeData.fire()
+
+    if (this.onAnalysisTimeUpdate) {
+      this.onAnalysisTimeUpdate(this.lastAnalysisTime)
+    }
 
     await window.withProgress(
       {
@@ -87,29 +135,39 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
         const totalLintWarnings = this.files.reduce((sum, file) => sum + file.lintWarnings, 0)
 
         if (totalParseErrors > 0 || totalLintErrors > 0) {
-          window.showErrorMessage(message)
+          window.showErrorMessage(message, 'View Details').then(selection => {
+            if (selection === 'View Details') {
+              commands.executeCommand('herbFileStatus.focus')
+            }
+          })
         } else if (totalLintWarnings > 0) {
-          window.showWarningMessage(message)
+          window.showWarningMessage(message, 'View Details').then(selection => {
+            if (selection === 'View Details') {
+              commands.executeCommand('herbFileStatus.focus')
+            }
+          })
         } else {
-          window.showInformationMessage(message)
+          window.showInformationMessage(message, 'View Details').then(selection => {
+            if (selection === 'View Details') {
+              commands.executeCommand('herbFileStatus.focus')
+            }
+          })
         }
       }
     )
   }
 
   async reprocessFile(uri: Uri): Promise<void> {
-    const result = await this.analysisService.analyzeFile(uri.fsPath)
     const index = this.files.findIndex(file => file.uri.toString() === uri.toString())
-    const updated: FileStatus = { uri, ...result }
 
     if (index >= 0) {
+      const result = await this.analysisService.analyzeFile(uri.fsPath)
+      const updated: FileStatus = { uri, ...result }
       this.files[index] = updated
-    } else {
-      this.files.push(updated)
-    }
 
-    this.updateProviders()
-    this._onDidChangeTreeData.fire()
+      this.updateProviders()
+      this._onDidChangeTreeData.fire()
+    }
   }
 
   async removeFile(uri: Uri): Promise<void> {
@@ -127,6 +185,21 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
       this.versionService.updateHerbVersions(versionString)
       this.updateProviders()
       this._onDidChangeTreeData.fire()
+
+      if (this.onVersionUpdate) {
+        this.onVersionUpdate()
+      }
+    }
+  }
+
+  clearAnalysis(): void {
+    this.files = []
+    this.lastAnalysisTime = null
+    this.updateProviders()
+    this._onDidChangeTreeData.fire()
+
+    if (this.onAnalysisTimeUpdate) {
+      this.onAnalysisTimeUpdate(null)
     }
   }
 }

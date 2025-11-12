@@ -1,3 +1,7 @@
+---
+source: "Lexer::DoctypeTest#test_0004_html4 doctype"
+input: "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">"
+---
 #<Herb::Token type="TOKEN_HTML_DOCTYPE" value="<!DOCTYPE" range=[0, 9] start=(1:0) end=(1:9)>
 #<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[9, 10] start=(1:9) end=(1:10)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="HTML" range=[10, 14] start=(1:10) end=(1:14)>

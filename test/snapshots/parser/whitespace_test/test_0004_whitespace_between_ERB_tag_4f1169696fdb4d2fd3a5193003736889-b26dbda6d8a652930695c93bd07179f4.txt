@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0004_whitespace between ERB tag"
+input: |2-
+<%= hello %>     <%= world %>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (4 items)
     ├── @ ERBContentNode (location: (1:0)-(1:12))

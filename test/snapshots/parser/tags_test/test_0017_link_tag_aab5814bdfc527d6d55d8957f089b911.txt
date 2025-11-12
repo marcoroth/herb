@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0017_link tag"
+input: "<link href=\"https://mywebsite.com/style.css\" rel=\"stylesheet\">"
+---
 @ DocumentNode (location: (1:0)-(1:62))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:62))

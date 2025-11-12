@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0013_trim with nested blocks"
+input: "{source: \"<%- [1, 2, 3].each do |i| -%>\\n  <%- if i > 1 -%>\\n    <p><%- i -%></p>\\n  <%- end -%>\\n<%- end -%>\\n\", options: {}}"
+---
+_buf = ::String.new; [1, 2, 3].each do |i| 
+ if i > 1 
+ _buf << '    <p>'.freeze; i; _buf << '</p>
+'.freeze; end 
+ end 
+_buf.to_s

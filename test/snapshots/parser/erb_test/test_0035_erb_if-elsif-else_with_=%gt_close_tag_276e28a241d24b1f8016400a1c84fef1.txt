@@ -1,0 +1,132 @@
+---
+source: "Parser::ERBTest#test_0035_erb if-elsif-else with =%> close tag"
+input: |2-
+<% if condition =%>
+  <p>True</p>
+<% elsif other =%>
+  <p>Other</p>
+<% else =%>
+  <p>False</p>
+<% end =%>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(7:10))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if condition " (location: (1:2)-(1:16))
+    │   ├── tag_closing: "=%>" (location: (1:16)-(1:19))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:13))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:9))
+    │   │   │   │       └── content: "True"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:9)-(2:13))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:9)-(2:11))
+    │   │   │   │       ├── tag_name: "p" (location: (2:11)-(2:12))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:12)-(2:13))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:13)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBIfNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " elsif other " (location: (3:2)-(3:15))
+    │   │       ├── tag_closing: "=%>" (location: (3:15)-(3:18))
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (3:18)-(4:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLElementNode (location: (4:2)-(4:14))
+    │   │       │   │   ├── open_tag:
+    │   │       │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:5))
+    │   │       │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │       │   │   │       ├── tag_name: "p" (location: (4:3)-(4:4))
+    │   │       │   │   │       ├── tag_closing: ">" (location: (4:4)-(4:5))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── is_void: false
+    │   │       │   │   │
+    │   │       │   │   ├── tag_name: "p" (location: (4:3)-(4:4))
+    │   │       │   │   ├── body: (1 item)
+    │   │       │   │   │   └── @ HTMLTextNode (location: (4:5)-(4:10))
+    │   │       │   │   │       └── content: "Other"
+    │   │       │   │   │
+    │   │       │   │   ├── close_tag:
+    │   │       │   │   │   └── @ HTMLCloseTagNode (location: (4:10)-(4:14))
+    │   │       │   │   │       ├── tag_opening: "</" (location: (4:10)-(4:12))
+    │   │       │   │   │       ├── tag_name: "p" (location: (4:12)-(4:13))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── tag_closing: ">" (location: (4:13)-(4:14))
+    │   │       │   │   │
+    │   │       │   │   ├── is_void: false
+    │   │       │   │   └── source: "HTML"
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (4:14)-(5:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent:
+    │   │       │   └── @ ERBElseNode (location: (5:0)-(7:0))
+    │   │       │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       │       ├── content: " else " (location: (5:2)-(5:8))
+    │   │       │       ├── tag_closing: "=%>" (location: (5:8)-(5:11))
+    │   │       │       └── statements: (3 items)
+    │   │       │           ├── @ HTMLTextNode (location: (5:11)-(6:2))
+    │   │       │           │   └── content: "\n  "
+    │   │       │           │
+    │   │       │           ├── @ HTMLElementNode (location: (6:2)-(6:14))
+    │   │       │           │   ├── open_tag:
+    │   │       │           │   │   └── @ HTMLOpenTagNode (location: (6:2)-(6:5))
+    │   │       │           │   │       ├── tag_opening: "<" (location: (6:2)-(6:3))
+    │   │       │           │   │       ├── tag_name: "p" (location: (6:3)-(6:4))
+    │   │       │           │   │       ├── tag_closing: ">" (location: (6:4)-(6:5))
+    │   │       │           │   │       ├── children: []
+    │   │       │           │   │       └── is_void: false
+    │   │       │           │   │
+    │   │       │           │   ├── tag_name: "p" (location: (6:3)-(6:4))
+    │   │       │           │   ├── body: (1 item)
+    │   │       │           │   │   └── @ HTMLTextNode (location: (6:5)-(6:10))
+    │   │       │           │   │       └── content: "False"
+    │   │       │           │   │
+    │   │       │           │   ├── close_tag:
+    │   │       │           │   │   └── @ HTMLCloseTagNode (location: (6:10)-(6:14))
+    │   │       │           │   │       ├── tag_opening: "</" (location: (6:10)-(6:12))
+    │   │       │           │   │       ├── tag_name: "p" (location: (6:12)-(6:13))
+    │   │       │           │   │       ├── children: []
+    │   │       │           │   │       └── tag_closing: ">" (location: (6:13)-(6:14))
+    │   │       │           │   │
+    │   │       │           │   ├── is_void: false
+    │   │       │           │   └── source: "HTML"
+    │   │       │           │
+    │   │       │           └── @ HTMLTextNode (location: (6:14)-(7:0))
+    │   │       │               └── content: "\n"
+    │   │       │
+    │   │       │
+    │   │       └── end_node: ∅
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:10))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "=%>" (location: (7:7)-(7:10))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:10)-(8:0))
+        └── content: "\n"

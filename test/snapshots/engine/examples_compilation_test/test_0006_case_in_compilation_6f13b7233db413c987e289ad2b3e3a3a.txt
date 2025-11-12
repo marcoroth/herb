@@ -1,0 +1,11 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0006_case in compilation"
+input: "{source: \"<% case {} %>\\n<% in {} %>\\n  \\\"matched\\\"\\n<% else %>\\n  \\\"not matched\\\"\\n<% end %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; case {} 
+ in {} 
+ _buf << '  "matched"
+'.freeze; else 
+ _buf << '  "not matched"
+'.freeze; end 
+_buf.to_s

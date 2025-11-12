@@ -1,299 +1,173 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import dedent from "dedent"
+import { describe, test } from "vitest"
 import { HTMLNoEmptyAttributesRule } from "../../src/rules/html-no-empty-attributes.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HTMLNoEmptyAttributesRule)
 
 describe("html-no-empty-attributes", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for attributes with meaningful values", () => {
-    const html = '<div id="header" class="container" name="main"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses(`<div id="header" class="container" name="main"></div>`)
   })
 
   test("fails for empty id attribute", () => {
-    const html = '<div id=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div id=""></div>`)
   })
 
   test("fails for empty class attribute", () => {
-    const html = '<div class=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div class=""></div>`)
   })
 
   test("fails for empty name attribute", () => {
-    const html = '<input name="">'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `name` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `name` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<input name="">`)
   })
 
   test("fails for empty for attribute", () => {
-    const html = '<label for="">Label</label>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `for` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `for` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<label for="">Label</label>`)
   })
 
   test("fails for empty src attribute", () => {
-    const html = '<img src="" alt="Image">'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `src` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `src` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<img src="" alt="Image">`)
   })
 
   test("fails for empty href attribute", () => {
-    const html = '<a href="">Link</a>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `href` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `href` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<a href="">Link</a>`)
   })
 
   test("fails for empty title attribute", () => {
-    const html = '<a href="https://example.com" title="">Link</a>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `title` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `title` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<a href="https://example.com" title="">Link</a>`)
   })
 
   test("fails for empty data attribute", () => {
-    const html = '<div data=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `data` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `data` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div data=""></div>`)
   })
 
   test("fails for data-* attributes with empty values", () => {
-    const html = '<div data-value="" data-config=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(2)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-value` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
-    expect(lintResult.offenses[1].message).toBe('Attribute `data-config` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[1].severity).toBe("warning")
+    expectWarning('Data attribute `data-value` should not have an empty value. Either provide a meaningful value or use `data-value` instead of `data-value=""`.')
+    expectWarning('Data attribute `data-config` should not have an empty value. Either provide a meaningful value or use `data-config` instead of `data-config=""`.')
+    assertOffenses(`<div data-value="" data-config=""></div>`)
   })
 
   test("fails for aria-* attributes with empty values", () => {
-    const html = '<button aria-label="" aria-describedby="">Button</button>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(2)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `aria-label` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
-    expect(lintResult.offenses[1].message).toBe('Attribute `aria-describedby` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[1].severity).toBe("warning")
+    expectWarning('Attribute `aria-label` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expectWarning('Attribute `aria-describedby` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<button aria-label="" aria-describedby="">Button</button>`)
   })
 
   test("fails for role attribute with empty value", () => {
-    const html = '<div role=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `role` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `role` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div role=""></div>`)
   })
 
   test("fails for multiple empty attributes", () => {
-    const html = '<div id="" class="" data-test=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(3)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
-    expect(lintResult.offenses[1].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[1].severity).toBe("warning")
-    expect(lintResult.offenses[2].message).toBe('Attribute `data-test` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[2].severity).toBe("warning")
+    expectWarning('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expectWarning('Data attribute `data-test` should not have an empty value. Either provide a meaningful value or use `data-test` instead of `data-test=""`.')
+    assertOffenses(`<div id="" class="" data-test=""></div>`)
   })
 
   test("fails for whitespace-only values", () => {
-    const html = '<div id="   " class=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(2)
-
-    expect(lintResult.offenses[0].message).toBe('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
-    expect(lintResult.offenses[1].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[1].severity).toBe("warning")
+    expectWarning('Attribute `id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div id="   " class=""></div>`)
   })
 
   test("passes for attributes with ERB output", () => {
-    const html = '<div id="<%= element_id %>" class="<%= css_classes %>"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses(`<div id="<%= element_id %>" class="<%= css_classes %>"></div>`)
   })
 
   test("passes for mixed static and ERB content", () => {
-    const html = '<div class="base <%= additional_classes %>"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses(`<div class="base <%= additional_classes %>"></div>`)
   })
 
   test("fails for dynamic data-* attribute name with empty value", () => {
-    const html = '<div data-<%= key %>=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Data attribute `data-<%= key %>` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>` instead of `data-<%= key %>=""`.')
+    assertOffenses(`<div data-<%= key %>=""></div>`)
   })
 
   test("fails for dynamic data-* composite name with empty value", () => {
-    const html = '<div data-<%= key %>-id=""></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>-id` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Data attribute `data-<%= key %>-id` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>-id` instead of `data-<%= key %>-id=""`.')
+    assertOffenses(`<div data-<%= key %>-id=""></div>`)
   })
 
   test("fails for dynamic data-* attribute name with whitespace-only value", () => {
-    const html = '<div data-<%= key %>="   "></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `data-<%= key %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Data attribute `data-<%= key %>` should not have an empty value. Either provide a meaningful value or use `data-<%= key %>` instead of `data-<%= key %>="   "`.')
+    assertOffenses(`<div data-<%= key %>="   "></div>`)
   })
 
   test("fails for dynamic aria-* attribute name with empty value", () => {
-    const html = '<button aria-<%= prop %>=""></button>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `aria-<%= prop %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
-    expect(lintResult.offenses[0].severity).toBe("warning")
+    expectWarning('Attribute `aria-<%= prop %>` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<button aria-<%= prop %>=""></button>`)
   })
 
   test("passes for dynamic attribute name with ERB value", () => {
-    const html = '<div data-<%= key %>="<%= value %>"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses(`<div data-<%= key %>="<%= value %>"></div>`)
   })
 
   test("fails for attribute with ERB that doesn't output anything", () => {
-    const html = '<div class="<% value %>"></div>'
-
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(1)
-    expect(lintResult.offenses[0].message).toBe('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+    assertOffenses(`<div class="<% value %>"></div>`)
   })
 
   test("passes for attribute with static value and ERB that doesn't output anything", () => {
-    const html = '<div class="something.<% value %>"></div>'
+    expectNoOffenses(`<div class="something.<% value %>"></div>`)
+  })
 
-    const linter = new Linter(Herb, [HTMLNoEmptyAttributesRule])
-    const lintResult = linter.lint(html)
+  test("passes for data-* attributes without explicit values", () => {
+    expectNoOffenses(`<div data-test data-value data-config></div>`)
+  })
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+  test("fails for data-* attributes with explicit empty string values", () => {
+    expectWarning('Data attribute `data-test` should not have an empty value. Either provide a meaningful value or use `data-test` instead of `data-test=""`.')
+    expectWarning('Data attribute `data-value` should not have an empty value. Either provide a meaningful value or use `data-value` instead of `data-value=""`.')
+    assertOffenses(`<div data-test="" data-value=""></div>`)
+  })
+
+  test("mixed data attributes: passes for implicit values, fails for explicit empty values", () => {
+    expectWarning('Data attribute `data-config` should not have an empty value. Either provide a meaningful value or use `data-config` instead of `data-config=""`.')
+    assertOffenses(`<div data-test data-config="" data-value></div>`)
+  })
+
+  test("passes for data-turbo-permanent without value", () => {
+    expectNoOffenses(`<div data-turbo-permanent>Content</div>`)
+  })
+
+  test("fails for data-turbo-permanent with explicit empty value", () => {
+    expectWarning('Data attribute `data-turbo-permanent` should not have an empty value. Either provide a meaningful value or use `data-turbo-permanent` instead of `data-turbo-permanent=""`.')
+    assertOffenses(`<div data-turbo-permanent="">Content</div>`)
+  })
+
+  test("passes for class with ERB control flow containing static text", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> valid <% else %> error <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("passes for class with ERB control flow containing output tags", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> <%= valid %> <% else %> <%= error %> <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("fails for class with ERB control flow containing only non-output tags", () => {
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+
+    assertOffenses(dedent`
+      <h1 class="<% if valid? %> <% no_op %> <% else %> <% no_op %> <% end %>">
+         Content
+      </h1>
+    `)
   })
 })

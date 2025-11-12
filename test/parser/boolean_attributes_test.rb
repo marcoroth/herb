@@ -29,5 +29,21 @@ module Parser
     test "boolean attribute surrounded by regular attributes" do
       assert_parsed_snapshot(%(<input class="classes" required id="ids"/>))
     end
+
+    test "boolean attribute on void element followed by newline and ERB tag with track_whitespace" do
+      assert_parsed_snapshot(%(<link crossorigin>\n<%= hello %>), track_whitespace: true)
+    end
+
+    test "boolean attribute on void element followed by ERB tag with track_whitespace" do
+      assert_parsed_snapshot(%(<link crossorigin><%= hello %>), track_whitespace: true)
+    end
+
+    test "boolean attribute on void element followed by ERB tag with track_whitespace" do
+      assert_parsed_snapshot(<<~HTML, track_whitespace: true)
+        <div id="test" hidden>
+          <%= "hi" %>
+        </div>
+      HTML
+    end
   end
 end

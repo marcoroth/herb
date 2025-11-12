@@ -5,7 +5,10 @@ Herb provides official JavaScript bindings as NPM packages, published under the 
 Herb supports both **browser** and **Node.js** environments with separate packages, ensuring optimized compatibility for each platform.
 
 > [!TIP] More Language Bindings
-> Herb also has [bindings for Ruby](/bindings/ruby/)
+> Herb also has bindings for:
+> - [Ruby](/bindings/ruby/)
+> - [Java](/bindings/java/)
+> - [Rust](/bindings/rust/)
 
 ## Installation
 

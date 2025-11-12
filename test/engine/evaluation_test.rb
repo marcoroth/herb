@@ -389,5 +389,50 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, { escape: false })
     end
+
+    test "comment before content" do
+      template = <<~ERB
+        <% # This file contains a comment before other content %>
+        <div>Hey there</div>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment on same line" do
+      template = %(<% if true %><% # Comment here %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment with newline" do
+      template = "<% if true %><% # Comment here %>\n<% end %>"
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment between code" do
+      template = %(<% if true %><% # Comment here %><%= "hello" %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment before and between code" do
+      template = %(<% # Comment here %><% if true %><% # Comment here %><%= "hello" %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment with spaces" do
+      template = %(<%  # Comment %> <% code = "test" %><%= code %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment multiline" do
+      template = "<% # Comment\nmore %> <% code = \"test\" %><%= code %>"
+
+      assert_evaluated_snapshot(template, { more: "ignored" }, { escape: false })
+    end
   end
 end

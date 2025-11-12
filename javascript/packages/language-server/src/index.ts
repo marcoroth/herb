@@ -1,6 +1,5 @@
 export * from "./server"
 export * from "./service"
-export * from "./config"
 export * from "./diagnostics"
 export * from "./document_service"
 export * from "./formatting_service"

@@ -1,3 +1,11 @@
+---
+source: "Parser::WhitespaceTest#test_0020_nested tags with preserved whitespace"
+input: |2-
+<div   class="outer"  >
+  <span     id="inner"    >text</span>
+</div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:6))

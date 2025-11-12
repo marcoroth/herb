@@ -1,0 +1,89 @@
+---
+source: "Analyze::CaseTest#test_0011_case with block in multiple when clauses"
+input: |2-
+<% case type %>
+<% when :a %>
+  <%= form_for(obj) do |f| %>
+    Form A
+  <% end %>
+<% when :b %>
+  <%= form_for(obj) do |f| %>
+    Form B
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(10:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case type " (location: (1:2)-(1:13))
+    │   ├── tag_closing: "%>" (location: (1:13)-(1:15))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:15)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:13))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when :a " (location: (2:2)-(2:11))
+    │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   └── statements: (3 items)
+    │   │   │       ├── @ HTMLTextNode (location: (2:13)-(3:2))
+    │   │   │       │   └── content: "\n  "
+    │   │   │       │
+    │   │   │       ├── @ ERBBlockNode (location: (3:2)-(5:11))
+    │   │   │       │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │       │   ├── content: " form_for(obj) do |f| " (location: (3:5)-(3:27))
+    │   │   │       │   ├── tag_closing: "%>" (location: (3:27)-(3:29))
+    │   │   │       │   ├── body: (1 item)
+    │   │   │       │   │   └── @ HTMLTextNode (location: (3:29)-(5:2))
+    │   │   │       │   │       └── content: "\n    Form A\n  "
+    │   │   │       │   │
+    │   │   │       │   └── end_node:
+    │   │   │       │       └── @ ERBEndNode (location: (5:2)-(5:11))
+    │   │   │       │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │   │       │           ├── content: " end " (location: (5:4)-(5:9))
+    │   │   │       │           └── tag_closing: "%>" (location: (5:9)-(5:11))
+    │   │   │       │
+    │   │   │       │
+    │   │   │       └── @ HTMLTextNode (location: (5:11)-(6:0))
+    │   │   │           └── content: "\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (6:0)-(6:13))
+    │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │       ├── content: " when :b " (location: (6:2)-(6:11))
+    │   │       ├── tag_closing: "%>" (location: (6:11)-(6:13))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (6:13)-(7:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBBlockNode (location: (7:2)-(9:11))
+    │   │           │   ├── tag_opening: "<%=" (location: (7:2)-(7:5))
+    │   │           │   ├── content: " form_for(obj) do |f| " (location: (7:5)-(7:27))
+    │   │           │   ├── tag_closing: "%>" (location: (7:27)-(7:29))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (7:29)-(9:2))
+    │   │           │   │       └── content: "\n    Form B\n  "
+    │   │           │   │
+    │   │           │   └── end_node:
+    │   │           │       └── @ ERBEndNode (location: (9:2)-(9:11))
+    │   │           │           ├── tag_opening: "<%" (location: (9:2)-(9:4))
+    │   │           │           ├── content: " end " (location: (9:4)-(9:9))
+    │   │           │           └── tag_closing: "%>" (location: (9:9)-(9:11))
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (9:11)-(10:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (10:0)-(10:9))
+    │           ├── tag_opening: "<%" (location: (10:0)-(10:2))
+    │           ├── content: " end " (location: (10:2)-(10:7))
+    │           └── tag_closing: "%>" (location: (10:7)-(10:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (10:9)-(11:0))
+        └── content: "\n"

@@ -15,10 +15,30 @@ export class HerbOverlay {
   private showingComponentOutlines = false;
   private menuOpen = false;
   private projectPath = '';
+  private preferredEditor = 'auto';
+  private defaultEditorFromServer = 'vscode';
   private currentlyHoveredERBElement: HTMLElement | null = null;
   private errorOverlay: ErrorOverlay | null = null;
 
   private static readonly SETTINGS_KEY = 'herb-dev-tools-settings';
+  private static readonly EDITOR_OPTIONS = [
+    { value: 'auto', label: 'Auto (from server via RAILS_EDITOR or EDITOR)' },
+    { value: 'atom', label: 'Atom' },
+    { value: 'cursor', label: 'Cursor' },
+    { value: 'emacs', label: 'Emacs' },
+    { value: 'idea', label: 'IntelliJ IDEA' },
+    { value: 'macvim', label: 'MacVim' },
+    { value: 'nova', label: 'Nova' },
+    { value: 'nvim', label: 'Neovim' },
+    { value: 'rubymine', label: 'RubyMine' },
+    { value: 'sublime', label: 'Sublime Text' },
+    { value: 'textmate', label: 'TextMate' },
+    { value: 'vim', label: 'Vim' },
+    { value: 'vscode', label: 'Visual Studio Code' },
+    { value: 'vscodium', label: 'VSCodium' },
+    { value: 'windsurf', label: 'Windsurf' },
+    { value: 'zed', label: 'Zed' },
+  ];
 
   constructor(private options: HerbDevToolsOptions = {}) {
     if (options.autoInit !== false) {
@@ -28,10 +48,12 @@ export class HerbOverlay {
 
   private init() {
     this.loadProjectPath();
+    this.loadDefaultEditor();
     this.loadSettings();
     this.injectMenu();
     this.setupMenuToggle();
     this.setupToggleSwitches();
+    this.setupEditorDropdown();
     this.initializeErrorOverlay();
     this.setupTurboListeners();
     this.applySettings();
@@ -50,6 +72,19 @@ export class HerbOverlay {
     }
   }
 
+  private loadDefaultEditor() {
+    const metaTag = document.querySelector('meta[name="herb-default-editor"]') as HTMLMetaElement;
+
+    if (metaTag?.content) {
+      const defaultEditor = metaTag.content.toLowerCase();
+      const isValidEditor = HerbOverlay.EDITOR_OPTIONS.some(option => option.value === defaultEditor);
+
+      if (isValidEditor) {
+        this.defaultEditorFromServer = defaultEditor;
+      }
+    }
+  }
+
   private loadSettings() {
     const savedSettings = localStorage.getItem(HerbOverlay.SETTINGS_KEY);
     if (savedSettings) {
@@ -63,6 +98,9 @@ export class HerbOverlay {
         this.showingPartialOutlines = settings.showingPartialOutlines || false;
         this.showingComponentOutlines = settings.showingComponentOutlines || false;
         this.menuOpen = settings.menuOpen || false;
+        if (settings.preferredEditor) {
+          this.preferredEditor = settings.preferredEditor;
+        }
       } catch (e) {
         console.warn('Failed to load Herb dev tools settings:', e);
       }
@@ -78,7 +116,8 @@ export class HerbOverlay {
       showingViewOutlines: this.showingViewOutlines,
       showingPartialOutlines: this.showingPartialOutlines,
       showingComponentOutlines: this.showingComponentOutlines,
-      menuOpen: this.menuOpen
+      menuOpen: this.menuOpen,
+      preferredEditor: this.preferredEditor
     };
 
     localStorage.setItem(HerbOverlay.SETTINGS_KEY, JSON.stringify(settings));
@@ -170,6 +209,17 @@ export class HerbOverlay {
             </label>
           </div>
 
+          <div class="herb-editor-section">
+            <label class="herb-editor-label">
+              <span class="herb-editor-text">Editor</span>
+              <select id="herbEditorSelect" class="herb-editor-select">
+                ${HerbOverlay.EDITOR_OPTIONS.map(editor =>
+                  `<option value="${editor.value}">${editor.label}</option>`
+                ).join('')}
+              </select>
+            </label>
+          </div>
+
           <div class="herb-disable-all-section">
             <button id="herbDisableAll" class="herb-disable-all-btn">Disable All</button>
           </div>
@@ -247,6 +297,7 @@ export class HerbOverlay {
     this.injectMenu();
     this.setupMenuToggle();
     this.setupToggleSwitches();
+    this.setupEditorDropdown();
     this.applySettings();
     this.updateMenuButtonState();
   }
@@ -332,6 +383,32 @@ export class HerbOverlay {
     if (disableAllBtn) {
       disableAllBtn.addEventListener('click', () => {
         this.disableAll();
+      });
+    }
+  }
+
+  private setupEditorDropdown() {
+    const editorSelect = document.getElementById('herbEditorSelect') as HTMLSelectElement;
+
+    if (editorSelect) {
+      const autoOption = editorSelect.querySelector('option[value="auto"]') as HTMLOptionElement;
+
+      if (autoOption) {
+        const editorLabel = HerbOverlay.EDITOR_OPTIONS.find(opt => opt.value === this.defaultEditorFromServer)?.label || this.defaultEditorFromServer;
+        const metaTag = document.querySelector('meta[name="herb-default-editor"]') as HTMLMetaElement;
+
+        if (metaTag?.content) {
+          autoOption.textContent = `Auto (from server): ${editorLabel}`;
+        } else {
+          autoOption.textContent = `Auto (default): ${editorLabel}`;
+        }
+      }
+
+      editorSelect.value = this.preferredEditor;
+
+      editorSelect.addEventListener('change', () => {
+        this.preferredEditor = editorSelect.value;
+        this.saveSettings();
       });
     }
   }
@@ -924,21 +1001,56 @@ export class HerbOverlay {
     }
   }
 
+  private getEditorUrl(editor: string, absolutePath: string, line: number, column: number): string {
+    switch (editor) {
+      case 'cursor':
+        return `cursor://file/${absolutePath}:${line}:${column}`;
+      case 'vscode':
+        return `vscode://file/${absolutePath}:${line}:${column}`;
+      case 'vscodium':
+        return `vscodium://file/${absolutePath}:${line}:${column}`;
+      case 'zed':
+        return `zed://file/${absolutePath}:${line}:${column}`;
+      case 'windsurf':
+        return `windsurf://file/${absolutePath}:${line}:${column}`;
+      case 'sublime':
+        return `subl://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      case 'atom':
+        return `atom://core/open/file?filename=${absolutePath}&line=${line}&column=${column}`;
+      case 'textmate':
+        return `txmt://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      case 'emacs':
+        return `emacs://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      case 'idea':
+        return `idea://open?file=${absolutePath}&line=${line}&column=${column}`;
+      case 'rubymine':
+        return `x-mine://open?file=${absolutePath}&line=${line}&column=${column}`;
+      case 'nova':
+        return `nova://open?path=${absolutePath}&line=${line}&column=${column}`;
+      case 'macvim':
+        return `mvim://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      case 'vim':
+        return `vim://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      case 'nvim':
+        return `nvim://open?url=file://${absolutePath}&line=${line}&column=${column}`;
+      default:
+        return '';
+    }
+  }
+
   private openFileInEditor(file: string, line: number, column: number) {
     const absolutePath = file.startsWith('/') ? file : (this.projectPath ? `${this.projectPath}/${file}` : file);
 
-    const editors = [
-      `cursor://file/${absolutePath}:${line}:${column}`,
-      `vscode://file/${absolutePath}:${line}:${column}`,
-      `zed://file/${absolutePath}:${line}:${column}`,
-      `subl://open?url=file://${absolutePath}&line=${line}&column=${column}`,
-      `atom://core/open/file?filename=${absolutePath}&line=${line}&column=${column}`,
-      `txmt://open?url=file://${absolutePath}&line=${line}&column=${column}`,
-    ];
+    const editorToUse = this.preferredEditor === 'auto' ? this.defaultEditorFromServer : this.preferredEditor;
+    const url = this.getEditorUrl(editorToUse, absolutePath, line, column);
 
-    try {
-      window.open(editors[0], '_self');
-    } catch (error) {
+    if (url) {
+      try {
+        window.open(url, '_self');
+      } catch (error) {
+        console.log(`Open in editor: ${absolutePath}:${line}:${column}`);
+      }
+    } else {
       console.log(`Open in editor: ${absolutePath}:${line}:${column}`);
     }
   }

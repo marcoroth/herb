@@ -126,4 +126,213 @@ describe("@herb-tools/formatter", () => {
     const output = formatter.format(input)
     expect(output).toEqual(expected)
   })
+
+  describe("guard clauses (modifier if)", () => {
+    test("does not indent content after 'next if' guard clause", () => {
+      const input = dedent`
+        <% [1,2].each do |value| %>
+        <% next if false %>
+        <div></div>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% [1,2].each do |value| %>
+          <% next if false %>
+          <div></div>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("does not indent content after 'return if' guard clause", () => {
+      const input = dedent`
+        <% (1..10).each do %>
+        <% return if condition %>
+        <div>Content</div>
+        <p>More content</p>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% (1..10).each do %>
+          <% return if condition %>
+          <div>Content</div>
+
+          <p>More content</p>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("does not indent content after 'break if' guard clause", () => {
+      const input = dedent`
+        <% loop do %>
+        <% break if done %>
+        <div>Loop content</div>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% loop do %>
+          <% break if done %>
+          <div>Loop content</div>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("handles multiple guard clauses in sequence", () => {
+      const input = dedent`
+        <% items.each do |item| %>
+        <% next if item.nil? %>
+        <% next if item.hidden? %>
+        <div><%= item.name %></div>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% items.each do |item| %>
+          <% next if item.nil? %>
+          <% next if item.hidden? %>
+          <div><%= item.name %></div>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("handles guard clause with unless modifier", () => {
+      const input = dedent`
+        <% items.each do |item| %>
+        <% next unless item.visible? %>
+        <div><%= item.name %></div>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% items.each do |item| %>
+          <% next unless item.visible? %>
+          <div><%= item.name %></div>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("distinguishes between block if and modifier if", () => {
+      const input = dedent`
+        <% items.each do |item| %>
+        <% next if item.skip? %>
+        <% if item.special? %>
+        <div class="special"><%= item.name %></div>
+        <% else %>
+        <div><%= item.name %></div>
+        <% end %>
+        <% end %>
+      `
+
+      const expected = dedent`
+        <% items.each do |item| %>
+          <% next if item.skip? %>
+          <% if item.special? %>
+            <div class="special"><%= item.name %></div>
+          <% else %>
+            <div><%= item.name %></div>
+          <% end %>
+        <% end %>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% else %>
+            Invalid
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% else %>Invalid<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elsif/else inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if status == 'active' %>
+            Active
+          <% elsif status == 'pending' %>
+            Pending
+          <% else %>
+            Inactive
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if status == 'active' %>Active<% elsif status == 'pending' %>Pending<% else %>Inactive<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elseif inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% elsif invalid? %>
+            Invalid
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% elsif invalid? %>Invalid<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+
+    test("if/elseif/else inside <span>", () => {
+      const input = dedent`
+        <span>
+          <% if valid? %>
+            Valid
+          <% elsif invalid? %>
+            Invalid
+          <% else %>
+            Unknown
+          <% end %>
+        </span>
+      `
+
+      const expected = dedent`
+        <span><% if valid? %>Valid<% elsif invalid? %>Invalid<% else %>Unknown<% end %></span>
+      `
+
+      const output = formatter.format(input)
+      expect(output).toEqual(expected)
+    })
+  })
 })

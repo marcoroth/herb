@@ -1,20 +1,10 @@
+---
+source: "Parser::TagsTest#test_0021_missing closing tag"
+input: "<div><span><p></p></div>"
+---
 @ DocumentNode (location: (1:0)-(1:24))
-├── errors: (2 errors)
-│   ├── @ UnclosedElementError (location: (1:24)-(1:24))
-│   │   ├── message: "Tag `<span>` opened at (1:6) was never closed before the end of document."
-│   │   └── opening_tag: "span" (location: (1:6)-(1:10))
-│   │
-│   └── @ UnclosedElementError (location: (1:24)-(1:24))
-│       ├── message: "Tag `<div>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "div" (location: (1:1)-(1:4))
-│
 └── children: (1 item)
-    └── @ HTMLElementNode (location: (1:0)-(1:5))
-        ├── errors: (1 error)
-        │   └── @ MissingClosingTagError (location: (1:1)-(1:4))
-        │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>`."
-        │       └── opening_tag: "div" (location: (1:1)-(1:4))
-        │
+    └── @ HTMLElementNode (location: (1:0)-(1:24))
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
         │       ├── tag_opening: "<" (location: (1:0)-(1:1))
@@ -24,55 +14,46 @@
         │       └── is_void: false
         │
         ├── tag_name: "div" (location: (1:1)-(1:4))
-        ├── body: (1 item)
-        │   └── @ HTMLElementNode (location: (1:5)-(1:24))
-        │       ├── errors: (1 error)
-        │       │   └── @ TagNamesMismatchError (location: (1:20)-(1:23))
-        │       │       ├── message: "Opening tag `<span>` at (1:6) closed with `</div>` at (1:20)."
-        │       │       ├── opening_tag: "span" (location: (1:6)-(1:10))
-        │       │       └── closing_tag: "div" (location: (1:20)-(1:23))
-        │       │
+        ├── body: (2 items)
+        │   ├── @ HTMLOpenTagNode (location: (1:5)-(1:11))
+        │   │   ├── errors: (1 error)
+        │   │   │   └── @ MissingClosingTagError (location: (1:5)-(1:11))
+        │   │   │       ├── message: "Opening tag `<span>` at (1:6) doesn't have a matching closing tag `</span>` in the same scope."
+        │   │   │       └── opening_tag: "span" (location: (1:6)-(1:10))
+        │   │   │
+        │   │   ├── tag_opening: "<" (location: (1:5)-(1:6))
+        │   │   ├── tag_name: "span" (location: (1:6)-(1:10))
+        │   │   ├── tag_closing: ">" (location: (1:10)-(1:11))
+        │   │   ├── children: []
+        │   │   └── is_void: false
+        │   │
+        │   └── @ HTMLElementNode (location: (1:11)-(1:18))
         │       ├── open_tag:
-        │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:11))
-        │       │       ├── tag_opening: "<" (location: (1:5)-(1:6))
-        │       │       ├── tag_name: "span" (location: (1:6)-(1:10))
-        │       │       ├── tag_closing: ">" (location: (1:10)-(1:11))
+        │       │   └── @ HTMLOpenTagNode (location: (1:11)-(1:14))
+        │       │       ├── tag_opening: "<" (location: (1:11)-(1:12))
+        │       │       ├── tag_name: "p" (location: (1:12)-(1:13))
+        │       │       ├── tag_closing: ">" (location: (1:13)-(1:14))
         │       │       ├── children: []
         │       │       └── is_void: false
         │       │
-        │       ├── tag_name: "span" (location: (1:6)-(1:10))
-        │       ├── body: (1 item)
-        │       │   └── @ HTMLElementNode (location: (1:11)-(1:18))
-        │       │       ├── open_tag:
-        │       │       │   └── @ HTMLOpenTagNode (location: (1:11)-(1:14))
-        │       │       │       ├── tag_opening: "<" (location: (1:11)-(1:12))
-        │       │       │       ├── tag_name: "p" (location: (1:12)-(1:13))
-        │       │       │       ├── tag_closing: ">" (location: (1:13)-(1:14))
-        │       │       │       ├── children: []
-        │       │       │       └── is_void: false
-        │       │       │
-        │       │       ├── tag_name: "p" (location: (1:12)-(1:13))
-        │       │       ├── body: []
-        │       │       ├── close_tag:
-        │       │       │   └── @ HTMLCloseTagNode (location: (1:14)-(1:18))
-        │       │       │       ├── tag_opening: "</" (location: (1:14)-(1:16))
-        │       │       │       ├── tag_name: "p" (location: (1:16)-(1:17))
-        │       │       │       ├── children: []
-        │       │       │       └── tag_closing: ">" (location: (1:17)-(1:18))
-        │       │       │
-        │       │       ├── is_void: false
-        │       │       └── source: "HTML"
-        │       │
+        │       ├── tag_name: "p" (location: (1:12)-(1:13))
+        │       ├── body: []
         │       ├── close_tag:
-        │       │   └── @ HTMLCloseTagNode (location: (1:18)-(1:24))
-        │       │       ├── tag_opening: "</" (location: (1:18)-(1:20))
-        │       │       ├── tag_name: "div" (location: (1:20)-(1:23))
+        │       │   └── @ HTMLCloseTagNode (location: (1:14)-(1:18))
+        │       │       ├── tag_opening: "</" (location: (1:14)-(1:16))
+        │       │       ├── tag_name: "p" (location: (1:16)-(1:17))
         │       │       ├── children: []
-        │       │       └── tag_closing: ">" (location: (1:23)-(1:24))
+        │       │       └── tag_closing: ">" (location: (1:17)-(1:18))
         │       │
         │       ├── is_void: false
         │       └── source: "HTML"
         │
-        ├── close_tag: ∅
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:18)-(1:24))
+        │       ├── tag_opening: "</" (location: (1:18)-(1:20))
+        │       ├── tag_name: "div" (location: (1:20)-(1:23))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:23)-(1:24))
+        │
         ├── is_void: false
         └── source: "HTML"

@@ -1,3 +1,12 @@
+---
+source: "Analyze::BlockTest#test_0016_block with multiple nested control structures"
+input: |2-
+<%= items.select { |item| item.valid? }.map do |item| %>
+  <div class="<%= item.active? ? 'active' : 'inactive' %>">
+    <%= item.name %>
+  </div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(5:9))

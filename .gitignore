@@ -78,6 +78,9 @@ vendor/*
 vendor/bundle/*
 vendor/cache/*
 
+# Prism Vendor
+vendor/prism/*
+
 # Bundled .gem files
 pkg/*
 
@@ -86,9 +89,17 @@ ext/herb/error_helpers.c
 ext/herb/error_helpers.h
 ext/herb/nodes.c
 ext/herb/nodes.h
+java/error_helpers.c
+java/error_helpers.h
+java/nodes.c
+java/nodes.h
+java/org/herb/ast/Errors.java
+java/org/herb/ast/Nodes.java
+java/org/herb/ast/NodeVisitor.java
+java/org/herb/ast/Visitor.java
 javascript/packages/core/src/errors.ts
-javascript/packages/core/src/nodes.ts
 javascript/packages/core/src/node-type-guards.ts
+javascript/packages/core/src/nodes.ts
 javascript/packages/core/src/visitor.ts
 javascript/packages/node/extension/error_helpers.cpp
 javascript/packages/node/extension/error_helpers.h
@@ -97,19 +108,33 @@ javascript/packages/node/extension/nodes.h
 lib/herb/ast/nodes.rb
 lib/herb/errors.rb
 lib/herb/visitor.rb
-sig/serialized_ast_nodes.rbs
+rust/src/ast/nodes.rs
+rust/src/errors.rs
+rust/src/nodes.rs
 sig/serialized_ast_errors.rbs
+sig/serialized_ast_nodes.rbs
+src/analyze_missing_end.c
+src/analyze_transform.c
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
 src/include/errors.h
+src/parser_match_tags.c
 src/visitor.c
 wasm/error_helpers.cpp
 wasm/error_helpers.h
 wasm/nodes.cpp
 wasm/nodes.h
+
+# Java Build Artifacts
+java/target/
+java/.java_compiled
+
+# Rust Build Artifacts
+rust/target/
+rust/Cargo.lock
 
 # NX Monorepo
 .nx/
@@ -131,3 +156,6 @@ docs/docs/public/c-reference
 
 # NPM
 **/node_modules/**/*
+
+# Clangd config
+compile_flags.txt

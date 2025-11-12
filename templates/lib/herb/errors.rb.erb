@@ -43,14 +43,17 @@ module Herb
         to_hash.to_json(state)
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(_indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         raise NotImplementedError
       end
     end
 
     <%- errors.each do |error| -%>
     class <%= error.name -%> < Error
+
+      include Colors
+
       #: type serialized_<%= error.human %> = {
       <%- error.fields.each do |field| -%>
       #|  <%= "#{field.name}: #{field.ruby_type}?," %>
@@ -85,27 +88,30 @@ module Herb
         })
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         output = +""
 
-        output += %(@ #{error_name} #{location&.tree_inspect}\n)
+        output += white("@ #{bold(red(error_name))} #{dimmed("(location: #{location.tree_inspect})\n")}")
         <%- symbol = error.fields.none? ? "└──" : "├──" -%>
-        output += %(<%= symbol %> message: #{message.inspect}\n)
+        output += white("<%= symbol %> message: #{green(message.inspect)}\n")
         <%- error.fields.each do |field| -%>
         <%- symbol = error.fields.last == field ? "└──" : "├──" -%>
-        <%- name = "#{symbol} #{field.name}: " -%>
         <%- case field -%>
         <%- when Herb::Template::PositionField -%>
-        output += %(<%= name %>#{<%= field.name %>&.tree_inspect || "∅"}\n)
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? <%= field.name %>.tree_inspect : magenta("∅")
+        output += "\n"
         <%- when Herb::Template::TokenField -%>
-        output += %(<%= name %>#{<%= field.name %>&.tree_inspect || "∅"}\n)
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? <%= field.name %>.tree_inspect : magenta("∅")
+        output += "\n"
         <%- when Herb::Template::TokenTypeField -%>
-        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::StringField -%>
-        output += %(<%= name %>#{<%= field.name %>.inspect}\n)
+        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- else -%>
-        output += "<%= name %>'#{<%= field.name %>.class}'\n"
+        output += white("<%= symbol %> <%= field.name %>: ") + '#{<%= field.name %>.class}'\n"
         <%- end -%>
         <%- end -%>
         output += %(\n)

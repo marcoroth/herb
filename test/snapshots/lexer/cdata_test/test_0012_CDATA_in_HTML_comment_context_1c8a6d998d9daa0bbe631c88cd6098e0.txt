@@ -1,3 +1,7 @@
+---
+source: "Lexer::CDATATest#test_0012_CDATA in HTML comment context"
+input: "<!-- Before --><![CDATA[Data]]><!-- After -->"
+---
 #<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[0, 4] start=(1:0) end=(1:4)>
 #<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=(1:4) end=(1:5)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="Before" range=[5, 11] start=(1:5) end=(1:11)>

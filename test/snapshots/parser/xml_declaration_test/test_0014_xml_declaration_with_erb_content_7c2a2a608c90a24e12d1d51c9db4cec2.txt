@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0014_xml declaration with erb content"
+input: "<?xml version=\"<%= @version %>\" encoding=\"UTF-8\"?>"
+---
 @ DocumentNode (location: (1:0)-(1:50))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:50))

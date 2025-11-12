@@ -180,9 +180,7 @@ module Herb
           debug_attributes << create_debug_attribute("data-herb-debug-attach-to-parent", "true")
         end
 
-        debug_attributes.each do |attr|
-          open_tag_node.children << attr
-        end
+        open_tag_node.children.concat(debug_attributes)
 
         @debug_attributes_applied = true
       end
@@ -233,9 +231,7 @@ module Herb
         ]
 
         debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
-
         debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
-
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
         tag_name_token = create_token(:tag_name, "span")

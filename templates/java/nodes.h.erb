@@ -1,0 +1,23 @@
+#ifndef HERB_JNI_NODES_H
+#define HERB_JNI_NODES_H
+
+#include <jni.h>
+
+#include "../../src/include/ast_nodes.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+<%- nodes.each do |node| -%>
+jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* node);
+<%- end -%>
+
+jobject CreateErrorNode(JNIEnv* env, AST_NODE_T* error_node);
+jobject CreateASTNode(JNIEnv* env, AST_NODE_T* node);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

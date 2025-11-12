@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0019_multiple void elements shouldn't expect a closing tag"
+input: "<br><input><br><input>"
+---
 @ DocumentNode (location: (1:0)-(1:22))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:4))

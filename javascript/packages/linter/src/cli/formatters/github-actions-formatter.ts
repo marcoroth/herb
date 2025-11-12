@@ -79,7 +79,23 @@ export class GitHubActionsFormatter extends BaseFormatter {
   // ::{level} file={file},line={line},col={col},title={title}::{message}
   //
   private formatDiagnostic(filename: string, diagnostic: Diagnostic, codePreview: string = ""): void {
-    const level = diagnostic.severity === "error" ? "error" : "warning"
+    let level: string
+
+    switch (diagnostic.severity) {
+      case "error":
+        level = "error"
+        break
+      case "warning":
+        level = "warning"
+        break
+      case "info":
+      case "hint":
+        level = "notice"
+        break
+      default:
+        level = "warning"
+    }
+
     const { line, column } = diagnostic.location.start
 
     const escapedFilename = this.escapeParam(filename)

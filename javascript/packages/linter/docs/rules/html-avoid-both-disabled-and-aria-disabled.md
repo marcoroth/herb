@@ -19,7 +19,7 @@ Elements that support the native `disabled` attribute include: `button`, `fields
 ```erb
 <!-- Use only the native disabled attribute -->
 <button disabled>Submit</button>
-<input type="text" disabled>
+<input type="text" autocomplete="off" disabled>
 
 <!-- Use only aria-disabled for custom elements -->
 <div role="button" aria-disabled="true">Custom Button</div>
@@ -34,7 +34,7 @@ Elements that support the native `disabled` attribute include: `button`, `fields
 <!-- Both disabled and aria-disabled -->
 <button disabled aria-disabled="true">Submit</button>
 
-<input type="text" disabled aria-disabled="true">
+<input type="text" autocomplete="off" disabled aria-disabled="true">
 
 <select disabled aria-disabled="true">
   <option>Option 1</option>

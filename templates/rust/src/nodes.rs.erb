@@ -1,0 +1,374 @@
+use crate::errors::{AnyError, ErrorNode};
+use crate::{Location, Token};
+use colored::*;
+
+fn escape_string(s: &str) -> String {
+  s.replace('\\', "\\\\")
+    .replace('\n', "\\n")
+    .replace('\r', "\\r")
+    .replace('\t', "\\t")
+    .replace('"', "\\\"")
+}
+
+fn format_string_value(value: &str) -> String {
+  format!("\"{}\"", escape_string(value)).green().to_string()
+}
+
+fn format_token_value(token: &Option<Token>) -> String {
+  token.as_ref().map(|t| t.tree_inspect()).unwrap_or_else(|| "∅".magenta().to_string())
+}
+
+fn format_bool_value(value: bool) -> String {
+  value.to_string().magenta().bold().to_string()
+}
+
+fn format_node_value<T: Node + ?Sized>(node: &Option<Box<T>>, prefix: &str, add_spacing: bool) -> String {
+  if let Some(ref n) = node {
+    let mut output = String::new();
+    output.push('\n');
+    output.push_str(&inspect_node_field(n.as_ref(), prefix));
+    if add_spacing {
+      output.push_str(&format!("{}\n", prefix));
+    }
+    output
+  } else {
+    format!("{}\n", "∅".magenta())
+  }
+}
+
+fn format_array_value(array: &[AnyNode], prefix: &str) -> String {
+  inspect_array(array, prefix)
+}
+
+fn format_errors_field(errors: &[AnyError], prefix: &str) -> String {
+  inspect_errors(errors, prefix)
+}
+
+fn inspect_errors(errors: &[AnyError], prefix: &str) -> String {
+  if errors.is_empty() {
+    return String::new();
+  }
+
+  let mut output = String::new();
+  output.push_str(&format!("{} {}: {}\n",
+    "├──".white(),
+    "errors".red().bold(),
+    format!("({} error{})", errors.len(), if errors.len() == 1 { "" } else { "s" }).dimmed()
+  ));
+
+  for (i, error) in errors.iter().enumerate() {
+    let is_last = i == errors.len() - 1;
+    let symbol = if is_last { "└── " } else { "├── " };
+    let next_prefix_str = if is_last { "    " } else { "│   " };
+    let next_prefix = next_prefix_str.white().to_string();
+
+    let tree = error.tree_inspect();
+    let tree = tree.trim_end_matches('\n');
+    output.push_str(&format!("{}{}{}\n", prefix, symbol.white(), tree.replace('\n', &format!("\n{}{}", prefix, next_prefix))));
+
+    if !is_last {
+      output.push_str(&format!("{}{}\n", prefix, "│   ".white()));
+    }
+  }
+
+  output.push_str(&format!("{}\n", prefix));
+  output
+}
+
+fn inspect_array(array: &[AnyNode], prefix: &str) -> String {
+  if array.is_empty() {
+    return format!("{}\n", "[]".dimmed());
+  }
+
+  let mut output = String::new();
+  output.push_str(&format!("{}\n", format!("({} item{})", array.len(), if array.len() == 1 { "" } else { "s" }).dimmed()));
+
+  for (i, item) in array.iter().enumerate() {
+    let is_last = i == array.len() - 1;
+    let symbol = if is_last { "└── " } else { "├── " };
+    let next_prefix_str = if is_last { "    " } else { "│   " };
+    let next_prefix = next_prefix_str.white().to_string();
+
+    let tree = item.tree_inspect();
+    let tree = tree.trim_end_matches('\n');
+
+    output.push_str(prefix);
+    output.push_str(&symbol.white().to_string());
+    output.push_str(&tree.replace('\n', &format!("\n{}{}", prefix, next_prefix)));
+    output.push('\n');
+
+    if !is_last {
+      output.push_str(prefix);
+      output.push_str(&next_prefix);
+      output.push('\n');
+    }
+  }
+
+  output
+}
+
+fn inspect_node_field<T: Node + ?Sized>(node: &T, prefix: &str) -> String {
+  let tree = node.tree_inspect();
+  let tree = tree.trim_end_matches('\n');
+
+  let lines: Vec<&str> = tree.split('\n').collect();
+  if lines.is_empty() {
+    return format!("{}\n", "∅".magenta());
+  }
+
+  let mut result = String::new();
+  result.push_str(prefix);
+  result.push_str(&"└── ".white().to_string());
+  result.push_str(lines[0]);
+  result.push('\n');
+
+  for line in lines.iter().skip(1) {
+    if line.is_empty() {
+      result.push_str(prefix);
+      result.push('\n');
+    } else {
+      result.push_str(prefix);
+      result.push_str("    ");
+      result.push_str(line);
+      result.push('\n');
+    }
+  }
+
+  result
+}
+
+pub trait Node {
+  fn node_type(&self) -> &str;
+  fn location(&self) -> &Location;
+  fn errors(&self) -> &[AnyError];
+  fn child_nodes(&self) -> Vec<&dyn Node>;
+  fn recursive_errors(&self) -> Vec<&dyn ErrorNode>;
+  fn tree_inspect(&self) -> String;
+}
+
+#[derive(Debug, Clone)]
+pub enum AnyNode {
+  <%- nodes.each do |node| -%>
+  <%= node.name %>(<%= node.name %>),
+  <%- end -%>
+}
+
+impl AnyNode {
+  pub fn node_type(&self) -> &str {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.node_type,
+      <%- end -%>
+    }
+  }
+
+  pub fn location(&self) -> &Location {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.location,
+      <%- end -%>
+    }
+  }
+
+  pub fn errors(&self) -> &[AnyError] {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => &n.errors,
+      <%- end -%>
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.tree_inspect(),
+      <%- end -%>
+    }
+  }
+
+  pub fn child_nodes(&self) -> Vec<&dyn Node> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.child_nodes(),
+      <%- end -%>
+    }
+  }
+
+  pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    match self {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => n.recursive_errors(),
+      <%- end -%>
+    }
+  }
+}
+
+impl Node for AnyNode {
+  fn node_type(&self) -> &str {
+    self.node_type()
+  }
+
+  fn location(&self) -> &Location {
+    self.location()
+  }
+
+  fn errors(&self) -> &[AnyError] {
+    self.errors()
+  }
+
+  fn child_nodes(&self) -> Vec<&dyn Node> {
+    self.child_nodes()
+  }
+
+  fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    self.recursive_errors()
+  }
+
+  fn tree_inspect(&self) -> String {
+    self.tree_inspect()
+  }
+}
+
+<%- nodes.each do |node| -%>
+#[derive(Debug, Clone)]
+pub struct <%= node.name %> {
+  pub node_type: String,
+  pub location: Location,
+  pub errors: Vec<AnyError>,
+  <%- node.fields.each do |field| -%>
+  <%- case field -%>
+  <%- when Herb::Template::StringField -%>
+  pub <%= field.name %>: String,
+  <%- when Herb::Template::TokenField -%>
+  pub <%= field.name %>: Option<Token>,
+  <%- when Herb::Template::BooleanField -%>
+  pub <%= field.name %>: bool,
+  <%- when Herb::Template::ArrayField -%>
+  pub <%= field.name %>: Vec<AnyNode>,
+  <%- when Herb::Template::NodeField -%>
+  <%- if field.specific_kind && field.specific_kind != "Node" -%>
+  pub <%= field.name %>: Option<Box<<%= field.specific_kind %>>>,
+  <%- else -%>
+  pub <%= field.name %>: Option<Box<AnyNode>>,
+  <%- end -%>
+  <%- when Herb::Template::ElementSourceField -%>
+  pub <%= field.name %>: String,
+  <%- end -%>
+  <%- end -%>
+}
+
+impl Node for <%= node.name %> {
+  fn node_type(&self) -> &str {
+    &self.node_type
+  }
+
+  fn location(&self) -> &Location {
+    &self.location
+  }
+
+  fn errors(&self) -> &[AnyError] {
+    &self.errors
+  }
+
+  fn child_nodes(&self) -> Vec<&dyn Node> {
+    <%- has_children = node.fields.any? { |field|
+      case field
+      when Herb::Template::ArrayField
+        true
+      when Herb::Template::NodeField
+        true
+      else
+        false
+      end
+    } -%>
+    <%- if has_children -%>
+    let mut children: Vec<&dyn Node> = Vec::new();
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::ArrayField -%>
+    children.extend(self.<%= field.name %>.iter().map(|n| n as &dyn Node));
+    <%- when Herb::Template::NodeField -%>
+    if let Some(ref node) = self.<%= field.name %> {
+      <%- if field.specific_kind && field.specific_kind != "Node" -%>
+      children.push(node.as_ref() as &dyn Node);
+      <%- else -%>
+      children.push(node.as_ref() as &dyn Node);
+      <%- end -%>
+    }
+    <%- end -%>
+    <%- end -%>
+    children
+    <%- else -%>
+    Vec::new()
+    <%- end -%>
+  }
+
+  fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    <%- has_children = node.fields.any? { |field|
+      case field
+      when Herb::Template::ArrayField
+        true
+      when Herb::Template::NodeField
+        true
+      else
+        false
+      end
+    } -%>
+    <%- if has_children -%>
+    let mut all_errors: Vec<&dyn ErrorNode> = Vec::new();
+    all_errors.extend(self.errors.iter().map(|e| e as &dyn ErrorNode));
+
+    <%- node.fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::ArrayField -%>
+    for child in &self.<%= field.name %> {
+      all_errors.extend(child.recursive_errors());
+    }
+    <%- when Herb::Template::NodeField -%>
+    if let Some(ref node) = self.<%= field.name %> {
+      all_errors.extend(node.recursive_errors());
+    }
+    <%- end -%>
+    <%- end -%>
+
+    all_errors
+    <%- else -%>
+    self.errors.iter().map(|e| e as &dyn ErrorNode).collect()
+    <%- end -%>
+  }
+
+  fn tree_inspect(&self) -> String {
+    let mut output = String::new();
+
+    output.push_str(&format!("{} {} {}\n",
+      "@".white(),
+      "<%= node.name %>".yellow().bold(),
+      format!("(location: {})", self.location).dimmed()
+    ));
+    output.push_str(&format_errors_field(&self.errors, &<%- if node.fields.any? -%>"│   "<%- else -%>"  "<%- end -%>.white().to_string()));
+    <%- if node.fields.any? -%>
+    <%- node.fields.each_with_index do |field, index| -%>
+    <%- is_last = index == node.fields.length - 1 -%>
+    <%- symbol = is_last ? "└── " : "├── " -%>
+    <%- case field -%>
+    <%- when Herb::Template::StringField, Herb::Template::ElementSourceField -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_string_value(&self.<%= field.name %>)));
+    <%- when Herb::Template::TokenField -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_token_value(&self.<%= field.name %>)));
+    <%- when Herb::Template::BooleanField -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
+    <%- when Herb::Template::ArrayField -%>
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
+    <%- when Herb::Template::NodeField -%>
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
+    <%- end -%>
+    <%- end -%>
+    <%- else -%>
+    output.push_str(&format!("{} {}\n", "└──".white(), "(no fields)".dimmed()));
+    <%- end -%>
+
+    output
+  }
+}
+
+<%- end -%>

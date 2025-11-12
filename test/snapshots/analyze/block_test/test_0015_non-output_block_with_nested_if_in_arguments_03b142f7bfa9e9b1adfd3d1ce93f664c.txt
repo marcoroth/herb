@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0015_non-output block with nested if in arguments"
+input: |2-
+<% link_to(some_url, class: ("some-class" if some_condition)) do %>
+  Click me
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

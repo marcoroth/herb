@@ -1,0 +1,5 @@
+---
+source: tests/snapshot_test.rs
+expression: output
+---
+1.6.0

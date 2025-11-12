@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0002_CDATA with text content"
+input: "<![CDATA[Hello World]]>"
+---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (1 item)
     └── @ CDATANode (location: (1:0)-(1:23))

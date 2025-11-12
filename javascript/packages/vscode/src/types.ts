@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 
 import type { LintOffense, LintSeverity, LinterRule } from '@herb-tools/linter'
 
-export type Status = 'processing' | 'ok' | 'failed' | 'timeout'
+export type Status = 'processing' | 'ok' | 'failed' | 'timeout' | 'formatter'
 
 export interface FileStatus {
   uri: vscode.Uri
@@ -12,6 +12,8 @@ export interface FileStatus {
   lintErrors: number
   lintOffenses: LintOffense[]
   linterDisabled?: boolean
+  formatterIssues?: boolean
+  formatterDisabled?: boolean
 }
 
 export interface StatusGroup {
@@ -25,6 +27,14 @@ export interface ParseErrorGroup {
 
 export interface LintIssueGroup {
   type: 'lintIssueGroup'
+}
+
+export interface ParserGroup {
+  type: 'parserGroup'
+}
+
+export interface FormatterIssueGroup {
+  type: 'formatterIssueGroup'
 }
 
 export interface LintSeverityGroup {
@@ -85,14 +95,26 @@ export interface NoLintIssuesNode {
   type: 'noLintIssues'
 }
 
+export interface NoFormatterIssuesNode {
+  type: 'noFormatterIssues'
+}
+
+export interface FormatterFileNode {
+  type: 'formatterFile'
+  file: FileStatus
+}
+
 export type TreeNode =
   | StatusGroup
   | ParseErrorGroup
   | LintIssueGroup
+  | ParserGroup
+  | FormatterIssueGroup
   | LintSeverityGroup
   | LintRuleGroup
   | FolderGroup
   | FileStatus
+  | FormatterFileNode
   | PromptNode
   | VersionInfoNode
   | SeparatorNode
@@ -102,6 +124,7 @@ export type TreeNode =
   | DocumentationNode
   | NoParseErrorsNode
   | NoLintIssuesNode
+  | NoFormatterIssuesNode
 
 export interface AnalysisResult {
   status: Status
@@ -110,4 +133,6 @@ export interface AnalysisResult {
   lintErrors: number
   lintOffenses: LintOffense[]
   linterDisabled: boolean
+  formatterIssues: boolean
+  formatterDisabled: boolean
 }

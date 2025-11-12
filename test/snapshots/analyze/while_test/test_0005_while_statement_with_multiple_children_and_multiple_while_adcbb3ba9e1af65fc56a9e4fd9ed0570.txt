@@ -1,3 +1,15 @@
+---
+source: "Analyze::WhileTest#test_0005_while statement with multiple children and multiple while"
+input: |2-
+<% while true %>
+  <h1>true</h1>
+  <h2>true</h2>
+
+  <% while false %>
+    <h3>false</h3>
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(9:0))
 └── children: (2 items)
     ├── @ ERBWhileNode (location: (1:0)-(8:9))

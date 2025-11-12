@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0011_script tag with multiple ERB interpolations"
+input: |2-
+<script>
+  var config = {
+    userId: <%= @user.id %>,
+    userName: "<%= @user.name %>",
+    isAdmin: <%= @user.admin? %>
+  };
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(7:9))

@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/formatter",
-  "version": "0.7.2",
+  "version": "0.7.5",
   "description": "Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -35,11 +35,10 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.7.2",
-    "@herb-tools/printer": "0.7.2"
-  },
-  "devDependencies": {
-    "glob": "^11.0.3"
+    "@herb-tools/config": "0.7.5",
+    "@herb-tools/core": "0.7.5",
+    "@herb-tools/printer": "0.7.5",
+    "@herb-tools/rewriter": "0.7.5"
   },
   "files": [
     "package.json",

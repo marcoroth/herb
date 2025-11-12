@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0019_whitespace before and after tag closing bracket"
+input: |2-
+<div class="test"   >   content   </div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:40))

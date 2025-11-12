@@ -1,3 +1,7 @@
+---
+source: "Parser::CommentsTest#test_0002_HTML comment with no whitespace"
+input: "<!--Hello World-->"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
     └── @ HTMLCommentNode (location: (1:0)-(1:18))

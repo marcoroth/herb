@@ -1,3 +1,17 @@
+---
+source: "Analyze::CaseInTest#test_0005_case in statement wrapped in element"
+input: |2-
+<h1>
+  <% case variable %>
+  <% in [String] %>
+    String
+  <% in [Integer] %>
+    Integer
+  <% else %>
+    else
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(10:5))

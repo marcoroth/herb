@@ -221,11 +221,10 @@ describe("ERB Formatter Compatibility Tests", () => {
           Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
           tempor incididunt ut labore et dolore magna aliqua. 🍰🍰🍰🍰🍰🍰🍰🍰🍰🍰Ut
           enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-          aliquip ex ea commodo
-          <span>co<strong>nse</strong>quat.</span>
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-          eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt
-          in culpa qui officia deserunt mollit anim id est laborum.
+          aliquip ex ea commodo <span>co<strong>nse</strong>quat.</span> Duis aute
+          irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+          nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
+          qui officia deserunt mollit anim id est laborum.
         </p>
       `)
     })
@@ -307,6 +306,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       expect(result).toBe(dedent`
         <% case status
            when 'active' %>
+          <span class="badge-active">Active</span>
         <% when 'inactive' %>
           <span class="badge-inactive">Inactive</span>
         <% else %>

@@ -1,0 +1,35 @@
+# Generated from lib/herb/colors.rb with RBS::Inline
+
+module Herb
+  module Colors
+    # : () -> bool
+    def self?.enabled?: () -> bool
+
+    # : (String) -> String
+    def self?.white: (String) -> String
+
+    # : (String) -> String
+    def self?.yellow: (String) -> String
+
+    # : (String) -> String
+    def self?.green: (String) -> String
+
+    # : (String) -> String
+    def self?.red: (String) -> String
+
+    # : (String) -> String
+    def self?.magenta: (String) -> String
+
+    # : (String) -> String
+    def self?.cyan: (String) -> String
+
+    # : (String) -> String
+    def self?.bright_magenta: (String) -> String
+
+    # : (String) -> String
+    def self?.dimmed: (String) -> String
+
+    # : (String) -> String
+    def self?.bold: (String) -> String
+  end
+end

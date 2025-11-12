@@ -1,3 +1,10 @@
+---
+source: "Analyze::IfTest#test_0002_if/else statement"
+input: |2-
+<% if true %>
+<% else %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBIfNode (location: (1:0)-(3:9))

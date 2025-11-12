@@ -64,29 +64,47 @@
       <div class="px-3 lg:px-8 h-screen">
         <div class="mx-2 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="mt-6">
-            <div class="lg:flex justify-between">
-              <div class="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4">
-                <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
-                  HTML+ERB File
-                </div>
-
-                <div
-                  class="flex flex-wrap items-center gap-3 text-sm"
-                  data-playground-target="parserOptions"
-                >
-                  <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <input
-                      type="checkbox"
-                      data-option="track_whitespace"
-                      data-action="change->playground#onOptionChange"
-                      class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
-                    />
-                    <span class="select-none">Track whitespace</span>
-                  </label>
-                </div>
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-4 mb-2">
+              <div class="text-gray-900 dark:text-gray-100 rounded-md py-1.5 text-sm font-medium">
+                HTML+ERB File
               </div>
 
-              <div class="flex flex-wrap gap-2 mt-2 lg:mt-0">
+              <div
+                class="flex flex-wrap items-center gap-3 text-sm"
+                data-playground-target="parserOptions"
+              >
+                <label class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    data-option="track_whitespace"
+                    data-action="change->playground#onOptionChange"
+                    class="rounded border-gray-300 dark:border-gray-600 text-green-600 focus:ring-green-500 dark:focus:ring-green-400"
+                  />
+                  <span class="select-none">Track whitespace</span>
+                </label>
+              </div>
+
+              <div class="hidden lg:flex items-center gap-4 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] lg:ml-auto">
+                <div data-playground-target="position"></div>
+
+                <span data-playground-target="diagnosticStatus" data-action="click->playground#showDiagnostics" class="hidden lg:flex items-center gap-4 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300" title="Click to view diagnostics">
+                  <span class="flex items-center gap-1" title="Errors">
+                    <i class="fas fa-circle-xmark text-red-500 text-xs"></i>
+                    <span data-playground-target="errorCount">0</span>
+                  </span>
+                  <span class="flex items-center gap-1" title="Warnings">
+                    <i class="fas fa-triangle-exclamation text-yellow-500 text-xs"></i>
+                    <span data-playground-target="warningCount">0</span>
+                  </span>
+                  <span class="flex items-center gap-1" title="Info">
+                    <i class="fas fa-info-circle text-blue-500 text-xs"></i>
+                    <span data-playground-target="infoCount">0</span>
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-2">
                 <div class="relative">
                   <button
                     data-action="click->playground#copyEditorContent"
@@ -175,6 +193,29 @@
 
                 <div class="relative">
                   <button
+                    data-action="click->playground#autofixEditor"
+                    data-playground-target="autofixButton"
+                    id="autofix-editor"
+                    class="text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium"
+                  >
+                    <i class="fas fa-wand-magic-sparkles w-4"></i>
+                    <i
+                      class="fas fa-circle-check w-4 text-green-600 hidden ease-in duration-300"
+                    ></i>
+
+                    <span class="ml-1">Autofix</span>
+                  </button>
+                  <div
+                    data-playground-target="autofixTooltip"
+                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                  >
+                    Autocorrect autocorrectable Herb Linter offenses
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
+                  </div>
+                </div>
+
+                <div class="relative">
+                  <button
                     data-action="click->playground#formatEditor"
                     data-playground-target="formatButton"
                     id="format-editor"
@@ -196,25 +237,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="mt-2 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] flex justify-between items-center">
-              <span data-playground-target="diagnosticStatus" data-action="click->playground#showDiagnostics" class="hidden flex items-center gap-4 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300" title="Click to view diagnostics">
-                <span class="flex items-center gap-1" title="Errors">
-                  <i class="fas fa-circle-xmark text-red-500 text-xs"></i>
-                  <span data-playground-target="errorCount">0</span>
-                </span>
-                <span class="flex items-center gap-1" title="Warnings">
-                  <i class="fas fa-triangle-exclamation text-yellow-500 text-xs"></i>
-                  <span data-playground-target="warningCount">0</span>
-                </span>
-                <span class="flex items-center gap-1" title="Info">
-                  <i class="fas fa-info-circle text-blue-500 text-xs"></i>
-                  <span data-playground-target="infoCount">0</span>
-                </span>
-              </span>
-              <div data-playground-target="position"></div>
-            </div>
 
             <div
               class="mt-2 outline outline-1 outline-gray-300 dark:outline-gray-600 z-10 rounded-md overflow-hidden bg-gray-50 dark:bg-gray-800 h-[30vh] md:h-[calc(100vh-110px)]"
@@ -230,31 +252,42 @@
           </div>
 
           <div class="mt-6" data-contoller="output">
-            <div class="lg:flex justify-between">
-              <div
-                class="text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium flex items-center gap-3"
-              >
-                <span>Herb Result</span>
-                <div class="relative">
-                  <button
-                    data-action="click->playground#copyViewerContent"
-                    data-playground-target="copyViewerButton"
-                    class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
-                  >
-                    <i class="fas fa-copy"></i>
-                    <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
-                  </button>
-                  <div
-                    data-playground-target="copyViewerTooltip"
-                    class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
-                  >
-                    Copy current panel content
-                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
-                  </div>
+            <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 lg:gap-3 mb-2">
+              <div class="flex items-center text-gray-900 dark:text-gray-100 rounded-md px-0 py-1.5 text-sm font-medium">
+                Herb Result
+              </div>
+
+              <div class="flex items-center gap-3 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt]">
+                <span data-playground-target="time"></span>
+              </div>
+
+              <div class="relative flex items-center">
+                <button
+                  data-action="click->playground#copyViewerContent"
+                  data-playground-target="copyViewerButton"
+                  class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-sm"
+                >
+                  <i class="fas fa-copy"></i>
+                  <i class="fas fa-circle-check text-green-600 hidden ease-in duration-300"></i>
+                </button>
+                <div
+                  data-playground-target="copyViewerTooltip"
+                  class="hidden absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded-md whitespace-nowrap z-50"
+                >
+                  Copy current panel content
+                  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-black"></div>
                 </div>
               </div>
 
-              <div class="mt-1 md:mt-0 flex flex-wrap gap-2">
+              <div class="hidden lg:flex items-center gap-3 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt] lg:ml-auto">
+                <div data-playground-target="version" class="cursor-help flex items-center gap-1" title="">
+                  <i class="fas fa-info-circle text-xs opacity-50 dark:opacity-70"></i>
+                </div>
+                <a data-playground-target="commitHash" class="hover:text-gray-600 dark:hover:text-gray-300 underline" href="#" target="_blank"></a>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-2">
                 <!-- <button
                   data-action="playground#toggleViewer keydown.esc@window->playground#shrinkViewer"
                   class="hover:opacity-75 bottom-[40px] right-[60px] text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md px-3 py-1.5 text-sm font-medium data-[active=true]:bg-green-600 data-[active=true]:hover:bg-green-700 data-[active=true]:text-white"
@@ -349,17 +382,6 @@
                   <span class="ml-1">Object</span>
                 </button>
               </div>
-            </div>
-
-            <div
-              class="flex justify-between items-center mt-2 font-mono whitespace-break-spaces text-gray-400 dark:text-gray-500 text-[8pt]"
-            >
-              <span data-playground-target="time"></span>
-              <div data-playground-target="version" class="cursor-help flex items-center gap-1" title="">
-                <i class="fas fa-info-circle text-xs opacity-50 dark:opacity-70"></i>
-              </div>
-              <a data-playground-target="commitHash" class="hover:text-gray-600 dark:hover:text-gray-300 underline" href="#" target="_blank"></a>
-            </div>
 
             <div class="mt-2">
               <pre

@@ -1,0 +1,81 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0004_invalid erb structure - elsif outside scope after tag closing"
+input: |2-
+<div
+  <% if some_condition %>
+>
+  <% elsif other_condition %>
+  <% end %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(3:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (3:0)-(3:1))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ ERBIfNode (location: (2:2)-(2:25))
+    │   │       │       ├── errors: (1 error)
+    │   │       │       │   └── @ MissingERBEndTagError (location: (2:2)-(2:25))
+    │   │       │       │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+    │   │       │       │       └── keyword: "`<% if %>`"
+    │   │       │       │
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " if some_condition " (location: (2:4)-(2:23))
+    │   │       │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       │       ├── statements: []
+    │   │       │       ├── subsequent: ∅
+    │   │       │       └── end_node: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (3:1)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:2)-(4:29))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (4:2)-(4:29))
+    │   │   │   │       ├── message: "`<% elsif %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% elsif %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   ├── content: " elsif other_condition " (location: (4:4)-(4:27))
+    │   │   │   ├── tag_closing: "%>" (location: (4:27)-(4:29))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (4:29)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (5:2)-(5:11))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (5:2)-(5:11))
+    │   │   │   │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% end %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │   │   ├── content: " end " (location: (5:4)-(5:9))
+    │   │   │   ├── tag_closing: "%>" (location: (5:9)-(5:11))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:11)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:6))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "div" (location: (6:2)-(6:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:5)-(6:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:6)-(7:0))
+        └── content: "\n"

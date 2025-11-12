@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0021_multiple boolean attributes with whitespace"
+input: |2-
+<input     checked     required     disabled     />
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:51))

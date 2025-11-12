@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0005_attribute with no quotes value, no whitespace and self-closing tag"
+input: "<img value=hello/>"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:18))

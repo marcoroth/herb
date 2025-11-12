@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0004_script tag with HTML in comment"
+input: "<script>// <div> should be ignored in comment</script>"
+---
 @ DocumentNode (location: (1:0)-(1:54))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:54))

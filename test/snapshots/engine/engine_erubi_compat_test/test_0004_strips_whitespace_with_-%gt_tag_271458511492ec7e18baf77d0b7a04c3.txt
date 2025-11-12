@@ -1,0 +1,8 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0004_strips whitespace with -%> tag"
+input: "{source: \"<% a = 1 -%>\\ntext\\n\", options: {}}"
+---
+_buf = ::String.new; a = 1 
+ _buf << 'text
+'.freeze;
+_buf.to_s

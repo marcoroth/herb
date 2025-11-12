@@ -1,3 +1,12 @@
+---
+source: "Parser::SVGTest#test_0004_svg with nested void path element"
+input: |2-
+<svg>
+  <g>
+    <path/>
+  </g>
+</svg>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:6))

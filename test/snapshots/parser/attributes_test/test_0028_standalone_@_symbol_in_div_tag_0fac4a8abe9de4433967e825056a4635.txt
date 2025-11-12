@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0028_standalone @ symbol in div tag"
+input: "<div @></div>"
+---
 @ DocumentNode (location: (1:0)-(1:13))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:13))

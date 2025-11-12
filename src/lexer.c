@@ -1,24 +1,21 @@
-#include "include/buffer.h"
 #include "include/lexer_peek_helpers.h"
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <ctype.h>
 #include <string.h>
 
 #define LEXER_STALL_LIMIT 5
 
-static size_t lexer_sizeof(void) {
-  return sizeof(struct LEXER_STRUCT);
-}
-
 static bool lexer_eof(const lexer_T* lexer) {
   return lexer->current_character == '\0' || lexer->stalled;
 }
 
 static bool lexer_has_more_characters(const lexer_T* lexer) {
-  return lexer->current_position < lexer->source_length;
+  return lexer->current_position < lexer->source.length;
 }
 
 static bool lexer_stalled(lexer_T* lexer) {
@@ -34,16 +31,15 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-lexer_T* lexer_init(const char* source) {
-  if (source == NULL) { source = ""; }
+void lexer_init(lexer_T* lexer, const char* source) {
+  if (source != NULL) {
+    lexer->source = hb_string(source);
+  } else {
+    lexer->source = hb_string("");
+  }
 
-  lexer_T* lexer = calloc(1, lexer_sizeof());
-
+  lexer->current_character = lexer->source.data[0];
   lexer->state = STATE_DATA;
-
-  lexer->source = source;
-  lexer->source_length = strlen(source);
-  lexer->current_character = source[0];
 
   lexer->current_line = 1;
   lexer->current_column = 0;
@@ -56,8 +52,6 @@ lexer_T* lexer_init(const char* source) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
-
-  return lexer;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
@@ -66,14 +60,14 @@ token_T* lexer_error(lexer_T* lexer, const char* message) {
   snprintf(
     error_message,
     sizeof(error_message),
-    "[Lexer] Error: %s (character '%c', line %zu, col %zu)\n",
+    "[Lexer] Error: %s (character '%c', line %u, col %u)\n",
     message,
     lexer->current_character,
     lexer->current_line,
     lexer->current_column
   );
 
-  return token_init(error_message, TOKEN_ERROR, lexer);
+  return token_init(hb_string(error_message), TOKEN_ERROR, lexer);
 }
 
 static void lexer_advance(lexer_T* lexer) {
@@ -81,7 +75,7 @@ static void lexer_advance(lexer_T* lexer) {
     if (!is_newline(lexer->current_character)) { lexer->current_column++; }
 
     lexer->current_position++;
-    lexer->current_character = lexer->source[lexer->current_position];
+    lexer->current_character = lexer->source.data[lexer->current_position];
   }
 }
 
@@ -93,11 +87,11 @@ static void lexer_advance_utf8_bytes(lexer_T* lexer, int byte_count) {
 
     lexer->current_position += byte_count;
 
-    if (lexer->current_position >= lexer->source_length) {
-      lexer->current_position = lexer->source_length;
+    if (lexer->current_position >= lexer->source.length) {
+      lexer->current_position = lexer->source.length;
       lexer->current_character = '\0';
     } else {
-      lexer->current_character = lexer->source[lexer->current_position];
+      lexer->current_character = lexer->source.data[lexer->current_position];
     }
   }
 }
@@ -108,65 +102,50 @@ static void lexer_advance_by(lexer_T* lexer, const size_t count) {
   }
 }
 
-static token_T* lexer_advance_with(lexer_T* lexer, const char* value, const token_type_T type) {
-  lexer_advance_by(lexer, strlen(value));
+static token_T* lexer_advance_with(lexer_T* lexer, hb_string_T value, const token_type_T type) {
+  lexer_advance_by(lexer, value.length);
   return token_init(value, type, lexer);
 }
 
 static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type_T type) {
-  char* collected = malloc(count + 1);
-  if (!collected) { return NULL; }
+  uint32_t start_position = lexer->current_position;
 
   for (size_t i = 0; i < count; i++) {
-    collected[i] = lexer->current_character;
     lexer_advance(lexer);
   }
 
-  collected[count] = '\0';
-
-  token_T* token = token_init(collected, type, lexer);
-  free(collected);
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
   return token;
 }
 
 static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
-  return lexer_advance_with(lexer, (char[]) { lexer->current_character, '\0' }, type);
+  char buffer[2];
+  buffer[0] = lexer->current_character;
+  buffer[1] = '\0';
+
+  return lexer_advance_with(lexer, hb_string(buffer), type);
 }
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
-  int char_byte_length = utf8_sequence_length(lexer->source, lexer->current_position, lexer->source_length);
-
+  int char_byte_length = utf8_sequence_length(lexer->source.data, lexer->current_position, lexer->source.length);
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
-
-  char* utf8_char = malloc(char_byte_length + 1);
-
-  if (!utf8_char) { return lexer_advance_current(lexer, type); }
+  uint32_t start_position = lexer->current_position;
 
   for (int i = 0; i < char_byte_length; i++) {
-    if (lexer->current_position + i >= lexer->source_length) {
-      free(utf8_char);
-      return lexer_advance_current(lexer, type);
-    }
-
-    utf8_char[i] = lexer->source[lexer->current_position + i];
+    if (lexer->current_position + i >= lexer->source.length) { return lexer_advance_current(lexer, type); }
   }
-
-  utf8_char[char_byte_length] = '\0';
 
   lexer_advance_utf8_bytes(lexer, char_byte_length);
 
-  token_T* token = token_init(utf8_char, type, lexer);
-
-  free(utf8_char);
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
   return token;
 }
 
-static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const token_type_T type) {
-  if (strncmp(lexer->source + lexer->current_position, value, strlen(value)) == 0) {
-    return lexer_advance_with(lexer, value, type);
-  }
+static token_T* lexer_match_and_advance(lexer_T* lexer, hb_string_T value, const token_type_T type) {
+  hb_string_T remaining_source = hb_string_slice(lexer->source, lexer->current_position);
+  if (hb_string_starts_with(remaining_source, value)) { return lexer_advance_with(lexer, value, type); }
 
   return NULL;
 }
@@ -174,35 +153,31 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, const char* value, const
 // ===== Specialized Parsers
 
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  uint32_t start_position = lexer->current_position;
 
   while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
          && !lexer_eof(lexer)) {
-    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  token_T* token = token_init(buffer.value, TOKEN_WHITESPACE, lexer);
-
-  buffer_free(&buffer);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_WHITESPACE, lexer);
 
   return token;
 }
 
 static token_T* lexer_parse_identifier(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  uint32_t start_position = lexer->current_position;
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
          && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
 
-    buffer_append_char(&buffer, lexer->current_character);
     lexer_advance(lexer);
   }
 
-  token_T* token = token_init(buffer.value, TOKEN_IDENTIFIER, lexer);
-
-  buffer_free(&buffer);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_IDENTIFIER, lexer);
 
   return token;
 }
@@ -210,7 +185,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  const char* erb_patterns[] = { "<%==", "<%%=", "<%=", "<%#", "<%-", "<%%", "<%" };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="), hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
 
@@ -223,14 +199,18 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  buffer_T buffer = buffer_new();
+  uint32_t start_position = lexer->current_position;
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      return token_init(buffer.value, TOKEN_ERROR, lexer); // Handle unexpected EOF
-    }
+      token_T* token = token_init(
+        hb_string_range(lexer->source, start_position, lexer->current_position),
+        TOKEN_ERROR,
+        lexer
+      ); // Handle unexpected EOF
 
-    buffer_append_char(&buffer, lexer->current_character);
+      return token;
+    }
 
     if (is_newline(lexer->current_character)) {
       lexer->current_line++;
@@ -240,14 +220,13 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
     }
 
     lexer->current_position++;
-    lexer->current_character = lexer->source[lexer->current_position];
+    lexer->current_character = lexer->source.data[lexer->current_position];
   }
 
   lexer->state = STATE_ERB_CLOSE;
 
-  token_T* token = token_init(buffer.value, TOKEN_ERB_CONTENT, lexer);
-
-  buffer_free(&buffer);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
   return token;
 }
@@ -255,16 +234,17 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
 
-  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "%%>", TOKEN_ERB_END); }
-  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, "-%>", TOKEN_ERB_END); }
+  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("-%>"), TOKEN_ERB_END); }
 
-  return lexer_advance_with(lexer, "%>", TOKEN_ERB_END);
+  return lexer_advance_with(lexer, hb_string("%>"), TOKEN_ERB_END);
 }
 
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {
-  if (lexer_eof(lexer)) { return token_init("", TOKEN_EOF, lexer); }
+  if (lexer_eof(lexer)) { return token_init(hb_string(""), TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }
@@ -301,33 +281,33 @@ token_T* lexer_next_token(lexer_T* lexer) {
       if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
-        return lexer_advance_with(lexer, "<!--", TOKEN_HTML_COMMENT_START);
+        return lexer_advance_with(lexer, hb_string("<!--"), TOKEN_HTML_COMMENT_START);
       }
 
       if (lexer_peek_for_close_tag_start(lexer, 0)) {
-        return lexer_advance_with(lexer, "</", TOKEN_HTML_TAG_START_CLOSE);
+        return lexer_advance_with(lexer, hb_string("</"), TOKEN_HTML_TAG_START_CLOSE);
       }
 
       return lexer_advance_current(lexer, TOKEN_LT);
     }
 
     case '/': {
-      token_T* token = lexer_match_and_advance(lexer, "/>", TOKEN_HTML_TAG_SELF_CLOSE);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("/>"), TOKEN_HTML_TAG_SELF_CLOSE);
       return token ? token : lexer_advance_current(lexer, TOKEN_SLASH);
     }
 
     case '?': {
-      token_T* token = lexer_match_and_advance(lexer, "?>", TOKEN_XML_DECLARATION_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("?>"), TOKEN_XML_DECLARATION_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
 
     case '-': {
-      token_T* token = lexer_match_and_advance(lexer, "-->", TOKEN_HTML_COMMENT_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
     }
 
     case ']': {
-      token_T* token = lexer_match_and_advance(lexer, "]]>", TOKEN_CDATA_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("]]>"), TOKEN_CDATA_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_CHARACTER);
     }
 
@@ -352,10 +332,4 @@ token_T* lexer_next_token(lexer_T* lexer) {
       return lexer_advance_utf8_character(lexer, TOKEN_CHARACTER);
     }
   }
-}
-
-void lexer_free(lexer_T* lexer) {
-  if (lexer == NULL) { return; }
-
-  free(lexer);
 }

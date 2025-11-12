@@ -1,3 +1,10 @@
+---
+source: "Parser::SVGTest#test_0005_HTML void can be non-void within svg"
+input: |2-
+<svg>
+  <br></br>
+</svg>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:6))
@@ -10,11 +17,11 @@
     │   │       └── is_void: false
     │   │
     │   ├── tag_name: "svg" (location: (1:1)-(1:4))
-    │   ├── body: (3 items)
+    │   ├── body: (4 items)
     │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
     │   │   │   └── content: "\n  "
     │   │   │
-    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:11))
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:6))
     │   │   │   ├── open_tag:
     │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
     │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
@@ -25,15 +32,22 @@
     │   │   │   │
     │   │   │   ├── tag_name: "br" (location: (2:3)-(2:5))
     │   │   │   ├── body: []
-    │   │   │   ├── close_tag:
-    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:6)-(2:11))
-    │   │   │   │       ├── tag_opening: "</" (location: (2:6)-(2:8))
-    │   │   │   │       ├── tag_name: "br" (location: (2:8)-(2:10))
-    │   │   │   │       ├── children: []
-    │   │   │   │       └── tag_closing: ">" (location: (2:10)-(2:11))
-    │   │   │   │
-    │   │   │   ├── is_void: false
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
     │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (2:6)-(2:11))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ VoidElementClosingTagError (location: (2:6)-(2:11))
+    │   │   │   │       ├── message: "`br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`."
+    │   │   │   │       ├── tag_name: "br" (location: (2:8)-(2:10))
+    │   │   │   │       ├── expected: "<br />"
+    │   │   │   │       └── found: "</br>"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (2:6)-(2:8))
+    │   │   │   ├── tag_name: "br" (location: (2:8)-(2:10))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (2:10)-(2:11))
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:11)-(3:0))
     │   │       └── content: "\n"

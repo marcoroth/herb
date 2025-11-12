@@ -42,7 +42,7 @@ jobs:
       - name: Add LLVM apt Repo
         run: |-
           wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-19 main"
+          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
           sudo apt update
 
       - name: Install APT dependencies
@@ -64,6 +64,9 @@ jobs:
 
       - name: Yarn install
         run: yarn install --frozen-lockfile
+
+      - name: Build tailwind-class-sorter package
+        run: yarn nx build @herb-tools/tailwind-class-sorter
 
       - name: Build all JavaScript packages
         run: yarn build

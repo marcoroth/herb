@@ -1,12 +1,13 @@
 #include "include/analyzed_ruby.h"
+#include "include/util/hb_string.h"
 
 #include <prism.h>
 #include <string.h>
 
-analyzed_ruby_T* init_analyzed_ruby(char* source) {
+analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
 
-  pm_parser_init(&analyzed->parser, (const uint8_t*) source, strlen(source), NULL);
+  pm_parser_init(&analyzed->parser, (const uint8_t*) source.data, source.length, NULL);
 
   analyzed->root = pm_parse(&analyzed->parser);
   analyzed->valid = (analyzed->parser.error_list.size == 0);
@@ -41,4 +42,24 @@ void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
   pm_parser_free(&analyzed->parser);
 
   free(analyzed);
+}
+
+const char* erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed) {
+  if (analyzed->has_end) {
+    return "`<% end %>`";
+  } else if (analyzed->has_else_node) {
+    return "`<% else %>`";
+  } else if (analyzed->has_elsif_node) {
+    return "`<% elsif %>`";
+  } else if (analyzed->has_when_node) {
+    return "`<% when %>`";
+  } else if (analyzed->has_in_node) {
+    return "`<% in %>`";
+  } else if (analyzed->has_rescue_node) {
+    return "`<% rescue %>`";
+  } else if (analyzed->has_ensure_node) {
+    return "`<% ensure %>`";
+  }
+
+  return NULL;
 }

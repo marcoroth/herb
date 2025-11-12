@@ -1,3 +1,13 @@
+---
+source: "Analyze::TernaryTest#test_0011_form_with with complex ternary in multiple attributes"
+input: |2-
+<%= form_with model: @article,
+              url: @article.persisted? ? article_path(@article) : articles_path,
+              html: { class: @article.draft? ? "draft-form" : "published-form" },
+              local: @article.draft? ? true : false do |f| %>
+  <%= f.text_field :title %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(6:9))

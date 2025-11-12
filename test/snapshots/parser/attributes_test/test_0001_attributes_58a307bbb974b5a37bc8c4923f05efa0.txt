@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0001_attributes"
+input: "<div id=\"hello\" class=\"container p-3\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:44))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:44))

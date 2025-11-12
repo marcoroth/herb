@@ -1,8 +1,12 @@
 # Templates
 templates/**/*.c.erb linguist-language=C
-templates/**/*.h.erb linguist-language=C
-templates/**/*.rb.erb linguist-language=Ruby
 templates/**/*.cpp.erb linguist-language=C++
+templates/**/*.h.erb linguist-language=C
+templates/**/*.java.erb linguist-language=Java
+templates/**/*.js.erb linguist-language=JavaScript
+templates/**/*.rb.erb linguist-language=Ruby
+templates/**/*.rs.erb linguist-language=Rust
+templates/**/*.ts.erb linguist-language=TypeScript
 
 # Template-generated RBS files
 sig/**/*.rbs linguist-generated

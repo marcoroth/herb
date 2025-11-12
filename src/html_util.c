@@ -1,74 +1,29 @@
 #include "include/html_util.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
+#include "include/util/hb_string.h"
 
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
-bool is_void_element(const char* tag_name) {
-  if (tag_name == NULL) { return false; }
+bool is_void_element(hb_string_T tag_name) {
+  if (hb_string_is_empty(tag_name)) { return false; }
 
-  const char* void_tags[] = {
-    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr",
+  hb_string_T void_tags[14] = {
+    hb_string("area"),  hb_string("base"),   hb_string("br"),    hb_string("col"),  hb_string("embed"),
+    hb_string("hr"),    hb_string("img"),    hb_string("input"), hb_string("link"), hb_string("meta"),
+    hb_string("param"), hb_string("source"), hb_string("track"), hb_string("wbr"),
   };
 
-  for (size_t i = 0; i < sizeof(void_tags) / sizeof(char*); i++) {
-    if (strcasecmp(tag_name, void_tags[i]) == 0) { return true; }
+  for (size_t i = 0; i < 14; i++) {
+    if (hb_string_equals_case_insensitive(tag_name, void_tags[i])) { return true; }
   }
 
   return false;
-}
-
-bool is_html4_void_element(const char* tag_name) {
-  if (tag_name == NULL) { return false; }
-
-  const char* html4_void_tags[] = {
-    "basefont", "bgsound", "command", "frame", "image", "keygen",
-  };
-
-  for (size_t i = 0; i < sizeof(html4_void_tags) / sizeof(char*); i++) {
-    if (strcasecmp(tag_name, html4_void_tags[i]) == 0) { return true; }
-  }
-
-  return false;
-}
-
-/**
- * @brief Creates an opening HTML tag string like "<tag_name>"
- *
- * @param tag_name The name of the HTML tag to be enclosed in a opening tag
- * @return A newly allocated string containing the opening tag, or NULL if memory allocation fails
- * @note The caller is responsible for freeing the returned string
- *
- * Example:
- * @code
- * char* tag = html_opening_tag_string("div");
- * if (tag) {
- *   printf("%s\n", tag); // Prints: <div>
- *   free(tag);
- * }
- * @endcode
- */
-char* html_opening_tag_string(const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("<>"); }
-
-  size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 3); // +3 for '<', '>', and '\0'
-
-  if (result == NULL) { return NULL; }
-
-  result[0] = '<';
-
-  memcpy(result + 1, tag_name, length);
-
-  result[length + 1] = '>';
-  result[length + 2] = '\0';
-
-  return result;
 }
 
 /**
@@ -80,30 +35,22 @@ char* html_opening_tag_string(const char* tag_name) {
  *
  * Example:
  * @code
- * char* tag = html_closing_tag_string("div");
- * if (tag) {
- *   printf("%s\n", tag); // Prints: </div>
- *   free(tag);
- * }
+ * hb_string_T tag = html_closing_tag_string(hb_string("div"));
+ *
+ * printf("%.*s\n", tag.length, tag.data); // Prints: </div>
+ * free(tag.data);
  * @endcode
  */
-char* html_closing_tag_string(const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("</>"); }
+hb_string_T html_closing_tag_string(hb_string_T tag_name) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, tag_name.length + 3);
 
-  size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 4); // +4 for '<', '/', '>', and '\0'
+  hb_buffer_append_char(&buffer, '<');
+  hb_buffer_append_char(&buffer, '/');
+  hb_buffer_append_string(&buffer, tag_name);
+  hb_buffer_append_char(&buffer, '>');
 
-  if (result == NULL) { return NULL; }
-
-  result[0] = '<';
-  result[1] = '/';
-
-  memcpy(result + 2, tag_name, length);
-
-  result[length + 2] = '>';
-  result[length + 3] = '\0';
-
-  return result;
+  return hb_string(buffer.value);
 }
 
 /**
@@ -115,29 +62,20 @@ char* html_closing_tag_string(const char* tag_name) {
  *
  * Example:
  * @code
- * char* tag = html_self_closing_tag_string("br");
- * if (tag) {
- *   printf("%s\n", tag); // Prints: <br />
- *   free(tag);
- * }
+ * hb_string_T tag = html_self_closing_tag_string(hb_string("br"));
+ * printf("%.*s\n", tag.length, tag.data); // Prints: <br />
+ * free(tag);
  * @endcode
  */
-char* html_self_closing_tag_string(const char* tag_name) {
-  if (tag_name == NULL) { return herb_strdup("< />"); }
+hb_string_T html_self_closing_tag_string(hb_string_T tag_name) {
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, tag_name.length + 4);
 
-  size_t length = strlen(tag_name);
-  char* result = (char*) malloc(length + 5); // +5 for '<', ' ', '/', '>', and '\0'
+  hb_buffer_append_char(&buffer, '<');
+  hb_buffer_append_string(&buffer, tag_name);
+  hb_buffer_append_char(&buffer, ' ');
+  hb_buffer_append_char(&buffer, '/');
+  hb_buffer_append_char(&buffer, '>');
 
-  if (result == NULL) { return NULL; }
-
-  result[0] = '<';
-
-  memcpy(result + 1, tag_name, length);
-
-  result[length + 1] = ' ';
-  result[length + 2] = '/';
-  result[length + 3] = '>';
-  result[length + 4] = '\0';
-
-  return result;
+  return hb_string(buffer.value);
 }

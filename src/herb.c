@@ -1,97 +1,85 @@
 #include "include/herb.h"
-#include "include/array.h"
-#include "include/buffer.h"
 #include "include/io.h"
-#include "include/json.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/token.h"
+#include "include/util/hb_array.h"
+#include "include/util/hb_buffer.h"
 #include "include/version.h"
 
 #include <prism.h>
 #include <stdlib.h>
 
-array_T* herb_lex(const char* source) {
-  lexer_T* lexer = lexer_init(source);
-  token_T* token = NULL;
-  array_T* tokens = array_init(128);
+hb_array_T* herb_lex(const char* source) {
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source);
 
-  while ((token = lexer_next_token(lexer))->type != TOKEN_EOF) {
-    array_append(tokens, token);
+  token_T* token = NULL;
+  hb_array_T* tokens = hb_array_init(128);
+
+  while ((token = lexer_next_token(&lexer))->type != TOKEN_EOF) {
+    hb_array_append(tokens, token);
   }
 
-  array_append(tokens, token);
-
-  lexer_free(lexer);
+  hb_array_append(tokens, token);
 
   return tokens;
 }
 
 AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
-  lexer_T* lexer = lexer_init(source);
-  parser_T* parser = parser_init(lexer, options);
+  if (!source) { source = ""; }
 
-  AST_DOCUMENT_NODE_T* document = parser_parse(parser);
+  lexer_T lexer = { 0 };
+  lexer_init(&lexer, source);
+  parser_T parser = { 0 };
 
-  parser_free(parser);
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  if (options != NULL) { parser_options = *options; }
+
+  herb_parser_init(&parser, &lexer, parser_options);
+
+  AST_DOCUMENT_NODE_T* document = herb_parser_parse(&parser);
+
+  herb_parser_deinit(&parser);
 
   return document;
 }
 
-array_T* herb_lex_file(const char* path) {
+hb_array_T* herb_lex_file(const char* path) {
   char* source = herb_read_file(path);
-  array_T* tokens = herb_lex(source);
+  hb_array_T* tokens = herb_lex(source);
 
   free(source);
 
   return tokens;
 }
 
-void herb_lex_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
+void herb_lex_to_buffer(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    token_T* token = hb_array_get(tokens, i);
 
-    char* type = token_to_string(token);
-    buffer_append(output, type);
-    free(type);
+    hb_string_T type = token_to_string(token);
+    hb_buffer_append_string(output, type);
+    free(type.data);
 
-    buffer_append(output, "\n");
+    hb_buffer_append(output, "\n");
   }
 
   herb_free_tokens(&tokens);
 }
 
-void herb_lex_json_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
-
-  buffer_T json = buffer_new();
-  json_start_root_array(&json);
-
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    token_T* token = array_get(tokens, i);
-    char* token_json = token_to_json(token);
-    json_add_raw_string(&json, token_json);
-    free(token_json);
-  }
-
-  json_end_array(&json);
-  buffer_concat(output, &json);
-
-  buffer_free(&json);
-  herb_free_tokens(&tokens);
-}
-
-void herb_free_tokens(array_T** tokens) {
+void herb_free_tokens(hb_array_T** tokens) {
   if (!tokens || !*tokens) { return; }
 
-  for (size_t i = 0; i < array_size(*tokens); i++) {
-    token_T* token = array_get(*tokens, i);
+  for (size_t i = 0; i < hb_array_size(*tokens); i++) {
+    token_T* token = hb_array_get(*tokens, i);
     if (token) { token_free(token); }
   }
 
-  array_free(tokens);
+  hb_array_free(tokens);
 }
 
 const char* herb_version(void) {

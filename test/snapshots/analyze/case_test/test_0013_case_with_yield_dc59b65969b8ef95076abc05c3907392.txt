@@ -1,0 +1,38 @@
+---
+source: "Analyze::CaseTest#test_0013_case with yield"
+input: |2-
+<% case yield(:a) %>
+<% when 'a' %>
+  aaa
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case yield(:a) " (location: (1:2)-(1:18))
+    │   ├── tag_closing: "%>" (location: (1:18)-(1:20))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:20)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:14))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 'a' " (location: (2:2)-(2:12))
+    │   │       ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (2:14)-(4:0))
+    │   │               └── content: "\n  aaa\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

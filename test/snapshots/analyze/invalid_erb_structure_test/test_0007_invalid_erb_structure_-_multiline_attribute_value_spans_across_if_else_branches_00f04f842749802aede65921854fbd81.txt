@@ -1,0 +1,89 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0007_invalid erb structure - multiline attribute value spans across if/else branches"
+input: |2-
+<div
+  <% if some_condition %>
+    class="a
+  <% else %>
+    b"
+  <% end %>
+>
+  Content
+</div>
+---
+@ DocumentNode (location: (1:0)-(10:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(9:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(7:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (7:0)-(7:1))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ ERBIfNode (location: (2:2)-(6:11))
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " if some_condition " (location: (2:4)-(2:23))
+    │   │       │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       │       ├── statements: (1 item)
+    │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(5:6))
+    │   │       │       │       ├── name:
+    │   │       │       │       │   └── @ HTMLAttributeNameNode (location: (3:4)-(3:9))
+    │   │       │       │       │       └── children: (1 item)
+    │   │       │       │       │           └── @ LiteralNode (location: (3:4)-(3:9))
+    │   │       │       │       │               └── content: "class"
+    │   │       │       │       │
+    │   │       │       │       │
+    │   │       │       │       ├── equals: "=" (location: (3:9)-(3:10))
+    │   │       │       │       └── value:
+    │   │       │       │           └── @ HTMLAttributeValueNode (location: (3:10)-(5:6))
+    │   │       │       │               ├── open_quote: """ (location: (3:10)-(3:11))
+    │   │       │       │               ├── children: (3 items)
+    │   │       │       │               │   ├── @ LiteralNode (location: (3:11)-(4:2))
+    │   │       │       │               │   │   └── content: "a\n  "
+    │   │       │       │               │   │
+    │   │       │       │               │   ├── @ ERBContentNode (location: (4:2)-(4:12))
+    │   │       │       │               │   │   ├── errors: (1 error)
+    │   │       │       │               │   │   │   └── @ ERBControlFlowScopeError (location: (4:2)-(4:12))
+    │   │       │       │               │   │   │       ├── message: "`<% else %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       │       │               │   │   │       └── keyword: "`<% else %>`"
+    │   │       │       │               │   │   │
+    │   │       │       │               │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │       │       │               │   │   ├── content: " else " (location: (4:4)-(4:10))
+    │   │       │       │               │   │   ├── tag_closing: "%>" (location: (4:10)-(4:12))
+    │   │       │       │               │   │   ├── parsed: true
+    │   │       │       │               │   │   └── valid: false
+    │   │       │       │               │   │
+    │   │       │       │               │   └── @ LiteralNode (location: (4:12)-(5:5))
+    │   │       │       │               │       └── content: "\n    b"
+    │   │       │       │               │
+    │   │       │       │               ├── close_quote: """ (location: (5:5)-(5:6))
+    │   │       │       │               └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── subsequent: ∅
+    │   │       │       └── end_node:
+    │   │       │           └── @ ERBEndNode (location: (6:2)-(6:11))
+    │   │       │               ├── tag_opening: "<%" (location: (6:2)-(6:4))
+    │   │       │               ├── content: " end " (location: (6:4)-(6:9))
+    │   │       │               └── tag_closing: "%>" (location: (6:9)-(6:11))
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (7:1)-(9:0))
+    │   │       └── content: "\n  Content\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (9:0)-(9:6))
+    │   │       ├── tag_opening: "</" (location: (9:0)-(9:2))
+    │   │       ├── tag_name: "div" (location: (9:2)-(9:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (9:5)-(9:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (9:6)-(10:0))
+        └── content: "\n"

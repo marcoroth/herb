@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0019_comment"
+input: "<%# comment with a single qutote(') and double quote (\") %>"
+---
 @ DocumentNode (location: (1:0)-(1:59))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(1:59))

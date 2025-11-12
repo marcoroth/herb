@@ -34,6 +34,14 @@ module Lexer
       assert_lexed_snapshot(%(<%%= "Test" %%>))
     end
 
+    test "erb <% =%>" do
+      assert_lexed_snapshot(%(<% "Test" =%>))
+    end
+
+    test "erb <%= =%>" do
+      assert_lexed_snapshot(%(<%= "Test" =%>))
+    end
+
     test "erb output inside HTML attribute value" do
       assert_lexed_snapshot(%(<article id="<%= dom_id(article) %>"></article>))
     end
@@ -77,6 +85,10 @@ module Lexer
           y = 2
         %>
       HTML
+    end
+
+    test "erb tag followed by literal closing delimiter" do
+      assert_lexed_snapshot(%(<% content %> %>))
     end
   end
 end

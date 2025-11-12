@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0018_element has a self-closing tag for a void element at the position where closing tag of parent is expected"
+input: "<div></br></div>"
+---
 @ DocumentNode (location: (1:0)-(1:16))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:16))

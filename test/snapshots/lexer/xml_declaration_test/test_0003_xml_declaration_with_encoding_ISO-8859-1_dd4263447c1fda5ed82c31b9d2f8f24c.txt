@@ -1,3 +1,7 @@
+---
+source: "Lexer::XMLDeclarationTest#test_0003_xml declaration with encoding ISO-8859-1"
+input: "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>"
+---
 #<Herb::Token type="TOKEN_XML_DECLARATION" value="<?xml" range=[0, 5] start=(1:0) end=(1:5)>
 #<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[5, 6] start=(1:5) end=(1:6)>
 #<Herb::Token type="TOKEN_IDENTIFIER" value="version" range=[6, 13] start=(1:6) end=(1:13)>

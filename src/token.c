@@ -1,37 +1,35 @@
 #include "include/token.h"
-#include "include/json.h"
 #include "include/lexer.h"
 #include "include/position.h"
+#include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-size_t token_sizeof(void) {
-  return sizeof(struct TOKEN_STRUCT);
-}
-
-token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, token_sizeof());
+token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
+  token_T* token = calloc(1, sizeof(token_T));
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
     lexer->current_column = 0;
   }
 
-  if (value) {
-    token->value = herb_strdup(value);
-  } else {
-    token->value = NULL;
-  }
+  token->value = hb_string_to_c_string_using_malloc(value);
 
   token->type = type;
-  token->range = range_init(lexer->previous_position, lexer->current_position);
+  token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
 
-  token->location =
-    location_from(lexer->previous_line, lexer->previous_column, lexer->current_line, lexer->current_column);
+  location_from(
+    &token->location,
+    lexer->previous_line,
+    lexer->previous_column,
+    lexer->current_line,
+    lexer->current_column
+  );
 
   lexer->previous_line = lexer->current_line;
   lexer->previous_column = lexer->current_column;
@@ -82,93 +80,42 @@ const char* token_type_to_string(const token_type_T type) {
   return "Unknown token_type_T";
 }
 
-char* token_to_string(const token_T* token) {
+hb_string_T token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
-  const char* template = "#<Herb::Token type=\"%s\" value=\"%s\" range=[%d, %d] start=(%d:%d) end=(%d:%d)>";
+  const char* template = "#<Herb::Token type=\"%s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
 
   char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
-  char* escaped;
+  hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
-    escaped = herb_strdup("<EOF>");
+    escaped = hb_string(herb_strdup("<EOF>"));
   } else {
-    escaped = escape_newlines(token->value);
+    escaped = escape_newlines(hb_string(token->value));
   }
 
   sprintf(
     string,
     template,
     type_string,
-    escaped,
-    token->range->from,
-    token->range->to,
-    token->location->start->line,
-    token->location->start->column,
-    token->location->end->line,
-    token->location->end->column
+    escaped.length,
+    escaped.data,
+    token->range.from,
+    token->range.to,
+    token->location.start.line,
+    token->location.start.column,
+    token->location.end.line,
+    token->location.end.column
   );
 
-  free(escaped);
+  free(escaped.data);
 
-  return string;
-}
-
-char* token_to_json(const token_T* token) {
-  buffer_T json = buffer_new();
-
-  json_start_root_object(&json);
-  json_add_string(&json, "type", token_type_to_string(token->type));
-  json_add_string(&json, "value", token->value);
-
-  buffer_T range = buffer_new();
-  json_start_array(&json, "range");
-  json_add_size_t(&range, NULL, token->range->from);
-  json_add_size_t(&range, NULL, token->range->to);
-  buffer_concat(&json, &range);
-  buffer_free(&range);
-  json_end_array(&json);
-
-  buffer_T start = buffer_new();
-  json_start_object(&json, "start");
-  json_add_size_t(&start, "line", token->location->start->line);
-  json_add_size_t(&start, "column", token->location->start->column);
-  buffer_concat(&json, &start);
-  buffer_free(&start);
-  json_end_object(&json);
-
-  buffer_T end = buffer_new();
-  json_start_object(&json, "end");
-  json_add_size_t(&end, "line", token->location->end->line);
-  json_add_size_t(&end, "column", token->location->end->column);
-  buffer_concat(&json, &end);
-  buffer_free(&end);
-  json_end_object(&json);
-
-  json_end_object(&json);
-
-  return buffer_value(&json);
-}
-
-char* token_value(const token_T* token) {
-  return token->value;
-}
-
-int token_type(const token_T* token) {
-  return token->type;
-}
-
-position_T* token_start_position(token_T* token) {
-  return token->location->start;
-}
-
-position_T* token_end_position(token_T* token) {
-  return token->location->end;
+  return hb_string(string);
 }
 
 token_T* token_copy(token_T* token) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, token_sizeof());
+  token_T* new_token = calloc(1, sizeof(token_T));
 
   if (!new_token) { return NULL; }
 
@@ -184,18 +131,20 @@ token_T* token_copy(token_T* token) {
   }
 
   new_token->type = token->type;
-  new_token->range = range_copy(token->range);
-  new_token->location = location_copy(token->location);
+  new_token->range = token->range;
+  new_token->location = token->location;
 
   return new_token;
+}
+
+bool token_value_empty(const token_T* token) {
+  return token == NULL || token->value == NULL || token->value[0] == '\0';
 }
 
 void token_free(token_T* token) {
   if (!token) { return; }
 
   if (token->value != NULL) { free(token->value); }
-  if (token->range != NULL) { range_free(token->range); }
-  if (token->location != NULL) { location_free(token->location); }
 
   free(token);
 }

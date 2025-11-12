@@ -53,8 +53,7 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
 
       this.addOffense(
         `Unknown Stimulus controller \`${identifier}\`. Make sure the controller is defined in your project.${suggestion}`,
-        location,
-        "error"
+        location
       )
 
       return true

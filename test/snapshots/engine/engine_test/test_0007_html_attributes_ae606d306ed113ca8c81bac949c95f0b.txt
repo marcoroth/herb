@@ -1,4 +1,7 @@
-_buf = ::String.new;
- _buf << '<div class="container" id="main">Content</div>
+---
+source: "Engine::EngineTest#test_0007_html attributes"
+input: "{source: \"<div class=\\\"container\\\" id=\\\"main\\\">Content</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div class="container" id="main">Content</div>
 '.freeze;
 _buf.to_s

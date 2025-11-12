@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0006_interpolate inside tag"
+input: "<h1 <%= \"id=test\" %>></h1>"
+---
 @ DocumentNode (location: (1:0)-(1:26))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:26))

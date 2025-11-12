@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0026_multiple non-breaking spaces in text"
+input: "<p>Hello   World</p>"
+---
 @ DocumentNode (location: (1:0)-(1:20))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:20))

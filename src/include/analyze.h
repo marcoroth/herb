@@ -2,13 +2,13 @@
 #define HERB_ANALYZE_H
 
 #include "analyzed_ruby.h"
-#include "array.h"
 #include "ast_nodes.h"
+#include "util/hb_array.h"
 
 typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
-  array_T* ruby_context_stack;
+  hb_array_T* ruby_context_stack;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -33,7 +33,15 @@ typedef enum {
   CONTROL_TYPE_UNKNOWN
 } control_type_t;
 
+typedef struct {
+  int loop_depth;
+  int rescue_depth;
+} invalid_erb_context_T;
+
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
 void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source);
+
+hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context);
+bool transform_erb_nodes(const AST_NODE_T* node, void* data);
 
 #endif

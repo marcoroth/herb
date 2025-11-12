@@ -61,22 +61,22 @@ shared_flags = $(production_flags) $(shared_library_flags) $(prism_flags)
 ifeq ($(os),Linux)
   test_cflags = $(test_flags) -I/usr/include/check
   test_ldflags = -L/usr/lib/x86_64-linux-gnu -lcheck -lm -lsubunit $(prism_ldflags)
-  cc = clang-19
-  clang_format = clang-format-19
-  clang_tidy = clang-tidy-19
+  cc = clang-21
+  clang_format = clang-format-21
+  clang_tidy = clang-tidy-21
 endif
 
 ifeq ($(os),Darwin)
   brew_prefix := $(shell brew --prefix check)
   test_cflags = $(test_flags) -I$(brew_prefix)/include
   test_ldflags = -L$(brew_prefix)/lib -lcheck -lm $(prism_ldflags)
-  llvm_path = $(shell brew --prefix llvm@19)
+  llvm_path = $(shell brew --prefix llvm@21)
   cc = $(llvm_path)/bin/clang
   clang_format = $(llvm_path)/bin/clang-format
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm
+all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm clangd_config
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -101,6 +101,7 @@ clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
+	rake prism:clean
 
 bundle_install:
 	bundle install
@@ -110,6 +111,7 @@ templates: bundle_install
 
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -
+	rake prism:vendor
 
 format:
 	$(clang_format) -i $(project_and_extension_files)
@@ -119,6 +121,9 @@ lint:
 
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
+
+clangd_config:
+	@echo "$(flags) $(test_cflags)" | tr ' ' '\n' | sort -u > compile_flags.txt
 
 wasm:
 	cd wasm && make

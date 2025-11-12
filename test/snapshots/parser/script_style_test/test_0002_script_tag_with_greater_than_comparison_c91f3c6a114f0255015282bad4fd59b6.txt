@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0002_script tag with greater than comparison"
+input: "<script>if (x > 10) { console.log(\"greater\"); }</script>"
+---
 @ DocumentNode (location: (1:0)-(1:56))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:56))

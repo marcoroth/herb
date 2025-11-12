@@ -5,14 +5,21 @@ import {
   DidChangeConfigurationNotification,
   DidChangeWatchedFilesNotification,
   TextDocumentSyncKind,
+  TextDocumentSaveReason,
   InitializeResult,
   Connection,
   DocumentFormattingParams,
   DocumentRangeFormattingParams,
+  CodeActionParams,
+  CodeActionKind,
+  TextEdit,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
-import { HerbSettings } from "./settings"
+import { PersonalHerbSettings } from "./settings"
+import { Config } from "@herb-tools/config"
+
+import type { TextDocument } from "vscode-languageserver-textdocument"
 
 export class Server {
   private service!: Service
@@ -29,11 +36,26 @@ export class Server {
 
       await this.service.init()
 
+      this.service.documentService.documents.onWillSaveWaitUntil(async (event) => {
+        return this.service.documentSaveService.applyFixesAndFormatting(event.document, event.reason)
+      })
+
       const result: InitializeResult = {
         capabilities: {
-          textDocumentSync: TextDocumentSyncKind.Incremental,
+          textDocumentSync: {
+            openClose: true,
+            change: TextDocumentSyncKind.Incremental,
+            willSave: true,
+            willSaveWaitUntil: true,
+            save: {
+              includeText: false
+            }
+          },
           documentFormattingProvider: true,
           documentRangeFormattingProvider: true,
+          codeActionProvider: {
+            codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
+          },
         },
       }
 
@@ -50,7 +72,6 @@ export class Server {
 
     this.connection.onInitialized(() => {
       if (this.service.settings.hasConfigurationCapability) {
-        // Register for all configuration changes.
         this.connection.client.register(DidChangeConfigurationNotification.type, undefined)
       }
 
@@ -60,10 +81,17 @@ export class Server {
         })
       }
 
+      const patterns = Config.getDefaultFilePatterns().map(globPattern => ({
+        globPattern
+      }))
+
       this.connection.client.register(DidChangeWatchedFilesNotification.type, {
         watchers: [
-          { globPattern: `**/**/*.html.erb` },
+          ...patterns,
+          { globPattern: `**/.herb.yml` },
           { globPattern: `**/**/.herb-lsp/config.json` },
+          { globPattern: `**/.herb/rules/**/*.mjs` },
+          { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
       })
     })
@@ -75,7 +103,7 @@ export class Server {
       } else {
         this.service.settings.globalSettings = (
           (change.settings.languageServerHerb || this.service.settings.defaultSettings)
-        ) as HerbSettings
+        ) as PersonalHerbSettings
       }
 
       await this.service.refresh()
@@ -89,25 +117,67 @@ export class Server {
       }
     })
 
-    this.connection.onDidChangeWatchedFiles((params) => {
-      params.changes.forEach(async (event) => {
-        if (event.uri.endsWith("/.herb-lsp/config.json")) {
+    this.connection.onDidChangeWatchedFiles(async (params) => {
+      for (const event of params.changes) {
+        const isConfigChange = event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")
+        const isCustomRuleChange = event.uri.includes("/.herb/rules/")
+        const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
+
+        if (isConfigChange) {
           await this.service.refreshConfig()
 
           const documents = this.service.documentService.getAll()
           await Promise.all(documents.map(document =>
             this.service.diagnostics.refreshDocument(document)
           ))
+        } else if (isCustomRuleChange || isCustomRewriterChange) {
+          if (isCustomRuleChange) {
+            this.connection.console.log(`[Linter] Custom rule changed: ${event.uri}`)
+            this.service.linterService.rebuildLinter()
+          }
+
+          if (isCustomRewriterChange) {
+            this.connection.console.log(`[Rewriter] Custom rewriter changed: ${event.uri}`)
+            await this.service.formattingService.refreshConfig(this.service.config)
+          }
+
+          const documents = this.service.documentService.getAll()
+          await Promise.all(documents.map(document =>
+            this.service.diagnostics.refreshDocument(document)
+          ))
         }
-      })
+      }
     })
 
-    this.connection.onDocumentFormatting((params: DocumentFormattingParams) => {
-      return this.service.formatting.formatDocument(params)
+    this.connection.onDocumentFormatting(async (params: DocumentFormattingParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentSaveService.applyFixesAndFormatting(document, TextDocumentSaveReason.Manual)
     })
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
-      return this.service.formatting.formatRange(params)
+      return this.service.formattingService.formatRange(params)
+    })
+
+    this.connection.onCodeAction((params: CodeActionParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const diagnostics = params.context.diagnostics
+      const documentText = document.getText()
+
+      const linterDisableCodeActions = this.service.codeActionService.createCodeActions(
+        params.textDocument.uri,
+        diagnostics,
+        documentText
+      )
+
+      const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+
+      return autofixCodeActions.concat(linterDisableCodeActions)
     })
   }
 

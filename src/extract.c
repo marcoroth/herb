@@ -1,21 +1,124 @@
-#include "include/array.h"
-#include "include/buffer.h"
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/lexer.h"
+#include "include/util/hb_array.h"
+#include "include/util/hb_buffer.h"
 
 #include <stdlib.h>
+#include <string.h>
 
-void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
+void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
+  bool is_comment_tag = false;
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
       case TOKEN_NEWLINE: {
-        buffer_append(output, token->value);
+        hb_buffer_append(output, token->value);
+        break;
+      }
+
+      case TOKEN_ERB_START: {
+        if (strcmp(token->value, "<%#") == 0) {
+          skip_erb_content = true;
+          is_comment_tag = true;
+        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+          skip_erb_content = true;
+          is_comment_tag = false;
+        } else {
+          skip_erb_content = false;
+          is_comment_tag = false;
+        }
+
+        hb_buffer_append_whitespace(output, range_length(token->range));
+        break;
+      }
+
+      case TOKEN_ERB_CONTENT: {
+        if (skip_erb_content == false) {
+          bool is_inline_comment = false;
+
+          if (!is_comment_tag && token->value != NULL) {
+            const char* content = token->value;
+
+            while (*content == ' ' || *content == '\t') {
+              content++;
+            }
+
+            if (*content == '#' && token->location.start.line == token->location.end.line) {
+              is_comment_tag = true;
+              is_inline_comment = true;
+            }
+          }
+
+          if (is_inline_comment) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          } else {
+            hb_buffer_append(output, token->value);
+          }
+        } else {
+          hb_buffer_append_whitespace(output, range_length(token->range));
+        }
+
+        break;
+      }
+
+      case TOKEN_ERB_END: {
+        bool was_comment = is_comment_tag;
+        skip_erb_content = false;
+        is_comment_tag = false;
+
+        if (was_comment) {
+          hb_buffer_append_whitespace(output, range_length(token->range));
+          break;
+        }
+
+        bool needs_semicolon = false;
+        uint32_t current_line = token->location.end.line;
+
+        for (size_t j = i + 1; j < hb_array_size(tokens); j++) {
+          const token_T* next_token = hb_array_get(tokens, j);
+
+          if (next_token->type == TOKEN_NEWLINE) { break; }
+
+          if (next_token->type == TOKEN_ERB_START && next_token->location.start.line == current_line) {
+            needs_semicolon = true;
+            break;
+          }
+        }
+
+        if (needs_semicolon) {
+          hb_buffer_append_char(output, ' ');
+          hb_buffer_append_char(output, ';');
+          hb_buffer_append_whitespace(output, range_length(token->range) - 2);
+        } else {
+          hb_buffer_append_whitespace(output, range_length(token->range));
+        }
+        break;
+      }
+
+      default: {
+        hb_buffer_append_whitespace(output, range_length(token->range));
+      }
+    }
+  }
+
+  herb_free_tokens(&tokens);
+}
+
+void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
+  bool skip_erb_content = false;
+
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
+
+    switch (token->type) {
+      case TOKEN_NEWLINE: {
+        hb_buffer_append(output, token->value);
         break;
       }
 
@@ -24,15 +127,15 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
           skip_erb_content = true;
         }
 
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
       case TOKEN_ERB_CONTENT: {
         if (skip_erb_content == false) {
-          buffer_append(output, token->value);
+          hb_buffer_append(output, token->value);
         } else {
-          buffer_append_whitespace(output, range_length(token->range));
+          hb_buffer_append_whitespace(output, range_length(token->range));
         }
 
         break;
@@ -41,13 +144,12 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
       case TOKEN_ERB_END: {
         skip_erb_content = false;
 
-        buffer_append_char(output, ';');
-        buffer_append_whitespace(output, range_length(token->range) - 1);
+        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
       default: {
-        buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_whitespace(output, range_length(token->range));
       }
     }
   }
@@ -55,65 +157,17 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, buffer_T* o
   herb_free_tokens(&tokens);
 }
 
-void herb_extract_ruby_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
-  bool skip_erb_content = false;
+void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
+  hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
-
-    switch (token->type) {
-      case TOKEN_NEWLINE: {
-        buffer_append(output, token->value);
-        break;
-      }
-
-      case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
-          skip_erb_content = true;
-        }
-
-        buffer_append_whitespace(output, range_length(token->range));
-        break;
-      }
-
-      case TOKEN_ERB_CONTENT: {
-        if (skip_erb_content == false) {
-          buffer_append(output, token->value);
-        } else {
-          buffer_append_whitespace(output, range_length(token->range));
-        }
-
-        break;
-      }
-
-      case TOKEN_ERB_END: {
-        skip_erb_content = false;
-
-        buffer_append_whitespace(output, range_length(token->range));
-        break;
-      }
-
-      default: {
-        buffer_append_whitespace(output, range_length(token->range));
-      }
-    }
-  }
-
-  herb_free_tokens(&tokens);
-}
-
-void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
-  array_T* tokens = herb_lex(source);
-
-  for (size_t i = 0; i < array_size(tokens); i++) {
-    const token_T* token = array_get(tokens, i);
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
       case TOKEN_ERB_START:
       case TOKEN_ERB_CONTENT:
-      case TOKEN_ERB_END: buffer_append_whitespace(output, range_length(token->range)); break;
-      default: buffer_append(output, token->value);
+      case TOKEN_ERB_END: hb_buffer_append_whitespace(output, range_length(token->range)); break;
+      default: hb_buffer_append(output, token->value);
     }
   }
 
@@ -121,8 +175,10 @@ void herb_extract_html_to_buffer(const char* source, buffer_T* output) {
 }
 
 char* herb_extract_ruby_with_semicolons(const char* source) {
-  buffer_T output;
-  buffer_init(&output);
+  if (!source) { return NULL; }
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
 
   herb_extract_ruby_to_buffer_with_semicolons(source, &output);
 
@@ -130,8 +186,10 @@ char* herb_extract_ruby_with_semicolons(const char* source) {
 }
 
 char* herb_extract(const char* source, const herb_extract_language_T language) {
-  buffer_T output;
-  buffer_init(&output);
+  if (!source) { return NULL; }
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
 
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;

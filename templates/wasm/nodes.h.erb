@@ -6,7 +6,7 @@ extern "C" {
 }
 
 emscripten::val NodeFromCStruct(AST_NODE_T* node);
-emscripten::val NodesArrayFromCArray(array_T* array);
+emscripten::val NodesArrayFromCArray(hb_array_T* array);
 
 <%- nodes.each do |node| -%>
 emscripten::val <%= node.human %>NodeFromCStruct(<%= node.struct_type %>* <%= node.human %>);

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -euo pipefail
+
+echo "Building all packages..."
+yarn nx run-many -t build --all
+
+echo "Running tests in all packages..."
+yarn nx run-many -t test --all
+
+for package_dir in javascript/packages/*; do
+  if [ -d "$package_dir" ] && [ -f "$package_dir/package.json" ]; then
+    package=$(basename "$package_dir")
+
+    if [ "$package" = "vscode" ]; then
+      echo "Skipping vscode package..."
+      continue
+    fi
+
+    echo "Publishing $package..."
+    (cd "$package_dir" && yarn publish)
+  fi
+done
+
+echo "All packages published successfully!"

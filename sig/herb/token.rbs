@@ -2,6 +2,8 @@
 
 module Herb
   class Token
+    include Colors
+
     attr_reader value: String
 
     attr_reader range: Range?
@@ -24,6 +26,12 @@ module Herb
 
     # : () -> String
     def value_inspect: () -> String
+
+    # : () -> String
+    def colorize_range: () -> String
+
+    # : (Position) -> String
+    def colorize_position: (Position) -> String
 
     # : () -> String
     def inspect: () -> String

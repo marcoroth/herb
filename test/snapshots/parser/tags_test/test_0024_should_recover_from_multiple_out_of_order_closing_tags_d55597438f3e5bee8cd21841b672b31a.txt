@@ -1,0 +1,109 @@
+---
+source: "Parser::TagsTest#test_0024_should recover from multiple out of order closing tags"
+input: |2-
+<main>
+  <div>
+    <p>
+      </span>
+    </div>
+  </p>
+</main>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "main" (location: (1:1)-(1:5))
+    │   │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "main" (location: (1:1)-(1:5))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:6)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(5:10))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:6)-(2:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   ├── body: (5 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:7)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLOpenTagNode (location: (3:4)-(3:7))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ MissingClosingTagError (location: (3:4)-(3:7))
+    │   │   │   │   │   │       ├── message: "Opening tag `<p>` at (3:5) doesn't have a matching closing tag `</p>` in the same scope."
+    │   │   │   │   │   │       └── opening_tag: "p" (location: (3:5)-(3:6))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   ├── tag_name: "p" (location: (3:5)-(3:6))
+    │   │   │   │   │   ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLTextNode (location: (3:7)-(4:6))
+    │   │   │   │   │   └── content: "\n      "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLCloseTagNode (location: (4:6)-(4:13))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ MissingOpeningTagError (location: (4:6)-(4:13))
+    │   │   │   │   │   │       ├── message: "Found closing tag `</span>` at (4:8) without a matching opening tag in the same scope."
+    │   │   │   │   │   │       └── closing_tag: "span" (location: (4:8)-(4:12))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "</" (location: (4:6)-(4:8))
+    │   │   │   │   │   ├── tag_name: "span" (location: (4:8)-(4:12))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── tag_closing: ">" (location: (4:12)-(4:13))
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (4:13)-(5:4))
+    │   │   │   │       └── content: "\n    "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (5:4)-(5:10))
+    │   │   │   │       ├── tag_opening: "</" (location: (5:4)-(5:6))
+    │   │   │   │       ├── tag_name: "div" (location: (5:6)-(5:9))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (5:9)-(5:10))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (5:10)-(6:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (6:2)-(6:6))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (6:2)-(6:6))
+    │   │   │   │       ├── message: "Found closing tag `</p>` at (6:4) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "p" (location: (6:4)-(6:5))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │   │   ├── tag_name: "p" (location: (6:4)-(6:5))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (6:5)-(6:6))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:6)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:7))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "main" (location: (7:2)-(7:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:6)-(7:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:7)-(8:0))
+        └── content: "\n"

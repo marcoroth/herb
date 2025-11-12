@@ -21,9 +21,9 @@ function createCustomTwoslashFunction(optionse) {
   return (code, lang, options) => {
     let fileName = undefined
 
-    // kinda of a hack to make sure we pass a `fileName` for the `erb-requires-trailing-newline` rule
+    // kind of a hack to make sure we pass a `fileName` for the `erb-require-trailing-newline` rule
     if (code.includes('▌')) {
-      fileName = "erb-requires-trailing-newline.html.erb"
+      fileName = "erb-require-trailing-newline.html.erb"
     }
 
     if (!lang || !['erb', 'html'].includes(lang)) {

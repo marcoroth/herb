@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0022_mixed quote types in multiple attributes"
+input: "<input value=\"double quoted\" placeholder='single quoted' />"
+---
 @ DocumentNode (location: (1:0)-(1:59))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:59))

@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0017_output block with nested if and empty body"
+input: |2-
+<%= link_to(some_url, class: ("some-class" if some_condition)) do %>
+
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

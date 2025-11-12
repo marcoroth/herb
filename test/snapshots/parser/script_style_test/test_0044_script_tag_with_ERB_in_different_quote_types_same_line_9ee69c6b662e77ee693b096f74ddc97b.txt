@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0044_script tag with ERB in different quote types same line"
+input: "<script>var a = \"ERB: <%= @a %>\"; var b = 'ERB: <%= @b %>';</script>"
+---
 @ DocumentNode (location: (1:0)-(1:68))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:68))

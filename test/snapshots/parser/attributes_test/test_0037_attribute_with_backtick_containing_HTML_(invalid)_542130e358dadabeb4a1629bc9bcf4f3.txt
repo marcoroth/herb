@@ -1,101 +1,85 @@
+---
+source: "Parser::AttributesTest#test_0037_attribute with backtick containing HTML (invalid)"
+input: "<div data-template=`<span>Hello</span>`></div>"
+---
 @ DocumentNode (location: (1:0)-(1:46))
-├── errors: (3 errors)
-│   ├── @ UnexpectedError (location: (1:38)-(1:39))
-│   │   ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_BACKTICK`."
-│   │   ├── description: "Unexpected token"
-│   │   ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
-│   │   └── found: "TOKEN_BACKTICK"
-│   │
-│   ├── @ UnexpectedError (location: (1:39)-(1:40))
-│   │   ├── message: "Unexpected token. Expected: `TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKE`, found: `TOKEN_HTML_TAG_END`."
-│   │   ├── description: "Unexpected token"
-│   │   ├── expected: "TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, TOKEN_NBSP, TOKEN_AT, or TOKEN_NEWLINE"
-│   │   └── found: "TOKEN_HTML_TAG_END"
-│   │
-│   └── @ UnclosedElementError (location: (1:40)-(1:42))
-│       ├── message: "Tag `<div>` opened at (1:1) was never closed before the end of document."
-│       └── opening_tag: "div" (location: (1:1)-(1:4))
-│
-└── children: (2 items)
-    ├── @ HTMLElementNode (location: (1:0)-(1:38))
-    │   ├── errors: (1 error)
-    │   │   └── @ TagNamesMismatchError (location: (1:33)-(1:37))
-    │   │       ├── message: "Opening tag `<div>` at (1:1) closed with `</span>` at (1:33)."
-    │   │       ├── opening_tag: "div" (location: (1:1)-(1:4))
-    │   │       └── closing_tag: "span" (location: (1:33)-(1:37))
-    │   │
-    │   ├── open_tag:
-    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:26))
-    │   │       ├── errors: (1 error)
-    │   │       │   └── @ UnexpectedError (location: (1:20)-(1:21))
-    │   │       │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_HTML_TAG_START`."
-    │   │       │       ├── description: "Unexpected Token"
-    │   │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"
-    │   │       │       └── found: "TOKEN_HTML_TAG_START"
-    │   │       │
-    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
-    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
-    │   │       ├── tag_closing: ">" (location: (1:25)-(1:26))
-    │   │       ├── children: (2 items)
-    │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:20))
-    │   │       │   │   ├── name:
-    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:18))
-    │   │       │   │   │       └── children: (1 item)
-    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:18))
-    │   │       │   │   │               └── content: "data-template"
-    │   │       │   │   │
-    │   │       │   │   │
-    │   │       │   │   ├── equals: "=" (location: (1:18)-(1:19))
-    │   │       │   │   └── value:
-    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:19)-(1:20))
-    │   │       │   │           ├── errors: (1 error)
-    │   │       │   │           │   └── @ UnexpectedError (location: (1:19)-(1:20))
-    │   │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: `single quote (') or double quote (\")`, found: `backtick (`)`."
-    │   │       │   │           │       ├── description: "Invalid quote character for HTML attribute"
-    │   │       │   │           │       ├── expected: "single quote (') or double quote (\")"
-    │   │       │   │           │       └── found: "backtick (`)"
-    │   │       │   │           │
-    │   │       │   │           ├── open_quote: ∅
-    │   │       │   │           ├── children: []
-    │   │       │   │           ├── close_quote: ∅
-    │   │       │   │           └── quoted: false
-    │   │       │   │
-    │   │       │   │
-    │   │       │   └── @ HTMLAttributeNode (location: (1:21)-(1:25))
-    │   │       │       ├── name:
-    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:25))
-    │   │       │       │       └── children: (1 item)
-    │   │       │       │           └── @ LiteralNode (location: (1:21)-(1:25))
-    │   │       │       │               └── content: "span"
-    │   │       │       │
-    │   │       │       │
-    │   │       │       ├── equals: ∅
-    │   │       │       └── value: ∅
-    │   │       │
-    │   │       └── is_void: false
-    │   │
-    │   ├── tag_name: "div" (location: (1:1)-(1:4))
-    │   ├── body: (1 item)
-    │   │   └── @ HTMLTextNode (location: (1:26)-(1:31))
-    │   │       └── content: "Hello"
-    │   │
-    │   ├── close_tag:
-    │   │   └── @ HTMLCloseTagNode (location: (1:31)-(1:38))
-    │   │       ├── tag_opening: "</" (location: (1:31)-(1:33))
-    │   │       ├── tag_name: "span" (location: (1:33)-(1:37))
-    │   │       ├── children: []
-    │   │       └── tag_closing: ">" (location: (1:37)-(1:38))
-    │   │
-    │   ├── is_void: false
-    │   └── source: "HTML"
-    │
-    └── @ HTMLCloseTagNode (location: (1:40)-(1:46))
-        ├── errors: (1 error)
-        │   └── @ MissingOpeningTagError (location: (1:40)-(1:46))
-        │       ├── message: "Found closing tag `</div>` at (1:42) without a matching opening tag."
-        │       └── closing_tag: "div" (location: (1:42)-(1:45))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:46))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:26))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnexpectedError (location: (1:20)-(1:21))
+        │       │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE`, found: `TOKEN_HTML_TAG_START`."
+        │       │       ├── description: "Unexpected Token"
+        │       │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"
+        │       │       └── found: "TOKEN_HTML_TAG_START"
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:25)-(1:26))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:20))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:18))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:18))
+        │       │   │   │               └── content: "data-template"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:18)-(1:19))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:19)-(1:20))
+        │       │   │           ├── errors: (1 error)
+        │       │   │           │   └── @ UnexpectedError (location: (1:19)-(1:20))
+        │       │   │           │       ├── message: "Invalid quote character for HTML attribute. Expected: `single quote (') or double quote (\")`, found: `backtick (`)`."
+        │       │   │           │       ├── description: "Invalid quote character for HTML attribute"
+        │       │   │           │       ├── expected: "single quote (') or double quote (\")"
+        │       │   │           │       └── found: "backtick (`)"
+        │       │   │           │
+        │       │   │           ├── open_quote: ∅
+        │       │   │           ├── children: []
+        │       │   │           ├── close_quote: ∅
+        │       │   │           └── quoted: false
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:21)-(1:25))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:25))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:21)-(1:25))
+        │       │       │               └── content: "span"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: ∅
+        │       │       └── value: ∅
+        │       │
+        │       └── is_void: false
         │
-        ├── tag_opening: "</" (location: (1:40)-(1:42))
-        ├── tag_name: "div" (location: (1:42)-(1:45))
-        ├── children: []
-        └── tag_closing: ">" (location: (1:45)-(1:46))
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (3 items)
+        │   ├── @ HTMLTextNode (location: (1:26)-(1:31))
+        │   │   └── content: "Hello"
+        │   │
+        │   ├── @ HTMLCloseTagNode (location: (1:31)-(1:38))
+        │   │   ├── errors: (1 error)
+        │   │   │   └── @ MissingOpeningTagError (location: (1:31)-(1:38))
+        │   │   │       ├── message: "Found closing tag `</span>` at (1:33) without a matching opening tag in the same scope."
+        │   │   │       └── closing_tag: "span" (location: (1:33)-(1:37))
+        │   │   │
+        │   │   ├── tag_opening: "</" (location: (1:31)-(1:33))
+        │   │   ├── tag_name: "span" (location: (1:33)-(1:37))
+        │   │   ├── children: []
+        │   │   └── tag_closing: ">" (location: (1:37)-(1:38))
+        │   │
+        │   └── @ HTMLTextNode (location: (1:38)-(1:40))
+        │       └── content: "`>"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:40)-(1:46))
+        │       ├── tag_opening: "</" (location: (1:40)-(1:42))
+        │       ├── tag_name: "div" (location: (1:42)-(1:45))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:45)-(1:46))
+        │
+        ├── is_void: false
+        └── source: "HTML"

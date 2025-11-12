@@ -4,15 +4,15 @@
 #include <string.h>
 
 extern "C" {
-#include "../extension/libherb/include/array.h"
 #include "../extension/libherb/include/ast_nodes.h"
-#include "../extension/libherb/include/buffer.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/io.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/position.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_array.h"
+#include "../extension/libherb/include/util/hb_buffer.h"
 }
 
 #include "error_helpers.h"
@@ -46,19 +46,20 @@ napi_value CreateString(napi_env env, const char* str) {
   return result;
 }
 
-napi_value CreatePosition(napi_env env, position_T* position) {
-  if (!position) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
+napi_value CreateStringFromHbString(napi_env env, hb_string_T string) {
+  napi_value result;
+  napi_create_string_utf8(env, string.data, string.length, &result);
+  return result;
+}
 
+
+napi_value CreatePosition(napi_env env, position_T position) {
   napi_value result;
   napi_create_object(env, &result);
 
   napi_value line, column;
-  napi_create_uint32(env, (uint32_t)position->line, &line);
-  napi_create_uint32(env, (uint32_t)position->column, &column);
+  napi_create_uint32(env, (uint32_t)position.line, &line);
+  napi_create_uint32(env, (uint32_t)position.column, &column);
 
   napi_set_named_property(env, result, "line", line);
   napi_set_named_property(env, result, "column", column);
@@ -66,18 +67,12 @@ napi_value CreatePosition(napi_env env, position_T* position) {
   return result;
 }
 
-napi_value CreateLocation(napi_env env, location_T* location) {
-  if (!location) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreateLocation(napi_env env, location_T location) {
   napi_value result;
   napi_create_object(env, &result);
 
-  napi_value start = CreatePosition(env, location->start);
-  napi_value end = CreatePosition(env, location->end);
+  napi_value start = CreatePosition(env, location.start);
+  napi_value end = CreatePosition(env, location.end);
 
   napi_set_named_property(env, result, "start", start);
   napi_set_named_property(env, result, "end", end);
@@ -85,19 +80,13 @@ napi_value CreateLocation(napi_env env, location_T* location) {
   return result;
 }
 
-napi_value CreateRange(napi_env env, range_T* range) {
-  if (!range) {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    return null_value;
-  }
-
+napi_value CreateRange(napi_env env, range_T range) {
   napi_value result;
   napi_create_array(env, &result);
 
   napi_value from, to;
-  napi_create_uint32(env, (uint32_t)range->from, &from);
-  napi_create_uint32(env, (uint32_t)range->to, &to);
+  napi_create_uint32(env, (uint32_t)range.from, &from);
+  napi_create_uint32(env, (uint32_t)range.to, &to);
 
   napi_set_element(env, result, 0, from);
   napi_set_element(env, result, 1, to);
@@ -154,7 +143,7 @@ napi_value ReadFileToString(napi_env env, const char* file_path) {
   return result;
 }
 
-napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
+napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) {
   napi_value result, tokens_array, errors_array, warnings_array;
 
   napi_create_object(env, &result);
@@ -164,8 +153,8 @@ napi_value CreateLexResult(napi_env env, array_T* tokens, napi_value source) {
 
   // Add tokens to array
   if (tokens) {
-    for (size_t i = 0; i < array_size(tokens); i++) {
-      token_T* token = (token_T*)array_get(tokens, i);
+    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+      token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         napi_value token_obj = CreateToken(env, token);
         napi_set_element(env, tokens_array, i, token_obj);

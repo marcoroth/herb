@@ -4,6 +4,6 @@ require_relative "test_helper"
 
 class HerbTest < Minitest::Spec
   test "version" do
-    assert_equal "herb gem v0.7.2, libprism v1.5.1, libherb v0.7.2 (Ruby C native extension)", Herb.version
+    assert_equal "herb gem v0.7.5, libprism v1.6.0, libherb v0.7.5 (Ruby C native extension)", Herb.version
   end
 end

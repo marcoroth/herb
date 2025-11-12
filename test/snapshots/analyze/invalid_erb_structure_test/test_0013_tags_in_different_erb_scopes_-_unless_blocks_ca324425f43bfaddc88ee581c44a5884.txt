@@ -1,0 +1,79 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0013_tags in different erb scopes - unless blocks"
+input: |2-
+<% unless disabled? %>
+  <section>
+<% end %>
+
+<% unless enabled? %>
+  </section>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (4 items)
+    ├── @ ERBUnlessNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " unless disabled? " (location: (1:2)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:22)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:11))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (2:2)-(2:11))
+    │   │   │   │       ├── message: "Opening tag `<section>` at (2:3) doesn't have a matching closing tag `</section>` in the same scope."
+    │   │   │   │       └── opening_tag: "section" (location: (2:3)-(2:10))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   ├── tag_name: "section" (location: (2:3)-(2:10))
+    │   │   │   ├── tag_closing: ">" (location: (2:10)-(2:11))
+    │   │   │   ├── children: []
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:11)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (3:9)-(5:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBUnlessNode (location: (5:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   ├── content: " unless enabled? " (location: (5:2)-(5:19))
+    │   ├── tag_closing: "%>" (location: (5:19)-(5:21))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (5:21)-(6:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (6:2)-(6:12))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (6:2)-(6:12))
+    │   │   │   │       ├── message: "Found closing tag `</section>` at (6:4) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "section" (location: (6:4)-(6:11))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │   │   ├── tag_name: "section" (location: (6:4)-(6:11))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (6:11)-(6:12))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:12)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

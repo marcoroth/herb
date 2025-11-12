@@ -1,0 +1,28 @@
+---
+source: "Parser::ERBTest#test_0036_unterminated erb missing closing %>"
+input: "<% if true"
+---
+@ DocumentNode (location: (1:0)-(1:10))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:10))
+        ├── errors: (3 errors)
+        │   ├── @ UnexpectedTokenError (location: (1:2)-(1:10))
+        │   │   ├── message: "Found `TOKEN_ERROR` when expecting `TOKEN_ERB_CONTENT` at (1:2)."
+        │   │   ├── expected_type: "TOKEN_ERB_CONTENT"
+        │   │   └── found: " if true" (location: (1:2)-(1:10))
+        │   │
+        │   ├── @ UnexpectedTokenError (location: (1:10)-(1:10))
+        │   │   ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:10)."
+        │   │   ├── expected_type: "TOKEN_ERB_END"
+        │   │   └── found: "" (location: (1:10)-(1:10))
+        │   │
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:10))
+        │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% if %>`"
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true" (location: (1:2)-(1:10))
+        ├── tag_closing: "" (location: (1:10)-(1:10))
+        ├── statements: []
+        ├── subsequent: ∅
+        └── end_node: ∅

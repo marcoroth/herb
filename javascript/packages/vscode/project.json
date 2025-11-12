@@ -9,7 +9,13 @@
       "options": {
         "script": "build"
       },
-      "dependsOn": ["@herb-tools/node-wasm:build", "@herb-tools/language-server:build"]
+      "dependsOn": [
+        "@herb-tools/config:build",
+        "@herb-tools/formatter:build",
+        "@herb-tools/language-server:build",
+        "@herb-tools/linter:build",
+        "@herb-tools/node-wasm:build"
+      ]
     },
     "test": {
       "executor": "nx:run-script",

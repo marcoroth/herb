@@ -1,0 +1,6 @@
+---
+source: "Engine::EscapeTest::javascript#test_0008_escape: false and empty jsfunc"
+input: "{source: \"<script><%= value %></script>\", options: {escape: false, jsfunc: \"\"}}"
+---
+_buf = ::String.new; _buf << '<script>'.freeze; _buf << ((value)); _buf << '</script>'.freeze;
+_buf.to_s

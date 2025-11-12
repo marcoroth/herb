@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0022_u-umlaut as only content"
+input: "<b>ü</b>"
+---
 @ DocumentNode (location: (1:0)-(1:8))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))

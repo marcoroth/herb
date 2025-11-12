@@ -6,9 +6,11 @@ import {
   DynamicAttributeStaticValueParams,
   DynamicAttributeDynamicValueParams
 } from "./rule-utils.js"
+
 import { getStaticContentFromNodes } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-import type { LintContext, LintOffense } from "../types.js"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
@@ -38,8 +40,7 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
     if (attributeName.includes("_")) {
       this.addOffense(
         `Attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not contain underscores. Use hyphens (-) instead.`,
-        attributeNode.value!.location,
-        "warning"
+        attributeNode.name?.location ?? attributeNode.location,
       )
     }
   }
@@ -48,7 +49,14 @@ class HTMLNoUnderscoresInAttributeNamesVisitor extends AttributeVisitorMixin {
 export class HTMLNoUnderscoresInAttributeNamesRule extends ParserRule {
   name = "html-no-underscores-in-attribute-names"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HTMLNoUnderscoresInAttributeNamesVisitor(this.name, context)
 
     visitor.visit(result.value)

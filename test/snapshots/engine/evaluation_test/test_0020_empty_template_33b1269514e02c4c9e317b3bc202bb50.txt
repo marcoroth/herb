@@ -1,0 +1,4 @@
+---
+source: "Engine::EvaluationTest#test_0020_empty template"
+input: "{source: \"\", locals: {}, options: {escape: false}}"
+---

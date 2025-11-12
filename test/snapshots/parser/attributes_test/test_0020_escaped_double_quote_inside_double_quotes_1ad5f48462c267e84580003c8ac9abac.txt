@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0020_escaped double quote inside double quotes"
+input: "<div data-msg=\"She said \\\"Hello\\\"\">Text</div>"
+---
 @ DocumentNode (location: (1:0)-(1:45))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:45))

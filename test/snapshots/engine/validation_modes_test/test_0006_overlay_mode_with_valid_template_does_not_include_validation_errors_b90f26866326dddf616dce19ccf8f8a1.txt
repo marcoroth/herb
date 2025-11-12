@@ -1,0 +1,6 @@
+---
+source: "Engine::ValidationModesTest#test_0006_:overlay mode with valid template does not include validation errors"
+input: "{source: \"<div>Valid template</div>\", options: {validation_mode: :overlay}}"
+---
+_buf = ::String.new; _buf << '<div>Valid template</div>'.freeze;
+_buf.to_s

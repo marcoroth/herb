@@ -3,6 +3,8 @@
 module Herb
   module AST
     class DocumentNode < Node
+      include Colors
+
       attr_reader children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
@@ -23,11 +25,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class LiteralNode < Node
+      include Colors
+
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -48,11 +52,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLOpenTagNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader tag_name: Herb::Token
@@ -81,11 +87,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLCloseTagNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader tag_name: Herb::Token
@@ -112,11 +120,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLElementNode < Node
+      include Colors
+
       attr_reader open_tag: Herb::AST::HTMLOpenTagNode
 
       attr_reader tag_name: Herb::Token
@@ -147,11 +157,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLAttributeValueNode < Node
+      include Colors
+
       attr_reader open_quote: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -178,11 +190,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLAttributeNameNode < Node
+      include Colors
+
       attr_reader children: Array[Herb::AST::Node]
 
       # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
@@ -203,11 +217,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLAttributeNode < Node
+      include Colors
+
       attr_reader name: Herb::AST::HTMLAttributeNameNode
 
       attr_reader equals: Herb::Token
@@ -232,11 +248,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLTextNode < Node
+      include Colors
+
       attr_reader content: String
 
       # : (String, Location, Array[Herb::Errors::Error], String) -> void
@@ -257,11 +275,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLCommentNode < Node
+      include Colors
+
       attr_reader comment_start: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -286,11 +306,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class HTMLDoctypeNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -315,11 +337,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class XMLDeclarationNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -344,11 +368,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class CDATANode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader children: Array[Herb::AST::Node]
@@ -373,11 +399,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class WhitespaceNode < Node
+      include Colors
+
       attr_reader value: Herb::Token
 
       # : (String, Location, Array[Herb::Errors::Error], Herb::Token) -> void
@@ -398,11 +426,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBContentNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -433,11 +463,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBEndNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -462,11 +494,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBElseNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -493,11 +527,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBIfNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -528,11 +564,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBBlockNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -561,11 +599,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBWhenNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -592,11 +632,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBCaseNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -629,11 +671,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBCaseMatchNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -666,11 +710,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBWhileNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -699,11 +745,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBUntilNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -732,11 +780,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBForNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -765,11 +815,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBRescueNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -798,11 +850,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBEnsureNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -829,11 +883,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBBeginNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -868,11 +924,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBUnlessNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -903,11 +961,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBYieldNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -932,11 +992,13 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBInNode < Node
+      include Colors
+
       attr_reader tag_opening: Herb::Token
 
       attr_reader content: Herb::Token
@@ -963,8 +1025,8 @@ module Herb
       # : () -> String
       def inspect: () -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
   end
 end

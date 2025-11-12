@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0040_Vue-style directive attribute without value"
+input: "<div :disabled></div>"
+---
 @ DocumentNode (location: (1:0)-(1:21))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:21))

@@ -1,0 +1,50 @@
+---
+source: "Parser::CommentsTest#test_0005_HTML comment with if"
+input: |2-
+<!--
+  <% if Rails.env.development? %>
+    Debug info: <%= current_user&.email %>
+  <% end %>
+-->
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLCommentNode (location: (1:0)-(5:3))
+    │   ├── comment_start: "<!--" (location: (1:0)-(1:4))
+    │   ├── children: (3 items)
+    │   │   ├── @ LiteralNode (location: (1:4)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBIfNode (location: (2:2)-(4:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " if Rails.env.development? " (location: (2:4)-(2:31))
+    │   │   │   ├── tag_closing: "%>" (location: (2:31)-(2:33))
+    │   │   │   ├── statements: (3 items)
+    │   │   │   │   ├── @ LiteralNode (location: (2:33)-(3:16))
+    │   │   │   │   │   └── content: "\n    Debug info: "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:16)-(3:42))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:16)-(3:19))
+    │   │   │   │   │   ├── content: " current_user&.email " (location: (3:19)-(3:40))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:40)-(3:42))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ LiteralNode (location: (3:42)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── subsequent: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │           ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │           └── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ LiteralNode (location: (4:11)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── comment_end: "-->" (location: (5:0)-(5:3))
+    │
+    └── @ HTMLTextNode (location: (5:3)-(6:0))
+        └── content: "\n"

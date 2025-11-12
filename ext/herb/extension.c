@@ -19,7 +19,7 @@ VALUE cParseResult;
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  array_T* tokens = herb_lex(string);
+  hb_array_T* tokens = herb_lex(string);
 
   VALUE result = create_lex_result(tokens, source);
 
@@ -30,7 +30,7 @@ static VALUE Herb_lex(VALUE self, VALUE source) {
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
-  array_T* tokens = herb_lex_file(file_path);
+  hb_array_T* tokens = herb_lex_file(file_path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
   VALUE result = create_lex_result(tokens, source_value);
@@ -78,6 +78,8 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
 
+  herb_analyze_parse_tree(root, string);
+
   VALUE result = create_parse_result(root, source_value);
 
   ast_node_free((AST_NODE_T*) root);
@@ -85,45 +87,30 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   return result;
 }
 
-static VALUE Herb_lex_to_json(VALUE self, VALUE source) {
-  char* string = (char*) check_string(source);
-  buffer_T output;
-
-  if (!buffer_init(&output)) { return Qnil; }
-
-  herb_lex_json_to_buffer(string, &output);
-
-  VALUE result = rb_str_new(output.value, output.length);
-
-  buffer_free(&output);
-
-  return result;
-}
-
 static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
-  buffer_T output;
+  hb_buffer_T output;
 
-  if (!buffer_init(&output)) { return Qnil; }
+  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_ruby_to_buffer(string, &output);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
-  buffer_free(&output);
+  free(output.value);
 
   return result;
 }
 
 static VALUE Herb_extract_html(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
-  buffer_T output;
+  hb_buffer_T output;
 
-  if (!buffer_init(&output)) { return Qnil; }
+  if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
   herb_extract_html_to_buffer(string, &output);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
-  buffer_free(&output);
+  free(output.value);
 
   return result;
 }
@@ -151,7 +138,6 @@ void Init_herb(void) {
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(mHerb, "lex_to_json", Herb_lex_to_json, 1);
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);

@@ -1,0 +1,220 @@
+package org.herb.ast;
+
+import org.herb.Location;
+import org.herb.Token;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<%- nodes.each do |node| -%>
+class <%= node.name %> extends BaseNode {
+  <%- if node.fields.any? -%>
+  <%- node.fields.each do |field| -%>
+  <%- if field.is_a?(Herb::Template::StringField) -%>
+  private final String <%= field.name %>;
+  <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+  private final Token <%= field.name %>;
+  <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
+  private final boolean <%= field.name %>;
+  <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+  private final List<Node> <%= field.name %>;
+  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  <%- if field.specific_kind -%>
+  private final <%= field.specific_kind %> <%= field.name %>;
+  <%- else -%>
+  private final Node <%= field.name %>;
+  <%- end -%>
+  <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
+  private final String <%= field.name %>;
+  <%- else -%>
+  // private final Object <%= field.name %>;
+  <%- end -%>
+  <%- end -%>
+  <%- end -%>
+
+  public <%= node.name %>(
+    String type,
+    Location location,
+    List<Node> errors<%- if node.fields.any? %>,<% end %>
+    <%- if node.fields.any? -%>
+    <%- node.fields.each do |field| -%>
+    <%- if field.is_a?(Herb::Template::StringField) -%>
+    String <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+    Token <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
+    boolean <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+    List<Node> <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    <%= field.specific_kind || 'Node' %> <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
+    String <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- else -%>
+    // <%= field.c_type %> <%= field.name %>
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+  ) {
+    super(type, location, errors);
+
+    <%- if node.fields.any? -%>
+    <%- node.fields.each do |field| -%>
+    <%- unless field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>
+    this.<%= field.name %> = <%= field.name %>;
+    <%- else -%>
+    // this.<%= field.name %> = <%= field.name %>;
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+  }
+
+  <%- if node.fields.any? -%>
+  <%- node.fields.each do |field| -%>
+  <%- if field.is_a?(Herb::Template::StringField) -%>
+  public String get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+  public Token get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
+  public boolean is<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+  public List<Node> get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  public <%= field.specific_kind || 'Node' %> get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
+  public String get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- else -%>
+  /*
+  public Object get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+  */
+
+  <%- end -%>
+  <%- end -%>
+  @Override
+  public <R, C> R accept(NodeVisitor<R, C> visitor, C context) {
+    return visitor.visit<%= node.name %>(this, context);
+  }
+
+  @Override
+  public <R, C> void visitChildren(NodeVisitor<R, C> visitor, C context) {
+    <%- if node.fields.any? -%>
+    <%- node.fields.each do |field| -%>
+    <%- if field.is_a?(Herb::Template::ArrayField) -%>
+    if (<%= field.name %> != null) {
+      for (Node child : <%= field.name %>) {
+        if (child != null) child.accept(visitor, context);
+      }
+    }
+
+    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    if (<%= field.name %> != null) <%= field.name %>.accept(visitor, context);
+
+    <%- end -%>
+    <%- end -%>
+    <%- else -%>
+    // No children to visit
+    <%- end -%>
+  }
+
+  @Override
+  public String inspect() {
+    StringBuilder output = new StringBuilder();
+
+    output.append("@ <%= node.name %> ").append(location != null ? "(location: " + location.toString() + ")" : "no-location").append("\n");
+    <%- if node.fields.any? -%>
+    output.append(inspectErrors("│   "));
+    <%- else -%>
+    output.append(inspectErrors("    "));
+    <%- end -%>
+    <%- if node.fields.any? -%>
+    <%- node.fields.each_with_index do |field, index| -%>
+    <%- is_last = index == node.fields.length - 1 -%>
+    <%- symbol = is_last ? "└── " : "├── " -%>
+    <%- prefix = is_last ? "    " : "│   " -%>
+    <%- if field.is_a?(Herb::Template::StringField) || field.is_a?(Herb::Template::ElementSourceField) -%>
+    output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %> != null ? "\"" + <%= field.name %>.replace("\\", "\\\\").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t").replace("\"", "\\\"") + "\"" : "∅").append("\n");
+    <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+    output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %> != null ? <%= field.name %>.treeInspect() : "∅").append("\n");
+    <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
+    output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %>).append("\n");
+    <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+    output.append("<%= symbol %><%= field.name %>: ").append(inspectArray(<%= field.name %>, "<%= prefix %>"));
+    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    if (<%= field.name %> != null) {
+      output.append("<%= symbol %><%= field.name %>:\n");
+      output.append("<%= prefix %>").append(inspectNode(<%= field.name %>, "<%= prefix %>"));
+      <%- unless is_last -%>
+      output.append("<%= prefix %>").append("\n");
+      <%- end -%>
+    } else {
+      output.append("<%= symbol %><%= field.name %>: ∅\n");
+    }
+    <%- end -%>
+    <%- end -%>
+    <%- else -%>
+    output.append("└── (no fields)\n");
+    <%- end -%>
+
+    return output.toString();
+  }
+
+  @Override
+  public List<Node> recursiveErrors() {
+    List<Node> result = new ArrayList<>();
+
+    if (errors != null) {
+      result.addAll(errors);
+    }
+
+    <%- if node.fields.any? -%>
+    <%- node.fields.each do |field| -%>
+    <%- if field.is_a?(Herb::Template::ArrayField) -%>
+
+    if (<%= field.name %> != null) {
+      for (Node child : <%= field.name %>) {
+        if (child != null) {
+          result.addAll(child.recursiveErrors());
+        }
+      }
+    }
+
+    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    if (<%= field.name %> != null) {
+      result.addAll(<%= field.name %>.recursiveErrors());
+    }
+
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return "<%= node.name %> {}";
+  }
+}
+
+<%- end -%>
+<%- end -%>

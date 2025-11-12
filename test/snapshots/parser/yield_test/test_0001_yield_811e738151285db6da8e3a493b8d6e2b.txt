@@ -1,0 +1,14 @@
+---
+source: "Parser::YieldTest#test_0001_yield"
+input: |2-
+<%= yield %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBYieldNode (location: (1:0)-(1:12))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " yield " (location: (1:3)-(1:10))
+    │   └── tag_closing: "%>" (location: (1:10)-(1:12))
+    │
+    └── @ HTMLTextNode (location: (1:12)-(2:0))
+        └── content: "\n"

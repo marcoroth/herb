@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0017_semicolon as only content"
+input: "<b>;</b>"
+---
 @ DocumentNode (location: (1:0)-(1:8))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))

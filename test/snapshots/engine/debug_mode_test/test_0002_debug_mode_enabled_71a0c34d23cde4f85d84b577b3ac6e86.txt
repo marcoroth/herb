@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0002_debug mode enabled"
+input: "{source: \"<h1>Hello <%= @name %>!</h1>\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">Hello <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @name %&gt;" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="11" style="display: contents;">'.freeze; _buf << (@name).to_s; _buf << '</span>!</h1>'.freeze;
+_buf.to_s

@@ -41,8 +41,7 @@ The recommended approach is to structure your HTML in the correct tab order and 
 
 <button tabindex="2">Second in tab order</button>
 
-
-<input tabindex="5" type="text">
+<input tabindex="5" type="text" autocomplete="off">
 
 <button tabindex="10">Submit</button>
 ```

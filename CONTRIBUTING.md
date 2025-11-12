@@ -2,17 +2,17 @@
 
 Pull request, bug reports, and any other forms of contribution are welcomed and highly encouraged.
 
-If you encounter any issues when following along with this file please dont hesitate to reach out and file an issue!
+If you encounter any issues when following along with this file please don't hesitate to reach out and file an issue!
 
 ## Running Locally
 
 ### Requirements
 
 - [**Check**](https://libcheck.github.io/check/): For unit testing.
-- [**Clang 19**](https://clang.llvm.org): The compiler used to build this project.
-- [**Clang Format 19**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
-- [**Clang Tidy 19**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
-- [**Prism Ruby Parser v1.5.1**](https://github.com/ruby/prism/releases/tag/v1.5.1): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
+- [**Clang 21**](https://clang.llvm.org): The compiler used to build this project.
+- [**Clang Format 21**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
+- [**Clang Tidy 21**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
+- [**Prism Ruby Parser v1.6.0**](https://github.com/ruby/prism/releases/tag/v1.6.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
 - [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
@@ -21,13 +21,23 @@ If you encounter any issues when following along with this file please dont hesi
 
 ##### For Linux
 
+Before installing the dependencies, you need to add the LLVM repository and GPG key to get Clang 21:
+
+```bash
+wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
+sudo apt update
+```
+
+Then install the required packages:
+
 ```bash
 xargs sudo apt-get install < Aptfile
 ```
 or:
 
 ```bash
-sudo apt-get install check clang-19 clang-tidy-19 clang-format-19 emscripten doxygen
+sudo apt-get install check clang-21 clang-tidy-21 clang-format-21 emscripten doxygen
 ```
 
 ##### For macOS (using Homebrew)
@@ -38,7 +48,7 @@ brew bundle
 or:
 
 ```bash
-brew install check llvm@19 emscripten doxygen
+brew install check llvm@21 emscripten doxygen
 ```
 
 ### Building
@@ -73,7 +83,6 @@ The `herb` executable exposes a few commands for interacting with `.html.erb` fi
 Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
 
 ./herb lex [file]      -  Lex a file
-./herb lex_json [file] -  Lex a file and return the result as json.
 ./herb parse [file]    -  Parse a file
 ./herb ruby [file]     -  Extract Ruby from a file
 ./herb html [file]     -  Extract HTML from a file

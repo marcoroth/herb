@@ -1,0 +1,24 @@
+---
+source: "Parser::ERBTest#test_0041_inline ruby comment on same line"
+input: "<% if true %><% # Comment here %><% end %>"
+---
+@ DocumentNode (location: (1:0)-(1:42))
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(1:42))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true " (location: (1:2)-(1:11))
+        ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── statements: (1 item)
+        │   └── @ ERBContentNode (location: (1:13)-(1:33))
+        │       ├── tag_opening: "<%" (location: (1:13)-(1:15))
+        │       ├── content: " # Comment here " (location: (1:15)-(1:31))
+        │       ├── tag_closing: "%>" (location: (1:31)-(1:33))
+        │       ├── parsed: true
+        │       └── valid: true
+        │
+        ├── subsequent: ∅
+        └── end_node:
+            └── @ ERBEndNode (location: (1:33)-(1:42))
+                ├── tag_opening: "<%" (location: (1:33)-(1:35))
+                ├── content: " end " (location: (1:35)-(1:40))
+                └── tag_closing: "%>" (location: (1:40)-(1:42))

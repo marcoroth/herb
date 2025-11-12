@@ -1,0 +1,11 @@
+---
+source: "Engine::EngineErubiCompatTest#test_0017_handles CDATA sections"
+input: "{source: \"<script>\\n<![CDATA[\\n  var data = <%= @data.to_json %>;\\n]]>\\n</script>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<script>
+<![CDATA[
+  var data = '.freeze; _buf << ::Herb::Engine.js((@data.to_json)); _buf << ';
+]]>
+</script>
+'.freeze;
+_buf.to_s

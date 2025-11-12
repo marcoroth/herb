@@ -1,9 +1,9 @@
 #ifndef HERB_PARSER_H
 #define HERB_PARSER_H
 
-#include "array.h"
 #include "ast_node.h"
 #include "lexer.h"
+#include "util/hb_array.h"
 
 typedef enum {
   FOREIGN_CONTENT_UNKNOWN = 0,
@@ -19,21 +19,27 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool track_whitespace;
 } parser_options_T;
 
+extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
+
 typedef struct PARSER_STRUCT {
   lexer_T* lexer;
   token_T* current_token;
-  array_T* open_tags_stack;
+  hb_array_T* open_tags_stack;
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
-  parser_options_T* options;
+  parser_options_T options;
 } parser_T;
-
-parser_T* parser_init(lexer_T* lexer, parser_options_T* options);
-
-AST_DOCUMENT_NODE_T* parser_parse(parser_T* parser);
 
 size_t parser_sizeof(void);
 
-void parser_free(parser_T* parser);
+void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options);
+
+AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser);
+
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document);
+void herb_parser_deinit(parser_T* parser);
+
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors);
+bool match_tags_visitor(const AST_NODE_T* node, void* data);
 
 #endif

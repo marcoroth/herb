@@ -3,16 +3,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 #include "nodes.h"
 
 extern "C" {
-#include "../src/include/array.h"
+#include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
 #include "../src/include/pretty_print.h"
 #include "../src/include/ast_pretty_print.h"
-#include "../src/include/buffer.h"
+#include "../src/include/util/hb_buffer.h"
 #include "../src/include/herb.h"
 #include "../src/include/token.h"
 #include "../src/include/position.h"
@@ -27,44 +28,42 @@ val CreateString(const char* string) {
   return string ? val(string) : val::null();
 }
 
-val CreatePosition(position_T* position) {
-  if (!position) {
+val CreateStringFromHbString(hb_string_T string) {
+  if (hb_string_is_empty(string)) {
     return val::null();
-  }
+  } else {
+    std::string cppString(string.data, string.length);
 
+    return val(cppString);
+  }
+}
+
+val CreatePosition(position_T position) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("line", position->line);
-  result.set("column", position->column);
+  result.set("line", position.line);
+  result.set("column", position.column);
 
   return result;
 }
 
-val CreateLocation(location_T* location) {
-  if (!location) {
-    return val::null();
-  }
-
+val CreateLocation(location_T location) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  result.set("start", CreatePosition(location->start));
-  result.set("end", CreatePosition(location->end));
+  result.set("start", CreatePosition(location.start));
+  result.set("end", CreatePosition(location.end));
 
   return result;
 }
 
-val CreateRange(range_T* range) {
-  if (!range) {
-    return val::null();
-  }
-
+val CreateRange(range_T range) {
   val Array = val::global("Array");
   val result = Array.new_();
 
-  result.call<void>("push", range->from);
-  result.call<void>("push", range->to);
+  result.call<void>("push", range.from);
+  result.call<void>("push", range.to);
 
   return result;
 }
@@ -90,7 +89,7 @@ val CreateToken(token_T* token) {
   return result;
 }
 
-val CreateLexResult(array_T* tokens, const std::string& source) {
+val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -100,8 +99,8 @@ val CreateLexResult(array_T* tokens, const std::string& source) {
   val warningsArray = Array.new_();
 
   if (tokens) {
-    for (size_t i = 0; i < array_size(tokens); i++) {
-      token_T* token = (token_T*)array_get(tokens, i);
+    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+      token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         tokensArray.call<void>("push", CreateToken(token));
       }

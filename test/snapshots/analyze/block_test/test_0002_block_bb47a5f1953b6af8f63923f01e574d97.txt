@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0002_block"
+input: |2-
+<% block do %>
+  Content
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

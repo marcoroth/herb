@@ -27,7 +27,7 @@ class StimulusFileProcessor extends FileProcessor {
     const stimulusLinter = new StimulusLinter(Herb, defaultRules, this.stimulusProject)
 
     for (const filename of files) {
-      const filePath = resolve(filename)
+      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       const content = readFileSync(filePath, "utf-8")
       const result = stimulusLinter.lint(content, { fileName: filename, stimulusProject: this.stimulusProject })
 
@@ -62,7 +62,7 @@ class StimulusFileProcessor extends FileProcessor {
     let templatesWithStimulus = 0
 
     for (const filename of files) {
-      const filePath = resolve(filename)
+      const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       const content = readFileSync(filePath, "utf-8")
       const hasStimulus = this.trackControllerUsage(content, usedControllers, controllerUsageStats)
 

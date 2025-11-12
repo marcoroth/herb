@@ -1,0 +1,97 @@
+#include "nodes.h"
+#include "extension_helpers.h"
+#include "error_helpers.h"
+
+#include "../../src/include/ast_node.h"
+#include "../../src/include/ast_nodes.h"
+#include "../../src/include/location.h"
+#include "../../src/include/util/hb_array.h"
+
+#include <stdlib.h>
+
+jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node);
+jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array);
+
+<%- nodes.each do |node| -%>
+jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>) {
+  if (!<%= node.human %>) { return NULL; }
+
+  jclass nodeClass = (*env)->FindClass(env, "org/herb/ast/<%= node.name %>");
+  if (!nodeClass) { return NULL; }
+
+  jstring type = (*env)->NewStringUTF(env, "<%= node.name %>");
+  jobject location = CreateLocation(env, <%= node.human %>->base.location);
+  jobject errors = ErrorsArrayFromCArray(env, <%= node.human %>->base.errors);
+
+  <%- node.fields.each do |field| -%>
+  <%- if field.is_a?(Herb::Template::StringField) -%>
+  jstring <%= field.name %> = (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>);
+  <%- elsif field.is_a?(Herb::Template::TokenField) -%>
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateToken(env, <%= node.human %>-><%= field.name %>) : NULL;
+  <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
+  jboolean <%= field.name %> = <%= node.human %>-><%= field.name %> ? JNI_TRUE : JNI_FALSE;
+  <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
+  jobject <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
+  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>) : NULL;
+  <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
+  // TODO: Convert element_source to string
+  jstring <%= field.name %> = (*env)->NewStringUTF(env, "");
+  <%- elsif field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>
+  // Skip <%= field.name %> (<%= field.class.name.split('::').last %>) - not supported in Java yet
+  <%- end -%>
+  <%- end -%>
+
+  const char* signature = "(Ljava/lang/String;Lorg/herb/Location;Ljava/util/List;<%- node.fields.each do |f| -%><%- unless f.is_a?(Herb::Template::AnalyzedRubyField) || f.is_a?(Herb::Template::PrismNodeField) -%><%- if f.is_a?(Herb::Template::StringField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::TokenField) -%>Lorg/herb/Token;<%- elsif f.is_a?(Herb::Template::BooleanField) -%>Z<%- elsif f.is_a?(Herb::Template::ArrayField) -%>Ljava/util/List;<%- elsif f.is_a?(Herb::Template::NodeField) -%>Lorg/herb/ast/<%= f.specific_kind || 'Node' %>;<%- elsif f.is_a?(Herb::Template::ElementSourceField) -%>Ljava/lang/String;<%- end -%><%- end -%><%- end -%>)V";
+  jmethodID constructor = (*env)->GetMethodID(env, nodeClass, "<init>", signature);
+  if (!constructor) { return NULL; }
+
+  jobject result = (*env)->NewObject(env, nodeClass, constructor, type, location, errors<%- node.fields.each do |field| -%><%- unless field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>, <%= field.name %><%- end -%><%- end -%>);
+
+  return result;
+}
+
+<%- end -%>
+
+jobject NodeFromCStruct(JNIEnv* env, AST_NODE_T* node) {
+  if (!node) { return NULL; }
+
+  switch (node->type) {
+  <%- nodes.each do |node| -%>
+  case <%= node.type %>:
+    return <%= node.name %>FromCStruct(env, (<%= node.struct_type %>*) node);
+  <%- end -%>
+  default:
+    return NULL;
+  }
+}
+
+jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
+  jclass arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
+  jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
+  jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
+
+  if (!array) {
+    return (*env)->NewObject(env, arrayListClass, arrayListConstructor, 0);
+  }
+
+  jobject javaList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, (jint) hb_array_size(array));
+
+  for (size_t i = 0; i < hb_array_size(array); i++) {
+    AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
+
+    if (child_node) {
+      jobject nodeObj = NodeFromCStruct(env, child_node);
+      (*env)->CallBooleanMethod(env, javaList, addMethod, nodeObj);
+    }
+  }
+
+  return javaList;
+}
+
+<%- nodes.each do |node| -%>
+jobject Create<%= node.name %>(JNIEnv* env, <%= node.struct_type %>* <%= node.human %>) {
+  return <%= node.name %>FromCStruct(env, <%= node.human %>);
+}
+
+<%- end -%>

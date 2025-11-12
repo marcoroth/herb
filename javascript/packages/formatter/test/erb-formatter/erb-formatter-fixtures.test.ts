@@ -590,7 +590,10 @@ describe("ERB Formatter Fixture Tests", () => {
       const result = formatter.format(source)
 
       expect(result).toBe(dedent`
-        --- title: "My Page" layout: "application" ---
+        ---
+        title: "My Page"
+        layout: "application"
+        ---
 
         <div class="page">
           <h1><%= @title || "Default Title" %></h1>

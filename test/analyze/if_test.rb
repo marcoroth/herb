@@ -93,5 +93,56 @@ module Analyze
         <h1 class="<% if bold? %>bold<% else %>normal<% end %>"></h1>
       HTML
     end
+
+    test "guard clause with if modifier should not be parsed as ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <% [1,2].each do |value| %>
+          <% next if false %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with return if modifier" do
+      skip "we cannot detect MethodDefinitions yet"
+
+      assert_parsed_snapshot(<<~HTML)
+        <% def some_method %>
+          <% return if true %>
+          <div>This won't render</div>
+        <% end %>
+      HTML
+    end
+
+    test "guard clause with break if modifier" do
+      assert_parsed_snapshot(<<~HTML)
+        <% loop do %>
+          <% break if condition %>
+          <div>Loop content</div>
+        <% end %>
+      HTML
+    end
+
+    test "ERB if/end embedded in attribute name without space" do
+      skip "<% if valid? %> gets joined to the disabled attribute, but the if contains a space inside the if body"
+
+      assert_parsed_snapshot(<<~HTML)
+        <button
+          type="submit"
+          disabled<% if valid? %> shouldn't be part of disabled<% end %>
+        ></button>
+      HTML
+    end
+
+    test "conditional attribute value" do
+      skip
+
+      assert_parsed_snapshot(<<~HTML)
+        <button
+          type="submit"
+          disabled<% if valid? %>="disabled"<% end %>
+        ></button>
+      HTML
+    end
   end
 end
