@@ -309,5 +309,23 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "hash-value ommission for render call" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+        </div>
+      HTML
+    end
+
+    test "hash-value ommission for form render call" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= render "form", f: %>
+          <%= f.input :name %>
+        </div>
+      HTML
+    end
   end
 end

@@ -77,17 +77,16 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
         }
 
         bool needs_semicolon = false;
-        uint32_t current_line = token->location.end.line;
 
         for (size_t j = i + 1; j < hb_array_size(tokens); j++) {
           const token_T* next_token = hb_array_get(tokens, j);
 
-          if (next_token->type == TOKEN_NEWLINE) { break; }
-
-          if (next_token->type == TOKEN_ERB_START && next_token->location.start.line == current_line) {
+          if (next_token->type == TOKEN_ERB_START) {
             needs_semicolon = true;
             break;
           }
+
+          if (next_token->type != TOKEN_NEWLINE) { break; }
         }
 
         if (needs_semicolon) {
