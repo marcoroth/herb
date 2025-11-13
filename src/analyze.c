@@ -515,21 +515,7 @@ static size_t process_control_structure(
 
           index++;
 
-          while (index < hb_array_size(array)) {
-            AST_NODE_T* child = hb_array_get(array, index);
-
-            if (!child) { break; }
-
-            if (child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-              control_type_t child_type = detect_control_type(child_erb);
-
-              if (child_type == CONTROL_TYPE_END) { break; }
-            }
-
-            hb_array_append(else_children, child);
-            index++;
-          }
+          index = process_block_children(node, array, index, else_children, context, initial_type);
 
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
@@ -677,21 +663,7 @@ static size_t process_control_structure(
 
           index++;
 
-          while (index < hb_array_size(array)) {
-            AST_NODE_T* child = hb_array_get(array, index);
-
-            if (!child) { break; }
-
-            if (child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-              control_type_t child_type = detect_control_type(child_erb);
-
-              if (child_type == CONTROL_TYPE_ENSURE || child_type == CONTROL_TYPE_END) { break; }
-            }
-
-            hb_array_append(else_children, child);
-            index++;
-          }
+          index = process_block_children(node, array, index, else_children, context, initial_type);
 
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
