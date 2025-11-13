@@ -29,6 +29,5 @@ size_t hb_buffer_capacity(const hb_buffer_T* buffer);
 size_t hb_buffer_sizeof(void);
 
 void hb_buffer_clear(hb_buffer_T* buffer);
-void hb_buffer_free(hb_buffer_T** buffer);
 
 #endif

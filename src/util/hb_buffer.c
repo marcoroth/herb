@@ -192,12 +192,3 @@ void hb_buffer_clear(hb_buffer_T* buffer) {
   buffer->length = 0;
   buffer->value[0] = '\0';
 }
-
-void hb_buffer_free(hb_buffer_T** buffer) {
-  if (!buffer || !*buffer) { return; }
-
-  if ((*buffer)->value != NULL) { free((*buffer)->value); }
-
-  free(*buffer);
-  *buffer = NULL;
-}
