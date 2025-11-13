@@ -1862,7 +1862,7 @@ export class FormatPrinter extends Printer {
     const firstWord = words[0]
     const firstChar = firstWord[0]
 
-    if (!/[a-zA-Z0-9.!?:;]/.test(firstChar)) {
+    if (/\s/.test(firstChar)) {
       return false
     }
 
@@ -1877,6 +1877,11 @@ export class FormatPrinter extends Printer {
 
       result.push({
         unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },
+        node: textNode
+      })
+    } else if (endsWithWhitespace(textNode.content)) {
+      result.push({
+        unit: { content: ' ', type: 'text', isAtomic: false, breaksFlow: false },
         node: textNode
       })
     }
@@ -1955,10 +1960,8 @@ export class FormatPrinter extends Printer {
       const hasWhitespace = this.hasWhitespaceBeforeNode(children, lastProcessedIndex, index, child)
       const lastUnit = result[result.length - 1]
       const lastIsAtomic = lastUnit.unit.isAtomic && (lastUnit.unit.type === 'erb' || lastUnit.unit.type === 'inline')
-      const trimmed = child.content.trim()
-      const startsWithClosingPunct = trimmed.length > 0 && /^[.!?:;]/.test(trimmed)
 
-      if (lastIsAtomic && (!hasWhitespace || startsWithClosingPunct) && this.tryMergeTextAfterAtomic(result, child)) {
+      if (lastIsAtomic && !hasWhitespace && this.tryMergeTextAfterAtomic(result, child)) {
         return
       }
     }

@@ -194,7 +194,9 @@ export function isERBTag(text: string): boolean {
  * Check if a string ends with an ERB tag
  */
 export function endsWithERBTag(text: string): boolean {
-  return /%>$/.test(text.trim())
+  const trimmed = text.trim()
+
+  return /%>$/.test(trimmed) || /%>\S+$/.test(trimmed)
 }
 
 /**

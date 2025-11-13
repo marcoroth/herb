@@ -105,6 +105,404 @@ describe("ERB whitespace formatting", () => {
       expect(result).toContain('<span>')
       expect(result).toContain('</span>')
     })
+
+    test("does not add whitespace before apostrophe after ERB tag (issue #855)", () => {
+      const source = dedent`
+        <p>
+          Lorem <%= letter.patient.first_name.titlecase %>'s ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        </p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).toEqual(dedent`
+        <p>
+          Lorem <%= letter.patient.first_name.titlecase %>'s ipsum dolor sit amet,
+          consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+          dolore magna aliqua.
+        </p>
+      `)
+    })
+
+    test("preserves dollar sign before ERB tag without adding space", () => {
+      const source = `<p>Lorem $<%= value %> ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves euro symbol after ERB tag without adding space", () => {
+      const source = `<p>Lorem <%= value %>€ ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves hash symbol before ERB tag without adding space", () => {
+      const source = `<p>Lorem #<%= value %> ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("keeps hyphen attached between adjacent ERB tags", () => {
+      const source = `<p>Lorem <%= value %>-<%= value %> ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("keeps period attached between adjacent ERB tags", () => {
+      const source = `<p>Lorem <%= value %>.<%= value %> ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves punctuation sequence around ERB tags without spaces", () => {
+      const source = `<p>Lorem .<%= value %>.<%= value %>. ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves punctuation sequence around ERB tags with spaces", () => {
+      const source = `<p>Lorem . <%= value %> . <%= value %> . ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("keeps adjacent ERB tags together without adding space", () => {
+      const source = `<p>Lorem <%= one %><%= two %> ipsum dolor sit amet.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("formats standalone period after block element on new line", () => {
+      const source = `<p>hello</p>.`
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <p>hello</p>
+
+        .
+      `)
+    })
+
+    test("formats period after closing tag within parent block", () => {
+      const source = dedent`
+        <div>
+          <p>hello</p>.
+        </div>
+      `
+      const result = formatter.format(source)
+      expect(result).toEqual(dedent`
+        <div>
+          <p>hello</p>
+          .
+        </div>
+      `)
+    })
+
+    test("keeps period attached to inline element without space", () => {
+      const source = `<p>Hello <span>World</span>. Hello</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves period spacing after inline element", () => {
+      const source = `<p>Hello <span>World</span> . Hello</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+  })
+
+  describe("edge cases and special characters", () => {
+    test("preserves exclamation mark after ERB tag", () => {
+      const source = `<p>Hello <%= name %>!</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves question mark after ERB tag", () => {
+      const source = `<p>Are you <%= adjective %>?</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves colon after ERB tag", () => {
+      const source = `<p>Result: <%= value %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves semicolon after ERB tag", () => {
+      const source = `<p>First <%= value %>; then <%= value2 %>.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves multiple punctuation marks (ellipsis)", () => {
+      const source = `<p>Loading<%= dots %>...</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves multiple exclamation marks", () => {
+      const source = `<p>Alert<%= message %>!!!</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves quotes around ERB tag", () => {
+      const source = `<p>He said "<%= quote %>".</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves single quotes around ERB tag", () => {
+      const source = `<p>Word: '<%= word %>'</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves parentheses around ERB tag", () => {
+      const source = `<p>Details (<%= info %>)</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves brackets around ERB tag", () => {
+      const source = `<p>Index [<%= index %>]</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves slash between ERB tags (fraction)", () => {
+      const source = `<p><%= numerator %>/<%= denominator %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves slash after ERB tag (file path)", () => {
+      const source = `<p><%= dir %>/<%= file %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves backslash after ERB tag", () => {
+      const source = `<p><%= path %>\\<%= file %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves at-sign before ERB tag (mention)", () => {
+      const source = `<p>@<%= username %> said hello</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves hashtag with ERB tag", () => {
+      const source = `<p>#<%= tag %> is trending</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves percent sign after ERB tag", () => {
+      const source = `<p><%= value %>%</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves ampersand between ERB tags", () => {
+      const source = `<p><%= first %>&<%= second %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves plus sign between ERB tags (concatenation)", () => {
+      const source = `<p><%= a %>+<%= b %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves asterisk between ERB tags (multiplication)", () => {
+      const source = `<p><%= width %>*<%= height %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves equals sign between ERB tags", () => {
+      const source = `<p><%= key %>=<%= value %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves caret after ERB tag", () => {
+      const source = `<p><%= base %>^<%= exponent %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves tilde before ERB tag", () => {
+      const source = `<p>~<%= approximate %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves pipe between ERB tags", () => {
+      const source = `<p><%= option1 %>|<%= option2 %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves underscore between ERB tags", () => {
+      const source = `<p><%= first %>_<%= last %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves numbers after ERB tag", () => {
+      const source = `<p><%= value %>123</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves numbers before ERB tag", () => {
+      const source = `<p>Version 123<%= suffix %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves decimal point in price format", () => {
+      const source = `<p>$<%= dollars %>.<%= cents %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves colon in time format", () => {
+      const source = `<p><%= hours %>:<%= minutes %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves x in dimensions format", () => {
+      const source = `<p><%= width %>x<%= height %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves file extension with ERB tag", () => {
+      const source = `<p><%= filename %>.html</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves multiple file extensions", () => {
+      const source = `<p><%= filename %>.html.erb</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves em dash between ERB tags", () => {
+      const source = `<p><%= start %>—<%= end %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves en dash between ERB tags", () => {
+      const source = `<p><%= start %>–<%= end %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("handles ERB comment with apostrophe", () => {
+      const source = `<p>Hello <%# user's name %><%= name %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves possessive with multiple ERB tags", () => {
+      const source = `<p><%= first_name %> <%= last_name %>'s profile</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves multiple apostrophes in sequence", () => {
+      const source = `<p><%= name %>'s friend's house</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves abbreviation with ERB tag", () => {
+      const source = `<p>Dr.<%= name %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves trailing abbreviation", () => {
+      const source = `<p><%= name %> Ph.D.</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves complex punctuation sequence", () => {
+      const source = `<p>"<%= title %>"—<%= author %>'s masterpiece!</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves comma and space between ERB tags", () => {
+      const source = `<p><%= city %>, <%= state %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("handles mixed punctuation and text", () => {
+      const source = `<p><%= value %>: <%= description %> (<%= note %>).</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves angle brackets (comparison operators)", () => {
+      const source = `<p><%= a %>&lt;<%= b %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves greater than with ERB tags", () => {
+      const source = `<p><%= a %>&gt;<%= b %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("handles nested quotes and apostrophes", () => {
+      const source = `<p>"<%= name %>'s quote"</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves contractions before ERB tag", () => {
+      const source = `<p>can't <%= verb %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves contractions after ERB tag", () => {
+      const source = `<p><%= subject %> can't <%= verb %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("handles backticks around ERB tag (code)", () => {
+      const source = `<p>Use \`<%= code %>\` here</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves currency symbol before decimal ERB tag", () => {
+      const source = `<p>$<%= price %>.99</p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
+
+    test("preserves comma in large numbers", () => {
+      const source = `<p><%= thousands %>,<%= hundreds %></p>`
+      const result = formatter.format(source)
+      expect(result).toEqual(source)
+    })
   })
 
   describe("shared utility validation", () => {

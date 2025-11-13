@@ -165,7 +165,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <h3>
-        <%= link_to "Start", start_path %> &rsquo;s overview of
+        <%= link_to "Start", start_path %>&rsquo;s overview of
         <%= link_to "Section", section_path %>, <%= link_to "End", end_path %>.
       </h3>
     `)
