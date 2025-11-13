@@ -258,5 +258,56 @@ module Parser
         more %> <% code %>
       HTML
     end
+
+    test "if/then/else with trimming and nested output tags (real-world RDoc example)" do
+      assert_parsed_snapshot(<<~'HTML')
+        <%- if @options.main_page and main_page = @files.find { |f| f.full_name == @options.main_page } then %>
+          <meta name="description" content="<%= h "#{@title}: #{excerpt(main_page.comment)}" %>">
+        <%- else %>
+          <meta name="description" content="Documentation for <%= h @title %>">
+        <%- end %>
+      HTML
+    end
+
+    test "if/elsif with block syntax in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if value %>
+
+        <% elsif items.any? { |item| item.true? } %>
+
+        <% end %>
+      HTML
+    end
+
+    test "if/elsif with symbol to proc in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if value %>
+
+        <% elsif items.any?(&:true?) %>
+
+        <% end %>
+      HTML
+    end
+
+    test "if/elsif/else with multiple block conditions and output (real-world form errors)" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if f.object.errors.any? { |e| e.type == :blank } %>
+          Name is required.
+        <% elsif f.object.errors.any? { |e| e.type == :taken } %>
+          Coffee bag with this name and roast date already exists on this roaster.
+        <% else %>
+          <%= f.object.errors.first.message %>
+        <% end %>
+      HTML
+    end
+
+    test "if/elsif/else with assignment and block in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if something = @some.find { |t| t.id == 1 } %>
+        <% elsif other_condition %>
+        <% else %>
+        <% end %>
+      HTML
+    end
   end
 end

@@ -134,6 +134,14 @@ module Analyze
       HTML
     end
 
+    test "if with yield in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if yield(:a) %>
+          content
+        <% end %>
+      HTML
+    end
+
     test "conditional attribute value" do
       skip
 

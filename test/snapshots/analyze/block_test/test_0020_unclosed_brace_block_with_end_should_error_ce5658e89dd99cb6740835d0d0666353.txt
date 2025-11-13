@@ -1,0 +1,55 @@
+---
+source: "Analyze::BlockTest#test_0020_unclosed brace block with end should error"
+input: |2-
+<% items.each { |item| %>
+  <%= item %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+├── errors: (3 errors)
+│   ├── @ RubyParseError (location: (3:3)-(3:6))
+│   │   ├── message: "unexpected_token_ignore: unexpected 'end', ignoring it"
+│   │   ├── error_message: "unexpected 'end', ignoring it"
+│   │   ├── diagnostic_id: "unexpected_token_ignore"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (3:9)-(4:0))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (4:0)-(4:0))
+│       ├── message: "block_term_brace: expected a block beginning with `{` to end with `}`"
+│       ├── error_message: "expected a block beginning with `{` to end with `}`"
+│       ├── diagnostic_id: "block_term_brace"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each { |item| " (location: (1:2)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:25)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:13))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " item " (location: (2:5)-(2:11))
+    │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:13)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"
