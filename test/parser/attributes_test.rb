@@ -195,5 +195,66 @@ module Parser
     test "Empty attribute value with closing bracket immediatly following it" do
       assert_parsed_snapshot(%(<div attribute-name=>div-content</div>))
     end
+
+    test "Conditional attribute with ERB control flow and no surrounding spaces" do
+      assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %>data-turbo-permanent<% end %>></dialog>))
+    end
+
+    test "Conditional attribute with ERB control flow with surrounding spaces" do
+      assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %> data-turbo-permanent <% end %>></dialog>))
+    end
+
+    test "Conditional attribute with ERB on separate line" do
+      assert_parsed_snapshot <<~HTML
+        <span
+          <% if @replaceable %>data-menu-button<% end %>
+          class="css-truncate css-truncate-target"
+        ></span>
+      HTML
+    end
+
+    test "Conditional attribute with value" do
+      assert_parsed_snapshot(%(<div <% if enabled? %>data-enabled="true"<% end %>></div>))
+    end
+
+    test "Multiple conditional attributes" do
+      assert_parsed_snapshot(%(<div <% if a? %>data-a<% end %> <% if b? %>data-b<% end %>></div>))
+    end
+
+    test "Conditional attribute with elsif and else" do
+      assert_parsed_snapshot(%(<div <% if primary? %>data-primary<% elsif secondary? %>data-secondary<% else %>data-default<% end %>></div>))
+    end
+
+    test "Conditional attribute with unless" do
+      assert_parsed_snapshot(%(<div <% unless disabled? %>data-enabled<% end %>></div>))
+    end
+
+    test "Multiple attributes in one conditional block" do
+      assert_parsed_snapshot(%(<div <% if admin? %>data-admin data-role="admin"<% end %>></div>))
+    end
+
+    test "Conditional boolean attribute" do
+      assert_parsed_snapshot(%(<input <% if should_disable? %>disabled<% end %> type="text">))
+    end
+
+    test "Conditional attribute with output tag inside" do
+      assert_parsed_snapshot(%(<div <% if user %>data-user="<%= user.id %>"<% end %>></div>))
+    end
+
+    test "ERB comment between attributes" do
+      assert_parsed_snapshot(%(<div data-foo="bar" <%# This is a comment %> data-baz="qux"></div>))
+    end
+
+    test "Conditional attribute with trimming tags" do
+      assert_parsed_snapshot(%(<div <%- if condition -%>data-conditional<%- end -%>></div>))
+    end
+
+    test "Empty conditional block in attributes" do
+      assert_parsed_snapshot(%(<div data-static <% if false %><% end %> data-other="value"></div>))
+    end
+
+    test "Nested conditional attributes" do
+      assert_parsed_snapshot(%(<div <% if outer? %><% if inner? %>data-inner<% end %><% end %>></div>))
+    end
   end
 end
