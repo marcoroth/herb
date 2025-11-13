@@ -66,3 +66,11 @@ jobs:
       - name: Run Rust tests
         run: make test
         working-directory: rust
+
+      - name: Vendor C sources for packaging
+        run: make vendor
+        working-directory: rust
+
+      - name: Test cargo package
+        run: cargo package --allow-dirty
+        working-directory: rust

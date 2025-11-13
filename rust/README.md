@@ -19,7 +19,7 @@ make all          # Generate templates and build
 
 ## Usage
 
-### CLI
+### CLI (within the Herb repo)
 
 ```bash
 ./bin/herb-rust version
@@ -54,6 +54,17 @@ fn main() {
 ```bash
 cargo test
 ```
+
+## Publishing
+
+Before publishing to crates.io, vendor the C sources:
+
+```bash
+make vendor                        # Vendor C sources from ../src and prism
+cargo publish --allow-dirty        # Publish to crates.io
+```
+
+The `vendor/` directory is gitignored to avoid committing duplicate files. The `make vendor` task copies C sources from the parent directory into `vendor/libherb` and `vendor/prism` so the published crate is self-contained.
 
 ## Cleaning
 
