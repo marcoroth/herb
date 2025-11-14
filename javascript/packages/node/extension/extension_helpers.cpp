@@ -153,7 +153,7 @@ napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) 
 
   // Add tokens to array
   if (tokens) {
-    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    for (size_t i = 0; i < tokens->size; i++) {
       token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         napi_value token_obj = CreateToken(env, token);

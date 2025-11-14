@@ -12,7 +12,7 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
   bool skip_erb_content = false;
   bool is_comment_tag = false;
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+  for (size_t i = 0; i < tokens->size; i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
@@ -79,7 +79,7 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
         bool needs_semicolon = false;
         uint32_t current_line = token->location.end.line;
 
-        for (size_t j = i + 1; j < hb_array_size(tokens); j++) {
+        for (size_t j = i + 1; j < tokens->size; j++) {
           const token_T* next_token = hb_array_get(tokens, j);
 
           if (next_token->type == TOKEN_NEWLINE) { break; }
@@ -113,7 +113,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+  for (size_t i = 0; i < tokens->size; i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
@@ -160,7 +160,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+  for (size_t i = 0; i < tokens->size; i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {

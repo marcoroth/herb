@@ -99,7 +99,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   val warningsArray = Array.new_();
 
   if (tokens) {
-    for (size_t i = 0; i < hb_array_size(tokens); i++) {
+    for (size_t i = 0; i < tokens->size; i++) {
       token_T* token = (token_T*)hb_array_get(tokens, i);
       if (token) {
         tokensArray.call<void>("push", CreateToken(token));
