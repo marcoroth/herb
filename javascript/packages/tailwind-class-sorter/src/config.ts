@@ -8,12 +8,6 @@ import { createJiti, type Jiti } from 'jiti'
 import postcss from 'postcss'
 // @ts-ignore
 import postcssImport from 'postcss-import'
-// @ts-ignore
-import { generateRules as generateRulesFallback } from 'tailwindcss/lib/lib/generateRules'
-// @ts-ignore
-import { createContext as createContextFallback } from 'tailwindcss/lib/lib/setupContextUtils'
-import loadConfigFallback from 'tailwindcss/loadConfig'
-import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import type { RequiredConfig } from 'tailwindcss/types/config.js'
 import { expiringMap } from './expiring-map.js'
 import { resolveCssFrom, resolveJsFrom } from './resolve'
@@ -84,10 +78,12 @@ async function loadTailwindConfig(
   tailwindConfigPath: string | null,
   entryPoint: string | null,
 ): Promise<ContextContainer> {
-  let createContext = createContextFallback
-  let generateRules = generateRulesFallback
-  let resolveConfig = resolveConfigFallback
-  let loadConfig = loadConfigFallback
+  // Tailwind internals are resolved lazily so Tailwind v4 (which does not
+  // expose the v3 entrypoints) can still load this module.
+  let createContext: ((config: any) => any) | null = null
+  let generateRules: ContextContainer['generateRules'] | null = null
+  let resolveConfig: ((config: RequiredConfig) => any) | null = null
+  let loadConfig: ((configPath: string) => any) | null = null
   let tailwindConfig: RequiredConfig = { content: [] }
 
   try {
@@ -101,19 +97,29 @@ async function loadTailwindConfig(
       }
     } catch {}
 
-    resolveConfig = require(path.join(pkgDir, 'resolveConfig'))
-    createContext = require(
-      path.join(pkgDir, 'lib/lib/setupContextUtils'),
-    ).createContext
-    generateRules = require(
-      path.join(pkgDir, 'lib/lib/generateRules'),
-    ).generateRules
+    try {
+      resolveConfig = require(path.join(pkgDir, 'resolveConfig'))
+    } catch {}
+
+    try {
+      createContext = require(
+        path.join(pkgDir, 'lib/lib/setupContextUtils'),
+      ).createContext
+    } catch {}
+
+    try {
+      generateRules = require(
+        path.join(pkgDir, 'lib/lib/generateRules'),
+      ).generateRules
+    } catch {}
 
     // Prior to `tailwindcss@3.3.0` this won't exist so we load it last
-    loadConfig = require(path.join(pkgDir, 'loadConfig'))
+    try {
+      loadConfig = require(path.join(pkgDir, 'loadConfig'))
+    } catch {}
   } catch {}
 
-  if (tailwindConfigPath) {
+  if (tailwindConfigPath && loadConfig) {
     try {
       clearModule(tailwindConfigPath)
       const loadedConfig = loadConfig(tailwindConfigPath)
@@ -126,12 +132,17 @@ async function loadTailwindConfig(
   // suppress "empty content" warning
   tailwindConfig.content = ['no-op']
 
+  if (!createContext || !resolveConfig) {
+    throw new Error('Could not load Tailwind CSS configuration')
+  }
+
   // Create the context
   let context = createContext(resolveConfig(tailwindConfig))
+  const fallbackGenerateRules: ContextContainer['generateRules'] = () => []
 
   return {
     context,
-    generateRules,
+    generateRules: generateRules ?? fallbackGenerateRules,
   }
 }
 
