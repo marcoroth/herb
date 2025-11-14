@@ -43,7 +43,7 @@ ast_node_type_T ast_node_type(const AST_NODE_T* node) {
 }
 
 size_t ast_node_errors_count(const AST_NODE_T* node) {
-  return hb_array_size(node->errors);
+  return node->errors->size;
 }
 
 hb_array_T* ast_node_errors(const AST_NODE_T* node) {

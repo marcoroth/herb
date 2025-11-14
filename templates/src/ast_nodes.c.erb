@@ -27,7 +27,11 @@
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
-  <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  if (<%= field.name %> == NULL) {
+    <%= node.human %>-><%= field.name %> = hb_array_init(8);
+  } else {
+    <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  }
   <%- when Herb::Template::BooleanField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ElementSourceField -%>
@@ -73,7 +77,7 @@ void ast_free_base_node(AST_NODE_T* node) {
   if (node == NULL) { return; }
 
   if (node->errors) {
-    for (size_t i = 0; i < hb_array_size(node->errors); i++) {
+    for (size_t i = 0; i < node->errors->size; i++) {
       ERROR_T* child = hb_array_get(node->errors, i);
       if (child != NULL) { error_free(child); }
     }
@@ -99,7 +103,7 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ArrayField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
-    for (size_t i = 0; i < hb_array_size(<%= node.human %>-><%= field.name %>); i++) {
+    for (size_t i = 0; i < <%= node.human %>-><%= field.name %>->size; i++) {
       AST_NODE_T* child = hb_array_get(<%= node.human %>-><%= field.name %>, i);
       if (child) { ast_node_free(child); }
     }
