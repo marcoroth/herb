@@ -15,6 +15,7 @@
     "@herb-tools/rewriter": "javascript/packages/rewriter",
     "@herb-tools/tailwind-class-sorter": "javascript/packages/tailwind-class-sorter",
     "stimulus-lint": "javascript/packages/stimulus-lint",
+    "turbo-lint": "javascript/packages/turbo-lint",
     "herb-language-server": "javascript/packages/herb-language-server",
     "vscode": "javascript/packages/vscode",
     "docs": "./docs",
