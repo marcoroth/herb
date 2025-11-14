@@ -8,12 +8,6 @@ import { createJiti, type Jiti } from 'jiti'
 import postcss from 'postcss'
 // @ts-ignore
 import postcssImport from 'postcss-import'
-// @ts-ignore
-import { generateRules as generateRulesFallback } from 'tailwindcss/lib/lib/generateRules'
-// @ts-ignore
-import { createContext as createContextFallback } from 'tailwindcss/lib/lib/setupContextUtils'
-import loadConfigFallback from 'tailwindcss/loadConfig'
-import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import type { RequiredConfig } from 'tailwindcss/types/config.js'
 import { expiringMap } from './expiring-map.js'
 import { resolveCssFrom, resolveJsFrom } from './resolve'
@@ -84,10 +78,10 @@ async function loadTailwindConfig(
   tailwindConfigPath: string | null,
   entryPoint: string | null,
 ): Promise<ContextContainer> {
-  let createContext = createContextFallback
-  let generateRules = generateRulesFallback
-  let resolveConfig = resolveConfigFallback
-  let loadConfig = loadConfigFallback
+  let createContext: any
+  let generateRules: any
+  let resolveConfig: any
+  let loadConfig: any
   let tailwindConfig: RequiredConfig = { content: [] }
 
   try {
@@ -111,7 +105,12 @@ async function loadTailwindConfig(
 
     // Prior to `tailwindcss@3.3.0` this won't exist so we load it last
     loadConfig = require(path.join(pkgDir, 'loadConfig'))
-  } catch {}
+  } catch (error) {
+    throw new Error(
+      `Failed to load Tailwind CSS. Make sure 'tailwindcss' is installed in your project.\n` +
+      `Original error: ${error instanceof Error ? error.message : String(error)}`
+    )
+  }
 
   if (tailwindConfigPath) {
     try {

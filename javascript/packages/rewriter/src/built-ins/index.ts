@@ -1,33 +1,38 @@
 import type { RewriterClass } from "../type-guards.js"
 
+// Re-export for users who want to import directly
 export { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
-import { TailwindClassSorterRewriter } from "./tailwind-class-sorter.js"
 
 /**
- * All built-in rewriters available in the package
+ * Registry of built-in rewriters with lazy loading to avoid
+ * loading heavy dependencies (like tailwindcss) unless needed
  */
-export const builtinRewriters: RewriterClass[] = [
-  TailwindClassSorterRewriter
-]
+const builtinRewriterRegistry = {
+  "tailwind-class-sorter": async () => {
+    const { TailwindClassSorterRewriter } = await import("./tailwind-class-sorter.js")
+    return TailwindClassSorterRewriter
+  }
+}
 
 /**
- * Get a built-in rewriter by name
+ * All built-in rewriters available in the package.
+ * Note: This loads all rewriters eagerly. For lazy loading, use getBuiltinRewriter().
  */
-export function getBuiltinRewriter(name: string): RewriterClass | undefined {
-  return builtinRewriters.find(RewriterClass => {
-    const instance = new RewriterClass()
+export const builtinRewriters: RewriterClass[] = []
 
-    return instance.name === name
-  })
+/**
+ * Get a built-in rewriter by name (lazy loaded)
+ */
+export async function getBuiltinRewriter(name: string): Promise<RewriterClass | undefined> {
+  const loader = builtinRewriterRegistry[name as keyof typeof builtinRewriterRegistry]
+  if (!loader) return undefined
+
+  return await loader()
 }
 
 /**
  * Get all built-in rewriter names
  */
 export function getBuiltinRewriterNames(): string[] {
-  return builtinRewriters.map(RewriterClass => {
-    const instance = new RewriterClass()
-
-    return instance.name
-  })
+  return Object.keys(builtinRewriterRegistry)
 }
