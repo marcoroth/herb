@@ -168,11 +168,8 @@ jobs:
           name: npm-packages
           path: javascript/packages/
 
-      - name: Publish formatter preview
-        run: npx pkg-pr-new publish --compact --comment=update --no-template \
-          './javascript/packages/formatter' \
-          './javascript/packages/linter' \
-          './javascript/packages/language-server'
+      - name: Publish preview packages
+        run: npx pkg-pr-new publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server'
 
   publish-vscode:
     name: Publish VSCode extension
