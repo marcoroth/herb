@@ -3,8 +3,14 @@ name: JavaScript
 on:
   push:
     branches:
-      - main
+      - "**"
+    tags:
+      - "!**"
   pull_request:
+  pull_request_review:
+    types: [submitted]
+  release:
+    types: [published]
 
 permissions:
   actions: read
@@ -67,6 +73,14 @@ jobs:
       - name: Run `test` for all NX packages
         run: yarn test
 
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: javascript/packages/*/
+          if-no-files-found: error
+          retention-days: 1
+
       # NX is not able to properly detect affected changes if things change in C source or the WASM build
       #
       # - name: Set NX SHAs
@@ -75,3 +89,116 @@ jobs:
       # # Nx Affected runs only tasks affected by the changes in this PR/commit. Learn more: https://nx.dev/ci/features/affected
       # - run: npx nx affected -t build
       # - run: npx nx affected -t test
+
+  publish:
+    name: Publish packages to npm
+    if: github.event_name == 'release' && github.repository_owner == 'marcoroth'
+    needs: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: javascript/packages/
+
+      - name: Publish packages with provenance
+        run: |
+          for package_dir in javascript/packages/*; do
+            if [ -d "$package_dir" ] && [ -f "$package_dir/package.json" ]; then
+              package=$(basename "$package_dir")
+
+              if [ "$package" = "vscode" ]; then
+                echo "Skipping vscode package..."
+                continue
+              fi
+
+              echo "Publishing $package..."
+              (cd "$package_dir" && npm publish --provenance --access public)
+            fi
+          done
+
+  preview-check:
+    if: |
+      github.repository == 'marcoroth/herb' &&
+      (github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
+      (github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
+
+    runs-on: ubuntu-latest
+    outputs:
+      has-permissions: ${{ steps.check.outputs.require-result }}
+
+    steps:
+      - name: Check permissions
+        id: check
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+
+  preview:
+    name: Publish preview packages
+    needs: [main, preview-check]
+    if: needs.preview-check.outputs.has-permissions == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: javascript/packages/
+
+      - name: Publish preview packages
+        run: npx pkg-pr-new publish --compact --comment=update --packageManager=yarn './javascript/packages/*'
+
+  publish-vscode:
+    name: Publish VSCode extension
+    if: github.event_name == 'release' && github.repository_owner == 'marcoroth'
+    needs: main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-packages
+          path: javascript/packages/
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          cd javascript/packages/vscode
+          npx @vscode/vsce publish
+
+      - name: Publish to Open VSX Registry
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          cd javascript/packages/vscode
+          npx ovsx publish -p $OVSX_PAT
