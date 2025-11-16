@@ -147,7 +147,6 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% page_title = "User Profile" %>
-
       <% user_data = { name: "John", age: 30 } %>
 
       <!DOCTYPE html>
@@ -236,9 +235,7 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <h1>Title</h1>
-
       <p>Content</p>
-
       <footer>Footer</footer>
     `)
   })

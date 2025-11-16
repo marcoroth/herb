@@ -10,8 +10,13 @@
 
 <p align="center">
   <a href="https://rubygems.org/gems/herb"><img alt="Gem Version" src="https://img.shields.io/gem/v/herb"></a>
+  <a href="https://crates.io/crates/herb"><img alt="Crates.io Version" src="https://img.shields.io/crates/v/herb"></a>
+  <a href="https://www.npmjs.com/package/@herb-tools/core"><img alt="npm Version" src="https://img.shields.io/npm/v/@herb-tools/core"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp"><img alt="VS Code Marketplace" src="https://img.shields.io/visual-studio-marketplace/v/marcoroth.herb-lsp"></a>
+  <a href="https://open-vsx.org/extension/marcoroth/herb-lsp"><img alt="Open VSX" src="https://img.shields.io/open-vsx/v/marcoroth/herb-lsp"></a>
   <a href="https://herb-tools.dev"><img alt="Documentation" src="https://img.shields.io/badge/documentation-available-green"></a>
   <a href="https://herb-tools.dev/playground"><img alt="playground" src="https://img.shields.io/badge/playground-Try_it_in_the_browser!-green"></a>
+  <a href="https://pkg.pr.new/~/marcoroth/herb"><img alt="pkg.pr.new" src="https://pkg.pr.new/badge/marcoroth/herb"></a>
   <a href="https://github.com/marcoroth/herb/blob/main/LICENSE.txt"><img alt="License" src="https://img.shields.io/github/license/marcoroth/herb"></a>
   <a href="https://github.com/marcoroth/herb/issues"><img alt="Issues" src="https://img.shields.io/github/issues/marcoroth/herb"></a>
 </p>
@@ -99,7 +104,7 @@ Commands:
   bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
 ```
 
-For detailed information, like how you can use Herb programatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
+For detailed information, like how you can use Herb programmatically in Ruby and JavaScript, visit the [documentation site](https://herb-tools.dev/bindings/ruby/reference).
 
 
 ## Background and Talk

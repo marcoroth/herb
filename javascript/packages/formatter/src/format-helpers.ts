@@ -56,17 +56,6 @@ export const SPACEABLE_CONTAINERS = new Set([
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
 
-export const TIGHT_GROUP_PARENTS = new Set([
-  'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead',
-  'tbody', 'tfoot'
-])
-
-export const TIGHT_GROUP_CHILDREN = new Set([
-  'li', 'option', 'td', 'th', 'dt', 'dd'
-])
-
-export const SPACING_THRESHOLD = 3
-
 /**
  * Token list attributes that contain space-separated values and benefit from
  * spacing around ERB content for readability

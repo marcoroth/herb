@@ -85,7 +85,6 @@ describe("ERB Formatter Additional Tests", () => {
 
       expect(result).toBe(dedent`
         <%- vite_client_tag %>
-
         <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
 
         <%= stylesheet_link_tag "tailwind",
@@ -159,6 +158,7 @@ describe("ERB Formatter Additional Tests", () => {
           <div>
             <div>
               <span>Short text</span>
+
               <p>
                 In the event we decide to issue a refund, we will reimburse you no later
                 than fourteen (14) days from the date on which we make that

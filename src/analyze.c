@@ -288,7 +288,7 @@ static AST_NODE_T* create_control_node(
   if (end_node) {
     end_position = end_node->base.location.end;
   } else if (children && hb_array_size(children) > 0) {
-    AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+    AST_NODE_T* last_child = hb_array_last(children);
     end_position = last_child->location.end;
   } else if (subsequent) {
     end_position = subsequent->location.end;
@@ -695,10 +695,10 @@ static size_t process_control_structure(
     } else if (else_clause) {
       end_position = else_clause->base.location.end;
     } else if (hb_array_size(when_conditions) > 0) {
-      AST_NODE_T* last_when = hb_array_get(when_conditions, hb_array_size(when_conditions) - 1);
+      AST_NODE_T* last_when = hb_array_last(when_conditions);
       end_position = last_when->location.end;
     } else if (hb_array_size(in_conditions) > 0) {
-      AST_NODE_T* last_in = hb_array_get(in_conditions, hb_array_size(in_conditions) - 1);
+      AST_NODE_T* last_in = hb_array_last(in_conditions);
       end_position = last_in->location.end;
     }
 
@@ -955,7 +955,7 @@ static size_t process_control_structure(
     if (end_node) {
       end_position = end_node->base.location.end;
     } else if (children && hb_array_size(children) > 0) {
-      AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+      AST_NODE_T* last_child = hb_array_last(children);
       end_position = last_child->location.end;
     }
 
@@ -1139,7 +1139,7 @@ static size_t process_block_children(
       hb_array_T* temp_array = hb_array_init(1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
-      if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_get(temp_array, 0)); }
+      if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_first(temp_array)); }
 
       hb_array_free(&temp_array);
 

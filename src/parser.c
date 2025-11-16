@@ -315,8 +315,8 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   position_T node_end = { 0 };
 
   if (children->size > 0) {
-    AST_NODE_T* first_child = hb_array_get(children, 0);
-    AST_NODE_T* last_child = hb_array_get(children, children->size - 1);
+    AST_NODE_T* first_child = hb_array_first(children);
+    AST_NODE_T* last_child = hb_array_last(children);
 
     node_start = first_child->location.start;
     node_end = last_child->location.end;

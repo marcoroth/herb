@@ -42,6 +42,16 @@ For occasional use without installing:
 npx @herb-tools/formatter template.html.erb
 ```
 
+### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the formatter from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/formatter@{commit} template.html.erb
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
+
 ### Project Installation
 
 :::code-group
