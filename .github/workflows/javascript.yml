@@ -63,9 +63,13 @@ jobs:
         run: yarn playwright install
 
       - name: Build tailwind-class-sorter package
+        env:
+          RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
         run: yarn nx build @herb-tools/tailwind-class-sorter
 
       - name: Run `build` for all NX packages
+        env:
+          RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
         run: yarn build
 
       - name: Run `test` for all NX packages
