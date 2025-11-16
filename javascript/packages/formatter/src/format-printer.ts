@@ -1179,6 +1179,14 @@ export class FormatPrinter extends Printer {
         }
       }).join("")
 
+      const isConditionalComment = /^\[if\s*[^\]]*\]>/.test(inner.trim())
+
+      if (isConditionalComment) {
+        this.pushWithIndent(open + inner + close)
+
+        return
+      }
+
       const hasNewlines = inner.includes('\n')
 
       if (hasNewlines) {
