@@ -1517,6 +1517,16 @@ export class FormatPrinter extends Printer {
     if (!openTagInline) return false
     if (children.length === 0) return true
 
+    const hasNonInlineChildElements = children.some(child => {
+      if (isNode(child, HTMLElementNode)) {
+        return !this.shouldRenderElementContentInline(child)
+      }
+
+      return false
+    })
+
+    if (hasNonInlineChildElements) return false
+
     let hasLeadingHerbDisable = false
 
     for (const child of node.body) {
@@ -1538,7 +1548,7 @@ export class FormatPrinter extends Printer {
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
-        return totalLength <= this.maxLineLength || totalLength <= 120
+        return totalLength <= this.maxLineLength
       }
 
       return false
@@ -1573,8 +1583,9 @@ export class FormatPrinter extends Printer {
 
       const childrenContent = this.renderChildrenInline(children)
       const fullLine = openTagResult + childrenContent + `</${tagName}>`
+      const totalLength = this.indent.length + fullLine.length
 
-      if ((this.indent.length + fullLine.length) <= this.maxLineLength) {
+      if (totalLength <= this.maxLineLength) {
         return true
       }
     }

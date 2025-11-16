@@ -795,100 +795,102 @@ describe("@herb-tools/formatter", () => {
       </script>
      `
 
-     const expected = dedent`
-       <div class="relative">
-         <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
-           <span>Show/Hide Columns</span>
-         </button>
+    const expected = dedent`
+      <div class="relative">
+        <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
+          <span>Show/Hide Columns</span>
+        </button>
 
-         <div
-           id="column-dropdown"
-           class="
-             absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
-             hidden
-           "
-         >
-           <div class="flex flex-col space-y-1 min-w-[200px]">
-             <% columns.each do |column| %>
-               <div class="form-control">
-                 <label class="cursor-pointer label justify-start gap-2">
-                   <input
-                     type="checkbox"
-                     class="column-toggle checkbox checkbox-sm"
-                     data-column="<%= column[:name] %>"
-                     <%= 'checked' if column[:default_visible] %>
-                   >
+        <div
+          id="column-dropdown"
+          class="
+            absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
+            hidden
+          "
+        >
+          <div class="flex flex-col space-y-1 min-w-[200px]">
+            <% columns.each do |column| %>
+              <div class="form-control">
+                <label class="cursor-pointer label justify-start gap-2">
+                  <input
+                    type="checkbox"
+                    class="column-toggle checkbox checkbox-sm"
+                    data-column="<%= column[:name] %>"
+                    <%= 'checked' if column[:default_visible] %>
+                  >
 
-                   <span class="label-text text-muted-foreground"><%= column[:label] %></span>
-                 </label>
-               </div>
-             <% end %>
-           </div>
-         </div>
-       </div>
+                  <span class="label-text text-muted-foreground">
+                    <%= column[:label] %>
+                  </span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
 
-       <script>
-       document.addEventListener('DOMContentLoaded', function() {
-         // Column toggle functionality
-         const columnToggleBtn = document.getElementById('column-toggle-btn');
-         const columnDropdown = document.getElementById('column-dropdown');
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Column toggle functionality
+        const columnToggleBtn = document.getElementById('column-toggle-btn');
+        const columnDropdown = document.getElementById('column-dropdown');
 
-         // Toggle dropdown visibility
-         columnToggleBtn.addEventListener('click', function() {
-           columnDropdown.classList.toggle('hidden');
-         });
+        // Toggle dropdown visibility
+        columnToggleBtn.addEventListener('click', function() {
+          columnDropdown.classList.toggle('hidden');
+        });
 
-         // Close dropdown when clicking outside
-         document.addEventListener('click', function(event) {
-           if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
-             columnDropdown.classList.add('hidden');
-           }
-         });
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+          if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
+            columnDropdown.classList.add('hidden');
+          }
+        });
 
-         // Handle column visibility toggles
-         const columnToggles = document.querySelectorAll('.column-toggle');
+        // Handle column visibility toggles
+        const columnToggles = document.querySelectorAll('.column-toggle');
+        columnToggles.forEach(toggle => {
+          toggle.addEventListener('change', function() {
+            const columnName = this.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+
+            columnCells.forEach(cell => {
+              if (this.checked) {
+                cell.style.display = '';
+              } else {
+                cell.style.display = 'none';
+              }
+            });
+
+            // Save column visibility preferences to localStorage
+            localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
+          });
+
+          // Apply saved preferences on load
+          const columnName = toggle.dataset.column;
+          const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
+
+          if (savedPreference === 'hidden') {
+            toggle.checked = false;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+
          columnToggles.forEach(toggle => {
-           toggle.addEventListener('change', function() {
-             const columnName = this.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-
-             columnCells.forEach(cell => {
-               if (this.checked) {
-                 cell.style.display = '';
-               } else {
-                 cell.style.display = 'none';
-               }
-             });
-
-             // Save column visibility preferences to localStorage
-             localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
-           });
-
-           // Apply saved preferences on load
-           const columnName = toggle.dataset.column;
-           const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
-
-           if (savedPreference === 'hidden') {
-             toggle.checked = false;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-
-          columnToggles.forEach(toggle => {
-           if (!toggle.checked) {
-             const columnName = toggle.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-       });
-       </script>
-     `
+          if (!toggle.checked) {
+            const columnName = toggle.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+      });
+      </script>
+    `
 
     const result = formatter.format(input)
     expect(result).toBe(expected)
@@ -1365,7 +1367,9 @@ describe("@herb-tools/formatter", () => {
             <span>
               <strong>Cover Image</strong><br>
               Dimensions
-              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
+              <strong>
+                <%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %>
+              </strong>
               &mdash;
               <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
             </span>
