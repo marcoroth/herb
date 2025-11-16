@@ -3,9 +3,7 @@ name: Rust
 on:
   push:
     branches:
-      - "**"
-    tags:
-      - "!**"
+      - main
   pull_request:
   release:
     types: [published]

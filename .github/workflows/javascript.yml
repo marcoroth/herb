@@ -3,9 +3,7 @@ name: JavaScript
 on:
   push:
     branches:
-      - "**"
-    tags:
-      - "!**"
+      - main
   pull_request:
   pull_request_review:
     types: [submitted]
@@ -131,9 +129,8 @@ jobs:
 
   preview-check:
     if: |
-      github.repository == 'marcoroth/herb' &&
-      (github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
-      (github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
+      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
+      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
 
     runs-on: ubuntu-latest
     outputs:
