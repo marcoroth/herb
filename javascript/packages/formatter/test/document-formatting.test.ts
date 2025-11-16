@@ -116,6 +116,7 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <% title = "Test" %>
+
       <div><%= title %></div>
     `)
   })
@@ -234,9 +235,7 @@ describe("Document-level formatting", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <h1>Title</h1>
-
       <p>Content</p>
-
       <footer>Footer</footer>
     `)
   })

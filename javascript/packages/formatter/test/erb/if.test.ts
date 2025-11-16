@@ -139,6 +139,7 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% [1,2].each do |value| %>
           <% next if false %>
+
           <div></div>
         <% end %>
       `
@@ -181,6 +182,7 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% loop do %>
           <% break if done %>
+
           <div>Loop content</div>
         <% end %>
       `
@@ -222,6 +224,7 @@ describe("@herb-tools/formatter", () => {
       const expected = dedent`
         <% items.each do |item| %>
           <% next unless item.visible? %>
+
           <div><%= item.name %></div>
         <% end %>
       `

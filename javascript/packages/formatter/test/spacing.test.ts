@@ -408,6 +408,7 @@ describe("Spacing", () => {
           <span>Span 1</span>
           <span>Span 2</span>
           <span>Span 3</span>
+
           <em>Emphasis</em>
           <strong>Strong</strong>
         </p>

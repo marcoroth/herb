@@ -531,10 +531,8 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div>
           <h1>Тест UTF-8 🚀</h1>
-
           <p>Café, naïve, résumé</p>
           <span>中文测试</span>
-
           <div>🍰🎉🎊✨🌟💫⭐🔥💥🎯</div>
         </div>
       `)

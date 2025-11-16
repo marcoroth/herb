@@ -49,9 +49,6 @@ import {
   FORMATTABLE_ATTRIBUTES,
   INLINE_ELEMENTS,
   SPACEABLE_CONTAINERS,
-  SPACING_THRESHOLD,
-  TIGHT_GROUP_CHILDREN,
-  TIGHT_GROUP_PARENTS,
   TOKEN_LIST_ATTRIBUTES,
 } from "./format-helpers.js"
 
@@ -443,49 +440,35 @@ export class FormatPrinter extends Printer {
     }
 
     const meaningfulSiblings = siblings.filter(child => isNonWhitespaceNode(child))
-
-    if (meaningfulSiblings.length < SPACING_THRESHOLD) {
-      return false
-    }
-
     const parentTagName = parentElement ? getTagName(parentElement) : null
-
-    if (parentTagName && TIGHT_GROUP_PARENTS.has(parentTagName)) {
-      return false
-    }
-
     const isSpaceableContainer = !parentTagName || (parentTagName && SPACEABLE_CONTAINERS.has(parentTagName))
 
     if (!isSpaceableContainer && meaningfulSiblings.length < 5) {
       return false
     }
 
-    if (previousMeaningfulIndex !== -1) {
-      const tagGroups = this.detectTagGroups(siblings)
-      const currentGroup = tagGroups.get(currentIndex)
-      const previousGroup = tagGroups.get(previousMeaningfulIndex)
+    const tagGroups = this.detectTagGroups(siblings)
+    const currentGroup = tagGroups.get(currentIndex)
+    const previousGroup = previousMeaningfulIndex !== -1 ? tagGroups.get(previousMeaningfulIndex) : undefined
 
-      if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
-        return false
-      }
+    if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
+      return false
+    }
 
-      if (previousGroup && currentGroup && previousGroup.groupEnd === previousMeaningfulIndex && currentGroup.groupStart === currentIndex) {
-        return true
-      }
+    if (previousGroup && previousGroup.groupEnd === previousMeaningfulIndex) {
+      return true
+    }
+
+    const allSingleLineHTMLElements = meaningfulSiblings.every(node => isNode(node, HTMLElementNode) && !this.isMultilineElement(node))
+
+    if (allSingleLineHTMLElements && tagGroups.size === 0) {
+      return false
     }
 
     if (isNode(currentNode, HTMLElementNode)) {
       const currentTagName = getTagName(currentNode)
 
       if (INLINE_ELEMENTS.has(currentTagName)) {
-        return false
-      }
-
-      if (TIGHT_GROUP_CHILDREN.has(currentTagName)) {
-        return false
-      }
-
-      if (currentTagName === 'a' && parentTagName === 'nav') {
         return false
       }
     }
