@@ -81,6 +81,16 @@ npm install -g @herb-tools/language-server
 yarn global add @herb-tools/language-server
 ```
 
+##### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the language server from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/language-server@{commit} --stdio
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
+
 ##### Run
 
 ```bash
