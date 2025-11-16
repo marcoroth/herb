@@ -25,6 +25,12 @@ function isExternal(id) {
   )
 }
 
+function allExternal(id) {
+  if (id.includes(".")) return false
+
+  return true
+}
+
 export default [
   // CLI entry point (CommonJS)
   {
@@ -55,7 +61,7 @@ export default [
       format: "cjs",
       sourcemap: enableSourcemaps,
     },
-    external: isExternal,
+    external: allExternal,
     plugins: [
       nodeResolve(),
       commonjs(),
