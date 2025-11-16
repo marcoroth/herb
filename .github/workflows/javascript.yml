@@ -168,12 +168,23 @@ jobs:
           name: npm-packages
           path: javascript/packages/
 
-      - name: Publish preview packages
+      - name: Publish formatter preview package
         run: |
-          npx pkg-pr-new publish --compact --comment=update --packageManager=yarn \
-            './javascript/packages/formatter'
+          npx pkg-pr-new publish --compact --comment=update --no-template --bin './javascript/packages/formatter'
 
-      #
+      - name: Publish linter preview package
+        run: |
+          npx pkg-pr-new publish --compact --comment=update --no-template --bin './javascript/packages/linter'
+
+      - name: Publish language-server preview package
+        run: |
+          npx pkg-pr-new publish --compact --comment=update --no-template --bin './javascript/packages/language-server'
+
+      - name: Publish node-wasm preview package
+        run: |
+          npx pkg-pr-new publish --compact --comment=update --no-template --packageManager=yarn './javascript/packages/node-wasm'
+
+
       # - name: Publish preview packages
       #   run: |
       #     npx pkg-pr-new publish --compact --comment=update --packageManager=yarn \
