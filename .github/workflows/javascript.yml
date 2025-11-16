@@ -171,19 +171,25 @@ jobs:
       - name: Publish preview packages
         run: |
           npx pkg-pr-new publish --compact --comment=update --packageManager=yarn \
-            './javascript/packages/browser' \
-            './javascript/packages/config' \
-            './javascript/packages/core' \
-            './javascript/packages/dev-tools' \
-            './javascript/packages/formatter' \
-            './javascript/packages/highlighter' \
-            './javascript/packages/language-server' \
-            './javascript/packages/linter' \
-            './javascript/packages/node' \
-            './javascript/packages/node-wasm' \
-            './javascript/packages/printer' \
-            './javascript/packages/rewriter' \
-            './javascript/packages/stimulus-lint'
+            './javascript/packages/formatter'
+
+      #
+      # - name: Publish preview packages
+      #   run: |
+      #     npx pkg-pr-new publish --compact --comment=update --packageManager=yarn \
+      #       './javascript/packages/browser' \
+      #       './javascript/packages/config' \
+      #       './javascript/packages/core' \
+      #       './javascript/packages/dev-tools' \
+      #       './javascript/packages/formatter' \
+      #       './javascript/packages/highlighter' \
+      #       './javascript/packages/language-server' \
+      #       './javascript/packages/linter' \
+      #       './javascript/packages/node' \
+      #       './javascript/packages/node-wasm' \
+      #       './javascript/packages/printer' \
+      #       './javascript/packages/rewriter' \
+      #       './javascript/packages/stimulus-lint'
 
   publish-vscode:
     name: Publish VSCode extension
