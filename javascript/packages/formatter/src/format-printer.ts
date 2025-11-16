@@ -1179,9 +1179,9 @@ export class FormatPrinter extends Printer {
         }
       }).join("")
 
-      const isConditionalComment = /^\[if\s*[^\]]*\]>/.test(inner.trim())
+      const trimmedInner = inner.trim()
 
-      if (isConditionalComment) {
+      if (trimmedInner.startsWith('[if ') && trimmedInner.endsWith('<![endif]')) {
         this.pushWithIndent(open + inner + close)
 
         return

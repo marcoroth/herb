@@ -48,4 +48,18 @@ describe("Outlook conditional comments", () => {
     const result = formatter.format(source)
     expect(result).toEqual(source)
   })
+
+  test("handles conditional comment with ERB interpolation", () => {
+    const source = dedent`
+      <!--[if mso]>
+      <table width="<%= width %>" cellpadding="0" cellspacing="0">
+        <tr>
+          <td><%= content %></td>
+        </tr>
+      </table>
+      <![endif]-->
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(source)
+  })
 })
