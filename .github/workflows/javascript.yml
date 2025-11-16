@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened, synchronize, labeled]
   pull_request_review:
     types: [submitted]
   release:
@@ -134,18 +135,27 @@ jobs:
   preview-check:
     if: |
       (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && github.event.pull_request.user.login == github.repository_owner) ||
-      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request_review' && github.event.review.state == 'approved')
+      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
+      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request_review' && github.event.review.state == 'approved') ||
+      (github.repository == 'marcoroth/herb' && github.event_name == 'pull_request_review' && contains(github.event.pull_request.labels.*.name, 'release-preview')) ||
+      (github.repository == 'marcoroth/herb' && github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     runs-on: ubuntu-latest
     outputs:
-      has-permissions: ${{ steps.check.outputs.require-result }}
+      has-permissions: ${{ steps.check.outputs.require-result || steps.push-check.outputs.result }}
 
     steps:
       - name: Check permissions
         id: check
+        if: github.event_name != 'push'
         uses: actions-cool/check-user-permission@v2
         with:
           require: write
+
+      - name: Set permission for push events
+        id: push-check
+        if: github.event_name == 'push'
+        run: echo "result=true" >> $GITHUB_OUTPUT
 
   preview:
     name: Publish preview packages
