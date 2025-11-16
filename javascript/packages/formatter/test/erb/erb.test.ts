@@ -35,13 +35,8 @@ describe("@herb-tools/formatter", () => {
       <%= title %>
       <%= title %>
     `
-    const expected = dedent`
-      <%= title %>
-
-      <%= title %>
-    `
     const result = formatter.format(source)
-    expect(result).toEqual(expected)
+    expect(result).toEqual(source)
   })
 
   test("adjecent ERB output tags without space on top-level", () => {
@@ -569,9 +564,7 @@ describe("@herb-tools/formatter", () => {
       >
         <head>
           <meta charset="utf-8">
-
           <meta http-equiv="x-ua-compatible" content="ie=edge">
-
           <meta name="viewport" content="width=device-width, initial-scale=1">
 
           <meta
@@ -582,8 +575,8 @@ describe("@herb-tools/formatter", () => {
           <meta name="x-apple-disable-message-reformatting">
 
           <title><%= message.subject %> | Company</title>
-
           <%= stylesheet_link_tag "mailer", media: "all" %>
+
           <style>
             @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
           </style>
@@ -601,10 +594,12 @@ describe("@herb-tools/formatter", () => {
             }
           </style>
         </head>
+
         <body style="font-family: 'DM Sans', Arial, sans-serif;">
           <% if content_for?(:preheader) %>
             <div class="hidden"><%= yield :preheader %></div>
           <% end %>
+
           <div
             role="article"
             aria-roledescription="email"
@@ -621,6 +616,7 @@ describe("@herb-tools/formatter", () => {
               <tr>
                 <td height="32"></td>
               </tr>
+
               <tr>
                 <td align="center">
                   <table
@@ -644,8 +640,10 @@ describe("@herb-tools/formatter", () => {
                             <% else %>
                               <%= hosted_image_tag('mailer/header-logo.png', class: 'h-[35px] block mb-3') %>
                             <% end %>
+
                             <%= yield %>
                           </div>
+
                           <div
                             class="
                               p-4 bg-primary-foreground text-center border-t
@@ -653,6 +651,7 @@ describe("@herb-tools/formatter", () => {
                             "
                           >
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
+
                             <p class="text-muted-foreground text-sm leading-5">
                               &copy;<%= Time.current.year %> - Company Inc, All
                               rights reserved.
@@ -672,6 +671,7 @@ describe("@herb-tools/formatter", () => {
                   </table>
                 </td>
               </tr>
+
               <tr>
                 <td height="32"></td>
               </tr>
@@ -800,6 +800,7 @@ describe("@herb-tools/formatter", () => {
          <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
            <span>Show/Hide Columns</span>
          </button>
+
          <div
            id="column-dropdown"
            class="
@@ -817,6 +818,7 @@ describe("@herb-tools/formatter", () => {
                      data-column="<%= column[:name] %>"
                      <%= 'checked' if column[:default_visible] %>
                    >
+
                    <span class="label-text text-muted-foreground"><%= column[:label] %></span>
                  </label>
                </div>
@@ -1339,9 +1341,7 @@ describe("@herb-tools/formatter", () => {
       <p>Why wait now? Schedule your next pickup today!</p>
 
       <%= render "user_mailer/schedule_now" %>
-
       <%= render "user_subscription_mailer/more_info" %>
-
       <%= render "user_mailer/questions" %>
 
       <p>
@@ -1360,6 +1360,7 @@ describe("@herb-tools/formatter", () => {
       <% if cover.present? %>
         <figure class="figure">
           <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
+
           <figcaption class="figure-caption text-center">
             <span>
               <strong>Cover Image</strong><br>

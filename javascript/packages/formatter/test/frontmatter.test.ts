@@ -149,7 +149,6 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toEqual(dedent`
       --- title: Test --- not closing
-
       <div>Content</div>
     `)
   })

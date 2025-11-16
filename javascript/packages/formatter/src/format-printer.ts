@@ -13,6 +13,8 @@ import {
   isERBNode,
   isCommentNode,
   isERBControlFlowNode,
+  isERBCommentNode,
+  isERBOutputNode,
   filterNodes,
 } from "@herb-tools/core"
 
@@ -288,6 +290,86 @@ export class FormatPrinter extends Printer {
     return nodes.filter(child => isNoneOf(child, HTMLAttributeNode, WhitespaceNode))
   }
 
+
+  /**
+   * Determine if an HTML element or ERB block would format to multiple lines
+   * Used for spacing multiline elements
+   *
+   * We render the node and check if the output contains newlines.
+   * This is the most accurate and reliable way to determine multiline status.
+   */
+  private isMultilineElement(node: Node): boolean {
+    try {
+      return this.capture(() => this.visit(node)).join("\n").trim().includes("\n")
+    } catch (e) {
+      return false
+    }
+  }
+
+  /**
+   * Get a grouping key for a node (tag name for HTML, ERB type for ERB)
+   */
+  private getGroupingKey(node: Node): string | null {
+    if (isNode(node, HTMLElementNode)) {
+      return getTagName(node)
+    }
+
+    if (isERBOutputNode(node)) return "erb-output"
+    if (isERBCommentNode(node)) return "erb-comment"
+    if (isERBNode(node)) return "erb-code"
+
+    return null
+  }
+
+  /**
+   * Detect groups of consecutive same-tag/same-type single-line elements
+   * Returns a map of index -> group info for efficient lookup
+   */
+  private detectTagGroups(siblings: Node[]): Map<number, { tagName: string; groupStart: number; groupEnd: number }> {
+    const groupMap = new Map<number, { tagName: string; groupStart: number; groupEnd: number }>()
+    const meaningfulNodes: Array<{ index: number; groupKey: string }> = []
+
+    for (let i = 0; i < siblings.length; i++) {
+      const node = siblings[i]
+
+      if (!this.isMultilineElement(node)) {
+        const groupKey = this.getGroupingKey(node)
+
+        if (groupKey) {
+          meaningfulNodes.push({ index: i, groupKey })
+        }
+      }
+    }
+
+    let groupStart = 0
+
+    while (groupStart < meaningfulNodes.length) {
+      const startGroupKey = meaningfulNodes[groupStart].groupKey
+      let groupEnd = groupStart
+
+      while (groupEnd + 1 < meaningfulNodes.length && meaningfulNodes[groupEnd + 1].groupKey === startGroupKey) {
+        groupEnd++
+      }
+
+      if (groupEnd > groupStart) {
+        const groupStartIndex = meaningfulNodes[groupStart].index
+        const groupEndIndex = meaningfulNodes[groupEnd].index
+
+        for (let i = groupStart; i <= groupEnd; i++) {
+          groupMap.set(meaningfulNodes[i].index, {
+            tagName: startGroupKey,
+            groupStart: groupStartIndex,
+            groupEnd: groupEndIndex
+          })
+        }
+      }
+
+      groupStart = groupEnd + 1
+    }
+
+    return groupMap
+  }
+
   /**
    * Determine if spacing should be added between sibling elements
    *
@@ -309,14 +391,55 @@ export class FormatPrinter extends Printer {
     currentIndex: number,
     hasExistingSpacing: boolean
   ): boolean {
+    const currentNode = siblings[currentIndex]
+
     if (hasExistingSpacing) {
       return true
+    }
+
+    const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
+
+    if (previousMeaningfulIndex !== -1) {
+      const previousNode = siblings[previousMeaningfulIndex]
+
+      if (isNode(previousNode, XMLDeclarationNode) || isNode(previousNode, HTMLDoctypeNode)) {
+        return true
+      }
+    }
+
+    const isCurrentComment = isCommentNode(currentNode)
+
+    if (previousMeaningfulIndex !== -1) {
+      const previousNode = siblings[previousMeaningfulIndex]
+      const isPreviousComment = isCommentNode(previousNode)
+
+      if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
+        const isPreviousMultiline = this.isMultilineElement(previousNode)
+        const isCurrentMultiline = this.isMultilineElement(currentNode)
+
+        if (isPreviousMultiline && isCurrentMultiline) {
+          return true
+        }
+
+        return false
+      }
+
+      if (isPreviousComment && isCurrentComment) {
+        return false
+      }
     }
 
     const hasMixedContent = siblings.some(child => isNode(child, HTMLTextNode) && child.content.trim() !== "")
 
     if (hasMixedContent) {
       return false
+    }
+
+    const isCurrentMultiline = this.isMultilineElement(currentNode)
+    const isPreviousMultiline = previousMeaningfulIndex !== -1 && this.isMultilineElement(siblings[previousMeaningfulIndex])
+
+    if (isCurrentMultiline || isPreviousMultiline) {
+      return true
     }
 
     const meaningfulSiblings = siblings.filter(child => isNonWhitespaceNode(child))
@@ -337,20 +460,17 @@ export class FormatPrinter extends Printer {
       return false
     }
 
-    const currentNode = siblings[currentIndex]
-    const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
-    const isCurrentComment = isCommentNode(currentNode)
-
     if (previousMeaningfulIndex !== -1) {
-      const previousNode = siblings[previousMeaningfulIndex]
-      const isPreviousComment = isCommentNode(previousNode)
+      const tagGroups = this.detectTagGroups(siblings)
+      const currentGroup = tagGroups.get(currentIndex)
+      const previousGroup = tagGroups.get(previousMeaningfulIndex)
 
-      if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
+      if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
         return false
       }
 
-      if (isPreviousComment && isCurrentComment) {
-        return false
+      if (previousGroup && currentGroup && previousGroup.groupEnd === previousMeaningfulIndex && currentGroup.groupStart === currentIndex) {
+        return true
       }
     }
 
@@ -676,7 +796,21 @@ export class FormatPrinter extends Printer {
       }
 
       if (isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
-        this.push("")
+        const previousNode = i > 0 ? children[i - 1] : null
+        const hasExistingSpacing = !!(previousNode && isNode(previousNode, HTMLTextNode) &&
+          previousNode.content.trim() === "" &&
+          (previousNode.content.includes('\n\n') || previousNode.content.split('\n').length > 2))
+
+        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(
+          null,
+          children,
+          i,
+          hasExistingSpacing
+        )
+
+        if (shouldAddSpacing) {
+          this.push("")
+        }
       }
 
       this.visit(child)
@@ -1189,8 +1323,7 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    // TODO: this feels hacky
-    if (node.tag_opening?.value === "<%#") {
+    if (isERBCommentNode(node)) {
       this.visitERBCommentNode(node)
     } else {
       this.printERBNode(node)
