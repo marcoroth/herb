@@ -382,58 +382,33 @@ export class FormatPrinter extends Printer {
    * @param hasExistingSpacing - Whether user-added spacing already exists
    * @returns true if spacing should be added before the current element
    */
-  private shouldAddSpacingBetweenSiblings(
-    parentElement: HTMLElementNode | null,
-    siblings: Node[],
-    currentIndex: number,
-    hasExistingSpacing: boolean
-  ): boolean {
+  private shouldAddSpacingBetweenSiblings(parentElement: HTMLElementNode | null, siblings: Node[], currentIndex: number, hasExistingSpacing: boolean): boolean {
+    if (hasExistingSpacing) return true
+
     const currentNode = siblings[currentIndex]
-
-    if (hasExistingSpacing) {
-      return true
-    }
-
     const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
+    const previousNode = previousMeaningfulIndex !== -1 ? siblings[previousMeaningfulIndex] : null
 
-    if (previousMeaningfulIndex !== -1) {
-      const previousNode = siblings[previousMeaningfulIndex]
-
-      if (isNode(previousNode, XMLDeclarationNode) || isNode(previousNode, HTMLDoctypeNode)) {
-        return true
-      }
-    }
-
-    const isCurrentComment = isCommentNode(currentNode)
-
-    if (previousMeaningfulIndex !== -1) {
-      const previousNode = siblings[previousMeaningfulIndex]
-      const isPreviousComment = isCommentNode(previousNode)
-
-      if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
-        const isPreviousMultiline = this.isMultilineElement(previousNode)
-        const isCurrentMultiline = this.isMultilineElement(currentNode)
-
-        if (isPreviousMultiline && isCurrentMultiline) {
-          return true
-        }
-
-        return false
-      }
-
-      if (isPreviousComment && isCurrentComment) {
-        return false
-      }
+    if (previousNode && (isNode(previousNode, XMLDeclarationNode) || isNode(previousNode, HTMLDoctypeNode))) {
+      return true
     }
 
     const hasMixedContent = siblings.some(child => isNode(child, HTMLTextNode) && child.content.trim() !== "")
 
-    if (hasMixedContent) {
-      return false
+    if (hasMixedContent) return false
+
+    const isCurrentComment = isCommentNode(currentNode)
+    const isPreviousComment = previousNode ? isCommentNode(previousNode) : false
+    const isCurrentMultiline = this.isMultilineElement(currentNode)
+    const isPreviousMultiline = previousNode ? this.isMultilineElement(previousNode) : false
+
+    if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
+      return isPreviousMultiline && isCurrentMultiline
     }
 
-    const isCurrentMultiline = this.isMultilineElement(currentNode)
-    const isPreviousMultiline = previousMeaningfulIndex !== -1 && this.isMultilineElement(siblings[previousMeaningfulIndex])
+    if (isPreviousComment && isCurrentComment) {
+      return false
+    }
 
     if (isCurrentMultiline || isPreviousMultiline) {
       return true
@@ -449,7 +424,7 @@ export class FormatPrinter extends Printer {
 
     const tagGroups = this.detectTagGroups(siblings)
     const currentGroup = tagGroups.get(currentIndex)
-    const previousGroup = previousMeaningfulIndex !== -1 ? tagGroups.get(previousMeaningfulIndex) : undefined
+    const previousGroup = previousNode ? tagGroups.get(previousMeaningfulIndex) : undefined
 
     if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
       return false
@@ -468,7 +443,7 @@ export class FormatPrinter extends Printer {
     if (isNode(currentNode, HTMLElementNode)) {
       const currentTagName = getTagName(currentNode)
 
-      if (INLINE_ELEMENTS.has(currentTagName)) {
+      if (currentTagName && INLINE_ELEMENTS.has(currentTagName)) {
         return false
       }
     }
