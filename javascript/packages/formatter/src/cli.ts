@@ -8,7 +8,7 @@ import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath }
 import { colorize } from "@herb-tools/highlighter"
 
 import { Formatter } from "./formatter.js"
-import { ASTRewriter, StringRewriter, CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
+import { ASTRewriter, StringRewriter, CustomRewriterLoader, getBuiltinRewriter, getBuiltinRewriterNames, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
 import { parseArgs } from "util"
 
 import { name, version, dependencies } from "../package.json"
@@ -204,9 +204,6 @@ export class CLI {
       if (formatterConfig.rewriter && (rewriterNames.pre.length > 0 || rewriterNames.post.length > 0)) {
         const baseDir = config.projectPath || process.cwd()
         const warnings: string[] = []
-        const allRewriterClasses: any[] = []
-
-        allRewriterClasses.push(...builtinRewriters)
 
         const loader = new CustomRewriterLoader({ baseDir })
         const { rewriters: customRewriters, rewriterInfo, duplicateWarnings } = await loader.loadRewritersWithInfo()
@@ -223,11 +220,10 @@ export class CLI {
           console.error()
         }
 
-        allRewriterClasses.push(...customRewriters)
         warnings.push(...duplicateWarnings)
 
         const rewriterMap = new Map<string, any>()
-        for (const RewriterClass of allRewriterClasses) {
+        for (const RewriterClass of customRewriters) {
           const instance = new RewriterClass()
 
           if (rewriterMap.has(instance.name)) {
@@ -235,6 +231,18 @@ export class CLI {
           }
 
           rewriterMap.set(instance.name, RewriterClass)
+        }
+
+        const allRequestedNames = [...rewriterNames.pre, ...rewriterNames.post]
+        const builtinNames = getBuiltinRewriterNames()
+
+        for (const name of allRequestedNames) {
+          if (!rewriterMap.has(name) && builtinNames.includes(name)) {
+            const RewriterClass = await getBuiltinRewriter(name)
+            if (RewriterClass) {
+              rewriterMap.set(name, RewriterClass)
+            }
+          }
         }
 
         for (const name of rewriterNames.pre) {

@@ -2,7 +2,7 @@ import { Connection, TextDocuments, DocumentFormattingParams, DocumentRangeForma
 import { TextDocument } from "vscode-languageserver-textdocument"
 import { Formatter, defaultFormatOptions } from "@herb-tools/formatter"
 import { ASTRewriter, StringRewriter } from "@herb-tools/rewriter"
-import { CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
+import { CustomRewriterLoader, getBuiltinRewriter, getBuiltinRewriterNames, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
 import { Project } from "./project"
 import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
@@ -74,24 +74,35 @@ export class FormattingService {
       const preNames = this.config.formatter.rewriter.pre || []
       const postNames = this.config.formatter.rewriter.post || []
       const warnings: string[] = []
-      const allRewriterClasses: any[] = []
-
-      allRewriterClasses.push(...builtinRewriters)
 
       const loader = new CustomRewriterLoader({ baseDir })
       const { rewriters: customRewriters, duplicateWarnings } = await loader.loadRewritersWithInfo()
 
-      allRewriterClasses.push(...customRewriters)
       warnings.push(...duplicateWarnings)
 
       const rewriterMap = new Map<string, any>()
 
-      for (const RewriterClass of allRewriterClasses) {
+      for (const RewriterClass of customRewriters) {
         const instance = new RewriterClass()
+
         if (rewriterMap.has(instance.name)) {
           warnings.push(`Rewriter "${instance.name}" is defined multiple times. Using the last definition.`)
         }
+
         rewriterMap.set(instance.name, RewriterClass)
+      }
+
+      const allRequestedNames = [...preNames, ...postNames]
+      const builtinNames = getBuiltinRewriterNames()
+
+      for (const name of allRequestedNames) {
+        if (!rewriterMap.has(name) && builtinNames.includes(name)) {
+          const RewriterClass = await getBuiltinRewriter(name)
+
+          if (RewriterClass) {
+            rewriterMap.set(name, RewriterClass)
+          }
+        }
       }
 
       const preRewriters: ASTRewriter[] = []
