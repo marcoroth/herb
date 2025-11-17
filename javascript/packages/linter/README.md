@@ -349,6 +349,36 @@ To disable all linting rules for a specific line, use `all`:
 Inline disable comments only affect the line they appear on. Each line that needs linting disabled must have its own disable comment.
 :::
 
+### Disabling Linting for Entire Files <Badge type="info" text="v0.8.2+" />
+
+You can disable linting for an entire file by adding the `ignore` directive anywhere in your template:
+
+```erb
+<%# herb:linter ignore %>
+```
+
+**Example:**
+
+:::code-group
+```erb [ignored.html.erb]
+<%# herb:linter ignore %>
+
+<DIV>
+  <SPAN>This entire file will not be linted</SPAN>
+</DIV>
+```
+
+```erb [regular.html.erb]
+<DIV>
+  <SPAN>This entire file will not be linted</SPAN>
+</DIV>
+```
+:::
+
+::: warning Important
+The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
+:::
+
 ## Configuration
 
 Create a `.herb.yml` file in your project root to configure the linter:
