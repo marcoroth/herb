@@ -10,14 +10,17 @@ function getCommitInfo() {
   const isGitHubActions = process.env.GITHUB_ACTIONS === 'true'
 
   if (isGitHubActions) {
-    hash = process.env.GITHUB_SHA?.substring(0, 8) || "unknown"
-
-    if (process.env.GITHUB_EVENT_NAME === 'pull_request' && process.env.GITHUB_PR_NUMBER) {
+    if (process.env.GITHUB_EVENT_NAME === 'pull_request' && process.env.GITHUB_PR_HEAD_SHA) {
+      hash = process.env.GITHUB_PR_HEAD_SHA.substring(0, 8)
       prNumber = process.env.GITHUB_PR_NUMBER
       tag = `PR #${prNumber}`
       ahead = 0
       console.log(`GitHub Actions PR build: hash=${hash}, PR=${prNumber}`)
-    } else if (process.env.GITHUB_REF?.startsWith('refs/tags/')) {
+    } else {
+      hash = process.env.GITHUB_SHA?.substring(0, 8) || "unknown"
+    }
+
+    if (process.env.GITHUB_REF?.startsWith('refs/tags/')) {
       tag = process.env.GITHUB_REF.replace('refs/tags/', '')
       ahead = 0
       console.log(`GitHub Actions tag build: hash=${hash}, tag=${tag}`)
