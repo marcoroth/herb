@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [opened, synchronize, labeled]
+    types: [opened, synchronize, labeled, closed]
   pull_request_review:
     types: [submitted]
   release:
@@ -17,6 +17,7 @@ permissions:
 
 jobs:
   main:
+    if: github.event.action != 'closed'
     env:
       GH_TOKEN: ${{ github.token }}
 
@@ -71,6 +72,7 @@ jobs:
       - name: Run `build` for all NX packages
         env:
           RELEASE_BUILD: ${{ github.event_name == 'release' && 'true' || 'false' }}
+          GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: yarn build
 
       - name: Run `test` for all NX packages
@@ -81,6 +83,15 @@ jobs:
         with:
           name: npm-packages
           path: javascript/packages/*/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload docs artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-preview
+          path: docs/.vitepress/dist
           if-no-files-found: error
           retention-days: 1
 
@@ -213,3 +224,128 @@ jobs:
         run: |
           cd javascript/packages/vscode
           npx ovsx publish -p $OVSX_PAT
+
+  deploy-preview:
+    name: Deploy docs preview to Cloudflare Pages
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    needs: main
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+
+    steps:
+      - name: Download docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-preview
+          path: dist
+
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: herb-tools
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment with preview URL
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previewUrl = '${{ steps.deploy.outputs.url }}';
+            const comment = `### 🌿 Interactive Playground and Documentation Preview
+
+            A preview deployment has been built for this pull request. Try out the changes live in the interactive playground:
+
+            - **[Playground Preview](${previewUrl}/playground)**
+            - **[Documentation Preview](${previewUrl})**
+            - **[Website Preview](${previewUrl})**
+
+            ---
+            <sub>🌱 Grown from commit [\`${context.payload.pull_request.head.sha.substring(0, 7)}\`](https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${context.payload.pull_request.head.sha})</sub>`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🌿 Interactive Playground and Documentation Preview')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  cleanup-preview:
+    name: Cleanup docs preview deployment
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Delete Cloudflare Pages deployment
+        run: |
+          DEPLOYMENTS=$(curl -s -X GET \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/herb-tools/deployments" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json")
+
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          DEPLOYMENT_ID=$(echo "$DEPLOYMENTS" | jq -r ".result[] | select(.deployment_trigger.metadata.branch == \"$BRANCH_NAME\") | .id" | head -n 1)
+
+          if [ -n "$DEPLOYMENT_ID" ]; then
+            echo "Deleting deployment $DEPLOYMENT_ID for branch $BRANCH_NAME"
+            curl -X DELETE \
+              "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/herb-tools/deployments/$DEPLOYMENT_ID" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json"
+          else
+            echo "No deployment found for branch $BRANCH_NAME"
+          fi
+
+      - name: Update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('🌿 Interactive Playground and Documentation Preview')
+            );
+
+            if (botComment) {
+              const updatedComment = botComment.body + '\n\n---\n\n✅ Preview deployment has been cleaned up.';
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: updatedComment
+              });
+            }
