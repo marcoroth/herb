@@ -370,7 +370,7 @@ You can disable linting for an entire file by adding the `ignore` directive anyw
 
 ```erb [regular.html.erb]
 <DIV>
-  <SPAN>This entire file will not be linted</SPAN>
+  <SPAN>This entire file will be linted</SPAN>
 </DIV>
 ```
 :::
