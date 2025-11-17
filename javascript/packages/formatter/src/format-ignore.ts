@@ -32,12 +32,6 @@ export function hasFormatterIgnoreDirective(node: Node): boolean {
 class FormatterIgnoreDetector extends Visitor {
   public hasIgnoreDirective = false
 
-  visitNode(node: Node): void {
-    if (this.hasIgnoreDirective) return
-
-    this.visitChildNodes(node)
-  }
-
   visitERBContentNode(node: ERBContentNode): void {
     if (isHerbFormatterIgnoreComment(node)) {
       this.hasIgnoreDirective = true

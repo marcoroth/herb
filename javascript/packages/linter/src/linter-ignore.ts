@@ -37,12 +37,6 @@ export function hasLinterIgnoreDirective(parseResult: ParseResult): boolean {
 class LinterIgnoreDetector extends Visitor {
   public hasIgnoreDirective = false
 
-  visitNode(node: Node): void {
-    if (this.hasIgnoreDirective) return
-
-    this.visitChildNodes(node)
-  }
-
   visitERBContentNode(node: ERBContentNode): void {
     if (isHerbLinterIgnoreComment(node)) {
       this.hasIgnoreDirective = true

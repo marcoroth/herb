@@ -121,6 +121,11 @@ export class FormatPrinter extends Printer {
   private currentAttributeName: string | null = null
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
+  private nodeIsMultiline = new Map<Node, boolean>()
+  private stringLineCount: number = 0
+  private tagGroupsCache = new Map<Node[], Map<number, { tagName: string; groupStart: number; groupEnd: number }>>()
+  private allSingleLineCache = new Map<Node[], boolean>()
+
 
   public source: string
 
@@ -140,6 +145,10 @@ export class FormatPrinter extends Printer {
     // TODO: refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
     this.lines = []
     this.indentLevel = 0
+    this.stringLineCount = 0
+    this.nodeIsMultiline.clear()
+    this.tagGroupsCache.clear()
+    this.allSingleLineCache.clear()
 
     this.visit(node)
 
@@ -178,17 +187,30 @@ export class FormatPrinter extends Printer {
   private capture(callback: () => void): string[] {
     const previousLines = this.lines
     const previousInlineMode = this.inlineMode
+    const previousStringLineCount = this.stringLineCount
 
     this.lines = []
+    this.stringLineCount = 0
 
     try {
       callback()
-
       return this.lines
     } finally {
       this.lines = previousLines
       this.inlineMode = previousInlineMode
+      this.stringLineCount = previousStringLineCount
     }
+  }
+
+  /**
+   * Track a boundary node's multiline status by comparing line count before/after rendering.
+   */
+  private trackBoundary(node: Node, callback: () => void): void {
+    const startLineCount = this.stringLineCount
+    callback()
+    const endLineCount = this.stringLineCount
+
+    this.nodeIsMultiline.set(node, (endLineCount - startLineCount) > 1)
   }
 
   /**
@@ -231,6 +253,7 @@ export class FormatPrinter extends Printer {
    */
   private push(line: string) {
     this.lines.push(line)
+    this.stringLineCount++
   }
 
   /**
@@ -287,20 +310,25 @@ export class FormatPrinter extends Printer {
     return nodes.filter(child => isNoneOf(child, HTMLAttributeNode, WhitespaceNode))
   }
 
-
   /**
-   * Determine if an HTML element or ERB block would format to multiple lines
-   * Used for spacing multiline elements
-   *
-   * We render the node and check if the output contains newlines.
-   * This is the most accurate and reliable way to determine multiline status.
+   * Check if a node will render as multiple lines when formatted.
    */
   private isMultilineElement(node: Node): boolean {
-    try {
-      return this.capture(() => this.visit(node)).join("\n").trim().includes("\n")
-    } catch (e) {
-      return false
+    if (isNode(node, ERBContentNode)) {
+      return (node.content?.value || "").includes("\n")
     }
+
+    if (isNode(node, HTMLElementNode) && isContentPreserving(node)) {
+      return true
+    }
+
+    const tracked = this.nodeIsMultiline.get(node)
+
+    if (tracked !== undefined) {
+      return tracked
+    }
+
+    return false
   }
 
   /**
@@ -323,6 +351,9 @@ export class FormatPrinter extends Printer {
    * Returns a map of index -> group info for efficient lookup
    */
   private detectTagGroups(siblings: Node[]): Map<number, { tagName: string; groupStart: number; groupEnd: number }> {
+    const cached = this.tagGroupsCache.get(siblings)
+    if (cached) return cached
+
     const groupMap = new Map<number, { tagName: string; groupStart: number; groupEnd: number }>()
     const meaningfulNodes: Array<{ index: number; groupKey: string }> = []
 
@@ -364,6 +395,8 @@ export class FormatPrinter extends Printer {
       groupStart = groupEnd + 1
     }
 
+    this.tagGroupsCache.set(siblings, groupMap)
+
     return groupMap
   }
 
@@ -382,9 +415,7 @@ export class FormatPrinter extends Printer {
    * @param hasExistingSpacing - Whether user-added spacing already exists
    * @returns true if spacing should be added before the current element
    */
-  private shouldAddSpacingBetweenSiblings(parentElement: HTMLElementNode | null, siblings: Node[], currentIndex: number, hasExistingSpacing: boolean): boolean {
-    if (hasExistingSpacing) return true
-
+  private shouldAddSpacingBetweenSiblings(parentElement: HTMLElementNode | null, siblings: Node[], currentIndex: number): boolean {
     const currentNode = siblings[currentIndex]
     const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
     const previousNode = previousMeaningfulIndex !== -1 ? siblings[previousMeaningfulIndex] : null
@@ -416,13 +447,22 @@ export class FormatPrinter extends Printer {
 
     const meaningfulSiblings = siblings.filter(child => isNonWhitespaceNode(child))
     const parentTagName = parentElement ? getTagName(parentElement) : null
-    const isSpaceableContainer = !parentTagName || (parentTagName && SPACEABLE_CONTAINERS.has(parentTagName))
+    const isSpaceableContainer = !parentTagName || SPACEABLE_CONTAINERS.has(parentTagName)
+    const tagGroups = this.detectTagGroups(siblings)
+
+    const cached = this.allSingleLineCache.get(siblings)
+    let allSingleLineHTMLElements: boolean
+    if (cached !== undefined) {
+      allSingleLineHTMLElements = cached
+    } else {
+      allSingleLineHTMLElements = meaningfulSiblings.every(node => isNode(node, HTMLElementNode) && !this.isMultilineElement(node))
+      this.allSingleLineCache.set(siblings, allSingleLineHTMLElements)
+    }
 
     if (!isSpaceableContainer && meaningfulSiblings.length < 5) {
       return false
     }
 
-    const tagGroups = this.detectTagGroups(siblings)
     const currentGroup = tagGroups.get(currentIndex)
     const previousGroup = previousNode ? tagGroups.get(previousMeaningfulIndex) : undefined
 
@@ -433,8 +473,6 @@ export class FormatPrinter extends Printer {
     if (previousGroup && previousGroup.groupEnd === previousMeaningfulIndex) {
       return true
     }
-
-    const allSingleLineHTMLElements = meaningfulSiblings.every(node => isNode(node, HTMLElementNode) && !this.isMultilineElement(node))
 
     if (allSingleLineHTMLElements && tagGroups.size === 0) {
       return false
@@ -730,7 +768,7 @@ export class FormatPrinter extends Printer {
       return
     }
 
-    let lastWasMeaningful = false
+    let lastMeaningfulNode: Node | null = null
     let hasHandledSpacing = false
 
     for (let i = 0; i < children.length; i++) {
@@ -748,35 +786,27 @@ export class FormatPrinter extends Printer {
 
       if (shouldAppendToLastLine(child, children, i)) {
         this.appendChildToLastLine(child, children, i)
-        lastWasMeaningful = true
+        lastMeaningfulNode = child
         hasHandledSpacing = false
         continue
       }
 
-      if (isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
-        const previousNode = i > 0 ? children[i - 1] : null
-        const hasExistingSpacing = !!(previousNode && isNode(previousNode, HTMLTextNode) &&
-          previousNode.content.trim() === "" &&
-          (previousNode.content.includes('\n\n') || previousNode.content.split('\n').length > 2))
+      if (!isNonWhitespaceNode(child)) continue
 
-        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(
-          null,
-          children,
-          i,
-          hasExistingSpacing
-        )
+      const childStartLine = this.stringLineCount
+      this.visit(child)
+
+      if (lastMeaningfulNode && !hasHandledSpacing) {
+        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings( null, children, i)
 
         if (shouldAddSpacing) {
-          this.push("")
+          this.lines.splice(childStartLine, 0, "")
+          this.stringLineCount++
         }
       }
 
-      this.visit(child)
-
-      if (isNonWhitespaceNode(child)) {
-        lastWasMeaningful = true
-        hasHandledSpacing = false
-      }
+      lastMeaningfulNode = child
+      hasHandledSpacing = false
     }
   }
 
@@ -784,23 +814,23 @@ export class FormatPrinter extends Printer {
     this.elementStack.push(node)
     this.elementFormattingAnalysis.set(node, this.analyzeElementFormatting(node))
 
-    if (this.inlineMode && node.is_void && this.indentLevel === 0) {
-      const openTag = this.capture(() => this.visit(node.open_tag)).join('')
-      this.pushToLastLine(openTag)
-      this.elementStack.pop()
+    this.trackBoundary(node, () => {
+      if (this.inlineMode && node.is_void && this.indentLevel === 0) {
+        const openTag = this.capture(() => this.visit(node.open_tag)).join('')
+        this.pushToLastLine(openTag)
+        return
+      }
 
-      return
-    }
+      this.visit(node.open_tag)
 
-    this.visit(node.open_tag)
+      if (node.body.length > 0) {
+        this.visitHTMLElementBody(node.body, node)
+      }
 
-    if (node.body.length > 0) {
-      this.visitHTMLElementBody(node.body, node)
-    }
-
-    if (node.close_tag) {
-      this.visit(node.close_tag)
-    }
+      if (node.close_tag) {
+        this.visit(node.close_tag)
+      }
+    })
 
     this.elementStack.pop()
   }
@@ -975,21 +1005,22 @@ export class FormatPrinter extends Printer {
 
   /**
    * Visit element children with intelligent spacing logic
+   *
+   * Tracks line positions and immediately splices blank lines after rendering each child.
    */
   private visitElementChildren(body: Node[], parentElement: HTMLElementNode | null) {
-    let lastWasMeaningful = false
+    let lastMeaningfulNode: Node | null = null
     let hasHandledSpacing = false
 
-    for (let i = 0; i < body.length; i++) {
-      const child = body[i]
+    for (let index = 0; index < body.length; index++) {
+      const child = body[index]
 
       if (isNode(child, HTMLTextNode)) {
         const isWhitespaceOnly = child.content.trim() === ""
 
         if (isWhitespaceOnly) {
-          const hasPreviousNonWhitespace = i > 0 && isNonWhitespaceNode(body[i - 1])
-          const hasNextNonWhitespace = i < body.length - 1 && isNonWhitespaceNode(body[i + 1])
-
+          const hasPreviousNonWhitespace = index > 0 && isNonWhitespaceNode(body[index - 1])
+          const hasNextNonWhitespace = index < body.length - 1 && isNonWhitespaceNode(body[index + 1])
           const hasMultipleNewlines = child.content.includes('\n\n')
 
           if (hasPreviousNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
@@ -1001,26 +1032,12 @@ export class FormatPrinter extends Printer {
         }
       }
 
-      if (isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
-        const element = body[i - 1]
-        const hasExistingSpacing = i > 0 && isNode(element, HTMLTextNode) && element.content.trim() === "" && (element.content.includes('\n\n') || element.content.split('\n').length > 2)
-
-        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(
-          parentElement,
-          body,
-          i,
-          hasExistingSpacing
-        )
-
-        if (shouldAddSpacing) {
-          this.push("")
-        }
-      }
+      if (!isNonWhitespaceNode(child)) continue
 
       let hasTrailingHerbDisable = false
 
       if (isNode(child, HTMLElementNode) && child.close_tag) {
-        for (let j = i + 1; j < body.length; j++) {
+        for (let j = index + 1; j < body.length; j++) {
           const nextChild = body[j]
 
           if (isNode(nextChild, WhitespaceNode) || isPureWhitespaceNode(nextChild)) {
@@ -1030,7 +1047,17 @@ export class FormatPrinter extends Printer {
           if (isNode(nextChild, ERBContentNode) && isHerbDisableComment(nextChild)) {
             hasTrailingHerbDisable = true
 
+            const childStartLine = this.stringLineCount
             this.visit(child)
+
+            if (lastMeaningfulNode && !hasHandledSpacing) {
+              const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+
+              if (shouldAddSpacing) {
+                this.lines.splice(childStartLine, 0, "")
+                this.stringLineCount++
+              }
+            }
 
             const herbDisableString = this.capture(() => {
               const savedIndentLevel = this.indentLevel
@@ -1043,7 +1070,9 @@ export class FormatPrinter extends Printer {
 
             this.pushToLastLine(' ' + herbDisableString)
 
-            i = j
+            index = j
+            lastMeaningfulNode = child
+            hasHandledSpacing = false
 
             break
           }
@@ -1053,11 +1082,19 @@ export class FormatPrinter extends Printer {
       }
 
       if (!hasTrailingHerbDisable) {
+        const childStartLine = this.stringLineCount
         this.visit(child)
-      }
 
-      if (isNonWhitespaceNode(child)) {
-        lastWasMeaningful = true
+        if (lastMeaningfulNode && !hasHandledSpacing) {
+          const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+
+          if (shouldAddSpacing) {
+            this.lines.splice(childStartLine, 0, "")
+            this.stringLineCount++
+          }
+        }
+
+        lastMeaningfulNode = child
         hasHandledSpacing = false
       }
     }
@@ -1301,91 +1338,101 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBYieldNode(node: ERBYieldNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+    })
   }
 
   visitERBInNode(node: ERBInNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
+    })
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
 
-    this.withIndent(() => this.visitAll(node.children))
-    this.visitAll(node.conditions)
+      this.withIndent(() => this.visitAll(node.children))
+      this.visitAll(node.conditions)
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBBlockNode(node: ERBBlockNode) {
-    this.printERBNode(node)
-
-    this.withIndent(() => {
-      const hasTextFlow = this.isInTextFlowContext(null, node.body)
-
-      if (hasTextFlow) {
-        this.visitTextFlowChildren(node.body)
-      } else {
-        this.visitElementChildren(node.body, null)
-      }
-    })
-
-    if (node.end_node) this.visit(node.end_node)
-  }
-
-  visitERBIfNode(node: ERBIfNode) {
-    if (this.inlineMode) {
-      this.printERBNode(node)
-
-      node.statements.forEach(child => {
-        if (isNode(child, HTMLAttributeNode)) {
-          this.lines.push(" ")
-          this.lines.push(this.renderAttribute(child))
-        } else {
-          const shouldAddSpaces = this.isInTokenListAttribute
-
-          if (shouldAddSpaces) {
-            this.lines.push(" ")
-          }
-
-          this.visit(child)
-
-          if (shouldAddSpaces) {
-            this.lines.push(" ")
-          }
-        }
-      })
-
-      const hasHTMLAttributes = node.statements.some(child => isNode(child, HTMLAttributeNode))
-      const isTokenList = this.isInTokenListAttribute
-
-      if ((hasHTMLAttributes || isTokenList) && node.end_node) {
-        this.lines.push(" ")
-      }
-
-      if (node.subsequent) this.visit(node.subsequent)
-      if (node.end_node) this.visit(node.end_node)
-    } else {
+    this.trackBoundary(node, () => {
       this.printERBNode(node)
 
       this.withIndent(() => {
-        node.statements.forEach(child => this.visit(child))
+        const hasTextFlow = this.isInTextFlowContext(null, node.body)
+
+        if (hasTextFlow) {
+          this.visitTextFlowChildren(node.body)
+        } else {
+          this.visitElementChildren(node.body, null)
+        }
       })
 
-      if (node.subsequent) this.visit(node.subsequent)
       if (node.end_node) this.visit(node.end_node)
-    }
+    })
+  }
+
+  visitERBIfNode(node: ERBIfNode) {
+    this.trackBoundary(node, () => {
+      if (this.inlineMode) {
+        this.printERBNode(node)
+
+        node.statements.forEach(child => {
+          if (isNode(child, HTMLAttributeNode)) {
+            this.lines.push(" ")
+            this.lines.push(this.renderAttribute(child))
+          } else {
+            const shouldAddSpaces = this.isInTokenListAttribute
+
+            if (shouldAddSpaces) {
+              this.lines.push(" ")
+            }
+
+            this.visit(child)
+
+            if (shouldAddSpaces) {
+              this.lines.push(" ")
+            }
+          }
+        })
+
+        const hasHTMLAttributes = node.statements.some(child => isNode(child, HTMLAttributeNode))
+        const isTokenList = this.isInTokenListAttribute
+
+        if ((hasHTMLAttributes || isTokenList) && node.end_node) {
+          this.lines.push(" ")
+        }
+
+        if (node.subsequent) this.visit(node.subsequent)
+        if (node.end_node) this.visit(node.end_node)
+      } else {
+        this.printERBNode(node)
+
+        this.withIndent(() => {
+          node.statements.forEach(child => this.visit(child))
+        })
+
+        if (node.subsequent) this.visit(node.subsequent)
+        if (node.end_node) this.visit(node.end_node)
+      }
+    })
   }
 
   visitERBElseNode(node: ERBElseNode) {
+    this.printERBNode(node)
+
     if (this.inlineMode) {
-      this.printERBNode(node)
-      node.statements.forEach(statement => this.visit(statement))
+      this.visitAll(node.statements)
     } else {
-      this.printERBNode(node)
-      this.withIndent(() => node.statements.forEach(statement => this.visit(statement)))
+      this.withIndent(() => this.visitAll(node.statements))
     }
   }
 
@@ -1395,44 +1442,54 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBCaseNode(node: ERBCaseNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
 
-    this.withIndent(() => this.visitAll(node.children))
-    this.visitAll(node.conditions)
+      this.withIndent(() => this.visitAll(node.children))
+      this.visitAll(node.conditions)
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBBeginNode(node: ERBBeginNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.rescue_clause) this.visit(node.rescue_clause)
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.ensure_clause) this.visit(node.ensure_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.rescue_clause) this.visit(node.rescue_clause)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.ensure_clause) this.visit(node.ensure_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBWhileNode(node: ERBWhileNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBUntilNode(node: ERBUntilNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBForNode(node: ERBForNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBRescueNode(node: ERBRescueNode) {
@@ -1446,11 +1503,13 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBUnlessNode(node: ERBUnlessNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   // --- Element Formatting Analysis Helpers ---
