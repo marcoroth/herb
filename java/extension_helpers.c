@@ -60,9 +60,9 @@ jobject CreateLexResult(JNIEnv* env, hb_array_T* tokens, jstring source) {
   jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
   jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
-  jobject tokensList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, (jint) hb_array_size(tokens));
+  jobject tokensList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, (jint) tokens->size);
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+  for (size_t i = 0; i < tokens->size; i++) {
     token_T* token = (token_T*) hb_array_get(tokens, i);
     jobject tokenObj = CreateToken(env, token);
     (*env)->CallBooleanMethod(env, tokensList, addMethod, tokenObj);
@@ -85,7 +85,7 @@ jobject CreateParseResult(JNIEnv* env, AST_DOCUMENT_NODE_T* root, jstring source
   jobject errorsList = (*env)->NewObject(env, arrayListClass, arrayListConstructor);
 
   if (root->base.errors) {
-    for (size_t i = 0; i < hb_array_size(root->base.errors); i++) {
+    for (size_t i = 0; i < root->base.errors->size; i++) {
       AST_NODE_T* error_node = (AST_NODE_T*) hb_array_get(root->base.errors, i);
       jobject errorObj = CreateErrorNode(env, error_node);
       (*env)->CallBooleanMethod(env, errorsList, addMethod, errorObj);

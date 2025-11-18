@@ -19,7 +19,7 @@ void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
 }
 
 bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
-  if (hb_array_size(parser->open_tags_stack) == 0) { return false; }
+  if (parser->open_tags_stack->size == 0) { return false; }
 
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || top_token->value == NULL) { return false; };
@@ -28,7 +28,7 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
-  if (hb_array_size(parser->open_tags_stack) == 0) { return NULL; }
+  if (parser->open_tags_stack->size == 0) { return NULL; }
 
   return hb_array_pop(parser->open_tags_stack);
 }
@@ -42,7 +42,7 @@ token_T* parser_pop_open_tag(const parser_T* parser) {
 bool parser_in_svg_context(const parser_T* parser) {
   if (!parser || !parser->open_tags_stack) { return false; }
 
-  size_t stack_size = hb_array_size(parser->open_tags_stack);
+  size_t stack_size = parser->open_tags_stack->size;
 
   for (size_t i = 0; i < stack_size; i++) {
     token_T* tag = (token_T*) hb_array_get(parser->open_tags_stack, i);
@@ -191,7 +191,7 @@ void parser_handle_mismatched_tags(
   const AST_HTML_CLOSE_TAG_NODE_T* close_tag,
   hb_array_T* errors
 ) {
-  if (hb_array_size(parser->open_tags_stack) > 0) {
+  if (parser->open_tags_stack->size > 0) {
     token_T* expected_tag = hb_array_last(parser->open_tags_stack);
     token_T* actual_tag = close_tag->tag_name;
 

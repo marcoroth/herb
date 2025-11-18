@@ -67,7 +67,7 @@ val NodesArrayFromCArray(hb_array_T* array) {
 
   val jsArray = val::array();
 
-  for (size_t i = 0; i < hb_array_size(array); i++) {
+  for (size_t i = 0; i < array->size; i++) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
