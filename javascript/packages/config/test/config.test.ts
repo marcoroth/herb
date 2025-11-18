@@ -35,12 +35,12 @@ describe("@herb-tools/config", () => {
     })
 
     test("can be instantiated", () => {
-      const config = new Config(testDir, { version: "0.8.1" })
+      const config = new Config(testDir, { version: "0.8.2" })
       expect(config).toBeInstanceOf(Config)
     })
 
     test("sets correct config path", () => {
-      const config = new Config(testDir, { version: "0.8.1" })
+      const config = new Config(testDir, { version: "0.8.2" })
       expect(config.path).toBe(join(testDir, ".herb.yml"))
     })
   })
@@ -66,14 +66,14 @@ describe("@herb-tools/config", () => {
 
     test("returns true when config file exists", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.8.1\n")
+      writeFileSync(configPath, "version: 0.8.2\n")
 
       expect(Config.exists(testDir)).toBe(true)
     })
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      writeFileSync(configPath, "version: 0.8.1\n")
+      writeFileSync(configPath, "version: 0.8.2\n")
 
       expect(Config.exists(configPath)).toBe(true)
     })
@@ -83,7 +83,7 @@ describe("@herb-tools/config", () => {
     test("reads raw YAML content from config file", () => {
       const configPath = join(testDir, ".herb.yml")
       const yamlContent = dedent`
-        version: 0.8.1
+        version: 0.8.2
         linter:
           enabled: true
           rules:
@@ -98,7 +98,7 @@ describe("@herb-tools/config", () => {
 
     test("handles explicit .herb.yml path", () => {
       const configPath = join(testDir, ".herb.yml")
-      const yamlContent = "version: 0.8.1\n"
+      const yamlContent = "version: 0.8.2\n"
       writeFileSync(configPath, yamlContent)
 
       const rawYaml = Config.readRawYaml(configPath)
@@ -191,7 +191,7 @@ describe("@herb-tools/config", () => {
   describe("Config.applyMutationToYamlString", () => {
     test("applies mutation to existing YAML", () => {
       const existingYaml = dedent`
-        version: 0.8.1
+        version: 0.8.2
         linter:
           enabled: true
       `
@@ -206,7 +206,7 @@ describe("@herb-tools/config", () => {
 
       const updatedYaml = Config.applyMutationToYamlString(existingYaml, mutation)
 
-      expect(updatedYaml).toContain("version: 0.8.1")
+      expect(updatedYaml).toContain("version: 0.8.2")
       expect(updatedYaml).toContain("enabled: true")
       expect(updatedYaml).toContain("html-tag-name-lowercase:")
       expect(updatedYaml).toContain("enabled: false")
@@ -214,7 +214,7 @@ describe("@herb-tools/config", () => {
 
     test("merges rules without overwriting existing rules", () => {
       const existingYaml = dedent`
-        version: 0.8.1
+        version: 0.8.2
         linter:
           rules:
             html-img-require-alt:
@@ -237,7 +237,7 @@ describe("@herb-tools/config", () => {
 
     test("updates existing rule configuration", () => {
       const existingYaml = dedent`
-        version: 0.8.1
+        version: 0.8.2
         linter:
           rules:
             html-tag-name-lowercase:
