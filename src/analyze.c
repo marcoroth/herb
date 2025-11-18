@@ -1409,7 +1409,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
   free(invalid_context);
 }
 
-static void parse_erb_content_errors(AST_NODE_T* erb_node, AST_DOCUMENT_NODE_T* document, const char* source) {
+static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
   if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
   AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
 
@@ -1458,7 +1458,7 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
         if (error_offset >= strlen(source) || source[error_offset] != ';') {
           AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
 
-          if (erb_node) { parse_erb_content_errors(erb_node, document, source); }
+          if (erb_node) { parse_erb_content_errors(erb_node, source); }
 
           continue;
         }
