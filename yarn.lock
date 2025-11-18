@@ -5006,14 +5006,14 @@ glob@^10.2.2, glob@^10.3.10, glob@^10.4.1, glob@^10.4.5:
     package-json-from-dist "^1.0.0"
     path-scurry "^1.11.1"
 
-glob@^11.0.0, glob@^11.0.3:
-  version "11.0.3"
-  resolved "https://registry.npmjs.org/glob/-/glob-11.0.3.tgz"
-  integrity sha512-2Nim7dha1KVkaiF4q6Dj+ngPPMdfvLJEOpZk/jKiUAkqKebpGAWQXAq9z1xu9HKu5lWfqw/FASuccEjyznjPaA==
+glob@^11.0.0, glob@^11.0.3, glob@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/glob/-/glob-11.1.0.tgz#4f826576e4eb99c7dad383793d2f9f08f67e50a6"
+  integrity sha512-vuNwKSaKiqm7g0THUBu2x7ckSs3XJLXE+2ssL7/MfTGPLLcrJQ/4Uq1CjPTtO5cCIiRxqvN6Twy1qOwhL0Xjcw==
   dependencies:
     foreground-child "^3.3.1"
     jackspeak "^4.1.1"
-    minimatch "^10.0.3"
+    minimatch "^10.1.1"
     minipass "^7.1.2"
     package-json-from-dist "^1.0.0"
     path-scurry "^2.0.0"
@@ -5817,17 +5817,17 @@ js-tokens@^4.0.0:
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
 js-yaml@^3.10.0, js-yaml@^3.13.1, js-yaml@^3.14.1:
-  version "3.14.1"
-  resolved "https://registry.npmjs.org/js-yaml/-/js-yaml-3.14.1.tgz"
-  integrity sha512-okMH7OXXJ7YrN9Ok3/SXrnu4iX9yOk+25nqX4imS2npuvTYDmo/QEZoqwZkYaIDk3jVvBOTOIEgEhaLOynBS9g==
+  version "3.14.2"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.2.tgz#77485ce1dd7f33c061fd1b16ecea23b55fcb04b0"
+  integrity sha512-PMSmkqxr106Xa156c2M265Z+FTrPl+oxd/rgOQy2tijQeK5TxQ43psO1ZCwhVOSdnn+RzkzlRz/eY4BgJBYVpg==
   dependencies:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
 js-yaml@^4.1.0:
-  version "4.1.0"
-  resolved "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.0.tgz"
-  integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.1.tgz#854c292467705b699476e1a2decc0c8a3458806b"
+  integrity sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==
   dependencies:
     argparse "^2.0.1"
 

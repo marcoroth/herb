@@ -51,7 +51,7 @@
     "@herb-tools/node-wasm": "0.8.2",
     "@herb-tools/printer": "0.8.2",
     "@herb-tools/rewriter": "0.8.2",
-    "glob": "^11.0.3"
+    "glob": "^11.1.0"
   },
   "files": [
     "package.json",
