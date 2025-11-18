@@ -34,7 +34,7 @@ describe("@herb-tools/browser", () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
     const ruby = Herb.extractRuby(simpleHtml)
     expect(ruby).toBeDefined()
-    expect(ruby).toBe('         "Hello World"         ')
+    expect(ruby).toBe('         "Hello World"  ;      ')
   })
 
   test("extractHTML() extracts HTML content", async () => {
