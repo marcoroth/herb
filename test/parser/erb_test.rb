@@ -309,5 +309,76 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "hash with trailing key across tags" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= render "form", f: %>
+        <%= f.input :name %>
+      HTML
+    end
+
+    test "single hash with trailing key in div" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= render "something", thing: %>
+        </div>
+      HTML
+    end
+
+    test "multiple hash with trailing key in div" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+        </div>
+      HTML
+    end
+
+    test "many hash with trailing key in div" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+          <%= render "something", thing: %>
+        </div>
+      HTML
+    end
+
+    test "hash shorthand in parentheses across tags" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <%= something(thing:) %>
+          <%= something(thing:) %>
+        </div>
+      HTML
+    end
+
+    test "complex form with trailing hash keys" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= form_with url:, model: custom_field, scope: :custom_field, data: {turbo_frame: :_top}, class: "my-2" do |form| %>
+          <%= form.hidden_field :type, value: custom_field.type %>
+          <%= form.input :name %>
+          <%= form.check_box :required %>
+          <%= form.check_box :nullable %>
+
+          <%= component "custom_field_forms/\#{custom_field.model_name.element.underscore}", form: %>
+
+          <div class="flex justify-end mt-4 space-x-4">
+            <%= component :link, path: custom_fields_path, variant: :button, data: {turbo_frame: :_top} do %>
+              <%= t("buttons.back") %>
+            <% end %>
+
+            <%= component :button, state: :primary do %>
+              <%= button_text %>
+            <% end %>
+          </div>
+        <% end %>
+      HTML
+    end
   end
 end

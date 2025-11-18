@@ -7,13 +7,13 @@ module Extractor
     test "basic silent" do
       ruby = Herb.extract_ruby("<h1><% RUBY_VERSION %></h1>")
 
-      assert_equal "       RUBY_VERSION        ", ruby
+      assert_equal "       RUBY_VERSION  ;     ", ruby
     end
 
     test "basic loud" do
       ruby = Herb.extract_ruby("<h1><%= RUBY_VERSION %></h1>")
 
-      assert_equal "        RUBY_VERSION        ", ruby
+      assert_equal "        RUBY_VERSION  ;     ", ruby
     end
 
     test "with newlines" do
@@ -23,7 +23,7 @@ module Extractor
         </h1>
       HTML
 
-      assert_equal "    \n     RUBY_VERSION   \n     \n", actual
+      assert_equal "    \n     RUBY_VERSION  ;\n     \n", actual
     end
 
     test "nested" do
@@ -37,7 +37,7 @@ module Extractor
         </ul>
       HTML
 
-      expected = "   array = [1, 2, 3]   \n\n    \n     array.each do |item|   \n            item        \n     end   \n     \n"
+      expected = "   array = [1, 2, 3]  ;\n\n    \n     array.each do |item|  ;\n            item  ;     \n     end  ;\n     \n"
 
       assert_equal expected, actual
     end
@@ -100,7 +100,7 @@ module Extractor
         <% if %><%# comment %><% end %>
       HTML
 
-      expected = "   if                    end   \n"
+      expected = "   if  ;                 end  ;\n"
 
       assert_equal expected, actual
     end
@@ -110,7 +110,7 @@ module Extractor
         <% if %><% # comment %><% end %>
       HTML
 
-      expected = "   if      # comment      end   \n"
+      expected = "   if  ;   # comment  ;   end  ;\n"
 
       assert_equal expected, actual
     end

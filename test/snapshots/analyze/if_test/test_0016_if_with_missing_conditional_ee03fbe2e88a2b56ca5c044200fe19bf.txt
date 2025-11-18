@@ -1,5 +1,5 @@
 ---
-source: "Parser::ERBTest#test_0040_if without condition"
+source: "Analyze::IfTest#test_0016_if with missing conditional"
 input: |2-
 <% if %>
 <% end %>
