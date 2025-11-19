@@ -1,0 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0032_right trim"
+input: "{source: \"<% if true -%>\\n  <h1>Content</h1>\\n<% end -%>\\n\", locals: {}, options: {escape: false}}"
+---
+  <h1>Content</h1>

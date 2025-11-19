@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0020_test compilation"
+source: "Engine::ExamplesCompilationTest#test_0023_test compilation"
 input: "{source: \"<input required />\\n\\n<h1 class=\\\"bg-gray-300 text-gray\\\" id='' data-controller=\\\"example\\\">\\n  Hello World <%= RUBY_VERSION %>\\n</h1>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; _buf << '<input required />
