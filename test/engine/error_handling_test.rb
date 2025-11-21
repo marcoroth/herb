@@ -202,7 +202,7 @@ module Engine
 
       assert_includes error.message, "Working"
       assert_includes error.message, "wrong_tag"
-      assert_includes error.message, "→"
+      assert_includes error.message, "←"
     end
 
     test "unclosed quotes in attributes" do
