@@ -29,7 +29,7 @@
     "rollup": "^4.53.2",
     "rollup-plugin-postcss": "^4.0.2",
     "tsx": "^4.20.4",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.0",
     "yaml": "^2.8.0",
     "yeoman-environment": "^4.4.1",
