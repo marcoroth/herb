@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@herb-tools/core": "0.8.2",
-    "glob": "^11.1.0"
+    "glob": "^13.0.0"
   },
   "files": [
     "package.json",
