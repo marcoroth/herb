@@ -1,0 +1,63 @@
+---
+source: "Parser::AttributesTest#test_0060_Nested conditional attributes"
+input: "<div <% if outer? %><% if inner? %>data-inner<% end %><% end %>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:70))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:70))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:64))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:63)-(1:64))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBIfNode (location: (1:5)-(1:63))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: " if outer? " (location: (1:7)-(1:18))
+        │       │       ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ ERBIfNode (location: (1:20)-(1:54))
+        │       │       │       ├── tag_opening: "<%" (location: (1:20)-(1:22))
+        │       │       │       ├── content: " if inner? " (location: (1:22)-(1:33))
+        │       │       │       ├── tag_closing: "%>" (location: (1:33)-(1:35))
+        │       │       │       ├── statements: (1 item)
+        │       │       │       │   └── @ HTMLAttributeNode (location: (1:35)-(1:45))
+        │       │       │       │       ├── name:
+        │       │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:35)-(1:45))
+        │       │       │       │       │       └── children: (1 item)
+        │       │       │       │       │           └── @ LiteralNode (location: (1:35)-(1:45))
+        │       │       │       │       │               └── content: "data-inner"
+        │       │       │       │       │
+        │       │       │       │       │
+        │       │       │       │       ├── equals: ∅
+        │       │       │       │       └── value: ∅
+        │       │       │       │
+        │       │       │       ├── subsequent: ∅
+        │       │       │       └── end_node:
+        │       │       │           └── @ ERBEndNode (location: (1:45)-(1:54))
+        │       │       │               ├── tag_opening: "<%" (location: (1:45)-(1:47))
+        │       │       │               ├── content: " end " (location: (1:47)-(1:52))
+        │       │       │               └── tag_closing: "%>" (location: (1:52)-(1:54))
+        │       │       │
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:54)-(1:63))
+        │       │               ├── tag_opening: "<%" (location: (1:54)-(1:56))
+        │       │               ├── content: " end " (location: (1:56)-(1:61))
+        │       │               └── tag_closing: "%>" (location: (1:61)-(1:63))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:64)-(1:70))
+        │       ├── tag_opening: "</" (location: (1:64)-(1:66))
+        │       ├── tag_name: "div" (location: (1:66)-(1:69))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:69)-(1:70))
+        │
+        ├── is_void: false
+        └── source: "HTML"
