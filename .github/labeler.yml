@@ -150,6 +150,11 @@ node:
     - any-glob-to-any-file:
       - '**/javascript/packages/node/**/*'
 
+turbo-lint:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '**/javascript/packages/turbo-lint/**/*'
+
 stimulus-lint:
   - changed-files:
     - any-glob-to-any-file:
