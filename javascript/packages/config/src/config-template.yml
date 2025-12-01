@@ -11,7 +11,7 @@
 # GitHub Repo: https://github.com/marcoroth/herb
 #
 
-version: 0.8.2
+version: 0.8.3
 
 # files:
 #   # Additional patterns beyond the defaults (**.html, **.rhtml, **.html.erb, etc.)
