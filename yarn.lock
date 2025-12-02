@@ -720,9 +720,10 @@
   dependencies:
     "@sinclair/typebox" "^0.34.0"
 
-"@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.3.4":
-  version "2.3.4"
-  resolved "https://github.com/jothepro/doxygen-awesome-css#568f56cde6ac78b6dfcc14acd380b2e745c301ea"
+"@jothepro/doxygen-awesome-css@https://github.com/jothepro/doxygen-awesome-css#v2.4.1":
+  version "2.4.1"
+  uid "1f3620084ff75734ed192101acf40e9dff01d848"
+  resolved "https://github.com/jothepro/doxygen-awesome-css#1f3620084ff75734ed192101acf40e9dff01d848"
 
 "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.13"
