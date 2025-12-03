@@ -379,10 +379,10 @@ describe("@herb-tools/config", () => {
       expect(config.isFormatterEnabled).toBe(false)
     })
 
-    test("isFormatterEnabled returns true by default", () => {
+    test("isFormatterEnabled returns false by default", () => {
       const config = Config.fromObject({}, { projectPath: testDir })
 
-      expect(config.isFormatterEnabled).toBe(true)
+      expect(config.isFormatterEnabled).toBe(false)
     })
 
     test("isRuleDisabled returns true when rule is disabled", () => {

@@ -171,9 +171,10 @@ export class CLI {
       }
 
       const config = await Config.loadForCLI(configFile || startPath, version)
+      const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 
-      if (formatterConfig.enabled === false && !isForceMode) {
+      if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
         console.log("Formatter is disabled in .herb.yml configuration.")
         console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
         console.log("Or use --force to format anyway.")
@@ -181,7 +182,7 @@ export class CLI {
         process.exit(0)
       }
 
-      if (isForceMode && formatterConfig.enabled === false) {
+      if (isForceMode && hasConfigFile && formatterConfig.enabled === false) {
         console.error("⚠️  Forcing formatter run (disabled in .herb.yml)")
         console.error()
       }

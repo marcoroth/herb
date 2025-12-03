@@ -139,10 +139,10 @@ export class Config {
 
   /**
    * Check if the formatter is enabled.
-   * @returns true if formatter is enabled (default), false if explicitly disabled
+   * @returns true if formatter is explicitly enabled, false otherwise (default)
    */
   public get isFormatterEnabled(): boolean {
-    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? true
+    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? false
   }
 
   /**
@@ -1096,7 +1096,7 @@ export class Config {
         rules: {}
       },
       formatter: {
-        enabled: true,
+        enabled: false,
         indentWidth: 2,
         maxLineLength: 80
       }
