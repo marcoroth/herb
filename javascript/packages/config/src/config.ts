@@ -85,6 +85,8 @@ export class Config {
 
   private static PROJECT_INDICATORS = [
     '.git',
+    '.herb',
+    '.herb.yml',
     'Gemfile',
     'package.json',
     'Rakefile',
@@ -421,6 +423,71 @@ export class Config {
       return true
     } catch {
       return false
+    }
+  }
+
+  /**
+   * Find the project root by walking up from a given path.
+   * Looks for .herb.yml first, then falls back to project indicators
+   * (.git, Gemfile, package.json, etc.)
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static async findProjectRoot(startPath: string): Promise<string> {
+    const { projectRoot } = await this.findConfigFile(startPath)
+
+    return projectRoot
+  }
+
+  /**
+   * Synchronous version of findProjectRoot for use in CLIs.
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static findProjectRootSync(startPath: string): string {
+    const fsSync = require('fs')
+    let currentPath = path.resolve(startPath)
+
+    try {
+      const stats = fsSync.statSync(currentPath)
+
+      if (stats.isFile()) {
+        currentPath = path.dirname(currentPath)
+      }
+    } catch {
+      currentPath = path.resolve(process.cwd())
+    }
+
+    while (true) {
+      const configPath = path.join(currentPath, this.configPath)
+
+      try {
+        fsSync.accessSync(configPath)
+
+        return currentPath
+      } catch {
+        // Config not in this directory, continue
+      }
+
+      for (const indicator of this.PROJECT_INDICATORS) {
+        try {
+          fsSync.accessSync(path.join(currentPath, indicator))
+
+          return currentPath
+        } catch {
+          // Indicator not found, continue checking
+        }
+      }
+
+      const parentPath = path.dirname(currentPath)
+
+      if (parentPath === currentPath) {
+        return process.cwd()
+      }
+
+      currentPath = parentPath
     }
   }
 

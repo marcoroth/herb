@@ -61,13 +61,7 @@ export class CLI {
       const resolvedPattern = resolve(pattern)
 
       if (existsSync(resolvedPattern)) {
-        const stats = statSync(resolvedPattern)
-
-        if (stats.isDirectory()) {
-          this.projectPath = resolvedPattern
-        } else {
-          this.projectPath = dirname(resolvedPattern)
-        }
+        this.projectPath = Config.findProjectRootSync(resolvedPattern)
       }
     }
   }
