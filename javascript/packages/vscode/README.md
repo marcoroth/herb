@@ -18,26 +18,23 @@ If you are looking to use Herb in another editor, check out the instructions on 
 
 ## Configuration
 
-### Linter Settings
+The extension can be configured through VS Code settings or a `.herb.yml` file in your project root. Project configuration in `.herb.yml` takes precedence over VS Code settings.
 
-You can configure the linter behavior through VS Code settings:
+See the [Configuration documentation](https://herb-tools.dev/configuration) for full details.
+
+### VS Code Settings
 
 * `languageServerHerb.linter.enabled` (boolean, default: `true`) - Enable/disable the linter
-* `languageServerHerb.linter.excludedRules` (string[], default: `["parser-no-errors"]`) - Array of linter rule names to exclude from diagnostics
+* `languageServerHerb.formatter.enabled` (boolean, default: `false`) - Enable/disable the formatter
 
 #### Example configuration in `settings.json`:
 
 ```json
 {
   "languageServerHerb.linter.enabled": true,
-  "languageServerHerb.linter.excludedRules": [
-    "parser-no-errors",
-    "html-tag-name-lowercase"
-  ]
+  "languageServerHerb.formatter.enabled": true
 }
 ```
-
-**Note:** The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting, since parser errors are already displayed through the language server's built-in diagnostics.
 
 ## Functionality
 

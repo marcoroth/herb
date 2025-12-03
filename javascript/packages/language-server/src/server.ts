@@ -89,7 +89,6 @@ export class Server {
         watchers: [
           ...patterns,
           { globPattern: `**/.herb.yml` },
-          { globPattern: `**/**/.herb-lsp/config.json` },
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
@@ -119,7 +118,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        const isConfigChange = event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")
+        const isConfigChange = event.uri.endsWith("/.herb.yml")
         const isCustomRuleChange = event.uri.includes("/.herb/rules/")
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 
