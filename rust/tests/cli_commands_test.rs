@@ -4,7 +4,7 @@ use herb::{extract_html, extract_ruby, version};
 fn test_version_functions() {
   assert_eq!(
     version(),
-    "herb rust v0.7.5, libprism v1.6.0, libherb v0.7.5 (Rust FFI)"
+    "herb rust v0.8.3, libprism v1.6.0, libherb v0.8.3 (Rust FFI)"
   );
 }
 
@@ -12,7 +12,7 @@ fn test_version_functions() {
 fn test_extract_ruby() {
   let source = "<div><%= name %></div>";
   let ruby = extract_ruby(source).unwrap();
-  assert_eq!(ruby, "         name         ");
+  assert_eq!(ruby, "         name  ;      ");
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn test_extract_ruby_complex() {
   let ruby = extract_ruby(source).unwrap();
   assert_eq!(
     ruby,
-    "     \n     users.each do |user|   \n           user.name       \n     end   \n      "
+    "     \n     users.each do |user|  ;\n           user.name  ;    \n     end  ;\n      "
   );
 }
 

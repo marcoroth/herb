@@ -134,6 +134,7 @@ java/.java_compiled
 
 # Rust Build Artifacts
 rust/target/
+rust/vendor/
 rust/Cargo.lock
 
 # NX Monorepo

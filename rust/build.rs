@@ -4,14 +4,51 @@ use std::process::Command;
 
 fn main() {
   let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-  let root_dir = manifest_dir.parent().unwrap();
-  let src_dir = root_dir.join("src");
-  let prism_path = get_prism_path(root_dir);
-  let prism_include = prism_path.join("include");
-  let prism_build = prism_path.join("build");
+  let vendor_src_dir = manifest_dir.join("vendor/libherb/src");
+  let vendor_include_dir = manifest_dir.join("vendor/libherb/src/include");
 
-  println!("cargo:rustc-link-search=native={}", prism_build.display());
-  println!("cargo:rustc-link-lib=static=prism");
+  let (src_dir, include_dir, root_dir) = if vendor_src_dir.exists() {
+    (vendor_src_dir, vendor_include_dir, manifest_dir.clone())
+  } else {
+    let root = manifest_dir.parent().unwrap();
+    (
+      root.join("src"),
+      root.join("src/include"),
+      root.to_path_buf(),
+    )
+  };
+
+  let vendor_prism_src = manifest_dir.join("vendor/prism/src");
+  let vendor_prism_include = manifest_dir.join("vendor/prism/include");
+
+  let prism_include = if vendor_prism_src.exists() {
+    let mut prism_sources = Vec::new();
+    for path in glob::glob(vendor_prism_src.join("**/*.c").to_str().unwrap())
+      .unwrap()
+      .flatten()
+    {
+      prism_sources.push(path);
+    }
+
+    let mut prism_build = cc::Build::new();
+    prism_build
+      .flag("-std=c99")
+      .flag("-fPIC")
+      .opt_level(2)
+      .include(&vendor_prism_include)
+      .files(&prism_sources)
+      .warnings(false);
+
+    prism_build.compile("prism");
+
+    vendor_prism_include
+  } else {
+    let prism_path = get_prism_path(&root_dir);
+    let prism_build = prism_path.join("build");
+    println!("cargo:rustc-link-search=native={}", prism_build.display());
+    println!("cargo:rustc-link-lib=static=prism");
+    prism_path.join("include")
+  };
 
   let mut c_sources = Vec::new();
 
@@ -32,22 +69,22 @@ fn main() {
     .flag("-Wno-unused-parameter")
     .flag("-fPIC")
     .opt_level(2)
-    .include(src_dir.join("include"))
+    .include(&include_dir)
     .include(&prism_include)
     .files(&c_sources);
 
   build.compile("herb");
 
   let bindings = bindgen::Builder::default()
-    .header(src_dir.join("include/analyze.h").to_str().unwrap())
-    .header(src_dir.join("include/herb.h").to_str().unwrap())
-    .header(src_dir.join("include/ast_nodes.h").to_str().unwrap())
-    .header(src_dir.join("include/errors.h").to_str().unwrap())
-    .header(src_dir.join("include/element_source.h").to_str().unwrap())
-    .header(src_dir.join("include/token_struct.h").to_str().unwrap())
-    .header(src_dir.join("include/util/hb_string.h").to_str().unwrap())
-    .header(src_dir.join("include/util/hb_array.h").to_str().unwrap())
-    .clang_arg(format!("-I{}", src_dir.join("include").display()))
+    .header(include_dir.join("analyze.h").to_str().unwrap())
+    .header(include_dir.join("herb.h").to_str().unwrap())
+    .header(include_dir.join("ast_nodes.h").to_str().unwrap())
+    .header(include_dir.join("errors.h").to_str().unwrap())
+    .header(include_dir.join("element_source.h").to_str().unwrap())
+    .header(include_dir.join("token_struct.h").to_str().unwrap())
+    .header(include_dir.join("util/hb_string.h").to_str().unwrap())
+    .header(include_dir.join("util/hb_array.h").to_str().unwrap())
+    .clang_arg(format!("-I{}", include_dir.display()))
     .clang_arg(format!("-I{}", prism_include.display()))
     .allowlist_function("herb_.*")
     .allowlist_function("hb_array_.*")
@@ -86,10 +123,7 @@ fn main() {
     println!("cargo:rerun-if-changed={}", source.display());
   }
 
-  println!(
-    "cargo:rerun-if-changed={}",
-    src_dir.join("include").display()
-  );
+  println!("cargo:rerun-if-changed={}", include_dir.display());
   println!("cargo:rerun-if-changed=build.rs");
 }
 

@@ -265,6 +265,7 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual(dedent`
       <html>
         <head></head>
+
         <body>
           <div class="main">
             <p>

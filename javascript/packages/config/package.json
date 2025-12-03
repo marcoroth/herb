@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/config",
-  "version": "0.7.5",
+  "version": "0.8.3",
   "description": "Shared configuration utilities for Herb tools",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -30,14 +30,14 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.7.5",
+    "@herb-tools/core": "0.8.3",
     "yaml": "^2.3.4"
   },
   "devDependencies": {
     "@types/minimatch": "^6.0.0",
-    "glob": "^11.0.3",
+    "glob": "^13.0.0",
     "minimatch": "^10.1.1",
-    "zod": "^4.1.12",
+    "zod": "^4.1.13",
     "zod-validation-error": "^5.0.0"
   },
   "files": [

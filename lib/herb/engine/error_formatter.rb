@@ -98,16 +98,24 @@ module Herb
       def format_error(error, number)
         output = String.new
 
-        output << "Error ##{number}: #{error.class.name.split("::").last.gsub(/Error$/, "")}\n"
+        error_name = if error.is_a?(Hash)
+                       error[:code] || "UnknownError"
+                     else
+                       error.class.name.split("::").last.gsub(/Error$/, "")
+                     end
+
+        output << "Error ##{number}: #{error_name}\n"
         output << ("-" * 40) << "\n"
 
-        if error.location
+        location = error.is_a?(Hash) ? error[:location] : error.location
+        if location
           output << "  File: #{@filename}\n"
-          output << "  Location: Line #{error.location.start.line}, Column #{error.location.start.column}\n"
+          output << "  Location: Line #{location.start.line}, Column #{location.start.column}\n"
         end
 
-        output << "  Message: #{error.message}\n\n"
-        output << format_source_context(error) if error.location
+        error_message = error.is_a?(Hash) ? error[:message] : error.message
+        output << "  Message: #{error_message}\n\n"
+        output << format_source_context(error) if location
         output << format_error_details(error)
 
         output

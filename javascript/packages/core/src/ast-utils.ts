@@ -19,11 +19,11 @@ import {
 } from "./nodes.js"
 
 import {
-  isNode,
   isAnyOf,
   isLiteralNode,
   isERBNode,
   isERBContentNode,
+  isHTMLCommentNode,
   areAllOfType,
   filterLiteralNodes
 } from "./node-type-guards.js"
@@ -37,6 +37,12 @@ export type ERBOutputNode = ERBNode & {
   }
 }
 
+export type ERBCommentNode = ERBNode & {
+  tag_opening: {
+    value: "<%#"
+  }
+}
+
 /**
  * Checks if a node is an ERB output node (generates content: <%= %> or <%== %>)
  */
@@ -46,6 +52,17 @@ export function isERBOutputNode(node: Node): node is ERBOutputNode {
 
   return ["<%=", "<%=="].includes(node.tag_opening?.value)
 }
+
+/**
+ * Checks if a node is a ERB comment node (control flow: <%# %>)
+ */
+export function isERBCommentNode(node: Node): node is ERBCommentNode {
+  if (!isERBNode(node)) return false
+  if (!node.tag_opening?.value) return false
+
+  return node.tag_opening?.value === "<%#" || (node.tag_opening?.value !== "<%#" && (node.content?.value || "").trimStart().startsWith("#"))
+}
+
 
 /**
  * Checks if a node is a non-output ERB node (control flow: <% %>)
@@ -200,8 +217,8 @@ export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTa
 /**
  * Check if a node is a comment (HTML comment or ERB comment)
  */
-export function isCommentNode(node: Node): boolean {
-  return isNode(node, HTMLCommentNode) || (isERBNode(node) && !isERBControlFlowNode(node))
+export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentNode {
+  return isHTMLCommentNode(node) || isERBCommentNode(node)
 }
 
 /**

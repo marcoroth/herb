@@ -34,7 +34,7 @@ abstract class HerbError {
     return String.format("HerbError{type='%s', message='%s', location=%s}", type, message, location);
   }
 
-  public abstract String treeInspect();
+  public abstract String inspect();
 
   protected String indent(String str, int level) {
     if (level == 0) return str;
@@ -90,7 +90,7 @@ class <%= error.name %> extends HerbError {
   <%- end -%>
   <%- end -%>
   @Override
-  public String treeInspect() {
+  public String inspect() {
     StringBuilder output = new StringBuilder();
 
     output.append("@ <%= error.name %> ");
@@ -109,7 +109,7 @@ class <%= error.name %> extends HerbError {
     output.append("\n");
     <%- when Herb::Template::TokenField -%>
     output.append("<%= symbol %> <%= field.name %>: ");
-    output.append(<%= field.name %> != null ? <%= field.name %>.treeInspect() : "∅");
+    output.append(<%= field.name %> != null ? <%= field.name %>.inspect() : "∅");
     output.append("\n");
     <%- end -%>
     <%- end -%>

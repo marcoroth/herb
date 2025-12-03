@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    herb (0.7.5)
+    herb (0.8.3)
 
 GEM
   remote: https://rubygems.org/

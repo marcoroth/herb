@@ -94,6 +94,7 @@ describe("CLI Binary", () => {
       expect(formattedContent).toBe(dedent`
         <div class="container">
           <%= "Hello" %>
+
           <p>World</p>
         </div>
       ` + '\n')

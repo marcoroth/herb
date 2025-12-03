@@ -110,11 +110,19 @@ bool search_block_nodes(const pm_node_t* node, void* data) {
   analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
 
   if (node->type == PM_BLOCK_NODE) {
-    analyzed->has_block_node = true;
-    return true;
-  } else {
-    pm_visit_child_nodes(node, search_block_nodes, analyzed);
+    pm_block_node_t* block_node = (pm_block_node_t*) node;
+
+    size_t opening_length = block_node->opening_loc.end - block_node->opening_loc.start;
+
+    if ((opening_length == 2 && block_node->opening_loc.start[0] == 'd' && block_node->opening_loc.start[1] == 'o')
+        || (opening_length == 1 && block_node->opening_loc.start[0] == '{')) {
+      analyzed->has_block_node = true;
+
+      return true;
+    }
   }
+
+  pm_visit_child_nodes(node, search_block_nodes, analyzed);
 
   return false;
 }

@@ -201,9 +201,49 @@ export default class AddTrailingNewline extends StringRewriter {
 
 ### Using Custom Rewriters
 
-By default, rewriters are auto-discovered from: `.herb/rewriters/**/*.{js,mjs,cjs}`
+By default, rewriters are auto-discovered from: `.herb/rewriters/**/*.mjs`
 
-Which means you can just reference and configure them in `.herb.yml` using their filename.
+::: info File Extension
+Custom rewriters must use the `.mjs` extension to avoid Node.js module type warnings. The `.mjs` extension explicitly marks files as ES modules.
+:::
+
+#### Configuring in `.herb.yml`
+
+Reference custom rewriters by their name in your configuration:
+
+```yaml [.herb.yml]
+formatter:
+  enabled: true
+  rewriter:
+    pre:
+      - tailwind-class-sorter  # Built-in rewriter
+      - my-ast-rewriter        # Custom rewriter
+    post:
+      - add-trailing-newline   # Custom rewriter
+```
+
+When custom rewriters are loaded, the formatter will display them:
+
+```
+Loaded 2 custom rewriters:
+  • my-ast-rewriter (.herb/rewriters/my-ast-rewriter.mjs)
+  • add-trailing-newline (.herb/rewriters/add-newline.mjs)
+
+Using 2 pre-format rewriters:
+  • tailwind-class-sorter (built-in)
+  • my-ast-rewriter (.herb/rewriters/my-ast-rewriter.mjs)
+
+Using 1 post-format rewriter:
+  • add-trailing-newline (.herb/rewriters/add-newline.mjs)
+```
+
+::: warning Rewriter Name Clashes
+If a custom rewriter has the same name as a built-in rewriter or another custom rewriter, you'll see a warning. The custom rewriter will override the built-in one.
+:::
+
+::: tip Hot Reload
+Custom rewriters are automatically reloaded when changed in editors with the Herb Language Server. No need to restart your editor!
+:::
 
 ## API Reference
 

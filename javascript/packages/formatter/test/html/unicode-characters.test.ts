@@ -40,7 +40,6 @@ describe("Unicode character handling", () => {
       </div>
 
       <!-- HTML comment -->
-
       <%# ERB comment %>
     `)
   })
@@ -92,7 +91,6 @@ describe("Unicode character handling", () => {
       </div>
 
       <!-- HTML comment -->
-
       <%# ERB comment %>
     `)
   })
@@ -160,10 +158,12 @@ describe("Unicode character handling", () => {
         <header>
           <h1>Article — Title with 'quotes'</h1>
         </header>
+
         <div class="content">
           <p>
             First paragraph with — em dash and ’curly quotes’
           </p>
+
           <p>
             Second paragraph with – en dash
           </p>
@@ -171,7 +171,6 @@ describe("Unicode character handling", () => {
       </article>
 
       <!-- HTML comment here -->
-
       <%# ERB comment here %>
     `)
   })
@@ -189,7 +188,6 @@ describe("Unicode character handling", () => {
       <div>Content</div>
 
       <!-- Comment with — em dash and 'quotes' -->
-
       <%# ERB comment with — dash and 'apostrophe' %>
     `)
   })

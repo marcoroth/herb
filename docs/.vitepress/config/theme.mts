@@ -132,6 +132,7 @@ export function createThemeConfig() {
     logo: "/herb.svg",
     nav: [
       { text: "Home", link: "/" },
+      { text: "Blog", link: "/blog/whats-new-in-herb-v0-8" },
       { text: "Documentation", link: "/overview" },
       { text: "Playground", link: "/playground" },
     ],
@@ -180,6 +181,7 @@ export function createThemeConfig() {
         }
       ],
       '/projects/linter': linterSidebar,
+      '/blog': [],
       '/': defaultSidebar
     },
     socialLinks: [

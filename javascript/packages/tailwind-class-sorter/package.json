@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@herb-tools/tailwind-class-sorter",
   "description": "Standalone Tailwind CSS class sorter with Prettier plugin compatibility, extracted from tailwindlabs/prettier-plugin-tailwindcss",
-  "version": "0.7.5",
+  "version": "0.8.3",
   "license": "MIT",
   "main": "./dist/tailwind-class-sorter.cjs",
   "module": "./dist/tailwind-class-sorter.esm.js",
@@ -32,6 +32,8 @@
     "build": "yarn clean && rollup -c",
     "dev": "rollup -c -w",
     "clean": "rimraf dist",
+    "setup-fixtures": "bash scripts/setup-fixtures.sh",
+    "pretest": "yarn setup-fixtures",
     "test": "vitest run",
     "test:watch": "vitest --watch",
     "prepublishOnly": "yarn clean && yarn build && yarn test"

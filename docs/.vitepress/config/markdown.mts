@@ -10,6 +10,9 @@ export function createMarkdownConfig() {
       herbLinterTransformer,
     ],
     // Explicitly load these languages for types highlighting
-    languages: ["js", "jsx", "ts", "tsx", "bash", "shell", "ruby", "html", "erb"],
+    languages: ["js", "ts", "bash", "shell", "ruby", "html", "erb", "java", "rust"],
+    image: {
+      lazyLoading: true
+    },
   }
 }
