@@ -709,13 +709,37 @@ export class FormatPrinter extends Printer {
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
-    this.pushWithIndent(`<${tagName}`)
+    const herbDisableComments = allChildren.filter(child =>
+      isNode(child, ERBContentNode) && isHerbDisableComment(child)
+    )
+
+    let openingLine = `<${tagName}`
+
+    if (herbDisableComments.length > 0) {
+      const commentLines = this.capture(() => {
+        herbDisableComments.forEach(comment => {
+          const wasInlineMode = this.inlineMode
+          this.inlineMode = true
+          this.lines.push(" ")
+          this.visit(comment)
+          this.inlineMode = wasInlineMode
+        })
+      })
+
+      openingLine += commentLines.join("")
+    }
+
+    this.pushWithIndent(openingLine)
 
     this.withIndent(() => {
       allChildren.forEach(child => {
         if (isNode(child, HTMLAttributeNode)) {
           this.pushWithIndent(this.renderAttribute(child))
         } else if (!isNode(child, WhitespaceNode)) {
+          if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
+            return
+          }
+
           this.visit(child)
         }
       })
