@@ -12,14 +12,11 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
-  TextEdit,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
-
-import type { TextDocument } from "vscode-languageserver-textdocument"
 
 export class Server {
   private service!: Service
@@ -37,7 +34,7 @@ export class Server {
       await this.service.init()
 
       this.service.documentService.documents.onWillSaveWaitUntil(async (event) => {
-        return this.service.documentSaveService.applyFixesAndFormatting(event.document, event.reason)
+        return this.service.documentSaveService.applyFixes(event.document)
       })
 
       const result: InitializeResult = {
