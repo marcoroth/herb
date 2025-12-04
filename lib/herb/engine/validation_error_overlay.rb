@@ -109,6 +109,7 @@ module Herb
           When fixing these issues, ensure that:
           1. Security best practices are followed
           2. HTML structure follows proper nesting rules
+          3. Code duplication resulting from the fixes is kept to a minimum. Making use of methods (either View Component methods, helper methods, inline methods, etc.), HTML builder helper methods (ie: content_tag, etc.), procs, etc, if it means keeping the resulting code clean, readable and maintainable.
 
           Provide correct the ERB template code for each affected file.
         MARKDOWN

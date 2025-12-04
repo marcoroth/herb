@@ -639,6 +639,7 @@ module Herb
           1. All HTML tags are properly opened and closed
           2. Tags that span ERB control flow blocks are handled correctly
           3. The resulting HTML structure is valid
+          4. Code duplication resulting from the fixes is kept to a minimum. Making use of methods (either View Component methods, helper methods, inline methods, etc.), HTML builder helper methods (ie: content_tag, etc.), procs, etc, if it means keeping the resulting code clean, readable and maintainable.
         MARKDOWN
 
         prompt
