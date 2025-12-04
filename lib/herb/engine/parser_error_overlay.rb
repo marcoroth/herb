@@ -17,13 +17,14 @@ module Herb
         Herb::Errors::MissingOpeningTagError
       ].freeze
 
-      def initialize(source, errors, filename: nil)
+      def initialize(source, errors, filename: nil, default_view: :human)
         @source = source
         @errors = errors.sort_by { |error|
           [ERROR_CLASS_PRIORITRY.index(error.class) || -1, error.location.start.line, error.location.start.column]
         }
         @filename = filename || "unknown"
         @lines = source.lines
+        @default_view = default_view.to_sym
       end
 
       def generate_html
@@ -308,6 +309,95 @@ module Herb
                 border-radius: 3px;
               }
 
+              /* View toggle button */
+              .herb-parser-error-overlay .herb-view-toggle {
+                color: rgba(255, 255, 255, 0.9);
+                font-family: inherit;
+                font-size: 13px;
+                font-weight: 500;
+                padding: 6px 12px;
+                background: rgba(255, 255, 255, 0.1);
+                border: none;
+                border-radius: 6px;
+                transition: background-color 0.2s;
+                cursor: pointer;
+                white-space: nowrap;
+                flex-shrink: 0;
+              }
+
+              .herb-parser-error-overlay .herb-view-toggle:hover {
+                background: rgba(255, 255, 255, 0.2);
+              }
+
+              /* LLM view styles */
+              .herb-parser-error-overlay .herb-llm-view {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                height: 100%;
+              }
+
+              /* LLM textarea container */
+              .herb-parser-error-overlay .herb-llm-textarea-container {
+                position: relative;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+              }
+
+              .herb-parser-error-overlay .herb-copy-button {
+                position: absolute;
+                top: 8px;
+                right: 25px;
+                color: #9ca3af;
+                background: rgba(0, 0, 0, 0.5);
+                border: 1px solid #374151;
+                border-radius: 6px;
+                padding: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1;
+              }
+
+              .herb-parser-error-overlay .herb-copy-button:hover {
+                color: #e5e5e5;
+                background: rgba(0, 0, 0, 0.7);
+                border-color: #6b7280;
+              }
+
+              .herb-parser-error-overlay .herb-copy-button.copied {
+                color: #10b981;
+                border-color: #10b981;
+              }
+
+              .herb-parser-error-overlay .herb-copy-button svg {
+                width: 18px;
+                height: 18px;
+              }
+
+              .herb-parser-error-overlay .herb-llm-textarea {
+                flex: 1;
+                width: 100%;
+                min-height: 300px;
+                background: #111111;
+                border: 1px solid #374151;
+                border-radius: 8px;
+                color: #e5e5e5;
+                font-family: inherit;
+                font-size: 13px;
+                line-height: 1.6;
+                padding: 16px;
+                resize: none;
+              }
+
+              .herb-parser-error-overlay .herb-llm-textarea:focus {
+                outline: none;
+                border-color: #6366f1;
+              }
+
               @media (max-width: 768px) {
                 .herb-parser-error-overlay {
                   padding: 10px;
@@ -342,10 +432,22 @@ module Herb
                     #{escape_html(error_message)}
                   </div>
                 </div>
+                <button type="button" class="herb-view-toggle" id="herb-view-toggle">#{@default_view == :llm ? "Human view" : "LLM prompt"}</button>
               </div>
 
-              <div class="herb-error-content">
+              <div class="herb-error-content" id="herb-human-view"#{' style="display: none;"' if @default_view == :llm}>
                 #{generate_error_sections}
+              </div>
+
+              <div class="herb-error-content herb-llm-view" id="herb-llm-view"#{if @default_view == :human
+                                                                                  ' style="display: none;"'
+                                                                                end}>
+                <div class="herb-llm-textarea-container">
+                  <button type="button" class="herb-copy-button" id="herb-copy-button" title="Copy to clipboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                  <textarea class="herb-llm-textarea" id="herb-llm-prompt" readonly>#{escape_html(generate_llm_prompt)}</textarea>
+                </div>
               </div>
             </div>
 
@@ -409,7 +511,6 @@ module Herb
                 document.body.style.overflow = 'hidden';
 
                 // Restore scroll when closed (cleanup for navigation)
-                const overlay = document.querySelector('.herb-parser-error-overlay');
                 if (overlay) {
                   const observer = new MutationObserver(function(mutations) {
                     mutations.forEach(function(mutation) {
@@ -421,6 +522,52 @@ module Herb
                     });
                   });
                   observer.observe(overlay, { attributes: true });
+                }
+
+                // View toggle functionality
+                const viewToggle = document.getElementById('herb-view-toggle');
+                const humanView = document.getElementById('herb-human-view');
+                const llmView = document.getElementById('herb-llm-view');
+
+                if (viewToggle && humanView && llmView) {
+                  viewToggle.addEventListener('click', function() {
+                    const isShowingHuman = humanView.style.display !== 'none';
+
+                    if (isShowingHuman) {
+                      humanView.style.display = 'none';
+                      llmView.style.display = 'flex';
+                      viewToggle.textContent = 'Human view';
+                    } else {
+                      humanView.style.display = 'flex';
+                      llmView.style.display = 'none';
+                      viewToggle.textContent = 'LLM prompt';
+                    }
+                  });
+                }
+
+                const copyButton = document.getElementById('herb-copy-button');
+                const llmPrompt = document.getElementById('herb-llm-prompt');
+
+                if (copyButton && llmPrompt) {
+                  copyButton.addEventListener('click', function() {
+                    navigator.clipboard.writeText(llmPrompt.value).then(function() {
+                      copyButton.textContent = 'Copied!';
+                      copyButton.classList.add('copied');
+                      setTimeout(function() {
+                        copyButton.textContent = 'Copy to clipboard';
+                        copyButton.classList.remove('copied');
+                      }, 2000);
+                    }).catch(function(err) {
+                      llmPrompt.select();
+                      document.execCommand('copy');
+                      copyButton.textContent = 'Copied!';
+                      copyButton.classList.add('copied');
+                      setTimeout(function() {
+                        copyButton.textContent = 'Copy to clipboard';
+                        copyButton.classList.remove('copied');
+                      }, 2000);
+                    });
+                  });
                 }
               })();
             </script>
@@ -442,6 +589,74 @@ module Herb
         sections << generate_suggestions_section(suggestions) if suggestions.any?
 
         sections.uniq.join("\n")
+      end
+
+      def generate_llm_prompt
+        error_count = @errors.length
+        error_word = error_count == 1 ? "error" : "errors"
+
+        prompt = <<~MARKDOWN
+          # ERB Template Errors
+
+          Herb, an HTML-aware ERB parsing tool, detected #{error_count} #{error_word} in an ERB template that need to be fixed.
+
+          ## File
+          `#{@filename}`
+
+          ## Errors
+
+        MARKDOWN
+
+        @errors.each_with_index do |error, index|
+          location = error.respond_to?(:location) && error.location ? error.location : nil
+          line_num = 1
+          col_num = 1
+
+          if location.respond_to?(:start) && location.is_a?(Herb::Location) && location.start
+            line_num = location.start.line
+            col_num = location.start.column
+          end
+
+          error_class = error.class.name.split("::").last.gsub(/Error$/, "")
+          error_message = error.respond_to?(:message) ? error.message : error.to_s
+          suggestion = get_error_suggestion(error)
+
+          prompt += "### Error #{index + 1}: #{error_class}\n\n"
+          prompt += "**Location:** Line #{line_num}, Column #{col_num}\n\n"
+          prompt += "**Message:** #{error_message}\n\n"
+          prompt += "**Suggestion:** #{suggestion}\n\n" if suggestion
+          prompt += "**Code context:**\n\n```erb\n"
+          prompt += generate_code_snippet_for_llm(line_num)
+          prompt += "```\n\n"
+        end
+
+        prompt += <<~MARKDOWN
+          ## Instructions
+
+          Fix all the errors listed above.
+
+          When fixing these errors, ensure that:
+          1. All HTML tags are properly opened and closed
+          2. Tags that span ERB control flow blocks are handled correctly
+          3. The resulting HTML structure is valid
+        MARKDOWN
+
+        prompt
+      end
+
+      def generate_code_snippet_for_llm(error_line_num)
+        start_line = [error_line_num - CONTEXT_LINES, 1].max
+        end_line = [error_line_num + CONTEXT_LINES, @lines.length].min
+
+        snippet = ""
+        (start_line..end_line).each do |i|
+          line = @lines[i - 1] || ""
+          line_str = line.chomp
+          marker = i == error_line_num ? " <-- ERROR" : ""
+          snippet += "#{i.to_s.rjust(4)}: #{line_str}#{marker}\n"
+        end
+
+        snippet
       end
 
       def generate_code_section(error, index)

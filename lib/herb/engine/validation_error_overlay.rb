@@ -53,6 +53,69 @@ module Herb
         HTML
       end
 
+      #: (Array[Hash[Symbol, untyped]], Hash[String, Array[Hash[Symbol, untyped]]], Hash[Symbol, Integer]) -> String
+      def self.generate_llm_prompt(errors, errors_by_file, counts)
+        issue_word = counts[:total] == 1 ? "issue" : "issues"
+        files = errors_by_file.keys
+
+        prompt = <<~MARKDOWN
+          # ERB Template Validation Issues
+
+          Herb, an HTML-aware ERB validation tool, detected #{counts[:total]} #{issue_word} in #{files.length == 1 ? "an ERB template" : "#{files.length} ERB templates"} that should be addressed.
+
+        MARKDOWN
+
+        if counts[:errors].positive? && counts[:warnings].positive?
+          errors_word = counts[:errors] == 1 ? "error" : "errors"
+          warnings_word = counts[:warnings] == 1 ? "warning" : "warnings"
+          prompt += "**Summary:** #{counts[:errors]} #{errors_word}, #{counts[:warnings]} #{warnings_word}\n\n"
+        end
+
+        prompt += "## Files\n"
+        files.each do |file|
+          prompt += "- `#{file}`\n"
+        end
+        prompt += "\n## Issues\n\n"
+
+        errors.each_with_index do |error, index|
+          location = error[:location]
+          line_num = location&.start&.line || 1
+          col_num = location&.start&.column || 1
+
+          severity_label = case error[:severity].to_s
+                           when "error" then "Error"
+                           when "warning" then "Warning"
+                           else "Info"
+                           end
+          source = error[:source].to_s.sub("Validator", "")
+          filename = error[:filename] || "unknown"
+
+          prompt += "### Issue #{index + 1}: #{source} #{severity_label}\n\n"
+          prompt += "**File:** `#{filename}`\n\n"
+          prompt += "**Location:** Line #{line_num}, Column #{col_num}\n\n"
+          prompt += "**Message:** #{error[:message]}\n\n"
+
+          prompt += "**Suggestion:** #{error[:suggestion]}\n\n" if error[:suggestion]
+
+          count = error[:count] || 1
+          prompt += "**Note:** This issue occurs #{count} times in the template.\n\n" if count > 1
+        end
+
+        prompt += <<~MARKDOWN
+          ## Instructions
+
+          Please review and fix the validation issues listed above.
+
+          When fixing these issues, ensure that:
+          1. Security best practices are followed
+          2. HTML structure follows proper nesting rules
+
+          Provide correct the ERB template code for each affected file.
+        MARKDOWN
+
+        prompt
+      end
+
       private
 
       def generate_code_snippet(line_num, col_num)

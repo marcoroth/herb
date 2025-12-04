@@ -110,6 +110,20 @@ export class ErrorOverlay {
 
     const errorMap = new Map<string, typeof validationFragments[0]>();
 
+    // Extract LLM prompt and default view from separate template if present
+    const llmPromptTemplate = document.querySelector('template[data-herb-validation-llm-prompt]') as HTMLTemplateElement;
+    let llmPrompt: string | null = null;
+    let defaultView: 'human' | 'llm' = 'human';
+
+    if (llmPromptTemplate) {
+      llmPrompt = llmPromptTemplate.textContent?.trim() || llmPromptTemplate.innerHTML?.trim() || null;
+      const viewAttr = llmPromptTemplate.getAttribute('data-default-view');
+      if (viewAttr === 'llm') {
+        defaultView = 'llm';
+      }
+      templatesToRemove.push(llmPromptTemplate);
+    }
+
     templates.forEach((template) => {
       try {
         const metadata = {
@@ -147,7 +161,7 @@ export class ErrorOverlay {
     validationFragments.push(...errorMap.values());
 
     if (validationFragments.length > 0) {
-      this.displayValidationOverlay(validationFragments);
+      this.displayValidationOverlay(validationFragments, llmPrompt, defaultView);
     }
   }
 
@@ -427,9 +441,59 @@ export class ErrorOverlay {
     if (overlay) {
       document.body.appendChild(overlay);
       overlay.style.display = 'flex';
+      this.setupParserErrorOverlayHandlers(overlay);
     } else {
       console.error('[ErrorOverlay] No parser error overlay found in HTML template');
     }
+  }
+
+  private setupParserErrorOverlayHandlers(overlay: HTMLElement) {
+    // Close overlay when clicking outside the container
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Close on Escape key
+    const escHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    // Prevent body scroll when overlay is open
+    document.body.style.overflow = 'hidden';
+
+    // Section toggle functionality
+    const sectionHeaders = overlay.querySelectorAll('.herb-section-header');
+    sectionHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const sectionId = header.getAttribute('data-section-id');
+        if (sectionId) {
+          const content = document.getElementById(sectionId + '-content');
+          const toggle = document.getElementById(sectionId + '-toggle');
+
+          if (content && toggle) {
+            if (content.classList.contains('collapsed')) {
+              content.classList.remove('collapsed');
+              toggle.classList.remove('collapsed');
+              toggle.textContent = '▼';
+            } else {
+              content.classList.add('collapsed');
+              toggle.classList.add('collapsed');
+              toggle.textContent = '▶';
+            }
+          }
+        }
+      });
+    });
+
+    this.setupViewToggle(overlay, '#herb-view-toggle', '#herb-human-view', '#herb-llm-view');
+    this.setupCopyButton(overlay, '#herb-copy-button', '#herb-llm-prompt');
   }
 
   private displayValidationOverlay(fragments: Array<{
@@ -446,7 +510,7 @@ export class ErrorOverlay {
     };
     html: string;
     count: number;
-  }>) {
+  }>, llmPrompt: string | null, defaultView: 'human' | 'llm') {
     const existingOverlay = document.querySelector('.herb-validation-overlay');
     if (existingOverlay) {
       existingOverlay.remove();
@@ -481,7 +545,9 @@ export class ErrorOverlay {
       fragments,
       errorsBySource,
       errorsByFile,
-      { errorCount, warningCount, totalCount, uniqueCount }
+      { errorCount, warningCount, totalCount, uniqueCount },
+      llmPrompt,
+      defaultView
     );
 
     const overlay = document.createElement('div');
@@ -497,7 +563,9 @@ export class ErrorOverlay {
     _fragments: Array<any>,
     errorsBySource: Map<string, any[]>,
     errorsByFile: Map<string, any[]>,
-    counts: { errorCount: number; warningCount: number; totalCount: number; uniqueCount: number }
+    counts: { errorCount: number; warningCount: number; totalCount: number; uniqueCount: number },
+    llmPrompt: string | null,
+    defaultView: 'human' | 'llm'
   ): string {
     let title = counts.uniqueCount === 1 ? 'Validation Issue' : `Validation Issues`;
 
@@ -518,7 +586,7 @@ export class ErrorOverlay {
       const totalErrors = Array.from(errorsByFile.values()).reduce((sum, errors) => sum + errors.length, 0);
 
       fileTabs = `
-        <div class="herb-file-tabs">
+        <div class="herb-file-tabs herb-validation-file-tabs">
           <button class="herb-file-tab active" data-file="*">
             All (${totalErrors})
           </button>
@@ -538,10 +606,10 @@ export class ErrorOverlay {
         </div>
         <div class="herb-validator-content">
           ${sourceFragments.map(f => {
-            const fileAttribute = `data-error-file="${this.escapeAttr(f.metadata.filename)}"`;
+      const fileAttribute = `data-error-file="${this.escapeAttr(f.metadata.filename)}"`;
 
-            if (f.count > 1) {
-              return `
+      if (f.count > 1) {
+        return `
                 <div class="herb-validation-item-wrapper" ${fileAttribute}>
                   ${f.html}
                   <div class="herb-occurrence-badge" title="This error occurs ${f.count} times in the template">
@@ -550,12 +618,23 @@ export class ErrorOverlay {
                   </div>
                 </div>
               `;
-            }
-            return `<div class="herb-validation-error-container" ${fileAttribute}>${f.html}</div>`;
-          }).join('')}
+      }
+      return `<div class="herb-validation-error-container" ${fileAttribute}>${f.html}</div>`;
+    }).join('')}
         </div>
       </div>
     `).join('');
+
+    // Use server-provided LLM prompt (always present from Ruby side)
+    const finalLlmPrompt = llmPrompt || '';
+
+    // Determine visibility based on default view
+    const showLlm = defaultView === 'llm';
+    const humanViewStyle = showLlm ? 'display: none;' : '';
+    const llmViewStyle = showLlm ? '' : 'display: none;';
+    const toggleButtonText = showLlm ? 'Human view' : 'LLM prompt';
+    const fileTabsStyle = showLlm ? 'display: none;' : '';
+    const dismissHintStyle = showLlm ? 'display: none;' : '';
 
     return `
       <style>${this.getValidationOverlayStyles()}</style>
@@ -568,13 +647,24 @@ export class ErrorOverlay {
             </div>
             <div class="herb-validation-subtitle">${subtitle.join(', ')}</div>
           </div>
-          <button class="herb-close-button" title="Close (Esc)">×</button>
+          <div class="herb-validation-header-actions">
+            <button type="button" class="herb-view-toggle herb-validation-view-toggle">${toggleButtonText}</button>
+            <button class="herb-close-button" title="Close (Esc)">×</button>
+          </div>
         </div>
-        ${fileTabs}
-        <div class="herb-validation-content">
+        ${fileTabs ? fileTabs.replace('<div class="herb-file-tabs', `<div class="herb-file-tabs" style="${fileTabsStyle}"`) : ''}
+        <div class="herb-validation-content herb-validation-human-view" style="${humanViewStyle}">
           ${contentSections}
         </div>
-        <div class="herb-dismiss-hint" style="padding-left: 24px; padding-right: 24px; padding-bottom: 12px;">
+        <div class="herb-validation-content herb-validation-llm-view" style="${llmViewStyle}">
+          <div class="herb-llm-textarea-container">
+            <button type="button" class="herb-copy-button herb-validation-copy-button" title="Copy to clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+            <textarea class="herb-llm-textarea herb-validation-llm-prompt" readonly>${this.escapeHtml(finalLlmPrompt)}</textarea>
+          </div>
+        </div>
+        <div class="herb-dismiss-hint herb-validation-dismiss-hint" style="padding-left: 24px; padding-right: 24px; padding-bottom: 12px; ${dismissHintStyle}">
           Click outside, press <kbd style="display: inline-block; padding: 2px 6px; font-family: monospace; font-size: 0.9em; color: #333; background: #f7f7f7; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 0 #ccc, 0 2px 3px rgba(0,0,0,0.2) inset;">Esc</kbd> key, or fix the code to dismiss.<br>
 
           You can also disable this overlay by passing <code style="color: #ffeb3b; font-family: monospace; font-size: 12pt;">validation_mode: :none</code> to <code style="color: #ffeb3b; font-family: monospace; font-size: 12pt;">Herb::Engine</code>.
@@ -623,6 +713,19 @@ export class ErrorOverlay {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        gap: 16px;
+      }
+
+      .herb-validation-header-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .herb-validation-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
       }
 
       .herb-validation-title {
@@ -638,6 +741,24 @@ export class ErrorOverlay {
         font-size: 14px;
         color: rgba(255, 255, 255, 0.9);
         margin-top: 4px;
+      }
+
+      .herb-validation-overlay .herb-view-toggle {
+        color: rgba(255, 255, 255, 0.9);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .herb-validation-overlay .herb-view-toggle:hover {
+        background: rgba(255, 255, 255, 0.2);
       }
 
       .herb-file-tabs {
@@ -872,6 +993,74 @@ export class ErrorOverlay {
       .herb-attr { color: #d19a66; }
       .herb-value { color: #98c379; }
       .herb-comment { color: #5c6370; font-style: italic; }
+
+      /* LLM view styles */
+      .herb-validation-llm-view {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        height: 100%;
+      }
+
+      .herb-validation-overlay .herb-llm-textarea-container {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .herb-validation-overlay .herb-copy-button {
+        position: absolute;
+        top: 8px;
+        right: 25px;
+        color: #9ca3af;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+      }
+
+      .herb-validation-overlay .herb-copy-button:hover {
+        color: #e5e5e5;
+        background: rgba(0, 0, 0, 0.7);
+        border-color: #6b7280;
+      }
+
+      .herb-validation-overlay .herb-copy-button.copied {
+        color: #10b981;
+        border-color: #10b981;
+      }
+
+      .herb-validation-overlay .herb-copy-button svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .herb-validation-overlay .herb-llm-textarea {
+        flex: 1;
+        width: 100%;
+        min-height: 300px;
+        background: #111111;
+        border: 1px solid #374151;
+        border-radius: 8px;
+        color: #e5e5e5;
+        font-family: inherit;
+        font-size: 13px;
+        line-height: 1.6;
+        padding: 16px;
+        resize: none;
+      }
+
+      .herb-validation-overlay .herb-llm-textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+      }
     `;
   }
 
@@ -937,6 +1126,90 @@ export class ErrorOverlay {
         });
       });
     });
+
+    // View toggle functionality (Human view <-> LLM view)
+    this.setupViewToggle(
+      overlay,
+      '.herb-validation-view-toggle',
+      '.herb-validation-human-view',
+      '.herb-validation-llm-view',
+      '.herb-validation-file-tabs',
+      '.herb-validation-dismiss-hint'
+    );
+
+    // Copy to clipboard functionality
+    this.setupCopyButton(overlay, '.herb-validation-copy-button', '.herb-validation-llm-prompt');
+  }
+
+  private setupViewToggle(
+    overlay: HTMLElement,
+    toggleSelector: string,
+    humanViewSelector: string,
+    llmViewSelector: string,
+    fileTabsSelector?: string,
+    dismissHintSelector?: string
+  ) {
+    const viewToggle = overlay.querySelector(toggleSelector) as HTMLButtonElement;
+    const humanView = overlay.querySelector(humanViewSelector) as HTMLElement;
+    const llmView = overlay.querySelector(llmViewSelector) as HTMLElement;
+    const fileTabs = fileTabsSelector ? overlay.querySelector(fileTabsSelector) as HTMLElement : null;
+    const dismissHint = dismissHintSelector ? overlay.querySelector(dismissHintSelector) as HTMLElement : null;
+
+    if (viewToggle && humanView && llmView) {
+      viewToggle.addEventListener('click', () => {
+        const isShowingHuman = humanView.style.display !== 'none';
+
+        if (isShowingHuman) {
+          humanView.style.display = 'none';
+          llmView.style.display = 'flex';
+          viewToggle.textContent = 'Human view';
+          if (fileTabs) fileTabs.style.display = 'none';
+          if (dismissHint) dismissHint.style.display = 'none';
+        } else {
+          humanView.style.display = 'flex';
+          llmView.style.display = 'none';
+          viewToggle.textContent = 'LLM prompt';
+          if (fileTabs) fileTabs.style.display = 'flex';
+          if (dismissHint) dismissHint.style.display = 'block';
+        }
+      });
+    }
+  }
+
+  private setupCopyButton(overlay: HTMLElement, buttonSelector: string, textareaSelector: string) {
+    const copyButton = overlay.querySelector(buttonSelector) as HTMLButtonElement;
+    const textarea = overlay.querySelector(textareaSelector) as HTMLTextAreaElement;
+
+    if (copyButton && textarea) {
+      const originalTitle = copyButton.getAttribute('title') || 'Copy to clipboard';
+      const checkmarkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      const copySvg = copyButton.innerHTML;
+
+      const showCopiedState = () => {
+        copyButton.innerHTML = checkmarkSvg;
+        copyButton.classList.add('copied');
+        copyButton.setAttribute('title', 'Copied!');
+        setTimeout(() => {
+          copyButton.innerHTML = copySvg;
+          copyButton.classList.remove('copied');
+          copyButton.setAttribute('title', originalTitle);
+        }, 2000);
+      };
+
+      const fallbackCopy = () => {
+        textarea.select();
+        document.execCommand('copy');
+        showCopiedState();
+      };
+
+      copyButton.addEventListener('click', () => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(textarea.value).then(showCopiedState).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
+      });
+    }
   }
 
   private escapeAttr(text: string): string {
