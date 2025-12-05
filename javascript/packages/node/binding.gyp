@@ -40,6 +40,7 @@
         "./extension/libherb/util.c",
         "./extension/libherb/util/hb_arena.c",
         "./extension/libherb/util/hb_array.c",
+        "./extension/libherb/util/hb_narray.c",
         "./extension/libherb/util/hb_buffer.c",
         "./extension/libherb/util/hb_string.c",
         "./extension/libherb/util/hb_system.c",
