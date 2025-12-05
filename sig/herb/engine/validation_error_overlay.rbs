@@ -13,6 +13,8 @@ module Herb
 
       def generate_fragment: () -> untyped
 
+      def self.generate_llm_prompt: (Array[Hash[Symbol, untyped]], Hash[String, Array[Hash[Symbol, untyped]]], Hash[Symbol, Integer]) -> String
+
       private
 
       def generate_code_snippet: (untyped line_num, untyped col_num) -> untyped
