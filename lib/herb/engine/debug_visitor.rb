@@ -87,11 +87,7 @@ module Herb
       def visit_erb_block_node(node)
         @erb_block_stack.push(node)
         super
-      end
-
-      def visit_erb_end_node(node)
-        @erb_block_stack.pop if @erb_block_stack.last&.end_node == node
-        super
+        @erb_block_stack.pop
       end
 
       private
