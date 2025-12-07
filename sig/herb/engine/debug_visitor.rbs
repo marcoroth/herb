@@ -65,6 +65,8 @@ module Herb
 
       # TODO: Rewrite using Prism Nodes once available
       def complex_rails_helper?: (untyped code) -> untyped
+
+      def javascript_tag?: (untyped code) -> untyped
     end
   end
 end
