@@ -1,6 +1,6 @@
 #ifndef HERB_VERSION_H
 #define HERB_VERSION_H
 
-#define HERB_VERSION "0.8.3"
+#define HERB_VERSION "0.8.4"
 
 #endif
