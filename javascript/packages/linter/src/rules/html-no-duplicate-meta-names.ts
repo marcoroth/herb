@@ -11,6 +11,7 @@ interface MetaTag {
   node: HTMLElementNode
   nameValue?: string
   httpEquivValue?: string
+  mediaValue?: string
 }
 
 interface ControlFlowState {
@@ -112,6 +113,8 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
           metaTag.nameValue = value
         } else if (name === "http-equiv" && value) {
           metaTag.httpEquivValue = value
+        } else if (name === "media" && value) {
+          metaTag.mediaValue = value
         }
       })
     }
@@ -155,6 +158,16 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
   }
 
   private areMetaTagsDuplicate(meta1: MetaTag, meta2: MetaTag): boolean {
+    if (meta1.mediaValue && meta2.mediaValue) {
+      if (meta1.mediaValue.toLowerCase() !== meta2.mediaValue.toLowerCase()) {
+        return false
+      }
+    }
+
+    if ((meta1.mediaValue && !meta2.mediaValue) || (!meta1.mediaValue && meta2.mediaValue)) {
+      return false
+    }
+
     if (meta1.nameValue && meta2.nameValue) {
       return meta1.nameValue.toLowerCase() === meta2.nameValue.toLowerCase()
     }
