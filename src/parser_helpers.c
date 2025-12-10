@@ -24,7 +24,7 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || top_token->value == NULL) { return false; };
 
-  return hb_string_equals(hb_string(top_token->value), tag_name);
+  return hb_string_equals_case_insensitive(hb_string(top_token->value), tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
@@ -49,7 +49,7 @@ bool parser_in_svg_context(const parser_T* parser) {
 
     if (tag && tag->value) {
       hb_string_T tag_value_string = hb_string(tag->value);
-      if (hb_string_equals(tag_value_string, hb_string("svg"))) { return true; }
+      if (hb_string_equals_case_insensitive(tag_value_string, hb_string("svg"))) { return true; }
     }
   }
 
@@ -61,8 +61,8 @@ bool parser_in_svg_context(const parser_T* parser) {
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
 
-  if (hb_string_equals(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -217,5 +217,5 @@ bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_t
 
   if (hb_string_is_empty(tag_name) || hb_string_is_empty(expected_tag_name)) { return false; }
 
-  return hb_string_equals(expected_tag_name, tag_name);
+  return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
 }

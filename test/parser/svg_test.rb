@@ -51,5 +51,13 @@ module Parser
         </svg>
       SVG
     end
+
+    test "svg with mixed case tags" do
+      assert_parsed_snapshot(<<~SVG)
+        <SVG>
+          <path />
+        </svg>
+      SVG
+    end
   end
 end
