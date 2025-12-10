@@ -464,7 +464,7 @@ Custom rules must use the `.mjs` extension to avoid Node.js module type warnings
 ::: code-group
 
 
-```js [.herb/rules/no-inline-styles.mjs]
+```js [.herb/rules/no-div-tags.mjs]
 import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
 
 class NoDivTagsVisitor extends BaseRuleVisitor {
