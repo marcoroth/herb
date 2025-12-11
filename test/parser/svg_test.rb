@@ -51,5 +51,13 @@ module Parser
         </svg>
       SVG
     end
+
+    test "case-insensitive svg with void element" do
+      assert_parsed_snapshot(<<~SVG)
+        <SVG>
+          <PATH />
+        </svg>
+      SVG
+    end
   end
 end

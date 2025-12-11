@@ -1149,11 +1149,11 @@ static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_st
     if (node->type == AST_HTML_OPEN_TAG_NODE) {
       AST_HTML_OPEN_TAG_NODE_T* open = (AST_HTML_OPEN_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(open->tag_name->value), tag_name)) { depth++; }
+      if (hb_string_equals_case_insensitive(hb_string(open->tag_name->value), tag_name)) { depth++; }
     } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
       AST_HTML_CLOSE_TAG_NODE_T* close = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(close->tag_name->value), tag_name)) {
+      if (hb_string_equals_case_insensitive(hb_string(close->tag_name->value), tag_name)) {
         if (depth == 0) { return i; }
         depth--;
       }
