@@ -1,0 +1,60 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0001_two blocks in same ERB tag"
+input: |2-
+<%
+  list.each do |rows|
+    rows.each_with_index do |row, row_index| %>
+    <% snip %>
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (4 items)
+    ├── @ ERBBlockNode (location: (1:0)-(5:11))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(3:47))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     list.each do |rows|
+    │       rows.each_with_index do |row, row_index| " (location: (1:2)-(3:45))
+    │   ├── tag_closing: "%>" (location: (3:45)-(3:47))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (3:47)-(4:4))
+    │   │   │   └── content: "\n    "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:4)-(4:14))
+    │   │   │   ├── tag_opening: "<%" (location: (4:4)-(4:6))
+    │   │   │   ├── content: " snip " (location: (4:6)-(4:12))
+    │   │   │   ├── tag_closing: "%>" (location: (4:12)-(4:14))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:14)-(5:2))
+    │   │       └── content: "\n  "
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:2)-(5:11))
+    │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │           ├── content: " end " (location: (5:4)-(5:9))
+    │           └── tag_closing: "%>" (location: (5:9)-(5:11))
+    │
+    │
+    ├── @ HTMLTextNode (location: (5:11)-(6:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (6:0)-(6:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBControlFlowScopeError (location: (6:0)-(6:9))
+    │   │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │       └── keyword: "`<% end %>`"
+    │   │
+    │   ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   ├── content: " end " (location: (6:2)-(6:7))
+    │   ├── tag_closing: "%>" (location: (6:7)-(6:9))
+    │   ├── parsed: true
+    │   └── valid: false
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

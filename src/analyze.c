@@ -45,6 +45,8 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   search_yield_nodes(analyzed->root, analyzed);
   search_block_closing_nodes(analyzed);
 
+  if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
+
   return analyzed;
 }
 
@@ -60,6 +62,14 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
       erb_content_node->analyzed_ruby = analyzed;
+
+      if (!analyzed->valid && analyzed->unclosed_control_flow_count >= 2) {
+        append_erb_multiple_blocks_in_tag_error(
+          erb_content_node->base.location.start,
+          erb_content_node->base.location.end,
+          erb_content_node->base.errors
+        );
+      }
     } else {
       erb_content_node->parsed = false;
       erb_content_node->valid = true;
