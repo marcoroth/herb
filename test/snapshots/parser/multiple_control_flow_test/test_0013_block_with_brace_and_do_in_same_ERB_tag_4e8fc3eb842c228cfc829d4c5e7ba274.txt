@@ -1,0 +1,40 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0013_block with brace and do in same ERB tag"
+input: |2-
+<% items.map { |x| x.each do |y| %>
+  <%= y %>
+<% end } %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:11))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:35))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.map { |x| x.each do |y| " (location: (1:2)-(1:33))
+    │   ├── tag_closing: "%>" (location: (1:33)-(1:35))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:35)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:10))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " y " (location: (2:5)-(2:8))
+    │   │   │   ├── tag_closing: "%>" (location: (2:8)-(2:10))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:10)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:11))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end } " (location: (3:2)-(3:9))
+    │           └── tag_closing: "%>" (location: (3:9)-(3:11))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:11)-(4:0))
+        └── content: "\n"

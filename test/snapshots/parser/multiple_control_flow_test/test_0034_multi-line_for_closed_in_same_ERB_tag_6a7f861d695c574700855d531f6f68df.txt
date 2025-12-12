@@ -1,0 +1,24 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0034_multi-line for closed in same ERB tag"
+input: |2-
+<%
+  for item in items
+    process(item)
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(5:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     for item in items
+    │       process(item)
+    │     end
+    │   " (location: (1:2)-(5:0))
+    │   ├── tag_closing: "%>" (location: (5:0)-(5:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (5:2)-(6:0))
+        └── content: "\n"

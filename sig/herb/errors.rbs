@@ -243,5 +243,15 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class ERBMultipleBlocksInTagError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end
