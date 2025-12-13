@@ -185,8 +185,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="), hb_string("<%#"),
-                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%") };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="),       hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
 

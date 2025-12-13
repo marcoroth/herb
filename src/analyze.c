@@ -56,7 +56,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     const char* opening = erb_content_node->tag_opening->value;
 
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0
+        && strcmp(opening, "<%graphql") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
 
       erb_content_node->parsed = true;
