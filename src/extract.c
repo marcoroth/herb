@@ -25,7 +25,8 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
         if (strcmp(token->value, "<%#") == 0) {
           skip_erb_content = true;
           is_comment_tag = true;
-        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0
+                   || strcmp(token->value, "<%graphql") == 0) {
           skip_erb_content = true;
           is_comment_tag = false;
         } else {
