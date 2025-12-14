@@ -1,0 +1,8 @@
+---
+source: "Engine::DebugModeTest#test_0048_block with debug disable comment content erb expressions do NOT get debug spans"
+input: "{source: \"<%= content_for :sidebar do # herb:debug disable %>\\n  <div><%= \\\"Sidebar content\\\" %></div>\\n<% end %>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << content_for :sidebar do # herb:debug disable; _buf << '
+  <div>'.freeze; _buf << ("Sidebar content").to_s; _buf << '</div>
+'.freeze; end 
+_buf.to_s
