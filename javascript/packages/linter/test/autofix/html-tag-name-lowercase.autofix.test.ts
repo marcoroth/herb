@@ -107,6 +107,17 @@ describe("html-tag-name-lowercase autofix", () => {
     expect(result.fixed).toHaveLength(0)
   })
 
+  test("converts uppercase SVG tags to lowercase", () => {
+    const input = `<SVG><linearGradient></linearGradient></SVG>`
+    const expected = `<svg><linearGradient></linearGradient></svg>`
+
+    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
+  })
+
   test("fixes one offense at a time", () => {
     const input = `<DIV>Hello</DIV>`
     const expected = `<div>Hello</div>`
