@@ -45,6 +45,8 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   search_yield_nodes(analyzed->root, analyzed);
   search_block_closing_nodes(analyzed);
 
+  if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
+
   return analyzed;
 }
 
@@ -54,12 +56,21 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     const char* opening = erb_content_node->tag_opening->value;
 
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0
+        && strcmp(opening, "<%graphql") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
       erb_content_node->analyzed_ruby = analyzed;
+
+      if (!analyzed->valid && analyzed->unclosed_control_flow_count >= 2) {
+        append_erb_multiple_blocks_in_tag_error(
+          erb_content_node->base.location.start,
+          erb_content_node->base.location.end,
+          erb_content_node->base.errors
+        );
+      }
     } else {
       erb_content_node->parsed = false;
       erb_content_node->valid = true;
@@ -90,6 +101,138 @@ static size_t process_subsequent_block(
   control_type_t parent_type
 );
 
+typedef struct {
+  control_type_t type;
+  uint32_t offset;
+  bool found;
+} earliest_control_keyword_t;
+
+typedef struct {
+  earliest_control_keyword_t* result;
+  const uint8_t* source_start;
+} location_walker_context_t;
+
+static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* data) {
+  if (!node) { return true; }
+
+  location_walker_context_t* context = (location_walker_context_t*) data;
+  earliest_control_keyword_t* result = context->result;
+
+  control_type_t current_type = CONTROL_TYPE_UNKNOWN;
+  uint32_t keyword_offset = UINT32_MAX;
+
+  switch (node->type) {
+    case PM_IF_NODE: {
+      pm_if_node_t* if_node = (pm_if_node_t*) node;
+      current_type = CONTROL_TYPE_IF;
+      keyword_offset = (uint32_t) (if_node->if_keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_UNLESS_NODE: {
+      pm_unless_node_t* unless_node = (pm_unless_node_t*) node;
+      current_type = CONTROL_TYPE_UNLESS;
+      keyword_offset = (uint32_t) (unless_node->keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_CASE_NODE: {
+      pm_case_node_t* case_node = (pm_case_node_t*) node;
+      current_type = CONTROL_TYPE_CASE;
+      keyword_offset = (uint32_t) (case_node->case_keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_CASE_MATCH_NODE: {
+      pm_case_match_node_t* case_match_node = (pm_case_match_node_t*) node;
+      current_type = CONTROL_TYPE_CASE_MATCH;
+      keyword_offset = (uint32_t) (case_match_node->case_keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_WHILE_NODE: {
+      pm_while_node_t* while_node = (pm_while_node_t*) node;
+      current_type = CONTROL_TYPE_WHILE;
+      keyword_offset = (uint32_t) (while_node->keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_UNTIL_NODE: {
+      pm_until_node_t* until_node = (pm_until_node_t*) node;
+      current_type = CONTROL_TYPE_UNTIL;
+      keyword_offset = (uint32_t) (until_node->keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_FOR_NODE: {
+      pm_for_node_t* for_node = (pm_for_node_t*) node;
+      current_type = CONTROL_TYPE_FOR;
+      keyword_offset = (uint32_t) (for_node->for_keyword_loc.start - context->source_start);
+      break;
+    }
+
+    case PM_BEGIN_NODE: {
+      pm_begin_node_t* begin_node = (pm_begin_node_t*) node;
+      current_type = CONTROL_TYPE_BEGIN;
+
+      if (begin_node->begin_keyword_loc.start != NULL) {
+        keyword_offset = (uint32_t) (begin_node->begin_keyword_loc.start - context->source_start);
+      } else {
+        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      }
+      break;
+    }
+
+    case PM_YIELD_NODE: {
+      current_type = CONTROL_TYPE_YIELD;
+      keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      break;
+    }
+
+    case PM_CALL_NODE: {
+      pm_call_node_t* call = (pm_call_node_t*) node;
+
+      if (call->block != NULL) {
+        current_type = CONTROL_TYPE_BLOCK;
+        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      }
+      break;
+    }
+
+    case PM_NEXT_NODE:
+    case PM_BREAK_NODE:
+    case PM_RETURN_NODE: {
+      current_type = CONTROL_TYPE_UNKNOWN;
+      keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      break;
+    }
+
+    default: break;
+  }
+
+  if (keyword_offset != UINT32_MAX) {
+    if (!result->found || keyword_offset < result->offset) {
+      result->type = current_type;
+      result->offset = keyword_offset;
+      result->found = true;
+    }
+  }
+
+  return true;
+}
+
+static control_type_t find_earliest_control_keyword(pm_node_t* root, const uint8_t* source_start) {
+  if (!root) { return CONTROL_TYPE_UNKNOWN; }
+
+  earliest_control_keyword_t result = { .type = CONTROL_TYPE_UNKNOWN, .offset = UINT32_MAX, .found = false };
+
+  location_walker_context_t context = { .result = &result, .source_start = source_start };
+
+  pm_visit_node(root, find_earliest_control_keyword_walker, &context);
+
+  return result.found ? result.type : CONTROL_TYPE_UNKNOWN;
+}
+
 static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
 
@@ -99,26 +242,18 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
 
   if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
 
-  if (has_block_node(ruby)) { return CONTROL_TYPE_BLOCK; }
-  if (has_if_node(ruby)) { return CONTROL_TYPE_IF; }
+  pm_node_t* root = ruby->root;
+
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
   if (has_end(ruby)) { return CONTROL_TYPE_END; }
-  if (has_case_node(ruby)) { return CONTROL_TYPE_CASE; }
-  if (has_case_match_node(ruby)) { return CONTROL_TYPE_CASE_MATCH; }
   if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
   if (has_in_node(ruby)) { return CONTROL_TYPE_IN; }
-  if (has_begin_node(ruby)) { return CONTROL_TYPE_BEGIN; }
   if (has_rescue_node(ruby)) { return CONTROL_TYPE_RESCUE; }
   if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
-  if (has_unless_node(ruby)) { return CONTROL_TYPE_UNLESS; }
-  if (has_while_node(ruby)) { return CONTROL_TYPE_WHILE; }
-  if (has_until_node(ruby)) { return CONTROL_TYPE_UNTIL; }
-  if (has_for_node(ruby)) { return CONTROL_TYPE_FOR; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
-  if (has_yield_node(ruby)) { return CONTROL_TYPE_YIELD; }
 
-  return CONTROL_TYPE_UNKNOWN;
+  return find_earliest_control_keyword(root, ruby->parser.start);
 }
 
 static bool is_subsequent_type(control_type_t parent_type, control_type_t child_type) {
@@ -163,8 +298,8 @@ static AST_NODE_T* create_control_node(
 
   if (end_node) {
     end_position = end_node->base.location.end;
-  } else if (children && hb_array_size(children) > 0) {
-    AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+  } else if (children && children->size > 0) {
+    AST_NODE_T* last_child = hb_array_last(children);
     end_position = last_child->location.end;
   } else if (subsequent) {
     end_position = subsequent->location.end;
@@ -205,7 +340,7 @@ static AST_NODE_T* create_control_node(
       hb_array_T* in_conditions = hb_array_init(8);
       hb_array_T* non_when_non_in_children = hb_array_init(8);
 
-      for (size_t i = 0; i < hb_array_size(children); i++) {
+      for (size_t i = 0; i < children->size; i++) {
         AST_NODE_T* child = hb_array_get(children, i);
 
         if (child && child->type == AST_ERB_WHEN_NODE) {
@@ -219,7 +354,7 @@ static AST_NODE_T* create_control_node(
 
       hb_array_free(&children);
 
-      if (hb_array_size(in_conditions) > 0) {
+      if (in_conditions->size > 0) {
         hb_array_free(&when_conditions);
 
         return (AST_NODE_T*) ast_erb_case_match_node_init(
@@ -415,7 +550,7 @@ static size_t process_control_structure(
     hb_array_T* in_conditions = hb_array_init(8);
     hb_array_T* non_when_non_in_children = hb_array_init(8);
 
-    while (index < hb_array_size(array)) {
+    while (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (!next_node) { break; }
@@ -431,7 +566,7 @@ static size_t process_control_structure(
       index++;
     }
 
-    while (index < hb_array_size(array)) {
+    while (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (!next_node) { break; }
@@ -503,7 +638,7 @@ static size_t process_control_structure(
 
     AST_ERB_ELSE_NODE_T* else_clause = NULL;
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -515,21 +650,7 @@ static size_t process_control_structure(
 
           index++;
 
-          while (index < hb_array_size(array)) {
-            AST_NODE_T* child = hb_array_get(array, index);
-
-            if (!child) { break; }
-
-            if (child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-              control_type_t child_type = detect_control_type(child_erb);
-
-              if (child_type == CONTROL_TYPE_END) { break; }
-            }
-
-            hb_array_append(else_children, child);
-            index++;
-          }
+          index = process_block_children(node, array, index, else_children, context, initial_type);
 
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
@@ -551,7 +672,7 @@ static size_t process_control_structure(
 
     AST_ERB_END_NODE_T* end_node = NULL;
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* potential_end = hb_array_get(array, index);
 
       if (potential_end && potential_end->type == AST_ERB_CONTENT_NODE) {
@@ -584,15 +705,15 @@ static size_t process_control_structure(
       end_position = end_node->base.location.end;
     } else if (else_clause) {
       end_position = else_clause->base.location.end;
-    } else if (hb_array_size(when_conditions) > 0) {
-      AST_NODE_T* last_when = hb_array_get(when_conditions, hb_array_size(when_conditions) - 1);
+    } else if (when_conditions->size > 0) {
+      AST_NODE_T* last_when = hb_array_last(when_conditions);
       end_position = last_when->location.end;
-    } else if (hb_array_size(in_conditions) > 0) {
-      AST_NODE_T* last_in = hb_array_get(in_conditions, hb_array_size(in_conditions) - 1);
+    } else if (in_conditions->size > 0) {
+      AST_NODE_T* last_in = hb_array_last(in_conditions);
       end_position = last_in->location.end;
     }
 
-    if (hb_array_size(in_conditions) > 0) {
+    if (in_conditions->size > 0) {
       hb_array_T* case_match_errors = erb_node->base.errors;
       erb_node->base.errors = NULL;
 
@@ -650,7 +771,7 @@ static size_t process_control_structure(
     AST_ERB_ELSE_NODE_T* else_clause = NULL;
     AST_ERB_ENSURE_NODE_T* ensure_clause = NULL;
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -665,7 +786,7 @@ static size_t process_control_structure(
       }
     }
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -677,21 +798,7 @@ static size_t process_control_structure(
 
           index++;
 
-          while (index < hb_array_size(array)) {
-            AST_NODE_T* child = hb_array_get(array, index);
-
-            if (!child) { break; }
-
-            if (child->type == AST_ERB_CONTENT_NODE) {
-              AST_ERB_CONTENT_NODE_T* child_erb = (AST_ERB_CONTENT_NODE_T*) child;
-              control_type_t child_type = detect_control_type(child_erb);
-
-              if (child_type == CONTROL_TYPE_ENSURE || child_type == CONTROL_TYPE_END) { break; }
-            }
-
-            hb_array_append(else_children, child);
-            index++;
-          }
+          index = process_block_children(node, array, index, else_children, context, initial_type);
 
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
@@ -711,7 +818,7 @@ static size_t process_control_structure(
       }
     }
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* next_node = hb_array_get(array, index);
 
       if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -723,7 +830,7 @@ static size_t process_control_structure(
 
           index++;
 
-          while (index < hb_array_size(array)) {
+          while (index < array->size) {
             AST_NODE_T* child = hb_array_get(array, index);
 
             if (!child) { break; }
@@ -759,7 +866,7 @@ static size_t process_control_structure(
 
     AST_ERB_END_NODE_T* end_node = NULL;
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* potential_end = hb_array_get(array, index);
 
       if (potential_end && potential_end->type == AST_ERB_CONTENT_NODE) {
@@ -826,7 +933,7 @@ static size_t process_control_structure(
 
     AST_ERB_END_NODE_T* end_node = NULL;
 
-    if (index < hb_array_size(array)) {
+    if (index < array->size) {
       AST_NODE_T* potential_close = hb_array_get(array, index);
 
       if (potential_close && potential_close->type == AST_ERB_CONTENT_NODE) {
@@ -858,8 +965,8 @@ static size_t process_control_structure(
 
     if (end_node) {
       end_position = end_node->base.location.end;
-    } else if (children && hb_array_size(children) > 0) {
-      AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+    } else if (children && children->size > 0) {
+      AST_NODE_T* last_child = hb_array_last(children);
       end_position = last_child->location.end;
     }
 
@@ -888,7 +995,7 @@ static size_t process_control_structure(
   AST_NODE_T* subsequent = NULL;
   AST_ERB_END_NODE_T* end_node = NULL;
 
-  if (index < hb_array_size(array)) {
+  if (index < array->size) {
     AST_NODE_T* next_node = hb_array_get(array, index);
 
     if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -901,7 +1008,7 @@ static size_t process_control_structure(
     }
   }
 
-  if (index < hb_array_size(array)) {
+  if (index < array->size) {
     AST_NODE_T* potential_end = hb_array_get(array, index);
 
     if (potential_end && potential_end->type == AST_ERB_CONTENT_NODE) {
@@ -963,7 +1070,7 @@ static size_t process_subsequent_block(
     hb_array_free(&children);
   }
 
-  if (index < hb_array_size(array)) {
+  if (index < array->size) {
     AST_NODE_T* next_node = hb_array_get(array, index);
 
     if (next_node && next_node->type == AST_ERB_CONTENT_NODE) {
@@ -1021,7 +1128,7 @@ static size_t process_block_children(
   analyze_ruby_context_T* context,
   control_type_t parent_type
 ) {
-  while (index < hb_array_size(array)) {
+  while (index < array->size) {
     AST_NODE_T* child = hb_array_get(array, index);
 
     if (!child) { break; }
@@ -1043,7 +1150,7 @@ static size_t process_block_children(
       hb_array_T* temp_array = hb_array_init(1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
-      if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_get(temp_array, 0)); }
+      if (temp_array->size > 0) { hb_array_append(children_array, hb_array_first(temp_array)); }
 
       hb_array_free(&temp_array);
 
@@ -1059,10 +1166,10 @@ static size_t process_block_children(
 }
 
 hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby_context_T* context) {
-  hb_array_T* new_array = hb_array_init(hb_array_size(array));
+  hb_array_T* new_array = hb_array_init(array->size);
   size_t index = 0;
 
-  while (index < hb_array_size(array)) {
+  while (index < array->size) {
     AST_NODE_T* item = hb_array_get(array, index);
 
     if (!item) { break; }
@@ -1197,7 +1304,7 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
     if (if_node->end_node == NULL) { check_erb_node_for_missing_end(node); }
 
     if (if_node->statements != NULL) {
-      for (size_t i = 0; i < hb_array_size(if_node->statements); i++) {
+      for (size_t i = 0; i < if_node->statements->size; i++) {
         AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(if_node->statements, i);
 
         if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
@@ -1229,7 +1336,7 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         const AST_ERB_IF_NODE_T* elsif_node = (const AST_ERB_IF_NODE_T*) subsequent;
 
         if (elsif_node->statements != NULL) {
-          for (size_t i = 0; i < hb_array_size(elsif_node->statements); i++) {
+          for (size_t i = 0; i < elsif_node->statements->size; i++) {
             AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(elsif_node->statements, i);
 
             if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
@@ -1241,7 +1348,7 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         const AST_ERB_ELSE_NODE_T* else_node = (const AST_ERB_ELSE_NODE_T*) subsequent;
 
         if (else_node->statements != NULL) {
-          for (size_t i = 0; i < hb_array_size(else_node->statements); i++) {
+          for (size_t i = 0; i < else_node->statements->size; i++) {
             AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(else_node->statements, i);
 
             if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
@@ -1313,6 +1420,35 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
   free(invalid_context);
 }
 
+static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
+  if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
+  AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
+
+  if (!content_node->content || !content_node->content->value) { return; }
+
+  const char* content = content_node->content->value;
+  if (strlen(content) == 0) { return; }
+
+  pm_parser_t parser;
+  pm_options_t options = { 0, .partial_script = true };
+  pm_parser_init(&parser, (const uint8_t*) content, strlen(content), &options);
+
+  pm_node_t* root = pm_parse(&parser);
+
+  const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head;
+
+  if (error != NULL) {
+    RUBY_PARSE_ERROR_T* parse_error =
+      ruby_parse_error_from_prism_error_with_positions(error, erb_node->location.start, erb_node->location.end);
+
+    hb_array_append(erb_node->errors, parse_error);
+  }
+
+  pm_node_destroy(&parser, root);
+  pm_parser_free(&parser);
+  pm_options_free(&options);
+}
+
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
   char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
@@ -1326,6 +1462,19 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
+    size_t error_offset = (size_t) (error->location.start - parser.start);
+
+    if (strstr(error->message, "unexpected ';'") != NULL) {
+      if (error_offset < strlen(extracted_ruby) && extracted_ruby[error_offset] == ';') {
+        if (error_offset >= strlen(source) || source[error_offset] != ';') {
+          AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
+
+          if (erb_node) { parse_erb_content_errors(erb_node, source); }
+
+          continue;
+        }
+      }
+    }
 
     RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser);
     hb_array_append(document->base.errors, parse_error);

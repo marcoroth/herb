@@ -19,6 +19,8 @@ module Herb
 
       def visit_erb_yield_node: (untyped _node) -> untyped
 
+      def visit_erb_block_node: (untyped node) -> untyped
+
       private
 
       def calculate_relative_path: () -> untyped
@@ -65,6 +67,9 @@ module Herb
 
       # TODO: Rewrite using Prism Nodes once available
       def complex_rails_helper?: (untyped code) -> untyped
+
+      # TODO: Rewrite using Prism Nodes once available
+      def javascript_tag?: (untyped code) -> untyped
     end
   end
 end

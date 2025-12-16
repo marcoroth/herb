@@ -1,0 +1,8 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0020_right trim compilation"
+input: "{source: \"<% if true -%>\\n  <h1>Content</h1>\\n<% end -%>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; if true 
+ _buf << '  <h1>Content</h1>
+'.freeze; end 
+_buf.to_s

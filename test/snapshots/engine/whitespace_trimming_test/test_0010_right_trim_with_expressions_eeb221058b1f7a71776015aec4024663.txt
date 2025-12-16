@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0010_right trim with expressions"
+input: "{source: \"<% name = \\\"World\\\" -%>\\nHello <%= name %>\\n\", options: {}}"
+---
+_buf = ::String.new; name = "World" 
+ _buf << 'Hello '.freeze; _buf << (name).to_s; _buf << '
+'.freeze;
+_buf.to_s

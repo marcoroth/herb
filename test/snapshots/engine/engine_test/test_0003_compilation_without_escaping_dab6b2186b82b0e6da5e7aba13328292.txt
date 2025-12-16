@@ -2,6 +2,5 @@
 source: "Engine::EngineTest#test_0003_compilation without escaping"
 input: "{source: \"<div><%= user_input %></div>\", options: {escape: false}}"
 ---
-_buf = ::String.new;
- _buf << '<div>'.freeze; _buf << (user_input).to_s; _buf << '</div>'.freeze;
+_buf = ::String.new; _buf << '<div>'.freeze; _buf << (user_input).to_s; _buf << '</div>'.freeze;
 _buf.to_s

@@ -335,4 +335,79 @@ describe("CLI Output Formatting", () => {
       expect(exitCode).toBe(1)
     })
   })
+
+  describe("Custom Rules from Project Root (issue #908)", () => {
+    const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/custom-rules-test"
+
+    function runLinterFromPath(filePath: string): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${filePath} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("loads custom rules when linting a file in a nested directory", () => {
+      try {
+        mkdirSync(join(tempDir, ".herb/rules"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.4
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
+          export default class NoHelloWorldRule {
+            name = "no-hello-world"
+
+            check(document, context) {
+              const errors = []
+              const source = document.source || ""
+
+              if (source.includes("hello world")) {
+                errors.push({
+                  message: "Text contains 'hello world' which is not allowed",
+                  location: {
+                    start: { line: 1, column: 1 },
+                    end: { line: 1, column: 22 }
+                  }
+                })
+              }
+
+              return errors
+            }
+          }
+        `)
+
+        const testFile = `<div>hello world</div>`
+        writeFileSync(join(tempDir, "app/views/widgets/test.html.erb"), testFile)
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views/widgets/test.html.erb"))
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("no-hello-world")
+        expect(output).toContain("Text contains 'hello world' which is not allowed")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+  })
 })

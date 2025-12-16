@@ -167,6 +167,7 @@ describe("ERB Formatter Fixture Tests", () => {
         <% when 'admin', 'moderator' %>
           <div class="admin-panel">
             <h2>Admin Controls</h2>
+
             <% if user.permissions.include?('delete') %>
               <button class="btn-danger">Delete</button>
             <% end %>
@@ -314,13 +315,11 @@ describe("ERB Formatter Fixture Tests", () => {
 
       expect(result).toBe(dedent`
         <% if eeee then "b" else c end %>
-
         <% if eeee then a else c end %>
 
         <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>
 
         <div <% if eeee then "b" else c end %>></div>
-
         <div <% if eeee then a else c end %>></div>
 
         <div
@@ -366,6 +365,7 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div class="container">
           <h1>Welcome</h1>
+
           <% if user.present? %>
             <p>Hello <%= user.name %>!</p>
           <% else %>
@@ -409,6 +409,7 @@ describe("ERB Formatter Fixture Tests", () => {
           <head>
             <title><%= page_title %></title>
           </head>
+
           <body>
             <% content_for :navigation do %>
               <nav class="main-nav">
@@ -500,6 +501,7 @@ describe("ERB Formatter Fixture Tests", () => {
                 <div class="level-4">
                   <div class="level-5">
                     <span>Deep content</span>
+
                     <% items.each_with_index do |item, index| %>
                       <div class="item-<%= index %>"><%= item.title %></div>
                     <% end %>
@@ -529,10 +531,8 @@ describe("ERB Formatter Fixture Tests", () => {
       expect(result).toBe(dedent`
         <div>
           <h1>Тест UTF-8 🚀</h1>
-
           <p>Café, naïve, résumé</p>
           <span>中文测试</span>
-
           <div>🍰🎉🎊✨🌟💫⭐🔥💥🎯</div>
         </div>
       `)

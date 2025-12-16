@@ -5,6 +5,7 @@ import { resolve, relative } from "path"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
+import { colorize } from "@herb-tools/highlighter"
 
 import { Formatter } from "./formatter.js"
 import { ASTRewriter, StringRewriter, CustomRewriterLoader, builtinRewriters, isASTRewriterClass, isStringRewriterClass } from "@herb-tools/rewriter/loader"
@@ -170,9 +171,10 @@ export class CLI {
       }
 
       const config = await Config.loadForCLI(configFile || startPath, version)
+      const hasConfigFile = Config.exists(config.projectPath)
       const formatterConfig = config.formatter || {}
 
-      if (formatterConfig.enabled === false && !isForceMode) {
+      if (hasConfigFile && formatterConfig.enabled === false && !isForceMode) {
         console.log("Formatter is disabled in .herb.yml configuration.")
         console.log("To enable formatting, set formatter.enabled: true in .herb.yml")
         console.log("Or use --force to format anyway.")
@@ -180,7 +182,7 @@ export class CLI {
         process.exit(0)
       }
 
-      if (isForceMode && formatterConfig.enabled === false) {
+      if (isForceMode && hasConfigFile && formatterConfig.enabled === false) {
         console.error("⚠️  Forcing formatter run (disabled in .herb.yml)")
         console.error()
       }
@@ -208,7 +210,19 @@ export class CLI {
         allRewriterClasses.push(...builtinRewriters)
 
         const loader = new CustomRewriterLoader({ baseDir })
-        const { rewriters: customRewriters, duplicateWarnings } = await loader.loadRewritersWithInfo()
+        const { rewriters: customRewriters, rewriterInfo, duplicateWarnings } = await loader.loadRewritersWithInfo()
+
+        if (customRewriters.length > 0) {
+          console.error(colorize(`\nLoaded ${customRewriters.length} custom ${pluralize(customRewriters.length, 'rewriter')}:`, "green"))
+
+          for (const { name, path } of rewriterInfo) {
+            const relativePath = config.projectPath ? path.replace(config.projectPath + '/', '') : path
+
+            console.error(colorize(`  • ${name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+          }
+
+          console.error()
+        }
 
         allRewriterClasses.push(...customRewriters)
         warnings.push(...duplicateWarnings)
@@ -274,18 +288,41 @@ export class CLI {
         }
 
         if (preRewriters.length > 0 || postRewriters.length > 0) {
-          const parts: string[] = []
+          const customRewriterPaths = new Map(rewriterInfo.map(r => [r.name, r.path]))
 
           if (preRewriters.length > 0) {
-            parts.push(`${preRewriters.length} pre-format ${pluralize(preRewriters.length, 'rewriter')}: ${rewriterNames.pre.join(', ')}`)
+            console.error(colorize(`\nUsing ${preRewriters.length} pre-format ${pluralize(preRewriters.length, 'rewriter')}:`, "green"))
+
+            for (const rewriter of preRewriters) {
+              const customPath = customRewriterPaths.get(rewriter.name)
+
+              if (customPath) {
+                const relativePath = config.projectPath ? customPath.replace(config.projectPath + '/', '') : customPath
+                console.error(colorize(`  • ${rewriter.name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+              } else {
+                console.error(colorize(`  • ${rewriter.name}`, "cyan") + colorize(` (built-in)`, "dim"))
+              }
+            }
+
+            console.error()
           }
 
           if (postRewriters.length > 0) {
-            parts.push(`${postRewriters.length} post-format ${pluralize(postRewriters.length, 'rewriter')}: ${rewriterNames.post.join(', ')}`)
-          }
+            console.error(colorize(`\nUsing ${postRewriters.length} post-format ${pluralize(postRewriters.length, 'rewriter')}:`, "green"))
 
-          console.error(`Using ${parts.join(', ')}`)
-          console.error()
+            for (const rewriter of postRewriters) {
+              const customPath = customRewriterPaths.get(rewriter.name)
+
+              if (customPath) {
+                const relativePath = config.projectPath ? customPath.replace(config.projectPath + '/', '') : customPath
+                console.error(colorize(`  • ${rewriter.name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+              } else {
+                console.error(colorize(`  • ${rewriter.name}`, "cyan") + colorize(` (built-in)`, "dim"))
+              }
+            }
+
+            console.error()
+          }
         }
 
         if (warnings.length > 0) {

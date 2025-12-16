@@ -24,7 +24,7 @@ $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 $INCFLAGS << " -I#{prism_src_path}/util"
 
-$CFLAGS << " -DPRISM_EXPORT_SYMBOLS=static "
+$CFLAGS << " -fvisibility=hidden"
 
 herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 

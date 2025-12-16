@@ -61,13 +61,7 @@ export class CLI {
       const resolvedPattern = resolve(pattern)
 
       if (existsSync(resolvedPattern)) {
-        const stats = statSync(resolvedPattern)
-
-        if (stats.isDirectory()) {
-          this.projectPath = resolvedPattern
-        } else {
-          this.projectPath = dirname(resolvedPattern)
-        }
+        this.projectPath = Config.findProjectRootSync(resolvedPattern)
       }
     }
   }
@@ -141,7 +135,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -247,7 +241,8 @@ export class CLI {
         fix,
         ignoreDisableComments,
         linterConfig,
-        config: processingConfig
+        config: processingConfig,
+        loadCustomRules
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)

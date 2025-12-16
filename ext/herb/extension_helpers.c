@@ -63,7 +63,7 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
 
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
+  for (size_t i = 0; i < tokens->size; i++) {
     token_T* token = hb_array_get(tokens, i);
     if (token != NULL) { rb_ary_push(value, rb_token_from_c_struct(token)); }
   }

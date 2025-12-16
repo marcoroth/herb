@@ -2,7 +2,6 @@
 source: "Engine::ExamplesCompilationTest#test_0008_comment compilation"
 input: "{source: \"<!-- Hello World -->\\n\", options: {escape: false}}"
 ---
-_buf = ::String.new;
- _buf << '<!-- Hello World -->
+_buf = ::String.new; _buf << '<!-- Hello World -->
 '.freeze;
 _buf.to_s

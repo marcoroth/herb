@@ -17,7 +17,7 @@ describe("@herb-tools/browser", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/browser@0.7.5, @herb-tools/core@0.7.5, libprism@1.6.0, libherb@0.7.5 (WebAssembly)")
+    expect(version).toBe("@herb-tools/browser@0.8.4, @herb-tools/core@0.8.4, libprism@1.6.0, libherb@0.8.4 (WebAssembly)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -34,7 +34,7 @@ describe("@herb-tools/browser", () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
     const ruby = Herb.extractRuby(simpleHtml)
     expect(ruby).toBeDefined()
-    expect(ruby).toBe('         "Hello World"         ')
+    expect(ruby).toBe('         "Hello World"  ;      ')
   })
 
   test("extractHTML() extracts HTML content", async () => {

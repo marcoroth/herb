@@ -2,11 +2,9 @@
 source: "Engine::ExamplesCompilationTest#test_0013_for compilation"
 input: "{source: \"<% names = [\\\"Alice\\\", \\\"Bob\\\", \\\"John\\\"] %>\\n\\n<% for name in names %>\\n  <p>Hello, <%= name %>!</p>\\n<% end %>\\n\", options: {escape: false}}"
 ---
-_buf = ::String.new;
- names = ["Alice", "Bob", "John"]; _buf << '
-
-'.freeze; for name in names; _buf << '
-  <p>Hello, '.freeze; _buf << (name).to_s; _buf << '!</p>
-'.freeze; end; _buf << '
-'.freeze;
+_buf = ::String.new; names = ["Alice", "Bob", "John"] 
+ _buf << '
+'.freeze; for name in names 
+ _buf << '  <p>Hello, '.freeze; _buf << (name).to_s; _buf << '!</p>
+'.freeze; end 
 _buf.to_s

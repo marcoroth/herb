@@ -2,8 +2,7 @@
 source: "Engine::DebugModeTest#test_0042_html comment erb expressions do NOT get debug spans"
 input: "{source: \"<!-- Comment with <%= @dynamic_content %> -->\\n<!-- Another comment: <%= @more_content %> -->\\n\", options: {debug: true}}"
 ---
-_buf = ::String.new;
- _buf << '<!-- Comment with '.freeze; _buf << (@dynamic_content).to_s; _buf << ' -->
+_buf = ::String.new; _buf << '<!-- Comment with '.freeze; _buf << (@dynamic_content).to_s; _buf << ' -->
 <!-- Another comment: '.freeze; _buf << (@more_content).to_s; _buf << ' -->
 '.freeze;
 _buf.to_s

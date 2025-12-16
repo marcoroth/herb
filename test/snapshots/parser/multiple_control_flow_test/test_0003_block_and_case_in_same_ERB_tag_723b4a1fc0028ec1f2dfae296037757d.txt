@@ -1,0 +1,59 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0003_block and case in same ERB tag"
+input: |2-
+<% items.each do |item| case item.type %>
+  <% when :a %>a<% when :b %>b<% end; end %>
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(2:44))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:41))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each do |item| case item.type " (location: (1:2)-(1:39))
+    │   ├── tag_closing: "%>" (location: (1:39)-(1:41))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:41)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:15))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (2:2)-(2:15))
+    │   │   │   │       ├── message: "`<% when %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% when %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " when :a " (location: (2:4)-(2:13))
+    │   │   │   ├── tag_closing: "%>" (location: (2:13)-(2:15))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:15)-(2:16))
+    │   │   │   └── content: "a"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:16)-(2:29))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (2:16)-(2:29))
+    │   │   │   │       ├── message: "`<% when %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% when %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (2:16)-(2:18))
+    │   │   │   ├── content: " when :b " (location: (2:18)-(2:27))
+    │   │   │   ├── tag_closing: "%>" (location: (2:27)-(2:29))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:29)-(2:30))
+    │   │       └── content: "b"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (2:30)-(2:44))
+    │           ├── tag_opening: "<%" (location: (2:30)-(2:32))
+    │           ├── content: " end; end " (location: (2:32)-(2:42))
+    │           └── tag_closing: "%>" (location: (2:42)-(2:44))
+    │
+    │
+    └── @ HTMLTextNode (location: (2:44)-(3:0))
+        └── content: "\n"

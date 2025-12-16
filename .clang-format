@@ -20,6 +20,7 @@ ColumnLimit: 120
 ContinuationIndentWidth: 2
 Cpp11BracedListStyle: false
 IndentCaseLabels: true
+IndentPPDirectives: AfterHash
 IndentWidth: 2
 InsertBraces: true
 InsertNewlineAtEOF: true

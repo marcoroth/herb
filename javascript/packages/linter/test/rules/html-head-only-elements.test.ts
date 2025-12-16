@@ -94,6 +94,89 @@ describe("html-head-only-elements", () => {
     `)
   })
 
+  test("passes when meta with itemprop is in body (microdata)", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <div itemscope itemtype="https://schema.org/Book">
+            <span itemprop="name">The Hobbit</span>
+            <meta itemprop="author" content="J.R.R. Tolkien">
+            <meta itemprop="isbn" content="978-0618260300">
+          </div>
+        </body>
+      </html>
+    `)
+  })
+
+  test("passes when meta with itemprop is deeply nested in body", () => {
+    expectNoOffenses(dedent`
+      <html>
+        <head>
+          <title>My Page</title>
+        </head>
+        <body>
+          <article>
+            <div itemscope itemtype="https://schema.org/Product">
+              <h1 itemprop="name">Widget</h1>
+              <div class="details">
+                <meta itemprop="sku" content="12345">
+                <span itemprop="price" content="29.99">$29.99</span>
+              </div>
+            </div>
+          </article>
+        </body>
+      </html>
+    `)
+  })
+
+  test("fails when meta with name attribute is in body", () => {
+    expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+        </head>
+        <body>
+          <meta name="description" content="Page description">
+          <h1>Welcome</h1>
+        </body>
+      </html>
+    `)
+  })
+
+  test("fails when meta with http-equiv attribute is in body", () => {
+    expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+        </head>
+        <body>
+          <meta http-equiv="refresh" content="30">
+          <h1>Welcome</h1>
+        </body>
+      </html>
+    `)
+  })
+
+  test("fails when meta with charset attribute is in body", () => {
+    expectError("Element `<meta>` must be placed inside the `<head>` tag.")
+
+    assertOffenses(dedent`
+      <html>
+        <head>
+        </head>
+        <body>
+          <meta charset="UTF-8">
+          <h1>Welcome</h1>
+        </body>
+      </html>
+    `)
+  })
+
   test("fails when link is in body", () => {
     expectError("Element `<link>` must be placed inside the `<head>` tag.")
 

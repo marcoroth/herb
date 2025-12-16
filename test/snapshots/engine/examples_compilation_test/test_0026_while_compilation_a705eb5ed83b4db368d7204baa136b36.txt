@@ -1,0 +1,9 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0026_while compilation"
+input: "{source: \"<% while i < 10 %>\\n  <b><%= i %></b> is less than 10\\n  <% i += 1 %>\\n<% end %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; while i < 10 
+ _buf << '  <b>'.freeze; _buf << (i).to_s; _buf << '</b> is less than 10
+'.freeze;   i += 1 
+ end 
+_buf.to_s

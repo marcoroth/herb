@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0023_begin with ensure closed in same ERB tag"
+input: |2-
+<% begin; do_work; ensure; cleanup; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:42))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " begin; do_work; ensure; cleanup; end " (location: (1:2)-(1:40))
+    │   ├── tag_closing: "%>" (location: (1:40)-(1:42))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:42)-(2:0))
+        └── content: "\n"

@@ -1,5 +1,6 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
+import { loadCustomRules } from "../loader.js"
 import { Config } from "@herb-tools/config"
 
 import { readFileSync, writeFileSync } from "fs"
@@ -24,6 +25,7 @@ export interface ProcessingContext {
   ignoreDisableComments?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
+  loadCustomRules?: boolean
 }
 
 export interface ProcessingResult {
@@ -43,6 +45,7 @@ export interface ProcessingResult {
 
 export class FileProcessor {
   private linter: Linter | null = null
+  private customRulesLoaded: boolean = false
 
   private isRuleAutocorrectable(ruleName: string): boolean {
     if (!this.linter) return false
@@ -68,16 +71,59 @@ export class FileProcessor {
     let filesWithOffenses = 0
     let filesFixed = 0
     let ruleCount = 0
+
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
+
+    if (!this.linter) {
+      let customRules = undefined
+      let customRuleInfo: Array<{ name: string, path: string }> = []
+      let customRuleWarnings: string[] = []
+
+      if (context?.loadCustomRules && !this.customRulesLoaded) {
+        try {
+          const result = await loadCustomRules({
+            baseDir: context.projectPath,
+            silent: formatOption === 'json'
+          })
+
+          customRules = result.rules
+          customRuleInfo = result.ruleInfo
+          customRuleWarnings = result.warnings
+
+          this.customRulesLoaded = true
+
+          if (customRules.length > 0 && formatOption !== 'json') {
+            const ruleText = customRules.length === 1 ? 'rule' : 'rules'
+            console.log(colorize(`\nLoaded ${customRules.length} custom ${ruleText}:`, "green"))
+
+            for (const { name, path } of customRuleInfo) {
+              const relativePath = context.projectPath ? path.replace(context.projectPath + '/', '') : path
+              console.log(colorize(`  • ${name}`, "cyan") + colorize(` (${relativePath})`, "dim"))
+            }
+
+            if (customRuleWarnings.length > 0) {
+              console.log()
+              for (const warning of customRuleWarnings) {
+                console.warn(colorize(`  ⚠ ${warning}`, "yellow"))
+              }
+            }
+
+            console.log()
+          }
+        } catch (error) {
+          if (formatOption !== 'json') {
+            console.warn(colorize(`Warning: Failed to load custom rules: ${error}`, "yellow"))
+          }
+        }
+      }
+
+      this.linter = Linter.from(Herb, context?.config, customRules)
+    }
 
     for (const filename of files) {
       const filePath = context?.projectPath ? resolve(context.projectPath, filename) : resolve(filename)
       let content = readFileSync(filePath, "utf-8")
-
-      if (!this.linter) {
-        this.linter = Linter.from(Herb, context?.config)
-      }
 
       const lintResult = this.linter.lint(content, {
         fileName: filename,

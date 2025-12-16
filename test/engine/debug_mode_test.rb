@@ -391,5 +391,16 @@ module Engine
     test "regular div content still gets debug spans after excluded context tests" do
       assert_compiled_snapshot("<div><%= @content %></div>", debug: true)
     end
+
+    test "javascript_tag content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <%= javascript_tag do %>
+          var userId = <%= @user.id %>;
+          var name = "<%= @user.name %>";
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
   end
 end

@@ -11,13 +11,20 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
   switch (node->type) {
     <%- nodes.each do |node| -%>
     <%- array_fields = node.fields.select { |f| f.is_a?(Herb::Template::ArrayField) && f.name != "errors" } -%>
-    <%- if array_fields.any? -%>
+    <%- single_node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) } -%>
+
+    <%- if array_fields.any? || single_node_fields.any? -%>
     case <%= node.type %>: {
       const <%= node.struct_type %>* <%= node.human %> = (const <%= node.struct_type %>*) node;
 
       <%- array_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
         match_tags_in_node_array(<%= node.human %>-><%= field.name %>, errors);
+      }
+      <%- end -%>
+      <%- single_node_fields.each do |field| -%>
+      if (<%= node.human %>-><%= field.name %> != NULL) {
+        herb_visit_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, match_tags_visitor, errors);
       }
       <%- end -%>
     } break;
@@ -27,5 +34,5 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
     default: break;
   }
 
-  return true;
+  return false;
 }

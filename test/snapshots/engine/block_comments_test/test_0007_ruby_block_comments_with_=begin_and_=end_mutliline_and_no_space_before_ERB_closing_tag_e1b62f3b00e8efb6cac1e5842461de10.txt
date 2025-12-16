@@ -2,5 +2,4 @@
 source: "Engine::BlockCommentsTest#test_0007_ruby block comments with =begin and =end mutliline and no space before ERB closing tag"
 input: "{source: \"<%\\n=begin%>\\n  This, while unusual, is a legal form of commenting.\\n<%\\n=end%>\\n<div>Hey there</div>\\n\", locals: {}, options: {}}"
 ---
-
 <div>Hey there</div>

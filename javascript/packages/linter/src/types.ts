@@ -69,6 +69,16 @@ export interface AutofixResult<TAutofixContext extends BaseAutofixContext = Base
 }
 
 /**
+ * Default configuration for rules when defaultConfig is not specified.
+ * Custom rules can omit defaultConfig and will use these defaults.
+ */
+export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
+  enabled: true,
+  severity: "error",
+  exclude: []
+}
+
+/**
  * Base class for parser rules.
  */
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
@@ -77,7 +87,9 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static autocorrectable = false
   abstract name: string
 
-  abstract get defaultConfig(): FullRuleConfig
+  get defaultConfig(): FullRuleConfig {
+    return DEFAULT_RULE_CONFIG
+  }
   abstract check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
@@ -109,7 +121,9 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   static autocorrectable = false
   abstract name: string
 
-  abstract get defaultConfig(): FullRuleConfig
+  get defaultConfig(): FullRuleConfig {
+    return DEFAULT_RULE_CONFIG
+  }
   abstract check(lexResult: LexResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
@@ -164,7 +178,9 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   static autocorrectable = false
   abstract name: string
 
-  abstract get defaultConfig(): FullRuleConfig
+  get defaultConfig(): FullRuleConfig {
+    return DEFAULT_RULE_CONFIG
+  }
   abstract check(source: string, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**

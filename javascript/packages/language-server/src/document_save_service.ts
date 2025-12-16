@@ -18,12 +18,31 @@ export class DocumentSaveService {
     this.formattingService = formattingService
   }
 
+  /**
+   * Apply only autofix edits on save.
+   * Called by willSaveWaitUntil - formatting is handled separately by editor.formatOnSave
+   */
+  async applyFixes(document: TextDocument): Promise<TextEdit[]> {
+    const settings = await this.settings.getDocumentSettings(document.uri)
+    const fixOnSave = settings?.linter?.fixOnSave !== false
+
+    this.connection.console.log(`[DocumentSave] applyFixes fixOnSave=${fixOnSave}`)
+
+    if (!fixOnSave) return []
+
+    return this.autofixService.autofix(document)
+  }
+
+  /**
+   * Apply autofix and formatting.
+   * Called by onDocumentFormatting (manual format or editor.formatOnSave)
+   */
   async applyFixesAndFormatting(document: TextDocument, reason: TextDocumentSaveReason): Promise<TextEdit[]> {
     const settings = await this.settings.getDocumentSettings(document.uri)
     const fixOnSave = settings?.linter?.fixOnSave !== false
     const formatterEnabled = settings?.formatter?.enabled ?? false
 
-    this.connection.console.log(`[DocumentSave] fixOnSave=${fixOnSave}, formatterEnabled=${formatterEnabled}`)
+    this.connection.console.log(`[DocumentSave] applyFixesAndFormatting fixOnSave=${fixOnSave}, formatterEnabled=${formatterEnabled}`)
 
     let autofixEdits: TextEdit[] = []
 

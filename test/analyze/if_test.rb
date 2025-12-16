@@ -134,6 +134,14 @@ module Analyze
       HTML
     end
 
+    test "if with yield in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if yield(:a) %>
+          content
+        <% end %>
+      HTML
+    end
+
     test "conditional attribute value" do
       skip
 
@@ -142,6 +150,20 @@ module Analyze
           type="submit"
           disabled<% if valid? %>="disabled"<% end %>
         ></button>
+      HTML
+    end
+
+    test "if with missing conditional" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if %>
+        <% end %>
+      HTML
+    end
+
+    test "if with invalid syntax" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true true %>
+        <% end %>
       HTML
     end
   end

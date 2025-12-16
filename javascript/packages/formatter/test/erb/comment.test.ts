@@ -101,11 +101,8 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <%# level 1 %>
-
       <%#   level 2 %>
-
       <%#     level 3 %>
-
       <%#       level 4 %>
     `)
   })
@@ -130,11 +127,8 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <%# level 1 %>
-
       <%# level 2 %>
-
       <%# level 3 %>
-
       <%# level 4 %>
     `)
   })

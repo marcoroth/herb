@@ -2,8 +2,7 @@
 source: "Engine::DebugModeTest#test_0035_puts debug span on parent if HTMLTextContent is only whitespace"
 input: "{source: \"<h1>\\n  <%= hello %>\\n</h1>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new;
- _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
+_buf = ::String.new; _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
   <span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= hello %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="3" style="display: contents;">'.freeze; _buf << (hello).to_s; _buf << '</span>
 </h1>
 '.freeze;

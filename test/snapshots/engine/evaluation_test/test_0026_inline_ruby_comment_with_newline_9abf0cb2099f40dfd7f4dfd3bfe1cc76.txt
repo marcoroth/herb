@@ -2,4 +2,3 @@
 source: "Engine::EvaluationTest#test_0026_inline ruby comment with newline"
 input: "{source: \"<% if true %><% # Comment here %>\\n<% end %>\", locals: {}, options: {escape: false}}"
 ---
-

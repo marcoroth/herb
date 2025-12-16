@@ -5,5 +5,4 @@ input: "{source: \"Sitename • Title\\n\\n<% @title = \\\"Home\\\" %>\\n\\n<tit
 Sitename • Title
 
 
-
 <title>Home • Sitename</title>

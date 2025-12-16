@@ -1,6 +1,6 @@
 [package]
 name = "herb"
-version = "0.7.5"
+version = "0.8.4"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
@@ -9,6 +9,14 @@ license = "MIT"
 repository = "https://github.com/marcoroth/herb"
 keywords = ["erb", "html", "html+erb", "ruby", "rails"]
 categories = ["parser-implementations", "development-tools"]
+include = [
+  "src/**/*",
+  "vendor/**/*.c",
+  "vendor/**/*.h",
+  "build.rs",
+  "Cargo.toml",
+  "README.md"
+]
 
 [lib]
 name = "herb"

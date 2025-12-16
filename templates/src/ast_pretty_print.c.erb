@@ -1,3 +1,4 @@
+#include "include/analyze_helpers.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
@@ -62,21 +63,21 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
 
       <%- when Herb::Template::AnalyzedRubyField -%>
       if (<%= node.human %>-><%= field.name %>) {
-        pretty_print_boolean_property(hb_string("if_node"), <%= node.human %>-><%= field.name %>->has_if_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("elsif_node"), <%= node.human %>-><%= field.name %>->has_elsif_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("else_node"), <%= node.human %>-><%= field.name %>->has_else_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("end"), <%= node.human %>-><%= field.name %>->has_end, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("block_node"), <%= node.human %>-><%= field.name %>->has_block_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("block_closing"), <%= node.human %>-><%= field.name %>->has_block_closing, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("case_node"), <%= node.human %>-><%= field.name %>->has_case_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("when_node"), <%= node.human %>-><%= field.name %>->has_when_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("for_node"), <%= node.human %>-><%= field.name %>->has_for_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("while_node"), <%= node.human %>-><%= field.name %>->has_while_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("until_node"), <%= node.human %>-><%= field.name %>->has_until_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("begin_node"), <%= node.human %>-><%= field.name %>->has_begin_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("rescue_node"), <%= node.human %>-><%= field.name %>->has_rescue_node, indent, relative_indent, false, buffer);
-        pretty_print_boolean_property(hb_string("ensure_node"), <%= node.human %>-><%= field.name %>->has_ensure_node, indent, relative_indent,  <%= last %>, buffer);
-        pretty_print_boolean_property(hb_string("unless_node"), <%= node.human %>-><%= field.name %>->has_unless_node, indent, relative_indent,  <%= last %>, buffer);
+        pretty_print_boolean_property(hb_string("if_node"), has_if_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("elsif_node"), has_elsif_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("else_node"), has_else_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("end"), has_end(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("block_node"), has_block_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("block_closing"), has_block_closing(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("case_node"), has_case_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("when_node"), has_when_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("for_node"), has_for_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("while_node"), has_while_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("until_node"), has_until_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("begin_node"), has_begin_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("rescue_node"), has_rescue_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("ensure_node"), has_ensure_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
+        pretty_print_boolean_property(hb_string("unless_node"), has_unless_node(<%= node.human %>-><%= field.name %>), indent, relative_indent, false, buffer);
       } else {
       pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
         hb_buffer_append(buffer, " ∅\n");

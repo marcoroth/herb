@@ -3,6 +3,7 @@ package org.herb.ast;
 import org.herb.Location;
 import org.herb.Token;
 
+import java.util.ArrayList;
 import java.util.List;
 
 <%- nodes.each do |node| -%>
@@ -136,7 +137,7 @@ class <%= node.name %> extends BaseNode {
   }
 
   @Override
-  public String treeInspect() {
+  public String inspect() {
     StringBuilder output = new StringBuilder();
 
     output.append("@ <%= node.name %> ").append(location != null ? "(location: " + location.toString() + ")" : "no-location").append("\n");
@@ -175,6 +176,38 @@ class <%= node.name %> extends BaseNode {
     <%- end -%>
 
     return output.toString();
+  }
+
+  @Override
+  public List<Node> recursiveErrors() {
+    List<Node> result = new ArrayList<>();
+
+    if (errors != null) {
+      result.addAll(errors);
+    }
+
+    <%- if node.fields.any? -%>
+    <%- node.fields.each do |field| -%>
+    <%- if field.is_a?(Herb::Template::ArrayField) -%>
+
+    if (<%= field.name %> != null) {
+      for (Node child : <%= field.name %>) {
+        if (child != null) {
+          result.addAll(child.recursiveErrors());
+        }
+      }
+    }
+
+    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    if (<%= field.name %> != null) {
+      result.addAll(<%= field.name %>.recursiveErrors());
+    }
+
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+
+    return result;
   }
 
   @Override

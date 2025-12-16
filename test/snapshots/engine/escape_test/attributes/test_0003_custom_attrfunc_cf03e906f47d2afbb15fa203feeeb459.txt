@@ -2,6 +2,5 @@
 source: "Engine::EscapeTest::attributes#test_0003_custom attrfunc"
 input: "{source: \"<div class=\\\"<%= value %>\\\"></div>\", options: {attrfunc: \"CustomEscape.attribute\"}}"
 ---
-_buf = ::String.new;
- _buf << '<div class="'.freeze; _buf << CustomEscape.attribute((value)); _buf << '"></div>'.freeze;
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << CustomEscape.attribute((value)); _buf << '"></div>'.freeze;
 _buf.to_s

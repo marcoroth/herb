@@ -2,6 +2,5 @@
 source: "Engine::EngineBlockTest#test_0011_doctype is optimized to single text token"
 input: "{source: \"<!DOCTYPE html PUBLIC \\\"-//W3C//DTD XHTML 1.0 Strict//EN\\\">\", options: {}}"
 ---
-_buf = ::String.new;
- _buf << '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">'.freeze;
+_buf = ::String.new; _buf << '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN">'.freeze;
 _buf.to_s

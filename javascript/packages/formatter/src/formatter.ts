@@ -2,12 +2,12 @@ import { FormatPrinter } from "./format-printer.js"
 
 import { isScaffoldTemplate } from "./scaffold-template-detector.js"
 import { resolveFormatOptions } from "./options.js"
+import { hasFormatterIgnoreDirective } from "./format-ignore.js"
 
 import type { Config } from "@herb-tools/config"
 import type { RewriteContext } from "@herb-tools/rewriter"
 import type { HerbBackend, ParseResult } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
-
 
 /**
  * Formatter uses a Herb Backend to parse the source and then
@@ -61,6 +61,7 @@ export class Formatter {
 
     if (result.failed) return source
     if (isScaffoldTemplate(result)) return source
+    if (hasFormatterIgnoreDirective(result.value)) return source
 
     const resolvedOptions = resolveFormatOptions({ ...this.options, ...options })
 

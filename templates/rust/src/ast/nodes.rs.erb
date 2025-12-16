@@ -51,7 +51,7 @@ unsafe fn convert_errors(errors_array: *mut hb_array_T) -> Vec<AnyError> {
     return Vec::new();
   }
 
-  let count = hb_array_size(errors_array);
+  let count = (*errors_array).size;
   let mut errors = Vec::with_capacity(count);
 
   for index in 0..count {
@@ -110,7 +110,7 @@ unsafe fn convert_children(children_array: *mut hb_array_T) -> Vec<AnyNode> {
     return Vec::new();
   }
 
-  let count = hb_array_size(children_array);
+  let count = (*children_array).size;
   let mut children = Vec::with_capacity(count);
 
   for index in 0..count {

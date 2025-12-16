@@ -378,7 +378,9 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Checks if a tag has a specific attribute
  */
-export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
+export function hasAttribute(node: HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+  if (!node) return false
+
   return getAttribute(node, attributeName) !== null
 }
 

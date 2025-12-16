@@ -141,7 +141,7 @@ static VALUE Herb_version(VALUE self) {
   return rb_funcall(rb_mKernel, rb_intern("sprintf"), 4, format_string, gem_version, libprism_version, libherb_version);
 }
 
-void Init_herb(void) {
+__attribute__((__visibility__("default"))) void Init_herb(void) {
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
   cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);

@@ -25,6 +25,7 @@ module Herb
         @relative_file_path = calculate_relative_path
         @top_level_elements = [] #: Array[Herb::AST::HTMLElementNode]
         @element_stack = [] #: Array[String]
+        @erb_block_stack = [] #: Array[Herb::AST::ERBBlockNode]
         @debug_attributes_applied = false
         @in_attribute = false
         @in_html_comment = false
@@ -81,6 +82,12 @@ module Herb
 
       def visit_erb_yield_node(_node)
         nil
+      end
+
+      def visit_erb_block_node(node)
+        @erb_block_stack.push(node)
+        super
+        @erb_block_stack.pop
       end
 
       private
@@ -180,9 +187,7 @@ module Herb
           debug_attributes << create_debug_attribute("data-herb-debug-attach-to-parent", "true")
         end
 
-        debug_attributes.each do |attr|
-          open_tag_node.children << attr
-        end
+        open_tag_node.children.concat(debug_attributes)
 
         @debug_attributes_applied = true
       end
@@ -233,9 +238,7 @@ module Herb
         ]
 
         debug_attributes << create_debug_attribute("data-herb-debug-line", line.to_s) if line
-
         debug_attributes << create_debug_attribute("data-herb-debug-column", (column + 1).to_s) if column
-
         debug_attributes << create_debug_attribute("style", "display: contents;")
 
         tag_name_token = create_token(:tag_name, "span")
@@ -299,7 +302,11 @@ module Herb
 
       def in_excluded_context?
         excluded_tags = ["script", "style", "head", "textarea", "pre"]
-        excluded_tags.any? { |tag| @element_stack.include?(tag) }
+        return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
+
+        return true if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) }
+
+        false
       end
 
       def erb_output?(opening)
@@ -333,6 +340,18 @@ module Herb
 
         return true if cleaned_code.match?(/\btag\.\w+\s.*do\s*$/) ||
                        cleaned_code.match?(/\btag\.\w+\s.*\{\s*$/)
+
+        false
+      end
+
+      # TODO: Rewrite using Prism Nodes once available
+      def javascript_tag?(code)
+        cleaned_code = code.strip.gsub(/\s+/, " ")
+
+        return true if cleaned_code.match?(/\bjavascript_tag\s.*do\s*$/) ||
+                       cleaned_code.match?(/\bjavascript_tag\s.*\{\s*$/) ||
+                       cleaned_code.match?(/\bjavascript_tag\(.*do\s*$/) ||
+                       cleaned_code.match?(/\bjavascript_tag\(.*\{\s*$/)
 
         false
       end

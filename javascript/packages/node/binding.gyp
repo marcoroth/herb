@@ -30,6 +30,7 @@
         "./extension/libherb/parser_helpers.c",
         "./extension/libherb/parser_match_tags.c",
         "./extension/libherb/parser.c",
+        "./extension/libherb/position.c",
         "./extension/libherb/pretty_print.c",
         "./extension/libherb/prism_helpers.c",
         "./extension/libherb/range.c",

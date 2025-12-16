@@ -778,16 +778,26 @@ export default class extends Controller {
     if (this.hasCommitHashTarget) {
       if (typeof __COMMIT_INFO__ !== 'undefined') {
         const commitInfo = __COMMIT_INFO__
-        const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
-        if (commitInfo.ahead > 0) {
-          this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+        if (commitInfo.prNumber) {
+          const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
+          const commitUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
+
+          this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
+          this.commitHashTarget.href = prUrl
+          this.commitHashTarget.title = `View PR #${commitInfo.prNumber} on GitHub (commit ${commitInfo.hash})`
         } else {
-          this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
-        }
+          const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
-        this.commitHashTarget.href = githubUrl
-        this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+          if (commitInfo.ahead > 0) {
+            this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+          } else {
+            this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
+          }
+
+          this.commitHashTarget.href = githubUrl
+          this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+        }
       } else {
         this.commitHashTarget.textContent = 'unknown'
         this.commitHashTarget.removeAttribute('href')
