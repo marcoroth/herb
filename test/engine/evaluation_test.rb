@@ -452,5 +452,13 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, { escape: false })
     end
+
+    test "graphql" do
+      template = File.read("examples/graphql.html.erb")
+      klass = Data.define(:title, :description, :price)
+      product = klass.new(title: "title", description: "Description", price: 42.00)
+
+      assert_evaluated_snapshot(template, { product: product }, { escape: false })
+    end
   end
 end

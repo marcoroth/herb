@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0018_link to with block compilation"
+source: "Engine::ExamplesCompilationTest#test_0019_link to with block compilation"
 input: "{source: \"<%= link_to root_path do %>\\n  <div class=\\\"card\\\">\\n    Test\\n  </div>\\n<% end %>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; _buf << link_to root_path do; _buf << '

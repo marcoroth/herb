@@ -1,0 +1,5 @@
+---
+source: "Engine::GraphQLTest#test_0007_graphql tag evaluated produces empty output"
+input: "{source: \"<%graphql\\n  fragment TestFragment on Test {\\n    id\\n  }\\n%>\\n\", locals: {}, options: {}}"
+---
+
