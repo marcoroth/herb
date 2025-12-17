@@ -106,4 +106,39 @@ describe("html-tag-name-lowercase autofix", () => {
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(0)
   })
+
+  test("converts uppercase SVG tags to lowercase", () => {
+    const input = `<SVG><linearGradient></linearGradient></SVG>`
+    const expected = `<svg><linearGradient></linearGradient></svg>`
+
+    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
+  })
+
+  test("fixes one offense at a time", () => {
+    const input = `<DIV>Hello</DIV>`
+    const expected = `<div>Hello</div>`
+
+    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+    const lintResult = linter.lint(input)
+    const result = linter.autofix(input, undefined, [lintResult.offenses[0]])
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(1)
+  })
+
+  test("fixes multiple selected offenses", () => {
+    const input = `<FORM><INPUT type="text"><BUTTON>Submit</BUTTON></FORM>`
+    const expected = `<form><input type="text"><button>Submit</button></form>`
+
+    const linter = new Linter(Herb, [HTMLTagNameLowercaseRule])
+    const lintResult = linter.lint(input)
+    const result = linter.autofix(input, undefined, [lintResult.offenses[1], lintResult.offenses[3], lintResult.offenses[4]])
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(3)
+  })
 })
