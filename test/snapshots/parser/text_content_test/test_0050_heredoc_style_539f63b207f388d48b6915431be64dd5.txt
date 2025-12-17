@@ -1,0 +1,29 @@
+---
+source: "Parser::TextContentTest#test_0050_heredoc style"
+input: "<code><<~HTML</code>"
+---
+@ DocumentNode (location: (1:0)-(1:20))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:20))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "code" (location: (1:1)-(1:5))
+        │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "code" (location: (1:1)-(1:5))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:6)-(1:13))
+        │       └── content: "<<~HTML"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:13)-(1:20))
+        │       ├── tag_opening: "</" (location: (1:13)-(1:15))
+        │       ├── tag_name: "code" (location: (1:15)-(1:19))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:19)-(1:20))
+        │
+        ├── is_void: false
+        └── source: "HTML"
