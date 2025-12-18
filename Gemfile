@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "prism", github: "ruby/prism", tag: "v1.6.0"
+gem "prism", github: "ruby/prism", tag: "v1.7.0"
 
 gem "actionview", "~> 8.0"
 gem "difftastic", "~> 0.7"
