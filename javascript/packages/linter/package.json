@@ -7,14 +7,14 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/linter%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/linter"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
   "bin": {
-    "herb-lint": "./bin/herb-lint"
+    "herb-lint": "bin/herb-lint"
   },
   "scripts": {
     "clean": "rimraf dist",

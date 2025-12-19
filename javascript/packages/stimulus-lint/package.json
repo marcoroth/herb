@@ -7,14 +7,14 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60stimulus-lint%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/stimulus-lint"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "stimulus-lint": "./bin/stimulus-lint"
+    "stimulus-lint": "bin/stimulus-lint"
   },
   "exports": {
     "./package.json": "./package.json",

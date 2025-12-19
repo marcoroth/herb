@@ -7,7 +7,7 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/config%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/config"
   },
   "main": "./dist/herb-config.cjs",

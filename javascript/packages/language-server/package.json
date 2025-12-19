@@ -11,11 +11,11 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/language-server"
   },
   "bin": {
-    "herb-language-server": "./bin/herb-language-server"
+    "herb-language-server": "bin/herb-language-server"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
