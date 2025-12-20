@@ -74,10 +74,8 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
-
-      - name: bundle install
-        run: bundle install
+          ruby-version: '3.4'
+          bundler-cache: true
 
       - name: Render Templates
         run: bundle exec rake templates
@@ -131,7 +129,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
-          bundler-cache: false
+          bundler-cache: true
 
       - name: Download gem artifacts
         uses: actions/download-artifact@v4
