@@ -66,12 +66,14 @@ $srcs = core_src_files + herb_src_files + prism_main_files + prism_util_files
 
 puts "Sources to be compiled: #{$srcs.inspect}"
 
-abort("could not find prism.h") unless find_header("prism.h")
-abort("could not find herb.h") unless find_header("herb.h")
+unless defined?(CROSS_COMPILING) && CROSS_COMPILING
+  abort("could not find prism.h") unless find_header("prism.h")
+  abort("could not find herb.h") unless find_header("herb.h")
 
-abort("could not find nodes.h (run `ruby templates/template.rb` to generate the file)") unless find_header("nodes.h")
-abort("could not find extension.h") unless find_header("extension.h")
-abort("could not find extension_helpers.h") unless find_header("extension_helpers.h")
+  abort("could not find nodes.h (run `ruby templates/template.rb` to generate the file)") unless find_header("nodes.h")
+  abort("could not find extension.h") unless find_header("extension.h")
+  abort("could not find extension_helpers.h") unless find_header("extension_helpers.h")
+end
 
 create_header
 create_makefile("#{extension_name}/#{extension_name}")
