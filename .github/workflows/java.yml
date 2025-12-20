@@ -30,18 +30,8 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Render Templates
-        run: bundle exec rake templates
-
-      - name: Compile Herb
-        run: bundle exec rake make
-
-      - name: Build JNI library
-        run: make jni
-        working-directory: java
-
-      - name: Compile Java classes
-        run: make java
+      - name: Build JNI library and Java classes
+        run: make all
         working-directory: java
 
       - name: Run tests

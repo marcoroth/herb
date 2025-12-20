@@ -144,6 +144,11 @@ namespace :prism do
       exit 1
     end
 
+    puts "Generating Prism templates..."
+    Dir.chdir(prism_bundle_path) do
+      system("ruby templates/template.rb", exception: true)
+    end
+
     FileUtils.mkdir_p(prism_vendor_path)
 
     files = [

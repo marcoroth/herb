@@ -62,28 +62,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Add LLVM apt Repo
-        run: |-
-          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-          sudo add-apt-repository "deb http://apt.llvm.org/$(lsb_release -cs)/ llvm-toolchain-$(lsb_release -cs)-21 main"
-          sudo apt update
-
-      - name: Install APT dependencies
-        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
-
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
-
-      - name: bundle install
-        run: bundle install
+          ruby-version: '3.4'
+          bundler-cache: true
 
       - name: Render Templates
         run: bundle exec rake templates
 
-      - name: Compile Herb
-        run: bundle exec rake make
+      - name: Vendor Prism
+        run: bundle exec rake prism:vendor
 
       - name: Build gem
         run: |
@@ -128,7 +117,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4'
-          bundler-cache: false
+          bundler-cache: true
 
       - name: Download gem artifacts
         uses: actions/download-artifact@v4

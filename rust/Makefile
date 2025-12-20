@@ -5,18 +5,26 @@ BIN_NAME = herb-rust
 BIN_PATH = $(BUILD_DIR)/debug/$(BIN_NAME)
 RELEASE_BIN_PATH = $(BUILD_DIR)/release/$(BIN_NAME)
 
-.PHONY: all build release clean test cli help templates format vendor
+.PHONY: all build release clean test cli help setup templates prism format vendor
 
-all: templates build
+all: build
+
+setup:
+	cd .. && bundle install
+	cd .. && bundle exec rake templates
+	cd .. && bundle exec rake prism:vendor
 
 templates:
-	cd .. && bundle exec rake templates
+	cd .. && bundle install && bundle exec rake templates
 
-build: templates
+prism:
+	cd .. && bundle install && bundle exec rake prism:vendor
+
+build:
 	cargo +stable build --verbose --bin $(BIN_NAME)
 	@echo "Built debug binary: $(BIN_PATH)"
 
-release: templates
+release:
 	cargo build --release --bin $(BIN_NAME)
 	@echo "Built release binary: $(RELEASE_BIN_PATH)"
 
@@ -44,24 +52,25 @@ clean:
 	cargo clean
 	@echo "Cleaned Rust build artifacts"
 
-vendor:
+vendor: prism
 	@echo "Vendoring C sources into vendor/libherb..."
 	rm -rf vendor/
 	mkdir -p vendor/libherb/
 	mkdir -p vendor/prism/
 	cp -r ../src vendor/libherb/
 	@echo "Vendoring prism library..."
-	PRISM_PATH=$$(bundle show prism) && \
-	cp -r "$$PRISM_PATH/src" vendor/prism/ && \
-	cp -r "$$PRISM_PATH/include" vendor/prism/
+	cp -r ../vendor/prism/src vendor/prism/
+	cp -r ../vendor/prism/include vendor/prism/
 	@echo "Vendored C sources and prism successfully"
 
 help:
 	@echo "Herb Rust Build System"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all        - Build everything (templates + Rust)"
+	@echo "  all        - Build Rust binary"
+	@echo "  setup      - Install deps, generate templates, vendor prism"
 	@echo "  templates  - Generate code from ERB templates"
+	@echo "  prism      - Vendor prism library sources"
 	@echo "  build      - Build debug binary"
 	@echo "  release    - Build release binary"
 	@echo "  cli        - Show CLI usage"
