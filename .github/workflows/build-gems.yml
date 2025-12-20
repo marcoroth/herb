@@ -85,6 +85,9 @@ jobs:
       - name: Compile Herb
         run: bundle exec rake make
 
+      - name: Setup Cross-Ruby Configs
+        run: bundle exec rake gem:prepare
+
       - name: Build gem
         run: |
           if [ "${{ matrix.target }}" = "default" ]; then

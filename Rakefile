@@ -58,34 +58,29 @@ begin
   end
 
   task "gem:native" do
-    require "rake_compiler_dock"
+    require "rake/cross/compiler"
     sh "bundle config set cache_all true"
 
     PLATFORMS.each do |platform|
-      RakeCompilerDock.sh "bundle --local && rake native:#{platform} gem", platform: platform
+      Rake::Cross::Compiler.sh "bundle --local && rake native:#{platform} gem", platform: platform
     end
 
-    RakeCompilerDock.sh "bundle --local && rake java gem", rubyvm: :jruby
+    # RakeCompilerDock.sh "bundle --local && rake java gem", rubyvm: :jruby
   rescue LoadError
-    abort "rake_compiler_dock is required to build native gems"
+    abort "rake-cross-compiler is required to build native gems"
   end
 
   namespace "gem" do
     task "prepare" do
-      require "rake_compiler_dock"
-      require "io/console"
-
-      sh "bundle config set cache_all true"
-      sh "cp ~/.gem/gem-*.pem build/gem/ || true"
+      require "rake/cross/compiler"
 
       gemspec_path = File.expand_path("./herb.gemspec", __dir__)
       spec = eval(File.read(gemspec_path), binding, gemspec_path)
 
-      RakeCompilerDock.set_ruby_cc_version(spec.required_ruby_version.as_list)
-
-      # ENV["GEM_PRIVATE_KEY_PASSPHRASE"] = STDIN.getpass("Enter passphrase of gem signature key: ")
+      Rake::Cross::Compiler.set_ruby_cc_version(spec.required_ruby_version, platforms: PLATFORMS)
+      Rake::Cross::Compiler.setup_cross_ruby(platforms: PLATFORMS)
     rescue LoadError
-      abort "rake_compiler_dock is required for this task"
+      abort "rake-cross-compiler is required for this task"
     end
 
     exttask.cross_platform.each do |platform|
@@ -94,9 +89,10 @@ begin
 
       desc "Build the native gem for #{platform}"
       task platform => "prepare" do
-        RakeCompilerDock.sh(
-          "bundle --local && rake native:#{platform} gem RUBY_CC_VERSION='#{ENV.fetch("RUBY_CC_VERSION", nil)}'",
-          platform: platform
+        Rake::Cross::Compiler.sh(
+          "bundle --local && rake native:#{platform} gem",
+          platform: platform,
+          ruby_cc_version: ENV.fetch("RUBY_CC_VERSION", nil)
         )
       end
     end

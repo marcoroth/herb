@@ -14,7 +14,7 @@ gem "maxitest"
 gem "minitest-difftastic", "~> 0.2"
 gem "rake", "~> 13.2"
 gem "rake-compiler", "~> 1.3"
-gem "rake-compiler-dock", "1.11.0.rc1"
+gem "rake-cross-compiler", github: "marcoroth/rake-cross-compiler"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 
