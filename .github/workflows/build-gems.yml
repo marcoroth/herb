@@ -79,6 +79,9 @@ jobs:
       - name: bundle install
         run: bundle install
 
+      - name: Vendor Prism
+        run: bundle exec rake prism:vendor
+
       - name: Render Templates
         run: bundle exec rake templates
 
