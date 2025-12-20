@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/marcoroth/rake-cross-compiler.git
-  revision: 180bdb7d9c023d652423ea00714c43705b244b52
+  revision: febcf430533d4187ae12cc84a3ffcb5d7ffc54a6
   specs:
     rake-cross-compiler (0.0.1)
       rake (>= 13.0)
