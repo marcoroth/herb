@@ -547,7 +547,7 @@ export class HerbOverlay {
     }
 
     element.style.position = 'relative';
-    if (element.tagName.toLowerCase() === 'html') {
+    if (element.localName === 'html') {
       label.style.top = '0';
     }
     element.appendChild(label);
