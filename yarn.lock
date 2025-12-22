@@ -1486,7 +1486,7 @@
     table "^6.9.0"
     terminal-link "^4.0.0"
 
-"@secretlint/node@^10.1.1", "@secretlint/node@^10.2.2":
+"@secretlint/node@^10.1.2", "@secretlint/node@^10.2.2":
   version "10.2.2"
   resolved "https://registry.npmjs.org/@secretlint/node/-/node-10.2.2.tgz"
   integrity sha512-eZGJQgcg/3WRBwX1bRnss7RmHHK/YlP/l7zOQsrjexYt6l+JJa5YhUmHbuGXS94yW0++3YkEJp0kQGYhiw1DMQ==
@@ -1510,23 +1510,23 @@
   resolved "https://registry.npmjs.org/@secretlint/resolver/-/resolver-10.2.2.tgz"
   integrity sha512-3md0cp12e+Ae5V+crPQYGd6aaO7ahw95s28OlULGyclyyUtf861UoRGS2prnUrKh7MZb23kdDOyGCYb9br5e4w==
 
-"@secretlint/secretlint-formatter-sarif@^10.1.1":
+"@secretlint/secretlint-formatter-sarif@^10.1.2":
   version "10.2.2"
-  resolved "https://registry.npmjs.org/@secretlint/secretlint-formatter-sarif/-/secretlint-formatter-sarif-10.2.2.tgz"
+  resolved "https://registry.yarnpkg.com/@secretlint/secretlint-formatter-sarif/-/secretlint-formatter-sarif-10.2.2.tgz#5c4044a6a6c9d95e2f57270d6184931f0979d649"
   integrity sha512-ojiF9TGRKJJw308DnYBucHxkpNovDNu1XvPh7IfUp0A12gzTtxuWDqdpuVezL7/IP8Ua7mp5/VkDMN9OLp1doQ==
   dependencies:
     node-sarif-builder "^3.2.0"
 
-"@secretlint/secretlint-rule-no-dotenv@^10.1.1":
+"@secretlint/secretlint-rule-no-dotenv@^10.1.2":
   version "10.2.2"
-  resolved "https://registry.npmjs.org/@secretlint/secretlint-rule-no-dotenv/-/secretlint-rule-no-dotenv-10.2.2.tgz"
+  resolved "https://registry.yarnpkg.com/@secretlint/secretlint-rule-no-dotenv/-/secretlint-rule-no-dotenv-10.2.2.tgz#ea43dcc2abd1dac3288b056610361f319f5ce6e9"
   integrity sha512-KJRbIShA9DVc5Va3yArtJ6QDzGjg3PRa1uYp9As4RsyKtKSSZjI64jVca57FZ8gbuk4em0/0Jq+uy6485wxIdg==
   dependencies:
     "@secretlint/types" "^10.2.2"
 
-"@secretlint/secretlint-rule-preset-recommend@^10.1.1":
+"@secretlint/secretlint-rule-preset-recommend@^10.1.2":
   version "10.2.2"
-  resolved "https://registry.npmjs.org/@secretlint/secretlint-rule-preset-recommend/-/secretlint-rule-preset-recommend-10.2.2.tgz"
+  resolved "https://registry.yarnpkg.com/@secretlint/secretlint-rule-preset-recommend/-/secretlint-rule-preset-recommend-10.2.2.tgz#27b17c38b360c6788826d28fcda28ac6e9772d0b"
   integrity sha512-K3jPqjva8bQndDKJqctnGfwuAxU2n9XNCPtbXVI5JvC7FnQiNg/yWlQPbMUlBXtBoBGFYp08A94m6fvtc9v+zA==
 
 "@secretlint/source-creator@^10.2.2":
@@ -2488,16 +2488,16 @@
     "@vscode/vsce-sign-win32-arm64" "2.0.5"
     "@vscode/vsce-sign-win32-x64" "2.0.5"
 
-"@vscode/vsce@^3.5.0":
-  version "3.6.0"
-  resolved "https://registry.npmjs.org/@vscode/vsce/-/vsce-3.6.0.tgz"
-  integrity sha512-u2ZoMfymRNJb14aHNawnXJtXHLXDVKc1oKZaH4VELKT/9iWKRVgtQOdwxCgtwSxJoqYvuK4hGlBWQJ05wxADhg==
+"@vscode/vsce@^3.7.1":
+  version "3.7.1"
+  resolved "https://registry.yarnpkg.com/@vscode/vsce/-/vsce-3.7.1.tgz#55a88ae40e9618fea251e373bc6b23c128915654"
+  integrity sha512-OTm2XdMt2YkpSn2Nx7z2EJtSuhRHsTPYsSK59hr3v8jRArK+2UEoju4Jumn1CmpgoBLGI6ReHLJ/czYltNUW3g==
   dependencies:
     "@azure/identity" "^4.1.0"
-    "@secretlint/node" "^10.1.1"
-    "@secretlint/secretlint-formatter-sarif" "^10.1.1"
-    "@secretlint/secretlint-rule-no-dotenv" "^10.1.1"
-    "@secretlint/secretlint-rule-preset-recommend" "^10.1.1"
+    "@secretlint/node" "^10.1.2"
+    "@secretlint/secretlint-formatter-sarif" "^10.1.2"
+    "@secretlint/secretlint-rule-no-dotenv" "^10.1.2"
+    "@secretlint/secretlint-rule-preset-recommend" "^10.1.2"
     "@vscode/vsce-sign" "^2.0.0"
     azure-devops-node-api "^12.5.0"
     chalk "^4.1.2"
@@ -2514,7 +2514,7 @@
     minimatch "^3.0.3"
     parse-semver "^1.1.1"
     read "^1.0.7"
-    secretlint "^10.1.1"
+    secretlint "^10.1.2"
     semver "^7.5.2"
     tmp "^0.2.3"
     typed-rest-client "^1.8.4"
@@ -8785,9 +8785,9 @@ sax@>=0.6.0:
   resolved "https://registry.npmjs.org/sax/-/sax-1.4.1.tgz"
   integrity sha512-+aWOz7yVScEGoKNd4PA10LZ8sk0A/z5+nXQG5giUO5rprX9jgYsTdov9qCchZiPIZezbZH+jRut8nPodFAX4Jg==
 
-secretlint@^10.1.1:
+secretlint@^10.1.2:
   version "10.2.2"
-  resolved "https://registry.npmjs.org/secretlint/-/secretlint-10.2.2.tgz"
+  resolved "https://registry.yarnpkg.com/secretlint/-/secretlint-10.2.2.tgz#c0cf997153a2bef0b653874dc87030daa6a35140"
   integrity sha512-xVpkeHV/aoWe4vP4TansF622nBEImzCY73y/0042DuJ29iKIaqgoJ8fGxre3rVSHHbxar4FdJobmTnLp9AU0eg==
   dependencies:
     "@secretlint/config-creator" "^10.2.2"
