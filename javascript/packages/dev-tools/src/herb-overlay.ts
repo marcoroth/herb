@@ -548,6 +548,10 @@ export class HerbOverlay {
       return;
     }
 
+    if (element.localName === 'html') {
+      label.style.top = '0';
+    }
+    
     if (window.getComputedStyle(element).position === 'static') {
       element.style.position = 'relative';
     }
