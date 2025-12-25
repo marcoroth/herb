@@ -22,8 +22,14 @@ static bool hb_buffer_resize(hb_buffer_T* buffer, const size_t new_capacity) {
     fprintf(stderr, "Error: Buffer capacity would overflow system limits.\n");
     exit(1);
   }
+  char* new_value = NULL;
 
-  char* new_value = realloc(buffer->value, new_capacity + 1);
+  if (buffer->allocator == NULL) {
+    new_value = realloc(buffer->value, new_capacity + 1);
+  } else {
+    new_value = hb_arena_alloc(buffer->allocator, new_capacity + 1);
+    memcpy(new_value, buffer->value, buffer->capacity + 1);
+  }
 
   if (unlikely(new_value == NULL)) {
     fprintf(stderr, "Error: Failed to resize buffer to %zu.\n", new_capacity);
@@ -61,6 +67,7 @@ static bool hb_buffer_expand_if_needed(hb_buffer_T* buffer, const size_t require
 }
 
 bool hb_buffer_init(hb_buffer_T* buffer, const size_t capacity) {
+  buffer->allocator = NULL;
   buffer->capacity = capacity;
   buffer->length = 0;
   buffer->value = malloc(sizeof(char) * (buffer->capacity + 1));
@@ -71,6 +78,16 @@ bool hb_buffer_init(hb_buffer_T* buffer, const size_t capacity) {
     return false;
   }
 
+  buffer->value[0] = '\0';
+
+  return true;
+}
+
+bool hb_buffer_init_arena(hb_buffer_T* buffer, hb_arena_T* allocator, size_t capacity) {
+  buffer->allocator = allocator;
+  buffer->capacity = capacity;
+  buffer->length = 0;
+  buffer->value = hb_arena_alloc(allocator, sizeof(char) * (buffer->capacity + 1));
   buffer->value[0] = '\0';
 
   return true;
@@ -191,13 +208,4 @@ void hb_buffer_concat(hb_buffer_T* destination, hb_buffer_T* source) {
 void hb_buffer_clear(hb_buffer_T* buffer) {
   buffer->length = 0;
   buffer->value[0] = '\0';
-}
-
-void hb_buffer_free(hb_buffer_T** buffer) {
-  if (!buffer || !*buffer) { return; }
-
-  if ((*buffer)->value != NULL) { free((*buffer)->value); }
-
-  free(*buffer);
-  *buffer = NULL;
 }

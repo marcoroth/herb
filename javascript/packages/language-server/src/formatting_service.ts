@@ -8,6 +8,8 @@ import { Settings } from "./settings"
 import { Config } from "@herb-tools/config"
 import { version } from "../package.json"
 
+const OPEN_CONFIG_ACTION = 'Open .herb.yml'
+
 export class FormattingService {
   private connection: Connection
   private documents: TextDocuments<TextDocument>
@@ -16,6 +18,7 @@ export class FormattingService {
   private config?: Config
   private preRewriters: ASTRewriter[] = []
   private postRewriters: StringRewriter[] = []
+  private failedRewriters: Map<string, string> = new Map()
 
   constructor(connection: Connection, documents: TextDocuments<TextDocument>, project: Project, settings: Settings) {
     this.connection = connection
@@ -27,6 +30,7 @@ export class FormattingService {
   async initialize() {
     try {
       this.config = await Config.loadForEditor(this.project.projectPath, version)
+      this.connection.console.log(`[Formatting] Config loaded, formatter config: ${JSON.stringify(this.config?.formatter || 'none')}`)
       await this.loadConfiguredRewriters()
       this.connection.console.log("Herb formatter initialized successfully")
     } catch (error) {
@@ -49,7 +53,12 @@ export class FormattingService {
   }
 
   private async loadConfiguredRewriters() {
+    this.connection.console.log(`[Rewriter] Loading rewriters from config: ${JSON.stringify(this.config?.formatter?.rewriter || 'none')}`)
+
+    this.failedRewriters.clear()
+
     if (!this.config?.formatter?.rewriter) {
+      this.connection.console.log(`[Rewriter] No rewriter config found, clearing rewriters`)
       this.preRewriters = []
       this.postRewriters = []
 
@@ -58,6 +67,10 @@ export class FormattingService {
 
     try {
       const baseDir = this.config.projectPath || this.project.projectPath
+      this.connection.console.log(`[Rewriter] Using baseDir: ${baseDir}`)
+      this.connection.console.log(`[Rewriter] config.projectPath: ${this.config.projectPath}`)
+      this.connection.console.log(`[Rewriter] project.projectPath: ${this.project.projectPath}`)
+
       const preNames = this.config.formatter.rewriter.pre || []
       const postNames = this.config.formatter.rewriter.post || []
       const warnings: string[] = []
@@ -105,7 +118,9 @@ export class FormattingService {
 
           preRewriters.push(instance)
         } catch (error) {
-          warnings.push(`Failed to initialize pre-format rewriter "${name}": ${error}`)
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          warnings.push(`Failed to initialize pre-format rewriter "${name}": ${errorMessage}`)
+          this.failedRewriters.set(name, errorMessage)
         }
       }
 
@@ -130,15 +145,39 @@ export class FormattingService {
 
           postRewriters.push(instance)
         } catch (error) {
-          warnings.push(`Failed to initialize post-format rewriter "${name}": ${error}`)
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          warnings.push(`Failed to initialize post-format rewriter "${name}": ${errorMessage}`)
+          this.failedRewriters.set(name, errorMessage)
         }
       }
 
       this.preRewriters = preRewriters
       this.postRewriters = postRewriters
 
+      this.connection.console.log(`[Rewriter] Loaded ${preRewriters.length} pre-rewriters: ${preRewriters.map(r => r.name).join(', ')}`)
+      this.connection.console.log(`[Rewriter] Loaded ${postRewriters.length} post-rewriters: ${postRewriters.map(r => r.name).join(', ')}`)
+
       if (warnings.length > 0) {
-        warnings.forEach(warning => this.connection.console.warn(`Rewriter: ${warning}`))
+        // Log each warning individually
+        warnings.forEach(warning => {
+          this.connection.console.warn(`Rewriter: ${warning}`)
+        })
+
+        // Show a single combined warning message
+        const message = warnings.length === 1
+          ? `Herb Rewriter: ${warnings[0]}`
+          : `Herb Rewriters (${warnings.length} failed):\n${warnings.map((w, i) => `${i + 1}. ${w}`).join('\n')}`
+
+        if (this.settings.hasShowDocumentCapability) {
+          this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
+            if (action?.title === OPEN_CONFIG_ACTION) {
+              const configPath = `${this.project.projectPath}/.herb.yml`
+              this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
+            }
+          })
+        } else {
+          this.connection.window.showWarningMessage(message)
+        }
       }
     } catch (error) {
       this.connection.console.error(`Failed to load rewriters: ${error}`)
@@ -170,6 +209,9 @@ export class FormattingService {
   private shouldFormatFile(filePath: string): boolean {
     if (filePath.endsWith('.herb.yml')) return false
     if (!this.config) return true
+
+    const hasConfigFile = Config.exists(this.config.projectPath)
+    if (!hasConfigFile) return true
 
     const relativePath = filePath.replace('file://', '').replace(this.project.projectPath + '/', '')
 
@@ -203,6 +245,27 @@ export class FormattingService {
     try {
       const text = document.getText()
       const config = await this.getConfigWithSettings(params.textDocument.uri)
+
+      this.connection.console.log(`[Formatting] Creating formatter with ${this.preRewriters.length} pre-rewriters, ${this.postRewriters.length} post-rewriters`)
+
+      if (this.failedRewriters.size > 0) {
+        const failedList = Array.from(this.failedRewriters.entries())
+        const message = failedList.length === 1
+          ? `Herb Rewriter "${failedList[0][0]}" is not available: ${failedList[0][1]}`
+          : `Herb Rewriters (${failedList.length} not available):\n${failedList.map(([name, error], i) => `${i + 1}. ${name}: ${error}`).join('\n')}`
+
+        if (this.settings.hasShowDocumentCapability) {
+          this.connection.window.showWarningMessage(message, { title: OPEN_CONFIG_ACTION }).then(action => {
+            if (action?.title === OPEN_CONFIG_ACTION) {
+              const configPath = `${this.project.projectPath}/.herb.yml`
+              this.connection.window.showDocument({ uri: `file://${configPath}`, takeFocus: true })
+            }
+          })
+        } else {
+          this.connection.window.showWarningMessage(message)
+        }
+      }
+
       const formatter = Formatter.from(this.project.herbBackend, config, {
         preRewriters: this.preRewriters,
         postRewriters: this.postRewriters

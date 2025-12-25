@@ -11,7 +11,7 @@ import { name, version, dependencies } from "../../package.json"
 export type FormatOption = "simple" | "detailed" | "json"
 
 export interface ParsedArguments {
-  pattern: string
+  patterns: string[]
   configFile?: string
   formatOption: FormatOption
   showTiming: boolean
@@ -23,16 +23,16 @@ export interface ParsedArguments {
   ignoreDisableComments: boolean
   force: boolean
   init: boolean
+  loadCustomRules: boolean
 }
 
 export class ArgumentParser {
   private readonly usage = dedent`
-    Usage: herb-lint [file|glob-pattern|directory] [options]
+    Usage: herb-lint [files|directories|glob-patterns...] [options]
 
     Arguments:
-      file             Single file to lint
-      glob-pattern     Files to lint (defaults to configured extensions in .herb.yml)
-      directory        Directory to lint (automatically appends configured glob pattern)
+      files            Files, directories, or glob patterns to lint (defaults to configured extensions in .herb.yml)
+                       Multiple arguments are supported (e.g., herb-lint file1.erb file2.erb dir/ "**/*.erb")
 
     Options:
       -h, --help                    show help
@@ -47,6 +47,7 @@ export class ArgumentParser {
       --json                        use JSON output format (shortcut for --format json)
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
+      --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color                    disable colored output
       --no-timing                   hide timing information
@@ -74,7 +75,8 @@ export class ArgumentParser {
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" }
+        "truncate-lines": { type: "boolean" },
+        "no-custom-rules": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -134,17 +136,18 @@ export class ArgumentParser {
     }
 
     const theme = values.theme || DEFAULT_THEME
-    const pattern = this.getFilePattern(positionals)
+    const patterns = this.getFilePatterns(positionals)
     const fix = values.fix || false
     const force = !!values.force
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
     const init = values.init || false
+    const loadCustomRules = !values["no-custom-rules"]
 
-    return { pattern, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules }
   }
 
-  private getFilePattern(positionals: string[]): string {
-    return positionals.length > 0 ? positionals[0] : ""
+  private getFilePatterns(positionals: string[]): string[] {
+    return positionals
   }
 }

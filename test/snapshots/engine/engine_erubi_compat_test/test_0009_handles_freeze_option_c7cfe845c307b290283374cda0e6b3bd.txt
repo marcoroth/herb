@@ -3,6 +3,5 @@ source: "Engine::EngineErubiCompatTest#test_0009_handles freeze option"
 input: "{source: \"<div>Static content</div>\", options: {freeze: true}}"
 ---
 # frozen_string_literal: true
-_buf = ::String.new;
- _buf << '<div>Static content</div>'.freeze;
+_buf = ::String.new; _buf << '<div>Static content</div>'.freeze;
 _buf.to_s

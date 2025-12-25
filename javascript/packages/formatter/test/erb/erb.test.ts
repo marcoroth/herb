@@ -35,13 +35,8 @@ describe("@herb-tools/formatter", () => {
       <%= title %>
       <%= title %>
     `
-    const expected = dedent`
-      <%= title %>
-
-      <%= title %>
-    `
     const result = formatter.format(source)
-    expect(result).toEqual(expected)
+    expect(result).toEqual(source)
   })
 
   test("adjecent ERB output tags without space on top-level", () => {
@@ -165,7 +160,7 @@ describe("@herb-tools/formatter", () => {
 
     expect(result).toBe(dedent`
       <h3>
-        <%= link_to "Start", start_path %> &rsquo;s overview of
+        <%= link_to "Start", start_path %>&rsquo;s overview of
         <%= link_to "Section", section_path %>, <%= link_to "End", end_path %>.
       </h3>
     `)
@@ -294,7 +289,8 @@ describe("@herb-tools/formatter", () => {
       <p>
         This will be the all-in-one home for everything to do with
         <a href="https://hanamirb.org">Hanami</a>,
-        <a href="https://dry-rb.org">Dry</a> and <a href="https://rom-rb.org">Rom</a>.
+        <a href="https://dry-rb.org">Dry</a> and
+        <a href="https://rom-rb.org">Rom</a>.
       </p>
     `)
 
@@ -328,7 +324,7 @@ describe("@herb-tools/formatter", () => {
         Here is some text.
         <br />
         Tel:
-        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone">08-123 456 78</a>
+        <a href="#" style="color: #2f2f2b; font-size: 16px; text-decoration: none;" itemprop="telephone"> 08-123 456 78 </a>
       </p>
     `)
 
@@ -568,9 +564,7 @@ describe("@herb-tools/formatter", () => {
       >
         <head>
           <meta charset="utf-8">
-
           <meta http-equiv="x-ua-compatible" content="ie=edge">
-
           <meta name="viewport" content="width=device-width, initial-scale=1">
 
           <meta
@@ -581,8 +575,8 @@ describe("@herb-tools/formatter", () => {
           <meta name="x-apple-disable-message-reformatting">
 
           <title><%= message.subject %> | Company</title>
-
           <%= stylesheet_link_tag "mailer", media: "all" %>
+
           <style>
             @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
           </style>
@@ -600,10 +594,12 @@ describe("@herb-tools/formatter", () => {
             }
           </style>
         </head>
+
         <body style="font-family: 'DM Sans', Arial, sans-serif;">
           <% if content_for?(:preheader) %>
             <div class="hidden"><%= yield :preheader %></div>
           <% end %>
+
           <div
             role="article"
             aria-roledescription="email"
@@ -620,6 +616,7 @@ describe("@herb-tools/formatter", () => {
               <tr>
                 <td height="32"></td>
               </tr>
+
               <tr>
                 <td align="center">
                   <table
@@ -643,8 +640,10 @@ describe("@herb-tools/formatter", () => {
                             <% else %>
                               <%= hosted_image_tag('mailer/header-logo.png', class: 'h-[35px] block mb-3') %>
                             <% end %>
+
                             <%= yield %>
                           </div>
+
                           <div
                             class="
                               p-4 bg-primary-foreground text-center border-t
@@ -652,6 +651,7 @@ describe("@herb-tools/formatter", () => {
                             "
                           >
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
+
                             <p class="text-muted-foreground text-sm leading-5">
                               &copy;<%= Time.current.year %> - Company Inc, All
                               rights reserved.
@@ -671,6 +671,7 @@ describe("@herb-tools/formatter", () => {
                   </table>
                 </td>
               </tr>
+
               <tr>
                 <td height="32"></td>
               </tr>
@@ -794,98 +795,102 @@ describe("@herb-tools/formatter", () => {
       </script>
      `
 
-     const expected = dedent`
-       <div class="relative">
-         <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
-           <span>Show/Hide Columns</span>
-         </button>
-         <div
-           id="column-dropdown"
-           class="
-             absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
-             hidden
-           "
-         >
-           <div class="flex flex-col space-y-1 min-w-[200px]">
-             <% columns.each do |column| %>
-               <div class="form-control">
-                 <label class="cursor-pointer label justify-start gap-2">
-                   <input
-                     type="checkbox"
-                     class="column-toggle checkbox checkbox-sm"
-                     data-column="<%= column[:name] %>"
-                     <%= 'checked' if column[:default_visible] %>
-                   >
-                   <span class="label-text text-muted-foreground"><%= column[:label] %></span>
-                 </label>
-               </div>
-             <% end %>
-           </div>
-         </div>
-       </div>
+    const expected = dedent`
+      <div class="relative">
+        <button id="column-toggle-btn" class="d-btn d-btn-sm d-btn-secondary">
+          <span>Show/Hide Columns</span>
+        </button>
 
-       <script>
-       document.addEventListener('DOMContentLoaded', function() {
-         // Column toggle functionality
-         const columnToggleBtn = document.getElementById('column-toggle-btn');
-         const columnDropdown = document.getElementById('column-dropdown');
+        <div
+          id="column-dropdown"
+          class="
+            absolute right-0 mt-1 bg-white border rounded-md shadow-lg z-10 p-2
+            hidden
+          "
+        >
+          <div class="flex flex-col space-y-1 min-w-[200px]">
+            <% columns.each do |column| %>
+              <div class="form-control">
+                <label class="cursor-pointer label justify-start gap-2">
+                  <input
+                    type="checkbox"
+                    class="column-toggle checkbox checkbox-sm"
+                    data-column="<%= column[:name] %>"
+                    <%= 'checked' if column[:default_visible] %>
+                  >
 
-         // Toggle dropdown visibility
-         columnToggleBtn.addEventListener('click', function() {
-           columnDropdown.classList.toggle('hidden');
-         });
+                  <span class="label-text text-muted-foreground">
+                    <%= column[:label] %>
+                  </span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
 
-         // Close dropdown when clicking outside
-         document.addEventListener('click', function(event) {
-           if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
-             columnDropdown.classList.add('hidden');
-           }
-         });
+      <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Column toggle functionality
+        const columnToggleBtn = document.getElementById('column-toggle-btn');
+        const columnDropdown = document.getElementById('column-dropdown');
 
-         // Handle column visibility toggles
-         const columnToggles = document.querySelectorAll('.column-toggle');
+        // Toggle dropdown visibility
+        columnToggleBtn.addEventListener('click', function() {
+          columnDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+          if (!columnToggleBtn.contains(event.target) && !columnDropdown.contains(event.target)) {
+            columnDropdown.classList.add('hidden');
+          }
+        });
+
+        // Handle column visibility toggles
+        const columnToggles = document.querySelectorAll('.column-toggle');
+        columnToggles.forEach(toggle => {
+          toggle.addEventListener('change', function() {
+            const columnName = this.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+
+            columnCells.forEach(cell => {
+              if (this.checked) {
+                cell.style.display = '';
+              } else {
+                cell.style.display = 'none';
+              }
+            });
+
+            // Save column visibility preferences to localStorage
+            localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
+          });
+
+          // Apply saved preferences on load
+          const columnName = toggle.dataset.column;
+          const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
+
+          if (savedPreference === 'hidden') {
+            toggle.checked = false;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+
          columnToggles.forEach(toggle => {
-           toggle.addEventListener('change', function() {
-             const columnName = this.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-
-             columnCells.forEach(cell => {
-               if (this.checked) {
-                 cell.style.display = '';
-               } else {
-                 cell.style.display = 'none';
-               }
-             });
-
-             // Save column visibility preferences to localStorage
-             localStorage.setItem(\`column_\${columnName}\`, this.checked ? 'visible' : 'hidden');
-           });
-
-           // Apply saved preferences on load
-           const columnName = toggle.dataset.column;
-           const savedPreference = localStorage.getItem(\`column_\${columnName}\`);
-
-           if (savedPreference === 'hidden') {
-             toggle.checked = false;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-
-          columnToggles.forEach(toggle => {
-           if (!toggle.checked) {
-             const columnName = toggle.dataset.column;
-             const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
-             columnCells.forEach(cell => {
-               cell.style.display = 'none';
-             });
-           }
-         });
-       });
-       </script>
-     `
+          if (!toggle.checked) {
+            const columnName = toggle.dataset.column;
+            const columnCells = document.querySelectorAll(\`.column-\${columnName}\`);
+            columnCells.forEach(cell => {
+              cell.style.display = 'none';
+            });
+          }
+        });
+      });
+      </script>
+    `
 
     const result = formatter.format(input)
     expect(result).toBe(expected)
@@ -1338,9 +1343,7 @@ describe("@herb-tools/formatter", () => {
       <p>Why wait now? Schedule your next pickup today!</p>
 
       <%= render "user_mailer/schedule_now" %>
-
       <%= render "user_subscription_mailer/more_info" %>
-
       <%= render "user_mailer/questions" %>
 
       <p>
@@ -1359,11 +1362,14 @@ describe("@herb-tools/formatter", () => {
       <% if cover.present? %>
         <figure class="figure">
           <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
+
           <figcaption class="figure-caption text-center">
             <span>
               <strong>Cover Image</strong><br>
               Dimensions
-              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
+              <strong>
+                <%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %>
+              </strong>
               &mdash;
               <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
             </span>

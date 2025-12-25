@@ -2,8 +2,7 @@
 source: "Engine::ValidationModesTest#test_0008_:overlay mode includes filename in HTML"
 input: "{source: \"<div <%= @malicious %>>Content</div>\", options: {validation_mode: :overlay, filename: \"/path/to/template.html.erb\", project_path: \"/path\"}}"
 ---
-_buf = ::String.new;
- _buf << '<div'.freeze; _buf << (@malicious).to_s; _buf << '>Content</div>'.freeze; _buf << ('<template
+_buf = ::String.new; _buf << '<div '.freeze; _buf << (@malicious).to_s; _buf << '>Content</div>'.freeze; _buf << ('<template
   data-herb-validation-error
   data-severity="error"
   data-source="SecurityValidator"

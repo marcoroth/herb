@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0015_right trim at end of file"
+input: "{source: \"<% if true -%>\\nContent\\n<% end -%>\", locals: {}, options: {}}"
+---
+Content

@@ -16,6 +16,10 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   pm_parser_t* parser
 );
 
-position_T position_from_source_with_offset(const char* source, size_t offset);
+RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
+  const pm_diagnostic_t* error,
+  position_T start,
+  position_T end
+);
 
 #endif

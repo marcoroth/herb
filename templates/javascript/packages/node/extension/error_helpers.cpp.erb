@@ -80,7 +80,7 @@ napi_value ErrorsArrayFromCArray(napi_env env, hb_array_T* array) {
   napi_create_array(env, &result);
 
   if (array) {
-    for (size_t i = 0; i < hb_array_size(array); i++) {
+    for (size_t i = 0; i < array->size; i++) {
       ERROR_T* error = (ERROR_T*) hb_array_get(array, i);
       if (error) {
         napi_value js_error = ErrorFromCStruct(env, error);

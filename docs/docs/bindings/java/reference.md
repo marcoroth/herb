@@ -34,7 +34,7 @@ import org.herb.Token;
 String source = "<p>Hello <%= user.name %></p>";
 LexResult result = Herb.lex(source);
 
-for (Token token : result.getTokens()) {
+for (Token token : result.tokens) {
   System.out.println(token.inspect());
 }
 // Output:
@@ -51,8 +51,8 @@ The `LexResult` class provides access to the lexed tokens:
 
 ```java
 public class LexResult {
-  public List<Token> getTokens();
-  public String getSource();
+  public List<Token> tokens;
+  public String source;
   public int getTokenCount();
   public boolean isEmpty();
 }
@@ -73,9 +73,7 @@ String source = "<p>Hello <%= user.name %></p>";
 
 ParseResult result = Herb.parse(source);
 
-if (result.getValue() != null) {
-  System.out.println(result.getValue().treeInspect());
-}
+System.out.println(result.inspect();
 // Output:
 // @ DocumentNode (location: (1:0)-(1:29))
 // └── children: (1 item)
@@ -133,12 +131,12 @@ The `ParseResult` class provides access to the parsed AST and any errors:
 
 ```java
 public class ParseResult {
-  public Node getValue();
-  public List<Node> getErrors();
-  public String getSource();
+  public Node value;
+  public List<Node> errors;
+  public String source;
   public boolean hasErrors();
   public int getErrorCount();
-  public boolean isSuccess();
+  public boolean isSuccessful();
 }
 ```
 
@@ -187,7 +185,7 @@ Returns the full version information including Herb, Prism, and JNI details:
 import org.herb.Herb;
 
 System.out.println(Herb.version());
-// Output: "herb java v0.7.5, libprism v1.6.0, libherb v0.7.5 (Java JNI)"
+// Output: "herb java v0.8.5, libprism v1.7.0, libherb v0.8.5 (Java JNI)"
 ```
 :::
 
@@ -200,7 +198,7 @@ Returns just the Herb library version:
 import org.herb.Herb;
 
 System.out.println(Herb.herbVersion());
-// Output: "0.7.5"
+// Output: "0.8.5"
 ```
 :::
 
@@ -213,7 +211,7 @@ Returns the Prism parser version:
 import org.herb.Herb;
 
 System.out.println(Herb.prismVersion());
-// Output: "1.6.0"
+// Output: "1.7.0"
 ```
 :::
 
@@ -278,7 +276,7 @@ public interface Node {
   String getNodeType();
   Location getLocation();
   List<Node> getErrors();
-  String treeInspect();
+  String inspect();
   <T> T accept(Visitor<T> visitor);
 }
 ```
@@ -291,8 +289,8 @@ Parse errors are accessible through the `ParseResult`:
 ParseResult result = Herb.parse(source);
 
 if (result.hasErrors()) {
-  for (Node error : result.getErrors()) {
-    System.out.println(error.treeInspect());
+  for (Node error : result.recursiveErrors()) {
+    System.out.println(error.inspect());
   }
 }
 ```

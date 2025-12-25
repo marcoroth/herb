@@ -2,6 +2,5 @@
 source: "Engine::DebugModeTest#test_0009_render calls get outline boundaries"
 input: "{source: \"<%= render \\\"shared/header\\\" %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new;
- _buf << (render "shared/header").to_s;
+_buf = ::String.new; _buf << (render "shared/header").to_s;
 _buf.to_s

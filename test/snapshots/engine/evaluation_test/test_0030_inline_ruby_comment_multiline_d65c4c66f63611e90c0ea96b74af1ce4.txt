@@ -1,0 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0030_inline ruby comment multiline"
+input: "{source: \"<% # Comment\\nmore %> <% code = \\\"test\\\" %><%= code %>\", locals: {more: \"ignored\"}, options: {escape: false}}"
+---
+test

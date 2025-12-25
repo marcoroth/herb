@@ -1,0 +1,38 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0039_multi-line deeply nested blocks closed in same ERB tag"
+input: |2-
+<%
+  if condition
+    items.each do |item|
+      case item.type
+      when :a
+        process_a(item)
+      when :b
+        process_b(item)
+      end
+    end
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(13:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(12:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     if condition
+    │       items.each do |item|
+    │         case item.type
+    │         when :a
+    │           process_a(item)
+    │         when :b
+    │           process_b(item)
+    │         end
+    │       end
+    │     end
+    │   " (location: (1:2)-(12:0))
+    │   ├── tag_closing: "%>" (location: (12:0)-(12:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (12:2)-(13:0))
+        └── content: "\n"

@@ -116,6 +116,7 @@ Metrics/BlockLength:
 
 Metrics/ParameterLists:
   Exclude:
+    - lib/herb/ast/node.rb
     - lib/herb/ast/nodes.rb
     - lib/herb/errors.rb
     - lib/herb/engine/validators/security_validator.rb
@@ -178,3 +179,7 @@ Security/MarshalLoad:
 Lint/UnderscorePrefixedVariableName:
   Exclude:
     - test/engine/secure_compiler_test.rb
+
+Lint/UnusedMethodArgument:
+  Exclude:
+    - lib/herb/errors.rb

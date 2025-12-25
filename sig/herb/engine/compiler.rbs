@@ -89,6 +89,8 @@ module Herb
 
       def add_text: (untyped text) -> untyped
 
+      def add_whitespace: (untyped whitespace) -> untyped
+
       def add_code: (untyped code) -> untyped
 
       def add_expression: (untyped code) -> untyped
@@ -97,13 +99,33 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
+      def compact_whitespace_tokens: (untyped tokens) -> untyped
+
+      def adjacent_whitespace?: (untyped tokens, untyped index) -> untyped
+
+      def trailing_whitespace?: (untyped token) -> untyped
+
+      def leading_whitespace?: (untyped token) -> untyped
+
+      def whitespace_before_code_sequence?: (untyped tokens, untyped current_index) -> untyped
+
+      def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
+
       def process_erb_output: (untyped opening, untyped code) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
 
-      def handle_whitespace_trimming: (untyped node) -> untyped
+      def at_line_start?: () -> untyped
+
+      def extract_lspace: () -> untyped
+
+      def extract_and_remove_lspace!: () -> untyped
+
+      def apply_trim: (untyped node, untyped code) -> untyped
+
+      def remove_trailing_whitespace_from_last_token!: () -> untyped
     end
   end
 end

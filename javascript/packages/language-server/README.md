@@ -49,19 +49,10 @@ After installing the Herb Language Server (see below) and [Sublime LSP](http://l
       ],
       "selector": "text.html.ruby | text.html.rails",
       "settings": {
-        "languageServerHerb.linter": {
-          "enabled": true,
-          "excludedRules": ["parser-no-errors"]
-        }
-      },
-      "initializationOptions": {
-        "enabledFeatures": {
-          "diagnostics": true,
-        },
-        "experimentalFeaturesEnabled": true
+        "languageServerHerb.linter.enabled": true
       }
     }
-  },
+  }
 }
 ```
 
@@ -80,6 +71,16 @@ npm install -g @herb-tools/language-server
 ```bash
 yarn global add @herb-tools/language-server
 ```
+
+##### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the language server from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/language-server@{commit} --stdio
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
 
 ##### Run
 
@@ -109,31 +110,21 @@ npx @herb-tools/language-server --stdio
 
 ## Configuration
 
-The language server can be configured using a `.herb-lsp/config.json` file in your project root. This file is automatically created when the language server starts if it doesn't exist.
+The language server can be configured using a `.herb.yml` file in your project root. This configuration is shared across all Herb tools including the linter, formatter, and language server.
 
-### Formatter Configuration
+See the [Configuration documentation](https://herb-tools.dev/configuration) for full details.
 
-You can configure formatting behavior by adding a `formatter` section to your config:
+### Example Configuration
 
-```json
-{
-  "version": "0.3.1",
-  "createdAt": "2025-06-29T00:00:00.000Z",
-  "updatedAt": "2025-06-29T00:00:00.000Z",
-  "options": {
-    "formatter": {
-      "enabled": true,
-      "indentWidth": 2,
-      "maxLineLength": 80
-    }
-  }
-}
+```yaml
+# .herb.yml
+linter:
+  enabled: true
+
+formatter:
+  enabled: true
+  indentWidth: 2
+  maxLineLength: 80
 ```
 
-#### `formatter` Options
-
-- `enabled` (`boolean`): Enable or disable formatting for this project. Defaults to `false`.
-- `indentWidth` (`number`): Number of spaces for each indentation level. Defaults to `2`.
-- `maxLineLength` (`number`): Maximum line length before wrapping. Defaults to `80`.
-
-**Note**: VS Code users can also control formatting globally through the `languageServerHerb.formatter.enabled` setting in VS Code preferences. Formatting is currently in **Beta** and disabled by default.
+**Note**: VS Code users can also control settings through `languageServerHerb.*` settings in VS Code preferences. Project configuration in `.herb.yml` takes precedence over editor settings.

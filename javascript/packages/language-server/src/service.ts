@@ -39,7 +39,7 @@ export class Service {
     this.documentService = new DocumentService(this.connection)
     this.project = new Project(connection, this.settings.projectPath.replace("file://", ""))
     this.parserService = new ParserService()
-    this.linterService = new LinterService(this.settings)
+    this.linterService = new LinterService(this.connection, this.settings, this.project)
     this.formattingService = new FormattingService(this.connection, this.documentService.documents, this.project, this.settings)
     this.autofixService = new AutofixService(this.connection, this.config)
     this.configService = new ConfigService(this.project.projectPath)
@@ -96,6 +96,7 @@ export class Service {
 
   async refresh() {
     await this.project.refresh()
+    await this.formattingService.refreshConfig(this.config)
     await this.diagnostics.refreshAllDocuments()
   }
 

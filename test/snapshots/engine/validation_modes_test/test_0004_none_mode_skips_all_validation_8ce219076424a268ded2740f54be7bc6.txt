@@ -2,6 +2,5 @@
 source: "Engine::ValidationModesTest#test_0004_:none mode skips all validation"
 input: "{source: \"<div <%= @malicious %>>Content</div>\", options: {validation_mode: :none}}"
 ---
-_buf = ::String.new;
- _buf << '<div'.freeze; _buf << (@malicious).to_s; _buf << '>Content</div>'.freeze;
+_buf = ::String.new; _buf << '<div '.freeze; _buf << (@malicious).to_s; _buf << '>Content</div>'.freeze;
 _buf.to_s

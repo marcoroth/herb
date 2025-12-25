@@ -24,8 +24,8 @@ module Herb
       # : (?untyped) -> String
       def to_json: (?untyped) -> String
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class UnexpectedError < Error
@@ -46,8 +46,8 @@ module Herb
       # : () -> serialized_unexpected_error
       def to_hash: () -> serialized_unexpected_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class UnexpectedTokenError < Error
@@ -66,8 +66,8 @@ module Herb
       # : () -> serialized_unexpected_token_error
       def to_hash: () -> serialized_unexpected_token_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class MissingOpeningTagError < Error
@@ -84,8 +84,8 @@ module Herb
       # : () -> serialized_missing_opening_tag_error
       def to_hash: () -> serialized_missing_opening_tag_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class MissingClosingTagError < Error
@@ -102,8 +102,8 @@ module Herb
       # : () -> serialized_missing_closing_tag_error
       def to_hash: () -> serialized_missing_closing_tag_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class TagNamesMismatchError < Error
@@ -122,8 +122,8 @@ module Herb
       # : () -> serialized_tag_names_mismatch_error
       def to_hash: () -> serialized_tag_names_mismatch_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class QuotesMismatchError < Error
@@ -142,8 +142,8 @@ module Herb
       # : () -> serialized_quotes_mismatch_error
       def to_hash: () -> serialized_quotes_mismatch_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class VoidElementClosingTagError < Error
@@ -164,8 +164,8 @@ module Herb
       # : () -> serialized_void_element_closing_tag_error
       def to_hash: () -> serialized_void_element_closing_tag_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class UnclosedElementError < Error
@@ -182,8 +182,8 @@ module Herb
       # : () -> serialized_unclosed_element_error
       def to_hash: () -> serialized_unclosed_element_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class RubyParseError < Error
@@ -204,8 +204,8 @@ module Herb
       # : () -> serialized_ruby_parse_error
       def to_hash: () -> serialized_ruby_parse_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class ERBControlFlowScopeError < Error
@@ -222,8 +222,8 @@ module Herb
       # : () -> serialized_erb_control_flow_scope_error
       def to_hash: () -> serialized_erb_control_flow_scope_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
     class MissingERBEndTagError < Error
@@ -240,8 +240,18 @@ module Herb
       # : () -> serialized_missingerb_end_tag_error
       def to_hash: () -> serialized_missingerb_end_tag_error
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class ERBMultipleBlocksInTagError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
   end
 end

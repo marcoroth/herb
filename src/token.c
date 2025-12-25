@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) {
+token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, sizeof(token_T));
 
   if (type == TOKEN_NEWLINE) {
@@ -18,11 +18,7 @@ token_T* token_init(const char* value, const token_type_T type, lexer_T* lexer) 
     lexer->current_column = 0;
   }
 
-  if (value) {
-    token->value = herb_strdup(value);
-  } else {
-    token->value = NULL;
-  }
+  token->value = hb_string_to_c_string_using_malloc(value);
 
   token->type = type;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };

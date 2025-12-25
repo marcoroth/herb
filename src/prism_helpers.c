@@ -16,21 +16,6 @@ const char* pm_error_level_to_string(pm_error_level_t level) {
   }
 }
 
-position_T position_from_source_with_offset(const char* source, size_t offset) {
-  position_T position = { .line = 1, .column = 0 };
-
-  for (size_t i = 0; i < offset; i++) {
-    if (is_newline(source[i])) {
-      position.line++;
-      position.column = 0;
-    } else {
-      position.column++;
-    }
-  }
-
-  return position;
-}
-
 RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   const pm_diagnostic_t* error,
   const AST_NODE_T* node,
@@ -43,6 +28,20 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   position_T start = position_from_source_with_offset(source, start_offset);
   position_T end = position_from_source_with_offset(source, end_offset);
 
+  return ruby_parse_error_init(
+    error->message,
+    pm_diagnostic_id_human(error->diag_id),
+    pm_error_level_to_string(error->level),
+    start,
+    end
+  );
+}
+
+RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
+  const pm_diagnostic_t* error,
+  position_T start,
+  position_T end
+) {
   return ruby_parse_error_init(
     error->message,
     pm_diagnostic_id_human(error->diag_id),

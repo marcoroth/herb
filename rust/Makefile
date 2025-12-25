@@ -5,7 +5,7 @@ BIN_NAME = herb-rust
 BIN_PATH = $(BUILD_DIR)/debug/$(BIN_NAME)
 RELEASE_BIN_PATH = $(BUILD_DIR)/release/$(BIN_NAME)
 
-.PHONY: all build release clean test cli help templates format
+.PHONY: all build release clean test cli help templates format vendor
 
 all: templates build
 
@@ -44,6 +44,18 @@ clean:
 	cargo clean
 	@echo "Cleaned Rust build artifacts"
 
+vendor:
+	@echo "Vendoring C sources into vendor/libherb..."
+	rm -rf vendor/
+	mkdir -p vendor/libherb/
+	mkdir -p vendor/prism/
+	cp -r ../src vendor/libherb/
+	@echo "Vendoring prism library..."
+	PRISM_PATH=$$(bundle show prism) && \
+	cp -r "$$PRISM_PATH/src" vendor/prism/ && \
+	cp -r "$$PRISM_PATH/include" vendor/prism/
+	@echo "Vendored C sources and prism successfully"
+
 help:
 	@echo "Herb Rust Build System"
 	@echo ""
@@ -55,6 +67,7 @@ help:
 	@echo "  cli        - Show CLI usage"
 	@echo "  test       - Run Rust tests"
 	@echo "  format     - Format Rust code with rustfmt"
+	@echo "  vendor     - Vendor C sources into vendor/"
 	@echo "  clean      - Remove build artifacts"
 	@echo "  help       - Show this help"
 	@echo ""

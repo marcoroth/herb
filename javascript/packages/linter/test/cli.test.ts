@@ -280,4 +280,134 @@ describe("CLI Output Formatting", () => {
       }
     })
   })
+
+  describe("Multiple File Arguments", () => {
+    function runLinterMultiFile(...files: string[]): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+        const fileArgs = files.map(f => `test/fixtures/${f}`).join(' ')
+
+        const output = execSync(`bin/herb-lint ${fileArgs} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("lints multiple files successfully", () => {
+      const { output, exitCode } = runLinterMultiFile("clean-file.html.erb", "boolean-attribute.html.erb")
+
+      expect(output).toContain("All files are clean")
+      expect(output).toContain("Checked      2 files")
+      expect(exitCode).toBe(0)
+    })
+
+    test("lints multiple files with errors", () => {
+      const { output, exitCode } = runLinterMultiFile("test-file-with-errors.html.erb", "bad-file.html.erb")
+
+      expect(output).toContain("test-file-with-errors.html.erb")
+      expect(output).toContain("bad-file.html.erb")
+      expect(exitCode).toBe(1)
+    })
+
+    test("exits with error if one file doesn't exist", () => {
+      const { output, exitCode } = runLinterMultiFile("clean-file.html.erb", "nonexistent-file.html.erb")
+
+      expect(output).toContain("No files found matching pattern")
+      expect(output).toContain("nonexistent-file.html.erb")
+      expect(exitCode).toBe(1)
+    })
+
+    test("deduplicates files when passed multiple times", () => {
+      const { output, exitCode } = runLinterMultiFile("test-file-with-errors.html.erb", "test-file-with-errors.html.erb")
+
+      const fileMatches = (output.match(/test-file-with-errors\.html\.erb/g) || []).length
+
+      expect(fileMatches).toBeGreaterThan(0)
+      expect(exitCode).toBe(1)
+    })
+  })
+
+  describe("Custom Rules from Project Root (issue #908)", () => {
+    const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/custom-rules-test"
+
+    function runLinterFromPath(filePath: string): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${filePath} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("loads custom rules when linting a file in a nested directory", () => {
+      try {
+        mkdirSync(join(tempDir, ".herb/rules"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.5
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
+          export default class NoHelloWorldRule {
+            name = "no-hello-world"
+
+            check(document, context) {
+              const errors = []
+              const source = document.source || ""
+
+              if (source.includes("hello world")) {
+                errors.push({
+                  message: "Text contains 'hello world' which is not allowed",
+                  location: {
+                    start: { line: 1, column: 1 },
+                    end: { line: 1, column: 22 }
+                  }
+                })
+              }
+
+              return errors
+            }
+          }
+        `)
+
+        const testFile = `<div>hello world</div>`
+        writeFileSync(join(tempDir, "app/views/widgets/test.html.erb"), testFile)
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views/widgets/test.html.erb"))
+
+        expect(output).toContain("Loaded 1 custom rule")
+        expect(output).toContain("no-hello-world")
+        expect(output).toContain("Text contains 'hello world' which is not allowed")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+  })
 })

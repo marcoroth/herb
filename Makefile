@@ -76,7 +76,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
-all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm
+all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm clangd_config
 
 $(exec): $(objects)
 	$(cc) $(objects) $(flags) $(ldflags) $(prism_ldflags) -o $(exec)
@@ -121,6 +121,9 @@ lint:
 
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
+
+clangd_config:
+	@echo "$(flags) $(test_cflags)" | tr ' ' '\n' | sort -u > compile_flags.txt
 
 wasm:
 	cd wasm && make

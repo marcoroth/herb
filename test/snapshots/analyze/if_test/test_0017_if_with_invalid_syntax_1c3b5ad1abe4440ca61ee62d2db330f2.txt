@@ -1,0 +1,33 @@
+---
+source: "Analyze::IfTest#test_0017_if with invalid syntax"
+input: |2-
+<% if true true %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(3:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (1:11)-(1:15))
+│       ├── message: "conditional_predicate_term: expected `then` or `;` or '\\n'"
+│       ├── error_message: "expected `then` or `;` or '\\n'"
+│       ├── diagnostic_id: "conditional_predicate_term"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(2:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if true true " (location: (1:2)-(1:16))
+    │   ├── tag_closing: "%>" (location: (1:16)-(1:18))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:18)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (2:0)-(2:9))
+    │           ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │           ├── content: " end " (location: (2:2)-(2:7))
+    │           └── tag_closing: "%>" (location: (2:7)-(2:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (2:9)-(3:0))
+        └── content: "\n"

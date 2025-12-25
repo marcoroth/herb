@@ -19,16 +19,16 @@ void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
 }
 
 bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
-  if (hb_array_size(parser->open_tags_stack) == 0) { return false; }
+  if (parser->open_tags_stack->size == 0) { return false; }
 
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || top_token->value == NULL) { return false; };
 
-  return hb_string_equals(hb_string(top_token->value), tag_name);
+  return hb_string_equals_case_insensitive(hb_string(top_token->value), tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
-  if (hb_array_size(parser->open_tags_stack) == 0) { return NULL; }
+  if (parser->open_tags_stack->size == 0) { return NULL; }
 
   return hb_array_pop(parser->open_tags_stack);
 }
@@ -42,14 +42,14 @@ token_T* parser_pop_open_tag(const parser_T* parser) {
 bool parser_in_svg_context(const parser_T* parser) {
   if (!parser || !parser->open_tags_stack) { return false; }
 
-  size_t stack_size = hb_array_size(parser->open_tags_stack);
+  size_t stack_size = parser->open_tags_stack->size;
 
   for (size_t i = 0; i < stack_size; i++) {
     token_T* tag = (token_T*) hb_array_get(parser->open_tags_stack, i);
 
     if (tag && tag->value) {
       hb_string_T tag_value_string = hb_string(tag->value);
-      if (hb_string_equals(tag_value_string, hb_string("svg"))) { return true; }
+      if (hb_string_equals_case_insensitive(tag_value_string, hb_string("svg"))) { return true; }
     }
   }
 
@@ -61,8 +61,8 @@ bool parser_in_svg_context(const parser_T* parser) {
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
 
-  if (hb_string_equals(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -191,7 +191,7 @@ void parser_handle_mismatched_tags(
   const AST_HTML_CLOSE_TAG_NODE_T* close_tag,
   hb_array_T* errors
 ) {
-  if (hb_array_size(parser->open_tags_stack) > 0) {
+  if (parser->open_tags_stack->size > 0) {
     token_T* expected_tag = hb_array_last(parser->open_tags_stack);
     token_T* actual_tag = close_tag->tag_name;
 
@@ -217,5 +217,5 @@ bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_t
 
   if (hb_string_is_empty(tag_name) || hb_string_is_empty(expected_tag_name)) { return false; }
 
-  return hb_string_equals(expected_tag_name, tag_name);
+  return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
 }

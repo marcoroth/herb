@@ -1,5 +1,7 @@
 import dedent from "dedent"
 
+import { Printer, IdentityPrinter } from "@herb-tools/printer"
+
 import {
   getTagName,
   getCombinedAttributeName,
@@ -11,18 +13,16 @@ import {
   isERBNode,
   isCommentNode,
   isERBControlFlowNode,
+  isERBCommentNode,
+  isERBOutputNode,
   filterNodes,
 } from "@herb-tools/core"
-
-import { Printer, IdentityPrinter } from "@herb-tools/printer"
 
 import {
   areAllNestedElementsInline,
   buildLineWithWord,
   countAdjacentInlineElements,
-  endsWithAlphanumeric,
   endsWithWhitespace,
-  filterEmptyNodes,
   filterEmptyNodesForHerbDisable,
   filterSignificantChildren,
   findPreviousMeaningfulSibling,
@@ -36,28 +36,23 @@ import {
   isFrontmatter,
   isHerbDisableComment,
   isInlineElement,
+  isLineBreakingElement,
   isNonWhitespaceNode,
   isPureWhitespaceNode,
   needsSpaceBetween,
   normalizeAndSplitWords,
   shouldAppendToLastLine,
   shouldPreserveUserSpacing,
-  shouldWrapToNextLine,
-  startsWithAlphanumeric,
 } from "./format-helpers.js"
 
 import {
   FORMATTABLE_ATTRIBUTES,
   INLINE_ELEMENTS,
   SPACEABLE_CONTAINERS,
-  SPACING_THRESHOLD,
-  TIGHT_GROUP_CHILDREN,
-  TIGHT_GROUP_PARENTS,
   TOKEN_LIST_ATTRIBUTES,
 } from "./format-helpers.js"
 
 import type {
-  ContentUnit,
   ContentUnitWithNode,
   ElementFormattingAnalysis,
 } from "./format-helpers.js"
@@ -126,6 +121,11 @@ export class FormatPrinter extends Printer {
   private currentAttributeName: string | null = null
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
+  private nodeIsMultiline = new Map<Node, boolean>()
+  private stringLineCount: number = 0
+  private tagGroupsCache = new Map<Node[], Map<number, { tagName: string; groupStart: number; groupEnd: number }>>()
+  private allSingleLineCache = new Map<Node[], boolean>()
+
 
   public source: string
 
@@ -145,6 +145,10 @@ export class FormatPrinter extends Printer {
     // TODO: refactor to use @herb-tools/printer infrastructre (or rework printer use push and this.lines)
     this.lines = []
     this.indentLevel = 0
+    this.stringLineCount = 0
+    this.nodeIsMultiline.clear()
+    this.tagGroupsCache.clear()
+    this.allSingleLineCache.clear()
 
     this.visit(node)
 
@@ -183,17 +187,30 @@ export class FormatPrinter extends Printer {
   private capture(callback: () => void): string[] {
     const previousLines = this.lines
     const previousInlineMode = this.inlineMode
+    const previousStringLineCount = this.stringLineCount
 
     this.lines = []
+    this.stringLineCount = 0
 
     try {
       callback()
-
       return this.lines
     } finally {
       this.lines = previousLines
       this.inlineMode = previousInlineMode
+      this.stringLineCount = previousStringLineCount
     }
+  }
+
+  /**
+   * Track a boundary node's multiline status by comparing line count before/after rendering.
+   */
+  private trackBoundary(node: Node, callback: () => void): void {
+    const startLineCount = this.stringLineCount
+    callback()
+    const endLineCount = this.stringLineCount
+
+    this.nodeIsMultiline.set(node, (endLineCount - startLineCount) > 1)
   }
 
   /**
@@ -236,6 +253,7 @@ export class FormatPrinter extends Printer {
    */
   private push(line: string) {
     this.lines.push(line)
+    this.stringLineCount++
   }
 
   /**
@@ -293,6 +311,96 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Check if a node will render as multiple lines when formatted.
+   */
+  private isMultilineElement(node: Node): boolean {
+    if (isNode(node, ERBContentNode)) {
+      return (node.content?.value || "").includes("\n")
+    }
+
+    if (isNode(node, HTMLElementNode) && isContentPreserving(node)) {
+      return true
+    }
+
+    const tracked = this.nodeIsMultiline.get(node)
+
+    if (tracked !== undefined) {
+      return tracked
+    }
+
+    return false
+  }
+
+  /**
+   * Get a grouping key for a node (tag name for HTML, ERB type for ERB)
+   */
+  private getGroupingKey(node: Node): string | null {
+    if (isNode(node, HTMLElementNode)) {
+      return getTagName(node)
+    }
+
+    if (isERBOutputNode(node)) return "erb-output"
+    if (isERBCommentNode(node)) return "erb-comment"
+    if (isERBNode(node)) return "erb-code"
+
+    return null
+  }
+
+  /**
+   * Detect groups of consecutive same-tag/same-type single-line elements
+   * Returns a map of index -> group info for efficient lookup
+   */
+  private detectTagGroups(siblings: Node[]): Map<number, { tagName: string; groupStart: number; groupEnd: number }> {
+    const cached = this.tagGroupsCache.get(siblings)
+    if (cached) return cached
+
+    const groupMap = new Map<number, { tagName: string; groupStart: number; groupEnd: number }>()
+    const meaningfulNodes: Array<{ index: number; groupKey: string }> = []
+
+    for (let i = 0; i < siblings.length; i++) {
+      const node = siblings[i]
+
+      if (!this.isMultilineElement(node)) {
+        const groupKey = this.getGroupingKey(node)
+
+        if (groupKey) {
+          meaningfulNodes.push({ index: i, groupKey })
+        }
+      }
+    }
+
+    let groupStart = 0
+
+    while (groupStart < meaningfulNodes.length) {
+      const startGroupKey = meaningfulNodes[groupStart].groupKey
+      let groupEnd = groupStart
+
+      while (groupEnd + 1 < meaningfulNodes.length && meaningfulNodes[groupEnd + 1].groupKey === startGroupKey) {
+        groupEnd++
+      }
+
+      if (groupEnd > groupStart) {
+        const groupStartIndex = meaningfulNodes[groupStart].index
+        const groupEndIndex = meaningfulNodes[groupEnd].index
+
+        for (let i = groupStart; i <= groupEnd; i++) {
+          groupMap.set(meaningfulNodes[i].index, {
+            tagName: startGroupKey,
+            groupStart: groupStartIndex,
+            groupEnd: groupEndIndex
+          })
+        }
+      }
+
+      groupStart = groupEnd + 1
+    }
+
+    this.tagGroupsCache.set(siblings, groupMap)
+
+    return groupMap
+  }
+
+  /**
    * Determine if spacing should be added between sibling elements
    *
    * This implements the "rule of three" intelligent spacing system:
@@ -307,69 +415,73 @@ export class FormatPrinter extends Printer {
    * @param hasExistingSpacing - Whether user-added spacing already exists
    * @returns true if spacing should be added before the current element
    */
-  private shouldAddSpacingBetweenSiblings(
-    parentElement: HTMLElementNode | null,
-    siblings: Node[],
-    currentIndex: number,
-    hasExistingSpacing: boolean
-  ): boolean {
-    if (hasExistingSpacing) {
+  private shouldAddSpacingBetweenSiblings(parentElement: HTMLElementNode | null, siblings: Node[], currentIndex: number): boolean {
+    const currentNode = siblings[currentIndex]
+    const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
+    const previousNode = previousMeaningfulIndex !== -1 ? siblings[previousMeaningfulIndex] : null
+
+    if (previousNode && (isNode(previousNode, XMLDeclarationNode) || isNode(previousNode, HTMLDoctypeNode))) {
       return true
     }
 
     const hasMixedContent = siblings.some(child => isNode(child, HTMLTextNode) && child.content.trim() !== "")
 
-    if (hasMixedContent) {
+    if (hasMixedContent) return false
+
+    const isCurrentComment = isCommentNode(currentNode)
+    const isPreviousComment = previousNode ? isCommentNode(previousNode) : false
+    const isCurrentMultiline = this.isMultilineElement(currentNode)
+    const isPreviousMultiline = previousNode ? this.isMultilineElement(previousNode) : false
+
+    if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
+      return isPreviousMultiline && isCurrentMultiline
+    }
+
+    if (isPreviousComment && isCurrentComment) {
       return false
+    }
+
+    if (isCurrentMultiline || isPreviousMultiline) {
+      return true
     }
 
     const meaningfulSiblings = siblings.filter(child => isNonWhitespaceNode(child))
-
-    if (meaningfulSiblings.length < SPACING_THRESHOLD) {
-      return false
-    }
-
     const parentTagName = parentElement ? getTagName(parentElement) : null
+    const isSpaceableContainer = !parentTagName || SPACEABLE_CONTAINERS.has(parentTagName)
+    const tagGroups = this.detectTagGroups(siblings)
 
-    if (parentTagName && TIGHT_GROUP_PARENTS.has(parentTagName)) {
-      return false
+    const cached = this.allSingleLineCache.get(siblings)
+    let allSingleLineHTMLElements: boolean
+    if (cached !== undefined) {
+      allSingleLineHTMLElements = cached
+    } else {
+      allSingleLineHTMLElements = meaningfulSiblings.every(node => isNode(node, HTMLElementNode) && !this.isMultilineElement(node))
+      this.allSingleLineCache.set(siblings, allSingleLineHTMLElements)
     }
-
-    const isSpaceableContainer = !parentTagName || (parentTagName && SPACEABLE_CONTAINERS.has(parentTagName))
 
     if (!isSpaceableContainer && meaningfulSiblings.length < 5) {
       return false
     }
 
-    const currentNode = siblings[currentIndex]
-    const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
-    const isCurrentComment = isCommentNode(currentNode)
+    const currentGroup = tagGroups.get(currentIndex)
+    const previousGroup = previousNode ? tagGroups.get(previousMeaningfulIndex) : undefined
 
-    if (previousMeaningfulIndex !== -1) {
-      const previousNode = siblings[previousMeaningfulIndex]
-      const isPreviousComment = isCommentNode(previousNode)
+    if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
+      return false
+    }
 
-      if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
-        return false
-      }
+    if (previousGroup && previousGroup.groupEnd === previousMeaningfulIndex) {
+      return true
+    }
 
-      if (isPreviousComment && isCurrentComment) {
-        return false
-      }
+    if (allSingleLineHTMLElements && tagGroups.size === 0) {
+      return false
     }
 
     if (isNode(currentNode, HTMLElementNode)) {
       const currentTagName = getTagName(currentNode)
 
-      if (INLINE_ELEMENTS.has(currentTagName)) {
-        return false
-      }
-
-      if (TIGHT_GROUP_CHILDREN.has(currentTagName)) {
-        return false
-      }
-
-      if (currentTagName === 'a' && parentTagName === 'nav') {
+      if (currentTagName && INLINE_ELEMENTS.has(currentTagName)) {
         return false
       }
     }
@@ -597,13 +709,37 @@ export class FormatPrinter extends Printer {
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
-    this.pushWithIndent(`<${tagName}`)
+    const herbDisableComments = allChildren.filter(child =>
+      isNode(child, ERBContentNode) && isHerbDisableComment(child)
+    )
+
+    let openingLine = `<${tagName}`
+
+    if (herbDisableComments.length > 0) {
+      const commentLines = this.capture(() => {
+        herbDisableComments.forEach(comment => {
+          const wasInlineMode = this.inlineMode
+          this.inlineMode = true
+          this.lines.push(" ")
+          this.visit(comment)
+          this.inlineMode = wasInlineMode
+        })
+      })
+
+      openingLine += commentLines.join("")
+    }
+
+    this.pushWithIndent(openingLine)
 
     this.withIndent(() => {
       allChildren.forEach(child => {
         if (isNode(child, HTMLAttributeNode)) {
           this.pushWithIndent(this.renderAttribute(child))
         } else if (!isNode(child, WhitespaceNode)) {
+          if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
+            return
+          }
+
           this.visit(child)
         }
       })
@@ -646,19 +782,17 @@ export class FormatPrinter extends Printer {
     const hasTextFlow = this.isInTextFlowContext(null, children)
 
     if (hasTextFlow) {
-      const filteredChildren = filterSignificantChildren(children)
-
       const wasInlineMode = this.inlineMode
       this.inlineMode = true
 
-      this.visitTextFlowChildren(filteredChildren)
+      this.visitTextFlowChildren(children)
 
       this.inlineMode = wasInlineMode
 
       return
     }
 
-    let lastWasMeaningful = false
+    let lastMeaningfulNode: Node | null = null
     let hasHandledSpacing = false
 
     for (let i = 0; i < children.length; i++) {
@@ -676,21 +810,27 @@ export class FormatPrinter extends Printer {
 
       if (shouldAppendToLastLine(child, children, i)) {
         this.appendChildToLastLine(child, children, i)
-        lastWasMeaningful = true
+        lastMeaningfulNode = child
         hasHandledSpacing = false
         continue
       }
 
-      if (isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
-        this.push("")
-      }
+      if (!isNonWhitespaceNode(child)) continue
 
+      const childStartLine = this.stringLineCount
       this.visit(child)
 
-      if (isNonWhitespaceNode(child)) {
-        lastWasMeaningful = true
-        hasHandledSpacing = false
+      if (lastMeaningfulNode && !hasHandledSpacing) {
+        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings( null, children, i)
+
+        if (shouldAddSpacing) {
+          this.lines.splice(childStartLine, 0, "")
+          this.stringLineCount++
+        }
       }
+
+      lastMeaningfulNode = child
+      hasHandledSpacing = false
     }
   }
 
@@ -698,28 +838,30 @@ export class FormatPrinter extends Printer {
     this.elementStack.push(node)
     this.elementFormattingAnalysis.set(node, this.analyzeElementFormatting(node))
 
-    if (this.inlineMode && node.is_void && this.indentLevel === 0) {
-      const openTag = this.capture(() => this.visit(node.open_tag)).join('')
-      this.pushToLastLine(openTag)
-      this.elementStack.pop()
+    this.trackBoundary(node, () => {
+      if (this.inlineMode && node.is_void && this.indentLevel === 0) {
+        const openTag = this.capture(() => this.visit(node.open_tag)).join('')
+        this.pushToLastLine(openTag)
+        return
+      }
 
-      return
-    }
+      this.visit(node.open_tag)
 
-    this.visit(node.open_tag)
+      if (node.body.length > 0) {
+        this.visitHTMLElementBody(node.body, node)
+      }
 
-    if (node.body.length > 0) {
-      this.visitHTMLElementBody(node.body, node)
-    }
-
-    if (node.close_tag) {
-      this.visit(node.close_tag)
-    }
+      if (node.close_tag) {
+        this.visit(node.close_tag)
+      }
+    })
 
     this.elementStack.pop()
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
+    const tagName = getTagName(element)
+
     if (isContentPreserving(element)) {
       element.body.map(child => {
         if (isNode(child, HTMLElementNode)) {
@@ -748,6 +890,9 @@ export class FormatPrinter extends Printer {
       const oldInlineMode = this.inlineMode
       const nodesToRender = hasTextFlow ? body : children
 
+      const hasOnlyTextContent = nodesToRender.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
+      const shouldPreserveSpaces = hasOnlyTextContent && isInlineElement(tagName)
+
       this.inlineMode = true
 
       const lines = this.capture(() => {
@@ -763,12 +908,17 @@ export class FormatPrinter extends Printer {
               }
             } else {
               const normalizedContent = child.content.replace(/\s+/g, ' ')
-              const trimmedContent = normalizedContent.trim()
 
-              if (trimmedContent) {
-                this.push(trimmedContent)
-              } else if (normalizedContent === ' ') {
-                this.push(' ')
+              if (shouldPreserveSpaces && normalizedContent) {
+                this.push(normalizedContent)
+              } else {
+                const trimmedContent = normalizedContent.trim()
+
+                if (trimmedContent) {
+                  this.push(trimmedContent)
+                } else if (normalizedContent === ' ') {
+                  this.push(' ')
+                }
               }
             }
           } else if (isNode(child, WhitespaceNode)) {
@@ -780,7 +930,10 @@ export class FormatPrinter extends Printer {
       })
 
       const content = lines.join('')
-      const inlineContent = hasTextFlow ? content.replace(/\s+/g, ' ').trim() : content.trim()
+
+      const inlineContent = shouldPreserveSpaces
+        ? (hasTextFlow ? content.replace(/\s+/g, ' ') : content)
+        : (hasTextFlow ? content.replace(/\s+/g, ' ').trim() : content.trim())
 
       if (inlineContent) {
         this.pushToLastLine(inlineContent)
@@ -797,6 +950,7 @@ export class FormatPrinter extends Printer {
     let leadingHerbDisableIndex = -1
     let firstWhitespaceIndex = -1
     let remainingChildren = children
+    let remainingBodyUnfiltered = body
 
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
@@ -831,6 +985,20 @@ export class FormatPrinter extends Printer {
 
         return true
       })
+
+      remainingBodyUnfiltered = body.filter((_, index) => {
+        if (index === leadingHerbDisableIndex) return false
+
+        if (firstWhitespaceIndex >= 0 && index === leadingHerbDisableIndex - 1) {
+          const child = body[index]
+
+          if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
+            return false
+          }
+        }
+
+        return true
+      })
     }
 
     if (leadingHerbDisableComment) {
@@ -852,7 +1020,7 @@ export class FormatPrinter extends Printer {
 
     this.withIndent(() => {
       if (hasTextFlow) {
-        this.visitTextFlowChildren(remainingChildren)
+        this.visitTextFlowChildren(remainingBodyUnfiltered)
       } else {
         this.visitElementChildren(leadingHerbDisableComment ? remainingChildren : body, element)
       }
@@ -861,21 +1029,22 @@ export class FormatPrinter extends Printer {
 
   /**
    * Visit element children with intelligent spacing logic
+   *
+   * Tracks line positions and immediately splices blank lines after rendering each child.
    */
   private visitElementChildren(body: Node[], parentElement: HTMLElementNode | null) {
-    let lastWasMeaningful = false
+    let lastMeaningfulNode: Node | null = null
     let hasHandledSpacing = false
 
-    for (let i = 0; i < body.length; i++) {
-      const child = body[i]
+    for (let index = 0; index < body.length; index++) {
+      const child = body[index]
 
       if (isNode(child, HTMLTextNode)) {
         const isWhitespaceOnly = child.content.trim() === ""
 
         if (isWhitespaceOnly) {
-          const hasPreviousNonWhitespace = i > 0 && isNonWhitespaceNode(body[i - 1])
-          const hasNextNonWhitespace = i < body.length - 1 && isNonWhitespaceNode(body[i + 1])
-
+          const hasPreviousNonWhitespace = index > 0 && isNonWhitespaceNode(body[index - 1])
+          const hasNextNonWhitespace = index < body.length - 1 && isNonWhitespaceNode(body[index + 1])
           const hasMultipleNewlines = child.content.includes('\n\n')
 
           if (hasPreviousNonWhitespace && hasNextNonWhitespace && hasMultipleNewlines) {
@@ -887,26 +1056,12 @@ export class FormatPrinter extends Printer {
         }
       }
 
-      if (isNonWhitespaceNode(child) && lastWasMeaningful && !hasHandledSpacing) {
-        const element = body[i - 1]
-        const hasExistingSpacing = i > 0 && isNode(element, HTMLTextNode) && element.content.trim() === "" && (element.content.includes('\n\n') || element.content.split('\n').length > 2)
-
-        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(
-          parentElement,
-          body,
-          i,
-          hasExistingSpacing
-        )
-
-        if (shouldAddSpacing) {
-          this.push("")
-        }
-      }
+      if (!isNonWhitespaceNode(child)) continue
 
       let hasTrailingHerbDisable = false
 
       if (isNode(child, HTMLElementNode) && child.close_tag) {
-        for (let j = i + 1; j < body.length; j++) {
+        for (let j = index + 1; j < body.length; j++) {
           const nextChild = body[j]
 
           if (isNode(nextChild, WhitespaceNode) || isPureWhitespaceNode(nextChild)) {
@@ -916,7 +1071,17 @@ export class FormatPrinter extends Printer {
           if (isNode(nextChild, ERBContentNode) && isHerbDisableComment(nextChild)) {
             hasTrailingHerbDisable = true
 
+            const childStartLine = this.stringLineCount
             this.visit(child)
+
+            if (lastMeaningfulNode && !hasHandledSpacing) {
+              const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+
+              if (shouldAddSpacing) {
+                this.lines.splice(childStartLine, 0, "")
+                this.stringLineCount++
+              }
+            }
 
             const herbDisableString = this.capture(() => {
               const savedIndentLevel = this.indentLevel
@@ -929,7 +1094,9 @@ export class FormatPrinter extends Printer {
 
             this.pushToLastLine(' ' + herbDisableString)
 
-            i = j
+            index = j
+            lastMeaningfulNode = child
+            hasHandledSpacing = false
 
             break
           }
@@ -939,11 +1106,19 @@ export class FormatPrinter extends Printer {
       }
 
       if (!hasTrailingHerbDisable) {
+        const childStartLine = this.stringLineCount
         this.visit(child)
-      }
 
-      if (isNonWhitespaceNode(child)) {
-        lastWasMeaningful = true
+        if (lastMeaningfulNode && !hasHandledSpacing) {
+          const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+
+          if (shouldAddSpacing) {
+            this.lines.splice(childStartLine, 0, "")
+            this.stringLineCount++
+          }
+        }
+
+        lastMeaningfulNode = child
         hasHandledSpacing = false
       }
     }
@@ -1065,6 +1240,14 @@ export class FormatPrinter extends Printer {
         }
       }).join("")
 
+      const trimmedInner = inner.trim()
+
+      if (trimmedInner.startsWith('[if ') && trimmedInner.endsWith('<![endif]')) {
+        this.pushWithIndent(open + inner + close)
+
+        return
+      }
+
       const hasNewlines = inner.includes('\n')
 
       if (hasNewlines) {
@@ -1167,8 +1350,7 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBContentNode(node: ERBContentNode) {
-    // TODO: this feels hacky
-    if (node.tag_opening?.value === "<%#") {
+    if (isERBCommentNode(node)) {
       this.visitERBCommentNode(node)
     } else {
       this.printERBNode(node)
@@ -1180,88 +1362,102 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBYieldNode(node: ERBYieldNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+    })
   }
 
   visitERBInNode(node: ERBInNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
+    })
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
 
-    this.withIndent(() => this.visitAll(node.children))
-    this.visitAll(node.conditions)
+      this.withIndent(() => this.visitAll(node.children))
+      this.visitAll(node.conditions)
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBBlockNode(node: ERBBlockNode) {
-    this.printERBNode(node)
-
-    this.withIndent(() => {
-      const hasTextFlow = this.isInTextFlowContext(null, node.body)
-
-      if (hasTextFlow) {
-        const children = filterSignificantChildren(node.body)
-        this.visitTextFlowChildren(children)
-      } else {
-        this.visitElementChildren(node.body, null)
-      }
-    })
-
-    if (node.end_node) this.visit(node.end_node)
-  }
-
-  visitERBIfNode(node: ERBIfNode) {
-    if (this.inlineMode) {
-      this.printERBNode(node)
-
-      node.statements.forEach(child => {
-        if (isNode(child, HTMLAttributeNode)) {
-          this.lines.push(" ")
-          this.lines.push(this.renderAttribute(child))
-        } else {
-          const shouldAddSpaces = this.isInTokenListAttribute
-
-          if (shouldAddSpaces) {
-            this.lines.push(" ")
-          }
-
-          this.visit(child)
-
-          if (shouldAddSpaces) {
-            this.lines.push(" ")
-          }
-        }
-      })
-
-      const hasHTMLAttributes = node.statements.some(child => isNode(child, HTMLAttributeNode))
-      const isTokenList = this.isInTokenListAttribute
-
-      if ((hasHTMLAttributes || isTokenList) && node.end_node) {
-        this.lines.push(" ")
-      }
-
-      if (node.subsequent) this.visit(node.end_node)
-      if (node.end_node) this.visit(node.end_node)
-    } else {
+    this.trackBoundary(node, () => {
       this.printERBNode(node)
 
       this.withIndent(() => {
-        node.statements.forEach(child => this.visit(child))
+        const hasTextFlow = this.isInTextFlowContext(null, node.body)
+
+        if (hasTextFlow) {
+          this.visitTextFlowChildren(node.body)
+        } else {
+          this.visitElementChildren(node.body, null)
+        }
       })
 
-      if (node.subsequent) this.visit(node.subsequent)
       if (node.end_node) this.visit(node.end_node)
-    }
+    })
+  }
+
+  visitERBIfNode(node: ERBIfNode) {
+    this.trackBoundary(node, () => {
+      if (this.inlineMode) {
+        this.printERBNode(node)
+
+        node.statements.forEach(child => {
+          if (isNode(child, HTMLAttributeNode)) {
+            this.lines.push(" ")
+            this.lines.push(this.renderAttribute(child))
+          } else {
+            const shouldAddSpaces = this.isInTokenListAttribute
+
+            if (shouldAddSpaces) {
+              this.lines.push(" ")
+            }
+
+            this.visit(child)
+
+            if (shouldAddSpaces) {
+              this.lines.push(" ")
+            }
+          }
+        })
+
+        const hasHTMLAttributes = node.statements.some(child => isNode(child, HTMLAttributeNode))
+        const isTokenList = this.isInTokenListAttribute
+
+        if ((hasHTMLAttributes || isTokenList) && node.end_node) {
+          this.lines.push(" ")
+        }
+
+        if (node.subsequent) this.visit(node.subsequent)
+        if (node.end_node) this.visit(node.end_node)
+      } else {
+        this.printERBNode(node)
+
+        this.withIndent(() => {
+          node.statements.forEach(child => this.visit(child))
+        })
+
+        if (node.subsequent) this.visit(node.subsequent)
+        if (node.end_node) this.visit(node.end_node)
+      }
+    })
   }
 
   visitERBElseNode(node: ERBElseNode) {
     this.printERBNode(node)
-    this.withIndent(() => node.statements.forEach(statement => this.visit(statement)))
+
+    if (this.inlineMode) {
+      this.visitAll(node.statements)
+    } else {
+      this.withIndent(() => this.visitAll(node.statements))
+    }
   }
 
   visitERBWhenNode(node: ERBWhenNode) {
@@ -1270,44 +1466,54 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBCaseNode(node: ERBCaseNode) {
-    this.printERBNode(node)
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
 
-    this.withIndent(() => this.visitAll(node.children))
-    this.visitAll(node.conditions)
+      this.withIndent(() => this.visitAll(node.children))
+      this.visitAll(node.conditions)
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBBeginNode(node: ERBBeginNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.rescue_clause) this.visit(node.rescue_clause)
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.ensure_clause) this.visit(node.ensure_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.rescue_clause) this.visit(node.rescue_clause)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.ensure_clause) this.visit(node.ensure_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBWhileNode(node: ERBWhileNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBUntilNode(node: ERBUntilNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBForNode(node: ERBForNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.end_node) this.visit(node.end_node)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   visitERBRescueNode(node: ERBRescueNode) {
@@ -1321,11 +1527,13 @@ export class FormatPrinter extends Printer {
   }
 
   visitERBUnlessNode(node: ERBUnlessNode) {
-    this.printERBNode(node)
-    this.withIndent(() => this.visitAll(node.statements))
+    this.trackBoundary(node, () => {
+      this.printERBNode(node)
+      this.withIndent(() => this.visitAll(node.statements))
 
-    if (node.else_clause) this.visit(node.else_clause)
-    if (node.end_node) this.visit(node.end_node)
+      if (node.else_clause) this.visit(node.else_clause)
+      if (node.end_node) this.visit(node.end_node)
+    })
   }
 
   // --- Element Formatting Analysis Helpers ---
@@ -1392,6 +1600,16 @@ export class FormatPrinter extends Printer {
     if (!openTagInline) return false
     if (children.length === 0) return true
 
+    const hasNonInlineChildElements = children.some(child => {
+      if (isNode(child, HTMLElementNode)) {
+        return !this.shouldRenderElementContentInline(child)
+      }
+
+      return false
+    })
+
+    if (hasNonInlineChildElements) return false
+
     let hasLeadingHerbDisable = false
 
     for (const child of node.body) {
@@ -1413,7 +1631,7 @@ export class FormatPrinter extends Printer {
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
-        return totalLength <= this.maxLineLength || totalLength <= 120
+        return totalLength <= this.maxLineLength
       }
 
       return false
@@ -1448,8 +1666,9 @@ export class FormatPrinter extends Printer {
 
       const childrenContent = this.renderChildrenInline(children)
       const fullLine = openTagResult + childrenContent + `</${tagName}>`
+      const totalLength = this.indent.length + fullLine.length
 
-      if ((this.indent.length + fullLine.length) <= this.maxLineLength) {
+      if (totalLength <= this.maxLineLength) {
         return true
       }
     }
@@ -1523,8 +1742,8 @@ export class FormatPrinter extends Printer {
     const adjacentInlineCount = countAdjacentInlineElements(children)
 
     if (adjacentInlineCount >= 2) {
-      this.renderAdjacentInlineElements(children, adjacentInlineCount)
-      this.visitRemainingChildren(children, adjacentInlineCount)
+      const { processedIndices } = this.renderAdjacentInlineElements(children, adjacentInlineCount)
+      this.visitRemainingChildren(children, processedIndices)
 
       return
     }
@@ -1533,14 +1752,113 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Wrap remaining words that don't fit on the current line
+   * Returns the wrapped lines with proper indentation
+   */
+  private wrapRemainingWords(words: string[], wrapWidth: number): string[] {
+    const lines: string[] = []
+    let line = ""
+
+    for (const word of words) {
+      const testLine = line + (line ? " " : "") + word
+
+      if (testLine.length > wrapWidth && line) {
+        lines.push(this.indent + line)
+        line = word
+      } else {
+        line = testLine
+      }
+    }
+
+    if (line) {
+      lines.push(this.indent + line)
+    }
+
+    return lines
+  }
+
+  /**
+   * Try to merge text starting with punctuation to inline content
+   * Returns object with merged content and whether processing should stop
+   */
+  private tryMergePunctuationText(inlineContent: string, trimmedText: string, wrapWidth: number): { mergedContent: string, shouldStop: boolean, wrappedLines: string[] } {
+    const combined = inlineContent + trimmedText
+
+    if (combined.length <= wrapWidth) {
+      return {
+        mergedContent: inlineContent + trimmedText,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const match = trimmedText.match(/^[.!?:;]+/)
+
+    if (!match) {
+      return {
+        mergedContent: inlineContent,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const punctuation = match[0]
+    const restText = trimmedText.substring(punctuation.length).trim()
+
+    if (!restText) {
+      return {
+        mergedContent: inlineContent + punctuation,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const words = restText.split(/\s+/)
+    let toMerge = punctuation
+    let mergedWordCount = 0
+
+    for (const word of words) {
+      const testMerge = toMerge + ' ' + word
+
+      if ((inlineContent + testMerge).length <= wrapWidth) {
+        toMerge = testMerge
+        mergedWordCount++
+      } else {
+        break
+      }
+    }
+
+    const mergedContent = inlineContent + toMerge
+
+    if (mergedWordCount >= words.length) {
+      return {
+        mergedContent,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const remainingWords = words.slice(mergedWordCount)
+    const wrappedLines = this.wrapRemainingWords(remainingWords, wrapWidth)
+
+    return {
+      mergedContent,
+      shouldStop: true,
+      wrappedLines
+    }
+  }
+
+  /**
    * Render adjacent inline elements together on one line
    */
-  private renderAdjacentInlineElements(children: Node[], count: number): void {
+  private renderAdjacentInlineElements(children: Node[], count: number): { processedIndices: Set<number> } {
     let inlineContent = ""
     let processedCount = 0
+    let lastProcessedIndex = -1
+    const processedIndices = new Set<number>()
 
-    for (let i = 0; i < children.length && processedCount < count; i++) {
-      const child = children[i]
+    for (let index = 0; index < children.length && processedCount < count; index++) {
+      const child = children[index]
 
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
         continue
@@ -1549,15 +1867,66 @@ export class FormatPrinter extends Printer {
       if (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) {
         inlineContent += this.renderInlineElementAsString(child)
         processedCount++
+        lastProcessedIndex = index
+        processedIndices.add(index)
+
+        if (inlineContent && isLineBreakingElement(child)) {
+          this.pushWithIndent(inlineContent)
+          inlineContent = ""
+        }
       } else if (isNode(child, ERBContentNode)) {
         inlineContent += this.renderERBAsString(child)
         processedCount++
+        lastProcessedIndex = index
+        processedIndices.add(index)
+      }
+    }
+
+    if (lastProcessedIndex >= 0) {
+      for (let index = lastProcessedIndex + 1; index < children.length; index++) {
+        const child = children[index]
+
+        if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+          continue
+        }
+
+        if (isNode(child, ERBContentNode)) {
+          inlineContent += this.renderERBAsString(child)
+          processedIndices.add(index)
+          continue
+        }
+
+        if (isNode(child, HTMLTextNode)) {
+          const trimmed = child.content.trim()
+
+          if (trimmed && /^[.!?:;]/.test(trimmed)) {
+            const wrapWidth = this.maxLineLength - this.indent.length
+            const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
+
+            inlineContent = result.mergedContent
+            processedIndices.add(index)
+
+            if (result.shouldStop) {
+              if (inlineContent) {
+                this.pushWithIndent(inlineContent)
+              }
+
+              result.wrappedLines.forEach(line => this.push(line))
+
+              return { processedIndices }
+            }
+          }
+        }
+
+        break
       }
     }
 
     if (inlineContent) {
       this.pushWithIndent(inlineContent)
     }
+
+    return { processedIndices }
   }
 
   /**
@@ -1597,16 +1966,15 @@ export class FormatPrinter extends Printer {
   /**
    * Visit remaining children after processing adjacent inline elements
    */
-  private visitRemainingChildren(children: Node[], skipCount: number): void {
-    let skipped = 0
+  private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
+    for (let index = 0; index < children.length; index++) {
+      const child = children[index]
 
-    for (const child of children) {
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
         continue
       }
 
-      if (skipped < skipCount) {
-        skipped++
+      if (processedIndices.has(index)) {
         continue
       }
 
@@ -1683,15 +2051,30 @@ export class FormatPrinter extends Printer {
 
     const words = normalizeAndSplitWords(textNode.content)
     if (words.length === 0 || !words[0]) return false
-    if (!startsWithAlphanumeric(words[0])) return false
 
-    lastUnit.unit.content += words[0]
+    const firstWord = words[0]
+    const firstChar = firstWord[0]
+
+    if (/\s/.test(firstChar)) {
+      return false
+    }
+
+    lastUnit.unit.content += firstWord
 
     if (words.length > 1) {
-      const remainingText = words.slice(1).join(' ')
+      let remainingText = words.slice(1).join(' ')
+
+      if (endsWithWhitespace(textNode.content)) {
+        remainingText += ' '
+      }
 
       result.push({
         unit: { content: remainingText, type: 'text', isAtomic: false, breaksFlow: false },
+        node: textNode
+      })
+    } else if (endsWithWhitespace(textNode.content)) {
+      result.push({
+        unit: { content: ' ', type: 'text', isAtomic: false, breaksFlow: false },
         node: textNode
       })
     }
@@ -1766,10 +2149,12 @@ export class FormatPrinter extends Printer {
   private processTextNode(result: ContentUnitWithNode[], children: Node[], child: HTMLTextNode, index: number, lastProcessedIndex: number): void {
     const isAtomic = child.content === ' '
 
-    if (!isAtomic && lastProcessedIndex >= 0) {
+    if (!isAtomic && lastProcessedIndex >= 0 && result.length > 0) {
       const hasWhitespace = this.hasWhitespaceBeforeNode(children, lastProcessedIndex, index, child)
+      const lastUnit = result[result.length - 1]
+      const lastIsAtomic = lastUnit.unit.isAtomic && (lastUnit.unit.type === 'erb' || lastUnit.unit.type === 'inline')
 
-      if (!hasWhitespace && this.tryMergeTextAfterAtomic(result, child)) {
+      if (lastIsAtomic && !hasWhitespace && this.tryMergeTextAfterAtomic(result, child)) {
         return
       }
     }
@@ -1826,6 +2211,18 @@ export class FormatPrinter extends Printer {
       if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
         return true
       }
+
+      if (hasWhitespace && result.length > 0) {
+        const lastUnit = result[result.length - 1]
+        const lastIsAtomic = lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')
+
+        if (lastIsAtomic && !this.lastUnitEndsWithWhitespace(result)) {
+          result.push({
+            unit: { content: ' ', type: 'text', isAtomic: true, breaksFlow: false },
+            node: null
+          })
+        }
+      }
     }
 
     result.push({
@@ -1847,7 +2244,27 @@ export class FormatPrinter extends Printer {
       const child = children[i]
 
       if (isNode(child, WhitespaceNode)) continue
-      if (isPureWhitespaceNode(child) && !(isNode(child, HTMLTextNode) && child.content === ' ')) continue
+
+      if (isPureWhitespaceNode(child) && !(isNode(child, HTMLTextNode) && child.content === ' ')) {
+        if (lastProcessedIndex >= 0) {
+          const hasNonWhitespaceAfter = children.slice(i + 1).some(node =>
+            !isNode(node, WhitespaceNode) && !isPureWhitespaceNode(node)
+          )
+
+          if (hasNonWhitespaceAfter) {
+            const previousNode = children[lastProcessedIndex]
+
+            if (!isLineBreakingElement(previousNode)) {
+              result.push({
+                unit: { content: ' ', type: 'text', isAtomic: true, breaksFlow: false },
+                node: child
+              })
+            }
+          }
+        }
+
+        continue
+      }
 
       if (isNode(child, HTMLTextNode)) {
         this.processTextNode(result, children, child, i, lastProcessedIndex)
@@ -2080,13 +2497,13 @@ export class FormatPrinter extends Printer {
   /**
    * Try to render a complete element inline including opening tag, children, and closing tag
    */
-  private tryRenderInlineFull(node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
+  private tryRenderInlineFull(_node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
     let result = `<${tagName}`
 
     result += this.renderAttributesString(attributes)
     result += ">"
 
-    const childrenContent = this.tryRenderChildrenInline(children)
+    const childrenContent = this.tryRenderChildrenInline(children, tagName)
 
     if (!childrenContent) return null
 
@@ -2114,12 +2531,14 @@ export class FormatPrinter extends Printer {
   /**
    * Try to render just the children inline (without tags)
    */
-  private tryRenderChildrenInline(children: Node[]): string | null {
+  private tryRenderChildrenInline(children: Node[], tagName?: string): string | null {
     let result = ""
     let hasInternalWhitespace = false
+    let addedLeadingSpace = false
 
     const hasHerbDisable = this.hasLeadingHerbDisable(children)
-    let addedLeadingSpace = false
+    const hasOnlyTextContent = children.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
+    const shouldPreserveSpaces = hasOnlyTextContent && tagName && isInlineElement(tagName)
 
     for (const child of children) {
       if (isNode(child, HTMLTextNode)) {
@@ -2129,7 +2548,7 @@ export class FormatPrinter extends Printer {
         const trimmedContent = normalizedContent.trim()
 
         if (trimmedContent) {
-          if (hasLeadingSpace && result && !result.endsWith(' ')) {
+          if (hasLeadingSpace && (result || shouldPreserveSpaces) && !result.endsWith(' ')) {
             result += ' '
           }
 
@@ -2180,11 +2599,11 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    if (hasHerbDisable && result.startsWith(' ')) {
-      return result.trimEnd()
+    if (shouldPreserveSpaces) {
+      return result
     }
 
-    if (hasInternalWhitespace) {
+    if (hasHerbDisable && result.startsWith(' ') || hasInternalWhitespace) {
       return result.trimEnd()
     }
 
@@ -2229,11 +2648,12 @@ export class FormatPrinter extends Printer {
       isNode(child, ERBContentNode) && isHerbDisableComment(child)
     )
 
-    return hasHerbDisable ? filterEmptyNodesForHerbDisable(body) : filterEmptyNodes(body)
+    return hasHerbDisable ? filterEmptyNodesForHerbDisable(body) : body
   }
 
   private renderElementInline(element: HTMLElementNode): string {
     const children = this.getFilteredChildren(element.body)
+
     return this.renderChildrenInline(children)
   }
 

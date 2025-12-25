@@ -36,6 +36,16 @@ For occasional use without installing:
 npx @herb-tools/linter template.html.erb
 ```
 
+### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the linter from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/linter@{commit} template.html.erb
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
+
 ### Project Installation
 
 :::code-group
@@ -209,7 +219,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.5::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -224,7 +234,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.7.5::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.5::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -339,6 +349,36 @@ To disable all linting rules for a specific line, use `all`:
 Inline disable comments only affect the line they appear on. Each line that needs linting disabled must have its own disable comment.
 :::
 
+### Disabling Linting for Entire Files <Badge type="info" text="v0.8.2+" />
+
+You can disable linting for an entire file by adding the `ignore` directive anywhere in your template:
+
+```erb
+<%# herb:linter ignore %>
+```
+
+**Example:**
+
+:::code-group
+```erb [ignored.html.erb]
+<%# herb:linter ignore %>
+
+<DIV>
+  <SPAN>This entire file will not be linted</SPAN>
+</DIV>
+```
+
+```erb [regular.html.erb]
+<DIV>
+  <SPAN>This entire file will be linted</SPAN>
+</DIV>
+```
+:::
+
+::: warning Important
+The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
+:::
+
 ## Configuration
 
 Create a `.herb.yml` file in your project root to configure the linter:
@@ -412,6 +452,115 @@ herb-lint --force app/views/excluded-file.html.erb
 ```
 
 When using `--force` on an excluded file, the linter will show a warning but proceed with linting.
+
+### Custom Rules
+
+Create custom linter rules for project-specific requirements by placing ES module files (`.mjs`) in `.herb/rules/`:
+
+::: info File Extension
+Custom rules must use the `.mjs` extension to avoid Node.js module type warnings. The `.mjs` extension explicitly marks files as ES modules.
+:::
+
+::: code-group
+
+
+```js [.herb/rules/no-div-tags.mjs]
+import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
+
+class NoDivTagsVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node) {
+    if (!node.tag_name) return
+    if (node.tag_name.value !== "div") return
+
+    this.addOffense(
+      `Avoid using \`<div>\` tags. Consider using semantic HTML elements like \`<section>\`, \`<article>\`, \`<nav>\`, \`<main>\`, \`<header>\`, \`<footer>\`, or \`<aside>\` instead.`,
+      node.tag_name.location
+    )
+  }
+}
+
+export default class NoDivTagsRule extends ParserRule {
+  name = "no-div-tags"
+
+  check(result, context) {
+    const visitor = new NoDivTagsVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
+  }
+}
+```
+
+```js [.herb/rules/no-inline-styles.mjs]
+import { BaseRuleVisitor, getAttributes, getAttributeName } from "@herb-tools/linter"
+
+class NoInlineStylesVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node) {
+    const attributes = getAttributes(node)
+
+    for (const attribute of attributes) {
+      const attributeName = getAttributeName(attribute)
+
+      if (attributeName === "style") {
+        this.addOffense(
+          `Avoid using inline \`style\` attributes. Use CSS classes instead.`,
+          attribute.location,
+          "warning"
+        )
+      }
+    }
+
+    super.visitHTMLOpenTagNode(node)
+  }
+}
+
+export default class NoInlineStylesRule {
+  name = "no-inline-styles"
+
+  check(parseResult, context) {
+    const visitor = new NoInlineStylesVisitor(this.name, context)
+    visitor.visit(parseResult.value)
+    return visitor.offenses
+  }
+}
+```
+
+:::
+
+**Rule Configuration:**
+
+The `defaultConfig` getter is optional. If not specified, custom rules default to:
+- `enabled: true` - Rule is enabled by default
+- `severity: "error"` - Offenses are reported as errors
+- `exclude: []` - No files are excluded
+
+You can override the `defaultConfig` getter to customize these defaults, as shown in the example above where severity is set to `"warning"`.
+
+**Rule Properties:**
+
+- `static type` - Optional, defaults to `"parser"`. Can be `"parser"`, `"lexer"`, or `"source"`
+- `name` - Required, the rule identifier used in configuration and output
+- `check()` - Required, the method that checks for offenses
+- `defaultConfig` - Optional, returns the default configuration for the rule
+- `isEnabled()` - Optional, dynamically determines if the rule should run
+- `autofix()` - Optional, implements automatic fixing for the rule
+
+Custom rules are loaded automatically by default. Use `--no-custom-rules` to disable them.
+
+When custom rules are loaded, the linter will display them:
+
+```
+Loaded 2 custom rules:
+  • no-inline-styles (.herb/rules/no-inline-styles.mjs)
+  • require-aria-labels (.herb/rules/require-aria-labels.mjs)
+```
+
+::: warning Rule Name Clashes
+If a custom rule has the same name as a built-in rule or another custom rule, you'll see a warning. The custom rule will override the built-in rule.
+:::
+
+::: tip Hot Reload
+Custom rules are automatically reloaded when changed in editors with the Herb Language Server. No need to restart your editor!
+:::
 
 ### Language Server Integration
 

@@ -300,7 +300,10 @@ describe("Quote normalization", () => {
 
       const result = formatter.format(source)
 
-      expect(result).toBe(`<input type="text" value="hello">\n\n<br>`)
+      expect(result).toBe(dedent`
+        <input type="text" value="hello">
+        <br>
+      `)
     })
 
     test("handles ARIA attributes with quotes", () => {
@@ -346,9 +349,7 @@ describe("Quote normalization", () => {
 
       expect(result).toBe(dedent`
         <span class="first">One</span>
-
         <span class="second">Two</span>
-
         <span class="third">Three</span>
       `)
     })

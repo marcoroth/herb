@@ -1,0 +1,5 @@
+---
+source: "Engine::ERBCommentsTest#test_0011_evaluation: inline ruby comment with spaces"
+input: "{source: \"<%  # Comment %> <% code = \\\"test\\\" %><%= code %>\", locals: {}, options: {}}"
+---
+test

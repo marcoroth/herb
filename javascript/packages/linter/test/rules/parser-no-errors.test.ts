@@ -56,7 +56,7 @@ describe("ParserNoErrorsRule", () => {
   })
 
   test("should report Ruby parse errors in ERB tags", () => {
-    expectError("expect_expression_after_operator: unexpected ';'; expected an expression after the operator (`RUBY_PARSE_ERROR`)")
+    expectError("expect_expression_after_operator: unexpected end-of-input; expected an expression after the operator (`RUBY_PARSE_ERROR`)")
     assertOffenses(`<%= 1 + %>`)
   })
 

@@ -1,0 +1,6 @@
+---
+source: "Engine::GraphQLTest#test_0002_graphql tag inline is omitted from compilation"
+input: "{source: \"<%graphql query { users { id } } %>\", options: {}}"
+---
+_buf = ::String.new;
+_buf.to_s

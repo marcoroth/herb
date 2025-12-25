@@ -2,6 +2,5 @@
 source: "Engine::DebugModeTest#test_0045_regular div content still gets debug spans after excluded context tests"
 input: "{source: \"<div><%= @content %></div>\", options: {debug: true}}"
 ---
-_buf = ::String.new;
- _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown"><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @content %&gt;" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="6" style="display: contents;">'.freeze; _buf << (@content).to_s; _buf << '</span></div>'.freeze;
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown"><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @content %&gt;" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown" data-herb-debug-inserted="true" data-herb-debug-line="1" data-herb-debug-column="6" style="display: contents;">'.freeze; _buf << (@content).to_s; _buf << '</span></div>'.freeze;
 _buf.to_s

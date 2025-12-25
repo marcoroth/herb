@@ -39,6 +39,7 @@ export class Settings {
   hasConfigurationCapability = false
   hasWorkspaceFolderCapability = false
   hasDiagnosticRelatedInformationCapability = false
+  hasShowDocumentCapability = false
 
   params: InitializeParams
   capabilities: ClientCapabilities
@@ -50,6 +51,7 @@ export class Settings {
     this.connection = connection
 
     this.hasConfigurationCapability = !!(this.capabilities.workspace && !!this.capabilities.workspace.configuration)
+    this.hasShowDocumentCapability = !!(this.capabilities.window?.showDocument)
 
     this.hasWorkspaceFolderCapability = !!(
       this.capabilities.workspace && !!this.capabilities.workspace.workspaceFolders
@@ -85,8 +87,9 @@ export class Settings {
   // TODO: ideally we can just use Config all the way through
   private mergeSettings(userSettings: PersonalHerbSettings | null, projectConfig?: Config): PersonalHerbSettings {
     const settings = userSettings || this.defaultSettings
+    const hasConfigFile = projectConfig ? Config.exists(projectConfig.projectPath) : false
 
-    if (!projectConfig) {
+    if (!projectConfig || !hasConfigFile) {
       return {
         trace: settings.trace,
         linter: {

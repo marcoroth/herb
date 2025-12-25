@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0011_left and right trim with expressions"
+input: "{source: \"<%- name = \\\"World\\\" -%>\\nHello <%- name -%>\\n\", locals: {}, options: {}}"
+---
+Hello 

@@ -398,5 +398,67 @@ module Engine
 
       assert_evaluated_snapshot(template, {}, { escape: false })
     end
+
+    test "inline ruby comment on same line" do
+      template = %(<% if true %><% # Comment here %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment with newline" do
+      template = "<% if true %><% # Comment here %>\n<% end %>"
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment between code" do
+      template = %(<% if true %><% # Comment here %><%= "hello" %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment before and between code" do
+      template = %(<% # Comment here %><% if true %><% # Comment here %><%= "hello" %><% end %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment with spaces" do
+      template = %(<%  # Comment %> <% code = "test" %><%= code %>)
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "inline ruby comment multiline" do
+      template = "<% # Comment\nmore %> <% code = \"test\" %><%= code %>"
+
+      assert_evaluated_snapshot(template, { more: "ignored" }, { escape: false })
+    end
+
+    test "left trim" do
+      template = File.read("examples/left-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "right trim" do
+      template = File.read("examples/right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "left and right trim" do
+      template = File.read("examples/left-right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "graphql" do
+      template = File.read("examples/graphql.html.erb")
+      klass = Data.define(:title, :description, :price)
+      product = klass.new(title: "title", description: "Description", price: 42.00)
+
+      assert_evaluated_snapshot(template, { product: product }, { escape: false })
+    end
   end
 end

@@ -47,7 +47,7 @@ module SnapshotUtils
     assert_snapshot_matches(expected, snapshot_key)
 
     if should_compare_with_erubi? || enforce_erubi_equality
-      compare_with_erubi_compiled(source, engine.src, engine_options, enforce_erubi_equality)
+      compare_with_erubi_compiled(source, engine.src, engine_options, enforce_equality: enforce_erubi_equality)
     end
 
     engine
@@ -77,7 +77,7 @@ module SnapshotUtils
     assert_snapshot_matches(result, snapshot_key)
 
     if should_compare_with_erubi? || enforce_erubi_equality
-      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_erubi_equality)
+      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_erubi_equality)
     end
 
     { engine: engine, result: result }

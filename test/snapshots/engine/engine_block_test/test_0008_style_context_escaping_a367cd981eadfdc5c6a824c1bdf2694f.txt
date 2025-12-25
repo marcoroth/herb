@@ -2,6 +2,5 @@
 source: "Engine::EngineBlockTest#test_0008_style context escaping"
 input: "{source: \"<style>.class { color: <%= color %>; }</style>\", options: {}}"
 ---
-_buf = ::String.new;
- _buf << '<style>.class { color: '.freeze; _buf << ::Herb::Engine.css((color)); _buf << '; }</style>'.freeze;
+_buf = ::String.new; _buf << '<style>.class { color: '.freeze; _buf << ::Herb::Engine.css((color)); _buf << '; }</style>'.freeze;
 _buf.to_s

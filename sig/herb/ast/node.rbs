@@ -27,11 +27,18 @@ module Herb
       # : (?prefix: String) -> String
       def inspect_errors: (?prefix: String) -> String
 
-      # : (Array[Herb::AST::Node|Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
-      def inspect_array: (Array[Herb::AST::Node | Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
+      # : (
+      # |   Array[Herb::AST::Node|Herb::Errors::Error],
+      # |   ?item_name: String,
+      # |   ?prefix: String,
+      # |   ?indent: Integer,
+      # |   ?depth: Integer,
+      # |   ?depth_limit: Integer
+      # | ) -> String
+      def inspect_array: (untyped array, ?item_name: untyped, ?prefix: untyped, ?indent: untyped, ?depth: untyped, ?depth_limit: untyped) -> untyped
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

@@ -1,6 +1,6 @@
 [package]
 name = "herb"
-version = "0.7.5"
+version = "0.8.5"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
@@ -9,6 +9,14 @@ license = "MIT"
 repository = "https://github.com/marcoroth/herb"
 keywords = ["erb", "html", "html+erb", "ruby", "rails"]
 categories = ["parser-implementations", "development-tools"]
+include = [
+  "src/**/*",
+  "vendor/**/*.c",
+  "vendor/**/*.h",
+  "build.rs",
+  "Cargo.toml",
+  "README.md"
+]
 
 [lib]
 name = "herb"
@@ -21,7 +29,7 @@ path = "src/main.rs"
 
 [dependencies]
 libc = "0.2"
-colored = "2"
+colored = "3"
 
 [dev-dependencies]
 insta = "1.40"
@@ -30,4 +38,4 @@ cargo-insta = "1.43.2"
 [build-dependencies]
 cc = "1.0"
 glob = "0.3"
-bindgen = "0.70"
+bindgen = "0.72"

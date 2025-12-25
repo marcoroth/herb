@@ -4,17 +4,16 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "prism", github: "ruby/prism", tag: "v1.6.0"
+gem "prism", github: "ruby/prism", tag: "v1.7.0"
 
 gem "actionview", "~> 8.0"
-gem "difftastic", "~> 0.7"
 gem "erubi"
 gem "lz_string"
 gem "maxitest"
 gem "minitest-difftastic", "~> 0.2"
 gem "rake", "~> 13.2"
 gem "rake-compiler", "~> 1.3"
-gem "rake-compiler-dock", "~> 1.10"
+gem "rake-compiler-dock", "1.11.0.rc1"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 

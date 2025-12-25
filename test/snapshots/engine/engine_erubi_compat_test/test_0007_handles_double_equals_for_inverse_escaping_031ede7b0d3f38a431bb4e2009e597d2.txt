@@ -2,6 +2,5 @@
 source: "Engine::EngineErubiCompatTest#test_0007_handles double equals for inverse escaping"
 input: "{source: \"<%== content %>\", options: {escape: true}}"
 ---
-__herb = ::Herb::Engine; _buf = ::String.new;
- _buf << (content).to_s;
+__herb = ::Herb::Engine; _buf = ::String.new; _buf << (content).to_s;
 _buf.to_s

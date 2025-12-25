@@ -42,7 +42,7 @@ export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
 
 export const INLINE_ELEMENTS = new Set([
   'a', 'abbr', 'acronym', 'b', 'bdo', 'big', 'br', 'cite', 'code',
-  'dfn', 'em', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
+  'dfn', 'em', 'hr', 'i', 'img', 'kbd', 'label', 'map', 'object', 'q',
   'samp', 'small', 'span', 'strong', 'sub', 'sup',
   'tt', 'var', 'del', 'ins', 'mark', 's', 'u', 'time', 'wbr'
 ])
@@ -55,17 +55,6 @@ export const SPACEABLE_CONTAINERS = new Set([
   'div', 'section', 'article', 'main', 'header', 'footer', 'aside',
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
-
-export const TIGHT_GROUP_PARENTS = new Set([
-  'ul', 'ol', 'nav', 'select', 'datalist', 'optgroup', 'tr', 'thead',
-  'tbody', 'tfoot'
-])
-
-export const TIGHT_GROUP_CHILDREN = new Set([
-  'li', 'option', 'td', 'th', 'dt', 'dd'
-])
-
-export const SPACING_THRESHOLD = 3
 
 /**
  * Token list attributes that contain space-separated values and benefit from
@@ -140,15 +129,6 @@ export function filterSignificantChildren(body: Node[]): Node[] {
 }
 
 /**
- * Filter out empty text nodes and whitespace nodes
- */
-export function filterEmptyNodes(nodes: Node[]): Node[] {
-  return nodes.filter(child =>
-    !isNode(child, WhitespaceNode) && !(isNode(child, HTMLTextNode) && child.content.trim() === "")
-  )
-}
-
-/**
  * Smart filter that preserves exactly ONE whitespace before herb:disable comments
  */
 export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
@@ -203,7 +183,9 @@ export function isERBTag(text: string): boolean {
  * Check if a string ends with an ERB tag
  */
 export function endsWithERBTag(text: string): boolean {
-  return /%>$/.test(text.trim())
+  const trimmed = text.trim()
+
+  return /%>$/.test(trimmed) || /%>\S+$/.test(trimmed)
 }
 
 /**
@@ -220,6 +202,7 @@ export function needsSpaceBetween(currentLine: string, word: string): boolean {
   if (isClosingPunctuation(word)) return false
   if (lineEndsWithOpeningPunctuation(currentLine)) return false
   if (currentLine.endsWith(' ')) return false
+  if (word.startsWith(' ')) return false
   if (endsWithERBTag(currentLine) && startsWithERBTag(word)) return false
 
   return true
@@ -335,12 +318,8 @@ export function hasMultilineTextContent(children: Node[]): boolean {
       return child.content.includes('\n')
     }
 
-    if (isNode(child, HTMLElementNode)) {
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (hasMultilineTextContent(nestedChildren)) {
-        return true
-      }
+    if (isNode(child, HTMLElementNode) && hasMultilineTextContent(child.body)) {
+      return true
     }
   }
 
@@ -357,9 +336,7 @@ export function areAllNestedElementsInline(children: Node[]): boolean {
         return false
       }
 
-      const nestedChildren = filterEmptyNodes(child.body)
-
-      if (!areAllNestedElementsInline(nestedChildren)) {
+      if (!areAllNestedElementsInline(child.body)) {
         return false
       }
     } else if (isAnyOf(child, HTMLDoctypeNode, HTMLCommentNode, isERBControlFlowNode)) {
@@ -452,16 +429,6 @@ export function countAdjacentInlineElements(children: Node[]): number {
 }
 
 /**
- * Determine if we should wrap to the next line
- */
-export function shouldWrapToNextLine(testLine: string, currentLine: string, word: string, wrapWidth: number): boolean {
-  if (!currentLine) return false
-  if (isClosingPunctuation(word)) return false
-
-  return testLine.length >= wrapWidth
-}
-
-/**
  * Check if a node represents a block-level element
  */
 export function isBlockLevelNode(node: Node): boolean {
@@ -479,27 +446,25 @@ export function isBlockLevelNode(node: Node): boolean {
 }
 
 /**
+ * Check if an element is a line-breaking element (br or hr)
+ */
+export function isLineBreakingElement(node: Node): boolean {
+  if (!isNode(node, HTMLElementNode)) {
+    return false
+  }
+
+  const tagName = getTagName(node)
+
+  return tagName === 'br' || tagName === 'hr'
+}
+
+/**
  * Normalize text by replacing multiple spaces with single space and trim
  * Then split into words
  */
 export function normalizeAndSplitWords(text: string): string[] {
   const normalized = text.replace(/\s+/g, ' ')
   return normalized.trim().split(' ')
-}
-
-/**
- * Check if text starts with an alphanumeric character (not punctuation)
- */
-export function startsWithAlphanumeric(text: string): boolean {
-  const trimmed = text.trim()
-  return /^[a-zA-Z0-9]/.test(trimmed)
-}
-
-/**
- * Check if text ends with an alphanumeric character (not punctuation)
- */
-export function endsWithAlphanumeric(text: string): boolean {
-  return /[a-zA-Z0-9]$/.test(text)
 }
 
 /**

@@ -1,0 +1,10 @@
+---
+source: "Engine::GraphQLTest#test_0004_graphql tag with comment and html"
+input: "{source: \"<%# app/views/humans/human.html.erb %>\\n<%graphql\\n  fragment HumanFragment on Human {\\n    name\\n    homePlanet\\n  }\\n%>\\n\\n<p><%= human.name %> lives on <%= human.home_planet %>.</p>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '
+
+
+<p>'.freeze; _buf << (human.name).to_s; _buf << ' lives on '.freeze; _buf << (human.home_planet).to_s; _buf << '.</p>
+'.freeze;
+_buf.to_s

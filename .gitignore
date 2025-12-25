@@ -134,6 +134,7 @@ java/.java_compiled
 
 # Rust Build Artifacts
 rust/target/
+rust/vendor/
 rust/Cargo.lock
 
 # NX Monorepo
@@ -156,3 +157,6 @@ docs/docs/public/c-reference
 
 # NPM
 **/node_modules/**/*
+
+# Clangd config
+compile_flags.txt
