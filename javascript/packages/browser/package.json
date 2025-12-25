@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/browser",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "WebAssembly-based HTML-aware ERB parser for browsers.",
   "type": "module",
   "license": "MIT",
@@ -34,7 +34,7 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.8.5"
+    "@herb-tools/core": "0.8.6"
   },
   "files": [
     "package.json",

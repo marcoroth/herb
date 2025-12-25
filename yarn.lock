@@ -4044,7 +4044,7 @@ ejs@^3.1.10:
   resolved "https://registry.npmjs.org/ejs/-/ejs-3.1.10.tgz"
   integrity sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==
   dependencies:
-    jake "^10.8.5"
+    jake "^10.8.6"
 
 electron-to-chromium@^1.5.211:
   version "1.5.211"
@@ -5769,7 +5769,7 @@ jackspeak@^4.1.1:
   dependencies:
     "@isaacs/cliui" "^8.0.2"
 
-jake@^10.8.5:
+jake@^10.8.6:
   version "10.9.4"
   resolved "https://registry.npmjs.org/jake/-/jake-10.9.4.tgz"
   integrity sha512-wpHYzhxiVQL+IV05BLE2Xn34zW1S223hvjtqk0+gsPrwd/8JNLXJgZZM/iPFsYc1xyphF+6M6EvdE5E9MBGkDA==

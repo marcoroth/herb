@@ -366,7 +366,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.5
+          version: 0.8.6
           linter:
             enabled: true
         `)

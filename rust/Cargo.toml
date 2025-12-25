@@ -1,6 +1,6 @@
 [package]
 name = "herb"
-version = "0.8.5"
+version = "0.8.6"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
