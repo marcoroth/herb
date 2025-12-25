@@ -1,0 +1,14 @@
+---
+source: "Analyze::BlockTest#test_0023_closed brace block with yield"
+input: |2-
+<% content = capture { yield } if block_given? %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBYieldNode (location: (1:0)-(1:49))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content = capture { yield } if block_given? " (location: (1:2)-(1:47))
+    │   └── tag_closing: "%>" (location: (1:47)-(1:49))
+    │
+    └── @ HTMLTextNode (location: (1:49)-(2:0))
+        └── content: "\n"
