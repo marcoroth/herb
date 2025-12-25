@@ -192,9 +192,19 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     case PM_CALL_NODE: {
       pm_call_node_t* call = (pm_call_node_t*) node;
 
-      if (call->block != NULL) {
-        current_type = CONTROL_TYPE_BLOCK;
-        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      if (call->block != NULL && call->block->type == PM_BLOCK_NODE) {
+        pm_block_node_t* block_node = (pm_block_node_t*) call->block;
+        size_t opening_length = block_node->opening_loc.end - block_node->opening_loc.start;
+        bool has_do_opening =
+          opening_length == 2 && block_node->opening_loc.start[0] == 'd' && block_node->opening_loc.start[1] == 'o';
+        bool has_brace_opening = opening_length == 1 && block_node->opening_loc.start[0] == '{';
+        bool has_closing_location = block_node->closing_loc.start != NULL && block_node->closing_loc.end != NULL
+                                 && (block_node->closing_loc.end - block_node->closing_loc.start) > 0;
+
+        if (has_do_opening || (has_brace_opening && !has_closing_location)) {
+          current_type = CONTROL_TYPE_BLOCK;
+          keyword_offset = (uint32_t) (node->location.start - context->source_start);
+        }
       }
       break;
     }
