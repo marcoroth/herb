@@ -1831,9 +1831,9 @@ export class FormatPrinter extends Printer {
     const adjacentInlineCount = countAdjacentInlineElements(children)
 
     if (adjacentInlineCount >= 2) {
-      const { processedIndices } = this.renderAdjacentInlineElements(children, adjacentInlineCount)
-      this.visitRemainingChildren(children, processedIndices)
-
+      const lastProcessedIndex = this.renderAdjacentInlinePrefix(children, adjacentInlineCount)
+      const remainingChildren = children.slice(lastProcessedIndex + 1)
+      this.buildAndWrapTextFlow(remainingChildren)
       return
     }
 
@@ -1841,110 +1841,14 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Wrap remaining words that don't fit on the current line
-   * Returns the wrapped lines with proper indentation
+   * Render adjacent inline elements at the start of children as a prefix.
+   * Handles line-breaking elements (br, hr) by flushing accumulated content.
+   * Returns the index of the last processed child.
    */
-  private wrapRemainingWords(words: string[], wrapWidth: number): string[] {
-    const lines: string[] = []
-    let line = ""
-
-    for (const word of words) {
-      const testLine = line + (line ? " " : "") + word
-
-      if (testLine.length > wrapWidth && line) {
-        lines.push(this.indent + line)
-        line = word
-      } else {
-        line = testLine
-      }
-    }
-
-    if (line) {
-      lines.push(this.indent + line)
-    }
-
-    return lines
-  }
-
-  /**
-   * Try to merge text starting with punctuation to inline content
-   * Returns object with merged content and whether processing should stop
-   */
-  private tryMergePunctuationText(inlineContent: string, trimmedText: string, wrapWidth: number): { mergedContent: string, shouldStop: boolean, wrappedLines: string[] } {
-    const combined = inlineContent + trimmedText
-
-    if (combined.length <= wrapWidth) {
-      return {
-        mergedContent: inlineContent + trimmedText,
-        shouldStop: false,
-        wrappedLines: []
-      }
-    }
-
-    const match = trimmedText.match(/^[.!?:;]+/)
-
-    if (!match) {
-      return {
-        mergedContent: inlineContent,
-        shouldStop: false,
-        wrappedLines: []
-      }
-    }
-
-    const punctuation = match[0]
-    const restText = trimmedText.substring(punctuation.length).trim()
-
-    if (!restText) {
-      return {
-        mergedContent: inlineContent + punctuation,
-        shouldStop: false,
-        wrappedLines: []
-      }
-    }
-
-    const words = restText.split(/[ \t\n\r]+/)
-    let toMerge = punctuation
-    let mergedWordCount = 0
-
-    for (const word of words) {
-      const testMerge = toMerge + ' ' + word
-
-      if ((inlineContent + testMerge).length <= wrapWidth) {
-        toMerge = testMerge
-        mergedWordCount++
-      } else {
-        break
-      }
-    }
-
-    const mergedContent = inlineContent + toMerge
-
-    if (mergedWordCount >= words.length) {
-      return {
-        mergedContent,
-        shouldStop: false,
-        wrappedLines: []
-      }
-    }
-
-    const remainingWords = words.slice(mergedWordCount)
-    const wrappedLines = this.wrapRemainingWords(remainingWords, wrapWidth)
-
-    return {
-      mergedContent,
-      shouldStop: true,
-      wrappedLines
-    }
-  }
-
-  /**
-   * Render adjacent inline elements together on one line
-   */
-  private renderAdjacentInlineElements(children: Node[], count: number): { processedIndices: Set<number> } {
+  private renderAdjacentInlinePrefix(children: Node[], count: number): number {
     let inlineContent = ""
     let processedCount = 0
     let lastProcessedIndex = -1
-    const processedIndices = new Set<number>()
 
     for (let index = 0; index < children.length && processedCount < count; index++) {
       const child = children[index]
@@ -1957,9 +1861,8 @@ export class FormatPrinter extends Printer {
         inlineContent += this.renderInlineElementAsString(child)
         processedCount++
         lastProcessedIndex = index
-        processedIndices.add(index)
 
-        if (inlineContent && isLineBreakingElement(child)) {
+        if (isLineBreakingElement(child)) {
           this.pushWithIndent(inlineContent)
           inlineContent = ""
         }
@@ -1967,43 +1870,23 @@ export class FormatPrinter extends Printer {
         inlineContent += this.renderERBAsString(child)
         processedCount++
         lastProcessedIndex = index
-        processedIndices.add(index)
       }
     }
 
-    if (lastProcessedIndex >= 0) {
+    if (inlineContent && lastProcessedIndex >= 0) {
       for (let index = lastProcessedIndex + 1; index < children.length; index++) {
         const child = children[index]
 
         if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
-          continue
-        }
-
-        if (isNode(child, ERBContentNode)) {
-          inlineContent += this.renderERBAsString(child)
-          processedIndices.add(index)
-          continue
+          break
         }
 
         if (isNode(child, HTMLTextNode)) {
-          const trimmed = child.content.trim()
+          const words = normalizeAndSplitWords(child.content)
 
-          if (trimmed && /^[.!?:;]/.test(trimmed)) {
-            const wrapWidth = this.maxLineLength - this.indent.length
-            const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
-
-            inlineContent = result.mergedContent
-            processedIndices.add(index)
-
-            if (result.shouldStop) {
-              if (inlineContent) {
-                this.pushWithIndent(inlineContent)
-              }
-
-              result.wrappedLines.forEach(line => this.push(line))
-
-              return { processedIndices }
-            }
+          if (words.length > 0 && words[0] && !' \t\n\r'.includes(words[0][0])) {
+            inlineContent += words[0]
+            lastProcessedIndex = index
           }
         }
 
@@ -2015,7 +1898,7 @@ export class FormatPrinter extends Printer {
       this.pushWithIndent(inlineContent)
     }
 
-    return { processedIndices }
+    return lastProcessedIndex
   }
 
   /**
@@ -2051,25 +1934,6 @@ export class FormatPrinter extends Printer {
       this.inlineMode = true
       this.visit(node)
     }).join("")
-  }
-
-  /**
-   * Visit remaining children after processing adjacent inline elements
-   */
-  private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
-    for (let index = 0; index < children.length; index++) {
-      const child = children[index]
-
-      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
-        continue
-      }
-
-      if (processedIndices.has(index)) {
-        continue
-      }
-
-      this.visit(child)
-    }
   }
 
   /**
@@ -2121,6 +1985,10 @@ export class FormatPrinter extends Printer {
           }
         }
       }
+    }
+
+    if (words.length > 0) {
+      words[words.length - 1].word = words[words.length - 1].word.trimEnd()
     }
 
     this.flushWords(words)
@@ -2272,11 +2140,44 @@ export class FormatPrinter extends Printer {
       return false
     }
 
-    if (lastProcessedIndex >= 0) {
-      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result)
+    const hasWhitespace = lastProcessedIndex >= 0 ? hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result) : true
 
-      if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
+    if (isLineBreakingElement(child)) {
+      if (!hasWhitespace && result.length > 0) {
+        const lastUnit = result[result.length - 1]
+
+        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
+          lastUnit.unit.content += inlineContent
+
+          result.push({
+            unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+            node: null
+          })
+
+          return true
+        }
+      }
+
+      result.push({
+        unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
+        node: child
+      })
+
+      return false
+    }
+
+    if (!hasWhitespace && lastProcessedIndex >= 0) {
+      if (this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
         return true
+      }
+
+      if (result.length > 0) {
+        const lastUnit = result[result.length - 1]
+
+        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
+          lastUnit.unit.content += inlineContent
+          return true
+        }
       }
     }
 
@@ -2300,6 +2201,15 @@ export class FormatPrinter extends Printer {
 
       if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
         return true
+      }
+
+      if (!hasWhitespace && result.length > 0) {
+        const lastUnit = result[result.length - 1]
+
+        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
+          lastUnit.unit.content += erbContent
+          return true
+        }
       }
 
       if (hasWhitespace && result.length > 0) {
@@ -2433,7 +2343,7 @@ export class FormatPrinter extends Printer {
         nextEffectiveLength = effectiveLength + spaceBefore + word.length
       }
 
-      if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength >= wrapWidth) {
+      if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength > wrapWidth) {
         lines.push(this.indent + currentLine.trimEnd())
 
         currentLine = word

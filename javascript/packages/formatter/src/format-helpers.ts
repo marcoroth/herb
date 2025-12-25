@@ -398,17 +398,22 @@ export function isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode |
 }
 
 /**
- * Count consecutive inline elements/ERB at the start of children (with no whitespace between)
+ * Count consecutive inline elements/ERB with no whitespace between them.
+ * Starts from startIndex and skips indices in processedIndices.
  */
-export function countAdjacentInlineElements(children: Node[]): number {
+export function countAdjacentInlineElements(children: Node[], startIndex = 0, processedIndices?: Set<number>): number {
   let count = 0
   let lastSignificantIndex = -1
 
-  for (let i = 0; i < children.length; i++) {
+  for (let i = startIndex; i < children.length; i++) {
     const child = children[i]
 
     if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
       continue
+    }
+
+    if (processedIndices?.has(i)) {
+      break
     }
 
     const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)
