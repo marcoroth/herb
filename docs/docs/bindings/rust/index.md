@@ -18,7 +18,7 @@ Add the dependency to your `Cargo.toml`:
 :::code-group
 ```toml [Cargo.toml]
 [dependencies]
-herb = "0.8.5"
+herb = "0.8.6"
 ```
 :::
 
