@@ -7,11 +7,11 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/highlighter%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/highlighter"
   },
   "bin": {
-    "herb-highlight": "./bin/herb-highlight"
+    "herb-highlight": "bin/herb-highlight"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
