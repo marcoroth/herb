@@ -548,7 +548,7 @@ export class HerbOverlay {
       return;
     }
 
-    if (element.localName === 'html') {
+    if (element.localName === 'html' || window.getComputedStyle(element).overflowY !== 'visible') {
       label.style.top = '0';
     }
     
