@@ -1,6 +1,7 @@
 import { glob } from "glob"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
+import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { existsSync, statSync } from "fs"
 import { dirname, resolve, relative } from "path"
@@ -14,6 +15,17 @@ import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
 
 export * from "./cli/index.js"
+
+const SEVERITY_LEVELS: Record<DiagnosticSeverity, number> = {
+  "error": 3,
+  "warning": 2,
+  "info": 1,
+  "hint": 0
+}
+
+function shouldFailOnSeverity(actualSeverity: DiagnosticSeverity, failLevel: DiagnosticSeverity): boolean {
+  return SEVERITY_LEVELS[actualSeverity] >= SEVERITY_LEVELS[failLevel]
+}
 
 export class CLI {
   protected argumentParser = new ArgumentParser()
@@ -135,7 +147,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -250,8 +262,20 @@ export class CLI {
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
       await this.afterProcess(results, outputOptions)
 
+      const effectiveFailLevel = failLevel || linterConfig.failLevel
+
       if (results.totalErrors > 0) {
         process.exit(1)
+      }
+
+      if (effectiveFailLevel) {
+        if (effectiveFailLevel === "warning" && results.totalWarnings > 0) {
+          process.exit(1)
+        } else if (effectiveFailLevel === "info" && (results.totalWarnings > 0 || results.totalInfo > 0)) {
+          process.exit(1)
+        } else if (effectiveFailLevel === "hint" && (results.totalWarnings > 0 || results.totalInfo > 0 || results.totalHints > 0)) {
+          process.exit(1)
+        }
       }
 
     } catch (error) {
