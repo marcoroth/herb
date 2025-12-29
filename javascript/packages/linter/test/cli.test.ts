@@ -369,7 +369,7 @@ describe("CLI Output Formatting", () => {
                 severity: warning
         `)
 
-        const { output, exitCode } = runLinter("clean-file.html.erb", "--fail-level", "warning")
+        const { exitCode } = runLinter("clean-file.html.erb", "--fail-level", "warning")
 
         expect(exitCode).toBe(0)
       } finally {
@@ -402,6 +402,7 @@ describe("CLI Output Formatting", () => {
       try {
         writeFileSync(configPath, dedent`
           linter:
+            failLevel: error
             rules:
               html-img-require-alt:
                 severity: warning
@@ -418,6 +419,14 @@ describe("CLI Output Formatting", () => {
       }
     })
 
+    test("exits with error for invalid --fail-level value", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--fail-level", "invalid")
+
+      expect(output).toContain("Invalid --fail-level value")
+      expect(output).toContain("invalid")
+      expect(exitCode).toBe(1)
+    })
+
     test("exits with success when warnings present but --fail-level not set", () => {
       try {
         writeFileSync(configPath, dedent`
@@ -432,6 +441,86 @@ describe("CLI Output Formatting", () => {
         const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
 
         expect(output).toContain("warning")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when info diagnostics are present with --fail-level info flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when info diagnostics present but --fail-level is warning", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when hint diagnostics are present with --fail-level hint flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "hint")
+
+        expect(output).toContain("hint")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when hint diagnostics present but --fail-level is info", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("hint")
         expect(exitCode).toBe(0)
       } finally {
         try { unlinkSync(configPath) } catch {}

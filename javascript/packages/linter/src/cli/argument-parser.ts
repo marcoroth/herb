@@ -44,7 +44,7 @@ export class ArgumentParser {
       --force                       force linting even if disabled in .herb.yml
       --fix                         automatically fix auto-correctable offenses
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
-      --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint)
+      --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --format                      output format (simple|detailed|json) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)

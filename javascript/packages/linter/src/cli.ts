@@ -1,7 +1,6 @@
 import { glob } from "glob"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
-import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { existsSync, statSync } from "fs"
 import { dirname, resolve, relative } from "path"
@@ -15,17 +14,6 @@ import type { ProcessingContext } from "./cli/file-processor.js"
 import type { FormatOption } from "./cli/argument-parser.js"
 
 export * from "./cli/index.js"
-
-const SEVERITY_LEVELS: Record<DiagnosticSeverity, number> = {
-  "error": 3,
-  "warning": 2,
-  "info": 1,
-  "hint": 0
-}
-
-function shouldFailOnSeverity(actualSeverity: DiagnosticSeverity, failLevel: DiagnosticSeverity): boolean {
-  return SEVERITY_LEVELS[actualSeverity] >= SEVERITY_LEVELS[failLevel]
-}
 
 export class CLI {
   protected argumentParser = new ArgumentParser()
@@ -264,18 +252,19 @@ export class CLI {
 
       const effectiveFailLevel = failLevel || linterConfig.failLevel
 
-      if (results.totalErrors > 0) {
-        process.exit(1)
-      }
+      const errors = results.totalErrors > 0
+      const warnings = results.totalWarnings > 0
+      const info = results.totalInfo > 0
+      const hints = results.totalHints > 0
 
-      if (effectiveFailLevel) {
-        if (effectiveFailLevel === "warning" && results.totalWarnings > 0) {
-          process.exit(1)
-        } else if (effectiveFailLevel === "info" && (results.totalWarnings > 0 || results.totalInfo > 0)) {
-          process.exit(1)
-        } else if (effectiveFailLevel === "hint" && (results.totalWarnings > 0 || results.totalInfo > 0 || results.totalHints > 0)) {
-          process.exit(1)
-        }
+      const shouldFailOnWarnings = effectiveFailLevel === "warning" && warnings
+      const shouldFailOnInfo = effectiveFailLevel === "info" && (warnings || info)
+      const shouldFailOnHints = effectiveFailLevel === "hint" && (warnings || info || hints)
+
+      const shouldFail = errors || shouldFailOnWarnings || shouldFailOnInfo || shouldFailOnHints
+
+      if (shouldFail) {
+        process.exit(1)
       }
 
     } catch (error) {
