@@ -336,6 +336,198 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("--fail-level", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("exits with error code when warnings are present with --fail-level warning flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when no warnings are present with --fail-level warning flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+        `)
+
+        const { exitCode } = runLinter("clean-file.html.erb", "--fail-level", "warning")
+
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when failLevel is set in config", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            failLevel: warning
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("CLI flag overrides config setting", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            failLevel: error
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error for invalid --fail-level value", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--fail-level", "invalid")
+
+      expect(output).toContain("Invalid --fail-level value")
+      expect(output).toContain("invalid")
+      expect(exitCode).toBe(1)
+    })
+
+    test("exits with success when warnings present but --fail-level not set", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when info diagnostics are present with --fail-level info flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when info diagnostics present but --fail-level is warning", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when hint diagnostics are present with --fail-level hint flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "hint")
+
+        expect(output).toContain("hint")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when hint diagnostics present but --fail-level is info", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("hint")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
   describe("Custom Rules from Project Root (issue #908)", () => {
     const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
     const { join } = require("path")

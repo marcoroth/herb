@@ -192,6 +192,28 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 npx @herb-tools/linter template.html.erb --no-github
 ```
 
+**Exit Behavior:** <Badge type="info" text="v0.9.0+" />
+```bash
+# Exit with error code when warnings or higher are present
+npx @herb-tools/linter template.html.erb --fail-level warning
+
+# Exit with error code when info diagnostics or higher are present
+npx @herb-tools/linter template.html.erb --fail-level info
+
+# Exit with error code when any diagnostic (including hints) is present
+npx @herb-tools/linter template.html.erb --fail-level hint
+```
+
+By default, the linter exits with code `1` only when errors are present. The `--fail-level` option allows you to control this behavior for CI/CD pipelines where you want stricter enforcement. Valid values are: `error` (default), `warning`, `info`, `hint`.
+
+This can also be configured in `.herb.yml`:
+```yaml [.herb.yml]
+linter:
+  failLevel: warning
+```
+
+The CLI flag takes precedence over the configuration file.
+
 **Help and Version:**
 ```bash
 # Show help
@@ -392,6 +414,10 @@ npx @herb-tools/linter --init
 ```yaml [.herb.yml]
 linter:
   enabled: true
+
+  # # Exit with error code when diagnostics of this severity or higher are present
+  # # Valid values: error (default), warning, info, hint
+  # failLevel: warning
 
   # Additional glob patterns to include (additive to defaults)
   include:

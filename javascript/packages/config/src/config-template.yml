@@ -27,6 +27,10 @@ version: 0.8.6
 linter:
   enabled: true
 
+  # # Exit with error code when diagnostics of this severity or higher are present
+  # # Valid values: error (default), warning, info, hint
+  # failLevel: warning
+
   # # Additional patterns beyond the defaults for linting
   # include:
   #   - '**/*.xml.erb'
