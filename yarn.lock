@@ -2017,10 +2017,10 @@
     "@types/expect" "^1.20.4"
     "@types/node" "*"
 
-"@types/vscode@^1.43.0":
-  version "1.106.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.106.0.tgz#abf54661998d1e76ef01bc8cf587450550631368"
-  integrity sha512-88oUcEl9Wmlyt64pbvjLzyyFuFuPotdjwy+P+5ggg3DyTJSMWJD3ShX2ppya5mqrAYTKEhcaJBerdc5JTeb32w==
+"@types/vscode@^1.107.0":
+  version "1.107.0"
+  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.107.0.tgz#82d76dec334896b4ce8373c6042549623e494105"
+  integrity sha512-XS8YE1jlyTIowP64+HoN30OlC1H9xqSlq1eoLZUgFEC8oUTO6euYZxti1xRiLSfZocs4qytTzR6xCBYtioQTCg==
 
 "@types/web-bluetooth@^0.0.21":
   version "0.0.21"
