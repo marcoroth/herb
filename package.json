@@ -20,7 +20,7 @@
     "concurrently": "^9.2.0",
     "dedent": "^1.7.0",
     "esbuild-plugin-copy": "^2.1.1",
-    "minimatch": "^10.0.3",
+    "picomatch": "^4.0.2",
     "nx": "22.3.3",
     "oxlint": "^1.35.0",
     "playwright": "^1.57.0",
