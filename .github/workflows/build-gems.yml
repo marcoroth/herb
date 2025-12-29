@@ -74,7 +74,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: false
+          bundler-cache: true
 
       - name: bundle install
         run: bundle install
@@ -127,8 +127,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
-          bundler-cache: false
+          bundler-cache: true
 
       - name: Download gem artifacts
         uses: actions/download-artifact@v4

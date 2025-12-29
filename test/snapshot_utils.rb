@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "readline"
+require "reline"
 require "digest"
 require_relative "../bin/lib/compare_helpers"
 
@@ -155,7 +155,7 @@ module SnapshotUtils
 
         Run the test using UPDATE_SNAPSHOTS=true to update (or create) the snapshot file for "#{class_name} #{name}"
 
-        UPDATE_SNAPSHOTS=true mtest #{e.location}
+        UPDATE_SNAPSHOTS=true bundle exec minitest #{e.location}
 
         #{divider}
         \e[0m
