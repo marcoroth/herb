@@ -113,7 +113,10 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
 
     if (this.tagAttributes.has(identifier)) {
       this.addDuplicateAttributeOffense(identifier, attributeNode.name!.location)
+      return
     }
+
+    this.addLoopWillDuplicateOffense(identifier, attributeNode.name!.location)
   }
 
   private handleConditionalAttribute(identifier: string, attributeNode: HTMLAttributeNode): void {
@@ -125,22 +128,34 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
     if (this.tagAttributes.has(identifier)) {
       this.addDuplicateAttributeOffense(identifier, attributeNode.name!.location)
     }
+
+    this.controlFlowAttributes.add(identifier)
   }
 
   private addDuplicateAttributeOffense(identifier: string, location: Location): void {
-    this.addOffense(`Duplicate attribute \`${identifier}\` found on tag. Remove the duplicate occurrence.`, location)
+    this.addOffense(
+      `Duplicate attribute \`${identifier}\`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values.`,
+      location,
+    )
   }
 
   private addSameLoopIterationOffense(identifier: string, location: Location): void {
     this.addOffense(
-      `Duplicate attribute \`${identifier}\` found within the same loop iteration. Attributes must be unique within the same loop iteration.`,
+      `Duplicate attribute \`${identifier}\` in same loop iteration. Each iteration will produce an element with duplicate attributes. Remove one or merge the values.`,
+      location,
+    )
+  }
+
+  private addLoopWillDuplicateOffense(identifier: string, location: Location): void {
+    this.addOffense(
+      `Attribute \`${identifier}\` inside loop will appear multiple times on this element. Use a dynamic attribute name like \`${identifier}-<%= index %>\` or move the attribute outside the loop.`,
       location,
     )
   }
 
   private addSameBranchOffense(identifier: string, location: Location): void {
     this.addOffense(
-      `Duplicate attribute \`${identifier}\` found within the same control flow branch. Attributes must be unique within the same control flow branch.`,
+      `Duplicate attribute \`${identifier}\` in same branch. This branch will produce an element with duplicate attributes. Remove one or merge the values.`,
       location,
     )
   }
