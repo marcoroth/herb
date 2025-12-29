@@ -49,7 +49,7 @@ $(OBJ_DIR)/herb/%.o: ../src/%.c | $(OBJ_DIR)
 
 $(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
 	@mkdir -p $(@D)
-	em++ -std=c++11 -c $< -o $@ $(CFLAGS)
+	em++ -std=c++17 -c $< -o $@ $(CFLAGS)
 
 $(OBJ_DIR)/prism/%.o: $(PRISM_PATH)/src/%.c | $(OBJ_DIR)
 	@mkdir -p $(@D)
