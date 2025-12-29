@@ -12,7 +12,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
   bool skip_erb_content = false;
   bool is_comment_tag = false;
 
-  for (size_t i = 0; i < tokens->size; i++) {
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
@@ -95,7 +95,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < tokens->size; i++) {
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {

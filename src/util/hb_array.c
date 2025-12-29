@@ -116,6 +116,7 @@ void* hb_array_pop(hb_array_T* array) {
   return last_item;
 }
 
+// TODO: Remove this function once we fully migrate to hb_narray
 size_t hb_array_size(const hb_array_T* array) {
   if (array == NULL) { return 0; }
 

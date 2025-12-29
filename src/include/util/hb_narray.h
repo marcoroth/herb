@@ -18,6 +18,7 @@ void hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacit
 void* hb_narray_get(const hb_narray_T* array, size_t index);
 void* hb_narray_first(hb_narray_T* array);
 void* hb_narray_last(hb_narray_T* array);
+size_t hb_narray_size(const hb_narray_T* array);
 
 void hb_narray_append(hb_narray_T* array, void* item);
 void hb_narray_remove(hb_narray_T* array, size_t index);

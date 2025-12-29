@@ -75,9 +75,9 @@ jobject NodesArrayFromCArray(JNIEnv* env, hb_array_T* array) {
     return (*env)->NewObject(env, arrayListClass, arrayListConstructor, 0);
   }
 
-  jobject javaList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, (jint) array->size);
+  jobject javaList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, (jint) hb_array_size(array));
 
-  for (size_t i = 0; i < array->size; i++) {
+  for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
