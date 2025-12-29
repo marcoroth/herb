@@ -386,7 +386,7 @@ test/fixtures/multiple-rule-offenses.html.erb:4:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [7/14] ⎯⎯⎯⎯
 
-[error] Duplicate attribute \`class\` found on tag. Remove the duplicate occurrence. (html-no-duplicate-attributes)
+[error] Duplicate attribute \`class\`. Browsers only use the first occurrence and ignore duplicate attributes. Remove the duplicate or merge the values. (html-no-duplicate-attributes)
 
 test/fixtures/multiple-rule-offenses.html.erb:5:14
 
