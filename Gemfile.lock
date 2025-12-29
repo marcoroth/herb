@@ -163,6 +163,7 @@ GEM
     strscan (3.1.6)
     terminal-table (4.0.0)
       unicode-display_width (>= 1.1.1, < 4)
+    tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     unicode-display_width (3.2.0)
@@ -198,6 +199,7 @@ DEPENDENCIES
   rubocop (~> 1.71)
   sorbet
   steep (~> 1.10)
+  tsort (~> 0.2.0)
 
 BUNDLED WITH
    2.7.2
