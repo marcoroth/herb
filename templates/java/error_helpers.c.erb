@@ -46,7 +46,7 @@ jobject ErrorsArrayFromCArray(JNIEnv* env, hb_array_T* array) {
   jobject javaList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, 0);
 
   if (array) {
-    for (size_t i = 0; i < array->size; i++) {
+    for (size_t i = 0; i < hb_array_size(array); i++) {
       ERROR_T* error = (ERROR_T*) hb_array_get(array, i);
 
       if (error) {

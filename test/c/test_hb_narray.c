@@ -138,6 +138,24 @@ TEST(test_hb_narray_remove)
   hb_narray_deinit(&array);
 END
 
+// Test hb_narray_size with NULL safety
+TEST(test_hb_narray_size)
+  ck_assert_int_eq(hb_narray_size(NULL), 0);
+
+  hb_narray_T array;
+  hb_narray_init(&array, sizeof(uint64_t), 5);
+  ck_assert_int_eq(hb_narray_size(&array), 0);
+
+  uint64_t item1 = 42, item2 = 99;
+  hb_narray_append(&array, &item1);
+  ck_assert_int_eq(hb_narray_size(&array), 1);
+
+  hb_narray_append(&array, &item2);
+  ck_assert_int_eq(hb_narray_size(&array), 2);
+
+  hb_narray_deinit(&array);
+END
+
 TCase *hb_narray_tests(void) {
   TCase *buffer = tcase_create("Herb (New) Array");
 
@@ -147,6 +165,7 @@ TCase *hb_narray_tests(void) {
   tcase_add_test(buffer, test_hb_narray_first_last);
   tcase_add_test(buffer, test_hb_narray_stack_behavior);
   tcase_add_test(buffer, test_hb_narray_remove);
+  tcase_add_test(buffer, test_hb_narray_size);
 
   return buffer;
 }

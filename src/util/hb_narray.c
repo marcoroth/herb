@@ -73,3 +73,9 @@ void hb_narray_deinit(hb_narray_T* array) {
   array->size = 0;
   free(array->items);
 }
+
+size_t hb_narray_size(const hb_narray_T* array) {
+  if (array == NULL) { return 0; }
+
+  return array->size;
+}

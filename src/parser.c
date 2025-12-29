@@ -314,7 +314,7 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   position_T node_start = { 0 };
   position_T node_end = { 0 };
 
-  if (children->size > 0) {
+  if (hb_array_size(children) > 0) {
     AST_NODE_T* first_child = hb_array_first(children);
     AST_NODE_T* last_child = hb_array_last(children);
 
@@ -1144,7 +1144,7 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
 static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_string_T tag_name) {
   int depth = 0;
 
-  for (size_t i = start_idx + 1; i < nodes->size; i++) {
+  for (size_t i = start_idx + 1; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (node == NULL) { continue; }
 
@@ -1168,9 +1168,9 @@ static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_st
 static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors);
 
 static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors) {
-  hb_array_T* result = hb_array_init(nodes->size);
+  hb_array_T* result = hb_array_init(hb_array_size(nodes));
 
-  for (size_t index = 0; index < nodes->size; index++) {
+  for (size_t index = 0; index < hb_array_size(nodes); index++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, index);
     if (node == NULL) { continue; }
 
@@ -1181,7 +1181,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
       size_t close_index = find_matching_close_tag(nodes, index, tag_name);
 
       if (close_index == (size_t) -1) {
-        if (open_tag->base.errors->size == 0) {
+        if (hb_array_size(open_tag->base.errors) == 0) {
           append_missing_closing_tag_error(
             open_tag->tag_name,
             open_tag->base.location.start,
@@ -1225,7 +1225,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
       AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
       if (!is_void_element(hb_string(close_tag->tag_name->value))) {
-        if (close_tag->base.errors->size == 0) {
+        if (hb_array_size(close_tag->base.errors) == 0) {
           append_missing_opening_tag_error(
             close_tag->tag_name,
             close_tag->base.location.start,
@@ -1299,19 +1299,19 @@ void herb_parser_deinit(parser_T* parser) {
 }
 
 void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
-  if (nodes == NULL || nodes->size == 0) { return; }
+  if (nodes == NULL || hb_array_size(nodes) == 0) { return; }
 
   hb_array_T* processed = parser_build_elements_from_tags(nodes, errors);
 
   nodes->size = 0;
 
-  for (size_t i = 0; i < processed->size; i++) {
+  for (size_t i = 0; i < hb_array_size(processed); i++) {
     hb_array_append(nodes, hb_array_get(processed, i));
   }
 
   hb_array_free(&processed);
 
-  for (size_t i = 0; i < nodes->size; i++) {
+  for (size_t i = 0; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (node == NULL) { continue; }
 

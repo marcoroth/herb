@@ -81,7 +81,7 @@ static VALUE rb_nodes_array_from_c_array(hb_array_T* array) {
   VALUE rb_array = rb_ary_new();
 
   if (array) {
-    for (size_t i = 0; i < array->size; i++) {
+    for (size_t i = 0; i < hb_array_size(array); i++) {
       AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
       if (child_node) {

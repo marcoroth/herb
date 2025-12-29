@@ -31,7 +31,7 @@ void herb_visit_child_nodes(const AST_NODE_T *node, bool (*visitor)(const AST_NO
 
       <%- when Herb::Template::ArrayField -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        for (size_t index = 0; index < <%= node.human %>-><%= field.name %>->size; index++) {
+        for (size_t index = 0; index < hb_array_size(<%= node.human %>-><%= field.name %>); index++) {
           herb_visit_node(hb_array_get(<%= node.human %>-><%= field.name %>, index), visitor, data);
         }
       }
