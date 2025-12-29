@@ -3,7 +3,7 @@ import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { existsSync, statSync } from "fs"
-import { dirname, resolve, relative } from "path"
+import { resolve, relative } from "path"
 
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
