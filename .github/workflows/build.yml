@@ -38,14 +38,11 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: bundle install
-        run: bundle install
-
       - name: Render Templates
         run: bundle exec rake templates
 
       - name: Compile Herb
-        run: bundle exec rake make
+        run: make
 
       - name: Compile Ruby extension
         run: bundle exec rake compile
@@ -63,7 +60,7 @@ jobs:
       #   run: bundle exec srb tc
 
       - name: Run C tests
-        run: ./run_herb_tests
+        run: make test && ./run_herb_tests
 
       - name: Run valgrind on examples/
         run: ./bin/valgrind_check_examples

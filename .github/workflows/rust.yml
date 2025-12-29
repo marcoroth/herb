@@ -44,14 +44,13 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: bundle install
-        run: bundle install
+      - name: Setup
+        run: make setup
+        working-directory: rust
 
-      - name: Render Templates
-        run: bundle exec rake templates
-
-      - name: Compile Herb
-        run: bundle exec rake make
+      - name: Build Rust
+        run: make build
+        working-directory: rust
 
       - name: Check Rust formatting
         run: make format-check
@@ -59,10 +58,6 @@ jobs:
 
       - name: Clippy
         run: make lint
-        working-directory: rust
-
-      - name: Build Rust
-        run: make build
         working-directory: rust
 
       - name: Run Rust tests
