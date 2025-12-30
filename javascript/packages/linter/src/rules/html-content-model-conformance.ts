@@ -74,7 +74,8 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
             }
             break
           case "transparent":
-            const transparentContentModel = this.resolveTransparentContentModel()
+            const transparentContentModel =
+              this.resolveTransparentContentModel()
             if (transparentContentModel) {
               check(spec, transparentContentModel)
             }
@@ -148,6 +149,9 @@ export class HTMLContentModelConformanceRule extends ParserRule {
     return visitor.offenses
   }
 }
+
+// 3.2.5.2.4: https://html.spec.whatwg.org/multipage/dom.html#heading-content-2
+const headingContent = ["h1", "h2", "h3", "h4", "h5", "h6", "hgroup"]
 
 // 3.2.5.2.9: https://html.spec.whatwg.org/multipage/dom.html#script-supporting-elements-2
 const scriptSupportingElements = ["script", "template"]
@@ -691,7 +695,9 @@ const specs = {
     // Either: phrasing content.
     // Or: Zero or more option and script-supporting elements.
     get contentModel() {
-      return phrasingElements.concat(scriptSupportingElements)
+      return phrasingElements
+        .concat(["option"])
+        .concat(scriptSupportingElements)
     },
     link: "https://html.spec.whatwg.org/multipage/form-elements.html#the-datalist-element",
   },
@@ -746,7 +752,9 @@ const specs = {
     categories: [],
     // If the element is a child of an optgroup element: Phrasing content, but there must be no interactive content and no descendant with the tabindex attribute.
     // Otherwise: Phrasing content, optionally intermixed with heading content.
-    contentModel: "phrasing",
+    get contentModel() {
+      return phrasingElements.concat(headingContent)
+    },
     link: "https://html.spec.whatwg.org/multipage/form-elements.html#the-legend-element",
   },
   selectedcontent: {
@@ -765,7 +773,9 @@ const specs = {
   summary: {
     categories: [],
     // Phrasing content, optionally intermixed with heading content.
-    contentModel: "phrasing",
+    get contentModel() {
+      return phrasingElements.concat(headingContent)
+    },
     link: "https://html.spec.whatwg.org/multipage/interactive-elements.html#the-summary-element",
   },
   dialog: {
