@@ -154,7 +154,7 @@ describe("html-content-model-conformance", () => {
     expectNoOffenses(`<dl><div><dt>dt</dt><dd>dd</dd></div></dl>`)
   })
 
-  test.skip("fails for p element inside div with dl parent", () => {
+  test("fails for p element inside div with dl parent", () => {
     expectError("Element `<p>` cannot be placed inside element `<div>`.")
     assertOffenses(`<dl><div><p>invalid</p></div></dl>`)
   })
@@ -165,7 +165,7 @@ describe("html-content-model-conformance", () => {
     )
   })
 
-  test.skip("fails for p element inside div with option ancestor", () => {
+  test("fails for p element inside div with option ancestor", () => {
     expectError("Element `<p>` cannot be placed inside element `<div>`.")
     assertOffenses(`<select><option><div><p>valid</p></div></option></select>`)
   })
@@ -176,7 +176,7 @@ describe("html-content-model-conformance", () => {
     )
   })
 
-  test.skip("fails for span element inside div with optgroup ancestor", () => {
+  test("fails for span element inside div with optgroup ancestor", () => {
     expectError("Element `<span>` cannot be placed inside element `<div>`.")
     assertOffenses(
       `<select><optgroup><div><span>invalid</span></div></optgroup></select>`,
@@ -189,7 +189,7 @@ describe("html-content-model-conformance", () => {
     )
   })
 
-  test.skip("fails for span element inside div with select ancestor", () => {
+  test("fails for span element inside div with select ancestor", () => {
     expectError("Element `<span>` cannot be placed inside element `<div>`.")
     assertOffenses(`<select><div><span>invalid</span></div></select>`)
   })

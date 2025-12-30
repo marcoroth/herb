@@ -22,6 +22,7 @@ type ContentModel =
 type Spec = {
   categories: Array<ContentCategory>
   contentModel: ContentModel
+  computedContentModel?: (elementStack: string[]) => ContentModel
   link: string
 }
 type Specs = { [key: string]: Spec }
@@ -34,11 +35,16 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
   }
 
   private resolveTransparentContentModel(): ContentModel | null {
-    for (const tagName of this.elementStack.reverse()) {
-      const contentModel = specs[tagName]?.contentModel
-      if (contentModel !== "transparent") {
+    let index = -1
+    for (const tagName of this.elementStack.slice(0, -1).reverse()) {
+      const spec = specs[tagName]
+      const contentModel = spec?.computedContentModel
+        ? spec.computedContentModel(this.elementStack.slice(0, index))
+        : spec?.contentModel
+      if (spec && contentModel !== "transparent") {
         return contentModel
       }
+      index--
     }
     return null
   }
@@ -90,7 +96,12 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
             }
         }
       }
-      check(spec, specs[parentTagName].contentModel)
+
+      const parentSpec = specs[parentTagName]
+      const parentContentModel = parentSpec.computedContentModel
+        ? parentSpec.computedContentModel(this.elementStack.slice(0, -1))
+        : parentSpec.contentModel
+      check(spec, parentContentModel)
     }
   }
 
@@ -321,18 +332,26 @@ const specs = {
   },
   div: {
     categories: ["flow"],
-    // If the element is a child of a dl element: One or more dt elements followed by one or more dd elements, optionally intermixed with script-supporting elements.
-    // Otherwise, if the element is a descendant of an option element: Zero or more option element inner content elements.
-    // Otherwise, if the element is a descendant of an optgroup element: Zero or more optgroup element inner content elements.
-    // Otherwise, if the element is a descendant of a select element: Zero or more select element inner content elements.
-    // Otherwise: flow content.
-    get contentModel() {
-      return ["dt", "dd"]
-        .concat(scriptSupportingElements)
-        .concat(optionElementInnerContentElements)
-        .concat(optgroupElementInnerContentElements)
-        .concat(selectElementInnerContentElements)
-        .concat(flowElements)
+    contentModel: "flow",
+    computedContentModel(elementStack) {
+      // If the element is a child of a dl element: One or more dt elements followed by one or more dd elements, optionally intermixed with script-supporting elements.
+      if (elementStack.at(-1) === "dl") {
+        return ["dt", "dd"].concat(scriptSupportingElements)
+      }
+      // Otherwise, if the element is a descendant of an option element: Zero or more option element inner content elements.
+      if (elementStack.includes("option")) {
+        return optionElementInnerContentElements
+      }
+      // Otherwise, if the element is a descendant of an optgroup element: Zero or more optgroup element inner content elements.
+      if (elementStack.includes("optgroup")) {
+        return optgroupElementInnerContentElements
+      }
+      // Otherwise, if the element is a descendant of a select element: Zero or more select element inner content elements.
+      if (elementStack.includes("select")) {
+        return selectElementInnerContentElements
+      }
+      // Otherwise: flow content.
+      return this.contentModel
     },
     link: "https://html.spec.whatwg.org/multipage/grouping-content.html#the-div-element",
   },
@@ -479,12 +498,14 @@ const specs = {
   },
   span: {
     categories: ["flow", "phrasing"],
-    // If the element is a descendant of an option element: Zero or more option element inner content elements, except div elements.
-    // Otherwise: Phrasing content.
-    get contentModel() {
-      return optionElementInnerContentElements
-        .filter((e) => e !== "div")
-        .concat(phrasingElements)
+    contentModel: "phrasing",
+    computedContentModel(elementStack) {
+      // If the element is a descendant of an option element: Zero or more option element inner content elements, except div elements.
+      if (elementStack.includes("option")) {
+        return optionElementInnerContentElements.filter((e) => e !== "div")
+      }
+      // Otherwise: Phrasing content.
+      return this.contentModel
     },
     link: "https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-span-element",
   },
