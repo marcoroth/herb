@@ -204,4 +204,10 @@ describe("html-content-model-conformance", () => {
     expectError("Element `<h1>` cannot be placed inside element `<button>`.")
     assertOffenses(`<button><h1>Some Text</h1></button>`)
   })
+
+  test("passes for custom element inside button (#260)", () => {
+    expectNoOffenses(
+      `<button><my-icon-component name="herb"></my-icon-component></button>`,
+    )
+  })
 })
