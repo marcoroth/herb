@@ -210,4 +210,17 @@ describe("html-content-model-conformance", () => {
       `<button><my-icon-component name="herb"></my-icon-component></button>`,
     )
   })
+
+  test("passes for svg element inside button (#291)", () => {
+    expectNoOffenses(`
+      <div class="absolute left-full top-0 flex w-16 justify-center pt-5">
+        <button type="button" class="-m-2.5 p-2.5">
+          <span class="sr-only">Close sidebar</span>
+          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    `)
+  })
 })
