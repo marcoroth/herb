@@ -193,4 +193,15 @@ describe("html-content-model-conformance", () => {
     expectError("Element `<span>` cannot be placed inside element `<div>`.")
     assertOffenses(`<select><div><span>invalid</span></div></select>`)
   })
+
+  test("passes for span element inside button (#186)", () => {
+    expectNoOffenses(
+      `<button><span>Button Text</span></button>`,
+    )
+  })
+
+  test("fails for h1 element inside button (#186)", () => {
+    expectError("Element `<h1>` cannot be placed inside element `<button>`.")
+    assertOffenses(`<button><h1>Some Text</h1></button>`)
+  })
 })
