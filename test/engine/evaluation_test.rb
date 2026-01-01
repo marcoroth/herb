@@ -337,7 +337,7 @@ module Engine
             </main>
         #{"    "}
             <footer>
-              <p>&copy; <%= Date.today.year %> <%= site_name %></p>
+              <p>&copy; <%= Date.new(2025, 12, 31).year %> <%= site_name %></p>
             </footer>
           </body>
         </html>
