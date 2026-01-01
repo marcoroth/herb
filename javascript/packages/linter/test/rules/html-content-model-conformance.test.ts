@@ -223,4 +223,28 @@ describe("html-content-model-conformance", () => {
       </div>
     `)
   })
+
+  test("passes for div element inside tag.div block", () => {
+    expectNoOffenses(`<%= tag.div do %><div>inside tag.p</div><% end %>`)
+  })
+
+  test("fails for div element inside tag.p block", () => {
+    expectError("Element `<div>` cannot be placed inside element `<p>`.")
+    assertOffenses(`<%= tag.p do %><div>inside tag.p</div><% end %>`)
+  })
+
+  test("fails for div element inside nesting tag blocks and elements", () => {
+    expectError("Element `<header>` cannot be placed inside element `<p>`.")
+    expectError("Element `<footer>` cannot be placed inside element `<p>`.")
+    assertOffenses(`
+      <%= tag.section do %>
+        <div>
+          <%= tag.p do %>
+            <header>inside tag.p</header>
+            <%= tag.footer %>
+          <% end %>
+        </div>
+      <% end %>
+    `)
+  })
 })

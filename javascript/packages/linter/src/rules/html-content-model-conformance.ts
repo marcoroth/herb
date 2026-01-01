@@ -10,6 +10,9 @@ import type {
   HTMLOpenTagNode,
   HTMLElementNode,
   ParseResult,
+  ERBBlockNode,
+  ERBContentNode,
+  Location,
 } from "@herb-tools/core"
 
 type ContentCategory = "flow" | "phrasing"
@@ -49,18 +52,51 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
     return null
   }
 
+  // TODO: Rewrite using Prism Nodes once available
+  private extractTagName(content?: string): string | null {
+    if (!content) {
+      return null
+    }
+
+    const cleaned_code = content.trim()
+    const match = cleaned_code.match(/\btag\.(\w+)(?:\s|\()?.*(?:do|\{)?\s*$/)
+    if (match) {
+      return match[1]
+    }
+    return null
+  }
+
+  private handleERBNode(tagOpening: string | undefined, content: string | undefined, location: Location | undefined, visitChildren: () => void): void {
+    if (tagOpening !== "<%=") {
+      visitChildren()
+      return
+    }
+
+    const tagName = this.extractTagName(content)
+
+    if (tagName) {
+      this.checkConformance(tagName, location!)
+
+      this.elementStack.push(tagName)
+      visitChildren()
+      this.elementStack.pop()
+    } else {
+      visitChildren()
+    }
+  }
+
   private addOffenseMessage(
     tagName: string,
     parentTagName: string,
-    openTag: HTMLOpenTagNode,
+    location: Location,
   ): void {
     this.addOffense(
       `Element \`<${tagName}>\` cannot be placed inside element \`<${parentTagName}>\`.`,
-      openTag.tag_name!.location,
+      location,
     )
   }
 
-  private checkConformance(tagName: string, openTag: HTMLOpenTagNode) {
+  private checkConformance(tagName: string, location: Location) {
     const spec = specs[tagName]
 
     const parentTagName = this.elementStack.at(-1)
@@ -70,7 +106,7 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
           case "flow":
           case "phrasing":
             if (!spec.categories.includes(parentContentModel)) {
-              this.addOffenseMessage(tagName, parentTagName, openTag)
+              this.addOffenseMessage(tagName, parentTagName, location)
             }
             break
           case "transparent":
@@ -89,7 +125,7 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
           default:
             if (Array.isArray(parentContentModel)) {
               if (!parentContentModel.includes(tagName)) {
-                this.addOffenseMessage(tagName, parentTagName, openTag)
+                this.addOffenseMessage(tagName, parentTagName, location)
               }
             } else {
               const _exhaustiveCheck: never = parentContentModel
@@ -122,11 +158,27 @@ class ContentModelConformanceVisitor extends BaseRuleVisitor {
       return
     }
 
-    this.checkConformance(tagName, openTag)
+    this.checkConformance(tagName, openTag.tag_name!.location)
 
     this.elementStack.push(tagName)
     super.visitHTMLElementNode(node)
     this.elementStack.pop()
+  }
+
+  visitERBContentNode(node: ERBContentNode): void {
+    const tagOpening = node.tag_opening?.value
+    const content = node.content?.value
+    const location = node.content?.location
+
+    this.handleERBNode(tagOpening, content, location, () => {})
+  }
+
+  visitERBBlockNode(node: ERBBlockNode): void {
+    const tagOpening = node.tag_opening?.value
+    const content = node.content?.value
+    const location = node.content?.location
+
+    this.handleERBNode(tagOpening, content, location, () => super.visitERBBlockNode(node))
   }
 }
 
