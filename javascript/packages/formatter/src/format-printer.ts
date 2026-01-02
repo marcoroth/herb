@@ -1792,7 +1792,7 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    const match = trimmedText.match(/^[.!?:;]+/)
+    const match = trimmedText.match(/^[.!?:;%]+/)
 
     if (!match) {
       return {
@@ -1899,7 +1899,7 @@ export class FormatPrinter extends Printer {
         if (isNode(child, HTMLTextNode)) {
           const trimmed = child.content.trim()
 
-          if (trimmed && /^[.!?:;]/.test(trimmed)) {
+          if (trimmed && /^[.!?:;%]/.test(trimmed)) {
             const wrapWidth = this.maxLineLength - this.indent.length
             const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
 
@@ -1964,21 +1964,179 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Visit remaining children after processing adjacent inline elements
+   * Count adjacent inline elements starting from a specific index
+   * Skips indices that are already processed
    */
-  private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
-    for (let index = 0; index < children.length; index++) {
+  private countAdjacentInlineElementsFromIndex(
+    children: Node[],
+    startIndex: number,
+    processedIndices: Set<number>
+  ): number {
+    let count = 0
+    let lastSignificantIndex = -1
+
+    for (let i = startIndex; i < children.length; i++) {
+      const child = children[i]
+
+      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        continue
+      }
+
+      if (processedIndices.has(i)) {
+        break
+      }
+
+      const isInlineOrERB =
+        (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) ||
+        isNode(child, ERBContentNode)
+
+      if (!isInlineOrERB) {
+        break
+      }
+
+      if (lastSignificantIndex >= 0 && hasWhitespaceBetween(children, lastSignificantIndex, i)) {
+        break
+      }
+
+      count++
+      lastSignificantIndex = i
+    }
+
+    return count
+  }
+
+  /**
+   * Render adjacent inline elements starting from a specific index
+   * Similar to renderAdjacentInlineElements but works from an arbitrary start point
+   */
+  private renderAdjacentInlineElementsFromIndex(
+    children: Node[],
+    startIndex: number,
+    count: number,
+    alreadyProcessed: Set<number>
+  ): { processedIndices: Set<number>; lastIndex: number } {
+    let inlineContent = ""
+    let processedCount = 0
+    let lastProcessedIndex = -1
+    const processedIndices = new Set<number>()
+
+    for (let index = startIndex; index < children.length && processedCount < count; index++) {
       const child = children[index]
 
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
         continue
       }
 
-      if (processedIndices.has(index)) {
+      if (alreadyProcessed.has(index)) {
         continue
       }
 
-      this.visit(child)
+      if (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) {
+        inlineContent += this.renderInlineElementAsString(child)
+        processedCount++
+        lastProcessedIndex = index
+        processedIndices.add(index)
+
+        if (inlineContent && isLineBreakingElement(child)) {
+          this.pushWithIndent(inlineContent)
+          inlineContent = ""
+        }
+      } else if (isNode(child, ERBContentNode)) {
+        inlineContent += this.renderERBAsString(child)
+        processedCount++
+        lastProcessedIndex = index
+        processedIndices.add(index)
+      }
+    }
+
+    if (lastProcessedIndex >= 0) {
+      for (let index = lastProcessedIndex + 1; index < children.length; index++) {
+        const child = children[index]
+
+        if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+          continue
+        }
+
+        if (alreadyProcessed.has(index)) {
+          break
+        }
+
+        if (isNode(child, ERBContentNode)) {
+          inlineContent += this.renderERBAsString(child)
+          processedIndices.add(index)
+          lastProcessedIndex = index
+          continue
+        }
+
+        if (isNode(child, HTMLTextNode)) {
+          const trimmed = child.content.trim()
+
+          if (trimmed && /^[.!?:;%]/.test(trimmed)) {
+            const wrapWidth = this.maxLineLength - this.indent.length
+            const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
+
+            inlineContent = result.mergedContent
+            processedIndices.add(index)
+            lastProcessedIndex = index
+
+            if (result.shouldStop) {
+              if (inlineContent) {
+                this.pushWithIndent(inlineContent)
+              }
+
+              result.wrappedLines.forEach(line => this.push(line))
+
+              return { processedIndices, lastIndex: lastProcessedIndex }
+            }
+          }
+        }
+
+        break
+      }
+    }
+
+    if (inlineContent) {
+      this.pushWithIndent(inlineContent)
+    }
+
+    return {
+      processedIndices,
+      lastIndex: lastProcessedIndex >= 0 ? lastProcessedIndex : startIndex + count - 1
+    }
+  }
+
+  /**
+   * Visit remaining children after processing adjacent inline elements
+   * Recursively handles groups of adjacent inline elements
+   */
+  private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
+    let index = 0
+
+    while (index < children.length) {
+      const child = children[index]
+
+      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        index++
+        continue
+      }
+
+      if (processedIndices.has(index)) {
+        index++
+        continue
+      }
+
+      const adjacentCount = this.countAdjacentInlineElementsFromIndex(children, index, processedIndices)
+
+      if (adjacentCount >= 2) {
+        const { processedIndices: newProcessedIndices, lastIndex } =
+          this.renderAdjacentInlineElementsFromIndex(children, index, adjacentCount, processedIndices)
+
+        newProcessedIndices.forEach(i => processedIndices.add(i))
+        index = lastIndex + 1
+      } else {
+        this.visit(child)
+        index++
+      }
     }
   }
 
