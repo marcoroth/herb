@@ -402,5 +402,25 @@ module Engine
 
       assert_compiled_snapshot(template, debug: true)
     end
+
+    test "block without debug disable comment content erb expressions get debug spans" do
+      template = <<~ERB
+        <%= content_for :sidebar do %>
+          <div><%= "Sidebar content" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "block with debug disable comment content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <%= content_for :sidebar do # herb:debug disable %>
+          <div><%= "Sidebar content" %></div>
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
   end
 end
