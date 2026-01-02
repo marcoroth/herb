@@ -295,6 +295,11 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
     TOKEN_EOF
   )) {
     if (token_is(parser, TOKEN_ERB_START)) {
+      const char* tag = parser->current_token->value;
+      bool is_output_tag = (tag[2] == '=');
+
+      if (!is_output_tag) { break; }
+
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
