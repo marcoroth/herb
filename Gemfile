@@ -27,3 +27,5 @@ gem "steep", "~> 1.10"
 # You can add tsort to your Gemfile or gemspec to silence this warning.
 # 🎉 Generated 0 RBS files under sig/
 gem "tsort", "~> 0.2.0"
+
+gem "irb", "~> 1.16"
