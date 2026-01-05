@@ -136,7 +136,7 @@ The `include` patterns are **additive** - they add to the defaults rather than r
 ### Linter Options
 
 - **`enabled`**: `true` or `false` - Enable or disable the linter globally
-- **`failLevel`** <Badge type="info" text="v0.9.0+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
+- **`failLevel`** <Badge type="info" text="v0.8.7+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
 - **`include`**: Array of glob patterns - Additional file patterns to lint (additive to defaults)
 - **`exclude`**: Array of glob patterns - File patterns to exclude from linting
 
