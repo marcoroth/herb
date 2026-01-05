@@ -17,7 +17,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.8.6, @herb-tools/core@0.8.6, libprism@1.7.0, libherb@0.8.6 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.8.7, @herb-tools/core@0.8.7, libprism@1.7.0, libherb@0.8.7 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {

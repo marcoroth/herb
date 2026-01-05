@@ -2,4 +2,4 @@
 source: tests/snapshot_test.rs
 expression: output
 ---
-herb rust v0.8.6, libprism v1.7.0, libherb v0.8.6 (Rust FFI)
+herb rust v0.8.7, libprism v1.7.0, libherb v0.8.7 (Rust FFI)
