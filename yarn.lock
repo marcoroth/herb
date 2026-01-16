@@ -2124,10 +2124,10 @@
     "@types/expect" "^1.20.4"
     "@types/node" "*"
 
-"@types/vscode@^1.107.0":
-  version "1.107.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.107.0.tgz#82d76dec334896b4ce8373c6042549623e494105"
-  integrity sha512-XS8YE1jlyTIowP64+HoN30OlC1H9xqSlq1eoLZUgFEC8oUTO6euYZxti1xRiLSfZocs4qytTzR6xCBYtioQTCg==
+"@types/vscode@^1.108.1":
+  version "1.108.1"
+  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.108.1.tgz#ed56b273acd865960cfea8d884e20433d9ed523b"
+  integrity sha512-DerV0BbSzt87TbrqmZ7lRDIYaMiqvP8tmJTzW2p49ZBVtGUnGAu2RGQd1Wv4XMzEVUpaHbsemVM5nfuQJj7H6w==
 
 "@types/web-bluetooth@^0.0.21":
   version "0.0.21"
