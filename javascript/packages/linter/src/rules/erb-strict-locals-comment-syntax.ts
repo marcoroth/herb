@@ -7,7 +7,7 @@ import { hasBalancedParentheses, splitByTopLevelComma } from "./string-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
-export const STRICT_LOCALS_PATTERN = /^locals:\s*\([\s\S]*\)\s*$/
+export const STRICT_LOCALS_PATTERN = /^locals:\s*\([^)]*\)\s*$/
 
 function isValidStrictLocalsFormat(content: string): boolean {
   return STRICT_LOCALS_PATTERN.test(content)
