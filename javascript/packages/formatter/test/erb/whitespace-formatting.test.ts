@@ -176,7 +176,6 @@ describe("ERB whitespace formatting", () => {
       const result = formatter.format(source)
       expect(result).toEqual(dedent`
         <p>hello</p>
-
         .
       `)
     })

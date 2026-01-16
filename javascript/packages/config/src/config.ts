@@ -4,8 +4,8 @@ import { promises as fs } from "fs"
 import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
-import { minimatch } from "minimatch"
-import { glob } from "glob"
+import picomatch from "picomatch"
+import { glob } from "tinyglobby"
 
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
@@ -41,6 +41,7 @@ export type RuleConfig = {
 
 export type LinterConfig = {
   enabled?: boolean
+  failLevel?: DiagnosticSeverity
   include?: string[]
   exclude?: string[]
   rules?: Record<string, RuleConfig>
@@ -85,6 +86,8 @@ export class Config {
 
   private static PROJECT_INDICATORS = [
     '.git',
+    '.herb',
+    '.herb.yml',
     'Gemfile',
     'package.json',
     'Rakefile',
@@ -139,10 +142,10 @@ export class Config {
 
   /**
    * Check if the formatter is enabled.
-   * @returns true if formatter is enabled (default), false if explicitly disabled
+   * @returns true if formatter is explicitly enabled, false otherwise (default)
    */
   public get isFormatterEnabled(): boolean {
-    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? true
+    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? false
   }
 
   /**
@@ -224,7 +227,6 @@ export class Config {
     return await glob(patterns, {
       cwd: searchDir,
       absolute: true,
-      nodir: true,
       ignore: filesConfig.exclude || []
     })
   }
@@ -258,7 +260,7 @@ export class Config {
       return false
     }
 
-    return excludePatterns.some(pattern => minimatch(filePath, pattern))
+    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**
@@ -272,7 +274,7 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => minimatch(filePath, pattern))
+    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**
@@ -421,6 +423,71 @@ export class Config {
       return true
     } catch {
       return false
+    }
+  }
+
+  /**
+   * Find the project root by walking up from a given path.
+   * Looks for .herb.yml first, then falls back to project indicators
+   * (.git, Gemfile, package.json, etc.)
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static async findProjectRoot(startPath: string): Promise<string> {
+    const { projectRoot } = await this.findConfigFile(startPath)
+
+    return projectRoot
+  }
+
+  /**
+   * Synchronous version of findProjectRoot for use in CLIs.
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static findProjectRootSync(startPath: string): string {
+    const fsSync = require('fs')
+    let currentPath = path.resolve(startPath)
+
+    try {
+      const stats = fsSync.statSync(currentPath)
+
+      if (stats.isFile()) {
+        currentPath = path.dirname(currentPath)
+      }
+    } catch {
+      currentPath = path.resolve(process.cwd())
+    }
+
+    while (true) {
+      const configPath = path.join(currentPath, this.configPath)
+
+      try {
+        fsSync.accessSync(configPath)
+
+        return currentPath
+      } catch {
+        // Config not in this directory, continue
+      }
+
+      for (const indicator of this.PROJECT_INDICATORS) {
+        try {
+          fsSync.accessSync(path.join(currentPath, indicator))
+
+          return currentPath
+        } catch {
+          // Indicator not found, continue checking
+        }
+      }
+
+      const parentPath = path.dirname(currentPath)
+
+      if (parentPath === currentPath) {
+        return process.cwd()
+      }
+
+      currentPath = parentPath
     }
   }
 
@@ -1096,7 +1163,7 @@ export class Config {
         rules: {}
       },
       formatter: {
-        enabled: true,
+        enabled: false,
         indentWidth: 2,
         maxLineLength: 80
       }

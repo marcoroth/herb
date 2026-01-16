@@ -11,6 +11,7 @@ import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
+import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
@@ -67,6 +68,7 @@ export const rules: RuleClass[] = [
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
+  ERBStrictLocalsCommentSyntaxRule,
 
   HerbDisableCommentValidRuleNameRule,
   HerbDisableCommentNoRedundantAllRule,

@@ -1,0 +1,56 @@
+---
+source: "Parser::ERBTest#test_0054_multiple hash with trailing key in div"
+input: |2-
+<div>
+  <%= render "something", thing: %>
+  <%= render "something", thing: %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:35))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " render "something", thing: " (location: (2:5)-(2:33))
+    │   │   │   ├── tag_closing: "%>" (location: (2:33)-(2:35))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:35)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:35))
+    │   │   │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │   ├── content: " render "something", thing: " (location: (3:5)-(3:33))
+    │   │   │   ├── tag_closing: "%>" (location: (3:33)-(3:35))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:35)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:6))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "div" (location: (4:2)-(4:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:6)-(5:0))
+        └── content: "\n"

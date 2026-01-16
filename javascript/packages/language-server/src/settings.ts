@@ -87,8 +87,9 @@ export class Settings {
   // TODO: ideally we can just use Config all the way through
   private mergeSettings(userSettings: PersonalHerbSettings | null, projectConfig?: Config): PersonalHerbSettings {
     const settings = userSettings || this.defaultSettings
+    const hasConfigFile = projectConfig ? Config.exists(projectConfig.projectPath) : false
 
-    if (!projectConfig) {
+    if (!projectConfig || !hasConfigFile) {
       return {
         trace: settings.trace,
         linter: {

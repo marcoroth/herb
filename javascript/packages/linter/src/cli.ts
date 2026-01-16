@@ -1,9 +1,9 @@
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { existsSync, statSync } from "fs"
-import { dirname, resolve, relative } from "path"
+import { resolve, relative } from "path"
 
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
@@ -61,13 +61,7 @@ export class CLI {
       const resolvedPattern = resolve(pattern)
 
       if (existsSync(resolvedPattern)) {
-        const stats = statSync(resolvedPattern)
-
-        if (stats.isDirectory()) {
-          this.projectPath = resolvedPattern
-        } else {
-          this.projectPath = dirname(resolvedPattern)
-        }
+        this.projectPath = Config.findProjectRootSync(resolvedPattern)
       }
     }
   }
@@ -141,7 +135,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -256,7 +250,20 @@ export class CLI {
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
       await this.afterProcess(results, outputOptions)
 
-      if (results.totalErrors > 0) {
+      const effectiveFailLevel = failLevel || linterConfig.failLevel
+
+      const errors = results.totalErrors > 0
+      const warnings = results.totalWarnings > 0
+      const info = results.totalInfo > 0
+      const hints = results.totalHints > 0
+
+      const shouldFailOnWarnings = effectiveFailLevel === "warning" && warnings
+      const shouldFailOnInfo = effectiveFailLevel === "info" && (warnings || info)
+      const shouldFailOnHints = effectiveFailLevel === "hint" && (warnings || info || hints)
+
+      const shouldFail = errors || shouldFailOnWarnings || shouldFailOnInfo || shouldFailOnHints
+
+      if (shouldFail) {
         process.exit(1)
       }
 

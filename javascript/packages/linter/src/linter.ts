@@ -1,10 +1,11 @@
 import { Location } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
-import { minimatch } from "minimatch"
+import picomatch from "picomatch"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
 import { parseHerbDisableLine } from "./herb-disable-comment-utils.js"
+import { hasLinterIgnoreDirective } from "./linter-ignore.js"
 
 import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { DEFAULT_RULE_CONFIG } from "./types.js"
@@ -190,7 +191,7 @@ export class Linter {
       const defaultExclude = rule.defaultConfig?.exclude ?? DEFAULT_RULE_CONFIG.exclude
 
       if (defaultExclude && defaultExclude.length > 0) {
-        const isExcluded = defaultExclude.some((pattern: string) => minimatch(context.fileName!, pattern))
+        const isExcluded = defaultExclude.some(pattern => picomatch.isMatch(context.fileName!, pattern))
 
         if (isExcluded) {
           return []
@@ -303,6 +304,18 @@ export class Linter {
     let wouldBeIgnoredCount = 0
 
     const parseResult = this.herb.parse(source, { track_whitespace: true })
+
+    // Check for file-level ignore directive using visitor
+    if (hasLinterIgnoreDirective(parseResult)) {
+      return {
+        offenses: [],
+        errors: 0,
+        warnings: 0,
+        info: 0,
+        hints: 0,
+        ignored: 0
+      }
+    }
     const lexResult = this.herb.lex(source)
     const hasParserErrors = parseResult.recursiveErrors().length > 0
     const sourceLines = source.split("\n")
@@ -573,3 +586,4 @@ export class Linter {
     }
   }
 }
+

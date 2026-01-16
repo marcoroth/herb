@@ -324,4 +324,20 @@ describe("herb:disable comment formatting", () => {
 
     expect(result).toBe(source)
   })
+
+  test("keeps herb:disable comment on same line as tag name in multiline opening tag", () => {
+    const source = dedent`
+      <a <%# herb:disable html-anchor-require-href %>
+        class="btn btn-secondary no-donate-btn"
+        aria-label="Close"
+        data-dismiss="modal"
+      >
+        Close
+      </a>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(source)
+  })
 })

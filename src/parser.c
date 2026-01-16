@@ -319,9 +319,9 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   position_T node_start = { 0 };
   position_T node_end = { 0 };
 
-  if (children->size > 0) {
-    AST_NODE_T* first_child = hb_array_get(children, 0);
-    AST_NODE_T* last_child = hb_array_get(children, children->size - 1);
+  if (hb_array_size(children) > 0) {
+    AST_NODE_T* first_child = hb_array_first(children);
+    AST_NODE_T* last_child = hb_array_last(children);
 
     node_start = first_child->location.start;
     node_end = last_child->location.end;
@@ -1120,7 +1120,9 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
           TOKEN_DASH,
           TOKEN_EQUALS,
           TOKEN_EXCLAMATION,
+          TOKEN_HTML_TAG_END,
           TOKEN_IDENTIFIER,
+          TOKEN_LT,
           TOKEN_NBSP,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
@@ -1154,11 +1156,11 @@ static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_st
     if (node->type == AST_HTML_OPEN_TAG_NODE) {
       AST_HTML_OPEN_TAG_NODE_T* open = (AST_HTML_OPEN_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(open->tag_name->value), tag_name)) { depth++; }
+      if (hb_string_equals_case_insensitive(hb_string(open->tag_name->value), tag_name)) { depth++; }
     } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
       AST_HTML_CLOSE_TAG_NODE_T* close = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(close->tag_name->value), tag_name)) {
+      if (hb_string_equals_case_insensitive(hb_string(close->tag_name->value), tag_name)) {
         if (depth == 0) { return i; }
         depth--;
       }
@@ -1306,9 +1308,7 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
 
   hb_array_T* processed = parser_build_elements_from_tags(nodes, errors);
 
-  while (hb_array_size(nodes) > 0) {
-    hb_array_remove(nodes, 0);
-  }
+  nodes->size = 0;
 
   for (size_t i = 0; i < hb_array_size(processed); i++) {
     hb_array_append(nodes, hb_array_get(processed, i));

@@ -19,7 +19,7 @@ input: |2-
 │   │   ├── diagnostic_id: "unexpected_token_close_context"
 │   │   └── level: "syntax"
 │   │
-│   └── @ RubyParseError (location: (4:0)-(4:0))
+│   └── @ RubyParseError (location: (3:9)-(3:9))
 │       ├── message: "block_term_brace: expected a block beginning with `{` to end with `}`"
 │       ├── error_message: "expected a block beginning with `{` to end with `}`"
 │       ├── diagnostic_id: "block_term_brace"

@@ -1,13 +1,13 @@
 {
   "name": "@herb-tools/formatter",
-  "version": "0.8.0",
+  "version": "0.8.7",
   "description": "Auto-formatter for HTML+ERB templates with intelligent indentation, line wrapping, and ERB-aware pretty-printing.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/formatter%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/formatter"
   },
   "main": "./dist/index.cjs",
@@ -35,10 +35,11 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.8.0",
-    "@herb-tools/core": "0.8.0",
-    "@herb-tools/printer": "0.8.0",
-    "@herb-tools/rewriter": "0.8.0"
+    "@herb-tools/config": "0.8.7",
+    "@herb-tools/core": "0.8.7",
+    "@herb-tools/printer": "0.8.7",
+    "@herb-tools/rewriter": "0.8.7",
+    "tinyglobby": "^0.2.15"
   },
   "files": [
     "package.json",

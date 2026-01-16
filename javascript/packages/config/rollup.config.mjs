@@ -12,7 +12,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["yaml", "fs", "path"],
+    external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       json(),
@@ -33,7 +33,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["yaml", "fs", "path"],
+    external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       json(),

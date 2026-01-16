@@ -1,0 +1,12 @@
+---
+source: "Parser::GraphQLTest#test_0003_graphql tag inline"
+input: "<%graphql query { users { id } } %>"
+---
+@ DocumentNode (location: (1:0)-(1:35))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:35))
+        ├── tag_opening: "<%graphql" (location: (1:0)-(1:9))
+        ├── content: " query { users { id } } " (location: (1:9)-(1:33))
+        ├── tag_closing: "%>" (location: (1:33)-(1:35))
+        ├── parsed: false
+        └── valid: true

@@ -45,6 +45,8 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   search_yield_nodes(analyzed->root, analyzed);
   search_block_closing_nodes(analyzed);
 
+  if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
+
   return analyzed;
 }
 
@@ -54,12 +56,21 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     const char* opening = erb_content_node->tag_opening->value;
 
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0) {
+    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0
+        && strcmp(opening, "<%graphql") != 0) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
 
       erb_content_node->parsed = true;
       erb_content_node->valid = analyzed->valid;
       erb_content_node->analyzed_ruby = analyzed;
+
+      if (!analyzed->valid && analyzed->unclosed_control_flow_count >= 2) {
+        append_erb_multiple_blocks_in_tag_error(
+          erb_content_node->base.location.start,
+          erb_content_node->base.location.end,
+          erb_content_node->base.errors
+        );
+      }
     } else {
       erb_content_node->parsed = false;
       erb_content_node->valid = true;
@@ -181,9 +192,19 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
     case PM_CALL_NODE: {
       pm_call_node_t* call = (pm_call_node_t*) node;
 
-      if (call->block != NULL) {
-        current_type = CONTROL_TYPE_BLOCK;
-        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      if (call->block != NULL && call->block->type == PM_BLOCK_NODE) {
+        pm_block_node_t* block_node = (pm_block_node_t*) call->block;
+        size_t opening_length = block_node->opening_loc.end - block_node->opening_loc.start;
+        bool has_do_opening =
+          opening_length == 2 && block_node->opening_loc.start[0] == 'd' && block_node->opening_loc.start[1] == 'o';
+        bool has_brace_opening = opening_length == 1 && block_node->opening_loc.start[0] == '{';
+        bool has_closing_location = block_node->closing_loc.start != NULL && block_node->closing_loc.end != NULL
+                                 && (block_node->closing_loc.end - block_node->closing_loc.start) > 0;
+
+        if (has_do_opening || (has_brace_opening && !has_closing_location)) {
+          current_type = CONTROL_TYPE_BLOCK;
+          keyword_offset = (uint32_t) (node->location.start - context->source_start);
+        }
       }
       break;
     }
@@ -287,8 +308,8 @@ static AST_NODE_T* create_control_node(
 
   if (end_node) {
     end_position = end_node->base.location.end;
-  } else if (children && hb_array_size(children) > 0) {
-    AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+  } else if (hb_array_size(children) > 0) {
+    AST_NODE_T* last_child = hb_array_last(children);
     end_position = last_child->location.end;
   } else if (subsequent) {
     end_position = subsequent->location.end;
@@ -695,10 +716,10 @@ static size_t process_control_structure(
     } else if (else_clause) {
       end_position = else_clause->base.location.end;
     } else if (hb_array_size(when_conditions) > 0) {
-      AST_NODE_T* last_when = hb_array_get(when_conditions, hb_array_size(when_conditions) - 1);
+      AST_NODE_T* last_when = hb_array_last(when_conditions);
       end_position = last_when->location.end;
     } else if (hb_array_size(in_conditions) > 0) {
-      AST_NODE_T* last_in = hb_array_get(in_conditions, hb_array_size(in_conditions) - 1);
+      AST_NODE_T* last_in = hb_array_last(in_conditions);
       end_position = last_in->location.end;
     }
 
@@ -954,8 +975,8 @@ static size_t process_control_structure(
 
     if (end_node) {
       end_position = end_node->base.location.end;
-    } else if (children && hb_array_size(children) > 0) {
-      AST_NODE_T* last_child = hb_array_get(children, hb_array_size(children) - 1);
+    } else if (hb_array_size(children) > 0) {
+      AST_NODE_T* last_child = hb_array_last(children);
       end_position = last_child->location.end;
     }
 
@@ -1139,7 +1160,7 @@ static size_t process_block_children(
       hb_array_T* temp_array = hb_array_init(1);
       size_t new_index = process_control_structure(node, array, index, temp_array, context, child_type);
 
-      if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_get(temp_array, 0)); }
+      if (hb_array_size(temp_array) > 0) { hb_array_append(children_array, hb_array_first(temp_array)); }
 
       hb_array_free(&temp_array);
 
@@ -1409,6 +1430,35 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
   free(invalid_context);
 }
 
+static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source) {
+  if (!erb_node || erb_node->type != AST_ERB_CONTENT_NODE) { return; }
+  AST_ERB_CONTENT_NODE_T* content_node = (AST_ERB_CONTENT_NODE_T*) erb_node;
+
+  if (!content_node->content || !content_node->content->value) { return; }
+
+  const char* content = content_node->content->value;
+  if (strlen(content) == 0) { return; }
+
+  pm_parser_t parser;
+  pm_options_t options = { 0, .partial_script = true };
+  pm_parser_init(&parser, (const uint8_t*) content, strlen(content), &options);
+
+  pm_node_t* root = pm_parse(&parser);
+
+  const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head;
+
+  if (error != NULL) {
+    RUBY_PARSE_ERROR_T* parse_error =
+      ruby_parse_error_from_prism_error_with_positions(error, erb_node->location.start, erb_node->location.end);
+
+    hb_array_append(erb_node->errors, parse_error);
+  }
+
+  pm_node_destroy(&parser, root);
+  pm_parser_free(&parser);
+  pm_options_free(&options);
+}
+
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source) {
   char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
 
@@ -1422,6 +1472,19 @@ void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source
 
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
+    size_t error_offset = (size_t) (error->location.start - parser.start);
+
+    if (strstr(error->message, "unexpected ';'") != NULL) {
+      if (error_offset < strlen(extracted_ruby) && extracted_ruby[error_offset] == ';') {
+        if (error_offset >= strlen(source) || source[error_offset] != ';') {
+          AST_NODE_T* erb_node = find_erb_content_at_offset(document, source, error_offset);
+
+          if (erb_node) { parse_erb_content_errors(erb_node, source); }
+
+          continue;
+        }
+      }
+    }
 
     RUBY_PARSE_ERROR_T* parse_error = ruby_parse_error_from_prism_error(error, (AST_NODE_T*) document, source, &parser);
     hb_array_append(document->base.errors, parse_error);

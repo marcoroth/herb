@@ -17,6 +17,10 @@ function getClassOrderPolyfill(
   classes: string[],
   { env }: { env: SortEnv },
 ): [string, bigint | null][] {
+  if (!env.context || !env.generateRules) {
+    return classes.map(name => [name, null] as [string, bigint | null])
+  }
+
   // A list of utilities that are used by certain Tailwind CSS utilities but
   // that don't exist on their own. This will result in them "not existing" and
   // sorting could be weird since you still require them in order to make the
@@ -48,6 +52,10 @@ function getClassOrderPolyfill(
 }
 
 function reorderClasses(classList: string[], { env }: { env: SortEnv }) {
+  if (!env.context) {
+    return classList.map(name => [name, null] as [string, bigint | null])
+  }
+
   let orderedClasses = env.context.getClassOrder
     ? env.context.getClassOrder(classList)
     : getClassOrderPolyfill(classList, { env })

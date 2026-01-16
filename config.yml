@@ -171,6 +171,13 @@ errors:
         - name: keyword
           type: string
 
+    - name: ERBMultipleBlocksInTagError
+      message:
+        template: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+        arguments: []
+
+      fields: []
+
 warnings:
   fields: []
   types: []

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T* output) {
+void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
   bool is_comment_tag = false;
@@ -25,7 +25,8 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
         if (strcmp(token->value, "<%#") == 0) {
           skip_erb_content = true;
           is_comment_tag = true;
-        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
+        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0
+                   || strcmp(token->value, "<%graphql") == 0) {
           skip_erb_content = true;
           is_comment_tag = false;
         } else {
@@ -76,75 +77,9 @@ void herb_extract_ruby_to_buffer_with_semicolons(const char* source, hb_buffer_T
           break;
         }
 
-        bool needs_semicolon = false;
-        uint32_t current_line = token->location.end.line;
-
-        for (size_t j = i + 1; j < hb_array_size(tokens); j++) {
-          const token_T* next_token = hb_array_get(tokens, j);
-
-          if (next_token->type == TOKEN_NEWLINE) { break; }
-
-          if (next_token->type == TOKEN_ERB_START && next_token->location.start.line == current_line) {
-            needs_semicolon = true;
-            break;
-          }
-        }
-
-        if (needs_semicolon) {
-          hb_buffer_append_char(output, ' ');
-          hb_buffer_append_char(output, ';');
-          hb_buffer_append_whitespace(output, range_length(token->range) - 2);
-        } else {
-          hb_buffer_append_whitespace(output, range_length(token->range));
-        }
-        break;
-      }
-
-      default: {
-        hb_buffer_append_whitespace(output, range_length(token->range));
-      }
-    }
-  }
-
-  herb_free_tokens(&tokens);
-}
-
-void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
-  hb_array_T* tokens = herb_lex(source);
-  bool skip_erb_content = false;
-
-  for (size_t i = 0; i < hb_array_size(tokens); i++) {
-    const token_T* token = hb_array_get(tokens, i);
-
-    switch (token->type) {
-      case TOKEN_NEWLINE: {
-        hb_buffer_append(output, token->value);
-        break;
-      }
-
-      case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0 || strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0) {
-          skip_erb_content = true;
-        }
-
-        hb_buffer_append_whitespace(output, range_length(token->range));
-        break;
-      }
-
-      case TOKEN_ERB_CONTENT: {
-        if (skip_erb_content == false) {
-          hb_buffer_append(output, token->value);
-        } else {
-          hb_buffer_append_whitespace(output, range_length(token->range));
-        }
-
-        break;
-      }
-
-      case TOKEN_ERB_END: {
-        skip_erb_content = false;
-
-        hb_buffer_append_whitespace(output, range_length(token->range));
+        hb_buffer_append_char(output, ' ');
+        hb_buffer_append_char(output, ';');
+        hb_buffer_append_whitespace(output, range_length(token->range) - 2);
         break;
       }
 
@@ -180,7 +115,7 @@ char* herb_extract_ruby_with_semicolons(const char* source) {
   hb_buffer_T output;
   hb_buffer_init(&output, strlen(source));
 
-  herb_extract_ruby_to_buffer_with_semicolons(source, &output);
+  herb_extract_ruby_to_buffer(source, &output);
 
   return output.value;
 }

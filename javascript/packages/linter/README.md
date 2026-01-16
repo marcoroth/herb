@@ -36,6 +36,16 @@ For occasional use without installing:
 npx @herb-tools/linter template.html.erb
 ```
 
+### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the linter from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/linter@{commit} template.html.erb
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
+
 ### Project Installation
 
 :::code-group
@@ -182,6 +192,28 @@ npx @herb-tools/linter template.html.erb --format=simple --github
 npx @herb-tools/linter template.html.erb --no-github
 ```
 
+**Exit Behavior:** <Badge type="info" text="v0.8.7+" />
+```bash
+# Exit with error code when warnings or higher are present
+npx @herb-tools/linter template.html.erb --fail-level warning
+
+# Exit with error code when info diagnostics or higher are present
+npx @herb-tools/linter template.html.erb --fail-level info
+
+# Exit with error code when any diagnostic (including hints) is present
+npx @herb-tools/linter template.html.erb --fail-level hint
+```
+
+By default, the linter exits with code `1` only when errors are present. The `--fail-level` option allows you to control this behavior for CI/CD pipelines where you want stricter enforcement. Valid values are: `error` (default), `warning`, `info`, `hint`.
+
+This can also be configured in `.herb.yml`:
+```yaml [.herb.yml]
+linter:
+  failLevel: warning
+```
+
+The CLI flag takes precedence over the configuration file.
+
 **Help and Version:**
 ```bash
 # Show help
@@ -209,7 +241,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.0::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -224,7 +256,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.0::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -339,6 +371,36 @@ To disable all linting rules for a specific line, use `all`:
 Inline disable comments only affect the line they appear on. Each line that needs linting disabled must have its own disable comment.
 :::
 
+### Disabling Linting for Entire Files <Badge type="info" text="v0.8.2+" />
+
+You can disable linting for an entire file by adding the `ignore` directive anywhere in your template:
+
+```erb
+<%# herb:linter ignore %>
+```
+
+**Example:**
+
+:::code-group
+```erb [ignored.html.erb]
+<%# herb:linter ignore %>
+
+<DIV>
+  <SPAN>This entire file will not be linted</SPAN>
+</DIV>
+```
+
+```erb [regular.html.erb]
+<DIV>
+  <SPAN>This entire file will be linted</SPAN>
+</DIV>
+```
+:::
+
+::: warning Important
+The `<%# herb:linter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
+:::
+
 ## Configuration
 
 Create a `.herb.yml` file in your project root to configure the linter:
@@ -352,6 +414,10 @@ npx @herb-tools/linter --init
 ```yaml [.herb.yml]
 linter:
   enabled: true
+
+  # # Exit with error code when diagnostics of this severity or higher are present
+  # # Valid values: error (default), warning, info, hint
+  # failLevel: warning
 
   # Additional glob patterns to include (additive to defaults)
   include:
@@ -424,7 +490,7 @@ Custom rules must use the `.mjs` extension to avoid Node.js module type warnings
 ::: code-group
 
 
-```js [.herb/rules/no-inline-styles.mjs]
+```js [.herb/rules/no-div-tags.mjs]
 import { BaseRuleVisitor, ParserRule } from "@herb-tools/linter"
 
 class NoDivTagsVisitor extends BaseRuleVisitor {

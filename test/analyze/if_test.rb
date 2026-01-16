@@ -152,5 +152,19 @@ module Analyze
         ></button>
       HTML
     end
+
+    test "if with missing conditional" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if %>
+        <% end %>
+      HTML
+    end
+
+    test "if with invalid syntax" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true true %>
+        <% end %>
+      HTML
+    end
   end
 end

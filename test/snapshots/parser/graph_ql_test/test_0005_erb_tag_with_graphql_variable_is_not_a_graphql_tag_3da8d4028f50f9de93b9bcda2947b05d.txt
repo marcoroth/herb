@@ -1,0 +1,12 @@
+---
+source: "Parser::GraphQLTest#test_0005_erb tag with graphql variable is not a graphql tag"
+input: "<% graphql = \"query\" %>"
+---
+@ DocumentNode (location: (1:0)-(1:23))
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:23))
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " graphql = "query" " (location: (1:2)-(1:21))
+        ├── tag_closing: "%>" (location: (1:21)-(1:23))
+        ├── parsed: true
+        └── valid: true

@@ -1,6 +1,0 @@
----
-source: "Engine::ExamplesCompilationTest#test_0019_simple erb compilation"
-input: "{source: \"<% title %>\\n\", options: {escape: false}}"
----
-_buf = ::String.new; title 
-_buf.to_s

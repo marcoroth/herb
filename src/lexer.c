@@ -185,8 +185,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="), hb_string("<%#"),
-                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%") };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="),       hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
 
@@ -278,7 +278,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with_next(lexer, strlen("<![CDATA["), TOKEN_CDATA_START);
       }
 
-      if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
+      if (isalpha(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
         return lexer_advance_with(lexer, hb_string("<!--"), TOKEN_HTML_COMMENT_START);

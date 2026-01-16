@@ -319,6 +319,7 @@ module Herb
         opening = node.tag_opening.value
 
         return if !skip_comment_check && erb_comment?(opening)
+        return if erb_graphql?(opening)
 
         code = node.content.value.strip
 
