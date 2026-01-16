@@ -459,9 +459,12 @@ export class Linter {
    * @param source - The source code to fix
    * @param context - Optional context for linting (e.g., fileName)
    * @param offensesToFix - Optional array of specific offenses to fix. If not provided, all fixable offenses will be fixed.
+   * @param options - Options for autofix behavior
+   * @param options.includeUnsafe - If true, also apply unsafe fixes (rules with unsafeAutocorrectable = true)
    * @returns AutofixResult containing the corrected source and lists of fixed/unfixed offenses
    */
-  autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[]): AutofixResult {
+  autofix(source: string, context?: Partial<LintContext>, offensesToFix?: LintOffense[], options?: { includeUnsafe?: boolean }): AutofixResult {
+    const includeUnsafe = options?.includeUnsafe ?? false
     const lintResult = offensesToFix ? { offenses: offensesToFix } : this.lint(source, context)
 
     const parserOffenses: LintOffense[] = []
@@ -503,8 +506,15 @@ export class Linter {
         }
 
         const rule = new RuleClass() as ParserRule
+        const isUnsafe = (RuleClass as any).unsafeAutocorrectable === true
 
         if (!rule.autofix) {
+          unfixed.push(offense)
+
+          continue
+        }
+
+        if (isUnsafe && !includeUnsafe) {
           unfixed.push(offense)
 
           continue
@@ -562,8 +572,14 @@ export class Linter {
         }
 
         const rule = new RuleClass() as SourceRule
+        const isUnsafe = (RuleClass as any).unsafeAutocorrectable === true
 
         if (!rule.autofix) {
+          unfixed.push(offense)
+          continue
+        }
+
+        if (isUnsafe && !includeUnsafe) {
           unfixed.push(offense)
           continue
         }
