@@ -66,9 +66,9 @@ export class CLI {
     }
   }
 
-  protected adjustPattern(pattern: string | undefined, configGlobPattern: string): string {
+  protected adjustPattern(pattern: string | undefined, configGlobPatterns: string[]): string {
     if (!pattern) {
-      return configGlobPattern
+      return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
     }
 
     const resolvedPattern = resolve(pattern)
@@ -77,7 +77,15 @@ export class CLI {
       const stats = statSync(resolvedPattern)
 
       if (stats.isDirectory()) {
-        return configGlobPattern
+        const relativeDir = relative(this.projectPath, resolvedPattern)
+
+        if (relativeDir) {
+          const scopedPatterns = configGlobPatterns.map(pattern => `${relativeDir}/${pattern}`)
+
+          return scopedPatterns.length === 1 ? scopedPatterns[0] : `{${scopedPatterns.join(',')}}`
+        }
+
+        return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
       } else if (stats.isFile()) {
         return relative(this.projectPath, resolvedPattern)
       }
@@ -96,10 +104,11 @@ export class CLI {
     }
 
     const filesConfig = config.getFilesConfigForTool('linter')
-    const configGlobPattern = filesConfig.include && filesConfig.include.length > 0
-      ? (filesConfig.include.length === 1 ? filesConfig.include[0] : `{${filesConfig.include.join(',')}}`)
-      : '**/*.html.erb'
-    const adjustedPattern = this.adjustPattern(pattern, configGlobPattern)
+    const configGlobPatterns = filesConfig.include && filesConfig.include.length > 0
+      ? filesConfig.include
+      : ['**/*.html.erb']
+
+    const adjustedPattern = this.adjustPattern(pattern, configGlobPatterns)
 
     let files = await glob(adjustedPattern, {
       cwd: this.projectPath,
