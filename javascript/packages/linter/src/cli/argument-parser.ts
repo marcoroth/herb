@@ -21,6 +21,7 @@ export interface ParsedArguments {
   truncateLines: boolean
   useGitHubActions: boolean
   fix: boolean
+  fixUnsafe: boolean
   ignoreDisableComments: boolean
   force: boolean
   init: boolean
@@ -43,6 +44,7 @@ export class ArgumentParser {
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
       --fix                         automatically fix auto-correctable offenses
+      --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
       --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --format                      output format (simple|detailed|json) [default: detailed]
@@ -68,6 +70,7 @@ export class ArgumentParser {
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
         fix: { type: "boolean" },
+        "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
         "fail-level": { type: "string" },
         format: { type: "string" },
@@ -141,7 +144,8 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const patterns = this.getFilePatterns(positionals)
-    const fix = values.fix || false
+    const fixUnsafe = values["fix-unsafely"] || false
+    const fix = values.fix || fixUnsafe  // --fix-unsafely implies --fix
     const force = !!values.force
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
@@ -159,7 +163,7 @@ export class ArgumentParser {
       }
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules, failLevel }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

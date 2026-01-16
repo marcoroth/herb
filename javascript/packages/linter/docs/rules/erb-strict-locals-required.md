@@ -36,6 +36,26 @@ linter:
       enabled: true
 ```
 
+## Autofix
+
+This rule supports **unsafe autofix** via `--fix-unsafely`. When applied, it inserts an empty strict locals declaration at the top of the file:
+
+```erb
+<%# locals: () %>
+```
+
+This is considered "unsafe" because:
+- It changes the partial's behavior (strict mode will now error on undeclared locals)
+- You may need to manually add the actual local variables your partial uses
+
+To apply the autofix:
+
+```bash
+herb-lint --fix-unsafely _partial.html.erb
+```
+
+After the autofix runs, review the file and update the locals declaration to include any variables your partial expects.
+
 ## Examples
 
 ### ✅ Good

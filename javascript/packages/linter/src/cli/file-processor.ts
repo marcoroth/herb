@@ -22,6 +22,7 @@ export interface ProcessingContext {
   projectPath?: string
   pattern?: string
   fix?: boolean
+  fixUnsafe?: boolean
   ignoreDisableComments?: boolean
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
@@ -138,7 +139,7 @@ export class FileProcessor {
         const autofixResult = this.linter.autofix(content, {
           fileName: filename,
           ignoreDisableComments: context?.ignoreDisableComments
-        })
+        }, undefined, { includeUnsafe: context?.fixUnsafe })
 
         if (autofixResult.fixed.length > 0) {
           writeFileSync(filePath, autofixResult.source, "utf-8")

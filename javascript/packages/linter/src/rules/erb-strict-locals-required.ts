@@ -4,7 +4,7 @@ import { BaseSourceRuleVisitor } from "./rule-utils.js"
 
 import { isPartialFile } from "./file-utils.js"
 
-import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 
 function hasStrictLocals(source: string): boolean {
   return source.includes("<%# locals:") || source.includes("<%#locals:")
@@ -28,6 +28,7 @@ class ERBStrictLocalsRequiredVisitor extends BaseSourceRuleVisitor {
 }
 
 export class ERBStrictLocalsRequiredRule extends SourceRule {
+  static unsafeAutocorrectable = true
   name = "erb-strict-locals-required"
 
   get defaultConfig(): FullRuleConfig {
@@ -43,5 +44,9 @@ export class ERBStrictLocalsRequiredRule extends SourceRule {
     visitor.visit(source)
 
     return visitor.offenses
+  }
+
+  autofix(_offense: LintOffense, source: string, _context?: Partial<LintContext>): string | null {
+    return `<%# locals: () %>\n\n${source}`
   }
 }

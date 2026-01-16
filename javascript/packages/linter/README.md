@@ -214,6 +214,32 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
+**Autofix:**
+
+Automatically fix auto-correctable offenses:
+```bash
+npx @herb-tools/linter --fix
+```
+
+Also apply unsafe auto-fixes (implies `--fix`):
+```bash
+npx @herb-tools/linter --fix-unsafely
+```
+
+The `--fix` flag automatically corrects offenses that have safe, deterministic fixes (like formatting issues). The `--fix-unsafely` flag additionally applies fixes that may change code behavior or require manual review after application.
+
+**Safe fixes** (`--fix`):
+- Formatting corrections (whitespace, quotes, trailing newlines)
+- Syntax normalization (tag casing, attribute formatting)
+
+**Unsafe fixes** (`--fix-unsafely`):
+- Changes that may alter runtime behavior
+- Insertions that require manual completion (e.g., adding empty strict locals declarations)
+
+::: warning
+Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
+:::
+
 **Help and Version:**
 ```bash
 # Show help
