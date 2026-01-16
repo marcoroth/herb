@@ -229,7 +229,7 @@ Returns the full version information including Herb, Prism, and FFI details:
 use herb::version;
 
 println!("{}", version());
-// Output: "herb rust v0.8.7, libprism v1.7.0, libherb v0.8.7 (Rust FFI)"
+// Output: "herb rust v0.8.7, libprism v1.8.0, libherb v0.8.7 (Rust FFI)"
 ```
 :::
 
@@ -255,7 +255,7 @@ Returns the Prism parser version:
 use herb::prism_version;
 
 println!("{}", prism_version());
-// Output: "1.7.0"
+// Output: "1.8.0"
 ```
 :::
 
