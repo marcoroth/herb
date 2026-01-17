@@ -40,7 +40,11 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   <%- when Herb::Template::ElementSourceField -%>
   result.set("<%= field.name %>", CreateStringFromHbString(element_source_to_string(<%= node.human %>-><%= field.name %>)));
   <%- when Herb::Template::LocationField -%>
-  result.set("<%= field.name %>", <%= node.human %>-><%= field.name %> ? CreateLocation(*<%= node.human %>-><%= field.name %>) : val::null());
+  if (<%= node.human %>-><%= field.name %>) {
+    result.set("<%= field.name %>", CreateLocation(*<%= node.human %>-><%= field.name %>));
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
   <%- else -%>
   result.set("<%= field.name %>", val::null());
   <%- end -%>
