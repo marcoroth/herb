@@ -85,6 +85,10 @@ module Herb
         output += white("<%= symbol %> <%= field.name %>: ")
         output += [true, false].include?(<%= field.name %>) ? bold(magenta(<%= field.name %>.to_s)) : magenta("∅")
         output += "\n"
+        <%- when Herb::Template::LocationField -%>
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? dimmed("(location: #{<%= field.name %>.tree_inspect})") : magenta("∅")
+        output += "\n"
         <%- when Herb::Template::ElementSourceField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::PrismNodeField -%>

@@ -26,6 +26,8 @@ class <%= node.name %> extends BaseNode {
   <%- end -%>
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
   private final String <%= field.name %>;
+  <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+  private final Location <%= field.name %>;
   <%- else -%>
   // private final Object <%= field.name %>;
   <%- end -%>
@@ -50,6 +52,8 @@ class <%= node.name %> extends BaseNode {
     <%= field.specific_kind || 'Node' %> <%= field.name %><%- if node.fields.last != field %>,<% end %>
     <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
     String <%= field.name %><%- if node.fields.last != field %>,<% end %>
+    <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+    Location <%= field.name %><%- if node.fields.last != field %>,<% end %>
     <%- else -%>
     // <%= field.c_type %> <%= field.name %>
     <%- end -%>
@@ -98,6 +102,11 @@ class <%= node.name %> extends BaseNode {
 
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
   public String get<%= field.name.split('_').map(&:capitalize).join %>() {
+    return <%= field.name %>;
+  }
+
+  <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+  public Location get<%= field.name.split('_').map(&:capitalize).join %>() {
     return <%= field.name %>;
   }
 
@@ -157,6 +166,8 @@ class <%= node.name %> extends BaseNode {
     output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %> != null ? <%= field.name %>.treeInspect() : "∅").append("\n");
     <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
     output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %>).append("\n");
+    <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+    output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %> != null ? "(location: " + <%= field.name %>.treeInspect() + ")" : "∅").append("\n");
     <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
     output.append("<%= symbol %><%= field.name %>: ").append(inspectArray(<%= field.name %>, "<%= prefix %>"));
     <%- elsif field.is_a?(Herb::Template::NodeField) -%>

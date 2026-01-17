@@ -1,0 +1,49 @@
+---
+source: "Analyze::ThenTest#test_0016_case in pattern matching with then keyword inline"
+input: |2-
+<% case value %>
+<% in Integer then "integer" %>
+<% in String then "string" %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseMatchNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case value " (location: (1:2)-(1:14))
+    │   ├── tag_closing: "%>" (location: (1:14)-(1:16))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:16)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBInNode (location: (2:0)-(2:31))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " in Integer then "integer" " (location: (2:2)-(2:29))
+    │   │   │   ├── tag_closing: "%>" (location: (2:29)-(2:31))
+    │   │   │   ├── then_keyword: (location: (2:14)-(2:18))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:31)-(3:0))
+    │   │   │           └── content: "\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBInNode (location: (3:0)-(3:29))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " in String then "string" " (location: (3:2)-(3:27))
+    │   │       ├── tag_closing: "%>" (location: (3:27)-(3:29))
+    │   │       ├── then_keyword: (location: (3:13)-(3:17))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (3:29)-(4:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

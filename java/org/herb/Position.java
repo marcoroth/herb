@@ -26,6 +26,10 @@ public class Position {
     return String.format("(%d:%d)", line, column);
   }
 
+  public String treeInspect() {
+    return inspect();
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;

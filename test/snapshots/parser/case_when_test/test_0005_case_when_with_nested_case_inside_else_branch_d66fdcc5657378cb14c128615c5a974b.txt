@@ -28,6 +28,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :primary " (location: (2:2)-(2:17))
     │   │       ├── tag_closing: "%>" (location: (2:17)-(2:19))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:19)-(3:2))
     │   │           │   └── content: "\n  "
@@ -82,6 +83,7 @@ input: |2-
     │   │           │   │   │   ├── tag_opening: "<%" (location: (6:2)-(6:4))
     │   │           │   │   │   ├── content: " when :secondary " (location: (6:4)-(6:21))
     │   │           │   │   │   ├── tag_closing: "%>" (location: (6:21)-(6:23))
+    │   │           │   │   │   ├── then_keyword: ∅
     │   │           │   │   │   └── statements: (3 items)
     │   │           │   │   │       ├── @ HTMLTextNode (location: (6:23)-(7:4))
     │   │           │   │   │       │   └── content: "\n    "
@@ -118,6 +120,7 @@ input: |2-
     │   │           │   │       ├── tag_opening: "<%" (location: (8:2)-(8:4))
     │   │           │   │       ├── content: " when :tertiary " (location: (8:4)-(8:20))
     │   │           │   │       ├── tag_closing: "%>" (location: (8:20)-(8:22))
+    │   │           │   │       ├── then_keyword: ∅
     │   │           │   │       └── statements: (3 items)
     │   │           │   │           ├── @ HTMLTextNode (location: (8:22)-(9:4))
     │   │           │   │           │   └── content: "\n    "

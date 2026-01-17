@@ -23,6 +23,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in [Integer] " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:18)-(3:2))
     │   │           │   └── content: "\n  "
@@ -31,6 +32,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │           │   ├── content: " if positive? " (location: (3:4)-(3:18))
     │   │           │   ├── tag_closing: "%>" (location: (3:18)-(3:20))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (1 item)
     │   │           │   │   └── @ HTMLTextNode (location: (3:20)-(5:2))
     │   │           │   │       └── content: "\n    Positive\n  "

@@ -425,6 +425,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -478,6 +481,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         # - name: conditions
         #   type: array
@@ -699,6 +705,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -735,6 +744,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         - name: statements
           type: array

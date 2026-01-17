@@ -19,6 +19,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │   │   ├── content: " if @condition " (location: (2:4)-(2:19))
     │   │   │   ├── tag_closing: "%>" (location: (2:19)-(2:21))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (3 items)
     │   │   │   │   ├── @ LiteralNode (location: (2:21)-(3:4))
     │   │   │   │   │   └── content: "\n    "

@@ -26,6 +26,7 @@ input: |2-
     │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │       │       ├── content: " if some_condition " (location: (2:4)-(2:23))
     │   │       │       ├── tag_closing: "%>" (location: (2:23)-(2:25))
+    │   │       │       ├── then_keyword: ∅
     │   │       │       ├── statements: (1 item)
     │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(3:13))
     │   │       │       │       ├── name:

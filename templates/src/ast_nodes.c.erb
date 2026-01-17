@@ -40,6 +40,8 @@
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
+  <%- when Herb::Template::LocationField -%>
+  <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -123,6 +125,8 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   free(<%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::BooleanField -%>
   <%- when Herb::Template::ElementSourceField -%>
+  <%- when Herb::Template::LocationField -%>
+  if (<%= node.human %>-><%= field.name %> != NULL) { free(<%= node.human %>-><%= field.name %>); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>

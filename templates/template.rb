@@ -117,6 +117,16 @@ module Herb
       end
     end
 
+    class LocationField < Field
+      def ruby_type
+        "Herb::Location"
+      end
+
+      def c_type
+        "location_T*"
+      end
+    end
+
     class IntegerField < Field
       def ruby_type
         "Integer"
@@ -210,6 +220,7 @@ module Herb
         when "token_type" then TokenTypeField
         when "string"     then StringField
         when "position"   then PositionField
+        when "location"   then LocationField
         when "size_t"     then SizeTField
         when "boolean"    then BooleanField
         when "prism_node" then PrismNodeField

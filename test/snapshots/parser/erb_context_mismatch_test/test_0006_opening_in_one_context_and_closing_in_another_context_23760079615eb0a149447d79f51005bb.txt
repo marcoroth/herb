@@ -17,6 +17,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if true " (location: (1:2)-(1:11))
     │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:13)-(2:2))
     │   │   │   └── content: "\n  "
@@ -51,6 +52,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (7:0)-(7:2))
     │   ├── content: " if true " (location: (7:2)-(7:11))
     │   ├── tag_closing: "%>" (location: (7:11)-(7:13))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (7:13)-(8:2))
     │   │   │   └── content: "\n  "

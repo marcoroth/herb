@@ -76,6 +76,10 @@ bool has_yield_node(analyzed_ruby_T* analyzed) {
   return analyzed->yield_node_count > 0;
 }
 
+bool has_then_keyword(analyzed_ruby_T* analyzed) {
+  return analyzed->then_keyword_count > 0;
+}
+
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
@@ -321,6 +325,42 @@ bool search_yield_nodes(const pm_node_t* node, void* data) {
   if (node->type == PM_YIELD_NODE) { analyzed->yield_node_count++; }
 
   pm_visit_child_nodes(node, search_yield_nodes, analyzed);
+
+  return false;
+}
+
+bool search_then_keywords(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  switch (node->type) {
+    case PM_IF_NODE: {
+      const pm_if_node_t* if_node = (const pm_if_node_t*) node;
+      if (if_node->then_keyword_loc.start != NULL && if_node->then_keyword_loc.end != NULL) {
+        analyzed->then_keyword_count++;
+      }
+      break;
+    }
+
+    case PM_UNLESS_NODE: {
+      const pm_unless_node_t* unless_node = (const pm_unless_node_t*) node;
+      if (unless_node->then_keyword_loc.start != NULL && unless_node->then_keyword_loc.end != NULL) {
+        analyzed->then_keyword_count++;
+      }
+      break;
+    }
+
+    case PM_WHEN_NODE: {
+      const pm_when_node_t* when_node = (const pm_when_node_t*) node;
+      if (when_node->then_keyword_loc.start != NULL && when_node->then_keyword_loc.end != NULL) {
+        analyzed->then_keyword_count++;
+      }
+      break;
+    }
+
+    default: break;
+  }
+
+  pm_visit_child_nodes(node, search_then_keywords, analyzed);
 
   return false;
 }

@@ -53,6 +53,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │   │   ├── content: " when Integer " (location: (3:2)-(3:16))
     │   │   │   ├── tag_closing: "%>" (location: (3:16)-(3:18))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (3 items)
     │   │   │       ├── @ HTMLTextNode (location: (3:18)-(4:2))
     │   │   │       │   └── content: "\n  "
@@ -89,6 +90,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
     │   │       ├── content: " when String " (location: (5:2)-(5:15))
     │   │       ├── tag_closing: "%>" (location: (5:15)-(5:17))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (5:17)-(6:2))
     │   │           │   └── content: "\n  "

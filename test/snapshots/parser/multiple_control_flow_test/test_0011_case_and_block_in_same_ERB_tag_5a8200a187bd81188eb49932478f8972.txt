@@ -55,6 +55,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │       ├── content: " when :a " (location: (2:4)-(2:13))
     │   │       ├── tag_closing: "%>" (location: (2:13)-(2:15))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (2:15)-(3:0))
     │   │               └── content: "a\n"
