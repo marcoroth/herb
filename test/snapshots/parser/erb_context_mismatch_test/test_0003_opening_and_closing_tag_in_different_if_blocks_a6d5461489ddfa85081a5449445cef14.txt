@@ -17,6 +17,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if wrap_in_dialog? " (location: (1:2)-(1:22))
     │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:24)-(2:2))
     │   │   │   └── content: "\n  "
@@ -78,6 +79,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (7:0)-(7:2))
     │   ├── content: " if wrap_in_dialog? " (location: (7:2)-(7:22))
     │   ├── tag_closing: "%>" (location: (7:22)-(7:24))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (7:24)-(8:2))
     │   │   │   └── content: "\n  "

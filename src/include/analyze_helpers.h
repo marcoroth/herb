@@ -25,6 +25,7 @@ bool has_rescue_node(analyzed_ruby_T* analyzed);
 bool has_ensure_node(analyzed_ruby_T* analyzed);
 bool has_unless_node(analyzed_ruby_T* analyzed);
 bool has_yield_node(analyzed_ruby_T* analyzed);
+bool has_then_keyword(analyzed_ruby_T* analyzed);
 
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message);
 
@@ -51,6 +52,7 @@ bool search_in_nodes(analyzed_ruby_T* analyzed);
 bool search_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_ensure_nodes(analyzed_ruby_T* analyzed);
 bool search_yield_nodes(const pm_node_t* node, void* data);
+bool search_then_keywords(const pm_node_t* node, void* data);
 bool search_unclosed_control_flows(const pm_node_t* node, void* data);
 
 void check_erb_node_for_missing_end(const AST_NODE_T* node);

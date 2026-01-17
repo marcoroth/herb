@@ -37,12 +37,14 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
   // TODO: Convert element_source to string
   jstring <%= field.name %> = (*env)->NewStringUTF(env, "");
+  <%- elsif field.is_a?(Herb::Template::LocationField) -%>
+  jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateLocation(env, *<%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::AnalyzedRubyField) || field.is_a?(Herb::Template::PrismNodeField) -%>
   // Skip <%= field.name %> (<%= field.class.name.split('::').last %>) - not supported in Java yet
   <%- end -%>
   <%- end -%>
 
-  const char* signature = "(Ljava/lang/String;Lorg/herb/Location;Ljava/util/List;<%- node.fields.each do |f| -%><%- unless f.is_a?(Herb::Template::AnalyzedRubyField) || f.is_a?(Herb::Template::PrismNodeField) -%><%- if f.is_a?(Herb::Template::StringField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::TokenField) -%>Lorg/herb/Token;<%- elsif f.is_a?(Herb::Template::BooleanField) -%>Z<%- elsif f.is_a?(Herb::Template::ArrayField) -%>Ljava/util/List;<%- elsif f.is_a?(Herb::Template::NodeField) -%>Lorg/herb/ast/<%= f.specific_kind || 'Node' %>;<%- elsif f.is_a?(Herb::Template::ElementSourceField) -%>Ljava/lang/String;<%- end -%><%- end -%><%- end -%>)V";
+  const char* signature = "(Ljava/lang/String;Lorg/herb/Location;Ljava/util/List;<%- node.fields.each do |f| -%><%- unless f.is_a?(Herb::Template::AnalyzedRubyField) || f.is_a?(Herb::Template::PrismNodeField) -%><%- if f.is_a?(Herb::Template::StringField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::TokenField) -%>Lorg/herb/Token;<%- elsif f.is_a?(Herb::Template::BooleanField) -%>Z<%- elsif f.is_a?(Herb::Template::ArrayField) -%>Ljava/util/List;<%- elsif f.is_a?(Herb::Template::NodeField) -%>Lorg/herb/ast/<%= f.specific_kind || 'Node' %>;<%- elsif f.is_a?(Herb::Template::ElementSourceField) -%>Ljava/lang/String;<%- elsif f.is_a?(Herb::Template::LocationField) -%>Lorg/herb/Location;<%- end -%><%- end -%><%- end -%>)V";
   jmethodID constructor = (*env)->GetMethodID(env, nodeClass, "<init>", signature);
   if (!constructor) { return NULL; }
 

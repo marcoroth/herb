@@ -28,6 +28,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :ok " (location: (2:2)-(2:12))
     │   │       ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:14)-(3:2))
     │   │           │   └── content: "\n  "
@@ -73,6 +74,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
     │   │           │   ├── content: " if error? " (location: (5:4)-(5:15))
     │   │           │   ├── tag_closing: "%>" (location: (5:15)-(5:17))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (3 items)
     │   │           │   │   ├── @ HTMLTextNode (location: (5:17)-(6:4))
     │   │           │   │   │   └── content: "\n    "
@@ -119,6 +121,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (8:2)-(8:4))
     │   │           │   ├── content: " unless success? " (location: (8:4)-(8:21))
     │   │           │   ├── tag_closing: "%>" (location: (8:21)-(8:23))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (3 items)
     │   │           │   │   ├── @ HTMLTextNode (location: (8:23)-(9:4))
     │   │           │   │   │   └── content: "\n    "

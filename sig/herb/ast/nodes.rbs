@@ -540,14 +540,16 @@ module Herb
 
       attr_reader tag_closing: Herb::Token
 
+      attr_reader then_keyword: Herb::Location
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader subsequent: Herb::AST::Node
 
       attr_reader end_node: Herb::AST::ERBEndNode
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node
@@ -612,10 +614,12 @@ module Herb
 
       attr_reader tag_closing: Herb::Token
 
+      attr_reader then_keyword: Herb::Location
+
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_when_node
       def to_hash: () -> serialized_erb_when_node
@@ -937,14 +941,16 @@ module Herb
 
       attr_reader tag_closing: Herb::Token
 
+      attr_reader then_keyword: Herb::Location
+
       attr_reader statements: Array[Herb::AST::Node]
 
       attr_reader else_clause: Herb::AST::ERBElseNode
 
       attr_reader end_node: Herb::AST::ERBEndNode
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> serialized_erb_unless_node
       def to_hash: () -> serialized_erb_unless_node
@@ -1005,10 +1011,12 @@ module Herb
 
       attr_reader tag_closing: Herb::Token
 
+      attr_reader then_keyword: Herb::Location
+
       attr_reader statements: Array[Herb::AST::Node]
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node]) -> void
 
       # : () -> serialized_erb_in_node
       def to_hash: () -> serialized_erb_in_node

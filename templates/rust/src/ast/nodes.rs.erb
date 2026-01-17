@@ -105,6 +105,14 @@ unsafe fn convert_token_field(token_ptr: *mut token_T) -> Option<crate::Token> {
   }
 }
 
+unsafe fn convert_location_field(location_ptr: *const location_T) -> Option<Location> {
+  if location_ptr.is_null() {
+    None
+  } else {
+    Some(convert_location(*location_ptr))
+  }
+}
+
 unsafe fn convert_children(children_array: *mut hb_array_T) -> Vec<AnyNode> {
   if children_array.is_null() {
     return Vec::new();
@@ -212,6 +220,8 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
       <%- else -%>
       <%= field.name %>: convert_node_field((*c_node_ptr).<%= field.name %> as *mut c_void),
       <%- end -%>
+      <%- when Herb::Template::LocationField -%>
+      <%= field.name %>: convert_location_field((*c_node_ptr).<%= field.name %>),
       <%- end -%>
       <%- end -%>
     })
