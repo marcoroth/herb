@@ -185,7 +185,10 @@ export class UnreachableCodeCollector extends Visitor {
   }
 
   visitERBWhenNode(node: ERBWhenNode): void {
-    this.checkEmptyStatements(node, node.statements, "when")
+    if (!node.then_keyword) {
+      this.checkEmptyStatements(node, node.statements, "when")
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -210,7 +213,10 @@ export class UnreachableCodeCollector extends Visitor {
   }
 
   visitERBInNode(node: ERBInNode): void {
-    this.checkEmptyStatements(node, node.statements, "in")
+    if (!node.then_keyword) {
+      this.checkEmptyStatements(node, node.statements, "in")
+    }
+
     this.visitChildNodes(node)
   }
 
