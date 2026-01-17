@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/ruby/prism.git
-  revision: df554035afb63c754b9edbe531ff48e6569eaf07
-  tag: v1.7.0
+  revision: 90c05789e4f90dec600d7748a002058046852370
+  tag: v1.8.0
   specs:
-    prism (1.7.0)
+    prism (1.8.0)
 
 PATH
   remote: .
@@ -110,7 +110,7 @@ GEM
     psych (5.3.1)
       date
       stringio
-    racc (1.8.1)
+    racc (1.8.0)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
