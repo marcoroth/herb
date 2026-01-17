@@ -200,5 +200,14 @@ module Analyze
         <% content = capture { yield } if block_given? %>
       HTML
     end
+
+    # https://github.com/marcoroth/herb/issues/1037
+    test "yield with fallback block" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= yield(:sidebar).presence || capture do %>
+          default sidebar
+        <% end %>
+      HTML
+    end
   end
 end
