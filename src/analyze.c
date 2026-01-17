@@ -112,6 +112,14 @@ typedef struct {
   const uint8_t* source_start;
 } location_walker_context_t;
 
+static bool control_type_is_block(control_type_t type) {
+  return type == CONTROL_TYPE_BLOCK;
+}
+
+static bool control_type_is_yield(control_type_t type) {
+  return type == CONTROL_TYPE_YIELD;
+}
+
 static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* data) {
   if (!node) { return true; }
 
@@ -219,7 +227,17 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
   }
 
   if (keyword_offset != UINT32_MAX) {
-    if (!result->found || keyword_offset < result->offset) {
+    bool should_update = !result->found;
+
+    if (result->found) {
+      if (control_type_is_block(current_type) && control_type_is_yield(result->type)) {
+        should_update = true;
+      } else if (!(control_type_is_yield(current_type) && control_type_is_block(result->type))) {
+        should_update = keyword_offset < result->offset;
+      }
+    }
+
+    if (should_update) {
       result->type = current_type;
       result->offset = keyword_offset;
       result->found = true;
