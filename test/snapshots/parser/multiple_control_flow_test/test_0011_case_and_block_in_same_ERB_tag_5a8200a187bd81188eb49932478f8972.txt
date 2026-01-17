@@ -13,7 +13,7 @@ input: |2-
 │   │   ├── diagnostic_id: "case_missing_conditions"
 │   │   └── level: "syntax"
 │   │
-│   ├── @ RubyParseError (location: (1:13)-(1:13))
+│   ├── @ RubyParseError (location: (1:3)-(1:7))
 │   │   ├── message: "case_term: expected an `end` to close the `case` statement"
 │   │   ├── error_message: "expected an `end` to close the `case` statement"
 │   │   ├── diagnostic_id: "case_term"
