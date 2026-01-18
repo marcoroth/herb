@@ -1,6 +1,6 @@
 {
   "name": "stimulus-lint",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Linting rules for Stimulus controllers and HTML+ERB view templates.",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
