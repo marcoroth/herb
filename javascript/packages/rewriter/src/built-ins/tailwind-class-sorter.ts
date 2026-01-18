@@ -45,7 +45,23 @@ class TailwindClassSorterVisitor extends Visitor {
     const attributeName = getStaticAttributeName(node.name)
     if (attributeName !== "class") return
 
-    this.visit(node.value)
+    const classAttributeSorter = new ClassAttributeSorter(this.sorter)
+
+    classAttributeSorter.visit(node.value)
+  }
+}
+
+/**
+ * Visitor that sorts classes within a single class attribute value.
+ * Only operates on the content of a class attribute, not the full document.
+ */
+class ClassAttributeSorter extends Visitor {
+  private sorter: TailwindClassSorter
+
+  constructor(sorter: TailwindClassSorter) {
+    super()
+
+    this.sorter = sorter
   }
 
   visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
@@ -127,175 +143,244 @@ class TailwindClassSorterVisitor extends Visitor {
     })
   }
 
-  private startsWithClassLiteral(nodes: Node[]): boolean {
-    return nodes.length > 0 && isLiteralNode(nodes[0]) && !!nodes[0].content.trim()
-  }
-
   private isWhitespaceLiteral(node: Node): boolean {
     return isLiteralNode(node) && !node.content.trim()
   }
 
-  private containsStringInterpolation(nodes: Node[]): boolean {
-    for (let i = 0; i < nodes.length - 1; i++) {
-      const current = nodes[i]
-      const next = nodes[i + 1]
-
-      if (isLiteralNode(current) && !isLiteralNode(next)) {
-        const literalContent = current.content
-
-        if (literalContent.length > 0 && !/\s$/.test(literalContent)) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const lookAhead = nodes[j]
-
-            if (isLiteralNode(lookAhead)) {
-              const lookAheadContent = lookAhead.content
-
-              if (lookAheadContent.length > 0 && !/^\s/.test(lookAheadContent)) {
-                return true
-              }
-
-              break
-            }
-          }
-        }
-      }
-
-      // "<%= prefix %>-blue-500"
-      if (i === 0 && !isLiteralNode(current) && isLiteralNode(next)) {
-        const nextContent = next.content
-
-        if (nextContent.length > 0 && !/^\s/.test(nextContent)) {
-          return true
-        }
-      }
-
-      // "bg-<%= suffix %>"
-      if (isLiteralNode(current) && !isLiteralNode(next)) {
-        const literalContent = current.content
-
-        if (literalContent.length > 0 && /-$/.test(literalContent)) {
-          let hasLiteralAfter = false
-
-          for (let j = i + 1; j < nodes.length; j++) {
-            const node = nodes[j]
-
-            if (isLiteralNode(node) && node.content.trim()) {
-              hasLiteralAfter = true
-              break
-            }
-          }
-
-          if (!hasLiteralAfter) {
-            return true
-          }
-        }
-      }
-    }
-
-    return false
-  }
-
-  private formatNodes(nodes: Node[], isNested: boolean): Node[] {
-    if (this.containsStringInterpolation(nodes)) {
-      for (const node of nodes) {
-        if (!isLiteralNode(node)) {
-          this.visit(node)
-        }
-      }
-
-      return nodes
-    }
-
-    const { classLiterals, others } = this.partitionNodes(nodes)
-    const preserveLeadingSpace = isNested || this.startsWithClassLiteral(nodes)
-
-    return this.formatSortedClasses(classLiterals, others, preserveLeadingSpace, isNested)
-  }
-
-  private partitionNodes(nodes: Node[]): { classLiterals: LiteralNode[], others: Node[] } {
-    const classLiterals: LiteralNode[] = []
-    const others: Node[] = []
+  private splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
+    const result: Node[] = []
 
     for (const node of nodes) {
       if (isLiteralNode(node)) {
-        if (node.content.trim()) {
-          classLiterals.push(node)
-        } else {
-          others.push(node)
+        const parts = node.content.match(/(\S+|\s+)/g) || []
+
+        for (const part of parts) {
+          result.push(new LiteralNode({
+            type: "AST_LITERAL_NODE",
+            content: part,
+            errors: [],
+            location: node.location
+          }))
         }
       } else {
-        this.visit(node)
-        others.push(node)
+        result.push(node)
       }
     }
 
-    return { classLiterals, others }
+    return result
   }
 
-  private formatSortedClasses(literals: LiteralNode[], others: Node[], preserveLeadingSpace: boolean, isNested: boolean): Node[] {
-    if (literals.length === 0 && others.length === 0) return []
-    if (literals.length === 0) return others
+  private groupNodesByClass(nodes: Node[]): Node[][] {
+    if (nodes.length === 0) return []
 
-    const fullContent = literals.map(n => n.content).join("")
-    const trimmedClasses = fullContent.trim()
+    const groups: Node[][] = []
+    let currentGroup: Node[] = []
 
-    if (!trimmedClasses) return others.length > 0 ? others : []
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i]
+      const previousNode = i > 0 ? nodes[i - 1] : null
 
-    try {
-      const sortedClasses = this.sorter.sortClasses(trimmedClasses)
+      let startNewGroup = false
 
-      if (others.length === 0) {
-        return this.formatSortedLiteral(literals[0], fullContent, sortedClasses, trimmedClasses)
+      if (currentGroup.length === 0) {
+        startNewGroup = false
+      } else if (isLiteralNode(node)) {
+        if (/^\s/.test(node.content)) {
+          startNewGroup = true
+        } else if (/^-/.test(node.content)) {
+          startNewGroup = false
+        } else if (previousNode && !isLiteralNode(previousNode)) {
+          startNewGroup = true
+        }
+
+      } else {
+        if (previousNode && isLiteralNode(previousNode)) {
+          if (/\s$/.test(previousNode.content)) {
+            startNewGroup = true
+          } else if (/-$/.test(previousNode.content)) {
+            startNewGroup = false
+          } else {
+            startNewGroup = true
+          }
+
+        } else if (previousNode && !isLiteralNode(previousNode)) {
+          startNewGroup = false
+        }
       }
 
-      return this.formatSortedLiteralWithERB(literals[0], fullContent, sortedClasses, others, preserveLeadingSpace, isNested)
-    } catch (error) {
-      return [...literals, ...others]
+      if (startNewGroup && currentGroup.length > 0) {
+        groups.push(currentGroup)
+
+        currentGroup = []
+      }
+
+      currentGroup.push(node)
     }
+
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup)
+    }
+
+    return groups
   }
 
-  private formatSortedLiteral(literal: LiteralNode, fullContent: string, sortedClasses: string, trimmedClasses: string): Node[] {
-    const leadingSpace = fullContent.match(/^\s*/)?.[0] || ""
-    const trailingSpace = fullContent.match(/\s*$/)?.[0] || ""
-    const alreadySorted = sortedClasses === trimmedClasses
-
-    const sortedContent = alreadySorted ? fullContent : (leadingSpace + sortedClasses + trailingSpace)
-
-    asMutable(literal).content = sortedContent
-
-    return [literal]
+  private isInterpolatedGroup(group: Node[]): boolean {
+    return group.some(node => !isLiteralNode(node))
   }
 
-  private formatSortedLiteralWithERB(literal: LiteralNode, fullContent: string, sortedClasses: string, others: Node[], preserveLeadingSpace: boolean, isNested: boolean): Node[] {
-    const leadingSpace = fullContent.match(/^\s*/)?.[0] || ""
-    const trailingSpace = fullContent.match(/\s*$/)?.[0] || ""
-
-    const leading = preserveLeadingSpace ? leadingSpace : ""
-    const firstIsWhitespace = this.isWhitespaceLiteral(others[0])
-    const spaceBetween = firstIsWhitespace ? "" : " "
-
-    asMutable(literal).content = leading + sortedClasses + spaceBetween
-
-    const othersWithWhitespace = this.addSpacingBetweenERBNodes(others, isNested, trailingSpace)
-
-    return [literal, ...othersWithWhitespace]
+  private isWhitespaceGroup(group: Node[]): boolean {
+    return group.every(node => this.isWhitespaceLiteral(node))
   }
 
-  private addSpacingBetweenERBNodes(nodes: Node[], isNested: boolean, trailingSpace: string): Node[] {
-    return nodes.flatMap((node, index) => {
-      const isLast = index >= nodes.length - 1
+  private getStaticClassContent(group: Node[]): string {
+    return group
+      .filter(node => isLiteralNode(node))
+      .map(node => (node as LiteralNode).content)
+      .join("")
+  }
 
-      if (isLast) {
-        return isNested && trailingSpace ? [node, this.spaceLiteral] : [node]
+  private formatNodes(nodes: Node[], isNested: boolean): Node[] {
+    if (nodes.length === 0) return nodes
+    if (nodes.every(n => this.isWhitespaceLiteral(n))) return nodes
+
+    const splitNodes = this.splitLiteralsAtWhitespace(nodes)
+    const groups = this.groupNodesByClass(splitNodes)
+
+    const staticClasses: string[] = []
+    const interpolationGroups: Node[][] = []
+    const standaloneERBNodes: Node[] = []
+
+    for (const group of groups) {
+      if (this.isWhitespaceGroup(group)) {
+        continue
       }
 
-      const currentIsWhitespace = this.isWhitespaceLiteral(node)
-      const nextIsWhitespace = this.isWhitespaceLiteral(nodes[index + 1])
-      const needsSpace = !currentIsWhitespace && !nextIsWhitespace
+      if (this.isInterpolatedGroup(group)) {
+        const hasAttachedLiteral = group.some(node => isLiteralNode(node) && node.content.trim())
 
-      return needsSpace ? [node, this.spaceLiteral] : [node]
-    })
+        if (hasAttachedLiteral) {
+          for (const node of group) {
+            if (!isLiteralNode(node)) {
+              this.visit(node)
+            }
+          }
+
+          interpolationGroups.push(group)
+        } else {
+          for (const node of group) {
+            if (!isLiteralNode(node)) {
+              this.visit(node)
+              standaloneERBNodes.push(node)
+            }
+          }
+        }
+      } else {
+        const content = this.getStaticClassContent(group).trim()
+
+        if (content) {
+          staticClasses.push(content)
+        }
+      }
+    }
+
+    const allStaticContent = staticClasses.join(" ")
+    let sortedContent = allStaticContent
+
+    if (allStaticContent) {
+      try {
+        sortedContent = this.sorter.sortClasses(allStaticContent)
+      } catch {
+        // Keep original on error
+      }
+    }
+
+    let addedLeadingSpace = false
+
+    const result: Node[] = []
+    const hasContent = sortedContent || interpolationGroups.length > 0 || standaloneERBNodes.length > 0
+    const needsLeadingSpace = isNested && hasContent
+
+    if (sortedContent) {
+      const literal = new LiteralNode({
+        type: "AST_LITERAL_NODE",
+        content: (needsLeadingSpace ? " " : "") + sortedContent,
+        errors: [],
+        location: Location.zero
+      })
+
+      result.push(literal)
+
+      addedLeadingSpace = !!needsLeadingSpace
+    }
+
+    for (const group of interpolationGroups) {
+      if (result.length > 0) {
+        result.push(this.spaceLiteral)
+      } else if (needsLeadingSpace && !addedLeadingSpace) {
+        result.push(this.spaceLiteral)
+        addedLeadingSpace = true
+      }
+
+      const trimmedGroup = this.trimGroupWhitespace(group)
+
+      result.push(...trimmedGroup)
+    }
+
+    for (const node of standaloneERBNodes) {
+      if (result.length > 0) {
+        result.push(this.spaceLiteral)
+      } else if (needsLeadingSpace && !addedLeadingSpace) {
+        result.push(this.spaceLiteral)
+        addedLeadingSpace = true
+      }
+      result.push(node)
+    }
+
+    if (isNested && result.length > 0) {
+      result.push(this.spaceLiteral)
+    }
+
+    return result
   }
+
+  private trimGroupWhitespace(group: Node[]): Node[] {
+    if (group.length === 0) return group
+
+    const result = [...group]
+
+    if (isLiteralNode(result[0])) {
+      const first = result[0] as LiteralNode
+      const trimmed = first.content.trimStart()
+
+      if (trimmed !== first.content) {
+        result[0] = new LiteralNode({
+          type: "AST_LITERAL_NODE",
+          content: trimmed,
+          errors: [],
+          location: first.location
+        })
+      }
+    }
+
+    const lastIndex = result.length - 1
+
+    if (isLiteralNode(result[lastIndex])) {
+      const last = result[lastIndex] as LiteralNode
+      const trimmed = last.content.trimEnd()
+
+      if (trimmed !== last.content) {
+        result[lastIndex] = new LiteralNode({
+          type: "AST_LITERAL_NODE",
+          content: trimmed,
+          errors: [],
+          location: last.location
+        })
+      }
+    }
+
+    return result
+  }
+
 }
 
 /**

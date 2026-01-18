@@ -182,9 +182,17 @@ describe("tailwind-class-sorter", () => {
       )
     })
 
-    test("preserves class with interpolation mixed with static classes", async () => {
-      await expectNoTransform(
-        `<div class="px-4 foo-<%= bar %>-100 bg-blue-500"></div>`
+    test("sorts static classes and moves multiple interpolations to end", async () => {
+      await expectTransform(
+        `<div class="some-<%= erb %> text-blue-300 <%= another %>-erb bg-white"></div>`,
+        `<div class="bg-white text-blue-300 some-<%= erb %> <%= another %>-erb"></div>`
+      )
+    })
+
+    test("sorts static classes and moves interpolation to end", async () => {
+      await expectTransform(
+        `<div class="px-4 foo-<%= bar %>-100 bg-blue-500"></div>`,
+        `<div class="bg-blue-500 px-4 foo-<%= bar %>-100"></div>`
       )
     })
 
@@ -326,14 +334,7 @@ describe("tailwind-class-sorter", () => {
             rounded">
           </div>
         `,
-        dedent`
-          <div class="rounded px-4 <% if valid? %>
-              bg-green-500 font-bold text-green-800
-            <% else %>
-              bg-red-500 font-bold text-red-800
-            <% end %>">
-          </div>
-        `
+        `<div class="rounded px-4 <% if valid? %> bg-green-500 font-bold text-green-800 <% else %> bg-red-500 font-bold text-red-800 <% end %>">\n</div>`
       )
     })
 
