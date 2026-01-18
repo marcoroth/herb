@@ -41,11 +41,11 @@ begin
       require_relative "herb/herb"
     end
   end
-rescue LoadError => error
+rescue LoadError => e
   raise LoadError, <<~MESSAGE
     Failed to load the Herb native extension.
 
-    Tried to load: #{error.message.split(" -- ").last}
+    Tried to load: #{e.message.split(" -- ").last}
 
     This can happen when:
       1. You're using a preview/development version of Ruby (RUBY_PATCHLEVEL=#{RUBY_PATCHLEVEL})
