@@ -7,7 +7,7 @@ module Herb
 
       ERROR_CLASS_PRIORITRY: untyped
 
-      def initialize: (untyped source, untyped errors, ?filename: untyped) -> untyped
+      def initialize: (untyped source, untyped errors, ?filename: untyped, ?default_view: Symbol) -> untyped
 
       def generate_html: () -> untyped
 
@@ -20,6 +20,10 @@ module Herb
       def generate_code_lines: (untyped error, untyped line_num, untyped col_num) -> untyped
 
       def generate_suggestions_section: (untyped suggestions) -> untyped
+
+      def generate_llm_prompt: () -> String
+
+      def generate_code_snippet_for_llm: (untyped error_line_num) -> String
 
       def syntax_highlight: (untyped code) -> untyped
 
