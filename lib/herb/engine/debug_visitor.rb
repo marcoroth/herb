@@ -301,7 +301,7 @@ module Herb
       end
 
       def in_excluded_context?
-        excluded_tags = ["script", "style", "head", "textarea", "pre"]
+        excluded_tags = ["script", "style", "head", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
         return true if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) }
