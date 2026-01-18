@@ -135,7 +135,77 @@ class TailwindClassSorterVisitor extends Visitor {
     return isLiteralNode(node) && !node.content.trim()
   }
 
+  private containsStringInterpolation(nodes: Node[]): boolean {
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const current = nodes[i]
+      const next = nodes[i + 1]
+
+      if (isLiteralNode(current) && !isLiteralNode(next)) {
+        const literalContent = current.content
+
+        if (literalContent.length > 0 && !/\s$/.test(literalContent)) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const lookAhead = nodes[j]
+
+            if (isLiteralNode(lookAhead)) {
+              const lookAheadContent = lookAhead.content
+
+              if (lookAheadContent.length > 0 && !/^\s/.test(lookAheadContent)) {
+                return true
+              }
+
+              break
+            }
+          }
+        }
+      }
+
+      // "<%= prefix %>-blue-500"
+      if (i === 0 && !isLiteralNode(current) && isLiteralNode(next)) {
+        const nextContent = next.content
+
+        if (nextContent.length > 0 && !/^\s/.test(nextContent)) {
+          return true
+        }
+      }
+
+      // "bg-<%= suffix %>"
+      if (isLiteralNode(current) && !isLiteralNode(next)) {
+        const literalContent = current.content
+
+        if (literalContent.length > 0 && /-$/.test(literalContent)) {
+          let hasLiteralAfter = false
+
+          for (let j = i + 1; j < nodes.length; j++) {
+            const node = nodes[j]
+
+            if (isLiteralNode(node) && node.content.trim()) {
+              hasLiteralAfter = true
+              break
+            }
+          }
+
+          if (!hasLiteralAfter) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
+  }
+
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
+    if (this.containsStringInterpolation(nodes)) {
+      for (const node of nodes) {
+        if (!isLiteralNode(node)) {
+          this.visit(node)
+        }
+      }
+
+      return nodes
+    }
+
     const { classLiterals, others } = this.partitionNodes(nodes)
     const preserveLeadingSpace = isNested || this.startsWithClassLiteral(nodes)
 
