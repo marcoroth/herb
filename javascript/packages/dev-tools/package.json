@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/dev-tools",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "Development tools for visual debugging in HTML+ERB templates",
   "type": "module",
   "license": "MIT",
@@ -30,7 +30,7 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.8.7"
+    "@herb-tools/core": "0.8.8"
   },
   "files": [
     "package.json",
