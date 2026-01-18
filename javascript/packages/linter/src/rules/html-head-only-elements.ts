@@ -23,6 +23,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     if (!this.insideBody) return
     if (!isHeadOnlyTag(tagName)) return
     if (tagName === "title" && this.insideSVG) return
+    if (tagName === "style" && this.insideSVG) return
     if (tagName === "meta" && this.hasItempropAttribute(node)) return
 
     this.addOffense(

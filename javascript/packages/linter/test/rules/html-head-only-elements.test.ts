@@ -332,6 +332,26 @@ describe("html-head-only-elements", () => {
     `)
   })
 
+  test("allows style element inside SVG", () => {
+    expectNoOffenses(dedent`
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <title>Hi</title>
+        </head>
+        <body>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29">
+            <defs>
+              <style>
+                .cls-1 {fill:none;stroke:#fff}
+              </style>
+            </defs>
+          </svg>
+        </body>
+      </html>
+    `)
+  })
+
   test("still fails for other head-only elements inside SVG", () => {
     expectError("Element `<meta>` must be placed inside the `<head>` tag.")
     expectError("Element `<link>` must be placed inside the `<head>` tag.")
