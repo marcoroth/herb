@@ -212,11 +212,19 @@ module Herb
     end
 
     def add_expression_result(code)
-      with_buffer { @src << " << (" << code << ").to_s" }
+      if code.include?("#")
+        with_buffer { @src << " << (" << code << "\n).to_s" }
+      else
+        with_buffer { @src << " << (" << code << ").to_s" }
+      end
     end
 
     def add_expression_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
+      if code.include?("#")
+        with_buffer { @src << " << " << @escapefunc << "((" << code << "\n))" }
+      else
+        with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
+      end
     end
 
     def add_expression_block(indicator, code)
@@ -228,11 +236,19 @@ module Herb
     end
 
     def add_expression_block_result(code)
-      with_buffer { @src << " << " << code }
+      if code.include?("#")
+        with_buffer { @src << " << " << code << "\n" }
+      else
+        with_buffer { @src << " << " << code }
+      end
     end
 
     def add_expression_block_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
+      if code.include?("#")
+        with_buffer { @src << " << " << @escapefunc << "(" << code << "\n)" }
+      else
+        with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
+      end
     end
 
     def add_postamble(postamble)
