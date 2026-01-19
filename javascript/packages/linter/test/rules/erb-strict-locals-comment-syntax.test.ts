@@ -72,6 +72,22 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     `)
   })
 
+  test("flags missing space after colon", () => {
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+
+    assertOffenses(dedent`
+      <%# locals:() %>
+    `)
+  })
+
+  test("flags missing space after colon with locals", () => {
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+
+    assertOffenses(dedent`
+      <%# locals:(title:) %>
+    `)
+  })
+
   test("flags missing parentheses around parameters", () => {
     expectError("Wrap parameters in parentheses: `locals: (name:)` or `locals: (name: default)`.")
 
