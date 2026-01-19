@@ -24,7 +24,7 @@
     "oxlint": "^1.39.0",
     "picomatch": "^4.0.2",
     "playwright": "^1.57.0",
-    "prettier": "^3.7.4",
+    "prettier": "^3.8.0",
     "rimraf": "^6.1.2",
     "rollup": "^4.55.1",
     "rollup-plugin-postcss": "^4.0.2",
