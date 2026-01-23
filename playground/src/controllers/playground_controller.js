@@ -69,6 +69,7 @@ export default class extends Controller {
     "printerVerification",
     "printerIgnoreErrors",
     "printerDiff",
+    "formatterMaxLineLength",
     "printerDiffContent",
     "printerLegend",
     "shareButton",
@@ -114,6 +115,7 @@ export default class extends Controller {
     this.restoreActiveTab()
     this.restoreParserOptions()
     this.restorePrinterOptions()
+    this.restoreFormatterOptions()
     this.inputTarget.focus()
     this.load()
 
@@ -220,8 +222,10 @@ export default class extends Controller {
 
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
+    const formatterOptions = this.getFormatterOptions()
     this.setOptionsInURL(options)
     this.setPrinterOptionsInURL(printerOptions)
+    this.setFormatterOptionsInURL(formatterOptions)
   }
 
   async insert(event) {
@@ -432,9 +436,23 @@ export default class extends Controller {
     }
   }
 
+  restoreFormatterOptions() {
+    const formatterOptionsFromURL = this.getFormatterOptionsFromURL()
+
+    if (Object.keys(formatterOptionsFromURL).length > 0) {
+      this.setFormatterOptions(formatterOptionsFromURL)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
+    }
+  }
+
+  setFormatterOptions(formatterOptions) {
+    if (this.hasFormatterMaxLineLengthTarget && formatterOptions.hasOwnProperty('maxLineLength')) {
+      this.formatterMaxLineLengthTarget.value = formatterOptions.maxLineLength
     }
   }
 
@@ -603,7 +621,8 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const result = await analyze(Herb, value)
+      const formatterOptions = this.getFormatterOptions()
+      const result = await analyze(Herb, value, {}, {}, formatterOptions)
 
       if (result.formatted) {
         if (this.editor) {
@@ -684,7 +703,8 @@ export default class extends Controller {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
-    const result = await analyze(Herb, value, options, printerOptions)
+    const formatterOptions = this.getFormatterOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -1021,11 +1041,30 @@ export default class extends Controller {
     this.analyze()
   }
 
+  onFormatterOptionChange(event) {
+    this.updateURL()
+    this.analyze()
+  }
+
   getPrinterOptions() {
     const options = {}
     if (this.hasPrinterIgnoreErrorsTarget) {
       options.ignoreErrors = this.printerIgnoreErrorsTarget.checked
     }
+    return options
+  }
+
+  getFormatterOptions() {
+    const options = {}
+
+    if (this.hasFormatterMaxLineLengthTarget) {
+      const value = parseInt(this.formatterMaxLineLengthTarget.value, 10)
+
+      if (!isNaN(value) && value > 0) {
+        options.maxLineLength = value
+      }
+    }
+
     return options
   }
 
@@ -1093,6 +1132,41 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(printerOptionsString))
       } catch (e) {
         console.warn('Failed to parse printer options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setFormatterOptionsInURL(formatterOptions) {
+    const url = new URL(window.parent.location)
+
+    const nonDefaultFormatterOptions = {}
+
+    Object.keys(formatterOptions).forEach(key => {
+      if (key === 'maxLineLength' && formatterOptions[key] !== 80) {
+        nonDefaultFormatterOptions[key] = formatterOptions[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+    } else {
+      url.searchParams.delete('formatterOptions')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
+  getFormatterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const formatterOptionsString = urlParams.get('formatterOptions')
+
+    if (formatterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(formatterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse formatter options from URL:', e)
       }
     }
 
