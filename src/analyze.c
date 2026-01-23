@@ -280,6 +280,8 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
 
+  if (ruby->unclosed_control_flow_count == 0 && !has_yield_node(ruby)) { return CONTROL_TYPE_UNKNOWN; }
+
   return find_earliest_control_keyword(root, ruby->parser.start);
 }
 
