@@ -46,7 +46,7 @@
     "postcss-import": "^16.1.1"
   },
   "devDependencies": {
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.0.10",
     "dedent": "^1.7.0",
     "esbuild": "^0.27.1",
     "rimraf": "^6.1.2",
