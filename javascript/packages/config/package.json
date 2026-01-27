@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/config",
-  "version": "0.8.8",
+  "version": "0.8.9",
   "description": "Shared configuration utilities for Herb tools",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -30,7 +30,7 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.8.8",
+    "@herb-tools/core": "0.8.9",
     "picomatch": "^4.0.2",
     "tinyglobby": "^0.2.15",
     "yaml": "^2.8.2"
