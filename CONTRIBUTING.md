@@ -12,7 +12,7 @@ If you encounter any issues when following along with this file please don't hes
 - [**Clang 21**](https://clang.llvm.org): The compiler used to build this project.
 - [**Clang Format 21**](https://clang.llvm.org/docs/ClangFormat.html): For formatting the project.
 - [**Clang Tidy 21**](https://clang.llvm.org/extra/clang-tidy/): For linting the project.
-- [**Prism Ruby Parser v1.8.0**](https://github.com/ruby/prism/releases/tag/v1.8.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
+- [**Prism Ruby Parser v1.9.0**](https://github.com/ruby/prism/releases/tag/v1.9.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
 - [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
