@@ -4,7 +4,7 @@ source "https://rubygems.org"
 
 gemspec
 
-gem "prism", github: "ruby/prism", tag: "v1.8.0"
+gem "prism", github: "ruby/prism", tag: "v1.9.0"
 
 gem "actionview", "~> 8.0"
 gem "digest", "~> 3.2"
