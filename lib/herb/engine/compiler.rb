@@ -297,18 +297,20 @@ module Herb
       end
 
       def add_context_aware_expression(code, context)
+        closing = code.include?("#") ? "\n))" : "))"
+
         case context
         when :attribute_value
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@attrfunc}((" << code << "))"
+            @engine.src << " << #{@attrfunc}((" << code << closing
           }
         when :script_content
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@jsfunc}((" << code << "))"
+            @engine.src << " << #{@jsfunc}((" << code << closing
           }
         when :style_content
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@cssfunc}((" << code << "))"
+            @engine.src << " << #{@cssfunc}((" << code << closing
           }
         else
           @engine.send(:add_expression_result_escaped, code)
