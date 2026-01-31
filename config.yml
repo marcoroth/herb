@@ -178,6 +178,17 @@ errors:
 
       fields: []
 
+    - name: ERBCaseWithConditionsInTagError
+      message:
+        template: "A `case` statement with a `%s` clause in a single ERB tag cannot be split across multiple tags. Use separate `<%% case ... %%>` and `<%% %s ... %%>` tags."
+        arguments:
+          - keyword
+          - keyword
+
+      fields:
+        - name: keyword
+          type: string
+
 warnings:
   fields: []
   types: []

@@ -32,6 +32,7 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed->yield_node_count = 0;
   analyzed->then_keyword_count = 0;
   analyzed->unclosed_control_flow_count = 0;
+  analyzed->has_case_with_inline_conditions = false;
 
   return analyzed;
 }

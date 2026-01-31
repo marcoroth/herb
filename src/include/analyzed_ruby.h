@@ -31,6 +31,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   int yield_node_count;
   int then_keyword_count;
   int unclosed_control_flow_count;
+  bool has_case_with_inline_conditions;
 } analyzed_ruby_T;
 
 analyzed_ruby_T* init_analyzed_ruby(hb_string_T source);

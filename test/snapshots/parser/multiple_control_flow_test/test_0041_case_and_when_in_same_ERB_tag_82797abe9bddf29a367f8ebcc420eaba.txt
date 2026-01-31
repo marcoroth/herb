@@ -1,0 +1,45 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0041_case and when in same ERB tag"
+input: |2-
+<% case variable when "a" %>
+  A
+<% when "b" %>
+  B
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(5:9))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBCaseWithConditionsInTagError (location: (1:0)-(1:28))
+    │   │       ├── message: "A `case` statement with a `when` clause in a single ERB tag cannot be split across multiple tags. Use separate `<% case ... %>` and `<% when ... %>` tags."
+    │   │       └── keyword: "when"
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case variable when "a" " (location: (1:2)-(1:26))
+    │   ├── tag_closing: "%>" (location: (1:26)-(1:28))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:28)-(3:0))
+    │   │       └── content: "\n  A\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (3:0)-(3:14))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " when "b" " (location: (3:2)-(3:12))
+    │   │       ├── tag_closing: "%>" (location: (3:12)-(3:14))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (3:14)-(5:0))
+    │   │               └── content: "\n  B\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

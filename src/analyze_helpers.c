@@ -406,6 +406,10 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
 
       if (has_location(case_node->case_keyword_loc) && !is_end_keyword(case_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
+
+        if (case_node->conditions.size > 0) {
+          analyzed->has_case_with_inline_conditions = true;
+        }
       }
 
       break;
@@ -416,6 +420,14 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
 
       if (has_location(case_match_node->case_keyword_loc) && !is_end_keyword(case_match_node->end_keyword_loc)) {
         analyzed->unclosed_control_flow_count++;
+
+        if (case_match_node->conditions.size > 0) {
+          analyzed->has_case_with_inline_conditions = true;
+        }
+
+        if (case_match_node->predicate != NULL && case_match_node->predicate->type == PM_MATCH_PREDICATE_NODE) {
+          analyzed->has_case_with_inline_conditions = true;
+        }
       }
 
       break;
