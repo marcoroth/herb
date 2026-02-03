@@ -163,3 +163,6 @@ compile_flags.txt
 
 # Local .envrc overrides
 .envrc.local
+
+# nix-direnv artifacts
+.direnv/

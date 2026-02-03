@@ -19,7 +19,7 @@ If you encounter any issues when following along with this file please don't hes
 - [**Doxygen**](https://www.doxygen.nl): For building the C-Reference documentation pages.
 
 
-##### For Linux
+#### For Linux
 
 Before installing the dependencies, you need to add the LLVM repository and GPG key to get Clang 21:
 
@@ -40,7 +40,7 @@ or:
 sudo apt-get install check clang-21 clang-tidy-21 clang-format-21 emscripten doxygen
 ```
 
-##### For macOS (using Homebrew)
+#### For macOS (using Homebrew)
 
 ```bash
 brew bundle
@@ -50,6 +50,16 @@ or:
 ```bash
 brew install check llvm@21 emscripten doxygen
 ```
+
+#### Nix flake
+
+Additionally we provide a `flake.nix` file which includes all dependencies and configuration to easily get started with Herb development. The recommended way to use it is by adding something like the following to `.envrc.local`:
+
+```sh
+use flake . --no-write-lock-file
+```
+
+If you'd prefer to have a  `flake.lock` use `use flake` instead and ignore the lockfile by adding it to `.git/info/exclude`.
 
 ### Building
 
