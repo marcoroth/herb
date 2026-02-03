@@ -11,9 +11,8 @@ input: |2-
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(5:9))
     │   ├── errors: (1 error)
-    │   │   └── @ ERBCaseWithConditionsInTagError (location: (1:0)-(1:28))
-    │   │       ├── message: "A `case` statement with a `when` clause in a single ERB tag cannot be split across multiple tags. Use separate `<% case ... %>` and `<% when ... %>` tags."
-    │   │       └── keyword: "when"
+    │   │   └── @ ERBCaseWithConditionsError (location: (1:0)-(1:28))
+    │   │       └── message: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case variable when "a" " (location: (1:2)-(1:26))

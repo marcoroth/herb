@@ -73,10 +73,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         );
       }
 
-      if (analyzed->has_case_with_inline_conditions) {
-        const char* keyword = analyzed->case_match_node_count > 0 ? "in" : "when";
-        append_erb_case_with_conditions_in_tag_error(
-          keyword,
+      if (analyzed->inline_conditionals_count > 0) {
+        append_erb_case_with_conditions_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           erb_content_node->base.errors
