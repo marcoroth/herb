@@ -76,6 +76,7 @@ ifeq ($(os),Darwin)
   clang_tidy = $(llvm_path)/bin/clang-tidy
 endif
 
+.PHONY: all
 all: templates prism $(exec) $(lib_name) $(static_lib_name) test wasm clangd_config
 
 $(exec): $(objects)
@@ -94,36 +95,46 @@ src/%.o: src/%.c templates
 test/%.o: test/%.c templates
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
 
+.PHONY: test
 test: $(test_objects) $(non_main_objects)
 	$(cc) $(test_objects) $(non_main_objects) $(test_cflags) $(test_ldflags) -o $(test_exec)
 
+.PHONY: clean
 clean:
 	rm -f $(exec) $(test_exec) $(lib_name) $(shared_lib_name) $(ruby_extension)
 	rm -rf $(objects) $(test_objects) $(extension_objects) lib/herb/*.bundle tmp
 	rm -rf $(prism_path)
 	rake prism:clean
 
+.PHONY: bundle_install
 bundle_install:
 	bundle install
 
+.PHONY: templates
 templates: bundle_install
 	bundle exec rake templates
 
+.PHONY: prism
 prism: bundle_install
 	cd $(prism_path) && ruby templates/template.rb && make static && cd -
 	rake prism:vendor
 
+.PHONY: format
 format:
 	$(clang_format) -i $(project_and_extension_files)
 
+.PHONY: lint
 lint:
 	$(clang_format) --dry-run --Werror $(project_and_extension_files)
 
+.PHONY: tidy
 tidy:
 	$(clang_tidy) $(project_files) -- $(flags)
 
+.PHONY: clangd_config
 clangd_config:
 	@echo "$(flags) $(test_cflags)" | tr ' ' '\n' | sort -u > compile_flags.txt
 
+.PHONY: wasm
 wasm:
 	cd wasm && make
