@@ -26,7 +26,7 @@
     "playwright": "^1.58.0",
     "prettier": "^3.8.0",
     "rimraf": "^6.1.2",
-    "rollup": "^4.55.2",
+    "rollup": "^4.57.1",
     "rollup-plugin-postcss": "^4.0.2",
     "tsx": "^4.20.4",
     "typescript": "^5.9.3",
