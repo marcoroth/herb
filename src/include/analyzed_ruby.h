@@ -21,7 +21,6 @@ typedef struct ANALYZED_RUBY_STRUCT {
   int case_match_node_count;
   int when_node_count;
   int in_node_count;
-  int inline_conditionals_count;
   int for_node_count;
   int while_node_count;
   int until_node_count;

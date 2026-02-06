@@ -22,7 +22,6 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed->case_match_node_count = 0;
   analyzed->when_node_count = 0;
   analyzed->in_node_count = 0;
-  analyzed->inline_conditionals_count = 0;
   analyzed->for_node_count = 0;
   analyzed->while_node_count = 0;
   analyzed->until_node_count = 0;

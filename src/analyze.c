@@ -34,17 +34,20 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   pm_visit_node(analyzed->root, search_until_nodes, analyzed);
   pm_visit_node(analyzed->root, search_begin_nodes, analyzed);
   pm_visit_node(analyzed->root, search_unless_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_when_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_in_nodes, analyzed);
 
-  search_elsif_nodes(analyzed);
-  search_else_nodes(analyzed);
-  search_end_nodes(analyzed);
-  search_when_nodes(analyzed);
-  search_in_nodes(analyzed);
-  search_rescue_nodes(analyzed);
-  search_ensure_nodes(analyzed);
+  search_unexpected_elsif_nodes(analyzed);
+  search_unexpected_else_nodes(analyzed);
+  search_unexpected_end_nodes(analyzed);
+  search_unexpected_when_nodes(analyzed);
+  search_unexpected_in_nodes(analyzed);
+
+  search_unexpected_rescue_nodes(analyzed);
+  search_unexpected_ensure_nodes(analyzed);
   search_yield_nodes(analyzed->root, analyzed);
   search_then_keywords(analyzed->root, analyzed);
-  search_block_closing_nodes(analyzed);
+  search_unexpected_block_closing_nodes(analyzed);
 
   if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
 
@@ -73,7 +76,9 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         );
       }
 
-      if (analyzed->inline_conditionals_count > 0) {
+      if (!analyzed->valid
+          && ((analyzed->case_node_count > 0 && analyzed->when_node_count > 0)
+              || (analyzed->case_match_node_count > 0 && analyzed->in_node_count > 0))) {
         append_erb_case_with_conditions_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
@@ -282,8 +287,8 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
   if (has_end(ruby)) { return CONTROL_TYPE_END; }
-  if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
-  if (has_in_node(ruby)) { return CONTROL_TYPE_IN; }
+  if (has_when_node(ruby) && !has_case_node(ruby)) { return CONTROL_TYPE_WHEN; }
+  if (has_in_node(ruby) && !has_case_match_node(ruby)) { return CONTROL_TYPE_IN; }
   if (has_rescue_node(ruby)) { return CONTROL_TYPE_RESCUE; }
   if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
