@@ -79,5 +79,41 @@ module Engine
 
       assert_evaluated_snapshot(template, { more: "ignored" })
     end
+
+    test "trailing comment in output tag" do
+      template = %(<%= value # this is a comment %>)
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "trailing comment in output tag with method call" do
+      template = %(<%= helper_method arg1, arg2 # trailing comment %>)
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "evaluation: trailing comment in output tag" do
+      template = %(<%= value # this is a comment %>)
+
+      assert_evaluated_snapshot(template, { value: "Hello World" })
+    end
+
+    test "evaluation: trailing comment in output tag with debug mode" do
+      template = %(<%= value # this is a comment %>)
+
+      assert_evaluated_snapshot(template, { value: "Hello World" }, debug: true)
+    end
+
+    test "trailing comment in escaped output tag" do
+      template = %(<%== value # this is a comment %>)
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "evaluation: trailing comment in escaped output tag" do
+      template = %(<%== value # this is a comment %>)
+
+      assert_evaluated_snapshot(template, { value: "<b>Hello</b>" })
+    end
   end
 end
