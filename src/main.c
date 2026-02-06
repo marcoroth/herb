@@ -61,24 +61,6 @@ int main(const int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  if (strcmp(argv[1], "visit") == 0) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    herb_analyze_parse_tree(root, source);
-
-    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
-    printf("%s\n", output.value);
-
-    print_time_diff(start, end, "visiting");
-
-    ast_node_free((AST_NODE_T*) root);
-    free(output.value);
-    free(source);
-
-    return 0;
-  }
-
   if (strcmp(argv[1], "lex") == 0) {
     herb_lex_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
