@@ -178,6 +178,13 @@ errors:
 
       fields: []
 
+    - name: ERBCaseWithConditionsError
+      message:
+        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        arguments: []
+
+      fields: []
+
 warnings:
   fields: []
   types: []

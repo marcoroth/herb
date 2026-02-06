@@ -242,7 +242,28 @@ bool search_unless_nodes(const pm_node_t* node, void* data) {
   return false;
 }
 
-bool search_elsif_nodes(analyzed_ruby_T* analyzed) {
+bool search_when_nodes(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  if (node->type == PM_WHEN_NODE) { analyzed->when_node_count++; }
+
+  pm_visit_child_nodes(node, search_when_nodes, analyzed);
+
+  return false;
+}
+
+bool search_in_nodes(const pm_node_t* node, void* data) {
+  analyzed_ruby_T* analyzed = (analyzed_ruby_T*) data;
+
+  if (node->type == PM_IN_NODE) { analyzed->in_node_count++; }
+  if (node->type == PM_MATCH_PREDICATE_NODE) { analyzed->in_node_count++; }
+
+  pm_visit_child_nodes(node, search_in_nodes, analyzed);
+
+  return false;
+}
+
+bool search_unexpected_elsif_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'elsif', ignoring it")) {
     analyzed->elsif_node_count++;
     return true;
@@ -251,7 +272,7 @@ bool search_elsif_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_else_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_else_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'else', ignoring it")) {
     analyzed->else_node_count++;
     return true;
@@ -260,7 +281,7 @@ bool search_else_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_end_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_end_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'end', ignoring it")) {
     if (has_error_message(analyzed, "unexpected '=', ignoring it")) {
       // `=end`
@@ -274,7 +295,7 @@ bool search_end_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_block_closing_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected '}', ignoring it")) {
     analyzed->block_closing_count++;
     return true;
@@ -283,7 +304,7 @@ bool search_block_closing_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_when_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'when', ignoring it")) {
     analyzed->when_node_count++;
     return true;
@@ -292,7 +313,7 @@ bool search_when_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_in_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_in_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'in', ignoring it")) {
     analyzed->in_node_count++;
     return true;
@@ -301,7 +322,7 @@ bool search_in_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_rescue_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'rescue', ignoring it")) {
     analyzed->rescue_node_count++;
     return true;
@@ -310,7 +331,7 @@ bool search_rescue_nodes(analyzed_ruby_T* analyzed) {
   return false;
 }
 
-bool search_ensure_nodes(analyzed_ruby_T* analyzed) {
+bool search_unexpected_ensure_nodes(analyzed_ruby_T* analyzed) {
   if (has_error_message(analyzed, "unexpected 'ensure', ignoring it")) {
     analyzed->ensure_node_count++;
     return true;
@@ -468,6 +489,7 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
       if (has_opening && !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
+
       break;
     }
 
