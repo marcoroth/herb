@@ -382,10 +382,6 @@ export class FormattingService {
         }).join('\n')
       }
 
-      if (!formattedText.endsWith('\n')) {
-        formattedText += '\n'
-      }
-
       if (formattedText === rangeText) {
         return []
       }
