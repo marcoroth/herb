@@ -212,19 +212,15 @@ module Herb
     end
 
     def add_expression_result(code)
-      if code.include?("#")
-        with_buffer { @src << " << (" << code << "\n).to_s" }
-      else
-        with_buffer { @src << " << (" << code << ").to_s" }
-      end
+      with_buffer {
+        @src << " << (" << code << comment_aware_newline(code) << ").to_s"
+      }
     end
 
     def add_expression_result_escaped(code)
-      if code.include?("#")
-        with_buffer { @src << " << " << @escapefunc << "((" << code << "\n))" }
-      else
-        with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
-      end
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << comment_aware_newline(code) << "))"
+      }
     end
 
     def add_expression_block(indicator, code)
@@ -236,19 +232,19 @@ module Herb
     end
 
     def add_expression_block_result(code)
-      if code.include?("#")
-        with_buffer { @src << " << " << code << "\n" }
-      else
-        with_buffer { @src << " << " << code }
-      end
+      with_buffer {
+        @src << " << " << code << comment_aware_newline(code)
+      }
     end
 
     def add_expression_block_result_escaped(code)
-      if code.include?("#")
-        with_buffer { @src << " << " << @escapefunc << "(" << code << "\n)" }
-      else
-        with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
-      end
+      with_buffer {
+        @src << " << " << @escapefunc << "(" << code << comment_aware_newline(code) << ")"
+      }
+    end
+
+    def comment_aware_newline(code)
+      code.include?("#") ? "\n" : ""
     end
 
     def add_postamble(postamble)
