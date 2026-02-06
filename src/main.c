@@ -132,6 +132,10 @@ int main(const int argc, char* argv[]) {
 
     herb_parse_ruby_to_stdout(ruby_source);
 
+    free(ruby_source);
+    free(output.value);
+    free(source);
+
     return 0;
   }
 
