@@ -9,7 +9,7 @@
 #include "include/io.h"
 #include "include/ruby_parser.h"
 #include "include/util/hb_buffer.h"
-#include "include/util/str_utils.h"
+#include "include/util/string.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -62,7 +62,7 @@ int main(const int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  if (string_eq(argv[1], "lex")) {
+  if (string_equals(argv[1], "lex")) {
     herb_lex_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -75,7 +75,7 @@ int main(const int argc, char* argv[]) {
     return 0;
   }
 
-  if (string_eq(argv[1], "parse")) {
+  if (string_equals(argv[1], "parse")) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
 
     herb_analyze_parse_tree(root, source);
@@ -83,7 +83,7 @@ int main(const int argc, char* argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     int silent = 0;
-    if (argc > 3 && string_eq(argv[3], "--silent")) { silent = 1; }
+    if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
 
     if (!silent) {
       ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
@@ -99,7 +99,7 @@ int main(const int argc, char* argv[]) {
     return 0;
   }
 
-  if (string_eq(argv[1], "ruby")) {
+  if (string_equals(argv[1], "ruby")) {
     herb_extract_ruby_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -112,7 +112,7 @@ int main(const int argc, char* argv[]) {
     return 0;
   }
 
-  if (string_eq(argv[1], "html")) {
+  if (string_equals(argv[1], "html")) {
     herb_extract_html_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -125,7 +125,7 @@ int main(const int argc, char* argv[]) {
     return 0;
   }
 
-  if (string_eq(argv[1], "prism")) {
+  if (string_equals(argv[1], "prism")) {
     printf("HTML+ERB File: \n%s\n", source);
 
     char* ruby_source = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY);

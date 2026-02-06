@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static inline bool string_eq(const char* a, const char* b) {
+static inline bool string_equals(const char* a, const char* b) {
   return strcmp(a, b) == 0;
 }
 

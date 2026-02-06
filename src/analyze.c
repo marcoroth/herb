@@ -14,7 +14,7 @@
 #include "include/util.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_string.h"
-#include "include/util/str_utils.h"
+#include "include/util/string.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -61,8 +61,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     const char* opening = erb_content_node->tag_opening->value;
 
-    if (!string_eq(opening, "<%%") && !string_eq(opening, "<%%=") && !string_eq(opening, "<%#")
-        && !string_eq(opening, "<%graphql")) {
+    if (!string_equals(opening, "<%%") && !string_equals(opening, "<%%=") && !string_equals(opening, "<%#")
+        && !string_equals(opening, "<%graphql")) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
 
       erb_content_node->parsed = true;

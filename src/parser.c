@@ -12,7 +12,7 @@
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
-#include "include/util/str_utils.h"
+#include "include/util/string.h"
 #include "include/visitor.h"
 
 #include <stdio.h>
@@ -347,7 +347,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   while (!token_is(parser, TOKEN_EOF)
          && !(
            token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-           && string_eq(parser->current_token->value, opening_quote->value)
+           && string_equals(parser->current_token->value, opening_quote->value)
          )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -365,7 +365,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       token_T* next_token = lexer_next_token(parser->lexer);
 
       if (next_token && next_token->type == TOKEN_QUOTE && opening_quote != NULL
-          && string_eq(next_token->value, opening_quote->value)) {
+          && string_equals(next_token->value, opening_quote->value)) {
         hb_buffer_append(&buffer, parser->current_token->value);
         hb_buffer_append(&buffer, next_token->value);
 
@@ -388,7 +388,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   }
 
   if (token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-      && string_eq(parser->current_token->value, opening_quote->value)) {
+      && string_equals(parser->current_token->value, opening_quote->value)) {
     lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
     token_T* potential_closing = parser->current_token;
@@ -416,7 +416,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       while (!token_is(parser, TOKEN_EOF)
              && !(
                token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-               && string_eq(parser->current_token->value, opening_quote->value)
+               && string_equals(parser->current_token->value, opening_quote->value)
              )) {
         if (token_is(parser, TOKEN_ERB_START)) {
           parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -446,7 +446,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 
   token_T* closing_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
 
-  if (opening_quote != NULL && closing_quote != NULL && !string_eq(opening_quote->value, closing_quote->value)) {
+  if (opening_quote != NULL && closing_quote != NULL && !string_equals(opening_quote->value, closing_quote->value)) {
     append_quotes_mismatch_error(
       opening_quote,
       closing_quote,
