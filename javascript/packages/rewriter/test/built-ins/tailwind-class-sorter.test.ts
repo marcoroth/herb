@@ -115,6 +115,95 @@ describe("tailwind-class-sorter", () => {
     })
   })
 
+  describe("ERB string interpolation within class names", () => {
+    test("preserves interpolation in middle of class name (issue #879)", async () => {
+      await expectNoTransform(
+        `<div class="foo-<%= bar %>-100"></div>`
+      )
+    })
+
+    test("preserves interpolation at start of class name", async () => {
+      await expectNoTransform(
+        `<div class="<%= prefix %>-blue-500"></div>`
+      )
+    })
+
+    test("preserves interpolation at end of class name", async () => {
+      await expectNoTransform(
+        `<div class="bg-<%= suffix %>"></div>`
+      )
+    })
+
+    test("preserves interpolation with multiple ERB tags in middle", async () => {
+      await expectNoTransform(
+        `<div class="foo-<%= bar %><%= baz %>-100"></div>`
+      )
+    })
+
+    test("preserves multiple ERB interpolations building one class name", async () => {
+      await expectNoTransform(
+        `<div class="<%= prefix %>-<%= color %>-<%= shade %>"></div>`
+      )
+    })
+
+    test("preserves complex interpolation with prefix, middle, and suffix", async () => {
+      await expectNoTransform(
+        `<div class="text-<%= color %>-<%= shade %>"></div>`
+      )
+    })
+
+    test("preserves interpolation with static prefix and multiple dynamic parts", async () => {
+      await expectNoTransform(
+        `<div class="bg-<%= color %><%= modifier %>"></div>`
+      )
+    })
+
+    test("preserves interpolation with dynamic prefix and static suffix", async () => {
+      await expectNoTransform(
+        `<div class="<%= utility %>-500"></div>`
+      )
+    })
+
+    test("preserves fully dynamic class with hyphens", async () => {
+      await expectNoTransform(
+        `<div class="<%= prefix %>-<%= suffix %>"></div>`
+      )
+    })
+
+    test("preserves multiple interpolated class names", async () => {
+      await expectNoTransform(
+        `<div class="foo-<%= bar %>-100 baz-<%= qux %>-200"></div>`
+      )
+    })
+
+    test("preserves multiple different interpolation patterns in same attribute", async () => {
+      await expectNoTransform(
+        `<div class="<%= a %>-blue bg-<%= b %> text-<%= c %>-500"></div>`
+      )
+    })
+
+    test("sorts static classes and moves multiple interpolations to end", async () => {
+      await expectTransform(
+        `<div class="some-<%= erb %> text-blue-300 <%= another %>-erb bg-white"></div>`,
+        `<div class="bg-white text-blue-300 some-<%= erb %> <%= another %>-erb"></div>`
+      )
+    })
+
+    test("sorts static classes and moves interpolation to end", async () => {
+      await expectTransform(
+        `<div class="px-4 foo-<%= bar %>-100 bg-blue-500"></div>`,
+        `<div class="bg-blue-500 px-4 foo-<%= bar %>-100"></div>`
+      )
+    })
+
+    test("still sorts classes inside conditionals when interpolation is in main attribute", async () => {
+      await expectTransform(
+        `<div class="foo-<%= bar %>-100 <% if valid? %> text-white bg-blue-500 <% end %>"></div>`,
+        `<div class="foo-<%= bar %>-100 <% if valid? %> bg-blue-500 text-white <% end %>"></div>`
+      )
+    })
+  })
+
   describe("ERB nodes in class attributes", () => {
     test("moves ERB output node from middle to end", async () => {
       await expectTransform(
@@ -245,14 +334,7 @@ describe("tailwind-class-sorter", () => {
             rounded">
           </div>
         `,
-        dedent`
-          <div class="rounded px-4 <% if valid? %>
-              bg-green-500 font-bold text-green-800
-            <% else %>
-              bg-red-500 font-bold text-red-800
-            <% end %>">
-          </div>
-        `
+        `<div class="rounded px-4 <% if valid? %> bg-green-500 font-bold text-green-800 <% else %> bg-red-500 font-bold text-red-800 <% end %>">\n</div>`
       )
     })
 
