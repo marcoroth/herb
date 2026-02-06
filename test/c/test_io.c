@@ -11,6 +11,12 @@ void create_test_file(const char* filename, const char* content) {
   fclose(fp);
 }
 
+// Test that reading a non-existent file correctly exits
+// Note: Check verifies the exit code via tcase_add_exit_test, so no assertions.
+TEST(test_herb_read_file_nonexistent_exits)
+  herb_read_file("non_existent_file.txt");
+END
+
 // Test reading from a file
 TEST(test_herb_read_file)
   const char* filename = "test_herb_read_file.txt";
@@ -31,6 +37,7 @@ TCase* io_tests(void) {
   TCase* io = tcase_create("IO");
 
   tcase_add_test(io, test_herb_read_file);
+  tcase_add_exit_test(io, test_herb_read_file_nonexistent_exits, 1);
 
   return io;
 }

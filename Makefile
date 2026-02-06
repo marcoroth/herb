@@ -95,7 +95,7 @@ $(static_lib_name): $(objects)
 src/%.o: src/%.c templates
 	$(cc) -c $(flags) -fPIC $< -o $@
 
-test/%.o: test/%.c templates
+test/%.o: test/%.c templates prism
 	$(cc) -c $(test_cflags) $(test_flags) $(prism_flags) $< -o $@
 
 .PHONY: test
