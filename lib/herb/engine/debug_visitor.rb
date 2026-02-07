@@ -304,10 +304,8 @@ module Herb
         basename = @filename.basename.to_s
         path = @filename.to_s
 
-        if sidecar_component?
-          if (match = path.match(%r{/components/(.+)/component\.[^/]+\z}))
-            return match[1].split("/").map { |s| classify(s) }.join("::")
-          end
+        if sidecar_component? && (match = path.match(%r{/components/(.+)/component\.[^/]+\z}))
+          return match[1].split("/").map { |s| classify(s) }.join("::")
         end
 
         if component?
