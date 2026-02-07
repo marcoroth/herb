@@ -4,6 +4,7 @@
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -129,6 +130,7 @@ char* herb_extract(const char* source, const herb_extract_language_T language) {
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;
     case HERB_EXTRACT_LANGUAGE_HTML: herb_extract_html_to_buffer(source, &output); break;
+    default: assert(0 && "invalid extract language");
   }
 
   return output.value;
