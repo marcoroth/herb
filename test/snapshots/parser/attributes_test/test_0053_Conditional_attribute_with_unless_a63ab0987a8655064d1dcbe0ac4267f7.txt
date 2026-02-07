@@ -1,0 +1,50 @@
+---
+source: "Parser::AttributesTest#test_0053_Conditional attribute with unless"
+input: "<div <% unless disabled? %>data-enabled<% end %>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:55))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:55))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:49))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:48)-(1:49))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBUnlessNode (location: (1:5)-(1:48))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: " unless disabled? " (location: (1:7)-(1:25))
+        │       │       ├── tag_closing: "%>" (location: (1:25)-(1:27))
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:27)-(1:39))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:27)-(1:39))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:27)-(1:39))
+        │       │       │       │               └── content: "data-enabled"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── else_clause: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:39)-(1:48))
+        │       │               ├── tag_opening: "<%" (location: (1:39)-(1:41))
+        │       │               ├── content: " end " (location: (1:41)-(1:46))
+        │       │               └── tag_closing: "%>" (location: (1:46)-(1:48))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:49)-(1:55))
+        │       ├── tag_opening: "</" (location: (1:49)-(1:51))
+        │       ├── tag_name: "div" (location: (1:51)-(1:54))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:54)-(1:55))
+        │
+        ├── is_void: false
+        └── source: "HTML"
