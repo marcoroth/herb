@@ -3,6 +3,7 @@
 #include "include/lexer.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/string.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -23,11 +24,11 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0) {
+        if (string_equals(token->value, "<%#")) {
           skip_erb_content = true;
           is_comment_tag = true;
-        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0
-                   || strcmp(token->value, "<%graphql") == 0) {
+        } else if (string_equals(token->value, "<%%") || string_equals(token->value, "<%%=")
+                   || string_equals(token->value, "<%graphql")) {
           skip_erb_content = true;
           is_comment_tag = false;
         } else {

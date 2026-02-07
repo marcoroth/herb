@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "include/analyzed_ruby.h"
+#include "include/util/string.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed) {
   return analyzed->if_node_count > 0;
@@ -83,7 +84,7 @@ bool has_then_keyword(analyzed_ruby_T* analyzed) {
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
   for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
-    if (strcmp(error->message, message) == 0) { return true; }
+    if (string_equals(error->message, message)) { return true; }
   }
 
   return false;
