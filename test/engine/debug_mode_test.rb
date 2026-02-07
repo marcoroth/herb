@@ -475,5 +475,77 @@ module Engine
 
       assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
+
+    test "sidecar component displays component name instead of component.html.erb" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.erb")
+    end
+
+    test "sidecar component with snake_case name converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/user_card/component.html.erb")
+    end
+
+    test "sidecar component with nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/user_card/component.html.erb")
+    end
+
+    test "sidecar component with deeply nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/settings/user_card/component.html.erb")
+    end
+
+    test "regular component file converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/button_component.html.erb")
+    end
+
+    test "sidecar component with erb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.erb")
+    end
+
+    test "sidecar component with herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.herb")
+    end
+
+    test "sidecar component with html.herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.herb")
+    end
+
+    test "namespaced regular component includes namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/ui/avatar_component.html.erb")
+    end
+
+    test "regular view keeps original basename" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/show.html.erb")
+    end
+
+    test "partial keeps original basename with underscore" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/_card.html.erb")
+    end
+
+    test "partial in components subfolder is not treated as component" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/page/components/_dropdowns.html.erb")
+    end
   end
 end
