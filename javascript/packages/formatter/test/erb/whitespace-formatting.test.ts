@@ -504,6 +504,63 @@ describe("ERB whitespace formatting", () => {
     })
   })
 
+  describe("line breaking elements and text flow", () => {
+    test("does not add line breaks after ERB tags following <br>", () => {
+      const source = dedent`
+        <p><strong>Ut enim ad minima veniam</strong><br>
+         <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet...</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).not.toContain(`<%= foo %>\n`)
+      expect(result).not.toContain(`<%= bar %>\n .`)
+    })
+
+    test("keeps period attached to ERB tag in text flow", () => {
+      const source = `<p><strong>Summary:</strong><br> Lorem ipsum <%= foo %> dolor <%= bar %>. Sit amet...</p>`
+      const result = formatter.format(source)
+
+      expect(result).not.toContain(`<%= bar %>\n.`)
+    })
+
+    test("does not separate ERB tags from surrounding text", () => {
+      const source = `Failed to <%= model.ignored? ? "unignore" : "ignore" %> model`
+      const result = formatter.format(source)
+
+      expect(result).toBe(
+        `Failed to <%= model.ignored? ? "unignore" : "ignore" %> model`,
+      )
+    })
+
+    test("preserves apostrophe with ERB tag inline", () => {
+      const source = `<p><%= user.name %>'s profile</p>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(`<p><%= user.name %>'s profile</p>`)
+    })
+
+    test("preserves possessive apostrophe after ERB tag", () => {
+      const source = `Waiting for <%= contractor.name.first_or_business %>'s signature.`
+      const result = formatter.format(source)
+
+      expect(result).toBe(
+        `Waiting for <%= contractor.name.first_or_business %>'s signature.`,
+      )
+    })
+
+    test("handles long text with ERB tags after <br>", () => {
+      const source = dedent`
+        <p><strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).not.toContain(`<%= foo %>\n  sed`)
+      expect(result).not.toContain(`<%= bar %>\n  .`)
+      expect(result).toContain(`<%= bar %>. Lorem`)
+    })
+  })
+
   describe("shared utility validation", () => {
     test("demonstrates consistent ERB content formatting where it applies", () => {
       const erbContentCases = [
