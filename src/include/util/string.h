@@ -1,5 +1,5 @@
-#ifndef HERB_STR_UTILS_H
-#define HERB_STR_UTILS_H
+#ifndef HERB_UTILS_STRING_H
+#define HERB_UTILS_STRING_H
 
 #include <stdbool.h>
 #include <string.h>
