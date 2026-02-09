@@ -266,7 +266,7 @@
     "@herb-tools/linter": "0.8.9",
     "@herb-tools/node-wasm": "0.8.9",
     "@types/node": "25.x",
-    "@types/vscode": "^1.43.0",
+    "@types/vscode": "^1.109.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vscode/test-cli": "^0.0.12",
