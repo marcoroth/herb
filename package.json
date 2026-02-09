@@ -21,7 +21,7 @@
     "dedent": "^1.7.0",
     "esbuild-plugin-copy": "^2.1.1",
     "nx": "22.4.4",
-    "oxlint": "^1.39.0",
+    "oxlint": "^1.43.0",
     "picomatch": "^4.0.2",
     "playwright": "^1.58.1",
     "prettier": "^3.8.1",
