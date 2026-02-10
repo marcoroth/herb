@@ -1591,6 +1591,131 @@ describe("@herb-tools/formatter", () => {
     expect(result).toBe(input)
   })
 
+  test("ERB output with squiggly heredoc", () => {
+    const input = dedent`
+      <%= <<~HEREDOC
+        example
+      HEREDOC
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with hyphen heredoc", () => {
+    const input = dedent`
+      <%= <<-HEREDOC
+      example
+      HEREDOC
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with single-quoted heredoc", () => {
+    const input = dedent`
+      <%= <<'HEREDOC'
+      no #{interpolation}
+      HEREDOC
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with double-quoted heredoc", () => {
+    const input = dedent`
+      <%= <<"HEREDOC"
+      with #{interpolation}
+      HEREDOC
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with heredoc and method chaining", () => {
+    const input = dedent`
+      <%= <<HEREDOC.strip
+      example
+      HEREDOC
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with bitshift operator", () => {
+    const input = `<%= 1 << 4 %>`
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  test("ERB output with append operator", () => {
+    const input = `<%= array << item %>`
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
+  // The heredoc is not detected because it doesn't start with "<<".
+  // See: https://github.com/marcoroth/herb/issues/476
+  // TODO: revisit once we have access to Prism nodes
+  test("ERB output with heredoc as method argument", () => {
+    const input = dedent`
+      <%= foo(<<HEREDOC)
+      example
+      HEREDOC
+      %>
+    `
+
+    const expected = dedent`
+      <%= foo(<<HEREDOC)
+      example
+      HEREDOC %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(expected)
+  })
+
+  // The heredoc is not detected because it doesn't start with "<<".
+  // See: https://github.com/marcoroth/herb/issues/476
+  // TODO: revisit once we have access to Prism nodes
+  test("ERB output with heredoc after assignment", () => {
+    const input = dedent`
+      <%= x = <<HEREDOC
+      example
+      HEREDOC
+      %>
+    `
+
+    const expected = dedent`
+      <%= x = <<HEREDOC
+      example
+      HEREDOC %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(expected)
+  })
+
   test("keeps hyphen-attached inline element together during line wrapping", () => {
     const input = dedent`
       <div>
