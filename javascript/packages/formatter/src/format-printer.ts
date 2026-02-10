@@ -285,10 +285,17 @@ export class FormatPrinter extends Printer {
 
   /**
    * Format ERB content with proper spacing around the inner content.
-   * Returns empty string if content is empty, otherwise wraps content with single spaces.
+   * Returns empty string if content is empty, otherwise adds a leading space
+   * and a trailing space (or newline for heredoc content starting with "<<").
    */
   private formatERBContent(content: string): string {
-    return content.trim() ? ` ${content.trim()} ` : ""
+    let trimmedContent = content.trim();
+
+    // See: https://github.com/marcoroth/herb/issues/476
+    // TODO: revisit once we have access to Prism nodes
+    let suffix = trimmedContent.startsWith("<<") ? "\n" : " "
+
+    return trimmedContent ? ` ${trimmedContent}${suffix}` : ""
   }
 
   /**
