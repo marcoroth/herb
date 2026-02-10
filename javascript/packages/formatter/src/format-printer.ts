@@ -288,7 +288,10 @@ export class FormatPrinter extends Printer {
    * Returns empty string if content is empty, otherwise wraps content with single spaces.
    */
   private formatERBContent(content: string): string {
-    return content.trim() ? ` ${content.trim()} ` : ""
+    let trimmedContent = content.trim();
+    // See: https://github.com/marcoroth/herb/issues/476
+    let suffix = trimmedContent.startsWith("<<") ? "\n" : " "
+    return trimmedContent ? ` ${trimmedContent}${suffix}` : ""
   }
 
   /**

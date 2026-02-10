@@ -1578,6 +1578,19 @@ describe("@herb-tools/formatter", () => {
     expect(result).toBe(expected)
   })
 
+  test("ERB output with heredoc (issue 476)", () => {
+    const input = dedent`
+      <%= <<EXAMPLE
+      example
+      EXAMPLE
+      %>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(input)
+  })
+
   test("keeps hyphen-attached inline element together during line wrapping", () => {
     const input = dedent`
       <div>
