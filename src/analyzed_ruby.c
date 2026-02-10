@@ -30,6 +30,7 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed->ensure_node_count = 0;
   analyzed->unless_node_count = 0;
   analyzed->yield_node_count = 0;
+  analyzed->then_keyword_count = 0;
   analyzed->unclosed_control_flow_count = 0;
 
   return analyzed;

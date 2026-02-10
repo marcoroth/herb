@@ -253,6 +253,8 @@ pub struct <%= node.name %> {
   <%- end -%>
   <%- when Herb::Template::ElementSourceField -%>
   pub <%= field.name %>: String,
+  <%- when Herb::Template::LocationField -%>
+  pub <%= field.name %>: Option<Location>,
   <%- end -%>
   <%- end -%>
 }
@@ -361,6 +363,8 @@ impl Node for <%= node.name %> {
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
     <%- when Herb::Template::NodeField -%>
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
+    <%- when Herb::Template::LocationField -%>
+    output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|l| format!("(location: {})", l).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));
     <%- end -%>
     <%- end -%>
     <%- else -%>

@@ -61,6 +61,15 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_value <%= field.name %> = CreateStringFromHbString(env, element_source_to_string(<%= node.human %>-><%= field.name %>));
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
+  <%- when Herb::Template::LocationField -%>
+  napi_value <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    <%= field.name %> = CreateLocation(env, *<%= node.human %>-><%= field.name %>);
+  } else {
+    napi_get_null(env, &<%= field.name %>);
+  }
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
   <%- else -%>
   napi_value <%= field.name %>;
   napi_get_null(env, &<%= field.name %>);

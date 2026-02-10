@@ -1,5 +1,8 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb, HerbBackend } from "../src"
+
+import type { ERBCaseNode, ERBWhenNode } from "../src"
 
 describe("@herb-tools/node-wasm", () => {
   beforeAll(async () => {
@@ -17,7 +20,7 @@ describe("@herb-tools/node-wasm", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node-wasm@0.8.7, @herb-tools/core@0.8.7, libprism@1.7.0, libherb@0.8.7 (WebAssembly)")
+    expect(version).toBe("@herb-tools/node-wasm@0.8.9, @herb-tools/core@0.8.9, libprism@1.9.0, libherb@0.8.9 (WebAssembly)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -97,5 +100,22 @@ describe("@herb-tools/node-wasm", () => {
     expect(result.errors).toHaveLength(0)
     expect(result.value.inspect()).toContain("@ WhitespaceNode")
     expect(result.value.inspect()).toContain('"   "')
+  })
+
+  test("parses then_keyword for when clause", () => {
+    const content = dedent`
+      <% case value %>
+      <% when String then "string" %>
+      <% end %>
+    `
+
+    const result = Herb.parse(content)
+    const caseNode = result.value.children[0] as ERBCaseNode
+    const whenNode = caseNode.conditions[0] as ERBWhenNode
+
+    expect(whenNode.then_keyword.start.line).toBe(2)
+    expect(whenNode.then_keyword.start.column).toBe(15)
+    expect(whenNode.then_keyword.end.line).toBe(2)
+    expect(whenNode.then_keyword.end.column).toBe(19)
   })
 })

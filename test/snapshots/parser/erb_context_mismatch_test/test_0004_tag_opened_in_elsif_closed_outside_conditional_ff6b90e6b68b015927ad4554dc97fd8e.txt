@@ -51,6 +51,7 @@ input: |2-
     │   │   │   │   │   ├── tag_opening: "<%" (location: (3:4)-(3:6))
     │   │   │   │   │   ├── content: " if magic == :foo " (location: (3:6)-(3:24))
     │   │   │   │   │   ├── tag_closing: "%>" (location: (3:24)-(3:26))
+    │   │   │   │   │   ├── then_keyword: ∅
     │   │   │   │   │   ├── statements: (5 items)
     │   │   │   │   │   │   ├── @ HTMLTextNode (location: (3:26)-(4:6))
     │   │   │   │   │   │   │   └── content: "\n      "
@@ -142,6 +143,7 @@ input: |2-
     │   │   │   │   │   │       ├── tag_opening: "<%" (location: (6:4)-(6:6))
     │   │   │   │   │   │       ├── content: " elsif magic == :bar " (location: (6:6)-(6:27))
     │   │   │   │   │   │       ├── tag_closing: "%>" (location: (6:27)-(6:29))
+    │   │   │   │   │   │       ├── then_keyword: ∅
     │   │   │   │   │   │       ├── statements: (5 items)
     │   │   │   │   │   │       │   ├── @ HTMLTextNode (location: (6:29)-(7:6))
     │   │   │   │   │   │       │   │   └── content: "\n      "

@@ -7,7 +7,7 @@ import { hasBalancedParentheses, splitByTopLevelComma } from "./string-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
-export const STRICT_LOCALS_PATTERN = /^locals:\s*\([\s\S]*\)\s*$/
+export const STRICT_LOCALS_PATTERN = /^locals:\s+\(.*\)\s*$/s
 
 function isValidStrictLocalsFormat(content: string): boolean {
   return STRICT_LOCALS_PATTERN.test(content)
@@ -47,6 +47,10 @@ function detectSingularLocal(content: string): boolean {
 
 function detectMissingColonBeforeParens(content: string): boolean {
   return /^locals\s+\(/.test(content)
+}
+
+function detectMissingSpaceAfterColon(content: string): boolean {
+  return /^locals:\(/.test(content)
 }
 
 function detectMissingParentheses(content: string): boolean {
@@ -237,6 +241,11 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
 
     if (detectMissingColonBeforeParens(commentContent)) {
       this.addOffense("Use `locals:` with a colon before the parentheses, not `locals (`.", node.location)
+      return
+    }
+
+    if (detectMissingSpaceAfterColon(commentContent)) {
+      this.addOffense("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.", node.location)
       return
     }
 

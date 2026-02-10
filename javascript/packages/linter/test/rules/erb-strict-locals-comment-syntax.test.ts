@@ -30,6 +30,12 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
     expectNoOffenses(`<%# locals: (callback: -> { nil }) %>`)
   })
 
+  test("allows i18n method calls with parentheses as default values", () => {
+    expectNoOffenses(`<%# locals: (title: t("translation_key_for.title"), message:) %>`)
+    expectNoOffenses(`<%# locals: (label: I18n.t("key"), value:) %>`)
+    expectNoOffenses(`<%# locals: (a: foo(bar(baz())), b:) %>`)
+  })
+
   test("allows double-splat for optional keyword arguments", () => {
     expectNoOffenses(`<%# locals: (message: "Hello", **attributes) %>`)
     expectNoOffenses(`<%# locals: (**options) %>`)
@@ -69,6 +75,22 @@ describe("ERBStrictLocalsCommentSyntaxRule", () => {
 
     assertOffenses(dedent`
       <%# locals (user:) %>
+    `)
+  })
+
+  test("flags missing space after colon", () => {
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+
+    assertOffenses(dedent`
+      <%# locals:() %>
+    `)
+  })
+
+  test("flags missing space after colon with locals", () => {
+    expectError("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.")
+
+    assertOffenses(dedent`
+      <%# locals:(title:) %>
     `)
   })
 

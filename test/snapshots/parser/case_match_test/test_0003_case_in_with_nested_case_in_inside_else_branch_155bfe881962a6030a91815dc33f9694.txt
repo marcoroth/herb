@@ -28,6 +28,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in { type: "primary" } " (location: (2:2)-(2:26))
     │   │       ├── tag_closing: "%>" (location: (2:26)-(2:28))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:28)-(3:2))
     │   │           │   └── content: "\n  "
@@ -82,6 +83,7 @@ input: |2-
     │   │           │   │   │   ├── tag_opening: "<%" (location: (6:2)-(6:4))
     │   │           │   │   │   ├── content: " in { status: "ok" } " (location: (6:4)-(6:25))
     │   │           │   │   │   ├── tag_closing: "%>" (location: (6:25)-(6:27))
+    │   │           │   │   │   ├── then_keyword: ∅
     │   │           │   │   │   └── statements: (3 items)
     │   │           │   │   │       ├── @ HTMLTextNode (location: (6:27)-(7:4))
     │   │           │   │   │       │   └── content: "\n    "
@@ -118,6 +120,7 @@ input: |2-
     │   │           │   │       ├── tag_opening: "<%" (location: (8:2)-(8:4))
     │   │           │   │       ├── content: " in { status: "error" } " (location: (8:4)-(8:28))
     │   │           │   │       ├── tag_closing: "%>" (location: (8:28)-(8:30))
+    │   │           │   │       ├── then_keyword: ∅
     │   │           │   │       └── statements: (3 items)
     │   │           │   │           ├── @ HTMLTextNode (location: (8:30)-(9:4))
     │   │           │   │           │   └── content: "\n    "

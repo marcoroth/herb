@@ -98,6 +98,12 @@ import type { ERBNode } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 
 /**
+ * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
+ * characters like NBSP (U+00A0) and full-width space (U+3000)
+ */
+const ASCII_WHITESPACE = /[ \t\n\r]+/g
+
+/**
  * Printer traverses the Herb AST using the Visitor pattern
  * and emits a formatted string with proper indentation, line breaks, and attribute wrapping.
  */
@@ -279,10 +285,17 @@ export class FormatPrinter extends Printer {
 
   /**
    * Format ERB content with proper spacing around the inner content.
-   * Returns empty string if content is empty, otherwise wraps content with single spaces.
+   * Returns empty string if content is empty, otherwise adds a leading space
+   * and a trailing space (or newline for heredoc content starting with "<<").
    */
   private formatERBContent(content: string): string {
-    return content.trim() ? ` ${content.trim()} ` : ""
+    let trimmedContent = content.trim();
+
+    // See: https://github.com/marcoroth/herb/issues/476
+    // TODO: revisit once we have access to Prism nodes
+    let suffix = trimmedContent.startsWith("<<") ? "\n" : " "
+
+    return trimmedContent ? ` ${trimmedContent}${suffix}` : ""
   }
 
   /**
@@ -551,7 +564,7 @@ export class FormatPrinter extends Printer {
   }
 
   private wouldClassAttributeBeMultiline(content: string, indentLength: number): boolean {
-    const normalizedContent = content.replace(/\s+/g, ' ').trim()
+    const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
     const hasActualNewlines = /\r?\n/.test(content)
 
     if (hasActualNewlines && normalizedContent.length > 80) {
@@ -601,7 +614,7 @@ export class FormatPrinter extends Printer {
           const name = attribute.name ? getCombinedAttributeName(attribute.name) : ""
 
           if (name === "class") {
-            const normalizedContent = content.replace(/\s+/g, ' ').trim()
+            const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
 
             return normalizedContent.length > 80
           }
@@ -609,7 +622,7 @@ export class FormatPrinter extends Printer {
           const lines = content.split(/\r?\n/)
 
           if (lines.length > 1) {
-            return lines.slice(1).some(line => /^\s+/.test(line))
+            return lines.slice(1).some(line => /^[ \t\n\r]+/.test(line))
           }
         }
       }
@@ -619,7 +632,7 @@ export class FormatPrinter extends Printer {
   }
 
   private formatClassAttribute(content: string, name: string, equals: string, open_quote: string, close_quote: string): string {
-    const normalizedContent = content.replace(/\s+/g, ' ').trim()
+    const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
     const hasActualNewlines = /\r?\n/.test(content)
 
     if (hasActualNewlines && normalizedContent.length > 80) {
@@ -658,7 +671,7 @@ export class FormatPrinter extends Printer {
 
   private formatMultilineAttribute(content: string, name: string, open_quote: string, close_quote: string): string {
     if (name === 'srcset' || name === 'sizes') {
-      const normalizedContent = content.replace(/\s+/g, ' ').trim()
+      const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
 
       return open_quote + normalizedContent + close_quote
     }
@@ -899,7 +912,7 @@ export class FormatPrinter extends Printer {
         nodesToRender.forEach(child => {
           if (isNode(child, HTMLTextNode)) {
             if (hasTextFlow) {
-              const normalizedContent = child.content.replace(/\s+/g, ' ')
+              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
 
               if (normalizedContent && normalizedContent !== ' ') {
                 this.push(normalizedContent)
@@ -907,7 +920,7 @@ export class FormatPrinter extends Printer {
                 this.push(' ')
               }
             } else {
-              const normalizedContent = child.content.replace(/\s+/g, ' ')
+              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
 
               if (shouldPreserveSpaces && normalizedContent) {
                 this.push(normalizedContent)
@@ -932,8 +945,8 @@ export class FormatPrinter extends Printer {
       const content = lines.join('')
 
       const inlineContent = shouldPreserveSpaces
-        ? (hasTextFlow ? content.replace(/\s+/g, ' ') : content)
-        : (hasTextFlow ? content.replace(/\s+/g, ' ').trim() : content.trim())
+        ? (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content)
+        : (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ').trim() : content.trim())
 
       if (inlineContent) {
         this.pushToLastLine(inlineContent)
@@ -1177,7 +1190,7 @@ export class FormatPrinter extends Printer {
 
   visitHTMLTextNode(node: HTMLTextNode) {
     if (this.inlineMode) {
-      const normalizedContent = node.content.replace(/\s+/g, ' ').trim()
+      const normalizedContent = node.content.replace(ASCII_WHITESPACE, ' ').trim()
 
       if (normalizedContent) {
         this.push(normalizedContent)
@@ -1191,7 +1204,7 @@ export class FormatPrinter extends Printer {
     if (!text) return
 
     const wrapWidth = this.maxLineLength - this.indent.length
-    const words = text.split(/\s+/)
+    const words = text.split(/[ \t\n\r]+/)
     const lines: string[] = []
 
     let line = ""
@@ -1813,7 +1826,7 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    const words = restText.split(/\s+/)
+    const words = restText.split(/[ \t\n\r]+/)
     let toMerge = punctuation
     let mergedWordCount = 0
 
@@ -1999,7 +2012,7 @@ export class FormatPrinter extends Printer {
       } else if (unit.isAtomic) {
         words.push({ word: unit.content, isHerbDisable: unit.isHerbDisable || false })
       } else {
-        const text = unit.content.replace(/\s+/g, ' ')
+        const text = unit.content.replace(ASCII_WHITESPACE, ' ')
         const hasLeadingSpace = text.startsWith(' ')
         const hasTrailingSpace = text.endsWith(' ')
         const trimmedText = text.trim()
@@ -2055,7 +2068,7 @@ export class FormatPrinter extends Printer {
     const firstWord = words[0]
     const firstChar = firstWord[0]
 
-    if (/\s/.test(firstChar)) {
+    if (' \t\n\r'.includes(firstChar)) {
       return false
     }
 
@@ -2125,7 +2138,7 @@ export class FormatPrinter extends Printer {
       return true
     }
 
-    if (isNode(currentNode, HTMLTextNode) && /^\s/.test(currentNode.content)) {
+    if (isNode(currentNode, HTMLTextNode) && /^[ \t\n\r]/.test(currentNode.content)) {
       return true
     }
 
@@ -2542,9 +2555,9 @@ export class FormatPrinter extends Printer {
 
     for (const child of children) {
       if (isNode(child, HTMLTextNode)) {
-        const normalizedContent = child.content.replace(/\s+/g, ' ')
-        const hasLeadingSpace = /^\s/.test(child.content)
-        const hasTrailingSpace = /\s$/.test(child.content)
+        const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
+        const hasLeadingSpace = /^[ \t\n\r]/.test(child.content)
+        const hasTrailingSpace = /[ \t\n\r]$/.test(child.content)
         const trimmedContent = normalizedContent.trim()
 
         if (trimmedContent) {
@@ -2675,6 +2688,6 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    return content.replace(/\s+/g, ' ').trim()
+    return content.replace(ASCII_WHITESPACE, ' ').trim()
   }
 }

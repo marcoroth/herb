@@ -51,6 +51,8 @@ module Herb
 
     def add_expression_block_result_escaped: (untyped code) -> untyped
 
+    def comment_aware_newline: (untyped code) -> untyped
+
     def add_postamble: (untyped postamble) -> untyped
 
     def with_buffer: () ?{ (?) -> untyped } -> untyped

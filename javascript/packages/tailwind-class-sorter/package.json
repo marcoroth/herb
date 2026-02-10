@@ -2,7 +2,7 @@
   "type": "module",
   "name": "@herb-tools/tailwind-class-sorter",
   "description": "Standalone Tailwind CSS class sorter with Prettier plugin compatibility, extracted from tailwindlabs/prettier-plugin-tailwindcss",
-  "version": "0.8.7",
+  "version": "0.8.9",
   "license": "MIT",
   "main": "./dist/tailwind-class-sorter.cjs",
   "module": "./dist/tailwind-class-sorter.esm.js",
@@ -46,7 +46,7 @@
     "postcss-import": "^16.1.1"
   },
   "devDependencies": {
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.2.2",
     "dedent": "^1.7.0",
     "esbuild": "^0.27.1",
     "rimraf": "^6.1.2",

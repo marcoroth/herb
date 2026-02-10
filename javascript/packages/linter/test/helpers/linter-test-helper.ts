@@ -61,7 +61,7 @@ interface LinterTestHelpers {
  * })
  * ```
  */
-export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelpers {
+export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?: Record<string, any>): LinterTestHelpers {
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
   let hasAsserted = false
@@ -70,6 +70,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
   const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const ruleConfigOverride = configOverride
 
   beforeAll(async () => {
     await Herb.load()
@@ -129,7 +130,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = instance.name === ruleInstance.name
+      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({
@@ -205,7 +209,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = instance.name === ruleInstance.name
+      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({

@@ -9,8 +9,10 @@
 #include "include/io.h"
 #include "include/ruby_parser.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/string.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -34,22 +36,22 @@ void print_time_diff(const struct timespec start, const struct timespec end, con
 
 int main(const int argc, char* argv[]) {
   if (argc < 2) {
-    printf("./herb [command] [options]\n\n");
+    puts("./herb [command] [options]\n");
 
-    printf("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n\n");
+    puts("Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.\n");
 
-    printf("./herb lex [file]      -  Lex a file\n");
-    printf("./herb parse [file]    -  Parse a file\n");
-    printf("./herb ruby [file]     -  Extract Ruby from a file\n");
-    printf("./herb html [file]     -  Extract HTML from a file\n");
-    printf("./herb prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism\n");
+    puts("./herb lex [file]      -  Lex a file");
+    puts("./herb parse [file]    -  Parse a file");
+    puts("./herb ruby [file]     -  Extract Ruby from a file");
+    puts("./herb html [file]     -  Extract HTML from a file");
+    puts("./herb prism [file]    -  Extract Ruby from a file and parse the Ruby source with Prism");
 
-    return 1;
+    return EXIT_FAILURE;
   }
 
   if (argc < 3) {
-    printf("Please specify input file.\n");
-    return 1;
+    puts("Please specify input file.");
+    return EXIT_FAILURE;
   }
 
   hb_buffer_T output;
@@ -61,38 +63,20 @@ int main(const int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  if (strcmp(argv[1], "visit") == 0) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
-    clock_gettime(CLOCK_MONOTONIC, &end);
-
-    herb_analyze_parse_tree(root, source);
-
-    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
-    printf("%s\n", output.value);
-
-    print_time_diff(start, end, "visiting");
-
-    ast_node_free((AST_NODE_T*) root);
-    free(output.value);
-    free(source);
-
-    return 0;
-  }
-
-  if (strcmp(argv[1], "lex") == 0) {
+  if (string_equals(argv[1], "lex")) {
     herb_lex_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s\n", output.value);
+    puts(output.value);
     print_time_diff(start, end, "lexing");
 
     free(output.value);
     free(source);
 
-    return 0;
+    return EXIT_SUCCESS;
   }
 
-  if (strcmp(argv[1], "parse") == 0) {
+  if (string_equals(argv[1], "parse")) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
 
     herb_analyze_parse_tree(root, source);
@@ -100,11 +84,11 @@ int main(const int argc, char* argv[]) {
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     int silent = 0;
-    if (argc > 3 && strcmp(argv[3], "--silent") == 0) { silent = 1; }
+    if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
 
     if (!silent) {
       ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
-      printf("%s\n", output.value);
+      puts(output.value);
 
       print_time_diff(start, end, "parsing");
     }
@@ -113,36 +97,36 @@ int main(const int argc, char* argv[]) {
     free(output.value);
     free(source);
 
-    return 0;
+    return EXIT_SUCCESS;
   }
 
-  if (strcmp(argv[1], "ruby") == 0) {
+  if (string_equals(argv[1], "ruby")) {
     herb_extract_ruby_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s\n", output.value);
+    puts(output.value);
     print_time_diff(start, end, "extracting Ruby");
 
     free(output.value);
     free(source);
 
-    return 0;
+    return EXIT_SUCCESS;
   }
 
-  if (strcmp(argv[1], "html") == 0) {
+  if (string_equals(argv[1], "html")) {
     herb_extract_html_to_buffer(source, &output);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    printf("%s\n", output.value);
+    puts(output.value);
     print_time_diff(start, end, "extracting HTML");
 
     free(output.value);
     free(source);
 
-    return 0;
+    return EXIT_SUCCESS;
   }
 
-  if (strcmp(argv[1], "prism") == 0) {
+  if (string_equals(argv[1], "prism")) {
     printf("HTML+ERB File: \n%s\n", source);
 
     char* ruby_source = herb_extract(source, HERB_EXTRACT_LANGUAGE_RUBY);
@@ -150,9 +134,13 @@ int main(const int argc, char* argv[]) {
 
     herb_parse_ruby_to_stdout(ruby_source);
 
-    return 0;
+    free(ruby_source);
+    free(output.value);
+    free(source);
+
+    return EXIT_SUCCESS;
   }
 
   printf("Unknown Command: %s\n", argv[1]);
-  return 1;
+  return EXIT_FAILURE;
 }

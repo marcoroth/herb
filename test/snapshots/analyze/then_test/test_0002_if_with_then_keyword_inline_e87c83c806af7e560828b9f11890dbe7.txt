@@ -1,0 +1,36 @@
+---
+source: "Analyze::ThenTest#test_0002_if with then keyword inline"
+input: |2-
+<% if condition then do_something %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (1:36)-(2:0))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:3)-(1:5))
+│       ├── message: "conditional_term: expected an `end` to close the conditional clause"
+│       ├── error_message: "expected an `end` to close the conditional clause"
+│       ├── diagnostic_id: "conditional_term"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBIfNode (location: (1:0)-(2:0))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:36))
+        │       ├── message: "`<% if %>` started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "`<% if %>`"
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if condition then do_something " (location: (1:2)-(1:34))
+        ├── tag_closing: "%>" (location: (1:34)-(1:36))
+        ├── then_keyword: (location: (1:16)-(1:20))
+        ├── statements: (1 item)
+        │   └── @ HTMLTextNode (location: (1:36)-(2:0))
+        │       └── content: "\n"
+        │
+        ├── subsequent: ∅
+        └── end_node: ∅

@@ -528,6 +528,90 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("Directory Scoping (issue #1045)", () => {
+    const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/directory-scoping-test"
+
+    function runLinterFromPath(filePath: string): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${filePath} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("only processes files within the specified directory", () => {
+      try {
+        // Create directory structure:
+        // tempDir/
+        //   .herb.yml
+        //   public/
+        //     file.html.erb (should NOT be processed)
+        //   app/
+        //     views/
+        //       file.html.erb (should be processed)
+        mkdirSync(join(tempDir, "public"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.9
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "public/file.html.erb"), `<img src="test.png" alt="test">\n`)
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<div>clean file</div>\n`)
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views"))
+
+        expect(output).toContain("Checked      1 file")
+        expect(output).not.toContain("public/file.html.erb")
+        expect(exitCode).toBe(0)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("processes all files when run from project root", () => {
+      try {
+        mkdirSync(join(tempDir, "public"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.9
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "public/file.html.erb"), `<div>public file</div>\n`)
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<div>views file</div>\n`)
+
+        const { output, exitCode } = runLinterFromPath(tempDir)
+
+        expect(output).toContain("Checked      2 files")
+        expect(exitCode).toBe(0)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+  })
+
   describe("Custom Rules from Project Root (issue #908)", () => {
     const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
     const { join } = require("path")
@@ -558,7 +642,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.7
+          version: 0.8.9
           linter:
             enabled: true
         `)

@@ -5,6 +5,7 @@ import { Linter } from "@herb-tools/linter"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { LintResult } from "@herb-tools/linter"
+import type { FormatOptions } from "@herb-tools/formatter"
 
 async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   try {
@@ -15,7 +16,7 @@ async function safeExecute<T>(promise: Promise<T>): Promise<T> {
   }
 }
 
-export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: { ignoreErrors?: boolean } = {}) {
+export async function analyze(herb: HerbBackend, source: string, options: ParserOptions = {}, printerOptions: { ignoreErrors?: boolean } = {}, formatterOptions: FormatOptions = {}) {
   const startTime = performance.now()
 
   const parseResult = await safeExecute<ParseResult>(
@@ -53,7 +54,7 @@ export async function analyze(herb: HerbBackend, source: string, options: Parser
   )
 
   const formatted = await safeExecute<string>(
-    new Promise((resolve) => resolve((new Formatter(herb, {})).format(source))),
+    new Promise((resolve) => resolve((new Formatter(herb, formatterOptions)).format(source))),
   )
 
   const printed = await safeExecute<string>(

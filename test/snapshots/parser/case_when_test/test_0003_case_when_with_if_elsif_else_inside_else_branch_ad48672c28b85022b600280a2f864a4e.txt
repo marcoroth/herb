@@ -29,6 +29,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :active " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:18)-(3:2))
     │   │           │   └── content: "\n  "
@@ -74,6 +75,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
     │   │           │   ├── content: " if admin? " (location: (5:4)-(5:15))
     │   │           │   ├── tag_closing: "%>" (location: (5:15)-(5:17))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (3 items)
     │   │           │   │   ├── @ HTMLTextNode (location: (5:17)-(6:4))
     │   │           │   │   │   └── content: "\n    "
@@ -110,6 +112,7 @@ input: |2-
     │   │           │   │       ├── tag_opening: "<%" (location: (7:2)-(7:4))
     │   │           │   │       ├── content: " elsif moderator? " (location: (7:4)-(7:22))
     │   │           │   │       ├── tag_closing: "%>" (location: (7:22)-(7:24))
+    │   │           │   │       ├── then_keyword: ∅
     │   │           │   │       ├── statements: (3 items)
     │   │           │   │       │   ├── @ HTMLTextNode (location: (7:24)-(8:4))
     │   │           │   │       │   │   └── content: "\n    "

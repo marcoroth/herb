@@ -14,6 +14,7 @@
 #include "include/util.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_string.h"
+#include "include/util/string.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -34,16 +35,20 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   pm_visit_node(analyzed->root, search_until_nodes, analyzed);
   pm_visit_node(analyzed->root, search_begin_nodes, analyzed);
   pm_visit_node(analyzed->root, search_unless_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_when_nodes, analyzed);
+  pm_visit_node(analyzed->root, search_in_nodes, analyzed);
 
-  search_elsif_nodes(analyzed);
-  search_else_nodes(analyzed);
-  search_end_nodes(analyzed);
-  search_when_nodes(analyzed);
-  search_in_nodes(analyzed);
-  search_rescue_nodes(analyzed);
-  search_ensure_nodes(analyzed);
+  search_unexpected_elsif_nodes(analyzed);
+  search_unexpected_else_nodes(analyzed);
+  search_unexpected_end_nodes(analyzed);
+  search_unexpected_when_nodes(analyzed);
+  search_unexpected_in_nodes(analyzed);
+
+  search_unexpected_rescue_nodes(analyzed);
+  search_unexpected_ensure_nodes(analyzed);
   search_yield_nodes(analyzed->root, analyzed);
-  search_block_closing_nodes(analyzed);
+  search_then_keywords(analyzed->root, analyzed);
+  search_unexpected_block_closing_nodes(analyzed);
 
   if (!analyzed->valid) { pm_visit_node(analyzed->root, search_unclosed_control_flows, analyzed); }
 
@@ -56,8 +61,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
     const char* opening = erb_content_node->tag_opening->value;
 
-    if (strcmp(opening, "<%%") != 0 && strcmp(opening, "<%%=") != 0 && strcmp(opening, "<%#") != 0
-        && strcmp(opening, "<%graphql") != 0) {
+    if (!string_equals(opening, "<%%") && !string_equals(opening, "<%%=") && !string_equals(opening, "<%#")
+        && !string_equals(opening, "<%graphql")) {
       analyzed_ruby_T* analyzed = herb_analyze_ruby(hb_string(erb_content_node->content->value));
 
       erb_content_node->parsed = true;
@@ -66,6 +71,16 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
 
       if (!analyzed->valid && analyzed->unclosed_control_flow_count >= 2) {
         append_erb_multiple_blocks_in_tag_error(
+          erb_content_node->base.location.start,
+          erb_content_node->base.location.end,
+          erb_content_node->base.errors
+        );
+      }
+
+      if (!analyzed->valid
+          && ((analyzed->case_node_count > 0 && analyzed->when_node_count > 0)
+              || (analyzed->case_match_node_count > 0 && analyzed->in_node_count > 0))) {
+        append_erb_case_with_conditions_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
           erb_content_node->base.errors
@@ -111,6 +126,14 @@ typedef struct {
   earliest_control_keyword_t* result;
   const uint8_t* source_start;
 } location_walker_context_t;
+
+static bool control_type_is_block(control_type_t type) {
+  return type == CONTROL_TYPE_BLOCK;
+}
+
+static bool control_type_is_yield(control_type_t type) {
+  return type == CONTROL_TYPE_YIELD;
+}
 
 static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* data) {
   if (!node) { return true; }
@@ -194,14 +217,12 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
 
       if (call->block != NULL && call->block->type == PM_BLOCK_NODE) {
         pm_block_node_t* block_node = (pm_block_node_t*) call->block;
-        size_t opening_length = block_node->opening_loc.end - block_node->opening_loc.start;
-        bool has_do_opening =
-          opening_length == 2 && block_node->opening_loc.start[0] == 'd' && block_node->opening_loc.start[1] == 'o';
-        bool has_brace_opening = opening_length == 1 && block_node->opening_loc.start[0] == '{';
-        bool has_closing_location = block_node->closing_loc.start != NULL && block_node->closing_loc.end != NULL
-                                 && (block_node->closing_loc.end - block_node->closing_loc.start) > 0;
 
-        if (has_do_opening || (has_brace_opening && !has_closing_location)) {
+        bool has_do_opening = is_do_block(block_node->opening_loc);
+        bool has_brace_opening = is_brace_block(block_node->opening_loc);
+        bool has_valid_brace_closing = is_closing_brace(block_node->closing_loc);
+
+        if (has_do_opening || (has_brace_opening && !has_valid_brace_closing)) {
           current_type = CONTROL_TYPE_BLOCK;
           keyword_offset = (uint32_t) (node->location.start - context->source_start);
         }
@@ -221,7 +242,17 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
   }
 
   if (keyword_offset != UINT32_MAX) {
-    if (!result->found || keyword_offset < result->offset) {
+    bool should_update = !result->found;
+
+    if (result->found) {
+      if (control_type_is_block(current_type) && control_type_is_yield(result->type)) {
+        should_update = true;
+      } else if (!(control_type_is_yield(current_type) && control_type_is_block(result->type))) {
+        should_update = keyword_offset < result->offset;
+      }
+    }
+
+    if (should_update) {
       result->type = current_type;
       result->offset = keyword_offset;
       result->found = true;
@@ -257,11 +288,13 @@ static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (has_elsif_node(ruby)) { return CONTROL_TYPE_ELSIF; }
   if (has_else_node(ruby)) { return CONTROL_TYPE_ELSE; }
   if (has_end(ruby)) { return CONTROL_TYPE_END; }
-  if (has_when_node(ruby)) { return CONTROL_TYPE_WHEN; }
-  if (has_in_node(ruby)) { return CONTROL_TYPE_IN; }
+  if (has_when_node(ruby) && !has_case_node(ruby)) { return CONTROL_TYPE_WHEN; }
+  if (has_in_node(ruby) && !has_case_match_node(ruby)) { return CONTROL_TYPE_IN; }
   if (has_rescue_node(ruby)) { return CONTROL_TYPE_RESCUE; }
   if (has_ensure_node(ruby)) { return CONTROL_TYPE_ENSURE; }
   if (has_block_closing(ruby)) { return CONTROL_TYPE_BLOCK_CLOSE; }
+
+  if (ruby->unclosed_control_flow_count == 0 && !has_yield_node(ruby)) { return CONTROL_TYPE_UNKNOWN; }
 
   return find_earliest_control_keyword(root, ruby->parser.start);
 }
@@ -319,6 +352,34 @@ static AST_NODE_T* create_control_node(
   token_T* content = erb_node->content;
   token_T* tag_closing = erb_node->tag_closing;
 
+  location_T* then_keyword = NULL;
+
+  if (control_type == CONTROL_TYPE_IF || control_type == CONTROL_TYPE_ELSIF || control_type == CONTROL_TYPE_UNLESS
+      || control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
+    const char* source = content ? content->value : NULL;
+
+    if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
+      if (source != NULL && strstr(source, "then") != NULL) {
+        then_keyword = get_then_keyword_location_wrapped(source, control_type == CONTROL_TYPE_IN);
+      }
+    } else if (control_type == CONTROL_TYPE_ELSIF) {
+      if (source != NULL && strstr(source, "then") != NULL) {
+        then_keyword = get_then_keyword_location_elsif_wrapped(source);
+      }
+    } else {
+      then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source);
+    }
+
+    if (then_keyword != NULL && content != NULL) {
+      position_T content_start = content->location.start;
+
+      then_keyword->start.line = content_start.line + then_keyword->start.line - 1;
+      then_keyword->start.column = content_start.column + then_keyword->start.column;
+      then_keyword->end.line = content_start.line + then_keyword->end.line - 1;
+      then_keyword->end.column = content_start.column + then_keyword->end.column;
+    }
+  }
+
   switch (control_type) {
     case CONTROL_TYPE_IF:
     case CONTROL_TYPE_ELSIF: {
@@ -326,6 +387,7 @@ static AST_NODE_T* create_control_node(
         tag_opening,
         content,
         tag_closing,
+        then_keyword,
         children,
         subsequent,
         end_node,
@@ -398,15 +460,29 @@ static AST_NODE_T* create_control_node(
     }
 
     case CONTROL_TYPE_WHEN: {
-      return (
-        AST_NODE_T*
-      ) ast_erb_when_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (AST_NODE_T*) ast_erb_when_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        then_keyword,
+        children,
+        start_position,
+        end_position,
+        errors
+      );
     }
 
     case CONTROL_TYPE_IN: {
-      return (
-        AST_NODE_T*
-      ) ast_erb_in_node_init(tag_opening, content, tag_closing, children, start_position, end_position, errors);
+      return (AST_NODE_T*) ast_erb_in_node_init(
+        tag_opening,
+        content,
+        tag_closing,
+        then_keyword,
+        children,
+        start_position,
+        end_position,
+        errors
+      );
     }
 
     case CONTROL_TYPE_BEGIN: {
@@ -471,6 +547,7 @@ static AST_NODE_T* create_control_node(
         tag_opening,
         content,
         tag_closing,
+        then_keyword,
         children,
         else_clause,
         end_node,
@@ -599,10 +676,27 @@ static size_t process_control_structure(
         hb_array_T* when_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
 
+        location_T* then_keyword = NULL;
+        const char* source = erb_content->content ? erb_content->content->value : NULL;
+
+        if (source != NULL && strstr(source, "then") != NULL) {
+          then_keyword = get_then_keyword_location_wrapped(source, false);
+
+          if (then_keyword != NULL && erb_content->content != NULL) {
+            position_T content_start = erb_content->content->location.start;
+
+            then_keyword->start.line = content_start.line + then_keyword->start.line - 1;
+            then_keyword->start.column = content_start.column + then_keyword->start.column;
+            then_keyword->end.line = content_start.line + then_keyword->end.line - 1;
+            then_keyword->end.column = content_start.column + then_keyword->end.column;
+          }
+        }
+
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
           erb_content->tag_opening,
           erb_content->content,
           erb_content->tag_closing,
+          then_keyword,
           when_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,
@@ -623,10 +717,27 @@ static size_t process_control_structure(
         hb_array_T* in_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
 
+        location_T* in_then_keyword = NULL;
+        const char* in_source = erb_content->content ? erb_content->content->value : NULL;
+
+        if (in_source != NULL && strstr(in_source, "then") != NULL) {
+          in_then_keyword = get_then_keyword_location_wrapped(in_source, true);
+
+          if (in_then_keyword != NULL && erb_content->content != NULL) {
+            position_T content_start = erb_content->content->location.start;
+
+            in_then_keyword->start.line = content_start.line + in_then_keyword->start.line - 1;
+            in_then_keyword->start.column = content_start.column + in_then_keyword->start.column;
+            in_then_keyword->end.line = content_start.line + in_then_keyword->end.line - 1;
+            in_then_keyword->end.column = content_start.column + in_then_keyword->end.column;
+          }
+        }
+
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
           erb_content->tag_opening,
           erb_content->content,
           erb_content->tag_closing,
+          in_then_keyword,
           in_statements,
           erb_content->tag_opening->location.start,
           erb_content->tag_closing->location.end,

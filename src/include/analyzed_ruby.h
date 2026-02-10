@@ -29,6 +29,7 @@ typedef struct ANALYZED_RUBY_STRUCT {
   int ensure_node_count;
   int unless_node_count;
   int yield_node_count;
+  int then_keyword_count;
   int unclosed_control_flow_count;
 } analyzed_ruby_T;
 

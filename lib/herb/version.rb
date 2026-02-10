@@ -2,5 +2,5 @@
 # typed: true
 
 module Herb
-  VERSION = "0.8.7"
+  VERSION = "0.8.9"
 end

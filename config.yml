@@ -178,6 +178,13 @@ errors:
 
       fields: []
 
+    - name: ERBCaseWithConditionsError
+      message:
+        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        arguments: []
+
+      fields: []
+
 warnings:
   fields: []
   types: []
@@ -425,6 +432,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -478,6 +488,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         # - name: conditions
         #   type: array
@@ -699,6 +712,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -735,6 +751,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         - name: statements
           type: array

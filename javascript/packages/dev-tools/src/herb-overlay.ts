@@ -157,7 +157,7 @@ export class HerbOverlay {
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbToggleViewOutlines" class="herb-toggle-input">
               <span class="herb-toggle-switch"></span>
-              <span class="herb-toggle-text">Show View Outlines</span>
+              <span class="herb-toggle-text herb-outline-preview herb-outline-view">View Outlines</span>
             </label>
           </div>
 
@@ -165,7 +165,7 @@ export class HerbOverlay {
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbTogglePartialOutlines" class="herb-toggle-input">
               <span class="herb-toggle-switch"></span>
-              <span class="herb-toggle-text">Show Partial Outlines</span>
+              <span class="herb-toggle-text herb-outline-preview herb-outline-partial">Partial Outlines</span>
             </label>
           </div>
 
@@ -173,7 +173,7 @@ export class HerbOverlay {
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbToggleComponentOutlines" class="herb-toggle-input">
               <span class="herb-toggle-switch"></span>
-              <span class="herb-toggle-text">Show Component Outlines</span>
+              <span class="herb-toggle-text herb-outline-preview herb-outline-component">Component Outlines</span>
             </label>
           </div>
 
@@ -181,7 +181,7 @@ export class HerbOverlay {
             <label class="herb-toggle-label">
               <input type="checkbox" id="herbToggleERBOutlines" class="herb-toggle-input">
               <span class="herb-toggle-switch"></span>
-              <span class="herb-toggle-text">Show ERB Output Outlines</span>
+              <span class="herb-toggle-text herb-outline-preview herb-outline-erb">ERB Output Outlines</span>
             </label>
 
             <div class="herb-nested-toggle" id="herbERBHoverRevealNested" style="display: none;">

@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb, HerbBackend } from "../src/index-esm.mjs"
 
@@ -17,7 +18,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.8.7, @herb-tools/core@0.8.7, libprism@1.7.0, libherb@0.8.7 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.8.9, @herb-tools/core@0.8.9, libprism@1.9.0, libherb@0.8.9 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -97,5 +98,23 @@ describe("@herb-tools/node", () => {
     expect(result.errors).toHaveLength(0)
     expect(result.value.inspect()).toContain("@ WhitespaceNode")
     expect(result.value.inspect()).toContain('"   "')
+  })
+
+  test("parses then_keyword for when clause", () => {
+    const content = dedent`
+      <% case value %>
+      <% when String then "string" %>
+      <% end %>
+    `
+
+    const result = Herb.parse(content)
+    const caseNode = result.value.children[0] as any
+    const whenNode = caseNode.conditions[0]
+
+    expect(whenNode.then_keyword).toBeDefined()
+    expect(whenNode.then_keyword.start.line).toBe(2)
+    expect(whenNode.then_keyword.start.column).toBe(15)
+    expect(whenNode.then_keyword.end.line).toBe(2)
+    expect(whenNode.then_keyword.end.column).toBe(19)
   })
 })

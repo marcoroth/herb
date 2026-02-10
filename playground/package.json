@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@alenaksu/json-viewer": "^2.0.1",
-    "@herb-tools/browser": "0.8.7",
-    "@herb-tools/formatter": "0.8.7",
-    "@herb-tools/linter": "0.8.7",
+    "@herb-tools/browser": "0.8.9",
+    "@herb-tools/formatter": "0.8.9",
+    "@herb-tools/linter": "0.8.9",
     "@hotwired/stimulus": "^3.2.2",
     "dedent": "^1.7.0",
     "express": "^5.2.1",
@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
-    "@types/node": "^25.0.3",
+    "@types/node": "^25.2.2",
     "@vitejs/plugin-vue": "^6.0.0"
   }
 }

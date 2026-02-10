@@ -1,0 +1,28 @@
+---
+source: "Analyze::IfTest#test_0019_complete if/else/end in single ERB tag should not be ERBIfNode"
+input: |2-
+<%
+  if condition
+    do_something
+  else
+    do_other
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(7:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     if condition
+    │       do_something
+    │     else
+    │       do_other
+    │     end
+    │   " (location: (1:2)-(7:0))
+    │   ├── tag_closing: "%>" (location: (7:0)-(7:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (7:2)-(8:0))
+        └── content: "\n"

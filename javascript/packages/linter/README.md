@@ -214,6 +214,32 @@ linter:
 
 The CLI flag takes precedence over the configuration file.
 
+**Autofix:**
+
+Automatically fix auto-correctable offenses:
+```bash
+npx @herb-tools/linter --fix
+```
+
+Also apply unsafe auto-fixes (implies `--fix`):
+```bash
+npx @herb-tools/linter --fix-unsafely
+```
+
+The `--fix` flag automatically corrects offenses that have safe, deterministic fixes (like formatting issues). The `--fix-unsafely` flag additionally applies fixes that may change code behavior or require manual review after application.
+
+**Safe fixes** (`--fix`):
+- Formatting corrections (whitespace, quotes, trailing newlines)
+- Syntax normalization (tag casing, attribute formatting)
+
+**Unsafe fixes** (`--fix-unsafely`):
+- Changes that may alter runtime behavior
+- Insertions that require manual completion (e.g., adding empty strict locals declarations)
+
+::: warning
+Always review changes made by `--fix-unsafely` before committing. These fixes are intentionally separated because they may require additional manual adjustments.
+:::
+
 **Help and Version:**
 ```bash
 # Show help
@@ -241,7 +267,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.9::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -256,7 +282,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.9::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]

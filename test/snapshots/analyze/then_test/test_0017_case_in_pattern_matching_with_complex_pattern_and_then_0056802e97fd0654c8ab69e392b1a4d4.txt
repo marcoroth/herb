@@ -1,0 +1,81 @@
+---
+source: "Analyze::ThenTest#test_0017_case in pattern matching with complex pattern and then"
+input: |2-
+<% case data %>
+<% in { name:, age: } then %>
+  <%= name %> is <%= age %> years old
+<% in [first, *rest] then %>
+  First: <%= first %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseMatchNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case data " (location: (1:2)-(1:13))
+    │   ├── tag_closing: "%>" (location: (1:13)-(1:15))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:15)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBInNode (location: (2:0)-(2:29))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " in { name:, age: } then " (location: (2:2)-(2:27))
+    │   │   │   ├── tag_closing: "%>" (location: (2:27)-(2:29))
+    │   │   │   ├── then_keyword: (location: (2:22)-(2:26))
+    │   │   │   └── statements: (5 items)
+    │   │   │       ├── @ HTMLTextNode (location: (2:29)-(3:2))
+    │   │   │       │   └── content: "\n  "
+    │   │   │       │
+    │   │   │       ├── @ ERBContentNode (location: (3:2)-(3:13))
+    │   │   │       │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │       │   ├── content: " name " (location: (3:5)-(3:11))
+    │   │   │       │   ├── tag_closing: "%>" (location: (3:11)-(3:13))
+    │   │   │       │   ├── parsed: true
+    │   │   │       │   └── valid: true
+    │   │   │       │
+    │   │   │       ├── @ HTMLTextNode (location: (3:13)-(3:17))
+    │   │   │       │   └── content: " is "
+    │   │   │       │
+    │   │   │       ├── @ ERBContentNode (location: (3:17)-(3:27))
+    │   │   │       │   ├── tag_opening: "<%=" (location: (3:17)-(3:20))
+    │   │   │       │   ├── content: " age " (location: (3:20)-(3:25))
+    │   │   │       │   ├── tag_closing: "%>" (location: (3:25)-(3:27))
+    │   │   │       │   ├── parsed: true
+    │   │   │       │   └── valid: true
+    │   │   │       │
+    │   │   │       └── @ HTMLTextNode (location: (3:27)-(4:0))
+    │   │   │           └── content: " years old\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBInNode (location: (4:0)-(4:28))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " in [first, *rest] then " (location: (4:2)-(4:26))
+    │   │       ├── tag_closing: "%>" (location: (4:26)-(4:28))
+    │   │       ├── then_keyword: (location: (4:21)-(4:25))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (4:28)-(5:9))
+    │   │           │   └── content: "\n  First: "
+    │   │           │
+    │   │           ├── @ ERBContentNode (location: (5:9)-(5:21))
+    │   │           │   ├── tag_opening: "<%=" (location: (5:9)-(5:12))
+    │   │           │   ├── content: " first " (location: (5:12)-(5:19))
+    │   │           │   ├── tag_closing: "%>" (location: (5:19)-(5:21))
+    │   │           │   ├── parsed: true
+    │   │           │   └── valid: true
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (5:21)-(6:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

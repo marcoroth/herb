@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 
 import type { RuleClass } from "./types.js"
 
@@ -52,7 +52,7 @@ export class CustomRuleLoader {
         const files = await glob(pattern, {
           cwd: this.baseDir,
           absolute: true,
-          nodir: true
+          onlyFiles: true
         })
 
         allFiles.push(...files)
