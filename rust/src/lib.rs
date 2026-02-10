@@ -22,4 +22,4 @@ pub use position::Position;
 pub use range::Range;
 pub use token::Token;
 
-pub const VERSION: &str = "0.8.9";
+pub const VERSION: &str = "0.8.10";
