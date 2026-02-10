@@ -297,9 +297,10 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       const char* tag = parser->current_token->value;
-      bool is_output_tag = (tag[2] == '=');
+      size_t tag_length = strlen(tag);
+      bool is_output_tag = (tag_length >= 3 && tag[2] == '=');
 
-      if (!is_output_tag) { break; }
+      if (!is_output_tag && hb_buffer_is_empty(&buffer) && hb_array_size(children) == 0) { break; }
 
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 

@@ -101,6 +101,10 @@ size_t hb_buffer_length(const hb_buffer_T* buffer) {
   return buffer->length;
 }
 
+bool hb_buffer_is_empty(const hb_buffer_T* buffer) {
+  return buffer->length == 0;
+}
+
 size_t hb_buffer_capacity(const hb_buffer_T* buffer) {
   return buffer->capacity;
 }
