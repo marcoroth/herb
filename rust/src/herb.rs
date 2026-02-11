@@ -3,6 +3,21 @@ use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
 use std::ffi::CString;
 
+#[derive(Debug, Clone)]
+pub struct ParserOptions {
+  pub track_whitespace: bool,
+  pub analyze: bool,
+}
+
+impl Default for ParserOptions {
+  fn default() -> Self {
+    Self {
+      track_whitespace: false,
+      analyze: true,
+    }
+  }
+}
+
 pub fn lex(source: &str) -> Result<LexResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
@@ -31,9 +46,19 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
 }
 
 pub fn parse(source: &str) -> Result<ParseResult, String> {
+  parse_with_options(source, &ParserOptions::default())
+}
+
+pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<ParseResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let ast = crate::ffi::herb_parse(c_source.as_ptr(), std::ptr::null_mut());
+
+    let mut c_opts = crate::bindings::parser_options_T {
+      track_whitespace: options.track_whitespace,
+      analyze: options.analyze,
+    };
+
+    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &mut c_opts);
 
     if ast.is_null() {
       return Err("Failed to parse source".to_string());

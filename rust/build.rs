@@ -103,6 +103,7 @@ fn main() {
     .allowlist_type("position_T")
     .allowlist_type("location_T")
     .allowlist_type("herb_extract_language_T")
+    .allowlist_type("parser_options_T")
     .allowlist_var("AST_.*")
     .allowlist_var("ERROR_.*")
     .allowlist_var("ELEMENT_SOURCE_.*")
