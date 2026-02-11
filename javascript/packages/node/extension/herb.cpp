@@ -83,16 +83,30 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
     if (valuetype == napi_object) {
       napi_value track_whitespace_prop;
-      bool has_prop;
-      napi_has_named_property(env, args[1], "track_whitespace", &has_prop);
+      bool has_track_whitespace_prop;
+      napi_has_named_property(env, args[1], "track_whitespace", &has_track_whitespace_prop);
 
-      if (has_prop) {
+      if (has_track_whitespace_prop) {
         napi_get_named_property(env, args[1], "track_whitespace", &track_whitespace_prop);
         bool track_whitespace_value;
         napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
 
         if (track_whitespace_value) {
           opts.track_whitespace = true;
+        }
+      }
+
+      napi_value analyze_prop;
+      bool has_analyze_prop;
+      napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
+
+      if (has_analyze_prop) {
+        napi_get_named_property(env, args[1], "analyze", &analyze_prop);
+        bool analyze_value;
+        napi_get_value_bool(env, analyze_prop, &analyze_value);
+
+        if (!analyze_value) {
+          opts.analyze = false;
         }
       }
     }

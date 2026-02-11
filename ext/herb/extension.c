@@ -5,7 +5,6 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
-
 VALUE mHerb;
 VALUE cPosition;
 VALUE cLocation;
@@ -51,9 +50,12 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
 
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) {
-      opts.track_whitespace = true;
-    }
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { opts.track_whitespace = true; }
+
+    VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
+    if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
+
+    if (!NIL_P(analyze) && !RTEST(analyze)) { opts.analyze = false; }
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, &opts);

@@ -39,6 +39,17 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
         opts.track_whitespace = true;
       }
     }
+
+    jmethodID getAnalyze =
+        (*env)->GetMethodID(env, optionsClass, "isAnalyze", "()Z");
+
+    if (getAnalyze != NULL) {
+      jboolean analyze = (*env)->CallBooleanMethod(env, options, getAnalyze);
+
+      if (analyze == JNI_FALSE) {
+        opts.analyze = false;
+      }
+    }
   }
 
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &opts);

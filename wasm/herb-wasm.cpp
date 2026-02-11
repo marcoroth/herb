@@ -43,6 +43,13 @@ val Herb_parse(const std::string& source, val options) {
         opts.track_whitespace = true;
       }
     }
+
+    if (options.hasOwnProperty("analyze")) {
+      bool analyze = options["analyze"].as<bool>();
+      if (!analyze) {
+        opts.analyze = false;
+      }
+    }
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &opts);
