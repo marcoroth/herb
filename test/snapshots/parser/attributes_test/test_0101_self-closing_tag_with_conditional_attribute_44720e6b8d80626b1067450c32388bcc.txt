@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0102_self-closing tag with conditional attribute"
+source: "Parser::AttributesTest#test_0101_self-closing tag with conditional attribute"
 input: "<input type=\"text\" <% if required? %>required<% end %> />"
 ---
 @ DocumentNode (location: (1:0)-(1:57))

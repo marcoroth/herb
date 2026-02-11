@@ -196,6 +196,7 @@ module Parser
       assert_parsed_snapshot(%(<div attribute-name=>div-content</div>))
     end
 
+    # https://github.com/marcoroth/herb/issues/856#issuecomment-3525179643
     test "Conditional attribute with ERB control flow and no surrounding spaces" do
       assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %>data-turbo-permanent<% end %>></dialog>))
     end
@@ -399,11 +400,6 @@ module Parser
 
     test "issue #1063: two conditional attributes back-to-back (no spaces)" do
       assert_parsed_snapshot(%(<details <% if a? %>open<% end %><% if b? %>style='color: red;'<% end %>></details>))
-    end
-
-    # https://github.com/marcoroth/herb/issues/856#issuecomment-3525179643
-    test "issue #856: data-turbo-permanent in if right before html tag end" do
-      assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %>data-turbo-permanent<% end %>></dialog>))
     end
 
     test "multiple regular attributes before conditional" do

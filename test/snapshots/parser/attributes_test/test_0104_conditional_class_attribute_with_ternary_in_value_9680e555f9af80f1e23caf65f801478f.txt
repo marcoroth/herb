@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0105_conditional class attribute with ternary in value"
+source: "Parser::AttributesTest#test_0104_conditional class attribute with ternary in value"
 input: "<div <% if styled? %>class=\"<%= active ? 'active' : 'inactive' %>\"<% end %>></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:82))

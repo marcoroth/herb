@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0099_nested conditionals in attributes"
+source: "Parser::AttributesTest#test_0098_nested conditionals in attributes"
 input: "<div <% if outer? %><% if inner? %>data-inner<% else %>data-outer<% end %><% end %>></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:90))

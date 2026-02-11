@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0098_conditional attribute with value between regular attributes"
+source: "Parser::AttributesTest#test_0097_conditional attribute with value between regular attributes"
 input: "<div id=\"main\" <% if active? %>data-active=\"true\"<% end %> class=\"container\"></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:83))
