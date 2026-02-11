@@ -7,7 +7,6 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/analyze.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -49,8 +48,6 @@ val Herb_parse(const std::string& source, val options) {
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options);
-
-  herb_analyze_parse_tree(root, source.c_str());
 
   val result = CreateParseResult(root, source);
 

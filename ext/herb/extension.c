@@ -5,7 +5,6 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
-#include "../../src/include/analyze.h"
 
 VALUE mHerb;
 VALUE cPosition;
@@ -61,8 +60,6 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
 
-  herb_analyze_parse_tree(root, string);
-
   VALUE result = create_parse_result(root, source);
 
   ast_node_free((AST_NODE_T*) root);
@@ -77,8 +74,6 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   char* string = (char*) check_string(source_value);
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
-
-  herb_analyze_parse_tree(root, string);
 
   VALUE result = create_parse_result(root, source_value);
 

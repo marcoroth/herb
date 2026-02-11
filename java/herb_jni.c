@@ -1,7 +1,6 @@
 #include "herb_jni.h"
 #include "extension_helpers.h"
 
-#include "../../src/include/analyze.h"
 #include "../../src/include/herb.h"
 #include "../../src/include/util/hb_buffer.h"
 
@@ -45,7 +44,6 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
   }
 
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, parser_options);
-  herb_analyze_parse_tree(ast, src);
 
   jobject result = CreateParseResult(env, ast, source);
 

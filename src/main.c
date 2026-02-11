@@ -1,6 +1,5 @@
 #define _POSIX_C_SOURCE 199309L // Enables `clock_gettime()`
 
-#include "include/analyze.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
@@ -78,8 +77,6 @@ int main(const int argc, char* argv[]) {
 
   if (string_equals(argv[1], "parse")) {
     AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
-
-    herb_analyze_parse_tree(root, source);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 

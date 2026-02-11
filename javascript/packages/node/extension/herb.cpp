@@ -1,5 +1,4 @@
 extern "C" {
-#include "../extension/libherb/include/analyze.h"
 #include "../extension/libherb/include/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
@@ -102,7 +101,6 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
-  herb_analyze_parse_tree(root, string);
   napi_value result = CreateParseResult(env, root, args[0]);
 
   ast_node_free((AST_NODE_T *) root);
