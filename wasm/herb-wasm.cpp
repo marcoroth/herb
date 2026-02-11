@@ -34,20 +34,18 @@ val Herb_lex(const std::string& source) {
 }
 
 val Herb_parse(const std::string& source, val options) {
-  parser_options_T* parser_options = nullptr;
-  parser_options_T opts = {0};
+  parser_options_T opts = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
     if (options.hasOwnProperty("track_whitespace")) {
       bool track_whitespace = options["track_whitespace"].as<bool>();
       if (track_whitespace) {
         opts.track_whitespace = true;
-        parser_options = &opts;
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options);
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &opts);
 
   val result = CreateParseResult(root, source);
 

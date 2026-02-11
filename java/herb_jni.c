@@ -25,8 +25,7 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject options) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  parser_options_T* parser_options = NULL;
-  parser_options_T opts = { 0 };
+  parser_options_T opts = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (options != NULL) {
     jclass optionsClass = (*env)->GetObjectClass(env, options);
@@ -38,12 +37,11 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
 
       if (trackWhitespace == JNI_TRUE) {
         opts.track_whitespace = true;
-        parser_options = &opts;
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* ast = herb_parse(src, parser_options);
+  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &opts);
 
   jobject result = CreateParseResult(env, ast, source);
 

@@ -45,8 +45,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
 
-  parser_options_T* parser_options = NULL;
-  parser_options_T opts = { 0 };
+  parser_options_T opts = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -54,11 +53,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
     if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) {
       opts.track_whitespace = true;
-      parser_options = &opts;
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &opts);
 
   VALUE result = create_parse_result(root, source);
 
