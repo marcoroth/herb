@@ -13,6 +13,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_html_conditional_element_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
