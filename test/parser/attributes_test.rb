@@ -195,5 +195,255 @@ module Parser
     test "Empty attribute value with closing bracket immediatly following it" do
       assert_parsed_snapshot(%(<div attribute-name=>div-content</div>))
     end
+
+    # https://github.com/marcoroth/herb/issues/856#issuecomment-3525179643
+    test "Conditional attribute with ERB control flow and no surrounding spaces" do
+      assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %>data-turbo-permanent<% end %>></dialog>))
+    end
+
+    test "Conditional attribute with ERB control flow with surrounding spaces" do
+      assert_parsed_snapshot(%(<dialog data-controller="dialog" <% if local_assigns[:permanent] %> data-turbo-permanent <% end %>></dialog>))
+    end
+
+    test "Conditional attribute with ERB on separate line" do
+      assert_parsed_snapshot <<~HTML
+        <span
+          <% if @replaceable %>data-menu-button<% end %>
+          class="css-truncate css-truncate-target"
+        ></span>
+      HTML
+    end
+
+    test "Conditional attribute with value" do
+      assert_parsed_snapshot(%(<div <% if enabled? %>data-enabled="true"<% end %>></div>))
+    end
+
+    test "Multiple conditional attributes" do
+      assert_parsed_snapshot(%(<div <% if a? %>data-a<% end %> <% if b? %>data-b<% end %>></div>))
+    end
+
+    test "Conditional attribute with elsif and else" do
+      assert_parsed_snapshot(%(<div <% if primary? %>data-primary<% elsif secondary? %>data-secondary<% else %>data-default<% end %>></div>))
+    end
+
+    test "Conditional attribute with unless" do
+      assert_parsed_snapshot(%(<div <% unless disabled? %>data-enabled<% end %>></div>))
+    end
+
+    test "Multiple attributes in one conditional block" do
+      assert_parsed_snapshot(%(<div <% if admin? %>data-admin data-role="admin"<% end %>></div>))
+    end
+
+    test "Conditional boolean attribute" do
+      assert_parsed_snapshot(%(<input <% if should_disable? %>disabled<% end %> type="text">))
+    end
+
+    test "Conditional attribute with output tag inside" do
+      assert_parsed_snapshot(%(<div <% if user %>data-user="<%= user.id %>"<% end %>></div>))
+    end
+
+    test "ERB comment between attributes" do
+      assert_parsed_snapshot(%(<div data-foo="bar" <%# This is a comment %> data-baz="qux"></div>))
+    end
+
+    test "Conditional attribute with trimming tags" do
+      assert_parsed_snapshot(%(<div <%- if condition -%>data-conditional<%- end -%>></div>))
+    end
+
+    test "Empty conditional block in attributes" do
+      assert_parsed_snapshot(%(<div data-static <% if false %><% end %> data-other="value"></div>))
+    end
+
+    test "Nested conditional attributes" do
+      assert_parsed_snapshot(%(<div <% if outer? %><% if inner? %>data-inner<% end %><% end %>></div>))
+    end
+
+    test "attribute name with non-output ERB" do
+      assert_parsed_snapshot(%(<div data-<% key %>-target="value"></div>))
+    end
+
+    test "attribute name with ERB trim" do
+      assert_parsed_snapshot(%(<div data-<%- key -%>-id="thing"></div>))
+    end
+
+    test "attribute name with ERB comment" do
+      assert_parsed_snapshot(%(<div data-<%# comment %>-target="value"></div>))
+    end
+
+    test "multiple non-ERB outputs in attribute names" do
+      assert_parsed_snapshot(%(<div data-<% key %>-target="value" id-<% another %>-suffix="test"></div>))
+    end
+
+    test "mixed ERB output types in multiple attribute names" do
+      assert_parsed_snapshot(%(
+        <div
+          data-<%= valid_key %>-target="value"
+          prefix-<% invalid_key %>-id="test"
+          class="<%= valid_class %>"
+        ></div>
+      ))
+    end
+
+    test "ERB in attribute names within form elements" do
+      assert_parsed_snapshot(%(
+        <form>
+          <input data-<%= user.id %>-field="text">
+          <button data-<% collection %>-list="options"></button>
+          <select prefix-<%# comment %>-suffix="value"></select>
+        </form>
+      ))
+    end
+
+    test "if/elsif/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%if a?%>data-one<%elsif b?%>data-two<%else%>data-three<%end%>></div>))
+    end
+
+    test "if/elsif/elsif/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%if a?%>data-one<%elsif b?%>data-two<%elsif c?%>data-three<%else%>data-four<%end%>></div>))
+    end
+
+    test "if/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%if a?%>data-one<%else%>data-two<%end%>></div>))
+    end
+
+    test "if/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%if a?%>data-one<%end%>></div>))
+    end
+
+    test "unless/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%unless a?%>data-one<%else%>data-two<%end%>></div>))
+    end
+
+    test "unless/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%unless a?%>data-one<%end%>></div>))
+    end
+
+    test "case/when/when/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%case x%><%when 1%>data-one<%when 2%>data-two<%end%>></div>))
+    end
+
+    test "case/when/when/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%case x%><%when 1%>data-one<%when 2%>data-two<%else%>data-default<%end%>></div>))
+    end
+
+    test "case/when/when/when/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%case x%><%when 1%>data-one<%when 2%>data-two<%when 3%>data-three<%end%>></div>))
+    end
+
+    test "case/in/in/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%case x%><%in 1%>data-one<%in 2%>data-two<%end%>></div>))
+    end
+
+    test "case/in/in/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%case x%><%in 1%>data-one<%in 2%>data-two<%else%>data-default<%end%>></div>))
+    end
+
+    test "begin/rescue/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%begin%>data-one<%rescue%>data-error<%end%>></div>))
+    end
+
+    test "begin/rescue/else/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%begin%>data-one<%rescue%>data-error<%else%>data-success<%end%>></div>))
+    end
+
+    test "begin/rescue/ensure/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%begin%>data-one<%rescue%>data-error<%ensure%>data-always<%end%>></div>))
+    end
+
+    test "begin/rescue/else/ensure/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%begin%>data-one<%rescue%>data-error<%else%>data-success<%ensure%>data-always<%end%>></div>))
+    end
+
+    test "begin/ensure/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%begin%>data-one<%ensure%>data-always<%end%>></div>))
+    end
+
+    test "while/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%while cond%>data-item<%end%>></div>))
+    end
+
+    test "until/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%until done%>data-item<%end%>></div>))
+    end
+
+    test "for/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%for i in items%>data-item<%end%>></div>))
+    end
+
+    test "block do/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%items.each do%>data-item<%end%>></div>))
+    end
+
+    test "block do with args/end control flow in attributes (no spaces)" do
+      assert_parsed_snapshot(%(<div <%items.each do |item|%>data-item<%end%>></div>))
+    end
+
+    test "issue #1063: conditional boolean attribute open (no spaces around attribute)" do
+      assert_parsed_snapshot(%(<details <% if @doc.registration_id.present? %>open<% end %>></details>))
+    end
+
+    test "issue #1063: conditional boolean attribute open (space after attribute)" do
+      assert_parsed_snapshot(%(<details <% if @doc.registration_id.present? %>open <% end %>></details>))
+    end
+
+    test "issue #1063: conditional boolean attribute open (space before attribute)" do
+      assert_parsed_snapshot(%(<details <% if @doc.registration_id.present? %> open<% end %>></details>))
+    end
+
+    test "issue #1063: conditional boolean attribute open (spaces around attribute)" do
+      assert_parsed_snapshot(%(<details <% if @doc.registration_id.present? %> open <% end %>></details>))
+    end
+
+    test "issue #1063: two conditional attributes back-to-back (with spaces)" do
+      assert_parsed_snapshot(%(<details <% if a? %> open <% end %> <% if b? %>style='color: red;'<% end %> ></details>))
+    end
+
+    test "issue #1063: two conditional attributes back-to-back (no spaces)" do
+      assert_parsed_snapshot(%(<details <% if a? %>open<% end %><% if b? %>style='color: red;'<% end %>></details>))
+    end
+
+    test "multiple regular attributes before conditional" do
+      assert_parsed_snapshot(%(<div id="main" class="container" <% if active? %>data-active<% end %>></div>))
+    end
+
+    test "multiple regular attributes after conditional" do
+      assert_parsed_snapshot(%(<div <% if active? %>data-active<% end %> id="main" class="container"></div>))
+    end
+
+    test "conditional attribute between regular attributes" do
+      assert_parsed_snapshot(%(<div id="main" <% if active? %>data-active<% end %> class="container"></div>))
+    end
+
+    test "conditional attribute with value between regular attributes" do
+      assert_parsed_snapshot(%(<div id="main" <% if active? %>data-active="true"<% end %> class="container"></div>))
+    end
+
+    test "nested conditionals in attributes" do
+      assert_parsed_snapshot(%(<div <% if outer? %><% if inner? %>data-inner<% else %>data-outer<% end %><% end %>></div>))
+    end
+
+    test "conditional with multiple attributes inside" do
+      assert_parsed_snapshot(%(<div <% if admin? %>data-admin data-role="admin" data-permissions="all"<% end %>></div>))
+    end
+
+    test "conditional with ERB output in attribute value" do
+      assert_parsed_snapshot(%(<div <% if user? %>data-user-id="<%= user.id %>" data-user-name="<%= user.name %>"<% end %>></div>))
+    end
+
+    test "self-closing tag with conditional attribute" do
+      assert_parsed_snapshot(%(<input type="text" <% if required? %>required<% end %> />))
+    end
+
+    test "self-closing tag with conditional attribute and value" do
+      assert_parsed_snapshot(%(<input type="text" <% if has_value? %>value="<%= default_value %>"<% end %> />))
+    end
+
+    test "void element with conditional attribute" do
+      assert_parsed_snapshot(%(<img src="image.png" <% if lazy? %>loading="lazy"<% end %>>))
+    end
+
+    test "conditional class attribute with ternary in value" do
+      assert_parsed_snapshot(%(<div <% if styled? %>class="<%= active ? 'active' : 'inactive' %>"<% end %>></div>))
+    end
   end
 end

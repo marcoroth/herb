@@ -28,6 +28,7 @@ void hb_buffer_concat(hb_buffer_T* destination, hb_buffer_T* source);
 char* hb_buffer_value(const hb_buffer_T* buffer);
 
 size_t hb_buffer_length(const hb_buffer_T* buffer);
+bool hb_buffer_is_empty(const hb_buffer_T* buffer);
 size_t hb_buffer_capacity(const hb_buffer_T* buffer);
 size_t hb_buffer_sizeof(void);
 
