@@ -1,0 +1,69 @@
+---
+source: "Parser::AttributesTest#test_0082_begin/ensure/end control flow in attributes (no spaces)"
+input: "<div <%begin%>data-one<%ensure%>data-always<%end%>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:57))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:57))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:51))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:50)-(1:51))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBBeginNode (location: (1:5)-(1:50))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: "begin" (location: (1:7)-(1:12))
+        │       │       ├── tag_closing: "%>" (location: (1:12)-(1:14))
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:14)-(1:22))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:22))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:14)-(1:22))
+        │       │       │       │               └── content: "data-one"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── rescue_clause: ∅
+        │       │       ├── else_clause: ∅
+        │       │       ├── ensure_clause:
+        │       │       │   └── @ ERBEnsureNode (location: (1:22)-(1:32))
+        │       │       │       ├── tag_opening: "<%" (location: (1:22)-(1:24))
+        │       │       │       ├── content: "ensure" (location: (1:24)-(1:30))
+        │       │       │       ├── tag_closing: "%>" (location: (1:30)-(1:32))
+        │       │       │       └── statements: (1 item)
+        │       │       │           └── @ HTMLAttributeNode (location: (1:32)-(1:43))
+        │       │       │               ├── name:
+        │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:43))
+        │       │       │               │       └── children: (1 item)
+        │       │       │               │           └── @ LiteralNode (location: (1:32)-(1:43))
+        │       │       │               │               └── content: "data-always"
+        │       │       │               │
+        │       │       │               │
+        │       │       │               ├── equals: ∅
+        │       │       │               └── value: ∅
+        │       │       │
+        │       │       │
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:43)-(1:50))
+        │       │               ├── tag_opening: "<%" (location: (1:43)-(1:45))
+        │       │               ├── content: "end" (location: (1:45)-(1:48))
+        │       │               └── tag_closing: "%>" (location: (1:48)-(1:50))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:51)-(1:57))
+        │       ├── tag_opening: "</" (location: (1:51)-(1:53))
+        │       ├── tag_name: "div" (location: (1:53)-(1:56))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:56)-(1:57))
+        │
+        ├── is_void: false
+        └── source: "HTML"

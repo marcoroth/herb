@@ -15,6 +15,7 @@ input: "<div <% if primary? %>data-primary<% elsif secondary? %>data-secondary<%
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if primary? " (location: (1:7)-(1:20))
         │       │       ├── tag_closing: "%>" (location: (1:20)-(1:22))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:22)-(1:34))
         │       │       │       ├── name:
@@ -32,6 +33,7 @@ input: "<div <% if primary? %>data-primary<% elsif secondary? %>data-secondary<%
         │       │       │       ├── tag_opening: "<%" (location: (1:34)-(1:36))
         │       │       │       ├── content: " elsif secondary? " (location: (1:36)-(1:54))
         │       │       │       ├── tag_closing: "%>" (location: (1:54)-(1:56))
+        │       │       │       ├── then_keyword: ∅
         │       │       │       ├── statements: (1 item)
         │       │       │       │   └── @ HTMLAttributeNode (location: (1:56)-(1:70))
         │       │       │       │       ├── name:

@@ -1,0 +1,85 @@
+---
+source: "Parser::AttributesTest#test_0093_issue #1063: two conditional attributes back-to-back (no spaces)"
+input: "<details <% if a? %>open<% end %><% if b? %>style='color: red;'<% end %>></details>"
+---
+@ DocumentNode (location: (1:0)-(1:83))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:83))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:73))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "details" (location: (1:1)-(1:8))
+        │       ├── tag_closing: ">" (location: (1:72)-(1:73))
+        │       ├── children: (2 items)
+        │       │   ├── @ ERBIfNode (location: (1:9)-(1:33))
+        │       │   │   ├── tag_opening: "<%" (location: (1:9)-(1:11))
+        │       │   │   ├── content: " if a? " (location: (1:11)-(1:18))
+        │       │   │   ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │   │   ├── then_keyword: ∅
+        │       │   │   ├── statements: (1 item)
+        │       │   │   │   └── @ HTMLAttributeNode (location: (1:20)-(1:24))
+        │       │   │   │       ├── name:
+        │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:24))
+        │       │   │   │       │       └── children: (1 item)
+        │       │   │   │       │           └── @ LiteralNode (location: (1:20)-(1:24))
+        │       │   │   │       │               └── content: "open"
+        │       │   │   │       │
+        │       │   │   │       │
+        │       │   │   │       ├── equals: ∅
+        │       │   │   │       └── value: ∅
+        │       │   │   │
+        │       │   │   ├── subsequent: ∅
+        │       │   │   └── end_node:
+        │       │   │       └── @ ERBEndNode (location: (1:24)-(1:33))
+        │       │   │           ├── tag_opening: "<%" (location: (1:24)-(1:26))
+        │       │   │           ├── content: " end " (location: (1:26)-(1:31))
+        │       │   │           └── tag_closing: "%>" (location: (1:31)-(1:33))
+        │       │   │
+        │       │   │
+        │       │   └── @ ERBIfNode (location: (1:33)-(1:72))
+        │       │       ├── tag_opening: "<%" (location: (1:33)-(1:35))
+        │       │       ├── content: " if b? " (location: (1:35)-(1:42))
+        │       │       ├── tag_closing: "%>" (location: (1:42)-(1:44))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:44)-(1:63))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:49))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:44)-(1:49))
+        │       │       │       │               └── content: "style"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: "=" (location: (1:49)-(1:50))
+        │       │       │       └── value:
+        │       │       │           └── @ HTMLAttributeValueNode (location: (1:50)-(1:63))
+        │       │       │               ├── open_quote: "'" (location: (1:50)-(1:51))
+        │       │       │               ├── children: (1 item)
+        │       │       │               │   └── @ LiteralNode (location: (1:51)-(1:62))
+        │       │       │               │       └── content: "color: red;"
+        │       │       │               │
+        │       │       │               ├── close_quote: "'" (location: (1:62)-(1:63))
+        │       │       │               └── quoted: true
+        │       │       │
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:63)-(1:72))
+        │       │               ├── tag_opening: "<%" (location: (1:63)-(1:65))
+        │       │               ├── content: " end " (location: (1:65)-(1:70))
+        │       │               └── tag_closing: "%>" (location: (1:70)-(1:72))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "details" (location: (1:1)-(1:8))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:73)-(1:83))
+        │       ├── tag_opening: "</" (location: (1:73)-(1:75))
+        │       ├── tag_name: "details" (location: (1:75)-(1:82))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:82)-(1:83))
+        │
+        ├── is_void: false
+        └── source: "HTML"

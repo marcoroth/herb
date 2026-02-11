@@ -15,11 +15,13 @@ input: "<div <% if outer? %><% if inner? %>data-inner<% end %><% end %>></div>"
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if outer? " (location: (1:7)-(1:18))
         │       │       ├── tag_closing: "%>" (location: (1:18)-(1:20))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ ERBIfNode (location: (1:20)-(1:54))
         │       │       │       ├── tag_opening: "<%" (location: (1:20)-(1:22))
         │       │       │       ├── content: " if inner? " (location: (1:22)-(1:33))
         │       │       │       ├── tag_closing: "%>" (location: (1:33)-(1:35))
+        │       │       │       ├── then_keyword: ∅
         │       │       │       ├── statements: (1 item)
         │       │       │       │   └── @ HTMLAttributeNode (location: (1:35)-(1:45))
         │       │       │       │       ├── name:

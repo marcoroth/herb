@@ -27,6 +27,7 @@ static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token
 static void parser_consume_whitespace(parser_T* parser, hb_array_T* children);
 static void parser_skip_erb_content(lexer_T* lexer);
 static bool parser_lookahead_erb_is_attribute(lexer_T* lexer);
+static bool parser_lookahead_erb_is_control_flow(parser_T* parser);
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children);
 static void parser_handle_whitespace_in_open_tag(parser_T* parser, hb_array_T* children);
 
@@ -300,7 +301,12 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
       size_t tag_length = strlen(tag);
       bool is_output_tag = (tag_length >= 3 && tag[2] == '=');
 
-      if (!is_output_tag && hb_buffer_is_empty(&buffer) && hb_array_size(children) == 0) { break; }
+      if (!is_output_tag) {
+        bool is_control_flow = parser_lookahead_erb_is_control_flow(parser);
+
+        if (hb_buffer_is_empty(&buffer) && hb_array_size(children) == 0) { break; }
+        if (is_control_flow) { break; }
+      }
 
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
@@ -724,6 +730,38 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
     return false;
 
   } while (true);
+}
+
+static bool starts_with_keyword(const char* pointer, const char* keyword) {
+  size_t length = strlen(keyword);
+  if (strncmp(pointer, keyword, length) != 0) { return false; }
+
+  char next = pointer[length];
+
+  return next == '\0' || is_whitespace(next);
+}
+
+// TODO: ideally we could avoid basing this off of strings, and use the step in analyze.c
+static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
+  lexer_T lexer_copy = *parser->lexer;
+  token_T* content = lexer_next_token(&lexer_copy);
+
+  if (content == NULL || content->type != TOKEN_ERB_CONTENT) {
+    if (content) { token_free(content); }
+
+    return false;
+  }
+
+  const char* pointer = skip_whitespace(content->value);
+
+  bool is_control_flow = starts_with_keyword(pointer, "end") || starts_with_keyword(pointer, "else")
+                      || starts_with_keyword(pointer, "elsif") || starts_with_keyword(pointer, "in")
+                      || starts_with_keyword(pointer, "when") || starts_with_keyword(pointer, "rescue")
+                      || starts_with_keyword(pointer, "ensure");
+
+  token_free(content);
+
+  return is_control_flow;
 }
 
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children) {

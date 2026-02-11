@@ -15,6 +15,7 @@ input: "<input <% if should_disable? %>disabled<% end %> type=\"text\">"
         │       │   │   ├── tag_opening: "<%" (location: (1:7)-(1:9))
         │       │   │   ├── content: " if should_disable? " (location: (1:9)-(1:29))
         │       │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │   │   ├── then_keyword: ∅
         │       │   │   ├── statements: (1 item)
         │       │   │   │   └── @ HTMLAttributeNode (location: (1:31)-(1:39))
         │       │   │   │       ├── name:

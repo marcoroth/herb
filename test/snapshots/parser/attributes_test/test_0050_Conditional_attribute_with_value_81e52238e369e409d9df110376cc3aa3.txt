@@ -15,6 +15,7 @@ input: "<div <% if enabled? %>data-enabled=\"true\"<% end %>></div>"
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if enabled? " (location: (1:7)-(1:20))
         │       │       ├── tag_closing: "%>" (location: (1:20)-(1:22))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:22)-(1:41))
         │       │       │       ├── name:

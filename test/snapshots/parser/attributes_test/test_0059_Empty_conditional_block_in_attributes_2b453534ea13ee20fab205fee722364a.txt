@@ -26,6 +26,7 @@ input: "<div data-static <% if false %><% end %> data-other=\"value\"></div>"
         │       │   │   ├── tag_opening: "<%" (location: (1:17)-(1:19))
         │       │   │   ├── content: " if false " (location: (1:19)-(1:29))
         │       │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │   │   ├── then_keyword: ∅
         │       │   │   ├── statements: []
         │       │   │   ├── subsequent: ∅
         │       │   │   └── end_node:

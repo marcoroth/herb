@@ -19,6 +19,7 @@ input: |2-
     │   │       │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │       │   │   ├── content: " if @replaceable " (location: (2:4)-(2:21))
     │   │       │   │   ├── tag_closing: "%>" (location: (2:21)-(2:23))
+    │   │       │   │   ├── then_keyword: ∅
     │   │       │   │   ├── statements: (1 item)
     │   │       │   │   │   └── @ HTMLAttributeNode (location: (2:23)-(2:39))
     │   │       │   │   │       ├── name:

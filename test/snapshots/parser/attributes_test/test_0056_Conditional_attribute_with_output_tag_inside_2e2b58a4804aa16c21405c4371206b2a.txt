@@ -15,6 +15,7 @@ input: "<div <% if user %>data-user=\"<%= user.id %>\"<% end %>></div>"
         │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       │       ├── content: " if user " (location: (1:7)-(1:16))
         │       │       ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:18)-(1:44))
         │       │       │       ├── name:

@@ -35,6 +35,7 @@ input: "<dialog data-controller=\"dialog\" <% if local_assigns[:permanent] %>dat
         │       │       ├── tag_opening: "<%" (location: (1:33)-(1:35))
         │       │       ├── content: " if local_assigns[:permanent] " (location: (1:35)-(1:65))
         │       │       ├── tag_closing: "%>" (location: (1:65)-(1:67))
+        │       │       ├── then_keyword: ∅
         │       │       ├── statements: (1 item)
         │       │       │   └── @ HTMLAttributeNode (location: (1:67)-(1:87))
         │       │       │       ├── name:
