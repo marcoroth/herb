@@ -96,6 +96,30 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitHTMLConditionalElementNode(node: Nodes.HTMLConditionalElementNode): void {
+    const tagName = node.tag_name?.value
+
+    if (tagName) {
+      this.context.enterTag(tagName)
+    }
+
+    if (node.open_conditional) {
+      this.visit(node.open_conditional)
+    }
+
+    if (node.body) {
+      node.body.forEach(child => this.visit(child))
+    }
+
+    if (node.close_conditional) {
+      this.visit(node.close_conditional)
+    }
+
+    if (tagName) {
+      this.context.exitTag()
+    }
+  }
+
   visitHTMLAttributeNode(node: Nodes.HTMLAttributeNode): void {
     if (node.name) {
       this.visit(node.name)

@@ -1,0 +1,11 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0012_doctype compilation"
+input: "{source: \"<!DoCTyPe <% hello world %> hello world this is inside the doctype>\\n<!DOCTYPE two>\\n<!doctype>\\n<!dOcTyPe>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << '<!DoCTyPe'.freeze;  hello world 
+ _buf << ' hello world this is inside the doctype>
+<!DOCTYPE two>
+<!doctype>
+<!dOcTyPe>
+'.freeze;
+_buf.to_s

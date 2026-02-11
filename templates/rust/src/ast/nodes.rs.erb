@@ -213,7 +213,7 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
       <%= field.name %>: (*c_node_ptr).<%= field.name %>,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: convert_children((*c_node_ptr).<%= field.name %>),
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       <%- if field.specific_kind && field.specific_kind != "Node" -%>
       <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
       <%= field.name %>: convert_specific_node_field!((*c_node_ptr).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),

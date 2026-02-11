@@ -97,6 +97,8 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>); }
+  <%- when Herb::Template::BorrowedNodeField -%>
+  /* <%= field.name %> is a borrowed reference, not freed here (owned by another field) */
   <%- when Herb::Template::NodeField -%>
   ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::ArrayField -%>

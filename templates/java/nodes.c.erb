@@ -32,7 +32,7 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
   jboolean <%= field.name %> = <%= node.human %>-><%= field.name %> ? JNI_TRUE : JNI_FALSE;
   <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
   jobject <%= field.name %> = NodesArrayFromCArray(env, <%= node.human %>-><%= field.name %>);
-  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
   // TODO: Convert element_source to string

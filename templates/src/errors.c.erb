@@ -222,7 +222,7 @@ static void error_pretty_print_<%= error.human %>(<%= error.struct_type %>* erro
   <%- when Herb::Template::TokenTypeField -%>
   pretty_print_property(hb_string(token_type_to_string(error-><%= field.name %>)), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::SizeTField -%>
-  pretty_print_size_t_property(hb_string(error-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
+  pretty_print_size_t_property(error-><%= field.name %>, hb_string("<%= field.name %>"), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- when Herb::Template::StringField -%>
   pretty_print_quoted_property(hb_string("<%= field.name %>"), hb_string(error-><%= field.name %>), indent, relative_indent, <%= error.fields.length - 1 == index %>, buffer);
   <%- else -%>

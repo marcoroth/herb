@@ -185,6 +185,54 @@ errors:
 
       fields: []
 
+    - name: ConditionalElementMultipleTagsError
+      message:
+        template: "Conditional element pattern detected at (%zu:%zu) but the conditional block contains multiple HTML tags. Each conditional element must wrap exactly one opening and one closing tag. Consider nesting the conditionals individually."
+        arguments:
+          - line
+          - column
+
+      fields:
+        - name: line
+          type: size_t
+
+        - name: column
+          type: size_t
+
+    - name: ConditionalElementConditionMismatchError
+      message:
+        template: "Conditional element `<%s>` has mismatched conditions: opening uses `%s` at (%zu:%zu) but closing uses `%s` at (%zu:%zu). Both conditions must be identical."
+        arguments:
+          - tag_name
+          - open_condition
+          - open_line
+          - open_column
+          - close_condition
+          - close_line
+          - close_column
+
+      fields:
+        - name: tag_name
+          type: string
+
+        - name: open_condition
+          type: string
+
+        - name: open_line
+          type: size_t
+
+        - name: open_column
+          type: size_t
+
+        - name: close_condition
+          type: string
+
+        - name: close_line
+          type: size_t
+
+        - name: close_column
+          type: size_t
+
 warnings:
   fields: []
   types: []
@@ -275,6 +323,37 @@ nodes:
 
         - name: is_void
           type: boolean
+
+        - name: source
+          type: element_source
+
+    - name: HTMLConditionalElementNode
+      fields:
+        - name: condition
+          type: string
+
+        - name: open_conditional
+          type: node
+          kind: Node
+
+        - name: open_tag
+          type: borrowed_node
+          kind: HTMLOpenTagNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: close_tag
+          type: borrowed_node
+          kind: HTMLCloseTagNode
+
+        - name: close_conditional
+          type: node
+          kind: Node
+
+        - name: tag_name
+          type: token
 
         - name: source
           type: element_source

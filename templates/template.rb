@@ -77,6 +77,9 @@ module Herb
       end
     end
 
+    class BorrowedNodeField < NodeField
+    end
+
     class TokenField < Field
       def ruby_type
         "Herb::Token"
@@ -214,19 +217,20 @@ module Herb
 
       def field_type_for(name)
         case name
-        when "array"      then ArrayField
-        when "node"       then NodeField
-        when "token"      then TokenField
-        when "token_type" then TokenTypeField
-        when "string"     then StringField
-        when "position"   then PositionField
-        when "location"   then LocationField
-        when "size_t"     then SizeTField
-        when "boolean"    then BooleanField
-        when "prism_node" then PrismNodeField
-        when "analyzed_ruby" then AnalyzedRubyField
+        when "array"          then ArrayField
+        when "node"           then NodeField
+        when "borrowed_node"  then BorrowedNodeField
+        when "token"          then TokenField
+        when "token_type"     then TokenTypeField
+        when "string"         then StringField
+        when "position"       then PositionField
+        when "location"       then LocationField
+        when "size_t"         then SizeTField
+        when "boolean"        then BooleanField
+        when "prism_node"     then PrismNodeField
+        when "analyzed_ruby"  then AnalyzedRubyField
         when "element_source" then ElementSourceField
-        when "void*" then VoidPointerField
+        when "void*"          then VoidPointerField
         else raise("Unknown field type: #{name.inspect}")
         end
       end

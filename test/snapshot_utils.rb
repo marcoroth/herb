@@ -63,7 +63,13 @@ module SnapshotUtils
     binding_context = Object.new
 
     locals.each do |key, value|
-      binding_context.define_singleton_method(key) { value }
+      name = key.to_s
+
+      if name.start_with?("@")
+        binding_context.instance_variable_set(name, value)
+      else
+        binding_context.define_singleton_method(name) { value }
+      end
     end
 
     result = binding_context.instance_eval(engine.src)

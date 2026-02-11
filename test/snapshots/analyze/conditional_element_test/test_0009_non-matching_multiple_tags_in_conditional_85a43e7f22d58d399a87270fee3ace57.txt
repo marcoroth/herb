@@ -1,0 +1,109 @@
+---
+source: "Analyze::ConditionalElementTest#test_0009_non-matching: multiple tags in conditional"
+input: |2-
+<% if @condition %>
+  <div>
+  <span>Extra tag</span>
+<% end %>
+  Content
+<% if @condition %>
+  </div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (4 items)
+    ├── @ ERBIfNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if @condition " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:7))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (2:2)-(2:7))
+    │   │   │   │       ├── message: "Opening tag `<div>` at (2:3) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │   │   │       └── opening_tag: "div" (location: (2:3)-(2:6))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   ├── tag_closing: ">" (location: (2:6)-(2:7))
+    │   │   │   ├── children: []
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:7)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:24))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "span" (location: (3:3)-(3:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:7)-(3:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (3:3)-(3:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (3:8)-(3:17))
+    │   │   │   │       └── content: "Extra tag"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:17)-(3:24))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:17)-(3:19))
+    │   │   │   │       ├── tag_name: "span" (location: (3:19)-(3:23))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:23)-(3:24))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:24)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (4:9)-(6:0))
+    │   └── content: "\n  Content\n"
+    │
+    ├── @ ERBIfNode (location: (6:0)-(8:9))
+    │   ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   ├── content: " if @condition " (location: (6:2)-(6:17))
+    │   ├── tag_closing: "%>" (location: (6:17)-(6:19))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (6:19)-(7:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (7:2)-(7:8))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (7:2)-(7:8))
+    │   │   │   │       ├── message: "Found closing tag `</div>` at (7:4) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "div" (location: (7:4)-(7:7))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (7:2)-(7:4))
+    │   │   │   ├── tag_name: "div" (location: (7:4)-(7:7))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (7:7)-(7:8))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (7:8)-(8:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (8:0)-(8:9))
+    │           ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │           ├── content: " end " (location: (8:2)-(8:7))
+    │           └── tag_closing: "%>" (location: (8:7)-(8:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (8:9)-(9:0))
+        └── content: "\n"

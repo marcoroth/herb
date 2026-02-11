@@ -18,7 +18,7 @@ class <%= node.name %> extends BaseNode {
   private final boolean <%= field.name %>;
   <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
   private final List<Node> <%= field.name %>;
-  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
   <%- if field.specific_kind -%>
   private final <%= field.specific_kind %> <%= field.name %>;
   <%- else -%>
@@ -48,7 +48,7 @@ class <%= node.name %> extends BaseNode {
     boolean <%= field.name %><%- if node.fields.last != field %>,<% end %>
     <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
     List<Node> <%= field.name %><%- if node.fields.last != field %>,<% end %>
-    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
     <%= field.specific_kind || 'Node' %> <%= field.name %><%- if node.fields.last != field %>,<% end %>
     <%- elsif field.is_a?(Herb::Template::ElementSourceField) -%>
     String <%= field.name %><%- if node.fields.last != field %>,<% end %>
@@ -95,7 +95,7 @@ class <%= node.name %> extends BaseNode {
     return <%= field.name %>;
   }
 
-  <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+  <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
   public <%= field.specific_kind || 'Node' %> get<%= field.name.split('_').map(&:capitalize).join %>() {
     return <%= field.name %>;
   }
@@ -135,7 +135,7 @@ class <%= node.name %> extends BaseNode {
       }
     }
 
-    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
     if (<%= field.name %> != null) <%= field.name %>.accept(visitor, context);
 
     <%- end -%>
@@ -170,7 +170,7 @@ class <%= node.name %> extends BaseNode {
     output.append("<%= symbol %><%= field.name %>: ").append(<%= field.name %> != null ? "(location: " + <%= field.name %>.treeInspect() + ")" : "∅").append("\n");
     <%- elsif field.is_a?(Herb::Template::ArrayField) -%>
     output.append("<%= symbol %><%= field.name %>: ").append(inspectArray(<%= field.name %>, "<%= prefix %>"));
-    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
     if (<%= field.name %> != null) {
       output.append("<%= symbol %><%= field.name %>:\n");
       output.append("<%= prefix %>").append(inspectNode(<%= field.name %>, "<%= prefix %>"));
@@ -209,7 +209,7 @@ class <%= node.name %> extends BaseNode {
       }
     }
 
-    <%- elsif field.is_a?(Herb::Template::NodeField) -%>
+    <%- elsif field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField) -%>
     if (<%= field.name %> != null) {
       result.addAll(<%= field.name %>.recursiveErrors());
     }

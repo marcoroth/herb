@@ -37,7 +37,7 @@ module Herb
       #: () -> Array[Herb::AST::Node?]
       def child_nodes
         [<%= node.fields.map { |field|
-          if field.is_a?(Herb::Template::NodeField)
+          if field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField)
             field.name
           elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
             "*#{field.name}"
@@ -95,7 +95,7 @@ module Herb
         # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>
         # no-op for <%= field.name %>
-        <%- when Herb::Template::NodeField -%>
+        <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
         output += white("<%= symbol %> <%= field.name %>: ")
         if <%= field.name %>
           <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>

@@ -145,7 +145,7 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%= field.name %>: string;
   <%- when Herb::Template::LocationField -%>
   <%= field.name %>: SerializedLocation | null;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: Serialized<%= field.specific_kind %> | null;
   <%- else -%>
@@ -174,7 +174,7 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%= field.name %>: string;
   <%- when Herb::Template::LocationField -%>
   <%= field.name %>: Location | null;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: <%= field.specific_kind %> | null;
   <%- else -%>
@@ -207,7 +207,7 @@ export class <%= node.name %> extends Node {
   readonly <%= field.name %>: string;
   <%- when Herb::Template::LocationField -%>
   readonly <%= field.name %>: Location | null;
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   readonly <%= field.name %>: <%= field.specific_kind %> | null;
   <%- else -%>
@@ -247,7 +247,7 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: data.<%= field.name %>,
       <%- when Herb::Template::LocationField -%>
       <%= field.name %>: data.<%= field.name %> ? Location.from(data.<%= field.name %>) : null,
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) : null,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
@@ -268,7 +268,7 @@ export class <%= node.name %> extends Node {
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::TokenField -%>
     this.<%= field.name %> = props.<%= field.name %>;
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     this.<%= field.name %> = props.<%= field.name %>;
     <%- when Herb::Template::StringField -%>
     this.<%= field.name %> = convertToUTF8(props.<%= field.name %>);
@@ -294,7 +294,7 @@ export class <%= node.name %> extends Node {
     return [
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       this.<%= field.name %>,
       <%- when Herb::Template::ArrayField -%>
       ...this.<%= field.name %>,
@@ -312,7 +312,7 @@ export class <%= node.name %> extends Node {
       ...this.errors,
       <%- node.fields.each do |field| -%>
       <%- case field -%>
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       this.<%= field.name %> ? this.<%= field.name %>.recursiveErrors() : [],
       <%- when Herb::Template::ArrayField -%>
       ...this.<%= field.name %>.map(node => node.recursiveErrors()),
@@ -337,7 +337,7 @@ export class <%= node.name %> extends Node {
       <%= field.name %>: this.<%= field.name %>,
       <%- when Herb::Template::LocationField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       <%= field.name %>: this.<%= field.name %> ? this.<%= field.name %>.toJSON() : null,
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: this.<%= field.name %>.map(node => node.toJSON()),
@@ -369,7 +369,7 @@ export class <%= node.name %> extends Node {
     output += `<%= name %>${this.<%= field.name %> ? JSON.stringify(this.<%= field.name %>) : "∅"}\n`;
     <%- when Herb::Template::LocationField -%>
     output += `<%= name %>${this.<%= field.name %> ? "(location: " + this.<%= field.name %>.treeInspect() + ")" : "∅"}\n`;
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     output += `<%= name %>${this.inspectNode(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;
     <%- when Herb::Template::ArrayField -%>
     output += `<%= name %>${this.inspectArray(this.<%= field.name %>, "<%= (node.fields.last == field) ? "    " : "│   " %>")}`;

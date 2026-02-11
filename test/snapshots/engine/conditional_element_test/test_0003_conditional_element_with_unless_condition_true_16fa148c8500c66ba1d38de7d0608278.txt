@@ -1,0 +1,5 @@
+---
+source: "Engine::ConditionalElementTest#test_0003_conditional element with unless condition true"
+input: "{source: \"<% unless @compact %>\\n  <div class=\\\"expanded\\\">\\n<% end %>\\n  <span>Content</span>\\n<% unless @compact %>\\n  </div>\\n<% end %>\\n\", locals: {\"@compact\": true}, options: {escape: false}}"
+---
+  <span>Content</span>
