@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0094_multiple regular attributes before conditional"
+source: "Parser::AttributesTest#test_0095_multiple regular attributes before conditional"
 input: "<div id=\"main\" class=\"container\" <% if active? %>data-active<% end %>></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:76))

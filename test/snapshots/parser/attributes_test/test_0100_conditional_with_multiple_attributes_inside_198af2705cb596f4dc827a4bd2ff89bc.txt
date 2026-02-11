@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0099_conditional with multiple attributes inside"
+source: "Parser::AttributesTest#test_0100_conditional with multiple attributes inside"
 input: "<div <% if admin? %>data-admin data-role=\"admin\" data-permissions=\"all\"<% end %>></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:87))

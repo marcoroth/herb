@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0103_void element with conditional attribute"
+source: "Parser::AttributesTest#test_0104_void element with conditional attribute"
 input: "<img src=\"image.png\" <% if lazy? %>loading=\"lazy\"<% end %>>"
 ---
 @ DocumentNode (location: (1:0)-(1:59))

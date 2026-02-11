@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0102_self-closing tag with conditional attribute and value"
+source: "Parser::AttributesTest#test_0103_self-closing tag with conditional attribute and value"
 input: "<input type=\"text\" <% if has_value? %>value=\"<%= default_value %>\"<% end %> />"
 ---
 @ DocumentNode (location: (1:0)-(1:78))

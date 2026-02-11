@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0100_conditional with ERB output in attribute value"
+source: "Parser::AttributesTest#test_0101_conditional with ERB output in attribute value"
 input: "<div <% if user? %>data-user-id=\"<%= user.id %>\" data-user-name=\"<%= user.name %>\"<% end %>></div>"
 ---
 @ DocumentNode (location: (1:0)-(1:98))

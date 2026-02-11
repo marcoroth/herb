@@ -1,5 +1,5 @@
 ---
-source: "Parser::AttributesTest#test_0047_Conditional attribute with ERB control flow and no surrounding spaces"
+source: "Parser::AttributesTest#test_0094_issue #856: data-turbo-permanent in if right before html tag end"
 input: "<dialog data-controller=\"dialog\" <% if local_assigns[:permanent] %>data-turbo-permanent<% end %>></dialog>"
 ---
 @ DocumentNode (location: (1:0)-(1:106))
