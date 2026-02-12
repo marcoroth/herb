@@ -44,21 +44,19 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
 
-  parser_options_T opts = HERB_DEFAULT_PARSER_OPTIONS;
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
-
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { opts.track_whitespace = true; }
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
 
     VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
     if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
-
-    if (!NIL_P(analyze) && !RTEST(analyze)) { opts.analyze = false; }
+    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &opts);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
 
   VALUE result = create_parse_result(root, source);
 

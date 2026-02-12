@@ -75,7 +75,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  parser_options_T opts = HERB_DEFAULT_PARSER_OPTIONS;
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -92,7 +92,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
 
         if (track_whitespace_value) {
-          opts.track_whitespace = true;
+          parser_options.track_whitespace = true;
         }
       }
 
@@ -106,13 +106,13 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, analyze_prop, &analyze_value);
 
         if (!analyze_value) {
-          opts.analyze = false;
+          parser_options.analyze = false;
         }
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &opts);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
   napi_value result = CreateParseResult(env, root, args[0]);
 
   ast_node_free((AST_NODE_T *) root);
