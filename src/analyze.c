@@ -1917,6 +1917,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       errors
     );
 
+    free(condition_copy);
+
     for (size_t body_index = matched_open->open_index + 1; body_index < node_index; body_index++) {
       size_t* consumed_index = malloc(sizeof(size_t));
       *consumed_index = body_index;
