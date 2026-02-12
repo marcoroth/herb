@@ -265,7 +265,7 @@
     "@herb-tools/formatter": "0.8.10",
     "@herb-tools/linter": "0.8.10",
     "@herb-tools/node-wasm": "0.8.10",
-    "@types/mocha": "^10.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/node": "25.x",
     "@types/vscode": "^1.109.0",
     "@typescript-eslint/eslint-plugin": "^8.55.0",
