@@ -52,5 +52,8 @@
     "dedent": "^1.7.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
   }
 }
