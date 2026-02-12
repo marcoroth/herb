@@ -460,5 +460,17 @@ module Engine
 
       assert_evaluated_snapshot(template, { product: product }, { escape: false })
     end
+
+    test "conditional html element with condition true" do
+      template = File.read("examples/conditional_html_element.html.erb")
+
+      assert_evaluated_snapshot(template, { :@with_icon => true }, { escape: false })
+    end
+
+    test "conditional html element with condition false" do
+      template = File.read("examples/conditional_html_element.html.erb")
+
+      assert_evaluated_snapshot(template, { :@with_icon => false }, { escape: false })
+    end
   end
 end

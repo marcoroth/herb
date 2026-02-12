@@ -58,12 +58,14 @@ class <%= error.name %> extends HerbError {
   private final Token <%= field.name %>;
   <%- when Herb::Template::TokenTypeField -%>
   private final String <%= field.name %>;
+  <%- when Herb::Template::SizeTField -%>
+  private final long <%= field.name %>;
   <%- else -%>
   // Unsupported field type: <%= field.class %>
   <%- end -%>
   <%- end -%>
 
-  public <%= error.name %>(String type, String message, Location location<%- error.fields.each do |field| -%><%- case field -%><%- when Herb::Template::StringField -%>, String <%= field.name %><%- when Herb::Template::TokenField -%>, Token <%= field.name %><%- when Herb::Template::TokenTypeField -%>, String <%= field.name %><%- end -%><%- end -%>) {
+  public <%= error.name %>(String type, String message, Location location<%- error.fields.each do |field| -%><%- case field -%><%- when Herb::Template::StringField -%>, String <%= field.name %><%- when Herb::Template::TokenField -%>, Token <%= field.name %><%- when Herb::Template::TokenTypeField -%>, String <%= field.name %><%- when Herb::Template::SizeTField -%>, long <%= field.name %><%- end -%><%- end -%>) {
     super(type, message, location);
     <%- error.fields.each do |field| -%>
     this.<%= field.name %> = <%= field.name %>;
@@ -84,6 +86,11 @@ class <%= error.name %> extends HerbError {
 
   <%- when Herb::Template::TokenTypeField -%>
   public String get<%= field.name.capitalize %>() {
+    return <%= field.name %>;
+  }
+
+  <%- when Herb::Template::SizeTField -%>
+  public long get<%= field.name.capitalize %>() {
     return <%= field.name %>;
   }
 
@@ -110,6 +117,10 @@ class <%= error.name %> extends HerbError {
     <%- when Herb::Template::TokenField -%>
     output.append("<%= symbol %> <%= field.name %>: ");
     output.append(<%= field.name %> != null ? <%= field.name %>.inspect() : "∅");
+    output.append("\n");
+    <%- when Herb::Template::SizeTField -%>
+    output.append("<%= symbol %> <%= field.name %>: ");
+    output.append(<%= field.name %>);
     output.append("\n");
     <%- end -%>
     <%- end -%>

@@ -64,6 +64,7 @@ import {
   HTMLOpenTagNode,
   HTMLCloseTagNode,
   HTMLElementNode,
+  HTMLConditionalElementNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   HTMLAttributeNameNode,
@@ -870,6 +871,32 @@ export class FormatPrinter extends Printer {
     })
 
     this.elementStack.pop()
+  }
+
+  visitHTMLConditionalElementNode(node: HTMLConditionalElementNode) {
+    this.trackBoundary(node, () => {
+      if (node.open_conditional) {
+        this.visit(node.open_conditional)
+      }
+
+      if (node.body.length > 0) {
+        this.push("")
+
+        this.withIndent(() => {
+          for (const child of node.body) {
+            if (!isPureWhitespaceNode(child)) {
+              this.visit(child)
+            }
+          }
+        })
+
+        this.push("")
+      }
+
+      if (node.close_conditional) {
+        this.visit(node.close_conditional)
+      }
+    })
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {

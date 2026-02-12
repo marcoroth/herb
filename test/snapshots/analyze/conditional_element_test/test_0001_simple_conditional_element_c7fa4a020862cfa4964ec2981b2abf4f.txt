@@ -1,0 +1,161 @@
+---
+source: "Analyze::ConditionalElementTest#test_0001_simple conditional element"
+input: |2-
+<% if @with_icon %>
+  <div class="icon">
+<% end %>
+  <span>Hello</span>
+<% if @with_icon %>
+  </div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLConditionalElementNode (location: (1:0)-(7:9))
+    │   ├── condition: "@with_icon"
+    │   ├── open_conditional:
+    │   │   └── @ ERBIfNode (location: (1:0)-(3:9))
+    │   │       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   │       ├── content: " if @with_icon " (location: (1:2)-(1:17))
+    │   │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:20))
+    │   │       │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       │   │   ├── tag_closing: ">" (location: (2:19)-(2:20))
+    │   │       │   │   ├── children: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (2:7)-(2:19))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │       │   │   │       │               └── content: "class"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │   │   │       └── value:
+    │   │       │   │   │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:19))
+    │   │       │   │   │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │   │   │               ├── children: (1 item)
+    │   │       │   │   │               │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │       │   │   │               │       └── content: "icon"
+    │   │       │   │   │               │
+    │   │       │   │   │               ├── close_quote: """ (location: (2:18)-(2:19))
+    │   │       │   │   │               └── quoted: true
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   └── is_void: false
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (2:20)-(3:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (3:0)-(3:9))
+    │   │               ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │               ├── content: " end " (location: (3:2)-(3:7))
+    │   │               └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │   │
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:20))
+    │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       ├── tag_closing: ">" (location: (2:19)-(2:20))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (2:7)-(2:19))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:19))
+    │   │       │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (2:14)-(2:18))
+    │   │       │               │       └── content: "icon"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (2:18)-(2:19))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (3:9)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(4:20))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (4:8)-(4:13))
+    │   │   │   │       └── content: "Hello"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:13)-(4:20))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:13)-(4:15))
+    │   │   │   │       ├── tag_name: "span" (location: (4:15)-(4:19))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:19)-(4:20))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:20)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:2)-(6:8))
+    │   │       ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │       ├── tag_name: "div" (location: (6:4)-(6:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │
+    │   ├── close_conditional:
+    │   │   └── @ ERBIfNode (location: (5:0)-(7:9))
+    │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       ├── content: " if @with_icon " (location: (5:2)-(5:17))
+    │   │       ├── tag_closing: "%>" (location: (5:17)-(5:19))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (5:19)-(6:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLCloseTagNode (location: (6:2)-(6:8))
+    │   │       │   │   ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │       │   │   ├── tag_name: "div" (location: (6:4)-(6:7))
+    │   │       │   │   ├── children: []
+    │   │       │   │   └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (6:8)-(7:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (7:0)-(7:9))
+    │   │               ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │   │               ├── content: " end " (location: (7:2)-(7:7))
+    │   │               └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

@@ -1,4 +1,5 @@
 #include "include/analyze.h"
+#include "include/analyze_conditional_elements.h"
 #include "include/analyze_helpers.h"
 #include "include/analyzed_ruby.h"
 #include "include/ast_node.h"
@@ -13,6 +14,7 @@
 #include "include/token_struct.h"
 #include "include/util.h"
 #include "include/util/hb_array.h"
+#include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 #include "include/util/string.h"
 #include "include/visitor.h"
@@ -1524,6 +1526,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
   context->ruby_context_stack = hb_array_init(8);
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
+  herb_transform_conditional_elements(document);
 
   invalid_erb_context_T* invalid_context = malloc(sizeof(invalid_erb_context_T));
   invalid_context->loop_depth = 0;

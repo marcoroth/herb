@@ -1,0 +1,5 @@
+---
+source: "Engine::ConditionalElementTest#test_0010_conditional element with attributes condition false"
+input: "{source: \"<% if @styled %>\\n  <div id=\\\"container\\\" class=\\\"styled\\\" data-value=\\\"test\\\">\\n<% end %>\\n  <span>Styled content</span>\\n<% if @styled %>\\n  </div>\\n<% end %>\\n\", locals: {\"@styled\": false}, options: {escape: false}}"
+---
+  <span>Styled content</span>

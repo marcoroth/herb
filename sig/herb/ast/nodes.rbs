@@ -161,6 +161,47 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class HTMLConditionalElementNode < Node
+      include Colors
+
+      attr_reader condition: String
+
+      attr_reader open_conditional: Herb::AST::Node
+
+      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+
+      attr_reader body: Array[Herb::AST::Node]
+
+      attr_reader close_tag: Herb::AST::HTMLCloseTagNode
+
+      attr_reader close_conditional: Herb::AST::Node
+
+      attr_reader tag_name: Herb::Token
+
+      attr_reader source: String
+
+      # : (String, Location, Array[Herb::Errors::Error], String, Herb::AST::Node, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, Herb::AST::Node, Herb::Token, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::Node, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, Herb::AST::Node, Herb::Token, String) -> void
+
+      # : () -> serialized_html_conditional_element_node
+      def to_hash: () -> serialized_html_conditional_element_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class HTMLAttributeValueNode < Node
       include Colors
 

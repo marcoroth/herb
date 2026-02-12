@@ -10,6 +10,7 @@
         "./extension/nodes.cpp",
 
         # Herb main source files
+        "./extension/libherb/analyze_conditional_elements.c",
         "./extension/libherb/analyze_helpers.c",
         "./extension/libherb/analyze_missing_end.c",
         "./extension/libherb/analyze_transform.c",

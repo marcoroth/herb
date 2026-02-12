@@ -28,6 +28,9 @@ module Herb
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
 
+    # : (Herb::AST::HTMLConditionalElementNode) -> void
+    def visit_html_conditional_element_node: (Herb::AST::HTMLConditionalElementNode) -> void
+
     # : (Herb::AST::HTMLAttributeValueNode) -> void
     def visit_html_attribute_value_node: (Herb::AST::HTMLAttributeValueNode) -> void
 

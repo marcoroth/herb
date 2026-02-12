@@ -99,6 +99,8 @@ module Herb
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::StringField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
+        <%- when Herb::Template::SizeTField -%>
+        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- else -%>
         output += white("<%= symbol %> <%= field.name %>: ") + '#{<%= field.name %>.class}'\n"
         <%- end -%>

@@ -245,7 +245,7 @@ pub struct <%= node.name %> {
   pub <%= field.name %>: bool,
   <%- when Herb::Template::ArrayField -%>
   pub <%= field.name %>: Vec<AnyNode>,
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind && field.specific_kind != "Node" -%>
   pub <%= field.name %>: Option<Box<<%= field.specific_kind %>>>,
   <%- else -%>
@@ -277,7 +277,7 @@ impl Node for <%= node.name %> {
       case field
       when Herb::Template::ArrayField
         true
-      when Herb::Template::NodeField
+      when Herb::Template::BorrowedNodeField, Herb::Template::NodeField
         true
       else
         false
@@ -289,7 +289,7 @@ impl Node for <%= node.name %> {
     <%- case field -%>
     <%- when Herb::Template::ArrayField -%>
     children.extend(self.<%= field.name %>.iter().map(|n| n as &dyn Node));
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     if let Some(ref node) = self.<%= field.name %> {
       <%- if field.specific_kind && field.specific_kind != "Node" -%>
       children.push(node.as_ref() as &dyn Node);
@@ -310,7 +310,7 @@ impl Node for <%= node.name %> {
       case field
       when Herb::Template::ArrayField
         true
-      when Herb::Template::NodeField
+      when Herb::Template::BorrowedNodeField, Herb::Template::NodeField
         true
       else
         false
@@ -326,7 +326,7 @@ impl Node for <%= node.name %> {
     for child in &self.<%= field.name %> {
       all_errors.extend(child.recursive_errors());
     }
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     if let Some(ref node) = self.<%= field.name %> {
       all_errors.extend(node.recursive_errors());
     }
@@ -361,7 +361,7 @@ impl Node for <%= node.name %> {
     output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), format_bool_value(self.<%= field.name %>)));
     <%- when Herb::Template::ArrayField -%>
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
-    <%- when Herb::Template::NodeField -%>
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
     <%- when Herb::Template::LocationField -%>
     output.push_str(&format!("{}{}: {}\n", "<%= symbol %>".white(), "<%= field.name %>".white(), self.<%= field.name %>.as_ref().map(|l| format!("(location: {})", l).dimmed().to_string()).unwrap_or_else(|| "∅".magenta().to_string())));

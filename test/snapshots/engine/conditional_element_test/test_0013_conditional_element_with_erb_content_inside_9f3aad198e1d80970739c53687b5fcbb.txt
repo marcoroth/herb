@@ -1,0 +1,8 @@
+---
+source: "Engine::ConditionalElementTest#test_0013_conditional element with erb content inside"
+input: "{source: \"<% if @with_card %>\\n  <div class=\\\"card\\\">\\n<% end %>\\n  <h2><%= title %></h2>\\n  <p><%= description %></p>\\n<% if @with_card %>\\n  </div>\\n<% end %>\\n\", locals: {\"@with_card\": true, title: \"Card Title\", description: \"Card description text\"}, options: {escape: false}}"
+---
+  <div class="card">
+  <h2>Card Title</h2>
+  <p>Card description text</p>
+  </div>
