@@ -1,5 +1,4 @@
 extern "C" {
-#include "../extension/libherb/include/analyze.h"
 #include "../extension/libherb/include/ast_nodes.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
@@ -76,8 +75,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  parser_options_T* parser_options = nullptr;
-  parser_options_T opts = {0};
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -85,24 +83,36 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
     if (valuetype == napi_object) {
       napi_value track_whitespace_prop;
-      bool has_prop;
-      napi_has_named_property(env, args[1], "track_whitespace", &has_prop);
+      bool has_track_whitespace_prop;
+      napi_has_named_property(env, args[1], "track_whitespace", &has_track_whitespace_prop);
 
-      if (has_prop) {
+      if (has_track_whitespace_prop) {
         napi_get_named_property(env, args[1], "track_whitespace", &track_whitespace_prop);
         bool track_whitespace_value;
         napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
 
         if (track_whitespace_value) {
-          opts.track_whitespace = true;
-          parser_options = &opts;
+          parser_options.track_whitespace = true;
+        }
+      }
+
+      napi_value analyze_prop;
+      bool has_analyze_prop;
+      napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
+
+      if (has_analyze_prop) {
+        napi_get_named_property(env, args[1], "analyze", &analyze_prop);
+        bool analyze_value;
+        napi_get_value_bool(env, analyze_prop, &analyze_value);
+
+        if (!analyze_value) {
+          parser_options.analyze = false;
         }
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
-  herb_analyze_parse_tree(root, string);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
   napi_value result = CreateParseResult(env, root, args[0]);
 
   ast_node_free((AST_NODE_T *) root);

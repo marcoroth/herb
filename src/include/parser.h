@@ -17,6 +17,7 @@ typedef enum { PARSER_STATE_DATA, PARSER_STATE_FOREIGN_CONTENT } parser_state_T;
 
 typedef struct PARSER_OPTIONS_STRUCT {
   bool track_whitespace;
+  bool analyze;
 } parser_options_T;
 
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;

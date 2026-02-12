@@ -60,6 +60,20 @@ describe("@herb-tools/node-wasm", () => {
     )
   })
 
+  test("parse() with analyze: true (default) transforms ERB nodes", async () => {
+    const erb = "<% if true %>true<% end %>"
+    const result = Herb.parse(erb)
+    expect(result.value.inspect()).toContain("@ ERBIfNode")
+    expect(result.value.inspect()).not.toContain("@ ERBContentNode")
+  })
+
+  test("parse() with analyze: false skips ERB node transformation", async () => {
+    const erb = "<% if true %>true<% end %>"
+    const result = Herb.parse(erb, { analyze: false })
+    expect(result.value.inspect()).toContain("@ ERBContentNode")
+    expect(result.value.inspect()).not.toContain("@ ERBIfNode")
+  })
+
   test("parse() without track_whitespace option ignores whitespace", async () => {
     const htmlWithWhitespace = '<div     class="example">content</div>'
     const result = Herb.parse(htmlWithWhitespace)
