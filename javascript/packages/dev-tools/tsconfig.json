@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    "types": [],
+    "rootDir": "./src",
     "target": "ES2020",
     "module": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2020", "dom"],
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
@@ -11,8 +13,7 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": false,
-    "rootDir": "./src"
+    "declaration": false
   },
   "include": [
     "src/**/*"

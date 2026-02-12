@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": [],
+    "rootDir": "./src",
     "target": "es2019",
     "lib": ["ES2019"],
     "module": "commonjs",
@@ -9,7 +11,6 @@
     "sourceMap": true,
     "strict": true,
     "outDir": "dist",
-    "rootDir": "./src",
     "declaration": true,
     "declarationDir": "./dist/types",
     "erasableSyntaxOnly": true,
