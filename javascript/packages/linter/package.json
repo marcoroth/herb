@@ -33,9 +33,10 @@
       "default": "./dist/index.js"
     },
     "./cli": {
-      "types": "./dist/types/src/cli.d.ts",
-      "require": "./dist/src/cli.js",
-      "default": "./dist/src/cli.js"
+      "types": "./dist/types/cli.d.ts",
+      "import": "./dist/cli.js",
+      "require": "./dist/cli.js",
+      "default": "./dist/cli.js"
     },
     "./loader": {
       "types": "./dist/types/loader.d.ts",
