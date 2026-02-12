@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["node"],
     "target": "es2019",
     "lib": ["ES2022"],
     "module": "ESNext",
