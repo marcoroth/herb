@@ -40,7 +40,7 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%
       Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)).to_string_lossy().into_owned())
     },
     <%- when Herb::Template::SizeTField -%>
-    error_ref.<%= field.name %> as usize,
+    error_ref.<%= field.name %>,
     <%- end -%>
     <%- end -%>
   )
