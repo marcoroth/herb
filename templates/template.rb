@@ -108,10 +108,8 @@ module Herb
       def java_type
         if specific_kind
           specific_kind
-        elsif union_kind
-          "Node" # Java uses base type, could use sealed interface in future
         else
-          "Node"
+          "Node" # Java uses base type for union_kind, could use sealed interface in future
         end
       end
     end
