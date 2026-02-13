@@ -400,7 +400,7 @@ impl Node for <%= node.name %> {
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_array_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string())));
     <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
     <%- if field.union_kind -%>
-    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_union_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>, |n| n.tree_inspect())));
+    output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_union_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>, |n: &<%= field.union_type_name %>| n.tree_inspect())));
     <%- else -%>
     output.push_str(&format!("{}{}: {}", "<%= symbol %>".white(), "<%= field.name %>".white(), format_node_value(&self.<%= field.name %>, &"<%= is_last ? "    " : "│   " %>".white().to_string(), <%= !is_last %>)));
     <%- end -%>

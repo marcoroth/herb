@@ -251,7 +251,7 @@ unsafe fn convert_<%= snake_name %>_field(node_pointer: *mut c_void) -> Option<<
     <%- kinds.each do |kind| -%>
     <%- node = nodes.find { |n| n.name == kind } -%>
     <%= node.type %> => {
-      Some(<%= enum_name %>::<%= kind %>(Box::new(convert_<%= node.human %>(node_pointer as *const <%= node.struct_type %>))))
+      Some(<%= enum_name %>::<%= kind %>(Box::new(convert_<%= node.human %>(node_pointer as *const c_void)?)))
     }
     <%- end -%>
     _ => None,
