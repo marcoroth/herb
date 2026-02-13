@@ -158,7 +158,7 @@ module Herb
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+      attr_reader open_tag: Herb::AST::Node
 
       attr_reader tag_name: Herb::Token
 
@@ -170,8 +170,8 @@ module Herb
 
       attr_reader source: String
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
