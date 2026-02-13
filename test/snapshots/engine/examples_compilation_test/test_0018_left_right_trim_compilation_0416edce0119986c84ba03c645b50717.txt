@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0017_left right trim compilation"
+source: "Engine::ExamplesCompilationTest#test_0018_left right trim compilation"
 input: "{source: \"<%- if true -%>\\n  <h1>Content</h1>\\n<%- end -%>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; if true 

@@ -1,5 +1,5 @@
 ---
-source: "Parser::ERBContextMismatchTest#test_0002_conditionally opening tag then closing unconditionally"
+source: "Analyze::ConditionalOpenTagTest#test_0001_simple if/else with different classes (issue #398)"
 input: |2-
 <% if some_condition %>
   <div class="a">

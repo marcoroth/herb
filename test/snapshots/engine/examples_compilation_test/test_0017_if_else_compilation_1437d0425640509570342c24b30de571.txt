@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0016_if else compilation"
+source: "Engine::ExamplesCompilationTest#test_0017_if else compilation"
 input: "{source: \"<h1>\\n  <% if true %>\\n    <div>Text1</div>\\n  <% elsif false %>\\n    <div>Text2</div>\\n  <% else %>\\n    <div>Text3</div>\\n  <% end %>\\n</h1>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; _buf << '<h1>

@@ -289,6 +289,18 @@ nodes:
         - name: is_void
           type: boolean
 
+    - name: HTMLConditionalOpenTagNode
+      fields:
+        - name: conditional
+          type: node
+          kind: Node
+
+        - name: tag_name
+          type: token
+
+        - name: is_void
+          type: boolean
+
     - name: HTMLCloseTagNode
       fields:
         - name: tag_opening
@@ -308,7 +320,7 @@ nodes:
       fields:
         - name: open_tag
           type: node
-          kind: HTMLOpenTagNode
+          kind: Node
 
         - name: tag_name
           type: token
