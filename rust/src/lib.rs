@@ -11,6 +11,7 @@ pub mod parse_result;
 pub mod position;
 pub mod range;
 pub mod token;
+pub mod union_types;
 
 pub use errors::{AnyError, ErrorNode, ErrorType};
 pub use herb::{

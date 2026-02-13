@@ -148,6 +148,8 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: Serialized<%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  <%= field.name %>: <%= field.union_kind.map { |k| "Serialized#{k}" }.join(" | ") %> | null;
   <%- else -%>
   <%= field.name %>: SerializedNode | null;
   <%- end -%>
@@ -161,7 +163,8 @@ export interface Serialized<%= node.name %> extends SerializedNode {
   <%- end -%>
 }
 
-export interface <%= node.name %>Props extends BaseNodeProps {
+export interface <%= node.name %>Props extends Omit<BaseNodeProps, 'type'> {
+  type: "<%= node.type %>";
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
@@ -177,6 +180,8 @@ export interface <%= node.name %>Props extends BaseNodeProps {
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  <%= field.name %>: <%= field.union_kind.join(" | ") %> | null;
   <%- else -%>
   <%= field.name %>: Node | null;
   <%- end -%>
@@ -195,6 +200,7 @@ export interface <%= node.name %>Props extends BaseNodeProps {
 }
 
 export class <%= node.name %> extends Node {
+  declare readonly type: "<%= node.type %>";
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
@@ -210,6 +216,8 @@ export class <%= node.name %> extends Node {
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   <%- if field.specific_kind -%>
   readonly <%= field.name %>: <%= field.specific_kind %> | null;
+  <%- elsif field.union_kind -%>
+  readonly <%= field.name %>: <%= field.union_kind.join(" | ") %> | null;
   <%- else -%>
   readonly <%= field.name %>: Node | null;
   <%- end -%>
@@ -248,7 +256,13 @@ export class <%= node.name %> extends Node {
       <%- when Herb::Template::LocationField -%>
       <%= field.name %>: data.<%= field.name %> ? Location.from(data.<%= field.name %>) : null,
       <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+      <%- if field.union_kind -%>
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) as <%= field.union_kind.join(" | ") %> : null,
+      <%- elsif field.specific_kind -%>
+      <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) as <%= field.specific_kind %> : null,
+      <%- else -%>
       <%= field.name %>: data.<%= field.name %> ? fromSerializedNode((data.<%= field.name %>)) : null,
+      <%- end -%>
       <%- when Herb::Template::ArrayField -%>
       <%= field.name %>: (data.<%= field.name %> || []).map(node => fromSerializedNode(node)),
       <%- when Herb::Template::PrismNodeField, Herb::Template::AnalyzedRubyField -%>

@@ -293,7 +293,9 @@ nodes:
       fields:
         - name: conditional
           type: node
-          kind: Node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
 
         - name: tag_name
           type: token
@@ -311,7 +313,7 @@ nodes:
 
         - name: children
           type: array
-          kind: Node
+          kind: WhitespaceNode
 
         - name: tag_closing
           type: token
@@ -320,7 +322,9 @@ nodes:
       fields:
         - name: open_tag
           type: node
-          kind: Node
+          kind:
+            - HTMLOpenTagNode
+            - HTMLConditionalOpenTagNode
 
         - name: tag_name
           type: token
@@ -346,7 +350,9 @@ nodes:
 
         - name: open_conditional
           type: node
-          kind: Node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
 
         - name: open_tag
           type: borrowed_node
@@ -362,7 +368,9 @@ nodes:
 
         - name: close_conditional
           type: node
-          kind: Node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
 
         - name: tag_name
           type: token
@@ -389,11 +397,9 @@ nodes:
       fields:
         - name: children
           type: array
-          kind: Node
-          # kind:
-          #   - LiteralNode
-          #   - ERBContentNode
-          #   - WhitespaceNode
+          kind:
+            - LiteralNode
+            - ERBContentNode
 
     - name: HTMLAttributeNode
       fields:
@@ -535,10 +541,9 @@ nodes:
 
         - name: subsequent
           type: node
-          kind: Node
-          # kind:
-          #   - ERBIfNode
-          #   - ERBElseNode
+          kind:
+            - ERBIfNode
+            - ERBElseNode
 
         - name: end_node
           type: node

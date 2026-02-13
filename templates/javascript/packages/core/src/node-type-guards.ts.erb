@@ -20,7 +20,9 @@ import {
 /**
  * Checks if a node is a <%= node.name %>
  */
-export function is<%= node.name %>(node: Node): node is <%= node.name %> {
+export function is<%= node.name %>(node: Node | null | undefined): node is <%= node.name %> {
+  if (!node) return false
+
   return node instanceof <%= node.name %> || node.type === "<%= node.type %>" || (node.constructor as any).type === "<%= node.type %>"
 }
 
