@@ -53,12 +53,12 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
-    let mut c_parser_options = crate::bindings::parser_options_T {
+    let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
       analyze: options.analyze,
     };
 
-    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &mut c_parser_options);
+    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options);
 
     if ast.is_null() {
       return Err("Failed to parse source".to_string());

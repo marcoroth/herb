@@ -27,7 +27,7 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source) {
   return tokens;
 }
 
-HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
+HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, const parser_options_T* options) {
   if (!source) { source = ""; }
 
   lexer_T lexer = { 0 };
