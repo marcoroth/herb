@@ -129,12 +129,12 @@ module Herb
 
       attr_reader tag_name: Herb::Token
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_reader children: Array[Herb::AST::WhitespaceNode]
 
       attr_reader tag_closing: Herb::Token
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::Node], Herb::Token) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Array[Herb::AST::WhitespaceNode], Herb::Token) -> void
 
       # : () -> serialized_html_close_tag_node
       def to_hash: () -> serialized_html_close_tag_node
