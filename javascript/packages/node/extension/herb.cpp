@@ -1,5 +1,6 @@
 extern "C" {
 #include "../extension/libherb/include/ast_nodes.h"
+#include "../extension/libherb/include/extract.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/range.h"
@@ -153,8 +154,8 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -172,7 +173,43 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  herb_extract_ruby_to_buffer(string, &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      napi_value prop;
+      bool has_prop;
+
+      napi_has_named_property(env, args[1], "semicolons", &has_prop);
+      if (has_prop) {
+        napi_get_named_property(env, args[1], "semicolons", &prop);
+        bool value;
+        napi_get_value_bool(env, prop, &value);
+        extract_options.semicolons = value;
+      }
+
+      napi_has_named_property(env, args[1], "comments", &has_prop);
+      if (has_prop) {
+        napi_get_named_property(env, args[1], "comments", &prop);
+        bool value;
+        napi_get_value_bool(env, prop, &value);
+        extract_options.comments = value;
+      }
+
+      napi_has_named_property(env, args[1], "preserve_positions", &has_prop);
+      if (has_prop) {
+        napi_get_named_property(env, args[1], "preserve_positions", &prop);
+        bool value;
+        napi_get_value_bool(env, prop, &value);
+        extract_options.preserve_positions = value;
+      }
+    }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
 
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);

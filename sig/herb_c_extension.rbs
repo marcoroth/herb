@@ -4,6 +4,6 @@
 module Herb
   def self.parse: (String input, ?track_whitespace: bool) -> ParseResult
   def self.lex: (String input) -> LexResult
-  def self.extract_ruby: (String source, ?semicolons: bool) -> String
+  def self.extract_ruby: (String source, ?semicolons: bool, ?comments: bool, ?preserve_positions: bool) -> String
   def self.extract_html: (String source) -> String
 end

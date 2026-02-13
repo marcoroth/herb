@@ -9,10 +9,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
+const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = {
+  .semicolons = true,
+  .comments = false,
+  .preserve_positions = true
+};
+
+void herb_extract_ruby_to_buffer_with_options(
+  const char* source,
+  hb_buffer_T* output,
+  const herb_extract_ruby_options_T* options
+) {
+  herb_extract_ruby_options_T extract_options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
   hb_array_T* tokens = herb_lex(source);
   bool skip_erb_content = false;
   bool is_comment_tag = false;
+  bool is_erb_comment_tag = false;
+  bool need_newline = false;
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
@@ -20,23 +34,48 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
     switch (token->type) {
       case TOKEN_NEWLINE: {
         hb_buffer_append(output, token->value);
+        need_newline = false;
         break;
       }
 
       case TOKEN_ERB_START: {
-        if (string_equals(token->value, "<%#")) {
-          skip_erb_content = true;
-          is_comment_tag = true;
+        is_erb_comment_tag = string_equals(token->value, "<%#");
+
+        if (is_erb_comment_tag) {
+          if (extract_options.comments) {
+            skip_erb_content = false;
+            is_comment_tag = false;
+
+            if (extract_options.preserve_positions) {
+              hb_buffer_append_whitespace(output, 2);
+              hb_buffer_append_char(output, '#');
+            } else {
+              if (need_newline) { hb_buffer_append_char(output, '\n'); }
+              hb_buffer_append_char(output, '#');
+              need_newline = true;
+            }
+          } else {
+            skip_erb_content = true;
+            is_comment_tag = true;
+            if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
+          }
         } else if (string_equals(token->value, "<%%") || string_equals(token->value, "<%%=")
                    || string_equals(token->value, "<%graphql")) {
           skip_erb_content = true;
           is_comment_tag = false;
+          if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
         } else {
           skip_erb_content = false;
           is_comment_tag = false;
+
+          if (extract_options.preserve_positions) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          } else if (need_newline) {
+            hb_buffer_append_char(output, '\n');
+            need_newline = false;
+          }
         }
 
-        hb_buffer_append_whitespace(output, range_length(token->range));
         break;
       }
 
@@ -44,7 +83,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
         if (skip_erb_content == false) {
           bool is_inline_comment = false;
 
-          if (!is_comment_tag && token->value != NULL) {
+          if (!extract_options.comments && !is_comment_tag && token->value != NULL) {
             const char* content = token->value;
 
             while (*content == ' ' || *content == '\t') {
@@ -58,12 +97,13 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
           }
 
           if (is_inline_comment) {
-            hb_buffer_append_whitespace(output, range_length(token->range));
+            if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
           } else {
             hb_buffer_append(output, token->value);
+            if (!extract_options.preserve_positions) { need_newline = true; }
           }
         } else {
-          hb_buffer_append_whitespace(output, range_length(token->range));
+          if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
         }
 
         break;
@@ -71,27 +111,39 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 
       case TOKEN_ERB_END: {
         bool was_comment = is_comment_tag;
+        bool was_erb_comment = is_erb_comment_tag;
         skip_erb_content = false;
         is_comment_tag = false;
+        is_erb_comment_tag = false;
 
-        if (was_comment) {
-          hb_buffer_append_whitespace(output, range_length(token->range));
-          break;
+        if (extract_options.preserve_positions) {
+          if (was_comment) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          } else if (was_erb_comment && extract_options.comments) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          } else if (extract_options.semicolons) {
+            hb_buffer_append_char(output, ' ');
+            hb_buffer_append_char(output, ';');
+            hb_buffer_append_whitespace(output, range_length(token->range) - 2);
+          } else {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          }
         }
 
-        hb_buffer_append_char(output, ' ');
-        hb_buffer_append_char(output, ';');
-        hb_buffer_append_whitespace(output, range_length(token->range) - 2);
         break;
       }
 
       default: {
-        hb_buffer_append_whitespace(output, range_length(token->range));
+        if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
       }
     }
   }
 
   herb_free_tokens(&tokens);
+}
+
+void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
+  herb_extract_ruby_to_buffer_with_options(source, output, NULL);
 }
 
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {

@@ -40,6 +40,30 @@ describe("@herb-tools/node-wasm", () => {
     expect(ruby).toBe('         "Hello World"  ;      ')
   })
 
+  test("extractRuby() with semicolons: false", async () => {
+    const source = "<% x = 1 %> <% y = 2 %>"
+    const ruby = Herb.extractRuby(source, { semicolons: false })
+    expect(ruby).toBe("   x = 1       y = 2   ")
+  })
+
+  test("extractRuby() with comments: true", async () => {
+    const source = "<%# comment %>\n<% code %>"
+    const ruby = Herb.extractRuby(source, { comments: true })
+    expect(ruby).toBe("  # comment   \n   code  ;")
+  })
+
+  test("extractRuby() with preserve_positions: false", async () => {
+    const source = "<% x = 1 %> <% y = 2 %>"
+    const ruby = Herb.extractRuby(source, { preserve_positions: false })
+    expect(ruby).toBe(" x = 1 \n y = 2 ")
+  })
+
+  test("extractRuby() with preserve_positions: false and comments: true", async () => {
+    const source = "<%# comment %><%= something %>"
+    const ruby = Herb.extractRuby(source, { preserve_positions: false, comments: true })
+    expect(ruby).toBe("# comment \n something ")
+  })
+
   test("extractHTML() extracts HTML content", async () => {
     const simpleHtml = '<div><%= "Hello World" %></div>'
     const html = Herb.extractHTML(simpleHtml)

@@ -89,21 +89,25 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
 
   if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
-  bool semicolons = false;
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
   if (!NIL_P(options)) {
-    VALUE with_semicolon_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
-    if (NIL_P(with_semicolon_value)) {
-      with_semicolon_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons")));
+    VALUE semicolons_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
+    if (NIL_P(semicolons_value)) { semicolons_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons"))); }
+    if (!NIL_P(semicolons_value)) { extract_options.semicolons = RTEST(semicolons_value); }
+
+    VALUE comments_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("comments"));
+    if (NIL_P(comments_value)) { comments_value = rb_hash_lookup(options, ID2SYM(rb_intern("comments"))); }
+    if (!NIL_P(comments_value)) { extract_options.comments = RTEST(comments_value); }
+
+    VALUE preserve_positions_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("preserve_positions"));
+    if (NIL_P(preserve_positions_value)) {
+      preserve_positions_value = rb_hash_lookup(options, ID2SYM(rb_intern("preserve_positions")));
     }
-
-    if (!NIL_P(with_semicolon_value) && RTEST(with_semicolon_value)) { semicolons = true; }
+    if (!NIL_P(preserve_positions_value)) { extract_options.preserve_positions = RTEST(preserve_positions_value); }
   }
 
-  if (semicolons) {
-    herb_extract_ruby_to_buffer_with_semicolons(string, &output);
-  } else {
-    herb_extract_ruby_to_buffer(string, &output);
-  }
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
   free(output.value);
