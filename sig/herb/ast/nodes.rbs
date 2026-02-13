@@ -94,14 +94,14 @@ module Herb
     class HTMLConditionalOpenTagNode < Node
       include Colors
 
-      attr_reader conditional: Herb::AST::Node
+      attr_reader conditional: Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode
 
       attr_reader tag_name: Herb::Token
 
       attr_reader is_void: bool
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, bool) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, bool) -> void
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, bool) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, bool) -> void
 
       # : () -> serialized_html_conditional_open_tag_node
       def to_hash: () -> serialized_html_conditional_open_tag_node
@@ -158,7 +158,7 @@ module Herb
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: Herb::AST::Node
+      attr_reader open_tag: Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode
 
       attr_reader tag_name: Herb::Token
 
@@ -170,8 +170,8 @@ module Herb
 
       attr_reader source: String
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], (Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode), Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode | Herb::AST::HTMLConditionalOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node
@@ -197,7 +197,7 @@ module Herb
 
       attr_reader condition: String
 
-      attr_reader open_conditional: Herb::AST::Node
+      attr_reader open_conditional: Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode
 
       attr_reader open_tag: Herb::AST::HTMLOpenTagNode
 
@@ -205,14 +205,14 @@ module Herb
 
       attr_reader close_tag: Herb::AST::HTMLCloseTagNode
 
-      attr_reader close_conditional: Herb::AST::Node
+      attr_reader close_conditional: Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode
 
       attr_reader tag_name: Herb::Token
 
       attr_reader source: String
 
-      # : (String, Location, Array[Herb::Errors::Error], String, Herb::AST::Node, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, Herb::AST::Node, Herb::Token, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::Node, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, Herb::AST::Node, Herb::Token, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], String, (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, (Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode), Herb::Token, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], String, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::AST::HTMLOpenTagNode, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, Herb::AST::ERBIfNode | Herb::AST::ERBUnlessNode, Herb::Token, String) -> void
 
       # : () -> serialized_html_conditional_element_node
       def to_hash: () -> serialized_html_conditional_element_node
@@ -269,10 +269,10 @@ module Herb
     class HTMLAttributeNameNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::Node]
+      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::Node]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode)]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode]) -> void
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node
@@ -616,12 +616,12 @@ module Herb
 
       attr_reader statements: Array[Herb::AST::Node]
 
-      attr_reader subsequent: Herb::AST::Node
+      attr_reader subsequent: Herb::AST::ERBIfNode | Herb::AST::ERBElseNode
 
       attr_reader end_node: Herb::AST::ERBEndNode
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::Node, Herb::AST::ERBEndNode) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], (Herb::AST::ERBIfNode | Herb::AST::ERBElseNode), Herb::AST::ERBEndNode) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::Token, Herb::Token, Herb::Token, Herb::Location, Array[Herb::AST::Node], Herb::AST::ERBIfNode | Herb::AST::ERBElseNode, Herb::AST::ERBEndNode) -> void
 
       # : () -> serialized_erb_if_node
       def to_hash: () -> serialized_erb_if_node

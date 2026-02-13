@@ -23,10 +23,17 @@ module Herb
       end
 
       def ruby_type
-        return "Array" unless specific_kind
-        return "Array[Herb::AST::#{specific_kind}]" if specific_kind.end_with?("Node")
-
-        "Array[#{specific_kind}]"
+        if specific_kind
+          if specific_kind.end_with?("Node")
+            "Array[Herb::AST::#{specific_kind}]"
+          else
+            "Array[#{specific_kind}]"
+          end
+        elsif union_kind
+          "Array[(#{union_kind.map { |k| "Herb::AST::#{k}" }.join(" | ")})]"
+        else
+          "Array"
+        end
       end
 
       def c_type
@@ -65,7 +72,13 @@ module Herb
       end
 
       def ruby_type
-        "Herb::AST::#{specific_kind || "Node"}"
+        if specific_kind
+          "Herb::AST::#{specific_kind}"
+        elsif union_kind
+          "(#{union_kind.map { |k| "Herb::AST::#{k}" }.join(" | ")})"
+        else
+          "Herb::AST::Node"
+        end
       end
 
       def specific_kind
@@ -74,6 +87,32 @@ module Herb
 
       def union_kind
         @kind if @kind.is_a?(Array)
+      end
+
+      def union_type_name
+        return nil unless union_kind
+
+        union_kind.sort.join("Or")
+      end
+
+      def rust_type
+        if specific_kind && specific_kind != "Node"
+          "Option<Box<#{specific_kind}>>"
+        elsif union_kind
+          "Option<#{union_type_name}>"
+        else
+          "Option<Box<AnyNode>>"
+        end
+      end
+
+      def java_type
+        if specific_kind
+          specific_kind
+        elsif union_kind
+          "Node" # Java uses base type, could use sealed interface in future
+        else
+          "Node"
+        end
       end
     end
 
@@ -385,7 +424,7 @@ module Herb
                         )
                       end
 
-      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors })
+      rendered_template = read_template(template_path.to_s).result_with_hash({ nodes: nodes, errors: errors, union_kinds: union_kinds })
       content = heading_for(name, template_file) + rendered_template
 
       check_gitignore(name)
@@ -427,6 +466,21 @@ module Herb
 
     def self.nodes
       (config.dig("nodes", "types") || []).map { |node| NodeType.new(node) }
+    end
+
+    # Collect all unique union kinds from node fields
+    def self.union_kinds
+      union_kinds_set = Set.new
+
+      nodes.each do |node|
+        node.fields.each do |field|
+          if field.respond_to?(:union_kind) && field.union_kind
+            union_kinds_set.add(field.union_kind.sort)
+          end
+        end
+      end
+
+      union_kinds_set.to_a.sort
     end
 
     def self.errors

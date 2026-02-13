@@ -2,6 +2,7 @@ use crate::bindings::*;
 use crate::convert::token_from_c;
 use crate::errors::*;
 use crate::nodes::*;
+use crate::union_types::*;
 use crate::{Location, Position};
 use std::ffi::CStr;
 use std::os::raw::{c_char, c_void};
@@ -135,20 +136,20 @@ unsafe fn convert_children(children_array: *mut hb_array_T) -> Vec<AnyNode> {
   children
 }
 
-unsafe fn convert_node_field(node_ptr: *mut c_void) -> Option<Box<AnyNode>> {
-  if node_ptr.is_null() {
+unsafe fn convert_node_field(node_pointer: *mut c_void) -> Option<Box<AnyNode>> {
+  if node_pointer.is_null() {
     None
   } else {
-    convert_node(node_ptr).map(Box::new)
+    convert_node(node_pointer).map(Box::new)
   }
 }
 
 macro_rules! convert_specific_node_field {
-  ($node_ptr:expr, $expected_type:expr, $convert_fn:ident, $node_type:ty) => {
-    if $node_ptr.is_null() {
+  ($node_pointer:expr, $expected_type:expr, $convert_fn:ident, $node_type:ty) => {
+    if $node_pointer.is_null() {
       None
     } else {
-      let ast_base_ptr = $node_ptr as *const AST_NODE_T;
+      let ast_base_ptr = $node_pointer as *const AST_NODE_T;
       let ast_base_ref = &*ast_base_ptr;
       let node_type = ast_base_ref.type_;
 
@@ -156,24 +157,24 @@ macro_rules! convert_specific_node_field {
         eprintln!("Warning: Expected node type {} but got {}", $expected_type, node_type);
         None
       } else {
-        $convert_fn($node_ptr as *const c_void).map(Box::new)
+        $convert_fn($node_pointer as *const c_void).map(Box::new)
       }
     }
   };
 }
 
-unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
-  if node_ptr.is_null() {
+unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
+  if node_pointer.is_null() {
     return None;
   }
 
-  let ast_base_ptr = node_ptr as *const AST_NODE_T;
+  let ast_base_ptr = node_pointer as *const AST_NODE_T;
   let ast_base_ref = &*ast_base_ptr;
   let node_type = ast_base_ref.type_;
 
   match node_type {
     <%- nodes.each do |node| -%>
-    <%= node.type %> => convert_<%= node.human %>(node_ptr).map(AnyNode::<%= node.name %>),
+    <%= node.type %> => convert_<%= node.human %>(node_pointer).map(AnyNode::<%= node.name %>),
     <%- end -%>
     _ => {
       eprintln!("Warning: Unknown node type {}", node_type);
@@ -188,16 +189,16 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
   ///
   /// # Safety
   ///
-  /// The caller must ensure that `node_ptr` is a valid pointer to a C document node
+  /// The caller must ensure that `node_pointer` is a valid pointer to a C document node
   /// structure with properly initialized fields.
   <%- end -%>
-  <%= node.name == "DocumentNode" ? "pub " : "" %>unsafe fn convert_<%= node.human %>(node_ptr: *const c_void) -> Option<<%= node.name %>> {
-    if node_ptr.is_null() {
+  <%= node.name == "DocumentNode" ? "pub " : "" %>unsafe fn convert_<%= node.human %>(node_pointer: *const c_void) -> Option<<%= node.name %>> {
+    if node_pointer.is_null() {
       return None;
     }
 
-    let c_node_ptr = node_ptr as *const <%= node.c_type %>;
-    let node_base_ref = &(*c_node_ptr).base;
+    let c_node_pointer = node_pointer as *const <%= node.c_type %>;
+    let node_base_ref = &(*c_node_pointer).base;
 
     Some(<%= node.name %> {
       node_type: "<%= node.name %>".to_string(),
@@ -206,27 +207,55 @@ unsafe fn convert_node(node_ptr: *const c_void) -> Option<AnyNode> {
       <%- node.fields.each do |field| -%>
       <%- case field -%>
       <%- when Herb::Template::StringField -%>
-      <%= field.name %>: get_string_field((*c_node_ptr).<%= field.name %>),
+      <%= field.name %>: get_string_field((*c_node_pointer).<%= field.name %>),
       <%- when Herb::Template::ElementSourceField -%>
-      <%= field.name %>: convert_element_source((*c_node_ptr).<%= field.name %>),
+      <%= field.name %>: convert_element_source((*c_node_pointer).<%= field.name %>),
       <%- when Herb::Template::TokenField -%>
-      <%= field.name %>: convert_token_field((*c_node_ptr).<%= field.name %>),
+      <%= field.name %>: convert_token_field((*c_node_pointer).<%= field.name %>),
       <%- when Herb::Template::BooleanField -%>
-      <%= field.name %>: (*c_node_ptr).<%= field.name %>,
+      <%= field.name %>: (*c_node_pointer).<%= field.name %>,
       <%- when Herb::Template::ArrayField -%>
-      <%= field.name %>: convert_children((*c_node_ptr).<%= field.name %>),
+      <%= field.name %>: convert_children((*c_node_pointer).<%= field.name %>),
       <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
       <%- if field.specific_kind && field.specific_kind != "Node" -%>
       <%- specific_node = nodes.find { |n| n.name == field.specific_kind } -%>
-      <%= field.name %>: convert_specific_node_field!((*c_node_ptr).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
+      <%= field.name %>: convert_specific_node_field!((*c_node_pointer).<%= field.name %>, <%= specific_node.type %>, convert_<%= specific_node.human %>, <%= field.specific_kind %>),
+      <%- elsif field.union_kind -%>
+      <%- snake_name = field.union_type_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase -%>
+      <%= field.name %>: convert_<%= snake_name %>_field((*c_node_pointer).<%= field.name %> as *mut c_void),
       <%- else -%>
-      <%= field.name %>: convert_node_field((*c_node_ptr).<%= field.name %> as *mut c_void),
+      <%= field.name %>: convert_node_field((*c_node_pointer).<%= field.name %> as *mut c_void),
       <%- end -%>
       <%- when Herb::Template::LocationField -%>
-      <%= field.name %>: convert_location_field((*c_node_ptr).<%= field.name %>),
+      <%= field.name %>: convert_location_field((*c_node_pointer).<%= field.name %>),
       <%- end -%>
       <%- end -%>
     })
   }
+
+<%- end -%>
+<%- union_kinds.each do |kinds| -%>
+<%-
+  enum_name = kinds.sort.join("Or")
+  snake_name = enum_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+-%>
+unsafe fn convert_<%= snake_name %>_field(node_pointer: *mut c_void) -> Option<<%= enum_name %>> {
+  if node_pointer.is_null() {
+    return None;
+  }
+
+  let base_node = node_pointer as *const AST_NODE_STRUCT;
+  let node_type = (*base_node).type_;
+
+  match node_type {
+    <%- kinds.each do |kind| -%>
+    <%- node = nodes.find { |n| n.name == kind } -%>
+    <%= node.type %> => {
+      Some(<%= enum_name %>::<%= kind %>(Box::new(convert_<%= node.human %>(node_pointer as *const <%= node.struct_type %>))))
+    }
+    <%- end -%>
+    _ => None,
+  }
+}
 
 <%- end -%>
