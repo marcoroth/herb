@@ -1,9 +1,9 @@
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config, addHerbExtensionRecommendation, getExtensionsJsonRelativePath } from "@herb-tools/config"
 
 import { existsSync, statSync } from "fs"
-import { dirname, resolve, relative } from "path"
+import { resolve, relative } from "path"
 
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
@@ -66,9 +66,9 @@ export class CLI {
     }
   }
 
-  protected adjustPattern(pattern: string | undefined, configGlobPattern: string): string {
+  protected adjustPattern(pattern: string | undefined, configGlobPatterns: string[]): string {
     if (!pattern) {
-      return configGlobPattern
+      return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
     }
 
     const resolvedPattern = resolve(pattern)
@@ -77,7 +77,15 @@ export class CLI {
       const stats = statSync(resolvedPattern)
 
       if (stats.isDirectory()) {
-        return configGlobPattern
+        const relativeDir = relative(this.projectPath, resolvedPattern)
+
+        if (relativeDir) {
+          const scopedPatterns = configGlobPatterns.map(pattern => `${relativeDir}/${pattern}`)
+
+          return scopedPatterns.length === 1 ? scopedPatterns[0] : `{${scopedPatterns.join(',')}}`
+        }
+
+        return configGlobPatterns.length === 1 ? configGlobPatterns[0] : `{${configGlobPatterns.join(',')}}`
       } else if (stats.isFile()) {
         return relative(this.projectPath, resolvedPattern)
       }
@@ -96,10 +104,11 @@ export class CLI {
     }
 
     const filesConfig = config.getFilesConfigForTool('linter')
-    const configGlobPattern = filesConfig.include && filesConfig.include.length > 0
-      ? (filesConfig.include.length === 1 ? filesConfig.include[0] : `{${filesConfig.include.join(',')}}`)
-      : '**/*.html.erb'
-    const adjustedPattern = this.adjustPattern(pattern, configGlobPattern)
+    const configGlobPatterns = filesConfig.include && filesConfig.include.length > 0
+      ? filesConfig.include
+      : ['**/*.html.erb']
+
+    const adjustedPattern = this.adjustPattern(pattern, configGlobPatterns)
 
     let files = await glob(adjustedPattern, {
       cwd: this.projectPath,
@@ -135,7 +144,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules } = this.argumentParser.parse(process.argv)
+    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -239,6 +248,7 @@ export class CLI {
         projectPath: this.projectPath,
         pattern: patterns.join(' '),
         fix,
+        fixUnsafe,
         ignoreDisableComments,
         linterConfig,
         config: processingConfig,
@@ -250,7 +260,20 @@ export class CLI {
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
       await this.afterProcess(results, outputOptions)
 
-      if (results.totalErrors > 0) {
+      const effectiveFailLevel = failLevel || linterConfig.failLevel
+
+      const errors = results.totalErrors > 0
+      const warnings = results.totalWarnings > 0
+      const info = results.totalInfo > 0
+      const hints = results.totalHints > 0
+
+      const shouldFailOnWarnings = effectiveFailLevel === "warning" && warnings
+      const shouldFailOnInfo = effectiveFailLevel === "info" && (warnings || info)
+      const shouldFailOnHints = effectiveFailLevel === "hint" && (warnings || info || hints)
+
+      const shouldFail = errors || shouldFailOnWarnings || shouldFailOnInfo || shouldFailOnHints
+
+      if (shouldFail) {
         process.exit(1)
       }
 

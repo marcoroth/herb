@@ -18,6 +18,11 @@ module Herb
       end
 
       #: (String) -> bool
+      def erb_graphql?(opening)
+        opening.start_with?("<%graphql")
+      end
+
+      #: (String) -> bool
       def erb_output?(opening)
         opening.include?("=")
       end

@@ -336,6 +336,282 @@ describe("CLI Output Formatting", () => {
     })
   })
 
+  describe("--fail-level", () => {
+    const { writeFileSync, unlinkSync } = require("fs")
+    const configPath = "test/fixtures/.herb.yml"
+
+    test("exits with error code when warnings are present with --fail-level warning flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when no warnings are present with --fail-level warning flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+        `)
+
+        const { exitCode } = runLinter("clean-file.html.erb", "--fail-level", "warning")
+
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when failLevel is set in config", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            failLevel: warning
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("CLI flag overrides config setting", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            failLevel: error
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error for invalid --fail-level value", () => {
+      const { output, exitCode } = runLinter("clean-file.html.erb", "--fail-level", "invalid")
+
+      expect(output).toContain("Invalid --fail-level value")
+      expect(output).toContain("invalid")
+      expect(exitCode).toBe(1)
+    })
+
+    test("exits with success when warnings present but --fail-level not set", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: warning
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb")
+
+        expect(output).toContain("warning")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when info diagnostics are present with --fail-level info flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when info diagnostics present but --fail-level is warning", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: info
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "warning")
+
+        expect(output).toContain("info")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with error code when hint diagnostics are present with --fail-level hint flag", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "hint")
+
+        expect(output).toContain("hint")
+        expect(exitCode).toBe(1)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+
+    test("exits with success when hint diagnostics present but --fail-level is info", () => {
+      try {
+        writeFileSync(configPath, dedent`
+          linter:
+            rules:
+              html-img-require-alt:
+                severity: hint
+              html-tag-name-lowercase:
+                enabled: false
+        `)
+
+        const { output, exitCode } = runLinter("test-file-with-errors.html.erb", "--fail-level", "info")
+
+        expect(output).toContain("hint")
+        expect(exitCode).toBe(0)
+      } finally {
+        try { unlinkSync(configPath) } catch {}
+      }
+    })
+  })
+
+  describe("Directory Scoping (issue #1045)", () => {
+    const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
+    const { join } = require("path")
+    const tempDir = "test/fixtures/directory-scoping-test"
+
+    function runLinterFromPath(filePath: string): { output: string, exitCode: number } {
+      try {
+        const { execSync } = require("child_process")
+
+        const output = execSync(`bin/herb-lint ${filePath} --no-timing 2>&1`, {
+          encoding: "utf-8",
+          env: { ...process.env, NO_COLOR: "1", FORCE_COLOR: undefined, GITHUB_ACTIONS: undefined }
+        })
+
+        return { output: output.trim(), exitCode: 0 }
+      } catch (error: any) {
+        const stderr = error.stderr ? error.stderr.toString().trim() : ""
+        const stdout = error.stdout ? error.stdout.toString().trim() : ""
+        const combined = (stdout + "\n" + stderr).trim()
+
+        return { output: combined || stderr || stdout, exitCode: error.status }
+      }
+    }
+
+    test("only processes files within the specified directory", () => {
+      try {
+        // Create directory structure:
+        // tempDir/
+        //   .herb.yml
+        //   public/
+        //     file.html.erb (should NOT be processed)
+        //   app/
+        //     views/
+        //       file.html.erb (should be processed)
+        mkdirSync(join(tempDir, "public"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.10
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "public/file.html.erb"), `<img src="test.png" alt="test">\n`)
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<div>clean file</div>\n`)
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views"))
+
+        expect(output).toContain("Checked      1 file")
+        expect(output).not.toContain("public/file.html.erb")
+        expect(exitCode).toBe(0)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("processes all files when run from project root", () => {
+      try {
+        mkdirSync(join(tempDir, "public"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.10
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, "public/file.html.erb"), `<div>public file</div>\n`)
+        writeFileSync(join(tempDir, "app/views/file.html.erb"), `<div>views file</div>\n`)
+
+        const { output, exitCode } = runLinterFromPath(tempDir)
+
+        expect(output).toContain("Checked      2 files")
+        expect(exitCode).toBe(0)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+  })
+
   describe("Custom Rules from Project Root (issue #908)", () => {
     const { mkdirSync, writeFileSync, rmSync, existsSync } = require("fs")
     const { join } = require("path")
@@ -366,7 +642,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.4
+          version: 0.8.10
           linter:
             enabled: true
         `)

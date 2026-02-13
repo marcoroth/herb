@@ -135,4 +135,30 @@ describe("html-no-empty-headings", () => {
   test("passes for heading with nested span containing text", () => {
     expectNoOffenses('<h2 class="class" data-turbo-temporary><%= content %></h2>')
   })
+
+  test("passes for empty heading inside template tag", () => {
+    expectNoOffenses('<template><h1></h1></template>')
+  })
+
+  test("passes for heading with only whitespace inside template tag", () => {
+    expectNoOffenses('<template><h2>   </h2></template>')
+  })
+
+  test("passes for deeply nested empty heading inside template tag", () => {
+    expectNoOffenses('<template><div><section><h3></h3></section></div></template>')
+  })
+
+  test("passes for multiple empty headings inside template tag", () => {
+    expectNoOffenses('<template><h1></h1><h2></h2><h3></h3></template>')
+  })
+
+  test("fails for empty heading outside template tag", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<div><h1></h1></div><template><h2></h2></template>')
+  })
+
+  test("passes for empty ARIA heading inside template tag", () => {
+    expectNoOffenses('<template><div role="heading"></div></template>')
+  })
 })

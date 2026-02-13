@@ -1,0 +1,86 @@
+---
+source: "Parser::AttributesTest#test_0064_multiple non-ERB outputs in attribute names"
+input: "<div data-<% key %>-target=\"value\" id-<% another %>-suffix=\"test\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:72))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:72))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:66))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:65)-(1:66))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:34))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:26))
+        │       │   │   │       └── children: (3 items)
+        │       │   │   │           ├── @ LiteralNode (location: (1:5)-(1:10))
+        │       │   │   │           │   └── content: "data-"
+        │       │   │   │           │
+        │       │   │   │           ├── @ ERBContentNode (location: (1:10)-(1:19))
+        │       │   │   │           │   ├── tag_opening: "<%" (location: (1:10)-(1:12))
+        │       │   │   │           │   ├── content: " key " (location: (1:12)-(1:17))
+        │       │   │   │           │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        │       │   │   │           │   ├── parsed: true
+        │       │   │   │           │   └── valid: true
+        │       │   │   │           │
+        │       │   │   │           └── @ LiteralNode (location: (1:19)-(1:26))
+        │       │   │   │               └── content: "-target"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:26)-(1:27))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:27)-(1:34))
+        │       │   │           ├── open_quote: """ (location: (1:27)-(1:28))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:28)-(1:33))
+        │       │   │           │       └── content: "value"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:33)-(1:34))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:35)-(1:65))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:35)-(1:58))
+        │       │       │       └── children: (3 items)
+        │       │       │           ├── @ LiteralNode (location: (1:35)-(1:38))
+        │       │       │           │   └── content: "id-"
+        │       │       │           │
+        │       │       │           ├── @ ERBContentNode (location: (1:38)-(1:51))
+        │       │       │           │   ├── tag_opening: "<%" (location: (1:38)-(1:40))
+        │       │       │           │   ├── content: " another " (location: (1:40)-(1:49))
+        │       │       │           │   ├── tag_closing: "%>" (location: (1:49)-(1:51))
+        │       │       │           │   ├── parsed: true
+        │       │       │           │   └── valid: true
+        │       │       │           │
+        │       │       │           └── @ LiteralNode (location: (1:51)-(1:58))
+        │       │       │               └── content: "-suffix"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:58)-(1:59))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:59)-(1:65))
+        │       │               ├── open_quote: """ (location: (1:59)-(1:60))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:60)-(1:64))
+        │       │               │       └── content: "test"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:64)-(1:65))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:66)-(1:72))
+        │       ├── tag_opening: "</" (location: (1:66)-(1:68))
+        │       ├── tag_name: "div" (location: (1:68)-(1:71))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:71)-(1:72))
+        │
+        ├── is_void: false
+        └── source: "HTML"

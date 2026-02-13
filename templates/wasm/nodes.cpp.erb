@@ -29,7 +29,7 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
   result.set("<%= field.name %>", CreateString(<%= node.human %>-><%= field.name %>));
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*) <%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::TokenField -%>
   result.set("<%= field.name %>", CreateToken(<%= node.human %>-><%= field.name %>));
@@ -39,6 +39,12 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::ElementSourceField -%>
   result.set("<%= field.name %>", CreateStringFromHbString(element_source_to_string(<%= node.human %>-><%= field.name %>)));
+  <%- when Herb::Template::LocationField -%>
+  if (<%= node.human %>-><%= field.name %>) {
+    result.set("<%= field.name %>", CreateLocation(*<%= node.human %>-><%= field.name %>));
+  } else {
+    result.set("<%= field.name %>", val::null());
+  }
   <%- else -%>
   result.set("<%= field.name %>", val::null());
   <%- end -%>
@@ -67,7 +73,7 @@ val NodesArrayFromCArray(hb_array_T* array) {
 
   val jsArray = val::array();
 
-  for (size_t i = 0; i < array->size; i++) {
+  for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {

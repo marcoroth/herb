@@ -1,0 +1,91 @@
+---
+source: "Parser::AttributesTest#test_0096_conditional attribute between regular attributes"
+input: "<div id=\"main\" <% if active? %>data-active<% end %> class=\"container\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:76))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:76))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:70))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:69)-(1:70))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:14))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:7))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:7))
+        │       │   │   │               └── content: "id"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:7)-(1:8))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:8)-(1:14))
+        │       │   │           ├── open_quote: """ (location: (1:8)-(1:9))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:9)-(1:13))
+        │       │   │           │       └── content: "main"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:13)-(1:14))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   ├── @ ERBIfNode (location: (1:15)-(1:51))
+        │       │   │   ├── tag_opening: "<%" (location: (1:15)-(1:17))
+        │       │   │   ├── content: " if active? " (location: (1:17)-(1:29))
+        │       │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │   │   ├── then_keyword: ∅
+        │       │   │   ├── statements: (1 item)
+        │       │   │   │   └── @ HTMLAttributeNode (location: (1:31)-(1:42))
+        │       │   │   │       ├── name:
+        │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:42))
+        │       │   │   │       │       └── children: (1 item)
+        │       │   │   │       │           └── @ LiteralNode (location: (1:31)-(1:42))
+        │       │   │   │       │               └── content: "data-active"
+        │       │   │   │       │
+        │       │   │   │       │
+        │       │   │   │       ├── equals: ∅
+        │       │   │   │       └── value: ∅
+        │       │   │   │
+        │       │   │   ├── subsequent: ∅
+        │       │   │   └── end_node:
+        │       │   │       └── @ ERBEndNode (location: (1:42)-(1:51))
+        │       │   │           ├── tag_opening: "<%" (location: (1:42)-(1:44))
+        │       │   │           ├── content: " end " (location: (1:44)-(1:49))
+        │       │   │           └── tag_closing: "%>" (location: (1:49)-(1:51))
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:52)-(1:69))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:52)-(1:57))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:52)-(1:57))
+        │       │       │               └── content: "class"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:57)-(1:58))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:58)-(1:69))
+        │       │               ├── open_quote: """ (location: (1:58)-(1:59))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:59)-(1:68))
+        │       │               │       └── content: "container"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:68)-(1:69))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:70)-(1:76))
+        │       ├── tag_opening: "</" (location: (1:70)-(1:72))
+        │       ├── tag_name: "div" (location: (1:72)-(1:75))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:75)-(1:76))
+        │
+        ├── is_void: false
+        └── source: "HTML"

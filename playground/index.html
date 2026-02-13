@@ -419,6 +419,19 @@
                     <span class="text-sm text-gray-300 mr-2">Document Status:</span>
                     <span data-playground-target="formatVerification" class="px-2 py-1 text-xs rounded font-medium"></span>
                   </div>
+                  <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 text-gray-300 text-sm">
+                      <span class="select-none">Max line length:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value="80"
+                        data-playground-target="formatterMaxLineLength"
+                        data-action="change->playground#onFormatterOptionChange"
+                        class="w-16 px-2 py-1 text-sm rounded border-gray-600 bg-gray-700 text-gray-200 focus:ring-green-500 focus:border-green-500"
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 <div class="w-full h-full overflow-auto">

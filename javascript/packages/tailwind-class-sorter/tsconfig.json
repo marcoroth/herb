@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "types": ["node"],
+    "rootDir": "./src",
     "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "ESNext",

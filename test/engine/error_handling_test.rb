@@ -337,7 +337,7 @@ module Engine
       end
     end
 
-    test "tags spanning erb control flow boundaries" do
+    test "tags spanning erb control flow boundaries are recognized as conditional elements" do
       template = <<~ERB
         <% if condition? %>
           <div>
@@ -348,14 +348,8 @@ module Engine
         <% end %>
       ERB
 
-      error = assert_raises(Herb::Engine::CompilationError) do
-        Herb::Engine.new(template)
-      end
-
-      assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "Opening tag `<div>`"
-      assert_includes error.message, "MissingOpeningTag"
-      assert_includes error.message, "Found closing tag `</div>`"
+      engine = Herb::Engine.new(template)
+      assert_kind_of Herb::Engine, engine
     end
 
     test "invalid erb control flow structure - else outside scope" do

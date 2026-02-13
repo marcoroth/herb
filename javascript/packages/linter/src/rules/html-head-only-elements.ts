@@ -1,5 +1,5 @@
 import { ParserRule } from "../types"
-import { BaseRuleVisitor, getTagName, isHeadOnlyTag, hasAttribute } from "./rule-utils"
+import { BaseRuleVisitor, getTagName, isHeadOnlyTag, hasAttribute, getOpenTag } from "./rule-utils"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
@@ -23,6 +23,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     if (!this.insideBody) return
     if (!isHeadOnlyTag(tagName)) return
     if (tagName === "title" && this.insideSVG) return
+    if (tagName === "style" && this.insideSVG) return
     if (tagName === "meta" && this.hasItempropAttribute(node)) return
 
     this.addOffense(
@@ -32,7 +33,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   }
 
   private hasItempropAttribute(node: HTMLElementNode): boolean {
-    return hasAttribute(node.open_tag, "itemprop")
+    return hasAttribute(getOpenTag(node), "itemprop")
   }
 
   private get insideHead(): boolean {

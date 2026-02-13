@@ -3,7 +3,9 @@
 #include "include/lexer.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
+#include "include/util/string.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,7 +14,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
   bool skip_erb_content = false;
   bool is_comment_tag = false;
 
-  for (size_t i = 0; i < tokens->size; i++) {
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
@@ -22,11 +24,11 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
       }
 
       case TOKEN_ERB_START: {
-        if (strcmp(token->value, "<%#") == 0) {
+        if (string_equals(token->value, "<%#")) {
           skip_erb_content = true;
           is_comment_tag = true;
-        } else if (strcmp(token->value, "<%%") == 0 || strcmp(token->value, "<%%=") == 0
-                   || strcmp(token->value, "<%graphql") == 0) {
+        } else if (string_equals(token->value, "<%%") || string_equals(token->value, "<%%=")
+                   || string_equals(token->value, "<%graphql")) {
           skip_erb_content = true;
           is_comment_tag = false;
         } else {
@@ -95,7 +97,7 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < tokens->size; i++) {
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
 
     switch (token->type) {
@@ -129,6 +131,7 @@ char* herb_extract(const char* source, const herb_extract_language_T language) {
   switch (language) {
     case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;
     case HERB_EXTRACT_LANGUAGE_HTML: herb_extract_html_to_buffer(source, &output); break;
+    default: assert(0 && "invalid extract language");
   }
 
   return output.value;

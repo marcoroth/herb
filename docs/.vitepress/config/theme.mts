@@ -153,7 +153,11 @@ export function createThemeConfig() {
     editLink: {
       pattern: ({ filePath }) => {
         if (filePath.startsWith('linter/rules/')) {
-          const fileName = filePath.replace('linter/rules/', '')
+          let fileName = filePath.replace('linter/rules/', '')
+
+          if (fileName === 'index.md') {
+            fileName = 'README.md'
+          }
 
           return `https://github.com/marcoroth/herb/edit/main/javascript/packages/linter/docs/rules/${fileName}`
         }

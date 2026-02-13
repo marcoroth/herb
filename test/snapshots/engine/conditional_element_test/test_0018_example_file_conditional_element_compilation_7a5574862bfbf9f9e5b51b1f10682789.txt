@@ -1,0 +1,14 @@
+---
+source: "Engine::ConditionalElementTest#test_0018_example file conditional element compilation"
+input: "{source: \"<% if @with_icon %>\\n  <div class=\\\"icon\\\">\\n<% end %>\\n\\n  <span>Hello</span>\\n\\n<% if @with_icon %>\\n  </div>\\n<% end %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; if @with_icon 
+ _buf << '  <div class="icon">
+'.freeze; end 
+ _buf << '
+  <span>Hello</span>
+
+'.freeze; if @with_icon 
+ _buf << '  </div>
+'.freeze; end 
+_buf.to_s

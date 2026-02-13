@@ -1,4 +1,5 @@
 #include "include/herb.h"
+#include "include/analyze.h"
 #include "include/io.h"
 #include "include/lexer.h"
 #include "include/parser.h"
@@ -26,7 +27,7 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex(const char* source) {
   return tokens;
 }
 
-HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, parser_options_T* options) {
+HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, const parser_options_T* options) {
   if (!source) { source = ""; }
 
   lexer_T lexer = { 0 };
@@ -43,6 +44,8 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, parse
 
   herb_parser_deinit(&parser);
 
+  if (parser_options.analyze) { herb_analyze_parse_tree(document, source); }
+
   return document;
 }
 
@@ -58,7 +61,7 @@ HERB_EXPORTED_FUNCTION hb_array_T* herb_lex_file(const char* path) {
 HERB_EXPORTED_FUNCTION void herb_lex_to_buffer(const char* source, hb_buffer_T* output) {
   hb_array_T* tokens = herb_lex(source);
 
-  for (size_t i = 0; i < tokens->size; i++) {
+  for (size_t i = 0; i < hb_array_size(tokens); i++) {
     token_T* token = hb_array_get(tokens, i);
 
     hb_string_T type = token_to_string(token);
@@ -74,7 +77,7 @@ HERB_EXPORTED_FUNCTION void herb_lex_to_buffer(const char* source, hb_buffer_T* 
 HERB_EXPORTED_FUNCTION void herb_free_tokens(hb_array_T** tokens) {
   if (!tokens || !*tokens) { return; }
 
-  for (size_t i = 0; i < (*tokens)->size; i++) {
+  for (size_t i = 0; i < hb_array_size(*tokens); i++) {
     token_T* token = hb_array_get(*tokens, i);
     if (token) { token_free(token); }
   }

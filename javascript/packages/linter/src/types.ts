@@ -85,6 +85,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static type = "parser" as const
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
   abstract name: string
 
   get defaultConfig(): FullRuleConfig {
@@ -119,6 +121,8 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
   static type = "lexer" as const
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
   abstract name: string
 
   get defaultConfig(): FullRuleConfig {
@@ -176,6 +180,8 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
   static type = "source" as const
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
   abstract name: string
 
   get defaultConfig(): FullRuleConfig {

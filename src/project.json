@@ -9,7 +9,7 @@
       "options": {
         "commands": [
           "bundle install",
-          "make"
+          "make templates prism build/libherb.a"
         ],
       },
       "inputs": ["{projectRoot}/**/*"],

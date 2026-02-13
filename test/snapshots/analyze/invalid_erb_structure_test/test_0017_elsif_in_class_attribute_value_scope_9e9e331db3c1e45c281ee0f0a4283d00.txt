@@ -18,6 +18,7 @@ input: |2-
     │   │       │       ├── tag_opening: "<%" (location: (1:4)-(1:6))
     │   │       │       ├── content: " if true " (location: (1:6)-(1:15))
     │   │       │       ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   │       │       ├── then_keyword: ∅
     │   │       │       ├── statements: (1 item)
     │   │       │       │   └── @ HTMLAttributeNode (location: (1:18)-(1:42))
     │   │       │       │       ├── name:

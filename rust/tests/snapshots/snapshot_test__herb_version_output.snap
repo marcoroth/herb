@@ -2,4 +2,4 @@
 source: tests/snapshot_test.rs
 expression: output
 ---
-0.8.4
+0.8.10

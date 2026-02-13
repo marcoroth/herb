@@ -45,7 +45,7 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       pretty_print_string_property(hb_string(<%= node.human %>-><%= field.name %>), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       <%- when Herb::Template::PrismNodeField -%>
       pretty_print_string_property(hb_string("<%= field.name %>"), hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
-      <%- when Herb::Template::NodeField -%>
+      <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
 
       pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
 
@@ -86,6 +86,20 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
       <%- when Herb::Template::VoidPointerField -%>
       pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
       hb_buffer_append(buffer, " ?\n");
+
+      <%- when Herb::Template::LocationField -%>
+      pretty_print_label(hb_string("<%= field.name %>"), indent, relative_indent, <%= last %>, buffer);
+      if (<%= node.human %>-><%= field.name %>) {
+        char <%= field.name %>_location_string[128];
+        sprintf(<%= field.name %>_location_string, " (location: (%u:%u)-(%u:%u))\n",
+          <%= node.human %>-><%= field.name %>->start.line,
+          <%= node.human %>-><%= field.name %>->start.column,
+          <%= node.human %>-><%= field.name %>->end.line,
+          <%= node.human %>-><%= field.name %>->end.column);
+        hb_buffer_append(buffer, <%= field.name %>_location_string);
+      } else {
+        hb_buffer_append(buffer, " ∅\n");
+      }
 
       <%- else -%>
       <%= field.inspect %>

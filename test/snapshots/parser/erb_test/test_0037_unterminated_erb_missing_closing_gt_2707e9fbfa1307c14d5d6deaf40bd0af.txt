@@ -23,6 +23,7 @@ input: "<% if true %"
         ├── tag_opening: "<%" (location: (1:0)-(1:2))
         ├── content: " if true %" (location: (1:2)-(1:12))
         ├── tag_closing: "" (location: (1:12)-(1:12))
+        ├── then_keyword: ∅
         ├── statements: []
         ├── subsequent: ∅
         └── end_node: ∅

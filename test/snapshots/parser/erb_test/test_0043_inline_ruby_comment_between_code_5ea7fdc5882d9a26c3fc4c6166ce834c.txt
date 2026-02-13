@@ -8,6 +8,7 @@ input: "<% if true %><% # Comment here %><%= hello %><% end %>"
         ├── tag_opening: "<%" (location: (1:0)-(1:2))
         ├── content: " if true " (location: (1:2)-(1:11))
         ├── tag_closing: "%>" (location: (1:11)-(1:13))
+        ├── then_keyword: ∅
         ├── statements: (2 items)
         │   ├── @ ERBContentNode (location: (1:13)-(1:33))
         │   │   ├── tag_opening: "<%" (location: (1:13)-(1:15))

@@ -10,6 +10,8 @@
         "./extension/nodes.cpp",
 
         # Herb main source files
+        "./extension/libherb/analyze_conditional_elements.c",
+        "./extension/libherb/analyze_conditional_open_tags.c",
         "./extension/libherb/analyze_helpers.c",
         "./extension/libherb/analyze_missing_end.c",
         "./extension/libherb/analyze_transform.c",
@@ -40,6 +42,7 @@
         "./extension/libherb/util.c",
         "./extension/libherb/util/hb_arena.c",
         "./extension/libherb/util/hb_array.c",
+        "./extension/libherb/util/hb_narray.c",
         "./extension/libherb/util/hb_buffer.c",
         "./extension/libherb/util/hb_string.c",
         "./extension/libherb/util/hb_system.c",

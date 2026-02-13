@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0056_regular component file converts to PascalCase"
+input: "{source: \"<div>Hello</div>\", options: {debug: true, filename: \"app/components/button_component.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="component" data-herb-debug-file-name="ButtonComponent" data-herb-debug-file-relative-path="app/components/button_component.html.erb" data-herb-debug-file-full-path="app/components/button_component.html.erb">Hello</div>'.freeze;
+_buf.to_s

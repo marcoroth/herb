@@ -19,6 +19,7 @@ input: "<div><% if bold? %><b><%= title %></b><% else %><b><%= title %></b><% en
         │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
         │       ├── content: " if bold? " (location: (1:7)-(1:17))
         │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        │       ├── then_keyword: ∅
         │       ├── statements: (1 item)
         │       │   └── @ HTMLElementNode (location: (1:19)-(1:38))
         │       │       ├── open_tag:

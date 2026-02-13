@@ -1,0 +1,10 @@
+---
+source: "Engine::GraphQLTest#test_0003_graphql tag with surrounding html"
+input: "{source: \"<div>\\n  <%graphql\\n    fragment UserFragment on User {\\n      id\\n      email\\n    }\\n  %>\\n  <p>Hello <%= user.name %></p>\\n</div>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<div>
+  
+  <p>Hello '.freeze; _buf << (user.name).to_s; _buf << '</p>
+</div>
+'.freeze;
+_buf.to_s

@@ -1,0 +1,58 @@
+---
+source: "Analyze::ThenTest#test_0027_if then with block"
+input: |2-
+<% if items.any? then %>
+  <% items.each do |item| %>
+    <%= item.name %>
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if items.any? then " (location: (1:2)-(1:22))
+    │   ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   ├── then_keyword: (location: (1:17)-(1:21))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:24)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBBlockNode (location: (2:2)-(4:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " items.each do |item| " (location: (2:4)-(2:26))
+    │   │   │   ├── tag_closing: "%>" (location: (2:26)-(2:28))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:28)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:4)-(3:20))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:4)-(3:7))
+    │   │   │   │   │   ├── content: " item.name " (location: (3:7)-(3:18))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:18)-(3:20))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:20)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │           ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │           └── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:11)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

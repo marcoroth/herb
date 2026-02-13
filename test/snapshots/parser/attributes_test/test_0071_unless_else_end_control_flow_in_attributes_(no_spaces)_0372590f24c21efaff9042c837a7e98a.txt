@@ -1,0 +1,68 @@
+---
+source: "Parser::AttributesTest#test_0071_unless/else/end control flow in attributes (no spaces)"
+input: "<div <%unless a?%>data-one<%else%>data-two<%end%>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:56))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:56))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:50))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:49)-(1:50))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBUnlessNode (location: (1:5)-(1:49))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: "unless a?" (location: (1:7)-(1:16))
+        │       │       ├── tag_closing: "%>" (location: (1:16)-(1:18))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:18)-(1:26))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:18)-(1:26))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:18)-(1:26))
+        │       │       │       │               └── content: "data-one"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── else_clause:
+        │       │       │   └── @ ERBElseNode (location: (1:26)-(1:42))
+        │       │       │       ├── tag_opening: "<%" (location: (1:26)-(1:28))
+        │       │       │       ├── content: "else" (location: (1:28)-(1:32))
+        │       │       │       ├── tag_closing: "%>" (location: (1:32)-(1:34))
+        │       │       │       └── statements: (1 item)
+        │       │       │           └── @ HTMLAttributeNode (location: (1:34)-(1:42))
+        │       │       │               ├── name:
+        │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:34)-(1:42))
+        │       │       │               │       └── children: (1 item)
+        │       │       │               │           └── @ LiteralNode (location: (1:34)-(1:42))
+        │       │       │               │               └── content: "data-two"
+        │       │       │               │
+        │       │       │               │
+        │       │       │               ├── equals: ∅
+        │       │       │               └── value: ∅
+        │       │       │
+        │       │       │
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:42)-(1:49))
+        │       │               ├── tag_opening: "<%" (location: (1:42)-(1:44))
+        │       │               ├── content: "end" (location: (1:44)-(1:47))
+        │       │               └── tag_closing: "%>" (location: (1:47)-(1:49))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:50)-(1:56))
+        │       ├── tag_opening: "</" (location: (1:50)-(1:52))
+        │       ├── tag_name: "div" (location: (1:52)-(1:55))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:55)-(1:56))
+        │
+        ├── is_void: false
+        └── source: "HTML"

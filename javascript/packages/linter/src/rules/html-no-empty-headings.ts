@@ -1,28 +1,26 @@
-import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS } from "./rule-utils.js"
+import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS, getOpenTag } from "./rule-utils.js"
+import { isLiteralNode, isHTMLTextNode, isHTMLElementNode } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, ParseResult, LiteralNode, HTMLTextNode } from "@herb-tools/core"
+import type { HTMLElementNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
+    const tagName = getTagName(node)?.toLowerCase()
+    if (tagName === "template") return
+
     this.checkHeadingElement(node)
     super.visitHTMLElementNode(node)
   }
 
-
   private checkHeadingElement(node: HTMLElementNode): void {
-    if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
-      return
-    }
+    const openTag = getOpenTag(node)
+    if (!openTag) return
 
-    const openTag = node.open_tag as HTMLOpenTagNode
-    const tagName = getTagName(openTag)
-
-    if (!tagName) {
-      return
-    }
+    const tagName = getTagName(node)
+    if (!tagName) return
 
     const isStandardHeading = HEADING_TAGS.has(tagName)
     const isAriaHeading = this.hasHeadingRole(openTag)
@@ -43,7 +41,6 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     }
   }
 
-
   private isEmptyHeading(node: HTMLElementNode): boolean {
     if (!node.body || node.body.length === 0) {
       return true
@@ -52,24 +49,13 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     let hasAccessibleContent = false
 
     for (const child of node.body) {
-      if (child.type === "AST_LITERAL_NODE") {
-        const literalNode = child as LiteralNode
-
-        if (literalNode.content.trim().length > 0) {
+      if (isLiteralNode(child) || isHTMLTextNode(child)) {
+        if (child.content.trim().length > 0) {
           hasAccessibleContent = true
           break
         }
-      } else if (child.type === "AST_HTML_TEXT_NODE") {
-        const textNode = child as HTMLTextNode
-
-        if (textNode.content.trim().length > 0) {
-          hasAccessibleContent = true
-          break
-        }
-      } else if (child.type === "AST_HTML_ELEMENT_NODE") {
-        const elementNode = child as HTMLElementNode
-
-        if (this.isElementAccessible(elementNode)) {
+      } else if (isHTMLElementNode(child)) {
+        if (this.isElementAccessible(child)) {
           hasAccessibleContent = true
           break
         }
@@ -95,11 +81,9 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private isElementAccessible(node: HTMLElementNode): boolean {
-    if (!node.open_tag || node.open_tag.type !== "AST_HTML_OPEN_TAG_NODE") {
-      return true
-    }
+    const openTag = getOpenTag(node)
+    if (!openTag) return true
 
-    const openTag = node.open_tag as HTMLOpenTagNode
     const attributes = getAttributes(openTag)
     const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
 
@@ -116,19 +100,12 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     }
 
     for (const child of node.body) {
-      if (child.type === "AST_LITERAL_NODE") {
-        const literalNode = child as LiteralNode
-        if (literalNode.content.trim().length > 0) {
+      if (isLiteralNode(child) || isHTMLTextNode(child)) {
+        if (child.content.trim().length > 0) {
           return true
         }
-      } else if (child.type === "AST_HTML_TEXT_NODE") {
-        const textNode = child as HTMLTextNode
-        if (textNode.content.trim().length > 0) {
-          return true
-        }
-      } else if (child.type === "AST_HTML_ELEMENT_NODE") {
-        const elementNode = child as HTMLElementNode
-        if (this.isElementAccessible(elementNode)) {
+      } else if (isHTMLElementNode(child)) {
+        if (this.isElementAccessible(child)) {
           return true
         }
       } else {

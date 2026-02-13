@@ -178,7 +178,7 @@ module Herb
 
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", view_type),
-          create_debug_attribute("data-herb-debug-file-name", @filename&.basename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-name", component_display_name),
           create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
           create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown")
         ]
@@ -231,7 +231,7 @@ module Herb
         debug_attributes = [
           create_debug_attribute("data-herb-debug-outline-type", outline_type),
           create_debug_attribute("data-herb-debug-erb", escaped_erb),
-          create_debug_attribute("data-herb-debug-file-name", @filename&.basename&.to_s || "unknown"),
+          create_debug_attribute("data-herb-debug-file-name", component_display_name),
           create_debug_attribute("data-herb-debug-file-relative-path", @relative_file_path || "unknown"),
           create_debug_attribute("data-herb-debug-file-full-path", @filename&.to_s || "unknown"),
           create_debug_attribute("data-herb-debug-inserted", "true")
@@ -288,8 +288,43 @@ module Herb
       def component?
         return false unless @filename
 
+        @filename.to_s.match?(%r{(^|/)app/components/})
+      end
+
+      def sidecar_component?
+        return false unless component?
+        return false unless @filename
+
+        @filename.basename.to_s.match?(/\Acomponent\.(html\.erb|html\.herb|erb|herb)\z/)
+      end
+
+      def component_display_name
+        return @filename&.basename&.to_s || "unknown" unless @filename
+
+        basename = @filename.basename.to_s
         path = @filename.to_s
-        path.include?("/components/")
+
+        if sidecar_component? && (match = path.match(%r{/components/(.+)/component\.[^/]+\z}))
+          return match[1].split("/").map { |s| classify(s) }.join("::")
+        end
+
+        if component?
+          path_without_ext = path.sub(/\.(?:html\.erb|html\.herb|erb|herb)\z/, "")
+
+          if (match = path_without_ext.match(%r{/components/(.+)\z}))
+            return match[1].split("/").map { |s| classify(s) }.join("::")
+          end
+        end
+
+        basename
+      end
+
+      def classify(name)
+        if name.respond_to?(:camelize)
+          name.camelize
+        else
+          name.split(/[_-]/).map(&:capitalize).join
+        end
       end
 
       def in_head_context?
@@ -301,7 +336,7 @@ module Herb
       end
 
       def in_excluded_context?
-        excluded_tags = ["script", "style", "head", "textarea", "pre"]
+        excluded_tags = ["script", "style", "head", "textarea", "pre", "svg", "math"]
         return true if excluded_tags.any? { |tag| @element_stack.include?(tag) }
 
         return true if @erb_block_stack.any? { |node| javascript_tag?(node.content.value.strip) }

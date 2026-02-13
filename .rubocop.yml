@@ -133,15 +133,7 @@ Metrics/PerceivedComplexity:
     - bin/**/*
 
 Layout/LineLength:
-  Max: 120
-  Exclude:
-    - test/**/*_test.rb
-    - lib/herb/token.rb
-    - lib/herb/ast/nodes.rb
-    - lib/herb/engine/error_formatter.rb
-    - lib/herb/engine/debug_visitor.rb
-    - lib/herb/engine/parser_error_overlay.rb
-    - lib/herb/engine/validation_error_overlay.rb
+  Enabled: false
 
 Layout/EmptyLines:
   Exclude:
@@ -183,3 +175,6 @@ Lint/UnderscorePrefixedVariableName:
 Lint/UnusedMethodArgument:
   Exclude:
     - lib/herb/errors.rb
+
+Style/IfUnlessModifier:
+  Enabled: false
