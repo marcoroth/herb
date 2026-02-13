@@ -14,6 +14,7 @@ The `Herb` class provides the following static methods:
 * `Herb.parse(source)`
 * `Herb.parse(source, options)`
 * `Herb.extractRuby(source)`
+* `Herb.extractRuby(source, options)`
 * `Herb.extractHTML(source)`
 * `Herb.version()`
 * `Herb.herbVersion()`
@@ -154,9 +155,103 @@ String source = "<p>Hello <%= user.name %></p>";
 
 String ruby = Herb.extractRuby(source);
 System.out.println(ruby);
-// Output: "             user.name       "
+// Output: "             user.name  ;    "
 ```
 :::
+
+### `Herb.extractRuby(String source, ExtractRubyOptions options)`
+
+Extract Ruby with custom options.
+
+#### Default behavior
+
+By default, the output is position-preserving with semicolons:
+
+:::code-group
+```java
+import org.herb.Herb;
+
+String source = "<% x = 1 %> <% y = 2 %>";
+String ruby = Herb.extractRuby(source);
+
+System.out.println(ruby);
+// Output: "   x = 1  ;    y = 2  ;"
+```
+:::
+
+#### Without semicolons
+
+:::code-group
+```java
+import org.herb.Herb;
+import org.herb.ExtractRubyOptions;
+
+String source = "<% x = 1 %> <% y = 2 %>";
+ExtractRubyOptions options = ExtractRubyOptions.create().semicolons(false);
+String ruby = Herb.extractRuby(source, options);
+
+System.out.println(ruby);
+// Output: "   x = 1       y = 2   "
+```
+:::
+
+#### Including ERB comments
+
+:::code-group
+```java
+import org.herb.Herb;
+import org.herb.ExtractRubyOptions;
+
+String source = "<%# comment %>\n<% code %>";
+ExtractRubyOptions options = ExtractRubyOptions.create().comments(true);
+String ruby = Herb.extractRuby(source, options);
+
+System.out.println(ruby);
+// Output: "  # comment   \n   code  ;"
+```
+:::
+
+#### Without position preservation
+
+Use `preservePositions(false)` for readable output where each ERB tag is placed on its own line:
+
+:::code-group
+```java
+import org.herb.Herb;
+import org.herb.ExtractRubyOptions;
+
+String source = "<%# comment %><%= something %>";
+ExtractRubyOptions options = ExtractRubyOptions.create().preservePositions(false).comments(true);
+String ruby = Herb.extractRuby(source, options);
+
+System.out.println(ruby);
+// Output: "# comment \n something "
+```
+:::
+
+### `ExtractRubyOptions`
+
+The `ExtractRubyOptions` class provides fluent configuration:
+
+```java
+public class ExtractRubyOptions {
+  public ExtractRubyOptions semicolons(boolean value);
+  public ExtractRubyOptions comments(boolean value);
+  public ExtractRubyOptions preservePositions(boolean value);
+
+  public static ExtractRubyOptions create();
+}
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `semicolons` | `true` | Add ` ;` at the end of each ERB tag to separate statements |
+| `comments` | `false` | Include ERB comments (`<%# %>`) in the output |
+| `preservePositions` | `true` | Maintain character positions by padding with whitespace |
+
+> [!TIP]
+> Use `preservePositions(false)` when you need readable Ruby output.
+> Use `preservePositions(true)` (default) when you need accurate error position mapping.
 
 ### `Herb.extractHTML(String source)`
 

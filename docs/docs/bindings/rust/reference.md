@@ -12,7 +12,9 @@ The `herb` crate exposes functions for lexing, parsing, and extracting Ruby and 
 
 * `herb::lex(source)`
 * `herb::parse(source)`
+* `herb::parse_with_options(source, options)`
 * `herb::extract_ruby(source)`
+* `herb::extract_ruby_with_options(source, options)`
 * `herb::extract_html(source)`
 * `herb::version()`
 * `herb::herb_version()`
@@ -196,9 +198,126 @@ match extract_ruby(source) {
   Ok(ruby) => println!("{}", ruby),
   Err(e) => eprintln!("Error: {}", e),
 }
-// Output: "             user.name       "
+// Output: "             user.name  ;    "
 ```
 :::
+
+### `herb::extract_ruby_with_options(source: &str, options: &ExtractRubyOptions) -> Result<String, String>`
+
+Extract Ruby with custom options.
+
+#### Default behavior
+
+By default, the output is position-preserving with semicolons:
+
+:::code-group
+```rust
+use herb::extract_ruby;
+
+let source = "<% x = 1 %> <% y = 2 %>";
+
+match extract_ruby(source) {
+  Ok(ruby) => println!("{:?}", ruby),
+  Err(e) => eprintln!("Error: {}", e),
+}
+// Output: "   x = 1  ;    y = 2  ;"
+```
+:::
+
+#### Without semicolons
+
+:::code-group
+```rust
+use herb::{extract_ruby_with_options, ExtractRubyOptions};
+
+let source = "<% x = 1 %> <% y = 2 %>";
+let options = ExtractRubyOptions {
+  semicolons: false,
+  ..Default::default()
+};
+
+match extract_ruby_with_options(source, &options) {
+  Ok(ruby) => println!("{:?}", ruby),
+  Err(e) => eprintln!("Error: {}", e),
+}
+// Output: "   x = 1       y = 2   "
+```
+:::
+
+#### Including ERB comments
+
+:::code-group
+```rust
+use herb::{extract_ruby_with_options, ExtractRubyOptions};
+
+let source = "<%# comment %>\n<% code %>";
+let options = ExtractRubyOptions {
+  comments: true,
+  ..Default::default()
+};
+
+match extract_ruby_with_options(source, &options) {
+  Ok(ruby) => println!("{:?}", ruby),
+  Err(e) => eprintln!("Error: {}", e),
+}
+// Output: "  # comment   \n   code  ;"
+```
+:::
+
+#### Without position preservation
+
+Use `preserve_positions: false` for readable output where each ERB tag is placed on its own line:
+
+:::code-group
+```rust
+use herb::{extract_ruby_with_options, ExtractRubyOptions};
+
+let source = "<%# comment %><%= something %>";
+let options = ExtractRubyOptions {
+  preserve_positions: false,
+  comments: true,
+  ..Default::default()
+};
+
+match extract_ruby_with_options(source, &options) {
+  Ok(ruby) => println!("{:?}", ruby),
+  Err(e) => eprintln!("Error: {}", e),
+}
+// Output: "# comment \n something "
+```
+:::
+
+### `ExtractRubyOptions`
+
+The `ExtractRubyOptions` struct provides configuration for Ruby extraction:
+
+```rust
+pub struct ExtractRubyOptions {
+  pub semicolons: bool,
+  pub comments: bool,
+  pub preserve_positions: bool,
+}
+
+impl Default for ExtractRubyOptions {
+  fn default() -> Self {
+    Self {
+      semicolons: true,
+      comments: false,
+      preserve_positions: true,
+    }
+  }
+}
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `semicolons` | `true` | Add `;` at the end of each ERB tag to separate statements |
+| `comments` | `false` | Include ERB comments (`<%# %>`) in the output |
+| `preserve_positions` | `true` | Maintain character positions by padding with whitespace |
+
+> [!TIP]
+> Use `preserve_positions: false` when you need readable Ruby output.
+> Use `preserve_positions: true` (default) when you need accurate error position mapping.
 
 ### `herb::extract_html(source: &str) -> Result<String, String>`
 

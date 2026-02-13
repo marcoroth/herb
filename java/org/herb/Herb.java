@@ -18,11 +18,15 @@ public class Herb {
   public static native String prismVersion();
   public static native ParseResult parse(String source, ParserOptions options);
   public static native LexResult lex(String source);
-  public static native String extractRuby(String source);
+  public static native String extractRuby(String source, ExtractRubyOptions options);
   public static native String extractHTML(String source);
 
   public static ParseResult parse(String source) {
     return parse(source, null);
+  }
+
+  public static String extractRuby(String source) {
+    return extractRuby(source, null);
   }
 
   public static String version() {

@@ -80,13 +80,34 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   return result;
 }
 
-static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
+static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
   char* string = (char*) check_string(source);
   hb_buffer_T output;
 
   if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
-  herb_extract_ruby_to_buffer(string, &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (!NIL_P(options)) {
+    VALUE semicolons_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
+    if (NIL_P(semicolons_value)) { semicolons_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons"))); }
+    if (!NIL_P(semicolons_value)) { extract_options.semicolons = RTEST(semicolons_value); }
+
+    VALUE comments_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("comments"));
+    if (NIL_P(comments_value)) { comments_value = rb_hash_lookup(options, ID2SYM(rb_intern("comments"))); }
+    if (!NIL_P(comments_value)) { extract_options.comments = RTEST(comments_value); }
+
+    VALUE preserve_positions_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("preserve_positions"));
+    if (NIL_P(preserve_positions_value)) {
+      preserve_positions_value = rb_hash_lookup(options, ID2SYM(rb_intern("preserve_positions")));
+    }
+    if (!NIL_P(preserve_positions_value)) { extract_options.preserve_positions = RTEST(preserve_positions_value); }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
   free(output.value);
@@ -131,7 +152,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
+  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }
