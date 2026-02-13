@@ -269,10 +269,10 @@ module Herb
     class HTMLAttributeNameNode < Node
       include Colors
 
-      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode]
+      attr_reader children: Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]
 
-      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode)]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode | Herb::AST::WhitespaceNode]) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Array[(Herb::AST::LiteralNode | Herb::AST::ERBContentNode)]) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Array[Herb::AST::LiteralNode | Herb::AST::ERBContentNode]) -> void
 
       # : () -> serialized_html_attribute_name_node
       def to_hash: () -> serialized_html_attribute_name_node

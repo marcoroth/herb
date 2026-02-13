@@ -136,6 +136,7 @@ unsafe fn convert_children(children_array: *mut hb_array_T) -> Vec<AnyNode> {
   children
 }
 
+#[allow(dead_code)]
 unsafe fn convert_node_field(node_pointer: *mut c_void) -> Option<Box<AnyNode>> {
   if node_pointer.is_null() {
     None
@@ -239,6 +240,7 @@ unsafe fn convert_node(node_pointer: *const c_void) -> Option<AnyNode> {
   enum_name = kinds.sort.join("Or")
   snake_name = enum_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
 -%>
+#[allow(dead_code)]
 unsafe fn convert_<%= snake_name %>_field(node_pointer: *mut c_void) -> Option<<%= enum_name %>> {
   if node_pointer.is_null() {
     return None;
