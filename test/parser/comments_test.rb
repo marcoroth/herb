@@ -34,5 +34,17 @@ module Parser
         -->
       HTML
     end
+
+    test "HTML comment with invalid closing tag --!>" do
+      assert_parsed_snapshot(%(<!-- Hello World --!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> no whitespace" do
+      assert_parsed_snapshot(%(<!--Hello World--!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> followed by html tag" do
+      assert_parsed_snapshot(%(<!--Hello World--!><h1>Hello</h1>))
+    end
   end
 end

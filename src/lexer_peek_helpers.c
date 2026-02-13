@@ -51,6 +51,10 @@ bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("-->"), false);
 }
 
+bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string("--!>"), false);
+}
+
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("%>"), false);
 }
