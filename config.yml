@@ -313,7 +313,7 @@ nodes:
 
         - name: children
           type: array
-          kind: Node
+          kind: WhitespaceNode
 
         - name: tag_closing
           type: token
