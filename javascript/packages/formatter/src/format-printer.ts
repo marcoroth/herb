@@ -62,6 +62,7 @@ import {
   Node,
   DocumentNode,
   HTMLOpenTagNode,
+  HTMLConditionalOpenTagNode,
   HTMLCloseTagNode,
   HTMLElementNode,
   HTMLConditionalElementNode,
@@ -125,6 +126,7 @@ export class FormatPrinter extends Printer {
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
+  private inConditionalOpenTagContext: boolean = false
   private currentAttributeName: string | null = null
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
@@ -173,7 +175,7 @@ export class FormatPrinter extends Printer {
    * Get the current tag name from the current element context
    */
   private get currentTagName(): string {
-    return this.currentElement?.open_tag?.tag_name?.value ?? ""
+    return this.currentElement?.tag_name?.value ?? ""
   }
 
   /**
@@ -899,6 +901,19 @@ export class FormatPrinter extends Printer {
     })
   }
 
+  visitHTMLConditionalOpenTagNode(node: HTMLConditionalOpenTagNode) {
+    const wasInConditionalOpenTagContext = this.inConditionalOpenTagContext
+    this.inConditionalOpenTagContext = true
+
+    this.trackBoundary(node, () => {
+      if (node.conditional) {
+        this.visit(node.conditional)
+      }
+    })
+
+    this.inConditionalOpenTagContext = wasInConditionalOpenTagContext
+  }
+
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
     const tagName = getTagName(element)
 
@@ -1168,6 +1183,12 @@ export class FormatPrinter extends Printer {
     const attributes = filterNodes(node.children, HTMLAttributeNode)
     const inlineNodes = this.extractInlineNodes(node.children)
     const isSelfClosing = node.tag_closing?.value === "/>"
+
+    if (this.inConditionalOpenTagContext) {
+      const inline = this.renderInlineOpen(getTagName(node), attributes, isSelfClosing, inlineNodes, node.children)
+      this.push(this.indent + inline)
+      return
+    }
 
     if (this.currentElement && this.elementFormattingAnalysis.has(this.currentElement)) {
       const analysis = this.elementFormattingAnalysis.get(this.currentElement)!
@@ -1597,7 +1618,12 @@ export class FormatPrinter extends Printer {
    * Determines if the open tag should be rendered inline
    */
   private shouldRenderOpenTagInline(node: HTMLElementNode): boolean {
-    const children = node.open_tag?.children || []
+    if (isNode(node.open_tag, HTMLConditionalOpenTagNode)) {
+      return false
+    }
+
+    const openTag = node.open_tag as HTMLOpenTagNode | null // TODO: fix type-narrowing
+    const children = openTag?.children || []
     const attributes = filterNodes(children, HTMLAttributeNode)
     const inlineNodes = this.extractInlineNodes(children)
     const hasERBControlFlow = inlineNodes.some(node => isERBControlFlowNode(node)) || children.some(node => isERBControlFlowNode(node))
@@ -1613,7 +1639,7 @@ export class FormatPrinter extends Printer {
     const inline = this.renderInlineOpen(
       getTagName(node),
       attributes,
-      node.open_tag?.tag_closing?.value === "/>",
+      openTag?.tag_closing?.value === "/>",
       inlineNodes,
       children
     )
@@ -1667,7 +1693,7 @@ export class FormatPrinter extends Printer {
     }
 
     if (isInlineElement(tagName)) {
-      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), node.body)
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes((node.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), node.body) // TODO: fix type-narrowing
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
@@ -1682,7 +1708,7 @@ export class FormatPrinter extends Printer {
     const hasMixedContent = hasMixedTextAndInlineContent(children)
 
     if (allNestedAreInline && (!hasMultilineText || hasMixedContent)) {
-      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(node.open_tag?.children, HTMLAttributeNode), node.body)
+      const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes((node.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), node.body) // TODO: fix type-narrowing
 
       if (fullInlineResult) {
         const totalLength = this.indent.length + fullInlineResult.length
@@ -1698,10 +1724,10 @@ export class FormatPrinter extends Printer {
     if (inlineResult) {
       const openTagResult = this.renderInlineOpen(
         tagName,
-        filterNodes(node.open_tag?.children, HTMLAttributeNode),
+        filterNodes((node.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), // TODO: fix type-narrowing
         false,
         [],
-        node.open_tag?.children || []
+        (node.open_tag as HTMLOpenTagNode | null)?.children ?? [] // TODO: fix type-narrowing
       )
 
       const childrenContent = this.renderChildrenInline(children)
@@ -1721,7 +1747,7 @@ export class FormatPrinter extends Printer {
    */
   private shouldRenderCloseTagInline(node: HTMLElementNode, elementContentInline: boolean): boolean {
     if (node.is_void) return true
-    if (node.open_tag?.tag_closing?.value === "/>") return true
+    if ((node.open_tag as HTMLOpenTagNode | null)?.tag_closing?.value === "/>") return true // TODO: fix type-narrowing
     if (isContentPreserving(node)) return true
 
     const children = filterSignificantChildren(node.body)
@@ -1975,10 +2001,10 @@ export class FormatPrinter extends Printer {
   private renderInlineElementAsString(element: HTMLElementNode): string {
     const tagName = getTagName(element)
 
-    if (element.is_void || element.open_tag?.tag_closing?.value === "/>") {
-      const attributes = filterNodes(element.open_tag?.children, HTMLAttributeNode)
+    if (element.is_void || (element.open_tag as HTMLOpenTagNode | null)?.tag_closing?.value === "/>") { // TODO: fix type-narrowing
+      const attributes = filterNodes((element.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode) // TODO: fix type-narrowing
       const attributesString = this.renderAttributesString(attributes)
-      const isSelfClosing = element.open_tag?.tag_closing?.value === "/>"
+      const isSelfClosing = (element.open_tag as HTMLOpenTagNode | null)?.tag_closing?.value === "/>" // TODO: fix type-narrowing
 
       return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
     }
@@ -1986,7 +2012,7 @@ export class FormatPrinter extends Printer {
     const childrenToRender = this.getFilteredChildren(element.body)
 
     const childInline = this.tryRenderInlineFull(element, tagName,
-      filterNodes(element.open_tag?.children, HTMLAttributeNode),
+      filterNodes((element.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), // TODO: fix type-narrowing
       childrenToRender
     )
 
@@ -2211,7 +2237,7 @@ export class FormatPrinter extends Printer {
   private processInlineElement(result: ContentUnitWithNode[], children: Node[], child: HTMLElementNode, index: number, lastProcessedIndex: number): boolean {
     const tagName = getTagName(child)
     const childrenToRender = this.getFilteredChildren(child.body)
-    const inlineContent = this.tryRenderInlineFull(child, tagName, filterNodes(child.open_tag?.children, HTMLAttributeNode), childrenToRender)
+    const inlineContent = this.tryRenderInlineFull(child, tagName, filterNodes((child.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), childrenToRender) // TODO: fix type-narrowing
 
     if (inlineContent === null) {
       result.push({
@@ -2621,7 +2647,7 @@ export class FormatPrinter extends Printer {
 
         const childrenToRender = this.getFilteredChildren(child.body)
         const childInline = this.tryRenderInlineFull(child, tagName,
-          filterNodes(child.open_tag?.children, HTMLAttributeNode),
+          filterNodes((child.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode), // TODO: fix type-narrowing
           childrenToRender
         )
 
@@ -2705,7 +2731,7 @@ export class FormatPrinter extends Printer {
         content += child.content
       } else if (isNode(child, HTMLElementNode) ) {
         const tagName = getTagName(child)
-        const attributes = filterNodes(child.open_tag?.children, HTMLAttributeNode)
+        const attributes = filterNodes((child.open_tag as HTMLOpenTagNode | null)?.children ?? [], HTMLAttributeNode) // TODO: fix type-narrowing
         const attributesString = this.renderAttributesString(attributes)
         const childContent = this.renderElementInline(child)
 

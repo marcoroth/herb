@@ -12,7 +12,11 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
     <%- nodes.each do |node| -%>
     <%- array_fields = node.fields.select { |f| f.is_a?(Herb::Template::ArrayField) && f.name != "errors" } -%>
 
-    <%- skip_fields = node.name == "HTMLConditionalElementNode" ? ["open_tag", "close_tag", "open_conditional", "close_conditional"] : [] -%>
+    <%- skip_fields = case node.name
+      when "HTMLConditionalElementNode" then ["open_tag", "close_tag", "open_conditional", "close_conditional"]
+      when "HTMLConditionalOpenTagNode" then ["conditional"]
+      else []
+    end -%>
     <%- single_node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) && !skip_fields.include?(f.name) } -%>
 
     <%- if array_fields.any? || single_node_fields.any? -%>

@@ -1,5 +1,6 @@
 #include "include/analyze.h"
 #include "include/analyze_conditional_elements.h"
+#include "include/analyze_conditional_open_tags.h"
 #include "include/analyze_helpers.h"
 #include "include/analyzed_ruby.h"
 #include "include/ast_node.h"
@@ -1527,6 +1528,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) 
 
   herb_visit_node((AST_NODE_T*) document, transform_erb_nodes, context);
   herb_transform_conditional_elements(document);
+  herb_transform_conditional_open_tags(document);
 
   invalid_erb_context_T* invalid_context = malloc(sizeof(invalid_erb_context_T));
   invalid_context->loop_depth = 0;

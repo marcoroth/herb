@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0014_for compilation"
+source: "Engine::ExamplesCompilationTest#test_0015_for compilation"
 input: "{source: \"<% names = [\\\"Alice\\\", \\\"Bob\\\", \\\"John\\\"] %>\\n\\n<% for name in names %>\\n  <p>Hello, <%= name %>!</p>\\n<% end %>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; names = ["Alice", "Bob", "John"] 

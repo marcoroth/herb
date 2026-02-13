@@ -18,6 +18,7 @@ import type {
   HTMLAttributeValueNode,
   HTMLElementNode,
   HTMLOpenTagNode,
+  HTMLConditionalOpenTagNode,
   LiteralNode,
   LexResult,
   Token,
@@ -167,6 +168,29 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
  */
 export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
   return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
+}
+
+/**
+ * Gets the open tag node from an HTMLElementNode, handling both regular and conditional open tags.
+ * For conditional open tags, returnsnull
+ */
+export function getOpenTag(element: HTMLElementNode | null | undefined): HTMLOpenTagNode | null {
+  if (!element?.open_tag) return null
+
+  if (element.open_tag.type === "AST_HTML_OPEN_TAG_NODE") {
+    return element.open_tag as HTMLOpenTagNode
+  }
+
+  return null
+}
+
+/**
+ * Gets attributes from an element's open tag (handles both regular and conditional open tags)
+ */
+export function getAttributesFromElement(element: HTMLElementNode | null | undefined): HTMLAttributeNode[] {
+  const openTag = getOpenTag(element)
+
+  return openTag ? getAttributes(openTag) : []
 }
 
 /**

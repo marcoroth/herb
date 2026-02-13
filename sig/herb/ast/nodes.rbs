@@ -91,6 +91,37 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class HTMLConditionalOpenTagNode < Node
+      include Colors
+
+      attr_reader conditional: Herb::AST::Node
+
+      attr_reader tag_name: Herb::Token
+
+      attr_reader is_void: bool
+
+      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, bool) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, bool) -> void
+
+      # : () -> serialized_html_conditional_open_tag_node
+      def to_hash: () -> serialized_html_conditional_open_tag_node
+
+      # : (Visitor) -> void
+      def accept: (Visitor) -> void
+
+      # : () -> Array[Herb::AST::Node?]
+      def child_nodes: () -> Array[Herb::AST::Node?]
+
+      # : () -> Array[Herb::AST::Node]
+      def compact_child_nodes: () -> Array[Herb::AST::Node]
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class HTMLCloseTagNode < Node
       include Colors
 
@@ -127,7 +158,7 @@ module Herb
     class HTMLElementNode < Node
       include Colors
 
-      attr_reader open_tag: Herb::AST::HTMLOpenTagNode
+      attr_reader open_tag: Herb::AST::Node
 
       attr_reader tag_name: Herb::Token
 
@@ -139,8 +170,8 @@ module Herb
 
       attr_reader source: String
 
-      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::HTMLOpenTagNode, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      # : (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
+      def initialize: (String, Location, Array[Herb::Errors::Error], Herb::AST::Node, Herb::Token, Array[Herb::AST::Node], Herb::AST::HTMLCloseTagNode, bool, String) -> void
 
       # : () -> serialized_html_element_node
       def to_hash: () -> serialized_html_element_node

@@ -1,5 +1,5 @@
-import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS } from "./rule-utils.js"
-import { isHTMLOpenTagNode, isLiteralNode, isHTMLTextNode, isHTMLElementNode } from "@herb-tools/core"
+import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS, getOpenTag } from "./rule-utils.js"
+import { isLiteralNode, isHTMLTextNode, isHTMLElementNode } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 
@@ -8,7 +8,7 @@ import type { HTMLElementNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node.open_tag)?.toLowerCase()
+    const tagName = getTagName(node)?.toLowerCase()
     if (tagName === "template") return
 
     this.checkHeadingElement(node)
@@ -16,14 +16,14 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private checkHeadingElement(node: HTMLElementNode): void {
-    if (!node.open_tag) return
-    if (!isHTMLOpenTagNode(node.open_tag)) return
+    const openTag = getOpenTag(node)
+    if (!openTag) return
 
-    const tagName = getTagName(node.open_tag)
+    const tagName = getTagName(node)
     if (!tagName) return
 
     const isStandardHeading = HEADING_TAGS.has(tagName)
-    const isAriaHeading = this.hasHeadingRole(node.open_tag)
+    const isAriaHeading = this.hasHeadingRole(openTag)
 
     if (!isStandardHeading && !isAriaHeading) {
       return
@@ -81,10 +81,10 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private isElementAccessible(node: HTMLElementNode): boolean {
-    if (!node.open_tag) return true
-    if (!isHTMLOpenTagNode(node.open_tag)) return true
+    const openTag = getOpenTag(node)
+    if (!openTag) return true
 
-    const attributes = getAttributes(node.open_tag)
+    const attributes = getAttributes(openTag)
     const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
 
     if (ariaHiddenAttribute) {

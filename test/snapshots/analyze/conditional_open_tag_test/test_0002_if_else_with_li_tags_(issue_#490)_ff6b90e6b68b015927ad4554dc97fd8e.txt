@@ -1,5 +1,5 @@
 ---
-source: "Parser::ERBContextMismatchTest#test_0004_tag opened in elsif closed outside conditional"
+source: "Analyze::ConditionalOpenTagTest#test_0002_if/else with li tags (issue #490)"
 input: |2-
 <nav>
   <ul>

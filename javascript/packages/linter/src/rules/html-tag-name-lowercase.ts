@@ -1,5 +1,5 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+import { BaseRuleVisitor, findParent, getOpenTag } from "./rule-utils.js"
 import { isNode, getTagName, HTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -26,8 +26,8 @@ class XMLDeclarationChecker extends BaseRuleVisitor {
 
 class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagName(node).toLowerCase() === "svg") {
-      this.checkTagName(node.open_tag)
+    if (getTagName(node)?.toLowerCase() === "svg") {
+      this.checkTagName(getOpenTag(node))
       this.checkTagName(node.close_tag)
     } else {
       super.visitHTMLElementNode(node)
@@ -115,8 +115,10 @@ export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> 
         closeTag.tag_name!.value = correctedTagName
         break
       case "AST_HTML_CLOSE_TAG_NODE":
-        const openTag = parentElement.open_tag as Mutable<HTMLOpenTagNode>
-        openTag.tag_name!.value = correctedTagName
+        const openTag = getOpenTag(parentElement) as Mutable<HTMLOpenTagNode> | null
+        if (openTag?.tag_name) {
+          openTag.tag_name.value = correctedTagName
+        }
         break
       default:
         break

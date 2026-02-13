@@ -1,5 +1,5 @@
 ---
-source: "Engine::ExamplesCompilationTest#test_0015_graphql compilation"
+source: "Engine::ExamplesCompilationTest#test_0016_graphql compilation"
 input: "{source: \"<%# app/views/products/product.html.erb %>\\n<%graphql\\n  fragment ProductFragment on Product {\\n    id\\n    title\\n    description\\n    price\\n  }\\n%>\\n\\n<article class=\\\"product\\\">\\n  <h1><%= product.title %></h1>\\n  <p class=\\\"description\\\"><%= product.description %></p>\\n  <span class=\\\"price\\\"><%= product.price %></span>\\n</article>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; _buf << '

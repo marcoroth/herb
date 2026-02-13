@@ -944,7 +944,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
   AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     NULL,
     NULL,
@@ -993,7 +993,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   }
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
     close_tag,
@@ -1251,7 +1251,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
         hb_array_T* element_errors = hb_array_init(8);
 
         AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
-          open_tag,
+          (AST_NODE_T*) open_tag,
           open_tag->tag_name,
           processed_body,
           close_tag,
