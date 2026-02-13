@@ -233,6 +233,18 @@ errors:
         - name: close_column
           type: size_t
 
+    - name: InvalidCommentClosingTagError
+      message:
+        template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
+        arguments:
+          - closing_tag->value
+          - closing_tag->location.start.line
+          - closing_tag->location.start.column
+
+      fields:
+        - name: closing_tag
+          type: token
+
 warnings:
   fields: []
   types: []

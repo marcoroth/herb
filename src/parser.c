@@ -97,7 +97,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   hb_buffer_T comment;
   hb_buffer_init(&comment, 512);
 
-  while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_EOF)) {
+  while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_HTML_COMMENT_INVALID_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
@@ -116,7 +116,19 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 
   parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
-  token_T* comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, errors);
+  token_T* comment_end = NULL;
+
+  if (token_is(parser, TOKEN_HTML_COMMENT_INVALID_END)) {
+    comment_end = parser_advance(parser);
+    append_invalid_comment_closing_tag_error(
+      comment_end,
+      comment_end->location.start,
+      comment_end->location.end,
+      errors
+    );
+  } else {
+    comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, errors);
+  }
 
   AST_HTML_COMMENT_NODE_T* comment_node = ast_html_comment_node_init(
     comment_start,

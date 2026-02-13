@@ -171,7 +171,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
-         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
+         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_peek_for_html_comment_invalid_end(lexer, 0)
+         && !lexer_eof(lexer)) {
 
     lexer_advance(lexer);
   }
@@ -302,7 +303,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
 
     case '-': {
-      token_T* token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("--!>"), TOKEN_HTML_COMMENT_INVALID_END);
+      if (token) { return token; }
+
+      token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
     }
 
