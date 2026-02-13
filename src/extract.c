@@ -9,11 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = {
-  .semicolons = true,
-  .comments = false,
-  .preserve_positions = true
-};
+const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicolons = true,
+                                                                        .comments = false,
+                                                                        .preserve_positions = true };
 
 void herb_extract_ruby_to_buffer_with_options(
   const char* source,
