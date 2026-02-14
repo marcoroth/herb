@@ -82,14 +82,14 @@ module Herb
 
         log.puts heading("PROJECT")
         log.puts "Path: #{absolute_path}"
-        log.puts "Config: #{configuration.config_path || '(defaults)'}"
-        log.puts "Include: #{include_patterns.join(', ')}"
-        log.puts "Exclude: #{exclude_patterns.join(', ')}\n\n"
+        log.puts "Config: #{configuration.config_path || "(defaults)"}"
+        log.puts "Include: #{include_patterns.join(", ")}"
+        log.puts "Exclude: #{exclude_patterns.join(", ")}\n\n"
 
         log.puts heading("PROCESSED FILES")
 
         if files.empty?
-          message = "No files found matching patterns: #{include_patterns.join(', ')}"
+          message = "No files found matching patterns: #{include_patterns.join(", ")}"
           log.puts message
           puts message
           return

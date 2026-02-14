@@ -89,12 +89,13 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Exclude:
+    - bin/**/*
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/visitor.rb
+    - lib/herb/configuration.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - bin/**/*
+    - lib/herb/project.rb
+    - lib/herb/visitor.rb
     - test/**/*_test.rb
 
 Metrics/ModuleLength:

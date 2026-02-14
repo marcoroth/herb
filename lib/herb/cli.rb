@@ -487,13 +487,13 @@ class Herb::CLI
       puts
     end
 
-    if excluded_files.any?
-      puts "  #{bold(red("Excluded:"))}"
-      excluded_files.each do |f|
-        relative = f.sub("#{expanded_path}/", "")
-        reason = find_exclude_reason(relative, exclude_patterns)
-        puts "    #{red("✗")} #{relative} #{dimmed("(#{reason})")}"
-      end
+    return unless excluded_files.any?
+
+    puts "  #{bold(red("Excluded:"))}"
+    excluded_files.each do |f|
+      relative = f.sub("#{expanded_path}/", "")
+      reason = find_exclude_reason(relative, exclude_patterns)
+      puts "    #{red("✗")} #{relative} #{dimmed("(#{reason})")}"
     end
   end
 
