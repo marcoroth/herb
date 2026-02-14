@@ -243,5 +243,93 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class ERBMultipleBlocksInTagError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class ERBCaseWithConditionsError < Error
+      include Colors
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class ConditionalElementMultipleTagsError < Error
+      include Colors
+
+      attr_reader line: Integer
+
+      attr_reader column: Integer
+
+      # : (String, Location, String, Integer, Integer) -> void
+      def initialize: (String, Location, String, Integer, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_conditional_element_multiple_tags_error
+      def to_hash: () -> serialized_conditional_element_multiple_tags_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class ConditionalElementConditionMismatchError < Error
+      include Colors
+
+      attr_reader tag_name: String
+
+      attr_reader open_condition: String
+
+      attr_reader open_line: Integer
+
+      attr_reader open_column: Integer
+
+      attr_reader close_condition: String
+
+      attr_reader close_line: Integer
+
+      attr_reader close_column: Integer
+
+      # : (String, Location, String, String, String, Integer, Integer, String, Integer, Integer) -> void
+      def initialize: (String, Location, String, String, String, Integer, Integer, String, Integer, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_conditional_element_condition_mismatch_error
+      def to_hash: () -> serialized_conditional_element_condition_mismatch_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class InvalidCommentClosingTagError < Error
+      include Colors
+
+      attr_reader closing_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_invalid_comment_closing_tag_error
+      def to_hash: () -> serialized_invalid_comment_closing_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

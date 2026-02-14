@@ -12,14 +12,11 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
-  TextEdit,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
 import { PersonalHerbSettings } from "./settings"
 import { Config } from "@herb-tools/config"
-
-import type { TextDocument } from "vscode-languageserver-textdocument"
 
 export class Server {
   private service!: Service
@@ -37,7 +34,7 @@ export class Server {
       await this.service.init()
 
       this.service.documentService.documents.onWillSaveWaitUntil(async (event) => {
-        return this.service.documentSaveService.applyFixesAndFormatting(event.document, event.reason)
+        return this.service.documentSaveService.applyFixes(event.document)
       })
 
       const result: InitializeResult = {
@@ -89,7 +86,6 @@ export class Server {
         watchers: [
           ...patterns,
           { globPattern: `**/.herb.yml` },
-          { globPattern: `**/**/.herb-lsp/config.json` },
           { globPattern: `**/.herb/rules/**/*.mjs` },
           { globPattern: `**/.herb/rewriters/**/*.mjs` },
         ],
@@ -119,7 +115,7 @@ export class Server {
 
     this.connection.onDidChangeWatchedFiles(async (params) => {
       for (const event of params.changes) {
-        const isConfigChange = event.uri.endsWith("/.herb.yml") || event.uri.endsWith("/.herb-lsp/config.json")
+        const isConfigChange = event.uri.endsWith("/.herb.yml")
         const isCustomRuleChange = event.uri.includes("/.herb/rules/")
         const isCustomRewriterChange = event.uri.includes("/.herb/rewriters/")
 

@@ -12,6 +12,7 @@
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
+#include "include/util/string.h"
 #include "include/visitor.h"
 
 #include <stdio.h>
@@ -26,10 +27,11 @@ static void parser_handle_whitespace(parser_T* parser, token_T* whitespace_token
 static void parser_consume_whitespace(parser_T* parser, hb_array_T* children);
 static void parser_skip_erb_content(lexer_T* lexer);
 static bool parser_lookahead_erb_is_attribute(lexer_T* lexer);
+static bool parser_lookahead_erb_is_control_flow(parser_T* parser);
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children);
 static void parser_handle_whitespace_in_open_tag(parser_T* parser, hb_array_T* children);
 
-const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false };
+const parser_options_T HERB_DEFAULT_PARSER_OPTIONS = { .track_whitespace = false, .analyze = true };
 
 size_t parser_sizeof(void) {
   return sizeof(struct PARSER_STRUCT);
@@ -95,7 +97,7 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
   hb_buffer_T comment;
   hb_buffer_init(&comment, 512);
 
-  while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_EOF)) {
+  while (token_is_none_of(parser, TOKEN_HTML_COMMENT_END, TOKEN_HTML_COMMENT_INVALID_END, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
@@ -114,7 +116,19 @@ static AST_HTML_COMMENT_NODE_T* parser_parse_html_comment(parser_T* parser) {
 
   parser_append_literal_node_from_buffer(parser, &comment, children, start);
 
-  token_T* comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, errors);
+  token_T* comment_end = NULL;
+
+  if (token_is(parser, TOKEN_HTML_COMMENT_INVALID_END)) {
+    comment_end = parser_advance(parser);
+    append_invalid_comment_closing_tag_error(
+      comment_end,
+      comment_end->location.start,
+      comment_end->location.end,
+      errors
+    );
+  } else {
+    comment_end = parser_consume_expected(parser, TOKEN_HTML_COMMENT_END, errors);
+  }
 
   AST_HTML_COMMENT_NODE_T* comment_node = ast_html_comment_node_init(
     comment_start,
@@ -295,6 +309,17 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
     TOKEN_EOF
   )) {
     if (token_is(parser, TOKEN_ERB_START)) {
+      const char* tag = parser->current_token->value;
+      size_t tag_length = strlen(tag);
+      bool is_output_tag = (tag_length >= 3 && tag[2] == '=');
+
+      if (!is_output_tag) {
+        bool is_control_flow = parser_lookahead_erb_is_control_flow(parser);
+
+        if (hb_buffer_is_empty(&buffer) && hb_array_size(children) == 0) { break; }
+        if (is_control_flow) { break; }
+      }
+
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
 
       AST_ERB_CONTENT_NODE_T* erb_node = parser_parse_erb_tag(parser);
@@ -314,9 +339,9 @@ static AST_HTML_ATTRIBUTE_NAME_NODE_T* parser_parse_html_attribute_name(parser_T
   position_T node_start = { 0 };
   position_T node_end = { 0 };
 
-  if (children->size > 0) {
-    AST_NODE_T* first_child = hb_array_get(children, 0);
-    AST_NODE_T* last_child = hb_array_get(children, children->size - 1);
+  if (hb_array_size(children) > 0) {
+    AST_NODE_T* first_child = hb_array_first(children);
+    AST_NODE_T* last_child = hb_array_last(children);
 
     node_start = first_child->location.start;
     node_end = last_child->location.end;
@@ -346,7 +371,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   while (!token_is(parser, TOKEN_EOF)
          && !(
            token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-           && strcmp(parser->current_token->value, opening_quote->value) == 0
+           && string_equals(parser->current_token->value, opening_quote->value)
          )) {
     if (token_is(parser, TOKEN_ERB_START)) {
       parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -364,7 +389,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       token_T* next_token = lexer_next_token(parser->lexer);
 
       if (next_token && next_token->type == TOKEN_QUOTE && opening_quote != NULL
-          && strcmp(next_token->value, opening_quote->value) == 0) {
+          && string_equals(next_token->value, opening_quote->value)) {
         hb_buffer_append(&buffer, parser->current_token->value);
         hb_buffer_append(&buffer, next_token->value);
 
@@ -387,7 +412,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   }
 
   if (token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-      && strcmp(parser->current_token->value, opening_quote->value) == 0) {
+      && string_equals(parser->current_token->value, opening_quote->value)) {
     lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
 
     token_T* potential_closing = parser->current_token;
@@ -415,7 +440,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       while (!token_is(parser, TOKEN_EOF)
              && !(
                token_is(parser, TOKEN_QUOTE) && opening_quote != NULL
-               && strcmp(parser->current_token->value, opening_quote->value) == 0
+               && string_equals(parser->current_token->value, opening_quote->value)
              )) {
         if (token_is(parser, TOKEN_ERB_START)) {
           parser_append_literal_node_from_buffer(parser, &buffer, children, start);
@@ -445,7 +470,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
 
   token_T* closing_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
 
-  if (opening_quote != NULL && closing_quote != NULL && strcmp(opening_quote->value, closing_quote->value) != 0) {
+  if (opening_quote != NULL && closing_quote != NULL && !string_equals(opening_quote->value, closing_quote->value)) {
     append_quotes_mismatch_error(
       opening_quote,
       closing_quote,
@@ -719,6 +744,38 @@ static bool parser_lookahead_erb_is_attribute(lexer_T* lexer) {
   } while (true);
 }
 
+static bool starts_with_keyword(const char* pointer, const char* keyword) {
+  size_t length = strlen(keyword);
+  if (strncmp(pointer, keyword, length) != 0) { return false; }
+
+  char next = pointer[length];
+
+  return next == '\0' || is_whitespace(next);
+}
+
+// TODO: ideally we could avoid basing this off of strings, and use the step in analyze.c
+static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
+  lexer_T lexer_copy = *parser->lexer;
+  token_T* content = lexer_next_token(&lexer_copy);
+
+  if (content == NULL || content->type != TOKEN_ERB_CONTENT) {
+    if (content) { token_free(content); }
+
+    return false;
+  }
+
+  const char* pointer = skip_whitespace(content->value);
+
+  bool is_control_flow = starts_with_keyword(pointer, "end") || starts_with_keyword(pointer, "else")
+                      || starts_with_keyword(pointer, "elsif") || starts_with_keyword(pointer, "in")
+                      || starts_with_keyword(pointer, "when") || starts_with_keyword(pointer, "rescue")
+                      || starts_with_keyword(pointer, "ensure");
+
+  token_free(content);
+
+  return is_control_flow;
+}
+
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children) {
   bool is_output_tag = parser->current_token->value && strlen(parser->current_token->value) >= 3
                     && strncmp(parser->current_token->value, "<%=", 3) == 0;
@@ -899,7 +956,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_self_closing_element(
   AST_HTML_OPEN_TAG_NODE_T* open_tag
 ) {
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     NULL,
     NULL,
@@ -948,7 +1005,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
   }
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
     close_tag,
@@ -1115,7 +1172,9 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
           TOKEN_DASH,
           TOKEN_EQUALS,
           TOKEN_EXCLAMATION,
+          TOKEN_HTML_TAG_END,
           TOKEN_IDENTIFIER,
+          TOKEN_LT,
           TOKEN_NBSP,
           TOKEN_NEWLINE,
           TOKEN_PERCENT,
@@ -1149,11 +1208,11 @@ static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_st
     if (node->type == AST_HTML_OPEN_TAG_NODE) {
       AST_HTML_OPEN_TAG_NODE_T* open = (AST_HTML_OPEN_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(open->tag_name->value), tag_name)) { depth++; }
+      if (hb_string_equals_case_insensitive(hb_string(open->tag_name->value), tag_name)) { depth++; }
     } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
       AST_HTML_CLOSE_TAG_NODE_T* close = (AST_HTML_CLOSE_TAG_NODE_T*) node;
 
-      if (hb_string_equals(hb_string(close->tag_name->value), tag_name)) {
+      if (hb_string_equals_case_insensitive(hb_string(close->tag_name->value), tag_name)) {
         if (depth == 0) { return i; }
         depth--;
       }
@@ -1204,7 +1263,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
         hb_array_T* element_errors = hb_array_init(8);
 
         AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
-          open_tag,
+          (AST_NODE_T*) open_tag,
           open_tag->tag_name,
           processed_body,
           close_tag,
@@ -1301,9 +1360,7 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
 
   hb_array_T* processed = parser_build_elements_from_tags(nodes, errors);
 
-  while (hb_array_size(nodes) > 0) {
-    hb_array_remove(nodes, 0);
-  }
+  nodes->size = 0;
 
   for (size_t i = 0; i < hb_array_size(processed); i++) {
     hb_array_append(nodes, hb_array_get(processed, i));

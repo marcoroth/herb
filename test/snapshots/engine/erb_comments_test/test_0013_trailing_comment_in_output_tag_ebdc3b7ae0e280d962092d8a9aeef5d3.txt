@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBCommentsTest#test_0013_trailing comment in output tag"
+input: "{source: \"<%= value # this is a comment %>\", options: {}}"
+---
+_buf = ::String.new; _buf << (value # this is a comment
+).to_s;
+_buf.to_s

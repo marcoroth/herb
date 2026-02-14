@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "readline"
+require "reline"
 require "digest"
 require_relative "../bin/lib/compare_helpers"
 
@@ -63,7 +63,13 @@ module SnapshotUtils
     binding_context = Object.new
 
     locals.each do |key, value|
-      binding_context.define_singleton_method(key) { value }
+      name = key.to_s
+
+      if name.start_with?("@")
+        binding_context.instance_variable_set(name, value)
+      else
+        binding_context.define_singleton_method(name) { value }
+      end
     end
 
     result = binding_context.instance_eval(engine.src)
@@ -155,7 +161,7 @@ module SnapshotUtils
 
         Run the test using UPDATE_SNAPSHOTS=true to update (or create) the snapshot file for "#{class_name} #{name}"
 
-        UPDATE_SNAPSHOTS=true mtest #{e.location}
+        UPDATE_SNAPSHOTS=true bundle exec minitest #{e.location}
 
         #{divider}
         \e[0m

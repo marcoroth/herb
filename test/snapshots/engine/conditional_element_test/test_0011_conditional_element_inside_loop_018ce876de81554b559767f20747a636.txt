@@ -1,0 +1,13 @@
+---
+source: "Engine::ConditionalElementTest#test_0011_conditional element inside loop"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <% if item[:wrapped] %>\\n      <li class=\\\"wrapped\\\">\\n    <% end %>\\n      <span><%= item[:name] %></span>\\n    <% if item[:wrapped] %>\\n      </li>\\n    <% end %>\\n  <% end %>\\n</ul>\\n\", locals: {items: [{name: \"First\", wrapped: true}, {name: \"Second\", wrapped: false}, {name: \"Third\", wrapped: true}]}, options: {escape: false}}"
+---
+<ul>
+      <li class="wrapped">
+      <span>First</span>
+      </li>
+      <span>Second</span>
+      <li class="wrapped">
+      <span>Third</span>
+      </li>
+</ul>

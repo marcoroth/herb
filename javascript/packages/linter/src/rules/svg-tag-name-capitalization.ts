@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, SVG_CAMEL_CASE_ELEMENTS, SVG_LOWERCASE_TO_CAMELCASE } from "./rule-utils.js"
+import { isHTMLOpenTagNode, isHTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, Mutable, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, ParseResult } from "@herb-tools/core"
@@ -25,12 +26,12 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
     }
 
     if (this.insideSVG) {
-      if (node.open_tag) {
-        this.checkTagName(node.open_tag as HTMLOpenTagNode)
+      if (isHTMLOpenTagNode(node.open_tag)) {
+        this.checkTagName(node.open_tag)
       }
 
       if (node.close_tag) {
-        this.checkTagName(node.close_tag as HTMLCloseTagNode)
+        this.checkTagName(node.close_tag)
       }
     }
 
@@ -40,7 +41,6 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
 
   private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode): void {
     const tagName = node.tag_name?.value
-
     if (!tagName) return
 
     if (SVG_CAMEL_CASE_ELEMENTS.has(tagName)) return
@@ -51,8 +51,8 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
     if (correctCamelCase && tagName !== correctCamelCase) {
       let type: string = node.type
 
-      if (node.type === "AST_HTML_OPEN_TAG_NODE") type = "Opening"
-      if (node.type === "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
+      if (isHTMLOpenTagNode(node)) type = "Opening"
+      if (isHTMLCloseTagNode(node)) type = "Closing"
 
       this.addOffense(
         `${type} SVG tag name \`${tagName}\` should use proper capitalization. Use \`${correctCamelCase}\` instead.`,
@@ -89,7 +89,7 @@ export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitaliz
   autofix(offense: LintOffense<SVGTagNameCapitalizationAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
     if (!offense.autofixContext) return null
 
-    const { node: { tag_name }, correctCamelCase } = offense.autofixContext
+    const { node: { tag_name }, correctCamelCase } = offense.autofixContext
 
     if (!tag_name) return null
 

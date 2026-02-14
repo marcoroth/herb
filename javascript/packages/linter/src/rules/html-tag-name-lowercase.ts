@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { BaseRuleVisitor } from "./rule-utils.js"
-import { isNode, getTagName, HTMLOpenTagNode } from "@herb-tools/core"
+import { BaseRuleVisitor, findParent, getOpenTag } from "./rule-utils.js"
+import { isNode, getTagName, HTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
@@ -26,8 +26,8 @@ class XMLDeclarationChecker extends BaseRuleVisitor {
 
 class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagName(node).toLowerCase() === "svg") {
-      this.checkTagName(node.open_tag)
+    if (getTagName(node)?.toLowerCase() === "svg") {
+      this.checkTagName(getOpenTag(node))
       this.checkTagName(node.close_tag)
     } else {
       super.visitHTMLElementNode(node)
@@ -99,11 +99,30 @@ export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> 
   autofix(offense: LintOffense<TagNameAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
     if (!offense.autofixContext) return null
 
-    const { node: { tag_name }, correctedTagName } = offense.autofixContext
+    const { node, correctedTagName } = offense.autofixContext
+    if (!node.tag_name) return null
 
-    if (!tag_name) return null
+    node.tag_name.value = correctedTagName
 
-    tag_name.value = correctedTagName
+    const parentElement = findParent(result.value, node as any as Node)
+    if (!parentElement || !isHTMLElementNode(parentElement)) return result
+
+    switch (node.type) {
+      case "AST_HTML_OPEN_TAG_NODE":
+        if (!parentElement.close_tag) break
+
+        const closeTag = parentElement.close_tag as Mutable<HTMLCloseTagNode>
+        closeTag.tag_name!.value = correctedTagName
+        break
+      case "AST_HTML_CLOSE_TAG_NODE":
+        const openTag = getOpenTag(parentElement) as Mutable<HTMLOpenTagNode> | null
+        if (openTag?.tag_name) {
+          openTag.tag_name.value = correctedTagName
+        }
+        break
+      default:
+        break
+    }
 
     return result
   }

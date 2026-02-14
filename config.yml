@@ -171,6 +171,80 @@ errors:
         - name: keyword
           type: string
 
+    - name: ERBMultipleBlocksInTagError
+      message:
+        template: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+        arguments: []
+
+      fields: []
+
+    - name: ERBCaseWithConditionsError
+      message:
+        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        arguments: []
+
+      fields: []
+
+    - name: ConditionalElementMultipleTagsError
+      message:
+        template: "Conditional element pattern detected at (%zu:%zu) but the conditional block contains multiple HTML tags. Each conditional element must wrap exactly one opening and one closing tag. Consider nesting the conditionals individually."
+        arguments:
+          - line
+          - column
+
+      fields:
+        - name: line
+          type: size_t
+
+        - name: column
+          type: size_t
+
+    - name: ConditionalElementConditionMismatchError
+      message:
+        template: "Conditional element `<%s>` has mismatched conditions: opening uses `%s` at (%zu:%zu) but closing uses `%s` at (%zu:%zu). Both conditions must be identical."
+        arguments:
+          - tag_name
+          - open_condition
+          - open_line
+          - open_column
+          - close_condition
+          - close_line
+          - close_column
+
+      fields:
+        - name: tag_name
+          type: string
+
+        - name: open_condition
+          type: string
+
+        - name: open_line
+          type: size_t
+
+        - name: open_column
+          type: size_t
+
+        - name: close_condition
+          type: string
+
+        - name: close_line
+          type: size_t
+
+        - name: close_column
+          type: size_t
+
+    - name: InvalidCommentClosingTagError
+      message:
+        template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
+        arguments:
+          - closing_tag->value
+          - closing_tag->location.start.line
+          - closing_tag->location.start.column
+
+      fields:
+        - name: closing_tag
+          type: token
+
 warnings:
   fields: []
   types: []
@@ -227,6 +301,20 @@ nodes:
         - name: is_void
           type: boolean
 
+    - name: HTMLConditionalOpenTagNode
+      fields:
+        - name: conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: tag_name
+          type: token
+
+        - name: is_void
+          type: boolean
+
     - name: HTMLCloseTagNode
       fields:
         - name: tag_opening
@@ -237,7 +325,7 @@ nodes:
 
         - name: children
           type: array
-          kind: Node
+          kind: WhitespaceNode
 
         - name: tag_closing
           type: token
@@ -246,7 +334,9 @@ nodes:
       fields:
         - name: open_tag
           type: node
-          kind: HTMLOpenTagNode
+          kind:
+            - HTMLOpenTagNode
+            - HTMLConditionalOpenTagNode
 
         - name: tag_name
           type: token
@@ -261,6 +351,41 @@ nodes:
 
         - name: is_void
           type: boolean
+
+        - name: source
+          type: element_source
+
+    - name: HTMLConditionalElementNode
+      fields:
+        - name: condition
+          type: string
+
+        - name: open_conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: open_tag
+          type: borrowed_node
+          kind: HTMLOpenTagNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: close_tag
+          type: borrowed_node
+          kind: HTMLCloseTagNode
+
+        - name: close_conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: tag_name
+          type: token
 
         - name: source
           type: element_source
@@ -284,11 +409,9 @@ nodes:
       fields:
         - name: children
           type: array
-          kind: Node
-          # kind:
-          #   - LiteralNode
-          #   - ERBContentNode
-          #   - WhitespaceNode
+          kind:
+            - LiteralNode
+            - ERBContentNode
 
     - name: HTMLAttributeNode
       fields:
@@ -418,6 +541,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -427,10 +553,9 @@ nodes:
 
         - name: subsequent
           type: node
-          kind: Node
-          # kind:
-          #   - ERBIfNode
-          #   - ERBElseNode
+          kind:
+            - ERBIfNode
+            - ERBElseNode
 
         - name: end_node
           type: node
@@ -471,6 +596,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         # - name: conditions
         #   type: array
@@ -692,6 +820,9 @@ nodes:
         - name: tag_closing
           type: token
 
+        - name: then_keyword
+          type: location
+
         # - name: predicate
         #   type: prism_node
 
@@ -728,6 +859,9 @@ nodes:
 
         - name: tag_closing
           type: token
+
+        - name: then_keyword
+          type: location
 
         - name: statements
           type: array

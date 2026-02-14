@@ -8,7 +8,14 @@ import {
   getStaticContentFromNodes,
   hasStaticContent,
   isEffectivelyStatic,
-  getValidatableStaticContent
+  isLiteralNode,
+  isERBContentNode,
+  isHTMLAttributeNode,
+  isHTMLAttributeValueNode,
+  isHTMLAttributeNameNode,
+  getValidatableStaticContent,
+  filterLiteralNodes,
+  filterHTMLAttributeNodes,
 } from "@herb-tools/core"
 
 import type {
@@ -166,7 +173,32 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
  * Gets attributes from an HTMLOpenTagNode
  */
 export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
-  return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
+  return node.children.filter(isHTMLAttributeNode)
+}
+
+/**
+ * Gets the open tag node from an HTMLElementNode, handling both regular and conditional open tags.
+ * For conditional open tags, returns null
+ */
+export function getOpenTag(element: HTMLElementNode | null | undefined): HTMLOpenTagNode | null {
+  if (!element?.open_tag) return null
+
+  switch (element.open_tag.type) {
+    case "AST_HTML_OPEN_TAG_NODE": return element.open_tag
+    case "AST_HTML_CONDITIONAL_OPEN_TAG_NODE": return null
+    default: return null
+  }
+
+  return null
+}
+
+/**
+ * Gets attributes from an element's open tag (handles both regular and conditional open tags)
+ */
+export function getAttributesFromElement(element: HTMLElementNode | null | undefined): HTMLAttributeNode[] {
+  const openTag = getOpenTag(element)
+
+  return openTag ? getAttributes(openTag) : []
 }
 
 /**
@@ -183,28 +215,22 @@ export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | un
  * Returns null if the attribute name contains dynamic content (ERB)
  */
 export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    const staticName = getStaticAttributeName(nameNode)
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return null
 
-    if (!lowercase) return staticName
+  const staticName = getStaticAttributeName(attributeNode.name)
 
-    return staticName ? staticName.toLowerCase() : null
-  }
+  if (!lowercase) return staticName
 
-  return null
+  return staticName ? staticName.toLowerCase() : null
 }
 
 /**
  * Checks if an attribute has a dynamic (ERB-containing) name
  */
 export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    return hasNodeDynamicAttributeName(nameNode)
-  }
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return false
 
-  return false
+  return hasNodeDynamicAttributeName(attributeNode.name)
 }
 
 /**
@@ -212,35 +238,27 @@ export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boole
  * This includes both static content and ERB syntax
  */
 export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return ""
 
-    return getCombinedAttributeName(nameNode)
-  }
-
-  return ""
+  return getCombinedAttributeName(attributeNode.name)
 }
 
 /**
  * Checks if an attribute value contains only static content (no ERB)
  */
 export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+  if (!attributeNode.value?.children) return false
 
-  if (!valueNode?.children) return false
-
-  return valueNode.children.every(child => child.type === "AST_LITERAL_NODE")
+  return attributeNode.value.children.every(isLiteralNode)
 }
 
 /**
  * Checks if an attribute value contains dynamic content (ERB)
  */
 export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+  if (!attributeNode.value?.children) return false
 
-  if (!valueNode?.children) return false
-
-  return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+  return attributeNode.value.children.some(isERBContentNode)
 }
 
 /**
@@ -249,23 +267,17 @@ export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): bool
 export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
   if (!hasStaticAttributeValue(attributeNode)) return null
 
-  const valueNode = attributeNode.value as HTMLAttributeValueNode
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
 
-  const result = valueNode.children
-    ?.filter(child => child.type === "AST_LITERAL_NODE")
-    .map(child => (child as LiteralNode).content)
-    .join("") || ""
-
-  return result
+  return filterLiteralNodes(valueNode.children).map(child => child.content).join("") || ""
 }
 
 /**
  * Gets the value nodes array for dynamic inspection
  */
 export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
-
-  return valueNode?.children || []
+  return attributeNode.value ?.children || []
 }
 
 /**
@@ -291,9 +303,8 @@ export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode)
  * Gets the attribute value content from an HTMLAttributeValueNode
  */
 export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
-
-  if (valueNode === null) return null
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
 
   if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
     return null
@@ -302,21 +313,12 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
   let result = ""
 
   for (const child of valueNode.children) {
-    switch (child.type) {
-      case "AST_ERB_CONTENT_NODE": {
-        const erbNode = child as ERBContentNode
-
-        if (erbNode.content) {
-          result += `${erbNode.tag_opening?.value}${erbNode.content.value}${erbNode.tag_closing?.value}`
-        }
-
-        break
+    if (isERBContentNode(child)) {
+      if (child.content) {
+        result += `${child.tag_opening?.value}${child.content.value}${child.tag_closing?.value}`
       }
-
-      case "AST_LITERAL_NODE": {
-        result += (child as LiteralNode).content
-        break
-      }
+    } else if (isLiteralNode(child)) {
+      result += child.content
     }
   }
 
@@ -327,48 +329,32 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
  * Checks if an attribute has a value
  */
 export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  return attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE"
+  return isHTMLAttributeValueNode(attributeNode.value)
 }
 
 /**
  * Gets the quote type used for an attribute value
  */
-export function getAttributeValueQuoteType(nodeOrAttribute: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
-  let valueNode: HTMLAttributeValueNode | undefined
+export function getAttributeValueQuoteType(node: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
+  const valueNode = isHTMLAttributeValueNode(node) ? node : node.value
+  if (!valueNode) return null
 
-  if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_NODE") {
-    const attributeNode = nodeOrAttribute as HTMLAttributeNode
-
-    if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-      valueNode = attributeNode.value as HTMLAttributeValueNode
-    }
-  } else if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    valueNode = nodeOrAttribute as HTMLAttributeValueNode
+  if (valueNode.quoted && valueNode.open_quote) {
+    return valueNode.open_quote.value === '"' ? "double" : "single"
   }
 
-  if (valueNode) {
-    if (valueNode.quoted && valueNode.open_quote) {
-      return valueNode.open_quote.value === '"' ? "double" : "single"
-    }
-
-    return "none"
-  }
-
-  return null
+  return "none"
 }
 
 /**
  * Finds an attribute by name in a list of attributes
  */
 export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      const attributeNode = child as HTMLAttributeNode
-      const name = getAttributeName(attributeNode)
+  for (const attribute of filterHTMLAttributeNodes(attributes)) {
+    const name = getAttributeName(attribute)
 
-      if (name === attributeName.toLowerCase()) {
-        return attributeNode
-      }
+    if (name === attributeName.toLowerCase()) {
+      return attribute
     }
   }
 
@@ -378,7 +364,9 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Checks if a tag has a specific attribute
  */
-export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
+export function hasAttribute(node: HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+  if (!node) return false
+
   return getAttribute(node, attributeName) !== null
 }
 
@@ -709,28 +697,17 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
  * Checks if an attribute value is quoted
  */
 export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
+  if (!isHTMLAttributeValueNode(attributeNode.value)) return false
 
-    return !!valueNode.quoted
-  }
-
-  return false
+  return !!attributeNode.value.quoted
 }
 
 /**
  * Iterates over all attributes of a tag node, calling the callback for each attribute
  */
-export function forEachAttribute(
-  node: HTMLOpenTagNode,
-  callback: (attributeNode: HTMLAttributeNode) => void
-): void {
-  const attributes = getAttributes(node)
-
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      callback(child as HTMLAttributeNode)
-    }
+export function forEachAttribute(node: HTMLOpenTagNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
+  for (const attribute of getAttributes(node)) {
+    callback(attribute)
   }
 }
 

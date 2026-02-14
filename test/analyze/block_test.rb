@@ -164,5 +164,50 @@ module Analyze
         <%= yield(:header) if content_for?(:header) %>
       HTML
     end
+
+    test "unclosed brace block should error" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each { |item| %>
+          <%= item %>
+        <% } %>
+      HTML
+    end
+
+    test "unclosed brace block with end should error" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each { |item| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "closed brace block in single tag is not a block" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.map { |item| item.name } %>
+      HTML
+    end
+
+    test "do/end block works as expected" do
+      assert_parsed_snapshot(<<~HTML)
+        <% items.each do |item| %>
+          <%= item %>
+        <% end %>
+      HTML
+    end
+
+    test "closed brace block with yield" do
+      assert_parsed_snapshot(<<~HTML)
+        <% content = capture { yield } if block_given? %>
+      HTML
+    end
+
+    # https://github.com/marcoroth/herb/issues/1037
+    test "yield with fallback block" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= yield(:sidebar).presence || capture do %>
+          default sidebar
+        <% end %>
+      HTML
+    end
   end
 end

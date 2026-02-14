@@ -1,0 +1,65 @@
+---
+source: "Parser::AttributesTest#test_0055_Conditional boolean attribute"
+input: "<input <% if should_disable? %>disabled<% end %> type=\"text\">"
+---
+@ DocumentNode (location: (1:0)-(1:61))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:61))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:61))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "input" (location: (1:1)-(1:6))
+        │       ├── tag_closing: ">" (location: (1:60)-(1:61))
+        │       ├── children: (2 items)
+        │       │   ├── @ ERBIfNode (location: (1:7)-(1:48))
+        │       │   │   ├── tag_opening: "<%" (location: (1:7)-(1:9))
+        │       │   │   ├── content: " if should_disable? " (location: (1:9)-(1:29))
+        │       │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │   │   ├── then_keyword: ∅
+        │       │   │   ├── statements: (1 item)
+        │       │   │   │   └── @ HTMLAttributeNode (location: (1:31)-(1:39))
+        │       │   │   │       ├── name:
+        │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:39))
+        │       │   │   │       │       └── children: (1 item)
+        │       │   │   │       │           └── @ LiteralNode (location: (1:31)-(1:39))
+        │       │   │   │       │               └── content: "disabled"
+        │       │   │   │       │
+        │       │   │   │       │
+        │       │   │   │       ├── equals: ∅
+        │       │   │   │       └── value: ∅
+        │       │   │   │
+        │       │   │   ├── subsequent: ∅
+        │       │   │   └── end_node:
+        │       │   │       └── @ ERBEndNode (location: (1:39)-(1:48))
+        │       │   │           ├── tag_opening: "<%" (location: (1:39)-(1:41))
+        │       │   │           ├── content: " end " (location: (1:41)-(1:46))
+        │       │   │           └── tag_closing: "%>" (location: (1:46)-(1:48))
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:49)-(1:60))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:49)-(1:53))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:49)-(1:53))
+        │       │       │               └── content: "type"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:53)-(1:54))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:54)-(1:60))
+        │       │               ├── open_quote: """ (location: (1:54)-(1:55))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:55)-(1:59))
+        │       │               │       └── content: "text"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:59)-(1:60))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "input" (location: (1:1)-(1:6))
+        ├── body: []
+        ├── close_tag: ∅
+        ├── is_void: true
+        └── source: "HTML"

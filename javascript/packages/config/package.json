@@ -1,13 +1,13 @@
 {
   "name": "@herb-tools/config",
-  "version": "0.7.5",
+  "version": "0.8.10",
   "description": "Shared configuration utilities for Herb tools",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/config%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/config"
   },
   "main": "./dist/herb-config.cjs",
@@ -30,14 +30,14 @@
     }
   },
   "dependencies": {
-    "@herb-tools/core": "0.7.5",
-    "yaml": "^2.3.4"
+    "@herb-tools/core": "0.8.10",
+    "picomatch": "^4.0.2",
+    "tinyglobby": "^0.2.15",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@types/minimatch": "^6.0.0",
-    "glob": "^11.0.3",
-    "minimatch": "^10.1.1",
-    "zod": "^4.1.12",
+    "@types/picomatch": "^4.0.2",
+    "zod": "^4.3.6",
     "zod-validation-error": "^5.0.0"
   },
   "files": [

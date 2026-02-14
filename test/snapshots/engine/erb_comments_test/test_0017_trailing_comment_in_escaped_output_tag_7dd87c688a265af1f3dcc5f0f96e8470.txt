@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBCommentsTest#test_0017_trailing comment in escaped output tag"
+input: "{source: \"<%== value # this is a comment %>\", options: {}}"
+---
+_buf = ::String.new; _buf << ::Herb::Engine.h((value # this is a comment
+));
+_buf.to_s

@@ -1,0 +1,173 @@
+---
+source: "Analyze::ConditionalOpenTagTest#test_0003_conditional with style attribute (issue #779)"
+input: |2-
+<% if meal_course.background_image.attached? %>
+  <div class='bg_button_gradient' style='background-image: url(<%= image %>);'>
+<% else %>
+  <div class='bg_button_gradient' style='background-image: none;'>
+<% end %>
+  Content here
+</div>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLConditionalOpenTagNode (location: (1:0)-(5:9))
+    │   │       ├── conditional:
+    │   │       │   └── @ ERBIfNode (location: (1:0)-(5:9))
+    │   │       │       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   │       │       ├── content: " if meal_course.background_image.attached? " (location: (1:2)-(1:45))
+    │   │       │       ├── tag_closing: "%>" (location: (1:45)-(1:47))
+    │   │       │       ├── then_keyword: ∅
+    │   │       │       ├── statements: (3 items)
+    │   │       │       │   ├── @ HTMLTextNode (location: (1:47)-(2:2))
+    │   │       │       │   │   └── content: "\n  "
+    │   │       │       │   │
+    │   │       │       │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:79))
+    │   │       │       │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       │       │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       │       │   │   ├── tag_closing: ">" (location: (2:78)-(2:79))
+    │   │       │       │   │   ├── children: (2 items)
+    │   │       │       │   │   │   ├── @ HTMLAttributeNode (location: (2:7)-(2:33))
+    │   │       │       │   │   │   │   ├── name:
+    │   │       │       │   │   │   │   │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │       │       │   │   │   │   │       └── children: (1 item)
+    │   │       │       │   │   │   │   │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │       │       │   │   │   │   │               └── content: "class"
+    │   │       │       │   │   │   │   │
+    │   │       │       │   │   │   │   │
+    │   │       │       │   │   │   │   ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │       │   │   │   │   └── value:
+    │   │       │       │   │   │   │       └── @ HTMLAttributeValueNode (location: (2:13)-(2:33))
+    │   │       │       │   │   │   │           ├── open_quote: "'" (location: (2:13)-(2:14))
+    │   │       │       │   │   │   │           ├── children: (1 item)
+    │   │       │       │   │   │   │           │   └── @ LiteralNode (location: (2:14)-(2:32))
+    │   │       │       │   │   │   │           │       └── content: "bg_button_gradient"
+    │   │       │       │   │   │   │           │
+    │   │       │       │   │   │   │           ├── close_quote: "'" (location: (2:32)-(2:33))
+    │   │       │       │   │   │   │           └── quoted: true
+    │   │       │       │   │   │   │
+    │   │       │       │   │   │   │
+    │   │       │       │   │   │   └── @ HTMLAttributeNode (location: (2:34)-(2:78))
+    │   │       │       │   │   │       ├── name:
+    │   │       │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:34)-(2:39))
+    │   │       │       │   │   │       │       └── children: (1 item)
+    │   │       │       │   │   │       │           └── @ LiteralNode (location: (2:34)-(2:39))
+    │   │       │       │   │   │       │               └── content: "style"
+    │   │       │       │   │   │       │
+    │   │       │       │   │   │       │
+    │   │       │       │   │   │       ├── equals: "=" (location: (2:39)-(2:40))
+    │   │       │       │   │   │       └── value:
+    │   │       │       │   │   │           └── @ HTMLAttributeValueNode (location: (2:40)-(2:78))
+    │   │       │       │   │   │               ├── open_quote: "'" (location: (2:40)-(2:41))
+    │   │       │       │   │   │               ├── children: (3 items)
+    │   │       │       │   │   │               │   ├── @ LiteralNode (location: (2:41)-(2:63))
+    │   │       │       │   │   │               │   │   └── content: "background-image: url("
+    │   │       │       │   │   │               │   │
+    │   │       │       │   │   │               │   ├── @ ERBContentNode (location: (2:63)-(2:75))
+    │   │       │       │   │   │               │   │   ├── tag_opening: "<%=" (location: (2:63)-(2:66))
+    │   │       │       │   │   │               │   │   ├── content: " image " (location: (2:66)-(2:73))
+    │   │       │       │   │   │               │   │   ├── tag_closing: "%>" (location: (2:73)-(2:75))
+    │   │       │       │   │   │               │   │   ├── parsed: true
+    │   │       │       │   │   │               │   │   └── valid: true
+    │   │       │       │   │   │               │   │
+    │   │       │       │   │   │               │   └── @ LiteralNode (location: (2:75)-(2:77))
+    │   │       │       │   │   │               │       └── content: ");"
+    │   │       │       │   │   │               │
+    │   │       │       │   │   │               ├── close_quote: "'" (location: (2:77)-(2:78))
+    │   │       │       │   │   │               └── quoted: true
+    │   │       │       │   │   │
+    │   │       │       │   │   │
+    │   │       │       │   │   └── is_void: false
+    │   │       │       │   │
+    │   │       │       │   └── @ HTMLTextNode (location: (2:79)-(3:0))
+    │   │       │       │       └── content: "\n"
+    │   │       │       │
+    │   │       │       ├── subsequent:
+    │   │       │       │   └── @ ERBElseNode (location: (3:0)-(5:0))
+    │   │       │       │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       │       │       ├── content: " else " (location: (3:2)-(3:8))
+    │   │       │       │       ├── tag_closing: "%>" (location: (3:8)-(3:10))
+    │   │       │       │       └── statements: (3 items)
+    │   │       │       │           ├── @ HTMLTextNode (location: (3:10)-(4:2))
+    │   │       │       │           │   └── content: "\n  "
+    │   │       │       │           │
+    │   │       │       │           ├── @ HTMLOpenTagNode (location: (4:2)-(4:66))
+    │   │       │       │           │   ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │       │       │           │   ├── tag_name: "div" (location: (4:3)-(4:6))
+    │   │       │       │           │   ├── tag_closing: ">" (location: (4:65)-(4:66))
+    │   │       │       │           │   ├── children: (2 items)
+    │   │       │       │           │   │   ├── @ HTMLAttributeNode (location: (4:7)-(4:33))
+    │   │       │       │           │   │   │   ├── name:
+    │   │       │       │           │   │   │   │   └── @ HTMLAttributeNameNode (location: (4:7)-(4:12))
+    │   │       │       │           │   │   │   │       └── children: (1 item)
+    │   │       │       │           │   │   │   │           └── @ LiteralNode (location: (4:7)-(4:12))
+    │   │       │       │           │   │   │   │               └── content: "class"
+    │   │       │       │           │   │   │   │
+    │   │       │       │           │   │   │   │
+    │   │       │       │           │   │   │   ├── equals: "=" (location: (4:12)-(4:13))
+    │   │       │       │           │   │   │   └── value:
+    │   │       │       │           │   │   │       └── @ HTMLAttributeValueNode (location: (4:13)-(4:33))
+    │   │       │       │           │   │   │           ├── open_quote: "'" (location: (4:13)-(4:14))
+    │   │       │       │           │   │   │           ├── children: (1 item)
+    │   │       │       │           │   │   │           │   └── @ LiteralNode (location: (4:14)-(4:32))
+    │   │       │       │           │   │   │           │       └── content: "bg_button_gradient"
+    │   │       │       │           │   │   │           │
+    │   │       │       │           │   │   │           ├── close_quote: "'" (location: (4:32)-(4:33))
+    │   │       │       │           │   │   │           └── quoted: true
+    │   │       │       │           │   │   │
+    │   │       │       │           │   │   │
+    │   │       │       │           │   │   └── @ HTMLAttributeNode (location: (4:34)-(4:65))
+    │   │       │       │           │   │       ├── name:
+    │   │       │       │           │   │       │   └── @ HTMLAttributeNameNode (location: (4:34)-(4:39))
+    │   │       │       │           │   │       │       └── children: (1 item)
+    │   │       │       │           │   │       │           └── @ LiteralNode (location: (4:34)-(4:39))
+    │   │       │       │           │   │       │               └── content: "style"
+    │   │       │       │           │   │       │
+    │   │       │       │           │   │       │
+    │   │       │       │           │   │       ├── equals: "=" (location: (4:39)-(4:40))
+    │   │       │       │           │   │       └── value:
+    │   │       │       │           │   │           └── @ HTMLAttributeValueNode (location: (4:40)-(4:65))
+    │   │       │       │           │   │               ├── open_quote: "'" (location: (4:40)-(4:41))
+    │   │       │       │           │   │               ├── children: (1 item)
+    │   │       │       │           │   │               │   └── @ LiteralNode (location: (4:41)-(4:64))
+    │   │       │       │           │   │               │       └── content: "background-image: none;"
+    │   │       │       │           │   │               │
+    │   │       │       │           │   │               ├── close_quote: "'" (location: (4:64)-(4:65))
+    │   │       │       │           │   │               └── quoted: true
+    │   │       │       │           │   │
+    │   │       │       │           │   │
+    │   │       │       │           │   └── is_void: false
+    │   │       │       │           │
+    │   │       │       │           └── @ HTMLTextNode (location: (4:66)-(5:0))
+    │   │       │       │               └── content: "\n"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       └── end_node:
+    │   │       │           └── @ ERBEndNode (location: (5:0)-(5:9))
+    │   │       │               ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       │               ├── content: " end " (location: (5:2)-(5:7))
+    │   │       │               └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │   │       │
+    │   │       │
+    │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (5:9)-(7:0))
+    │   │       └── content: "\n  Content here\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "div" (location: (7:2)-(7:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

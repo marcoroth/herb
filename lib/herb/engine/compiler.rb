@@ -76,6 +76,26 @@ module Herb
         @element_stack.pop if tag_name
       end
 
+      def visit_html_conditional_element_node(node)
+        tag_name = node.tag_name&.value&.downcase
+
+        @element_stack.push(tag_name) if tag_name
+
+        if tag_name == "script"
+          push_context(:script_content)
+        elsif tag_name == "style"
+          push_context(:style_content)
+        end
+
+        visit(node.open_conditional)
+        visit_all(node.body)
+        visit(node.close_conditional)
+
+        pop_context if %w[script style].include?(tag_name)
+
+        @element_stack.pop if tag_name
+      end
+
       def visit_html_open_tag_node(node)
         add_text(node.tag_opening&.value || "<")
         add_text(node.tag_name.value) if node.tag_name
@@ -297,18 +317,20 @@ module Herb
       end
 
       def add_context_aware_expression(code, context)
+        closing = code.include?("#") ? "\n))" : "))"
+
         case context
         when :attribute_value
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@attrfunc}((" << code << "))"
+            @engine.src << " << #{@attrfunc}((" << code << closing
           }
         when :script_content
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@jsfunc}((" << code << "))"
+            @engine.src << " << #{@jsfunc}((" << code << closing
           }
         when :style_content
           @engine.send(:with_buffer) {
-            @engine.src << " << #{@cssfunc}((" << code << "))"
+            @engine.src << " << #{@cssfunc}((" << code << closing
           }
         else
           @engine.send(:add_expression_result_escaped, code)
@@ -319,6 +341,7 @@ module Herb
         opening = node.tag_opening.value
 
         return if !skip_comment_check && erb_comment?(opening)
+        return if erb_graphql?(opening)
 
         code = node.content.value.strip
 

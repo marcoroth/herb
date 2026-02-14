@@ -134,6 +134,14 @@ module Analyze
       HTML
     end
 
+    test "if with yield in condition" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if yield(:a) %>
+          content
+        <% end %>
+      HTML
+    end
+
     test "conditional attribute value" do
       skip
 
@@ -142,6 +150,79 @@ module Analyze
           type="submit"
           disabled<% if valid? %>="disabled"<% end %>
         ></button>
+      HTML
+    end
+
+    test "if with missing conditional" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if %>
+        <% end %>
+      HTML
+    end
+
+    test "if with invalid syntax" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true true %>
+        <% end %>
+      HTML
+    end
+
+    test "complete if/end in single ERB tag should not be ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          if false
+            next
+          end
+        %>
+      HTML
+    end
+
+    test "complete if/else/end in single ERB tag should not be ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          if condition
+            do_something
+          else
+            do_other
+          end
+        %>
+      HTML
+    end
+
+    test "complete if/elsif/else/end in single ERB tag should not be ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <%
+          if a
+            one
+          elsif b
+            two
+          else
+            three
+          end
+        %>
+      HTML
+    end
+
+    test "each block with complete if/end inside single ERB tag" do
+      assert_parsed_snapshot(<<~HTML)
+        <% [1,2,3].each do |i| %>
+          <%
+            if false
+              next
+            end
+          %>
+
+          <%= i %>
+        <% end %>
+      HTML
+    end
+
+    test "each block with inline guard clause should not be ERBIfNode" do
+      assert_parsed_snapshot(<<~HTML)
+        <% [1,2,3].each do |i| %>
+          <% next if false %>
+          <%= i %>
+        <% end %>
       HTML
     end
   end

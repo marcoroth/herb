@@ -1,0 +1,51 @@
+---
+source: "Analyze::ThenTest#test_0026_when with then and method chain"
+input: |2-
+<% case items.first.type %>
+<% when :foo then %>
+  foo
+<% when :bar then %>
+  bar
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case items.first.type " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:27)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:20))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when :foo then " (location: (2:2)-(2:18))
+    │   │   │   ├── tag_closing: "%>" (location: (2:18)-(2:20))
+    │   │   │   ├── then_keyword: (location: (2:13)-(2:17))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:20)-(4:0))
+    │   │   │           └── content: "\n  foo\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (4:0)-(4:20))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " when :bar then " (location: (4:2)-(4:18))
+    │   │       ├── tag_closing: "%>" (location: (4:18)-(4:20))
+    │   │       ├── then_keyword: (location: (4:13)-(4:17))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (4:20)-(6:0))
+    │   │               └── content: "\n  bar\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

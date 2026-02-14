@@ -1,8 +1,9 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, getTagName, hasAttribute, getAttributes, findAttributeByName } from "./rule-utils.js"
+import { isHTMLAttributeValueNode, isERBContentNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLOpenTagNode, HTMLAttributeValueNode, ParseResult, Node } from "@herb-tools/core"
+import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 const ELEMENTS_WITH_NATIVE_DISABLED_ATTRIBUTE_SUPPORT = new Set([
   "button", "fieldset", "input", "optgroup", "option", "select", "textarea"
@@ -43,12 +44,10 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
     if (!attribute) return false
 
     const valueNode = attribute.value
-    if (!valueNode || valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE") return false
+    if (!isHTMLAttributeValueNode(valueNode)) return false
+    if (!valueNode.children) return false
 
-    const htmlValueNode = valueNode as HTMLAttributeValueNode
-    if (!htmlValueNode.children) return false
-
-    return htmlValueNode.children.some((child: Node) => child.type === "AST_ERB_CONTENT_NODE")
+    return valueNode.children.some(isERBContentNode)
   }
 }
 

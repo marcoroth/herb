@@ -40,7 +40,7 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   napi_value <%= field.name %> = CreateString(env, <%= node.human %>-><%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   napi_value <%= field.name %> = NodeFromCStruct(env, (AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
@@ -59,6 +59,15 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
 
   <%- when Herb::Template::ElementSourceField -%>
   napi_value <%= field.name %> = CreateStringFromHbString(env, element_source_to_string(<%= node.human %>-><%= field.name %>));
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
+  <%- when Herb::Template::LocationField -%>
+  napi_value <%= field.name %>;
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    <%= field.name %> = CreateLocation(env, *<%= node.human %>-><%= field.name %>);
+  } else {
+    napi_get_null(env, &<%= field.name %>);
+  }
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
   <%- else -%>

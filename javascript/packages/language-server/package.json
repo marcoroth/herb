@@ -1,7 +1,7 @@
 {
   "name": "@herb-tools/language-server",
   "description": "Herb HTML+ERB Language Tools and Language Server Protocol integration.",
-  "version": "0.7.5",
+  "version": "0.8.10",
   "author": "Marco Roth",
   "license": "MIT",
   "engines": {
@@ -11,11 +11,11 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-tools/language-server%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/language-server"
   },
   "bin": {
-    "herb-language-server": "./bin/herb-language-server"
+    "herb-language-server": "bin/herb-language-server"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -45,12 +45,15 @@
     "dist/"
   ],
   "dependencies": {
-    "@herb-tools/config": "0.7.5",
-    "@herb-tools/formatter": "0.7.5",
-    "@herb-tools/linter": "0.7.5",
-    "@herb-tools/node-wasm": "0.7.5",
+    "@herb-tools/config": "0.8.10",
+    "@herb-tools/formatter": "0.8.10",
+    "@herb-tools/linter": "0.8.10",
+    "@herb-tools/node-wasm": "0.8.10",
     "dedent": "^1.7.0",
     "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0"
   }
 }

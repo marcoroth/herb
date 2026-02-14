@@ -1,0 +1,59 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0012_three unclosed blocks in same ERB tag"
+input: |2-
+<% if a; if b; if c %>
+  <p>nested</p>
+<% end; end; end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(3:19))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:22))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if a; if b; if c " (location: (1:2)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:22)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:15))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "p" (location: (2:3)-(2:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:5)-(2:11))
+    │   │   │   │       └── content: "nested"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:11)-(2:15))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:11)-(2:13))
+    │   │   │   │       ├── tag_name: "p" (location: (2:13)-(2:14))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:15)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:19))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end; end; end " (location: (3:2)-(3:17))
+    │           └── tag_closing: "%>" (location: (3:17)-(3:19))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:19)-(4:0))
+        └── content: "\n"

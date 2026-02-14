@@ -1,0 +1,78 @@
+---
+source: "Parser::AttributesTest#test_0102_self-closing tag with conditional attribute and value"
+input: "<input type=\"text\" <% if has_value? %>value=\"<%= default_value %>\"<% end %> />"
+---
+@ DocumentNode (location: (1:0)-(1:78))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:78))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:78))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "input" (location: (1:1)-(1:6))
+        │       ├── tag_closing: "/>" (location: (1:76)-(1:78))
+        │       ├── children: (2 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:18))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:11))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:7)-(1:11))
+        │       │   │   │               └── content: "type"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: "=" (location: (1:11)-(1:12))
+        │       │   │   └── value:
+        │       │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:18))
+        │       │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+        │       │   │           ├── children: (1 item)
+        │       │   │           │   └── @ LiteralNode (location: (1:13)-(1:17))
+        │       │   │           │       └── content: "text"
+        │       │   │           │
+        │       │   │           ├── close_quote: """ (location: (1:17)-(1:18))
+        │       │   │           └── quoted: true
+        │       │   │
+        │       │   │
+        │       │   └── @ ERBIfNode (location: (1:19)-(1:75))
+        │       │       ├── tag_opening: "<%" (location: (1:19)-(1:21))
+        │       │       ├── content: " if has_value? " (location: (1:21)-(1:36))
+        │       │       ├── tag_closing: "%>" (location: (1:36)-(1:38))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:38)-(1:66))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:38)-(1:43))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:38)-(1:43))
+        │       │       │       │               └── content: "value"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: "=" (location: (1:43)-(1:44))
+        │       │       │       └── value:
+        │       │       │           └── @ HTMLAttributeValueNode (location: (1:44)-(1:66))
+        │       │       │               ├── open_quote: """ (location: (1:44)-(1:45))
+        │       │       │               ├── children: (1 item)
+        │       │       │               │   └── @ ERBContentNode (location: (1:45)-(1:65))
+        │       │       │               │       ├── tag_opening: "<%=" (location: (1:45)-(1:48))
+        │       │       │               │       ├── content: " default_value " (location: (1:48)-(1:63))
+        │       │       │               │       ├── tag_closing: "%>" (location: (1:63)-(1:65))
+        │       │       │               │       ├── parsed: true
+        │       │       │               │       └── valid: true
+        │       │       │               │
+        │       │       │               ├── close_quote: """ (location: (1:65)-(1:66))
+        │       │       │               └── quoted: true
+        │       │       │
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:66)-(1:75))
+        │       │               ├── tag_opening: "<%" (location: (1:66)-(1:68))
+        │       │               ├── content: " end " (location: (1:68)-(1:73))
+        │       │               └── tag_closing: "%>" (location: (1:73)-(1:75))
+        │       │
+        │       │
+        │       └── is_void: true
+        │
+        ├── tag_name: "input" (location: (1:1)-(1:6))
+        ├── body: []
+        ├── close_tag: ∅
+        ├── is_void: true
+        └── source: "HTML"

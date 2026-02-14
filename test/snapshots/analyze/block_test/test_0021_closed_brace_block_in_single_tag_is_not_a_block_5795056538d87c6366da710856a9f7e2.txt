@@ -1,0 +1,16 @@
+---
+source: "Analyze::BlockTest#test_0021_closed brace block in single tag is not a block"
+input: |2-
+<% items.map { |item| item.name } %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:36))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.map { |item| item.name } " (location: (1:2)-(1:34))
+    │   ├── tag_closing: "%>" (location: (1:34)-(1:36))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:36)-(2:0))
+        └── content: "\n"

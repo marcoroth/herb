@@ -1,0 +1,205 @@
+---
+source: "Parser::CaseWhenTest#test_0003_case/when with if/elsif/else inside else branch"
+input: |2-
+<% case status %>
+<% when :active %>
+  <p>Active</p>
+<% else %>
+  <% if admin? %>
+    <p>Admin view</p>
+  <% elsif moderator? %>
+    <p>Moderator view</p>
+  <% else %>
+    <p>User view</p>
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(13:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(12:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case status " (location: (1:2)-(1:15))
+    │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:17)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:18))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when :active " (location: (2:2)-(2:16))
+    │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (2:18)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (3:2)-(3:15))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:5))
+    │   │           │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │           │   │       ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │           │   │       ├── tag_closing: ">" (location: (3:4)-(3:5))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "p" (location: (3:3)-(3:4))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (3:5)-(3:11))
+    │   │           │   │       └── content: "Active"
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (3:11)-(3:15))
+    │   │           │   │       ├── tag_opening: "</" (location: (3:11)-(3:13))
+    │   │           │   │       ├── tag_name: "p" (location: (3:13)-(3:14))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (3:15)-(4:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (4:0)-(4:10))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " else " (location: (4:2)-(4:8))
+    │   │       ├── tag_closing: "%>" (location: (4:8)-(4:10))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (4:10)-(5:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBIfNode (location: (5:2)-(11:11))
+    │   │           │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │           │   ├── content: " if admin? " (location: (5:4)-(5:15))
+    │   │           │   ├── tag_closing: "%>" (location: (5:15)-(5:17))
+    │   │           │   ├── then_keyword: ∅
+    │   │           │   ├── statements: (3 items)
+    │   │           │   │   ├── @ HTMLTextNode (location: (5:17)-(6:4))
+    │   │           │   │   │   └── content: "\n    "
+    │   │           │   │   │
+    │   │           │   │   ├── @ HTMLElementNode (location: (6:4)-(6:21))
+    │   │           │   │   │   ├── open_tag:
+    │   │           │   │   │   │   └── @ HTMLOpenTagNode (location: (6:4)-(6:7))
+    │   │           │   │   │   │       ├── tag_opening: "<" (location: (6:4)-(6:5))
+    │   │           │   │   │   │       ├── tag_name: "p" (location: (6:5)-(6:6))
+    │   │           │   │   │   │       ├── tag_closing: ">" (location: (6:6)-(6:7))
+    │   │           │   │   │   │       ├── children: []
+    │   │           │   │   │   │       └── is_void: false
+    │   │           │   │   │   │
+    │   │           │   │   │   ├── tag_name: "p" (location: (6:5)-(6:6))
+    │   │           │   │   │   ├── body: (1 item)
+    │   │           │   │   │   │   └── @ HTMLTextNode (location: (6:7)-(6:17))
+    │   │           │   │   │   │       └── content: "Admin view"
+    │   │           │   │   │   │
+    │   │           │   │   │   ├── close_tag:
+    │   │           │   │   │   │   └── @ HTMLCloseTagNode (location: (6:17)-(6:21))
+    │   │           │   │   │   │       ├── tag_opening: "</" (location: (6:17)-(6:19))
+    │   │           │   │   │   │       ├── tag_name: "p" (location: (6:19)-(6:20))
+    │   │           │   │   │   │       ├── children: []
+    │   │           │   │   │   │       └── tag_closing: ">" (location: (6:20)-(6:21))
+    │   │           │   │   │   │
+    │   │           │   │   │   ├── is_void: false
+    │   │           │   │   │   └── source: "HTML"
+    │   │           │   │   │
+    │   │           │   │   └── @ HTMLTextNode (location: (6:21)-(7:2))
+    │   │           │   │       └── content: "\n  "
+    │   │           │   │
+    │   │           │   ├── subsequent:
+    │   │           │   │   └── @ ERBIfNode (location: (7:2)-(9:2))
+    │   │           │   │       ├── tag_opening: "<%" (location: (7:2)-(7:4))
+    │   │           │   │       ├── content: " elsif moderator? " (location: (7:4)-(7:22))
+    │   │           │   │       ├── tag_closing: "%>" (location: (7:22)-(7:24))
+    │   │           │   │       ├── then_keyword: ∅
+    │   │           │   │       ├── statements: (3 items)
+    │   │           │   │       │   ├── @ HTMLTextNode (location: (7:24)-(8:4))
+    │   │           │   │       │   │   └── content: "\n    "
+    │   │           │   │       │   │
+    │   │           │   │       │   ├── @ HTMLElementNode (location: (8:4)-(8:25))
+    │   │           │   │       │   │   ├── open_tag:
+    │   │           │   │       │   │   │   └── @ HTMLOpenTagNode (location: (8:4)-(8:7))
+    │   │           │   │       │   │   │       ├── tag_opening: "<" (location: (8:4)-(8:5))
+    │   │           │   │       │   │   │       ├── tag_name: "p" (location: (8:5)-(8:6))
+    │   │           │   │       │   │   │       ├── tag_closing: ">" (location: (8:6)-(8:7))
+    │   │           │   │       │   │   │       ├── children: []
+    │   │           │   │       │   │   │       └── is_void: false
+    │   │           │   │       │   │   │
+    │   │           │   │       │   │   ├── tag_name: "p" (location: (8:5)-(8:6))
+    │   │           │   │       │   │   ├── body: (1 item)
+    │   │           │   │       │   │   │   └── @ HTMLTextNode (location: (8:7)-(8:21))
+    │   │           │   │       │   │   │       └── content: "Moderator view"
+    │   │           │   │       │   │   │
+    │   │           │   │       │   │   ├── close_tag:
+    │   │           │   │       │   │   │   └── @ HTMLCloseTagNode (location: (8:21)-(8:25))
+    │   │           │   │       │   │   │       ├── tag_opening: "</" (location: (8:21)-(8:23))
+    │   │           │   │       │   │   │       ├── tag_name: "p" (location: (8:23)-(8:24))
+    │   │           │   │       │   │   │       ├── children: []
+    │   │           │   │       │   │   │       └── tag_closing: ">" (location: (8:24)-(8:25))
+    │   │           │   │       │   │   │
+    │   │           │   │       │   │   ├── is_void: false
+    │   │           │   │       │   │   └── source: "HTML"
+    │   │           │   │       │   │
+    │   │           │   │       │   └── @ HTMLTextNode (location: (8:25)-(9:2))
+    │   │           │   │       │       └── content: "\n  "
+    │   │           │   │       │
+    │   │           │   │       ├── subsequent:
+    │   │           │   │       │   └── @ ERBElseNode (location: (9:2)-(11:2))
+    │   │           │   │       │       ├── tag_opening: "<%" (location: (9:2)-(9:4))
+    │   │           │   │       │       ├── content: " else " (location: (9:4)-(9:10))
+    │   │           │   │       │       ├── tag_closing: "%>" (location: (9:10)-(9:12))
+    │   │           │   │       │       └── statements: (3 items)
+    │   │           │   │       │           ├── @ HTMLTextNode (location: (9:12)-(10:4))
+    │   │           │   │       │           │   └── content: "\n    "
+    │   │           │   │       │           │
+    │   │           │   │       │           ├── @ HTMLElementNode (location: (10:4)-(10:20))
+    │   │           │   │       │           │   ├── open_tag:
+    │   │           │   │       │           │   │   └── @ HTMLOpenTagNode (location: (10:4)-(10:7))
+    │   │           │   │       │           │   │       ├── tag_opening: "<" (location: (10:4)-(10:5))
+    │   │           │   │       │           │   │       ├── tag_name: "p" (location: (10:5)-(10:6))
+    │   │           │   │       │           │   │       ├── tag_closing: ">" (location: (10:6)-(10:7))
+    │   │           │   │       │           │   │       ├── children: []
+    │   │           │   │       │           │   │       └── is_void: false
+    │   │           │   │       │           │   │
+    │   │           │   │       │           │   ├── tag_name: "p" (location: (10:5)-(10:6))
+    │   │           │   │       │           │   ├── body: (1 item)
+    │   │           │   │       │           │   │   └── @ HTMLTextNode (location: (10:7)-(10:16))
+    │   │           │   │       │           │   │       └── content: "User view"
+    │   │           │   │       │           │   │
+    │   │           │   │       │           │   ├── close_tag:
+    │   │           │   │       │           │   │   └── @ HTMLCloseTagNode (location: (10:16)-(10:20))
+    │   │           │   │       │           │   │       ├── tag_opening: "</" (location: (10:16)-(10:18))
+    │   │           │   │       │           │   │       ├── tag_name: "p" (location: (10:18)-(10:19))
+    │   │           │   │       │           │   │       ├── children: []
+    │   │           │   │       │           │   │       └── tag_closing: ">" (location: (10:19)-(10:20))
+    │   │           │   │       │           │   │
+    │   │           │   │       │           │   ├── is_void: false
+    │   │           │   │       │           │   └── source: "HTML"
+    │   │           │   │       │           │
+    │   │           │   │       │           └── @ HTMLTextNode (location: (10:20)-(11:2))
+    │   │           │   │       │               └── content: "\n  "
+    │   │           │   │       │
+    │   │           │   │       │
+    │   │           │   │       └── end_node: ∅
+    │   │           │   │
+    │   │           │   └── end_node:
+    │   │           │       └── @ ERBEndNode (location: (11:2)-(11:11))
+    │   │           │           ├── tag_opening: "<%" (location: (11:2)-(11:4))
+    │   │           │           ├── content: " end " (location: (11:4)-(11:9))
+    │   │           │           └── tag_closing: "%>" (location: (11:9)-(11:11))
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (11:11)-(12:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (12:0)-(12:9))
+    │           ├── tag_opening: "<%" (location: (12:0)-(12:2))
+    │           ├── content: " end " (location: (12:2)-(12:7))
+    │           └── tag_closing: "%>" (location: (12:7)-(12:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (12:9)-(13:0))
+        └── content: "\n"

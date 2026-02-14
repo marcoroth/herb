@@ -115,24 +115,6 @@ TEST(test_hb_buffer_clear)
   free(buffer.value);
 END
 
-// Test freeing buffer
-TEST(test_hb_buffer_free)
-  hb_buffer_T buffer;
-  hb_buffer_init(&buffer, 1024);
-
-  hb_buffer_append(&buffer, "Test");
-  ck_assert_int_eq(buffer.length, 4);
-  ck_assert_int_eq(buffer.capacity, 1024);
-  free(buffer.value);
-  buffer.value = NULL;
-  buffer.length = 0;
-  buffer.capacity = 0;
-
-  ck_assert_ptr_null(buffer.value);
-  ck_assert_int_eq(buffer.length, 0);
-  ck_assert_int_eq(buffer.capacity, 0);
-END
-
 // Test buffer UTF-8 integrity
 TEST(test_buffer_utf8_integrity)
   hb_buffer_T buffer;
@@ -201,7 +183,6 @@ TCase *hb_buffer_tests(void) {
   tcase_add_test(buffer, test_hb_buffer_append_string);
   tcase_add_test(buffer, test_hb_buffer_resizing_behavior);
   tcase_add_test(buffer, test_hb_buffer_clear);
-  tcase_add_test(buffer, test_hb_buffer_free);
   tcase_add_test(buffer, test_buffer_utf8_integrity);
   tcase_add_test(buffer, test_hb_buffer_append_utf8);
   tcase_add_test(buffer, test_hb_buffer_length_correctness);

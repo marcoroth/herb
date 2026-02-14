@@ -19,6 +19,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │   │   ├── content: " if Rails.env.development? " (location: (2:4)-(2:31))
     │   │   │   ├── tag_closing: "%>" (location: (2:31)-(2:33))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (3 items)
     │   │   │   │   ├── @ LiteralNode (location: (2:33)-(3:16))
     │   │   │   │   │   └── content: "\n    Debug info: "

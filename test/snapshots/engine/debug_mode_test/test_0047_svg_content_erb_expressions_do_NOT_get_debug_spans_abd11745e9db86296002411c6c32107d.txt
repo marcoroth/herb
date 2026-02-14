@@ -1,0 +1,10 @@
+---
+source: "Engine::DebugModeTest#test_0047_svg content erb expressions do NOT get debug spans"
+input: "{source: \"<svg viewBox=\\\"0 0 100 100\\\">\\n  <circle cx=\\\"50\\\" cy=\\\"50\\\" r=\\\"<%= @radius %>\\\" />\\n  <text x=\\\"50\\\" y=\\\"50\\\"><%= @label %></text>\\n</svg>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << '<svg viewBox="0 0 100 100" data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  <circle cx="50" cy="50" r="'.freeze; _buf << ::Herb::Engine.attr((@radius)); _buf << '" />
+  <text x="50" y="50">'.freeze; _buf << (@label).to_s; _buf << '</text>
+</svg>
+'.freeze;
+_buf.to_s

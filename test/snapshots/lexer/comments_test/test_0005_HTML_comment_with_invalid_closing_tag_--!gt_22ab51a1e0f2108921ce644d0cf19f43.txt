@@ -1,0 +1,12 @@
+---
+source: "Lexer::CommentsTest#test_0005_HTML comment with invalid closing tag --!>"
+input: "<!-- Hello World --!>"
+---
+#<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[0, 4] start=(1:0) end=(1:4)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[4, 5] start=(1:4) end=(1:5)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="Hello" range=[5, 10] start=(1:5) end=(1:10)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[10, 11] start=(1:10) end=(1:11)>
+#<Herb::Token type="TOKEN_IDENTIFIER" value="World" range=[11, 16] start=(1:11) end=(1:16)>
+#<Herb::Token type="TOKEN_WHITESPACE" value=" " range=[16, 17] start=(1:16) end=(1:17)>
+#<Herb::Token type="TOKEN_HTML_COMMENT_INVALID_END" value="--!>" range=[17, 21] start=(1:17) end=(1:21)>
+#<Herb::Token type="TOKEN_EOF" value="<EOF>" range=[21, 21] start=(1:21) end=(1:21)>

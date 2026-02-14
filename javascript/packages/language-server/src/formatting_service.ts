@@ -210,6 +210,9 @@ export class FormattingService {
     if (filePath.endsWith('.herb.yml')) return false
     if (!this.config) return true
 
+    const hasConfigFile = Config.exists(this.config.projectPath)
+    if (!hasConfigFile) return true
+
     const relativePath = filePath.replace('file://', '').replace(this.project.projectPath + '/', '')
 
     return this.config.isFormatterEnabledForPath(relativePath)
@@ -377,10 +380,6 @@ export class FormattingService {
 
           return indentString + line
         }).join('\n')
-      }
-
-      if (!formattedText.endsWith('\n')) {
-        formattedText += '\n'
       }
 
       if (formattedText === rangeText) {

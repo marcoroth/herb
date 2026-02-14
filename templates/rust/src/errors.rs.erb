@@ -136,6 +136,7 @@ pub struct <%= error.name %> {
   <%- end -%>
 }
 
+#[allow(clippy::too_many_arguments)]
 impl <%= error.name %> {
   pub fn new(
     message: String,

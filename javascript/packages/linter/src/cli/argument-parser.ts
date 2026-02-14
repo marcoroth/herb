@@ -5,6 +5,7 @@ import { Herb } from "@herb-tools/node-wasm"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
+import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
@@ -20,10 +21,12 @@ export interface ParsedArguments {
   truncateLines: boolean
   useGitHubActions: boolean
   fix: boolean
+  fixUnsafe: boolean
   ignoreDisableComments: boolean
   force: boolean
   init: boolean
   loadCustomRules: boolean
+  failLevel?: DiagnosticSeverity
 }
 
 export class ArgumentParser {
@@ -41,7 +44,9 @@ export class ArgumentParser {
       -c, --config-file <path>      explicitly specify path to .herb.yml config file
       --force                       force linting even if disabled in .herb.yml
       --fix                         automatically fix auto-correctable offenses
+      --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
       --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
+      --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
       --format                      output format (simple|detailed|json) [default: detailed]
       --simple                      use simple output format (shortcut for --format simple)
       --json                        use JSON output format (shortcut for --format json)
@@ -65,7 +70,9 @@ export class ArgumentParser {
         "config-file": { type: "string", short: "c" },
         force: { type: "boolean" },
         fix: { type: "boolean" },
+        "fix-unsafely": { type: "boolean" },
         "ignore-disable-comments": { type: "boolean" },
+        "fail-level": { type: "string" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -137,14 +144,26 @@ export class ArgumentParser {
 
     const theme = values.theme || DEFAULT_THEME
     const patterns = this.getFilePatterns(positionals)
-    const fix = values.fix || false
+    const fixUnsafe = values["fix-unsafely"] || false
+    const fix = values.fix || fixUnsafe  // --fix-unsafely implies --fix
     const force = !!values.force
     const ignoreDisableComments = values["ignore-disable-comments"] || false
     const configFile = values["config-file"]
     const init = values.init || false
     const loadCustomRules = !values["no-custom-rules"]
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, ignoreDisableComments, force, init, loadCustomRules }
+    let failLevel: DiagnosticSeverity | undefined
+    if (values["fail-level"]) {
+      const level = values["fail-level"]
+      if (level === "error" || level === "warning" || level === "info" || level === "hint") {
+        failLevel = level
+      } else {
+        console.error(`Error: Invalid --fail-level value "${level}". Must be one of: error, warning, info, hint`)
+        process.exit(1)
+      }
+    }
+
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

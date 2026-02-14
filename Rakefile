@@ -159,6 +159,13 @@ namespace :prism do
       puts "Vendoring '#{file}' Prism file to #{vendored_file_path}"
       FileUtils.cp_r(prism_bundle_path + "/#{file}", prism_vendor_path)
     end
+
+    prism_ast_header = "#{prism_vendor_path}/include/prism/ast.h"
+
+    unless File.exist?(prism_ast_header)
+      puts "Generating Prism template files..."
+      system("ruby #{prism_vendor_path}/templates/template.rb", exception: true)
+    end
   end
 
   desc "Clean vendored Prism in vendor/prism/"

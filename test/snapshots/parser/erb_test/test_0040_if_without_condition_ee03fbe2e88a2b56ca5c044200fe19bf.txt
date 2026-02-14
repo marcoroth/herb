@@ -5,17 +5,11 @@ input: |2-
 <% end %>
 ---
 @ DocumentNode (location: (1:0)-(3:0))
-├── errors: (2 errors)
-│   ├── @ RubyParseError (location: (1:3)-(1:5))
-│   │   ├── message: "conditional_if_predicate: expected a predicate expression for the `if` statement"
-│   │   ├── error_message: "expected a predicate expression for the `if` statement"
-│   │   ├── diagnostic_id: "conditional_if_predicate"
-│   │   └── level: "syntax"
-│   │
-│   └── @ RubyParseError (location: (2:3)-(2:6))
-│       ├── message: "conditional_predicate_term: expected `then` or `;` or '\\n'"
-│       ├── error_message: "expected `then` or `;` or '\\n'"
-│       ├── diagnostic_id: "conditional_predicate_term"
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (1:3)-(1:5))
+│       ├── message: "conditional_if_predicate: expected a predicate expression for the `if` statement"
+│       ├── error_message: "expected a predicate expression for the `if` statement"
+│       ├── diagnostic_id: "conditional_if_predicate"
 │       └── level: "syntax"
 │
 └── children: (2 items)
@@ -23,6 +17,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if " (location: (1:2)-(1:6))
     │   ├── tag_closing: "%>" (location: (1:6)-(1:8))
+    │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
     │   │   └── @ HTMLTextNode (location: (1:8)-(2:0))
     │   │       └── content: "\n"

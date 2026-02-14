@@ -55,6 +55,7 @@ const char* token_type_to_string(const token_type_T type) {
     case TOKEN_HTML_TAG_SELF_CLOSE: return "TOKEN_HTML_TAG_SELF_CLOSE";
     case TOKEN_HTML_COMMENT_START: return "TOKEN_HTML_COMMENT_START";
     case TOKEN_HTML_COMMENT_END: return "TOKEN_HTML_COMMENT_END";
+    case TOKEN_HTML_COMMENT_INVALID_END: return "TOKEN_HTML_COMMENT_INVALID_END";
     case TOKEN_EQUALS: return "TOKEN_EQUALS";
     case TOKEN_QUOTE: return "TOKEN_QUOTE";
     case TOKEN_BACKTICK: return "TOKEN_BACKTICK";

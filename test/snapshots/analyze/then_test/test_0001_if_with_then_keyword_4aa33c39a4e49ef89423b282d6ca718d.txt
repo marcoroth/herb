@@ -1,0 +1,28 @@
+---
+source: "Analyze::ThenTest#test_0001_if with then keyword"
+input: |2-
+<% if condition then %>
+  content
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if condition then " (location: (1:2)-(1:21))
+    │   ├── tag_closing: "%>" (location: (1:21)-(1:23))
+    │   ├── then_keyword: (location: (1:16)-(1:20))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:23)-(3:0))
+    │   │       └── content: "\n  content\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

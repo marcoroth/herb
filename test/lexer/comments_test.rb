@@ -24,5 +24,17 @@ module Lexer
         <h1><!-- Hello World --></h1>
       ))
     end
+
+    test "HTML comment with invalid closing tag --!>" do
+      assert_lexed_snapshot(%(<!-- Hello World --!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> no whitespace" do
+      assert_lexed_snapshot(%(<!--Hello World--!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> followed by html tag" do
+      assert_lexed_snapshot(%(<!--Hello World--!><h1>Hello</h1>))
+    end
   end
 end

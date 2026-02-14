@@ -12,24 +12,26 @@ analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed->root = pm_parse(&analyzed->parser);
   analyzed->valid = (analyzed->parser.error_list.size == 0);
   analyzed->parsed = true;
-  analyzed->has_if_node = false;
-  analyzed->has_elsif_node = false;
-  analyzed->has_else_node = false;
-  analyzed->has_end = false;
-  analyzed->has_block_node = false;
-  analyzed->has_block_closing = false;
-  analyzed->has_case_node = false;
-  analyzed->has_case_match_node = false;
-  analyzed->has_when_node = false;
-  analyzed->has_in_node = false;
-  analyzed->has_for_node = false;
-  analyzed->has_while_node = false;
-  analyzed->has_until_node = false;
-  analyzed->has_begin_node = false;
-  analyzed->has_rescue_node = false;
-  analyzed->has_ensure_node = false;
-  analyzed->has_unless_node = false;
-  analyzed->has_yield_node = false;
+  analyzed->if_node_count = 0;
+  analyzed->elsif_node_count = 0;
+  analyzed->else_node_count = 0;
+  analyzed->end_count = 0;
+  analyzed->block_node_count = 0;
+  analyzed->block_closing_count = 0;
+  analyzed->case_node_count = 0;
+  analyzed->case_match_node_count = 0;
+  analyzed->when_node_count = 0;
+  analyzed->in_node_count = 0;
+  analyzed->for_node_count = 0;
+  analyzed->while_node_count = 0;
+  analyzed->until_node_count = 0;
+  analyzed->begin_node_count = 0;
+  analyzed->rescue_node_count = 0;
+  analyzed->ensure_node_count = 0;
+  analyzed->unless_node_count = 0;
+  analyzed->yield_node_count = 0;
+  analyzed->then_keyword_count = 0;
+  analyzed->unclosed_control_flow_count = 0;
 
   return analyzed;
 }
@@ -45,19 +47,19 @@ void free_analyzed_ruby(analyzed_ruby_T* analyzed) {
 }
 
 const char* erb_keyword_from_analyzed_ruby(const analyzed_ruby_T* analyzed) {
-  if (analyzed->has_end) {
+  if (analyzed->end_count > 0) {
     return "`<% end %>`";
-  } else if (analyzed->has_else_node) {
+  } else if (analyzed->else_node_count > 0) {
     return "`<% else %>`";
-  } else if (analyzed->has_elsif_node) {
+  } else if (analyzed->elsif_node_count > 0) {
     return "`<% elsif %>`";
-  } else if (analyzed->has_when_node) {
+  } else if (analyzed->when_node_count > 0) {
     return "`<% when %>`";
-  } else if (analyzed->has_in_node) {
+  } else if (analyzed->in_node_count > 0) {
     return "`<% in %>`";
-  } else if (analyzed->has_rescue_node) {
+  } else if (analyzed->rescue_node_count > 0) {
     return "`<% rescue %>`";
-  } else if (analyzed->has_ensure_node) {
+  } else if (analyzed->ensure_node_count > 0) {
     return "`<% ensure %>`";
   }
 

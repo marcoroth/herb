@@ -31,7 +31,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= node.human %>-><%= field.name %>);
-  <%- when Herb::Template::NodeField -%>
+  <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_node_from_c_struct((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
   <%- when Herb::Template::TokenField -%>
   VALUE <%= node.human %>_<%= field.name %> = rb_token_from_c_struct(<%= node.human %>-><%= field.name %>);
@@ -45,6 +45,8 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
     hb_string_T element_source_string = element_source_to_string(<%= node.human %>-><%= field.name %>);
     <%= node.human %>_<%= field.name %> = rb_utf8_str_new(element_source_string.data, element_source_string.length);
   }
+  <%- when Herb::Template::LocationField -%>
+  VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;

@@ -35,6 +35,8 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(token_type_to_string(<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::StringField -%>
   VALUE <%= error.human %>_<%= field.name %> = rb_utf8_str_new_cstr(<%= error.human %>-><%= field.name %>);
+  <%- when Herb::Template::SizeTField -%>
+  VALUE <%= error.human %>_<%= field.name %> = ULONG2NUM(<%= error.human %>-><%= field.name %>);
   <%- else -%>
   /* <%= field.inspect %> */
   VALUE <%= error.human %>_<%= field.name %> = Qnil;

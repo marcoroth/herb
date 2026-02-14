@@ -171,7 +171,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
-         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
+         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_peek_for_html_comment_invalid_end(lexer, 0)
+         && !lexer_eof(lexer)) {
 
     lexer_advance(lexer);
   }
@@ -185,8 +186,8 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="), hb_string("<%#"),
-                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%") };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="),       hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
 
@@ -278,7 +279,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with_next(lexer, strlen("<![CDATA["), TOKEN_CDATA_START);
       }
 
-      if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
+      if (isalpha(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
         return lexer_advance_with(lexer, hb_string("<!--"), TOKEN_HTML_COMMENT_START);
@@ -302,7 +303,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
 
     case '-': {
-      token_T* token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("--!>"), TOKEN_HTML_COMMENT_INVALID_END);
+      if (token) { return token; }
+
+      token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
     }
 

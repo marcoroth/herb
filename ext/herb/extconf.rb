@@ -2,10 +2,6 @@
 
 require "mkmf"
 
-Dir.chdir(File.expand_path("../..", __dir__)) do
-  system("rake templates", exception: true)
-end
-
 extension_name = "herb"
 
 include_path = File.expand_path("../../src/include", __dir__)
@@ -24,7 +20,7 @@ $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 $INCFLAGS << " -I#{prism_src_path}/util"
 
-$CFLAGS << " -DPRISM_EXPORT_SYMBOLS=static "
+$CFLAGS << " -fvisibility=hidden"
 
 herb_src_files = Dir.glob("#{$srcdir}/../../src/**/*.c").map { |file| file.delete_prefix("../../../../ext/herb/") }.sort
 

@@ -1,0 +1,9 @@
+---
+source: "Engine::ConditionalElementTest#test_0012_multiple sequential conditional elements"
+input: "{source: \"<% if @show_header %>\\n  <header>\\n<% end %>\\n  <h1>Title</h1>\\n<% if @show_header %>\\n  </header>\\n<% end %>\\n\\n<% if @show_footer %>\\n  <footer>\\n<% end %>\\n  <p>Footer content</p>\\n<% if @show_footer %>\\n  </footer>\\n<% end %>\\n\", locals: {\"@show_header\": true, \"@show_footer\": false}, options: {escape: false}}"
+---
+  <header>
+  <h1>Title</h1>
+  </header>
+
+  <p>Footer content</p>

@@ -293,5 +293,17 @@ module Parser
         >
       HTML
     end
+
+    test "case-insensitive empty tag" do
+      assert_parsed_snapshot("<SPAN></span>")
+    end
+
+    test "case-insensitive script tag" do
+      assert_parsed_snapshot(%(<SCRIPT>var x = 5;</script>))
+    end
+
+    test "case-insensitive style tag" do
+      assert_parsed_snapshot(%(<STYLE>.class { color: red; }</style>))
+    end
   end
 end

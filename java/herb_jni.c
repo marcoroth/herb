@@ -1,7 +1,7 @@
 #include "herb_jni.h"
 #include "extension_helpers.h"
 
-#include "../../src/include/analyze.h"
+#include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
 #include "../../src/include/util/hb_buffer.h"
 
@@ -26,8 +26,7 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject options) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  parser_options_T* parser_options = NULL;
-  parser_options_T opts = { 0 };
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (options != NULL) {
     jclass optionsClass = (*env)->GetObjectClass(env, options);
@@ -38,14 +37,23 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
       jboolean trackWhitespace = (*env)->CallBooleanMethod(env, options, getTrackWhitespace);
 
       if (trackWhitespace == JNI_TRUE) {
-        opts.track_whitespace = true;
-        parser_options = &opts;
+        parser_options.track_whitespace = true;
+      }
+    }
+
+    jmethodID getAnalyze =
+        (*env)->GetMethodID(env, optionsClass, "isAnalyze", "()Z");
+
+    if (getAnalyze != NULL) {
+      jboolean analyze = (*env)->CallBooleanMethod(env, options, getAnalyze);
+
+      if (analyze == JNI_FALSE) {
+        parser_options.analyze = false;
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* ast = herb_parse(src, parser_options);
-  herb_analyze_parse_tree(ast, src);
+  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options);
 
   jobject result = CreateParseResult(env, ast, source);
 
@@ -70,7 +78,7 @@ Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source) {
+Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobject options) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
   hb_buffer_T output;
@@ -81,7 +89,31 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source) {
     return NULL;
   }
 
-  herb_extract_ruby_to_buffer(src, &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (options != NULL) {
+    jclass optionsClass = (*env)->GetObjectClass(env, options);
+
+    jmethodID getSemicolons = (*env)->GetMethodID(env, optionsClass, "isSemicolons", "()Z");
+    if (getSemicolons != NULL) {
+      jboolean semicolons = (*env)->CallBooleanMethod(env, options, getSemicolons);
+      extract_options.semicolons = (semicolons == JNI_TRUE);
+    }
+
+    jmethodID getComments = (*env)->GetMethodID(env, optionsClass, "isComments", "()Z");
+    if (getComments != NULL) {
+      jboolean comments = (*env)->CallBooleanMethod(env, options, getComments);
+      extract_options.comments = (comments == JNI_TRUE);
+    }
+
+    jmethodID getPreservePositions = (*env)->GetMethodID(env, optionsClass, "isPreservePositions", "()Z");
+    if (getPreservePositions != NULL) {
+      jboolean preservePositions = (*env)->CallBooleanMethod(env, options, getPreservePositions);
+      extract_options.preserve_positions = (preservePositions == JNI_TRUE);
+    }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 

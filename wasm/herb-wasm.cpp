@@ -7,7 +7,6 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/analyze.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -35,22 +34,25 @@ val Herb_lex(const std::string& source) {
 }
 
 val Herb_parse(const std::string& source, val options) {
-  parser_options_T* parser_options = nullptr;
-  parser_options_T opts = {0};
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
     if (options.hasOwnProperty("track_whitespace")) {
       bool track_whitespace = options["track_whitespace"].as<bool>();
       if (track_whitespace) {
-        opts.track_whitespace = true;
-        parser_options = &opts;
+        parser_options.track_whitespace = true;
+      }
+    }
+
+    if (options.hasOwnProperty("analyze")) {
+      bool analyze = options["analyze"].as<bool>();
+      if (!analyze) {
+        parser_options.analyze = false;
       }
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), parser_options);
-
-  herb_analyze_parse_tree(root, source.c_str());
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);
 
   val result = CreateParseResult(root, source);
 
@@ -59,11 +61,27 @@ val Herb_parse(const std::string& source, val options) {
   return result;
 }
 
-std::string Herb_extract_ruby(const std::string& source) {
+std::string Herb_extract_ruby(const std::string& source, val options) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_ruby_to_buffer(source.c_str(), &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (options.hasOwnProperty("semicolons")) {
+      extract_options.semicolons = options["semicolons"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("comments")) {
+      extract_options.comments = options["comments"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("preserve_positions")) {
+      extract_options.preserve_positions = options["preserve_positions"].as<bool>();
+    }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options);
   std::string result(hb_buffer_value(&output));
   free(output.value);
   return result;

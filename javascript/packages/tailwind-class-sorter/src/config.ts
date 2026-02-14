@@ -8,12 +8,6 @@ import { createJiti, type Jiti } from 'jiti'
 import postcss from 'postcss'
 // @ts-ignore
 import postcssImport from 'postcss-import'
-// @ts-ignore
-import { generateRules as generateRulesFallback } from 'tailwindcss/lib/lib/generateRules'
-// @ts-ignore
-import { createContext as createContextFallback } from 'tailwindcss/lib/lib/setupContextUtils'
-import loadConfigFallback from 'tailwindcss/loadConfig'
-import resolveConfigFallback from 'tailwindcss/resolveConfig'
 import type { RequiredConfig } from 'tailwindcss/types/config.js'
 import { expiringMap } from './expiring-map.js'
 import { resolveCssFrom, resolveJsFrom } from './resolve'
@@ -84,22 +78,53 @@ async function loadTailwindConfig(
   tailwindConfigPath: string | null,
   entryPoint: string | null,
 ): Promise<ContextContainer> {
-  let createContext = createContextFallback
-  let generateRules = generateRulesFallback
-  let resolveConfig = resolveConfigFallback
-  let loadConfig = loadConfigFallback
+  let createContext: any
+  let generateRules: any
+  let resolveConfig: any
+  let loadConfig: any
   let tailwindConfig: RequiredConfig = { content: [] }
 
   try {
-    let pkgFile = resolveJsFrom(baseDir, `${pkgName}/package.json`)
-    let pkgDir = path.dirname(pkgFile)
+    let pkgPath = resolveJsFrom(baseDir, pkgName)
+    let pkgJsonPath: string
+
+    try {
+      const Module = require('module')
+      const requireFromBase = Module.createRequire(path.join(baseDir, 'index.js'))
+
+      pkgJsonPath = requireFromBase.resolve(`${pkgName}/package.json`)
+    } catch {
+      // Fallback: assume pkgPath is in a subdirectory of the package
+      // Let's walk up until we find package.json
+      let currentDir = path.dirname(pkgPath)
+
+      while (currentDir !== path.dirname(currentDir)) {
+        const candidatePkgJson = path.join(currentDir, 'package.json')
+
+        try {
+          require('fs').accessSync(candidatePkgJson)
+          pkgJsonPath = candidatePkgJson
+          break
+        } catch {}
+
+        currentDir = path.dirname(currentDir)
+      }
+
+      if (!pkgJsonPath!) {
+        throw new Error('Could not find Tailwind CSS package.json')
+      }
+    }
+
+    let pkgDir = path.dirname(pkgJsonPath)
 
     try {
       let v4 = await loadV4(baseDir, pkgDir, pkgName, entryPoint)
       if (v4) {
         return v4
       }
-    } catch {}
+    } catch (err) {
+      // V4 loading failed, will try v3 below
+    }
 
     resolveConfig = require(path.join(pkgDir, 'resolveConfig'))
     createContext = require(
@@ -111,7 +136,9 @@ async function loadTailwindConfig(
 
     // Prior to `tailwindcss@3.3.0` this won't exist so we load it last
     loadConfig = require(path.join(pkgDir, 'loadConfig'))
-  } catch {}
+  } catch (err: any) {
+    // Tailwind isn't installed or loading failed, will use defaults
+  }
 
   if (tailwindConfigPath) {
     try {
@@ -123,10 +150,15 @@ async function loadTailwindConfig(
     }
   }
 
-  // suppress "empty content" warning
+  if (!resolveConfig || !createContext || !generateRules) {
+    return {
+      context: null,
+      generateRules: null,
+    }
+  }
+
   tailwindConfig.content = ['no-op']
 
-  // Create the context
   let context = createContext(resolveConfig(tailwindConfig))
 
   return {
@@ -339,6 +371,30 @@ function getEntryPoint(options: SortTailwindClassesOptions, baseDir: string): st
 
     return path.resolve(baseDir, options.tailwindConfig)
   }
+
+  try {
+    const commonPaths = [
+      'app/assets/tailwind/application.css',
+      'app/assets/stylesheets/application.tailwind.css',
+      'app/assets/stylesheets/application.css',
+      'src/styles/tailwind.css',
+      'src/tailwind.css',
+      'styles/tailwind.css',
+      'tailwind.css',
+      'app.css',
+      'src/app.css',
+    ]
+
+    for (const cssPath of commonPaths) {
+      const fullPath = path.resolve(baseDir, cssPath)
+      try {
+        require('fs').accessSync(fullPath, require('fs').constants.R_OK)
+        return fullPath
+      } catch {
+        // File doesn't exist or isn't readable, continue to next path
+      }
+    }
+  } catch {}
 
   return null
 }

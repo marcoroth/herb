@@ -42,6 +42,16 @@ For occasional use without installing:
 npx @herb-tools/formatter template.html.erb
 ```
 
+### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the formatter from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/formatter@{commit} template.html.erb
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
+
 ### Project Installation
 
 :::code-group
@@ -233,6 +243,34 @@ herb-format --force app/views/excluded-file.html.erb
 ```
 
 When using `--force` on an excluded file, the formatter will show a warning but proceed with formatting.
+
+### Disabling Formatting for Entire Files <Badge type="info" text="v0.8.2+" />
+
+You can disable formatting for an entire file by adding the `ignore` directive anywhere in your template:
+
+```erb
+<%# herb:formatter ignore %>
+```
+
+**Example:**
+
+:::code-group
+```erb [ignored.html.erb]
+<%# herb:formatter ignore %>
+
+<div><div>This entire file will not be formatted</div></div>
+```
+
+```erb [formatted.html.erb]
+<div>
+  <div>This file will be formatted</div>
+</div>
+```
+:::
+
+::: warning Important
+The `<%# herb:formatter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
+:::
 
 ## Rewriters
 

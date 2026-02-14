@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
@@ -11,6 +12,8 @@ import { ERBPreferImageTagHelperRule } from "./rules/erb-prefer-image-tag-helper
 import { ERBRequireTrailingNewlineRule } from "./rules/erb-require-trailing-newline.js"
 import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-tags.js"
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
+import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
+import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
 
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
@@ -58,6 +61,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoConditionalHTMLElementRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
@@ -67,6 +71,8 @@ export const rules: RuleClass[] = [
   ERBRequireTrailingNewlineRule,
   ERBRequireWhitespaceRule,
   ERBRightTrimRule,
+  ERBStrictLocalsCommentSyntaxRule,
+  ERBStrictLocalsRequiredRule,
 
   HerbDisableCommentValidRuleNameRule,
   HerbDisableCommentNoRedundantAllRule,

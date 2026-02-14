@@ -2,7 +2,7 @@
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
-  "version": "0.7.5",
+  "version": "0.8.10",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -14,6 +14,9 @@
   "engines": {
     "vscode": "^1.43.0"
   },
+  "extensionDependencies": [
+    "Shopify.ruby-lsp"
+  ],
   "categories": [
     "Programming Languages",
     "Linters",
@@ -28,7 +31,7 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-lsp-vscode%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/vscode"
   },
   "sponsor": {
@@ -258,20 +261,21 @@
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/config": "0.7.5",
-    "@herb-tools/formatter": "0.7.5",
-    "@herb-tools/linter": "0.7.5",
-    "@herb-tools/node-wasm": "0.7.5",
-    "@types/node": "24.x",
-    "@types/vscode": "^1.105.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.4",
-    "@typescript-eslint/parser": "^8.40.0",
+    "@herb-tools/config": "0.8.10",
+    "@herb-tools/formatter": "0.8.10",
+    "@herb-tools/linter": "0.8.10",
+    "@herb-tools/node-wasm": "0.8.10",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "25.x",
+    "@types/vscode": "^1.109.0",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.54.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.5.0",
-    "esbuild": "^0.27.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.27.1",
     "esbuild-plugin-copy": "^2.1.1",
-    "eslint": "^9.25.1",
+    "eslint": "^10.0.0",
     "npm-run-all": "^4.1.5",
     "vscode-languageclient": "^9.0.1"
   }

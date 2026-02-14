@@ -1,0 +1,13 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0012_conditional html open tag compilation"
+input: "{source: \"<% if some_condition %>\\n  <div class=\\\"a\\\">\\n<% else %>\\n  <div class=\\\"b\\\">\\n<% end %>\\n  Content\\n</div>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; if some_condition 
+ _buf << '  <div class="a">
+'.freeze; else 
+ _buf << '  <div class="b">
+'.freeze; end 
+ _buf << '  Content
+</div>
+'.freeze;
+_buf.to_s

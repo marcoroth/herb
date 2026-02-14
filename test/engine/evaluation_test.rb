@@ -337,7 +337,7 @@ module Engine
             </main>
         #{"    "}
             <footer>
-              <p>&copy; <%= Date.today.year %> <%= site_name %></p>
+              <p>&copy; <%= Date.new(2025, 12, 31).year %> <%= site_name %></p>
             </footer>
           </body>
         </html>
@@ -433,6 +433,56 @@ module Engine
       template = "<% # Comment\nmore %> <% code = \"test\" %><%= code %>"
 
       assert_evaluated_snapshot(template, { more: "ignored" }, { escape: false })
+    end
+
+    test "left trim" do
+      template = File.read("examples/left-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "right trim" do
+      template = File.read("examples/right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "left and right trim" do
+      template = File.read("examples/left-right-trim.html.erb")
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
+
+    test "graphql" do
+      template = File.read("examples/graphql.html.erb")
+      klass = Data.define(:title, :description, :price)
+      product = klass.new(title: "title", description: "Description", price: 42.00)
+
+      assert_evaluated_snapshot(template, { product: product }, { escape: false })
+    end
+
+    test "conditional html element with condition true" do
+      template = File.read("examples/conditional_html_element.html.erb")
+
+      assert_evaluated_snapshot(template, { :@with_icon => true }, { escape: false })
+    end
+
+    test "conditional html element with condition false" do
+      template = File.read("examples/conditional_html_element.html.erb")
+
+      assert_evaluated_snapshot(template, { :@with_icon => false }, { escape: false })
+    end
+
+    test "conditional html open tag with condition true" do
+      template = File.read("examples/conditional_html_open_tag.html.erb")
+
+      assert_evaluated_snapshot(template, { some_condition: true }, { escape: false })
+    end
+
+    test "conditional html open tag with condition false" do
+      template = File.read("examples/conditional_html_open_tag.html.erb")
+
+      assert_evaluated_snapshot(template, { some_condition: false }, { escape: false })
     end
   end
 end

@@ -1,0 +1,34 @@
+---
+source: "Parser::GraphQLTest#test_0004_graphql tag with query variables"
+input: |2-
+<%graphql
+  query Products($first: Int!) {
+    products(first: $first) {
+      nodes {
+        id
+        title
+      }
+    }
+  }
+%>
+---
+@ DocumentNode (location: (1:0)-(11:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(10:2))
+    │   ├── tag_opening: "<%graphql" (location: (1:0)-(1:9))
+    │   ├── content: "
+    │     query Products($first: Int!) {
+    │       products(first: $first) {
+    │         nodes {
+    │           id
+    │           title
+    │         }
+    │       }
+    │     }
+    │   " (location: (1:9)-(10:0))
+    │   ├── tag_closing: "%>" (location: (10:0)-(10:2))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (10:2)-(11:0))
+        └── content: "\n"

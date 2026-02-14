@@ -35,7 +35,8 @@ module Engine
         Herb::Engine.new(@invalid_nesting_template, validation_mode: :raise)
       end
 
-      assert_includes error.message, "Block element"
+      assert_includes error.message, "InvalidNestingError"
+      assert_includes error.message, "Block element <div> cannot be nested inside <p>"
     end
 
     test ":raise mode is the default behavior" do

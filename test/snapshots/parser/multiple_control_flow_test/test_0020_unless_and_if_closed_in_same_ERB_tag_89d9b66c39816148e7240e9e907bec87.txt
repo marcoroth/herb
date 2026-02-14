@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0020_unless and if closed in same ERB tag"
+input: |2-
+<% unless skip; if ready; process; end; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:46))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " unless skip; if ready; process; end; end " (location: (1:2)-(1:44))
+    │   ├── tag_closing: "%>" (location: (1:44)-(1:46))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:46)-(2:0))
+        └── content: "\n"

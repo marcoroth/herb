@@ -53,6 +53,7 @@ module Herb
     class <%= error.name -%> < Error
 
       include Colors
+      <%- if error.fields.any? -%>
 
       #: type serialized_<%= error.human %> = {
       <%- error.fields.each do |field| -%>
@@ -68,25 +69,27 @@ module Herb
       #: (<%= [*base_arguments.map(&:last), *error.fields.map(&:ruby_type)].join(", ") %>) -> void
       def initialize(<%= [*base_arguments.map(&:first), *error.fields.map(&:name)].join(", ") %>)
         super(<%= base_arguments.map(&:first).join(", ") %>)
-
         <%- error.fields.each do |field| -%>
         @<%= field.name %> = <%= field.name %>
         <%- end -%>
       end
+      <%- end -%>
 
       #: () -> String
       def inspect
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
+      <%- if error.fields.any? -%>
 
       #: () -> serialized_<%= error.human %>
       def to_hash
-        super.merge({
-          <%- error.fields.each do |field| -%>
-          <%= field.name %>: <%= field.name %>,
+        super.merge(
+          <%- error.fields.each_with_index do |field, index| -%>
+          <%= field.name %>: <%= field.name %><%= index < error.fields.size - 1 ? "," : "" %>
           <%- end -%>
-        })
+        ) #: Herb::serialized_<%= error.human %>
       end
+      <%- end -%>
 
       #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
@@ -109,6 +112,8 @@ module Herb
         <%- when Herb::Template::TokenTypeField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::StringField -%>
+        output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
+        <%- when Herb::Template::SizeTField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- else -%>
         output += white("<%= symbol %> <%= field.name %>: ") + '#{<%= field.name %>.class}'\n"

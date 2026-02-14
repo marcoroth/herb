@@ -1,8 +1,10 @@
 #ifndef HERB_PRISM_HELPERS_H
 #define HERB_PRISM_HELPERS_H
 
+#include "analyzed_ruby.h"
 #include "ast_nodes.h"
 #include "errors.h"
+#include "location.h"
 #include "position.h"
 
 #include <prism.h>
@@ -16,6 +18,14 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   pm_parser_t* parser
 );
 
-position_T position_from_source_with_offset(const char* source, size_t offset);
+RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
+  const pm_diagnostic_t* error,
+  position_T start,
+  position_T end
+);
+
+location_T* get_then_keyword_location(analyzed_ruby_T* analyzed, const char* source);
+location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_clause);
+location_T* get_then_keyword_location_elsif_wrapped(const char* source);
 
 #endif

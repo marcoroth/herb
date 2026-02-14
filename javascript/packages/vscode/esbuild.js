@@ -24,6 +24,13 @@ const esbuildProblemMatcherPlugin = {
   },
 }
 
+// Banner to shim import.meta.url for CJS compatibility
+// This is needed because some ESM dependencies (like fdir used by tinyglobby)
+// use import.meta.url with createRequire, which breaks when bundled to CJS
+const importMetaBanner = `
+var import_meta_url = typeof document === 'undefined' ? require('url').pathToFileURL(__filename).href : (document.currentScript && document.currentScript.src || new URL('extension.js', document.baseURI).href);
+`
+
 async function main() {
   const ctx = await esbuild.context({
     entryPoints: [
@@ -38,6 +45,12 @@ async function main() {
     outfile: 'dist/extension.js',
     external: ['vscode'],
     logLevel: 'silent',
+    banner: {
+      js: importMetaBanner,
+    },
+    define: {
+      'import.meta.url': 'import_meta_url',
+    },
     plugins: [
       esbuildProblemMatcherPlugin,
       copy({
@@ -59,6 +72,12 @@ async function main() {
     outfile: 'dist/parse-worker.js',
     external: [],
     logLevel: 'silent',
+    banner: {
+      js: importMetaBanner,
+    },
+    define: {
+      'import.meta.url': 'import_meta_url',
+    },
   })
 
   if (watch) {

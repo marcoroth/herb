@@ -5,8 +5,6 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
-#include "../../src/include/analyze.h"
-
 VALUE mHerb;
 VALUE cPosition;
 VALUE cLocation;
@@ -46,22 +44,19 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
 
-  parser_options_T* parser_options = NULL;
-  parser_options_T opts = { 0 };
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
     if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
 
-    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) {
-      opts.track_whitespace = true;
-      parser_options = &opts;
-    }
+    VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
+    if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
+    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, parser_options);
-
-  herb_analyze_parse_tree(root, string);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
 
   VALUE result = create_parse_result(root, source);
 
@@ -78,8 +73,6 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
 
-  herb_analyze_parse_tree(root, string);
-
   VALUE result = create_parse_result(root, source_value);
 
   ast_node_free((AST_NODE_T*) root);
@@ -87,13 +80,34 @@ static VALUE Herb_parse_file(VALUE self, VALUE path) {
   return result;
 }
 
-static VALUE Herb_extract_ruby(VALUE self, VALUE source) {
+static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
   char* string = (char*) check_string(source);
   hb_buffer_T output;
 
   if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
-  herb_extract_ruby_to_buffer(string, &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (!NIL_P(options)) {
+    VALUE semicolons_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("semicolons"));
+    if (NIL_P(semicolons_value)) { semicolons_value = rb_hash_lookup(options, ID2SYM(rb_intern("semicolons"))); }
+    if (!NIL_P(semicolons_value)) { extract_options.semicolons = RTEST(semicolons_value); }
+
+    VALUE comments_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("comments"));
+    if (NIL_P(comments_value)) { comments_value = rb_hash_lookup(options, ID2SYM(rb_intern("comments"))); }
+    if (!NIL_P(comments_value)) { extract_options.comments = RTEST(comments_value); }
+
+    VALUE preserve_positions_value = rb_hash_lookup(options, rb_utf8_str_new_cstr("preserve_positions"));
+    if (NIL_P(preserve_positions_value)) {
+      preserve_positions_value = rb_hash_lookup(options, ID2SYM(rb_intern("preserve_positions")));
+    }
+    if (!NIL_P(preserve_positions_value)) { extract_options.preserve_positions = RTEST(preserve_positions_value); }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
 
   VALUE result = rb_utf8_str_new_cstr(output.value);
   free(output.value);
@@ -124,7 +138,7 @@ static VALUE Herb_version(VALUE self) {
   return rb_funcall(rb_mKernel, rb_intern("sprintf"), 4, format_string, gem_version, libprism_version, libherb_version);
 }
 
-void Init_herb(void) {
+__attribute__((__visibility__("default"))) void Init_herb(void) {
   mHerb = rb_define_module("Herb");
   cPosition = rb_define_class_under(mHerb, "Position", rb_cObject);
   cLocation = rb_define_class_under(mHerb, "Location", rb_cObject);
@@ -138,7 +152,7 @@ void Init_herb(void) {
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
-  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, 1);
+  rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }
