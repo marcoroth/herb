@@ -19,7 +19,10 @@ gem "rbs-inline", "~> 0.12"
 gem "reline", "~> 0.6"
 gem "rubocop", "~> 1.71"
 gem "sorbet"
-gem "steep", "~> 1.10"
+
+# TODO: Remove once https://github.com/ruby/rbs/pull/2850 is merged and released
+gem "rbs", github: "marcoroth/rbs", branch: "psych-load-unsafe-file"
+gem "steep", github: "soutaro/steep", branch: "master"
 
 # TODO: remove once it's fixed in RBS
 # ❯ bundle exec rbs-inline --opt-out --output=sig/ lib/

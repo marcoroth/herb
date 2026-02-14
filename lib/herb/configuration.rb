@@ -19,7 +19,7 @@ module Herb
       "config/application.rb"
     ].freeze
 
-    DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__).freeze
+    DEFAULTS_PATH = File.expand_path("defaults.yml", __dir__ || __FILE__).freeze
     DEFAULTS = YAML.safe_load_file(DEFAULTS_PATH).freeze
 
     attr_reader :config, :config_path, :project_root
