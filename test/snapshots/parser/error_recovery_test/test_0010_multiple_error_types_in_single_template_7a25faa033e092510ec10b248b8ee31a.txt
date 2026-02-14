@@ -1,0 +1,103 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0010_multiple error types in single template"
+input: |2-
+<div>
+  <span class="unclosed
+  <p>content</p>
+</span>
+</div>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:7))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(3:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:4)-(3:5))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:8)-(3:4))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:8)-(2:13))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:8)-(2:13))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:13)-(2:14))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:14)-(3:4))
+    │   │   │   │       │               ├── errors: (1 error)
+    │   │   │   │       │               │   └── @ UnclosedQuoteError (location: (2:14)-(3:4))
+    │   │   │   │       │               │       ├── message: "Attribute value opened with \" at (2:14) was never closed."
+    │   │   │   │       │               │       └── opening_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── open_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (2:15)-(3:4))
+    │   │   │   │       │               │       └── content: "unclosed\n  <p"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: ∅
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (3:5)-(3:12))
+    │   │   │   │   │   └── content: "content"
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLCloseTagNode (location: (3:12)-(3:16))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ MissingOpeningTagError (location: (3:12)-(3:16))
+    │   │   │   │   │   │       ├── message: "Found closing tag `</p>` at (3:14) without a matching opening tag in the same scope."
+    │   │   │   │   │   │       └── closing_tag: "p" (location: (3:14)-(3:15))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "</" (location: (3:12)-(3:14))
+    │   │   │   │   │   ├── tag_name: "p" (location: (3:14)-(3:15))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── tag_closing: ">" (location: (3:15)-(3:16))
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:16)-(4:0))
+    │   │   │   │       └── content: "\n"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:7))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │   │   │       ├── tag_name: "span" (location: (4:2)-(4:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:6)-(4:7))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:7)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:6))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "div" (location: (5:2)-(5:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:5)-(5:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (5:6)-(6:0))
+        └── content: "\n"

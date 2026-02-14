@@ -245,6 +245,30 @@ errors:
         - name: closing_tag
           type: token
 
+    - name: UnclosedOpenTagError
+      message:
+        template: "Opening tag `<%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
+    - name: UnclosedQuoteError
+      message:
+        template: "Attribute value opened with %s at (%u:%u) was never closed."
+        arguments:
+          - opening_quote->value
+          - opening_quote->location.start.line
+          - opening_quote->location.start.column
+
+      fields:
+        - name: opening_quote
+          type: token
+
 warnings:
   fields: []
   types: []

@@ -331,5 +331,41 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class UnclosedOpenTagError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_open_tag_error
+      def to_hash: () -> serialized_unclosed_open_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnclosedQuoteError < Error
+      include Colors
+
+      attr_reader opening_quote: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_quote_error
+      def to_hash: () -> serialized_unclosed_quote_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

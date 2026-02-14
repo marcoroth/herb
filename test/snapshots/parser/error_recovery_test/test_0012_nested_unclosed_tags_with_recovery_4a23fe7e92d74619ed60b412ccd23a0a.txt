@@ -1,0 +1,90 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0012_nested unclosed tags with recovery"
+input: |2-
+<div>
+  <span class="test
+  <em>emphasized</em>
+</div>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:5)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:2)-(3:6))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (2:2)-(3:6))
+    │   │   │   │       ├── message: "Opening tag `<span>` at (2:3) doesn't have a matching closing tag `</span>` in the same scope."
+    │   │   │   │       └── opening_tag: "span" (location: (2:3)-(2:7))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │   │   ├── children: (1 item)
+    │   │   │   │   └── @ HTMLAttributeNode (location: (2:8)-(3:5))
+    │   │   │   │       ├── name:
+    │   │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:8)-(2:13))
+    │   │   │   │       │       └── children: (1 item)
+    │   │   │   │       │           └── @ LiteralNode (location: (2:8)-(2:13))
+    │   │   │   │       │               └── content: "class"
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       ├── equals: "=" (location: (2:13)-(2:14))
+    │   │   │   │       └── value:
+    │   │   │   │           └── @ HTMLAttributeValueNode (location: (2:14)-(3:5))
+    │   │   │   │               ├── errors: (1 error)
+    │   │   │   │               │   └── @ UnclosedQuoteError (location: (2:14)-(3:5))
+    │   │   │   │               │       ├── message: "Attribute value opened with \" at (2:14) was never closed."
+    │   │   │   │               │       └── opening_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │               │
+    │   │   │   │               ├── open_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │               ├── children: (1 item)
+    │   │   │   │               │   └── @ LiteralNode (location: (2:15)-(3:5))
+    │   │   │   │               │       └── content: "test\n  <em"
+    │   │   │   │               │
+    │   │   │   │               ├── close_quote: ∅
+    │   │   │   │               └── quoted: true
+    │   │   │   │
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:6)-(3:16))
+    │   │   │   └── content: "emphasized"
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (3:16)-(3:21))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (3:16)-(3:21))
+    │   │   │   │       ├── message: "Found closing tag `</em>` at (3:18) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "em" (location: (3:18)-(3:20))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (3:16)-(3:18))
+    │   │   │   ├── tag_name: "em" (location: (3:18)-(3:20))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (3:20)-(3:21))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:21)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:6))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "div" (location: (4:2)-(4:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:5)-(4:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:6)-(5:0))
+        └── content: "\n"
