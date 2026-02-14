@@ -888,12 +888,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
     if (token_is(parser, TOKEN_HTML_TAG_START)) {
-      append_unclosed_open_tag_error(
-        tag_name,
-        tag_name->location.start,
-        parser->current_token->location.start,
-        errors
-      );
+      append_unclosed_open_tag_error(tag_name, tag_name->location.start, parser->current_token->location.start, errors);
 
       AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
         tag_start,
@@ -955,12 +950,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   }
 
   if (token_is(parser, TOKEN_EOF)) {
-    append_unclosed_open_tag_error(
-      tag_name,
-      tag_name->location.start,
-      parser->current_token->location.start,
-      errors
-    );
+    append_unclosed_open_tag_error(tag_name, tag_name->location.start, parser->current_token->location.start, errors);
 
     AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
       tag_start,
