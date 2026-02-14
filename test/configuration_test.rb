@@ -435,8 +435,8 @@ class ConfigurationTest < Minitest::Spec
     files = config.find_files
 
     assert_equal 2, files.size
-    assert files.any? { |f| f.end_with?("index.html.erb") }
-    assert files.any? { |f| f.end_with?("show.html.erb") }
+    assert(files.any? { |f| f.end_with?("index.html.erb") })
+    assert(files.any? { |f| f.end_with?("show.html.erb") })
   end
 
   test "find_files excludes default patterns" do
