@@ -161,4 +161,36 @@ describe("html-no-empty-headings", () => {
   test("passes for empty ARIA heading inside template tag", () => {
     expectNoOffenses('<template><div role="heading"></div></template>')
   })
+
+  test("fails for heading with only non-output ERB (issue #847)", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><% title %></h1>')
+  })
+
+  test("fails for heading with non-output ERB and whitespace", () => {
+    expectError("Heading element `<h2>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h2> <% some_method %> </h2>')
+  })
+
+  test("passes for heading with ERB if containing output ERB", () => {
+    expectNoOffenses('<h1><% if show_title %><%= title %><% end %></h1>')
+  })
+
+  test("fails for heading with ERB if not containing any ERB output", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><% if show_title %><% title %><% end %></h1>')
+  })
+
+  test("passes for heading with ERB block containing output", () => {
+    expectNoOffenses('<h1><% items.each do |item| %><%= item.name %><% end %></h1>')
+  })
+
+  test("fails for heading with only ERB comment", () => {
+    expectError("Heading element `<h1>` must not be empty. Provide accessible text content for screen readers and SEO.")
+
+    assertOffenses('<h1><%# this is a comment %></h1>')
+  })
 })

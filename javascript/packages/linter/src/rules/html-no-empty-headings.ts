@@ -1,8 +1,8 @@
-import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS, getOpenTag } from "./rule-utils.js"
-import { isLiteralNode, isHTMLTextNode, isHTMLElementNode } from "@herb-tools/core"
-
 import { ParserRule } from "../types.js"
+import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS, getOpenTag } from "./rule-utils.js"
+import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode } from "@herb-tools/core"
 
+import type { Node } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
@@ -46,26 +46,47 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       return true
     }
 
-    let hasAccessibleContent = false
+    return !this.hasAccessibleContent(node.body)
+  }
 
-    for (const child of node.body) {
-      if (isLiteralNode(child) || isHTMLTextNode(child)) {
+  private hasAccessibleContent(nodes: Node[]): boolean {
+    for (const child of nodes) {
+      if (isLiteralNode(child) || isHTMLTextNode(child)) {
         if (child.content.trim().length > 0) {
-          hasAccessibleContent = true
-          break
+          return true
         }
       } else if (isHTMLElementNode(child)) {
         if (this.isElementAccessible(child)) {
-          hasAccessibleContent = true
-          break
+          return true
         }
-      } else {
-        hasAccessibleContent = true
-        break
+      } else if (isERBOutputNode(child)) {
+        return true
+      } else if (isERBControlFlowNode(child)) {
+        if (this.hasAccessibleContentInControlFlow(child)) {
+          return true
+        }
       }
     }
 
-    return !hasAccessibleContent
+    return false
+  }
+
+  private hasAccessibleContentInControlFlow(node: Node): boolean {
+    const nodeWithStatements = node as { statements?: Node[], body?: Node[], subsequent?: Node }
+
+    if (nodeWithStatements.statements && this.hasAccessibleContent(nodeWithStatements.statements)) {
+      return true
+    }
+
+    if (nodeWithStatements.body && this.hasAccessibleContent(nodeWithStatements.body)) {
+      return true
+    }
+
+    if (nodeWithStatements.subsequent) {
+      return this.hasAccessibleContentInControlFlow(nodeWithStatements.subsequent)
+    }
+
+    return false
   }
 
   private hasHeadingRole(node: HTMLOpenTagNode): boolean {
@@ -99,22 +120,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
       return false
     }
 
-    for (const child of node.body) {
-      if (isLiteralNode(child) || isHTMLTextNode(child)) {
-        if (child.content.trim().length > 0) {
-          return true
-        }
-      } else if (isHTMLElementNode(child)) {
-        if (this.isElementAccessible(child)) {
-          return true
-        }
-      } else {
-        // If there's any non-literal/non-text/non-element content (like ERB), consider it accessible
-        return true
-      }
-    }
-
-    return false
+    return this.hasAccessibleContent(node.body)
   }
 }
 
