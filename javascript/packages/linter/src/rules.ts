@@ -14,6 +14,7 @@ import { ERBRequireWhitespaceRule } from "./rules/erb-require-whitespace-inside-
 import { ERBRightTrimRule } from "./rules/erb-right-trim.js"
 import { ERBStrictLocalsCommentSyntaxRule } from "./rules/erb-strict-locals-comment-syntax.js"
 import { ERBStrictLocalsRequiredRule } from "./rules/erb-strict-locals-required.js"
+import { ERBTrailingWhitespaceRule } from "./rules/erb-trailing-whitespace.js"
 
 import { HerbDisableCommentValidRuleNameRule } from "./rules/herb-disable-comment-valid-rule-name.js"
 import { HerbDisableCommentNoRedundantAllRule } from "./rules/herb-disable-comment-no-redundant-all.js"
@@ -75,6 +76,7 @@ export const rules: RuleClass[] = [
   ERBRightTrimRule,
   ERBStrictLocalsCommentSyntaxRule,
   ERBStrictLocalsRequiredRule,
+  ERBTrailingWhitespaceRule,
 
   HerbDisableCommentValidRuleNameRule,
   HerbDisableCommentNoRedundantAllRule,

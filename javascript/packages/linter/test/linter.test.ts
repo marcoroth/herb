@@ -71,7 +71,7 @@ describe("@herb-tools/linter", () => {
     })
 
     test("processes complex ERB templates", () => {
-      const html = `
+      const html = dedent`
         <div class="<%= classes %>">
           <% items.each do |item| %>
             <span><%= item.name %></span>
