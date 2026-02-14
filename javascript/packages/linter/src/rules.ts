@@ -39,6 +39,7 @@ import { HTMLIframeHasTitleRule } from "./rules/html-iframe-has-title.js"
 import { HTMLImgRequireAltRule } from "./rules/html-img-require-alt.js"
 import { HTMLInputRequireAutocompleteRule } from "./rules/html-input-require-autocomplete.js"
 import { HTMLNavigationHasLabelRule } from "./rules/html-navigation-has-label.js"
+import { HTMLNoAbstractRolesRule } from "./rules/html-no-abstract-roles.js"
 import { HTMLNoAriaHiddenOnBodyRule } from "./rules/html-no-aria-hidden-on-body.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
@@ -99,6 +100,7 @@ export const rules: RuleClass[] = [
   HTMLImgRequireAltRule,
   HTMLInputRequireAutocompleteRule,
   HTMLNavigationHasLabelRule,
+  HTMLNoAbstractRolesRule,
   HTMLNoAriaHiddenOnBodyRule,
   HTMLNoAriaHiddenOnFocusableRule,
   HTMLNoBlockInsideInlineRule,

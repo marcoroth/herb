@@ -472,6 +472,26 @@ export const VALID_ARIA_ROLES = new Set([
 ]);
 
 /**
+ * Abstract ARIA roles used to support the WAI-ARIA Roles Model.
+ * Authors MUST NOT use abstract roles in content.
+ * @see https://www.w3.org/TR/wai-aria-1.0/roles#abstract_roles
+ */
+export const ABSTRACT_ARIA_ROLES = new Set([
+  "command",
+  "composite",
+  "input",
+  "landmark",
+  "range",
+  "roletype",
+  "section",
+  "sectionhead",
+  "select",
+  "structure",
+  "widget",
+  "window"
+]);
+
+/**
  * Parameter types for AttributeVisitorMixin methods
  */
 export interface StaticAttributeStaticValueParams {
