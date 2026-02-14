@@ -270,6 +270,30 @@ describe("@herb-tools/formatter", () => {
     expect(secondFormat).toBe(result)
   })
 
+  test("issue 978: does not duplicate content with multiple adjacent inline/ERB groups separated by br", () => {
+    const input = dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `)
+
+    // Test idempotency
+    const secondFormat = formatter.format(result)
+    expect(secondFormat).toBe(result)
+  })
+
   test("https://github.com/hanakai-rb/site/blob/8adc128d9d464f3e37615be2aa29d57979904533/app/templates/pages/home.html.erb", () => {
     const input = dedent`
       <h1>Hanakai</h1>
