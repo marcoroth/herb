@@ -23,6 +23,7 @@ require_relative "herb/warnings"
 
 require_relative "herb/cli"
 require_relative "herb/project"
+require_relative "herb/configuration"
 
 require_relative "herb/version"
 
@@ -64,4 +65,17 @@ rescue LoadError => e
 end
 
 module Herb
+  class << self
+    def configuration(project_path = nil)
+      @configuration ||= Configuration.load(project_path)
+    end
+
+    def configure(project_path = nil)
+      @configuration = Configuration.load(project_path)
+    end
+
+    def reset_configuration!
+      @configuration = nil
+    end
+  end
 end

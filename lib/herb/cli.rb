@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool
 
   def initialize(args)
     @args = args
@@ -93,6 +93,7 @@ class Herb::CLI
         bundle exec herb compile [file]     Compile ERB template to Ruby code.
         bundle exec herb render [file]      Compile and render ERB template to final output.
         bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
+        bundle exec herb config [path]      Show configuration and file patterns for a project
         bundle exec herb ruby [file]        Extract Ruby from a file.
         bundle exec herb html [file]        Extract HTML from a file.
         bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
@@ -119,6 +120,9 @@ class Herb::CLI
                   project.silent = silent
                   has_issues = project.parse!
                   exit(has_issues ? 1 : 0)
+                when "config"
+                  show_config
+                  exit(0)
                 when "parse"
                   Herb.parse(file_content)
                 when "compile"
@@ -217,6 +221,10 @@ class Herb::CLI
 
       parser.on("--debug", "Enable debug mode with ERB expression wrapping (for compile command)") do
         self.debug = true
+      end
+
+      parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
+        self.tool = t.to_sym
       end
     end
   end
@@ -386,6 +394,120 @@ class Herb::CLI
 
       exit(1)
     end
+  end
+
+  def show_config
+    path = @file || "."
+    config = Herb::Configuration.load(path)
+
+    if tool
+      show_tool_config(config, path)
+    else
+      show_general_config(config, path)
+    end
+  end
+
+  def show_general_config(config, path)
+    puts bold("Herb Configuration")
+    puts
+    puts "#{bold("Project root:")} #{config.project_root || "(not found)"}"
+    puts "#{bold("Config file:")}  #{config.config_path || "(using defaults)"}"
+    puts
+
+    puts bold("Include patterns:")
+    config.file_include_patterns.each { |p| puts "  #{green("+")} #{p}" }
+    puts
+
+    puts bold("Exclude patterns:")
+    config.file_exclude_patterns.each { |p| puts "  #{red("-")} #{p}" }
+    puts
+
+    all_matched = find_all_matching_files(path, config.file_include_patterns)
+    included_files = config.find_files(path)
+    excluded_files = all_matched - included_files
+
+    puts bold("Files (#{included_files.size} included, #{excluded_files.size} excluded):")
+    puts
+
+    show_file_lists(included_files, excluded_files, path, config.file_exclude_patterns)
+
+    puts
+    puts dimmed("Tip: Use --tool linter or --tool formatter to see tool-specific configuration")
+  end
+
+  def show_tool_config(config, path)
+    unless [:linter, :formatter].include?(tool)
+      puts red("Unknown tool: #{tool}")
+      puts "Valid tools: linter, formatter"
+      exit(1)
+    end
+
+    tool_config = config.send(tool)
+    include_patterns = config.include_patterns_for(tool)
+    exclude_patterns = config.exclude_patterns_for(tool)
+
+    puts bold("Herb Configuration for #{tool.to_s.capitalize}")
+    puts
+    puts "#{bold("Project root:")} #{config.project_root || "(not found)"}"
+    puts "#{bold("Config file:")}  #{config.config_path || "(using defaults)"}"
+    puts
+
+    if tool_config["enabled"] == false
+      puts yellow("⚠ #{tool.to_s.capitalize} is disabled in configuration")
+      puts
+    end
+
+    puts bold("Include patterns (files + #{tool}):")
+    include_patterns.each { |p| puts "  #{green("+")} #{p}" }
+    puts
+
+    puts bold("Exclude patterns (files + #{tool}):")
+    exclude_patterns.each { |p| puts "  #{red("-")} #{p}" }
+    puts
+
+    all_matched = find_all_matching_files(path, include_patterns)
+    included_files = config.find_files_for_tool(tool, path)
+    excluded_files = all_matched - included_files
+
+    puts bold("Files for #{tool} (#{included_files.size} included, #{excluded_files.size} excluded):")
+    puts
+
+    show_file_lists(included_files, excluded_files, path, exclude_patterns)
+  end
+
+  def show_file_lists(included_files, excluded_files, path, exclude_patterns)
+    expanded_path = File.expand_path(path)
+
+    if included_files.any?
+      puts "  #{bold(green("Included:"))}"
+      included_files.each do |f|
+        relative = f.sub("#{expanded_path}/", "")
+        puts "    #{green("✓")} #{relative}"
+      end
+      puts
+    end
+
+    if excluded_files.any?
+      puts "  #{bold(red("Excluded:"))}"
+      excluded_files.each do |f|
+        relative = f.sub("#{expanded_path}/", "")
+        reason = find_exclude_reason(relative, exclude_patterns)
+        puts "    #{red("✗")} #{relative} #{dimmed("(#{reason})")}"
+      end
+    end
+  end
+
+  def find_all_matching_files(path, include_patterns)
+    expanded_path = File.expand_path(path)
+    include_patterns.flat_map do |pattern|
+      Dir[File.join(expanded_path, pattern)]
+    end.uniq
+  end
+
+  def find_exclude_reason(relative_path, exclude_patterns)
+    exclude_patterns.find do |pattern|
+      File.fnmatch?(pattern, relative_path, File::FNM_PATHNAME)
+    end || "excluded"
   end
 
   def print_version

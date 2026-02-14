@@ -29,12 +29,16 @@ module Herb
       @output_file = output_file || "#{date}_erb_parsing_result_#{@project_path.basename}.log"
     end
 
-    def glob
-      "**/*.{html,rhtml,html.erb,html+*.erb,turbo_stream.erb}"
+    def configuration
+      @configuration ||= Configuration.load(@project_path.to_s)
     end
 
-    def full_path_glob
-      project_path + glob
+    def include_patterns
+      configuration.file_include_patterns
+    end
+
+    def exclude_patterns
+      configuration.file_exclude_patterns
     end
 
     def absolute_path
@@ -42,8 +46,25 @@ module Herb
     end
 
     def files
-      @files ||= Dir[full_path_glob]
+      @files ||= find_files
     end
+
+    private
+
+    def find_files
+      included = include_patterns.flat_map do |pattern|
+        Dir[File.join(@project_path, pattern)]
+      end.uniq
+
+      return included if exclude_patterns.empty?
+
+      included.reject do |file|
+        relative_path = file.sub("#{@project_path}/", "")
+        exclude_patterns.any? { |pattern| File.fnmatch?(pattern, relative_path, File::FNM_PATHNAME) }
+      end
+    end
+
+    public
 
     def parse!
       start_time = Time.now unless no_timing
@@ -61,12 +82,14 @@ module Herb
 
         log.puts heading("PROJECT")
         log.puts "Path: #{absolute_path}"
-        log.puts "Glob: #{"#{absolute_path}#{glob}"}\n\n"
+        log.puts "Config: #{configuration.config_path || '(defaults)'}"
+        log.puts "Include: #{include_patterns.join(', ')}"
+        log.puts "Exclude: #{exclude_patterns.join(', ')}\n\n"
 
         log.puts heading("PROCESSED FILES")
 
         if files.empty?
-          message = "No .html.erb files found using #{full_path_glob}"
+          message = "No files found matching patterns: #{include_patterns.join(', ')}"
           log.puts message
           puts message
           return
