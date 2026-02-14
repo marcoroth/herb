@@ -40,6 +40,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-input-require-autocomplete`](./html-input-require-autocomplete.md) - Require `autocomplete` attributes on `<input>` tags.
 - [`html-img-require-alt`](./html-img-require-alt.md) - Requires `alt` attributes on `<img>` tags
 - [`html-navigation-has-label`](./html-navigation-has-label.md) - Navigation landmarks must have accessible labels
+- [`html-no-abstract-roles`](./html-no-abstract-roles.md) - No abstract ARIA roles
 - [`html-no-aria-hidden-on-body`](./html-no-aria-hidden-on-body.md) - No `aria-hidden` on `<body>`
 - [`html-no-aria-hidden-on-focusable`](./html-no-aria-hidden-on-focusable.md) - Focusable elements should not have `aria-hidden="true"`
 - [`html-no-block-inside-inline`](./html-no-block-inside-inline.md) - Prevents block-level elements inside inline elements
