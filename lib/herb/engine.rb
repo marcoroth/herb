@@ -51,6 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @default_view = properties.fetch(:default_view, :human).to_sym
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -65,6 +66,11 @@ module Herb
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
+      end
+
+      unless [:human, :llm].include?(@default_view)
+        raise ArgumentError,
+              "default_view must be one of :human or :llm, got #{@default_view.inspect}"
       end
 
       @freeze = properties[:freeze]
@@ -333,6 +339,9 @@ module Herb
     def add_validation_overlay(errors, input = nil)
       return unless errors.any?
 
+      # Group errors by file for LLM prompt generation
+      errors_by_file = {} #: Hash[String, Array[Hash[Symbol, untyped]]]
+
       templates = errors.map { |error|
         location = error[:location]
         line = location&.start&.line || 0
@@ -344,6 +353,10 @@ module Herb
 
         escaped_message = escape_attr(error[:message])
         escaped_suggestion = error[:suggestion] ? escape_attr(error[:suggestion]) : ""
+
+        # Track errors by file for LLM prompt
+        errors_by_file[@relative_file_path] ||= []
+        errors_by_file[@relative_file_path] << error.merge(filename: @relative_file_path)
 
         <<~TEMPLATE
           <template
@@ -361,7 +374,18 @@ module Herb
         TEMPLATE
       }.join
 
-      @validation_error_template = templates
+      # Generate combined LLM prompt
+      error_count = errors.count { |e| e[:severity].to_s == "error" }
+      warning_count = errors.count { |e| e[:severity].to_s == "warning" }
+      counts = { errors: error_count, warnings: warning_count, total: errors.length }
+
+      llm_prompt = ValidationErrorOverlay.generate_llm_prompt(errors.map { |e|
+        e.merge(filename: @relative_file_path)
+      }, errors_by_file, counts)
+      llm_template = "<template data-herb-validation-llm-prompt data-default-view=\"#{@default_view}\">" \
+                     "#{escape_attr(llm_prompt)}</template>"
+
+      @validation_error_template = templates + llm_template
     end
 
     def escape_attr(text)
@@ -382,7 +406,8 @@ module Herb
       overlay_generator = ParserErrorOverlay.new(
         input,
         parser_errors,
-        filename: @relative_file_path
+        filename: @relative_file_path,
+        default_view: @default_view
       )
 
       error_html = overlay_generator.generate_html
