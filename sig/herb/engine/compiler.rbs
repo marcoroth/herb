@@ -25,6 +25,8 @@ module Herb
 
       def visit_html_close_tag_node: (untyped node) -> untyped
 
+      def visit_html_omitted_close_tag_node: (untyped node) -> untyped
+
       def visit_html_text_node: (untyped node) -> untyped
 
       def visit_literal_node: (untyped node) -> untyped
