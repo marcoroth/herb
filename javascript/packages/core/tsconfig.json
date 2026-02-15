@@ -5,7 +5,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "dom"],
     "outDir": "./dist",
     "declaration": true,
     "declarationDir": "./dist/types",
