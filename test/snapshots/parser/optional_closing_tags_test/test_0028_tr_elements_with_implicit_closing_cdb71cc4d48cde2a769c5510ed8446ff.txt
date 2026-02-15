@@ -1,0 +1,138 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0028_tr elements with implicit closing"
+input: |2-
+<table>
+  <tr><td>Row 1</td>
+  <tr><td>Row 2</td>
+</table>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:7)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(3:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:6))
+    │   │   │   │       ├── message: "Element `<tr>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tr>` closing tag at (3:2) for clarity."
+    │   │   │   │       ├── opening_tag: "tr" (location: (2:3)-(2:5))
+    │   │   │   │       └── insertion_point: (3:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "tr" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "tr" (location: (2:3)-(2:5))
+    │   │   │   ├── body: (2 items)
+    │   │   │   │   ├── @ HTMLElementNode (location: (2:6)-(2:20))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (2:6)-(2:10))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (2:6)-(2:7))
+    │   │   │   │   │   │       ├── tag_name: "td" (location: (2:7)-(2:9))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (2:9)-(2:10))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "td" (location: (2:7)-(2:9))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (2:10)-(2:15))
+    │   │   │   │   │   │       └── content: "Row 1"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (2:15)-(2:20))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (2:15)-(2:17))
+    │   │   │   │   │   │       ├── tag_name: "td" (location: (2:17)-(2:19))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (2:19)-(2:20))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (2:20)-(3:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (3:2)-(3:2))
+    │   │   │   │       └── tag_name: "tr" (location: (2:3)-(2:5))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLElementNode (location: (3:2)-(4:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ OmittedClosingTagError (location: (3:2)-(3:6))
+    │   │       │       ├── message: "Element `<tr>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tr>` closing tag at (4:0) for clarity."
+    │   │       │       ├── opening_tag: "tr" (location: (3:3)-(3:5))
+    │   │       │       └── insertion_point: (4:0)
+    │   │       │
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (3:2)-(3:6))
+    │   │       │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │       │       ├── tag_name: "tr" (location: (3:3)-(3:5))
+    │   │       │       ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │       │       ├── children: []
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "tr" (location: (3:3)-(3:5))
+    │   │       ├── body: (2 items)
+    │   │       │   ├── @ HTMLElementNode (location: (3:6)-(3:20))
+    │   │       │   │   ├── open_tag:
+    │   │       │   │   │   └── @ HTMLOpenTagNode (location: (3:6)-(3:10))
+    │   │       │   │   │       ├── tag_opening: "<" (location: (3:6)-(3:7))
+    │   │       │   │   │       ├── tag_name: "td" (location: (3:7)-(3:9))
+    │   │       │   │   │       ├── tag_closing: ">" (location: (3:9)-(3:10))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── is_void: false
+    │   │       │   │   │
+    │   │       │   │   ├── tag_name: "td" (location: (3:7)-(3:9))
+    │   │       │   │   ├── body: (1 item)
+    │   │       │   │   │   └── @ HTMLTextNode (location: (3:10)-(3:15))
+    │   │       │   │   │       └── content: "Row 2"
+    │   │       │   │   │
+    │   │       │   │   ├── close_tag:
+    │   │       │   │   │   └── @ HTMLCloseTagNode (location: (3:15)-(3:20))
+    │   │       │   │   │       ├── tag_opening: "</" (location: (3:15)-(3:17))
+    │   │       │   │   │       ├── tag_name: "td" (location: (3:17)-(3:19))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── tag_closing: ">" (location: (3:19)-(3:20))
+    │   │       │   │   │
+    │   │       │   │   ├── is_void: false
+    │   │       │   │   └── source: "HTML"
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (3:20)-(4:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLOmittedCloseTagNode (location: (4:0)-(4:0))
+    │   │       │       └── tag_name: "tr" (location: (3:3)-(3:5))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:8))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "table" (location: (4:2)-(4:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:8)-(5:0))
+        └── content: "\n"

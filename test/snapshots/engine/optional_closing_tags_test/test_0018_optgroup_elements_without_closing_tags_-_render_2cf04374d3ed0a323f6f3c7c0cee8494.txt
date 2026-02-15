@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0018_optgroup elements without closing tags - render"
+input: "{source: \"<select>\\n  <optgroup label=\\\"Group 1\\\">\\n    <option>A\\n    <option>B\\n  <optgroup label=\\\"Group 2\\\">\\n    <option>C\\n    <option>D\\n</select>\\n\", locals: {}, options: {escape: false}}"
+---
+<select>
+  <optgroup label="Group 1">
+    <option>A
+    <option>B
+  <optgroup label="Group 2">
+    <option>C
+    <option>D
+</select>
