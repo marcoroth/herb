@@ -38,7 +38,7 @@ class ERBNoTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBNoTrailing
 }
 
 export class ERBNoTrailingWhitespaceRule extends SourceRule {
-  static autocorrectable = true
+  static autocorrectable = false
   name = "erb-no-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
