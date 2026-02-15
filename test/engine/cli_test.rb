@@ -136,7 +136,7 @@ module Engine
     test "compile invalid template text output" do
       template = <<~ERB
         <div>
-          <p>Unclosed paragraph
+          <span>Unclosed span
         </div>
       ERB
 
@@ -166,7 +166,7 @@ module Engine
     end
 
     test "compile with silent flag failure" do
-      template = "<div><p>Unclosed</div>"
+      template = "<div><span>Unclosed</div>"
 
       with_temp_file(template) do |file_path|
         assert_raises(SystemExit) do

@@ -1,0 +1,9 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0005_multiple p elements without closing tags - compilation"
+input: "{source: \"<p>First paragraph\\n<p>Second paragraph\\n<p>Third paragraph\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>First paragraph
+<p>Second paragraph
+<p>Third paragraph
+'.freeze;
+_buf.to_s

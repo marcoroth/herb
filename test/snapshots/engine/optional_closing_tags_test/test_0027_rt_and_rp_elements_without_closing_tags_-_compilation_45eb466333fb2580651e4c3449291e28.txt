@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0027_rt and rp elements without closing tags - compilation"
+input: "{source: \"<ruby>\\n  Base\\n  <rp>(\\n  <rt>annotation\\n  <rp>)\\n</ruby>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<ruby>
+  Base
+  <rp>(
+  <rt>annotation
+  <rp>)
+</ruby>
+'.freeze;
+_buf.to_s

@@ -149,7 +149,7 @@ module Herb
       end
 
       def c_type
-        "position_T*"
+        "position_T"
       end
     end
 

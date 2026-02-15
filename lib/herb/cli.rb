@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict
 
   def initialize(args)
     @args = args
@@ -124,7 +124,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content)
+                  Herb.parse(file_content, strict: strict.nil? ? true : strict)
                 when "compile"
                   compile_template
                 when "render"
@@ -223,6 +223,14 @@ class Herb::CLI
         self.debug = true
       end
 
+      parser.on("--strict", "Enable strict mode - report errors for omitted closing tags (for parse/compile/render commands) (default: true)") do
+        self.strict = true
+      end
+
+      parser.on("--no-strict", "Disable strict mode (for parse/compile/render commands)") do
+        self.strict = false
+      end
+
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
       end
@@ -270,6 +278,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
+      options[:strict] = strict.nil? ? true : strict
 
       if debug
         options[:debug] = true
@@ -284,6 +293,7 @@ class Herb::CLI
           source: engine.src,
           filename: engine.filename,
           bufvar: engine.bufvar,
+          strict: options[:strict],
         }
 
         puts result.to_json
@@ -336,6 +346,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
+      options[:strict] = strict.nil? ? true : strict
 
       if debug
         options[:debug] = true
@@ -352,6 +363,7 @@ class Herb::CLI
           success: true,
           output: rendered_output,
           filename: engine.filename,
+          strict: options[:strict],
         }
 
         puts result.to_json

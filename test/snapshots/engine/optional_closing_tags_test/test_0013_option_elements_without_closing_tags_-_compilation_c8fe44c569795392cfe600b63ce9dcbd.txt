@@ -1,0 +1,11 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0013_option elements without closing tags - compilation"
+input: "{source: \"<select>\\n  <option value=\\\"1\\\">One\\n  <option value=\\\"2\\\">Two\\n  <option value=\\\"3\\\">Three\\n</select>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<select>
+  <option value="1">One
+  <option value="2">Two
+  <option value="3">Three
+</select>
+'.freeze;
+_buf.to_s

@@ -145,6 +145,10 @@ module Herb
         add_text(node.tag_closing&.value)
       end
 
+      def visit_html_omitted_close_tag_node(node)
+        # no-op
+      end
+
       def visit_html_text_node(node)
         add_text(node.content)
       end

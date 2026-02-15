@@ -345,7 +345,7 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
       (AST_NODE_T*) conditional_open_tag,
       tag_name_token,
       body,
-      close_tag,
+      (AST_NODE_T*) close_tag,
       false,
       ELEMENT_SOURCE_HTML,
       start_position,

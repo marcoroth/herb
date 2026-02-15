@@ -1,0 +1,10 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0028_rt and rp elements without closing tags - render"
+input: "{source: \"<ruby>\\n  Base\\n  <rp>(\\n  <rt>annotation\\n  <rp>)\\n</ruby>\\n\", locals: {}, options: {escape: false}}"
+---
+<ruby>
+  Base
+  <rp>(
+  <rt>annotation
+  <rp>)
+</ruby>

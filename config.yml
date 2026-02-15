@@ -229,6 +229,24 @@ errors:
         - name: closing_tag
           type: token
 
+    - name: OmittedClosingTagError
+      message:
+        template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - opening_tag->value
+          - insertion_point.line
+          - insertion_point.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: insertion_point
+          type: position
+
     - name: UnclosedOpenTagError
       message:
         template: "Opening tag `<%s>` at (%u:%u) is missing closing `>`."
@@ -370,6 +388,11 @@ nodes:
         - name: tag_closing
           type: token
 
+    - name: HTMLOmittedCloseTagNode
+      fields:
+        - name: tag_name
+          type: token
+
     - name: HTMLElementNode
       fields:
         - name: open_tag
@@ -387,7 +410,9 @@ nodes:
 
         - name: close_tag
           type: node
-          kind: HTMLCloseTagNode
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
 
         - name: is_void
           type: boolean
@@ -416,7 +441,9 @@ nodes:
 
         - name: close_tag
           type: borrowed_node
-          kind: HTMLCloseTagNode
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
 
         - name: close_conditional
           type: node

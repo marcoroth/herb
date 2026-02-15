@@ -1556,7 +1556,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, 
 
   herb_analyze_parse_errors(document, source);
 
-  herb_parser_match_html_tags_post_analyze(document);
+  herb_parser_match_html_tags_post_analyze(document, strict);
 
   hb_array_free(&context->ruby_context_stack);
 

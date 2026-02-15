@@ -1154,7 +1154,7 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
     (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
-    close_tag,
+    (AST_NODE_T*) close_tag,
     false,
     ELEMENT_SOURCE_HTML,
     open_tag->base.location.start,
@@ -1414,9 +1414,32 @@ static size_t find_matching_close_tag(hb_array_T* nodes, size_t start_idx, hb_st
   return (size_t) -1;
 }
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors);
+static size_t find_implicit_close_index(hb_array_T* nodes, size_t start_idx, hb_string_T tag_name) {
+  if (!has_optional_end_tag(tag_name)) { return (size_t) -1; }
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors) {
+  for (size_t i = start_idx + 1; i < hb_array_size(nodes); i++) {
+    AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
+    if (node == NULL) { continue; }
+
+    if (node->type == AST_HTML_OPEN_TAG_NODE) {
+      AST_HTML_OPEN_TAG_NODE_T* open = (AST_HTML_OPEN_TAG_NODE_T*) node;
+      hb_string_T next_tag_name = hb_string(open->tag_name->value);
+
+      if (should_implicitly_close(tag_name, next_tag_name)) { return i; }
+    } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
+      AST_HTML_CLOSE_TAG_NODE_T* close = (AST_HTML_CLOSE_TAG_NODE_T*) node;
+      hb_string_T close_tag_name = hb_string(close->tag_name->value);
+
+      if (parent_closes_element(tag_name, close_tag_name)) { return i; }
+    }
+  }
+
+  return hb_array_size(nodes);
+}
+
+static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict);
+
+static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict) {
   hb_array_T* result = hb_array_init(hb_array_size(nodes));
 
   for (size_t index = 0; index < hb_array_size(nodes); index++) {
@@ -1430,16 +1453,67 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
       size_t close_index = find_matching_close_tag(nodes, index, tag_name);
 
       if (close_index == (size_t) -1) {
-        if (hb_array_size(open_tag->base.errors) == 0) {
-          append_missing_closing_tag_error(
-            open_tag->tag_name,
-            open_tag->base.location.start,
-            open_tag->base.location.end,
-            open_tag->base.errors
-          );
-        }
+        size_t implicit_close_index = find_implicit_close_index(nodes, index, tag_name);
 
-        hb_array_append(result, node);
+        if (implicit_close_index != (size_t) -1 && implicit_close_index > index + 1) {
+          hb_array_T* body = hb_array_init(implicit_close_index - index - 1);
+
+          for (size_t j = index + 1; j < implicit_close_index; j++) {
+            hb_array_append(body, hb_array_get(nodes, j));
+          }
+
+          hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
+          hb_array_free(&body);
+
+          position_T end_position = open_tag->base.location.end;
+
+          if (hb_array_size(processed_body) > 0) {
+            AST_NODE_T* last_body_node = (AST_NODE_T*) hb_array_get(processed_body, hb_array_size(processed_body) - 1);
+            if (last_body_node != NULL) { end_position = last_body_node->location.end; }
+          }
+
+          hb_array_T* element_errors = hb_array_init(8);
+
+          if (strict) {
+            append_omitted_closing_tag_error(
+              open_tag->tag_name,
+              end_position,
+              open_tag->base.location.start,
+              open_tag->base.location.end,
+              element_errors
+            );
+          }
+
+          AST_HTML_OMITTED_CLOSE_TAG_NODE_T* omitted_close_tag =
+            ast_html_omitted_close_tag_node_init(open_tag->tag_name, end_position, end_position, hb_array_init(8));
+
+          AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
+            (AST_NODE_T*) open_tag,
+            open_tag->tag_name,
+            processed_body,
+            (AST_NODE_T*) omitted_close_tag,
+            false,
+            ELEMENT_SOURCE_HTML,
+            open_tag->base.location.start,
+            end_position,
+            element_errors
+          );
+
+          hb_array_append(result, element);
+
+          index = implicit_close_index - 1;
+        } else {
+          if (hb_array_size(open_tag->base.errors) == 0) {
+            append_missing_closing_tag_error(
+              open_tag->tag_name,
+              open_tag->base.location.start,
+              open_tag->base.location.end,
+              open_tag->base.errors
+            );
+          }
+
+          hb_array_append(result, node);
+        }
       } else {
         AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) hb_array_get(nodes, close_index);
 
@@ -1449,7 +1523,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
           hb_array_append(body, hb_array_get(nodes, j));
         }
 
-        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors);
+        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
         hb_array_free(&body);
 
         hb_array_T* element_errors = hb_array_init(8);
@@ -1458,7 +1532,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
           (AST_NODE_T*) open_tag,
           open_tag->tag_name,
           processed_body,
-          close_tag,
+          (AST_NODE_T*) close_tag,
           false,
           ELEMENT_SOURCE_HTML,
           open_tag->base.location.start,
@@ -1547,10 +1621,10 @@ void herb_parser_deinit(parser_T* parser) {
   if (parser->open_tags_stack != NULL) { hb_array_free(&parser->open_tags_stack); }
 }
 
-void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict) {
   if (nodes == NULL || hb_array_size(nodes) == 0) { return; }
 
-  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors);
+  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors, strict);
 
   nodes->size = 0;
 
@@ -1560,16 +1634,18 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors) {
 
   hb_array_free(&processed);
 
+  match_tags_context_T context = { .errors = errors, .strict = strict };
+
   for (size_t i = 0; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
     if (node == NULL) { continue; }
 
-    herb_visit_node(node, match_tags_visitor, errors);
+    herb_visit_node(node, match_tags_visitor, &context);
   }
 }
 
-void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document) {
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, bool strict) {
   if (document == NULL) { return; }
 
-  match_tags_in_node_array(document->children, document->base.errors);
+  match_tags_in_node_array(document->children, document->base.errors, strict);
 }

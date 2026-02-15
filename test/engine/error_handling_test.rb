@@ -9,7 +9,7 @@ module Engine
       template = <<~ERB
         <div>
           <h1>Title</h1>
-          <p>Some text
+          <section>Some text
         </span>
       ERB
 
@@ -19,7 +19,7 @@ module Engine
 
       assert_includes error.message, "HTML+ERB Compilation Errors"
       assert_includes error.message, "MissingClosingTag"
-      assert_includes error.message, "Opening tag `<p>`"
+      assert_includes error.message, "Opening tag `<section>`"
       assert_includes error.message, "MissingOpeningTag"
       assert_includes error.message, "Found closing tag `</span>`"
     end
@@ -192,7 +192,7 @@ module Engine
       template = <<~ERB
         <div>
           <h1>Working title</h1>
-          <p>Text content
+          <section>Text content
         </wrong_tag>
       ERB
 
@@ -204,7 +204,7 @@ module Engine
 
       assert_includes error.message, "MissingClosingTag"
       assert_includes error.message, "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
-      assert_includes error.message, "Opening tag `<p>` at (3:3) doesn't have a matching closing tag `</p>` in the same scope."
+      assert_includes error.message, "Opening tag `<section>` at (3:3) doesn't have a matching closing tag `</section>` in the same scope."
 
       assert_includes error.message, "MissingOpeningTag"
       assert_includes error.message, "Found closing tag `</wrong_tag>` at (4:2) without a matching opening tag in the same scope."

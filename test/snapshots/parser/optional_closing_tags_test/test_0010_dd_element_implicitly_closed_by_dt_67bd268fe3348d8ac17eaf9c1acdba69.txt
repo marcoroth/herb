@@ -1,0 +1,90 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0010_dd element implicitly closed by dt"
+input: |2-
+<dl>
+  <dd>Definition
+  <dt>Term
+</dl>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:5))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:4))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "dl" (location: (1:1)-(1:3))
+    │   │       ├── tag_closing: ">" (location: (1:3)-(1:4))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "dl" (location: (1:1)-(1:3))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:4)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(3:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:6))
+    │   │   │   │       ├── message: "Element `<dd>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</dd>` closing tag at (3:2) for clarity."
+    │   │   │   │       ├── opening_tag: "dd" (location: (2:3)-(2:5))
+    │   │   │   │       └── insertion_point: (3:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "dd" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "dd" (location: (2:3)-(2:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:6)-(3:2))
+    │   │   │   │       └── content: "Definition\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (3:2)-(3:2))
+    │   │   │   │       └── tag_name: "dd" (location: (2:3)-(2:5))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLElementNode (location: (3:2)-(4:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ OmittedClosingTagError (location: (3:2)-(3:6))
+    │   │       │       ├── message: "Element `<dt>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</dt>` closing tag at (4:0) for clarity."
+    │   │       │       ├── opening_tag: "dt" (location: (3:3)-(3:5))
+    │   │       │       └── insertion_point: (4:0)
+    │   │       │
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (3:2)-(3:6))
+    │   │       │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │       │       ├── tag_name: "dt" (location: (3:3)-(3:5))
+    │   │       │       ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │       │       ├── children: []
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "dt" (location: (3:3)-(3:5))
+    │   │       ├── body: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (3:6)-(4:0))
+    │   │       │       └── content: "Term\n"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLOmittedCloseTagNode (location: (4:0)-(4:0))
+    │   │       │       └── tag_name: "dt" (location: (3:3)-(3:5))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:5))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "dl" (location: (4:2)-(4:4))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:4)-(4:5))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:5)-(5:0))
+        └── content: "\n"
