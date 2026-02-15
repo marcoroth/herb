@@ -50,6 +50,10 @@ val Herb_parse(const std::string& source, val options) {
         parser_options.analyze = false;
       }
     }
+
+    if (options.hasOwnProperty("strict")) {
+      parser_options.strict = options["strict"].as<bool>();
+    }
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);

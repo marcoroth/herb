@@ -1518,7 +1518,7 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   return result;
 }
 
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source) {
+void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, bool strict) {
   herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
 
   analyze_ruby_context_T* context = malloc(sizeof(analyze_ruby_context_T));

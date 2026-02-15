@@ -51,6 +51,14 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
         parser_options.analyze = false;
       }
     }
+
+    jmethodID getStrict =
+        (*env)->GetMethodID(env, optionsClass, "isStrict", "()Z");
+
+    if (getStrict != NULL) {
+      jboolean strict = (*env)->CallBooleanMethod(env, options, getStrict);
+      parser_options.strict = (strict == JNI_TRUE);
+    }
   }
 
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options);
