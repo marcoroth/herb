@@ -1086,11 +1086,20 @@ export default class extends Controller {
   setOptionsInURL(options) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      track_whitespace: false,
+      analyze: true,
+      strict: true,
+    }
+
     const nonDefaultOptions = {}
 
     Object.keys(options).forEach(key => {
-      if (options[key] !== false && options[key] !== '' && options[key] !== null && options[key] !== undefined) {
-        nonDefaultOptions[key] = options[key]
+      const value = options[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultOptions[key] = value
       }
     })
 
@@ -1106,11 +1115,18 @@ export default class extends Controller {
   setPrinterOptionsInURL(printerOptions) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      ignoreErrors: false,
+    }
+
     const nonDefaultPrinterOptions = {}
 
     Object.keys(printerOptions).forEach(key => {
-      if (printerOptions[key] !== false && printerOptions[key] !== '' && printerOptions[key] !== null && printerOptions[key] !== undefined) {
-        nonDefaultPrinterOptions[key] = printerOptions[key]
+      const value = printerOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultPrinterOptions[key] = value
       }
     })
 
