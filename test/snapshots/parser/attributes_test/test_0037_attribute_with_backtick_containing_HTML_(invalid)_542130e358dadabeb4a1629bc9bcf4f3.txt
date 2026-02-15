@@ -8,7 +8,7 @@ input: "<div data-template=`<span>Hello</span>`></div>"
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:20))
         │       ├── errors: (1 error)
-        │       │   └── @ UnclosedOpenTagError (location: (1:1)-(1:4))
+        │       │   └── @ UnclosedOpenTagError (location: (1:1)-(1:20))
         │       │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
         │       │       └── tag_name: "div" (location: (1:1)-(1:4))
         │       │
