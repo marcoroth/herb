@@ -761,6 +761,50 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
   if (equals != NULL) {
     parser_consume_whitespace(parser, NULL);
 
+    // <div class= >
+    if (token_is(parser, TOKEN_HTML_TAG_END) || token_is(parser, TOKEN_HTML_TAG_SELF_CLOSE)) {
+      hb_array_T* errors = hb_array_init(8);
+      char* attribute_name_string = NULL;
+
+      if (hb_array_size(attribute_name->children) > 0) {
+        AST_LITERAL_NODE_T* first_child = (AST_LITERAL_NODE_T*) hb_array_get(attribute_name->children, 0);
+
+        if (first_child && first_child->content) { attribute_name_string = herb_strdup(first_child->content); }
+      }
+
+      append_missing_attribute_value_error(
+        attribute_name_string ? attribute_name_string : "unknown",
+        equals->location.start,
+        parser->current_token->location.start,
+        errors
+      );
+
+      if (attribute_name_string) { free(attribute_name_string); }
+
+      AST_HTML_ATTRIBUTE_VALUE_NODE_T* empty_value = ast_html_attribute_value_node_init(
+        NULL,
+        hb_array_init(8),
+        NULL,
+        false,
+        equals->location.end,
+        parser->current_token->location.start,
+        errors
+      );
+
+      AST_HTML_ATTRIBUTE_NODE_T* attribute_node = ast_html_attribute_node_init(
+        attribute_name,
+        equals,
+        empty_value,
+        attribute_name->base.location.start,
+        parser->current_token->location.start,
+        NULL
+      );
+
+      token_free(equals);
+
+      return attribute_node;
+    }
+
     AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = parser_parse_html_attribute_value(parser);
 
     AST_HTML_ATTRIBUTE_NODE_T* attribute_node = ast_html_attribute_node_init(

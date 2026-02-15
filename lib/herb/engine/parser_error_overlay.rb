@@ -13,7 +13,8 @@ module Herb
         Herb::Errors::VoidElementClosingTagError,
         Herb::Errors::UnclosedElementError,
         Herb::Errors::MissingClosingTagError,
-        Herb::Errors::MissingOpeningTagError
+        Herb::Errors::MissingOpeningTagError,
+        Herb::Errors::MissingAttributeValueError
       ].freeze
 
       def initialize(source, errors, filename: nil)
@@ -728,6 +729,12 @@ module Herb
           end
         when Herb::Errors::RubyParseError
           "Fix Ruby syntax: Check your Ruby syntax inside the ERB tag"
+        when Herb::Errors::MissingAttributeValueError
+          if error.respond_to?(:attribute_name) && error.attribute_name
+            "Add attribute value: Add a value after the equals sign for '#{error.attribute_name}' or remove the equals sign"
+          else
+            "Add attribute value: Add a value after the equals sign or remove the equals sign"
+          end
         else
           message = error.respond_to?(:message) ? error.message : error.to_s
           "Fix error: #{message}"
@@ -746,6 +753,8 @@ module Herb
           "← Void element cannot be closed"
         when Herb::Errors::RubyParseError
           "← Ruby syntax error"
+        when Herb::Errors::MissingAttributeValueError
+          "← Missing attribute value"
         end
       end
 

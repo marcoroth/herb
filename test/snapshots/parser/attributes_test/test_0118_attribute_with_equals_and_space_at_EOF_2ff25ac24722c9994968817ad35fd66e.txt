@@ -1,0 +1,41 @@
+---
+source: "Parser::AttributesTest#test_0118_attribute with equals and space at EOF"
+input: "<div class= "
+---
+@ DocumentNode (location: (1:0)-(1:12))
+└── children: (1 item)
+    └── @ HTMLOpenTagNode (location: (1:0)-(1:12))
+        ├── errors: (1 error)
+        │   └── @ UnclosedOpenTagError (location: (1:1)-(1:12))
+        │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+        │       └── tag_name: "div" (location: (1:1)-(1:4))
+        │
+        ├── tag_opening: "<" (location: (1:0)-(1:1))
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── tag_closing: ∅
+        ├── children: (1 item)
+        │   └── @ HTMLAttributeNode (location: (1:5)-(1:12))
+        │       ├── name:
+        │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       └── children: (1 item)
+        │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │               └── content: "class"
+        │       │
+        │       │
+        │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       └── value:
+        │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:12))
+        │               ├── errors: (1 error)
+        │               │   └── @ UnexpectedError (location: (1:12)-(1:12))
+        │               │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START`, found: `TOKEN_EOF`."
+        │               │       ├── description: "Unexpected Token"
+        │               │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
+        │               │       └── found: "TOKEN_EOF"
+        │               │
+        │               ├── open_quote: ∅
+        │               ├── children: []
+        │               ├── close_quote: ∅
+        │               └── quoted: false
+        │
+        │
+        └── is_void: false
