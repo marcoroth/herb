@@ -117,14 +117,14 @@ module SnapshotUtils
     puts "\n\n"
 
     should_update = if !ENV["FORCE_UPDATE_SNAPSHOTS"].nil?
-                       true
-                     elsif !$stdin.tty?
-                       puts "\nCannot prompt for snapshot update in non-interactive terminal."
-                       puts "Run with FORCE_UPDATE_SNAPSHOTS=true to update snapshots without prompting.\n"
-                       false
-                     else
-                       ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
-                     end
+                      true
+                    elsif !$stdin.tty?
+                      puts "\nCannot prompt for snapshot update in non-interactive terminal."
+                      puts "Run with FORCE_UPDATE_SNAPSHOTS=true to update snapshots without prompting.\n"
+                      false
+                    else
+                      ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+                    end
 
     if should_update
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source, options)}\n"
