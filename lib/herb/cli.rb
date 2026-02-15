@@ -124,7 +124,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? ? true : strict)
+                  Herb.parse(file_content, strict: strict.nil? || strict)
                 when "compile"
                   compile_template
                 when "render"
@@ -278,7 +278,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? ? true : strict
+      options[:strict] = strict.nil? || strict
 
       if debug
         options[:debug] = true
@@ -346,7 +346,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
-      options[:strict] = strict.nil? ? true : strict
+      options[:strict] = strict.nil? || strict
 
       if debug
         options[:debug] = true
