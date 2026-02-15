@@ -1,64 +1,62 @@
-import { type Node, Location } from "@herb-tools/core"
+import  { type Node, Location } from "@herb-tools/core"
 
 import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
-interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
+interface ERBTrailingWhitespaceAutofixContext extends BaseAutofixContext {
   startOffset: number
   endOffset: number
 }
 
-class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAutofixContext> {
+class ERBTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBTrailingWhitespaceAutofixContext> {
   protected visitSource(source: string): void {
     if (source.length === 0) return
 
-    const regex = /\n{4,}/g
+    const regex = /[ \t\r]+(?=\n|$)/g
 
     let match: RegExpExecArray | null
 
     while ((match = regex.exec(source)) !== null) {
-      const startOffset = match.index + 3
+      const startOffset = match.index
       const endOffset = match.index + match[0].length
       const start = positionFromOffset(source, startOffset)
       const end = positionFromOffset(source, endOffset)
       const location = new Location(start, end)
 
-      const extraLines = match[0].length - 3
-
       this.addOffense(
-        `Extra blank line detected. Remove ${extraLines} blank ${extraLines === 1 ? "line" : "lines"} to maintain consistent spacing (max 2 allowed).`,
+        "Extra whitespace detected at end of line.",
         location,
         {
           node: null as any as Node,
           startOffset,
-          endOffset
+          endOffset,
         }
       )
     }
   }
 }
 
-export class ERBNoExtraNewLineRule extends SourceRule {
+export class ERBTrailingWhitespaceRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-no-extra-newline"
+  name = "erb-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
     }
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
+    const visitor = new ERBTrailingWhitespaceVisitor(this.name, context)
 
     visitor.visit(source)
 
     return visitor.offenses
   }
 
-  autofix(offense: LintOffense<ERBNoExtraNewLineAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
+  autofix(offense: LintOffense<ERBTrailingWhitespaceAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
     if (!offense.autofixContext) return null
 
     const { startOffset, endOffset } = offense.autofixContext

@@ -1,6 +1,7 @@
 import {
   Visitor,
   Location,
+  Position,
   getStaticAttributeName,
   hasDynamicAttributeName as hasNodeDynamicAttributeName,
   getCombinedAttributeName,
@@ -19,13 +20,11 @@ import {
 } from "@herb-tools/core"
 
 import type {
-  ERBContentNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   HTMLElementNode,
   HTMLOpenTagNode,
-  LiteralNode,
   LexResult,
   Token,
   Node
@@ -1059,4 +1058,27 @@ export function isHeadTag(tagName: string): boolean {
     !isHtmlOnlyTag(tag) &&
     (isHeadOnlyTag(tag) || isHeadAndBodyTag(tag))
   )
+}
+
+/**
+ * Converts a character offset in a source string to a Position (line, column).
+ * Lines are 1-based, columns are 0-based.
+ */
+export function positionFromOffset(source: string, offset: number): Position {
+  let line = 1
+  let column = 0
+  let currentOffset = 0
+
+  for (let i = 0; i < source.length && currentOffset < offset; i++) {
+    const char = source[i]
+    currentOffset++
+    if (char === "\n") {
+      line++
+      column = 0
+    } else {
+      column++
+    }
+  }
+
+  return new Position(line, column)
 }
