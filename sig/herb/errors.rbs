@@ -368,6 +368,24 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class MissingAttributeValueError < Error
+      include Colors
+
+      attr_reader attribute_name: String
+
+      # : (String, Location, String, String) -> void
+      def initialize: (String, Location, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missing_attribute_value_error
+      def to_hash: () -> serialized_missing_attribute_value_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class UnclosedERBTagError < Error
       include Colors
 

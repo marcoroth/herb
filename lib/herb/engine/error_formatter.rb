@@ -213,6 +213,10 @@ module Herb
           output << "  Level: #{error.level}\n"
           output << "  Details: #{error.error_message}\n"
           output << "  Suggestion: Check your Ruby syntax inside the ERB tag\n"
+
+        when Herb::Errors::MissingAttributeValueError
+          output << "  Attribute: #{error.attribute_name}\n"
+          output << "  Suggestion: Add a value after the equals sign or remove the equals sign\n"
         end
 
         output
@@ -222,7 +226,8 @@ module Herb
         case error
         when Herb::Errors::MissingClosingTagError,
              Herb::Errors::TagNamesMismatchError,
-             Herb::Errors::UnclosedElementError
+             Herb::Errors::UnclosedElementError,
+             Herb::Errors::MissingAttributeValueError
           true
         else
           false
@@ -237,6 +242,8 @@ module Herb
           "← Tag mismatch"
         when Herb::Errors::UnclosedElementError
           "← Unclosed element"
+        when Herb::Errors::MissingAttributeValueError
+          "← Missing attribute value"
         else
           ""
         end
@@ -412,6 +419,12 @@ module Herb
           end
         when Herb::Errors::RubyParseError
           "Check your Ruby syntax inside the ERB tag"
+        when Herb::Errors::MissingAttributeValueError
+          if error.attribute_name
+            "Add a value after the equals sign for '#{error.attribute_name}' or remove the equals sign"
+          else
+            "Add a value after the equals sign or remove the equals sign"
+          end
         end
       end
     end

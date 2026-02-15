@@ -1,0 +1,49 @@
+---
+source: "Parser::AttributesTest#test_0109_data attribute with equals in value"
+input: "<div data-formula=\"x=y+z\">Content</div>"
+---
+@ DocumentNode (location: (1:0)-(1:39))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:39))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:26))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:25)-(1:26))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:25))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:17))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:17))
+        │       │       │               └── content: "data-formula"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:17)-(1:18))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:18)-(1:25))
+        │       │               ├── open_quote: """ (location: (1:18)-(1:19))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:19)-(1:24))
+        │       │               │       └── content: "x=y+z"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:24)-(1:25))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:26)-(1:33))
+        │       └── content: "Content"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:33)-(1:39))
+        │       ├── tag_opening: "</" (location: (1:33)-(1:35))
+        │       ├── tag_name: "div" (location: (1:35)-(1:38))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:38)-(1:39))
+        │
+        ├── is_void: false
+        └── source: "HTML"

@@ -271,6 +271,18 @@ errors:
         - name: opening_quote
           type: token
 
+    - name: MissingAttributeValueError
+      message:
+        template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
+        arguments:
+          - attribute_name
+          - start.line
+          - start.column
+
+      fields:
+        - name: attribute_name
+          type: string
+
     - name: UnclosedERBTagError
       message:
         template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
