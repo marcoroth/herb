@@ -1379,7 +1379,22 @@ describe("@herb-tools/formatter", () => {
      `
 
     const result = formatter.format(input)
-    expect(result).toBe(input)
+    expect(result).toBe(dedent`
+      <% if cover.present? %>
+        <figure class="figure">
+          <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
+
+          <figcaption class="figure-caption text-center">
+            <span>
+              <strong>Cover Image</strong><br> Dimensions
+              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
+              &mdash;
+              <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
+            </span>
+          </figcaption>
+        </figure>
+      <% end %>
+    `)
   })
 
   test("adjecent ERB text within elements", () => {
