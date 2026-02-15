@@ -251,7 +251,7 @@ module Engine
         <div>
           <%# This is a comment %>
           <p>Visible content</p>
-          <%# Another comment with <%= "erb" %> inside %>
+          <%# Another comment %>
           <p>More content</p>
         </div>
       ERB

@@ -42,6 +42,18 @@ module Parser
       assert_parsed_snapshot(%(<img src="image.jpg />))
     end
 
+    test "unclosed ERB tag at EOF" do
+      assert_parsed_snapshot(%(<%= foo))
+    end
+
+    test "unclosed ERB comment at EOF" do
+      assert_parsed_snapshot(%(<%# comment))
+    end
+
+    test "nested ERB tag inside ERB comment" do
+      assert_parsed_snapshot(%(<%# Another comment with <%= "erb" %> inside %>))
+    end
+
     test "multiple error types in single template" do
       assert_parsed_snapshot(<<~HTML)
         <div>
@@ -55,6 +67,46 @@ module Parser
     test "recovery with ERB content" do
       assert_parsed_snapshot(<<~HTML)
         <div class="foo<%= bar %>
+          <%= content %>
+        </div>
+      HTML
+    end
+
+    test "unclosed ERB tag in attribute value without closing quote" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="foo<%= bar
+          <%= content %>
+        </div>
+      HTML
+    end
+
+    test "closed ERB tag in attribute missing tag closing" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="foo<%= bar %>"
+          <%= content %>
+        </div>
+      HTML
+    end
+
+    test "unclosed ERB tag in attribute value with space before quote" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="foo<%= bar ">
+          <%= content %>
+        </div>
+      HTML
+    end
+
+    test "unclosed ERB tag in attribute value without space before quote" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="foo<%= bar">
+          <%= content %>
+        </div>
+      HTML
+    end
+
+    test "closed ERB tag in attribute with extra closing angle bracket" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="foo<%= bar %>>
           <%= content %>
         </div>
       HTML

@@ -253,6 +253,38 @@ errors:
         - name: opening_quote
           type: token
 
+    - name: UnclosedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+    - name: NestedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%u:%u). Nesting `<%%` tags is not supported."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - nested_tag_line
+          - nested_tag_column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: nested_tag_line
+          type: size_t
+
+        - name: nested_tag_column
+          type: size_t
+
 warnings:
   fields: []
   types: []

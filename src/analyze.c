@@ -26,6 +26,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+static position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
+  if (erb_node->tag_closing != NULL) {
+    return erb_node->tag_closing->location.end;
+  } else if (erb_node->content != NULL) {
+    return erb_node->content->location.end;
+  } else {
+    return erb_node->tag_opening->location.end;
+  }
+}
+
 static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = init_analyzed_ruby(source);
 
@@ -279,11 +289,11 @@ static control_type_t find_earliest_control_keyword(pm_node_t* root, const uint8
 
 static control_type_t detect_control_type(AST_ERB_CONTENT_NODE_T* erb_node) {
   if (!erb_node || erb_node->base.type != AST_ERB_CONTENT_NODE) { return CONTROL_TYPE_UNKNOWN; }
+  if (erb_node->tag_closing == NULL) { return CONTROL_TYPE_UNKNOWN; }
 
   analyzed_ruby_T* ruby = erb_node->analyzed_ruby;
 
   if (!ruby) { return CONTROL_TYPE_UNKNOWN; }
-
   if (ruby->valid) { return CONTROL_TYPE_UNKNOWN; }
 
   pm_node_t* root = ruby->root;
@@ -340,7 +350,7 @@ static AST_NODE_T* create_control_node(
   erb_node->base.errors = NULL;
 
   position_T start_position = erb_node->tag_opening->location.start;
-  position_T end_position = erb_node->tag_closing->location.end;
+  position_T end_position = erb_content_end_position(erb_node);
 
   if (end_node) {
     end_position = end_node->base.location.end;
@@ -695,6 +705,8 @@ static size_t process_control_structure(
           }
         }
 
+        position_T when_end_position = erb_content_end_position(erb_content);
+
         AST_ERB_WHEN_NODE_T* when_node = ast_erb_when_node_init(
           erb_content->tag_opening,
           erb_content->content,
@@ -702,7 +714,7 @@ static size_t process_control_structure(
           then_keyword,
           when_statements,
           erb_content->tag_opening->location.start,
-          erb_content->tag_closing->location.end,
+          when_end_position,
           when_errors
         );
 
@@ -736,6 +748,8 @@ static size_t process_control_structure(
           }
         }
 
+        position_T in_end_position = erb_content_end_position(erb_content);
+
         AST_ERB_IN_NODE_T* in_node = ast_erb_in_node_init(
           erb_content->tag_opening,
           erb_content->content,
@@ -743,7 +757,7 @@ static size_t process_control_structure(
           in_then_keyword,
           in_statements,
           erb_content->tag_opening->location.start,
-          erb_content->tag_closing->location.end,
+          in_end_position,
           in_errors
         );
 
@@ -785,7 +799,7 @@ static size_t process_control_structure(
             next_erb->tag_closing,
             else_children,
             next_erb->tag_opening->location.start,
-            next_erb->tag_closing->location.end,
+            erb_content_end_position(next_erb),
             else_errors
           );
 
@@ -811,7 +825,7 @@ static size_t process_control_structure(
             end_erb->content,
             end_erb->tag_closing,
             end_erb->tag_opening->location.start,
-            end_erb->tag_closing->location.end,
+            erb_content_end_position(end_erb),
             end_errors
           );
 
@@ -823,7 +837,7 @@ static size_t process_control_structure(
     }
 
     position_T start_position = erb_node->tag_opening->location.start;
-    position_T end_position = erb_node->tag_closing->location.end;
+    position_T end_position = erb_content_end_position(erb_node);
 
     if (end_node) {
       end_position = end_node->base.location.end;
@@ -933,7 +947,7 @@ static size_t process_control_structure(
             next_erb->tag_closing,
             else_children,
             next_erb->tag_opening->location.start,
-            next_erb->tag_closing->location.end,
+            erb_content_end_position(next_erb),
             else_errors
           );
 
@@ -979,7 +993,7 @@ static size_t process_control_structure(
             next_erb->tag_closing,
             ensure_children,
             next_erb->tag_opening->location.start,
-            next_erb->tag_closing->location.end,
+            erb_content_end_position(next_erb),
             ensure_errors
           );
 
@@ -1005,7 +1019,7 @@ static size_t process_control_structure(
             end_erb->content,
             end_erb->tag_closing,
             end_erb->tag_opening->location.start,
-            end_erb->tag_closing->location.end,
+            erb_content_end_position(end_erb),
             end_errors
           );
 
@@ -1017,7 +1031,7 @@ static size_t process_control_structure(
     }
 
     position_T start_position = erb_node->tag_opening->location.start;
-    position_T end_position = erb_node->tag_closing->location.end;
+    position_T end_position = erb_content_end_position(erb_node);
 
     if (end_node) {
       end_position = end_node->base.location.end;
@@ -1068,12 +1082,14 @@ static size_t process_control_structure(
           hb_array_T* end_errors = close_erb->base.errors;
           close_erb->base.errors = NULL;
 
+          position_T close_end_pos = erb_content_end_position(close_erb);
+
           end_node = ast_erb_end_node_init(
             close_erb->tag_opening,
             close_erb->content,
             close_erb->tag_closing,
             close_erb->tag_opening->location.start,
-            close_erb->tag_closing->location.end,
+            close_end_pos,
             end_errors
           );
 
@@ -1085,7 +1101,7 @@ static size_t process_control_structure(
     }
 
     position_T start_position = erb_node->tag_opening->location.start;
-    position_T end_position = erb_node->tag_closing->location.end;
+    position_T end_position = erb_content_end_position(erb_node);
 
     if (end_node) {
       end_position = end_node->base.location.end;
@@ -1142,12 +1158,14 @@ static size_t process_control_structure(
         hb_array_T* end_errors = end_erb->base.errors;
         end_erb->base.errors = NULL;
 
+        position_T end_erb_final_pos = erb_content_end_position(end_erb);
+
         end_node = ast_erb_end_node_init(
           end_erb->tag_opening,
           end_erb->content,
           end_erb->tag_closing,
           end_erb->tag_opening->location.start,
-          end_erb->tag_closing->location.end,
+          end_erb_final_pos,
           end_errors
         );
 

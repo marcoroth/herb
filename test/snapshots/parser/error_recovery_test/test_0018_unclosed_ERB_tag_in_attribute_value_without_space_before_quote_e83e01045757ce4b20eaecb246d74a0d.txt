@@ -1,11 +1,18 @@
 ---
-source: "Parser::ErrorRecoveryTest#test_0011_recovery with ERB content"
+source: "Parser::ErrorRecoveryTest#test_0018_unclosed ERB tag in attribute value without space before quote"
 input: |2-
-<div class="foo<%= bar %>
+<div class="foo<%= bar">
   <%= content %>
 </div>
 ---
 @ DocumentNode (location: (1:0)-(4:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (3:6)-(3:6))
+│       ├── message: "string_literal_eof: unterminated string meets end of file"
+│       ├── error_message: "unterminated string meets end of file"
+│       ├── diagnostic_id: "string_literal_eof"
+│       └── level: "syntax"
+│
 └── children: (2 items)
     ├── @ HTMLOpenTagNode (location: (1:0)-(3:6))
     │   ├── errors: (1 error)
@@ -34,19 +41,24 @@ input: |2-
     │   │               │       └── opening_quote: """ (location: (1:11)-(1:12))
     │   │               │
     │   │               ├── open_quote: """ (location: (1:11)-(1:12))
-    │   │               ├── children: (5 items)
+    │   │               ├── children: (4 items)
     │   │               │   ├── @ LiteralNode (location: (1:12)-(1:15))
     │   │               │   │   └── content: "foo"
     │   │               │   │
-    │   │               │   ├── @ ERBContentNode (location: (1:15)-(1:25))
+    │   │               │   ├── @ ERBContentNode (location: (1:15)-(2:2))
+    │   │               │   │   ├── errors: (1 error)
+    │   │               │   │   │   └── @ NestedERBTagError (location: (2:2)-(2:5))
+    │   │               │   │   │       ├── message: "ERB tag `<%=` at (1:15) was terminated by nested `<%` tag at (2:2). Nesting `<%` tags is not supported."
+    │   │               │   │   │       ├── opening_tag: "<%=" (location: (1:15)-(1:18))
+    │   │               │   │   │       ├── nested_tag_line: 2
+    │   │               │   │   │       └── nested_tag_column: 2
+    │   │               │   │   │
     │   │               │   │   ├── tag_opening: "<%=" (location: (1:15)-(1:18))
-    │   │               │   │   ├── content: " bar " (location: (1:18)-(1:23))
-    │   │               │   │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   │               │   │   ├── content: " bar">
+    │   │               │   │     " (location: (1:18)-(2:2))
+    │   │               │   │   ├── tag_closing: ∅
     │   │               │   │   ├── parsed: true
-    │   │               │   │   └── valid: true
-    │   │               │   │
-    │   │               │   ├── @ LiteralNode (location: (1:25)-(2:2))
-    │   │               │   │   └── content: "\n  "
+    │   │               │   │   └── valid: false
     │   │               │   │
     │   │               │   ├── @ ERBContentNode (location: (2:2)-(2:16))
     │   │               │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))

@@ -204,11 +204,17 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      token_T* token = token_init(
-        hb_string_range(lexer->source, start_position, lexer->current_position),
-        TOKEN_ERROR,
-        lexer
-      ); // Handle unexpected EOF
+      token_T* token =
+        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
+
+      return token;
+    }
+
+    if (lexer_peek_erb_start(lexer, 0)) {
+      lexer->state = STATE_DATA;
+
+      token_T* token =
+        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
       return token;
     }
