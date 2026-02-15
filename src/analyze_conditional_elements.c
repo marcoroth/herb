@@ -404,7 +404,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       matched_open->open_conditional,
       matched_open->open_tag,
       body,
-      close_tag,
+      (AST_NODE_T*) close_tag,
       node,
       matched_open->open_tag->tag_name,
       ELEMENT_SOURCE_HTML,

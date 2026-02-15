@@ -1,6 +1,7 @@
 package org.herb.ast;
 
 import org.herb.Location;
+import org.herb.Position;
 import org.herb.Token;
 
 /**
@@ -58,6 +59,8 @@ class <%= error.name %> extends HerbError {
   private final Token <%= field.name %>;
   <%- when Herb::Template::TokenTypeField -%>
   private final String <%= field.name %>;
+  <%- when Herb::Template::PositionField -%>
+  private final Position <%= field.name %>;
   <%- when Herb::Template::SizeTField -%>
   private final long <%= field.name %>;
   <%- else -%>
@@ -65,7 +68,7 @@ class <%= error.name %> extends HerbError {
   <%- end -%>
   <%- end -%>
 
-  public <%= error.name %>(String type, String message, Location location<%- error.fields.each do |field| -%><%- case field -%><%- when Herb::Template::StringField -%>, String <%= field.name %><%- when Herb::Template::TokenField -%>, Token <%= field.name %><%- when Herb::Template::TokenTypeField -%>, String <%= field.name %><%- when Herb::Template::SizeTField -%>, long <%= field.name %><%- end -%><%- end -%>) {
+  public <%= error.name %>(String type, String message, Location location<%- error.fields.each do |field| -%><%- case field -%><%- when Herb::Template::StringField -%>, String <%= field.name %><%- when Herb::Template::TokenField -%>, Token <%= field.name %><%- when Herb::Template::TokenTypeField -%>, String <%= field.name %><%- when Herb::Template::PositionField -%>, Position <%= field.name %><%- when Herb::Template::SizeTField -%>, long <%= field.name %><%- end -%><%- end -%>) {
     super(type, message, location);
     <%- error.fields.each do |field| -%>
     this.<%= field.name %> = <%= field.name %>;
@@ -86,6 +89,11 @@ class <%= error.name %> extends HerbError {
 
   <%- when Herb::Template::TokenTypeField -%>
   public String get<%= field.name.capitalize %>() {
+    return <%= field.name %>;
+  }
+
+  <%- when Herb::Template::PositionField -%>
+  public Position get<%= field.name.capitalize %>() {
     return <%= field.name %>;
   }
 
@@ -117,6 +125,10 @@ class <%= error.name %> extends HerbError {
     <%- when Herb::Template::TokenField -%>
     output.append("<%= symbol %> <%= field.name %>: ");
     output.append(<%= field.name %> != null ? <%= field.name %>.inspect() : "∅");
+    output.append("\n");
+    <%- when Herb::Template::PositionField -%>
+    output.append("<%= symbol %> <%= field.name %>: ");
+    output.append(<%= field.name %> != null ? <%= field.name %>.toString() : "∅");
     output.append("\n");
     <%- when Herb::Template::SizeTField -%>
     output.append("<%= symbol %> <%= field.name %>: ");

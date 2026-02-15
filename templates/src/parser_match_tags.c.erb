@@ -4,7 +4,7 @@
 #include "include/visitor.h"
 
 bool match_tags_visitor(const AST_NODE_T* node, void* data) {
-  hb_array_T* errors = (hb_array_T*) data;
+  match_tags_context_T* context = (match_tags_context_T*) data;
 
   if (node == NULL) { return false; }
 
@@ -25,12 +25,12 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
 
       <%- array_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, errors);
+        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, context->errors, context->strict);
       }
       <%- end -%>
       <%- single_node_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        herb_visit_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, match_tags_visitor, errors);
+        herb_visit_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, match_tags_visitor, context);
       }
       <%- end -%>
     } break;

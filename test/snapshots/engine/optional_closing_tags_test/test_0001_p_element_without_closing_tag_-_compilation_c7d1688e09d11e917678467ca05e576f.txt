@@ -1,0 +1,6 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0001_p element without closing tag - compilation"
+input: "{source: \"<p>Hello World\", options: {}}"
+---
+_buf = ::String.new; _buf << '<p>Hello World'.freeze;
+_buf.to_s

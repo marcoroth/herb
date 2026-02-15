@@ -21,6 +21,11 @@ typedef struct PARSER_OPTIONS_STRUCT {
   bool strict;
 } parser_options_T;
 
+typedef struct MATCH_TAGS_CONTEXT_STRUCT {
+  hb_array_T* errors;
+  bool strict;
+} match_tags_context_T;
+
 extern const parser_options_T HERB_DEFAULT_PARSER_OPTIONS;
 
 typedef struct PARSER_STRUCT {
@@ -40,10 +45,10 @@ void herb_parser_init(parser_T* parser, lexer_T* lexer, parser_options_T options
 
 AST_DOCUMENT_NODE_T* herb_parser_parse(parser_T* parser);
 
-void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document);
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, bool strict);
 void herb_parser_deinit(parser_T* parser);
 
-void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors);
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict);
 bool match_tags_visitor(const AST_NODE_T* node, void* data);
 
 #endif
