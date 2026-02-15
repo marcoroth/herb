@@ -1,44 +1,70 @@
-import  { type Node, Location } from "@herb-tools/core"
+import { Location, isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, Visitor } from "@herb-tools/core"
+import { getTagName, findNodeAtPosition } from "./rule-utils.js"
+import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
 
-import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
-import { SourceRule } from "../types.js"
-import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLElementNode, HTMLTextNode, LiteralNode, ParseResult, DocumentNode, ERBNode } from "@herb-tools/core"
 
-interface ERBNoTrailingWhitespaceAutofixContext extends BaseAutofixContext {
-  startOffset: number
-  endOffset: number
+const TRAILING_WHITESPACE = /[ \t\r\v\f\u00A0]+$/
+const TRAILING_WHITESPACE_BEFORE_NEWLINE = /[ \t\r\v\f\u00A0]+(?=\n)/g
+const ONLY_WHITESPACE = /^[ \t\r\v\f\u00A0]+$/
+
+interface SkipZone {
+  startLine: number
+  startColumn: number
+  endLine: number
+  endColumn: number
 }
 
-class ERBNoTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBNoTrailingWhitespaceAutofixContext> {
-  protected visitSource(source: string): void {
-    if (source.length === 0) return
+interface TrailingWhitespaceCandidate {
+  line: number
+  column: number
+  length: number
+}
 
-    const regex = /[ \t\r]+(?=\n|$)/g
+interface ERBNoTrailingWhitespaceAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLTextNode> | Mutable<LiteralNode>
+}
 
-    let match: RegExpExecArray | null
+class SkipZoneCollector extends Visitor {
+  skipZones: SkipZone[] = []
 
-    while ((match = regex.exec(source)) !== null) {
-      const startOffset = match.index
-      const endOffset = match.index + match[0].length
-      const start = positionFromOffset(source, startOffset)
-      const end = positionFromOffset(source, endOffset)
-      const location = new Location(start, end)
+  SKIP_TAGS = new Set(["pre", "textarea", "script", "style"])
 
-      this.addOffense(
-        "Extra whitespace detected at end of line.",
-        location,
-        {
-          node: null as any as Node,
-          startOffset,
-          endOffset,
-        }
-      )
+  visitHTMLElementNode(node: HTMLElementNode): void {
+    if (isHTMLOpenTagNode(node.open_tag)) {
+      const tagName = getTagName(node.open_tag)
+
+      if (tagName && this.SKIP_TAGS.has(tagName)) {
+        this.skipZones.push({
+          startLine: node.location.start.line,
+          startColumn: node.location.start.column,
+          endLine: node.location.end.line,
+          endColumn: node.location.end.column
+        })
+
+        return
+      }
     }
+
+    super.visitHTMLElementNode(node)
+  }
+
+  visitERBNode(node: ERBNode) {
+    if (!node.tag_opening) return
+    if (!node.tag_closing) return
+
+    this.skipZones.push({
+      startLine: node.tag_opening.location.start.line,
+      startColumn: node.tag_opening.location.start.column,
+      endLine: node.tag_closing.location.end.line,
+      endColumn: node.tag_closing.location.end.column
+    })
   }
 }
 
-export class ERBNoTrailingWhitespaceRule extends SourceRule {
-  static autocorrectable = false
+export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitespaceAutofixContext> {
+  static autocorrectable = true
   name = "erb-no-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
@@ -48,22 +74,112 @@ export class ERBNoTrailingWhitespaceRule extends SourceRule {
     }
   }
 
-  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoTrailingWhitespaceVisitor(this.name, context)
+  check(result: ParseResult, _context?: Partial<LintContext>): UnboundLintOffense<ERBNoTrailingWhitespaceAutofixContext>[] {
+    const offenses: UnboundLintOffense<ERBNoTrailingWhitespaceAutofixContext>[] = []
+    const lines = result.source.split("\n")
+    const candidates = this.findTrailingWhitespaceCandidates(lines)
 
-    visitor.visit(source)
+    if (candidates.length === 0) return offenses
 
-    return visitor.offenses
+    const skipZones = this.collectSkipZones(result.value)
+
+    for (const candidate of candidates) {
+      if (!this.isInSkipZone(candidate, skipZones)) {
+        const location = Location.from(candidate.line, candidate.column, candidate.line, candidate.column + candidate.length)
+        const node = findNodeAtPosition(result.value, candidate.line, candidate.column, (n) => isHTMLTextNode(n) || isLiteralNode(n)) as HTMLTextNode | LiteralNode | null
+
+        offenses.push({
+          rule: this.name,
+          message: "Extra whitespace detected at end of line.",
+          location,
+          autofixContext: node ? { node } : undefined
+        })
+      }
+    }
+
+    return offenses
   }
 
-  autofix(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
+  private findTrailingWhitespaceCandidates(lines: string[]): TrailingWhitespaceCandidate[] {
+    const candidates: TrailingWhitespaceCandidate[] = []
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const match = line.match(TRAILING_WHITESPACE)
+
+      if (match && match.index !== undefined) {
+        candidates.push({
+          line: i + 1,
+          column: match.index,
+          length: match[0].length
+        })
+      }
+    }
+
+    return candidates
+  }
+
+  private collectSkipZones(root: DocumentNode): SkipZone[] {
+    const collector = new SkipZoneCollector()
+
+    collector.visit(root)
+
+    return collector.skipZones
+  }
+
+  private isInSkipZone(candidate: TrailingWhitespaceCandidate, skipZones: SkipZone[]): boolean {
+    for (const zone of skipZones) {
+      if (candidate.line < zone.startLine || candidate.line > zone.endLine) continue
+      if (candidate.line === zone.endLine && candidate.column >= zone.endColumn) continue
+      if (candidate.line === zone.startLine && candidate.column < zone.startColumn) continue
+
+      return true
+    }
+
+    return false
+  }
+
+  autofix(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
     if (!offense.autofixContext) return null
 
-    const { startOffset, endOffset } = offense.autofixContext
+    const { node } = offense.autofixContext
 
-    const before = source.substring(0, startOffset)
-    const after = source.substring(endOffset)
+    if (node.type === "AST_HTML_TEXT_NODE" || node.type === "AST_LITERAL_NODE") {
+      let fixedContent = node.content.replace(TRAILING_WHITESPACE_BEFORE_NEWLINE, "")
+      const offenseIsAtEndOfContent = this.isOffenseAtEndOfContent(offense, node)
 
-    return before + after
+      if (offenseIsAtEndOfContent) {
+        if (this.hasTrailingWhitespaceNotIndentation(fixedContent)) {
+          fixedContent = fixedContent.replace(TRAILING_WHITESPACE, "")
+        }
+
+        if (ONLY_WHITESPACE.test(fixedContent) && node.location.start.column !== 0) {
+          fixedContent = ""
+        }
+      }
+
+      node.content = fixedContent
+    }
+
+    return result
+  }
+
+  private isOffenseAtEndOfContent(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, node: Mutable<HTMLTextNode> | Mutable<LiteralNode>): boolean {
+    return offense.location.end.line === node.location.end.line && offense.location.end.column === node.location.end.column
+  }
+
+  private hasTrailingWhitespaceNotIndentation(content: string): boolean {
+    if (content.endsWith("\n")) return false
+
+    const endMatch = content.match(TRAILING_WHITESPACE)
+    if (!endMatch) return false
+
+    const whitespaceStart = content.length - endMatch[0].length
+    if (whitespaceStart === 0) return false
+
+    const characterBefore = content[whitespaceStart - 1]
+    if (characterBefore === "\n") return false
+
+    return true
   }
 }

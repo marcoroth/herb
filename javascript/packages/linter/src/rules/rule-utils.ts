@@ -1082,3 +1082,90 @@ export function positionFromOffset(source: string, offset: number): Position {
 
   return new Position(line, column)
 }
+
+/**
+ * Checks if a position (line, column) is within a node's location range.
+ * @param node - The node to check
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @returns true if the position is within the node's location
+ */
+function isPositionInNode(node: Node, line: number, column: number): boolean {
+  if (!node.location) return false
+
+  const { start, end } = node.location
+
+  if (line < start.line) return false
+  if (line === start.line && column < start.column) return false
+
+  if (line > end.line) return false
+  if (line === end.line && column >= end.column) return false
+
+  return true
+}
+
+/**
+ * Finds a node in the AST that contains a specific position.
+ * Returns the deepest (most specific) node that matches the position and optional predicate.
+ *
+ * @param root - The root node to search from
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @param predicate - Optional predicate function to filter nodes
+ * @returns The matching node or null if not found
+ */
+export function findNodeAtPosition(root: Node, line: number, column: number, predicate?: (node: Node) => boolean): Node | null {
+  let bestMatch: Node | null = null
+  const visited = new Set<Node>()
+
+  function search(node: Node): void {
+    if (!node || visited.has(node)) return
+    visited.add(node)
+
+    if (isPositionInNode(node, line, column)) {
+      if (!predicate || predicate(node)) {
+        if (!bestMatch || isMoreSpecific(node, bestMatch)) {
+          bestMatch = node
+        }
+      }
+    }
+
+    const nodeAny = node as any
+
+    if (typeof nodeAny.compactChildNodes === 'function') {
+      for (const child of nodeAny.compactChildNodes()) {
+        search(child)
+      }
+    } else {
+      if (nodeAny.children && Array.isArray(nodeAny.children)) {
+        for (const child of nodeAny.children) {
+          if (child) search(child)
+        }
+      }
+
+      if (nodeAny.body && Array.isArray(nodeAny.body)) {
+        for (const child of nodeAny.body) {
+          if (child) search(child)
+        }
+      }
+    }
+  }
+
+  function isMoreSpecific(nodeA: Node, nodeB: Node): boolean {
+    if (!nodeA.location || !nodeB.location) return false
+
+    const aStart = nodeA.location.start
+    const aEnd = nodeA.location.end
+    const bStart = nodeB.location.start
+    const bEnd = nodeB.location.end
+
+    const startsAtOrAfter = aStart.line > bStart.line || (aStart.line === bStart.line && aStart.column >= bStart.column)
+    const endsAtOrBefore = aEnd.line < bEnd.line || (aEnd.line === bEnd.line && aEnd.column <= bEnd.column)
+
+    return startsAtOrAfter && endsAtOrBefore
+  }
+
+  search(root)
+
+  return bestMatch
+}

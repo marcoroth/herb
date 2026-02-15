@@ -4,7 +4,17 @@
 
 ## Description
 
-Disallow trailing whitespace (spaces, tabs, carriage returns) at the end of lines in ERB templates. This rule detects and removes any invisible whitespace characters that appear after the last visible character on a line.
+Disallow trailing whitespace (spaces, tabs, carriage returns, and other whitespace characters) at the end of lines in ERB templates.
+
+## Skipped Content
+
+This rule does **not** flag trailing whitespace inside:
+
+* `<pre>` - Preformatted text where whitespace is significant
+* `<textarea>` - User input where whitespace may be intentional
+* `<script>` - Treated as foreign content
+* `<style>` - Treated as foreign content
+* ERB tags (`<% %>`, `<%= %>`, `<%# %>`) - Ruby code where trailing whitespace could be significant (heredocs, string literals)
 
 ## Rationale
 
@@ -19,13 +29,17 @@ Trailing whitespace is invisible and serves no purpose, but it can cause several
 
 ### ✅ Good
 
-```html
+```erb
 <div>
   <p>Hello</p>
 </div>
+```
 
+```erb
 <%= content %>
+```
 
+```erb
 <div>
   <h1>Title</h1>
 </div>
@@ -35,11 +49,15 @@ Trailing whitespace is invisible and serves no purpose, but it can cause several
 
 ```erb
 <div>···
-  <p>Hello</p>··
+  <p>Hello</p>
 </div>
+```
 
+```erb
 <%= content %>·
+```
 
+```erb
 Hello→→
 World···
 ```
