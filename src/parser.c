@@ -378,6 +378,34 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
            && string_equals(parser->current_token->value, opening_quote->value)
          )) {
     if (token_is(parser, TOKEN_HTML_TAG_END) || token_is(parser, TOKEN_HTML_TAG_SELF_CLOSE)) {
+      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
+      bool found_closing_quote = false;
+      token_T* lookahead = lexer_next_token(parser->lexer);
+
+      while (lookahead && lookahead->type != TOKEN_EOF) {
+        if (lookahead->type == TOKEN_QUOTE && opening_quote != NULL
+            && string_equals(lookahead->value, opening_quote->value)) {
+          found_closing_quote = true;
+          token_free(lookahead);
+          break;
+        }
+
+        token_free(lookahead);
+
+        lookahead = lexer_next_token(parser->lexer);
+      }
+
+      if (lookahead && !found_closing_quote && lookahead->type == TOKEN_EOF) { token_free(lookahead); }
+
+      lexer_restore_state(parser->lexer, saved_state);
+
+      if (found_closing_quote) {
+        hb_buffer_append(&buffer, parser->current_token->value);
+        token_free(parser->current_token);
+        parser->current_token = lexer_next_token(parser->lexer);
+        continue;
+      }
+
       append_unclosed_quote_error(
         opening_quote,
         opening_quote->location.start,
@@ -403,12 +431,21 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       return attribute_value;
     }
 
-    if (token_is(parser, TOKEN_IDENTIFIER)) {
-      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
-      token_T* next_token = lexer_next_token(parser->lexer);
+    bool buffer_ends_with_whitespace = buffer.length > 0 && is_whitespace(buffer.value[buffer.length - 1]);
 
-      bool looks_like_new_attribute = (next_token && next_token->type == TOKEN_EQUALS);
-      token_free(next_token);
+    if (token_is(parser, TOKEN_IDENTIFIER) && buffer_ends_with_whitespace) {
+      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
+      token_T* equals_token = lexer_next_token(parser->lexer);
+      bool looks_like_new_attribute = false;
+
+      if (equals_token && equals_token->type == TOKEN_EQUALS) {
+        token_T* after_equals = lexer_next_token(parser->lexer);
+        looks_like_new_attribute = (after_equals && after_equals->type == TOKEN_QUOTE);
+
+        if (after_equals) { token_free(after_equals); }
+      }
+
+      if (equals_token) { token_free(equals_token); }
       lexer_restore_state(parser->lexer, saved_state);
 
       if (looks_like_new_attribute) {
@@ -534,16 +571,6 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
   free(buffer.value);
 
   token_T* closing_quote = parser_consume_expected(parser, TOKEN_QUOTE, errors);
-
-  if (opening_quote != NULL && closing_quote != NULL && !string_equals(opening_quote->value, closing_quote->value)) {
-    append_quotes_mismatch_error(
-      opening_quote,
-      closing_quote,
-      closing_quote->location.start,
-      closing_quote->location.end,
-      errors
-    );
-  }
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* attribute_value = ast_html_attribute_value_node_init(
     opening_quote,

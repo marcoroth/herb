@@ -213,13 +213,6 @@ module Herb
           output << "  Level: #{error.level}\n"
           output << "  Details: #{error.error_message}\n"
           output << "  Suggestion: Check your Ruby syntax inside the ERB tag\n"
-
-        when Herb::Errors::QuotesMismatchError
-          if error.opening_quote && error.closing_quote
-            output << "  Opening quote: #{error.opening_quote.value}\n"
-            output << "  Closing quote: #{error.closing_quote.value}\n"
-            output << "  Suggestion: Use matching quotes for attribute values\n"
-          end
         end
 
         output
@@ -419,8 +412,6 @@ module Herb
           end
         when Herb::Errors::RubyParseError
           "Check your Ruby syntax inside the ERB tag"
-        when Herb::Errors::QuotesMismatchError
-          "Use matching quotes for attribute values"
         end
       end
     end

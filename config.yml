@@ -87,22 +87,6 @@ errors:
         - name: closing_tag
           type: token
 
-    - name: QuotesMismatchError
-      message:
-        template: "String opened with %s but closed with %s at (%u:%u)."
-        arguments:
-          - opening_quote->value
-          - closing_quote->value
-          - closing_quote->location.start.line
-          - closing_quote->location.start.column
-
-      fields:
-        - name: opening_quote
-          type: token
-
-        - name: closing_quote
-          type: token
-
     - name: VoidElementClosingTagError
       message:
         template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."

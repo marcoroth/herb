@@ -39,15 +39,16 @@ By surfacing parser errors through the linter, developers can catch these critic
 ### 🚫 Bad
 
 ```html
-<!-- Mismatched closing tag -->
 <h2>Welcome to our site</h3>
+```
 
-<!-- Unclosed element -->
+```html
 <div>
   <p>This paragraph is never closed
 </div>
+```
 
-<!-- Missing opening tag -->
+```html
 Some content
 </div>
 ```
@@ -62,20 +63,6 @@ Some content
 <!-- Void element with closing tag -->
 <img src="image.jpg" alt="Description"></img>
 ```
-
-## Error Types
-
-This rule reports various parser error types:
-
-- **`UNCLOSED_ELEMENT_ERROR`**: Elements that are opened but never closed
-- **`MISSING_CLOSING_TAG_ERROR`**: Opening tags without matching closing tags
-- **`MISSING_OPENING_TAG_ERROR`**: Closing tags without matching opening tags
-- **`TAG_NAMES_MISMATCH_ERROR`**: Opening and closing tags with different names
-- **`QUOTES_MISMATCH_ERROR`**: Mismatched quotation marks in attributes
-- **`VOID_ELEMENT_CLOSING_TAG_ERROR`**: Void elements (like `<img>`) with closing tags
-- **`RUBY_PARSE_ERROR`**: Invalid Ruby syntax within ERB tags
-- **`UNEXPECTED_TOKEN_ERROR`**: Unexpected tokens during parsing
-- **`UNEXPECTED_ERROR`**: Other unexpected parsing issues
 
 ## References
 
