@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { BaseRuleVisitor, findParent, getOpenTag } from "./rule-utils.js"
-import { isNode, getTagName, HTMLOpenTagNode, isHTMLElementNode } from "@herb-tools/core"
+import { isNode, getTagName, HTMLOpenTagNode, isHTMLElementNode, isHTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
@@ -28,7 +28,10 @@ class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (getTagName(node)?.toLowerCase() === "svg") {
       this.checkTagName(getOpenTag(node))
-      this.checkTagName(node.close_tag)
+
+      if (node.close_tag && isHTMLCloseTagNode(node.close_tag)) {
+        this.checkTagName(node.close_tag)
+      }
     } else {
       super.visitHTMLElementNode(node)
     }
