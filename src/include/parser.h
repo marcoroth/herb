@@ -29,6 +29,8 @@ typedef struct PARSER_STRUCT {
   parser_state_T state;
   foreign_content_type_T foreign_content_type;
   parser_options_T options;
+  size_t consecutive_error_count;
+  bool in_recovery_mode;
 } parser_T;
 
 size_t parser_sizeof(void);

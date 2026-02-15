@@ -219,3 +219,45 @@ bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_t
 
   return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
 }
+
+void parser_synchronize(parser_T* parser, hb_array_T* errors) {
+  (void) errors;
+
+  while (parser->current_token->type != TOKEN_EOF) {
+    token_type_T type = parser->current_token->type;
+
+    if (type == TOKEN_HTML_TAG_START || type == TOKEN_HTML_TAG_START_CLOSE || type == TOKEN_ERB_START
+        || type == TOKEN_HTML_COMMENT_START || type == TOKEN_HTML_DOCTYPE) {
+      return;
+    }
+
+    token_T* skipped = parser_advance(parser);
+    token_free(skipped);
+  }
+}
+
+bool parser_can_close_ancestor(const parser_T* parser, hb_string_T tag_name) {
+  size_t stack_size = hb_array_size(parser->open_tags_stack);
+
+  for (size_t i = stack_size; i > 0; i--) {
+    token_T* open = hb_array_get(parser->open_tags_stack, i - 1);
+
+    if (open && open->value && hb_string_equals_case_insensitive(hb_string(open->value), tag_name)) { return true; }
+  }
+
+  return false;
+}
+
+size_t parser_find_ancestor_depth(const parser_T* parser, hb_string_T tag_name) {
+  size_t stack_size = hb_array_size(parser->open_tags_stack);
+
+  for (size_t i = stack_size; i > 0; i--) {
+    token_T* open = hb_array_get(parser->open_tags_stack, i - 1);
+
+    if (open && open->value && hb_string_equals_case_insensitive(hb_string(open->value), tag_name)) {
+      return stack_size - i;
+    }
+  }
+
+  return (size_t) -1;
+}

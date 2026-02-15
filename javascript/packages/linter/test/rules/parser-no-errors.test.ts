@@ -49,9 +49,7 @@ describe("ParserNoErrorsRule", () => {
   })
 
   test("should report errors for mismatched quotes in attributes", () => {
-    expectError("Found `TOKEN_EOF` when expecting `TOKEN_HTML_TAG_SELF_CLOSE` at (1:24). (`UNEXPECTED_TOKEN_ERROR`)")
-    expectError("Found `TOKEN_EOF` when expecting `TOKEN_QUOTE` at (1:24). (`UNEXPECTED_TOKEN_ERROR`)")
-    expectError("String opened with \" but closed with  at (1:24). (`QUOTES_MISMATCH_ERROR`)")
+    expectError("Attribute value opened with \" at (1:11) was never closed. (`UNCLOSED_QUOTE_ERROR`)")
     assertOffenses(`<div class="test'></div>`)
   })
 

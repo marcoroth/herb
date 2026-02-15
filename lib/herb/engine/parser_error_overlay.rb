@@ -9,7 +9,6 @@ module Herb
         Herb::Errors::UnexpectedTokenError,
         Herb::Errors::UnexpectedError,
         Herb::Errors::RubyParseError,
-        Herb::Errors::QuotesMismatchError,
         Herb::Errors::TagNamesMismatchError,
         Herb::Errors::VoidElementClosingTagError,
         Herb::Errors::UnclosedElementError,
@@ -729,8 +728,6 @@ module Herb
           end
         when Herb::Errors::RubyParseError
           "Fix Ruby syntax: Check your Ruby syntax inside the ERB tag"
-        when Herb::Errors::QuotesMismatchError
-          "Fix quote mismatch: Use matching quotes for attribute values"
         else
           message = error.respond_to?(:message) ? error.message : error.to_s
           "Fix error: #{message}"
@@ -747,8 +744,6 @@ module Herb
           "← Unclosed element"
         when Herb::Errors::VoidElementClosingTagError
           "← Void element cannot be closed"
-        when Herb::Errors::QuotesMismatchError
-          "← Quote mismatch"
         when Herb::Errors::RubyParseError
           "← Ruby syntax error"
         end
