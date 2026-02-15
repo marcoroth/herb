@@ -312,6 +312,26 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
+    class OmittedClosingTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      attr_reader insertion_point: Herb::Position
+
+      # : (String, Location, String, Herb::Token, Herb::Position) -> void
+      def initialize: (String, Location, String, Herb::Token, Herb::Position) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_omitted_closing_tag_error
+      def to_hash: () -> serialized_omitted_closing_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
     class UnclosedOpenTagError < Error
       include Colors
 
