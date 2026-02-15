@@ -347,5 +347,45 @@ module Herb
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
+
+    class UnclosedERBTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosederb_tag_error
+      def to_hash: () -> serialized_unclosederb_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class NestedERBTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      attr_reader nested_tag_line: Integer
+
+      attr_reader nested_tag_column: Integer
+
+      # : (String, Location, String, Herb::Token, Integer, Integer) -> void
+      def initialize: (String, Location, String, Herb::Token, Integer, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_nestederb_tag_error
+      def to_hash: () -> serialized_nestederb_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
   end
 end

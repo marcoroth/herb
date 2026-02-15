@@ -1,0 +1,29 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0012_nested ERB tag inside ERB comment"
+input: "<%# Another comment with <%= \"erb\" %> inside %>"
+---
+@ DocumentNode (location: (1:0)-(1:47))
+└── children: (3 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:25))
+    │   ├── errors: (1 error)
+    │   │   └── @ NestedERBTagError (location: (1:25)-(1:28))
+    │   │       ├── message: "ERB tag `<%#` at (1:0) was terminated by nested `<%` tag at (1:25). Nesting `<%` tags is not supported."
+    │   │       ├── opening_tag: "<%#" (location: (1:0)-(1:3))
+    │   │       ├── nested_tag_line: 1
+    │   │       └── nested_tag_column: 25
+    │   │
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " Another comment with " (location: (1:3)-(1:25))
+    │   ├── tag_closing: ∅
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ ERBContentNode (location: (1:25)-(1:37))
+    │   ├── tag_opening: "<%=" (location: (1:25)-(1:28))
+    │   ├── content: " "erb" " (location: (1:28)-(1:35))
+    │   ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:37)-(1:47))
+        └── content: " inside %>"

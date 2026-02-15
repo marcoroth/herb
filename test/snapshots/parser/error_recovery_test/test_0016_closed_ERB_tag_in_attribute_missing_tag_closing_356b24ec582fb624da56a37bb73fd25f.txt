@@ -1,0 +1,71 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0016_closed ERB tag in attribute missing tag closing"
+input: |2-
+<div class="foo<%= bar %>"
+  <%= content %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(3:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(3:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ UnclosedOpenTagError (location: (1:1)-(3:0))
+    │   │       │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+    │   │       │       └── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       │
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ∅
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:26))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │   │   │               └── content: "class"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:26))
+    │   │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │   │           ├── children: (2 items)
+    │   │       │   │           │   ├── @ LiteralNode (location: (1:12)-(1:15))
+    │   │       │   │           │   │   └── content: "foo"
+    │   │       │   │           │   │
+    │   │       │   │           │   └── @ ERBContentNode (location: (1:15)-(1:25))
+    │   │       │   │           │       ├── tag_opening: "<%=" (location: (1:15)-(1:18))
+    │   │       │   │           │       ├── content: " bar " (location: (1:18)-(1:23))
+    │   │       │   │           │       ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   │       │   │           │       ├── parsed: true
+    │   │       │   │           │       └── valid: true
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:25)-(1:26))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ ERBContentNode (location: (2:2)-(2:16))
+    │   │       │       ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │       │       ├── content: " content " (location: (2:5)-(2:14))
+    │   │       │       ├── tag_closing: "%>" (location: (2:14)-(2:16))
+    │   │       │       ├── parsed: true
+    │   │       │       └── valid: true
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
+    │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
+    │   │       ├── tag_name: "div" (location: (3:2)-(3:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (3:6)-(4:0))
+        └── content: "\n"
