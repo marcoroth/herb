@@ -1,0 +1,14 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0025_colgroup element without closing tag - compilation"
+input: "{source: \"<table>\\n  <colgroup>\\n    <col style=\\\"width: 50%\\\">\\n    <col style=\\\"width: 50%\\\">\\n  <tr>\\n    <td>A\\n    <td>B\\n</table>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '<table>
+  <colgroup>
+    <col style="width: 50%">
+    <col style="width: 50%">
+  <tr>
+    <td>A
+    <td>B
+</table>
+'.freeze;
+_buf.to_s

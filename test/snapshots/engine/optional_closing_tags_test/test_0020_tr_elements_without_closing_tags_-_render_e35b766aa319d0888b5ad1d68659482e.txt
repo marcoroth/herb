@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0020_tr elements without closing tags - render"
+input: "{source: \"<table>\\n  <tr>\\n    <td>Cell 1\\n    <td>Cell 2\\n  <tr>\\n    <td>Cell 3\\n    <td>Cell 4\\n</table>\\n\", locals: {}, options: {escape: false}}"
+---
+<table>
+  <tr>
+    <td>Cell 1
+    <td>Cell 2
+  <tr>
+    <td>Cell 3
+    <td>Cell 4
+</table>

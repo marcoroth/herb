@@ -51,6 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @strict = properties.fetch(:strict, false)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -89,7 +90,7 @@ module Herb
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
       @src << preamble
 
-      parse_result = ::Herb.parse(input, track_whitespace: true)
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
       ast = parse_result.value
       parser_errors = parse_result.errors
 

@@ -30,7 +30,7 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
         this.checkTagName(node.open_tag)
       }
 
-      if (node.close_tag) {
+      if (node.close_tag && isHTMLCloseTagNode(node.close_tag)) {
         this.checkTagName(node.close_tag)
       }
     }

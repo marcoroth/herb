@@ -14,6 +14,10 @@ unsafe fn convert_location(c_location: location_T) -> Location {
   )
 }
 
+unsafe fn convert_position(c_position: position_T) -> Position {
+  Position::new(c_position.line, c_position.column)
+}
+
 <%- errors.each do |error| -%>
 <%- snake_name = error.name.gsub(/([A-Z]+)([A-Z][a-z])/, '\1_\2').gsub(/([a-z\d])([A-Z])/, '\1_\2').downcase -%>
 unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%= error.name %> {
@@ -42,6 +46,8 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%
     },
     <%- when Herb::Template::SizeTField -%>
     error_ref.<%= field.name %>,
+    <%- when Herb::Template::PositionField -%>
+    Some(convert_position(error_ref.<%= field.name %>)),
     <%- end -%>
     <%- end -%>
   )

@@ -1,0 +1,9 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0010_li elements with erb without closing tags - render"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <li><%= item %>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"Apple\", \"Banana\", \"Cherry\"]}, options: {escape: false}}"
+---
+<ul>
+    <li>Apple
+    <li>Banana
+    <li>Cherry
+</ul>

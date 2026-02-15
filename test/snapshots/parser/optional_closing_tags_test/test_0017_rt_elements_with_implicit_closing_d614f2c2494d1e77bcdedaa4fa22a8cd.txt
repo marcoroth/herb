@@ -1,0 +1,90 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0017_rt elements with implicit closing"
+input: |2-
+<ruby>
+  漢<rt>かん
+  字<rt>じ
+</ruby>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "ruby" (location: (1:1)-(1:5))
+    │   │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "ruby" (location: (1:1)-(1:5))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:6)-(2:3))
+    │   │   │   └── content: "\n  漢"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:3)-(3:3))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:3)-(2:7))
+    │   │   │   │       ├── message: "Element `<rt>` at (2:4) has its closing tag omitted. While valid HTML, consider adding an explicit `</rt>` closing tag at (3:3) for clarity."
+    │   │   │   │       ├── opening_tag: "rt" (location: (2:4)-(2:6))
+    │   │   │   │       └── insertion_point: (3:3)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:3)-(2:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:3)-(2:4))
+    │   │   │   │       ├── tag_name: "rt" (location: (2:4)-(2:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:6)-(2:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "rt" (location: (2:4)-(2:6))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:7)-(3:3))
+    │   │   │   │       └── content: "かん\n  字"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (3:3)-(3:3))
+    │   │   │   │       └── tag_name: "rt" (location: (2:4)-(2:6))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLElementNode (location: (3:3)-(4:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ OmittedClosingTagError (location: (3:3)-(3:7))
+    │   │       │       ├── message: "Element `<rt>` at (3:4) has its closing tag omitted. While valid HTML, consider adding an explicit `</rt>` closing tag at (4:0) for clarity."
+    │   │       │       ├── opening_tag: "rt" (location: (3:4)-(3:6))
+    │   │       │       └── insertion_point: (4:0)
+    │   │       │
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (3:3)-(3:7))
+    │   │       │       ├── tag_opening: "<" (location: (3:3)-(3:4))
+    │   │       │       ├── tag_name: "rt" (location: (3:4)-(3:6))
+    │   │       │       ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │       │       ├── children: []
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "rt" (location: (3:4)-(3:6))
+    │   │       ├── body: (1 item)
+    │   │       │   └── @ HTMLTextNode (location: (3:7)-(4:0))
+    │   │       │       └── content: "じ\n"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLOmittedCloseTagNode (location: (4:0)-(4:0))
+    │   │       │       └── tag_name: "rt" (location: (3:4)-(3:6))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:7))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "ruby" (location: (4:2)-(4:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:6)-(4:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:7)-(5:0))
+        └── content: "\n"

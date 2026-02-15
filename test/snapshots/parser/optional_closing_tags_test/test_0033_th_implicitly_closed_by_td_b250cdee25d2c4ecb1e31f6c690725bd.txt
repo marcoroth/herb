@@ -1,0 +1,119 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0033_th implicitly closed by td"
+input: |2-
+<table>
+  <tr>
+    <th>Header
+    <td>Data
+  </tr>
+</table>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:7)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(5:7))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "tr" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "tr" (location: (2:3)-(2:5))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:6)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (3:4)-(4:4))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ OmittedClosingTagError (location: (3:4)-(3:8))
+    │   │   │   │   │   │       ├── message: "Element `<th>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</th>` closing tag at (4:4) for clarity."
+    │   │   │   │   │   │       ├── opening_tag: "th" (location: (3:5)-(3:7))
+    │   │   │   │   │   │       └── insertion_point: (4:4)
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (3:4)-(3:8))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   │       ├── tag_name: "th" (location: (3:5)-(3:7))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (3:7)-(3:8))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "th" (location: (3:5)-(3:7))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (3:8)-(4:4))
+    │   │   │   │   │   │       └── content: "Header\n    "
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (4:4)-(4:4))
+    │   │   │   │   │   │       └── tag_name: "th" (location: (3:5)-(3:7))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLElementNode (location: (4:4)-(5:2))
+    │   │   │   │       ├── errors: (1 error)
+    │   │   │   │       │   └── @ OmittedClosingTagError (location: (4:4)-(4:8))
+    │   │   │   │       │       ├── message: "Element `<td>` at (4:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</td>` closing tag at (5:2) for clarity."
+    │   │   │   │       │       ├── opening_tag: "td" (location: (4:5)-(4:7))
+    │   │   │   │       │       └── insertion_point: (5:2)
+    │   │   │   │       │
+    │   │   │   │       ├── open_tag:
+    │   │   │   │       │   └── @ HTMLOpenTagNode (location: (4:4)-(4:8))
+    │   │   │   │       │       ├── tag_opening: "<" (location: (4:4)-(4:5))
+    │   │   │   │       │       ├── tag_name: "td" (location: (4:5)-(4:7))
+    │   │   │   │       │       ├── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── is_void: false
+    │   │   │   │       │
+    │   │   │   │       ├── tag_name: "td" (location: (4:5)-(4:7))
+    │   │   │   │       ├── body: (1 item)
+    │   │   │   │       │   └── @ HTMLTextNode (location: (4:8)-(5:2))
+    │   │   │   │       │       └── content: "Data\n  "
+    │   │   │   │       │
+    │   │   │   │       ├── close_tag:
+    │   │   │   │       │   └── @ HTMLOmittedCloseTagNode (location: (5:2)-(5:2))
+    │   │   │   │       │       └── tag_name: "td" (location: (4:5)-(4:7))
+    │   │   │   │       │
+    │   │   │   │       ├── is_void: false
+    │   │   │   │       └── source: "HTML"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (5:2)-(5:7))
+    │   │   │   │       ├── tag_opening: "</" (location: (5:2)-(5:4))
+    │   │   │   │       ├── tag_name: "tr" (location: (5:4)-(5:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (5:6)-(5:7))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:7)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:8))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "table" (location: (6:2)-(6:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:8)-(7:0))
+        └── content: "\n"
