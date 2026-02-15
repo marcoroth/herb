@@ -1,0 +1,80 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0017_unclosed ERB tag in attribute value with space before quote"
+input: |2-
+<div class="foo<%= bar ">
+  <%= content %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (3:6)-(3:6))
+│       ├── message: "string_literal_eof: unterminated string meets end of file"
+│       ├── error_message: "unterminated string meets end of file"
+│       ├── diagnostic_id: "string_literal_eof"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(3:6))
+    │   ├── errors: (1 error)
+    │   │   └── @ MissingClosingTagError (location: (1:0)-(3:6))
+    │   │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │       └── opening_tag: "div" (location: (1:1)-(1:4))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── tag_closing: ">" (location: (3:5)-(3:6))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLAttributeNode (location: (1:5)-(3:5))
+    │   │       ├── name:
+    │   │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       └── children: (1 item)
+    │   │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │               └── content: "class"
+    │   │       │
+    │   │       │
+    │   │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       └── value:
+    │   │           └── @ HTMLAttributeValueNode (location: (1:11)-(3:5))
+    │   │               ├── errors: (1 error)
+    │   │               │   └── @ UnclosedQuoteError (location: (1:11)-(3:5))
+    │   │               │       ├── message: "Attribute value opened with \" at (1:11) was never closed."
+    │   │               │       └── opening_quote: """ (location: (1:11)-(1:12))
+    │   │               │
+    │   │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │               ├── children: (4 items)
+    │   │               │   ├── @ LiteralNode (location: (1:12)-(1:15))
+    │   │               │   │   └── content: "foo"
+    │   │               │   │
+    │   │               │   ├── @ ERBContentNode (location: (1:15)-(2:2))
+    │   │               │   │   ├── errors: (1 error)
+    │   │               │   │   │   └── @ NestedERBTagError (location: (2:2)-(2:5))
+    │   │               │   │   │       ├── message: "ERB tag `<%=` at (1:15) was terminated by nested `<%` tag at (2:2). Nesting `<%` tags is not supported."
+    │   │               │   │   │       ├── opening_tag: "<%=" (location: (1:15)-(1:18))
+    │   │               │   │   │       ├── nested_tag_line: 2
+    │   │               │   │   │       └── nested_tag_column: 2
+    │   │               │   │   │
+    │   │               │   │   ├── tag_opening: "<%=" (location: (1:15)-(1:18))
+    │   │               │   │   ├── content: " bar ">
+    │   │               │   │     " (location: (1:18)-(2:2))
+    │   │               │   │   ├── tag_closing: ∅
+    │   │               │   │   ├── parsed: true
+    │   │               │   │   └── valid: false
+    │   │               │   │
+    │   │               │   ├── @ ERBContentNode (location: (2:2)-(2:16))
+    │   │               │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │               │   │   ├── content: " content " (location: (2:5)-(2:14))
+    │   │               │   │   ├── tag_closing: "%>" (location: (2:14)-(2:16))
+    │   │               │   │   ├── parsed: true
+    │   │               │   │   └── valid: true
+    │   │               │   │
+    │   │               │   └── @ LiteralNode (location: (2:16)-(3:5))
+    │   │               │       └── content: "\n</div"
+    │   │               │
+    │   │               ├── close_quote: ∅
+    │   │               └── quoted: true
+    │   │
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLTextNode (location: (3:6)-(4:0))
+        └── content: "\n"

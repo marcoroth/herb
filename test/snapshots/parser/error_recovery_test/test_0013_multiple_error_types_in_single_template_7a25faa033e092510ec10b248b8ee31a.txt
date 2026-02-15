@@ -1,5 +1,5 @@
 ---
-source: "Parser::ErrorRecoveryTest#test_0010_multiple error types in single template"
+source: "Parser::ErrorRecoveryTest#test_0013_multiple error types in single template"
 input: |2-
 <div>
   <span class="unclosed

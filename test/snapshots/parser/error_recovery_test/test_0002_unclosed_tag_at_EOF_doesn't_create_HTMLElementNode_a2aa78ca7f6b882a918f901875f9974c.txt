@@ -6,7 +6,7 @@ input: "<div <div"
 └── children: (2 items)
     ├── @ HTMLOpenTagNode (location: (1:0)-(1:5))
     │   ├── errors: (1 error)
-    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:5))
+    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:4))
     │   │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
     │   │       └── tag_name: "div" (location: (1:1)-(1:4))
     │   │

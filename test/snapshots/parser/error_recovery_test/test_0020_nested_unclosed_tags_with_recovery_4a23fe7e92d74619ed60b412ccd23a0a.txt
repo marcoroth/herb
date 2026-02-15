@@ -1,5 +1,5 @@
 ---
-source: "Parser::ErrorRecoveryTest#test_0012_nested unclosed tags with recovery"
+source: "Parser::ErrorRecoveryTest#test_0020_nested unclosed tags with recovery"
 input: |2-
 <div>
   <span class="test

@@ -6,7 +6,7 @@ input: "<input type=\"text\" name=\"field\"<span>content</span>"
 └── children: (2 items)
     ├── @ HTMLOpenTagNode (location: (1:0)-(1:31))
     │   ├── errors: (1 error)
-    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:31))
+    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:6))
     │   │       ├── message: "Opening tag `<input>` at (1:1) is missing closing `>`."
     │   │       └── tag_name: "input" (location: (1:1)-(1:6))
     │   │

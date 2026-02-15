@@ -8,7 +8,7 @@ input: "<a href=\"test\"<b>text</b></a>"
         ├── open_tag:
         │   └── @ HTMLOpenTagNode (location: (1:0)-(1:14))
         │       ├── errors: (1 error)
-        │       │   └── @ UnclosedOpenTagError (location: (1:1)-(1:14))
+        │       │   └── @ UnclosedOpenTagError (location: (1:1)-(1:2))
         │       │       ├── message: "Opening tag `<a>` at (1:1) is missing closing `>`."
         │       │       └── tag_name: "a" (location: (1:1)-(1:2))
         │       │

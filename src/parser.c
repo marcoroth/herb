@@ -914,7 +914,7 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   token_T* tag_name = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
-    if (token_is(parser, TOKEN_HTML_TAG_START)) {
+    if (token_is_any_of(parser, TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_START_CLOSE)) {
       append_unclosed_open_tag_error(tag_name, tag_name->location.start, parser->current_token->location.start, errors);
 
       AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
@@ -1190,7 +1190,32 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
 
   token_T* opening_tag = parser_consume_expected(parser, TOKEN_ERB_START, errors);
   token_T* content = parser_consume_expected(parser, TOKEN_ERB_CONTENT, errors);
-  token_T* closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, errors);
+
+  token_T* closing_tag = NULL;
+  position_T end_position;
+
+  if (token_is(parser, TOKEN_ERB_END)) {
+    closing_tag = parser_consume_expected(parser, TOKEN_ERB_END, errors);
+    end_position = closing_tag->location.end;
+  } else if (token_is(parser, TOKEN_ERB_START)) {
+    append_nestederb_tag_error(
+      opening_tag,
+      parser->current_token->location.start.line,
+      parser->current_token->location.start.column,
+      parser->current_token->location.start,
+      parser->current_token->location.end,
+      errors
+    );
+    end_position = parser->current_token->location.start;
+  } else {
+    append_unclosederb_tag_error(
+      opening_tag,
+      opening_tag->location.start,
+      parser->current_token->location.start,
+      errors
+    );
+    end_position = parser->current_token->location.start;
+  }
 
   AST_ERB_CONTENT_NODE_T* erb_node = ast_erb_content_node_init(
     opening_tag,
@@ -1200,13 +1225,13 @@ static AST_ERB_CONTENT_NODE_T* parser_parse_erb_tag(parser_T* parser) {
     false,
     false,
     opening_tag->location.start,
-    closing_tag->location.end,
+    end_position,
     errors
   );
 
   token_free(opening_tag);
   token_free(content);
-  token_free(closing_tag);
+  if (closing_tag != NULL) { token_free(closing_tag); }
 
   return erb_node;
 }
