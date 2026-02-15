@@ -4,12 +4,12 @@ import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
 import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
-interface ERBTrailingWhitespaceAutofixContext extends BaseAutofixContext {
+interface ERBNoTrailingWhitespaceAutofixContext extends BaseAutofixContext {
   startOffset: number
   endOffset: number
 }
 
-class ERBTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBTrailingWhitespaceAutofixContext> {
+class ERBNoTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBNoTrailingWhitespaceAutofixContext> {
   protected visitSource(source: string): void {
     if (source.length === 0) return
 
@@ -37,9 +37,9 @@ class ERBTrailingWhitespaceVisitor extends BaseSourceRuleVisitor<ERBTrailingWhit
   }
 }
 
-export class ERBTrailingWhitespaceRule extends SourceRule {
+export class ERBNoTrailingWhitespaceRule extends SourceRule {
   static autocorrectable = true
-  name = "erb-trailing-whitespace"
+  name = "erb-no-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -49,14 +49,14 @@ export class ERBTrailingWhitespaceRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBTrailingWhitespaceVisitor(this.name, context)
+    const visitor = new ERBNoTrailingWhitespaceVisitor(this.name, context)
 
     visitor.visit(source)
 
     return visitor.offenses
   }
 
-  autofix(offense: LintOffense<ERBTrailingWhitespaceAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
+  autofix(offense: LintOffense<ERBNoTrailingWhitespaceAutofixContext>, source: string, _context?: Partial<LintContext>): string | null {
     if (!offense.autofixContext) return null
 
     const { startOffset, endOffset } = offense.autofixContext

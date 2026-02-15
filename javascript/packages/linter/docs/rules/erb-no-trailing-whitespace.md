@@ -1,6 +1,6 @@
 # Linter Rule: Disallow trailing whitespace at end of lines
 
-**Rule:** `erb-trailing-whitespace`
+**Rule:** `erb-no-trailing-whitespace`
 
 ## Description
 

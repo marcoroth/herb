@@ -3,9 +3,9 @@ import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
 
-import { ERBTrailingWhitespaceRule } from "../../src/rules/erb-trailing-whitespace.js"
+import { ERBNoTrailingWhitespaceRule } from "../../src/rules/erb-no-trailing-whitespace.js"
 
-describe("erb-trailing-whitespace autofix", () => {
+describe("erb-no-trailing-whitespace autofix", () => {
   beforeAll(async () => {
     await Herb.load()
   })
@@ -14,7 +14,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "Hello   "
     const expected = "Hello"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -26,7 +26,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "Hello\t"
     const expected = "Hello"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -38,7 +38,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "Hello \nWorld \nClean"
     const expected = "Hello\nWorld\nClean"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -50,7 +50,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "<div>\n   \n</div>"
     const expected = "<div>\n\n</div>"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -62,7 +62,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "<div>Hello</div>  \n<p>World</p>"
     const expected = "<div>Hello</div>\n<p>World</p>"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -74,7 +74,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "Hello \t "
     const expected = "Hello"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -86,7 +86,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "<div>\n  <p>Hello</p>\n</div>"
     const expected = "<div>\n  <p>Hello</p>\n</div>"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -98,7 +98,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = ""
     const expected = ""
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -110,7 +110,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "  <div> \n    <p>Hello</p> \n  </div>"
     const expected = "  <div>\n    <p>Hello</p>\n  </div>"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)
@@ -122,7 +122,7 @@ describe("erb-trailing-whitespace autofix", () => {
     const input = "Hello \n\nWorld \n"
     const expected = "Hello\n\nWorld\n"
 
-    const linter = new Linter(Herb, [ERBTrailingWhitespaceRule])
+    const linter = new Linter(Herb, [ERBNoTrailingWhitespaceRule])
     const result = linter.autofix(input, { fileName: "test.html.erb" })
 
     expect(result.source).toBe(expected)

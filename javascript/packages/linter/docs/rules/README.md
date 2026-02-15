@@ -12,12 +12,12 @@ This page contains documentation for all Herb Linter rules.
 - [`erb-no-extra-whitespace-inside-tags`](./erb-no-extra-whitespace-inside-tags.md) - Disallow multiple consecutive spaces inside ERB tags
 - [`erb-no-output-control-flow`](./erb-no-output-control-flow.md) - Prevents outputting control flow blocks
 - [`erb-no-silent-tag-in-attribute-name`](./erb-no-silent-tag-in-attribute-name.md) - Disallow ERB silent tags in HTML attribute names
+- [`erb-no-trailing-whitespace`](./erb-no-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
 - [`erb-prefer-image-tag-helper`](./erb-prefer-image-tag-helper.md) - Prefer `image_tag` helper over `<img>` with ERB expressions
 - [`erb-require-whitespace-inside-tags`](./erb-require-whitespace-inside-tags.md) - Requires whitespace around ERB tags
 - [`erb-require-trailing-newline`](./erb-require-trailing-newline.md) - Enforces that all HTML+ERB template files end with exactly one trailing newline character.
 - [`erb-right-trim`](./erb-right-trim.md) - Enforce consistent right-trimming syntax.
 - [`erb-strict-locals-comment-syntax`](./erb-strict-locals-comment-syntax.md) - Enforce strict locals comment syntax.
-- [`erb-trailing-whitespace`](./erb-trailing-whitespace.md) - Disallow trailing whitespace at end of lines.
 - [`herb-disable-comment-malformed`](./herb-disable-comment-malformed.md) - Detect malformed `herb:disable` comments.
 - [`herb-disable-comment-missing-rules`](./herb-disable-comment-missing-rules.md) - Require rule names in `herb:disable` comments.
 - [`herb-disable-comment-no-duplicate-rules`](./herb-disable-comment-no-duplicate-rules.md) - Disallow duplicate rule names in `herb:disable` comments.

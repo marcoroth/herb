@@ -2,11 +2,11 @@ import dedent from "dedent"
 import { describe, test } from "vitest"
 
 import { createLinterTest } from "../helpers/linter-test-helper.js"
-import { ERBTrailingWhitespaceRule } from "../../src/rules/erb-trailing-whitespace.js"
+import { ERBNoTrailingWhitespaceRule } from "../../src/rules/erb-no-trailing-whitespace.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBTrailingWhitespaceRule)
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBNoTrailingWhitespaceRule)
 
-describe("erb-trailing-whitespace", () => {
+describe("erb-no-trailing-whitespace", () => {
   test("when empty string", () => {
     expectNoOffenses("")
   })
