@@ -110,6 +110,17 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
           parser_options.analyze = false;
         }
       }
+
+      napi_value strict_prop;
+      bool has_strict_prop;
+      napi_has_named_property(env, args[1], "strict", &has_strict_prop);
+
+      if (has_strict_prop) {
+        napi_get_named_property(env, args[1], "strict", &strict_prop);
+        bool strict_value;
+        napi_get_value_bool(env, strict_prop, &strict_value);
+        parser_options.strict = strict_value;
+      }
     }
   }
 

@@ -54,6 +54,10 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
     if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
     if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
+
+    VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
+    if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
+    if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
@@ -65,13 +69,32 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   return result;
 }
 
-static VALUE Herb_parse_file(VALUE self, VALUE path) {
+static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
+  VALUE path, options;
+  rb_scan_args(argc, argv, "1:", &path, &options);
+
   char* file_path = (char*) check_string(path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
   char* string = (char*) check_string(source_value);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, NULL);
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+
+  if (!NIL_P(options)) {
+    VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
+    if (NIL_P(track_whitespace)) { track_whitespace = rb_hash_lookup(options, ID2SYM(rb_intern("track_whitespace"))); }
+    if (!NIL_P(track_whitespace) && RTEST(track_whitespace)) { parser_options.track_whitespace = true; }
+
+    VALUE analyze = rb_hash_lookup(options, rb_utf8_str_new_cstr("analyze"));
+    if (NIL_P(analyze)) { analyze = rb_hash_lookup(options, ID2SYM(rb_intern("analyze"))); }
+    if (!NIL_P(analyze) && !RTEST(analyze)) { parser_options.analyze = false; }
+
+    VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
+    if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
+    if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
 
   VALUE result = create_parse_result(root, source_value);
 
@@ -150,7 +173,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
 
   rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
-  rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, 1);
+  rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, -1);
   rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);

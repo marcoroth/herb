@@ -7,6 +7,7 @@ use std::ffi::CString;
 pub struct ParserOptions {
   pub track_whitespace: bool,
   pub analyze: bool,
+  pub strict: bool,
 }
 
 impl Default for ParserOptions {
@@ -14,6 +15,7 @@ impl Default for ParserOptions {
     Self {
       track_whitespace: false,
       analyze: true,
+      strict: true,
     }
   }
 }
@@ -73,6 +75,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
       analyze: options.analyze,
+      strict: options.strict,
     };
 
     let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options);
