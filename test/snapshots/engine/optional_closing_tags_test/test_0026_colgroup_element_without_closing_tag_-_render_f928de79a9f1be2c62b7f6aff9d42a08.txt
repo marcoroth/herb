@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0026_colgroup element without closing tag - render"
+input: "{source: \"<table>\\n  <colgroup>\\n    <col style=\\\"width: 50%\\\">\\n    <col style=\\\"width: 50%\\\">\\n  <tr>\\n    <td>A\\n    <td>B\\n</table>\\n\", locals: {}, options: {escape: false, strict: false}}"
+---
+<table>
+  <colgroup>
+    <col style="width: 50%">
+    <col style="width: 50%">
+  <tr>
+    <td>A
+    <td>B
+</table>

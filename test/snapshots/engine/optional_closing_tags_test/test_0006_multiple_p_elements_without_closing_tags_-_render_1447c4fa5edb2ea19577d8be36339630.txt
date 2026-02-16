@@ -1,0 +1,7 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0006_multiple p elements without closing tags - render"
+input: "{source: \"<p>First paragraph\\n<p>Second paragraph\\n<p>Third paragraph\\n\", locals: {}, options: {escape: false, strict: false}}"
+---
+<p>First paragraph
+<p>Second paragraph
+<p>Third paragraph

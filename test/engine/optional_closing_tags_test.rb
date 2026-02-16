@@ -12,25 +12,25 @@ module Engine
     test "p element without closing tag - compilation" do
       template = "<p>Hello World"
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "p element without closing tag - render" do
       template = "<p>Hello World"
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "p element with erb without closing tag - compilation" do
       template = "<p><%= message %>"
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "p element with erb without closing tag - render" do
       template = "<p><%= message %>"
 
-      assert_evaluated_snapshot(template, { message: "Hello" }, { escape: false })
+      assert_evaluated_snapshot(template, { message: "Hello" }, { escape: false, strict: false })
     end
 
     test "multiple p elements without closing tags - compilation" do
@@ -40,7 +40,7 @@ module Engine
         <p>Third paragraph
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "multiple p elements without closing tags - render" do
@@ -50,7 +50,7 @@ module Engine
         <p>Third paragraph
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # LI element tests
@@ -63,7 +63,7 @@ module Engine
         </ul>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "li elements without closing tags - render" do
@@ -75,7 +75,7 @@ module Engine
         </ul>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "li elements with erb without closing tags - compilation" do
@@ -87,7 +87,7 @@ module Engine
         </ul>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "li elements with erb without closing tags - render" do
@@ -99,7 +99,7 @@ module Engine
         </ul>
       ERB
 
-      assert_evaluated_snapshot(template, { items: ["Apple", "Banana", "Cherry"] }, { escape: false })
+      assert_evaluated_snapshot(template, { items: ["Apple", "Banana", "Cherry"] }, { escape: false, strict: false })
     end
 
     # DT/DD element tests
@@ -113,7 +113,7 @@ module Engine
         </dl>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "dt and dd elements without closing tags - render" do
@@ -126,7 +126,7 @@ module Engine
         </dl>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # Option element tests
@@ -139,7 +139,7 @@ module Engine
         </select>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "option elements without closing tags - render" do
@@ -151,7 +151,7 @@ module Engine
         </select>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "option elements with erb without closing tags - compilation" do
@@ -163,7 +163,7 @@ module Engine
         </select>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "option elements with erb without closing tags - render" do
@@ -181,7 +181,7 @@ module Engine
         { value: "3", label: "Three" }
       ]
 
-      assert_evaluated_snapshot(template, { select_options: select_options }, { escape: false })
+      assert_evaluated_snapshot(template, { select_options: select_options }, { escape: false, strict: false })
     end
 
     # Optgroup element tests
@@ -197,7 +197,7 @@ module Engine
         </select>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "optgroup elements without closing tags - render" do
@@ -212,7 +212,7 @@ module Engine
         </select>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # Table element tests
@@ -228,7 +228,7 @@ module Engine
         </table>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "tr elements without closing tags - render" do
@@ -243,7 +243,7 @@ module Engine
         </table>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "td and th elements without closing tags - compilation" do
@@ -258,7 +258,7 @@ module Engine
         </table>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "td and th elements without closing tags - render" do
@@ -273,7 +273,7 @@ module Engine
         </table>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "thead tbody tfoot without closing tags - compilation" do
@@ -288,7 +288,7 @@ module Engine
         </table>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "thead tbody tfoot without closing tags - render" do
@@ -303,7 +303,7 @@ module Engine
         </table>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # Colgroup element tests
@@ -319,7 +319,7 @@ module Engine
         </table>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "colgroup element without closing tag - render" do
@@ -334,7 +334,7 @@ module Engine
         </table>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # RT/RP element tests
@@ -348,7 +348,7 @@ module Engine
         </ruby>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "rt and rp elements without closing tags - render" do
@@ -361,7 +361,7 @@ module Engine
         </ruby>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     # Complex mixed tests
@@ -385,7 +385,7 @@ module Engine
         </form>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "complex form with optional closing tags - render" do
@@ -408,7 +408,7 @@ module Engine
         </form>
       ERB
 
-      assert_evaluated_snapshot(template, {}, { escape: false })
+      assert_evaluated_snapshot(template, {}, { escape: false, strict: false })
     end
 
     test "erb loop with li elements without closing tags - compilation" do
@@ -423,7 +423,7 @@ module Engine
         </nav>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "erb loop with li elements without closing tags - render" do
@@ -444,7 +444,7 @@ module Engine
         { name: "Contact", url: "/contact" }
       ]
 
-      assert_evaluated_snapshot(template, { items: items }, { escape: false })
+      assert_evaluated_snapshot(template, { items: items }, { escape: false, strict: false })
     end
 
     test "table with erb and optional closing tags - compilation" do
@@ -465,7 +465,7 @@ module Engine
         </table>
       ERB
 
-      assert_compiled_snapshot(template)
+      assert_compiled_snapshot(template, strict: false)
     end
 
     test "table with erb and optional closing tags - render" do
@@ -492,7 +492,7 @@ module Engine
         { name: "Charlie", age: 35, city: "Paris" }
       ]
 
-      assert_evaluated_snapshot(template, { users: users }, { escape: false })
+      assert_evaluated_snapshot(template, { users: users }, { escape: false, strict: false })
     end
   end
 end

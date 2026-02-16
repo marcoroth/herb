@@ -51,7 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
-      @strict = properties.fetch(:strict, false)
+      @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?

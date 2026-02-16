@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0022_td and th elements without closing tags - render"
+input: "{source: \"<table>\\n  <tr>\\n    <th>Header 1\\n    <th>Header 2\\n  <tr>\\n    <td>Data 1\\n    <td>Data 2\\n</table>\\n\", locals: {}, options: {escape: false, strict: false}}"
+---
+<table>
+  <tr>
+    <th>Header 1
+    <th>Header 2
+  <tr>
+    <td>Data 1
+    <td>Data 2
+</table>
