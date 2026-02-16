@@ -743,4 +743,302 @@ describe("CLI Binary", () => {
       expect(result.stdout).toContain("Checked 3 files, formatted 3 files")
     })
   })
+
+  describe("Config Auto-Discovery", () => {
+    const configContent = dedent`
+      files:
+        include:
+          - "**/*.html.erb"
+
+      formatter:
+        enabled: true
+        indentWidth: 4
+        maxLineLength: 120
+    `
+
+    beforeEach(async () => {
+      await mkdir("test-config-discovery", { recursive: true })
+      await mkdir("test-config-discovery/subdir", { recursive: true })
+      await writeFile("test-config-discovery/.herb.yml", configContent)
+    })
+
+    afterEach(async () => {
+      await rm("test-config-discovery", { recursive: true }).catch(() => {})
+    })
+
+    it("should auto-discover config file in current directory", async () => {
+      const testFile = "test-config-discovery/test.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file at")
+      expect(result.stderr).toContain(".herb.yml")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('    <p>Test</p>')
+      expect(formatted).not.toMatch(/^\s{2}<p>/m)
+    })
+
+    it("should auto-discover config file from subdirectory", async () => {
+      const testFile = "test-config-discovery/subdir/nested.html.erb"
+      const input = '<div><p>Nested</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file at")
+      expect(result.stderr).toContain(".herb.yml")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('    <p>Nested</p>')
+    })
+
+    it("should use config maxLineLength setting", async () => {
+      const testFile = "test-config-discovery/long-line.html.erb"
+      const input = '<div class="container"><p>This is a pretty long line of text that is exactly one hundred and fifteen characters long</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('This is a pretty long line')
+    })
+
+    it("should override config with CLI flags", async () => {
+      const testFile = "test-config-discovery/override.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile, '--indent-width', '2'])
+
+      expectExitCode(result, 0)
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('  <p>Test</p>')
+      expect(formatted).not.toMatch(/^\s{4}<p>/m)
+    })
+
+    it("should work without config file (use defaults)", async () => {
+      await mkdir("test-no-config", { recursive: true })
+      const testFile = "test-no-config/test.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).not.toContain("Using Herb config file")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('  <p>Test</p>')
+
+      await rm("test-no-config", { recursive: true })
+    })
+
+    it("should honor explicit --config-file flag", async () => {
+      await mkdir("test-explicit-config", { recursive: true })
+
+      const altConfigContent = dedent`
+        files:
+          include:
+            - "**/*.html.erb"
+
+        formatter:
+          enabled: true
+          indentWidth: 8
+      `
+
+      await writeFile("test-explicit-config/.herb.yml", altConfigContent)
+
+      const testFile = "test-explicit-config/explicit.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile, '--config-file', 'test-explicit-config/.herb.yml'])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('        <p>Test</p>')
+
+      await rm("test-explicit-config", { recursive: true })
+    })
+
+    it("should format multiple files with config from project root", async () => {
+      const file1 = "test-config-discovery/file1.html.erb"
+      const file2 = "test-config-discovery/subdir/file2.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(file1, input)
+      await writeFile(file2, input)
+
+      const result = await execBinary([file1, file2])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stdout).toContain("Checked 2 files, formatted 2 files")
+
+      const formatted1 = await readFile(file1, 'utf-8')
+      const formatted2 = await readFile(file2, 'utf-8')
+
+      expect(formatted1).toContain('    <p>Test</p>')
+      expect(formatted2).toContain('    <p>Test</p>')
+    })
+  })
+
+  describe("Config Auto-Discovery Regression Tests (Issue #1177)", () => {
+    const configContent = dedent`
+      files:
+        include:
+          - "**/*.html.erb"
+
+      formatter:
+        enabled: true
+        indentWidth: 3
+        maxLineLength: 100
+    `
+
+    beforeEach(async () => {
+      await mkdir("test-issue-1177", { recursive: true })
+      await mkdir("test-issue-1177/deep/nested/path", { recursive: true })
+      await writeFile("test-issue-1177/.herb.yml", configContent)
+    })
+
+    afterEach(async () => {
+      await rm("test-issue-1177", { recursive: true }).catch(() => {})
+    })
+
+    it("should auto-discover config when formatting a single file in project root", async () => {
+      const testFile = "test-issue-1177/index.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stderr).toContain("test-issue-1177/.herb.yml")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('   <p>Test</p>')
+      expect(formatted).toMatch(/^\s{3}<p>/m)
+    })
+
+    it("should auto-discover config when formatting a deeply nested file", async () => {
+      const testFile = "test-issue-1177/deep/nested/path/deep.html.erb"
+      const input = '<div><p>Deep nested file</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stderr).toContain("test-issue-1177/.herb.yml")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('   <p>Deep nested file</p>')
+    })
+
+    it("should use config settings without requiring --config-file flag", async () => {
+      const testFile = "test-issue-1177/test.html.erb"
+      const input = '<div><p>This is a line that is exactly ninety five characters long for testing config</p></div>'
+
+      await writeFile(testFile, input)
+
+      const result = await execBinary([testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+
+      const formatted = await readFile(testFile, 'utf-8')
+      expect(formatted).toContain('ninety five characters long for testing config')
+      expect(formatted).toContain('   <p>')
+    })
+
+    it("should consistently use config across multiple file arguments", async () => {
+      const file1 = "test-issue-1177/file1.html.erb"
+      const file2 = "test-issue-1177/deep/file2.html.erb"
+      const file3 = "test-issue-1177/deep/nested/file3.html.erb"
+      const input = '<div><p>Test</p></div>'
+
+      await writeFile(file1, input)
+      await writeFile(file2, input)
+      await writeFile(file3, input)
+
+      const result = await execBinary([file1, file2, file3])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stdout).toContain("Checked 3 files")
+
+      const formatted1 = await readFile(file1, 'utf-8')
+      const formatted2 = await readFile(file2, 'utf-8')
+      const formatted3 = await readFile(file3, 'utf-8')
+
+      expect(formatted1).toContain('   <p>Test</p>')
+      expect(formatted2).toContain('   <p>Test</p>')
+      expect(formatted3).toContain('   <p>Test</p>')
+    })
+
+    it("should respect config when using glob patterns", async () => {
+      await writeFile("test-issue-1177/a.html.erb", '<div><p>A</p></div>')
+      await writeFile("test-issue-1177/b.html.erb", '<div><p>B</p></div>')
+      await writeFile("test-issue-1177/deep/c.html.erb", '<div><p>C</p></div>')
+
+      const result = await execBinary(["test-issue-1177/**/*.html.erb"])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+
+      const formattedA = await readFile("test-issue-1177/a.html.erb", 'utf-8')
+      const formattedB = await readFile("test-issue-1177/b.html.erb", 'utf-8')
+      const formattedC = await readFile("test-issue-1177/deep/c.html.erb", 'utf-8')
+
+      expect(formattedA).toContain('   <p>A</p>')
+      expect(formattedB).toContain('   <p>B</p>')
+      expect(formattedC).toContain('   <p>C</p>')
+    })
+
+    it("should use config in --check mode", async () => {
+      const testFile = "test-issue-1177/check.html.erb"
+      const alreadyFormatted = '<div>\n   <p>Test</p>\n</div>\n'
+
+      await writeFile(testFile, alreadyFormatted)
+
+      const result = await execBinary(["--check", testFile])
+
+      expectExitCode(result, 0)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stdout).toContain("all files are properly formatted")
+    })
+
+    it("should detect unformatted files correctly with config settings", async () => {
+      const testFile = "test-issue-1177/unformatted.html.erb"
+      const wrongFormatting = '<div>\n  <p>Test</p>\n</div>\n'
+
+      await writeFile(testFile, wrongFormatting)
+
+      const result = await execBinary(["--check", testFile])
+
+      expectExitCode(result, 1)
+      expect(result.stderr).toContain("Using Herb config file")
+      expect(result.stdout).toContain("not formatted")
+      expect(result.stdout).toContain("unformatted.html.erb")
+    })
+  })
 })
