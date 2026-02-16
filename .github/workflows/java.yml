@@ -31,23 +31,17 @@ jobs:
           bundler-cache: true
 
       - name: Render Templates
-        run: bundle exec rake templates
+        run: make templates
+        working-directory: java
 
       - name: Compile Herb
-        run: bundle exec rake make
-
-      - name: Build JNI library
-        run: make jni
+        run: make herb
         working-directory: java
 
-      - name: Compile Java classes
-        run: make java
+      - name: Build and test
+        run: make test
         working-directory: java
 
-      - name: Run tests
-        run: ./run_tests.sh
-        working-directory: java
-
-      - name: Test CLI version command
-        run: ./bin/herb-java version
+      - name: Integration tests
+        run: make integration_test
         working-directory: java

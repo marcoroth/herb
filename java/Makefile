@@ -48,13 +48,18 @@ JNI_LIB = $(BUILD_DIR)/$(JNI_LIB_PREFIX)herb_jni.$(JNI_LIB_EXT)
 JAVA_SOURCES = $(shell find org -name "*.java" 2>/dev/null)
 JAVA_TIMESTAMP = target/.java_compiled
 
-.PHONY: all clean java jni test
+.PHONY: all
+all: templates herb jni java
 
-all: templates jni java
-
+.PHONY: templates
 templates:
 	cd .. && bundle exec rake templates
 
+.PHONY: herb
+herb:
+	cd .. && bundle exec rake make
+
+.PHONY: jni
 jni: $(JNI_LIB)
 
 $(JNI_LIB): $(JNI_OBJECTS) $(HERB_OBJECTS)
@@ -65,6 +70,7 @@ $(JNI_LIB): $(JNI_OBJECTS) $(HERB_OBJECTS)
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+.PHONY: java
 java: $(JAVA_TIMESTAMP)
 
 $(JAVA_TIMESTAMP): $(JAVA_SOURCES)
@@ -75,24 +81,39 @@ $(JAVA_TIMESTAMP): $(JAVA_SOURCES)
 		echo "Compiled Java classes"; \
 	fi
 
+.PHONY: test
+test: jni java
+	$(JAVA_CMD) --enable-native-access=ALL-UNNAMED \
+		-Djava.library.path=$(BUILD_DIR) \
+		-cp target/classes org.herb.HerbTest
+
+.PHONY: integration_test
+integration_test: cli
+	bash run_tests.sh
+
+.PHONY: cli
 cli: all
 	@echo "CLI ready! Use: ./bin/herb-java [command] [file]"
 	@echo ""
 	@./bin/herb-java || true
 
+.PHONY: clean
 clean:
 	rm -f $(JNI_OBJECTS) $(JNI_LIB)
 	rm -rf target/
 	rm -f nodes.o error_helpers.o
 
+.PHONY: help
 help:
 	@echo "Herb Java/JNI Build System"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all        - Build everything (templates + JNI + Java)"
+	@echo "  all        - Build everything (templates + herb + JNI + Java)"
 	@echo "  templates  - Generate code from ERB templates"
+	@echo "  herb       - Compile the Herb C library"
 	@echo "  jni        - Build JNI shared library"
 	@echo "  java       - Compile Java classes"
+	@echo "  test       - Run Java tests"
 	@echo "  cli        - Show CLI usage"
 	@echo "  clean      - Remove built files"
 	@echo "  help       - Show this help"
