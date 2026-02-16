@@ -269,9 +269,9 @@ describe("@herb-tools/formatter", () => {
         <body>
           <div class="main">
             <p>
-              <strong>Bold Heading:</strong><br>
-              <%= Date.current %>: Lorem ipsum dolor sit amet, consectetur adipiscing
-              elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              <strong>Bold Heading:</strong><br> <%= Date.current %>: Lorem ipsum
+              dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+              incididunt ut labore et dolore magna aliqua.
             </p>
           </div>
         </body>

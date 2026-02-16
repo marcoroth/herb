@@ -1825,8 +1825,71 @@ export class FormatPrinter extends Printer {
     const adjacentInlineCount = countAdjacentInlineElements(children)
 
     if (adjacentInlineCount >= 2) {
-      const { processedIndices } = this.renderAdjacentInlineElements(children, adjacentInlineCount)
-      this.visitRemainingChildren(children, processedIndices)
+      let processedCount = 0
+      const adjacentInlineContent = this.capture(() => {
+        const oldInlineMode = this.inlineMode
+        this.inlineMode = true
+
+        for (
+          let i = 0;
+          i < children.length && processedCount < adjacentInlineCount;
+          i++
+        ) {
+          const child = children[i]
+
+          if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+            continue
+          }
+
+          const isInlineOrERB =
+            (isNode(child, HTMLElementNode) &&
+              isInlineElement(getTagName(child))) ||
+            isNode(child, ERBContentNode)
+
+          if (isInlineOrERB) {
+            if (isNode(child, HTMLElementNode)) {
+              this.push(this.renderInlineElementAsString(child))
+            } else if (isNode(child, ERBContentNode)) {
+              this.push(this.renderERBAsString(child))
+            }
+            processedCount++
+          } else {
+            break
+          }
+        }
+
+        this.inlineMode = oldInlineMode
+      }).join("")
+
+      processedCount = 0
+      const remainingChildren = children.filter((child) => {
+        if (processedCount >= adjacentInlineCount) return true
+
+        if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+          return true
+        }
+
+        const isInlineOrERB =
+          (isNode(child, HTMLElementNode) &&
+            isInlineElement(getTagName(child))) ||
+          isNode(child, ERBContentNode)
+
+        if (isInlineOrERB) {
+          processedCount++
+          return false
+        }
+
+        return true
+      })
+
+      if (adjacentInlineContent) {
+        this.buildAndWrapTextFlowWithPrefix(
+          adjacentInlineContent,
+          remainingChildren,
+        )
+      } else if (remainingChildren.length > 0) {
+        this.buildAndWrapTextFlow(remainingChildren)
+      }
 
       return
     }
@@ -2067,11 +2130,15 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Build words array from text/inline/ERB and wrap them
+   * Build words array from text/inline/ERB with an optional prefix and wrap them
    */
-  private buildAndWrapTextFlow(children: Node[]): void {
+  private buildAndWrapTextFlowWithPrefix(prefix: string, children: Node[]): void {
     const unitsWithNodes: ContentUnitWithNode[] = this.buildContentUnitsWithNodes(children)
     const words: Array<{ word: string, isHerbDisable: boolean }> = []
+
+    if (prefix) {
+      words.push({ word: prefix, isHerbDisable: false })
+    }
 
     for (const { unit, node } of unitsWithNodes) {
       if (unit.breaksFlow) {
@@ -2118,6 +2185,13 @@ export class FormatPrinter extends Printer {
     }
 
     this.flushWords(words)
+  }
+
+  /**
+   * Build words array from text/inline/ERB and wrap them
+   */
+  private buildAndWrapTextFlow(children: Node[]): void {
+    this.buildAndWrapTextFlowWithPrefix('', children)
   }
 
   /**
