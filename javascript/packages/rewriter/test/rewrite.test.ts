@@ -128,15 +128,8 @@ describe("rewrite", () => {
           rounded">
         </div>
       `
-      const expected = dedent`
-        <div class="rounded px-4 <% if valid? %>
-            bg-green-500 font-bold text-green-800
-          <% else %>
-            bg-red-500 font-bold text-red-800
-          <% end %>">
-        </div>
-      `
 
+      const expected = `<div class="rounded px-4 <% if valid? %> bg-green-500 font-bold text-green-800 <% else %> bg-red-500 font-bold text-red-800 <% end %>">\n</div>`
       const output = rewriteString(Herb, template, [sorter])
 
       expect(output).toBe(expected)
