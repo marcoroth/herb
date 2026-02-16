@@ -43,5 +43,5 @@ jobs:
         working-directory: java
 
       - name: Integration tests
-        run: make integration_test
+        run: make cli_test
         working-directory: java
