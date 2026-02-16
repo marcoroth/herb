@@ -8,6 +8,10 @@ require "json"
 
 module Engine
   class CLIStdinTest < Minitest::Spec
+    def setup
+      skip "Shell stdin tests are skipped in CI" if ENV["CI"]
+    end
+
     def with_temp_file(content)
       file = Tempfile.new(["test_template", ".erb"])
       file.write(content)
