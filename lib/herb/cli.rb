@@ -13,11 +13,11 @@ class Herb::CLI
   def initialize(args)
     @args = args
     @command = args[0]
-    @file = args[1]
   end
 
   def call
     options
+    @file = @args[1]
 
     if silent
       if result.failed?
@@ -61,16 +61,23 @@ class Herb::CLI
   end
 
   def file_content
-    if @file && File.exist?(@file)
+    if @file && @file != "-" && File.exist?(@file)
       File.read(@file)
-    elsif @file
+    elsif @file && @file != "-"
       puts "File doesn't exist: #{@file}"
       exit(1)
+    elsif @file == "-" || !$stdin.tty?
+      $stdin.read
     else
       puts "No file provided."
       puts
       puts "Usage:"
       puts "  bundle exec herb #{@command} [file] [options]"
+      puts
+      puts "You can also pipe content via stdin:"
+      puts "  echo \"<div>Hello</div>\" | bundle exec herb #{@command}"
+      puts "  cat file.html.erb | bundle exec herb #{@command}"
+      puts "  bundle exec herb #{@command} -"
       exit(1)
     end
   end
@@ -99,6 +106,14 @@ class Herb::CLI
         bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
         bundle exec herb playground [file]  Open the content of the source file in the playground
         bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
+
+      stdin:
+        Commands that accept [file] also accept input via stdin:
+          echo "<div>Hello</div>" | bundle exec herb lex
+          cat file.html.erb | bundle exec herb parse
+
+        Use `-` to explicitly read from stdin:
+          bundle exec herb compile -
 
       Options:
         #{option_parser.to_s.strip.gsub(/^    /, "  ")}

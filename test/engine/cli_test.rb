@@ -38,6 +38,14 @@ module Engine
       file&.unlink
     end
 
+    def with_stdin(content)
+      original_stdin = $stdin
+      $stdin = StringIO.new(content)
+      yield
+    ensure
+      $stdin = original_stdin
+    end
+
     test "compile valid template" do
       template = "<div>Hello <%= name %>!</div>"
 
@@ -188,13 +196,22 @@ module Engine
     end
 
     test "compile no file provided" do
-      assert_raises(SystemExit) do
-        Herb::CLI.new(["compile"]).call
-      end
+      original_stdin = $stdin
+      mock_stdin = StringIO.new
+      def mock_stdin.tty? = true
+      $stdin = mock_stdin
 
-      output = captured_output
-      assert_includes output, "No file provided"
-      assert_includes output, "Usage:"
+      begin
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "No file provided"
+        assert_includes output, "Usage:"
+      ensure
+        $stdin = original_stdin
+      end
     end
 
     test "help includes compile command" do
@@ -308,6 +325,164 @@ module Engine
       output = captured_output
       assert_includes output, "Unknown command"
       assert_includes output, "compile [file]"
+    end
+
+    test "lex reads from stdin with dash argument" do
+      template = "<div>Hello</div>"
+
+      with_stdin(template) do
+        Herb::CLI.new(["lex", "-"]).call
+
+        output = captured_output
+        assert_includes output, "TOKEN_HTML_TAG_START"
+        assert_includes output, "TOKEN_IDENTIFIER"
+        assert_includes output, "div"
+      end
+    end
+
+    test "parse reads from stdin with dash argument" do
+      template = "<div>Hello</div>"
+
+      with_stdin(template) do
+        Herb::CLI.new(["parse", "-"]).call
+
+        output = captured_output
+        assert_includes output, "DocumentNode"
+        assert_includes output, "HTMLElementNode"
+        assert_includes output, "div"
+      end
+    end
+
+    test "compile reads from stdin with dash argument" do
+      template = "<div><%= name %></div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", "-"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "_buf = ::String.new"
+        assert_includes output, "<div>"
+        assert_includes output, "__herb.h((name))"
+      end
+    end
+
+    test "ruby reads from stdin with dash argument" do
+      template = "<div><%= user.name %></div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["ruby", "-"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "user.name"
+      end
+    end
+
+    test "html reads from stdin with dash argument" do
+      template = "<div><%= user.name %></div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["html", "-"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "<div>"
+        assert_includes output, "</div>"
+      end
+    end
+
+    test "stdin with json output" do
+      template = "<div>Hello</div>"
+
+      with_stdin(template) do
+        Herb::CLI.new(["lex", "-", "--json"]).call
+
+        output = captured_output
+        json_data = JSON.parse(output)
+
+        assert_kind_of Array, json_data
+        assert(json_data.any? { |token| token["type"] == "TOKEN_HTML_TAG_START" })
+        assert(json_data.any? { |token| token["value"] == "div" })
+      end
+    end
+
+    test "compile stdin with json output" do
+      template = "<div><%= title %></div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", "-", "--json"]).call
+        end
+
+        output = captured_output
+        json_data = JSON.parse(output)
+
+        assert_equal true, json_data["success"]
+        assert_includes json_data["source"], "_buf = ::String.new"
+        assert_equal "-", json_data["filename"]
+      end
+    end
+
+    test "compile stdin with options" do
+      template = "<div><%= user_input %></div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile", "-", "--no-escape", "--freeze"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "# frozen_string_literal: true"
+        assert_includes output, "(user_input).to_s"
+        refute_includes output, "__herb.h("
+      end
+    end
+
+    test "render reads from stdin" do
+      template = "<div>Rendered content</div>"
+
+      with_stdin(template) do
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["render", "-"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "<div>Rendered content</div>"
+      end
+    end
+
+    test "help includes stdin documentation" do
+      assert_raises(SystemExit) do
+        Herb::CLI.new(["help"]).call
+      end
+
+      output = captured_output
+      assert_includes output, "stdin:"
+      assert_includes output, "echo"
+      assert_includes output, "cat"
+    end
+
+    test "no file provided message includes stdin hint" do
+      original_stdin = $stdin
+      mock_stdin = StringIO.new
+      def mock_stdin.tty? = true
+      $stdin = mock_stdin
+
+      begin
+        assert_raises(SystemExit) do
+          Herb::CLI.new(["compile"]).call
+        end
+
+        output = captured_output
+        assert_includes output, "No file provided"
+        assert_includes output, "pipe content via stdin"
+      ensure
+        $stdin = original_stdin
+      end
     end
   end
 end
