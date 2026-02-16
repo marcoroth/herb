@@ -13,6 +13,7 @@ VALUE cToken;
 VALUE cResult;
 VALUE cLexResult;
 VALUE cParseResult;
+VALUE cParserOptions;
 
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
@@ -210,6 +211,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
+  cParserOptions = rb_define_class_under(mHerb, "ParserOptions", rb_cObject);
 
   rb_init_node_classes();
   rb_init_error_classes();

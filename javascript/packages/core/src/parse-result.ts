@@ -3,27 +3,21 @@ import { Result } from "./result.js"
 import { DocumentNode } from "./nodes.js"
 import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
+import { ParserOptions } from "./parser-options.js"
 
 import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedDocumentNode } from "./nodes.js"
+import type { SerializedParserOptions } from "./parser-options.js"
 
 import type { Visitor } from "./visitor.js"
-
-export type SerializedParserOptions = {
-  strict: boolean
-  track_whitespace: boolean
-  analyze: boolean
-}
 
 export type SerializedParseResult = {
   value: SerializedDocumentNode
   source: string
   warnings: SerializedHerbWarning[]
   errors: SerializedHerbError[]
-  strict: boolean
-  track_whitespace: boolean
-  analyze: boolean
+  options: SerializedParserOptions
 }
 
 /**
@@ -34,14 +28,8 @@ export class ParseResult extends Result {
   /** The document node generated from the source code. */
   readonly value: DocumentNode
 
-  /** Whether strict mode was enabled during parsing. */
-  readonly strict: boolean
-
-  /** Whether whitespace tracking was enabled during parsing. */
-  readonly trackWhitespace: boolean
-
-  /** Whether analysis was performed during parsing. */
-  readonly analyze: boolean
+  /** The parser options used during parsing. */
+  readonly options: ParserOptions
 
   /**
    * Creates a `ParseResult` instance from a serialized result.
@@ -54,11 +42,7 @@ export class ParseResult extends Result {
       result.source,
       result.warnings.map((warning) => HerbWarning.from(warning)),
       result.errors.map((error) => HerbError.from(error)),
-      {
-        strict: result.strict ?? true,
-        trackWhitespace: result.track_whitespace ?? false,
-        analyze: result.analyze ?? true,
-      },
+      ParserOptions.from(result.options),
     )
   }
 
@@ -75,13 +59,11 @@ export class ParseResult extends Result {
     source: string,
     warnings: HerbWarning[] = [],
     errors: HerbError[] = [],
-    options: { strict?: boolean; trackWhitespace?: boolean; analyze?: boolean } = {},
+    options: ParserOptions = new ParserOptions(),
   ) {
     super(source, warnings, errors)
     this.value = value
-    this.strict = options.strict ?? true
-    this.trackWhitespace = options.trackWhitespace ?? false
-    this.analyze = options.analyze ?? true
+    this.options = options
   }
 
   /**

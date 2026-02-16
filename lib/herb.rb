@@ -11,6 +11,7 @@ require_relative "herb/token_list"
 
 require_relative "herb/result"
 require_relative "herb/lex_result"
+require_relative "herb/parser_options"
 require_relative "herb/parse_result"
 
 require_relative "herb/ast"

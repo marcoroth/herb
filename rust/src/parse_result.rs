@@ -7,9 +7,7 @@ pub struct ParseResult {
   pub value: DocumentNode,
   pub source: String,
   pub errors: Vec<AnyError>,
-  pub strict: bool,
-  pub track_whitespace: bool,
-  pub analyze: bool,
+  pub options: ParserOptions,
 }
 
 impl ParseResult {
@@ -23,9 +21,7 @@ impl ParseResult {
       value,
       source,
       errors,
-      strict: options.strict,
-      track_whitespace: options.track_whitespace,
-      analyze: options.analyze,
+      options: options.clone(),
     }
   }
 
