@@ -76,6 +76,54 @@ export class CodeActionService {
     return actions.concat(disableAllActions)
   }
 
+  parserErrorCodeActions(params: CodeActionParams, _document: TextDocument): CodeAction[] {
+    const codeActions: CodeAction[] = []
+
+    const parserDiagnostics = params.context.diagnostics.filter(diagnostic => {
+      return diagnostic.source === "Herb Parser " && this.isInRange(diagnostic.range, params.range)
+    })
+
+    for (const diagnostic of parserDiagnostics) {
+      if (diagnostic.code === "OmittedClosingTagError") {
+        const action = this.createInsertClosingTagAction(params.textDocument.uri, diagnostic)
+
+        if (action) {
+          codeActions.push(action)
+        }
+      }
+    }
+
+    return codeActions
+  }
+
+  private createInsertClosingTagAction(uri: string, diagnostic: Diagnostic): CodeAction | null {
+    const errorData = diagnostic.data?.error
+    if (!errorData) return null
+
+    const insertionPoint = errorData.insertion_point
+    const openingTag = errorData.opening_tag
+
+    if (!insertionPoint || !openingTag) return null
+
+    const tagName = openingTag.value
+    const closingTag = `</${tagName}>`
+    const position = Position.create(insertionPoint.line - 1, insertionPoint.column)
+    const textEdit = TextEdit.insert(position, closingTag)
+
+    const workspaceEdit: WorkspaceEdit = {
+      changes: {
+        [uri]: [textEdit]
+      }
+    }
+
+    return {
+      title: `Insert closing tag \`</${tagName}>\``,
+      kind: CodeActionKind.QuickFix,
+      diagnostics: [diagnostic],
+      edit: workspaceEdit
+    }
+  }
+
   autofixCodeActions(params: CodeActionParams, document: TextDocument): CodeAction[] {
     if (this.config && !this.config.isLinterEnabled) {
       return []

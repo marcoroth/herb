@@ -172,8 +172,9 @@ export class Server {
       )
 
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
+      const parserErrorCodeActions = this.service.codeActionService.parserErrorCodeActions(params, document)
 
-      return autofixCodeActions.concat(linterDisableCodeActions)
+      return autofixCodeActions.concat(parserErrorCodeActions).concat(linterDisableCodeActions)
     })
   }
 
