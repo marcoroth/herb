@@ -47,6 +47,7 @@ JNI_LIB = $(BUILD_DIR)/$(JNI_LIB_PREFIX)herb_jni.$(JNI_LIB_EXT)
 
 JAVA_SOURCES = $(shell find org -name "*.java" 2>/dev/null)
 JAVA_TIMESTAMP = target/.java_compiled
+JUNIT_JAR = lib/junit-platform-console-standalone-1.14.2.jar
 
 .PHONY: all
 all: templates herb jni java
@@ -76,7 +77,7 @@ java: $(JAVA_TIMESTAMP)
 $(JAVA_TIMESTAMP): $(JAVA_SOURCES)
 	@mkdir -p target/classes
 	@if [ -n "$(JAVA_SOURCES)" ]; then \
-		$(JAVAC) -d target/classes $(JAVA_SOURCES); \
+		$(JAVAC) -cp $(JUNIT_JAR) -d target/classes $(JAVA_SOURCES); \
 		touch $(JAVA_TIMESTAMP); \
 		echo "Compiled Java classes"; \
 	fi
@@ -85,7 +86,9 @@ $(JAVA_TIMESTAMP): $(JAVA_SOURCES)
 test: jni java
 	$(JAVA_CMD) --enable-native-access=ALL-UNNAMED \
 		-Djava.library.path=$(BUILD_DIR) \
-		-cp target/classes org.herb.HerbTest
+		-jar $(JUNIT_JAR) execute \
+		--class-path target/classes \
+		--select-package org.herb
 
 .PHONY: integration_test
 integration_test: cli
