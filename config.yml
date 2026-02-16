@@ -231,7 +231,7 @@ errors:
 
     - name: OmittedClosingTagError
       message:
-        template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity."
+        template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity, or set `strict: false` to allow this."
         arguments:
           - opening_tag->value
           - opening_tag->location.start.line

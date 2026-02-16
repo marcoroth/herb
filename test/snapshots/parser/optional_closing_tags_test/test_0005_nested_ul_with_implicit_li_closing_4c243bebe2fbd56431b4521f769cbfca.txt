@@ -29,7 +29,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:2)-(4:6))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:6))
-    │   │   │   │       ├── message: "Element `<li>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (4:6) for clarity."
+    │   │   │   │       ├── message: "Element `<li>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (4:6) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "li" (location: (2:3)-(2:5))
     │   │   │   │       └── insertion_point: (4:6)
     │   │   │   │
@@ -71,7 +71,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (4:6)-(5:6))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (4:6)-(4:10))
-    │   │   │   │       ├── message: "Element `<li>` at (4:7) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (5:6) for clarity."
+    │   │   │   │       ├── message: "Element `<li>` at (4:7) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (5:6) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "li" (location: (4:7)-(4:9))
     │   │   │   │       └── insertion_point: (5:6)
     │   │   │   │
@@ -98,7 +98,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (5:6)-(6:4))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (5:6)-(5:10))
-    │   │   │   │       ├── message: "Element `<li>` at (5:7) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (6:4) for clarity."
+    │   │   │   │       ├── message: "Element `<li>` at (5:7) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (6:4) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "li" (location: (5:7)-(5:9))
     │   │   │   │       └── insertion_point: (6:4)
     │   │   │   │
@@ -139,7 +139,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (7:2)-(8:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (7:2)-(7:6))
-    │   │       │       ├── message: "Element `<li>` at (7:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (8:0) for clarity."
+    │   │       │       ├── message: "Element `<li>` at (7:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (8:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "li" (location: (7:3)-(7:5))
     │   │       │       └── insertion_point: (8:0)
     │   │       │

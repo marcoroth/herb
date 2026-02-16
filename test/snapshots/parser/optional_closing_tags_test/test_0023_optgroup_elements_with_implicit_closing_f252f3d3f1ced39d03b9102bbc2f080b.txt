@@ -27,7 +27,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:28))
-    │   │   │   │       ├── message: "Element `<optgroup>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (4:2) for clarity."
+    │   │   │   │       ├── message: "Element `<optgroup>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "optgroup" (location: (2:3)-(2:11))
     │   │   │   │       └── insertion_point: (4:2)
     │   │   │   │
@@ -101,7 +101,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (4:2)-(6:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (4:2)-(4:28))
-    │   │       │       ├── message: "Element `<optgroup>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (6:0) for clarity."
+    │   │       │       ├── message: "Element `<optgroup>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (6:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "optgroup" (location: (4:3)-(4:11))
     │   │       │       └── insertion_point: (6:0)
     │   │       │

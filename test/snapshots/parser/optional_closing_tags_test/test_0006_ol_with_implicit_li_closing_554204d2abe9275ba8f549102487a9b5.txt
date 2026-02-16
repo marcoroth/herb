@@ -26,7 +26,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:2)-(3:2))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:6))
-    │   │   │   │       ├── message: "Element `<li>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (3:2) for clarity."
+    │   │   │   │       ├── message: "Element `<li>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (3:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "li" (location: (2:3)-(2:5))
     │   │   │   │       └── insertion_point: (3:2)
     │   │   │   │
@@ -53,7 +53,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (3:2)-(4:2))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (3:2)-(3:6))
-    │   │   │   │       ├── message: "Element `<li>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (4:2) for clarity."
+    │   │   │   │       ├── message: "Element `<li>` at (3:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "li" (location: (3:3)-(3:5))
     │   │   │   │       └── insertion_point: (4:2)
     │   │   │   │
@@ -80,7 +80,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (4:2)-(5:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (4:2)-(4:6))
-    │   │       │       ├── message: "Element `<li>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (5:0) for clarity."
+    │   │       │       ├── message: "Element `<li>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</li>` closing tag at (5:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "li" (location: (4:3)-(4:5))
     │   │       │       └── insertion_point: (5:0)
     │   │       │
