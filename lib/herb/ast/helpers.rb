@@ -27,6 +27,13 @@ module Herb
         opening.include?("=")
       end
 
+      #: (Herb::AST::Node?) -> bool
+      def omitted_close_tag?(node)
+        return false unless node.is_a?(Herb::AST::HTMLElementNode)
+
+        node.close_tag.is_a?(Herb::AST::HTMLOmittedCloseTagNode)
+      end
+
       #: (Herb::AST::ERBContentNode) -> bool
       def inline_ruby_comment?(node)
         return false unless node.is_a?(Herb::AST::ERBContentNode)

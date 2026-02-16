@@ -81,6 +81,7 @@ rules:
           order:
             - name
             - type
+            - writable
             - kind
 
       - quote_style:

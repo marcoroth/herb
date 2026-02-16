@@ -1,0 +1,29 @@
+# Generated from lib/herb/engine/auto_close_omitted_tags_visitor.rb with RBS::Inline
+
+module Herb
+  class Engine
+    # Replaces omitted closing tags with explicit ones, so that the compiled output always
+    # contains a closing tag, even when the template omits it.
+    #
+    # This visitor is not loaded by default. Require it explicitly and pass it to the engine:
+    #
+    #     require "herb/engine/auto_close_omitted_tags_visitor"
+    #
+    #     Herb::Engine.new(source, visitors: [Herb::Engine::AutoCloseOmittedTagsVisitor.new])
+    class AutoCloseOmittedTagsVisitor < Herb::Visitor
+      # : (Herb::AST::HTMLElementNode) -> void
+      def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      private
+
+      # : (Herb::AST::HTMLOmittedCloseTagNode) -> Herb::AST::HTMLCloseTagNode
+      def explicit_close_tag: (Herb::AST::HTMLOmittedCloseTagNode) -> Herb::AST::HTMLCloseTagNode
+
+      # : (String, String, Herb::Location?) -> Herb::Token
+      def token: (String, String, Herb::Location?) -> Herb::Token
+    end
+  end
+end
