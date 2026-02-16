@@ -69,7 +69,13 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
   return analyzed;
 }
 
+typedef struct {
+  hb_arena_T* arena;
+} analyze_erb_content_context_T;
+
 static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
+  analyze_erb_content_context_T* context = (analyze_erb_content_context_T*) data;
+
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
@@ -87,7 +93,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         append_erb_multiple_blocks_in_tag_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
-          erb_content_node->base.errors
+          erb_content_node->base.errors,
+          context->arena
         );
       }
 
@@ -97,7 +104,8 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         append_erb_case_with_conditions_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
-          erb_content_node->base.errors
+          erb_content_node->base.errors,
+          context->arena
         );
       }
     } else {
@@ -1403,21 +1411,6 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
   return new_array;
 }
 
-static void free_analyzed_ruby_from_array(hb_array_T* array) {
-  if (!array) { return; }
-
-  for (size_t i = 0; i < hb_array_size(array); i++) {
-    AST_NODE_T* node = hb_array_get(array, i);
-    if (node && node->type == AST_ERB_CONTENT_NODE) {
-      AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) node;
-      if (erb_content->analyzed_ruby != NULL) {
-        free_analyzed_ruby(erb_content->analyzed_ruby);
-        erb_content->analyzed_ruby = NULL;
-      }
-    }
-  }
-}
-
 static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   invalid_erb_context_T* context = (invalid_erb_context_T*) data;
 
@@ -1491,7 +1484,7 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
       if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
 
       if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
-        append_erb_control_flow_scope_error(keyword, node->location.start, node->location.end, node->errors);
+        append_erb_control_flow_scope_error(keyword, node->location.start, node->location.end, node->errors, context->arena);
       }
     }
 
@@ -1502,47 +1495,9 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
   return true;
 }
 
-static bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
-  analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
-  context->parent = (AST_NODE_T*) node;
-
-  if (node->type == AST_DOCUMENT_NODE) {
-    AST_DOCUMENT_NODE_T* document_node = (AST_DOCUMENT_NODE_T*) node;
-    hb_array_T* old_array = document_node->children;
-    document_node->children = rewrite_node_array((AST_NODE_T*) node, document_node->children, context);
-    free_analyzed_ruby_from_array(old_array);
-    hb_array_free(&old_array);
-  }
-
-  if (node->type == AST_HTML_ELEMENT_NODE) {
-    AST_HTML_ELEMENT_NODE_T* element_node = (AST_HTML_ELEMENT_NODE_T*) node;
-    hb_array_T* old_array = element_node->body;
-    element_node->body = rewrite_node_array((AST_NODE_T*) node, element_node->body, context);
-    free_analyzed_ruby_from_array(old_array);
-    hb_array_free(&old_array);
-  }
-
-  if (node->type == AST_HTML_OPEN_TAG_NODE) {
-    AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
-    hb_array_T* old_array = open_tag->children;
-    open_tag->children = rewrite_node_array((AST_NODE_T*) node, open_tag->children, context);
-    free_analyzed_ruby_from_array(old_array);
-    hb_array_free(&old_array);
-  }
-
-  if (node->type == AST_HTML_ATTRIBUTE_VALUE_NODE) {
-    AST_HTML_ATTRIBUTE_VALUE_NODE_T* value_node = (AST_HTML_ATTRIBUTE_VALUE_NODE_T*) node;
-    hb_array_T* old_array = value_node->children;
-    value_node->children = rewrite_node_array((AST_NODE_T*) node, value_node->children, context);
-    free_analyzed_ruby_from_array(old_array);
-    hb_array_free(&old_array);
-  }
-
-  return true;
-}
-
 void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, bool strict) {
-  herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
+  analyze_erb_content_context_T erb_content_context = { .arena = document->arena };
+  herb_visit_node((AST_NODE_T*) document, analyze_erb_content, &erb_content_context);
 
   analyze_ruby_context_T* context = malloc(sizeof(analyze_ruby_context_T));
   context->document = document;
@@ -1557,6 +1512,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, 
   invalid_erb_context_T* invalid_context = malloc(sizeof(invalid_erb_context_T));
   invalid_context->loop_depth = 0;
   invalid_context->rescue_depth = 0;
+  invalid_context->arena = document->arena;
 
   herb_visit_node((AST_NODE_T*) document, detect_invalid_erb_structures, invalid_context);
 

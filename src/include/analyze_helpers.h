@@ -6,6 +6,7 @@
 
 #include "analyzed_ruby.h"
 #include "ast_node.h"
+#include "util/hb_arena.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed);
 bool has_elsif_node(analyzed_ruby_T* analyzed);
@@ -58,6 +59,6 @@ bool search_unexpected_in_nodes(analyzed_ruby_T* analyzed);
 bool search_unexpected_rescue_nodes(analyzed_ruby_T* analyzed);
 bool search_unexpected_when_nodes(analyzed_ruby_T* analyzed);
 
-void check_erb_node_for_missing_end(const AST_NODE_T* node);
+void check_erb_node_for_missing_end(const AST_NODE_T* node, hb_arena_T* arena);
 
 #endif

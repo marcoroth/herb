@@ -214,7 +214,14 @@ typedef struct {
   bool is_if;
 } conditional_open_tag_T;
 
-static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document_errors) {
+typedef struct {
+  hb_array_T* errors;
+  hb_arena_T* arena;
+} conditional_transform_context_T;
+
+static void rewrite_conditional_elements(hb_array_T* nodes, conditional_transform_context_T* context) {
+  hb_array_T* document_errors = context->errors;
+  hb_arena_T* arena = context->arena;
   if (!nodes || hb_array_size(nodes) == 0) { return; }
   if (!document_errors) { return; }
 
@@ -257,7 +264,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
           open_node->location.start.line,
           open_node->location.start.column,
           open_node->location.start,
-          open_node->location.end
+          open_node->location.end,
+          arena
         );
 
         hb_array_append(document_errors, multiple_tags_error);
@@ -374,7 +382,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
           node->location.start.line,
           node->location.start.column,
           mismatched_open->open_conditional->location.start,
-          node->location.end
+          node->location.end,
+          arena
         );
 
       hb_array_append(document_errors, mismatch_error);
@@ -410,7 +419,8 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       ELEMENT_SOURCE_HTML,
       start_position,
       end_position,
-      errors
+      errors,
+      arena
     );
 
     free(condition_copy);
@@ -489,39 +499,39 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
 static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void* data);
 
-static void transform_conditional_elements_in_array(hb_array_T* array, hb_array_T* document_errors) {
+static void transform_conditional_elements_in_array(hb_array_T* array, conditional_transform_context_T* context) {
   if (!array) { return; }
 
   for (size_t i = 0; i < hb_array_size(array); i++) {
     AST_NODE_T* child = (AST_NODE_T*) hb_array_get(array, i);
 
-    if (child) { herb_visit_node(child, transform_conditional_elements_visitor, document_errors); }
+    if (child) { herb_visit_node(child, transform_conditional_elements_visitor, context); }
   }
 
-  rewrite_conditional_elements(array, document_errors);
+  rewrite_conditional_elements(array, context);
 }
 
 static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void* data) {
   if (!node) { return false; }
 
-  hb_array_T* document_errors = (hb_array_T*) data;
+  conditional_transform_context_T* context = (conditional_transform_context_T*) data;
 
   switch (node->type) {
     case AST_DOCUMENT_NODE: {
       AST_DOCUMENT_NODE_T* doc = (AST_DOCUMENT_NODE_T*) node;
-      transform_conditional_elements_in_array(doc->children, document_errors);
+      transform_conditional_elements_in_array(doc->children, context);
       return false;
     }
 
     case AST_HTML_ELEMENT_NODE: {
       AST_HTML_ELEMENT_NODE_T* element = (AST_HTML_ELEMENT_NODE_T*) node;
-      transform_conditional_elements_in_array(element->body, document_errors);
+      transform_conditional_elements_in_array(element->body, context);
       return false;
     }
 
     case AST_ERB_IF_NODE: {
       AST_ERB_IF_NODE_T* if_node = (AST_ERB_IF_NODE_T*) node;
-      transform_conditional_elements_in_array(if_node->statements, document_errors);
+      transform_conditional_elements_in_array(if_node->statements, context);
 
       if (if_node->subsequent) { herb_visit_node(if_node->subsequent, transform_conditional_elements_visitor, data); }
 
@@ -530,13 +540,13 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_ELSE_NODE: {
       AST_ERB_ELSE_NODE_T* else_node = (AST_ERB_ELSE_NODE_T*) node;
-      transform_conditional_elements_in_array(else_node->statements, document_errors);
+      transform_conditional_elements_in_array(else_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNLESS_NODE: {
       AST_ERB_UNLESS_NODE_T* unless_node = (AST_ERB_UNLESS_NODE_T*) node;
-      transform_conditional_elements_in_array(unless_node->statements, document_errors);
+      transform_conditional_elements_in_array(unless_node->statements, context);
 
       if (unless_node->else_clause) {
         herb_visit_node((AST_NODE_T*) unless_node->else_clause, transform_conditional_elements_visitor, data);
@@ -547,31 +557,31 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_BLOCK_NODE: {
       AST_ERB_BLOCK_NODE_T* block_node = (AST_ERB_BLOCK_NODE_T*) node;
-      transform_conditional_elements_in_array(block_node->body, document_errors);
+      transform_conditional_elements_in_array(block_node->body, context);
       return false;
     }
 
     case AST_ERB_WHILE_NODE: {
       AST_ERB_WHILE_NODE_T* while_node = (AST_ERB_WHILE_NODE_T*) node;
-      transform_conditional_elements_in_array(while_node->statements, document_errors);
+      transform_conditional_elements_in_array(while_node->statements, context);
       return false;
     }
 
     case AST_ERB_UNTIL_NODE: {
       AST_ERB_UNTIL_NODE_T* until_node = (AST_ERB_UNTIL_NODE_T*) node;
-      transform_conditional_elements_in_array(until_node->statements, document_errors);
+      transform_conditional_elements_in_array(until_node->statements, context);
       return false;
     }
 
     case AST_ERB_FOR_NODE: {
       AST_ERB_FOR_NODE_T* for_node = (AST_ERB_FOR_NODE_T*) node;
-      transform_conditional_elements_in_array(for_node->statements, document_errors);
+      transform_conditional_elements_in_array(for_node->statements, context);
       return false;
     }
 
     case AST_ERB_CASE_NODE: {
       AST_ERB_CASE_NODE_T* case_node = (AST_ERB_CASE_NODE_T*) node;
-      transform_conditional_elements_in_array(case_node->children, document_errors);
+      transform_conditional_elements_in_array(case_node->children, context);
 
       for (size_t i = 0; i < hb_array_size(case_node->conditions); i++) {
         AST_NODE_T* when = (AST_NODE_T*) hb_array_get(case_node->conditions, i);
@@ -587,13 +597,13 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_WHEN_NODE: {
       AST_ERB_WHEN_NODE_T* when_node = (AST_ERB_WHEN_NODE_T*) node;
-      transform_conditional_elements_in_array(when_node->statements, document_errors);
+      transform_conditional_elements_in_array(when_node->statements, context);
       return false;
     }
 
     case AST_ERB_BEGIN_NODE: {
       AST_ERB_BEGIN_NODE_T* begin_node = (AST_ERB_BEGIN_NODE_T*) node;
-      transform_conditional_elements_in_array(begin_node->statements, document_errors);
+      transform_conditional_elements_in_array(begin_node->statements, context);
 
       if (begin_node->rescue_clause) {
         herb_visit_node((AST_NODE_T*) begin_node->rescue_clause, transform_conditional_elements_visitor, data);
@@ -612,7 +622,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_RESCUE_NODE: {
       AST_ERB_RESCUE_NODE_T* rescue_node = (AST_ERB_RESCUE_NODE_T*) node;
-      transform_conditional_elements_in_array(rescue_node->statements, document_errors);
+      transform_conditional_elements_in_array(rescue_node->statements, context);
 
       if (rescue_node->subsequent) {
         herb_visit_node((AST_NODE_T*) rescue_node->subsequent, transform_conditional_elements_visitor, data);
@@ -623,7 +633,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 
     case AST_ERB_ENSURE_NODE: {
       AST_ERB_ENSURE_NODE_T* ensure_node = (AST_ERB_ENSURE_NODE_T*) node;
-      transform_conditional_elements_in_array(ensure_node->statements, document_errors);
+      transform_conditional_elements_in_array(ensure_node->statements, context);
       return false;
     }
 
@@ -632,5 +642,10 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 }
 
 void herb_transform_conditional_elements(AST_DOCUMENT_NODE_T* document) {
-  herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, document->base.errors);
+  conditional_transform_context_T context = {
+    .errors = document->base.errors,
+    .arena = document->arena
+  };
+
+  herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, &context);
 }

@@ -37,6 +37,7 @@ typedef enum {
 typedef struct {
   int loop_depth;
   int rescue_depth;
+  hb_arena_T* arena;
 } invalid_erb_context_T;
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);
