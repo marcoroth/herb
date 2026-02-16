@@ -13,7 +13,12 @@ pub struct ParseResult {
 }
 
 impl ParseResult {
-  pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions) -> Self {
+  pub fn new(
+    value: DocumentNode,
+    source: String,
+    errors: Vec<AnyError>,
+    options: &ParserOptions,
+  ) -> Self {
     Self {
       value,
       source,
