@@ -24,7 +24,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (2:2)-(3:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (2:2)-(2:5))
-    │   │       │       ├── message: "Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (3:0) for clarity."
+    │   │       │       ├── message: "Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (3:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "p" (location: (2:3)-(2:4))
     │   │       │       └── insertion_point: (3:0)
     │   │       │

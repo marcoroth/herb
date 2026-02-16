@@ -40,7 +40,7 @@ input: |2-
     │   │   │   │   └── @ HTMLElementNode (location: (3:4)-(4:2))
     │   │   │   │       ├── errors: (1 error)
     │   │   │   │       │   └── @ OmittedClosingTagError (location: (3:4)-(3:8))
-    │   │   │   │       │       ├── message: "Element `<tr>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</tr>` closing tag at (4:2) for clarity."
+    │   │   │   │       │       ├── message: "Element `<tr>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</tr>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       │       ├── opening_tag: "tr" (location: (3:5)-(3:7))
     │   │   │   │       │       └── insertion_point: (4:2)
     │   │   │   │       │

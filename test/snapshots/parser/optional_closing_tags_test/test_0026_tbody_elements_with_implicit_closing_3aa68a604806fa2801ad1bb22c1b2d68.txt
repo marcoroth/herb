@@ -27,7 +27,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:9))
-    │   │   │   │       ├── message: "Element `<tbody>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tbody>` closing tag at (4:2) for clarity."
+    │   │   │   │       ├── message: "Element `<tbody>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tbody>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "tbody" (location: (2:3)-(2:8))
     │   │   │   │       └── insertion_point: (4:2)
     │   │   │   │
@@ -102,7 +102,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (4:2)-(6:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (4:2)-(4:9))
-    │   │       │       ├── message: "Element `<tbody>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tbody>` closing tag at (6:0) for clarity."
+    │   │       │       ├── message: "Element `<tbody>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</tbody>` closing tag at (6:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "tbody" (location: (4:3)-(4:8))
     │   │       │       └── insertion_point: (6:0)
     │   │       │

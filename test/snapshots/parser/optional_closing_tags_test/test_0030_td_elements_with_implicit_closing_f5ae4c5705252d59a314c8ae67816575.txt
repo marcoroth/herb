@@ -41,7 +41,7 @@ input: |2-
     │   │   │   │   ├── @ HTMLElementNode (location: (3:4)-(4:4))
     │   │   │   │   │   ├── errors: (1 error)
     │   │   │   │   │   │   └── @ OmittedClosingTagError (location: (3:4)-(3:8))
-    │   │   │   │   │   │       ├── message: "Element `<td>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</td>` closing tag at (4:4) for clarity."
+    │   │   │   │   │   │       ├── message: "Element `<td>` at (3:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</td>` closing tag at (4:4) for clarity, or set `strict: false` to allow this."
     │   │   │   │   │   │       ├── opening_tag: "td" (location: (3:5)-(3:7))
     │   │   │   │   │   │       └── insertion_point: (4:4)
     │   │   │   │   │   │
@@ -68,7 +68,7 @@ input: |2-
     │   │   │   │   └── @ HTMLElementNode (location: (4:4)-(5:2))
     │   │   │   │       ├── errors: (1 error)
     │   │   │   │       │   └── @ OmittedClosingTagError (location: (4:4)-(4:8))
-    │   │   │   │       │       ├── message: "Element `<td>` at (4:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</td>` closing tag at (5:2) for clarity."
+    │   │   │   │       │       ├── message: "Element `<td>` at (4:5) has its closing tag omitted. While valid HTML, consider adding an explicit `</td>` closing tag at (5:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       │       ├── opening_tag: "td" (location: (4:5)-(4:7))
     │   │   │   │       │       └── insertion_point: (5:2)
     │   │   │   │       │

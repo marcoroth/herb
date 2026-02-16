@@ -24,7 +24,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:3)-(2:8))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:3)-(2:7))
-    │   │   │   │       ├── message: "Element `<rp>` at (2:4) has its closing tag omitted. While valid HTML, consider adding an explicit `</rp>` closing tag at (2:8) for clarity."
+    │   │   │   │       ├── message: "Element `<rp>` at (2:4) has its closing tag omitted. While valid HTML, consider adding an explicit `</rp>` closing tag at (2:8) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "rp" (location: (2:4)-(2:6))
     │   │   │   │       └── insertion_point: (2:8)
     │   │   │   │
@@ -51,7 +51,7 @@ input: |2-
     │   │   └── @ HTMLElementNode (location: (2:8)-(3:0))
     │   │       ├── errors: (1 error)
     │   │       │   └── @ OmittedClosingTagError (location: (2:8)-(2:12))
-    │   │       │       ├── message: "Element `<rt>` at (2:9) has its closing tag omitted. While valid HTML, consider adding an explicit `</rt>` closing tag at (3:0) for clarity."
+    │   │       │       ├── message: "Element `<rt>` at (2:9) has its closing tag omitted. While valid HTML, consider adding an explicit `</rt>` closing tag at (3:0) for clarity, or set `strict: false` to allow this."
     │   │       │       ├── opening_tag: "rt" (location: (2:9)-(2:11))
     │   │       │       └── insertion_point: (3:0)
     │   │       │

@@ -28,7 +28,7 @@ input: |2-
     │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
     │   │   │   ├── errors: (1 error)
     │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:9))
-    │   │   │   │       ├── message: "Element `<thead>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</thead>` closing tag at (4:2) for clarity."
+    │   │   │   │       ├── message: "Element `<thead>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</thead>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
     │   │   │   │       ├── opening_tag: "thead" (location: (2:3)-(2:8))
     │   │   │   │       └── insertion_point: (4:2)
     │   │   │   │
