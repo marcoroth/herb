@@ -3,7 +3,6 @@
 #include "include/errors.h"
 #include "include/location.h"
 #include "include/position.h"
-#include "include/util.h"
 #include "include/util/hb_buffer.h"
 
 #include <prism.h>
