@@ -1,5 +1,0 @@
----
-source: "Engine::OptionalClosingTagsTest#test_0004_p element with erb without closing tag - render"
-input: "{source: \"<p><%= message %>\", locals: {message: \"Hello\"}, options: {escape: false}}"
----
-<p>Hello

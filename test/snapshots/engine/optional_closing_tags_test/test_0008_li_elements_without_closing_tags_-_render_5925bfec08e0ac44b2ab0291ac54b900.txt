@@ -1,0 +1,9 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0008_li elements without closing tags - render"
+input: "{source: \"<ul>\\n  <li>Item 1\\n  <li>Item 2\\n  <li>Item 3\\n</ul>\\n\", locals: {}, options: {escape: false, strict: false}}"
+---
+<ul>
+  <li>Item 1
+  <li>Item 2
+  <li>Item 3
+</ul>

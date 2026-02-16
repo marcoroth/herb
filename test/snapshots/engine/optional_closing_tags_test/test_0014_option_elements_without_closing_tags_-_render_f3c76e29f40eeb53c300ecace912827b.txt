@@ -1,9 +1,0 @@
----
-source: "Engine::OptionalClosingTagsTest#test_0014_option elements without closing tags - render"
-input: "{source: \"<select>\\n  <option value=\\\"1\\\">One\\n  <option value=\\\"2\\\">Two\\n  <option value=\\\"3\\\">Three\\n</select>\\n\", locals: {}, options: {escape: false}}"
----
-<select>
-  <option value="1">One
-  <option value="2">Two
-  <option value="3">Three
-</select>

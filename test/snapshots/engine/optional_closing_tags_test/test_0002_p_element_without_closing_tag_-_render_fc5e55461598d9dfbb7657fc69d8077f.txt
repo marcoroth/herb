@@ -1,5 +1,0 @@
----
-source: "Engine::OptionalClosingTagsTest#test_0002_p element without closing tag - render"
-input: "{source: \"<p>Hello World\", locals: {}, options: {escape: false}}"
----
-<p>Hello World
