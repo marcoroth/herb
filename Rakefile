@@ -22,17 +22,17 @@ end
 begin
   require "rake/extensiontask"
 
-  PLATFORMS = %w[
-    aarch64-linux-gnu
-    aarch64-linux-musl
-    arm-linux-gnu
-    arm-linux-musl
-    arm64-darwin
-    x86_64-darwin
-    x86_64-linux-gnu
-    x86_64-linux-musl
-    x86-linux-gnu
-    x86-linux-musl
+  PLATFORMS = [
+    "aarch64-linux-gnu",
+    "aarch64-linux-musl",
+    "arm-linux-gnu",
+    "arm-linux-musl",
+    "arm64-darwin",
+    "x86_64-darwin",
+    "x86_64-linux-gnu",
+    "x86_64-linux-musl",
+    "x86-linux-gnu",
+    "x86-linux-musl"
   ].freeze
 
   exttask = Rake::ExtensionTask.new do |ext|

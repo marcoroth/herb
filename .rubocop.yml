@@ -29,10 +29,12 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 Style/WordArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/SymbolArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/BlockDelimiters:
   Enabled: false

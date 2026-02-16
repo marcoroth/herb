@@ -71,7 +71,7 @@ module Herb
         visit_all(node.body)
         visit(node.close_tag)
 
-        pop_context if %w[script style].include?(tag_name)
+        pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
@@ -91,7 +91,7 @@ module Herb
         visit_all(node.body)
         visit(node.close_conditional)
 
-        pop_context if %w[script style].include?(tag_name)
+        pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
