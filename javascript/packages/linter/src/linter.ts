@@ -11,7 +11,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 
 import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
-import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
+import type { ParseResult, LexResult, HerbBackend, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
 export interface LinterOptions {
@@ -297,13 +297,13 @@ export class Linter {
    * @param source - The source code to lint
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
-  lint(source: string, context?: Partial<LintContext>): LintResult {
+  lint(source: string, context?: Partial<LintContext>, parserOptions?: Partial<ParserOptions>): LintResult {
     this.offenses = []
 
     let ignoredCount = 0
     let wouldBeIgnoredCount = 0
 
-    const parseResult = this.herb.parse(source, { track_whitespace: true })
+    const parseResult = this.herb.parse(source, { track_whitespace: true, ...parserOptions })
 
     // Check for file-level ignore directive using visitor
     if (hasLinterIgnoreDirective(parseResult)) {
@@ -602,4 +602,3 @@ export class Linter {
     }
   }
 }
-

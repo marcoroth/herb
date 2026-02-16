@@ -55,6 +55,7 @@ import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
+import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
@@ -117,6 +118,7 @@ export const rules: RuleClass[] = [
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
+  HTMLRequireClosingTagsRule,
   HTMLTagNameLowercaseRule,
 
   SVGTagNameCapitalizationRule,

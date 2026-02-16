@@ -56,6 +56,7 @@ export * from "./html-no-self-closing.js"
 export * from "./html-no-space-in-tag.js"
 export * from "./html-no-title-attribute.js"
 export * from "./html-no-underscores-in-attribute-names.js"
+export * from "./html-require-closing-tags.js"
 export * from "./html-tag-name-lowercase.js"
 
 export * from "./svg-tag-name-capitalization.js"
