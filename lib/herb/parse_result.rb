@@ -5,10 +5,16 @@ require "json"
 module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
+    attr_reader :strict #: bool
+    attr_reader :track_whitespace #: bool
+    attr_reader :analyze #: bool
 
-    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
-    def initialize(value, source, warnings, errors)
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], ?Hash[Symbol, untyped]) -> void
+    def initialize(value, source, warnings, errors, options = {})
       @value = value
+      @strict = options.fetch(:strict, true)
+      @track_whitespace = options.fetch(:track_whitespace, false)
+      @analyze = options.fetch(:analyze, true)
       super(source, warnings, errors)
     end
 

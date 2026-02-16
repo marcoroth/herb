@@ -1,4 +1,5 @@
 use crate::errors::{AnyError, ErrorNode};
+use crate::herb::ParserOptions;
 use crate::nodes::{DocumentNode, Node};
 use std::fmt;
 
@@ -6,14 +7,20 @@ pub struct ParseResult {
   pub value: DocumentNode,
   pub source: String,
   pub errors: Vec<AnyError>,
+  pub strict: bool,
+  pub track_whitespace: bool,
+  pub analyze: bool,
 }
 
 impl ParseResult {
-  pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>) -> Self {
+  pub fn new(value: DocumentNode, source: String, errors: Vec<AnyError>, options: &ParserOptions) -> Self {
     Self {
       value,
       source,
       errors,
+      strict: options.strict,
+      track_whitespace: options.track_whitespace,
+      analyze: options.analyze,
     }
   }
 

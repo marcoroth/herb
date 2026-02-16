@@ -87,7 +87,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
       .ok_or_else(|| "Failed to convert AST".to_string())?;
 
-    let result = ParseResult::new(document_node, source.to_string(), Vec::new());
+    let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T);
 

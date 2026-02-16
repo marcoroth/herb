@@ -115,7 +115,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   return result;
 }
 
-val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
+val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, parser_options_T* options){
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -128,6 +128,10 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
   result.set("source", val(source));
   result.set("warnings", warningsArray);
   result.set("errors", errorsArray);
+
+  result.set("strict", val(options->strict));
+  result.set("track_whitespace", val(options->track_whitespace));
+  result.set("analyze", val(options->analyze));
 
   return result;
 }

@@ -58,7 +58,7 @@ val Herb_parse(const std::string& source, val options) {
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);
 
-  val result = CreateParseResult(root, source);
+  val result = CreateParseResult(root, source, &parser_options);
 
   ast_node_free((AST_NODE_T *) root);
 
