@@ -2,13 +2,21 @@
 # typed: true
 
 module Herb
+  #: type serialized_node = {
+  #|  type: String,
+  #|  location: serialized_location?,
+  #|  errors: Array[serialized_error]
+  #| }
   module AST
     class Node
-      attr_reader :type #: String
-      attr_reader :location #: Location
-      attr_reader :errors #: Array[Herb::Errors::Error]
+      #: String
+      attr_reader :type
+      #: Location
+      attr_reader :location
+      #: Array[Herb::Errors::Error]
+      attr_reader :errors
 
-      #: (String, Location, Array[Herb::Errors::Error]) -> void
+      #: (String, Location, ?Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
@@ -19,7 +27,7 @@ module Herb
       def to_hash
         {
           type: type,
-          location: location&.to_hash,
+          location: location.to_hash,
           errors: errors.map(&:to_hash),
         }
       end

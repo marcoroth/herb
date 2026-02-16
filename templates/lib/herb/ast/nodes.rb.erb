@@ -1,11 +1,19 @@
 module Herb
   module AST
     <%- nodes.each do |node| -%>
+    #: type serialized_<%= node.human %> = {
+      <%- node.fields.each do |field| -%>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+    #|  <%= field.name %>: <%= field.ruby_type %><%= if is_nilable then "?" end %>,
+      <%- end -%>
+    #| }
     class <%= node.name -%> < Node
       include Colors
 
       <%- node.fields.each do |field| -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+      #: <%= field.ruby_type %><%= if is_nilable then "?" end %>
+      attr_reader :<%= field.name %>
       <%- end -%>
 
       #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -26,7 +34,7 @@ module Herb
           <%- node.fields.each do |field| -%>
           <%= field.name %>: <%= field.name %>,
           <%- end -%>
-        }) #: Herb::serialized_<%= node.human %>
+        })
       end
 
       #: (Visitor) -> void

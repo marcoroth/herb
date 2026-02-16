@@ -59,8 +59,8 @@ jobs:
       - name: RBS Inline
         run: bundle exec rake rbs_inline
 
-      # - name: Sorbet
-      #   run: bundle exec srb tc
+      - name: Sorbet
+        run: bundle exec srb tc
 
       - name: clang-tidy version
         run: clang-tidy-21 --version

@@ -2,9 +2,12 @@
 # typed: true
 
 module Herb
+  #: type serialized_position = { line: Integer, column: Integer }
   class Position
-    attr_reader :line #: Integer
-    attr_reader :column #: Integer
+    #: Integer
+    attr_reader :line
+    #: Integer
+    attr_reader :column
 
     #: (Integer, Integer) -> void
     def initialize(line, column)
