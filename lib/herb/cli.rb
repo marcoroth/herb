@@ -8,7 +8,8 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict,
+                :auto_close_tags
 
   def initialize(args)
     @args = args
@@ -246,6 +247,10 @@ class Herb::CLI
         self.strict = false
       end
 
+      parser.on("--auto-close-tags", "Auto-insert closing tags for elements with omitted closing tags (for compile/render commands)") do
+        self.auto_close_tags = true
+      end
+
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
       end
@@ -294,6 +299,7 @@ class Herb::CLI
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
       options[:strict] = strict.nil? || strict
+      options[:auto_close_omitted_tags] = auto_close_tags
 
       if debug
         options[:debug] = true
@@ -309,6 +315,7 @@ class Herb::CLI
           filename: engine.filename,
           bufvar: engine.bufvar,
           strict: options[:strict],
+          auto_close_omitted_tags: options[:auto_close_omitted_tags],
         }
 
         puts result.to_json
@@ -362,6 +369,7 @@ class Herb::CLI
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
       options[:strict] = strict.nil? || strict
+      options[:auto_close_omitted_tags] = auto_close_tags
 
       if debug
         options[:debug] = true
@@ -379,6 +387,7 @@ class Herb::CLI
           output: rendered_output,
           filename: engine.filename,
           strict: options[:strict],
+          auto_close_omitted_tags: options[:auto_close_omitted_tags],
         }
 
         puts result.to_json

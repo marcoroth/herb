@@ -1,0 +1,10 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0036_inline-block with erb - closing tag inserted at correct position - render"
+input: "{source: \"<ul>\\n  <% items.each do |item| %>\\n    <li style=\\\"display: inline-block\\\"><%= item %>\\n  <% end %>\\n</ul>\\n\", locals: {items: [\"A\", \"B\", \"C\"]}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<ul>
+    <li style="display: inline-block">A
+  </li>    <li style="display: inline-block">B
+  </li>    <li style="display: inline-block">C
+  </li>
+</ul>

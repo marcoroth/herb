@@ -1,0 +1,18 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0029_complex table with optional closing tags - auto_close enabled - compilation"
+input: "{source: \"<table>\\n  <thead>\\n    <tr>\\n      <th>Name\\n      <th>Age\\n  <tbody>\\n    <% users.each do |user| %>\\n      <tr>\\n        <td><%= user[:name] %>\\n        <td><%= user[:age] %>\\n    <% end %>\\n</table>\\n\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<table>
+  <thead>
+    <tr>
+      <th>Name
+      </th><th>Age
+  </th></tr></thead><tbody>
+'.freeze;     users.each do |user| 
+ _buf << '      <tr>
+        <td>'.freeze; _buf << (user[:name]).to_s; _buf << '
+        </td><td>'.freeze; _buf << (user[:age]).to_s; _buf << '
+    </td></tr>'.freeze; end; _buf << '
+</tbody></table>
+'.freeze;
+_buf.to_s

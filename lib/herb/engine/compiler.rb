@@ -13,6 +13,7 @@ module Herb
         @attrfunc = options.fetch(:attrfunc, @escape ? "__herb.attr" : "::Herb::Engine.attr")
         @jsfunc = options.fetch(:jsfunc, @escape ? "__herb.js" : "::Herb::Engine.js")
         @cssfunc = options.fetch(:cssfunc, @escape ? "__herb.css" : "::Herb::Engine.css")
+        @auto_close_omitted_tags = options.fetch(:auto_close_omitted_tags, false)
         @tokens = [] #: Array[untyped]
         @element_stack = [] #: Array[String]
         @context_stack = [:html_content]
@@ -146,7 +147,18 @@ module Herb
       end
 
       def visit_html_omitted_close_tag_node(node)
-        # no-op
+        return unless @auto_close_omitted_tags
+
+        tag_name = node.tag_name&.value
+
+        if @engine.content_for_head && tag_name&.downcase == "head"
+          escaped_html = @engine.content_for_head.gsub("'", "\\\\'")
+          @tokens << [:expr, "'#{escaped_html}'.html_safe", current_context]
+        end
+
+        add_text("</")
+        add_text(tag_name)
+        add_text(">")
       end
 
       def visit_html_text_node(node)

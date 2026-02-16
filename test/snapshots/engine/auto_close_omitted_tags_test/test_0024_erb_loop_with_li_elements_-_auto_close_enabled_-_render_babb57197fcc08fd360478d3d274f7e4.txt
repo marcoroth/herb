@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0024_erb loop with li elements - auto_close enabled - render"
+input: "{source: \"<ul><% items.each do |item| %><li><%= item %><% end %></ul>\", locals: {items: [\"A\", \"B\", \"C\"]}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<ul><li>A</li><li>B</li><li>C</li></ul>
