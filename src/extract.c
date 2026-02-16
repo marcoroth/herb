@@ -1,6 +1,5 @@
 #include "include/herb.h"
 #include "include/io.h"
-#include "include/lexer.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/string.h"
