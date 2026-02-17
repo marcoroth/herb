@@ -1,6 +1,5 @@
 #include "include/herb.h"
 #include "include/io.h"
-#include "include/lexer.h"
 #include "include/macros.h"
 #include "include/util/hb_arena.h"
 #include "include/util/hb_array.h"

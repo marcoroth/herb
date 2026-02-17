@@ -2,7 +2,6 @@
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/position.h"
-#include "include/token.h"
 #include "include/util.h"
 #include "include/visitor.h"
 

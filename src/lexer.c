@@ -2,7 +2,6 @@
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
-#include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
 #include <ctype.h>

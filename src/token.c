@@ -1,5 +1,4 @@
 #include "include/token.h"
-#include "include/lexer.h"
 #include "include/position.h"
 #include "include/range.h"
 #include "include/token_struct.h"
