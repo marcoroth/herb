@@ -3,6 +3,7 @@ import type { RuleClass } from "./types.js"
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
+import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
@@ -65,6 +66,7 @@ export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
   ERBNoConditionalHTMLElementRule,
+  ERBNoConditionalOpenTagRule,
   ERBNoEmptyTagsRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
