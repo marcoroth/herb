@@ -22,7 +22,8 @@ export class HTMLRequireClosingTagsRule extends ParserRule {
   get defaultConfig(): FullRuleConfig {
     return {
       enabled: true,
-      severity: "error"
+      severity: "error",
+      parserOptions: { strict: false }
     }
   }
 

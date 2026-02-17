@@ -89,7 +89,7 @@ describe("html-require-closing-tags", () => {
           <li>Item 2
           <li>Item 3
         </ul>
-      `, { strict: false })
+      `)
     })
 
     test("fails for definition list", () => {
@@ -104,7 +104,7 @@ describe("html-require-closing-tags", () => {
           <dt>Term 2
           <dd>Definition 2
         </dl>
-      `, { strict: false })
+      `)
     })
 
     test("fails for table elements", () => {
@@ -127,7 +127,7 @@ describe("html-require-closing-tags", () => {
               <td>Cell 1
               <td>Cell 2
         </table>
-      `, { strict: false })
+      `)
     })
 
     test("fails for select options", () => {
@@ -140,7 +140,7 @@ describe("html-require-closing-tags", () => {
           <option>Option 2
           <option>Option 3
         </select>
-      `, { strict: false })
+      `)
     })
 
     test("fails for paragraphs", () => {
@@ -151,7 +151,7 @@ describe("html-require-closing-tags", () => {
           <p>Paragraph 1
           <p>Paragraph 2
         </div>
-      `, { strict: false })
+      `)
     })
   });
 
@@ -164,6 +164,6 @@ describe("html-require-closing-tags", () => {
         <li>Another item</li>
         <li>Back to omitted
       </ul>
-    `, { strict: false })
+    `)
   })
 })

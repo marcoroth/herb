@@ -21,7 +21,6 @@ interface ExpectedOffense {
 interface TestOptions {
   context?: any
   allowInvalidSyntax?: boolean
-  strict?: boolean
 }
 
 interface LinterTestHelpers {
@@ -71,6 +70,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
   const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const ruleParserOptions = ruleInstance.defaultConfig?.parserOptions ?? {}
   const ruleConfigOverride = configOverride
 
   beforeAll(async () => {
@@ -105,7 +105,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = Herb.parse(html, { track_whitespace: true, ...ruleParserOptions })
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -182,10 +182,9 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     const context = options?.context ?? options
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
-    const strict = options?.strict ?? true
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true, strict })
+      const parseResult = Herb.parse(html, { track_whitespace: true, ...ruleParserOptions })
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -196,7 +195,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
         )
       }
 
-      if (strict && !allowInvalidSyntax && parserErrors.length > 0) {
+      if (!allowInvalidSyntax && parserErrors.length > 0) {
         const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
 
         throw new Error(
@@ -224,7 +223,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     })
 
     const linter = new Linter(Herb, ruleClasses, config)
-    const lintResult = linter.lint(html, context, { strict })
+    const lintResult = linter.lint(html, context)
     const ruleName = ruleInstance.name
 
     const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
