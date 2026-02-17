@@ -558,12 +558,14 @@ export class Linter {
 
         if (offense.autofixContext) {
           const originalNodeType = offense.autofixContext.node.type
+          const originalTagName = (offense.autofixContext.node as any).tag_name?.value
           const location: Location = offense.autofixContext.node.location ? Location.from(offense.autofixContext.node.location) : offense.location
 
           const freshNode = findNodeByLocation(
             parseResult.value,
             location,
-            (node) => node.type === originalNodeType
+            (node) => node.type === originalNodeType &&
+              (originalNodeType !== "AST_HTML_OMITTED_CLOSE_TAG_NODE" || (node as any).tag_name?.value === originalTagName)
           )
 
           if (freshNode) {

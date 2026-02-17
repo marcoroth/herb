@@ -203,7 +203,7 @@ export function getAttributesFromElement(element: HTMLElementNode | null | undef
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
   if (!node) return null
 
   return node.tag_name?.value.toLowerCase() || null
