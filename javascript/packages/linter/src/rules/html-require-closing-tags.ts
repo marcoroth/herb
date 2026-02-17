@@ -55,28 +55,37 @@ export class HTMLRequireClosingTagsRule extends ParserRule<RequireClosingTagsAut
     const parentElement = findParent(result.value, node as unknown as Node) as Mutable<HTMLElementNode> | null
     if (!parentElement) return null
 
-    const textNode = this.findLastTextNode(parentElement)
+    const textNode = this.findTextLeaf(parentElement)
     if (!textNode) return null
 
+    // Insert before trailing newline + indentation, e.g. "Item 1\n  " → "Item 1</li>\n  "
+    // For element children with trailing whitespace (e.g. <thead> containing <tr>),
+    // place the closing tag on its own indented line.
+    const lastBodyNode = parentElement.body[parentElement.body.length - 1]
     const content = textNode.content
-    // capture newline and leading whitespace of the next line
-    // e.g. "Item 1\n  "  →  "Item 1</li>\n  "
     const match = content.match(/(\n\s*)$/)
+    const insertion = (match && lastBodyNode.type === "AST_HTML_ELEMENT_NODE")
+      ? "\n" + " ".repeat(parentElement.location.start.column) + closeTag
+      : closeTag
+
     if (match) {
-      textNode.content = content.slice(0, -match[1].length) + closeTag + match[1]
+      textNode.content = content.slice(0, -match[1].length) + insertion + match[1]
     } else {
-      textNode.content = content + closeTag
+      textNode.content = content + insertion
     }
+
+    // Remove error so file can be printed without `ignoreErrors`
+    parentElement.errors = parentElement.errors.filter(e => e.type !== "OMITTED_CLOSING_TAG_ERROR")
 
     return result
   }
 
-  private findLastTextNode(node: Mutable<HTMLElementNode>): Mutable<HTMLTextNode> | null {
-    if (node.body.length === 0) return null
+  private findTextLeaf(node: Mutable<HTMLElementNode>): Mutable<HTMLTextNode> | null {
+    if (!node.body.length) return null
 
     const last = node.body[node.body.length - 1]
     if (last.type === "AST_HTML_TEXT_NODE") return last as Mutable<HTMLTextNode>
-    if (last.type === "AST_HTML_ELEMENT_NODE") return this.findLastTextNode(last as Mutable<HTMLElementNode>)
+    if (last.type === "AST_HTML_ELEMENT_NODE") return this.findTextLeaf(last as Mutable<HTMLElementNode>)
 
     return null
   }

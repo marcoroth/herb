@@ -208,11 +208,15 @@ describe("html-require-closing-tags autofix", () => {
         <thead>
           <tr>
             <th>Header 1</th>
-            <th>Header 2</th></tr></thead>
+            <th>Header 2</th>
+          </tr>
+        </thead>
         <tbody>
           <tr>
             <td>Cell 1</td>
-            <td>Cell 2</td></tr></tbody>
+            <td>Cell 2</td>
+          </tr>
+        </tbody>
       </table>
     `
 
@@ -221,6 +225,40 @@ describe("html-require-closing-tags autofix", () => {
 
     expect(result.source).toBe(expected)
     expect(result.fixed).toHaveLength(8)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("preserve newlines and indentation for element children", () => {
+    const input = dedent`
+      <tr><th>Header 1
+    `
+    const expected = dedent`
+      <tr><th>Header 1</th></tr>
+    `
+
+    const linter = new Linter(Herb, [HTMLRequireClosingTagsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(2)
+    expect(result.unfixed).toHaveLength(0)
+  })
+
+  test("does not add closing tags without content for element children", () => {
+    const input = dedent`
+      <tr>
+        <th>
+    `
+    const expected = dedent`
+      <tr>
+        <th>
+    `
+
+    const linter = new Linter(Herb, [HTMLRequireClosingTagsRule])
+    const result = linter.autofix(input)
+
+    expect(result.source).toBe(expected)
+    expect(result.fixed).toHaveLength(0)
     expect(result.unfixed).toHaveLength(0)
   })
 })
