@@ -5,6 +5,7 @@ export * from "./herb-disable-comment-base.js"
 
 export * from "./erb-comment-syntax.js"
 export * from "./erb-no-case-node-children.js"
+export * from "./erb-no-conditional-open-tag.js"
 export * from "./erb-no-empty-tags.js"
 export * from "./erb-no-extra-newline.js"
 export * from "./erb-no-extra-whitespace-inside-tags.js"
