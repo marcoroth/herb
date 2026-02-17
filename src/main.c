@@ -8,6 +8,7 @@
 #include "include/io.h"
 #include "include/macros.h"
 #include "include/ruby_parser.h"
+#include "include/token.h"
 #include "include/util/hb_arena.h"
 #include "include/util/hb_arena_debug.h"
 #include "include/util/hb_buffer.h"
@@ -105,12 +106,36 @@ int main(const int argc, char* argv[]) {
   }
 
   if (string_equals(argv[1], "lex")) {
-    herb_lex_to_buffer(source, &output);
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    herb_lex_result_T* result = herb_lex(source, arena);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    puts(output.value);
-    print_time_diff(start, end, "lexing");
+    int silent = 0;
+    if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
 
+    if (!silent) {
+      for (size_t i = 0; i < hb_array_size(result->tokens); i++) {
+        token_T* token = hb_array_get(result->tokens, i);
+        hb_string_T type = token_to_string(token);
+        hb_buffer_append_string(&output, type);
+        free(type.data);
+        hb_buffer_append(&output, "\n");
+      }
+
+      puts(output.value);
+      print_time_diff(start, end, "lexing");
+
+      printf("\n");
+      hb_arena_print_stats(arena);
+    }
+
+    hb_arena_free(arena);
+    free(arena);
     free(output.value);
     free(source);
 
