@@ -2,7 +2,6 @@
 #include "include/lexer.h"
 #include "include/lexer_struct.h"
 #include "include/macros.h"
-#include "include/token.h"
 #include "include/util/hb_string.h"
 
 #include <ctype.h>

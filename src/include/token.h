@@ -2,7 +2,6 @@
 #define HERB_TOKEN_H
 
 #include "lexer_struct.h"
-#include "position.h"
 #include "token_struct.h"
 #include "util/hb_arena.h"
 #include "util/hb_string.h"

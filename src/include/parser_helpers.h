@@ -2,9 +2,7 @@
 #define HERB_PARSER_HELPERS_H
 
 #include "ast_nodes.h"
-#include "errors.h"
 #include "parser.h"
-#include "token.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
 #include "util/hb_string.h"
