@@ -40,7 +40,11 @@ HERB_EXPORTED_FUNCTION herb_lex_result_T* herb_lex(const char* source, hb_arena_
   return result;
 }
 
-HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, const parser_options_T* options, hb_arena_T* arena) {
+HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(
+  const char* source,
+  const parser_options_T* options,
+  hb_arena_T* arena
+) {
   if (!source) { source = ""; }
   if (!arena) { return NULL; }
 

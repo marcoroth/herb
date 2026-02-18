@@ -199,7 +199,11 @@ static token_T* get_first_branch_tag_name_token_unless(AST_ERB_UNLESS_NODE_T* un
   return result.tag ? result.tag->tag_name : NULL;
 }
 
-static void add_multiple_tags_error_to_erb_node(AST_NODE_T* erb_node, AST_HTML_OPEN_TAG_NODE_T* second_tag, hb_arena_T* arena) {
+static void add_multiple_tags_error_to_erb_node(
+  AST_NODE_T* erb_node,
+  AST_HTML_OPEN_TAG_NODE_T* second_tag,
+  hb_arena_T* arena
+) {
   if (!erb_node || !second_tag) { return; }
 
   CONDITIONAL_ELEMENT_MULTIPLE_TAGS_ERROR_T* error = conditional_element_multiple_tags_error_init(
@@ -577,10 +581,7 @@ static bool transform_conditional_open_tags_visitor(const AST_NODE_T* node, void
 }
 
 void herb_transform_conditional_open_tags(AST_DOCUMENT_NODE_T* document) {
-  conditional_open_tags_context_T context = {
-    .errors = document->base.errors,
-    .arena = document->arena
-  };
+  conditional_open_tags_context_T context = { .errors = document->base.errors, .arena = document->arena };
 
   herb_visit_node((AST_NODE_T*) document, transform_conditional_open_tags_visitor, &context);
 }

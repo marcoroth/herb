@@ -641,10 +641,7 @@ static bool transform_conditional_elements_visitor(const AST_NODE_T* node, void*
 }
 
 void herb_transform_conditional_elements(AST_DOCUMENT_NODE_T* document) {
-  conditional_transform_context_T context = {
-    .errors = document->base.errors,
-    .arena = document->arena
-  };
+  conditional_transform_context_T context = { .errors = document->base.errors, .arena = document->arena };
 
   herb_visit_node((AST_NODE_T*) document, transform_conditional_elements_visitor, &context);
 }

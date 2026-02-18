@@ -9,7 +9,6 @@
 #include "../../src/include/util/hb_arena.h"
 #include "../../src/include/util/hb_arena_debug.h"
 
-
 VALUE mHerb;
 VALUE cPosition;
 VALUE cLocation;

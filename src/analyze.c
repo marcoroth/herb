@@ -1481,7 +1481,13 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
       if (keyword == NULL) { keyword = erb_keyword_from_analyzed_ruby(analyzed); }
 
       if (keyword != NULL && !token_value_empty(content_node->tag_closing)) {
-        append_erb_control_flow_scope_error(keyword, node->location.start, node->location.end, node->errors, context->arena);
+        append_erb_control_flow_scope_error(
+          keyword,
+          node->location.start,
+          node->location.end,
+          node->errors,
+          context->arena
+        );
       }
     }
 

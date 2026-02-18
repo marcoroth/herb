@@ -996,7 +996,13 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
 
   while (token_is_none_of(parser, TOKEN_HTML_TAG_END, TOKEN_HTML_TAG_SELF_CLOSE, TOKEN_EOF)) {
     if (token_is_any_of(parser, TOKEN_HTML_TAG_START, TOKEN_HTML_TAG_START_CLOSE)) {
-      append_unclosed_open_tag_error(tag_name, tag_name->location.start, parser->current_token->location.start, errors, parser->arena);
+      append_unclosed_open_tag_error(
+        tag_name,
+        tag_name->location.start,
+        parser->current_token->location.start,
+        errors,
+        parser->arena
+      );
 
       AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
         tag_start,
@@ -1059,7 +1065,13 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
   }
 
   if (token_is(parser, TOKEN_EOF)) {
-    append_unclosed_open_tag_error(tag_name, tag_name->location.start, parser->current_token->location.start, errors, parser->arena);
+    append_unclosed_open_tag_error(
+      tag_name,
+      tag_name->location.start,
+      parser->current_token->location.start,
+      errors,
+      parser->arena
+    );
 
     AST_HTML_OPEN_TAG_NODE_T* open_tag_node = ast_html_open_tag_node_init(
       tag_start,
@@ -1228,7 +1240,13 @@ static AST_HTML_ELEMENT_NODE_T* parser_parse_html_regular_element(
       token_T* unclosed = parser_pop_open_tag(parser);
 
       if (unclosed != NULL) {
-        append_missing_closing_tag_error(unclosed, unclosed->location.start, unclosed->location.end, errors, parser->arena);
+        append_missing_closing_tag_error(
+          unclosed,
+          unclosed->location.start,
+          unclosed->location.end,
+          errors,
+          parser->arena
+        );
         token_free(unclosed);
       }
     }
@@ -1530,9 +1548,19 @@ static size_t find_implicit_close_index(hb_array_T* nodes, size_t start_idx, hb_
   return hb_array_size(nodes);
 }
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict, hb_arena_T* arena);
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  bool strict,
+  hb_arena_T* arena
+);
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict, hb_arena_T* arena) {
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  bool strict,
+  hb_arena_T* arena
+) {
   hb_array_T* result = hb_array_init(hb_array_size(nodes));
 
   for (size_t index = 0; index < hb_array_size(nodes); index++) {
@@ -1578,8 +1606,13 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
             );
           }
 
-          AST_HTML_OMITTED_CLOSE_TAG_NODE_T* omitted_close_tag =
-            ast_html_omitted_close_tag_node_init(open_tag->tag_name, end_position, end_position, hb_array_init(8), arena);
+          AST_HTML_OMITTED_CLOSE_TAG_NODE_T* omitted_close_tag = ast_html_omitted_close_tag_node_init(
+            open_tag->tag_name,
+            end_position,
+            end_position,
+            hb_array_init(8),
+            arena
+          );
 
           AST_HTML_ELEMENT_NODE_T* element = ast_html_element_node_init(
             (AST_NODE_T*) open_tag,
