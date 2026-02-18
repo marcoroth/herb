@@ -76,8 +76,6 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
 
     let mut lex_result_ptr = lex_result;
     crate::ffi::herb_free_lex_result(&mut lex_result_ptr as *mut *mut herb_lex_result_T);
-    crate::ffi::hb_arena_free(arena);
-    libc::free(arena as *mut std::ffi::c_void);
 
     Ok(LexResult::new(tokens))
   }
@@ -123,8 +121,6 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let result = ParseResult::new(document_node, source.to_string(), Vec::new());
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T);
-    crate::ffi::hb_arena_free(arena);
-    libc::free(arena as *mut std::ffi::c_void);
 
     Ok(result)
   }
