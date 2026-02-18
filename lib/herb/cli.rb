@@ -95,17 +95,22 @@ class Herb::CLI
         bundle exec herb [command] [options]
 
       Commands:
-        bundle exec herb lex [file]         Lex a file.
-        bundle exec herb parse [file]       Parse a file.
-        bundle exec herb compile [file]     Compile ERB template to Ruby code.
-        bundle exec herb render [file]      Compile and render ERB template to final output.
-        bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
-        bundle exec herb config [path]      Show configuration and file patterns for a project
-        bundle exec herb ruby [file]        Extract Ruby from a file.
-        bundle exec herb html [file]        Extract HTML from a file.
-        bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
-        bundle exec herb playground [file]  Open the content of the source file in the playground
-        bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
+        bundle exec herb lex [file]           Lex a file.
+        bundle exec herb parse [file]         Parse a file.
+        bundle exec herb compile [file]       Compile ERB template to Ruby code.
+        bundle exec herb render [file]        Compile and render ERB template to final output.
+        bundle exec herb analyze [path]       Analyze a project by passing a directory to the root of the project
+        bundle exec herb config [path]        Show configuration and file patterns for a project
+        bundle exec herb ruby [file]          Extract Ruby from a file.
+        bundle exec herb html [file]          Extract HTML from a file.
+        bundle exec herb playground [file]    Open the content of the source file in the playground
+        bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
+
+        bundle exec herb lint [patterns]      Lint templates (delegates to @herb-tools/linter)
+        bundle exec herb format [patterns]    Format templates (delegates to @herb-tools/formatter)
+        bundle exec herb highlight [file]     Syntax highlight templates (delegates to @herb-tools/highlighter)
+        bundle exec herb print [file]         Print AST (delegates to @herb-tools/printer)
+        bundle exec herb lsp                  Start the language server (delegates to @herb-tools/language-server)
 
       stdin:
         Commands that accept [file] also accept input via stdin:
@@ -171,6 +176,16 @@ class Herb::CLI
                     system(%(open "#{url}##{hash}"))
                     exit(0)
                   end
+                when "lint"
+                  run_node_tool("herb-lint", "@herb-tools/linter")
+                when "format"
+                  run_node_tool("herb-format", "@herb-tools/formatter")
+                when "print"
+                  run_node_tool("herb-print", "@herb-tools/printer")
+                when "highlight"
+                  run_node_tool("herb-highlight", "@herb-tools/highlighter")
+                when "lsp"
+                  run_node_tool("herb-language-server", "@herb-tools/language-server")
                 when "help"
                   help
                 when "version"
@@ -253,10 +268,59 @@ class Herb::CLI
   end
 
   def options
+    return if ["lint", "format", "print", "highlight", "lsp"].include?(@command)
+
     option_parser.parse!(@args)
   end
 
   private
+
+  def find_node_binary(name)
+    local_bin = File.join(Dir.pwd, "node_modules", ".bin", name)
+    return local_bin if File.executable?(local_bin)
+
+    path_result = `which #{name} 2>/dev/null`.strip
+    return path_result unless path_result.empty?
+
+    nil
+  end
+
+  def node_available?
+    system("which node > /dev/null 2>&1")
+  end
+
+  def run_node_tool(binary_name, package_name)
+    unless node_available?
+      warn "Error: Node.js is required to run 'herb #{@command}'."
+      warn ""
+      warn "Install the tool:"
+      warn "  npm install #{package_name}"
+      warn "  yarn add #{package_name}"
+      warn "  pnpm add #{package_name}"
+      warn "  bun add #{package_name}"
+      warn ""
+      warn "Or install Node.js from https://nodejs.org"
+      exit 1
+    end
+
+    remaining_args = @args[1..]
+    binary = find_node_binary(binary_name)
+    node_version = `node --version 2>/dev/null`.strip
+
+    command_parts = if binary
+                      [binary, *remaining_args]
+                    else
+                      ["npx", package_name, *remaining_args]
+                    end
+
+    escaped_command = command_parts.map { |arg| arg.include?(" ") ? "\"#{arg}\"" : arg }.join(" ")
+
+    warn "Node.js: #{node_version}"
+    warn "Running: #{escaped_command}"
+    warn ""
+
+    exec(*command_parts)
+  end
 
   def print_error_summary(errors)
     puts
