@@ -12,6 +12,8 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
+  TextEdit,
+  FoldingRangeParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -53,6 +55,7 @@ export class Server {
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
+          foldingRangeProvider: true,
         },
       }
 
@@ -174,6 +177,16 @@ export class Server {
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
 
       return autofixCodeActions.concat(linterDisableCodeActions)
+    })
+
+    this.connection.onFoldingRanges((params: FoldingRangeParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      const parseResult = this.service.parserService.parseDocument(document)
+
+      return this.service.foldingRangeService.getFoldingRanges(parseResult.document)
     })
   }
 
