@@ -727,6 +727,11 @@ static size_t process_control_structure(
         hb_array_T* when_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
 
+        if (erb_content->analyzed_ruby != NULL) {
+          free_analyzed_ruby(erb_content->analyzed_ruby);
+          erb_content->analyzed_ruby = NULL;
+        }
+
         location_T* then_keyword = NULL;
         const char* source = erb_content->content ? erb_content->content->value : NULL;
 
@@ -768,6 +773,11 @@ static size_t process_control_structure(
 
         hb_array_T* in_errors = erb_content->base.errors;
         erb_content->base.errors = NULL;
+
+        if (erb_content->analyzed_ruby != NULL) {
+          free_analyzed_ruby(erb_content->analyzed_ruby);
+          erb_content->analyzed_ruby = NULL;
+        }
 
         location_T* in_then_keyword = NULL;
         const char* in_source = erb_content->content ? erb_content->content->value : NULL;
@@ -829,6 +839,11 @@ static size_t process_control_structure(
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
 
+          if (next_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(next_erb->analyzed_ruby);
+            next_erb->analyzed_ruby = NULL;
+          }
+
           else_clause = ast_erb_else_node_init(
             next_erb->tag_opening,
             next_erb->content,
@@ -854,6 +869,11 @@ static size_t process_control_structure(
         if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
           hb_array_T* end_errors = end_erb->base.errors;
           end_erb->base.errors = NULL;
+
+          if (end_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(end_erb->analyzed_ruby);
+            end_erb->analyzed_ruby = NULL;
+          }
 
           end_node = ast_erb_end_node_init(
             end_erb->tag_opening,
@@ -983,6 +1003,11 @@ static size_t process_control_structure(
           hb_array_T* else_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
 
+          if (next_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(next_erb->analyzed_ruby);
+            next_erb->analyzed_ruby = NULL;
+          }
+
           else_clause = ast_erb_else_node_init(
             next_erb->tag_opening,
             next_erb->content,
@@ -1028,6 +1053,11 @@ static size_t process_control_structure(
           hb_array_T* ensure_errors = next_erb->base.errors;
           next_erb->base.errors = NULL;
 
+          if (next_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(next_erb->analyzed_ruby);
+            next_erb->analyzed_ruby = NULL;
+          }
+
           ensure_clause = ast_erb_ensure_node_init(
             next_erb->tag_opening,
             next_erb->content,
@@ -1053,6 +1083,11 @@ static size_t process_control_structure(
         if (detect_control_type(end_erb) == CONTROL_TYPE_END) {
           hb_array_T* end_errors = end_erb->base.errors;
           end_erb->base.errors = NULL;
+
+          if (end_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(end_erb->analyzed_ruby);
+            end_erb->analyzed_ruby = NULL;
+          }
 
           end_node = ast_erb_end_node_init(
             end_erb->tag_opening,
@@ -1127,6 +1162,11 @@ static size_t process_control_structure(
           close_erb->base.errors = NULL;
 
           position_T close_end_pos = erb_content_end_position(close_erb);
+
+          if (close_erb->analyzed_ruby != NULL) {
+            free_analyzed_ruby(close_erb->analyzed_ruby);
+            close_erb->analyzed_ruby = NULL;
+          }
 
           end_node = ast_erb_end_node_init(
             close_erb->tag_opening,
@@ -1208,6 +1248,11 @@ static size_t process_control_structure(
 
         position_T end_erb_final_pos = erb_content_end_position(end_erb);
 
+        if (end_erb->analyzed_ruby != NULL) {
+          free_analyzed_ruby(end_erb->analyzed_ruby);
+          end_erb->analyzed_ruby = NULL;
+        }
+
         end_node = ast_erb_end_node_init(
           end_erb->tag_opening,
           end_erb->content,
@@ -1250,6 +1295,11 @@ static size_t process_subsequent_block(
   index++;
 
   index = process_block_children(node, array, index, children, context, parent_type);
+
+  if (erb_node->analyzed_ruby != NULL) {
+    free_analyzed_ruby(erb_node->analyzed_ruby);
+    erb_node->analyzed_ruby = NULL;
+  }
 
   AST_NODE_T* subsequent_node = create_control_node(erb_node, children, NULL, NULL, type, context->arena);
 
