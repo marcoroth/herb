@@ -5,16 +5,12 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAllowedScriptTypeRule)
 
 describe("html-allowed-script-type", () => {
-  test("fails when type attribute is blank", () => {
-    expectError('`type` attribute required for `<script>` tag.')
-
-    assertOffenses('<script></script>')
+  test("passes when type attribute is blank", () => {
+    expectNoOffenses('<script></script>')
   })
 
-  test("fails when type attribute has no value", () => {
-    expectError('`type` attribute required for `<script>` tag.')
-
-    assertOffenses('<script type></script>')
+  test("passes when type attribute has no value", () => {
+    expectNoOffenses('<script type></script>')
   })
 
   test("passes when type is allowed", () => {
@@ -27,7 +23,7 @@ describe("html-allowed-script-type", () => {
 
   test("fails when type is not allowed", () => {
     expectError(
-      'Avoid using "text/yavascript" as type for `<script>` tag. Must be one of: text/javascript.'
+      'Avoid using "text/yavascript" as type for `<script>` tag. Must be one of: text/javascript or blank.'
     )
 
     assertOffenses('<script type="text/yavascript"></script>')

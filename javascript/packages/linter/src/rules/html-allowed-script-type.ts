@@ -6,7 +6,9 @@ import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.j
 import type { HTMLAttributeNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 const ALLOWED_TYPES = ["text/javascript"]
-const ALLOW_BLANK = false
+// NOTE: Rules are not configurable for now, keep some sane defaults
+//   See https://github.com/marcoroth/herb/issues/1204
+const ALLOW_BLANK = true
 
 class AllowedScriptTypeVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
