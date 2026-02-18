@@ -22,8 +22,8 @@ extern "C" {
 #include <string.h>
 
 napi_value Herb_lex(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -34,24 +34,53 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  hb_arena_T* external_arena = nullptr;
 
-  if (!arena) {
-    free(string);
-    return nullptr;
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      bool has_arena_prop;
+      napi_has_named_property(env, args[1], "arena", &has_arena_prop);
+
+      if (has_arena_prop) {
+        napi_value arena_prop;
+        napi_get_named_property(env, args[1], "arena", &arena_prop);
+        external_arena = get_arena_from_value(env, arena_prop);
+      }
+    }
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(string);
-    return nullptr;
+  hb_arena_T* arena;
+  bool owns_arena;
+
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+    if (!arena) {
+      free(string);
+      return nullptr;
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      free(string);
+      return nullptr;
+    }
+    owns_arena = true;
   }
 
   herb_lex_result_T* lex_result = herb_lex(string, arena);
 
   if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     free(string);
     return nullptr;
   }
@@ -65,8 +94,8 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -77,24 +106,53 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   char* file_path = CheckString(env, args[0]);
   if (!file_path) { return nullptr; }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  hb_arena_T* external_arena = nullptr;
 
-  if (!arena) {
-    free(file_path);
-    return nullptr;
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      bool has_arena_prop;
+      napi_has_named_property(env, args[1], "arena", &has_arena_prop);
+
+      if (has_arena_prop) {
+        napi_value arena_prop;
+        napi_get_named_property(env, args[1], "arena", &arena_prop);
+        external_arena = get_arena_from_value(env, arena_prop);
+      }
+    }
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(file_path);
-    return nullptr;
+  hb_arena_T* arena;
+  bool owns_arena;
+
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+    if (!arena) {
+      free(file_path);
+      return nullptr;
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      free(file_path);
+      return nullptr;
+    }
+    owns_arena = true;
   }
 
   herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
 
   if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     free(file_path);
     return nullptr;
   }
@@ -223,8 +281,8 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 }
 
 napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
-  size_t argc = 1;
-  napi_value args[1];
+  size_t argc = 2;
+  napi_value args[2];
   napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
   if (argc < 1) {
@@ -243,30 +301,101 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  hb_arena_T* external_arena = nullptr;
 
-  if (!arena) {
-    free(file_path);
-    free(string);
-    return nullptr;
+  if (argc >= 2) {
+    napi_valuetype valuetype;
+    napi_typeof(env, args[1], &valuetype);
+
+    if (valuetype == napi_object) {
+      napi_value track_whitespace_prop;
+      bool has_track_whitespace_prop;
+      napi_has_named_property(env, args[1], "track_whitespace", &has_track_whitespace_prop);
+
+      if (has_track_whitespace_prop) {
+        napi_get_named_property(env, args[1], "track_whitespace", &track_whitespace_prop);
+        bool track_whitespace_value;
+        napi_get_value_bool(env, track_whitespace_prop, &track_whitespace_value);
+
+        if (track_whitespace_value) {
+          parser_options.track_whitespace = true;
+        }
+      }
+
+      napi_value analyze_prop;
+      bool has_analyze_prop;
+      napi_has_named_property(env, args[1], "analyze", &has_analyze_prop);
+
+      if (has_analyze_prop) {
+        napi_get_named_property(env, args[1], "analyze", &analyze_prop);
+        bool analyze_value;
+        napi_get_value_bool(env, analyze_prop, &analyze_value);
+
+        if (!analyze_value) {
+          parser_options.analyze = false;
+        }
+      }
+
+      napi_value strict_prop;
+      bool has_strict_prop;
+      napi_has_named_property(env, args[1], "strict", &has_strict_prop);
+
+      if (has_strict_prop) {
+        napi_get_named_property(env, args[1], "strict", &strict_prop);
+        bool strict_value;
+        napi_get_value_bool(env, strict_prop, &strict_value);
+        parser_options.strict = strict_value;
+      }
+
+      bool has_arena_prop;
+      napi_has_named_property(env, args[1], "arena", &has_arena_prop);
+
+      if (has_arena_prop) {
+        napi_value arena_prop;
+        napi_get_named_property(env, args[1], "arena", &arena_prop);
+        external_arena = get_arena_from_value(env, arena_prop);
+      }
+    }
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(file_path);
-    free(string);
-    return nullptr;
+  hb_arena_T* arena;
+  bool owns_arena;
+
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+    if (!arena) {
+      free(file_path);
+      free(string);
+      return nullptr;
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      free(file_path);
+      free(string);
+      return nullptr;
+    }
+    owns_arena = true;
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, nullptr, arena);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
 
   if (!root) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     free(file_path);
     free(string);
     return nullptr;
   }
+
+  root->owns_arena = owns_arena;
 
   napi_value result = CreateParseResult(env, root, source_value);
 

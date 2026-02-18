@@ -26,23 +26,43 @@ extern "C" {
 
 using namespace emscripten;
 
-val Herb_lex(const std::string& source) {
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+val Herb_lex(const std::string& source, val options) {
+  hb_arena_T* external_arena = nullptr;
 
-  if (!arena) {
-    return val::null();
+  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (options.hasOwnProperty("arenaId")) {
+      int arena_id = options["arenaId"].as<int>();
+      external_arena = get_arena_by_id(arena_id);
+    }
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    return val::null();
+  hb_arena_T* arena;
+  bool owns_arena;
+
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+    if (!arena) {
+      return val::null();
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      return val::null();
+    }
+    owns_arena = true;
   }
 
   herb_lex_result_T* lex_result = herb_lex(source.c_str(), arena);
 
   if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     return val::null();
   }
 
