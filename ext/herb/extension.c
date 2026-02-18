@@ -25,47 +25,26 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
 
   if (!NIL_P(options)) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
+  arena_context_T context;
+  if (!setup_arena_context(get_arena_option_from_hash(options), &context)) { return Qnil; }
 
-  if (!NIL_P(external_arena)) {
-    arena = get_arena_from_value(external_arena);
-    owns_arena = false;
-  } else {
-    arena = malloc(sizeof(hb_arena_T));
-    if (!arena) { return Qnil; }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return Qnil;
-    }
-    owns_arena = true;
-  }
-
-  herb_lex_result_T* lex_result = herb_lex(string, arena);
+  herb_lex_result_T* lex_result = herb_lex(string, context.arena);
 
   if (!lex_result) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+    cleanup_arena_context(&context);
     return Qnil;
   }
 
   VALUE result = create_lex_result(lex_result->tokens, source);
 
-  if (print_arena_stats) { hb_arena_print_stats(arena); }
+  if (print_arena_stats) { hb_arena_print_stats(context.arena); }
 
   herb_free_lex_result(&lex_result);
 
@@ -78,48 +57,27 @@ static VALUE Herb_lex_file(int argc, VALUE* argv, VALUE self) {
 
   char* file_path = (char*) check_string(path);
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
 
   if (!NIL_P(options)) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
+  arena_context_T context;
+  if (!setup_arena_context(get_arena_option_from_hash(options), &context)) { return Qnil; }
 
-  if (!NIL_P(external_arena)) {
-    arena = get_arena_from_value(external_arena);
-    owns_arena = false;
-  } else {
-    arena = malloc(sizeof(hb_arena_T));
-    if (!arena) { return Qnil; }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return Qnil;
-    }
-    owns_arena = true;
-  }
-
-  herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
+  herb_lex_result_T* lex_result = herb_lex_file(file_path, context.arena);
 
   if (!lex_result) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+    cleanup_arena_context(&context);
     return Qnil;
   }
 
   VALUE source_value = read_file_to_ruby_string(file_path);
   VALUE result = create_lex_result(lex_result->tokens, source_value);
 
-  if (print_arena_stats) { hb_arena_print_stats(arena); }
+  if (print_arena_stats) { hb_arena_print_stats(context.arena); }
 
   herb_free_lex_result(&lex_result);
 
@@ -134,7 +92,6 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -152,43 +109,23 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
+  arena_context_T context;
+  if (!setup_arena_context(get_arena_option_from_hash(options), &context)) { return Qnil; }
 
-  if (!NIL_P(external_arena)) {
-    arena = get_arena_from_value(external_arena);
-    owns_arena = false;
-  } else {
-    arena = malloc(sizeof(hb_arena_T));
-    if (!arena) { return Qnil; }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return Qnil;
-    }
-    owns_arena = true;
-  }
-
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, context.arena);
 
   if (!root) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+    cleanup_arena_context(&context);
     return Qnil;
   }
 
-  root->owns_arena = owns_arena;
+  root->owns_arena = context.owns_arena;
 
   VALUE result = create_parse_result(root, source);
 
-  if (print_arena_stats) { hb_arena_print_stats(arena); }
+  if (print_arena_stats) { hb_arena_print_stats(context.arena); }
 
   ast_node_free((AST_NODE_T*) root);
 
@@ -206,7 +143,6 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -224,43 +160,23 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
+  arena_context_T context;
+  if (!setup_arena_context(get_arena_option_from_hash(options), &context)) { return Qnil; }
 
-  if (!NIL_P(external_arena)) {
-    arena = get_arena_from_value(external_arena);
-    owns_arena = false;
-  } else {
-    arena = malloc(sizeof(hb_arena_T));
-    if (!arena) { return Qnil; }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return Qnil;
-    }
-    owns_arena = true;
-  }
-
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, context.arena);
 
   if (!root) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+    cleanup_arena_context(&context);
     return Qnil;
   }
 
-  root->owns_arena = owns_arena;
+  root->owns_arena = context.owns_arena;
 
   VALUE result = create_parse_result(root, source_value);
 
-  if (print_arena_stats) { hb_arena_print_stats(arena); }
+  if (print_arena_stats) { hb_arena_print_stats(context.arena); }
 
   ast_node_free((AST_NODE_T*) root);
 

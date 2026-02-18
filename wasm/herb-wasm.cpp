@@ -27,42 +27,17 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source, val options) {
-  hb_arena_T* external_arena = nullptr;
+  hb_arena_T* external_arena = get_arena_option_from_object(options);
 
-  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
-    if (options.hasOwnProperty("arenaId")) {
-      int arena_id = options["arenaId"].as<int>();
-      external_arena = get_arena_by_id(arena_id);
-    }
+  arena_context_T context;
+  if (!setup_arena_context(external_arena, &context)) {
+    return val::null();
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
-
-  if (external_arena) {
-    arena = external_arena;
-    owns_arena = false;
-  } else {
-    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-    if (!arena) {
-      return val::null();
-    }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return val::null();
-    }
-    owns_arena = true;
-  }
-
-  herb_lex_result_T* lex_result = herb_lex(source.c_str(), arena);
+  herb_lex_result_T* lex_result = herb_lex(source.c_str(), context.arena);
 
   if (!lex_result) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+    cleanup_arena_context(&context);
     return val::null();
   }
 
@@ -75,7 +50,6 @@ val Herb_lex(const std::string& source, val options) {
 
 val Herb_parse(const std::string& source, val options) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-  hb_arena_T* external_arena = nullptr;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
     if (options.hasOwnProperty("track_whitespace")) {
@@ -95,44 +69,23 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("strict")) {
       parser_options.strict = options["strict"].as<bool>();
     }
-
-    if (options.hasOwnProperty("arenaId")) {
-      int arena_id = options["arenaId"].as<int>();
-      external_arena = get_arena_by_id(arena_id);
-    }
   }
 
-  hb_arena_T* arena;
-  bool owns_arena;
+  hb_arena_T* external_arena = get_arena_option_from_object(options);
 
-  if (external_arena) {
-    arena = external_arena;
-    owns_arena = false;
-  } else {
-    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-    if (!arena) {
-      return val::null();
-    }
-
-    if (!hb_arena_init(arena, KB(512))) {
-      free(arena);
-      return val::null();
-    }
-    owns_arena = true;
-  }
-
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, arena);
-
-  if (!root) {
-    if (owns_arena) {
-      hb_arena_free(arena);
-      free(arena);
-    }
+  arena_context_T context;
+  if (!setup_arena_context(external_arena, &context)) {
     return val::null();
   }
 
-  root->owns_arena = owns_arena;
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, context.arena);
+
+  if (!root) {
+    cleanup_arena_context(&context);
+    return val::null();
+  }
+
+  root->owns_arena = context.owns_arena;
 
   val result = CreateParseResult(root, source);
 

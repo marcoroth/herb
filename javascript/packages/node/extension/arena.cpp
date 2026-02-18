@@ -166,6 +166,50 @@ hb_arena_T* get_arena_from_value(napi_env env, napi_value arena_val) {
   return wrapper->arena;
 }
 
+hb_arena_T* get_arena_option_from_object(napi_env env, napi_value options) {
+  if (!options) return nullptr;
+
+  napi_valuetype valuetype;
+  napi_typeof(env, options, &valuetype);
+  if (valuetype != napi_object) return nullptr;
+
+  bool has_arena_prop;
+  napi_has_named_property(env, options, "arena", &has_arena_prop);
+  if (!has_arena_prop) return nullptr;
+
+  napi_value arena_prop;
+  napi_get_named_property(env, options, "arena", &arena_prop);
+  return get_arena_from_value(env, arena_prop);
+}
+
+bool setup_arena_context(napi_env env, hb_arena_T* external_arena, arena_context_T* context) {
+  if (external_arena) {
+    context->arena = external_arena;
+    context->owns_arena = false;
+    return true;
+  }
+
+  context->arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  if (!context->arena) { return false; }
+
+  if (!hb_arena_init(context->arena, KB(512))) {
+    free(context->arena);
+    context->arena = nullptr;
+    return false;
+  }
+
+  context->owns_arena = true;
+  return true;
+}
+
+void cleanup_arena_context(arena_context_T* context) {
+  if (context->owns_arena && context->arena) {
+    hb_arena_free(context->arena);
+    free(context->arena);
+    context->arena = nullptr;
+  }
+}
+
 void Init_herb_arena(napi_env env, napi_value exports) {
   napi_property_descriptor arena_properties[] = {
     { "reset", nullptr, Arena_reset, nullptr, nullptr, nullptr, napi_default, nullptr },

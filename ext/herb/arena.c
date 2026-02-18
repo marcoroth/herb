@@ -136,6 +136,43 @@ hb_arena_T* get_arena_from_value(VALUE arena_obj) {
   return wrapper->arena;
 }
 
+VALUE get_arena_option_from_hash(VALUE options) {
+  if (NIL_P(options)) return Qnil;
+
+  VALUE arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
+  if (NIL_P(arena)) { arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
+
+  return arena;
+}
+
+bool setup_arena_context(VALUE external_arena, arena_context_T* context) {
+  if (!NIL_P(external_arena)) {
+    context->arena = get_arena_from_value(external_arena);
+    context->owns_arena = false;
+    return true;
+  }
+
+  context->arena = malloc(sizeof(hb_arena_T));
+  if (!context->arena) { return false; }
+
+  if (!hb_arena_init(context->arena, KB(512))) {
+    free(context->arena);
+    context->arena = NULL;
+    return false;
+  }
+
+  context->owns_arena = true;
+  return true;
+}
+
+void cleanup_arena_context(arena_context_T* context) {
+  if (context->owns_arena && context->arena) {
+    hb_arena_free(context->arena);
+    free(context->arena);
+    context->arena = NULL;
+  }
+}
+
 void Init_herb_arena(VALUE mHerb) {
   cArena = rb_define_class_under(mHerb, "Arena", rb_cObject);
   rb_define_alloc_func(cArena, Arena_allocate);

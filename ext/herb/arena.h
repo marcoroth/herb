@@ -2,6 +2,7 @@
 #define HERB_EXT_ARENA_H
 
 #include <ruby.h>
+#include <stdbool.h>
 #include "../../src/include/util/hb_arena.h"
 
 extern VALUE cArena;
@@ -15,6 +16,15 @@ VALUE Arena_capacity(VALUE self);
 VALUE Arena_stats(VALUE self);
 
 hb_arena_T* get_arena_from_value(VALUE arena_obj);
+
+typedef struct {
+  hb_arena_T* arena;
+  bool owns_arena;
+} arena_context_T;
+
+VALUE get_arena_option_from_hash(VALUE options);
+bool setup_arena_context(VALUE external_arena, arena_context_T* context);
+void cleanup_arena_context(arena_context_T* context);
 
 void Init_herb_arena(VALUE mHerb);
 
