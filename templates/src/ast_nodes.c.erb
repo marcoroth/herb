@@ -57,6 +57,7 @@
 
   <%- if node.human == "document_node" -%>
   <%= node.human %>->arena = arena;
+  <%= node.human %>->owns_arena = true;
   <%- end -%>
 
   return <%= node.human %>;
@@ -181,10 +182,11 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
   ast_free_arrays_recursive((AST_NODE_T*)<%= node.human %>);
 
   hb_arena_T* arena = <%= node.human %>->arena;
+  bool owns_arena = <%= node.human %>->owns_arena;
 
   ast_free_base_node(&<%= node.human %>->base);
 
-  if (arena != NULL) {
+  if (arena != NULL && owns_arena) {
     hb_arena_free(arena);
     free(arena);
   }

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arena.h"
 #include "extension_helpers.h"
 
 extern "C" {
@@ -54,6 +55,7 @@ val Herb_lex(const std::string& source) {
 
 val Herb_parse(const std::string& source, val options) {
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  hb_arena_T* external_arena = nullptr;
 
   if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
     if (options.hasOwnProperty("track_whitespace")) {
@@ -73,26 +75,44 @@ val Herb_parse(const std::string& source, val options) {
     if (options.hasOwnProperty("strict")) {
       parser_options.strict = options["strict"].as<bool>();
     }
+
+    if (options.hasOwnProperty("arenaId")) {
+      int arena_id = options["arenaId"].as<int>();
+      external_arena = get_arena_by_id(arena_id);
+    }
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  hb_arena_T* arena;
+  bool owns_arena;
 
-  if (!arena) {
-    return val::null();
-  }
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    return val::null();
+    if (!arena) {
+      return val::null();
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      return val::null();
+    }
+    owns_arena = true;
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, arena);
 
   if (!root) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     return val::null();
   }
+
+  root->owns_arena = owns_arena;
 
   val result = CreateParseResult(root, source);
 
@@ -151,4 +171,10 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("extractRuby", &Herb_extract_ruby);
   function("extractHTML", &Herb_extract_html);
   function("version", &Herb_version);
+
+  function("createArena", &Herb_createArena);
+  function("resetArena", &Herb_resetArena);
+  function("freeArena", &Herb_freeArena);
+  function("arenaPosition", &Herb_arenaPosition);
+  function("arenaCapacity", &Herb_arenaCapacity);
 }

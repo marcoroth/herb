@@ -11,6 +11,7 @@ extern "C" {
 #include "../extension/libherb/include/util/hb_buffer.h"
 }
 
+#include "arena.h"
 #include "error_helpers.h"
 #include "extension_helpers.h"
 #include "nodes.h"
@@ -121,6 +122,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   if (!string) { return nullptr; }
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  hb_arena_T* external_arena = nullptr;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -165,30 +167,53 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
         napi_get_value_bool(env, strict_prop, &strict_value);
         parser_options.strict = strict_value;
       }
+
+      bool has_arena_prop;
+      napi_has_named_property(env, args[1], "arena", &has_arena_prop);
+
+      if (has_arena_prop) {
+        napi_value arena_prop;
+        napi_get_named_property(env, args[1], "arena", &arena_prop);
+        external_arena = get_arena_from_value(env, arena_prop);
+      }
     }
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+  hb_arena_T* arena;
+  bool owns_arena;
 
-  if (!arena) {
-    free(string);
-    return nullptr;
-  }
+  if (external_arena) {
+    arena = external_arena;
+    owns_arena = false;
+  } else {
+    arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(string);
-    return nullptr;
+    if (!arena) {
+      free(string);
+      return nullptr;
+    }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      free(string);
+      return nullptr;
+    }
+    owns_arena = true;
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
 
   if (!root) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     free(string);
     return nullptr;
   }
+
+  root->owns_arena = owns_arena;
+
   napi_value result = CreateParseResult(env, root, args[0]);
 
   ast_node_free((AST_NODE_T *) root);
@@ -362,6 +387,8 @@ napi_value Herb_version(napi_env env, napi_callback_info info) {
 }
 
 napi_value Init(napi_env env, napi_value exports) {
+  Init_herb_arena(env, exports);
+
   napi_property_descriptor descriptors[] = {
     { "parse", nullptr, Herb_parse, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lex", nullptr, Herb_lex, nullptr, nullptr, nullptr, napi_default, nullptr },

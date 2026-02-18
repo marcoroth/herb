@@ -1,5 +1,6 @@
 #include <ruby.h>
 
+#include "arena.h"
 #include "error_helpers.h"
 #include "extension.h"
 #include "extension_helpers.h"
@@ -103,6 +104,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   bool print_arena_stats = false;
+  VALUE external_arena = Qnil;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -120,23 +122,39 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+
+    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
+    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
-  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
-  if (!arena) { return Qnil; }
+  hb_arena_T* arena;
+  bool owns_arena;
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    return Qnil;
+  if (!NIL_P(external_arena)) {
+    arena = get_arena_from_value(external_arena);
+    owns_arena = false;
+  } else {
+    arena = malloc(sizeof(hb_arena_T));
+    if (!arena) { return Qnil; }
+
+    if (!hb_arena_init(arena, KB(512))) {
+      free(arena);
+      return Qnil;
+    }
+    owns_arena = true;
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
 
   if (!root) {
-    hb_arena_free(arena);
-    free(arena);
+    if (owns_arena) {
+      hb_arena_free(arena);
+      free(arena);
+    }
     return Qnil;
   }
+
+  root->owns_arena = owns_arena;
 
   VALUE result = create_parse_result(root, source);
 
@@ -269,6 +287,8 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
+
+  Init_herb_arena(mHerb);
 
   rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
   rb_define_singleton_method(mHerb, "lex", Herb_lex, -1);
