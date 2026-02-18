@@ -82,8 +82,6 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
   jobject result = CreateParseResult(env, ast, source);
 
   ast_node_free((AST_NODE_T*) ast);
-  hb_arena_free(arena);
-  free(arena);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -117,8 +115,6 @@ Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   jobject result = CreateLexResult(env, lex_result->tokens, source);
 
   herb_free_lex_result(&lex_result);
-  hb_arena_free(arena);
-  free(arena);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
