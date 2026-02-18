@@ -1,9 +1,9 @@
 #ifndef HERB_EXT_ARENA_H
 #define HERB_EXT_ARENA_H
 
+#include "../../src/include/util/hb_arena.h"
 #include <ruby.h>
 #include <stdbool.h>
-#include "../../src/include/util/hb_arena.h"
 
 extern VALUE cArena;
 extern const rb_data_type_t herb_arena_type;
