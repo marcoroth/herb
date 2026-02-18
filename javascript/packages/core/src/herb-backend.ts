@@ -7,6 +7,7 @@ import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 import { deserializePrismParseResult } from "./prism/index.js"
 
+import type { Arena, ArenaOption, BackendArenaOption, CreateArenaOptions } from "./arena.js"
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
 import type { ParseResultFor } from "./parse-result.js"
 import type { LexOptions, ParseOptions } from "./parser-options.js"
@@ -52,15 +53,22 @@ export abstract class HerbBackend {
    * @returns A `LexResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  lex(source: string, options?: LexOptions): LexResult {
+  lex(source: string, options?: LexOptions & ArenaOption): LexResult {
     this.ensureBackend()
 
-    return LexResult.from(this.backend.lex(ensureString(source), options))
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: LexOptions & BackendArenaOption = {
+      ...restOptions,
+      ...(arena ? arena.toBackendOption() : {}),
+    }
+
+    return LexResult.from(this.backend.lex(ensureString(source), mergedOptions))
   }
 
   /**
    * Lexes a file.
    * @param path - The file path to lex.
+   * @param options - Optional lexing options.
    * @returns A `LexResult` instance.
    */
   abstract lexFile(path: string, options?: LexOptions): LexResult
@@ -72,10 +80,15 @@ export abstract class HerbBackend {
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse<const Options extends ParseOptions>(source: string, options?: Options): ParseResultFor<Options> {
+  parse<const Options extends ParseOptions>(source: string, options?: Options & ArenaOption): ParseResultFor<Options> {
     this.ensureBackend()
 
-    const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: ParseOptions & BackendArenaOption = {
+      ...DEFAULT_PARSER_OPTIONS,
+      ...restOptions,
+      ...(arena ? arena.toBackendOption() : {}),
+    }
 
     return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions)) as ParseResultFor<Options>
   }
@@ -83,6 +96,7 @@ export abstract class HerbBackend {
   /**
    * Parses a file.
    * @param path - The file path to parse.
+   * @param options - Optional parsing options.
    * @returns A `ParseResult` instance.
    */
   abstract parseFile(path: string): ParseResult
@@ -202,4 +216,12 @@ export abstract class HerbBackend {
    * @returns A string representing the backend version.
    */
   abstract backendVersion(): string
+
+  /**
+   * Creates a new Arena for memory allocation during parsing.
+   * @param options - Optional arena creation options.
+   * @returns An Arena instance.
+   * @throws Error if the backend is not loaded.
+   */
+  abstract createArena(options?: CreateArenaOptions): Arena
 }

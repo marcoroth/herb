@@ -134,6 +134,7 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
+  VALUE external_arena = Qnil;
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
@@ -142,6 +143,9 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+
+    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
+    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
 
     size_t opener_count = read_erb_openers(options, opener_buffer);
 
@@ -154,7 +158,11 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
   lex_args_T args = { 0 };
   args.source = source;
 
-  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+  if (!NIL_P(external_arena)) {
+    args.allocator = hb_allocator_with_borrowed_arena(get_arena_from_value(external_arena));
+  } else if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) {
+    return Qnil;
+  }
 
   args.tokens = herb_lex_with_options(string, &parser_options, &args.allocator);
 
