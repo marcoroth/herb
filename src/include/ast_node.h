@@ -5,11 +5,12 @@
 #include "errors.h"
 #include "position.h"
 #include "token_struct.h"
+#include "util/hb_arena.h"
 
 void ast_node_init(AST_NODE_T* node, ast_node_type_T type, position_T start, position_T end, hb_array_T* errors);
 void ast_node_free(AST_NODE_T* node);
 
-AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token);
+AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_arena_T* arena);
 
 size_t ast_node_sizeof(void);
 size_t ast_node_child_count(AST_NODE_T* node);

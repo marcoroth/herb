@@ -630,7 +630,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
   // <div id=home>
   if (token_is(parser, TOKEN_IDENTIFIER)) {
     token_T* identifier = parser_consume_expected(parser, TOKEN_IDENTIFIER, errors);
-    AST_LITERAL_NODE_T* literal = ast_literal_node_init_from_token(identifier);
+    AST_LITERAL_NODE_T* literal = ast_literal_node_init_from_token(identifier, parser->arena);
     token_free(identifier);
 
     hb_array_append(children, literal);
