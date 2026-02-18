@@ -10,7 +10,7 @@ class ArenaTest < Minitest::Spec
   test "creating an arena with default size" do
     arena = Herb::Arena.new
     assert_instance_of Herb::Arena, arena
-    assert arena.capacity > 0
+    assert arena.capacity.positive?
   end
 
   test "creating an arena with custom size" do
@@ -51,7 +51,7 @@ class ArenaTest < Minitest::Spec
     arena = Herb::Arena.new
 
     Herb.parse("<div>hello</div>", arena: arena)
-    assert arena.position > 0
+    assert arena.position.positive?
 
     arena.reset
     assert_equal 0, arena.position
@@ -85,8 +85,8 @@ class ArenaTest < Minitest::Spec
     Herb.parse("<span>second</span>", arena: arena2)
     position2 = arena2.position
 
-    assert position1 > 0
-    assert position2 > 0
+    assert position1.positive?
+    assert position2.positive?
     assert_equal position1, arena1.position
   end
 
@@ -105,7 +105,7 @@ class ArenaTest < Minitest::Spec
       assert result.value
     end
 
-    assert arena.position > 0
+    assert arena.position.positive?
   end
 
   test "arena reset allows reuse for batch processing" do
