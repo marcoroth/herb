@@ -1,23 +1,5 @@
 #include "include/analyze.h"
-#include "include/analyzed_ruby.h"
 #include "include/visitor.h"
-
-static void free_analyzed_ruby_from_array(hb_array_T* array) {
-  if (array == NULL) { return; }
-
-  for (size_t i = 0; i < hb_array_size(array); i++) {
-    AST_NODE_T* node = (AST_NODE_T*) hb_array_get(array, i);
-
-    if (node != NULL && node->type == AST_ERB_CONTENT_NODE) {
-      AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
-
-      if (erb_content_node->analyzed_ruby != NULL) {
-        free_analyzed_ruby(erb_content_node->analyzed_ruby);
-        erb_content_node->analyzed_ruby = NULL;
-      }
-    }
-  }
-}
 
 bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
   analyze_ruby_context_T* context = (analyze_ruby_context_T*) data;
@@ -30,7 +12,6 @@ bool transform_erb_nodes(const AST_NODE_T* node, void* data) {
     <%= node.struct_type %>* <%= node.human %> = (<%= node.struct_type %>*) node;
     hb_array_T* old_array = <%= node.human %>-><%= field.name %>;
     <%= node.human %>-><%= field.name %> = rewrite_node_array((AST_NODE_T*) node, <%= node.human %>-><%= field.name %>, context);
-    free_analyzed_ruby_from_array(old_array);
     hb_array_free(&old_array);
   }
 

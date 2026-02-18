@@ -356,11 +356,6 @@ static AST_NODE_T* create_control_node(
   hb_array_T* errors = erb_node->base.errors;
   erb_node->base.errors = NULL;
 
-  if (erb_node->analyzed_ruby != NULL) {
-    free_analyzed_ruby(erb_node->analyzed_ruby);
-    erb_node->analyzed_ruby = NULL;
-  }
-
   position_T start_position = erb_node->tag_opening->location.start;
   position_T end_position = erb_content_end_position(erb_node);
 
@@ -403,6 +398,11 @@ static AST_NODE_T* create_control_node(
       then_keyword->end.line = content_start.line + then_keyword->end.line - 1;
       then_keyword->end.column = content_start.column + then_keyword->end.column;
     }
+  }
+
+  if (erb_node->analyzed_ruby != NULL) {
+    free_analyzed_ruby(erb_node->analyzed_ruby);
+    erb_node->analyzed_ruby = NULL;
   }
 
   switch (control_type) {
@@ -1490,12 +1490,103 @@ static bool detect_invalid_erb_structures(const AST_NODE_T* node, void* data) {
         );
       }
     }
+  }
+
+  if (node->type == AST_ERB_IF_NODE) {
+    const AST_ERB_IF_NODE_T* if_node = (const AST_ERB_IF_NODE_T*) node;
+
+    if (if_node->end_node == NULL) { check_erb_node_for_missing_end(node, context->arena); }
+
+    if (if_node->statements != NULL) {
+      for (size_t i = 0; i < hb_array_size(if_node->statements); i++) {
+        AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(if_node->statements, i);
+
+        if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+      }
+    }
+
+    AST_NODE_T* subsequent = if_node->subsequent;
+
+    while (subsequent != NULL) {
+      if (subsequent->type == AST_ERB_CONTENT_NODE) {
+        const AST_ERB_CONTENT_NODE_T* content_node = (const AST_ERB_CONTENT_NODE_T*) subsequent;
+
+        if (content_node->parsed && !content_node->valid && content_node->analyzed_ruby != NULL) {
+          analyzed_ruby_T* analyzed = content_node->analyzed_ruby;
+          const char* keyword = erb_keyword_from_analyzed_ruby(analyzed);
+
+          if (!token_value_empty(content_node->tag_closing)) {
+            append_erb_control_flow_scope_error(
+              keyword,
+              subsequent->location.start,
+              subsequent->location.end,
+              subsequent->errors,
+              context->arena
+            );
+          }
+        }
+      }
+
+      if (subsequent->type == AST_ERB_IF_NODE) {
+        const AST_ERB_IF_NODE_T* elsif_node = (const AST_ERB_IF_NODE_T*) subsequent;
+
+        if (elsif_node->statements != NULL) {
+          for (size_t i = 0; i < hb_array_size(elsif_node->statements); i++) {
+            AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(elsif_node->statements, i);
+
+            if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+          }
+        }
+
+        subsequent = elsif_node->subsequent;
+      } else if (subsequent->type == AST_ERB_ELSE_NODE) {
+        const AST_ERB_ELSE_NODE_T* else_node = (const AST_ERB_ELSE_NODE_T*) subsequent;
+
+        if (else_node->statements != NULL) {
+          for (size_t i = 0; i < hb_array_size(else_node->statements); i++) {
+            AST_NODE_T* statement = (AST_NODE_T*) hb_array_get(else_node->statements, i);
+
+            if (statement != NULL) { herb_visit_node(statement, detect_invalid_erb_structures, context); }
+          }
+        }
+
+        break;
+      } else {
+        break;
+      }
+    }
+  }
+
+  if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
+      || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+    herb_visit_child_nodes(node, detect_invalid_erb_structures, context);
+  }
+
+  if (node->type == AST_ERB_UNLESS_NODE || node->type == AST_ERB_WHILE_NODE || node->type == AST_ERB_UNTIL_NODE
+      || node->type == AST_ERB_FOR_NODE || node->type == AST_ERB_CASE_NODE || node->type == AST_ERB_CASE_MATCH_NODE
+      || node->type == AST_ERB_BEGIN_NODE || node->type == AST_ERB_BLOCK_NODE || node->type == AST_ERB_ELSE_NODE) {
+    check_erb_node_for_missing_end(node, context->arena);
 
     if (is_loop_node) { context->loop_depth--; }
     if (is_begin_node) { context->rescue_depth--; }
+
+    return false;
   }
 
-  return true;
+  if (node->type == AST_ERB_IF_NODE) {
+    if (is_loop_node) { context->loop_depth--; }
+    if (is_begin_node) { context->rescue_depth--; }
+
+    return false;
+  }
+
+  bool result = true;
+
+  if (is_loop_node) { context->loop_depth--; }
+  if (is_begin_node) { context->rescue_depth--; }
+
+  return result;
 }
 
 void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, bool strict) {
