@@ -63,9 +63,7 @@ VALUE Arena_initialize(int argc, VALUE* argv, VALUE self) {
   TypedData_Get_Struct(self, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
   wrapper->arena = malloc(sizeof(hb_arena_T));
-  if (!wrapper->arena) {
-    rb_raise(rb_eNoMemError, "Failed to allocate arena");
-  }
+  if (!wrapper->arena) { rb_raise(rb_eNoMemError, "Failed to allocate arena"); }
 
   if (!hb_arena_init(wrapper->arena, initial_size)) {
     free(wrapper->arena);
@@ -81,9 +79,7 @@ VALUE Arena_reset(VALUE self) {
   herb_arena_wrapper_T* wrapper;
   TypedData_Get_Struct(self, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
-  if (!wrapper->arena || !wrapper->initialized) {
-    rb_raise(rb_eRuntimeError, "Arena not initialized");
-  }
+  if (!wrapper->arena || !wrapper->initialized) { rb_raise(rb_eRuntimeError, "Arena not initialized"); }
 
   hb_arena_reset(wrapper->arena);
   return self;
@@ -93,9 +89,7 @@ VALUE Arena_position(VALUE self) {
   herb_arena_wrapper_T* wrapper;
   TypedData_Get_Struct(self, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
-  if (!wrapper->arena || !wrapper->initialized) {
-    rb_raise(rb_eRuntimeError, "Arena not initialized");
-  }
+  if (!wrapper->arena || !wrapper->initialized) { rb_raise(rb_eRuntimeError, "Arena not initialized"); }
 
   return SIZET2NUM(hb_arena_position(wrapper->arena));
 }
@@ -104,9 +98,7 @@ VALUE Arena_capacity(VALUE self) {
   herb_arena_wrapper_T* wrapper;
   TypedData_Get_Struct(self, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
-  if (!wrapper->arena || !wrapper->initialized) {
-    rb_raise(rb_eRuntimeError, "Arena not initialized");
-  }
+  if (!wrapper->arena || !wrapper->initialized) { rb_raise(rb_eRuntimeError, "Arena not initialized"); }
 
   return SIZET2NUM(hb_arena_capacity(wrapper->arena));
 }
@@ -115,29 +107,25 @@ VALUE Arena_stats(VALUE self) {
   herb_arena_wrapper_T* wrapper;
   TypedData_Get_Struct(self, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
-  if (!wrapper->arena || !wrapper->initialized) {
-    rb_raise(rb_eRuntimeError, "Arena not initialized");
-  }
+  if (!wrapper->arena || !wrapper->initialized) { rb_raise(rb_eRuntimeError, "Arena not initialized"); }
 
   hb_arena_print_stats(wrapper->arena);
   return Qnil;
 }
 
 hb_arena_T* get_arena_from_value(VALUE arena_obj) {
-  if (NIL_P(arena_obj)) return NULL;
+  if (NIL_P(arena_obj)) { return NULL; }
 
   herb_arena_wrapper_T* wrapper;
   TypedData_Get_Struct(arena_obj, herb_arena_wrapper_T, &herb_arena_type, wrapper);
 
-  if (!wrapper->arena || !wrapper->initialized) {
-    rb_raise(rb_eRuntimeError, "Arena not initialized");
-  }
+  if (!wrapper->arena || !wrapper->initialized) { rb_raise(rb_eRuntimeError, "Arena not initialized"); }
 
   return wrapper->arena;
 }
 
 VALUE get_arena_option_from_hash(VALUE options) {
-  if (NIL_P(options)) return Qnil;
+  if (NIL_P(options)) { return Qnil; }
 
   VALUE arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
   if (NIL_P(arena)) { arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
