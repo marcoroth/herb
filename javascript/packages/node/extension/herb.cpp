@@ -117,12 +117,12 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
 
       ApplyERBOpeners(parser_options, openers);
 
-      external_arena = ReadArena(env, args[1]);
+      external_arena = get_arena_option_from_object(env, args[1]);
     }
   }
 
   hb_allocator_T allocator;
-  if (!InitAllocator(allocator, external_arena)) {
+  if (!herb_arena_init_allocator(allocator, external_arena)) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
@@ -169,7 +169,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
       herb_extract_parser_options(env, args[1], &parser_options);
 
-      external_arena = ReadArena(env, args[1]);
+      external_arena = get_arena_option_from_object(env, args[1]);
     }
   }
 
@@ -177,7 +177,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
-  if (!InitAllocator(allocator, external_arena)) {
+  if (!herb_arena_init_allocator(allocator, external_arena)) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;

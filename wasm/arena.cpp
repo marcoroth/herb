@@ -68,3 +68,21 @@ hb_arena_T* get_arena_by_id(int arena_id) {
   }
   return nullptr;
 }
+
+hb_arena_T* get_arena_option_from_object(emscripten::val options) {
+  if (options.isUndefined() || options.isNull()) return nullptr;
+  if (options.typeOf().as<std::string>() != "object") return nullptr;
+  if (!options.hasOwnProperty("arenaId")) return nullptr;
+
+  int arena_id = options["arenaId"].as<int>();
+  return get_arena_by_id(arena_id);
+}
+
+bool herb_arena_init_allocator(hb_allocator_T& allocator, hb_arena_T* external_arena) {
+  if (external_arena != nullptr) {
+    allocator = hb_allocator_with_borrowed_arena(external_arena);
+    return true;
+  }
+
+  return hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+}

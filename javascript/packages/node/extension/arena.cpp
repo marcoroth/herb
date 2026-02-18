@@ -166,6 +166,31 @@ hb_arena_T* get_arena_from_value(napi_env env, napi_value arena_val) {
   return wrapper->arena;
 }
 
+hb_arena_T* get_arena_option_from_object(napi_env env, napi_value options) {
+  if (!options) return nullptr;
+
+  napi_valuetype valuetype;
+  napi_typeof(env, options, &valuetype);
+  if (valuetype != napi_object) return nullptr;
+
+  bool has_arena_prop;
+  napi_has_named_property(env, options, "arena", &has_arena_prop);
+  if (!has_arena_prop) return nullptr;
+
+  napi_value arena_prop;
+  napi_get_named_property(env, options, "arena", &arena_prop);
+  return get_arena_from_value(env, arena_prop);
+}
+
+bool herb_arena_init_allocator(hb_allocator_T& allocator, hb_arena_T* external_arena) {
+  if (external_arena != nullptr) {
+    allocator = hb_allocator_with_borrowed_arena(external_arena);
+    return true;
+  }
+
+  return hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+}
+
 void Init_herb_arena(napi_env env, napi_value exports) {
   napi_property_descriptor arena_properties[] = {
     { "reset", nullptr, Arena_reset, nullptr, nullptr, nullptr, napi_default, nullptr },
@@ -188,30 +213,4 @@ void Init_herb_arena(napi_env env, napi_value exports) {
 
   napi_create_reference(env, arena_class, 1, &arena_constructor_ref);
   napi_set_named_property(env, exports, "Arena", arena_class);
-}
-
-hb_arena_T* ReadArena(napi_env env, napi_value options) {
-  bool has_arena;
-  napi_has_named_property(env, options, "arena", &has_arena);
-
-  if (!has_arena) { return nullptr; }
-
-  napi_value arena_value;
-  napi_get_named_property(env, options, "arena", &arena_value);
-
-  napi_valuetype valuetype;
-  napi_typeof(env, arena_value, &valuetype);
-
-  if (valuetype != napi_object) { return nullptr; }
-
-  return get_arena_from_value(env, arena_value);
-}
-
-bool InitAllocator(hb_allocator_T& allocator, hb_arena_T* arena) {
-  if (arena != nullptr) {
-    allocator = hb_allocator_with_borrowed_arena(arena);
-    return true;
-  }
-
-  return hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
 }

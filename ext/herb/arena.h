@@ -2,6 +2,9 @@
 #define HERB_EXT_ARENA_H
 
 #include <ruby.h>
+#include <stdbool.h>
+
+#include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_arena.h"
 
 extern VALUE cArena;
@@ -15,6 +18,9 @@ VALUE Arena_capacity(VALUE self);
 VALUE Arena_stats(VALUE self);
 
 hb_arena_T* get_arena_from_value(VALUE arena_obj);
+
+VALUE get_arena_option_from_hash(VALUE options);
+bool herb_arena_init_allocator(hb_allocator_T* allocator, VALUE external_arena);
 
 void Init_herb_arena(VALUE mHerb);
 

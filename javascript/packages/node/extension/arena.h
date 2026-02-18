@@ -17,8 +17,8 @@ napi_value Arena_get_capacity(napi_env env, napi_callback_info info);
 napi_value Arena_free(napi_env env, napi_callback_info info);
 
 hb_arena_T* get_arena_from_value(napi_env env, napi_value arena_val);
-hb_arena_T* ReadArena(napi_env env, napi_value options);
-bool InitAllocator(hb_allocator_T& allocator, hb_arena_T* arena);
+hb_arena_T* get_arena_option_from_object(napi_env env, napi_value options);
+bool herb_arena_init_allocator(hb_allocator_T& allocator, hb_arena_T* external_arena);
 
 void Init_herb_arena(napi_env env, napi_value exports);
 

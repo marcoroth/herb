@@ -134,7 +134,7 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
+  VALUE external_arena = get_arena_option_from_hash(options);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
@@ -143,9 +143,6 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
 
     size_t opener_count = read_erb_openers(options, opener_buffer);
 
@@ -158,11 +155,7 @@ static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
   lex_args_T args = { 0 };
   args.source = source;
 
-  if (!NIL_P(external_arena)) {
-    args.allocator = hb_allocator_with_borrowed_arena(get_arena_from_value(external_arena));
-  } else if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) {
-    return Qnil;
-  }
+  if (!herb_arena_init_allocator(&args.allocator, external_arena)) { return Qnil; }
 
   args.tokens = herb_lex_with_options(string, &parser_options, &args.allocator);
 
@@ -177,7 +170,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
-  VALUE external_arena = Qnil;
+  VALUE external_arena = get_arena_option_from_hash(options);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
@@ -195,9 +188,6 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
-
-    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
-    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
   uint32_t error_count = 0;
@@ -208,11 +198,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   args.parser_options = &parser_options;
   args.print_arena_stats = print_arena_stats;
 
-  if (!NIL_P(external_arena)) {
-    args.allocator = hb_allocator_with_borrowed_arena(get_arena_from_value(external_arena));
-  } else if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) {
-    return Qnil;
-  }
+  if (!herb_arena_init_allocator(&args.allocator, external_arena)) { return Qnil; }
 
   if (string != NULL) {
     args.input = hb_allocator_strndup(&args.allocator, string, (size_t) RSTRING_LEN(source));

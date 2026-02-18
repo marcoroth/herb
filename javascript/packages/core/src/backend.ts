@@ -1,37 +1,16 @@
 import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
-<<<<<<< HEAD
 import type { LexOptions, ParseOptions } from "./parser-options.js"
 import type { BackendArenaOption } from "./arena.js"
-||||||| parent of fac81712b (Improve JavaScript API and also support arena in lex)
-import type { ParserOptions } from "./parser-options.js"
-=======
->>>>>>> fac81712b (Improve JavaScript API and also support arena in lex)
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 import type { DiffOptions, DiffResult } from "./diff-result.js"
 
 interface LibHerbBackendFunctions {
-<<<<<<< HEAD
   lex: (source: string, options?: LexOptions & BackendArenaOption) => SerializedLexResult
-||||||| parent of fac81712b (Improve JavaScript API and also support arena in lex)
-  lex: (source: string) => SerializedLexResult
-  lexFile: (path: string) => SerializedLexResult
-=======
-  lex: (source: string, options?: Record<string, unknown>) => SerializedLexResult
-  lexFile: (path: string, options?: Record<string, unknown>) => SerializedLexResult
->>>>>>> fac81712b (Improve JavaScript API and also support arena in lex)
 
-<<<<<<< HEAD
   parse: (source: string, options?: ParseOptions & BackendArenaOption) => SerializedParseResult
 
   diff: (oldSource: string, newSource: string, options?: DiffOptions) => DiffResult
-||||||| parent of fac81712b (Improve JavaScript API and also support arena in lex)
-  parse: (source: string, options?: ParserOptions) => SerializedParseResult
-  parseFile: (path: string) => SerializedParseResult
-=======
-  parse: (source: string, options?: Record<string, unknown>) => SerializedParseResult
-  parseFile: (path: string, options?: Record<string, unknown>) => SerializedParseResult
->>>>>>> fac81712b (Improve JavaScript API and also support arena in lex)
 
   extractRuby: (source: string, options?: ExtractRubyOptions) => string
   extractHTML: (source: string) => string

@@ -65,25 +65,9 @@ static void ApplyERBOpeners(parser_options_T& parser_options, const std::vector<
   parser_options.erb_opener_count = storage.size();
 }
 
-static hb_arena_T* ReadArena(val options) {
-  if (options.isNull() || options.isUndefined()) { return nullptr; }
-  if (!options.hasOwnProperty("arenaId")) { return nullptr; }
-
-  return get_arena_by_id(options["arenaId"].as<int>());
-}
-
-static bool InitAllocator(hb_allocator_T& allocator, hb_arena_T* arena) {
-  if (arena != nullptr) {
-    allocator = hb_allocator_with_borrowed_arena(arena);
-    return true;
-  }
-
-  return hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
-}
-
 val Herb_lex(const std::string& source, val options) {
   hb_allocator_T allocator;
-  if (!InitAllocator(allocator, ReadArena(options))) {
+  if (!herb_arena_init_allocator(allocator, get_arena_option_from_object(options))) {
     return val::null();
   }
 
@@ -122,7 +106,7 @@ val Herb_parse(const std::string& source, val options) {
   parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
-  if (!InitAllocator(allocator, ReadArena(options))) {
+  if (!herb_arena_init_allocator(allocator, get_arena_option_from_object(options))) {
     return val::null();
   }
 
