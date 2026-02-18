@@ -21,18 +21,7 @@ token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) 
     lexer->current_column = 0;
   }
 
-  if (value.data) {
-    char* arena_value = hb_arena_alloc(lexer->arena, value.length + 1);
-    if (arena_value) {
-      memcpy(arena_value, value.data, value.length);
-      arena_value[value.length] = '\0';
-      token->value = arena_value;
-    } else {
-      token->value = NULL;
-    }
-  } else {
-    token->value = NULL;
-  }
+  token->value = value.data ? hb_arena_strndup(lexer->arena, value.data, value.length) : NULL;
 
   token->type = type;
   token->arena_allocated = true;
@@ -137,16 +126,7 @@ token_T* token_copy(token_T* token, hb_arena_T* arena) {
 
   if (token->value) {
     if (arena) {
-      size_t value_length = strlen(token->value);
-      char* arena_value = hb_arena_alloc(arena, value_length + 1);
-
-      if (arena_value) {
-        memcpy(arena_value, token->value, value_length);
-        arena_value[value_length] = '\0';
-        new_token->value = arena_value;
-      } else {
-        new_token->value = NULL;
-      }
+      new_token->value = hb_arena_strdup(arena, token->value);
     } else {
       new_token->value = herb_strdup(token->value);
 

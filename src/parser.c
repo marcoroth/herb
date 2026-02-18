@@ -750,12 +750,7 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       token_T* equals_with_whitespace = hb_arena_alloc(parser->arena, sizeof(token_T));
       equals_with_whitespace->type = TOKEN_EQUALS;
 
-      size_t value_length = strlen(equals_buffer.value);
-      char* arena_value = hb_arena_alloc(parser->arena, value_length + 1);
-      memcpy(arena_value, equals_buffer.value, value_length);
-      arena_value[value_length] = '\0';
-
-      equals_with_whitespace->value = arena_value;
+      equals_with_whitespace->value = hb_arena_strdup(parser->arena, equals_buffer.value);
       equals_with_whitespace->location = (location_T) { .start = equals_start, .end = equals_end };
       equals_with_whitespace->range = (range_T) { .from = range_start, .to = range_end };
       equals_with_whitespace->arena_allocated = true;
@@ -801,7 +796,9 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       if (hb_array_size(attribute_name->children) > 0) {
         AST_LITERAL_NODE_T* first_child = (AST_LITERAL_NODE_T*) hb_array_get(attribute_name->children, 0);
 
-        if (first_child && first_child->content) { attribute_name_string = herb_strdup(first_child->content); }
+        if (first_child && first_child->content) {
+          attribute_name_string = hb_arena_strdup(parser->arena, first_child->content);
+        }
       }
 
       append_missing_attribute_value_error(
@@ -811,8 +808,6 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
         errors,
         parser->arena
       );
-
-      if (attribute_name_string) { free(attribute_name_string); }
 
       AST_HTML_ATTRIBUTE_VALUE_NODE_T* empty_value = ast_html_attribute_value_node_init(
         NULL,

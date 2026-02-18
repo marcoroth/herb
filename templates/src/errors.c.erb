@@ -63,44 +63,21 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
     );
 
     if (arena) {
-      size_t length = strlen(message);
-      char* string = hb_arena_alloc(arena, length + 1);
-
-      if (string) {
-        memcpy(string, message, length);
-        string[length] = '\0';
-        <%= error.human %>->base.message = string;
-      }
+      <%= error.human %>->base.message = hb_arena_strdup(arena, message);
     } else {
       <%= error.human %>->base.message = herb_strdup(message);
       free(message);
     }
   } else {
     if (arena) {
-      const char* template_string = "<%= error.message_template %>";
-      size_t length = strlen(template_string);
-      char* string = hb_arena_alloc(arena, length + 1);
-
-      if (string) {
-        memcpy(string, template_string, length);
-        string[length] = '\0';
-        <%= error.human %>->base.message = string;
-      }
+      <%= error.human %>->base.message = hb_arena_strdup(arena, "<%= error.message_template %>");
     } else {
       <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
     }
   }
   <%- else -%>
   if (arena) {
-    const char* template_string = "<%= error.message_template %>";
-    size_t length = strlen(template_string);
-    char* string = hb_arena_alloc(arena, length + 1);
-
-    if (string) {
-      memcpy(string, template_string, length);
-      string[length] = '\0';
-      <%= error.human %>->base.message = string;
-    }
+    <%= error.human %>->base.message = hb_arena_strdup(arena, "<%= error.message_template %>");
   } else {
     <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
   }
@@ -117,18 +94,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  if (arena) {
-    size_t length = strlen(<%= field.name %>);
-    char* string = hb_arena_alloc(arena, length + 1);
-
-    if (string) {
-      memcpy(string, <%= field.name %>, length);
-      string[length] = '\0';
-      <%= error.human %>-><%= field.name %> = string;
-    }
-  } else {
-    <%= error.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
-  }
+  <%= error.human %>-><%= field.name %> = arena ? hb_arena_strdup(arena, <%= field.name %>) : herb_strdup(<%= field.name %>);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
