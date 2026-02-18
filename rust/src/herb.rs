@@ -1,4 +1,4 @@
-use crate::bindings::{hb_array_T, hb_buffer_T, token_T};
+use crate::bindings::{hb_arena_T, hb_buffer_T, herb_lex_result_T, token_T};
 use crate::convert::token_from_c;
 use crate::{LexResult, ParseResult};
 use std::ffi::CString;
@@ -40,12 +40,29 @@ impl Default for ExtractRubyOptions {
 pub fn lex(source: &str) -> Result<LexResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let c_tokens = crate::ffi::herb_lex(c_source.as_ptr());
 
-    if c_tokens.is_null() {
+    let arena = libc::malloc(std::mem::size_of::<hb_arena_T>()) as *mut hb_arena_T;
+
+    if arena.is_null() {
+      return Err("Failed to allocate arena".to_string());
+    }
+
+    if !crate::ffi::hb_arena_init(arena, 512 * 1024) {
+      libc::free(arena as *mut std::ffi::c_void);
+
+      return Err("Failed to initialize arena".to_string());
+    }
+
+    let lex_result = crate::ffi::herb_lex(c_source.as_ptr(), arena);
+
+    if lex_result.is_null() {
+      crate::ffi::hb_arena_free(arena);
+      libc::free(arena as *mut std::ffi::c_void);
+
       return Err("Failed to lex source".to_string());
     }
 
+    let c_tokens = (*lex_result).tokens;
     let array_size = crate::ffi::hb_array_size(c_tokens);
     let mut tokens = Vec::with_capacity(array_size);
 
@@ -57,8 +74,10 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
       }
     }
 
-    let mut c_tokens_ptr = c_tokens;
-    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T);
+    let mut lex_result_ptr = lex_result;
+    crate::ffi::herb_free_lex_result(&mut lex_result_ptr as *mut *mut herb_lex_result_T);
+    crate::ffi::hb_arena_free(arena);
+    libc::free(arena as *mut std::ffi::c_void);
 
     Ok(LexResult::new(tokens))
   }
@@ -71,6 +90,17 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
 pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<ParseResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
+    let arena = libc::malloc(std::mem::size_of::<hb_arena_T>()) as *mut hb_arena_T;
+
+    if arena.is_null() {
+      return Err("Failed to allocate arena".to_string());
+    }
+
+    if !crate::ffi::hb_arena_init(arena, 512 * 1024) {
+      libc::free(arena as *mut std::ffi::c_void);
+
+      return Err("Failed to initialize arena".to_string());
+    }
 
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
@@ -78,9 +108,12 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       strict: options.strict,
     };
 
-    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options);
+    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, arena);
 
     if ast.is_null() {
+      crate::ffi::hb_arena_free(arena);
+      libc::free(arena as *mut std::ffi::c_void);
+
       return Err("Failed to parse source".to_string());
     }
 
@@ -90,6 +123,8 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
     let result = ParseResult::new(document_node, source.to_string(), Vec::new());
 
     crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T);
+    crate::ffi::hb_arena_free(arena);
+    libc::free(arena as *mut std::ffi::c_void);
 
     Ok(result)
   }
