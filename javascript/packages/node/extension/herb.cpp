@@ -11,6 +11,7 @@ extern "C" {
 #include "../extension/libherb/include/lib/hb_buffer.h"
 }
 
+#include "arena.h"
 #include "error_helpers.h"
 #include "extension_helpers.h"
 #include "nodes.h"
@@ -149,6 +150,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   ERBOpeners openers;
+  hb_arena_T* external_arena = nullptr;
 
   if (argc >= 2) {
     napi_valuetype valuetype;
@@ -163,6 +165,8 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
       ApplyERBOpeners(parser_options, openers);
 
       herb_extract_parser_options(env, args[1], &parser_options);
+
+      external_arena = ReadArena(env, args[1]);
     }
   }
 
@@ -170,7 +174,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+  if (!InitAllocator(allocator, external_arena)) {
     free(string);
     napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
@@ -528,6 +532,8 @@ napi_value Herb_diff(napi_env env, napi_callback_info info) {
 }
 
 napi_value Init(napi_env env, napi_value exports) {
+  Init_herb_arena(env, exports);
+
   napi_property_descriptor descriptors[] = {
     { "parse", nullptr, Herb_parse, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "lex", nullptr, Herb_lex, nullptr, nullptr, nullptr, napi_default, nullptr },

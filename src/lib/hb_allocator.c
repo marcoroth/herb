@@ -122,6 +122,17 @@ hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena) {
   };
 }
 
+static void borrowed_arena_destroy(hb_allocator_T* self) {
+  self->context = NULL;
+}
+
+hb_allocator_T hb_allocator_with_borrowed_arena(hb_arena_T* arena) {
+  hb_allocator_T allocator = hb_allocator_with_arena(arena);
+  allocator.destroy = borrowed_arena_destroy;
+
+  return allocator;
+}
+
 // --- Tracking backend ---
 
 #define TRACKING_INITIAL_CAPACITY 128

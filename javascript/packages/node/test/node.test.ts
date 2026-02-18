@@ -11,6 +11,119 @@ describe("@herb-tools/node", () => {
     expect(Herb).toBeDefined()
   })
 
+  describe("Arena", () => {
+    test("Arena class exists on backend", () => {
+      expect(Herb.backend.Arena).toBeDefined()
+    })
+
+    test("creating an arena with default size", () => {
+      const arena = new Herb.backend.Arena()
+      expect(arena).toBeDefined()
+      expect(arena.capacity).toBeGreaterThan(0)
+    })
+
+    test("creating an arena with custom size", () => {
+      const arena = new Herb.backend.Arena({ size: 1024 * 1024 })
+      expect(arena).toBeDefined()
+      expect(arena.capacity).toBeGreaterThanOrEqual(1024 * 1024)
+    })
+
+    test("arena position starts at zero", () => {
+      const arena = new Herb.backend.Arena()
+      expect(arena.position).toBe(0)
+    })
+
+    test("arena position increases after parsing", () => {
+      const arena = new Herb.backend.Arena()
+      const initialPosition = arena.position
+
+      Herb.backend.parse("<div>hello</div>", { arena })
+
+      expect(arena.position).toBeGreaterThan(initialPosition)
+    })
+
+    test("arena can be reused for multiple parse calls", () => {
+      const arena = new Herb.backend.Arena()
+
+      const result1 = Herb.backend.parse("<div>first</div>", { arena })
+      const positionAfterFirst = arena.position
+
+      const result2 = Herb.backend.parse("<span>second</span>", { arena })
+      const positionAfterSecond = arena.position
+
+      expect(result1).toBeDefined()
+      expect(result2).toBeDefined()
+      expect(positionAfterSecond).toBeGreaterThan(positionAfterFirst)
+    })
+
+    test("arena reset returns position to zero", () => {
+      const arena = new Herb.backend.Arena()
+
+      Herb.backend.parse("<div>hello</div>", { arena })
+      expect(arena.position).toBeGreaterThan(0)
+
+      arena.reset()
+      expect(arena.position).toBe(0)
+    })
+
+    test("arena can be reused after reset", () => {
+      const arena = new Herb.backend.Arena()
+
+      const result1 = Herb.backend.parse("<div>first</div>", { arena })
+      arena.reset()
+
+      const result2 = Herb.backend.parse("<span>second</span>", { arena })
+
+      expect(result1).toBeDefined()
+      expect(result2).toBeDefined()
+    })
+
+    test("multiple arenas can be used independently", () => {
+      const arena1 = new Herb.backend.Arena()
+      const arena2 = new Herb.backend.Arena()
+
+      Herb.backend.parse("<div>first</div>", { arena: arena1 })
+      const position1 = arena1.position
+
+      Herb.backend.parse("<span>second</span>", { arena: arena2 })
+      const position2 = arena2.position
+
+      expect(position1).toBeGreaterThan(0)
+      expect(position2).toBeGreaterThan(0)
+      expect(arena1.position).toBe(position1)
+    })
+
+    test("parsing many templates with shared arena", () => {
+      const arena = new Herb.backend.Arena()
+
+      for (let i = 0; i < 100; i++) {
+        const result = Herb.backend.parse(`<div>template ${i}</div>`, { arena })
+        expect(result).toBeDefined()
+      }
+
+      expect(arena.position).toBeGreaterThan(0)
+    })
+
+    test("arena reset allows reuse for batch processing", () => {
+      const arena = new Herb.backend.Arena()
+
+      for (let batch = 0; batch < 3; batch++) {
+        for (let i = 0; i < 10; i++) {
+          const result = Herb.backend.parse(`<div>batch ${batch} item ${i}</div>`, { arena })
+          expect(result).toBeDefined()
+        }
+        arena.reset()
+        expect(arena.position).toBe(0)
+      }
+    })
+
+    test("arena free releases resources", () => {
+      const arena = new Herb.backend.Arena()
+      Herb.backend.parse("<div>hello</div>", { arena })
+      arena.free()
+    })
+  })
+
   test("Herb export is of instance HerbBackend", () => {
     expect(Herb instanceof HerbBackend).toBeTruthy()
   })

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "arena.h"
 #include "extension_helpers.h"
 #include "nodes.h"
 #include "parser_options_helpers.h"
@@ -64,9 +65,25 @@ static void ApplyERBOpeners(parser_options_T& parser_options, const std::vector<
   parser_options.erb_opener_count = storage.size();
 }
 
+static hb_arena_T* ReadArena(val options) {
+  if (options.isNull() || options.isUndefined()) { return nullptr; }
+  if (!options.hasOwnProperty("arenaId")) { return nullptr; }
+
+  return get_arena_by_id(options["arenaId"].as<int>());
+}
+
+static bool InitAllocator(hb_allocator_T& allocator, hb_arena_T* arena) {
+  if (arena != nullptr) {
+    allocator = hb_allocator_with_borrowed_arena(arena);
+    return true;
+  }
+
+  return hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA);
+}
+
 val Herb_lex(const std::string& source, val options) {
   hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+  if (!InitAllocator(allocator, ReadArena(options))) {
     return val::null();
   }
 
@@ -105,7 +122,7 @@ val Herb_parse(const std::string& source, val options) {
   parser_options.error_count = &error_count;
 
   hb_allocator_T allocator;
-  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+  if (!InitAllocator(allocator, ReadArena(options))) {
     return val::null();
   }
 
@@ -330,4 +347,10 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("version", &Herb_version);
   function("parseRuby", &Herb_parse_ruby);
   function("diff", &Herb_diff);
+
+  function("createArena", &Herb_createArena);
+  function("resetArena", &Herb_resetArena);
+  function("freeArena", &Herb_freeArena);
+  function("arenaPosition", &Herb_arenaPosition);
+  function("arenaCapacity", &Herb_arenaCapacity);
 }

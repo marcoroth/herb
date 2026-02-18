@@ -4,6 +4,7 @@
       "target_name": "<(module_name)",
       "product_dir": "<(module_path)",
       "sources": [
+        "./extension/arena.cpp",
         "./extension/error_helpers.cpp",
         "./extension/extension_helpers.cpp",
         "./extension/herb.cpp",

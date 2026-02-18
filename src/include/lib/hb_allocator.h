@@ -52,6 +52,7 @@ void hb_allocator_destroy(hb_allocator_T* allocator);
 
 hb_allocator_T hb_allocator_with_malloc(void);
 hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena);
+hb_allocator_T hb_allocator_with_borrowed_arena(hb_arena_T* arena);
 hb_allocator_T hb_allocator_with_tracking(void);
 
 hb_allocator_tracking_stats_T* hb_allocator_tracking_stats(hb_allocator_T* allocator);

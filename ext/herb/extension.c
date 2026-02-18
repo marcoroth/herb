@@ -4,6 +4,7 @@
 #include "../../src/include/lib/hb_allocator.h"
 #include "../../src/include/lib/hb_arena_debug.h"
 
+#include "arena.h"
 #include "error_helpers.h"
 #include "extension.h"
 #include "extension_helpers.h"
@@ -168,6 +169,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
 
   char* string = (char*) check_string(source);
   bool print_arena_stats = false;
+  VALUE external_arena = Qnil;
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
   hb_string_T opener_buffer[HERB_MAX_ERB_OPENERS];
@@ -185,6 +187,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
     if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
     if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+
+    external_arena = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena"));
+    if (NIL_P(external_arena)) { external_arena = rb_hash_lookup(options, ID2SYM(rb_intern("arena"))); }
   }
 
   uint32_t error_count = 0;
@@ -195,7 +200,11 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   args.parser_options = &parser_options;
   args.print_arena_stats = print_arena_stats;
 
-  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+  if (!NIL_P(external_arena)) {
+    args.allocator = hb_allocator_with_borrowed_arena(get_arena_from_value(external_arena));
+  } else if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) {
+    return Qnil;
+  }
 
   if (string != NULL) {
     args.input = hb_allocator_strndup(&args.allocator, string, (size_t) RSTRING_LEN(source));
@@ -589,6 +598,8 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
   cParserOptions = rb_define_class_under(mHerb, "ParserOptions", rb_cObject);
+
+  Init_herb_arena(mHerb);
 
   rb_init_node_classes();
   rb_init_error_classes();
