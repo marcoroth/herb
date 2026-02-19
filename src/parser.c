@@ -485,28 +485,6 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
       continue;
     }
 
-    if (token_is(parser, TOKEN_BACKSLASH)) {
-      lexer_state_snapshot_T saved_state = lexer_save_state(parser->lexer);
-
-      token_T* next_token = lexer_next_token(parser->lexer);
-
-      if (next_token && next_token->type == TOKEN_QUOTE && opening_quote != NULL
-          && string_equals(next_token->value, opening_quote->value)) {
-        hb_buffer_append(&buffer, parser->current_token->value);
-        hb_buffer_append(&buffer, next_token->value);
-
-        token_free(parser->current_token);
-        token_free(next_token);
-
-        parser->current_token = lexer_next_token(parser->lexer);
-        continue;
-      } else {
-        lexer_restore_state(parser->lexer, saved_state);
-
-        if (next_token) { token_free(next_token); }
-      }
-    }
-
     hb_buffer_append(&buffer, parser->current_token->value);
     token_free(parser->current_token);
 
@@ -523,7 +501,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_quoted_html_attribute_value
     if (token_is(parser, TOKEN_IDENTIFIER) || token_is(parser, TOKEN_CHARACTER)) {
       append_unexpected_error(
         "Unescaped quote character in attribute value",
-        "escaped quote (\\') or different quote style (\")",
+        "HTML entity (&apos;/&quot;) or different quote style",
         opening_quote->value,
         potential_closing->location.start,
         potential_closing->location.end,
