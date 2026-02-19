@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#define hb_arena_for_each_page(allocator, page)                                                                        \
+#define hb_arena_for_each_page(allocator, _page)                                                                       \
   for (hb_arena_page_T* page = (allocator)->head; page != NULL; page = page->next)
 
 static inline size_t hb_arena_align_size(size_t size, size_t alignment) {
@@ -107,6 +107,37 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   if (!allocated) { return NULL; }
 
   return hb_arena_page_alloc_from(allocator->tail, required_size);
+}
+
+char* hb_arena_strdup(hb_arena_T* allocator, const char* string) {
+  assert(allocator != NULL);
+
+  if (string == NULL) { return NULL; }
+
+  size_t length = strlen(string);
+  char* copy = hb_arena_alloc(allocator, length + 1);
+
+  if (copy != NULL) {
+    memcpy(copy, string, length);
+    copy[length] = '\0';
+  }
+
+  return copy;
+}
+
+char* hb_arena_strndup(hb_arena_T* allocator, const char* string, size_t length) {
+  assert(allocator != NULL);
+
+  if (string == NULL) { return NULL; }
+
+  char* copy = hb_arena_alloc(allocator, length + 1);
+
+  if (copy != NULL) {
+    memcpy(copy, string, length);
+    copy[length] = '\0';
+  }
+
+  return copy;
 }
 
 size_t hb_arena_position(hb_arena_T* allocator) {

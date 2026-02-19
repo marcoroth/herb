@@ -5,6 +5,10 @@
 #include "extension_helpers.h"
 #include "nodes.h"
 
+#include "../../src/include/macros.h"
+#include "../../src/include/util/hb_arena.h"
+#include "../../src/include/util/hb_arena_debug.h"
+
 VALUE mHerb;
 VALUE cPosition;
 VALUE cLocation;
@@ -14,26 +18,79 @@ VALUE cResult;
 VALUE cLexResult;
 VALUE cParseResult;
 
-static VALUE Herb_lex(VALUE self, VALUE source) {
+static VALUE Herb_lex(int argc, VALUE* argv, VALUE self) {
+  VALUE source, options;
+  rb_scan_args(argc, argv, "1:", &source, &options);
+
   char* string = (char*) check_string(source);
+  bool print_arena_stats = false;
 
-  hb_array_T* tokens = herb_lex(string);
+  if (!NIL_P(options)) {
+    VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
+    if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
+    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+  }
 
-  VALUE result = create_lex_result(tokens, source);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
 
-  herb_free_tokens(&tokens);
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  herb_lex_result_T* lex_result = herb_lex(string, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
+
+  VALUE result = create_lex_result(lex_result->tokens, source);
+
+  if (print_arena_stats) { hb_arena_print_stats(arena); }
+
+  herb_free_lex_result(&lex_result);
 
   return result;
 }
 
-static VALUE Herb_lex_file(VALUE self, VALUE path) {
+static VALUE Herb_lex_file(int argc, VALUE* argv, VALUE self) {
+  VALUE path, options;
+  rb_scan_args(argc, argv, "1:", &path, &options);
+
   char* file_path = (char*) check_string(path);
-  hb_array_T* tokens = herb_lex_file(file_path);
+  bool print_arena_stats = false;
+
+  if (!NIL_P(options)) {
+    VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
+    if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
+    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
+  }
+
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE source_value = read_file_to_ruby_string(file_path);
-  VALUE result = create_lex_result(tokens, source_value);
+  VALUE result = create_lex_result(lex_result->tokens, source_value);
 
-  herb_free_tokens(&tokens);
+  if (print_arena_stats) { hb_arena_print_stats(arena); }
+
+  herb_free_lex_result(&lex_result);
 
   return result;
 }
@@ -45,6 +102,7 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
   char* string = (char*) check_string(source);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  bool print_arena_stats = false;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -58,11 +116,31 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
     if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
+
+    VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
+    if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
+    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE result = create_parse_result(root, source);
+
+  if (print_arena_stats) { hb_arena_print_stats(arena); }
 
   ast_node_free((AST_NODE_T*) root);
 
@@ -79,6 +157,7 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
   char* string = (char*) check_string(source_value);
 
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  bool print_arena_stats = false;
 
   if (!NIL_P(options)) {
     VALUE track_whitespace = rb_hash_lookup(options, rb_utf8_str_new_cstr("track_whitespace"));
@@ -92,11 +171,31 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     VALUE strict = rb_hash_lookup(options, rb_utf8_str_new_cstr("strict"));
     if (NIL_P(strict)) { strict = rb_hash_lookup(options, ID2SYM(rb_intern("strict"))); }
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
+
+    VALUE arena_stats = rb_hash_lookup(options, rb_utf8_str_new_cstr("arena_stats"));
+    if (NIL_P(arena_stats)) { arena_stats = rb_hash_lookup(options, ID2SYM(rb_intern("arena_stats"))); }
+    if (!NIL_P(arena_stats) && RTEST(arena_stats)) { print_arena_stats = true; }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) { return Qnil; }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    return Qnil;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    return Qnil;
+  }
 
   VALUE result = create_parse_result(root, source_value);
+
+  if (print_arena_stats) { hb_arena_print_stats(arena); }
 
   ast_node_free((AST_NODE_T*) root);
 
@@ -172,9 +271,9 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
 
   rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
-  rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
+  rb_define_singleton_method(mHerb, "lex", Herb_lex, -1);
   rb_define_singleton_method(mHerb, "parse_file", Herb_parse_file, -1);
-  rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, 1);
+  rb_define_singleton_method(mHerb, "lex_file", Herb_lex_file, -1);
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);

@@ -9,6 +9,7 @@ typedef struct ANALYZE_RUBY_CONTEXT_STRUCT {
   AST_DOCUMENT_NODE_T* document;
   AST_NODE_T* parent;
   hb_array_T* ruby_context_stack;
+  hb_arena_T* arena;
 } analyze_ruby_context_T;
 
 typedef enum {
@@ -36,6 +37,7 @@ typedef enum {
 typedef struct {
   int loop_depth;
   int rescue_depth;
+  hb_arena_T* arena;
 } invalid_erb_context_T;
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source);

@@ -27,12 +27,12 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
   }
 }
 
-AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
-  AST_LITERAL_NODE_T* literal = malloc(sizeof(AST_LITERAL_NODE_T));
+AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token, hb_arena_T* arena) {
+  AST_LITERAL_NODE_T* literal = hb_arena_alloc(arena, sizeof(AST_LITERAL_NODE_T));
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = herb_strdup(token->value);
+  literal->content = hb_arena_strdup(arena, token->value);
 
   return literal;
 }

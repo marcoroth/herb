@@ -3,8 +3,10 @@ extern "C" {
 #include "../extension/libherb/include/extract.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
+#include "../extension/libherb/include/macros.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_arena.h"
 #include "../extension/libherb/include/util/hb_array.h"
 #include "../extension/libherb/include/util/hb_buffer.h"
 }
@@ -31,10 +33,31 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  hb_array_T* tokens = herb_lex(string);
-  napi_value result = CreateLexResult(env, tokens, args[0]);
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
 
-  herb_free_tokens(&tokens);
+  if (!arena) {
+    free(string);
+    return nullptr;
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    free(string);
+    return nullptr;
+  }
+
+  herb_lex_result_T* lex_result = herb_lex(string, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    free(string);
+    return nullptr;
+  }
+
+  napi_value result = CreateLexResult(env, lex_result->tokens, args[0]);
+
+  herb_free_lex_result(&lex_result);
   free(string);
 
   return result;
@@ -53,11 +76,32 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   char* file_path = CheckString(env, args[0]);
   if (!file_path) { return nullptr; }
 
-  hb_array_T* tokens = herb_lex_file(file_path);
-  napi_value source_value = ReadFileToString(env, file_path);
-  napi_value result = CreateLexResult(env, tokens, source_value);
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
 
-  herb_free_tokens(&tokens);
+  if (!arena) {
+    free(file_path);
+    return nullptr;
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    free(file_path);
+    return nullptr;
+  }
+
+  herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    free(file_path);
+    return nullptr;
+  }
+
+  napi_value source_value = ReadFileToString(env, file_path);
+  napi_value result = CreateLexResult(env, lex_result->tokens, source_value);
+
+  herb_free_lex_result(&lex_result);
   free(file_path);
 
   return result;
@@ -124,7 +168,27 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    free(string);
+    return nullptr;
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    free(string);
+    return nullptr;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    free(string);
+    return nullptr;
+  }
   napi_value result = CreateParseResult(env, root, args[0]);
 
   ast_node_free((AST_NODE_T *) root);
@@ -154,7 +218,31 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, nullptr);
+  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    free(file_path);
+    free(string);
+    return nullptr;
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    free(file_path);
+    free(string);
+    return nullptr;
+  }
+
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, nullptr, arena);
+
+  if (!root) {
+    hb_arena_free(arena);
+    free(arena);
+    free(file_path);
+    free(string);
+    return nullptr;
+  }
+
   napi_value result = CreateParseResult(env, root, source_value);
 
   ast_node_free((AST_NODE_T *) root);

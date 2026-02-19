@@ -22,6 +22,8 @@ typedef struct HB_ARENA_STRUCT {
 
 bool hb_arena_init(hb_arena_T* allocator, size_t initial_size);
 void* hb_arena_alloc(hb_arena_T* allocator, size_t size);
+char* hb_arena_strdup(hb_arena_T* allocator, const char* string);
+char* hb_arena_strndup(hb_arena_T* allocator, const char* string, size_t length);
 size_t hb_arena_position(hb_arena_T* allocator);
 size_t hb_arena_capacity(hb_arena_T* allocator);
 void hb_arena_reset(hb_arena_T* allocator);

@@ -9,6 +9,7 @@
 #include "location.h"
 #include "position.h"
 #include "token_struct.h"
+#include "util/hb_arena.h"
 #include "util/hb_array.h"
 #include "util/hb_buffer.h"
 #include "util/hb_string.h"
@@ -32,12 +33,15 @@ typedef struct AST_NODE_STRUCT {
 typedef struct <%= node.struct_name %> {
   AST_NODE_T base;
   <%= arguments %>
+  <%- if node.human == "document_node" -%>
+  hb_arena_T* arena;
+  <%- end -%>
 } <%= node.struct_type %>;
 <%- end -%>
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors", "hb_arena_T* arena"] -%>
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>);
 <%- end -%>
 

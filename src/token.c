@@ -9,17 +9,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+size_t token_sizeof(void) {
+  return sizeof(struct TOKEN_STRUCT);
+}
+
 token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = calloc(1, sizeof(token_T));
+  token_T* token = hb_arena_alloc(lexer->arena, token_sizeof());
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
     lexer->current_column = 0;
   }
 
-  token->value = hb_string_to_c_string_using_malloc(value);
+  token->value = value.data ? hb_arena_strndup(lexer->arena, value.data, value.length) : NULL;
 
   token->type = type;
+  token->arena_allocated = true;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
 
   location_from(
@@ -112,19 +117,23 @@ hb_string_T token_to_string(const token_T* token) {
   return hb_string(string);
 }
 
-token_T* token_copy(token_T* token) {
+token_T* token_copy(token_T* token, hb_arena_T* arena) {
   if (!token) { return NULL; }
 
-  token_T* new_token = calloc(1, sizeof(token_T));
+  token_T* new_token = arena ? hb_arena_alloc(arena, token_sizeof()) : calloc(1, token_sizeof());
 
   if (!new_token) { return NULL; }
 
   if (token->value) {
-    new_token->value = herb_strdup(token->value);
+    if (arena) {
+      new_token->value = hb_arena_strdup(arena, token->value);
+    } else {
+      new_token->value = herb_strdup(token->value);
 
-    if (!new_token->value) {
-      free(new_token);
-      return NULL;
+      if (!new_token->value) {
+        free(new_token);
+        return NULL;
+      }
     }
   } else {
     new_token->value = NULL;
@@ -133,6 +142,7 @@ token_T* token_copy(token_T* token) {
   new_token->type = token->type;
   new_token->range = token->range;
   new_token->location = token->location;
+  new_token->arena_allocated = arena != NULL;
 
   return new_token;
 }
@@ -144,7 +154,9 @@ bool token_value_empty(const token_T* token) {
 void token_free(token_T* token) {
   if (!token) { return; }
 
-  if (token->value != NULL) { free(token->value); }
+  if (!token->arena_allocated) {
+    if (token->value != NULL) { free(token->value); }
 
-  free(token);
+    free(token);
+  }
 }

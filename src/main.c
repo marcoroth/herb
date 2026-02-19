@@ -6,7 +6,11 @@
 #include "include/extract.h"
 #include "include/herb.h"
 #include "include/io.h"
+#include "include/macros.h"
 #include "include/ruby_parser.h"
+#include "include/token.h"
+#include "include/util/hb_arena.h"
+#include "include/util/hb_arena_debug.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/string.h"
 
@@ -31,6 +35,23 @@ void print_time_diff(const struct timespec start, const struct timespec end, con
   printf("  %8.0f µs\n", us);
   printf("  %8.3f ms\n", ms);
   printf("  %8.6f  s\n\n", s);
+}
+
+static hb_arena_T* allocate_arena(void) {
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    fprintf(stderr, "Failed to allocate arena\n");
+    return NULL;
+  }
+
+  if (!hb_arena_init(arena, KB(16))) {
+    fprintf(stderr, "Failed to initialize arena\n");
+    free(arena);
+    return NULL;
+  }
+
+  return arena;
 }
 
 int main(const int argc, char* argv[]) {
@@ -62,13 +83,59 @@ int main(const int argc, char* argv[]) {
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
-  if (string_equals(argv[1], "lex")) {
-    herb_lex_to_buffer(source, &output);
+  if (string_equals(argv[1], "visit")) {
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, arena);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
-    puts(output.value);
-    print_time_diff(start, end, "lexing");
+    ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
+    printf("%s\n", output.value);
 
+    print_time_diff(start, end, "visiting");
+
+    ast_node_free((AST_NODE_T*) root);
+    free(output.value);
+    free(source);
+
+    return 0;
+  }
+
+  if (string_equals(argv[1], "lex")) {
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    herb_lex_result_T* result = herb_lex(source, arena);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+
+    int silent = 0;
+    if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
+
+    if (!silent) {
+      for (size_t i = 0; i < hb_array_size(result->tokens); i++) {
+        token_T* token = hb_array_get(result->tokens, i);
+        hb_string_T type = token_to_string(token);
+        hb_buffer_append_string(&output, type);
+        free(type.data);
+        hb_buffer_append(&output, "\n");
+      }
+
+      puts(output.value);
+      print_time_diff(start, end, "lexing");
+
+      printf("\n");
+      hb_arena_print_stats(arena);
+    }
+
+    hb_arena_free(arena);
+    free(arena);
     free(output.value);
     free(source);
 
@@ -76,7 +143,13 @@ int main(const int argc, char* argv[]) {
   }
 
   if (string_equals(argv[1], "parse")) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+    hb_arena_T* arena = allocate_arena();
+    if (!arena) {
+      free(source);
+      return 1;
+    }
+
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, arena);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -88,6 +161,9 @@ int main(const int argc, char* argv[]) {
       puts(output.value);
 
       print_time_diff(start, end, "parsing");
+
+      printf("\n");
+      hb_arena_print_stats(arena);
     }
 
     ast_node_free((AST_NODE_T*) root);

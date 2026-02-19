@@ -3,6 +3,8 @@
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
+#include "../../src/include/macros.h"
+#include "../../src/include/util/hb_arena.h"
 #include "../../src/include/util/hb_buffer.h"
 
 #include <stdlib.h>
@@ -61,7 +63,21 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     }
   }
 
-  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+
+  if (!arena) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    (*env)->ReleaseStringUTFChars(env, source, src);
+
+    return NULL;
+  }
+
+  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, arena);
 
   jobject result = CreateParseResult(env, ast, source);
 
@@ -75,11 +91,30 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  hb_array_T* tokens = herb_lex(src);
+  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+  if (!arena) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
-  jobject result = CreateLexResult(env, tokens, source);
+  if (!hb_arena_init(arena, KB(512))) {
+    free(arena);
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
-  herb_free_tokens(&tokens);
+  herb_lex_result_T* lex_result = herb_lex(src, arena);
+
+  if (!lex_result) {
+    hb_arena_free(arena);
+    free(arena);
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  jobject result = CreateLexResult(env, lex_result->tokens, source);
+
+  herb_free_lex_result(&lex_result);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
