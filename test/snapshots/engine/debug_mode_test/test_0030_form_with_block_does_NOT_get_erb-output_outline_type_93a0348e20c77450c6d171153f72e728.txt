@@ -2,5 +2,5 @@
 source: "Engine::DebugModeTest#test_0030_form_with block does NOT get erb-output outline type"
 input: "{source: \"<%= form_with model: @user do |f| %>Form content<% end %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << form_with model: @user do |f|; _buf << 'Form content'.freeze; end;
+_buf = ::String.new; _buf << (form_with model: @user do |f|; _buf << 'Form content'.freeze; end);
 _buf.to_s

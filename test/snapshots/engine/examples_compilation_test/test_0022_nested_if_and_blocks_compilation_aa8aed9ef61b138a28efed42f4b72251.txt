@@ -3,7 +3,7 @@ source: "Engine::ExamplesCompilationTest#test_0022_nested if and blocks compilat
 input: "{source: \"<div id=\\\"output\\\">\\n  <%= tag.div class: \\\"div\\\" do %>\\n    <% if Date.today.friday? %>\\n      <h1>\\n        Happy\\n        <% current_hour = Time.now.hour %>\\n\\n        <% if current_hour < 12 %>\\n          <b>Early Friday</b>\\n        <% elsif current_hour >= 18 %>\\n          <b>Late Friday</b>\\n        <% else %>\\n          <b>Friday</b>\\n        <% end %>\\n      </h1>\\n    <% elsif Date.today.saturday? %>\\n      <h1>\\n        It's\\n        <b>Saturday</b>\\n        <%= \\\" - Time to relax!\\\" %>\\n      </h1>\\n    <% else %>\\n      <h1>\\n        Oh no, it's\\n        <b>Not Friday</b>\\n        <%= \\\" - Keep going!\\\" %>\\n      </h1>\\n    <% end %>\\n  <% end %>\\n</div>\\n\", options: {escape: false}}"
 ---
 _buf = ::String.new; _buf << '<div id="output">
-  '.freeze; _buf << tag.div class: "div" do; _buf << '
+  '.freeze; _buf << (tag.div class: "div" do; _buf << '
 '.freeze;     if Date.today.friday? 
  _buf << '      <h1>
         Happy
@@ -29,8 +29,7 @@ _buf = ::String.new; _buf << '<div id="output">
         <b>Not Friday</b>
         '.freeze; _buf << (" - Keep going!").to_s; _buf << '
       </h1>
-'.freeze;     end 
-   end 
+'.freeze;     end    end )
  _buf << '</div>
 '.freeze;
 _buf.to_s

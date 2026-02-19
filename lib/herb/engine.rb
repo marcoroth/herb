@@ -76,6 +76,8 @@ module Herb
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
 
+      preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
+
       @src << "# frozen_string_literal: true\n" if @freeze
 
       if properties[:ensure]
@@ -214,17 +216,13 @@ module Herb
 
     def add_expression_result(code)
       with_buffer {
-        @src << " << (" << code
-        @src << "\n" if heredoc?(code)
-        @src << comment_aware_newline(code) << ").to_s"
+        @src << " << (" << code << trailing_newline(code) << ").to_s"
       }
     end
 
     def add_expression_result_escaped(code)
       with_buffer {
-        @src << " << " << @escapefunc << "((" << code
-        @src << "\n" if heredoc?(code)
-        @src << comment_aware_newline(code) << "))"
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code) << "))"
       }
     end
 
@@ -238,18 +236,45 @@ module Herb
 
     def add_expression_block_result(code)
       with_buffer {
-        @src << " << " << code << comment_aware_newline(code)
+        @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
       with_buffer {
-        @src << " << " << @escapefunc << "(" << code << comment_aware_newline(code) << ")"
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
-    def comment_aware_newline(code)
-      code.include?("#") ? "\n" : ""
+    def add_expression_block_end(code, escaped: false)
+      terminate_expression
+
+      trailing_newline = code.end_with?("\n")
+      code_stripped = code.chomp
+
+      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+
+      @src << " " << code_stripped
+      @src << (escaped ? "))" : ")")
+
+      @src << if code.include?("#") || trailing_newline
+                "\n"
+              else
+                ";"
+              end
+
+      @buffer_on_stack = false
+    end
+
+    def trailing_newline(code)
+      return "\n" if comment?(code)
+      return "\n" if heredoc?(code)
+
+      ""
+    end
+
+    def comment?(code)
+      code.include?("#")
     end
 
     def heredoc?(code)

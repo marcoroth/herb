@@ -2,8 +2,8 @@
 source: "Engine::DebugModeTest#test_0046_javascript_tag content erb expressions do NOT get debug spans"
 input: "{source: \"<%= javascript_tag do %>\\n  var userId = <%= @user.id %>;\\n  var name = \\\"<%= @user.name %>\\\";\\n<% end %>\\n\", options: {debug: true}}"
 ---
-_buf = ::String.new; _buf << javascript_tag do; _buf << '
+_buf = ::String.new; _buf << (javascript_tag do; _buf << '
   var userId = '.freeze; _buf << (@user.id).to_s; _buf << ';
   var name = "'.freeze; _buf << (@user.name).to_s; _buf << '";
-'.freeze; end 
+'.freeze; end )
 _buf.to_s

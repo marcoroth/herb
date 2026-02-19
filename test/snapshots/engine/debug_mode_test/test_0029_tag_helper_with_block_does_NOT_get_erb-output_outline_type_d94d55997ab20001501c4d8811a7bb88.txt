@@ -2,5 +2,5 @@
 source: "Engine::DebugModeTest#test_0029_tag helper with block does NOT get erb-output outline type"
 input: "{source: \"<%= tag.div class: \\\"container\\\" do %>Content<% end %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << tag.div class: "container" do; _buf << 'Content'.freeze; end;
+_buf = ::String.new; _buf << (tag.div class: "container" do; _buf << 'Content'.freeze; end);
 _buf.to_s

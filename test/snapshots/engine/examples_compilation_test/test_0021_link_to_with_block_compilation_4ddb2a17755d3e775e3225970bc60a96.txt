@@ -2,9 +2,9 @@
 source: "Engine::ExamplesCompilationTest#test_0021_link to with block compilation"
 input: "{source: \"<%= link_to root_path do %>\\n  <div class=\\\"card\\\">\\n    Test\\n  </div>\\n<% end %>\\n\", options: {escape: false}}"
 ---
-_buf = ::String.new; _buf << link_to root_path do; _buf << '
+_buf = ::String.new; _buf << (link_to root_path do; _buf << '
   <div class="card">
     Test
   </div>
-'.freeze; end 
+'.freeze; end )
 _buf.to_s
