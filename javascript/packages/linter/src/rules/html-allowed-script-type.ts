@@ -19,26 +19,45 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
 
   private visitScriptNode(node: HTMLOpenTagNode): void {
     const typeAttribute = getAttribute(node, "type")
-    const isTypePresent = typeAttribute && hasAttributeValue(typeAttribute)
 
-    if (isTypePresent) {
-      this.validateTypeAttribute(typeAttribute)
-    } else if (!ALLOW_BLANK) {
-      this.addOffense(
-        "`type` attribute required for `<script>` tag.",
-        node.location
-      )
+    if (!typeAttribute) {
+      if (!ALLOW_BLANK) {
+        this.addOffense("`type` attribute required for `<script>` tag.", node.location)
+      }
+
+      return
     }
+
+    if (!hasAttributeValue(typeAttribute)) {
+      this.addOffense(
+        "Avoid using an empty `type` attribute on the `<script>` tag. Either set a valid type or remove the attribute entirely.",
+        typeAttribute.location
+      )
+
+      return
+    }
+
+    this.validateTypeAttribute(typeAttribute)
   }
 
   private validateTypeAttribute(typeAttribute: HTMLAttributeNode): void {
     const typeValue = getStaticAttributeValue(typeAttribute)
-    if (!typeValue) return
+    if (typeValue === null) return
+
+    if (typeValue === "") {
+      this.addOffense(
+        "Avoid using an empty `type` attribute on the `<script>` tag. Either set a valid type or remove the attribute entirely.",
+        typeAttribute.location
+      )
+
+      return
+    }
+
     if (ALLOWED_TYPES.includes(typeValue)) return
 
     this.addOffense(
-      `Avoid using "${typeValue}" as type for \`<script>\` tag. ` +
-      `Must be one of: ${ALLOWED_TYPES.join(", ")}` +
+      `Avoid using \`${typeValue}\` as the \`type\` attribute for the \`<script>\` tag. ` +
+      `Must be one of: ${ALLOWED_TYPES.map(t => `\`${t}\``).join(", ")}` +
       `${ALLOW_BLANK ? " or blank" : ""}.`,
       typeAttribute.location
     )

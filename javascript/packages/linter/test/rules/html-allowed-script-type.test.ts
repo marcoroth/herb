@@ -9,8 +9,16 @@ describe("html-allowed-script-type", () => {
     expectNoOffenses('<script></script>')
   })
 
-  test("passes when type attribute has no value", () => {
-    expectNoOffenses('<script type></script>')
+  test("fails when type attribute has no value", () => {
+    expectError('Avoid using an empty `type` attribute on the `<script>` tag. Either set a valid type or remove the attribute entirely.')
+
+    assertOffenses('<script type></script>')
+  })
+
+  test("fails when type attribute has empty value", () => {
+    expectError('Avoid using an empty `type` attribute on the `<script>` tag. Either set a valid type or remove the attribute entirely.')
+
+    assertOffenses('<script type=""></script>')
   })
 
   test("passes when type is allowed", () => {
@@ -22,9 +30,7 @@ describe("html-allowed-script-type", () => {
   })
 
   test("fails when type is not allowed", () => {
-    expectError(
-      'Avoid using "text/yavascript" as type for `<script>` tag. Must be one of: text/javascript or blank.'
-    )
+    expectError('Avoid using `text/yavascript` as the `type` attribute for the `<script>` tag. Must be one of: `text/javascript` or blank.')
 
     assertOffenses('<script type="text/yavascript"></script>')
   })

@@ -4,7 +4,7 @@
 
 ## Description
 
-Restricts which `type` attribute values are permitted on `<script>` tags. Only an approved whitelist of types is allowed: `text/javascript`. A missing `type` attribute is also reported.
+Restricts which `type` attribute values are permitted on `<script>` tags. Only approved types are allowed: `text/javascript`. An empty or valueless `type` attribute is reported.
 
 ## Rationale
 
@@ -23,14 +23,8 @@ By restricting the allowed `type` values and requiring the `type` attribute to b
 ```
 
 ```erb
-<script type="application/json">
-  { "key": "value" }
-</script>
-```
-
-```erb
-<script type="text/html">
-  <div>Template</div>
+<script>
+  console.log("Hello")
 </script>
 ```
 
@@ -49,7 +43,13 @@ By restricting the allowed `type` values and requiring the `type` attribute to b
 ```
 
 ```erb
-<script>
+<script type="">
+  console.log("Hello")
+</script>
+```
+
+```erb
+<script type>
   console.log("Hello")
 </script>
 ```
