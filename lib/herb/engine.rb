@@ -213,13 +213,17 @@ module Herb
 
     def add_expression_result(code)
       with_buffer {
-        @src << " << (" << code << comment_aware_newline(code) << ").to_s"
+        @src << " << (" << code
+        @src << "\n" if heredoc?(code)
+        @src << comment_aware_newline(code) << ").to_s"
       }
     end
 
     def add_expression_result_escaped(code)
       with_buffer {
-        @src << " << " << @escapefunc << "((" << code << comment_aware_newline(code) << "))"
+        @src << " << " << @escapefunc << "((" << code
+        @src << "\n" if heredoc?(code)
+        @src << comment_aware_newline(code) << "))"
       }
     end
 
@@ -245,6 +249,10 @@ module Herb
 
     def comment_aware_newline(code)
       code.include?("#") ? "\n" : ""
+    end
+
+    def heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
     end
 
     def add_postamble(postamble)
