@@ -1,0 +1,49 @@
+---
+source: "Parser::AttributesTest#test_0121_issue #1211: attribute value with backslash"
+input: "<button data-shortcut=\"S,s,\\\">S \\</button>"
+---
+@ DocumentNode (location: (1:0)-(1:42))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:42))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:30))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "button" (location: (1:1)-(1:7))
+        │       ├── tag_closing: ">" (location: (1:29)-(1:30))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:8)-(1:29))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:8)-(1:21))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:8)-(1:21))
+        │       │       │               └── content: "data-shortcut"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:21)-(1:22))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:22)-(1:29))
+        │       │               ├── open_quote: """ (location: (1:22)-(1:23))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:23)-(1:28))
+        │       │               │       └── content: "S,s,\\"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:28)-(1:29))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "button" (location: (1:1)-(1:7))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:30)-(1:33))
+        │       └── content: "S \\"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:33)-(1:42))
+        │       ├── tag_opening: "</" (location: (1:33)-(1:35))
+        │       ├── tag_name: "button" (location: (1:35)-(1:41))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:41)-(1:42))
+        │
+        ├── is_void: false
+        └── source: "HTML"

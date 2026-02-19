@@ -509,5 +509,9 @@ module Parser
     test "attribute with equals followed by closing tag" do
       assert_parsed_snapshot("<div class=</div>")
     end
+
+    test "issue #1211: attribute value with backslash" do
+      assert_parsed_snapshot('<button data-shortcut="S,s,\">S \</button>')
+    end
   end
 end
