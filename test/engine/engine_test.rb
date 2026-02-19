@@ -164,5 +164,18 @@ module Engine
 
       assert_compiled_snapshot(template, escape: false)
     end
+
+    test "heredoc with trailing arguments compiles to valid Ruby" do
+      template = <<~ERB
+        <%= method_call <<~GRAPHQL, variables
+          query {
+            field
+          }
+        GRAPHQL
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

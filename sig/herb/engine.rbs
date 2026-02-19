@@ -53,6 +53,8 @@ module Herb
 
     def comment_aware_newline: (untyped code) -> untyped
 
+    def heredoc?: (untyped code) -> untyped
+
     def add_postamble: (untyped postamble) -> untyped
 
     def with_buffer: () ?{ (?) -> untyped } -> untyped

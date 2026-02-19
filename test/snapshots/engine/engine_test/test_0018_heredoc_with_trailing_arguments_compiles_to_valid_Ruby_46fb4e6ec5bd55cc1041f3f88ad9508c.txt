@@ -1,0 +1,12 @@
+---
+source: "Engine::EngineTest#test_0018_heredoc with trailing arguments compiles to valid Ruby"
+input: "{source: \"<%= method_call <<~GRAPHQL, variables\\n  query {\\n    field\\n  }\\nGRAPHQL\\n%>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << (method_call <<~GRAPHQL, variables
+  query {
+    field
+  }
+GRAPHQL
+).to_s; _buf << '
+'.freeze;
+_buf.to_s
