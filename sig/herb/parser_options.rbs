@@ -1,0 +1,26 @@
+# Generated from lib/herb/parser_options.rb with RBS::Inline
+
+module Herb
+  class ParserOptions
+    attr_reader strict: bool
+
+    attr_reader track_whitespace: bool
+
+    attr_reader analyze: bool
+
+    DEFAULT_STRICT: bool
+
+    DEFAULT_TRACK_WHITESPACE: bool
+
+    DEFAULT_ANALYZE: bool
+
+    # : (?strict: bool, ?track_whitespace: bool, ?analyze: bool) -> void
+    def initialize: (?strict: bool, ?track_whitespace: bool, ?analyze: bool) -> void
+
+    # : () -> Hash[Symbol, bool]
+    def to_h: () -> Hash[Symbol, bool]
+
+    # : () -> String
+    def inspect: () -> String
+  end
+end

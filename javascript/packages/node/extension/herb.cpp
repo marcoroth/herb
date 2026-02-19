@@ -125,7 +125,7 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
-  napi_value result = CreateParseResult(env, root, args[0]);
+  napi_value result = CreateParseResult(env, root, args[0], &parser_options);
 
   ast_node_free((AST_NODE_T *) root);
   free(string);
@@ -154,8 +154,9 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, nullptr);
-  napi_value result = CreateParseResult(env, root, source_value);
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  napi_value result = CreateParseResult(env, root, source_value, &parser_options);
 
   ast_node_free((AST_NODE_T *) root);
   free(file_path);

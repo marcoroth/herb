@@ -13,10 +13,12 @@ VALUE cToken;
 VALUE cResult;
 VALUE cLexResult;
 VALUE cParseResult;
+VALUE cParserOptions;
 
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
   VALUE source;
+  const parser_options_T* parser_options;
 } parse_args_T;
 
 typedef struct {
@@ -31,7 +33,7 @@ typedef struct {
 static VALUE parse_convert_body(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
 
-  return create_parse_result(args->root, args->source);
+  return create_parse_result(args->root, args->source, args->parser_options);
 }
 
 static VALUE parse_cleanup(VALUE arg) {
@@ -109,7 +111,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source };
+  parse_args_T args = { .root = herb_parse(string, &parser_options),
+                        .source = source,
+                        .parser_options = &parser_options };
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
@@ -139,7 +143,9 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source_value };
+  parse_args_T args = { .root = herb_parse(string, &parser_options),
+                        .source = source_value,
+                        .parser_options = &parser_options };
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
@@ -209,6 +215,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
+  cParserOptions = rb_define_class_under(mHerb, "ParserOptions", rb_cObject);
 
   rb_init_node_classes();
   rb_init_error_classes();
