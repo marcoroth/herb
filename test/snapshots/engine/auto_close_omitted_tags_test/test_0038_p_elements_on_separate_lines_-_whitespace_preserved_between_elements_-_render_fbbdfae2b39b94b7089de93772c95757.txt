@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0038_p elements on separate lines - whitespace preserved between elements - render"
+input: "{source: \"<p>First\\n<p>Second\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<p>First
+</p><p>Second</p>

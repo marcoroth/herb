@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0018_thead tbody tfoot without closing tags - auto_close enabled - render"
+input: "{source: \"<table><thead><tr><th>H<tbody><tr><td>B<tfoot><tr><td>F</table>\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>B</td></tr></tbody><tfoot><tr><td>F</td></tr></tfoot></table>

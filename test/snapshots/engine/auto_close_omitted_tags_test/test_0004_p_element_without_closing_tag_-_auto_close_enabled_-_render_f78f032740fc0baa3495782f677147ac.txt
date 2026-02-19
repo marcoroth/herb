@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0004_p element without closing tag - auto_close enabled - render"
+input: "{source: \"<p>Hello World\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<p>Hello World</p>

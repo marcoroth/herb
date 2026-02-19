@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0033_inline-block li elements - single line maintains no whitespace - compilation"
+input: "{source: \"<ul><li style=\\\"display: inline-block\\\">Foo<li style=\\\"display: inline-block\\\">Bar</ul>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<ul><li style="display: inline-block">Foo</li><li style="display: inline-block">Bar</li></ul>'.freeze;
+_buf.to_s
