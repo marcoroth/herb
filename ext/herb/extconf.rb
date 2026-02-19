@@ -52,6 +52,7 @@ prism_util_files = [
 ]
 
 core_src_files = [
+  "arena.c",
   "extension.c",
   "nodes.c",
   "error_helpers.c",
@@ -66,6 +67,7 @@ abort("could not find prism.h") unless find_header("prism.h")
 abort("could not find herb.h") unless find_header("herb.h")
 
 abort("could not find nodes.h (run `ruby templates/template.rb` to generate the file)") unless find_header("nodes.h")
+abort("could not find arena.h") unless find_header("arena.h")
 abort("could not find extension.h") unless find_header("extension.h")
 abort("could not find extension_helpers.h") unless find_header("extension_helpers.h")
 

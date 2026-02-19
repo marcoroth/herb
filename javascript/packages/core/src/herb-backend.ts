@@ -6,9 +6,15 @@ import { ParseResult } from "./parse-result.js"
 import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 
+import type { Arena } from "./arena.js"
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
 import type { ParserOptions } from "./parser-options.js"
+import type { LexOptions } from "./lex-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
+
+export interface CreateArenaOptions {
+  size?: number
+}
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -44,25 +50,41 @@ export abstract class HerbBackend {
   /**
    * Lexes the given source string into a `LexResult`.
    * @param source - The source code to lex.
+   * @param options - Optional lexing options.
    * @returns A `LexResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  lex(source: string): LexResult {
+  lex(source: string, options?: LexOptions): LexResult {
     this.ensureBackend()
 
-    return LexResult.from(this.backend.lex(ensureString(source)))
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: Record<string, unknown> = { ...restOptions }
+
+    if (arena) {
+      Object.assign(mergedOptions, arena.toBackendOption())
+    }
+
+    return LexResult.from(this.backend.lex(ensureString(source), mergedOptions))
   }
 
   /**
    * Lexes a file.
    * @param path - The file path to lex.
+   * @param options - Optional lexing options.
    * @returns A `LexResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  lexFile(path: string): LexResult {
+  lexFile(path: string, options?: LexOptions): LexResult {
     this.ensureBackend()
 
-    return LexResult.from(this.backend.lexFile(ensureString(path)))
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: Record<string, unknown> = { ...restOptions }
+
+    if (arena) {
+      Object.assign(mergedOptions, arena.toBackendOption())
+    }
+
+    return LexResult.from(this.backend.lexFile(ensureString(path), mergedOptions))
   }
 
   /**
@@ -75,7 +97,12 @@ export abstract class HerbBackend {
   parse(source: string, options?: ParserOptions): ParseResult {
     this.ensureBackend()
 
-    const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: Record<string, unknown> = { ...DEFAULT_PARSER_OPTIONS, ...restOptions }
+
+    if (arena) {
+      Object.assign(mergedOptions, arena.toBackendOption())
+    }
 
     return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
   }
@@ -83,13 +110,21 @@ export abstract class HerbBackend {
   /**
    * Parses a file.
    * @param path - The file path to parse.
+   * @param options - Optional parsing options.
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parseFile(path: string): ParseResult {
+  parseFile(path: string, options?: ParserOptions): ParseResult {
     this.ensureBackend()
 
-    return ParseResult.from(this.backend.parseFile(ensureString(path)))
+    const { arena, ...restOptions } = options || {}
+    const mergedOptions: Record<string, unknown> = { ...DEFAULT_PARSER_OPTIONS, ...restOptions }
+
+    if (arena) {
+      Object.assign(mergedOptions, arena.toBackendOption())
+    }
+
+    return ParseResult.from(this.backend.parseFile(ensureString(path), mergedOptions))
   }
 
   /**
@@ -159,4 +194,12 @@ export abstract class HerbBackend {
    * @returns A string representing the backend version.
    */
   abstract backendVersion(): string
+
+  /**
+   * Creates a new Arena for memory allocation during parsing.
+   * @param options - Optional arena creation options.
+   * @returns An Arena instance.
+   * @throws Error if the backend is not loaded.
+   */
+  abstract createArena(options?: CreateArenaOptions): Arena
 }

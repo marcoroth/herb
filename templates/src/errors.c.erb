@@ -5,6 +5,7 @@
 #include "include/token.h"
 #include "include/util.h"
 #include "include/util/hb_array.h"
+#include "include/util/hb_arena.h"
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -26,10 +27,10 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
 }
 <%- errors.each do |error| -%>
 <%- error_arguments = error.fields.any? ? error.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = error_arguments + ["position_T start", "position_T end"] -%>
+<%- arguments = error_arguments + ["position_T start", "position_T end", "hb_arena_T* arena"] -%>
 
 <%= error.struct_type %>* <%= error.human %>_init(<%= arguments.join(", ") %>) {
-  <%= error.struct_type %>* <%= error.human %> = malloc(sizeof(<%= error.struct_type %>));
+  <%= error.struct_type %>* <%= error.human %> = arena ? hb_arena_alloc(arena, sizeof(<%= error.struct_type %>)) : malloc(sizeof(<%= error.struct_type %>));
 
   error_init(&<%= error.human %>->base, <%= error.type %>, start, end);
 
@@ -37,7 +38,7 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   const char* message_template = "<%= error.message_template %>";
 
   size_t message_size = <%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
-  char* message = (char*) malloc(message_size);
+  char* message = arena ? (char*) hb_arena_alloc(arena, message_size) : (char*) malloc(message_size);
 
   if (message) {
     <%- error.message_arguments.each_with_index do |argument, i| -%>
@@ -61,13 +62,25 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
       <%- end -%>
     );
 
-    <%= error.human %>->base.message = herb_strdup(message);
-    free(message);
+    if (arena) {
+      <%= error.human %>->base.message = hb_arena_strdup(arena, message);
+    } else {
+      <%= error.human %>->base.message = herb_strdup(message);
+      free(message);
+    }
+  } else {
+    if (arena) {
+      <%= error.human %>->base.message = hb_arena_strdup(arena, "<%= error.message_template %>");
+    } else {
+      <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
+    }
+  }
+  <%- else -%>
+  if (arena) {
+    <%= error.human %>->base.message = hb_arena_strdup(arena, "<%= error.message_template %>");
   } else {
     <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
   }
-  <%- else -%>
-  <%= error.human %>->base.message = herb_strdup("<%= error.message_template %>");
   <%- end -%>
 
   <%- error.fields.each do |field| -%>
@@ -75,13 +88,13 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- when Herb::Template::PositionField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::TokenField -%>
-  <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = token_copy(<%= field.name %>, arena);
   <%- when Herb::Template::TokenTypeField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::SizeTField -%>
   <%= error.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  <%= error.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
+  <%= error.human %>-><%= field.name %> = arena ? hb_arena_strdup(arena, <%= field.name %>) : herb_strdup(<%= field.name %>);
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
@@ -89,8 +102,8 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   return <%= error.human %>;
 }
 
-void append_<%= error.human %>(<%= (arguments + ["hb_array_T* errors"]).join(", ") %>) {
-  hb_array_append(errors, <%= error.human %>_init(<%= arguments.map { |argument| argument.split(" ").last.strip }.join(", ") %>));
+void append_<%= error.human %>(<%= (error_arguments + ["position_T start", "position_T end", "hb_array_T* errors", "hb_arena_T* arena"]).join(", ") %>) {
+  hb_array_append(errors, <%= error.human %>_init(<%= (error_arguments.map { |arg| arg.split(" ").last.strip } + ["start", "end", "arena"]).join(", ") %>));
 }
 <%- end -%>
 

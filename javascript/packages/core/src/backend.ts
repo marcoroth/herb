@@ -1,14 +1,13 @@
 import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
-import type { ParserOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 
 interface LibHerbBackendFunctions {
-  lex: (source: string) => SerializedLexResult
-  lexFile: (path: string) => SerializedLexResult
+  lex: (source: string, options?: Record<string, unknown>) => SerializedLexResult
+  lexFile: (path: string, options?: Record<string, unknown>) => SerializedLexResult
 
-  parse: (source: string, options?: ParserOptions) => SerializedParseResult
-  parseFile: (path: string) => SerializedParseResult
+  parse: (source: string, options?: Record<string, unknown>) => SerializedParseResult
+  parseFile: (path: string, options?: Record<string, unknown>) => SerializedParseResult
 
   extractRuby: (source: string, options?: ExtractRubyOptions) => string
   extractHTML: (source: string) => string

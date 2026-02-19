@@ -25,7 +25,7 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
 
       <%- array_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, context->errors, context->strict);
+        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, context->errors, context->strict, context->arena);
       }
       <%- end -%>
       <%- single_node_fields.each do |field| -%>

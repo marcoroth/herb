@@ -10,6 +10,164 @@ describe("@herb-tools/browser", () => {
     expect(Herb).toBeDefined()
   })
 
+  describe("Arena", () => {
+    test("createArena returns an Arena", () => {
+      const arena = Herb.createArena()
+      expect(arena).toBeDefined()
+      expect(arena.capacity).toBeGreaterThan(0)
+      arena.free()
+    })
+
+    test("creating an arena with custom size", () => {
+      const arena = Herb.createArena({ size: 1024 * 1024 })
+      expect(arena).toBeDefined()
+      expect(arena.capacity).toBeGreaterThanOrEqual(1024 * 1024)
+      arena.free()
+    })
+
+    test("arena position starts at zero", () => {
+      const arena = Herb.createArena()
+      expect(arena.position).toBe(0)
+      arena.free()
+    })
+
+    test("arena position increases after parsing", () => {
+      const arena = Herb.createArena()
+      const initialPosition = arena.position
+
+      Herb.parse("<div>hello</div>", { arena })
+
+      expect(arena.position).toBeGreaterThan(initialPosition)
+      arena.free()
+    })
+
+    test("arena can be reused for multiple parse calls", () => {
+      const arena = Herb.createArena()
+
+      const result1 = Herb.parse("<div>first</div>", { arena })
+      const positionAfterFirst = arena.position
+
+      const result2 = Herb.parse("<span>second</span>", { arena })
+      const positionAfterSecond = arena.position
+
+      expect(result1).toBeDefined()
+      expect(result2).toBeDefined()
+      expect(positionAfterSecond).toBeGreaterThan(positionAfterFirst)
+      arena.free()
+    })
+
+    test("arena reset returns position to zero", () => {
+      const arena = Herb.createArena()
+
+      Herb.parse("<div>hello</div>", { arena })
+      expect(arena.position).toBeGreaterThan(0)
+
+      arena.reset()
+      expect(arena.position).toBe(0)
+      arena.free()
+    })
+
+    test("arena can be reused after reset", () => {
+      const arena = Herb.createArena()
+
+      const result1 = Herb.parse("<div>first</div>", { arena })
+      arena.reset()
+
+      const result2 = Herb.parse("<span>second</span>", { arena })
+
+      expect(result1).toBeDefined()
+      expect(result2).toBeDefined()
+      arena.free()
+    })
+
+    test("multiple arenas can be used independently", () => {
+      const arena1 = Herb.createArena()
+      const arena2 = Herb.createArena()
+
+      Herb.parse("<div>first</div>", { arena: arena1 })
+      const position1 = arena1.position
+
+      Herb.parse("<span>second</span>", { arena: arena2 })
+      const position2 = arena2.position
+
+      expect(position1).toBeGreaterThan(0)
+      expect(position2).toBeGreaterThan(0)
+      expect(arena1.position).toBe(position1)
+
+      arena1.free()
+      arena2.free()
+    })
+
+    test("parsing many templates with shared arena", () => {
+      const arena = Herb.createArena()
+
+      for (let i = 0; i < 100; i++) {
+        const result = Herb.parse(`<div>template ${i}</div>`, { arena })
+        expect(result).toBeDefined()
+      }
+
+      expect(arena.position).toBeGreaterThan(0)
+      arena.free()
+    })
+
+    test("arena reset allows reuse for batch processing", () => {
+      const arena = Herb.createArena()
+
+      for (let batch = 0; batch < 3; batch++) {
+        for (let i = 0; i < 10; i++) {
+          const result = Herb.parse(`<div>batch ${batch} item ${i}</div>`, { arena })
+          expect(result).toBeDefined()
+        }
+        arena.reset()
+        expect(arena.position).toBe(0)
+      }
+
+      arena.free()
+    })
+
+    test("arena free releases resources", () => {
+      const arena = Herb.createArena()
+      Herb.parse("<div>hello</div>", { arena })
+      arena.free()
+    })
+
+    test("arena works with lex", () => {
+      const arena = Herb.createArena()
+
+      const result = Herb.lex("<div>hello</div>", { arena })
+
+      expect(result).toBeDefined()
+      expect(result.value.tokens.length).toBeGreaterThan(0)
+      arena.free()
+    })
+
+    test("arena can be reused for multiple lex calls", () => {
+      const arena = Herb.createArena()
+
+      const result1 = Herb.lex("<div>first</div>", { arena })
+      const result2 = Herb.lex("<span>second</span>", { arena })
+
+      expect(result1).toBeDefined()
+      expect(result2).toBeDefined()
+      expect(result1.value.tokens.length).toBeGreaterThan(0)
+      expect(result2.value.tokens.length).toBeGreaterThan(0)
+      arena.free()
+    })
+
+    test("arena can be used for both parse and lex", () => {
+      const arena = Herb.createArena()
+
+      const parseResult = Herb.parse("<div>parsed</div>", { arena })
+      const lexResult = Herb.lex("<span>lexed</span>", { arena })
+
+      expect(parseResult).toBeDefined()
+      expect(lexResult).toBeDefined()
+      expect(parseResult.value).toBeDefined()
+      expect(lexResult.value.tokens.length).toBeGreaterThan(0)
+      arena.free()
+    })
+  })
+
   test("Herb export is of instance HerbBackend", () => {
     expect(Herb instanceof HerbBackend).toBeTruthy()
   })
