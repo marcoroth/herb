@@ -703,6 +703,20 @@ static AST_HTML_ATTRIBUTE_NODE_T* parser_parse_html_attribute(parser_T* parser) 
       }
 
       token_T* equals_with_whitespace = calloc(1, sizeof(token_T));
+
+      if (!equals_with_whitespace) {
+        free(equals_buffer.value);
+
+        return ast_html_attribute_node_init(
+          attribute_name,
+          NULL,
+          NULL,
+          attribute_name->base.location.start,
+          attribute_name->base.location.end,
+          NULL
+        );
+      }
+
       equals_with_whitespace->type = TOKEN_EQUALS;
       equals_with_whitespace->value = herb_strdup(equals_buffer.value);
       equals_with_whitespace->location = (location_T) { .start = equals_start, .end = equals_end };
@@ -1640,7 +1654,15 @@ void herb_parser_deinit(parser_T* parser) {
   if (parser == NULL) { return; }
 
   if (parser->current_token != NULL) { token_free(parser->current_token); }
-  if (parser->open_tags_stack != NULL) { hb_array_free(&parser->open_tags_stack); }
+
+  if (parser->open_tags_stack != NULL) {
+    for (size_t i = 0; i < hb_array_size(parser->open_tags_stack); i++) {
+      token_T* token = (token_T*) hb_array_get(parser->open_tags_stack, i);
+      if (token != NULL) { token_free(token); }
+    }
+
+    hb_array_free(&parser->open_tags_stack);
+  }
 }
 
 void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict) {

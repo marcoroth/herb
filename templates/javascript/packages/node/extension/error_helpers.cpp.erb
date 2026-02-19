@@ -62,6 +62,11 @@ napi_value <%= error.name %>FromCStruct(napi_env env, <%= error.struct_type %>* 
   napi_value <%= field.name %> = CreatePosition(env, <%= error.human %>-><%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
+  <%- when Herb::Template::SizeTField -%>
+  napi_value <%= field.name %>;
+  napi_create_uint32(env, (uint32_t)<%= error.human %>-><%= field.name %>, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
   <%- when Herb::Template::ArrayField -%>
   napi_value <%= field.name %> = NodesArrayFromCArray(env, <%= error.human %>-><%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);

@@ -11,6 +11,8 @@ size_t hb_array_sizeof(void) {
 hb_array_T* hb_array_init(const size_t capacity) {
   hb_array_T* array = malloc(hb_array_sizeof());
 
+  if (!array) { return NULL; }
+
   array->size = 0;
   array->capacity = capacity;
   array->items = malloc(capacity * sizeof(void*));
@@ -23,7 +25,9 @@ hb_array_T* hb_array_init(const size_t capacity) {
   return array;
 }
 
-void hb_array_append(hb_array_T* array, void* item) {
+bool hb_array_append(hb_array_T* array, void* item) {
+  if (!array) { return false; }
+
   if (array->size >= array->capacity) {
     size_t new_capacity;
 
@@ -40,13 +44,13 @@ void hb_array_append(hb_array_T* array, void* item) {
 
     if (new_capacity > SIZE_MAX / sizeof(void*)) {
       fprintf(stderr, "Error: Array allocation would exceed system limits.\n");
-      return;
+      return false;
     }
 
     size_t new_size_bytes = new_capacity * sizeof(void*);
     void* new_items = realloc(array->items, new_size_bytes);
 
-    if (unlikely(new_items == NULL)) { return; }
+    if (unlikely(new_items == NULL)) { return false; }
 
     array->items = (void**) new_items;
     array->capacity = new_capacity;
@@ -54,6 +58,8 @@ void hb_array_append(hb_array_T* array, void* item) {
 
   array->items[array->size] = item;
   array->size++;
+
+  return true;
 }
 
 void* hb_array_get(const hb_array_T* array, const size_t index) {
@@ -103,8 +109,8 @@ void hb_array_remove_item(hb_array_T* array, void* item) {
 }
 
 // Alias for hb_array_append
-void hb_array_push(hb_array_T* array, void* item) {
-  hb_array_append(array, item);
+bool hb_array_push(hb_array_T* array, void* item) {
+  return hb_array_append(array, item);
 }
 
 void* hb_array_pop(hb_array_T* array) {

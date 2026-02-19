@@ -14,28 +14,77 @@ VALUE cResult;
 VALUE cLexResult;
 VALUE cParseResult;
 
+typedef struct {
+  AST_DOCUMENT_NODE_T* root;
+  VALUE source;
+} parse_args_T;
+
+typedef struct {
+  hb_array_T* tokens;
+  VALUE source;
+} lex_args_T;
+
+typedef struct {
+  char* buffer_value;
+} buffer_args_T;
+
+static VALUE parse_convert_body(VALUE arg) {
+  parse_args_T* args = (parse_args_T*) arg;
+
+  return create_parse_result(args->root, args->source);
+}
+
+static VALUE parse_cleanup(VALUE arg) {
+  parse_args_T* args = (parse_args_T*) arg;
+
+  if (args->root != NULL) { ast_node_free((AST_NODE_T*) args->root); }
+
+  return Qnil;
+}
+
+static VALUE lex_convert_body(VALUE arg) {
+  lex_args_T* args = (lex_args_T*) arg;
+
+  return create_lex_result(args->tokens, args->source);
+}
+
+static VALUE lex_cleanup(VALUE arg) {
+  lex_args_T* args = (lex_args_T*) arg;
+
+  if (args->tokens != NULL) { herb_free_tokens(&args->tokens); }
+
+  return Qnil;
+}
+
+static VALUE buffer_to_string_body(VALUE arg) {
+  buffer_args_T* args = (buffer_args_T*) arg;
+
+  return rb_utf8_str_new_cstr(args->buffer_value);
+}
+
+static VALUE buffer_cleanup(VALUE arg) {
+  buffer_args_T* args = (buffer_args_T*) arg;
+
+  if (args->buffer_value != NULL) { free(args->buffer_value); }
+
+  return Qnil;
+}
+
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  hb_array_T* tokens = herb_lex(string);
+  lex_args_T args = { .tokens = herb_lex(string), .source = source };
 
-  VALUE result = create_lex_result(tokens, source);
-
-  herb_free_tokens(&tokens);
-
-  return result;
+  return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
-  hb_array_T* tokens = herb_lex_file(file_path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
-  VALUE result = create_lex_result(tokens, source_value);
+  lex_args_T args = { .tokens = herb_lex_file(file_path), .source = source_value };
 
-  herb_free_tokens(&tokens);
-
-  return result;
+  return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
@@ -60,13 +109,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source };
 
-  VALUE result = create_parse_result(root, source);
-
-  ast_node_free((AST_NODE_T*) root);
-
-  return result;
+  return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
@@ -94,13 +139,9 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source_value };
 
-  VALUE result = create_parse_result(root, source_value);
-
-  ast_node_free((AST_NODE_T*) root);
-
-  return result;
+  return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
@@ -132,10 +173,9 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
 
   herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
 
-  VALUE result = rb_utf8_str_new_cstr(output.value);
-  free(output.value);
+  buffer_args_T args = { .buffer_value = output.value };
 
-  return result;
+  return rb_ensure(buffer_to_string_body, (VALUE) &args, buffer_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_extract_html(VALUE self, VALUE source) {
@@ -146,10 +186,9 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
 
   herb_extract_html_to_buffer(string, &output);
 
-  VALUE result = rb_utf8_str_new_cstr(output.value);
-  free(output.value);
+  buffer_args_T args = { .buffer_value = output.value };
 
-  return result;
+  return rb_ensure(buffer_to_string_body, (VALUE) &args, buffer_cleanup, (VALUE) &args);
 }
 
 static VALUE Herb_version(VALUE self) {
@@ -170,6 +209,9 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   cResult = rb_define_class_under(mHerb, "Result", rb_cObject);
   cLexResult = rb_define_class_under(mHerb, "LexResult", cResult);
   cParseResult = rb_define_class_under(mHerb, "ParseResult", cResult);
+
+  rb_init_node_classes();
+  rb_init_error_classes();
 
   rb_define_singleton_method(mHerb, "parse", Herb_parse, -1);
   rb_define_singleton_method(mHerb, "lex", Herb_lex, 1);
