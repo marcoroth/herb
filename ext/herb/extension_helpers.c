@@ -73,7 +73,7 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
   return rb_class_new_instance(4, args, cLexResult);
 }
 
-VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, parser_options_T* options) {
+VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_options_T* options) {
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();

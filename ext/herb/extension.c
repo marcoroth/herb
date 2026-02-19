@@ -18,7 +18,7 @@ VALUE cParserOptions;
 typedef struct {
   AST_DOCUMENT_NODE_T* root;
   VALUE source;
-  parser_options_T* parser_options;
+  const parser_options_T* parser_options;
 } parse_args_T;
 
 typedef struct {
@@ -111,7 +111,9 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source, .parser_options = &parser_options };
+  parse_args_T args = { .root = herb_parse(string, &parser_options),
+                        .source = source,
+                        .parser_options = &parser_options };
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
@@ -141,7 +143,9 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options), .source = source_value, .parser_options = &parser_options };
+  parse_args_T args = { .root = herb_parse(string, &parser_options),
+                        .source = source_value,
+                        .parser_options = &parser_options };
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
