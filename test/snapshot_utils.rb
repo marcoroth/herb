@@ -68,11 +68,25 @@ module SnapshotUtils
 
   def assert_evaluated_snapshot(source, locals = {}, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
+    require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
     engine_options = options.merge(kwargs)
 
     engine = Herb::Engine.new(source, engine_options)
+
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
     binding_context = Object.new
 
     locals.each do |key, value|
