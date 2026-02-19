@@ -297,7 +297,7 @@ errors:
 
     - name: NestedERBTagError
       message:
-        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%u:%u). Nesting `<%%` tags is not supported."
+        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
         arguments:
           - opening_tag->value
           - opening_tag->location.start.line

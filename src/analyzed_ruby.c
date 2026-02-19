@@ -7,6 +7,8 @@
 analyzed_ruby_T* init_analyzed_ruby(hb_string_T source) {
   analyzed_ruby_T* analyzed = malloc(sizeof(analyzed_ruby_T));
 
+  if (!analyzed) { return NULL; }
+
   pm_parser_init(&analyzed->parser, (const uint8_t*) source.data, source.length, NULL);
 
   analyzed->root = pm_parse(&analyzed->parser);

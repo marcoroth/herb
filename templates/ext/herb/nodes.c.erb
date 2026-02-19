@@ -11,16 +11,25 @@
 VALUE rb_node_from_c_struct(AST_NODE_T* node);
 static VALUE rb_nodes_array_from_c_array(hb_array_T* array);
 
+static VALUE mAST;
+static VALUE cNode;
+<%- nodes.each do |node| -%>
+static VALUE c<%= node.name %>;
+<%- end -%>
+
+void rb_init_node_classes(void) {
+  mAST = rb_define_module_under(mHerb, "AST");
+  cNode = rb_define_class_under(mAST, "Node", rb_cObject);
+  <%- nodes.each do |node| -%>
+  c<%= node.name %> = rb_define_class_under(mAST, "<%= node.name %>", cNode);
+  <%- end -%>
+}
+
 <%- nodes.each do |node| -%>
 static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= node.human %>) {
   if (<%= node.human %> == NULL) { return Qnil; }
 
   AST_NODE_T* node = &<%= node.human %>->base;
-
-  VALUE Herb = rb_define_module("Herb");
-  VALUE AST = rb_define_module_under(Herb, "AST");
-  VALUE Node = rb_define_class_under(AST, "Node", rb_cObject);
-  VALUE <%= node.name %> = rb_define_class_under(AST, "<%= node.name %>", Node);
 
   hb_string_T node_type = ast_node_type_to_string(node);
   VALUE type = rb_utf8_str_new(node_type.data, node_type.length);
@@ -47,8 +56,11 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
   }
   <%- when Herb::Template::LocationField -%>
   VALUE <%= node.human %>_<%= field.name %> = (<%= node.human %>-><%= field.name %> != NULL) ? rb_location_from_c_struct(*<%= node.human %>-><%= field.name %>) : Qnil;
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  /* <%= field.name %> is internal parser state, not exposed to Ruby */
+  VALUE <%= node.human %>_<%= field.name %> = Qnil;
   <%- else -%>
-  /* <%= field.inspect %> */
+  /* Unhandled field type: <%= field.class.name %> */
   VALUE <%= node.human %>_<%= field.name %> = Qnil;
   <%- end -%>
   <%- end -%>
@@ -62,7 +74,7 @@ static VALUE rb_<%= node.human %>_from_c_struct(<%= node.struct_type %>* <%= nod
     <%- end -%>
   };
 
-  return rb_class_new_instance(<%= 3 + node.fields.count %>, args, <%= node.name %>);
+  return rb_class_new_instance(<%= 3 + node.fields.count %>, args, c<%= node.name %>);
 };
 
 <%- end -%>

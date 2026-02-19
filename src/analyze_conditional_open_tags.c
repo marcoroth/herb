@@ -357,8 +357,11 @@ static void rewrite_conditional_open_tags(hb_array_T* nodes, hb_array_T* documen
 
     for (size_t j = i + 1; j <= close_index; j++) {
       size_t* index = malloc(sizeof(size_t));
-      *index = j;
-      hb_array_append(consumed_indices, index);
+
+      if (index) {
+        *index = j;
+        hb_array_append(consumed_indices, index);
+      }
     }
   }
 

@@ -18,7 +18,7 @@ extern "C" {
 
 using namespace emscripten;
 
-val CreateLocation(location_T* location);
+val CreateLocation(location_T location);
 val CreateToken(token_T* token);
 val NodeFromCStruct(AST_NODE_T* node);
 val NodesArrayFromCArray(hb_array_T* array);
@@ -51,6 +51,8 @@ val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>) {
   result.set("<%= field.name %>", <%= error.human %>-><%= field.name %>);
   <%- when Herb::Template::PositionField -%>
   result.set("<%= field.name %>", CreatePosition(<%= error.human %>-><%= field.name %>));
+  <%- when Herb::Template::SizeTField -%>
+  result.set("<%= field.name %>", val((double)<%= error.human %>-><%= field.name %>));
   <%- when Herb::Template::ArrayField -%>
   result.set("<%= field.name %>", NodesArrayFromCArray(<%= error.human %>-><%= field.name %>));
   <%- else -%>

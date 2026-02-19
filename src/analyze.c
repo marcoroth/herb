@@ -1537,6 +1537,9 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, 
   herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
 
   analyze_ruby_context_T* context = malloc(sizeof(analyze_ruby_context_T));
+
+  if (!context) { return; }
+
   context->document = document;
   context->parent = NULL;
   context->ruby_context_stack = hb_array_init(8);
@@ -1546,6 +1549,13 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, 
   herb_transform_conditional_open_tags(document);
 
   invalid_erb_context_T* invalid_context = malloc(sizeof(invalid_erb_context_T));
+
+  if (!invalid_context) {
+    hb_array_free(&context->ruby_context_stack);
+    free(context);
+    return;
+  }
+
   invalid_context->loop_depth = 0;
   invalid_context->rescue_depth = 0;
 

@@ -70,7 +70,14 @@ napi_value <%= node.human %>NodeFromCStruct(napi_env env, <%= node.struct_type %
   }
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
 
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  /* <%= field.name %> is internal parser state, not exposed to JavaScript */
+  napi_value <%= field.name %>;
+  napi_get_null(env, &<%= field.name %>);
+  napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
+
   <%- else -%>
+  /* Unhandled field type: <%= field.class.name %> */
   napi_value <%= field.name %>;
   napi_get_null(env, &<%= field.name %>);
   napi_set_named_property(env, result, "<%= field.name %>", <%= field.name %>);
@@ -87,11 +94,13 @@ napi_value NodesArrayFromCArray(napi_env env, hb_array_T* array) {
   napi_create_array(env, &result);
 
   if (array) {
+    uint32_t index = 0;
+
     for (size_t i = 0; i < hb_array_size(array); i++) {
       AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
       if (child_node) {
         napi_value js_child = NodeFromCStruct(env, child_node);
-        napi_set_element(env, result, i, js_child);
+        napi_set_element(env, result, index++, js_child);
       }
     }
   }

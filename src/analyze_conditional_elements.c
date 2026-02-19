@@ -285,6 +285,9 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
     if (contains_single_open_tag(statements, &open_tag)) {
       conditional_open_tag_T* entry = malloc(sizeof(conditional_open_tag_T));
+
+      if (!entry) { continue; }
+
       entry->open_index = node_index;
       entry->open_conditional = node;
       entry->open_tag = open_tag;
@@ -416,17 +419,23 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
 
     for (size_t body_index = matched_open->open_index + 1; body_index < node_index; body_index++) {
       size_t* consumed_index = malloc(sizeof(size_t));
-      *consumed_index = body_index;
 
-      hb_array_append(consumed_indices, consumed_index);
+      if (consumed_index) {
+        *consumed_index = body_index;
+        hb_array_append(consumed_indices, consumed_index);
+      }
+
       hb_array_set(nodes, body_index, NULL);
     }
 
     hb_array_set(nodes, matched_open->open_index, conditional_element);
 
     size_t* close_index = malloc(sizeof(size_t));
-    *close_index = node_index;
-    hb_array_append(consumed_indices, close_index);
+
+    if (close_index) {
+      *close_index = node_index;
+      hb_array_append(consumed_indices, close_index);
+    }
     hb_array_set(nodes, node_index, NULL);
 
     if (matched_open->condition) { free((void*) matched_open->condition); }

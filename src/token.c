@@ -12,6 +12,8 @@
 token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
   token_T* token = calloc(1, sizeof(token_T));
 
+  if (!token) { return NULL; }
+
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
     lexer->current_column = 0;
@@ -83,8 +85,12 @@ const char* token_type_to_string(const token_type_T type) {
 hb_string_T token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Herb::Token type=\"%s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
+  const char* value = token->value ? token->value : "";
 
-  char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
+  char* string = calloc(strlen(type_string) + strlen(template) + strlen(value) + 16, sizeof(char));
+
+  if (!string) { return hb_string(""); }
+
   hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
