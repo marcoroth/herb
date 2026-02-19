@@ -1720,6 +1720,12 @@ export class FormatPrinter extends Printer {
       return false
     }
 
+    if (SPACEABLE_CONTAINERS.has(tagName)) {
+      const allChildrenAreERB = children.length > 1 && children.every(child => isERBNode(child))
+
+      if (allChildrenAreERB) return false
+    }
+
     const allNestedAreInline = areAllNestedElementsInline(children)
     const hasMultilineText = hasMultilineTextContent(children)
     const hasMixedContent = hasMixedTextAndInlineContent(children)
