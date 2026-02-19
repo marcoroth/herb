@@ -70,6 +70,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
   const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const ruleParserOptions = ruleInstance.defaultConfig?.parserOptions ?? {}
   const ruleConfigOverride = configOverride
 
   beforeAll(async () => {
@@ -104,7 +105,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = Herb.parse(html, { track_whitespace: true, ...ruleParserOptions })
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -183,7 +184,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = Herb.parse(html, { track_whitespace: true, ...ruleParserOptions })
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
