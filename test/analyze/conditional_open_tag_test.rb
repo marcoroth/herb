@@ -222,5 +222,90 @@ module Analyze
         </div>
       HTML
     end
+
+    test "complete elements in if/else should not trigger error" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="outer">
+          <% if condition %>
+            <div class="inner">A</div>
+          <% else %>
+            <div class="inner">B</div>
+          <% end %>
+        </div>
+      HTML
+    end
+
+    test "multiple complete elements in if/else should not trigger error" do
+      assert_parsed_snapshot(<<~HTML)
+        <div class="text-center">
+          <% if @event.retreat? %>
+            <div class="mb-1"><%= duration %></div>
+            <div class="text-sm">Days</div>
+          <% else %>
+            <div class="mb-1"><%= count %></div>
+            <div class="text-sm">Talks</div>
+          <% end %>
+        </div>
+      HTML
+    end
+
+    test "nested complete elements with ERB content inside if/else" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <% x = 1 %>
+          <div class="outer">
+            <div class="inner1">content1</div>
+            <div class="inner2">content2</div>
+          </div>
+        <% elsif condition2 %>
+          <div class="outer">
+            <div class="inner1">content1</div>
+            <div class="inner2">content2</div>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "if/elsif with each block inside branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div class="container">
+            <div class="items">
+              <% items.each do |item| %>
+                <div class="item"><%= item %></div>
+              <% end %>
+            </div>
+          </div>
+        <% elsif other_condition %>
+          <div class="container">
+            <span>No items</span>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "deeply nested if/else with complete elements (rubyevents pattern)" do
+      assert_parsed_snapshot(<<~HTML)
+        <%= turbo_frame_tag do %>
+          <div class="container">
+            <div class="flex">
+              <section>
+                <div class="grid">
+                  <div class="text-center">
+                    <% if @event.retreat? %>
+                      <div class="mb-1"><%= duration %></div>
+                      <div class="text-sm">Days</div>
+                    <% else %>
+                      <div class="mb-1"><%= count %></div>
+                      <div class="text-sm">Talks</div>
+                    <% end %>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        <% end %>
+      HTML
+    end
   end
 end

@@ -35,18 +35,55 @@ typedef struct {
   bool has_multiple_tags;
 } single_open_tag_result_T;
 
+static bool has_matching_close_tag_in_statements(hb_array_T* statements, size_t open_tag_index, const char* tag_name) {
+  if (!statements || !tag_name) { return false; }
+
+  int depth = 0;
+
+  for (size_t i = open_tag_index + 1; i < hb_array_size(statements); i++) {
+    AST_NODE_T* node = (AST_NODE_T*) hb_array_get(statements, i);
+
+    if (!node) { continue; }
+
+    if (node->type == AST_HTML_OPEN_TAG_NODE) {
+      AST_HTML_OPEN_TAG_NODE_T* open_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+
+      if (open_tag->tag_name && open_tag->tag_name->value) {
+        if (hb_string_equals_case_insensitive(hb_string(tag_name), hb_string(open_tag->tag_name->value))) { depth++; }
+      }
+    } else if (node->type == AST_HTML_CLOSE_TAG_NODE) {
+      AST_HTML_CLOSE_TAG_NODE_T* close_tag = (AST_HTML_CLOSE_TAG_NODE_T*) node;
+
+      if (close_tag->tag_name && close_tag->tag_name->value) {
+        if (hb_string_equals_case_insensitive(hb_string(tag_name), hb_string(close_tag->tag_name->value))) {
+          if (depth == 0) { return true; }
+          depth--;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* statements) {
   single_open_tag_result_T result = { .tag = NULL, .second_tag = NULL, .has_multiple_tags = false };
 
   if (!statements || hb_array_size(statements) == 0) { return result; }
 
   size_t tag_count = 0;
+  size_t first_tag_index = 0;
 
   for (size_t i = 0; i < hb_array_size(statements); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(statements, i);
 
     if (!node) { continue; }
+
     if (node->type == AST_WHITESPACE_NODE) { continue; }
+    if (node->type == AST_HTML_CLOSE_TAG_NODE) { continue; }
+    if (node->type == AST_ERB_CONTENT_NODE) { continue; }
+    if (node->type == AST_HTML_ELEMENT_NODE) { continue; }
+    if (node->type == AST_ERB_BLOCK_NODE) { continue; }
 
     if (node->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) node;
@@ -63,6 +100,15 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 
       if (whitespace_only) { continue; }
 
+      if (result.tag) {
+        const char* tag_name = get_open_tag_name(result.tag);
+
+        if (tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
+          result.tag = NULL;
+          result.has_multiple_tags = false;
+          result.second_tag = NULL;
+        }
+      }
       return result;
     }
 
@@ -71,6 +117,7 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 
       if (tag_count == 1) {
         result.tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
+        first_tag_index = i;
       } else if (tag_count == 2) {
         result.second_tag = (AST_HTML_OPEN_TAG_NODE_T*) node;
         result.has_multiple_tags = true;
@@ -82,7 +129,27 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
     return result;
   }
 
-  if (tag_count != 1) { result.tag = NULL; }
+  if (tag_count != 1) {
+    result.tag = NULL;
+
+    if (result.has_multiple_tags && result.second_tag) {
+      const char* first_tag_name =
+        get_open_tag_name((AST_HTML_OPEN_TAG_NODE_T*) hb_array_get(statements, first_tag_index));
+      bool first_has_close =
+        first_tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, first_tag_name);
+
+      if (first_has_close) {
+        result.has_multiple_tags = false;
+        result.second_tag = NULL;
+      }
+    }
+  }
+
+  if (result.tag) {
+    const char* tag_name = get_open_tag_name(result.tag);
+
+    if (tag_name && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) { result.tag = NULL; }
+  }
 
   return result;
 }
