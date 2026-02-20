@@ -30,6 +30,16 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Cache junit jar
+        uses: actions/cache@v4
+        with:
+          path: java/lib
+          key: ${{ runner.os }}-junit-1.14.2
+
+      - name: Ensure junit jar
+        run: make lib/junit-platform-console-standalone-1.14.2.jar
+        working-directory: java
+
       - name: Render Templates
         run: make templates
         working-directory: java

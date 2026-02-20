@@ -47,7 +47,21 @@ JNI_LIB = $(BUILD_DIR)/$(JNI_LIB_PREFIX)herb_jni.$(JNI_LIB_EXT)
 
 JAVA_SOURCES = $(shell find org -name "*.java" 2>/dev/null)
 JAVA_TIMESTAMP = target/.java_compiled
-JUNIT_JAR = lib/junit-platform-console-standalone-1.14.2.jar
+JUNIT_VERSION := 1.14.2
+JUNIT_JAR := lib/junit-platform-console-standalone-$(JUNIT_VERSION).jar
+JUNIT_URL := https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/$(JUNIT_VERSION)/junit-platform-console-standalone-$(JUNIT_VERSION).jar
+
+.PHONY: lib
+lib:
+	@mkdir -p lib
+
+$(JUNIT_JAR): | lib
+	@if [ ! -f "$(JUNIT_JAR)" ]; then \
+		echo "Downloading junit standalone $(JUNIT_VERSION)..."; \
+		curl -fSL -o "$(JUNIT_JAR)" "$(JUNIT_URL)"; \
+	else \
+		echo "$(JUNIT_JAR) already exists"; \
+	fi
 
 .PHONY: all
 all: templates herb jni java
@@ -74,7 +88,7 @@ $(JNI_LIB): $(JNI_OBJECTS) $(HERB_OBJECTS)
 .PHONY: java
 java: $(JAVA_TIMESTAMP)
 
-$(JAVA_TIMESTAMP): $(JAVA_SOURCES)
+$(JAVA_TIMESTAMP): $(JAVA_SOURCES) $(JUNIT_JAR)
 	@mkdir -p target/classes
 	@if [ -n "$(JAVA_SOURCES)" ]; then \
 		$(JAVAC) -cp $(JUNIT_JAR) -d target/classes $(JAVA_SOURCES); \
