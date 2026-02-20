@@ -22,7 +22,7 @@ module Engine
     end
 
     test "shell: lex accepts piped stdin" do
-      output = `echo '<div>Hello</div>' | bundle exec herb lex 2>&1`
+      output = `echo '<div>Hello</div>' | exe/herb lex 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "TOKEN_HTML_TAG_START"
@@ -30,7 +30,7 @@ module Engine
     end
 
     test "shell: parse accepts piped stdin" do
-      output = `echo '<div>Hello</div>' | bundle exec herb parse 2>&1`
+      output = `echo '<div>Hello</div>' | exe/herb parse 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "DocumentNode"
@@ -38,7 +38,7 @@ module Engine
     end
 
     test "shell: compile accepts piped stdin" do
-      output = `echo '<div><%= name %></div>' | bundle exec herb compile 2>&1`
+      output = `echo '<div><%= name %></div>' | exe/herb compile 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "_buf = ::String.new"
@@ -46,14 +46,14 @@ module Engine
     end
 
     test "shell: ruby accepts piped stdin" do
-      output = `echo '<div><%= user.name %></div>' | bundle exec herb ruby 2>&1`
+      output = `echo '<div><%= user.name %></div>' | exe/herb ruby 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "user.name"
     end
 
     test "shell: html accepts piped stdin" do
-      output = `echo '<div><%= user.name %></div>' | bundle exec herb html 2>&1`
+      output = `echo '<div><%= user.name %></div>' | exe/herb html 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "<div>"
@@ -61,14 +61,14 @@ module Engine
     end
 
     test "shell: render accepts piped stdin" do
-      output = `echo '<div>Static</div>' | bundle exec herb render 2>&1`
+      output = `echo '<div>Static</div>' | exe/herb render 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "<div>Static</div>"
     end
 
     test "shell: compile with json flag and stdin" do
-      output = `echo '<div>Test</div>' | bundle exec herb compile --json 2>&1`
+      output = `echo '<div>Test</div>' | exe/herb compile --json 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       json_data = JSON.parse(output)
@@ -77,7 +77,7 @@ module Engine
     end
 
     test "shell: lex with json flag and stdin" do
-      output = `echo '<div>Test</div>' | bundle exec herb lex --json 2>&1`
+      output = `echo '<div>Test</div>' | exe/herb lex --json 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       json_data = JSON.parse(output)
@@ -86,7 +86,7 @@ module Engine
     end
 
     test "shell: compile with multiple flags and stdin" do
-      output = `echo '<div><%= x %></div>' | bundle exec herb compile --no-escape --freeze 2>&1`
+      output = `echo '<div><%= x %></div>' | exe/herb compile --no-escape --freeze 2>&1`
 
       assert $CHILD_STATUS.success?, "Command failed with: #{output}"
       assert_includes output, "# frozen_string_literal: true"
@@ -95,7 +95,7 @@ module Engine
 
     test "shell: stdin with file redirection and dash" do
       with_temp_file("<article>Content</article>") do |file_path|
-        output = `bundle exec herb lex - < #{file_path} 2>&1`
+        output = `exe/herb lex - < #{file_path} 2>&1`
 
         assert $CHILD_STATUS.success?, "Command failed with: #{output}"
         assert_includes output, "TOKEN_HTML_TAG_START"
@@ -105,7 +105,7 @@ module Engine
 
     test "shell: cat pipe to lex" do
       with_temp_file("<section>Data</section>") do |file_path|
-        output = `cat #{file_path} | bundle exec herb lex 2>&1`
+        output = `cat #{file_path} | exe/herb lex 2>&1`
 
         assert $CHILD_STATUS.success?, "Command failed with: #{output}"
         assert_includes output, "TOKEN_HTML_TAG_START"
