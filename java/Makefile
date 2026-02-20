@@ -63,6 +63,10 @@ $(JUNIT_JAR): | lib
 		echo "$(JUNIT_JAR) already exists"; \
 	fi
 
+.PHONY: ensure-junit
+ensure-junit: $(JUNIT_JAR)
+	@echo "JUnit standalone jar ensured: $(JUNIT_JAR)"
+
 .PHONY: all
 all: templates herb jni java
 

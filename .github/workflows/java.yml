@@ -34,10 +34,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: java/lib
-          key: ${{ runner.os }}-junit-1.14.2
+          key: ${{ runner.os }}-junit-${{ hashFiles('java/Makefile') }}
 
       - name: Ensure junit jar
-        run: make lib/junit-platform-console-standalone-1.14.2.jar
+        run: make ensure-junit
         working-directory: java
 
       - name: Render Templates
