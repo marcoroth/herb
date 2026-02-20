@@ -279,10 +279,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       `
 
       const result = formatter.format(source)
-
-      expect(result).toEqual(dedent`
-        <div><%= yield(:header) %><%= yield :footer, class: "mt-4" %></div>
-      `)
+      expect(result).toEqual(source)
     })
   })
 

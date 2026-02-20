@@ -8,16 +8,16 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict
 
   def initialize(args)
     @args = args
     @command = args[0]
-    @file = args[1]
   end
 
   def call
     options
+    @file = @args[1]
 
     if silent
       if result.failed?
@@ -61,16 +61,23 @@ class Herb::CLI
   end
 
   def file_content
-    if @file && File.exist?(@file)
+    if @file && @file != "-" && File.exist?(@file)
       File.read(@file)
-    elsif @file
+    elsif @file && @file != "-"
       puts "File doesn't exist: #{@file}"
       exit(1)
+    elsif @file == "-" || !$stdin.tty?
+      $stdin.read
     else
       puts "No file provided."
       puts
       puts "Usage:"
       puts "  bundle exec herb #{@command} [file] [options]"
+      puts
+      puts "You can also pipe content via stdin:"
+      puts "  echo \"<div>Hello</div>\" | bundle exec herb #{@command}"
+      puts "  cat file.html.erb | bundle exec herb #{@command}"
+      puts "  bundle exec herb #{@command} -"
       exit(1)
     end
   end
@@ -88,16 +95,30 @@ class Herb::CLI
         bundle exec herb [command] [options]
 
       Commands:
-        bundle exec herb lex [file]         Lex a file.
-        bundle exec herb parse [file]       Parse a file.
-        bundle exec herb compile [file]     Compile ERB template to Ruby code.
-        bundle exec herb render [file]      Compile and render ERB template to final output.
-        bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
-        bundle exec herb ruby [file]        Extract Ruby from a file.
-        bundle exec herb html [file]        Extract HTML from a file.
-        bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
-        bundle exec herb playground [file]  Open the content of the source file in the playground
-        bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
+        bundle exec herb lex [file]           Lex a file.
+        bundle exec herb parse [file]         Parse a file.
+        bundle exec herb compile [file]       Compile ERB template to Ruby code.
+        bundle exec herb render [file]        Compile and render ERB template to final output.
+        bundle exec herb analyze [path]       Analyze a project by passing a directory to the root of the project
+        bundle exec herb config [path]        Show configuration and file patterns for a project
+        bundle exec herb ruby [file]          Extract Ruby from a file.
+        bundle exec herb html [file]          Extract HTML from a file.
+        bundle exec herb playground [file]    Open the content of the source file in the playground
+        bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
+
+        bundle exec herb lint [patterns]      Lint templates (delegates to @herb-tools/linter)
+        bundle exec herb format [patterns]    Format templates (delegates to @herb-tools/formatter)
+        bundle exec herb highlight [file]     Syntax highlight templates (delegates to @herb-tools/highlighter)
+        bundle exec herb print [file]         Print AST (delegates to @herb-tools/printer)
+        bundle exec herb lsp                  Start the language server (delegates to @herb-tools/language-server)
+
+      stdin:
+        Commands that accept [file] also accept input via stdin:
+          echo "<div>Hello</div>" | bundle exec herb lex
+          cat file.html.erb | bundle exec herb parse
+
+        Use `-` to explicitly read from stdin:
+          bundle exec herb compile -
 
       Options:
         #{option_parser.to_s.strip.gsub(/^    /, "  ")}
@@ -119,8 +140,11 @@ class Herb::CLI
                   project.silent = silent
                   has_issues = project.parse!
                   exit(has_issues ? 1 : 0)
+                when "config"
+                  show_config
+                  exit(0)
                 when "parse"
-                  Herb.parse(file_content)
+                  Herb.parse(file_content, strict: strict.nil? || strict)
                 when "compile"
                   compile_template
                 when "render"
@@ -152,6 +176,16 @@ class Herb::CLI
                     system(%(open "#{url}##{hash}"))
                     exit(0)
                   end
+                when "lint"
+                  run_node_tool("herb-lint", "@herb-tools/linter")
+                when "format"
+                  run_node_tool("herb-format", "@herb-tools/formatter")
+                when "print"
+                  run_node_tool("herb-print", "@herb-tools/printer")
+                when "highlight"
+                  run_node_tool("herb-highlight", "@herb-tools/highlighter")
+                when "lsp"
+                  run_node_tool("herb-language-server", "@herb-tools/language-server")
                 when "help"
                   help
                 when "version"
@@ -218,14 +252,75 @@ class Herb::CLI
       parser.on("--debug", "Enable debug mode with ERB expression wrapping (for compile command)") do
         self.debug = true
       end
+
+      parser.on("--strict", "Enable strict mode - report errors for omitted closing tags (for parse/compile/render commands) (default: true)") do
+        self.strict = true
+      end
+
+      parser.on("--no-strict", "Disable strict mode (for parse/compile/render commands)") do
+        self.strict = false
+      end
+
+      parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
+        self.tool = t.to_sym
+      end
     end
   end
 
   def options
+    return if ["lint", "format", "print", "highlight", "lsp"].include?(@command)
+
     option_parser.parse!(@args)
   end
 
   private
+
+  def find_node_binary(name)
+    local_bin = File.join(Dir.pwd, "node_modules", ".bin", name)
+    return local_bin if File.executable?(local_bin)
+
+    path_result = `which #{name} 2>/dev/null`.strip
+    return path_result unless path_result.empty?
+
+    nil
+  end
+
+  def node_available?
+    system("which node > /dev/null 2>&1")
+  end
+
+  def run_node_tool(binary_name, package_name)
+    unless node_available?
+      warn "Error: Node.js is required to run 'herb #{@command}'."
+      warn ""
+      warn "Install the tool:"
+      warn "  npm install #{package_name}"
+      warn "  yarn add #{package_name}"
+      warn "  pnpm add #{package_name}"
+      warn "  bun add #{package_name}"
+      warn ""
+      warn "Or install Node.js from https://nodejs.org"
+      exit 1
+    end
+
+    remaining_args = @args[1..]
+    binary = find_node_binary(binary_name)
+    node_version = `node --version 2>/dev/null`.strip
+
+    command_parts = if binary
+                      [binary, *remaining_args]
+                    else
+                      ["npx", package_name, *remaining_args]
+                    end
+
+    escaped_command = command_parts.map { |arg| arg.include?(" ") ? "\"#{arg}\"" : arg }.join(" ")
+
+    warn "Node.js: #{node_version}"
+    warn "Running: #{escaped_command}"
+    warn ""
+
+    exec(*command_parts)
+  end
 
   def print_error_summary(errors)
     puts
@@ -262,6 +357,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
+      options[:strict] = strict.nil? || strict
 
       if debug
         options[:debug] = true
@@ -276,6 +372,7 @@ class Herb::CLI
           source: engine.src,
           filename: engine.filename,
           bufvar: engine.bufvar,
+          strict: options[:strict],
         }
 
         puts result.to_json
@@ -328,6 +425,7 @@ class Herb::CLI
       options[:filename] = @file if @file
       options[:escape] = no_escape ? false : true
       options[:freeze] = true if freeze
+      options[:strict] = strict.nil? || strict
 
       if debug
         options[:debug] = true
@@ -344,6 +442,7 @@ class Herb::CLI
           success: true,
           output: rendered_output,
           filename: engine.filename,
+          strict: options[:strict],
         }
 
         puts result.to_json
@@ -386,6 +485,120 @@ class Herb::CLI
 
       exit(1)
     end
+  end
+
+  def show_config
+    path = @file || "."
+    config = Herb::Configuration.load(path)
+
+    if tool
+      show_tool_config(config, path)
+    else
+      show_general_config(config, path)
+    end
+  end
+
+  def show_general_config(config, path)
+    puts bold("Herb Configuration")
+    puts
+    puts "#{bold("Project root:")} #{config.project_root || "(not found)"}"
+    puts "#{bold("Config file:")}  #{config.config_path || "(using defaults)"}"
+    puts
+
+    puts bold("Include patterns:")
+    config.file_include_patterns.each { |p| puts "  #{green("+")} #{p}" }
+    puts
+
+    puts bold("Exclude patterns:")
+    config.file_exclude_patterns.each { |p| puts "  #{red("-")} #{p}" }
+    puts
+
+    all_matched = find_all_matching_files(path, config.file_include_patterns)
+    included_files = config.find_files(path)
+    excluded_files = all_matched - included_files
+
+    puts bold("Files (#{included_files.size} included, #{excluded_files.size} excluded):")
+    puts
+
+    show_file_lists(included_files, excluded_files, path, config.file_exclude_patterns)
+
+    puts
+    puts dimmed("Tip: Use --tool linter or --tool formatter to see tool-specific configuration")
+  end
+
+  def show_tool_config(config, path)
+    unless [:linter, :formatter].include?(tool)
+      puts red("Unknown tool: #{tool}")
+      puts "Valid tools: linter, formatter"
+      exit(1)
+    end
+
+    tool_config = config.send(tool)
+    include_patterns = config.include_patterns_for(tool)
+    exclude_patterns = config.exclude_patterns_for(tool)
+
+    puts bold("Herb Configuration for #{tool.to_s.capitalize}")
+    puts
+    puts "#{bold("Project root:")} #{config.project_root || "(not found)"}"
+    puts "#{bold("Config file:")}  #{config.config_path || "(using defaults)"}"
+    puts
+
+    if tool_config["enabled"] == false
+      puts yellow("⚠ #{tool.to_s.capitalize} is disabled in configuration")
+      puts
+    end
+
+    puts bold("Include patterns (files + #{tool}):")
+    include_patterns.each { |p| puts "  #{green("+")} #{p}" }
+    puts
+
+    puts bold("Exclude patterns (files + #{tool}):")
+    exclude_patterns.each { |p| puts "  #{red("-")} #{p}" }
+    puts
+
+    all_matched = find_all_matching_files(path, include_patterns)
+    included_files = config.find_files_for_tool(tool, path)
+    excluded_files = all_matched - included_files
+
+    puts bold("Files for #{tool} (#{included_files.size} included, #{excluded_files.size} excluded):")
+    puts
+
+    show_file_lists(included_files, excluded_files, path, exclude_patterns)
+  end
+
+  def show_file_lists(included_files, excluded_files, path, exclude_patterns)
+    expanded_path = File.expand_path(path)
+
+    if included_files.any?
+      puts "  #{bold(green("Included:"))}"
+      included_files.each do |f|
+        relative = f.sub("#{expanded_path}/", "")
+        puts "    #{green("✓")} #{relative}"
+      end
+      puts
+    end
+
+    return unless excluded_files.any?
+
+    puts "  #{bold(red("Excluded:"))}"
+    excluded_files.each do |f|
+      relative = f.sub("#{expanded_path}/", "")
+      reason = find_exclude_reason(relative, exclude_patterns)
+      puts "    #{red("✗")} #{relative} #{dimmed("(#{reason})")}"
+    end
+  end
+
+  def find_all_matching_files(path, include_patterns)
+    expanded_path = File.expand_path(path)
+    include_patterns.flat_map do |pattern|
+      Dir[File.join(expanded_path, pattern)]
+    end.uniq
+  end
+
+  def find_exclude_reason(relative_path, exclude_patterns)
+    exclude_patterns.find do |pattern|
+      File.fnmatch?(pattern, relative_path, File::FNM_PATHNAME)
+    end || "excluded"
   end
 
   def print_version

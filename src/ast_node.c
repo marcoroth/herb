@@ -2,7 +2,6 @@
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/position.h"
-#include "include/token.h"
 #include "include/util.h"
 #include "include/visitor.h"
 
@@ -30,6 +29,8 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
   AST_LITERAL_NODE_T* literal = malloc(sizeof(AST_LITERAL_NODE_T));
+
+  if (!literal) { return NULL; }
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 

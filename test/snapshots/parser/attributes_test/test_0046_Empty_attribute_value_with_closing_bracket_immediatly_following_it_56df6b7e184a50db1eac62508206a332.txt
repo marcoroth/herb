@@ -11,7 +11,7 @@ input: "<div attribute-name=>div-content</div>"
         │       ├── tag_name: "div" (location: (1:1)-(1:4))
         │       ├── tag_closing: ">" (location: (1:20)-(1:21))
         │       ├── children: (1 item)
-        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:21))
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:20))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:19))
         │       │       │       └── children: (1 item)
@@ -21,13 +21,11 @@ input: "<div attribute-name=>div-content</div>"
         │       │       │
         │       │       ├── equals: "=" (location: (1:19)-(1:20))
         │       │       └── value:
-        │       │           └── @ HTMLAttributeValueNode (location: (1:20)-(1:21))
+        │       │           └── @ HTMLAttributeValueNode (location: (1:20)-(1:20))
         │       │               ├── errors: (1 error)
-        │       │               │   └── @ UnexpectedError (location: (1:20)-(1:21))
-        │       │               │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START`, found: `TOKEN_HTML_TAG_END`."
-        │       │               │       ├── description: "Unexpected Token"
-        │       │               │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
-        │       │               │       └── found: "TOKEN_HTML_TAG_END"
+        │       │               │   └── @ MissingAttributeValueError (location: (1:19)-(1:20))
+        │       │               │       ├── message: "Attribute `attribute-name` at (1:19) is missing a value after the equals sign."
+        │       │               │       └── attribute_name: "attribute-name"
         │       │               │
         │       │               ├── open_quote: ∅
         │       │               ├── children: []

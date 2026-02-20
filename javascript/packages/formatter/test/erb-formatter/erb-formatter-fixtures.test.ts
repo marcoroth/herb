@@ -574,6 +574,29 @@ describe("ERB Formatter Fixture Tests", () => {
       `)
     })
 
+    test("multiple erb expressions in block element preserve newlines (GH-1210)", () => {
+      const source = dedent`
+        <main>
+          <%= render "shared/flash" %>
+          <%= yield %>
+        </main>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(source)
+    })
+
+    test("multiple erb expressions with text between them in block element stay inline", () => {
+      const source = dedent`
+        <main><%= render "shared/flash" %> <%= yield %></main>
+      `
+
+      const result = formatter.format(source)
+
+      expect(result).toBe(source)
+    })
+
     test("front-matter.html.erb - handles front matter", () => {
       const source = dedent`
         ---

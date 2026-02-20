@@ -39,7 +39,7 @@ module Herb
         [<%= node.fields.map { |field|
           if field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField)
             field.name
-          elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
+          elsif field.is_a?(Herb::Template::ArrayField) && (field.specific_kind&.end_with?("Node") || field.union_kind&.all? { |k| k.end_with?("Node") })
             "*#{field.name}"
           else
             nil

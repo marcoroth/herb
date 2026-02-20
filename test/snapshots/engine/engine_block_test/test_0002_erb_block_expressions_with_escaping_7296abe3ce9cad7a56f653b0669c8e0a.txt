@@ -2,5 +2,5 @@
 source: "Engine::EngineBlockTest#test_0002_erb block expressions with escaping"
 input: "{source: \"<%== form_for @user do %>Form content<% end %>\", options: {escape: false}}"
 ---
-_buf = ::String.new; _buf << ::Herb::Engine.h(form_for @user do); _buf << 'Form content'.freeze; end;
+_buf = ::String.new; _buf << ::Herb::Engine.h((form_for @user do; _buf << 'Form content'.freeze; end));
 _buf.to_s

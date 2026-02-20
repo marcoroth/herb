@@ -1,0 +1,49 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0001_detects unclosed div tag when new tag starts"
+input: "<div class=\"foo\"<span>"
+---
+@ DocumentNode (location: (1:0)-(1:22))
+└── children: (2 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:16))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:16))
+    │   │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+    │   │       └── tag_name: "div" (location: (1:1)-(1:4))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── tag_closing: ∅
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLAttributeNode (location: (1:5)-(1:16))
+    │   │       ├── name:
+    │   │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │       └── children: (1 item)
+    │   │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │               └── content: "class"
+    │   │       │
+    │   │       │
+    │   │       ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       └── value:
+    │   │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:16))
+    │   │               ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │               ├── children: (1 item)
+    │   │               │   └── @ LiteralNode (location: (1:12)-(1:15))
+    │   │               │       └── content: "foo"
+    │   │               │
+    │   │               ├── close_quote: """ (location: (1:15)-(1:16))
+    │   │               └── quoted: true
+    │   │
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLOpenTagNode (location: (1:16)-(1:22))
+        ├── errors: (1 error)
+        │   └── @ MissingClosingTagError (location: (1:16)-(1:22))
+        │       ├── message: "Opening tag `<span>` at (1:17) doesn't have a matching closing tag `</span>` in the same scope."
+        │       └── opening_tag: "span" (location: (1:17)-(1:21))
+        │
+        ├── tag_opening: "<" (location: (1:16)-(1:17))
+        ├── tag_name: "span" (location: (1:17)-(1:21))
+        ├── tag_closing: ">" (location: (1:21)-(1:22))
+        ├── children: []
+        └── is_void: false

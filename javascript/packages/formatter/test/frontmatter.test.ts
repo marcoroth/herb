@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,10 +16,12 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves YAML frontmatter with no formatting", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       title: My Page
       layout: application
@@ -27,13 +31,11 @@ describe("@herb-tools/formatter", () => {
       <div class="container">
         <h1><%= @title %></h1>
       </div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("preserves frontmatter with ERB content after it", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       title: Test
       ---
@@ -41,13 +43,11 @@ describe("@herb-tools/formatter", () => {
       <% if Rails.env.development? %>
         <p>Debug mode</p>
       <% end %>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("preserves frontmatter indentation as-is", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       nested:
         key: value
@@ -56,9 +56,7 @@ describe("@herb-tools/formatter", () => {
       ---
 
       <div>Content</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("normalizes whitespace after frontmatter", () => {
@@ -83,7 +81,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("handles frontmatter with arrays and objects", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       tags:
         - ruby
@@ -97,9 +95,7 @@ describe("@herb-tools/formatter", () => {
       <article>
         <h1>Title</h1>
       </article>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("formats HTML but preserves frontmatter when HTML is messy", () => {
@@ -127,16 +123,13 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("does not treat --- in the middle of document as frontmatter", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <p>Some content</p>
         ---
         <p>More content</p>
       </div>
-    `
-    const result = formatter.format(source)
-
-    expect(result).toEqual(source)
+    `)
   })
 
   test("frontmatter must end with --- on its own line", () => {
@@ -154,18 +147,16 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("empty frontmatter block", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       ---
 
       <div>Content</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("frontmatter with comments", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       ---
       # This is a YAML comment
       title: My Page
@@ -174,9 +165,7 @@ describe("@herb-tools/formatter", () => {
       ---
 
       <div>Content</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("frontmatter adds newline", () => {

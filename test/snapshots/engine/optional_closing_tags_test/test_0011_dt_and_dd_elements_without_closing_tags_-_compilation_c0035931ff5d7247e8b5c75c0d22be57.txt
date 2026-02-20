@@ -1,0 +1,12 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0011_dt and dd elements without closing tags - compilation"
+input: "{source: \"<dl>\\n  <dt>Term 1\\n  <dd>Definition 1\\n  <dt>Term 2\\n  <dd>Definition 2\\n</dl>\\n\", options: {strict: false}}"
+---
+_buf = ::String.new; _buf << '<dl>
+  <dt>Term 1
+  <dd>Definition 1
+  <dt>Term 2
+  <dd>Definition 2
+</dl>
+'.freeze;
+_buf.to_s

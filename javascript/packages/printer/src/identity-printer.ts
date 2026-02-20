@@ -72,6 +72,10 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitHTMLOmittedCloseTagNode(_node: Nodes.HTMLOmittedCloseTagNode): void {
+    // Omitted closing tags don't print anything
+  }
+
   visitHTMLElementNode(node: Nodes.HTMLElementNode): void {
     const tagName = node.tag_name?.value
 

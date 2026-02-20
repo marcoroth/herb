@@ -445,5 +445,73 @@ module Parser
     test "conditional class attribute with ternary in value" do
       assert_parsed_snapshot(%(<div <% if styled? %>class="<%= active ? 'active' : 'inactive' %>"<% end %>></div>))
     end
+
+    test "attribute value with equals sign" do
+      assert_parsed_snapshot('<meta content="width=device-width">')
+    end
+
+    test "attribute value with multiple equals signs" do
+      assert_parsed_snapshot('<meta content="a=b=c=d">')
+    end
+
+    test "viewport meta tag with equals in value" do
+      assert_parsed_snapshot('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
+    end
+
+    test "href with query string" do
+      assert_parsed_snapshot('<a href="/path?foo=bar&baz=qux">Link</a>')
+    end
+
+    test "data attribute with equals in value" do
+      assert_parsed_snapshot('<div data-formula="x=y+z">Content</div>')
+    end
+
+    test "style attribute with calc and equals" do
+      assert_parsed_snapshot('<div style="--custom-prop: calc(100% - 20px)">Content</div>')
+    end
+
+    test "attribute value with ERB assignment" do
+      assert_parsed_snapshot('<div data-config="<%= value = 5 %>">Content</div>')
+    end
+
+    test "attribute with equals but no value" do
+      assert_parsed_snapshot("<div data-attribute=></div>")
+    end
+
+    test "attribute with equals and space but no value" do
+      assert_parsed_snapshot("<div data-attribute= ></div>")
+    end
+
+    test "attribute with equals, space, and empty quoted value" do
+      assert_parsed_snapshot('<div data-attribute= ""></div>')
+    end
+
+    test "attribute with equals followed by new tag start" do
+      assert_parsed_snapshot("<div class=<span>test</span></div>")
+    end
+
+    test "attribute with equals and space followed by new tag start" do
+      assert_parsed_snapshot("<div class= <span>test</span></div>")
+    end
+
+    test "attribute with equals at EOF" do
+      assert_parsed_snapshot("<div class=")
+    end
+
+    test "attribute with equals and space at EOF" do
+      assert_parsed_snapshot("<div class= ")
+    end
+
+    test "multiple attributes with missing values" do
+      assert_parsed_snapshot("<div class= id= ></div>")
+    end
+
+    test "attribute with equals followed by closing tag" do
+      assert_parsed_snapshot("<div class=</div>")
+    end
+
+    test "issue #1211: attribute value with backslash" do
+      assert_parsed_snapshot('<button data-shortcut="S,s,\">S \</button>')
+    end
   end
 end

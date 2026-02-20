@@ -3,6 +3,19 @@ source: "Parser::ScriptStyleTest#test_0028_script tag with incomplete ERB tag at
 input: "<script>console.log(\"test\"); <%</script>"
 ---
 @ DocumentNode (location: (1:0)-(1:40))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (1:31)-(1:32))
+│   │   ├── message: "unexpected_token_ignore: unexpected '<', ignoring it"
+│   │   ├── error_message: "unexpected '<', ignoring it"
+│   │   ├── diagnostic_id: "unexpected_token_ignore"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:32)-(1:33))
+│       ├── message: "regexp_term: unterminated regexp meets end of file; expected a closing delimiter"
+│       ├── error_message: "unterminated regexp meets end of file; expected a closing delimiter"
+│       ├── diagnostic_id: "regexp_term"
+│       └── level: "syntax"
+│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))
         ├── errors: (1 error)
@@ -24,20 +37,14 @@ input: "<script>console.log(\"test\"); <%</script>"
         │   │   └── content: "console.log(\"test\"); "
         │   │
         │   └── @ ERBContentNode (location: (1:29)-(1:40))
-        │       ├── errors: (2 errors)
-        │       │   ├── @ UnexpectedTokenError (location: (1:31)-(1:40))
-        │       │   │   ├── message: "Found `TOKEN_ERROR` when expecting `TOKEN_ERB_CONTENT` at (1:31)."
-        │       │   │   ├── expected_type: "TOKEN_ERB_CONTENT"
-        │       │   │   └── found: "</script>" (location: (1:31)-(1:40))
-        │       │   │
-        │       │   └── @ UnexpectedTokenError (location: (1:40)-(1:40))
-        │       │       ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:40)."
-        │       │       ├── expected_type: "TOKEN_ERB_END"
-        │       │       └── found: "" (location: (1:40)-(1:40))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnclosedERBTagError (location: (1:29)-(1:40))
+        │       │       ├── message: "ERB tag `<%` at (1:29) is missing closing `%>`."
+        │       │       └── opening_tag: "<%" (location: (1:29)-(1:31))
         │       │
         │       ├── tag_opening: "<%" (location: (1:29)-(1:31))
         │       ├── content: "</script>" (location: (1:31)-(1:40))
-        │       ├── tag_closing: "" (location: (1:40)-(1:40))
+        │       ├── tag_closing: ∅
         │       ├── parsed: true
         │       └── valid: false
         │

@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("Document-level formatting", () => {
   beforeAll(async () => {
@@ -14,6 +16,7 @@ describe("Document-level formatting", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves newline between ERB assignment and HTML element", () => {
@@ -481,16 +484,13 @@ describe("Document-level formatting", () => {
   })
 
   test("preserves inline opening tag for block elements with few attributes", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div class="flex flex-col">
         <h3 class="line-clamp-1">
           <pre>Content</pre>
         </h3>
       </div>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("split ERB tag if it doesn't fit on current line", () => {

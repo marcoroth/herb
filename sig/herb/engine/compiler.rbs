@@ -25,6 +25,8 @@ module Herb
 
       def visit_html_close_tag_node: (untyped node) -> untyped
 
+      def visit_html_omitted_close_tag_node: (untyped node) -> untyped
+
       def visit_html_text_node: (untyped node) -> untyped
 
       def visit_literal_node: (untyped node) -> untyped
@@ -74,6 +76,8 @@ module Herb
       def visit_erb_yield_node: (untyped node) -> untyped
 
       def visit_erb_block_node: (untyped node) -> untyped
+
+      def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
 
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 

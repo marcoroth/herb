@@ -251,7 +251,7 @@ module Engine
         <div>
           <%# This is a comment %>
           <p>Visible content</p>
-          <%# Another comment with <%= "erb" %> inside %>
+          <%# Another comment %>
           <p>More content</p>
         </div>
       ERB
@@ -471,6 +471,18 @@ module Engine
       template = File.read("examples/conditional_html_element.html.erb")
 
       assert_evaluated_snapshot(template, { :@with_icon => false }, { escape: false })
+    end
+
+    test "conditional html open tag with condition true" do
+      template = File.read("examples/conditional_html_open_tag.html.erb")
+
+      assert_evaluated_snapshot(template, { some_condition: true }, { escape: false })
+    end
+
+    test "conditional html open tag with condition false" do
+      template = File.read("examples/conditional_html_open_tag.html.erb")
+
+      assert_evaluated_snapshot(template, { some_condition: false }, { escape: false })
     end
   end
 end

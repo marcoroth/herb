@@ -50,22 +50,42 @@ val Herb_parse(const std::string& source, val options) {
         parser_options.analyze = false;
       }
     }
+
+    if (options.hasOwnProperty("strict")) {
+      parser_options.strict = options["strict"].as<bool>();
+    }
   }
 
   AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);
 
-  val result = CreateParseResult(root, source);
+  val result = CreateParseResult(root, source, &parser_options);
 
   ast_node_free((AST_NODE_T *) root);
 
   return result;
 }
 
-std::string Herb_extract_ruby(const std::string& source) {
+std::string Herb_extract_ruby(const std::string& source, val options) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_ruby_to_buffer(source.c_str(), &output);
+  herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+
+  if (!options.isUndefined() && !options.isNull() && options.typeOf().as<std::string>() == "object") {
+    if (options.hasOwnProperty("semicolons")) {
+      extract_options.semicolons = options["semicolons"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("comments")) {
+      extract_options.comments = options["comments"].as<bool>();
+    }
+
+    if (options.hasOwnProperty("preserve_positions")) {
+      extract_options.preserve_positions = options["preserve_positions"].as<bool>();
+    }
+  }
+
+  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options);
   std::string result(hb_buffer_value(&output));
   free(output.value);
   return result;

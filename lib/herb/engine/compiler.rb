@@ -22,7 +22,7 @@ module Herb
       def generate_output
         optimized_tokens = optimize_tokens(@tokens)
 
-        optimized_tokens.each do |type, value, context|
+        optimized_tokens.each do |type, value, context, escaped|
           case type
           when :text
             @engine.send(:add_text, value)
@@ -48,6 +48,8 @@ module Herb
           when :expr_block_escaped
             indicator = @escape ? "=" : "=="
             @engine.send(:add_expression_block, indicator, value)
+          when :expr_block_end
+            @engine.send(:add_expression_block_end, value, escaped: escaped)
           end
         end
       end
@@ -71,7 +73,7 @@ module Herb
         visit_all(node.body)
         visit(node.close_tag)
 
-        pop_context if %w[script style].include?(tag_name)
+        pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
@@ -91,7 +93,7 @@ module Herb
         visit_all(node.body)
         visit(node.close_conditional)
 
-        pop_context if %w[script style].include?(tag_name)
+        pop_context if ["script", "style"].include?(tag_name)
 
         @element_stack.pop if tag_name
       end
@@ -143,6 +145,10 @@ module Herb
         add_text(node.tag_opening&.value)
         add_text(node.tag_name&.value)
         add_text(node.tag_closing&.value)
+      end
+
+      def visit_html_omitted_close_tag_node(node)
+        # no-op
       end
 
       def visit_html_text_node(node)
@@ -277,12 +283,30 @@ module Herb
                      end
 
           visit_all(node.body)
-          visit(node.end_node)
+          visit_erb_block_end_node(node.end_node, escaped: should_escape)
         else
           visit_erb_control_node(node) do
             visit_all(node.body)
             visit(node.end_node)
           end
+        end
+      end
+
+      def visit_erb_block_end_node(node, escaped: false)
+        has_left_trim = node.tag_opening.value.start_with?("<%-")
+
+        remove_trailing_whitespace_from_last_token! if has_left_trim
+
+        code = node.content.value.strip
+
+        if at_line_start?
+          lspace = extract_and_remove_lspace!
+          rspace = " \n"
+
+          @tokens << [:expr_block_end, "#{lspace}#{code}#{rspace}", current_context, escaped]
+          @trim_next_whitespace = true
+        else
+          @tokens << [:expr_block_end, code, current_context, escaped]
         end
       end
 
@@ -390,7 +414,7 @@ module Herb
         current_text = ""
         current_context = nil
 
-        compacted.each do |type, value, context|
+        compacted.each do |type, value, context, escaped|
           if type == :text
             current_text += value
             current_context ||= context
@@ -402,7 +426,7 @@ module Herb
               current_context = nil
             end
 
-            optimized << [type, value, context]
+            optimized << [type, value, context, escaped]
           end
         end
 

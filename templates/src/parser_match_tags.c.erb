@@ -4,7 +4,7 @@
 #include "include/visitor.h"
 
 bool match_tags_visitor(const AST_NODE_T* node, void* data) {
-  hb_array_T* errors = (hb_array_T*) data;
+  match_tags_context_T* context = (match_tags_context_T*) data;
 
   if (node == NULL) { return false; }
 
@@ -12,7 +12,11 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
     <%- nodes.each do |node| -%>
     <%- array_fields = node.fields.select { |f| f.is_a?(Herb::Template::ArrayField) && f.name != "errors" } -%>
 
-    <%- skip_fields = node.name == "HTMLConditionalElementNode" ? ["open_tag", "close_tag", "open_conditional", "close_conditional"] : [] -%>
+    <%- skip_fields = case node.name
+      when "HTMLConditionalElementNode" then ["open_tag", "close_tag", "open_conditional", "close_conditional"]
+      when "HTMLConditionalOpenTagNode" then ["conditional"]
+      else []
+    end -%>
     <%- single_node_fields = node.fields.select { |f| f.is_a?(Herb::Template::NodeField) && !skip_fields.include?(f.name) } -%>
 
     <%- if array_fields.any? || single_node_fields.any? -%>
@@ -21,12 +25,12 @@ bool match_tags_visitor(const AST_NODE_T* node, void* data) {
 
       <%- array_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, errors);
+        match_tags_in_node_array(<%= node.human %>-><%= field.name %>, context->errors, context->strict);
       }
       <%- end -%>
       <%- single_node_fields.each do |field| -%>
       if (<%= node.human %>-><%= field.name %> != NULL) {
-        herb_visit_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, match_tags_visitor, errors);
+        herb_visit_node((AST_NODE_T*) <%= node.human %>-><%= field.name %>, match_tags_visitor, context);
       }
       <%- end -%>
     } break;

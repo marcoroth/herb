@@ -44,7 +44,7 @@ class VisitorTest < Minitest::Spec
   test "document with nil in child_nodes" do
     visitor = VisitedNodesVisitor.new
 
-    result = Herb.parse(%(<p>Hello))
+    result = Herb.parse(%(<span>Hello))
     result.visit(visitor)
 
     expected_nodes = [

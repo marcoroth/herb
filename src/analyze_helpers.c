@@ -81,8 +81,8 @@ bool has_then_keyword(analyzed_ruby_T* analyzed) {
   return analyzed->then_keyword_count > 0;
 }
 
-bool has_error_message(analyzed_ruby_T* anlayzed, const char* message) {
-  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) anlayzed->parser.error_list.head; error != NULL;
+bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {
+  for (const pm_diagnostic_t* error = (const pm_diagnostic_t*) analyzed->parser.error_list.head; error != NULL;
        error = (const pm_diagnostic_t*) error->node.next) {
     if (string_equals(error->message, message)) { return true; }
   }

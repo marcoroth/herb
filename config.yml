@@ -87,22 +87,6 @@ errors:
         - name: closing_tag
           type: token
 
-    - name: QuotesMismatchError
-      message:
-        template: "String opened with %s but closed with %s at (%u:%u)."
-        arguments:
-          - opening_quote->value
-          - closing_quote->value
-          - closing_quote->location.start.line
-          - closing_quote->location.start.column
-
-      fields:
-        - name: opening_quote
-          type: token
-
-        - name: closing_quote
-          type: token
-
     - name: VoidElementClosingTagError
       message:
         template: "`%s` is a void element and should not be used as a closing tag. Use `<%s>` or `<%s />` instead of `</%s>`."
@@ -233,6 +217,116 @@ errors:
         - name: close_column
           type: size_t
 
+    - name: InvalidCommentClosingTagError
+      message:
+        template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
+        arguments:
+          - closing_tag->value
+          - closing_tag->location.start.line
+          - closing_tag->location.start.column
+
+      fields:
+        - name: closing_tag
+          type: token
+
+    - name: OmittedClosingTagError
+      message:
+        template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity, or set `strict: false` to allow this."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - opening_tag->value
+          - insertion_point.line
+          - insertion_point.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: insertion_point
+          type: position
+
+    - name: UnclosedOpenTagError
+      message:
+        template: "Opening tag `<%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
+    - name: UnclosedCloseTagError
+      message:
+        template: "Closing tag `</%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
+    - name: UnclosedQuoteError
+      message:
+        template: "Attribute value opened with %s at (%u:%u) was never closed."
+        arguments:
+          - opening_quote->value
+          - opening_quote->location.start.line
+          - opening_quote->location.start.column
+
+      fields:
+        - name: opening_quote
+          type: token
+
+    - name: MissingAttributeValueError
+      message:
+        template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
+        arguments:
+          - attribute_name
+          - start.line
+          - start.column
+
+      fields:
+        - name: attribute_name
+          type: string
+
+    - name: UnclosedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+    - name: NestedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - nested_tag_line
+          - nested_tag_column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: nested_tag_line
+          type: size_t
+
+        - name: nested_tag_column
+          type: size_t
+
 warnings:
   fields: []
   types: []
@@ -289,6 +383,20 @@ nodes:
         - name: is_void
           type: boolean
 
+    - name: HTMLConditionalOpenTagNode
+      fields:
+        - name: conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: tag_name
+          type: token
+
+        - name: is_void
+          type: boolean
+
     - name: HTMLCloseTagNode
       fields:
         - name: tag_opening
@@ -299,16 +407,23 @@ nodes:
 
         - name: children
           type: array
-          kind: Node
+          kind: WhitespaceNode
 
         - name: tag_closing
+          type: token
+
+    - name: HTMLOmittedCloseTagNode
+      fields:
+        - name: tag_name
           type: token
 
     - name: HTMLElementNode
       fields:
         - name: open_tag
           type: node
-          kind: HTMLOpenTagNode
+          kind:
+            - HTMLOpenTagNode
+            - HTMLConditionalOpenTagNode
 
         - name: tag_name
           type: token
@@ -319,7 +434,9 @@ nodes:
 
         - name: close_tag
           type: node
-          kind: HTMLCloseTagNode
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
 
         - name: is_void
           type: boolean
@@ -334,7 +451,9 @@ nodes:
 
         - name: open_conditional
           type: node
-          kind: Node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
 
         - name: open_tag
           type: borrowed_node
@@ -346,11 +465,15 @@ nodes:
 
         - name: close_tag
           type: borrowed_node
-          kind: HTMLCloseTagNode
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
 
         - name: close_conditional
           type: node
-          kind: Node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
 
         - name: tag_name
           type: token
@@ -377,11 +500,9 @@ nodes:
       fields:
         - name: children
           type: array
-          kind: Node
-          # kind:
-          #   - LiteralNode
-          #   - ERBContentNode
-          #   - WhitespaceNode
+          kind:
+            - LiteralNode
+            - ERBContentNode
 
     - name: HTMLAttributeNode
       fields:
@@ -523,10 +644,9 @@ nodes:
 
         - name: subsequent
           type: node
-          kind: Node
-          # kind:
-          #   - ERBIfNode
-          #   - ERBElseNode
+          kind:
+            - ERBIfNode
+            - ERBElseNode
 
         - name: end_node
           type: node

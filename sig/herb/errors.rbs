@@ -126,26 +126,6 @@ module Herb
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
     end
 
-    class QuotesMismatchError < Error
-      include Colors
-
-      attr_reader opening_quote: Herb::Token
-
-      attr_reader closing_quote: Herb::Token
-
-      # : (String, Location, String, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
-
-      # : () -> String
-      def inspect: () -> String
-
-      # : () -> serialized_quotes_mismatch_error
-      def to_hash: () -> serialized_quotes_mismatch_error
-
-      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
-      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
-    end
-
     class VoidElementClosingTagError < Error
       include Colors
 
@@ -309,6 +289,156 @@ module Herb
 
       # : () -> serialized_conditional_element_condition_mismatch_error
       def to_hash: () -> serialized_conditional_element_condition_mismatch_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class InvalidCommentClosingTagError < Error
+      include Colors
+
+      attr_reader closing_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_invalid_comment_closing_tag_error
+      def to_hash: () -> serialized_invalid_comment_closing_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class OmittedClosingTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      attr_reader insertion_point: Herb::Position
+
+      # : (String, Location, String, Herb::Token, Herb::Position) -> void
+      def initialize: (String, Location, String, Herb::Token, Herb::Position) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_omitted_closing_tag_error
+      def to_hash: () -> serialized_omitted_closing_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnclosedOpenTagError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_open_tag_error
+      def to_hash: () -> serialized_unclosed_open_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnclosedCloseTagError < Error
+      include Colors
+
+      attr_reader tag_name: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_close_tag_error
+      def to_hash: () -> serialized_unclosed_close_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnclosedQuoteError < Error
+      include Colors
+
+      attr_reader opening_quote: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosed_quote_error
+      def to_hash: () -> serialized_unclosed_quote_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class MissingAttributeValueError < Error
+      include Colors
+
+      attr_reader attribute_name: String
+
+      # : (String, Location, String, String) -> void
+      def initialize: (String, Location, String, String) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_missing_attribute_value_error
+      def to_hash: () -> serialized_missing_attribute_value_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class UnclosedERBTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      # : (String, Location, String, Herb::Token) -> void
+      def initialize: (String, Location, String, Herb::Token) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_unclosederb_tag_error
+      def to_hash: () -> serialized_unclosederb_tag_error
+
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+    end
+
+    class NestedERBTagError < Error
+      include Colors
+
+      attr_reader opening_tag: Herb::Token
+
+      attr_reader nested_tag_line: Integer
+
+      attr_reader nested_tag_column: Integer
+
+      # : (String, Location, String, Herb::Token, Integer, Integer) -> void
+      def initialize: (String, Location, String, Herb::Token, Integer, Integer) -> void
+
+      # : () -> String
+      def inspect: () -> String
+
+      # : () -> serialized_nestederb_tag_error
+      def to_hash: () -> serialized_nestederb_tag_error
 
       # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
       def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String

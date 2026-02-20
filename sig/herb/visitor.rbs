@@ -22,8 +22,14 @@ module Herb
     # : (Herb::AST::HTMLOpenTagNode) -> void
     def visit_html_open_tag_node: (Herb::AST::HTMLOpenTagNode) -> void
 
+    # : (Herb::AST::HTMLConditionalOpenTagNode) -> void
+    def visit_html_conditional_open_tag_node: (Herb::AST::HTMLConditionalOpenTagNode) -> void
+
     # : (Herb::AST::HTMLCloseTagNode) -> void
     def visit_html_close_tag_node: (Herb::AST::HTMLCloseTagNode) -> void
+
+    # : (Herb::AST::HTMLOmittedCloseTagNode) -> void
+    def visit_html_omitted_close_tag_node: (Herb::AST::HTMLOmittedCloseTagNode) -> void
 
     # : (Herb::AST::HTMLElementNode) -> void
     def visit_html_element_node: (Herb::AST::HTMLElementNode) -> void

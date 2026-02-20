@@ -2,7 +2,7 @@
 source: "Engine::DebugModeTest#test_0017_render block expressions get outline boundaries"
 input: "{source: \"<%= render \\\"layout\\\" do %>\\n  <div>Block content</div>\\n<% end %>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << render "layout" do; _buf << '
+_buf = ::String.new; _buf << (render "layout" do; _buf << '
   <div>Block content</div>
-'.freeze; end 
+'.freeze; end )
 _buf.to_s

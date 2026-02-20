@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "../include/macros.h"
-#include "../include/util.h"
 #include "../include/util/hb_buffer.h"
 
 static bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_length) {

@@ -36,6 +36,7 @@ module SnapshotUtils
 
   def assert_compiled_snapshot(source, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
+    require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
     engine_options = options.merge(kwargs)
@@ -46,6 +47,18 @@ module SnapshotUtils
     snapshot_key = { source: source, options: engine_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
 
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
     if should_compare_with_erubi? || enforce_erubi_equality
       compare_with_erubi_compiled(source, engine.src, engine_options, enforce_equality: enforce_erubi_equality)
     end
@@ -55,11 +68,25 @@ module SnapshotUtils
 
   def assert_evaluated_snapshot(source, locals = {}, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
+    require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
     engine_options = options.merge(kwargs)
 
     engine = Herb::Engine.new(source, engine_options)
+
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
     binding_context = Object.new
 
     locals.each do |key, value|
@@ -116,9 +143,17 @@ module SnapshotUtils
     puts source
     puts "\n\n"
 
-    if !ENV["FORCE_UPDATE_SNAPSHOTS"].nil? ||
-       ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+    should_update = if !ENV["FORCE_UPDATE_SNAPSHOTS"].nil?
+                      true
+                    elsif !$stdin.tty?
+                      puts "\nCannot prompt for snapshot update in non-interactive terminal."
+                      puts "Run with FORCE_UPDATE_SNAPSHOTS=true to update snapshots without prompting.\n"
+                      false
+                    else
+                      ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+                    end
 
+    if should_update
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source, options)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source, options).dirname)

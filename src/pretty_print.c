@@ -1,6 +1,4 @@
 #include "include/pretty_print.h"
-#include "include/analyzed_ruby.h"
-#include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
 #include "include/errors.h"

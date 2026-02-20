@@ -2,5 +2,5 @@
 source: "Engine::DebugModeTest#test_0026_content_for with block does NOT get erb-output outline type"
 input: "{source: \"<%= content_for :sidebar do %><div>Sidebar content</div><% end %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << content_for :sidebar do; _buf << '<div>Sidebar content</div>'.freeze; end;
+_buf = ::String.new; _buf << (content_for :sidebar do; _buf << '<div>Sidebar content</div>'.freeze; end);
 _buf.to_s

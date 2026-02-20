@@ -1,0 +1,186 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0023_optgroup elements with implicit closing"
+input: |2-
+<select>
+  <optgroup label="Group 1">
+    <option>Option 1</option>
+  <optgroup label="Group 2">
+    <option>Option 2</option>
+</select>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(6:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "select" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "select" (location: (1:1)-(1:7))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:8)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:28))
+    │   │   │   │       ├── message: "Element `<optgroup>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "optgroup" (location: (2:3)-(2:11))
+    │   │   │   │       └── insertion_point: (4:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:28))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "optgroup" (location: (2:3)-(2:11))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:27)-(2:28))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:12)-(2:27))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:12)-(2:17))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:12)-(2:17))
+    │   │   │   │       │       │               └── content: "label"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:17)-(2:18))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:18)-(2:27))
+    │   │   │   │       │               ├── open_quote: """ (location: (2:18)-(2:19))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (2:19)-(2:26))
+    │   │   │   │       │               │       └── content: "Group 1"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (2:26)-(2:27))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "optgroup" (location: (2:3)-(2:11))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:28)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (3:4)-(3:29))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (3:4)-(3:12))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   │       ├── tag_name: "option" (location: (3:5)-(3:11))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (3:11)-(3:12))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "option" (location: (3:5)-(3:11))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (3:12)-(3:20))
+    │   │   │   │   │   │       └── content: "Option 1"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (3:20)-(3:29))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (3:20)-(3:22))
+    │   │   │   │   │   │       ├── tag_name: "option" (location: (3:22)-(3:28))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:29)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (4:2)-(4:2))
+    │   │   │   │       └── tag_name: "optgroup" (location: (2:3)-(2:11))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLElementNode (location: (4:2)-(6:0))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ OmittedClosingTagError (location: (4:2)-(4:28))
+    │   │       │       ├── message: "Element `<optgroup>` at (4:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</optgroup>` closing tag at (6:0) for clarity, or set `strict: false` to allow this."
+    │   │       │       ├── opening_tag: "optgroup" (location: (4:3)-(4:11))
+    │   │       │       └── insertion_point: (6:0)
+    │   │       │
+    │   │       ├── open_tag:
+    │   │       │   └── @ HTMLOpenTagNode (location: (4:2)-(4:28))
+    │   │       │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │       │       ├── tag_name: "optgroup" (location: (4:3)-(4:11))
+    │   │       │       ├── tag_closing: ">" (location: (4:27)-(4:28))
+    │   │       │       ├── children: (1 item)
+    │   │       │       │   └── @ HTMLAttributeNode (location: (4:12)-(4:27))
+    │   │       │       │       ├── name:
+    │   │       │       │       │   └── @ HTMLAttributeNameNode (location: (4:12)-(4:17))
+    │   │       │       │       │       └── children: (1 item)
+    │   │       │       │       │           └── @ LiteralNode (location: (4:12)-(4:17))
+    │   │       │       │       │               └── content: "label"
+    │   │       │       │       │
+    │   │       │       │       │
+    │   │       │       │       ├── equals: "=" (location: (4:17)-(4:18))
+    │   │       │       │       └── value:
+    │   │       │       │           └── @ HTMLAttributeValueNode (location: (4:18)-(4:27))
+    │   │       │       │               ├── open_quote: """ (location: (4:18)-(4:19))
+    │   │       │       │               ├── children: (1 item)
+    │   │       │       │               │   └── @ LiteralNode (location: (4:19)-(4:26))
+    │   │       │       │               │       └── content: "Group 2"
+    │   │       │       │               │
+    │   │       │       │               ├── close_quote: """ (location: (4:26)-(4:27))
+    │   │       │       │               └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       └── is_void: false
+    │   │       │
+    │   │       ├── tag_name: "optgroup" (location: (4:3)-(4:11))
+    │   │       ├── body: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (4:28)-(5:4))
+    │   │       │   │   └── content: "\n    "
+    │   │       │   │
+    │   │       │   ├── @ HTMLElementNode (location: (5:4)-(5:29))
+    │   │       │   │   ├── open_tag:
+    │   │       │   │   │   └── @ HTMLOpenTagNode (location: (5:4)-(5:12))
+    │   │       │   │   │       ├── tag_opening: "<" (location: (5:4)-(5:5))
+    │   │       │   │   │       ├── tag_name: "option" (location: (5:5)-(5:11))
+    │   │       │   │   │       ├── tag_closing: ">" (location: (5:11)-(5:12))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── is_void: false
+    │   │       │   │   │
+    │   │       │   │   ├── tag_name: "option" (location: (5:5)-(5:11))
+    │   │       │   │   ├── body: (1 item)
+    │   │       │   │   │   └── @ HTMLTextNode (location: (5:12)-(5:20))
+    │   │       │   │   │       └── content: "Option 2"
+    │   │       │   │   │
+    │   │       │   │   ├── close_tag:
+    │   │       │   │   │   └── @ HTMLCloseTagNode (location: (5:20)-(5:29))
+    │   │       │   │   │       ├── tag_opening: "</" (location: (5:20)-(5:22))
+    │   │       │   │   │       ├── tag_name: "option" (location: (5:22)-(5:28))
+    │   │       │   │   │       ├── children: []
+    │   │       │   │   │       └── tag_closing: ">" (location: (5:28)-(5:29))
+    │   │       │   │   │
+    │   │       │   │   ├── is_void: false
+    │   │       │   │   └── source: "HTML"
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (5:29)-(6:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── close_tag:
+    │   │       │   └── @ HTMLOmittedCloseTagNode (location: (6:0)-(6:0))
+    │   │       │       └── tag_name: "optgroup" (location: (4:3)-(4:11))
+    │   │       │
+    │   │       ├── is_void: false
+    │   │       └── source: "HTML"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:9))
+    │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
+    │   │       ├── tag_name: "select" (location: (6:2)-(6:8))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:8)-(6:9))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"
