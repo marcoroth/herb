@@ -71,16 +71,14 @@ describe("Multiline Element Spacing", () => {
   })
 
   test("single-line elements stay grouped", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <meta name="a">
         <meta name="b">
         <meta name="c">
         <meta name="d">
       </div>
-    `
-
-    expectFormattedToMatch(source)
+    `)
   })
 
   test("mixed single-line and multiline elements", () => {

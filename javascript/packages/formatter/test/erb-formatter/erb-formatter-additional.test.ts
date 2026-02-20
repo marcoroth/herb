@@ -177,15 +177,13 @@ describe("ERB Formatter Additional Tests", () => {
 
   describe("Error handling", () => {
     test("handles unmatched ERB tags gracefully", () => {
-      const source = dedent`
+      expectFormattedToMatch(dedent`
         <% if true %>
           <h1>
             <%= link_to 'New Order', new_order_path, class: "btn btn-success" %>
             <% end %>
           </h1>
-      `
-
-      expectFormattedToMatch(source)
+      `)
     })
   })
 

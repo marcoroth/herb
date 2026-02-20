@@ -484,15 +484,13 @@ describe("Document-level formatting", () => {
   })
 
   test("preserves inline opening tag for block elements with few attributes", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div class="flex flex-col">
         <h3 class="line-clamp-1">
           <pre>Content</pre>
         </h3>
       </div>
-    `
-
-    expectFormattedToMatch(source)
+    `)
   })
 
   test("split ERB tag if it doesn't fit on current line", () => {
