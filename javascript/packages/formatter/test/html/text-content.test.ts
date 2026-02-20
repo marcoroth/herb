@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("text content", () => {
@@ -153,59 +157,45 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("root-level text with ERB interpolation", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       Hello, <%= @name %>, it is <%= @time %>.
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("text with ERB interpolation inside element", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>Hello, <%= @name %>, it is <%= @time %>.</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("period after ERB tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       Today is <%= Date.current %>.
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("exclamation mark after ERB tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       Welcome <%= @user.name %>!
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("question mark after ERB tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       Is this <%= @status %>?
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("semicolon after ERB tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       First item: <%= @item %>;
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("comma should not merge - maintains space", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       Hello <%= @first %>, how are you?
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("colon after ERB with newline with <br>", () => {
@@ -362,14 +352,11 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB block with non-output tag followed by text without space", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%= link_to "/" do %>
         <% icon("icon") %>can not insert whitespace here
       <% end %>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("text with hyphen before inline bold element preserves no-space boundary", () => {
@@ -419,41 +406,29 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("inline span with text content on single line preserves format", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <span>And on the other hand one can not remove whitespace entirely</span>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("inline span with leading and trailing spaces preserves them", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <span> And on the other hand one can not remove whitespace entirely </span>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("div with multiline text preserves leading and trailing whitespace", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         Here the whitespace will not be removed
       </div>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("div with inline text content preserves format", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <div>Here the whitespace will not be removed</div>
-    `
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("div with leading and trailing spaces trims them for inline content", () => {

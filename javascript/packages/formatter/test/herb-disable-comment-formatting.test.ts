@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("herb:disable comment formatting", () => {
   beforeAll(async () => {
@@ -13,6 +15,7 @@ describe("herb:disable comment formatting", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("should keep herb:disable comment inline after opening tag", () => {
@@ -62,9 +65,7 @@ describe("herb:disable comment formatting", () => {
       </DIV> <%# herb:disable html-tag-name-lowercase %>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should not count herb:disable comment length in line wrapping calculations", () => {
@@ -74,9 +75,7 @@ describe("herb:disable comment formatting", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should treat herb:disable as 'invisible' for text flow wrapping", () => {
@@ -120,9 +119,7 @@ describe("herb:disable comment formatting", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should preserve herb:disable comment whitespace and position", () => {
@@ -132,9 +129,7 @@ describe("herb:disable comment formatting", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should not treat regular ERB comments as herb:disable", () => {
@@ -250,9 +245,7 @@ describe("herb:disable comment formatting", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should handle herb:disable between sibling elements", () => {
@@ -320,9 +313,7 @@ describe("herb:disable comment formatting", () => {
       <%end5> <%# herb:disable erb-require-whitespace-inside-tags %>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("keeps herb:disable comment on same line as tag name in multiline opening tag", () => {
@@ -336,8 +327,6 @@ describe("herb:disable comment formatting", () => {
       </a>
     `
 
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 })

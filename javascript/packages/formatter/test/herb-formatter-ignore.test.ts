@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("herb:formatter ignore directive", () => {
   beforeAll(async () => {
@@ -12,6 +14,7 @@ describe("herb:formatter ignore directive", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("should ignore formatting when directive is at top of file", () => {
@@ -22,8 +25,7 @@ describe("herb:formatter ignore directive", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should ignore formatting when directive is in middle of file", () => {
@@ -34,8 +36,7 @@ describe("herb:formatter ignore directive", () => {
       </div>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should work with frontmatter before directive", () => {
@@ -49,8 +50,7 @@ describe("herb:formatter ignore directive", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should work with whitespace before directive", () => {
@@ -62,8 +62,7 @@ describe("herb:formatter ignore directive", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should not match herb:formatter ignore with extra text", () => {
@@ -98,8 +97,7 @@ describe("herb:formatter ignore directive", () => {
       <%# herb:formatter ignore %>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 
   test("should ignore formatting when directive is nested deep in document", () => {
@@ -114,7 +112,6 @@ describe("herb:formatter ignore directive", () => {
       </DIV>
     `
 
-    const result = formatter.format(source)
-    expect(result).toBe(source)
+    expectFormattedToMatch(source)
   })
 })
