@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("formats simple HTML with ERB content", () => {
@@ -31,12 +35,10 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB output tags on two lines on top-level", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%= title %>
       <%= title %>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("adjecent ERB output tags without space on top-level", () => {
@@ -102,16 +104,13 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("should not add extra % to ERB closing tags with quoted strings", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <%= link_to "Nederlands", url_for(locale: 'nl'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "Français", url_for(locale: 'fr'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "English", url_for(locale: 'en'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
       </div>
-    `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+    `)
   })
 
   test("should handle complex ERB in layout files", () => {
@@ -897,7 +896,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 3", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <style>
         [data-test-page-header] {
           margin-bottom: 0px;
@@ -922,10 +921,7 @@ describe("@herb-tools/formatter", () => {
       </script>
 
       <div class="pt-3" id="chat"></div>
-     `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+     `)
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 4", () => {
@@ -1358,7 +1354,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3356738094", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <% if cover.present? %>
         <figure class="figure">
           <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
@@ -1376,10 +1372,7 @@ describe("@herb-tools/formatter", () => {
           </figcaption>
         </figure>
       <% end %>
-     `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+     `)
   })
 
   test("adjecent ERB text within elements", () => {
@@ -1579,97 +1572,65 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB output with heredoc (issue 476)", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<EXAMPLE
       example
       EXAMPLE
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with squiggly heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<~HEREDOC
         example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with hyphen heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<-HEREDOC
       example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with single-quoted heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<'HEREDOC'
       no #{interpolation}
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with double-quoted heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<"HEREDOC"
       with #{interpolation}
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with heredoc and method chaining", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<HEREDOC.strip
       example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with bitshift operator", () => {
-    const input = `<%= 1 << 4 %>`
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    expectFormattedToMatch(`<%= 1 << 4 %>`)
   })
 
   test("ERB output with append operator", () => {
-    const input = `<%= array << item %>`
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    expectFormattedToMatch(`<%= array << item %>`)
   })
 
   // The heredoc is not detected because it doesn't start with "<<".

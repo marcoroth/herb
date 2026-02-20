@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../src"
+import { createExpectFormattedToMatch } from "./helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("herb:disable comment formatting", () => {
   beforeAll(async () => {
@@ -13,6 +15,7 @@ describe("herb:disable comment formatting", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("should keep herb:disable comment inline after opening tag", () => {
@@ -56,27 +59,19 @@ describe("herb:disable comment formatting", () => {
   })
 
   test("should keep herb:disable comment inline after closing tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <DIV>
         Some content here that needs formatting.
       </DIV> <%# herb:disable html-tag-name-lowercase %>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("should not count herb:disable comment length in line wrapping calculations", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <DIV> <%# herb:disable html-tag-name-lowercase, some-super-long-rule-names-that-should-make-this-wrap-but-it-doesnt-because-its-a-herb-disable-comment %>
         Short text here that should not wrap.
       </DIV>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("should treat herb:disable as 'invisible' for text flow wrapping", () => {
@@ -114,27 +109,19 @@ describe("herb:disable comment formatting", () => {
   })
 
   test("should handle multiple rule names in herb:disable comment", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <DIV> <%# herb:disable rule-one, rule-two, rule-three %>
         Text content here.
       </DIV>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("should preserve herb:disable comment whitespace and position", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <DIV><%# herb:disable html-tag-name-lowercase %>
         Content here.
       </DIV>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("should not treat regular ERB comments as herb:disable", () => {
@@ -244,15 +231,11 @@ describe("herb:disable comment formatting", () => {
   })
 
   test("should handle very long herb:disable rule lists", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <DIV> <%# herb:disable rule-one, rule-two, rule-three, rule-four, rule-five, rule-six, rule-seven %>
         Content.
       </DIV>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("should handle herb:disable between sibling elements", () => {
@@ -312,21 +295,17 @@ describe("herb:disable comment formatting", () => {
   })
 
   test("handles erb if nodes", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%if valid?%> <%# herb:disable erb-require-whitespace-inside-tags %>
         <%=content%> <%# herb:disable erb-require-whitespace-inside-tags %>
       <%else%> <%# herb:disable erb-require-whitespace-inside-tags %>
         <%=other_content%> <%# herb:disable erb-require-whitespace-inside-tags %>
       <%end5> <%# herb:disable erb-require-whitespace-inside-tags %>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 
   test("keeps herb:disable comment on same line as tag name in multiline opening tag", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <a <%# herb:disable html-anchor-require-href %>
         class="btn btn-secondary no-donate-btn"
         aria-label="Close"
@@ -334,10 +313,6 @@ describe("herb:disable comment formatting", () => {
       >
         Close
       </a>
-    `
-
-    const result = formatter.format(source)
-
-    expect(result).toBe(source)
+    `)
   })
 })

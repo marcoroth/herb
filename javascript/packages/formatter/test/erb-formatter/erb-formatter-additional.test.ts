@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("ERB Formatter Additional Tests", () => {
   beforeAll(async () => {
@@ -13,6 +15,7 @@ describe("ERB Formatter Additional Tests", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   describe("Basic formatting edge cases", () => {
@@ -174,17 +177,13 @@ describe("ERB Formatter Additional Tests", () => {
 
   describe("Error handling", () => {
     test("handles unmatched ERB tags gracefully", () => {
-      const source = dedent`
+      expectFormattedToMatch(dedent`
         <% if true %>
           <h1>
             <%= link_to 'New Order', new_order_path, class: "btn btn-success" %>
             <% end %>
           </h1>
-      `
-
-      const result = formatter.format(source)
-
-      expect(result).toBe(source)
+      `)
     })
   })
 
