@@ -1,0 +1,35 @@
+---
+source: "Parser::UnclosedCloseTagTest#test_0002_close tag missing > at EOF"
+input: |2-
+<p>Today is Saturday</p
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:23))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:3))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "p" (location: (1:1)-(1:2))
+        │       ├── tag_closing: ">" (location: (1:2)-(1:3))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "p" (location: (1:1)-(1:2))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:3)-(1:20))
+        │       └── content: "Today is Saturday"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:20)-(1:23))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnclosedCloseTagError (location: (1:20)-(1:23))
+        │       │       ├── message: "Closing tag `</p>` at (1:22) is missing closing `>`."
+        │       │       └── tag_name: "p" (location: (1:22)-(1:23))
+        │       │
+        │       ├── tag_opening: "</" (location: (1:20)-(1:22))
+        │       ├── tag_name: "p" (location: (1:22)-(1:23))
+        │       ├── children: []
+        │       └── tag_closing: ∅
+        │
+        ├── is_void: false
+        └── source: "HTML"

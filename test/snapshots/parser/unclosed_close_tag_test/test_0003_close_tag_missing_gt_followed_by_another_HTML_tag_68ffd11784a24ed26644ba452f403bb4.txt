@@ -1,0 +1,55 @@
+---
+source: "Parser::UnclosedCloseTagTest#test_0003_close tag missing > followed by another HTML tag"
+input: "<div><p>Hello</p</div>"
+---
+@ DocumentNode (location: (1:0)-(1:22))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:22))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLElementNode (location: (1:5)-(1:16))
+        │       ├── open_tag:
+        │       │   └── @ HTMLOpenTagNode (location: (1:5)-(1:8))
+        │       │       ├── tag_opening: "<" (location: (1:5)-(1:6))
+        │       │       ├── tag_name: "p" (location: (1:6)-(1:7))
+        │       │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+        │       │       ├── children: []
+        │       │       └── is_void: false
+        │       │
+        │       ├── tag_name: "p" (location: (1:6)-(1:7))
+        │       ├── body: (1 item)
+        │       │   └── @ HTMLTextNode (location: (1:8)-(1:13))
+        │       │       └── content: "Hello"
+        │       │
+        │       ├── close_tag:
+        │       │   └── @ HTMLCloseTagNode (location: (1:13)-(1:16))
+        │       │       ├── errors: (1 error)
+        │       │       │   └── @ UnclosedCloseTagError (location: (1:13)-(1:16))
+        │       │       │       ├── message: "Closing tag `</p>` at (1:15) is missing closing `>`."
+        │       │       │       └── tag_name: "p" (location: (1:15)-(1:16))
+        │       │       │
+        │       │       ├── tag_opening: "</" (location: (1:13)-(1:15))
+        │       │       ├── tag_name: "p" (location: (1:15)-(1:16))
+        │       │       ├── children: []
+        │       │       └── tag_closing: ∅
+        │       │
+        │       ├── is_void: false
+        │       └── source: "HTML"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:16)-(1:22))
+        │       ├── tag_opening: "</" (location: (1:16)-(1:18))
+        │       ├── tag_name: "div" (location: (1:18)-(1:21))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:21)-(1:22))
+        │
+        ├── is_void: false
+        └── source: "HTML"
