@@ -1082,9 +1082,14 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
 
   parser_consume_whitespace(parser, children);
 
-  token_T* tag_closing = parser_consume_expected(parser, TOKEN_HTML_TAG_END, errors);
+  token_T* tag_closing = parser_consume_if_present(parser, TOKEN_HTML_TAG_END);
 
-  if (tag_name != NULL && is_void_element(hb_string(tag_name->value)) && parser_in_svg_context(parser) == false) {
+  if (tag_closing == NULL) {
+    append_unclosed_close_tag_error(tag_name, tag_opening->location.start, tag_name->location.end, errors);
+  }
+
+  if (tag_closing != NULL && tag_name != NULL && is_void_element(hb_string(tag_name->value))
+      && parser_in_svg_context(parser) == false) {
     hb_string_T expected = html_self_closing_tag_string(hb_string(tag_name->value));
     hb_string_T got = html_closing_tag_string(hb_string(tag_name->value));
 
@@ -1101,13 +1106,15 @@ static AST_HTML_CLOSE_TAG_NODE_T* parser_parse_html_close_tag(parser_T* parser) 
     free(got.data);
   }
 
+  position_T end_position = tag_closing != NULL ? tag_closing->location.end : tag_name->location.end;
+
   AST_HTML_CLOSE_TAG_NODE_T* close_tag = ast_html_close_tag_node_init(
     tag_opening,
     tag_name,
     children,
     tag_closing,
     tag_opening->location.start,
-    tag_closing->location.end,
+    end_position,
     errors
   );
 
