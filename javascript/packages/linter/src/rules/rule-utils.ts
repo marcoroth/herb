@@ -10,6 +10,8 @@ import {
   hasStaticContent,
   isEffectivelyStatic,
   isLiteralNode,
+  isHTMLTextNode,
+  isWhitespaceNode,
   isERBContentNode,
   isHTMLAttributeNode,
   isHTMLAttributeValueNode,
@@ -590,6 +592,17 @@ export function createEndOfFileLocation(source: string): Location {
   const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
 
   return Location.from(lastLineNumber, startColumn, lastLineNumber, lastColumnNumber)
+}
+
+/**
+ * Checks if a node contains only whitespace (newlines, spaces, indentation)
+ */
+export function isWhitespaceOnly(node: Node): boolean {
+  if (isWhitespaceNode(node)) return true
+  if (isHTMLTextNode(node) && (node as any).content.trim() === "") return true
+  if (isLiteralNode(node) && node.content.trim() === "") return true
+
+  return false
 }
 
 /**

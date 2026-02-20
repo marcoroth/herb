@@ -46,6 +46,7 @@ import { HTMLNoAbstractRolesRule } from "./rules/html-no-abstract-roles.js"
 import { HTMLNoAriaHiddenOnBodyRule } from "./rules/html-no-aria-hidden-on-body.js"
 import { HTMLNoAriaHiddenOnFocusableRule } from "./rules/html-no-aria-hidden-on-focusable.js"
 import { HTMLNoBlockInsideInlineRule } from "./rules/html-no-block-inside-inline.js"
+import { HTMLNoConsecutiveCommentsRule } from "./rules/html-no-consecutive-comments.js"
 import { HTMLNoDuplicateAttributesRule } from "./rules/html-no-duplicate-attributes.js"
 import { HTMLNoDuplicateIdsRule } from "./rules/html-no-duplicate-ids.js"
 import { HTMLNoDuplicateMetaNamesRule } from "./rules/html-no-duplicate-meta-names.js"
@@ -110,6 +111,7 @@ export const rules: RuleClass[] = [
   HTMLNoAriaHiddenOnBodyRule,
   HTMLNoAriaHiddenOnFocusableRule,
   HTMLNoBlockInsideInlineRule,
+  HTMLNoConsecutiveCommentsRule,
   HTMLNoDuplicateAttributesRule,
   HTMLNoDuplicateIdsRule,
   HTMLNoDuplicateMetaNamesRule,
