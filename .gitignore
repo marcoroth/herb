@@ -132,6 +132,7 @@ wasm/nodes.h
 # Java Build Artifacts
 java/target/
 java/.java_compiled
+java/lib/*.jar
 
 # Rust Build Artifacts
 rust/target/
