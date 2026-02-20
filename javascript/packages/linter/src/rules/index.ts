@@ -26,6 +26,7 @@ export * from "./herb-disable-comment-missing-rules.js"
 export * from "./herb-disable-comment-malformed.js"
 export * from "./herb-disable-comment-unnecessary.js"
 
+export * from "./html-allowed-script-type.js"
 export * from "./html-anchor-require-href.js"
 export * from "./html-aria-label-is-well-formatted.js"
 export * from "./html-aria-level-must-be-valid.js"
