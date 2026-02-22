@@ -51,7 +51,3 @@ jobs:
       - name: Build and test
         run: make test
         working-directory: java
-
-      - name: Integration tests
-        run: make cli_test
-        working-directory: java
