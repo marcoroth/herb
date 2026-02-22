@@ -288,7 +288,7 @@ test/fixtures/parser-errors.html.erb:2:16
 `;
 
 exports[`CLI Output Formatting > displays most violated rules with multiple offenses 1`] = `
-"[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
+"[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a \`<button>\` instead. (html-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:5:3
 
@@ -302,7 +302,7 @@ test/fixtures/multiple-rule-offenses.html.erb:5:3
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [1/14] ⎯⎯⎯⎯
 
-[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
+[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a \`<button>\` instead. (html-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:10:1
 
@@ -316,7 +316,7 @@ test/fixtures/multiple-rule-offenses.html.erb:10:1
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯  [2/14] ⎯⎯⎯⎯
 
-[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. (html-anchor-require-href)
+[error] Add an \`href\` attribute to \`<a>\` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a \`<button>\` instead. (html-anchor-require-href)
 
 test/fixtures/multiple-rule-offenses.html.erb:10:4
 
