@@ -108,10 +108,6 @@ test: jni java
 		--class-path target/classes \
 		--select-package org.herb
 
-.PHONY: cli_test
-cli_test: cli
-	bash run_tests.sh
-
 .PHONY: cli
 cli: all
 	@echo "CLI ready! Use: ./bin/herb-java [command] [file]"
@@ -130,7 +126,6 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  all        - Build everything (templates + herb + JNI + Java)"
-	@echo "  cli_test   - Run CLI integration tests"
 	@echo "  templates  - Generate code from ERB templates"
 	@echo "  herb       - Compile the Herb C library"
 	@echo "  jni        - Build JNI shared library"
