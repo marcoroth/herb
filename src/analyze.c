@@ -656,7 +656,7 @@ static size_t process_control_structure(
         AST_ERB_CONTENT_NODE_T* erb_content = (AST_ERB_CONTENT_NODE_T*) next_node;
         control_type_t next_type = detect_control_type(erb_content);
 
-        if (next_type == CONTROL_TYPE_WHEN || next_type == CONTROL_TYPE_IN) { break; }
+        if (next_type == CONTROL_TYPE_WHEN || next_type == CONTROL_TYPE_IN || next_type == CONTROL_TYPE_END) { break; }
       }
 
       hb_array_append(non_when_non_in_children, next_node);
