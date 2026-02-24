@@ -2,7 +2,7 @@ import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-too
 
 import { BaseFormatter } from "./base-formatter.js"
 import { LineWrapper } from "@herb-tools/highlighter"
-import { ruleDocumentationUrl } from "../../urls.js"
+import { ruleDocumentationUrl, fileUrl } from "../../urls.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -44,6 +44,7 @@ export class DetailedFormatter extends BaseFormatter {
         wrapLines: this.wrapLines,
         truncateLines: this.truncateLines,
         codeUrlBuilder: ruleDocumentationUrl,
+        fileUrlBuilder: (path) => fileUrl(path),
         suffixBuilder: (diagnostic) => autocorrectableSet.has(diagnostic) ? correctableTag : undefined,
       })
 
@@ -61,6 +62,7 @@ export class DetailedFormatter extends BaseFormatter {
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines,
           codeUrl,
+          fileUrl: fileUrl(filename),
           suffix,
         })
         console.log(`\n${formatted}`)

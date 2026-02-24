@@ -14,6 +14,7 @@ export interface DiagnosticRenderOptions {
   maxWidth?: number
   truncateLines?: boolean
   codeUrl?: string
+  fileUrl?: string
   suffix?: string
 }
 
@@ -142,9 +143,9 @@ export class DiagnosticRenderer {
 
     const shouldWrap = wrapLines && !truncateLines
     const shouldTruncate = truncateLines
-    const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
-
-    const { codeUrl } = options
+    const fileHeaderText = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
+    const { codeUrl, fileUrl: fileUrlOption } = options
+    const fileHeader = fileUrlOption ? hyperlink(fileHeaderText, fileUrlOption) : fileHeaderText
 
     const color = severityColor(diagnostic.severity)
     const text = colorize(colorize(diagnostic.severity, color), "bold")
