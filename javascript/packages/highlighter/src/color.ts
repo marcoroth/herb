@@ -1,5 +1,16 @@
 import { DiagnosticSeverity } from "@herb-tools/core"
 
+export const ANSI_ESCAPE = "\x1b"
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX = /\x1b\[[0-9;]*m/g
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX_START = /^\x1b\[[0-9;]*m/
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX_CAPTURE = /(\x1b\[[0-9;]*m)/g
+
 export const colors = {
   reset: "\x1b[0m",
   bold: "\x1b[1m",

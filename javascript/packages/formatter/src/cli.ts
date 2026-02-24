@@ -156,7 +156,6 @@ export class CLI {
       this.determineProjectPath(positionals)
 
       const file = positionals[0]
-      const startPath = file || process.cwd()
 
       if (isInitMode) {
         const configPath = configFile || this.projectPath
