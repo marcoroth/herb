@@ -45,8 +45,8 @@
     "playground": "nx run playground:dev",
     "docs": "nx dev docs",
     "lint": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --check",
-    "lint:oxc": "oxlint --config oxlint.json javascript/packages/",
-    "lint:oxc:fix": "oxlint --config oxlint.json --fix javascript/packages/",
+    "lint:oxc": "oxlint javascript/packages/",
+    "lint:oxc:fix": "oxlint --fix javascript/packages/",
     "format": "yarn prettier '**/*.{js,mjs,cjs,ts,mts,cts,css,html}' --write",
     "release": "tsx javascript/tools/scripts/release.ts"
   },

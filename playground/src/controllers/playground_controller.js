@@ -1031,17 +1031,17 @@ export default class extends Controller {
     })
   }
 
-  onOptionChange(event) {
+  onOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onPrinterOptionChange(event) {
+  onPrinterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onFormatterOptionChange(event) {
+  onFormatterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
@@ -1266,7 +1266,7 @@ export default class extends Controller {
         const startLine = diagnostic.line || diagnostic.startLineNumber || 1
         const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
         const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
-        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+        const endColumn = (diagnostic.endColumn || diagnostic.column || 0) + 1
 
         groupHtml += `
           <div
@@ -1826,7 +1826,7 @@ export default class extends Controller {
   }
 
 
-  openGitHubIssue(event) {
+  openGitHubIssue(_event) {
     const currentUrl = window.parent.location.href
 
     const issueTitle = encodeURIComponent('Bug report from Herb Playground')

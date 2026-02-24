@@ -551,7 +551,7 @@ export class HerbOverlay {
     if (element.localName === 'html' || window.getComputedStyle(element).overflowY !== 'visible') {
       label.style.top = '0';
     }
-    
+
     if (window.getComputedStyle(element).position === 'static') {
       element.style.position = 'relative';
     }
@@ -586,7 +586,7 @@ export class HerbOverlay {
     const elements = document.querySelectorAll('[data-herb-debug-showing-erb')
 
     elements.forEach(element => {
-      const originalContent = element.getAttribute('data-herb-debug-original')  || "";
+      const originalContent = element.getAttribute('data-herb-debug-original')  || "";
 
       element.innerHTML = originalContent;
       element.removeAttribute("data-herb-debug-showing-erb")
@@ -617,7 +617,7 @@ export class HerbOverlay {
           this.addTooltipHoverHandler(element);
         }
       } else {
-        const originalContent = element.getAttribute('data-herb-debug-original')  || "";
+        const originalContent = element.getAttribute('data-herb-debug-original')  || "";
 
         if (element && element.hasAttribute("data-herb-debug-showing-erb")) {
           element.innerHTML = originalContent;
@@ -1055,7 +1055,7 @@ export class HerbOverlay {
     if (url) {
       try {
         window.open(url, '_self');
-      } catch (error) {
+      } catch (_error) {
         console.log(`Open in editor: ${absolutePath}:${line}:${column}`);
       }
     } else {

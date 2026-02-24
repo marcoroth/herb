@@ -62,7 +62,7 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
     if (!offense.autofixContext) return null
 
     const { node, tagName, isVoid } = offense.autofixContext
-    const { tag_closing } = node
+    const { tag_closing } = node
 
     if (!tag_closing) return null
 

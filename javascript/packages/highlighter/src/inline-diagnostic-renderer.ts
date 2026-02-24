@@ -82,7 +82,7 @@ export class InlineDiagnosticRenderer {
       const highestSeverity = this.getHighestSeverity(lineDiagnostics)
       const lineColor = severityColor(highestSeverity)
 
-      let displayLine = line
+      const displayLine = line
       let availableWidth = maxWidth
 
       if (wrapLines && showLineNumbers) {

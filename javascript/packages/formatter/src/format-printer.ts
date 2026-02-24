@@ -309,11 +309,11 @@ export class FormatPrinter extends Printer {
    * and a trailing space (or newline for heredoc content starting with "<<").
    */
   private formatERBContent(content: string): string {
-    let trimmedContent = content.trim();
+    const trimmedContent = content.trim();
 
     // See: https://github.com/marcoroth/herb/issues/476
     // TODO: revisit once we have access to Prism nodes
-    let suffix = trimmedContent.startsWith("<<") ? "\n" : " "
+    const suffix = trimmedContent.startsWith("<<") ? "\n" : " "
 
     return trimmedContent ? ` ${trimmedContent}${suffix}` : ""
   }
@@ -1264,7 +1264,7 @@ export class FormatPrinter extends Printer {
       return
     }
 
-    let text = node.content.trim()
+    const text = node.content.trim()
 
     if (!text) return
 

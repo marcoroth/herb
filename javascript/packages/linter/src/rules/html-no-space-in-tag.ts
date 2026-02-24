@@ -15,7 +15,7 @@ const MESSAGES = {
 } as const
 
 interface HTMLNoSpaceInTagAutofixContext extends BaseAutofixContext {
-  node: WhitespaceNode | HTMLOpenTagNode
+  node: WhitespaceNode | HTMLOpenTagNode
   message: string
 }
 

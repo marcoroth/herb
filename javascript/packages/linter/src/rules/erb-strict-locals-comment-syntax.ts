@@ -42,7 +42,7 @@ function detectLocalsWithoutColon(content: string): boolean {
 }
 
 function detectSingularLocal(content: string): boolean {
-  return /^local:/.test(content)
+  return content.startsWith('local:')
 }
 
 function detectMissingColonBeforeParens(content: string): boolean {
@@ -50,7 +50,7 @@ function detectMissingColonBeforeParens(content: string): boolean {
 }
 
 function detectMissingSpaceAfterColon(content: string): boolean {
-  return /^locals:\(/.test(content)
+  return content.startsWith('locals:(')
 }
 
 function detectMissingParentheses(content: string): boolean {

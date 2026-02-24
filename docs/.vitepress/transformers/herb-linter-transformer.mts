@@ -4,7 +4,6 @@ import { createPositionConverter } from "twoslash-protocol"
 
 import { Herb } from '@herb-tools/node'
 import { Linter } from '@herb-tools/linter'
-import type { LintContext } from '@herb-tools/linter'
 
 export interface LinterDiagnostic {
   line: number
@@ -17,7 +16,7 @@ export interface LinterDiagnostic {
 }
 
 // Create custom Twoslash function for linter diagnostics
-function createCustomTwoslashFunction(optionse) {
+function createCustomTwoslashFunction(options) {
   return (code, lang, options) => {
     let fileName = undefined
 

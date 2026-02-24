@@ -1,8 +1,6 @@
 import { Node, Visitor, Token, ParseResult, isToken, isParseResult } from "@herb-tools/core"
 import { PrintContext } from "./print-context.js"
 
-import type { ERBNode } from "@herb-tools/core"
-
 /**
  * Options for controlling the printing behavior
  */
@@ -33,7 +31,7 @@ export abstract class Printer extends Visitor {
    * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  static print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  static print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     const printer = new (this as any)()
 
     return printer.print(input, options)
@@ -47,7 +45,7 @@ export abstract class Printer extends Visitor {
    * @returns The printed string representation of the input
    * @throws {Error} When node has parse errors and ignoreErrors is false
    */
-  print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
+  print(input: Token | Node | ParseResult | Node[] | undefined | null, options: PrintOptions = DEFAULT_PRINT_OPTIONS): string {
     if (!input) return ""
 
     if (isToken(input)) {

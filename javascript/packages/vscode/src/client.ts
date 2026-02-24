@@ -89,7 +89,7 @@ export class Client {
             server: vscodeConfig.get('trace.server', 'verbose'),
           },
         }
-      } catch (error) {
+      } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         settings = {
@@ -182,7 +182,7 @@ export class Client {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code
           },
         }
-      } catch (error) {
+      } catch (_error) {
         const vscodeConfig = workspace.getConfiguration('languageServerHerb')
 
         return {

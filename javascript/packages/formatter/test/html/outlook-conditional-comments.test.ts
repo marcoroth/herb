@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
 import { createExpectFormattedToMatch } from "../helpers"

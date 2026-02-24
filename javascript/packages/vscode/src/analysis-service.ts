@@ -35,7 +35,7 @@ export class AnalysisService {
           formatterMaxLineLength = projectConfig.formatter?.maxLineLength ?? 80
           linterRules = projectConfig.linter?.rules ?? {}
         }
-      } catch (error) {
+      } catch (_error) {
         const vscodeConfig = vscode.workspace.getConfiguration('languageServerHerb')
         linterEnabled = vscodeConfig.get('linter.enabled', true)
         formatterEnabled = vscodeConfig.get('formatter.enabled', false)
@@ -53,6 +53,7 @@ export class AnalysisService {
         JSON.stringify(linterRules),
         workspaceRoot
       ], { timeout: 1000 })
+
       const result = JSON.parse(stdout.trim())
       const failed = result.errors > 0 || result.lintErrors > 0
 

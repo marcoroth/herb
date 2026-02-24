@@ -11,7 +11,7 @@ import { HTMLAttributeDoubleQuotesRule } from "../src/rules/html-attribute-doubl
 import { HTMLAttributeValuesRequireQuotesRule } from "../src/rules/html-attribute-values-require-quotes.js"
 import { ParserRule, SourceRule } from "../src/types.js"
 
-import type { LintOffense, UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../src/types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 describe("@herb-tools/linter", () => {
@@ -467,10 +467,9 @@ describe("@herb-tools/linter", () => {
         }
       })
 
-      const linter = Linter.from(Herb, config)
       const filteredRules = Linter.filterRulesByConfig([DisabledByDefaultRule], config.linter?.rules)
-      const linterWithRules = new Linter(Herb, filteredRules)
-      const lintResult = linterWithRules.lint(html)
+      const linter = new Linter(Herb, filteredRules, config)
+      const lintResult = linter.lint(html)
 
       expect(lintResult.offenses).toHaveLength(1)
       expect(lintResult.offenses[0].rule).toBe("disabled-by-default-rule")
@@ -488,10 +487,9 @@ describe("@herb-tools/linter", () => {
         }
       })
 
-      const linter = Linter.from(Herb, config)
       const filteredRules = Linter.filterRulesByConfig([HTMLTagNameLowercaseRule], config.linter?.rules)
-      const linterWithRules = new Linter(Herb, filteredRules)
-      const lintResult = linterWithRules.lint(html)
+      const linter = new Linter(Herb, filteredRules, config)
+      const lintResult = linter.lint(html)
 
       expect(lintResult.offenses).toHaveLength(0)
     })

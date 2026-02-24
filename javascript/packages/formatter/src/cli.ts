@@ -220,8 +220,8 @@ export class CLI {
         formatterConfig.maxLineLength = maxLineLength
       }
 
-      let preRewriters: ASTRewriter[] = []
-      let postRewriters: StringRewriter[] = []
+      const preRewriters: ASTRewriter[] = []
+      const postRewriters: StringRewriter[] = []
       const rewriterNames = { pre: formatterConfig.rewriter?.pre || [], post: formatterConfig.rewriter?.post || [] }
 
       if (formatterConfig.rewriter && (rewriterNames.pre.length > 0 || rewriterNames.post.length > 0)) {
@@ -420,7 +420,7 @@ export class CLI {
         }
 
         let formattedCount = 0
-        let unformattedFiles: string[] = []
+        const unformattedFiles: string[] = []
 
         for (const filePath of files) {
           const displayPath = relative(process.cwd(), filePath)
@@ -468,7 +468,7 @@ export class CLI {
         }
 
         let formattedCount = 0
-        let unformattedFiles: string[] = []
+        const unformattedFiles: string[] = []
 
         for (const filePath of files) {
           const displayPath = relative(process.cwd(), filePath)

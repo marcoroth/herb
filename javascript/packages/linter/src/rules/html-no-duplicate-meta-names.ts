@@ -1,5 +1,5 @@
 import { isHTMLElementNode, isHTMLOpenTagNode } from "@herb-tools/core"
-import { getTagName, getAttributeName, getAttributeValue, forEachAttribute, getOpenTag } from "./rule-utils"
+import { getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
 
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { ParserRule, BaseAutofixContext } from "../types"

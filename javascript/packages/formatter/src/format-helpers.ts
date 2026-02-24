@@ -169,7 +169,7 @@ export function isClosingPunctuation(word: string): boolean {
  * Check if a line ends with opening punctuation
  */
 export function lineEndsWithOpeningPunctuation(line: string): boolean {
-  return /[(\[]$/.test(line)
+  return /[([]$/.test(line)
 }
 
 /**
@@ -185,14 +185,14 @@ export function isERBTag(text: string): boolean {
 export function endsWithERBTag(text: string): boolean {
   const trimmed = text.trim()
 
-  return /%>$/.test(trimmed) || /%>\S+$/.test(trimmed)
+  return trimmed.endsWith('%>') || /%>\S+$/.test(trimmed)
 }
 
 /**
  * Check if a string starts with an ERB tag
  */
 export function startsWithERBTag(text: string): boolean {
-  return /^<%/.test(text.trim())
+  return text.trim().startsWith('<%')
 }
 
 /**

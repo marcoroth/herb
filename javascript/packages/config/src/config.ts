@@ -772,7 +772,7 @@ export class Config {
         }
       }
 
-      if (/^    [a-z][\w-]*:/.test(line) && prevLine && /^      /.test(prevLine)) {
+      if (/^    [a-z][\w-]*:/.test(line) && prevLine && prevLine.startsWith('      ')) {
         result.push('')
       }
 
@@ -976,7 +976,7 @@ export class Config {
       if (!silent) {
         console.error(`✓ Created default configuration at ${configPath}`)
       }
-    } catch (error) {
+    } catch (_error) {
       if (!silent) {
         console.error(`⚠ Could not create config file at ${configPath}, using defaults in-memory`)
       }
