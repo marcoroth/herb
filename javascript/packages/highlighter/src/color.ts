@@ -88,6 +88,14 @@ export const colorize = (
   return text
 }
 
+export const hyperlink = (text: string, url: string): string => {
+  if (process.env.NO_COLOR !== undefined) {
+    return text
+  }
+
+  return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`
+}
+
 export const severityColor = (severity: DiagnosticSeverity): Color => {
   switch (severity) {
     case "error": return "brightRed"

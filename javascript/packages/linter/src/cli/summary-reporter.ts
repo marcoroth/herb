@@ -1,4 +1,6 @@
-import { colorize } from "@herb-tools/highlighter"
+import { colorize, hyperlink } from "@herb-tools/highlighter"
+
+import { ruleDocumentationUrl } from "../urls.js"
 
 export interface SummaryData {
   files: string[]
@@ -144,7 +146,9 @@ export class SummaryReporter {
     for (const [rule, data] of displayedRules) {
       const fileCount = data.files.size
       const countText = `(${data.count} ${this.pluralize(data.count, "offense")} in ${fileCount} ${this.pluralize(fileCount, "file")})`
-      console.log(`  ${colorize(rule, "gray")} ${colorize(colorize(countText, "gray"), "dim")}`)
+      const ruleText = colorize(rule, "gray")
+      const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(rule))
+      console.log(`  ${ruleLink} ${colorize(colorize(countText, "gray"), "dim")}`)
     }
 
     if (remainingRules.length > 0) {

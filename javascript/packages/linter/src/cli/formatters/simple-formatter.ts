@@ -1,6 +1,7 @@
-import { colorize } from "@herb-tools/highlighter"
+import { colorize, hyperlink } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
+import { ruleDocumentationUrl } from "../../urls.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -29,7 +30,8 @@ export class SimpleFormatter extends BaseFormatter {
     for (const offense of offenses) {
       const isError = offense.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const rule = colorize(`(${offense.code})`, "blue")
+      const ruleText = colorize(`(${offense.code})`, "blue")
+      const rule = offense.code ? hyperlink(ruleText, ruleDocumentationUrl(offense.code)) : ruleText
       const locationString = `${offense.location.start.line}:${offense.location.start.column}`
       const paddedLocation = locationString.padEnd(4)
 
@@ -44,7 +46,8 @@ export class SimpleFormatter extends BaseFormatter {
     for (const { offense, autocorrectable } of processedFiles) {
       const isError = offense.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const rule = colorize(`(${offense.code})`, "blue")
+      const ruleText = colorize(`(${offense.code})`, "blue")
+      const rule = offense.code ? hyperlink(ruleText, ruleDocumentationUrl(offense.code)) : ruleText
       const locationString = `${offense.location.start.line}:${offense.location.start.column}`
       const paddedLocation = locationString.padEnd(4)
       const correctable = autocorrectable ? colorize(colorize(" [Correctable]", "green"), "bold") : ""

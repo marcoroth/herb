@@ -1,4 +1,4 @@
-import { colorize, severityColor, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
+import { colorize, hyperlink, severityColor, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
 import { applyDimToStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
@@ -13,6 +13,7 @@ export interface DiagnosticRenderOptions {
   wrapLines?: boolean
   maxWidth?: number
   truncateLines?: boolean
+  codeUrl?: string
 }
 
 export class DiagnosticRenderer {
@@ -142,9 +143,12 @@ export class DiagnosticRenderer {
     const shouldTruncate = truncateLines
     const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
 
+    const { codeUrl } = options
+
     const text = diagnostic.severity
     const color = severityColor(diagnostic.severity)
-    const diagnosticId = colorize(diagnostic.code || "-", "gray")
+    const diagnosticIdText = colorize(diagnostic.code || "-", "gray")
+    const diagnosticId = codeUrl ? hyperlink(diagnosticIdText, codeUrl) : diagnosticIdText
 
     const originalLines = content.split("\n")
     const targetLineNumber = diagnostic.location.start.line

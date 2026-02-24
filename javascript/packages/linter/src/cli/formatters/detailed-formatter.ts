@@ -2,6 +2,7 @@ import { colorize, Highlighter, type ThemeInput, DEFAULT_THEME } from "@herb-too
 
 import { BaseFormatter } from "./base-formatter.js"
 import { LineWrapper } from "@herb-tools/highlighter"
+import { ruleDocumentationUrl } from "../../urls.js"
 
 import type { Diagnostic } from "@herb-tools/core"
 import type { ProcessedFile } from "../file-processor.js"
@@ -44,7 +45,8 @@ export class DetailedFormatter extends BaseFormatter {
         splitDiagnostics: true,
         contextLines: 2,
         wrapLines: this.wrapLines,
-        truncateLines: this.truncateLines
+        truncateLines: this.truncateLines,
+        codeUrlBuilder: ruleDocumentationUrl,
       })
 
       console.log(`\n${highlighted}`)
@@ -63,10 +65,12 @@ export class DetailedFormatter extends BaseFormatter {
           }
         }
 
+        const codeUrl = modifiedOffense.code ? ruleDocumentationUrl(modifiedOffense.code) : undefined
         const formatted = this.highlighter.highlightDiagnostic(filename, modifiedOffense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
-          truncateLines: this.truncateLines
+          truncateLines: this.truncateLines,
+          codeUrl,
         })
         console.log(`\n${formatted}`)
 
