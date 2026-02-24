@@ -79,12 +79,6 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 
     if (!node) { continue; }
 
-    if (node->type == AST_WHITESPACE_NODE) { continue; }
-    if (node->type == AST_HTML_CLOSE_TAG_NODE) { continue; }
-    if (node->type == AST_ERB_CONTENT_NODE) { continue; }
-    if (node->type == AST_HTML_ELEMENT_NODE) { continue; }
-    if (node->type == AST_ERB_BLOCK_NODE) { continue; }
-
     if (node->type == AST_HTML_TEXT_NODE) {
       AST_HTML_TEXT_NODE_T* text = (AST_HTML_TEXT_NODE_T*) node;
       bool whitespace_only = true;
@@ -125,8 +119,6 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
 
       continue;
     }
-
-    return result;
   }
 
   if (tag_count != 1) {

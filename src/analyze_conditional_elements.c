@@ -225,9 +225,12 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     if (!is_simple_erb_conditional(open_node)) { continue; }
 
     hb_array_T* open_statements = get_erb_conditional_statements(open_node);
-    size_t open_tag_count = count_nodes_of_type(open_statements, AST_HTML_OPEN_TAG_NODE);
 
+    size_t open_tag_count = count_nodes_of_type(open_statements, AST_HTML_OPEN_TAG_NODE);
     if (open_tag_count < 2) { continue; }
+
+    size_t open_close_tag_count = count_nodes_of_type(open_statements, AST_HTML_CLOSE_TAG_NODE);
+    if (open_tag_count <= open_close_tag_count) { continue; }
 
     bool open_is_if;
     const char* open_condition = extract_condition_from_erb_content(open_node, &open_is_if);
@@ -242,9 +245,12 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       if (!is_simple_erb_conditional(close_node)) { continue; }
 
       hb_array_T* close_statements = get_erb_conditional_statements(close_node);
-      size_t close_tag_count = count_nodes_of_type(close_statements, AST_HTML_CLOSE_TAG_NODE);
 
+      size_t close_tag_count = count_nodes_of_type(close_statements, AST_HTML_CLOSE_TAG_NODE);
       if (close_tag_count < 2) { continue; }
+
+      size_t close_open_tag_count = count_nodes_of_type(close_statements, AST_HTML_OPEN_TAG_NODE);
+      if (close_tag_count <= close_open_tag_count) { continue; }
 
       bool close_is_if;
       const char* close_condition = extract_condition_from_erb_content(close_node, &close_is_if);
