@@ -14,6 +14,7 @@ export interface DiagnosticRenderOptions {
   maxWidth?: number
   truncateLines?: boolean
   codeUrl?: string
+  suffix?: string
 }
 
 export class DiagnosticRenderer {
@@ -145,9 +146,9 @@ export class DiagnosticRenderer {
 
     const { codeUrl } = options
 
-    const text = diagnostic.severity
     const color = severityColor(diagnostic.severity)
-    const diagnosticIdText = colorize(diagnostic.code || "-", "gray")
+    const text = colorize(colorize(diagnostic.severity, color), "bold")
+    const diagnosticIdText = diagnostic.code || "-"
     const diagnosticId = codeUrl ? hyperlink(diagnosticIdText, codeUrl) : diagnosticIdText
 
     const originalLines = content.split("\n")
@@ -249,8 +250,10 @@ export class DiagnosticRenderer {
     }
 
     const highlightedMessage = this.highlightBackticks(diagnostic.message)
+    const { suffix } = options
+    const suffixText = suffix ? ` ${suffix}` : ""
 
-    return `[${text}] ${highlightedMessage} (${diagnosticId})
+    return `[${text}] ${highlightedMessage} (${diagnosticId})${suffixText}
 
 ${fileHeader}
 

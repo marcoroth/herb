@@ -1,4 +1,4 @@
-import { colorize, hyperlink } from "@herb-tools/highlighter"
+import { colorize, hyperlink, TextFormatter } from "@herb-tools/highlighter"
 
 import { BaseFormatter } from "./base-formatter.js"
 import { ruleDocumentationUrl } from "../../urls.js"
@@ -30,14 +30,14 @@ export class SimpleFormatter extends BaseFormatter {
     for (const offense of offenses) {
       const isError = offense.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const ruleText = colorize(`(${offense.code})`, "blue")
+      const ruleText = `(${offense.code})`
       const rule = offense.code ? hyperlink(ruleText, ruleDocumentationUrl(offense.code)) : ruleText
       const locationString = `${offense.location.start.line}:${offense.location.start.column}`
       const paddedLocation = locationString.padEnd(4)
 
-      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${offense.message} ${rule}`)
+      const message = TextFormatter.highlightBackticks(offense.message)
+      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${message} ${rule}`)
     }
-    console.log("")
   }
 
   formatFileProcessed(filename: string, processedFiles: ProcessedFile[]): void {
@@ -46,14 +46,14 @@ export class SimpleFormatter extends BaseFormatter {
     for (const { offense, autocorrectable } of processedFiles) {
       const isError = offense.severity === "error"
       const severity = isError ? colorize("✗", "brightRed") : colorize("⚠", "brightYellow")
-      const ruleText = colorize(`(${offense.code})`, "blue")
+      const ruleText = `(${offense.code})`
       const rule = offense.code ? hyperlink(ruleText, ruleDocumentationUrl(offense.code)) : ruleText
       const locationString = `${offense.location.start.line}:${offense.location.start.column}`
       const paddedLocation = locationString.padEnd(4)
       const correctable = autocorrectable ? colorize(colorize(" [Correctable]", "green"), "bold") : ""
 
-      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${offense.message} ${rule}${correctable}`)
+      const message = TextFormatter.highlightBackticks(offense.message)
+      console.log(`  ${colorize(paddedLocation, "gray")} ${severity} ${message} ${rule}${correctable}`)
     }
-    console.log("")
   }
 }

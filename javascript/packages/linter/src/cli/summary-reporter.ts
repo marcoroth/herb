@@ -41,20 +41,14 @@ export class SummaryReporter {
       const filesClean = filesChecked - filesWithOffenses
 
       let filesSummary = ""
-      let shouldDim = false
 
       if (filesWithOffenses > 0) {
-        filesSummary = `${colorize(colorize(`${filesWithOffenses} with offenses`, "brightRed"), "bold")} | ${colorize(colorize(`${filesClean} clean`, "green"), "bold")} ${colorize(colorize(`(${filesChecked} total)`, "gray"), "dim")}`
+        filesSummary = `${colorize(colorize(`${filesWithOffenses} with offenses`, "brightRed"), "bold")} | ${colorize(colorize(`${filesClean} clean`, "green"), "bold")} ${colorize(`(${filesChecked} total)`, "gray")}`
       } else {
-        filesSummary = `${colorize(colorize(`${filesChecked} clean`, "green"), "bold")} ${colorize(colorize(`(${filesChecked} total)`, "gray"), "dim")}`
-        shouldDim = true
+        filesSummary = `${colorize(colorize(`${filesChecked} clean`, "green"), "bold")} ${colorize(`(${filesChecked} total)`, "gray")}`
       }
 
-      if (shouldDim) {
-        console.log(colorize(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`, "dim"))
-      } else {
-        console.log(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`)
-      }
+      console.log(`  ${colorize(pad("Files"), "gray")} ${filesSummary}`)
     }
 
     let offensesSummary = ""
@@ -96,7 +90,7 @@ export class SummaryReporter {
       }
 
       if (detailText) {
-        offensesSummary += ` ${colorize(colorize(`(${detailText})`, "gray"), "dim")}`
+        offensesSummary += ` ${colorize(`(${detailText})`, "gray")}`
       }
     }
 
@@ -124,7 +118,7 @@ export class SummaryReporter {
       const timeString = startDate.toTimeString().split(' ')[0]
 
       console.log(`  ${colorize(pad("Start at"), "gray")} ${colorize(timeString, "cyan")}`)
-      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray"), "dim")}`)
+      console.log(`  ${colorize(pad("Duration"), "gray")} ${colorize(`${duration}ms`, "cyan")} ${colorize(`(${ruleCount} ${this.pluralize(ruleCount, "rule")})`, "gray")}`)
     }
 
     if (filesWithOffenses === 0 && files.length > 1) {
@@ -141,20 +135,21 @@ export class SummaryReporter {
     const remainingRules = allRules.slice(limit)
 
     const title = ruleOffenses.size <= limit ? "Rule offenses:" : "Most frequent rule offenses:"
+    console.log("\n")
     console.log(` ${colorize(title, "bold")}`)
 
     for (const [rule, data] of displayedRules) {
       const fileCount = data.files.size
       const countText = `(${data.count} ${this.pluralize(data.count, "offense")} in ${fileCount} ${this.pluralize(fileCount, "file")})`
-      const ruleText = colorize(rule, "gray")
+      const ruleText = colorize(rule, "white")
       const ruleLink = hyperlink(ruleText, ruleDocumentationUrl(rule))
-      console.log(`  ${ruleLink} ${colorize(colorize(countText, "gray"), "dim")}`)
+      console.log(`  ${ruleLink} ${colorize(countText, "gray")}`)
     }
 
     if (remainingRules.length > 0) {
       const remainingOffenseCount = remainingRules.reduce((sum, [_, data]) => sum + data.count, 0)
       const remainingRuleCount = remainingRules.length
-      console.log(colorize(colorize(`\n  ...and ${remainingRuleCount} more ${this.pluralize(remainingRuleCount, "rule")} with ${remainingOffenseCount} ${this.pluralize(remainingOffenseCount, "offense")}`, "gray"), "dim"))
+      console.log(colorize(`\n  ...and ${remainingRuleCount} more ${this.pluralize(remainingRuleCount, "rule")} with ${remainingOffenseCount} ${this.pluralize(remainingOffenseCount, "offense")}`, "gray"))
     }
   }
 }

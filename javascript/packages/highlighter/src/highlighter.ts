@@ -21,6 +21,7 @@ export interface HighlightOptions {
   maxWidth?: number
   truncateLines?: boolean
   codeUrlBuilder?: (code: string) => string
+  suffixBuilder?: (diagnostic: Diagnostic) => string | undefined
 }
 
 export interface HighlightDiagnosticOptions {
@@ -31,6 +32,7 @@ export interface HighlightDiagnosticOptions {
   maxWidth?: number
   truncateLines?: boolean
   codeUrl?: string
+  suffix?: string
 }
 
 export class Highlighter {
@@ -100,6 +102,7 @@ export class Highlighter {
       maxWidth = LineWrapper.getTerminalWidth(),
       truncateLines = false,
       codeUrlBuilder,
+      suffixBuilder,
     } = options
 
     // Case 1: Split diagnostics - render each diagnostic individually
@@ -108,6 +111,7 @@ export class Highlighter {
       for (let i = 0; i < diagnostics.length; i++) {
         const diagnostic = diagnostics[i]
         const codeUrl = codeUrlBuilder && diagnostic.code ? codeUrlBuilder(diagnostic.code) : undefined
+        const suffix = suffixBuilder ? suffixBuilder(diagnostic) : undefined
         const result = this.highlightDiagnostic(path, diagnostic, content, {
           contextLines,
           showLineNumbers,
@@ -115,6 +119,7 @@ export class Highlighter {
           maxWidth,
           truncateLines,
           codeUrl,
+          suffix,
         })
 
         results.push(result)

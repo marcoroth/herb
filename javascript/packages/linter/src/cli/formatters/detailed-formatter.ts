@@ -28,17 +28,14 @@ export class DetailedFormatter extends BaseFormatter {
       await this.highlighter.initialize()
     }
 
+    const correctableTag = colorize(colorize("[Correctable]", "green"), "bold")
+    const autocorrectableSet = new Set(
+      allOffenses.filter(item => item.autocorrectable).map(item => item.offense)
+    )
+
     if (isSingleFile) {
       const { filename, content } = allOffenses[0]
-      const diagnostics = allOffenses.map(item => {
-        if (item.autocorrectable && item.offense.code) {
-          return {
-            ...item.offense,
-            message: `${item.offense.message} ${colorize(colorize("[Correctable]", "green"), "bold")}`
-          }
-        }
-        return item.offense
-      })
+      const diagnostics = allOffenses.map(item => item.offense)
 
       const highlighted = this.highlighter.highlight(filename, content, {
         diagnostics: diagnostics,
@@ -47,6 +44,7 @@ export class DetailedFormatter extends BaseFormatter {
         wrapLines: this.wrapLines,
         truncateLines: this.truncateLines,
         codeUrlBuilder: ruleDocumentationUrl,
+        suffixBuilder: (diagnostic) => autocorrectableSet.has(diagnostic) ? correctableTag : undefined,
       })
 
       console.log(`\n${highlighted}`)
@@ -56,21 +54,14 @@ export class DetailedFormatter extends BaseFormatter {
       for (let i = 0; i < allOffenses.length; i++) {
         const { filename, offense, content, autocorrectable } = allOffenses[i]
 
-        let modifiedOffense = offense
-
-        if (autocorrectable && offense.code) {
-          modifiedOffense = {
-            ...offense,
-            message: `${offense.message} ${colorize(colorize("[Correctable]", "green"), "bold")}`
-          }
-        }
-
-        const codeUrl = modifiedOffense.code ? ruleDocumentationUrl(modifiedOffense.code) : undefined
-        const formatted = this.highlighter.highlightDiagnostic(filename, modifiedOffense, content, {
+        const codeUrl = offense.code ? ruleDocumentationUrl(offense.code) : undefined
+        const suffix = autocorrectable ? correctableTag : undefined
+        const formatted = this.highlighter.highlightDiagnostic(filename, offense, content, {
           contextLines: 2,
           wrapLines: this.wrapLines,
           truncateLines: this.truncateLines,
           codeUrl,
+          suffix,
         })
         console.log(`\n${formatted}`)
 

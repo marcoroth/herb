@@ -13,7 +13,7 @@ export class InlineDiagnosticRenderer {
   }
 
   private getSeverityText(severity: DiagnosticSeverity): string {
-    return colorize(severity, severityColor(severity))
+    return colorize(colorize(severity, severityColor(severity)), "bold")
   }
 
   private getHighestSeverity(diagnostics: Diagnostic[]): DiagnosticSeverity {
@@ -167,7 +167,7 @@ export class InlineDiagnosticRenderer {
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
 
             const severityText = this.getSeverityText(diagnostic.severity)
-            const diagnosticIdText = colorize(diagnostic.code || "-", "gray")
+            const diagnosticIdText = diagnostic.code || "-"
             const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
@@ -185,7 +185,7 @@ export class InlineDiagnosticRenderer {
             output += `${pointerSpacing}${pointer}\n`
 
             const severityText = this.getSeverityText(diagnostic.severity)
-            const diagnosticIdText = colorize(diagnostic.code || "-", "gray")
+            const diagnosticIdText = diagnostic.code || "-"
             const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
