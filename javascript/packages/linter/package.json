@@ -21,7 +21,10 @@
     "build": "yarn clean && tsc -b && rollup -c",
     "watch": "tsc -b -w",
     "test": "vitest run",
+    "test:js": "HERB_TEST_BACKEND=node-wasm vitest run",
+    "test:native": "HERB_TEST_BACKEND=node vitest run",
     "test:watch": "vitest --watch",
+    "rule-progress": "tsx scripts/rule-progress.ts",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "exports": {

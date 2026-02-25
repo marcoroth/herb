@@ -1,4 +1,7 @@
 {
+  "variables": {
+    "has_linter": "<!(test -f ../../../rust/target/debug/libherb_linter.a && echo 1 || echo 0)"
+  },
   "targets": [
     {
       "target_name": "<(module_name)",
@@ -7,6 +10,7 @@
         "./extension/error_helpers.cpp",
         "./extension/extension_helpers.cpp",
         "./extension/herb.cpp",
+        "./extension/linter.cpp",
         "./extension/nodes.cpp",
 
         # Herb main source files
@@ -88,6 +92,7 @@
         "PRISM_EXPORT_SYMBOLS=static",
         "PRISM_STATIC=1"
       ],
+      "libraries": [],
       "cflags": [
         "-Wall",
         "-Wextra"
@@ -101,7 +106,21 @@
         "VCCLCompilerTool": {
           "ExceptionHandling": 1
         }
-      }
+      },
+      "conditions": [
+        ["has_linter==1", {
+          "defines": [
+            "HAS_HERB_LINTER"
+          ],
+          "include_dirs": [
+            "../../../rust/herb-linter/include"
+          ],
+          "libraries": [
+            "-L../../../rust/target/debug",
+            "-lherb_linter"
+          ]
+        }]
+      ]
     }
   ]
 }

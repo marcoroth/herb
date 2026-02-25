@@ -29,7 +29,7 @@ describe("HerbDisableCommentValidRuleNameRule", () => {
   })
 
   test("warns on unknown single rule name", () => {
-    expectWarning("Unknown rule `this-rule-doesnt-exist`. Did you mean `erb-comment-syntax`?")
+    expectWarning("Unknown rule `this-rule-doesnt-exist`. Did you mean `erb-no-empty-tags`?")
 
     assertOffenses(dedent`
       <div>test</div> <%# herb:disable this-rule-doesnt-exist %>

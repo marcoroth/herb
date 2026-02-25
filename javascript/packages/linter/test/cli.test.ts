@@ -16,7 +16,7 @@ describe("CLI Output Formatting", () => {
         env = args.pop() as Record<string, string>
       }
 
-      const allArgs = [...(args as string[]), "--no-timing"].join(' ')
+      const allArgs = [...(args as string[]), "--no-timing", "--no-compare-backends"].join(' ')
 
       const output = execSync(`bin/herb-lint test/fixtures/${fixture} ${allArgs} 2>&1`, {
         encoding: "utf-8",

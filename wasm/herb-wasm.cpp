@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "extension_helpers.h"
+#include "linter.h"
 
 extern "C" {
 #include "../src/include/util/hb_array.h"
@@ -115,4 +116,9 @@ EMSCRIPTEN_BINDINGS(herb_module) {
   function("extractRuby", &Herb_extract_ruby);
   function("extractHTML", &Herb_extract_html);
   function("version", &Herb_version);
+#ifdef HAS_HERB_LINTER
+  function("lint", &Herb_lint);
+  function("lintRuleCount", &Herb_lint_rule_count);
+  function("lintRuleNames", &Herb_lint_rule_names);
+#endif
 }

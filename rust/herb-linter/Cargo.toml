@@ -1,0 +1,31 @@
+[package]
+name = "herb-linter"
+version = "0.8.10"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "HTML+ERB linter for validating HTML structure and enforcing best practices"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+
+[lib]
+name = "herb_linter"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[[bin]]
+name = "herb-lint"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+cli = ["rayon"]
+
+[dependencies]
+herb = { path = ".." }
+herb-config = { path = "../herb-config" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rayon = { version = "1.10", optional = true }
+
+[dev-dependencies]
+insta = "1.40"

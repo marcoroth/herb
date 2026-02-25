@@ -21,7 +21,7 @@ function rank(input: string, list: string[]): RankedResult[] {
     const score = levenshtein(input.toLowerCase(), item.toLowerCase())
 
     return { item, score }
-  }).sort((a, b) => a.score - b.score)
+  }).sort((a, b) => a.score - b.score || a.item.localeCompare(b.item))
 }
 
 /**

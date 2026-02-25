@@ -1,7 +1,8 @@
 [workspace]
 members = [
   ".",
-  "herb-config"
+  "herb-config",
+  "herb-linter"
 ]
 
 [package]

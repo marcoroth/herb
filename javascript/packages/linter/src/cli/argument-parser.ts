@@ -26,6 +26,7 @@ export interface ParsedArguments {
   force: boolean
   init: boolean
   loadCustomRules: boolean
+  compareBackends: boolean
   failLevel?: DiagnosticSeverity
 }
 
@@ -53,6 +54,7 @@ export class ArgumentParser {
       --github                      enable GitHub Actions annotations (combines with --format)
       --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
       --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
+      --no-compare-backends         disable comparison between the WASM and Rust backends
       --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
       --no-color                    disable colored output
       --no-timing                   hide timing information
@@ -83,7 +85,8 @@ export class ArgumentParser {
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
         "truncate-lines": { type: "boolean" },
-        "no-custom-rules": { type: "boolean" }
+        "no-custom-rules": { type: "boolean" },
+        "no-compare-backends": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -151,6 +154,7 @@ export class ArgumentParser {
     const configFile = values["config-file"]
     const init = values.init || false
     const loadCustomRules = !values["no-custom-rules"]
+    const compareBackends = !values["no-compare-backends"]
 
     let failLevel: DiagnosticSeverity | undefined
     if (values["fail-level"]) {
@@ -163,7 +167,7 @@ export class ArgumentParser {
       }
     }
 
-    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel }
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, compareBackends, failLevel }
   }
 
   private getFilePatterns(positionals: string[]): string[] {

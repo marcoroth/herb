@@ -15,10 +15,24 @@ $VPATH << "$(srcdir)/../../src/util"
 $VPATH << prism_src_path
 $VPATH << "#{prism_src_path}/util"
 
+linter_include_path = File.expand_path("../../rust/herb-linter/include", __dir__)
+linter_lib_path = File.expand_path("../../rust/target/debug", __dir__)
+linter_lib_file = "#{linter_lib_path}/libherb_linter.a"
+has_linter = File.exist?(linter_lib_file)
+
 $INCFLAGS << " -I#{prism_include_path}"
 $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 $INCFLAGS << " -I#{prism_src_path}/util"
+
+if has_linter
+  $INCFLAGS << " -I#{linter_include_path}"
+  $LDFLAGS << " #{linter_lib_file}"
+  $CFLAGS << " -DHAS_HERB_LINTER"
+  puts "Linter support: enabled (found #{linter_lib_file})"
+else
+  puts "Linter support: disabled (#{linter_lib_file} not found)"
+end
 
 $CFLAGS << " -fvisibility=hidden"
 
@@ -57,6 +71,8 @@ core_src_files = [
   "error_helpers.c",
   "extension_helpers.c"
 ]
+
+core_src_files << "linter.c" if has_linter
 
 $srcs = core_src_files + herb_src_files + prism_main_files + prism_util_files
 

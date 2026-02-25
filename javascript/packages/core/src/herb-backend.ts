@@ -2,9 +2,11 @@ import packageJSON from "../package.json" with { type: "json" }
 
 import { ensureString } from "./util.js"
 import { LexResult } from "./lex-result.js"
+import { BackendLintResult } from "./lint-result.js"
 import { ParseResult } from "./parse-result.js"
 import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
+import { hasLinterBackend } from "./backend.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
 import type { ParseOptions } from "./parser-options.js"
@@ -120,6 +122,59 @@ export abstract class HerbBackend {
   }
 
   /**
+   * Checks if the backend supports the native linter (Rust-based).
+   * @returns True if lint, lintRuleCount, and lintRuleNames are available.
+   */
+  get supportsLint(): boolean {
+    return this.isLoaded && hasLinterBackend(this.backend)
+  }
+
+  /**
+   * Lints the given source string using the native linter and returns a `BackendLintResult`.
+   * @param source - The source code to lint.
+   * @param configJson - Optional JSON string with linter configuration.
+   * @param fileName - Optional file name for context.
+   * @returns A `BackendLintResult` instance.
+   * @throws Error if the backend is not loaded or does not support linting.
+   */
+  lint(source: string, configJson?: string, fileName?: string): BackendLintResult {
+    this.ensureBackend()
+    this.ensureLinterBackend()
+
+    const backend = this.backend as LibHerbBackend & { lint: (source: string, configJson?: string, fileName?: string) => any }
+
+    return BackendLintResult.from(backend.lint(ensureString(source), configJson, fileName))
+  }
+
+  /**
+   * Returns the number of available native lint rules.
+   * @returns The count of lint rules.
+   * @throws Error if the backend is not loaded or does not support linting.
+   */
+  lintRuleCount(): number {
+    this.ensureBackend()
+    this.ensureLinterBackend()
+
+    const backend = this.backend as LibHerbBackend & { lintRuleCount: () => number }
+
+    return backend.lintRuleCount()
+  }
+
+  /**
+   * Returns the names of all available native lint rules.
+   * @returns An array of lint rule name strings.
+   * @throws Error if the backend is not loaded or does not support linting.
+   */
+  lintRuleNames(): string[] {
+    this.ensureBackend()
+    this.ensureLinterBackend()
+
+    const backend = this.backend as LibHerbBackend & { lintRuleNames: () => string[] }
+
+    return backend.lintRuleNames()
+  }
+
+  /**
    * Gets the Herb version information, including the core and backend versions.
    * @returns A version string containing backend, core, and libherb versions.
    * @throws Error if the backend is not loaded.
@@ -142,6 +197,18 @@ export abstract class HerbBackend {
     if (!this.isLoaded) {
       throw new Error(
         "Herb backend is not loaded. Call `await Herb.load()` first.",
+      )
+    }
+  }
+
+  /**
+   * Ensures that the backend supports linting.
+   * @throws Error if the backend does not support linting.
+   */
+  ensureLinterBackend(): void {
+    if (!this.supportsLint) {
+      throw new Error(
+        "Herb backend does not support native linting. Use the @herb-tools/linter package for JavaScript-based linting, or use a backend that includes the Rust linter.",
       )
     }
   }
