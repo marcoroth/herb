@@ -1,0 +1,26 @@
+[package]
+name = "herb-linter"
+version = "0.8.10"
+edition = "2021"
+authors = ["Marco Roth <marco.roth@intergga.ch>"]
+description = "Linter for Herb (HTML+ERB)"
+license = "MIT"
+repository = "https://github.com/marcoroth/herb"
+
+[lib]
+name = "herb_linter"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib", "staticlib"]
+
+[[bin]]
+name = "herb-lint"
+path = "src/main.rs"
+
+[dependencies]
+herb = { path = ".." }
+herb-config = { path = "../herb-config" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+insta = "1.40"

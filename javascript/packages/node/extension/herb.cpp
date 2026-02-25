@@ -11,6 +11,7 @@ extern "C" {
 
 #include "error_helpers.h"
 #include "extension_helpers.h"
+#include "linter.h"
 #include "nodes.h"
 
 #include <node_api.h>
@@ -283,6 +284,9 @@ napi_value Init(napi_env env, napi_value exports) {
     { "extractRuby", nullptr, Herb_extract_ruby, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "extractHTML", nullptr, Herb_extract_html, nullptr, nullptr, nullptr, napi_default, nullptr },
     { "version", nullptr, Herb_version, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "lint", nullptr, Herb_lint, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "lintRuleCount", nullptr, Herb_lint_rule_count, nullptr, nullptr, nullptr, napi_default, nullptr },
+    { "lintRuleNames", nullptr, Herb_lint_rule_names, nullptr, nullptr, nullptr, napi_default, nullptr },
   };
 
   napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);

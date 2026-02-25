@@ -1,5 +1,6 @@
 import type { SerializedParseResult } from "./parse-result.js"
 import type { SerializedLexResult } from "./lex-result.js"
+import type { SerializedLintResult } from "./lint-result.js"
 import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 
@@ -16,6 +17,12 @@ interface LibHerbBackendFunctions {
   version: () => string
 }
 
+interface LibHerbLinterBackendFunctions {
+  lint: (source: string, configJson?: string, fileName?: string) => SerializedLintResult
+  lintRuleCount: () => number
+  lintRuleNames: () => string[]
+}
+
 export type BackendPromise = () => Promise<LibHerbBackend>
 
 const expectedFunctions = [
@@ -26,6 +33,12 @@ const expectedFunctions = [
   "extractRuby",
   "extractHTML",
   "version",
+] as const
+
+const optionalLinterFunctions = [
+  "lint",
+  "lintRuleCount",
+  "lintRuleNames",
 ] as const
 
 type LibHerbBackendFunctionName = (typeof expectedFunctions)[number]
@@ -40,6 +53,18 @@ type CheckInterfaceKeysInFunctions =
     ? true
     : "Error: LibHerbBackendFunctions has keys not listed in expectedFunctions"
 
+type OptionalLinterFunctionName = (typeof optionalLinterFunctions)[number]
+
+type CheckLinterFunctionsExistInInterface =
+  OptionalLinterFunctionName extends keyof LibHerbLinterBackendFunctions
+    ? true
+    : "Error: Not all optionalLinterFunctions are defined in LibHerbLinterBackendFunctions"
+
+type CheckLinterInterfaceKeysInFunctions =
+  keyof LibHerbLinterBackendFunctions extends OptionalLinterFunctionName
+    ? true
+    : "Error: LibHerbLinterBackendFunctions has keys not listed in optionalLinterFunctions"
+
 // NOTE: This function should never be called and is only for type checking
 // so we can make sure `expectedFunctions` matches the functions defined
 // in `LibHerbBackendFunctions` and the other way around.
@@ -47,8 +72,10 @@ type CheckInterfaceKeysInFunctions =
 export function _TYPECHECK() {
   const checkFunctionsExist: CheckFunctionsExistInInterface = true
   const checkInterfaceComplete: CheckInterfaceKeysInFunctions = true
+  const checkLinterFunctionsExist: CheckLinterFunctionsExistInInterface = true
+  const checkLinterInterfaceComplete: CheckLinterInterfaceKeysInFunctions = true
 
-  return { checkFunctionsExist, checkInterfaceComplete }
+  return { checkFunctionsExist, checkInterfaceComplete, checkLinterFunctionsExist, checkLinterInterfaceComplete }
 }
 
 // Exported Types + Functions
@@ -56,6 +83,8 @@ export function _TYPECHECK() {
 export type LibHerbBackend = {
   [K in LibHerbBackendFunctionName]: LibHerbBackendFunctions[K]
 }
+
+export type LibHerbLinterBackend = LibHerbBackend & LibHerbLinterBackendFunctions
 
 export function isLibHerbBackend(
   object: any,
@@ -72,6 +101,16 @@ export function isLibHerbBackend(
       throw new Error(
         `Libherb at "${libherbpath}" has "${expectedFunction}" but it's not a function.`,
       )
+    }
+  }
+
+  return true
+}
+
+export function hasLinterBackend(object: any): object is LibHerbLinterBackend {
+  for (const functionName of optionalLinterFunctions) {
+    if (typeof object[functionName] !== "function") {
+      return false
     }
   }
 

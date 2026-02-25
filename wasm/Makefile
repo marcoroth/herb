@@ -21,6 +21,9 @@ PRISM_MAIN_OBJECTS = $(patsubst $(PRISM_PATH)/src/%.c,$(OBJ_DIR)/prism/%.o,$(PRI
 PRISM_UTIL_OBJECTS = $(patsubst $(PRISM_PATH)/src/util/%.c,$(OBJ_DIR)/prism/util/%.o,$(PRISM_UTIL_SOURCES))
 ALL_OBJECTS = $(C_OBJECTS) $(CPP_OBJECTS) $(PRISM_MAIN_OBJECTS) $(PRISM_UTIL_OBJECTS)
 
+LINTER_INCLUDE_DIR = ../rust/herb-linter/include
+LINTER_LIB_DIR = ../rust/target/wasm32-unknown-emscripten/release
+
 INCLUDE_DIR = ../include
 
 PRISM_INCLUDE = $(PRISM_PATH)/include
@@ -30,7 +33,7 @@ PRISM_EXCLUDE_FLAGS = -DPRISM_EXCLUDE_PRETTYPRINT -DPRISM_EXCLUDE_JSON -DPRISM_E
 
 OPT_FLAGS = -Oz -g0 -flto -fdata-sections -ffunction-sections
 
-CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -I$(PRISM_UTIL) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static $(PRISM_EXCLUDE_FLAGS) $(OPT_FLAGS)
+CFLAGS = -I$(INCLUDE_DIR) -I$(PRISM_INCLUDE) -I$(PRISM_SRC) -I$(PRISM_UTIL) -I$(LINTER_INCLUDE_DIR) -DPRISM_STATIC=1 -DPRISM_EXPORT_SYMBOLS=static $(PRISM_EXCLUDE_FLAGS) $(OPT_FLAGS)
 WASM_FLAGS = -s WASM=1 \
              -s SINGLE_FILE=1 \
              -s EXPORT_ES6=1 \
@@ -64,11 +67,11 @@ $(OBJ_DIR)/prism/util/%.o: $(PRISM_PATH)/src/util/%.c | $(OBJ_DIR)
 
 $(BROWSER_WASM_OUTPUT): $(ALL_OBJECTS)
 	mkdir -p $(BROWSER_BUILD_DIR)
-	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='web' -o $(BROWSER_WASM_OUTPUT)
+	em++ $(ALL_OBJECTS) $(LINTER_LIB_DIR)/libherb_linter.a $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='web' -o $(BROWSER_WASM_OUTPUT)
 
 $(NODE_WASM_OUTPUT): $(ALL_OBJECTS)
 	mkdir -p $(NODE_BUILD_DIR)
-	em++ $(ALL_OBJECTS) $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
+	em++ $(ALL_OBJECTS) $(LINTER_LIB_DIR)/libherb_linter.a $(CFLAGS) $(WASM_FLAGS) -s ENVIRONMENT='node' -o $(NODE_WASM_OUTPUT)
 
 clean: clean_objects clean_browser clean_node
 

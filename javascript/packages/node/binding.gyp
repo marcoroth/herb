@@ -7,6 +7,7 @@
         "./extension/error_helpers.cpp",
         "./extension/extension_helpers.cpp",
         "./extension/herb.cpp",
+        "./extension/linter.cpp",
         "./extension/nodes.cpp",
 
         # Herb main source files
@@ -79,7 +80,8 @@
         "./extension/libherb/include",
         "./extension/prism/include",
         "./extension/prism/src",
-        "./extension/prism/src/util"
+        "./extension/prism/src/util",
+        "../../../rust/herb-linter/include"
       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
@@ -87,6 +89,10 @@
       "defines": [
         "PRISM_EXPORT_SYMBOLS=static",
         "PRISM_STATIC=1"
+      ],
+      "libraries": [
+        "-L../../../rust/target/debug",
+        "-lherb_linter"
       ],
       "cflags": [
         "-Wall",

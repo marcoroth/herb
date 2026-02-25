@@ -3,6 +3,7 @@
 #include "error_helpers.h"
 #include "extension.h"
 #include "extension_helpers.h"
+#include "linter.h"
 #include "nodes.h"
 
 VALUE mHerb;
@@ -227,4 +228,6 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
+
+  Init_herb_linter();
 }

@@ -1,4 +1,5 @@
 import { Location } from "@herb-tools/core"
+import { BackendLintResult } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 import picomatch from "picomatch"
 
@@ -44,12 +45,28 @@ export interface LinterOptions {
   silentCustomRules?: boolean
 }
 
+/**
+ * Controls which linting backend is used.
+ * - "auto": Uses the native Rust linter if available, otherwise falls back to JavaScript rules.
+ * - "javascript": Always uses JavaScript-based rules, even if the backend supports native linting.
+ * - "native": Always uses the native Rust linter. Throws if the backend doesn't support it.
+ */
+export type BackendMode = "auto" | "javascript" | "native"
+
 export class Linter {
   protected rules: RuleClass[]
   protected allAvailableRules: RuleClass[]
   protected herb: HerbBackend
   protected offenses: LintOffense[]
   protected config?: Config
+
+  /**
+   * Controls which linting backend is used.
+   * - "javascript" (default): Always uses JavaScript rules.
+   * - "auto": Uses native Rust linter if available, otherwise JavaScript rules.
+   * - "native": Always uses the native Rust linter. Throws if not available.
+   */
+  backendMode: BackendMode = "javascript"
 
   /**
    * Creates a new Linter instance with automatic rule filtering based on config.
@@ -153,7 +170,29 @@ export class Linter {
   }
 
   getRuleCount(): number {
+    if (this.useNativeBackend) {
+      return this.herb.lintRuleCount()
+    }
+
     return this.rules.length
+  }
+
+  getRuleNames(): string[] {
+    if (this.useNativeBackend) {
+      return this.herb.lintRuleNames()
+    }
+
+    return this.rules.map(RuleClass => new RuleClass().name)
+  }
+
+  get supportsNativeLint(): boolean {
+    return this.herb.supportsLint
+  }
+
+  protected get useNativeBackend(): boolean {
+    if (this.backendMode === "native") return true
+    if (this.backendMode === "javascript") return false
+    return this.herb.supportsLint
   }
 
   /**
@@ -293,11 +332,68 @@ export class Linter {
 
 
   /**
-   * Lint source code using Parser/AST, Lexer, and Source rules.
+   * Lint source code using the native Rust linter backend if available,
+   * otherwise falls back to JavaScript-based Parser/AST, Lexer, and Source rules.
    * @param source - The source code to lint
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
+    if (this.backendMode === "native") {
+      return this.lintWithBackend(source, context)
+    }
+
+    if (this.backendMode === "javascript") {
+      return this.lintWithJavaScript(source, context)
+    }
+
+    if (this.herb.supportsLint) {
+      return this.lintWithBackend(source, context)
+    }
+
+    return this.lintWithJavaScript(source, context)
+  }
+
+  /**
+   * Lint source code using the native Rust linter backend.
+   * Delegates linting to the compiled Rust linter via the backend FFI.
+   * @param source - The source code to lint
+   * @param context - Optional context for linting
+   */
+  protected lintWithBackend(source: string, context?: Partial<LintContext>): LintResult {
+    const configJson = this.config?.linter?.rules
+      ? JSON.stringify({ rules: this.config.linter.rules })
+      : undefined
+
+    const fileName = context?.fileName ?? undefined
+
+    const result: BackendLintResult = this.herb.lint(source, configJson, fileName)
+
+    const offenses: LintOffense[] = result.offenses.map(offense => ({
+      rule: offense.rule as LintOffense["rule"],
+      code: offense.code,
+      source: offense.source,
+      message: offense.message,
+      severity: offense.severity,
+      location: offense.location,
+    }))
+
+    return {
+      offenses,
+      errors: result.errors,
+      warnings: result.warnings,
+      info: result.info,
+      hints: result.hints,
+      ignored: result.ignored,
+    }
+  }
+
+  /**
+   * Lint source code using JavaScript-based Parser/AST, Lexer, and Source rules.
+   * This is the fallback when the native Rust linter is not available.
+   * @param source - The source code to lint
+   * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
+   */
+  protected lintWithJavaScript(source: string, context?: Partial<LintContext>): LintResult {
     this.offenses = []
 
     let ignoredCount = 0

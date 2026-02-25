@@ -15,10 +15,16 @@ $VPATH << "$(srcdir)/../../src/util"
 $VPATH << prism_src_path
 $VPATH << "#{prism_src_path}/util"
 
+linter_include_path = File.expand_path("../../rust/herb-linter/include", __dir__)
+linter_lib_path = File.expand_path("../../rust/target/debug", __dir__)
+
 $INCFLAGS << " -I#{prism_include_path}"
 $INCFLAGS << " -I#{include_path}"
 $INCFLAGS << " -I#{prism_src_path}"
 $INCFLAGS << " -I#{prism_src_path}/util"
+$INCFLAGS << " -I#{linter_include_path}"
+
+$LDFLAGS << " -L#{linter_lib_path} -lherb_linter"
 
 $CFLAGS << " -fvisibility=hidden"
 
@@ -53,6 +59,7 @@ prism_util_files = [
 
 core_src_files = [
   "extension.c",
+  "linter.c",
   "nodes.c",
   "error_helpers.c",
   "extension_helpers.c"

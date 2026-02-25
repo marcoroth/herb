@@ -1,3 +1,6 @@
+[workspace]
+members = [".", "herb-config", "herb-linter"]
+
 [package]
 name = "herb"
 version = "0.8.10"

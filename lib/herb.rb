@@ -14,6 +14,9 @@ require_relative "herb/lex_result"
 require_relative "herb/parser_options"
 require_relative "herb/parse_result"
 
+require_relative "herb/offense"
+require_relative "herb/lint_result"
+
 require_relative "herb/ast"
 require_relative "herb/ast/node"
 require_relative "herb/ast/nodes"
@@ -67,6 +70,13 @@ end
 
 module Herb
   class << self
+    def lint(source, config_json = nil, file_name = nil)
+      hash = _lint_json(source, config_json, file_name)
+      return nil if hash.nil?
+
+      LintResult.from(hash)
+    end
+
     def configuration(project_path = nil)
       @configuration ||= Configuration.load(project_path)
     end

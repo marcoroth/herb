@@ -15,4 +15,5 @@ ignore = [
   "src/errors.rs",
   "src/nodes.rs",
   "src/union_types.rs",
+  "src/visitor.rs",
 ]
