@@ -206,4 +206,44 @@ describe("@herb-tools/formatter - inline elements", () => {
       <h2 class="title">Posts (<%= @posts.count %>)</h2>
     `)
   })
+
+  test("deeply nested span with ERB stays inline regardless of line length (issue #1095)", () => {
+    const source = dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("inline span with ERB stays inline even with long classes (issue #1095)", () => {
+    const source = dedent`
+      <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+    `)
+  })
 })

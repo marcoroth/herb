@@ -1712,12 +1712,10 @@ export class FormatPrinter extends Printer {
     if (isInlineElement(tagName)) {
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
-      if (fullInlineResult) {
-        const totalLength = this.indent.length + fullInlineResult.length
-        return totalLength <= this.maxLineLength
-      }
-
-      return false
+      // Inline elements should always stay inline when they can be rendered inline,
+      // regardless of line length. Breaking them to multiline changes visual rendering
+      // with CSS properties like whitespace-pre-line. See issue #1095.
+      return fullInlineResult !== null
     }
 
     if (SPACEABLE_CONTAINERS.has(tagName)) {
