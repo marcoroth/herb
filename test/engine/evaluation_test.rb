@@ -484,5 +484,18 @@ module Engine
 
       assert_evaluated_snapshot(template, { some_condition: false }, { escape: false })
     end
+
+    test "heredoc in code tag" do
+      template = <<~ERB
+        <%
+          text = <<~TEXT
+            Hello, world!
+          TEXT
+        %>
+        <%= text %>
+      ERB
+
+      assert_evaluated_snapshot(template, {}, { escape: false })
+    end
   end
 end

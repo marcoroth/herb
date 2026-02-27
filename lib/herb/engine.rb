@@ -175,6 +175,14 @@ module Herb
       end
     end
 
+    def self.comment?(code)
+      code.include?("#")
+    end
+
+    def self.heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
     protected
 
     def add_text(text)
@@ -196,8 +204,8 @@ module Herb
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if code.include?("#")
-          @src << "\n"
+        if self.class.comment?(code) || self.class.heredoc?(code)
+          @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
         end
@@ -267,18 +275,10 @@ module Herb
     end
 
     def trailing_newline(code)
-      return "\n" if comment?(code)
-      return "\n" if heredoc?(code)
+      return "\n" if self.class.comment?(code)
+      return "\n" if self.class.heredoc?(code)
 
       ""
-    end
-
-    def comment?(code)
-      code.include?("#")
-    end
-
-    def heredoc?(code)
-      code.match?(/<<[~-]?\s*['"`]?\w/)
     end
 
     def add_postamble(postamble)

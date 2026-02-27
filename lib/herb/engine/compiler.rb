@@ -545,7 +545,7 @@ module Herb
 
         if at_line_start?
           lspace = extract_and_remove_lspace!
-          rspace = " \n"
+          rspace = Herb::Engine.heredoc?(code) ? "\n" : " \n"
 
           @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
           @trim_next_whitespace = true

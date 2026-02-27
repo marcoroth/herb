@@ -35,6 +35,10 @@ module Herb
 
     def self.css: (untyped value) -> untyped
 
+    def self.comment?: (untyped code) -> untyped
+
+    def self.heredoc?: (untyped code) -> untyped
+
     def add_text: (untyped text) -> untyped
 
     def add_code: (untyped code) -> untyped
@@ -54,10 +58,6 @@ module Herb
     def add_expression_block_end: (untyped code, ?escaped: untyped) -> untyped
 
     def trailing_newline: (untyped code) -> untyped
-
-    def comment?: (untyped code) -> untyped
-
-    def heredoc?: (untyped code) -> untyped
 
     def add_postamble: (untyped postamble) -> untyped
 
