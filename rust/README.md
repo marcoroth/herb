@@ -1,6 +1,6 @@
 # Herb Rust Bindings
 
-Rust bindings for Herb - Powerful and seamless HTML-aware ERB parsing and tooling.
+Rust bindings for Herb - An ecosystem of powerful and seamless developer tools for HTML+ERB templates.
 
 ## Building
 
