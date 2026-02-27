@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict
+  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace
 
   def initialize(args)
     @args = args
@@ -144,7 +144,7 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false)
                 when "compile"
                   compile_template
                 when "render"
@@ -259,6 +259,18 @@ class Herb::CLI
 
       parser.on("--no-strict", "Disable strict mode (for parse/compile/render commands)") do
         self.strict = false
+      end
+
+      parser.on("--analyze", "Enable analyze mode (for parse command) (default: true)") do
+        self.analyze = true
+      end
+
+      parser.on("--no-analyze", "Disable analyze mode (for parse command)") do
+        self.analyze = false
+      end
+
+      parser.on("--track-whitespace", "Enable whitespace tracking (for parse command) (default: false)") do
+        self.track_whitespace = true
       end
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
