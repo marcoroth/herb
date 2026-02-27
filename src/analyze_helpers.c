@@ -161,6 +161,15 @@ bool search_block_nodes(const pm_node_t* node, void* data) {
     if (has_opening && is_unclosed) { analyzed->block_node_count++; }
   }
 
+  if (node->type == PM_LAMBDA_NODE) {
+    pm_lambda_node_t* lambda_node = (pm_lambda_node_t*) node;
+
+    bool has_opening = is_do_block(lambda_node->opening_loc) || is_brace_block(lambda_node->opening_loc);
+    bool is_unclosed = !has_valid_block_closing(lambda_node->opening_loc, lambda_node->closing_loc);
+
+    if (has_opening && is_unclosed) { analyzed->block_node_count++; }
+  }
+
   pm_visit_child_nodes(node, search_block_nodes, analyzed);
 
   return false;
@@ -488,6 +497,17 @@ bool search_unclosed_control_flows(const pm_node_t* node, void* data) {
       bool has_opening = is_do_block(block_node->opening_loc) || is_brace_block(block_node->opening_loc);
 
       if (has_opening && !has_valid_block_closing(block_node->opening_loc, block_node->closing_loc)) {
+        analyzed->unclosed_control_flow_count++;
+      }
+
+      break;
+    }
+
+    case PM_LAMBDA_NODE: {
+      const pm_lambda_node_t* lambda_node = (const pm_lambda_node_t*) node;
+      bool has_opening = is_do_block(lambda_node->opening_loc) || is_brace_block(lambda_node->opening_loc);
+
+      if (has_opening && !has_valid_block_closing(lambda_node->opening_loc, lambda_node->closing_loc)) {
         analyzed->unclosed_control_flow_count++;
       }
 

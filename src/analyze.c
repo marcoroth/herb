@@ -240,6 +240,21 @@ static bool find_earliest_control_keyword_walker(const pm_node_t* node, void* da
       break;
     }
 
+    case PM_LAMBDA_NODE: {
+      pm_lambda_node_t* lambda = (pm_lambda_node_t*) node;
+
+      bool has_do_opening = is_do_block(lambda->opening_loc);
+      bool has_brace_opening = is_brace_block(lambda->opening_loc);
+      bool has_valid_brace_closing = is_closing_brace(lambda->closing_loc);
+
+      if (has_do_opening || (has_brace_opening && !has_valid_brace_closing)) {
+        current_type = CONTROL_TYPE_BLOCK;
+        keyword_offset = (uint32_t) (node->location.start - context->source_start);
+      }
+
+      break;
+    }
+
     case PM_NEXT_NODE:
     case PM_BREAK_NODE:
     case PM_RETURN_NODE: {
