@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0010_li elements without closing tags - auto_close enabled - render"
+input: "{source: \"<ul><li>One<li>Two</ul>\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<ul><li>One</li><li>Two</li></ul>

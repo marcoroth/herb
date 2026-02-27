@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0020_rt and rp elements without closing tags - auto_close enabled - render"
+input: "{source: \"<ruby>Base<rp>(<rt>annotation<rp>)</ruby>\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<ruby>Base<rp>(</rp><rt>annotation</rt><rp>)</rp></ruby>

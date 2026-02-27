@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0005_multiple p elements without closing tags - auto_close enabled - compilation"
+input: "{source: \"<p>First<p>Second<p>Third\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<p>First</p><p>Second</p><p>Third</p>'.freeze;
+_buf.to_s

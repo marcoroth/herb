@@ -17,7 +17,7 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template, :visitors
+                :validation_error_template, :visitors, :auto_close_omitted_tags
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -52,6 +52,7 @@ module Herb
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
       @strict = properties.fetch(:strict, true)
+      @auto_close_omitted_tags = properties.fetch(:auto_close_omitted_tags, false)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?

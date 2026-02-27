@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0022_erb expression in p element - auto_close enabled - render"
+input: "{source: \"<p><%= message %>\", locals: {message: \"Hello\"}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<p>Hello</p>

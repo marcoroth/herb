@@ -1,0 +1,8 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0032_inline-block li elements - closing tag position preserves no-whitespace behavior - render"
+input: "{source: \"<ul>\\n  <li style=\\\"display: inline-block\\\">Foo\\n  <li style=\\\"display: inline-block\\\">Bar\\n</ul>\\n\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<ul>
+  <li style="display: inline-block">Foo
+  </li><li style="display: inline-block">Bar
+</li></ul>

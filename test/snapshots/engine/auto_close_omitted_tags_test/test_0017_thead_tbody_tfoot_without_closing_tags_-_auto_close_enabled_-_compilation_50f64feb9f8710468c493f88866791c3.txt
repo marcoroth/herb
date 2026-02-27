@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0017_thead tbody tfoot without closing tags - auto_close enabled - compilation"
+input: "{source: \"<table><thead><tr><th>H<tbody><tr><td>B<tfoot><tr><td>F</table>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<table><thead><tr><th>H</th></tr></thead><tbody><tr><td>B</td></tr></tbody><tfoot><tr><td>F</td></tr></tfoot></table>'.freeze;
+_buf.to_s

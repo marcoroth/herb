@@ -1,0 +1,11 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0028_complex navigation with optional closing tags - auto_close enabled - render"
+input: "{source: \"<nav>\\n  <ul>\\n    <% items.each do |item| %>\\n      <li><a href=\\\"<%= item[:url] %>\\\"><%= item[:name] %></a>\\n    <% end %>\\n  </ul>\\n</nav>\\n\", locals: {items: [{name: \"Home\", url: \"/\"}, {name: \"About\", url: \"/about\"}]}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<nav>
+  <ul>
+      <li><a href="/">Home</a>
+    </li>      <li><a href="/about">About</a>
+    </li>
+  </ul>
+</nav>

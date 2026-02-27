@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0003_p element without closing tag - auto_close enabled - compilation"
+input: "{source: \"<p>Hello World\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<p>Hello World</p>'.freeze;
+_buf.to_s

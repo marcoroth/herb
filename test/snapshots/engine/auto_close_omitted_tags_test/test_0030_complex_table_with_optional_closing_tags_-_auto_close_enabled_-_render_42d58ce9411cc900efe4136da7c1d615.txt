@@ -1,0 +1,18 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0030_complex table with optional closing tags - auto_close enabled - render"
+input: "{source: \"<table>\\n  <thead>\\n    <tr>\\n      <th>Name\\n      <th>Age\\n  <tbody>\\n    <% users.each do |user| %>\\n      <tr>\\n        <td><%= user[:name] %>\\n        <td><%= user[:age] %>\\n    <% end %>\\n</table>\\n\", locals: {users: [{name: \"Alice\", age: 30}, {name: \"Bob\", age: 25}]}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<table>
+  <thead>
+    <tr>
+      <th>Name
+      </th><th>Age
+  </th></tr></thead><tbody>
+      <tr>
+        <td>Alice
+        </td><td>30
+    </td></tr>      <tr>
+        <td>Bob
+        </td><td>25
+    </td></tr>
+</tbody></table>

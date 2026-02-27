@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0014_option elements without closing tags - auto_close enabled - render"
+input: "{source: \"<select><option value=\\\"1\\\">One<option value=\\\"2\\\">Two</select>\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<select><option value="1">One</option><option value="2">Two</option></select>

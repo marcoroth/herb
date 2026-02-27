@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0006_multiple p elements without closing tags - auto_close enabled - render"
+input: "{source: \"<p>First<p>Second<p>Third\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<p>First</p><p>Second</p><p>Third</p>

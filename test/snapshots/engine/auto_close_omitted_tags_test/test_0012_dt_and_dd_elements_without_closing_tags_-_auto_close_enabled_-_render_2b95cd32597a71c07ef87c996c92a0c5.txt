@@ -1,0 +1,5 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0012_dt and dd elements without closing tags - auto_close enabled - render"
+input: "{source: \"<dl><dt>Term<dd>Definition</dl>\", locals: {}, options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+<dl><dt>Term</dt><dd>Definition</dd></dl>

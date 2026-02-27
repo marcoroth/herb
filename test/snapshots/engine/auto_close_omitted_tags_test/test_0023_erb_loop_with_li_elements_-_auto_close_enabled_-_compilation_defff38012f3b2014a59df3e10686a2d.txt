@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0023_erb loop with li elements - auto_close enabled - compilation"
+input: "{source: \"<ul><% items.each do |item| %><li><%= item %><% end %></ul>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<ul>'.freeze; items.each do |item|; _buf << '<li>'.freeze; _buf << (item).to_s; _buf << '</li>'.freeze; end; _buf << '</ul>'.freeze;
+_buf.to_s

@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0019_rt and rp elements without closing tags - auto_close enabled - compilation"
+input: "{source: \"<ruby>Base<rp>(<rt>annotation<rp>)</ruby>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<ruby>Base<rp>(</rp><rt>annotation</rt><rp>)</rp></ruby>'.freeze;
+_buf.to_s

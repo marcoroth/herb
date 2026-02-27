@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0013_option elements without closing tags - auto_close enabled - compilation"
+input: "{source: \"<select><option value=\\\"1\\\">One<option value=\\\"2\\\">Two</select>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<select><option value="1">One</option><option value="2">Two</option></select>'.freeze;
+_buf.to_s

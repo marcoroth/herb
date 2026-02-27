@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0021_erb expression in p element - auto_close enabled - compilation"
+input: "{source: \"<p><%= message %>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<p>'.freeze; _buf << (message).to_s; _buf << '</p>'.freeze;
+_buf.to_s

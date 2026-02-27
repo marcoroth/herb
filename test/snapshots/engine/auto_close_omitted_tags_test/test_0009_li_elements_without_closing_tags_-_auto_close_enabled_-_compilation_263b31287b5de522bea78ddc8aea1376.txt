@@ -1,0 +1,6 @@
+---
+source: "Engine::AutoCloseOmittedTagsTest#test_0009_li elements without closing tags - auto_close enabled - compilation"
+input: "{source: \"<ul><li>One<li>Two</ul>\", options: {strict: false, auto_close_omitted_tags: true, escape: false}}"
+---
+_buf = ::String.new; _buf << '<ul><li>One</li><li>Two</li></ul>'.freeze;
+_buf.to_s
