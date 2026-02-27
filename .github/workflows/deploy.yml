@@ -46,7 +46,13 @@ jobs:
           sudo apt update
 
       - name: Install APT dependencies
-        run: xargs sudo apt-get install -y --no-install-recommends < Aptfile
+        run: grep -v emscripten Aptfile | xargs sudo apt-get install -y --no-install-recommends
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 5.0.2
+          actions-cache-folder: emsdk-cache
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
