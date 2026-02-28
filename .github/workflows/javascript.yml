@@ -193,7 +193,7 @@ jobs:
           path: javascript/packages/
 
       - name: Publish preview packages
-        run: npx pkg-pr-new publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server'
+        run: npx pkg-pr-new@0.0.63 publish --compact --comment=update --bin --no-template './javascript/packages/formatter' './javascript/packages/linter' './javascript/packages/language-server'
 
   publish-vscode:
     name: Publish VSCode extension
