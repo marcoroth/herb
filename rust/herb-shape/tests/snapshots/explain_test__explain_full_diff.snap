@@ -1,0 +1,8 @@
+---
+source: herb-shape/tests/explain_test.rs
+assertion_line: 184
+expression: explain(&result)
+---
+- The <div> element was replaced with a <section>
+- text content in <p> inside <div> was replaced with dynamic content
+- a <img> element was removed in <div>
