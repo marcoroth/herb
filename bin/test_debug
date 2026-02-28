@@ -4,6 +4,6 @@ set -e  # Exit on error
 
 make all
 ./run_herb_tests
-NO_TIMEOUT=true bundle exec rake test
+FORK_TESTS=true bundle exec rake test
 
 echo "Tests successful!"
