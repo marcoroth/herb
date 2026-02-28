@@ -1,0 +1,57 @@
+AllCops:
+  Include:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+  Exclude: []
+
+Lint:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Style:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Layout:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Metrics:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Naming:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Security:
+  Exclude:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
+
+Herb/Linting:
+  Enabled: true
+  Include:
+    - "**/*.erb"
+    - "**/*.html"
+    - "**/*.html.erb"
+    - "**/*.htm"
