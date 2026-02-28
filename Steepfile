@@ -11,6 +11,7 @@ target :lib do
   library "pathname"
   library "tempfile"
   library "yaml"
+  library "prism"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"

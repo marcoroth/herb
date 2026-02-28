@@ -30,6 +30,9 @@ module Herb
     class CompilationError < StandardError
     end
 
+    class InvalidRubyError < CompilationError
+    end
+
     def initialize(input, properties = {})
       @filename = properties[:filename] ? ::Pathname.new(properties[:filename]) : nil
       @project_path = ::Pathname.new(properties[:project_path] || Dir.pwd)
@@ -134,6 +137,18 @@ module Herb
       add_postamble(postamble)
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
+
+      if properties.fetch(:validate_ruby, false)
+        require "prism"
+
+        prism_result = Prism.parse(@src)
+        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+        if syntax_errors.any?
+          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
+          raise InvalidRubyError, "Compiled template produced invalid Ruby:\n#{details}"
+        end
+      end
 
       @src.freeze
       freeze

@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate
 
   def initialize(args)
     @args = args
@@ -100,6 +100,7 @@ class Herb::CLI
         bundle exec herb compile [file]       Compile ERB template to Ruby code.
         bundle exec herb render [file]        Compile and render ERB template to final output.
         bundle exec herb analyze [path]       Analyze a project by passing a directory to the root of the project
+        bundle exec herb report [file]        Generate a Markdown bug report for a file
         bundle exec herb config [path]        Show configuration and file patterns for a project
         bundle exec herb ruby [file]          Extract Ruby from a file.
         bundle exec herb html [file]          Extract HTML from a file.
@@ -133,13 +134,31 @@ class Herb::CLI
   def result
     @result ||= case @command
                 when "analyze"
-                  project = Herb::Project.new(directory)
-                  project.no_interactive = no_interactive
-                  project.no_log_file = no_log_file
+                  path = @file || "."
+
+                  if path != "-" && File.file?(path)
+                    project = Herb::Project.new(File.dirname(path))
+                    project.file_paths = [File.expand_path(path)]
+                  else
+                    unless File.directory?(path)
+                      puts "Not a file or directory: '#{path}'."
+                      exit(1)
+                    end
+
+                    project = Herb::Project.new(path)
+                  end
+
+                  project.no_log_file = log_file ? false : true
                   project.no_timing = no_timing
                   project.silent = silent
-                  has_issues = project.parse!
+                  project.verbose = verbose || ci?
+                  project.isolate = isolate
+                  project.validate_ruby = true
+                  has_issues = project.analyze!
                   exit(has_issues ? 1 : 0)
+                when "report"
+                  generate_report
+                  exit(0)
                 when "config"
                   show_config
                   exit(0)
@@ -158,7 +177,12 @@ class Herb::CLI
                   puts Herb.extract_html(file_content)
                   exit(0)
                 when "playground"
-                  require "lz_string"
+                  require "bundler/inline"
+
+                  gemfile do
+                    source "https://rubygems.org"
+                    gem "lz_string"
+                  end
 
                   hash = LZString::UriSafe.compress(file_content)
                   local_url = "http://localhost:5173"
@@ -221,12 +245,16 @@ class Herb::CLI
         self.silent = true
       end
 
-      parser.on("-n", "--non-interactive", "Disable interactive output (progress bars, terminal clearing)") do
-        self.no_interactive = true
+      parser.on("--verbose", "Show detailed per-file progress (default in CI)") do
+        self.verbose = true
       end
 
-      parser.on("--no-log-file", "Disable log file generation") do
-        self.no_log_file = true
+      parser.on("--isolate", "Fork each file into its own process for crash isolation (slower)") do
+        self.isolate = true
+      end
+
+      parser.on("--log-file", "Enable log file generation") do
+        self.log_file = true
       end
 
       parser.on("--no-timing", "Disable timing output") do
@@ -286,6 +314,10 @@ class Herb::CLI
   end
 
   private
+
+  def ci?
+    ENV["CI"] == "true" || ENV.key?("GITHUB_ACTIONS") || ENV.key?("BUILDKITE") || ENV.key?("JENKINS_URL") || ENV.key?("CIRCLECI") || ENV.key?("TRAVIS")
+  end
 
   def find_node_binary(name)
     local_bin = File.join(Dir.pwd, "node_modules", ".bin", name)
@@ -361,6 +393,35 @@ class Herb::CLI
     end
   end
 
+  def generate_report
+    unless @file
+      puts "Usage: herb report <file>"
+      exit(1)
+    end
+
+    unless File.file?(@file)
+      puts "File not found: #{@file}"
+      exit(1)
+    end
+
+    project = Herb::Project.new(File.dirname(@file))
+    project.file_paths = [File.expand_path(@file)]
+    project.no_log_file = true
+    project.no_timing = true
+    project.silent = true
+    project.validate_ruby = true
+
+    original_stdout = $stdout
+    $stdout = StringIO.new
+    begin
+      project.analyze!
+    ensure
+      $stdout = original_stdout
+    end
+
+    project.print_file_report(@file)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -376,6 +437,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
       if json

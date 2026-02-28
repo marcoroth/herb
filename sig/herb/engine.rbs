@@ -25,6 +25,9 @@ module Herb
     class CompilationError < StandardError
     end
 
+    class InvalidRubyError < CompilationError
+    end
+
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped
