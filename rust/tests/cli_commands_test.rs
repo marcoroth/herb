@@ -2,10 +2,7 @@ use herb::{extract_html, extract_ruby, version};
 
 #[test]
 fn test_version_functions() {
-  assert_eq!(
-    version(),
-    "herb rust v0.8.10, libprism v1.9.0, libherb v0.8.10 (Rust FFI)"
-  );
+  assert_eq!(version(), "herb rust v0.8.10, libprism v1.9.0, libherb v0.8.10 (Rust FFI)");
 }
 
 #[test]
@@ -30,10 +27,7 @@ fn test_extract_ruby_complex() {
   <% end %>
 </div>"#;
   let ruby = extract_ruby(source).unwrap();
-  assert_eq!(
-    ruby,
-    "     \n     users.each do |user|  ;\n           user.name  ;    \n     end  ;\n      "
-  );
+  assert_eq!(ruby, "     \n     users.each do |user|  ;\n           user.name  ;    \n     end  ;\n      ");
 }
 
 #[test]
@@ -44,8 +38,5 @@ fn test_extract_html_complex() {
   <% end %>
 </div>"#;
   let html = extract_html(source).unwrap();
-  assert_eq!(
-    html,
-    "<div>\n                            \n    <p>                </p>\n           \n</div>"
-  );
+  assert_eq!(html, "<div>\n                            \n    <p>                </p>\n           \n</div>");
 }

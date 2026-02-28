@@ -1,5 +1,5 @@
 edition = "2021"
-max_width = 100
+max_width = 160
 hard_tabs = false
 tab_spaces = 2
 newline_style = "Unix"
@@ -15,4 +15,5 @@ ignore = [
   "src/errors.rs",
   "src/nodes.rs",
   "src/union_types.rs",
+  "src/visitor.rs",
 ]

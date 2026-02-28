@@ -112,6 +112,7 @@ rust/src/ast/nodes.rs
 rust/src/errors.rs
 rust/src/nodes.rs
 rust/src/union_types.rs
+rust/src/visitor.rs
 sig/serialized_ast_errors.rbs
 sig/serialized_ast_nodes.rbs
 src/analyze_missing_end.c

@@ -59,10 +59,6 @@ impl Token {
 
 impl fmt::Display for Token {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(
-      f,
-      "Token{{type='{}', value='{}', location={}}}",
-      self.token_type, self.value, self.location
-    )
+    write!(f, "Token{{type='{}', value='{}', location={}}}", self.token_type, self.value, self.location)
   }
 }

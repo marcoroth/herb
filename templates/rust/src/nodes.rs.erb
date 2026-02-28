@@ -179,6 +179,13 @@ pub trait Node {
   fn tree_inspect(&self) -> String;
 }
 
+pub trait ERBNode {
+  fn tag_opening(&self) -> &Option<Token>;
+  fn content(&self) -> &Option<Token>;
+  fn tag_closing(&self) -> &Option<Token>;
+  fn location(&self) -> &Location;
+}
+
 #[derive(Debug, Clone)]
 pub enum AnyNode {
   <%- nodes.each do |node| -%>
@@ -416,4 +423,24 @@ impl Node for <%= node.name %> {
   }
 }
 
+<%- if node.name.start_with?("ERB") -%>
+impl ERBNode for <%= node.name %> {
+  fn tag_opening(&self) -> &Option<Token> {
+    &self.tag_opening
+  }
+
+  fn content(&self) -> &Option<Token> {
+    &self.content
+  }
+
+  fn tag_closing(&self) -> &Option<Token> {
+    &self.tag_closing
+  }
+
+  fn location(&self) -> &Location {
+    &self.location
+  }
+}
+
+<%- end -%>
 <%- end -%>
