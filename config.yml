@@ -307,6 +307,15 @@ errors:
         - name: opening_tag
           type: token
 
+    - name: StrayERBClosingTagError
+      message:
+        template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
+        arguments:
+          - start.line
+          - start.column
+
+      fields: []
+
     - name: NestedERBTagError
       message:
         template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."

@@ -275,6 +275,31 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
       return NULL;
     }
 
+    if (parser->options.strict && parser->current_token->type == TOKEN_PERCENT) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* peek_token = lexer_next_token(&lexer_copy);
+
+      if (peek_token && peek_token->type == TOKEN_HTML_TAG_END) {
+        position_T stray_start = parser->current_token->location.start;
+        position_T stray_end = peek_token->location.end;
+        token_free(peek_token);
+
+        append_strayerb_closing_tag_error(stray_start, stray_end, document_errors);
+
+        token_T* percent = parser_advance(parser);
+        hb_buffer_append(&content, percent->value);
+        token_free(percent);
+
+        token_T* gt = parser_advance(parser);
+        hb_buffer_append(&content, gt->value);
+        token_free(gt);
+
+        continue;
+      }
+
+      token_free(peek_token);
+    }
+
     token_T* token = parser_advance(parser);
     hb_buffer_append(&content, token->value);
     token_free(token);
@@ -1002,6 +1027,32 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       }
 
       token_free(next_token);
+    }
+
+    if (parser->current_token->type == TOKEN_PERCENT) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* peek_token = lexer_next_token(&lexer_copy);
+
+      if (peek_token && peek_token->type == TOKEN_HTML_TAG_END) {
+        position_T stray_start = parser->current_token->location.start;
+        position_T stray_end = peek_token->location.end;
+        token_free(peek_token);
+
+        append_strayerb_closing_tag_error(stray_start, stray_end, errors);
+
+        token_T* percent = parser_advance(parser);
+        token_T* gt = parser_advance(parser);
+
+        AST_LITERAL_NODE_T* literal = ast_literal_node_init("%>", stray_start, stray_end, NULL);
+        hb_array_append(children, literal);
+
+        token_free(percent);
+        token_free(gt);
+
+        continue;
+      }
+
+      token_free(peek_token);
     }
 
     parser_append_unexpected_error(
