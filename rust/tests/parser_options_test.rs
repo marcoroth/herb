@@ -28,10 +28,7 @@ fn test_track_whitespace_enabled_tracks_whitespace() {
   let result = parse_with_options(source, &options).unwrap();
   let output = result.inspect();
 
-  assert!(
-    output.contains("WhitespaceNode"),
-    "Expected WhitespaceNode with track_whitespace enabled"
-  );
+  assert!(output.contains("WhitespaceNode"), "Expected WhitespaceNode with track_whitespace enabled");
 }
 
 #[test]
@@ -42,15 +39,8 @@ fn test_analyze_enabled_by_default_transforms_erb_nodes() {
   let result = parse(source).unwrap();
   let output = result.inspect();
 
-  assert!(
-    output.contains("ERBIfNode"),
-    "Expected ERBIfNode with analyze enabled (default)"
-  );
-
-  assert!(
-    !output.contains("ERBContentNode"),
-    "Expected no ERBContentNode with analyze enabled (default)"
-  );
+  assert!(output.contains("ERBIfNode"), "Expected ERBIfNode with analyze enabled (default)");
+  assert!(!output.contains("ERBContentNode"), "Expected no ERBContentNode with analyze enabled (default)");
 }
 
 #[test]
@@ -65,13 +55,6 @@ fn test_analyze_disabled_skips_erb_node_transformation() {
   let result = parse_with_options(source, &options).unwrap();
   let output = result.inspect();
 
-  assert!(
-    output.contains("ERBContentNode"),
-    "Expected ERBContentNode with analyze disabled"
-  );
-
-  assert!(
-    !output.contains("ERBIfNode"),
-    "Expected no ERBIfNode with analyze disabled"
-  );
+  assert!(output.contains("ERBContentNode"), "Expected ERBContentNode with analyze disabled");
+  assert!(!output.contains("ERBIfNode"), "Expected no ERBIfNode with analyze disabled");
 }

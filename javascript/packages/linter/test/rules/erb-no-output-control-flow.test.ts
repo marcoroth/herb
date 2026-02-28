@@ -79,7 +79,7 @@ describe("erb-no-output-control-flow", () => {
       <%= end %>
     `
 
-    expectError("Control flow statements like `if` should not be used with output tags. Use `<% if ... %>` instead.")
+    expectError("Control flow statements like `elsif` should not be used with output tags. Use `<% elsif ... %>` instead.")
     expectError("Control flow statements like `else` should not be used with output tags. Use `<% else ... %>` instead.")
     expectError("Control flow statements like `end` should not be used with output tags. Use `<% end ... %>` instead.")
     assertOffenses(html)

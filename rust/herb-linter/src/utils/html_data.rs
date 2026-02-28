@@ -3,8 +3,7 @@ use std::sync::LazyLock;
 
 pub static HTML_VOID_ELEMENTS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
   [
-    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source",
-    "track", "wbr",
+    "area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr",
   ]
   .into_iter()
   .collect()
@@ -12,9 +11,8 @@ pub static HTML_VOID_ELEMENTS: LazyLock<HashSet<&'static str>> = LazyLock::new(|
 
 pub static HTML_INLINE_ELEMENTS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
   [
-    "a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code", "dfn", "em", "i",
-    "img", "input", "kbd", "label", "map", "object", "output", "q", "samp", "script", "select",
-    "small", "span", "strong", "sub", "sup", "textarea", "time", "tt", "var",
+    "a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code", "dfn", "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
+    "q", "samp", "script", "select", "small", "span", "strong", "sub", "sup", "textarea", "time", "tt", "var",
   ]
   .into_iter()
   .collect()
@@ -99,6 +97,12 @@ pub static HTML_BOOLEAN_ATTRIBUTES: LazyLock<HashSet<&'static str>> = LazyLock::
   .into_iter()
   .collect()
 });
+
+pub static HEAD_ONLY_TAG_NAMES: LazyLock<HashSet<&'static str>> = LazyLock::new(|| ["base", "title", "style", "meta", "link"].into_iter().collect());
+
+pub fn is_head_only_element(tag_name: &str) -> bool {
+  HEAD_ONLY_TAG_NAMES.contains(tag_name.to_lowercase().as_str())
+}
 
 pub fn is_void_element(tag_name: &str) -> bool {
   HTML_VOID_ELEMENTS.contains(tag_name.to_lowercase().as_str())

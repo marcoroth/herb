@@ -59,9 +59,7 @@ fn test_ffi_herb_lint_with_config() {
     let json_string = std::ffi::CStr::from_ptr(lint_result.json).to_str().unwrap();
     let parsed: serde_json::Value = serde_json::from_str(json_string).unwrap();
     let offenses = parsed["offenses"].as_array().unwrap();
-    assert!(!offenses
-      .iter()
-      .any(|offense| offense["rule"] == "html-img-require-alt"));
+    assert!(!offenses.iter().any(|offense| offense["rule"] == "html-img-require-alt"));
 
     herb_linter::ffi::herb_lint_result_free(result);
   }
@@ -70,7 +68,7 @@ fn test_ffi_herb_lint_with_config() {
 #[test]
 fn test_ffi_rule_count() {
   let count = herb_linter::ffi::herb_lint_rule_count();
-  assert_eq!(count, 5);
+  assert_eq!(count, 58);
 }
 
 #[test]
@@ -78,16 +76,11 @@ fn test_ffi_rule_names() {
   unsafe {
     let mut count: usize = 0;
     let names = herb_linter::ffi::herb_lint_rule_names(&mut count);
-    assert_eq!(count, 5);
+    assert_eq!(count, 58);
     assert!(!names.is_null());
 
     let name_strings: Vec<String> = (0..count)
-      .map(|index| {
-        std::ffi::CStr::from_ptr(*names.add(index))
-          .to_str()
-          .unwrap()
-          .to_string()
-      })
+      .map(|index| std::ffi::CStr::from_ptr(*names.add(index)).to_str().unwrap().to_string())
       .collect();
 
     assert!(name_strings.contains(&"parser-no-errors".to_string()));

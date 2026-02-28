@@ -12,5 +12,10 @@ name = "herb_config"
 path = "src/lib.rs"
 
 [dependencies]
+globset = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_yaml = "0.9"
+
+[dev-dependencies]
+serde_yaml = "0.9"
+tempfile = "3"

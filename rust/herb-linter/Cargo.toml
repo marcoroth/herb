@@ -10,17 +10,22 @@ repository = "https://github.com/marcoroth/herb"
 [lib]
 name = "herb_linter"
 path = "src/lib.rs"
-crate-type = ["cdylib", "rlib", "staticlib"]
+crate-type = ["rlib", "staticlib"]
 
 [[bin]]
 name = "herb-lint"
 path = "src/main.rs"
+required-features = ["cli"]
+
+[features]
+cli = ["rayon"]
 
 [dependencies]
 herb = { path = ".." }
 herb-config = { path = "../herb-config" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+rayon = { version = "1.10", optional = true }
 
 [dev-dependencies]
 insta = "1.40"

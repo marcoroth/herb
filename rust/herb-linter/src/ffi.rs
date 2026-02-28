@@ -3,8 +3,9 @@ use std::os::raw::c_char;
 use std::ptr;
 
 use crate::linter::Linter;
-use crate::rule::LintContext;
+use crate::rule::{LintContext, Rule};
 use crate::rules;
+
 use herb_config::LinterConfig;
 
 #[repr(C)]
@@ -24,11 +25,7 @@ pub struct HerbLintResultT {
 /// - `file_name` may be null or a valid null-terminated UTF-8 C string.
 /// - The returned pointer must be freed with `herb_lint_result_free`.
 #[no_mangle]
-pub unsafe extern "C" fn herb_lint(
-  source: *const c_char,
-  config_json: *const c_char,
-  file_name: *const c_char,
-) -> *mut HerbLintResultT {
+pub unsafe extern "C" fn herb_lint(source: *const c_char, config_json: *const c_char, file_name: *const c_char) -> *mut HerbLintResultT {
   if source.is_null() {
     return ptr::null_mut();
   }
@@ -56,6 +53,7 @@ pub unsafe extern "C" fn herb_lint(
   let linter = Linter::new(config);
   let context = LintContext {
     file_name: file_name_string,
+    ..Default::default()
   };
 
   let result = linter.lint(source_string, &context);
@@ -103,10 +101,7 @@ pub extern "C" fn herb_lint_rule_count() -> usize {
 #[no_mangle]
 pub unsafe extern "C" fn herb_lint_rule_names(count: *mut usize) -> *mut *mut c_char {
   let all = rules::all_rules();
-  let names: Vec<CString> = all
-    .iter()
-    .map(|rule| CString::new(rule.name()).unwrap_or_default())
-    .collect();
+  let names: Vec<CString> = all.iter().map(|rule| CString::new(rule.name()).unwrap_or_default()).collect();
 
   if !count.is_null() {
     *count = names.len();

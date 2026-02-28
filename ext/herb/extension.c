@@ -3,8 +3,11 @@
 #include "error_helpers.h"
 #include "extension.h"
 #include "extension_helpers.h"
-#include "linter.h"
 #include "nodes.h"
+
+#ifdef HAS_HERB_LINTER
+#  include "linter.h"
+#endif
 
 VALUE mHerb;
 VALUE cPosition;
@@ -229,5 +232,7 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 
+#ifdef HAS_HERB_LINTER
   Init_herb_linter();
+#endif
 }

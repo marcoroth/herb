@@ -12,6 +12,13 @@ impl Location {
     Self { start, end }
   }
 
+  pub fn from(start_line: u32, start_column: u32, end_line: u32, end_column: u32) -> Self {
+    Self {
+      start: Position::new(start_line, start_column),
+      end: Position::new(end_line, end_column),
+    }
+  }
+
   pub fn inspect(&self) -> String {
     format!("{}-{}", self.start, self.end)
   }

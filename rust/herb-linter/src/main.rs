@@ -2,6 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
+use rayon::prelude::*;
+
 use herb_config::{HerbConfig, Severity};
 use herb_linter::linter::Linter;
 use herb_linter::offense::Offense;
@@ -78,8 +80,7 @@ fn main() {
   }
 
   let current_directory = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-  let (config, config_path) =
-    HerbConfig::load(&current_directory, arguments.config_file.as_deref());
+  let (config, config_path) = HerbConfig::load(&current_directory, arguments.config_file.as_deref());
 
   if arguments.init {
     init_command(&current_directory, config_path.as_deref());
@@ -87,10 +88,7 @@ fn main() {
   }
 
   if !config.linter.enabled && !arguments.force {
-    output_info(
-      "Linting is disabled in .herb.yml configuration. Use --force to lint anyway.",
-      &arguments,
-    );
+    output_info("Linting is disabled in .herb.yml configuration. Use --force to lint anyway.", &arguments);
     return;
   }
 
@@ -99,10 +97,7 @@ fn main() {
   }
 
   if arguments.patterns.is_empty() {
-    output_info(
-      "No files or directories specified. Run with --help for usage.",
-      &arguments,
-    );
+    output_info("No files or directories specified. Run with --help for usage.", &arguments);
     std::process::exit(1);
   }
 
@@ -148,15 +143,8 @@ fn main() {
   let should_fail = match fail_level {
     FailLevel::Error => result.total_errors > 0,
     FailLevel::Warning => result.total_errors > 0 || result.total_warnings > 0,
-    FailLevel::Info => {
-      result.total_errors > 0 || result.total_warnings > 0 || result.total_info > 0
-    }
-    FailLevel::Hint => {
-      result.total_errors > 0
-        || result.total_warnings > 0
-        || result.total_info > 0
-        || result.total_hints > 0
-    }
+    FailLevel::Info => result.total_errors > 0 || result.total_warnings > 0 || result.total_info > 0,
+    FailLevel::Hint => result.total_errors > 0 || result.total_warnings > 0 || result.total_info > 0 || result.total_hints > 0,
   };
 
   if should_fail {
@@ -224,10 +212,7 @@ fn parse_arguments() -> CliArguments {
           "info" => FailLevel::Info,
           "hint" => FailLevel::Hint,
           other => {
-            eprintln!(
-              "Error: Invalid --fail-level value \"{}\". Must be one of: error, warning, info, hint",
-              other
-            );
+            eprintln!("Error: Invalid --fail-level value \"{}\". Must be one of: error, warning, info, hint", other);
             std::process::exit(1);
           }
         };
@@ -243,10 +228,7 @@ fn parse_arguments() -> CliArguments {
           "detailed" => OutputFormat::Detailed,
           "json" => OutputFormat::Json,
           other => {
-            eprintln!(
-              "Error: Invalid --format value \"{}\". Must be one of: simple, detailed, json",
-              other
-            );
+            eprintln!("Error: Invalid --format value \"{}\". Must be one of: simple, detailed, json", other);
             std::process::exit(1);
           }
         };
@@ -276,8 +258,7 @@ fn parse_arguments() -> CliArguments {
     index += 1;
   }
 
-  let is_github_environment =
-    std::env::var("GITHUB_ACTIONS").map_or(false, |value| value == "true");
+  let is_github_environment = std::env::var("GITHUB_ACTIONS").map_or(false, |value| value == "true");
 
   let github_actions = match github_actions_flag {
     Some(explicit) => explicit,
@@ -312,10 +293,7 @@ fn parse_arguments() -> CliArguments {
 }
 
 fn print_usage() {
-  println!(
-    "herb-lint {} - Linter for HTML+ERB templates",
-    env!("CARGO_PKG_VERSION")
-  );
+  println!("herb-lint {} - Linter for HTML+ERB templates", env!("CARGO_PKG_VERSION"));
   println!();
   println!("Usage: herb-lint [files|directories...] [options]");
   println!();
@@ -335,12 +313,8 @@ fn print_usage() {
   println!("  --fix-unsafely                also apply unsafe auto-fixes (implies --fix)");
   println!("  --ignore-disable-comments     report offenses even when suppressed with herb:disable comments");
   println!("  --fail-level <severity>       exit with error code for this severity or higher (error|warning|info|hint) [default: error]");
-  println!(
-    "  --format <format>             output format (simple|detailed|json) [default: detailed]"
-  );
-  println!(
-    "  --simple                      use simple output format (shortcut for --format simple)"
-  );
+  println!("  --format <format>             output format (simple|detailed|json) [default: detailed]");
+  println!("  --simple                      use simple output format (shortcut for --format simple)");
   println!("  --json                        use JSON output format (shortcut for --format json)");
   println!("  --github                      enable GitHub Actions annotations");
   println!("  --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)");
@@ -348,11 +322,7 @@ fn print_usage() {
   println!("  --no-timing                   hide timing information");
 }
 
-fn collect_files(
-  path: &Path,
-  include_patterns: &[String],
-  exclude_patterns: &[String],
-) -> Vec<String> {
+fn collect_files(path: &Path, include_patterns: &[String], exclude_patterns: &[String]) -> Vec<String> {
   if path.is_file() {
     return vec![path.to_string_lossy().into_owned()];
   }
@@ -367,20 +337,11 @@ fn collect_files(
   files
 }
 
-fn collect_files_recursive(
-  directory: &Path,
-  files: &mut Vec<String>,
-  include_patterns: &[String],
-  exclude_patterns: &[String],
-) {
+fn collect_files_recursive(directory: &Path, files: &mut Vec<String>, include_patterns: &[String], exclude_patterns: &[String]) {
   let entries = match std::fs::read_dir(directory) {
     Ok(entries) => entries,
     Err(error) => {
-      eprintln!(
-        "Error reading directory '{}': {}",
-        directory.display(),
-        error
-      );
+      eprintln!("Error reading directory '{}': {}", directory.display(), error);
       return;
     }
   };
@@ -401,9 +362,7 @@ fn collect_files_recursive(
       }
 
       collect_files_recursive(&path, files, include_patterns, exclude_patterns);
-    } else if is_file_included(&path, include_patterns)
-      && !is_path_excluded(&path, exclude_patterns)
-    {
+    } else if is_file_included(&path, include_patterns) && !is_path_excluded(&path, exclude_patterns) {
       files.push(path.to_string_lossy().into_owned());
     }
   }
@@ -468,15 +427,52 @@ fn extract_dir_prefix_from_glob(pattern: &str) -> Option<String> {
 
 fn pattern_matches(path: &str, pattern: &str) -> bool {
   if let Some(directory_prefix) = extract_dir_prefix_from_glob(pattern) {
-    return path.contains(&format!("/{}/", directory_prefix))
-      || path.starts_with(&format!("{}/", directory_prefix));
+    return path.contains(&format!("/{}/", directory_prefix)) || path.starts_with(&format!("{}/", directory_prefix));
   }
   false
+}
+
+struct FileLintResult {
+  file_path: String,
+  offenses: Vec<Offense>,
+  errors: usize,
+  warnings: usize,
+  info: usize,
+  hints: usize,
 }
 
 fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> ProcessingResult {
   let linter = Linter::new(linter_config.clone());
   let rule_count = linter.rule_names().len();
+
+  let file_results: Vec<FileLintResult> = files
+    .par_iter()
+    .filter_map(|file_path| {
+      let source = match std::fs::read_to_string(file_path) {
+        Ok(content) => content,
+        Err(error) => {
+          eprintln!("Error reading file '{}': {}", file_path, error);
+          return None;
+        }
+      };
+
+      let context = LintContext {
+        file_name: Some(file_path.clone()),
+        ..Default::default()
+      };
+
+      let result = linter.lint(&source, &context);
+
+      Some(FileLintResult {
+        file_path: file_path.clone(),
+        offenses: result.offenses,
+        errors: result.errors,
+        warnings: result.warnings,
+        info: result.info,
+        hints: result.hints,
+      })
+    })
+    .collect();
 
   let mut all_offenses = Vec::new();
   let mut total_errors = 0usize;
@@ -486,43 +482,27 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
   let mut files_with_offenses = 0usize;
   let mut rule_offenses: HashMap<String, RuleOffenseStats> = HashMap::new();
 
-  for file_path in files {
-    let source = match std::fs::read_to_string(file_path) {
-      Ok(content) => content,
-      Err(error) => {
-        eprintln!("Error reading file '{}': {}", file_path, error);
-        continue;
-      }
-    };
-
-    let context = LintContext {
-      file_name: Some(file_path.clone()),
-    };
-
-    let result = linter.lint(&source, &context);
-
-    if !result.offenses.is_empty() {
+  for file_result in file_results {
+    if !file_result.offenses.is_empty() {
       files_with_offenses += 1;
     }
 
-    total_errors += result.errors;
-    total_warnings += result.warnings;
-    total_info += result.info;
-    total_hints += result.hints;
+    total_errors += file_result.errors;
+    total_warnings += file_result.warnings;
+    total_info += file_result.info;
+    total_hints += file_result.hints;
 
-    for offense in result.offenses {
-      let stats = rule_offenses
-        .entry(offense.rule.clone())
-        .or_insert_with(|| RuleOffenseStats {
-          count: 0,
-          files: HashSet::new(),
-        });
+    for offense in file_result.offenses {
+      let stats = rule_offenses.entry(offense.rule.clone()).or_insert_with(|| RuleOffenseStats {
+        count: 0,
+        files: HashSet::new(),
+      });
 
       stats.count += 1;
-      stats.files.insert(file_path.clone());
+      stats.files.insert(file_result.file_path.clone());
 
       all_offenses.push(ProcessedFile {
-        filename: file_path.clone(),
+        filename: file_result.file_path.clone(),
         offense,
       });
     }
@@ -535,22 +515,13 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
       return file_comparison;
     }
 
-    let line_comparison = a
-      .offense
-      .location
-      .start
-      .line
-      .cmp(&b.offense.location.start.line);
+    let line_comparison = a.offense.location.start.line.cmp(&b.offense.location.start.line);
 
     if line_comparison != std::cmp::Ordering::Equal {
       return line_comparison;
     }
 
-    a.offense
-      .location
-      .start
-      .column
-      .cmp(&b.offense.location.start.column)
+    a.offense.location.start.column.cmp(&b.offense.location.start.column)
   });
 
   ProcessingResult {
@@ -566,7 +537,7 @@ fn lint_files(files: &[String], linter_config: &herb_config::LinterConfig) -> Pr
   }
 }
 
-fn output_results(result: &ProcessingResult,arguments: &CliArguments,duration: std::time::Duration) {
+fn output_results(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
   if arguments.github_actions {
     format_github_actions(result);
 
@@ -655,10 +626,7 @@ fn format_simple(result: &ProcessingResult) {
     }
 
     let offense = &processed.offense;
-    let location = format!(
-      "{}:{}",
-      offense.location.start.line, offense.location.start.column
-    );
+    let location = format!("{}:{}", offense.location.start.line, offense.location.start.column);
 
     let padded_location = format!("{:<8}", location);
     let severity_string = format!("{}", offense.severity);
@@ -668,10 +636,7 @@ fn format_simple(result: &ProcessingResult) {
       let symbol = if is_error { "x" } else { "!" };
       (
         symbol.to_string(),
-        format!(
-          "  {} {} {} ({})",
-          padded_location, symbol, offense.message, offense.rule
-        ),
+        format!("  {} {} {} ({})", padded_location, symbol, offense.message, offense.rule),
       )
     } else {
       let symbol = if is_error {
@@ -682,10 +647,7 @@ fn format_simple(result: &ProcessingResult) {
 
       (
         symbol.to_string(),
-        format!(
-          "  \x1b[90m{}\x1b[0m {} {} ({})",
-          padded_location, symbol, offense.message, offense.rule
-        ),
+        format!("  \x1b[90m{}\x1b[0m {} {} ({})", padded_location, symbol, offense.message, offense.rule),
       )
     };
 
@@ -764,30 +726,18 @@ fn format_github_actions(result: &ProcessingResult) {
     message.push_str(&format!(" [{}]", offense.rule));
     let escaped_message = escape_github_message(&message);
 
-    let title = format!(
-      "{} \u{2022} herb-lint@{}",
-      offense.rule,
-      env!("CARGO_PKG_VERSION")
-    );
+    let title = format!("{} \u{2022} herb-lint@{}", offense.rule, env!("CARGO_PKG_VERSION"));
     let escaped_title = escape_github_param(&title);
 
     println!(
       "\n::{}  file={},line={},col={},title={}::{}",
-      level,
-      escaped_filename,
-      offense.location.start.line,
-      offense.location.start.column,
-      escaped_title,
-      escaped_message
+      level, escaped_filename, offense.location.start.line, offense.location.start.column, escaped_title, escaped_message
     );
   }
 }
 
 fn escape_github_message(input: &str) -> String {
-  input
-    .replace('%', "%25")
-    .replace('\n', "%0A")
-    .replace('\r', "%0D")
+  input.replace('%', "%25").replace('\n', "%0A").replace('\r', "%0D")
 }
 
 fn escape_github_param(input: &str) -> String {
@@ -799,11 +749,7 @@ fn escape_github_param(input: &str) -> String {
     .replace(',', "%2C")
 }
 
-fn display_summary(
-  result: &ProcessingResult,
-  arguments: &CliArguments,
-  duration: std::time::Duration,
-) {
+fn display_summary(result: &ProcessingResult, arguments: &CliArguments, duration: std::time::Duration) {
   let no_color = std::env::var("NO_COLOR").is_ok();
 
   println!();
@@ -820,20 +766,14 @@ fn display_summary(
   if no_color {
     println!("  {:<12} {}", "Checked", checked_text);
   } else {
-    println!(
-      "  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m",
-      "Checked", checked_text
-    );
+    println!("  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m", "Checked", checked_text);
   }
 
   if file_count > 1 {
     let files_clean = file_count - result.files_with_offenses;
     let files_summary = if result.files_with_offenses > 0 {
       if no_color {
-        format!(
-          "{} with offenses | {} clean ({} total)",
-          result.files_with_offenses, files_clean, file_count
-        )
+        format!("{} with offenses | {} clean ({} total)", result.files_with_offenses, files_clean, file_count)
       } else {
         format!(
           "\x1b[1m\x1b[91m{} with offenses\x1b[0m | \x1b[1m\x1b[32m{} clean\x1b[0m \x1b[90m({} total)\x1b[0m",
@@ -843,10 +783,7 @@ fn display_summary(
     } else if no_color {
       format!("{} clean ({} total)", file_count, file_count)
     } else {
-      format!(
-        "\x1b[1m\x1b[32m{} clean\x1b[0m \x1b[90m({} total)\x1b[0m",
-        file_count, file_count
-      )
+      format!("\x1b[1m\x1b[32m{} clean\x1b[0m \x1b[90m({} total)\x1b[0m", file_count, file_count)
     };
 
     if no_color {
@@ -859,11 +796,7 @@ fn display_summary(
   let mut parts = Vec::new();
   if result.total_errors > 0 {
     if no_color {
-      parts.push(format!(
-        "{} {}",
-        result.total_errors,
-        pluralize(result.total_errors, "error")
-      ));
+      parts.push(format!("{} {}", result.total_errors, pluralize(result.total_errors, "error")));
     } else {
       parts.push(format!(
         "\x1b[1m\x1b[91m{} {}\x1b[0m",
@@ -875,11 +808,7 @@ fn display_summary(
 
   if result.total_warnings > 0 {
     if no_color {
-      parts.push(format!(
-        "{} {}",
-        result.total_warnings,
-        pluralize(result.total_warnings, "warning")
-      ));
+      parts.push(format!("{} {}", result.total_warnings, pluralize(result.total_warnings, "warning")));
     } else {
       parts.push(format!(
         "\x1b[1m\x1b[93m{} {}\x1b[0m",
@@ -889,11 +818,7 @@ fn display_summary(
     }
   } else if result.total_errors > 0 {
     if no_color {
-      parts.push(format!(
-        "{} {}",
-        result.total_warnings,
-        pluralize(result.total_warnings, "warning")
-      ));
+      parts.push(format!("{} {}", result.total_warnings, pluralize(result.total_warnings, "warning")));
     } else {
       parts.push(format!(
         "\x1b[1m\x1b[32m{} {}\x1b[0m",
@@ -913,11 +838,7 @@ fn display_summary(
 
   if result.total_hints > 0 {
     if no_color {
-      parts.push(format!(
-        "{} {}",
-        result.total_hints,
-        pluralize(result.total_hints, "hint")
-      ));
+      parts.push(format!("{} {}", result.total_hints, pluralize(result.total_hints, "hint")));
     } else {
       parts.push(format!(
         "\x1b[1m\x1b[90m{} {}\x1b[0m",
@@ -935,8 +856,7 @@ fn display_summary(
     }
   } else {
     let joined = parts.join(" | ");
-    let total_offenses =
-      result.total_errors + result.total_warnings + result.total_info + result.total_hints;
+    let total_offenses = result.total_errors + result.total_warnings + result.total_info + result.total_hints;
 
     if result.files_with_offenses > 0 {
       let detail = format!(
@@ -967,17 +887,9 @@ fn display_summary(
 
   if total_offenses > 0 {
     let fixable_line = if no_color {
-      format!(
-        "{} {}",
-        total_offenses,
-        pluralize(total_offenses, "offense")
-      )
+      format!("{} {}", total_offenses, pluralize(total_offenses, "offense"))
     } else {
-      format!(
-        "\x1b[1m\x1b[91m{} {}\x1b[0m",
-        total_offenses,
-        pluralize(total_offenses, "offense")
-      )
+      format!("\x1b[1m\x1b[91m{} {}\x1b[0m", total_offenses, pluralize(total_offenses, "offense"))
     };
 
     if no_color {
@@ -989,20 +901,12 @@ fn display_summary(
 
   if arguments.show_timing {
     let duration_milliseconds = duration.as_millis();
-    let duration_text = format!(
-      "{}ms ({} {})",
-      duration_milliseconds,
-      result.rule_count,
-      pluralize(result.rule_count, "rule")
-    );
+    let duration_text = format!("{}ms ({} {})", duration_milliseconds, result.rule_count, pluralize(result.rule_count, "rule"));
 
     if no_color {
       println!("  {:<12} {}", "Duration", duration_text);
     } else {
-      println!(
-        "  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m",
-        "Duration", duration_text
-      );
+      println!("  \x1b[90m{:<12}\x1b[0m \x1b[36m{}\x1b[0m", "Duration", duration_text);
     }
   }
 
@@ -1020,13 +924,11 @@ fn display_most_offending_files(result: &ProcessingResult) {
   let mut file_offenses: HashMap<String, FileOffenseStats> = HashMap::new();
 
   for processed in &result.all_offenses {
-    let stats = file_offenses
-      .entry(processed.filename.clone())
-      .or_insert(FileOffenseStats {
-        count: 0,
-        errors: 0,
-        warnings: 0,
-      });
+    let stats = file_offenses.entry(processed.filename.clone()).or_insert(FileOffenseStats {
+      count: 0,
+      errors: 0,
+      warnings: 0,
+    });
 
     stats.count += 1;
 
@@ -1071,18 +973,10 @@ fn display_most_offending_files(result: &ProcessingResult) {
   for (file, data) in &displayed {
     let mut parts = Vec::new();
     if data.errors > 0 {
-      parts.push(format!(
-        "{} {}",
-        data.errors,
-        pluralize(data.errors, "error")
-      ));
+      parts.push(format!("{} {}", data.errors, pluralize(data.errors, "error")));
     }
     if data.warnings > 0 {
-      parts.push(format!(
-        "{} {}",
-        data.warnings,
-        pluralize(data.warnings, "warning")
-      ));
+      parts.push(format!("{} {}", data.warnings, pluralize(data.warnings, "warning")));
     }
     let count_text = format!("({})", parts.join(", "));
 
@@ -1183,10 +1077,7 @@ fn display_most_violated_rules(result: &ProcessingResult) {
 
 fn init_command(current_directory: &Path, existing_config: Option<&Path>) {
   if let Some(path) = existing_config {
-    eprintln!(
-      "\n\u{2717} Configuration file already exists at {}",
-      path.display()
-    );
+    eprintln!("\n\u{2717} Configuration file already exists at {}", path.display());
     eprintln!("  Use --config-file to specify a different location.\n");
     std::process::exit(1);
   }
@@ -1195,10 +1086,7 @@ fn init_command(current_directory: &Path, existing_config: Option<&Path>) {
   let config_path = project_root.join(".herb.yml");
 
   if config_path.exists() {
-    eprintln!(
-      "\n\u{2717} Configuration file already exists at {}",
-      config_path.display()
-    );
+    eprintln!("\n\u{2717} Configuration file already exists at {}", config_path.display());
     eprintln!("  Use --config-file to specify a different location.\n");
     std::process::exit(1);
   }
@@ -1207,18 +1095,11 @@ fn init_command(current_directory: &Path, existing_config: Option<&Path>) {
 
   match std::fs::write(&config_path, template) {
     Ok(()) => {
-      println!(
-        "\n\u{2713} Configuration initialized at {}",
-        config_path.display()
-      );
+      println!("\n\u{2713} Configuration initialized at {}", config_path.display());
       println!("  Edit this file to customize linter and formatter settings.\n");
     }
     Err(error) => {
-      eprintln!(
-        "Error: Failed to write configuration file '{}': {}",
-        config_path.display(),
-        error
-      );
+      eprintln!("Error: Failed to write configuration file '{}': {}", config_path.display(), error);
       std::process::exit(1);
     }
   }

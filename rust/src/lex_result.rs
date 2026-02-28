@@ -15,12 +15,7 @@ impl LexResult {
   }
 
   pub fn inspect(&self) -> String {
-    self
-      .tokens
-      .iter()
-      .map(|token| token.inspect())
-      .collect::<Vec<_>>()
-      .join("\n")
+    self.tokens.iter().map(|token| token.inspect()).collect::<Vec<_>>().join("\n")
   }
 }
 

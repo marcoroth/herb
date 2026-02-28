@@ -12,6 +12,7 @@ fn lint_with_file(source: &str, file_name: &str) -> herb_linter::offense::LintRe
   let linter = Linter::default();
   let context = LintContext {
     file_name: Some(file_name.to_string()),
+    ..Default::default()
   };
   linter.lint(source, &context)
 }
@@ -29,10 +30,7 @@ fn test_parser_no_errors_clean() {
 fn test_parser_no_errors_with_error() {
   let result = lint("<div>");
   assert!(result.errors > 0);
-  assert!(result
-    .offenses
-    .iter()
-    .any(|offense| offense.rule == "parser-no-errors"));
+  assert!(result.offenses.iter().any(|offense| offense.rule == "parser-no-errors"));
 }
 
 // ── html-img-require-alt ──────────────────────────────────────────────
@@ -48,22 +46,14 @@ fn test_img_require_alt_missing() {
 #[test]
 fn test_img_require_alt_present() {
   let result = lint("<img src=\"photo.jpg\" alt=\"A photo\">");
-  let alt_offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-img-require-alt")
-    .collect();
+  let alt_offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-img-require-alt").collect();
   assert!(alt_offenses.is_empty());
 }
 
 #[test]
 fn test_img_require_alt_empty_alt() {
   let result = lint("<img src=\"photo.jpg\" alt=\"\">");
-  let alt_offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-img-require-alt")
-    .collect();
+  let alt_offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-img-require-alt").collect();
   assert!(alt_offenses.is_empty());
 }
 
@@ -72,11 +62,7 @@ fn test_img_require_alt_empty_alt() {
 #[test]
 fn test_tag_name_lowercase_uppercase() {
   let result = lint("<DIV>hello</DIV>");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-tag-name-lowercase")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-tag-name-lowercase").collect();
   assert_eq!(offenses.len(), 2); // open + close
   assert!(offenses[0].message.contains("lowercase"));
 }
@@ -84,22 +70,14 @@ fn test_tag_name_lowercase_uppercase() {
 #[test]
 fn test_tag_name_lowercase_already_lowercase() {
   let result = lint("<div>hello</div>");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-tag-name-lowercase")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-tag-name-lowercase").collect();
   assert!(offenses.is_empty());
 }
 
 #[test]
 fn test_tag_name_lowercase_mixed_case() {
   let result = lint("<Div>hello</Div>");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-tag-name-lowercase")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-tag-name-lowercase").collect();
   assert_eq!(offenses.len(), 2);
 }
 
@@ -108,11 +86,7 @@ fn test_tag_name_lowercase_mixed_case() {
 #[test]
 fn test_no_self_closing_br() {
   let result = lint("<br />");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-no-self-closing")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-no-self-closing").collect();
   assert_eq!(offenses.len(), 1);
   assert!(offenses[0].message.contains("<br>"));
 }
@@ -120,11 +94,7 @@ fn test_no_self_closing_br() {
 #[test]
 fn test_no_self_closing_div() {
   let result = lint("<div />");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-no-self-closing")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-no-self-closing").collect();
   assert_eq!(offenses.len(), 1);
   assert!(offenses[0].message.contains("<div></div>"));
 }
@@ -132,22 +102,14 @@ fn test_no_self_closing_div() {
 #[test]
 fn test_no_self_closing_void_ok() {
   let result = lint("<br>");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-no-self-closing")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-no-self-closing").collect();
   assert!(offenses.is_empty());
 }
 
 #[test]
 fn test_no_self_closing_img_with_alt() {
   let result = lint("<img src=\"photo.jpg\" alt=\"photo\" />");
-  let offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-no-self-closing")
-    .collect();
+  let offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-no-self-closing").collect();
   assert_eq!(offenses.len(), 1);
   assert!(offenses[0].message.contains("<img>"));
 }
@@ -206,7 +168,7 @@ fn test_trailing_newline_no_file_name() {
 #[test]
 fn test_linter_rule_count() {
   let linter = Linter::default();
-  assert_eq!(linter.rule_count(), 5);
+  assert_eq!(linter.rule_count(), 53);
 }
 
 #[test]
@@ -235,11 +197,7 @@ fn test_linter_config_disable_rule() {
   let context = LintContext::default();
   let result = linter.lint("<img src=\"photo.jpg\">", &context);
 
-  let alt_offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-img-require-alt")
-    .collect();
+  let alt_offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-img-require-alt").collect();
   assert!(alt_offenses.is_empty());
 }
 
@@ -259,11 +217,7 @@ fn test_linter_config_severity_override() {
   let context = LintContext::default();
   let result = linter.lint("<img src=\"photo.jpg\">", &context);
 
-  let alt_offenses: Vec<_> = result
-    .offenses
-    .iter()
-    .filter(|offense| offense.rule == "html-img-require-alt")
-    .collect();
+  let alt_offenses: Vec<_> = result.offenses.iter().filter(|offense| offense.rule == "html-img-require-alt").collect();
   assert_eq!(alt_offenses.len(), 1);
   assert_eq!(alt_offenses[0].severity, herb_config::Severity::Warning);
 }

@@ -1,5 +1,6 @@
 use herb::Location;
 use herb_config::Severity;
+
 use serde::Serialize;
 
 #[derive(Debug, Clone)]
@@ -8,6 +9,17 @@ pub struct UnboundOffense {
   pub code: String,
   pub message: String,
   pub location: Location,
+}
+
+impl UnboundOffense {
+  pub fn new(rule: &str, message: impl Into<String>, location: Location) -> Self {
+    Self {
+      rule: rule.to_string(),
+      code: rule.to_string(),
+      message: message.into(),
+      location,
+    }
+  }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -59,22 +71,14 @@ pub struct LintResult {
 
 impl LintResult {
   pub fn new(offenses: Vec<Offense>) -> Self {
-    let errors = offenses
-      .iter()
-      .filter(|offense| offense.severity == Severity::Error)
-      .count();
-    let warnings = offenses
-      .iter()
-      .filter(|offense| offense.severity == Severity::Warning)
-      .count();
-    let info = offenses
-      .iter()
-      .filter(|offense| offense.severity == Severity::Info)
-      .count();
-    let hints = offenses
-      .iter()
-      .filter(|offense| offense.severity == Severity::Hint)
-      .count();
+    Self::new_with_ignored(offenses, 0)
+  }
+
+  pub fn new_with_ignored(offenses: Vec<Offense>, ignored: usize) -> Self {
+    let errors = offenses.iter().filter(|offense| offense.severity == Severity::Error).count();
+    let warnings = offenses.iter().filter(|offense| offense.severity == Severity::Warning).count();
+    let info = offenses.iter().filter(|offense| offense.severity == Severity::Info).count();
+    let hints = offenses.iter().filter(|offense| offense.severity == Severity::Hint).count();
 
     Self {
       offenses,
@@ -82,7 +86,7 @@ impl LintResult {
       warnings,
       info,
       hints,
-      ignored: 0,
+      ignored,
     }
   }
 

@@ -2,9 +2,13 @@ import { beforeAll, afterEach, expect } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
+import { rules as allBuiltinRules } from "../../src/rules.js"
+import { normalizeOffenses } from "../../src/backend-comparison.js"
 import { Config } from "@herb-tools/config"
 
-import type { RuleClass } from "../../src/types.js"
+import type { HerbBackend } from "@herb-tools/core"
+import type { RuleClass, LintResult } from "../../src/types.js"
+import type { BackendMode } from "../../src/linter.js"
 
 interface ExpectedLocation {
   line?: number
@@ -30,8 +34,17 @@ interface LinterTestHelpers {
   assertOffenses: (html: string, options?: any | TestOptions) => void
 }
 
+export interface LinterTestOptions {
+  configOverride?: Record<string, any>
+  herb?: HerbBackend
+}
+
 /**
  * Creates a test helper for linter rules that reduces boilerplate in tests.
+ *
+ * Each assertion automatically runs both the JavaScript and Rust linting paths
+ * and fails if the results differ. This ensures all rules are implemented in
+ * both backends.
  *
  * @param rules - A single rule class or array of rule classes to test. When multiple rules are provided,
  *                the first rule is considered the primary rule being tested.
@@ -61,19 +74,24 @@ interface LinterTestHelpers {
  * })
  * ```
  */
-export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?: Record<string, any>): LinterTestHelpers {
+export function createLinterTest(rules: RuleClass | RuleClass[], configOverrideOrOptions?: Record<string, any> | LinterTestOptions): LinterTestHelpers {
+  const isOptionsObject = configOverrideOrOptions && ("herb" in configOverrideOrOptions || "configOverride" in configOverrideOrOptions)
+  const options: LinterTestOptions = isOptionsObject ? configOverrideOrOptions as LinterTestOptions : { configOverride: configOverrideOrOptions as Record<string, any> | undefined }
+
+  const testHerb = options.herb ?? Herb
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
+
   let hasAsserted = false
 
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
   const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
-  const ruleConfigOverride = configOverride
+  const ruleConfigOverride = options.configOverride
 
   beforeAll(async () => {
-    await Herb.load()
+    await testHerb.load()
   })
 
   afterEach(() => {
@@ -91,6 +109,80 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     hasAsserted = false
   })
 
+  const buildConfig = () => {
+    const rulesConfig: Record<string, any> = {}
+
+    ruleClasses.forEach(ruleClass => {
+      const instance = new ruleClass()
+      const isPrimary = instance.name === ruleInstance.name
+      rulesConfig[instance.name] = isPrimary ? { ...instance.defaultConfig, enabled: true, ...ruleConfigOverride } : instance.defaultConfig
+    })
+
+    return Config.fromObject({
+      linter: {
+        rules: rulesConfig
+      }
+    })
+  }
+
+  const createLinterWithMode = (config: ReturnType<typeof buildConfig>, mode: BackendMode) => {
+    const linter = new Linter(testHerb, ruleClasses, config, allBuiltinRules)
+    linter.backendMode = mode
+    return linter
+  }
+
+  const lintWithMode = (html: string, config: ReturnType<typeof buildConfig>, mode: BackendMode, context?: any): LintResult => {
+    const linter = createLinterWithMode(config, mode)
+    return linter.lint(html, context)
+  }
+
+  const compareBackendResults = (resultA: LintResult, resultB: LintResult, labelA: string, labelB: string, ruleName: string, html: string) => {
+    const offensesA = resultA.offenses.filter(o => o.rule === ruleName)
+    const offensesB = resultB.offenses.filter(o => o.rule === ruleName)
+
+    const normalizedA = normalizeOffenses(offensesA)
+    const normalizedB = normalizeOffenses(offensesB)
+
+    if (JSON.stringify(normalizedA) !== JSON.stringify(normalizedB)) {
+      const formatOffenses = (offenses: typeof normalizedA) =>
+        offenses.length === 0
+          ? "  (none)"
+          : offenses.map(o => `  - [${o.severity}] "${o.message}" at ${o.line}:${o.column}`).join("\n")
+
+      throw new Error(
+        `Backend mismatch for rule "${ruleName}"!\n\n` +
+        `${labelA} (${offensesA.length} offense(s)):\n${formatOffenses(normalizedA)}\n\n` +
+        `${labelB} (${offensesB.length} offense(s)):\n${formatOffenses(normalizedB)}\n\n` +
+        `Source:\n${html}`
+      )
+    }
+  }
+
+  const validateParserErrors = (html: string, allowInvalidSyntax: boolean) => {
+    if (isParserNoErrorsRule) return
+
+    const parseResult = testHerb.parse(html, { track_whitespace: true })
+    const parserErrors = parseResult.recursiveErrors()
+
+    if (allowInvalidSyntax && parserErrors.length === 0) {
+      throw new Error(
+        `Test has 'allowInvalidSyntax: true' but the HTML is actually valid.\n` +
+        `Remove the 'allowInvalidSyntax' option since the HTML parses without errors.\n` +
+        `Source:\n${html}`
+      )
+    }
+
+    if (!allowInvalidSyntax && parserErrors.length > 0) {
+      const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
+
+      throw new Error(
+        `Test HTML has parser errors. Fix the HTML before testing the linter rule.\n` +
+        `Source:\n${html}\n\n` +
+        `Parser errors:\n${formattedErrors}`
+      )
+    }
+  }
+
   const expectNoOffenses = (html: string, options?: any | TestOptions) => {
     if (expectedWarnings.length > 0 || expectedErrors.length > 0) {
       throw new Error(
@@ -103,52 +195,17 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const context = options?.context ?? options
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
-    if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
-      const parserErrors = parseResult.recursiveErrors()
+    validateParserErrors(html, allowInvalidSyntax)
 
-      if (allowInvalidSyntax && parserErrors.length === 0) {
-        throw new Error(
-          `Test has 'allowInvalidSyntax: true' but the HTML is actually valid.\n` +
-          `Remove the 'allowInvalidSyntax' option since the HTML parses without errors.\n` +
-          `Source:\n${html}`
-        )
-      }
-
-      if (!allowInvalidSyntax && parserErrors.length > 0) {
-        const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
-
-        throw new Error(
-          `Test HTML has parser errors. Fix the HTML before testing the linter rule.\n` +
-          `Source:\n${html}\n\n` +
-          `Parser errors:\n${formattedErrors}`
-        )
-      }
-    }
-
-    const rulesConfig: Record<string, any> = {}
-
-    ruleClasses.forEach(ruleClass => {
-      const instance = new ruleClass()
-      const isPrimary = instance.name === ruleInstance.name
-      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
-        ? { ...instance.defaultConfig, ...ruleConfigOverride }
-        : instance.defaultConfig
-    })
-
-    const config = Config.fromObject({
-      linter: {
-        rules: rulesConfig
-      }
-    })
-
-    const linter = new Linter(Herb, ruleClasses, config)
-    const lintResult = linter.lint(html, context)
-
+    const config = buildConfig()
     const ruleName = ruleInstance.name
-    const primaryOffenses = lintResult.offenses.filter(offense => offense.rule === ruleName)
 
-    expect(primaryOffenses).toHaveLength(0)
+    const javascriptResult = lintWithMode(html, config, "javascript", context)
+    const jsPrimaryOffenses = javascriptResult.offenses.filter(offense => offense.rule === ruleName)
+    expect(jsPrimaryOffenses).toHaveLength(0)
+
+    const rustResult = lintWithMode(html, config, "rust", context)
+    compareBackendResults(javascriptResult, rustResult, "JavaScript", "Rust", ruleName, html)
   }
 
   const normalizeLocation = (location?: LocationInput): ExpectedLocation | undefined => {
@@ -182,50 +239,13 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const context = options?.context ?? options
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
-    if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
-      const parserErrors = parseResult.recursiveErrors()
+    validateParserErrors(html, allowInvalidSyntax)
 
-      if (allowInvalidSyntax && parserErrors.length === 0) {
-        throw new Error(
-          `Test has 'allowInvalidSyntax: true' but the HTML is actually valid.\n` +
-          `Remove the 'allowInvalidSyntax' option since the HTML parses without errors.\n` +
-          `Source:\n${html}`
-        )
-      }
-
-      if (!allowInvalidSyntax && parserErrors.length > 0) {
-        const formattedErrors = parserErrors.map(error => `  - ${error.message} (${error.type}) at ${error.location.start.line}:${error.location.start.column}`).join('\n')
-
-        throw new Error(
-          `Test HTML has parser errors. Fix the HTML before testing the linter rule.\n` +
-          `Source:\n${html}\n\n` +
-          `Parser errors:\n${formattedErrors}`
-        )
-      }
-    }
-
-    const rulesConfig: Record<string, any> = {}
-
-    ruleClasses.forEach(ruleClass => {
-      const instance = new ruleClass()
-      const isPrimary = instance.name === ruleInstance.name
-      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
-        ? { ...instance.defaultConfig, ...ruleConfigOverride }
-        : instance.defaultConfig
-    })
-
-    const config = Config.fromObject({
-      linter: {
-        rules: rulesConfig
-      }
-    })
-
-    const linter = new Linter(Herb, ruleClasses, config)
-    const lintResult = linter.lint(html, context)
+    const config = buildConfig()
     const ruleName = ruleInstance.name
+    const javascriptResult = lintWithMode(html, config, "javascript", context)
 
-    const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
+    const primaryOffenses = javascriptResult.offenses.filter(o => o.rule === ruleName)
     const primaryErrors = primaryOffenses.filter(o => o.severity === "error")
     const primaryWarnings = primaryOffenses.filter(o => o.severity === "warning")
 
@@ -255,6 +275,9 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     matchOffenses(expectedErrors, actualErrors, "error")
     matchOffenses(expectedWarnings, actualWarnings, "warning")
 
+    const rustResult = lintWithMode(html, config, "rust", context)
+    compareBackendResults(javascriptResult, rustResult, "JavaScript", "Rust", ruleName, html)
+
     expectedWarnings.length = 0
     expectedErrors.length = 0
   }
@@ -267,9 +290,6 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   }
 }
 
-/**
- * Matches expected offenses to actual offenses in an order-independent way
- */
 function matchOffenses(
   expected: ExpectedOffense[],
   actual: any[],

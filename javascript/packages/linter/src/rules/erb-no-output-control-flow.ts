@@ -39,7 +39,8 @@ class ERBNoOutputControlFlowRuleVisitor extends BaseRuleVisitor {
     }
 
     if (openTag.value === "<%="){
-      const controlBlockType = ERBNoOutputControlFlowRuleVisitor.CONTROL_BLOCK_NAMES[controlBlock.type] || controlBlock.type
+      const contentKeyword = controlBlock.content?.value?.trim().split(/\s+/)[0]
+      const controlBlockType = contentKeyword || ERBNoOutputControlFlowRuleVisitor.CONTROL_BLOCK_NAMES[controlBlock.type] || controlBlock.type
 
       this.addOffense(
         `Control flow statements like \`${controlBlockType}\` should not be used with output tags. Use \`<% ${controlBlockType} ... %>\` instead.`,

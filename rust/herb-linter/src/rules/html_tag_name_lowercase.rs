@@ -1,12 +1,11 @@
 use crate::offense::UnboundOffense;
-use crate::rule::{LintContext, Rule, RuleType};
-use crate::utils::tag_utils::get_tag_name_from_open_tag;
-use herb::nodes::*;
-use herb::visitor::Visitor;
-use herb::ParseResult;
-use herb_config::Severity;
+use crate::rule::{LintContext, ParserRule, Rule};
+use crate::utils::tag_utils::{get_tag_name_from_open_tag, tag_name_location};
 
-pub struct HTMLTagNameLowercaseRule;
+use herb::nodes::*;
+use herb::ParseResult;
+use herb::Visitor;
+use herb_config::Severity;
 
 struct XMLDeclarationChecker {
   has_xml_declaration: bool,
@@ -18,31 +17,19 @@ impl Visitor for XMLDeclarationChecker {
   }
 }
 
-struct TagNameLowercaseVisitor<'rule> {
-  rule_name: &'rule str,
-  offenses: Vec<UnboundOffense>,
-}
+rule_visitor!(TagNameLowercaseVisitor);
 
-impl<'rule> TagNameLowercaseVisitor<'rule> {
+impl TagNameLowercaseVisitor {
   fn check_open_tag(&mut self, node: &HTMLOpenTagNode) {
     if let Some(tag_name) = get_tag_name_from_open_tag(node) {
       let lowercase = tag_name.to_lowercase();
       if tag_name != lowercase {
-        let location = node
-          .tag_name
-          .as_ref()
-          .map(|token| token.location.clone())
-          .unwrap_or_else(|| node.location.clone());
+        let location = tag_name_location(node);
 
-        self.offenses.push(UnboundOffense {
-          rule: self.rule_name.to_string(),
-          code: self.rule_name.to_string(),
-          message: format!(
-            "Opening tag name `<{}>` should be lowercase. Use `<{}>` instead.",
-            tag_name, lowercase
-          ),
+        self.add_offense(
+          format!("Opening tag name `<{}>` should be lowercase. Use `<{}>` instead.", tag_name, lowercase),
           location,
-        });
+        );
       }
     }
   }
@@ -53,21 +40,16 @@ impl<'rule> TagNameLowercaseVisitor<'rule> {
       let lowercase = tag_name.to_lowercase();
 
       if tag_name.as_str() != lowercase {
-        self.offenses.push(UnboundOffense {
-          rule: self.rule_name.to_string(),
-          code: self.rule_name.to_string(),
-          message: format!(
-            "Closing tag name `</{}>` should be lowercase. Use `</{}>` instead.",
-            tag_name, lowercase
-          ),
-          location: token.location.clone(),
-        });
+        self.add_offense(
+          format!("Closing tag name `</{}>` should be lowercase. Use `</{}>` instead.", tag_name, lowercase),
+          token.location.clone(),
+        );
       }
     }
   }
 }
 
-impl<'rule> Visitor for TagNameLowercaseVisitor<'rule> {
+impl Visitor for TagNameLowercaseVisitor {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     // For SVG elements, only check the SVG tag itself (not children)
     if let Some(tag_name) = node.tag_name.as_ref().map(|token| token.value.as_str()) {
@@ -75,10 +57,7 @@ impl<'rule> Visitor for TagNameLowercaseVisitor<'rule> {
         if let Some(open_tag) = crate::utils::tag_utils::get_open_tag(node) {
           self.check_open_tag(open_tag);
         }
-        if let Some(
-          herb::union_types::HTMLCloseTagNodeOrHTMLOmittedCloseTagNode::HTMLCloseTagNode(close),
-        ) = &node.close_tag
-        {
+        if let Some(herb::union_types::HTMLCloseTagNodeOrHTMLOmittedCloseTagNode::HTMLCloseTagNode(close)) = &node.close_tag {
           self.check_close_tag(close);
         }
         return;
@@ -96,13 +75,11 @@ impl<'rule> Visitor for TagNameLowercaseVisitor<'rule> {
   }
 }
 
-impl Rule for HTMLTagNameLowercaseRule {
-  fn name(&self) -> &str {
-    "html-tag-name-lowercase"
-  }
+pub struct HTMLTagNameLowercaseRule;
 
-  fn rule_type(&self) -> RuleType {
-    RuleType::Parser
+impl Rule for HTMLTagNameLowercaseRule {
+  fn name(&self) -> &'static str {
+    "html-tag-name-lowercase"
   }
 
   fn default_severity(&self) -> Severity {
@@ -112,21 +89,18 @@ impl Rule for HTMLTagNameLowercaseRule {
   fn default_exclude(&self) -> &[&str] {
     &["**/*.xml", "**/*.xml.erb"]
   }
+}
 
-  fn check_parse(&self, result: &ParseResult, _context: &LintContext) -> Vec<UnboundOffense> {
+impl ParserRule for HTMLTagNameLowercaseRule {
+  fn check(&self, result: &ParseResult, _context: &LintContext) -> Vec<UnboundOffense> {
     // Skip if the file contains an XML declaration
-    let mut xml_checker = XMLDeclarationChecker {
-      has_xml_declaration: false,
-    };
+    let mut xml_checker = XMLDeclarationChecker { has_xml_declaration: false };
     xml_checker.visit_document_node(&result.value);
     if xml_checker.has_xml_declaration {
       return Vec::new();
     }
 
-    let mut visitor = TagNameLowercaseVisitor {
-      rule_name: self.name(),
-      offenses: Vec::new(),
-    };
+    let mut visitor = TagNameLowercaseVisitor::new(self.name());
     visitor.visit_document_node(&result.value);
     visitor.offenses
   }

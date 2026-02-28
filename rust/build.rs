@@ -14,11 +14,7 @@ fn main() {
     (vendor_src_dir, vendor_include_dir, manifest_dir.clone())
   } else {
     let root = manifest_dir.parent().unwrap();
-    (
-      root.join("src"),
-      root.join("src/include"),
-      root.to_path_buf(),
-    )
+    (root.join("src"), root.join("src/include"), root.to_path_buf())
   };
 
   let prism_include = if is_wasm {
@@ -36,10 +32,7 @@ fn main() {
 
     let prism_include = if vendor_prism_src.exists() {
       let mut prism_sources = Vec::new();
-      for path in glob::glob(vendor_prism_src.join("**/*.c").to_str().unwrap())
-        .unwrap()
-        .flatten()
-      {
+      for path in glob::glob(vendor_prism_src.join("**/*.c").to_str().unwrap()).unwrap().flatten() {
         prism_sources.push(path);
       }
 
@@ -65,10 +58,7 @@ fn main() {
 
     let mut c_sources = Vec::new();
 
-    for path in glob::glob(src_dir.join("**/*.c").to_str().unwrap())
-      .unwrap()
-      .flatten()
-    {
+    for path in glob::glob(src_dir.join("**/*.c").to_str().unwrap()).unwrap().flatten() {
       if !path.ends_with("main.c") {
         c_sources.push(path);
       }
@@ -151,9 +141,7 @@ fn main() {
   let bindings = builder.generate().expect("Unable to generate bindings");
 
   let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-  bindings
-    .write_to_file(out_path.join("bindings.rs"))
-    .expect("Couldn't write bindings!");
+  bindings.write_to_file(out_path.join("bindings.rs")).expect("Couldn't write bindings!");
 
   println!("cargo:rerun-if-changed={}", include_dir.display());
   println!("cargo:rerun-if-changed=build.rs");
@@ -168,12 +156,7 @@ fn get_prism_path(root_dir: &Path) -> PathBuf {
 
   let output_string = String::from_utf8(output.stdout).expect("Failed to parse bundle output");
 
-  let path_string = output_string
-    .lines()
-    .last()
-    .expect("No output from bundle show prism")
-    .trim()
-    .to_string();
+  let path_string = output_string.lines().last().expect("No output from bundle show prism").trim().to_string();
 
   PathBuf::from(path_string)
 }

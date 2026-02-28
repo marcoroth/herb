@@ -1,20 +1,19 @@
-use crate::offense::UnboundOffense;
-use crate::rule::{LintContext, Rule, RuleType};
 use crate::utils::html_data::is_void_element;
 use crate::utils::tag_utils::get_tag_name_from_open_tag;
+
 use herb::nodes::*;
-use herb::visitor::Visitor;
-use herb::ParseResult;
-use herb_config::Severity;
+use herb::Visitor;
 
-pub struct HTMLNoSelfClosingRule;
+rule_visitor!(NoSelfClosingVisitor);
+define_parser_rule!(
+  HTMLNoSelfClosingRule,
+  "html-no-self-closing",
+  Error,
+  NoSelfClosingVisitor,
+  exclude: ["**/views/**/*_mailer/**/*"]
+);
 
-struct NoSelfClosingVisitor<'rule> {
-  rule_name: &'rule str,
-  offenses: Vec<UnboundOffense>,
-}
-
-impl<'rule> Visitor for NoSelfClosingVisitor<'rule> {
+impl Visitor for NoSelfClosingVisitor {
   fn visit_html_element_node(&mut self, node: &HTMLElementNode) {
     if let Some(tag_name) = node.tag_name.as_ref().map(|token| token.value.as_str()) {
       if tag_name.eq_ignore_ascii_case("svg") {
@@ -39,45 +38,11 @@ impl<'rule> Visitor for NoSelfClosingVisitor<'rule> {
           format!("<{}></{}>", tag_name, tag_name)
         };
 
-        self.offenses.push(UnboundOffense {
-          rule: self.rule_name.to_string(),
-          code: self.rule_name.to_string(),
-          message: format!(
-            "Use `{}` instead of self-closing `<{} />` for HTML compatibility.",
-            instead, tag_name
-          ),
-          location: node.location.clone(),
-        });
+        self.add_offense(
+          format!("Use `{}` instead of self-closing `<{} />` for HTML compatibility.", instead, tag_name),
+          node.location.clone(),
+        );
       }
     }
-  }
-}
-
-impl Rule for HTMLNoSelfClosingRule {
-  fn name(&self) -> &str {
-    "html-no-self-closing"
-  }
-
-  fn rule_type(&self) -> RuleType {
-    RuleType::Parser
-  }
-
-  fn default_severity(&self) -> Severity {
-    Severity::Error
-  }
-
-  fn default_exclude(&self) -> &[&str] {
-    &["**/views/**/*_mailer/**/*"]
-  }
-
-  fn check_parse(&self, result: &ParseResult, _context: &LintContext) -> Vec<UnboundOffense> {
-    let mut visitor = NoSelfClosingVisitor {
-      rule_name: self.name(),
-      offenses: Vec::new(),
-    };
-
-    visitor.visit_document_node(&result.value);
-
-    visitor.offenses
   }
 }

@@ -1,5 +1,9 @@
 [workspace]
-members = [".", "herb-config", "herb-linter"]
+members = [
+  ".",
+  "herb-config",
+  "herb-linter"
+]
 
 [package]
 name = "herb"
@@ -24,7 +28,7 @@ include = [
 [lib]
 name = "herb"
 path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [[bin]]
 name = "herb-rust"

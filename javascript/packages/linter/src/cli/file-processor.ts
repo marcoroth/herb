@@ -1,6 +1,7 @@
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../linter.js"
 import { loadCustomRules } from "../loader.js"
+import { compareBackendOffenses } from "../backend-comparison.js"
 import { Config } from "@herb-tools/config"
 
 import { readFileSync, writeFileSync } from "fs"
@@ -10,6 +11,7 @@ import { colorize } from "@herb-tools/highlighter"
 import type { Diagnostic } from "@herb-tools/core"
 import type { FormatOption } from "./argument-parser.js"
 import type { HerbConfigOptions } from "@herb-tools/config"
+import type { BackendMismatch } from "../backend-comparison.js"
 
 export interface ProcessedFile {
   filename: string
@@ -27,6 +29,7 @@ export interface ProcessingContext {
   linterConfig?: HerbConfigOptions['linter']
   config?: Config
   loadCustomRules?: boolean
+  compareBackends?: boolean
 }
 
 export interface ProcessingResult {
@@ -41,11 +44,13 @@ export interface ProcessingResult {
   ruleCount: number
   allOffenses: ProcessedFile[]
   ruleOffenses: Map<string, { count: number, files: Set<string> }>
+  backendMismatches?: BackendMismatch[]
   context?: ProcessingContext
 }
 
 export class FileProcessor {
   private linter: Linter | null = null
+  private rustLinter: Linter | null = null
   private customRulesLoaded: boolean = false
 
   private isRuleAutocorrectable(ruleName: string): boolean {
@@ -75,6 +80,7 @@ export class FileProcessor {
 
     const allOffenses: ProcessedFile[] = []
     const ruleOffenses = new Map<string, { count: number, files: Set<string> }>()
+    const backendMismatches: BackendMismatch[] = []
 
     if (!this.linter) {
       let customRules = undefined
@@ -120,6 +126,12 @@ export class FileProcessor {
       }
 
       this.linter = Linter.from(Herb, context?.config, customRules)
+    }
+
+    const shouldCompare = context?.compareBackends && Herb.supportsLint
+    if (shouldCompare && !this.rustLinter) {
+      this.rustLinter = Linter.from(Herb, context?.config)
+      this.rustLinter.backendMode = "rust"
     }
 
     for (const filename of files) {
@@ -203,6 +215,18 @@ export class FileProcessor {
       if (lintResult.wouldBeIgnored) {
         totalWouldBeIgnored += lintResult.wouldBeIgnored
       }
+
+      if (shouldCompare && this.rustLinter) {
+        const rustResult = this.rustLinter.lint(content, {
+          fileName: filename,
+          ignoreDisableComments: context?.ignoreDisableComments
+        })
+
+        const mismatch = compareBackendOffenses(filename, lintResult.offenses, rustResult.offenses)
+        if (mismatch) {
+          backendMismatches.push(mismatch)
+        }
+      }
     }
 
     const result: ProcessingResult = {
@@ -216,6 +240,7 @@ export class FileProcessor {
       ruleCount,
       allOffenses,
       ruleOffenses,
+      backendMismatches: shouldCompare ? backendMismatches : undefined,
       context
     }
 

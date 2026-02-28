@@ -8,6 +8,7 @@ import { resolve, relative } from "path"
 import { ArgumentParser } from "./cli/argument-parser.js"
 import { FileProcessor } from "./cli/file-processor.js"
 import { OutputManager } from "./cli/output-manager.js"
+import { formatMismatchReport } from "./backend-comparison.js"
 import { version } from "../package.json"
 
 import type { ProcessingContext } from "./cli/file-processor.js"
@@ -144,7 +145,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, compareBackends, failLevel } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -252,13 +253,19 @@ export class CLI {
         ignoreDisableComments,
         linterConfig,
         config: processingConfig,
-        loadCustomRules
+        loadCustomRules,
+        compareBackends
       }
 
       const results = await this.fileProcessor.processFiles(files, formatOption, context)
 
       await this.outputManager.outputResults({ ...results, files }, outputOptions)
       await this.afterProcess(results, outputOptions)
+
+      if (results.backendMismatches !== undefined) {
+        const report = formatMismatchReport(results.backendMismatches, files.length)
+        process.stderr.write(report + "\n")
+      }
 
       const effectiveFailLevel = failLevel || linterConfig.failLevel
 

@@ -84,8 +84,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       return Err("Failed to parse source".to_string());
     }
 
-    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void)
-      .ok_or_else(|| "Failed to convert AST".to_string())?;
+    let document_node = crate::ast::convert_document_node(ast as *const std::ffi::c_void).ok_or_else(|| "Failed to convert AST".to_string())?;
 
     let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
 
@@ -99,10 +98,7 @@ pub fn extract_ruby(source: &str) -> Result<String, String> {
   extract_ruby_with_options(source, &ExtractRubyOptions::default())
 }
 
-pub fn extract_ruby_with_options(
-  source: &str,
-  options: &ExtractRubyOptions,
-) -> Result<String, String> {
+pub fn extract_ruby_with_options(source: &str, options: &ExtractRubyOptions) -> Result<String, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
 
@@ -119,11 +115,7 @@ pub fn extract_ruby_with_options(
       preserve_positions: options.preserve_positions,
     };
 
-    crate::ffi::herb_extract_ruby_to_buffer_with_options(
-      c_source.as_ptr(),
-      &mut output,
-      &c_options,
-    );
+    crate::ffi::herb_extract_ruby_to_buffer_with_options(c_source.as_ptr(), &mut output, &c_options);
 
     let c_str = std::ffi::CStr::from_ptr(crate::ffi::hb_buffer_value(&output));
     let rust_str = c_str.to_string_lossy().into_owned();
@@ -137,10 +129,7 @@ pub fn extract_ruby_with_options(
 pub fn extract_html(source: &str) -> Result<String, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let result = crate::ffi::herb_extract(
-      c_source.as_ptr(),
-      crate::bindings::HERB_EXTRACT_LANGUAGE_HTML,
-    );
+    let result = crate::ffi::herb_extract(c_source.as_ptr(), crate::bindings::HERB_EXTRACT_LANGUAGE_HTML);
 
     if result.is_null() {
       return Ok(String::new());

@@ -1,3 +1,5 @@
+#ifdef HAS_HERB_LINTER
+
 extern "C" {
 #include "herb_linter.h"
 }
@@ -98,3 +100,5 @@ napi_value Herb_lint_rule_names(napi_env env, napi_callback_info info) {
 
   return array;
 }
+
+#endif

@@ -47,11 +47,11 @@ export interface LinterOptions {
 
 /**
  * Controls which linting backend is used.
- * - "auto": Uses the native Rust linter if available, otherwise falls back to JavaScript rules.
- * - "javascript": Always uses JavaScript-based rules, even if the backend supports native linting.
- * - "native": Always uses the native Rust linter. Throws if the backend doesn't support it.
+ * - "auto": Uses the Rust linter if available, otherwise falls back to JavaScript rules.
+ * - "javascript": Always uses JavaScript-based rules, even if the backend supports Rust linting.
+ * - "rust": Always uses the Rust linter. Throws if the backend doesn't support it.
  */
-export type BackendMode = "auto" | "javascript" | "native"
+export type BackendMode = "auto" | "javascript" | "rust"
 
 export class Linter {
   protected rules: RuleClass[]
@@ -63,8 +63,8 @@ export class Linter {
   /**
    * Controls which linting backend is used.
    * - "javascript" (default): Always uses JavaScript rules.
-   * - "auto": Uses native Rust linter if available, otherwise JavaScript rules.
-   * - "native": Always uses the native Rust linter. Throws if not available.
+   * - "auto": Uses Rust linter if available, otherwise JavaScript rules.
+   * - "rust": Always uses the Rust linter. Throws if not available.
    */
   backendMode: BackendMode = "javascript"
 
@@ -190,7 +190,7 @@ export class Linter {
   }
 
   protected get useNativeBackend(): boolean {
-    if (this.backendMode === "native") return true
+    if (this.backendMode === "rust") return true
     if (this.backendMode === "javascript") return false
     return this.herb.supportsLint
   }
@@ -338,7 +338,7 @@ export class Linter {
    * @param context - Optional context for linting (e.g., fileName for distinguishing files vs snippets)
    */
   lint(source: string, context?: Partial<LintContext>): LintResult {
-    if (this.backendMode === "native") {
+    if (this.backendMode === "rust") {
       return this.lintWithBackend(source, context)
     }
 

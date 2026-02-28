@@ -1,4 +1,7 @@
 {
+  "variables": {
+    "has_linter": "<!(test -f ../../../rust/target/debug/libherb_linter.a && echo 1 || echo 0)"
+  },
   "targets": [
     {
       "target_name": "<(module_name)",
@@ -80,8 +83,7 @@
         "./extension/libherb/include",
         "./extension/prism/include",
         "./extension/prism/src",
-        "./extension/prism/src/util",
-        "../../../rust/herb-linter/include"
+        "./extension/prism/src/util"
       ],
       "dependencies": [
         "<!(node -p \"require('node-addon-api').gyp\")"
@@ -90,10 +92,7 @@
         "PRISM_EXPORT_SYMBOLS=static",
         "PRISM_STATIC=1"
       ],
-      "libraries": [
-        "-L../../../rust/target/debug",
-        "-lherb_linter"
-      ],
+      "libraries": [],
       "cflags": [
         "-Wall",
         "-Wextra"
@@ -107,7 +106,21 @@
         "VCCLCompilerTool": {
           "ExceptionHandling": 1
         }
-      }
+      },
+      "conditions": [
+        ["has_linter==1", {
+          "defines": [
+            "HAS_HERB_LINTER"
+          ],
+          "include_dirs": [
+            "../../../rust/herb-linter/include"
+          ],
+          "libraries": [
+            "-L../../../rust/target/debug",
+            "-lherb_linter"
+          ]
+        }]
+      ]
     }
   ]
 }

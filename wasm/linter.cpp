@@ -1,3 +1,5 @@
+#ifdef HAS_HERB_LINTER
+
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
 #include <string>
@@ -60,3 +62,5 @@ val Herb_lint_rule_names() {
 
   return array;
 }
+
+#endif
