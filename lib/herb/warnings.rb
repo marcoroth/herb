@@ -9,12 +9,9 @@ module Herb
     #|  message: String
     #| }
     class Warning
-      #: String
-      attr_reader :type
-      #: Location?
-      attr_reader :location
-      #: String
-      attr_reader :message
+      attr_reader :type #: String
+      attr_reader :location #: Location?
+      attr_reader :message #: String
 
       #: (String, Location, String) -> void
       def initialize(type, location, message)

@@ -4,10 +4,8 @@
 module Herb
   #: type serialized_range = [Integer, Integer]
   class Range
-    #: Integer
-    attr_reader :from
-    #: Integer
-    attr_reader :to
+    attr_reader :from #: Integer
+    attr_reader :to #: Integer
 
     #: (Integer, Integer) -> void
     def initialize(from, to)

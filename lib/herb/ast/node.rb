@@ -9,12 +9,9 @@ module Herb
   #| }
   module AST
     class Node
-      #: String
-      attr_reader :type
-      #: Location
-      attr_reader :location
-      #: Array[Herb::Errors::Error]
-      attr_reader :errors
+      attr_reader :type #: String
+      attr_reader :location #: Location
+      attr_reader :errors #: Array[Herb::Errors::Error]
 
       #: (String, Location, ?Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])

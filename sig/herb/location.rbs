@@ -1,6 +1,10 @@
 # Generated from lib/herb/location.rb with RBS::Inline
 
 module Herb
+  # : type serialized_location = {
+  # | start: serialized_position,
+  # | end: serialized_position
+  # | }
   class Location
     attr_reader start: Position
 

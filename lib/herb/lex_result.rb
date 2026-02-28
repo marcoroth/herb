@@ -3,8 +3,7 @@
 
 module Herb
   class LexResult < Result
-    #: TokenList
-    attr_reader :value
+    attr_reader :value #: TokenList
 
     #: (Array[Herb::Token], String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
     def initialize(value, source, warnings, errors)

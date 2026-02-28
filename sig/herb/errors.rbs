@@ -1,16 +1,21 @@
 # Generated from lib/herb/errors.rb with RBS::Inline
 
 module Herb
+  # : type serialized_error = {
+  # |  type: String,
+  # |  location: serialized_location?,
+  # |  message: String
+  # | }
   module Errors
     class Error
       attr_reader type: String
 
-      attr_reader location: Location
+      attr_reader location: Location?
 
       attr_reader message: String
 
-      # : (String, Location, String) -> void
-      def initialize: (String, Location, String) -> void
+      # : (String, Location?, String) -> void
+      def initialize: (String, Location?, String) -> void
 
       # : () -> serialized_error
       def to_hash: () -> serialized_error
@@ -31,14 +36,14 @@ module Herb
     class UnexpectedError < Error
       include Colors
 
-      attr_reader description: String
+      attr_reader description: String?
 
-      attr_reader expected: String
+      attr_reader expected: String?
 
-      attr_reader found: String
+      attr_reader found: String?
 
-      # : (String, Location, String, String, String, String) -> void
-      def initialize: (String, Location, String, String, String, String) -> void
+      # : (String, Location?, String, String, String, String) -> void
+      def initialize: (String, Location?, String, String, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -53,12 +58,12 @@ module Herb
     class UnexpectedTokenError < Error
       include Colors
 
-      attr_reader expected_type: String
+      attr_reader expected_type: String?
 
-      attr_reader found: Herb::Token
+      attr_reader found: Herb::Token?
 
-      # : (String, Location, String, String, Herb::Token) -> void
-      def initialize: (String, Location, String, String, Herb::Token) -> void
+      # : (String, Location?, String, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -73,10 +78,10 @@ module Herb
     class MissingOpeningTagError < Error
       include Colors
 
-      attr_reader closing_tag: Herb::Token
+      attr_reader closing_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -91,10 +96,10 @@ module Herb
     class MissingClosingTagError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -109,12 +114,12 @@ module Herb
     class TagNamesMismatchError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      attr_reader closing_tag: Herb::Token
+      attr_reader closing_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -129,14 +134,14 @@ module Herb
     class VoidElementClosingTagError < Error
       include Colors
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      attr_reader expected: String
+      attr_reader expected: String?
 
-      attr_reader found: String
+      attr_reader found: String?
 
-      # : (String, Location, String, Herb::Token, String, String) -> void
-      def initialize: (String, Location, String, Herb::Token, String, String) -> void
+      # : (String, Location?, String, Herb::Token, String, String) -> void
+      def initialize: (String, Location?, String, Herb::Token, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -151,10 +156,10 @@ module Herb
     class UnclosedElementError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -169,14 +174,14 @@ module Herb
     class RubyParseError < Error
       include Colors
 
-      attr_reader error_message: String
+      attr_reader error_message: String?
 
-      attr_reader diagnostic_id: String
+      attr_reader diagnostic_id: String?
 
-      attr_reader level: String
+      attr_reader level: String?
 
-      # : (String, Location, String, String, String, String) -> void
-      def initialize: (String, Location, String, String, String, String) -> void
+      # : (String, Location?, String, String, String, String) -> void
+      def initialize: (String, Location?, String, String, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -191,10 +196,10 @@ module Herb
     class ERBControlFlowScopeError < Error
       include Colors
 
-      attr_reader keyword: String
+      attr_reader keyword: String?
 
-      # : (String, Location, String, String) -> void
-      def initialize: (String, Location, String, String) -> void
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -209,10 +214,10 @@ module Herb
     class MissingERBEndTagError < Error
       include Colors
 
-      attr_reader keyword: String
+      attr_reader keyword: String?
 
-      # : (String, Location, String, String) -> void
-      def initialize: (String, Location, String, String) -> void
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -247,12 +252,12 @@ module Herb
     class ConditionalElementMultipleTagsError < Error
       include Colors
 
-      attr_reader line: Integer
+      attr_reader line: Integer?
 
-      attr_reader column: Integer
+      attr_reader column: Integer?
 
-      # : (String, Location, String, Integer, Integer) -> void
-      def initialize: (String, Location, String, Integer, Integer) -> void
+      # : (String, Location?, String, Integer, Integer) -> void
+      def initialize: (String, Location?, String, Integer, Integer) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -267,22 +272,22 @@ module Herb
     class ConditionalElementConditionMismatchError < Error
       include Colors
 
-      attr_reader tag_name: String
+      attr_reader tag_name: String?
 
-      attr_reader open_condition: String
+      attr_reader open_condition: String?
 
-      attr_reader open_line: Integer
+      attr_reader open_line: Integer?
 
-      attr_reader open_column: Integer
+      attr_reader open_column: Integer?
 
-      attr_reader close_condition: String
+      attr_reader close_condition: String?
 
-      attr_reader close_line: Integer
+      attr_reader close_line: Integer?
 
-      attr_reader close_column: Integer
+      attr_reader close_column: Integer?
 
-      # : (String, Location, String, String, String, Integer, Integer, String, Integer, Integer) -> void
-      def initialize: (String, Location, String, String, String, Integer, Integer, String, Integer, Integer) -> void
+      # : (String, Location?, String, String, String, Integer, Integer, String, Integer, Integer) -> void
+      def initialize: (String, Location?, String, String, String, Integer, Integer, String, Integer, Integer) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -297,10 +302,10 @@ module Herb
     class InvalidCommentClosingTagError < Error
       include Colors
 
-      attr_reader closing_tag: Herb::Token
+      attr_reader closing_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -315,12 +320,12 @@ module Herb
     class OmittedClosingTagError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      attr_reader insertion_point: Herb::Position
+      attr_reader insertion_point: Herb::Position?
 
-      # : (String, Location, String, Herb::Token, Herb::Position) -> void
-      def initialize: (String, Location, String, Herb::Token, Herb::Position) -> void
+      # : (String, Location?, String, Herb::Token, Herb::Position) -> void
+      def initialize: (String, Location?, String, Herb::Token, Herb::Position) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -335,10 +340,10 @@ module Herb
     class UnclosedOpenTagError < Error
       include Colors
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -353,10 +358,10 @@ module Herb
     class UnclosedCloseTagError < Error
       include Colors
 
-      attr_reader tag_name: Herb::Token
+      attr_reader tag_name: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -371,10 +376,10 @@ module Herb
     class UnclosedQuoteError < Error
       include Colors
 
-      attr_reader opening_quote: Herb::Token
+      attr_reader opening_quote: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -389,10 +394,10 @@ module Herb
     class MissingAttributeValueError < Error
       include Colors
 
-      attr_reader attribute_name: String
+      attr_reader attribute_name: String?
 
-      # : (String, Location, String, String) -> void
-      def initialize: (String, Location, String, String) -> void
+      # : (String, Location?, String, String) -> void
+      def initialize: (String, Location?, String, String) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -407,10 +412,10 @@ module Herb
     class UnclosedERBTagError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      # : (String, Location, String, Herb::Token) -> void
-      def initialize: (String, Location, String, Herb::Token) -> void
+      # : (String, Location?, String, Herb::Token) -> void
+      def initialize: (String, Location?, String, Herb::Token) -> void
 
       # : () -> String
       def inspect: () -> String
@@ -435,14 +440,14 @@ module Herb
     class NestedERBTagError < Error
       include Colors
 
-      attr_reader opening_tag: Herb::Token
+      attr_reader opening_tag: Herb::Token?
 
-      attr_reader nested_tag_line: Integer
+      attr_reader nested_tag_line: Integer?
 
-      attr_reader nested_tag_column: Integer
+      attr_reader nested_tag_column: Integer?
 
-      # : (String, Location, String, Herb::Token, Integer, Integer) -> void
-      def initialize: (String, Location, String, Herb::Token, Integer, Integer) -> void
+      # : (String, Location?, String, Herb::Token, Integer, Integer) -> void
+      def initialize: (String, Location?, String, Herb::Token, Integer, Integer) -> void
 
       # : () -> String
       def inspect: () -> String

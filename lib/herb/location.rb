@@ -7,10 +7,8 @@ module Herb
   #| end: serialized_position
   #| }
   class Location
-    #: Position
-    attr_reader :start
-    #: Position
-    attr_reader :end
+    attr_reader :start #: Position
+    attr_reader :end #: Position
 
     #: (Position, Position) -> void
     def initialize(start_position, end_position)
