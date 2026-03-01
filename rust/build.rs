@@ -86,7 +86,7 @@ fn main() {
   };
 
   let mut builder = bindgen::Builder::default()
-    .header(include_dir.join("analyze.h").to_str().unwrap())
+    .header(include_dir.join("analyze/analyze.h").to_str().unwrap())
     .header(include_dir.join("herb.h").to_str().unwrap())
     .header(include_dir.join("ast_nodes.h").to_str().unwrap())
     .header(include_dir.join("errors.h").to_str().unwrap())
