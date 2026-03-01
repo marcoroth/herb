@@ -179,7 +179,7 @@ class TailwindClassSorterVisitor extends Visitor {
       }
 
       return this.formatSortedLiteralWithERB(literals[0], fullContent, sortedClasses, others, preserveLeadingSpace, isNested)
-    } catch (error) {
+    } catch (_error) {
       return [...literals, ...others]
     }
   }

@@ -3,6 +3,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
+  let target = env::var("TARGET").unwrap_or_default();
+  let is_wasm = target.contains("wasm32") || target.contains("emscripten");
+
   let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
   let vendor_src_dir = manifest_dir.join("vendor/libherb/src");
   let vendor_include_dir = manifest_dir.join("vendor/libherb/src/include");
@@ -11,72 +14,89 @@ fn main() {
     (vendor_src_dir, vendor_include_dir, manifest_dir.clone())
   } else {
     let root = manifest_dir.parent().unwrap();
-    (
-      root.join("src"),
-      root.join("src/include"),
-      root.to_path_buf(),
-    )
+    (root.join("src"), root.join("src/include"), root.to_path_buf())
   };
 
-  let vendor_prism_src = manifest_dir.join("vendor/prism/src");
-  let vendor_prism_include = manifest_dir.join("vendor/prism/include");
+  let prism_include = if is_wasm {
+    let vendor_prism_include = manifest_dir.join("vendor/prism/include");
 
-  let prism_include = if vendor_prism_src.exists() {
-    let mut prism_sources = Vec::new();
-    for path in glob::glob(vendor_prism_src.join("**/*.c").to_str().unwrap())
-      .unwrap()
-      .flatten()
-    {
-      prism_sources.push(path);
+    if vendor_prism_include.exists() {
+      vendor_prism_include
+    } else {
+      let prism_path = get_prism_path(&root_dir);
+      prism_path.join("include")
+    }
+  } else {
+    let vendor_prism_src = manifest_dir.join("vendor/prism/src");
+    let vendor_prism_include = manifest_dir.join("vendor/prism/include");
+
+    let prism_include = if vendor_prism_src.exists() {
+      let mut prism_sources = Vec::new();
+      for path in glob::glob(vendor_prism_src.join("**/*.c").to_str().unwrap()).unwrap().flatten() {
+        prism_sources.push(path);
+      }
+
+      let mut prism_build = cc::Build::new();
+      prism_build
+        .flag("-std=c99")
+        .flag("-fPIC")
+        .opt_level(2)
+        .define("HERB_EXCLUDE_PRETTYPRINT", None)
+        .define("PRISM_EXCLUDE_PRETTYPRINT", None)
+        .define("PRISM_EXCLUDE_JSON", None)
+        .define("PRISM_EXCLUDE_PACK", None)
+        .define("PRISM_EXCLUDE_SERIALIZATION", None)
+        .include(&vendor_prism_include)
+        .files(&prism_sources)
+        .warnings(false);
+
+      prism_build.compile("prism");
+
+      vendor_prism_include
+    } else {
+      let prism_path = get_prism_path(&root_dir);
+      let prism_build = prism_path.join("build");
+      println!("cargo:rustc-link-search=native={}", prism_build.display());
+      println!("cargo:rustc-link-lib=static=prism");
+      prism_path.join("include")
+    };
+
+    let mut c_sources = Vec::new();
+
+    for path in glob::glob(src_dir.join("**/*.c").to_str().unwrap()).unwrap().flatten() {
+      if !path.ends_with("main.c") {
+        c_sources.push(path);
+      }
     }
 
-    let mut prism_build = cc::Build::new();
-    prism_build
+    let mut build = cc::Build::new();
+    build
       .flag("-std=c99")
+      .flag("-Wall")
+      .flag("-Wextra")
+      .flag("-Wno-unused-parameter")
       .flag("-fPIC")
       .opt_level(2)
-      .include(&vendor_prism_include)
-      .files(&prism_sources)
-      .warnings(false);
+      .define("HERB_EXCLUDE_PRETTYPRINT", None)
+      .define("PRISM_EXCLUDE_PRETTYPRINT", None)
+      .define("PRISM_EXCLUDE_JSON", None)
+      .define("PRISM_EXCLUDE_PACK", None)
+      .define("PRISM_EXCLUDE_SERIALIZATION", None)
+      .include(&include_dir)
+      .include(&prism_include)
+      .files(&c_sources);
 
-    prism_build.compile("prism");
+    build.compile("herb");
 
-    vendor_prism_include
-  } else {
-    let prism_path = get_prism_path(&root_dir);
-    let prism_build = prism_path.join("build");
-    println!("cargo:rustc-link-search=native={}", prism_build.display());
-    println!("cargo:rustc-link-lib=static=prism");
-    prism_path.join("include")
+    for source in &c_sources {
+      println!("cargo:rerun-if-changed={}", source.display());
+    }
+
+    prism_include
   };
 
-  let mut c_sources = Vec::new();
-
-  for path in glob::glob(src_dir.join("**/*.c").to_str().unwrap())
-    .unwrap()
-    .flatten()
-  {
-    if !path.ends_with("main.c") {
-      c_sources.push(path);
-    }
-  }
-
-  let mut build = cc::Build::new();
-  build
-    .flag("-std=c99")
-    .flag("-Wall")
-    .flag("-Wextra")
-    .flag("-Wno-unused-parameter")
-    .flag("-fPIC")
-    .opt_level(2)
-    .include(&include_dir)
-    .include(&prism_include)
-    .files(&c_sources);
-
-  build.compile("herb");
-
-  let bindings = bindgen::Builder::default()
-    .header(include_dir.join("analyze.h").to_str().unwrap())
+  let mut builder = bindgen::Builder::default()
+    .header(include_dir.join("analyze/analyze.h").to_str().unwrap())
     .header(include_dir.join("herb.h").to_str().unwrap())
     .header(include_dir.join("ast_nodes.h").to_str().unwrap())
     .header(include_dir.join("errors.h").to_str().unwrap())
@@ -116,18 +136,22 @@ fn main() {
     .derive_debug(true)
     .derive_default(false)
     .prepend_enum_name(false)
-    .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-    .generate()
-    .expect("Unable to generate bindings");
+    .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()));
+
+  if is_wasm {
+    let host = env::var("HOST").unwrap_or_default();
+
+    if !host.is_empty() {
+      builder = builder.clang_arg(format!("--target={}", host));
+    }
+
+    builder = builder.layout_tests(false);
+  }
+
+  let bindings = builder.generate().expect("Unable to generate bindings");
 
   let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-  bindings
-    .write_to_file(out_path.join("bindings.rs"))
-    .expect("Couldn't write bindings!");
-
-  for source in &c_sources {
-    println!("cargo:rerun-if-changed={}", source.display());
-  }
+  bindings.write_to_file(out_path.join("bindings.rs")).expect("Couldn't write bindings!");
 
   println!("cargo:rerun-if-changed={}", include_dir.display());
   println!("cargo:rerun-if-changed=build.rs");
@@ -140,14 +164,9 @@ fn get_prism_path(root_dir: &Path) -> PathBuf {
     .output()
     .expect("Failed to run `bundle show prism`");
 
-  let output_str = String::from_utf8(output.stdout).expect("Failed to parse bundle output");
+  let output_string = String::from_utf8(output.stdout).expect("Failed to parse bundle output");
 
-  let path_str = output_str
-    .lines()
-    .last()
-    .expect("No output from bundle show prism")
-    .trim()
-    .to_string();
+  let path_string = output_string.lines().last().expect("No output from bundle show prism").trim().to_string();
 
-  PathBuf::from(path_str)
+  PathBuf::from(path_string)
 }

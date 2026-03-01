@@ -25,6 +25,9 @@ module Herb
     class CompilationError < StandardError
     end
 
+    class InvalidRubyError < CompilationError
+    end
+
     def initialize: (untyped input, ?untyped properties) -> untyped
 
     def self.h: (untyped value) -> untyped
@@ -34,6 +37,10 @@ module Herb
     def self.js: (untyped value) -> untyped
 
     def self.css: (untyped value) -> untyped
+
+    def self.comment?: (untyped code) -> untyped
+
+    def self.heredoc?: (untyped code) -> untyped
 
     def add_text: (untyped text) -> untyped
 
@@ -54,10 +61,6 @@ module Herb
     def add_expression_block_end: (untyped code, ?escaped: untyped) -> untyped
 
     def trailing_newline: (untyped code) -> untyped
-
-    def comment?: (untyped code) -> untyped
-
-    def heredoc?: (untyped code) -> untyped
 
     def add_postamble: (untyped postamble) -> untyped
 

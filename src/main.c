@@ -2,7 +2,11 @@
 
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
-#include "include/ast_pretty_print.h"
+
+#ifndef HERB_EXCLUDE_PRETTYPRINT
+#  include "include/ast_pretty_print.h"
+#endif
+
 #include "include/extract.h"
 #include "include/herb.h"
 #include "include/io.h"
@@ -84,8 +88,10 @@ int main(const int argc, char* argv[]) {
     if (argc > 3 && string_equals(argv[3], "--silent")) { silent = 1; }
 
     if (!silent) {
+#ifndef HERB_EXCLUDE_PRETTYPRINT
       ast_pretty_print_node((AST_NODE_T*) root, 0, 0, &output);
       puts(output.value);
+#endif
 
       print_time_diff(start, end, "parsing");
     }

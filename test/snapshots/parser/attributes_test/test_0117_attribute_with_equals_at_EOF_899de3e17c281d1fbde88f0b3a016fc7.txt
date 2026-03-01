@@ -27,10 +27,10 @@ input: "<div class="
         │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:11))
         │               ├── errors: (1 error)
         │               │   └── @ UnexpectedError (location: (1:11)-(1:11))
-        │               │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START`, found: `TOKEN_EOF`."
+        │               │       ├── message: "Unexpected Token. Expected: an identifier, a quote, or `<%`, found: end of file."
         │               │       ├── description: "Unexpected Token"
-        │               │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
-        │               │       └── found: "TOKEN_EOF"
+        │               │       ├── expected: "an identifier, a quote, or `<%`"
+        │               │       └── found: "end of file"
         │               │
         │               ├── open_quote: ∅
         │               ├── children: []

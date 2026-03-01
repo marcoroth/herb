@@ -260,19 +260,34 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
     if (token_is(parser, TOKEN_ERROR)) {
       free(content.value);
 
-      token_T* token = parser_consume_expected(parser, TOKEN_ERROR, document_errors);
-      append_unexpected_error(
-        hb_string("Token Error"),
-        hb_string("not TOKEN_ERROR"),
-        token->value,
-        token->location.start,
-        token->location.end,
-        document_errors
-      );
-
-      token_free(token);
+      parser_append_unexpected_error_string(parser, document_errors, "Token Error", "not an error token");
 
       return NULL;
+    }
+
+    if (parser->options.strict && parser->current_token->type == TOKEN_PERCENT) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* peek_token = lexer_next_token(&lexer_copy);
+
+      if (peek_token && peek_token->type == TOKEN_HTML_TAG_END) {
+        position_T stray_start = parser->current_token->location.start;
+        position_T stray_end = peek_token->location.end;
+        token_free(peek_token);
+
+        append_strayerb_closing_tag_error(stray_start, stray_end, document_errors);
+
+        token_T* percent = parser_advance(parser);
+        hb_buffer_append_string(&content, percent->value);
+        token_free(percent);
+
+        token_T* gt = parser_advance(parser);
+        hb_buffer_append_string(&content, gt->value);
+        token_free(gt);
+
+        continue;
+      }
+
+      token_free(peek_token);
     }
 
     token_T* token = parser_advance(parser);
@@ -615,7 +630,7 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     append_unexpected_error(
       hb_string("Invalid quote character for HTML attribute"),
       hb_string("single quote (') or double quote (\")"),
-      hb_string("backtick (`)"),
+      hb_string("a backtick"),
       start,
       end,
       errors
@@ -629,14 +644,18 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     return value;
   }
 
+  char* expected = token_types_to_friendly_string(TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
+
   append_unexpected_error(
     hb_string("Unexpected Token"),
-    hb_string("TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"),
-    token_type_to_string(parser->current_token->type),
+    hb_string(expected),
+    hb_string(token_type_to_friendly_string(parser->current_token->type)),
     parser->current_token->location.start,
     parser->current_token->location.end,
     errors
   );
+
+  free(expected);
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = ast_html_attribute_value_node_init(
     NULL,
@@ -1004,11 +1023,41 @@ static AST_HTML_OPEN_TAG_NODE_T* parser_parse_html_open_tag(parser_T* parser) {
       token_free(next_token);
     }
 
+    if (parser->current_token->type == TOKEN_PERCENT) {
+      lexer_T lexer_copy = *parser->lexer;
+      token_T* peek_token = lexer_next_token(&lexer_copy);
+
+      if (peek_token && peek_token->type == TOKEN_HTML_TAG_END) {
+        position_T stray_start = parser->current_token->location.start;
+        position_T stray_end = peek_token->location.end;
+        token_free(peek_token);
+
+        append_strayerb_closing_tag_error(stray_start, stray_end, errors);
+
+        token_T* percent = parser_advance(parser);
+        token_T* gt = parser_advance(parser);
+
+        AST_LITERAL_NODE_T* literal = ast_literal_node_init(hb_string("%>"), stray_start, stray_end, NULL);
+        hb_array_append(children, literal);
+
+        token_free(percent);
+        token_free(gt);
+
+        continue;
+      }
+
+      token_free(peek_token);
+    }
+
     parser_append_unexpected_error(
       parser,
-      hb_string("Unexpected Token"),
-      hb_string("TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE"),
-      errors
+      errors,
+      "Unexpected Token",
+      TOKEN_IDENTIFIER,
+      TOKEN_AT,
+      TOKEN_ERB_START,
+      TOKEN_WHITESPACE,
+      TOKEN_NEWLINE
     );
   }
 
@@ -1423,10 +1472,17 @@ static void parser_parse_in_data_state(parser_T* parser, hb_array_T* children, h
 
     parser_append_unexpected_error(
       parser,
-      hb_string("Unexpected token"),
-      hb_string("TOKEN_ERB_START, TOKEN_HTML_DOCTYPE, TOKEN_HTML_COMMENT_START, TOKEN_IDENTIFIER, TOKEN_WHITESPACE, "
-      "TOKEN_NBSP, TOKEN_AT, TOKEN_BACKSLASH, or TOKEN_NEWLINE"),
-      errors
+      errors,
+      "Unexpected token",
+      TOKEN_ERB_START,
+      TOKEN_HTML_DOCTYPE,
+      TOKEN_HTML_COMMENT_START,
+      TOKEN_IDENTIFIER,
+      TOKEN_WHITESPACE,
+      TOKEN_NBSP,
+      TOKEN_AT,
+      TOKEN_BACKSLASH,
+      TOKEN_NEWLINE
     );
 
     parser_synchronize(parser, errors);
@@ -1480,9 +1536,18 @@ static size_t find_implicit_close_index(hb_array_T* nodes, size_t start_idx, hb_
   return hb_array_size(nodes);
 }
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict);
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  const parser_options_T* options
+);
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict) {
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  const parser_options_T* options
+) {
+  bool strict = options ? options->strict : false;
   hb_array_T* result = hb_array_init(hb_array_size(nodes));
 
   for (size_t index = 0; index < hb_array_size(nodes); index++) {
@@ -1505,7 +1570,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
             hb_array_append(body, hb_array_get(nodes, j));
           }
 
-          hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
+          hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, options);
           hb_array_free(&body);
 
           position_T end_position = open_tag->base.location.end;
@@ -1566,7 +1631,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
           hb_array_append(body, hb_array_get(nodes, j));
         }
 
-        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
+        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, options);
         hb_array_free(&body);
 
         hb_array_T* element_errors = hb_array_init(8);
@@ -1672,10 +1737,10 @@ void herb_parser_deinit(parser_T* parser) {
   }
 }
 
-void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict) {
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, const parser_options_T* options) {
   if (nodes == NULL || hb_array_size(nodes) == 0) { return; }
 
-  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors, strict);
+  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors, options);
 
   nodes->size = 0;
 
@@ -1685,7 +1750,7 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict
 
   hb_array_free(&processed);
 
-  match_tags_context_T context = { .errors = errors, .strict = strict };
+  match_tags_context_T context = { .errors = errors, .options = options };
 
   for (size_t i = 0; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
@@ -1695,8 +1760,8 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict
   }
 }
 
-void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, bool strict) {
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, const parser_options_T* options) {
   if (document == NULL) { return; }
 
-  match_tags_in_node_array(document->children, document->base.errors, strict);
+  match_tags_in_node_array(document->children, document->base.errors, options);
 }

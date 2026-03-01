@@ -2,6 +2,7 @@ import type { RuleClass } from "./types.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-conditions.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
 import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
@@ -57,7 +58,9 @@ import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
+import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
+import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
@@ -66,6 +69,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoInlineCaseConditionsRule,
   ERBNoConditionalHTMLElementRule,
   ERBNoConditionalOpenTagRule,
   ERBNoEmptyTagsRule,
@@ -121,7 +125,9 @@ export const rules: RuleClass[] = [
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
+  HTMLRequireClosingTagsRule,
   HTMLTagNameLowercaseRule,
+  TurboPermanentRequireIdRule,
 
   SVGTagNameCapitalizationRule,
 

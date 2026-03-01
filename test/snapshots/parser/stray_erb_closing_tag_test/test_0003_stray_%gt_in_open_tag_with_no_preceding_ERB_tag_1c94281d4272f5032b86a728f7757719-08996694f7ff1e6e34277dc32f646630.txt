@@ -1,0 +1,25 @@
+---
+source: "Parser::StrayERBClosingTagTest#test_0003_stray %> in open tag with no preceding ERB tag"
+input: |2-
+<div %>
+options: {strict: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (1 item)
+    └── @ HTMLOpenTagNode (location: (1:0)-(2:0))
+        ├── errors: (2 errors)
+        │   ├── @ StrayERBClosingTagError (location: (1:5)-(1:7))
+        │   │   └── message: "Stray `%>` found at (1:5). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+        │   │
+        │   └── @ UnclosedOpenTagError (location: (1:1)-(2:0))
+        │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+        │       └── tag_name: "div" (location: (1:1)-(1:4))
+        │
+        ├── tag_opening: "<" (location: (1:0)-(1:1))
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── tag_closing: ∅
+        ├── children: (1 item)
+        │   └── @ LiteralNode (location: (1:5)-(1:7))
+        │       └── content: "%>"
+        │
+        └── is_void: false

@@ -24,7 +24,7 @@ input: "<div data-msg='Don\\'t worry'>Text</div>"
         │       │           └── @ HTMLAttributeValueNode (location: (1:14)-(1:28))
         │       │               ├── errors: (1 error)
         │       │               │   └── @ UnexpectedError (location: (1:19)-(1:20))
-        │       │               │       ├── message: "Unescaped quote character in attribute value. Expected: `HTML entity (&apos;/&quot;) or different quote style`, found: `'`."
+        │       │               │       ├── message: "Unescaped quote character in attribute value. Expected: HTML entity (&apos;/&quot;) or different quote style, found: '."
         │       │               │       ├── description: "Unescaped quote character in attribute value"
         │       │               │       ├── expected: "HTML entity (&apos;/&quot;) or different quote style"
         │       │               │       └── found: "'"

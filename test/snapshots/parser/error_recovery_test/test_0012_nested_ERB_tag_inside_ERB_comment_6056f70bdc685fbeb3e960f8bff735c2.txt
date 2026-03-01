@@ -3,6 +3,10 @@ source: "Parser::ErrorRecoveryTest#test_0012_nested ERB tag inside ERB comment"
 input: "<%# Another comment with <%= \"erb\" %> inside %>"
 ---
 @ DocumentNode (location: (1:0)-(1:47))
+├── errors: (1 error)
+│   └── @ StrayERBClosingTagError (location: (1:45)-(1:47))
+│       └── message: "Stray `%>` found at (1:45). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+│
 └── children: (3 items)
     ├── @ ERBContentNode (location: (1:0)-(1:25))
     │   ├── errors: (1 error)

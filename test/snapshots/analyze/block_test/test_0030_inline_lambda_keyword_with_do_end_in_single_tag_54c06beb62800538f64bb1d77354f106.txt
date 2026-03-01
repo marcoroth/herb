@@ -1,0 +1,16 @@
+---
+source: "Analyze::BlockTest#test_0030_inline lambda keyword with do/end in single tag"
+input: |2-
+<% content = lambda do; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:30))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content = lambda do; end " (location: (1:2)-(1:28))
+    │   ├── tag_closing: "%>" (location: (1:28)-(1:30))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:30)-(2:0))
+        └── content: "\n"

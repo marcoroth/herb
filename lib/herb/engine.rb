@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 require "json"
 require "time"
@@ -28,6 +29,9 @@ module Herb
     }.freeze
 
     class CompilationError < StandardError
+    end
+
+    class InvalidRubyError < CompilationError
     end
 
     def initialize(input, properties = {})
@@ -135,6 +139,18 @@ module Herb
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
+      if properties.fetch(:validate_ruby, false)
+        require "prism"
+
+        prism_result = Prism.parse(@src)
+        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+        if syntax_errors.any?
+          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
+          raise InvalidRubyError, "Compiled template produced invalid Ruby:\n#{details}"
+        end
+      end
+
       @src.freeze
       freeze
     end
@@ -175,6 +191,14 @@ module Herb
       end
     end
 
+    def self.comment?(code)
+      code.include?("#")
+    end
+
+    def self.heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
     protected
 
     def add_text(text)
@@ -196,8 +220,8 @@ module Herb
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if code.include?("#")
-          @src << "\n"
+        if self.class.comment?(code) || self.class.heredoc?(code)
+          @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
         end
@@ -267,18 +291,10 @@ module Herb
     end
 
     def trailing_newline(code)
-      return "\n" if comment?(code)
-      return "\n" if heredoc?(code)
+      return "\n" if self.class.comment?(code)
+      return "\n" if self.class.heredoc?(code)
 
       ""
-    end
-
-    def comment?(code)
-      code.include?("#")
-    end
-
-    def heredoc?(code)
-      code.match?(/<<[~-]?\s*['"`]?\w/)
     end
 
     def add_postamble(postamble)

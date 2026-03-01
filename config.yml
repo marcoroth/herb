@@ -12,7 +12,7 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "%s. Expected: `%s`, found: `%s`."
+        template: "%s. Expected: %s, found: %s."
         arguments:
           - description
           - expected
@@ -30,10 +30,10 @@ errors:
 
     - name: UnexpectedTokenError
       message:
-        template: "Found `%s` when expecting `%s` at (%u:%u)."
+        template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_string(found->type)
-          - token_type_to_string(expected_type)
+          - hb_string(token_type_to_friendly_string(found->type))
+          - hb_string(token_type_to_friendly_string(expected_type))
           - found->location.start.line
           - found->location.start.column
 
@@ -164,7 +164,7 @@ errors:
 
     - name: ERBCaseWithConditionsError
       message:
-        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
         arguments: []
 
       fields: []
@@ -306,6 +306,15 @@ errors:
       fields:
         - name: opening_tag
           type: token
+
+    - name: StrayERBClosingTagError
+      message:
+        template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
+        arguments:
+          - start.line
+          - start.column
+
+      fields: []
 
     - name: NestedERBTagError
       message:

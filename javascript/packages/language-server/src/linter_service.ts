@@ -1,7 +1,7 @@
 import { Diagnostic, Range, Position, CodeDescription, Connection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Linter, rules, type RuleClass } from "@herb-tools/linter"
+import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
 import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loader"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
@@ -158,7 +158,7 @@ export class LinterService {
       const codeDescription: CodeDescription = {
         href: customRulePath
           ? `file://${customRulePath}`
-          : `https://herb-tools.dev/linter/rules/${offense.rule}`
+          : ruleDocumentationUrl(offense.rule)
       }
 
       return {

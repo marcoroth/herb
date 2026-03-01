@@ -8,6 +8,7 @@
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
@@ -89,18 +90,45 @@ void parser_exit_foreign_content(parser_T* parser) {
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
 }
 
-void parser_append_unexpected_error(
+void parser_append_unexpected_error_impl(
   parser_T* parser,
-  hb_string_T description,
-  hb_string_T expected,
-  hb_array_T* errors
+  hb_array_T* errors,
+  const char* description,
+  token_type_T first_token,
+  ...
+) {
+  token_T* token = parser_advance(parser);
+
+  va_list args;
+  va_start(args, first_token);
+  char* expected = token_types_to_friendly_string_valist(first_token, args);
+  va_end(args);
+
+  append_unexpected_error(
+    hb_string(description),
+    hb_string(expected),
+    hb_string(token_type_to_friendly_string(token->type)),
+    token->location.start,
+    token->location.end,
+    errors
+  );
+
+  free(expected);
+  token_free(token);
+}
+
+void parser_append_unexpected_error_string(
+  parser_T* parser,
+  hb_array_T* errors,
+  const char* description,
+  const char* expected
 ) {
   token_T* token = parser_advance(parser);
 
   append_unexpected_error(
-    description,
-    expected,
-    token_type_to_string(token->type),
+    hb_string(description),
+    hb_string(expected),
+    hb_string(token_type_to_friendly_string(token->type)),
     token->location.start,
     token->location.end,
     errors

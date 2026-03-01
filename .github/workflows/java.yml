@@ -30,24 +30,24 @@ jobs:
         with:
           bundler-cache: true
 
+      - name: Cache junit jar
+        uses: actions/cache@v4
+        with:
+          path: java/lib
+          key: ${{ runner.os }}-junit-${{ hashFiles('java/Makefile') }}
+
+      - name: Ensure junit jar
+        run: make ensure-junit
+        working-directory: java
+
       - name: Render Templates
-        run: bundle exec rake templates
+        run: make templates
+        working-directory: java
 
       - name: Compile Herb
-        run: bundle exec rake make
-
-      - name: Build JNI library
-        run: make jni
+        run: make herb
         working-directory: java
 
-      - name: Compile Java classes
-        run: make java
-        working-directory: java
-
-      - name: Run tests
-        run: ./run_tests.sh
-        working-directory: java
-
-      - name: Test CLI version command
-        run: ./bin/herb-java version
+      - name: Build and test
+        run: make test
         working-directory: java

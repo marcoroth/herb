@@ -1,5 +1,3 @@
-import dedent from "dedent"
-
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor } from "./rule-utils.js"
 

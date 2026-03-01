@@ -1,5 +1,5 @@
 #include "include/herb.h"
-#include "include/analyze.h"
+#include "include/analyze/analyze.h"
 #include "include/io.h"
 #include "include/lexer.h"
 #include "include/parser.h"
@@ -44,7 +44,7 @@ HERB_EXPORTED_FUNCTION AST_DOCUMENT_NODE_T* herb_parse(const char* source, const
 
   herb_parser_deinit(&parser);
 
-  if (parser_options.analyze) { herb_analyze_parse_tree(document, source, parser_options.strict); }
+  if (parser_options.analyze) { herb_analyze_parse_tree(document, source, &parser_options); }
 
   return document;
 }

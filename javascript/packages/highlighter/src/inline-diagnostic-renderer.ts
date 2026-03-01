@@ -1,4 +1,4 @@
-import { colorize, severityColor } from "./color.js"
+import { colorize, hyperlink, severityColor } from "./color.js"
 import { TextFormatter } from "./text-formatter.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
@@ -13,7 +13,7 @@ export class InlineDiagnosticRenderer {
   }
 
   private getSeverityText(severity: DiagnosticSeverity): string {
-    return colorize(severity, severityColor(severity))
+    return colorize(colorize(severity, severityColor(severity)), "bold")
   }
 
   private getHighestSeverity(diagnostics: Diagnostic[]): DiagnosticSeverity {
@@ -37,6 +37,7 @@ export class InlineDiagnosticRenderer {
     wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
     truncateLines = false,
+    codeUrlBuilder?: (code: string) => string,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
 
@@ -82,7 +83,7 @@ export class InlineDiagnosticRenderer {
       const highestSeverity = this.getHighestSeverity(lineDiagnostics)
       const lineColor = severityColor(highestSeverity)
 
-      let displayLine = line
+      const displayLine = line
       let availableWidth = maxWidth
 
       if (wrapLines && showLineNumbers) {
@@ -166,7 +167,8 @@ export class InlineDiagnosticRenderer {
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
 
             const severityText = this.getSeverityText(diagnostic.severity)
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
+            const diagnosticIdText = diagnostic.code || "-"
+            const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText =
@@ -183,7 +185,8 @@ export class InlineDiagnosticRenderer {
             output += `${pointerSpacing}${pointer}\n`
 
             const severityText = this.getSeverityText(diagnostic.severity)
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
+            const diagnosticIdText = diagnostic.code || "-"
+            const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText =

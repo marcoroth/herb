@@ -403,7 +403,7 @@ describe("ERB whitespace formatting", () => {
 
         expect(result).toEqual(expected)
       })
-    }),
+    })
 
     test("documents current behavior for ERB logic tags", () => {
       const logicCases = ['<% if condition%>', '<%end%>']

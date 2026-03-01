@@ -213,7 +213,7 @@ export abstract class StimulusAttributeVisitor extends AttributeVisitorMixin {
 
 export abstract class HerbParserRule extends ParserRule {
   isEnabled(_result: ParseResult, context?: Partial<StimulusLintContext>): boolean {
-    if (!context || !context.stimulusProject) return false
+    if (!context || !context.stimulusProject) return false
 
     return true
   }

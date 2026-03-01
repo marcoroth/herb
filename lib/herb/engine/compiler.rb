@@ -194,7 +194,9 @@ module Herb
       end
 
       def visit_erb_control_node(node, &_block)
-        apply_trim(node, node.content.value.strip)
+        if node.content
+          apply_trim(node, node.content.value.strip)
+        end
 
         yield if block_given?
       end
@@ -545,7 +547,7 @@ module Herb
 
         if at_line_start?
           lspace = extract_and_remove_lspace!
-          rspace = " \n"
+          rspace = Herb::Engine.heredoc?(code) ? "\n" : " \n"
 
           @tokens << [:code, "#{lspace}#{code}#{rspace}", current_context]
           @trim_next_whitespace = true

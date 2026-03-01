@@ -1,7 +1,6 @@
 import typescript from "@rollup/plugin-typescript"
 import json from "@rollup/plugin-json"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
-import { readFileSync } from "fs"
 import { yaml } from "./yaml-plugin.mjs"
 
 export default [

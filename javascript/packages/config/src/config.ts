@@ -772,7 +772,7 @@ export class Config {
         }
       }
 
-      if (/^    [a-z][\w-]*:/.test(line) && prevLine && /^      /.test(prevLine)) {
+      if (/^    [a-z][\w-]*:/.test(line) && prevLine && prevLine.startsWith('      ')) {
         result.push('')
       }
 
@@ -976,7 +976,7 @@ export class Config {
       if (!silent) {
         console.error(`✓ Created default configuration at ${configPath}`)
       }
-    } catch (error) {
+    } catch (_error) {
       if (!silent) {
         console.error(`⚠ Could not create config file at ${configPath}, using defaults in-memory`)
       }
@@ -1090,69 +1090,66 @@ export class Config {
     version: string,
     exitOnError: boolean = false
   ): Promise<Config> {
+    const content = await fs.readFile(configPath, "utf8")
+
+    let parsed: any
+
     try {
-      const content = await fs.readFile(configPath, "utf8")
+      parsed = parse(content)
+    } catch (error) {
+      if (exitOnError) {
+        console.error(`\n✗ Invalid YAML syntax in ${configPath}`)
 
-      let parsed: any
-      try {
-        parsed = parse(content)
-      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`  ${error.message}\n`)
+        }
+        process.exit(1)
+      } else {
+        throw new Error(`Invalid YAML syntax in ${configPath}: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
+    if (parsed === null || parsed === undefined) {
+      parsed = {}
+    }
+
+    if (!parsed.version) {
+      parsed.version = version
+    }
+
+    try {
+      HerbConfigSchema.parse(parsed)
+    } catch (error) {
+      if (error instanceof ZodError) {
+        const validationError = fromZodError(error, {
+          prefix: `Configuration errors in ${configPath}`,
+        })
+
         if (exitOnError) {
-          console.error(`\n✗ Invalid YAML syntax in ${configPath}`)
+          console.error(`\n✗ ${validationError.toString()}\n`)
 
-          if (error instanceof Error) {
-            console.error(`  ${error.message}\n`)
-          }
           process.exit(1)
         } else {
-          throw new Error(`Invalid YAML syntax in ${configPath}: ${error instanceof Error ? error.message : String(error)}`)
+          throw new Error(validationError.toString())
         }
       }
 
-      if (parsed === null || parsed === undefined) {
-        parsed = {}
-      }
-
-      if (!parsed.version) {
-        parsed.version = version
-      }
-
-      try {
-        HerbConfigSchema.parse(parsed)
-      } catch (error) {
-        if (error instanceof ZodError) {
-          const validationError = fromZodError(error, {
-            prefix: `Configuration errors in ${configPath}`,
-          })
-
-          if (exitOnError) {
-            console.error(`\n✗ ${validationError.toString()}\n`)
-
-            process.exit(1)
-          } else {
-            throw new Error(validationError.toString())
-          }
-        }
-
-        throw error
-      }
-
-      if (parsed.version && parsed.version !== version) {
-        console.error(`\n⚠️ Configuration version mismatch in ${configPath}`)
-        console.error(`   Config version: ${parsed.version}`)
-        console.error(`   Current version: ${version}`)
-        console.error(`   Consider updating your .herb.yml file.\n`)
-      }
-
-      const defaults = this.getDefaultConfig(version)
-      const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
-
-      resolved.version = version
-
-      return new Config(projectRoot, resolved)
-    } catch (error) {
       throw error
     }
+
+    if (parsed.version && parsed.version !== version) {
+      console.error(`\n⚠️ Configuration version mismatch in ${configPath}`)
+      console.error(`   Config version: ${parsed.version}`)
+      console.error(`   Current version: ${version}`)
+      console.error(`   Consider updating your .herb.yml file.\n`)
+    }
+
+    const defaults = this.getDefaultConfig(version)
+    const resolved = deepMerge(defaults, parsed as Partial<HerbConfig>)
+
+    resolved.version = version
+
+    return new Config(projectRoot, resolved)
   }
 
   /**

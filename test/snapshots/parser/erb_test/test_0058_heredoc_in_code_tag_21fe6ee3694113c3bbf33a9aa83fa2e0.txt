@@ -1,0 +1,24 @@
+---
+source: "Parser::ERBTest#test_0058_heredoc in code tag"
+input: |2-
+<%
+  text = <<~TEXT
+    Hello, world!
+  TEXT
+%>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(5:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     text = <<~TEXT
+    │       Hello, world!
+    │     TEXT
+    │   " (location: (1:2)-(5:0))
+    │   ├── tag_closing: "%>" (location: (5:0)-(5:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (5:2)-(6:0))
+        └── content: "\n"

@@ -13,11 +13,21 @@ void parser_push_open_tag(const parser_T* parser, token_T* tag_name);
 bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name);
 token_T* parser_pop_open_tag(const parser_T* parser);
 
-void parser_append_unexpected_error(
+void parser_append_unexpected_error_impl(
   parser_T* parser,
-  hb_string_T description,
-  hb_string_T expected,
-  hb_array_T* errors
+  hb_array_T* errors,
+  const char* description,
+  token_type_T first_token,
+  ...
+);
+#define parser_append_unexpected_error(parser, errors, description, ...)                                               \
+  parser_append_unexpected_error_impl(parser, errors, description, __VA_ARGS__, TOKEN_SENTINEL)
+
+void parser_append_unexpected_error_string(
+  parser_T* parser,
+  hb_array_T* errors,
+  const char* description,
+  const char* expected
 );
 void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T* errors);
 

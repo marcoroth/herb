@@ -50,6 +50,9 @@ typedef enum {
   TOKEN_EOF,
 } token_type_T;
 
+// Sentinel value for variadic functions
+#define TOKEN_SENTINEL 99999999
+
 typedef struct TOKEN_STRUCT {
   hb_string_T value;
   range_T range;

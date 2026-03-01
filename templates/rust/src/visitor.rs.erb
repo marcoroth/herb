@@ -1,0 +1,81 @@
+use crate::nodes::*;
+use crate::union_types::*;
+
+/// Visitor trait for traversing the Herb AST.
+///
+/// Provides a visit/walk separation pattern:
+/// - `visit_*` methods are the entry points for each node type (override these in rules)
+/// - `walk_*` methods traverse child nodes (call these explicitly from `visit_*` overrides)
+///
+/// Default `visit_*` implementations call the corresponding `walk_*` method.
+/// Override `visit_*` to add custom behavior, then call `walk_*` to continue traversal.
+pub trait Visitor {
+  fn visit(&mut self, node: &AnyNode) {
+    match node {
+      <%- nodes.each do |node| -%>
+      AnyNode::<%= node.name %>(n) => self.visit_<%= node.human %>(n),
+      <%- end -%>
+    }
+  }
+
+  fn visit_all(&mut self, nodes: &[AnyNode]) {
+    for node in nodes {
+      self.visit(node);
+    }
+  }
+
+  fn visit_erb_node(&mut self, _node: &dyn ERBNode) {
+    // Default implementation does nothing
+  }
+
+  <%- nodes.each do |node| -%>
+  fn visit_<%= node.human %>(&mut self, node: &<%= node.name %>) {
+    <%- if node.name.start_with?("ERB") -%>
+    self.visit_erb_node(node);
+    <%- end -%>
+    self.walk_<%= node.human %>(node);
+  }
+
+  fn walk_<%= node.human %>(&mut self, node: &<%= node.name %>) {
+    <%- children_fields = node.fields.select { |field|
+      case field
+      when Herb::Template::ArrayField
+        true
+      when Herb::Template::NodeField, Herb::Template::BorrowedNodeField
+        true
+      else
+        false
+      end
+    } -%>
+    <%- if children_fields.any? -%>
+    <%- children_fields.each do |field| -%>
+    <%- case field -%>
+    <%- when Herb::Template::ArrayField -%>
+    self.visit_all(&node.<%= field.name %>);
+    <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
+    <%- if field.specific_kind && field.specific_kind != "Node" -%>
+    if let Some(ref child) = node.<%= field.name %> {
+      self.visit_<%= field.specific_kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").downcase %>(child);
+    }
+    <%- elsif field.union_kind -%>
+    if let Some(ref child) = node.<%= field.name %> {
+      match child {
+        <%- field.union_kind.each do |kind| -%>
+        <%= field.union_type_name %>::<%= kind %>(n) => self.visit_<%= kind.gsub(/(?<=[a-zA-Z])(?=[A-Z][a-z])/, "_").downcase %>(n),
+        <%- end -%>
+      }
+    }
+    <%- else -%>
+    if let Some(ref child) = node.<%= field.name %> {
+      self.visit(child);
+    }
+    <%- end -%>
+    <%- end -%>
+    <%- end -%>
+    <%- else -%>
+    let _ = node;
+    <%- end -%>
+  }
+
+  <%- end -%>
+}

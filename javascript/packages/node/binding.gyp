@@ -10,13 +10,17 @@
         "./extension/nodes.cpp",
 
         # Herb main source files
-        "./extension/libherb/analyze_conditional_elements.c",
-        "./extension/libherb/analyze_conditional_open_tags.c",
-        "./extension/libherb/analyze_helpers.c",
-        "./extension/libherb/analyze_missing_end.c",
-        "./extension/libherb/analyze_transform.c",
-        "./extension/libherb/analyze.c",
-        "./extension/libherb/analyzed_ruby.c",
+        "./extension/libherb/analyze/analyze.c",
+        "./extension/libherb/analyze/analyzed_ruby.c",
+        "./extension/libherb/analyze/builders.c",
+        "./extension/libherb/analyze/conditional_elements.c",
+        "./extension/libherb/analyze/conditional_open_tags.c",
+        "./extension/libherb/analyze/control_type.c",
+        "./extension/libherb/analyze/helpers.c",
+        "./extension/libherb/analyze/invalid_structures.c",
+        "./extension/libherb/analyze/missing_end.c",
+        "./extension/libherb/analyze/parse_errors.c",
+        "./extension/libherb/analyze/transform.c",
         "./extension/libherb/ast_node.c",
         "./extension/libherb/ast_nodes.c",
         "./extension/libherb/ast_pretty_print.c",
@@ -86,7 +90,12 @@
       ],
       "defines": [
         "PRISM_EXPORT_SYMBOLS=static",
-        "PRISM_STATIC=1"
+        "PRISM_STATIC=1",
+        "HERB_EXCLUDE_PRETTYPRINT",
+        "PRISM_EXCLUDE_PRETTYPRINT",
+        "PRISM_EXCLUDE_JSON",
+        "PRISM_EXCLUDE_PACK",
+        "PRISM_EXCLUDE_SERIALIZATION"
       ],
       "cflags": [
         "-Wall",

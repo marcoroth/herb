@@ -49,7 +49,7 @@ function readExtensionsJson(filePath: string): VSCodeExtensionsJson {
     }
 
     return parsed
-  } catch (error) {
+  } catch (_error) {
     console.warn(`Warning: Could not parse ${filePath}, creating new file`)
 
     return { recommendations: [] }

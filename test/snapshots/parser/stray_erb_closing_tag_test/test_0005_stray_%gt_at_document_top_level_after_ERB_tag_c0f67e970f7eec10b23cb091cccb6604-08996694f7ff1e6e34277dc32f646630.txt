@@ -1,0 +1,21 @@
+---
+source: "Parser::StrayERBClosingTagTest#test_0005_stray %> at document top level after ERB tag"
+input: |2-
+<% content %> %>
+options: {strict: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+├── errors: (1 error)
+│   └── @ StrayERBClosingTagError (location: (1:14)-(1:16))
+│       └── message: "Stray `%>` found at (1:14). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+│
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:13))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content " (location: (1:2)-(1:11))
+    │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:13)-(2:0))
+        └── content: " %>\n"

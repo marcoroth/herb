@@ -169,7 +169,7 @@ export function isClosingPunctuation(word: string): boolean {
  * Check if a line ends with opening punctuation
  */
 export function lineEndsWithOpeningPunctuation(line: string): boolean {
-  return /[(\[]$/.test(line)
+  return /[([]$/.test(line)
 }
 
 /**
@@ -185,14 +185,14 @@ export function isERBTag(text: string): boolean {
 export function endsWithERBTag(text: string): boolean {
   const trimmed = text.trim()
 
-  return /%>$/.test(trimmed) || /%>\S+$/.test(trimmed)
+  return trimmed.endsWith('%>') || /%>\S+$/.test(trimmed)
 }
 
 /**
  * Check if a string starts with an ERB tag
  */
 export function startsWithERBTag(text: string): boolean {
-  return /^<%/.test(text.trim())
+  return text.trim().startsWith('<%')
 }
 
 /**
@@ -398,17 +398,22 @@ export function isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode |
 }
 
 /**
- * Count consecutive inline elements/ERB at the start of children (with no whitespace between)
+ * Count consecutive inline elements/ERB with no whitespace between them.
+ * Starts from startIndex and skips indices in processedIndices.
  */
-export function countAdjacentInlineElements(children: Node[]): number {
+export function countAdjacentInlineElements(children: Node[], startIndex = 0, processedIndices?: Set<number>): number {
   let count = 0
   let lastSignificantIndex = -1
 
-  for (let i = 0; i < children.length; i++) {
+  for (let i = startIndex; i < children.length; i++) {
     const child = children[i]
 
     if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
       continue
+    }
+
+    if (processedIndices?.has(i)) {
+      break
     }
 
     const isInlineOrERB = (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) || isNode(child, ERBContentNode)

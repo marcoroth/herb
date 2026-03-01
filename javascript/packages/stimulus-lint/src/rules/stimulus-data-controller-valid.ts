@@ -23,7 +23,7 @@ class DataControllerValidVisitor extends StimulusRuleVisitor {
     const controllers = this.getControllerIdentifiers(value)
 
     for (const controller of controllers) {
-      this.validateControllerIdentifier(controller, attributeNode.value?.location || attributeNode.location)
+      this.validateControllerIdentifier(controller, attributeNode.value?.location || attributeNode.location)
     }
   }
 }

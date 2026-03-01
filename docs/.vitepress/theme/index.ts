@@ -1,6 +1,5 @@
 import type { EnhanceAppContext } from "vitepress"
 import Theme from "vitepress/theme"
-import { h } from "vue"
 import { onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vitepress'
 import mediumZoom from 'medium-zoom'

@@ -60,7 +60,7 @@ export function isERBCommentNode(node: Node): node is ERBCommentNode {
   if (!isERBNode(node)) return false
   if (!node.tag_opening?.value) return false
 
-  return node.tag_opening?.value === "<%#" || (node.tag_opening?.value !== "<%#" && (node.content?.value || "").trimStart().startsWith("#"))
+  return node.tag_opening?.value === "<%#" || (node.tag_opening?.value !== "<%#" && (node.content?.value || "").trimStart().startsWith("#"))
 }
 
 

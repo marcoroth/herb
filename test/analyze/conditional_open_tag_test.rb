@@ -307,5 +307,275 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "complete elements with erb if/end inside if/else branches (issue #1239)" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          <div>
+            <div></div>
+            <% if true %><% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "nested if/else with complete elements and inner erb control flow (issue #1239)" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if true %>
+          <% if true %>
+            <div>
+              <div></div>
+              <% if true %><% end %>
+            </div>
+          <% else %>
+            <div></div>
+          <% end %>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb while inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <span></span>
+            <% while x > 0 %>
+              <p><%= x %></p>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb each block inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% items.each do |item| %>
+              <span><%= item %></span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb unless inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% unless hidden %>
+              <span>visible</span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb begin/rescue inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% begin %>
+              <span><%= dangerous_call %></span>
+            <% rescue %>
+              <span>error</span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb case/when inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% case status %>
+            <% when :active %>
+              <span>active</span>
+            <% when :inactive %>
+              <span>inactive</span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "erb if/end before complete element in branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <% if setup %><% end %>
+          <div></div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "multiple erb control flow nodes with complete element in branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% if a %><% end %>
+            <% items.each do |item| %>
+              <span><%= item %></span>
+            <% end %>
+            <% if b %><% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "if/elsif/else with erb control flow in each branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if a %>
+          <div>
+            <% if x %><% end %>
+          </div>
+        <% elsif b %>
+          <div>
+            <% items.each do |i| %><% end %>
+          </div>
+        <% else %>
+          <div>
+            <% while c %><% end %>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb until inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% until done %>
+              <p>waiting</p>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb for inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% for item in items %>
+              <span><%= item %></span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with erb if/elsif/else inside if/else branches" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% if inner_a %>
+              <span>a</span>
+            <% elsif inner_b %>
+              <span>b</span>
+            <% else %>
+              <span>c</span>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "erb block before complete element in branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <% items.each do |item| %><% end %>
+          <div></div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "deeply nested erb control flow inside branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% items.each do |item| %>
+              <% if item.visible? %>
+                <span><%= item.name %></span>
+              <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "html comment alongside complete element in branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <!-- a comment -->
+          <div></div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "erb output tag alongside complete element in branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <%= some_helper %>
+          <div></div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
+
+    test "both branches have erb control flow with complete elements" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <% if inner %><% end %>
+          </div>
+        <% else %>
+          <div>
+            <% unless inner %><% end %>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "unless/else with erb control flow inside branch" do
+      assert_parsed_snapshot(<<~HTML)
+        <% unless condition %>
+          <div>
+            <% if inner %><% end %>
+          </div>
+        <% else %>
+          <div></div>
+        <% end %>
+      HTML
+    end
   end
 end

@@ -1,15 +1,19 @@
-#include "include/pretty_print.h"
-#include "include/ast_nodes.h"
-#include "include/ast_pretty_print.h"
-#include "include/errors.h"
-#include "include/token_struct.h"
-#include "include/util.h"
-#include "include/util/hb_buffer.h"
-#include "include/util/hb_string.h"
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+// Pretty print support excluded
+#else
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#  include "include/pretty_print.h"
+#  include "include/ast_nodes.h"
+#  include "include/ast_pretty_print.h"
+#  include "include/errors.h"
+#  include "include/token_struct.h"
+#  include "include/util.h"
+#  include "include/util/hb_buffer.h"
+#  include "include/util/hb_string.h"
+
+#  include <stdbool.h>
+#  include <stdio.h>
+#  include <stdlib.h>
 
 void pretty_print_indent(hb_buffer_T* buffer, const size_t indent) {
   for (size_t i = 0; i < indent; i++) {
@@ -249,3 +253,5 @@ void pretty_print_string_property(
     if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
 }
+
+#endif

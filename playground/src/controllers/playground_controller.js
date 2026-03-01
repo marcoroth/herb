@@ -206,7 +206,7 @@ export default class extends Controller {
     this.removePrinterVerificationTooltip()
   }
 
-  handlePopState = async (event) => {
+  handlePopState = async (_event) => {
     if (this.urlUpdatedFromChangeEvent === false) {
       this.editor.setValue(this.decompressedValue)
     }
@@ -262,7 +262,7 @@ export default class extends Controller {
 
       button.querySelector(".fa-circle-check").classList.remove("hidden")
       this.showShareSuccessMessage()
-    } catch (error) {
+    } catch (_error) {
       button.querySelector(".fa-circle-xmark").classList.remove("hidden")
       this.showShareErrorMessage()
     }
@@ -519,7 +519,7 @@ export default class extends Controller {
     )
   }
 
-  selectViewer(event) {
+  selectViewer(_event) {
     const button = this.getClosestButton(event.target)
     const tabName = button.dataset.viewer
 
@@ -527,7 +527,7 @@ export default class extends Controller {
     this.updateTabInURL(tabName)
   }
 
-  showDiagnostics(event) {
+  showDiagnostics(_event) {
     this.setActiveTab('diagnostics')
     this.updateTabInURL('diagnostics')
   }
@@ -543,7 +543,7 @@ export default class extends Controller {
     }
   }
 
-  enclargeViewer(event) {
+  enclargeViewer(_event) {
     this.currentViewer.style.position = "absolute"
     this.currentViewer.style.top = `0px`
     this.currentViewer.style.right = `10px`
@@ -555,7 +555,7 @@ export default class extends Controller {
     this.currentViewer.style.cursor = "zoom-out"
   }
 
-  shrinkViewer(event) {
+  shrinkViewer(_event) {
     this.currentViewer.style.position = null
     this.currentViewer.style.left = null
     this.currentViewer.style.top = null
@@ -758,7 +758,7 @@ export default class extends Controller {
     }
 
     if (this.hasTimeTarget) {
-      if (result.duration.toFixed(2) == 0.0) {
+      if (result.duration.toFixed(2) === 0.0) {
         this.timeTarget.textContent = `(in < 0.00 ms)`
       } else {
         this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
@@ -801,7 +801,6 @@ export default class extends Controller {
 
         if (commitInfo.prNumber) {
           const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
-          const commitUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
           this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
           this.commitHashTarget.href = prUrl
@@ -1031,17 +1030,17 @@ export default class extends Controller {
     })
   }
 
-  onOptionChange(event) {
+  onOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onPrinterOptionChange(event) {
+  onPrinterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onFormatterOptionChange(event) {
+  onFormatterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
@@ -1266,7 +1265,7 @@ export default class extends Controller {
         const startLine = diagnostic.line || diagnostic.startLineNumber || 1
         const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
         const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
-        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+        const endColumn = (diagnostic.endColumn || diagnostic.column || 0) + 1
 
         groupHtml += `
           <div
@@ -1743,7 +1742,7 @@ export default class extends Controller {
       }
     }
 
-    let containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
+    const containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
 
     if (!containerDiv) {
       this.noDiagnosticsTarget.innerHTML = `
@@ -1826,7 +1825,7 @@ export default class extends Controller {
   }
 
 
-  openGitHubIssue(event) {
+  openGitHubIssue(_event) {
     const currentUrl = window.parent.location.href
 
     const issueTitle = encodeURIComponent('Bug report from Herb Playground')
