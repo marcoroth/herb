@@ -1,0 +1,130 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0036_colgroup implicitly closed by tr"
+input: |2-
+<table>
+  <colgroup>
+    <col>
+  <tr><td>Data</td></tr>
+</table>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(5:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   ├── body: (4 items)
+    │   │   ├── @ HTMLTextNode (location: (1:7)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:12))
+    │   │   │   │       ├── message: "Element `<colgroup>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</colgroup>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │       └── insertion_point: (4:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:12))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:11)-(2:12))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:12)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (3:4)-(3:9))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (3:4)-(3:9))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   │       ├── tag_name: "col" (location: (3:5)-(3:8))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (3:8)-(3:9))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "col" (location: (3:5)-(3:8))
+    │   │   │   │   │   ├── body: []
+    │   │   │   │   │   ├── close_tag: ∅
+    │   │   │   │   │   ├── is_void: true
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:9)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (4:2)-(4:2))
+    │   │   │   │       └── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(4:24))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:6))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "tr" (location: (4:3)-(4:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:5)-(4:6))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "tr" (location: (4:3)-(4:5))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLElementNode (location: (4:6)-(4:19))
+    │   │   │   │       ├── open_tag:
+    │   │   │   │       │   └── @ HTMLOpenTagNode (location: (4:6)-(4:10))
+    │   │   │   │       │       ├── tag_opening: "<" (location: (4:6)-(4:7))
+    │   │   │   │       │       ├── tag_name: "td" (location: (4:7)-(4:9))
+    │   │   │   │       │       ├── tag_closing: ">" (location: (4:9)-(4:10))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── is_void: false
+    │   │   │   │       │
+    │   │   │   │       ├── tag_name: "td" (location: (4:7)-(4:9))
+    │   │   │   │       ├── body: (1 item)
+    │   │   │   │       │   └── @ HTMLTextNode (location: (4:10)-(4:14))
+    │   │   │   │       │       └── content: "Data"
+    │   │   │   │       │
+    │   │   │   │       ├── close_tag:
+    │   │   │   │       │   └── @ HTMLCloseTagNode (location: (4:14)-(4:19))
+    │   │   │   │       │       ├── tag_opening: "</" (location: (4:14)-(4:16))
+    │   │   │   │       │       ├── tag_name: "td" (location: (4:16)-(4:18))
+    │   │   │   │       │       ├── children: []
+    │   │   │   │       │       └── tag_closing: ">" (location: (4:18)-(4:19))
+    │   │   │   │       │
+    │   │   │   │       ├── is_void: false
+    │   │   │   │       └── source: "HTML"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:19)-(4:24))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:19)-(4:21))
+    │   │   │   │       ├── tag_name: "tr" (location: (4:21)-(4:23))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:23)-(4:24))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:24)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:8))
+    │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
+    │   │       ├── tag_name: "table" (location: (5:2)-(5:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (5:7)-(5:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (5:8)-(6:0))
+        └── content: "\n"

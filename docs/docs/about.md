@@ -18,9 +18,11 @@
 
 The Herb Project was created and is led by Marco Roth.
 
+## Maintainers
+
 <VPTeamMembers size="small" :members="[creator]" />
 
-## Project Contributors
+## Contributors
 
 Herb wouldn't be possible without all its contributors. Thank you to all the amazing people who have directly contributed to the project:
 

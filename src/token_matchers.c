@@ -1,6 +1,5 @@
 #include "include/token_matchers.h"
 #include "include/parser.h"
-#include "include/token.h"
 
 #include <stdarg.h>
 #include <stdbool.h>

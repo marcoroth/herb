@@ -1,3 +1,13 @@
+---
+source: "Analyze::CaseInTest#test_0001_case in statement"
+input: |2-
+<% case variable %>
+<% in [Integer] %>
+  Integer
+<% else %>
+  else
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(6:9))
@@ -13,6 +23,7 @@
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " in [Integer] " (location: (2:2)-(2:16))
     │   │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (2:18)-(4:0))
     │   │               └── content: "\n  Integer\n"

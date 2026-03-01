@@ -1,0 +1,93 @@
+---
+source: "Parser::AttributesTest#test_0039_Vue-style directive attributes multiple"
+input: "<input :model=\"user\" :disabled=\"isDisabled\" :class=\"className\"></input>"
+---
+@ DocumentNode (location: (1:0)-(1:71))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:63))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:63))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:62)-(1:63))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:7)-(1:20))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:13))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:7)-(1:13))
+    │   │       │   │   │               └── content: ":model"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:13)-(1:14))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:14)-(1:20))
+    │   │       │   │           ├── open_quote: """ (location: (1:14)-(1:15))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:15)-(1:19))
+    │   │       │   │           │       └── content: "user"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:19)-(1:20))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:21)-(1:43))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:30))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:21)-(1:30))
+    │   │       │   │   │               └── content: ":disabled"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:30)-(1:31))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:31)-(1:43))
+    │   │       │   │           ├── open_quote: """ (location: (1:31)-(1:32))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:32)-(1:42))
+    │   │       │   │           │       └── content: "isDisabled"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:42)-(1:43))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:44)-(1:62))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:50))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:44)-(1:50))
+    │   │       │       │               └── content: ":class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:50)-(1:51))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:51)-(1:62))
+    │   │       │               ├── open_quote: """ (location: (1:51)-(1:52))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:52)-(1:61))
+    │   │       │               │       └── content: "className"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:61)-(1:62))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── source: "HTML"
+    │
+    └── @ HTMLCloseTagNode (location: (1:63)-(1:71))
+        ├── errors: (1 error)
+        │   └── @ VoidElementClosingTagError (location: (1:63)-(1:71))
+        │       ├── message: "`input` is a void element and should not be used as a closing tag. Use `<input>` or `<input />` instead of `</input>`."
+        │       ├── tag_name: "input" (location: (1:65)-(1:70))
+        │       ├── expected: "<input />"
+        │       └── found: "</input>"
+        │
+        ├── tag_opening: "</" (location: (1:63)-(1:65))
+        ├── tag_name: "input" (location: (1:65)-(1:70))
+        ├── children: []
+        └── tag_closing: ">" (location: (1:70)-(1:71))

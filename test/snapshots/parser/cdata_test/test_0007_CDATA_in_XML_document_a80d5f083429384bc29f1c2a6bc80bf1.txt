@@ -1,0 +1,79 @@
+---
+source: "Parser::CDATATest#test_0007_CDATA in XML document"
+input: |2-
+<?xml version="1.0"?>
+<root>
+  <data><![CDATA[Some data here]]></data>
+</root>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (4 items)
+    ├── @ XMLDeclarationNode (location: (1:0)-(1:21))
+    │   ├── tag_opening: "<?xml" (location: (1:0)-(1:5))
+    │   ├── children: (1 item)
+    │   │   └── @ LiteralNode (location: (1:5)-(1:19))
+    │   │       └── content: " version=\"1.0\""
+    │   │
+    │   └── tag_closing: "?>" (location: (1:19)-(1:21))
+    │
+    ├── @ HTMLTextNode (location: (1:21)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(4:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:6))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "root" (location: (2:1)-(2:5))
+    │   │       ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "root" (location: (2:1)-(2:5))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (2:6)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:41))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "data" (location: (3:3)-(3:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:7)-(3:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "data" (location: (3:3)-(3:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ CDATANode (location: (3:8)-(3:34))
+    │   │   │   │       ├── tag_opening: "<![CDATA[" (location: (3:8)-(3:17))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ LiteralNode (location: (3:17)-(3:31))
+    │   │   │   │       │       └── content: "Some data here"
+    │   │   │   │       │
+    │   │   │   │       └── tag_closing: "]]>" (location: (3:31)-(3:34))
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:34)-(3:41))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:34)-(3:36))
+    │   │   │   │       ├── tag_name: "data" (location: (3:36)-(3:40))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:40)-(3:41))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:41)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:0)-(4:7))
+    │   │       ├── tag_opening: "</" (location: (4:0)-(4:2))
+    │   │       ├── tag_name: "root" (location: (4:2)-(4:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:6)-(4:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:7)-(5:0))
+        └── content: "\n"

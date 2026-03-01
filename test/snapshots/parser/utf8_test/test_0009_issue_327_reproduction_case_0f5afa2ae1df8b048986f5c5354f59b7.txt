@@ -1,0 +1,61 @@
+---
+source: "Parser::UTF8Test#test_0009_issue 327 reproduction case"
+input: |2-
+<div>▌</div>
+<div>🌿</div>
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (4 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:12))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:4)-(1:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:5)-(1:6))
+    │   │       └── content: "▌"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:6)-(1:12))
+    │   │       ├── tag_opening: "</" (location: (1:6)-(1:8))
+    │   │       ├── tag_name: "div" (location: (1:8)-(1:11))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:11)-(1:12))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (1:12)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(2:12))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:5))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "div" (location: (2:1)-(2:4))
+    │   │       ├── tag_closing: ">" (location: (2:4)-(2:5))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (2:1)-(2:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (2:5)-(2:6))
+    │   │       └── content: "🌿"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (2:6)-(2:12))
+    │   │       ├── tag_opening: "</" (location: (2:6)-(2:8))
+    │   │       ├── tag_name: "div" (location: (2:8)-(2:11))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (2:11)-(2:12))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (2:12)-(3:0))
+        └── content: "\n"

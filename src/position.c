@@ -1,33 +1,27 @@
 #include "include/position.h"
-#include "include/memory.h"
+#include "include/util.h"
 
-size_t position_sizeof(void) {
-  return sizeof(position_T);
-}
+position_T position_from_source_with_offset(const char* source, size_t offset) {
+  position_T position = { .line = 1, .column = 0 };
 
-position_T* position_init(const size_t line, const size_t column) {
-  position_T* position = safe_malloc(position_sizeof());
-
-  position->line = line;
-  position->column = column;
+  for (size_t i = 0; i < offset; i++) {
+    if (is_newline(source[i])) {
+      position.line++;
+      position.column = 0;
+    } else {
+      position.column++;
+    }
+  }
 
   return position;
 }
 
-size_t position_line(const position_T* position) {
-  return position->line;
-}
+bool position_is_within_range(position_T position, position_T start, position_T end) {
+  if (position.line < start.line) { return false; }
+  if (position.line == start.line && position.column < start.column) { return false; }
 
-size_t position_column(const position_T* position) {
-  return position->column;
-}
+  if (position.line > end.line) { return false; }
+  if (position.line == end.line && position.column > end.column) { return false; }
 
-position_T* position_copy(position_T* position) {
-  if (position == NULL) { return NULL; }
-
-  return position_init(position_line(position), position_column(position));
-}
-
-void position_free(position_T* position) {
-  free(position);
+  return true;
 }

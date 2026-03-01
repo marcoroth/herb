@@ -1,0 +1,53 @@
+---
+source: "Parser::WhitespaceTest#test_0001_whitespace tracking disabled by default"
+input: |2-
+<div     class="hello">content</div>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:36))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:23))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:22)-(1:23))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:9)-(1:22))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:9)-(1:14))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:9)-(1:14))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:14)-(1:15))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:15)-(1:22))
+    │   │       │               ├── open_quote: """ (location: (1:15)-(1:16))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:16)-(1:21))
+    │   │       │               │       └── content: "hello"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:21)-(1:22))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:23)-(1:30))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:30)-(1:36))
+    │   │       ├── tag_opening: "</" (location: (1:30)-(1:32))
+    │   │       ├── tag_name: "div" (location: (1:32)-(1:35))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:35)-(1:36))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:36)-(2:0))
+        └── content: "\n"

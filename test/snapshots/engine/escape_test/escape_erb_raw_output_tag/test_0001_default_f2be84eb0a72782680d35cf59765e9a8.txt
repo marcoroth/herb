@@ -1,0 +1,6 @@
+---
+source: "Engine::EscapeTest::escape ERB raw output tag#test_0001_default"
+input: "{source: \"<h1><%== value %></h1>\", options: {}}"
+---
+_buf = ::String.new; _buf << '<h1>'.freeze; _buf << ::Herb::Engine.h((value)); _buf << '</h1>'.freeze;
+_buf.to_s

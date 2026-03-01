@@ -1,11 +1,8 @@
+---
+source: "Parser::TagsTest#test_0027_stray closing tag with whitespace"
+input: "<div>Hello</div>< /span>"
+---
 @ DocumentNode (location: (1:0)-(1:24))
-├── errors: (1 error)
-│   └── @ UnexpectedError (location: (1:16)-(1:17))
-│       ├── message: "Unexpected token. Expected: `ERB start`, `unknown token`, `unknown token`, `unknown token`, `identifier`, `newline` or `unknown token`, found: `<`."
-│       ├── description: "Unexpected token"
-│       ├── expected: "`ERB start`, `unknown token`, `unknown token`, `unknown token`, `identifier`, `newline` or `unknown token`"
-│       └── found: "<"
-│
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:16))
     │   ├── open_tag:
@@ -25,9 +22,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:10)-(1:16))
     │   │       ├── tag_opening: "</" (location: (1:10)-(1:12))
     │   │       ├── tag_name: "div" (location: (1:12)-(1:15))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:15)-(1:16))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
-    └── @ HTMLTextNode (location: (1:17)-(1:24))
-        └── content: " /span>"
+    └── @ HTMLTextNode (location: (1:16)-(1:24))
+        └── content: "< /span>"

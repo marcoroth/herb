@@ -1,6 +1,6 @@
-## Herb for Node.js
+# Herb for Node.js
 
-##### Package: [`@herb-tools/node`](https://www.npmjs.com/package/@herb-tools/node)
+**Package**: [`@herb-tools/node`](https://www.npmjs.com/package/@herb-tools/node)
 
 ---
 

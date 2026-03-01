@@ -1,0 +1,14 @@
+---
+source: "Engine::DebugModeTest#test_0049_nested svg inside div erb expressions do NOT get debug spans inside svg"
+input: "{source: \"<div class=\\\"chart-container\\\">\\n  <h2><%= @chart_title %></h2>\\n  <svg viewBox=\\\"0 0 100 100\\\">\\n    <rect width=\\\"<%= @width %>\\\" height=\\\"<%= @height %>\\\" />\\n    <text><%= @value %></text>\\n  </svg>\\n  <p><%= @description %></p>\\n</div>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div class="chart-container" data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">
+  <h2><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @chart_title %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="2" data-herb-debug-column="7" style="display: contents;">'.freeze; _buf << (@chart_title).to_s; _buf << '</span></h2>
+  <svg viewBox="0 0 100 100">
+    <rect width="'.freeze; _buf << ::Herb::Engine.attr((@width)); _buf << '" height="'.freeze; _buf << ::Herb::Engine.attr((@height)); _buf << '" />
+    <text>'.freeze; _buf << (@value).to_s; _buf << '</text>
+  </svg>
+  <p><span data-herb-debug-outline-type="erb-output" data-herb-debug-erb="&lt;%= @description %&gt;" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb" data-herb-debug-inserted="true" data-herb-debug-line="7" data-herb-debug-column="6" style="display: contents;">'.freeze; _buf << (@description).to_s; _buf << '</span></p>
+</div>
+'.freeze;
+_buf.to_s

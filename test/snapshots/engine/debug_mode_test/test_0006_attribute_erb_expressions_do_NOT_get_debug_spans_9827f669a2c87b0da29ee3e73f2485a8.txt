@@ -1,0 +1,6 @@
+---
+source: "Engine::DebugModeTest#test_0006_attribute erb expressions do NOT get debug spans"
+input: "{source: \"<div class=\\\"<%= css_class %>\\\" data-id=\\\"<%= @user.id %>\\\">Content</div>\", options: {debug: true, filename: \"test.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ::Herb::Engine.attr((css_class)); _buf << '" data-id="'.freeze; _buf << ::Herb::Engine.attr((@user.id)); _buf << '" data-herb-debug-outline-type="view" data-herb-debug-file-name="test.html.erb" data-herb-debug-file-relative-path="test.html.erb" data-herb-debug-file-full-path="test.html.erb">Content</div>'.freeze;
+_buf.to_s

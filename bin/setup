@@ -2,5 +2,7 @@
 
 set -e  # Exit on error
 
-make prism
-make all
+bundle install
+bundle exec rake templates
+yarn install
+yarn build

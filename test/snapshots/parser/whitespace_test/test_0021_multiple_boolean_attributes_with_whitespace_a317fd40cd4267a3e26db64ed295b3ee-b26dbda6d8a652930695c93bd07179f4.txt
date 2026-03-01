@@ -1,0 +1,70 @@
+---
+source: "Parser::WhitespaceTest#test_0021_multiple boolean attributes with whitespace"
+input: |2-
+<input     checked     required     disabled     />
+options: {track_whitespace: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:51))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:51))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: "/>" (location: (1:51)-(1:51))
+    │   │       ├── children: (7 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:6)-(1:11))
+    │   │       │   │   └── value: "     " (location: (1:6)-(1:11))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:11)-(1:18))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:11)-(1:18))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:11)-(1:18))
+    │   │       │   │   │               └── content: "checked"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:18)-(1:23))
+    │   │       │   │   └── value: "     " (location: (1:18)-(1:23))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:31)-(1:31))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:31)-(1:31))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:31)-(1:31))
+    │   │       │   │   │               └── content: "required"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:31)-(1:36))
+    │   │       │   │   └── value: "     " (location: (1:31)-(1:36))
+    │   │       │   │
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:44)-(1:44))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:44)-(1:44))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:44)-(1:44))
+    │   │       │   │   │               └── content: "disabled"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: ∅
+    │   │       │   │   └── value: ∅
+    │   │       │   │
+    │   │       │   └── @ WhitespaceNode (location: (1:44)-(1:49))
+    │   │       │       └── value: "     " (location: (1:44)-(1:49))
+    │   │       │
+    │   │       └── is_void: true
+    │   │
+    │   ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:51)-(2:0))
+        └── content: "\n"

@@ -1,0 +1,85 @@
+# Generated from lib/herb/configuration.rb with RBS::Inline
+
+module Herb
+  class Configuration
+    CONFIG_FILENAMES: untyped
+
+    PROJECT_INDICATORS: untyped
+
+    DEFAULTS_PATH: untyped
+
+    DEFAULTS: untyped
+
+    attr_reader config: untyped
+
+    attr_reader config_path: untyped
+
+    attr_reader project_root: untyped
+
+    def initialize: (?untyped project_path) -> untyped
+
+    def []: (untyped key) -> untyped
+
+    def dig: (*untyped keys) -> untyped
+
+    def version: () -> untyped
+
+    def files: () -> untyped
+
+    def file_include_patterns: () -> untyped
+
+    def file_exclude_patterns: () -> untyped
+
+    def linter: () -> untyped
+
+    def formatter: () -> untyped
+
+    def include_patterns_for: (untyped tool) -> untyped
+
+    def exclude_patterns_for: (untyped tool) -> untyped
+
+    def linter_include_patterns: () -> untyped
+
+    def linter_exclude_patterns: () -> untyped
+
+    def formatter_include_patterns: () -> untyped
+
+    def formatter_exclude_patterns: () -> untyped
+
+    def enabled_for_path?: (untyped path, untyped tool) -> untyped
+
+    def linter_enabled_for_path?: (untyped path) -> untyped
+
+    def formatter_enabled_for_path?: (untyped path) -> untyped
+
+    def path_excluded?: (untyped path, untyped patterns) -> untyped
+
+    def path_included?: (untyped path, untyped patterns) -> untyped
+
+    def find_files: (?untyped search_path) -> untyped
+
+    def find_files_for_tool: (untyped tool, ?untyped search_path) -> untyped
+
+    def find_files_for_linter: (?untyped search_path) -> untyped
+
+    def find_files_for_formatter: (?untyped search_path) -> untyped
+
+    def self.load: (?untyped project_path) -> untyped
+
+    def self.default: () -> untyped
+
+    def self.default_file_patterns: () -> untyped
+
+    def self.default_exclude_patterns: () -> untyped
+
+    private
+
+    def find_config_file: () -> untyped
+
+    def project_root?: (untyped path) -> untyped
+
+    def load_config: () -> untyped
+
+    def deep_merge: (untyped base, untyped override, ?additive_keys: untyped) -> untyped
+  end
+end

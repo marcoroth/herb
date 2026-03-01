@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0003_text content with tag after"
+input: "Hello<span>World</span>"
+---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (2 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:5))
@@ -21,6 +25,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:16)-(1:23))
         │       ├── tag_opening: "</" (location: (1:16)-(1:18))
         │       ├── tag_name: "span" (location: (1:18)-(1:22))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:22)-(1:23))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

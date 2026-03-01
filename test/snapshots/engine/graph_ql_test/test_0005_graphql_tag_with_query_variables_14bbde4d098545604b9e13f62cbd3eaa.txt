@@ -1,0 +1,12 @@
+---
+source: "Engine::GraphQLTest#test_0005_graphql tag with query variables"
+input: "{source: \"<%graphql\\n  query Products($first: Int!) {\\n    products(first: $first) {\\n      nodes {\\n        id\\n        title\\n      }\\n    }\\n  }\\n%>\\n<ul>\\n  <% products.each do |product| %>\\n    <li><%= product.title %></li>\\n  <% end %>\\n</ul>\\n\", options: {}}"
+---
+_buf = ::String.new; _buf << '
+<ul>
+'.freeze;   products.each do |product| 
+ _buf << '    <li>'.freeze; _buf << (product.title).to_s; _buf << '</li>
+'.freeze;   end 
+ _buf << '</ul>
+'.freeze;
+_buf.to_s

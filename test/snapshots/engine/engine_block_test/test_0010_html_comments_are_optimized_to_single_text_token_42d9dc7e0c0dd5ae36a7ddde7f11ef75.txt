@@ -1,0 +1,6 @@
+---
+source: "Engine::EngineBlockTest#test_0010_html comments are optimized to single text token"
+input: "{source: \"<!-- This is a comment with multiple words -->\", options: {}}"
+---
+_buf = ::String.new; _buf << '<!-- This is a comment with multiple words -->'.freeze;
+_buf.to_s

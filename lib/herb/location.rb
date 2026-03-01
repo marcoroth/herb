@@ -2,6 +2,10 @@
 # typed: true
 
 module Herb
+  #: type serialized_location = {
+  #| start: serialized_position,
+  #| end: serialized_position
+  #| }
   class Location
     attr_reader :start #: Position
     attr_reader :end #: Position
@@ -28,9 +32,9 @@ module Herb
     #: () -> serialized_location
     def to_hash
       {
-        start: start,
-        end: self.end,
-      } #: Herb::serialized_location
+        start: start.to_hash,
+        end: self.end.to_hash,
+      }
     end
 
     #: (?untyped) -> String
@@ -40,12 +44,12 @@ module Herb
 
     #: () -> String
     def tree_inspect
-      %((location: #{start.tree_inspect}-#{self.end.tree_inspect}))
+      "#{start.tree_inspect}-#{self.end.tree_inspect}"
     end
 
     #: () -> String
     def inspect
-      %(#<Herb::Location #{tree_inspect}>)
+      %(#<Herb::Location (location: #{tree_inspect})>)
     end
   end
 end

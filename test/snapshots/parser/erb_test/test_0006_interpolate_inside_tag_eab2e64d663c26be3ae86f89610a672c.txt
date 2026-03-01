@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0006_interpolate inside tag"
+input: "<h1 <%= \"id=test\" %>></h1>"
+---
 @ DocumentNode (location: (1:0)-(1:26))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:26))
@@ -22,6 +26,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:21)-(1:26))
         │       ├── tag_opening: "</" (location: (1:21)-(1:23))
         │       ├── tag_name: "h1" (location: (1:23)-(1:25))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:25)-(1:26))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

@@ -6,7 +6,7 @@ extern "C" {
 }
 
 emscripten::val ErrorFromCStruct(ERROR_T* error);
-emscripten::val ErrorsArrayFromCArray(array_T* array);
+emscripten::val ErrorsArrayFromCArray(hb_array_T* array);
 
 <%- errors.each do |error| -%>
 emscripten::val <%= error.name %>FromCStruct(<%= error.struct_type %>* <%= error.human %>);

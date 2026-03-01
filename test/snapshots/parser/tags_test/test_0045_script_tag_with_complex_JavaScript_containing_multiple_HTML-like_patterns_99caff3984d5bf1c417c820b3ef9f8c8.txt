@@ -1,0 +1,45 @@
+---
+source: "Parser::TagsTest#test_0045_script tag with complex JavaScript containing multiple HTML-like patterns"
+input: |2-
+<script>
+  function createElements() {
+    const div = "<div class='container'>";
+
+    const span = "<span>text</span>";
+
+    if (elements.length > maxCount) {
+      return "<ul><li>Item</li></ul>";
+    }
+
+    return div + span + "</div>";
+  }
+</script>
+---
+@ DocumentNode (location: (1:0)-(14:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(13:9))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:8))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   │       ├── tag_closing: ">" (location: (1:7)-(1:8))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "script" (location: (1:1)-(1:7))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:8)-(13:0))
+    │   │       └── content: "\n  function createElements() {\n    const div = \"<div class='container'>\";\n\n    const span = \"<span>text</span>\";\n\n    if (elements.length > maxCount) {\n      return \"<ul><li>Item</li></ul>\";\n    }\n\n    return div + span + \"</div>\";\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (13:0)-(13:9))
+    │   │       ├── tag_opening: "</" (location: (13:0)-(13:2))
+    │   │       ├── tag_name: "script" (location: (13:2)-(13:8))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (13:8)-(13:9))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (13:9)-(14:0))
+        └── content: "\n"

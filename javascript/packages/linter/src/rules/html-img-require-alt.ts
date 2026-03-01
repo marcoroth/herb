@@ -1,49 +1,44 @@
-import { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, HTMLAttributeNameNode } from "@herb-tools/core"
-import { Rule, LintMessage } from "../types.js"
+import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
 
-export class HTMLImgRequireAltRule implements Rule {
+import { ParserRule } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+
+class ImgRequireAltVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.checkImgTag(node)
+    super.visitHTMLOpenTagNode(node)
+  }
+
+  private checkImgTag(node: HTMLOpenTagNode): void {
+    const tagName = getTagName(node)
+
+    if (tagName !== "img") {
+      return
+    }
+
+    if (!hasAttribute(node, "alt")) {
+      this.addOffense(
+        'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
+        node.tag_name!.location
+      )
+    }
+  }
+}
+
+export class HTMLImgRequireAltRule extends ParserRule {
   name = "html-img-require-alt"
-  description = "Enforce that all <img> elements include an alt attribute"
 
-  check(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): LintMessage[] {
-    const messages: LintMessage[] = []
-
-    // Only check img tags
-    if (!node.tag_name || node.tag_name.value.toLowerCase() !== "img") {
-      return messages
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
     }
+  }
 
-    // Check if the img tag has an alt attribute
-    let hasAltAttribute = false
-
-    const attributes = node.type === "AST_HTML_SELF_CLOSE_TAG_NODE"
-      ? (node as HTMLSelfCloseTagNode).attributes
-      : (node as HTMLOpenTagNode).children
-
-    for (const child of attributes) {
-      if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-        const attributeNode = child as HTMLAttributeNode
-
-        if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-          const nameNode = attributeNode.name as HTMLAttributeNameNode
-
-          if (nameNode.name && nameNode.name.value.toLowerCase() === "alt") {
-            hasAltAttribute = true
-            break
-          }
-        }
-      }
-    }
-
-    if (!hasAltAttribute) {
-      messages.push({
-        rule: this.name,
-        message: 'Missing required "alt" attribute on <img> tag. Add alt="" for decorative images or alt="description" for informative images.',
-        location: node.tag_name.location,
-        severity: "error"
-      })
-    }
-
-    return messages
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new ImgRequireAltVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }

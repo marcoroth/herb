@@ -2,7 +2,7 @@
   "name": "herb-lsp",
   "displayName": "Herb LSP - HTML+ERB Language Tools",
   "description": "VS Code extension for connecting with the Herb Language Server and Language Tools for HTML+ERB files",
-  "version": "0.3.1",
+  "version": "0.8.10",
   "private": true,
   "license": "MIT",
   "pricing": "Free",
@@ -14,6 +14,9 @@
   "engines": {
     "vscode": "^1.43.0"
   },
+  "extensionDependencies": [
+    "Shopify.ruby-lsp"
+  ],
   "categories": [
     "Programming Languages",
     "Linters",
@@ -28,7 +31,7 @@
   "bugs": "https://github.com/marcoroth/herb/issues/new?title=Package%20%60@herb-lsp-vscode%60:%20",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marcoroth/herb.git",
+    "url": "git+https://github.com/marcoroth/herb.git",
     "directory": "javascript/packages/vscode"
   },
   "sponsor": {
@@ -36,14 +39,51 @@
   },
   "activationEvents": [
     "onLanguage:erb",
-    "onLanguage:html"
+    "onLanguage:html",
+    "onCommand:herb.analyzeProject",
+    "onCommand:herb.reprocessFile"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "Herb configuration",
+      "title": "Herb (HTML+ERB)",
       "properties": {
+        "languageServerHerb.linter.enabled": {
+          "scope": "window",
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable the Herb Linter. The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable rules, like proper tag nesting, required attributes, and ERB usage patterns.",
+          "markdownDescription": "Enable/disable the [Herb Linter](https://herb-tools.dev/projects/linter). The linter provides comprehensive HTML+ERB validation, enforces best practices, and catches common errors with a set of configurable [rules](https://herb-tools.dev/linter/rules/), like proper tag nesting, required attributes, and ERB usage patterns.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.linter.fixOnSave": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically autofix correctable linter offenses when saving files.",
+          "markdownDescription": "Automatically autofix correctable linter offenses when saving files."
+        },
+        "languageServerHerb.formatter.enabled": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Enable/disable document formatting using the Herb Formatter (Experimental Preview). WARNING: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.",
+          "markdownDescription": "Enable/disable document formatting using the [Herb Formatter](https://herb-tools.dev/projects/formatter) **(Experimental Preview)**. ⚠️ **WARNING**: This formatter is experimental and may potentially corrupt files. Only use on files that can be restored via git or other version control.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.formatter.indentWidth": {
+          "scope": "resource",
+          "type": "number",
+          "default": 2,
+          "description": "Number of spaces for each indentation level.",
+          "markdownDescription": "Number of spaces for each indentation level.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
+        "languageServerHerb.formatter.maxLineLength": {
+          "scope": "resource",
+          "type": "number",
+          "default": 80,
+          "description": "Maximum line length before wrapping.",
+          "markdownDescription": "Maximum line length before wrapping.\n\n**Note**: This is a personal default. If a `.herb.yml` file exists in your project, its configuration takes precedence."
+        },
         "languageServerHerb.trace.server": {
           "scope": "window",
           "type": "string",
@@ -53,16 +93,157 @@
             "verbose"
           ],
           "default": "verbose",
-          "description": "Traces the communication between VS Code and the language server."
+          "description": "Traces the communication between Visual Studio Code and the Herb language server (for debugging)."
         }
       }
-    }
+    },
+    "commands": [
+      {
+        "command": "herb.analyzeProject",
+        "title": "Herb: Analyze Project",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "herb.reprocessFile",
+        "title": "Herb: Re-analyze File",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "herb.createConfig",
+        "title": "Herb: Create Herb Configuration",
+        "icon": "$(file-add)"
+      },
+      {
+        "command": "herb.editConfig",
+        "title": "Herb: Edit Herb Configuration",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "herb.reportIssue",
+        "title": "Herb: Report Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportDetailedIssue",
+        "title": "Herb: Report Detailed Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportGeneralIssue",
+        "title": "Herb: Report General Issue",
+        "icon": "$(github)"
+      },
+      {
+        "command": "herb.reportDiagnosticIssue",
+        "title": "Herb: Report Issue with Diagnostic",
+        "icon": "$(github)",
+        "when": "false"
+      },
+      {
+        "command": "herb.toggleLinter",
+        "title": "Herb: Toggle Linter",
+        "icon": "$(symbol-boolean)"
+      },
+      {
+        "command": "herb.toggleFormatter",
+        "title": "Herb: Toggle Formatter",
+        "icon": "$(symbol-boolean)"
+      },
+      {
+        "command": "herb.setIndentWidth",
+        "title": "Herb: Set Indent Width",
+        "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "herb.setMaxLineLength",
+        "title": "Herb: Set Max Line Length",
+        "icon": "$(symbol-numeric)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "herbExplorer",
+          "title": "Herb",
+          "icon": "assets/herb.svg"
+        }
+      ]
+    },
+    "views": {
+      "herbExplorer": [
+        {
+          "id": "herbFileStatus",
+          "name": "Project Analysis",
+          "visibility": "visible"
+        },
+        {
+          "id": "herbConfiguration",
+          "name": "Configuration",
+          "visibility": "visible"
+        },
+        {
+          "id": "herbInformation",
+          "name": "Information",
+          "visibility": "collapsed"
+        },
+        {
+          "id": "herbSupport",
+          "name": "Support",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "herb.analyzeProject",
+          "when": "view == herbFileStatus",
+          "group": "navigation"
+        },
+        {
+          "command": "herb.createConfig",
+          "when": "view == herbConfiguration && !herb.hasProjectConfig",
+          "group": "navigation"
+        },
+        {
+          "command": "herb.editConfig",
+          "when": "view == herbConfiguration && herb.hasProjectConfig",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "herb.reprocessFile",
+          "when": "view == herbFileStatus && (viewItem == herbFileWithIssues || viewItem == herbFileOk)",
+          "group": "inline"
+        },
+        {
+          "command": "herb.reportDetailedIssue",
+          "when": "view == herbFileStatus && viewItem == herbFileWithIssues",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "herbFileStatus",
+        "contents": "Run a project analysis to get started",
+        "button": {
+          "title": "Analyze Project",
+          "command": "herb.analyzeProject"
+        }
+      },
+      {
+        "view": "herbConfiguration",
+        "contents": "Create a Herb configuration file to share Herb settings with your team.\n\n[Create .herb.yml](command:herb.createConfig)",
+        "when": "!herb.hasProjectConfig"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "yarn run package",
     "publish": "vsce publish",
-    "prebuild": "yarn clean",
-    "build": "yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
+    "build": "yarn clean && yarn sync-defaults && yarn run check-types && yarn run lint && yarn build:language-server && node esbuild.js",
     "build:language-server": "cd ../language-server && yarn build && cd -",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
@@ -73,25 +254,29 @@
     "pretest": "yarn run build-tests && yarn run build && yarn run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test",
+    "test": "if [ -z \"$DISPLAY\" ]; then xvfb-run -a yarn vscode:test; else yarn vscode:test; fi",
+    "vscode:test": "vscode-test",
     "clean": "rimraf dist",
+    "sync-defaults": "node scripts/sync-defaults.js",
     "prepublishOnly": "yarn clean && yarn build && yarn test"
   },
   "devDependencies": {
-    "@herb-tools/node-wasm": "0.3.1",
-    "@types/vscode": "^1.43.0",
+    "@herb-tools/config": "0.8.10",
+    "@herb-tools/formatter": "0.8.10",
+    "@herb-tools/linter": "0.8.10",
+    "@herb-tools/node-wasm": "0.8.10",
     "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "vscode-languageclient": "^9.0.1",
-    "eslint": "^9.25.1",
-    "esbuild": "^0.25.3",
-    "esbuild-plugin-copy": "^2.1.1",
-    "npm-run-all": "^4.1.5",
-    "typescript": "^5.8.3",
-    "@vscode/test-cli": "^0.0.10",
+    "@types/node": "25.x",
+    "@types/vscode": "^1.109.0",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.56.1",
+    "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.5.0"
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.27.3",
+    "esbuild-plugin-copy": "^2.1.1",
+    "eslint": "^10.0.0",
+    "npm-run-all": "^4.1.5",
+    "vscode-languageclient": "^9.0.1"
   }
 }

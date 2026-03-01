@@ -39,16 +39,18 @@ module Parser
                 │       ├── tag_opening: "<%=" (location: (1:4)-(1:7))
                 │       ├── content: " RUBY_VERSION " (location: (1:7)-(1:21))
                 │       ├── tag_closing: "%>" (location: (1:21)-(1:23))
-                │       ├── parsed: false
-                │       └── valid: false
+                │       ├── parsed: true
+                │       └── valid: true
                 │
                 ├── close_tag:
                 │   └── @ HTMLCloseTagNode (location: (1:23)-(1:28))
                 │       ├── tag_opening: "</" (location: (1:23)-(1:25))
                 │       ├── tag_name: "h1" (location: (1:25)-(1:27))
+                │       ├── children: []
                 │       └── tag_closing: ">" (location: (1:27)-(1:28))
                 │
-                └── is_void: false
+                ├── is_void: false
+                └── source: "HTML"
       SNAPSHOT
 
       file.unlink

@@ -1,0 +1,26 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0033_multi-line until closed in same ERB tag"
+input: |2-
+<%
+  until done
+    process
+    increment
+  end
+%>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(6:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     until done
+    │       process
+    │       increment
+    │     end
+    │   " (location: (1:2)-(6:0))
+    │   ├── tag_closing: "%>" (location: (6:0)-(6:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (6:2)-(7:0))
+        └── content: "\n"

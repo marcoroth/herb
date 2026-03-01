@@ -1,0 +1,89 @@
+---
+source: "Analyze::BlockTest#test_0016_block with multiple nested control structures"
+input: |2-
+<%= items.select { |item| item.valid? }.map do |item| %>
+  <div class="<%= item.active? ? 'active' : 'inactive' %>">
+    <%= item.name %>
+  </div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%=" (location: (1:0)-(1:3))
+    │   ├── content: " items.select { |item| item.valid? }.map do |item| " (location: (1:3)-(1:54))
+    │   ├── tag_closing: "%>" (location: (1:54)-(1:56))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:56)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:8))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:59))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:58)-(2:59))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:7)-(2:58))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:58))
+    │   │   │   │       │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ ERBContentNode (location: (2:14)-(2:57))
+    │   │   │   │       │               │       ├── tag_opening: "<%=" (location: (2:14)-(2:17))
+    │   │   │   │       │               │       ├── content: " item.active? ? 'active' : 'inactive' " (location: (2:17)-(2:55))
+    │   │   │   │       │               │       ├── tag_closing: "%>" (location: (2:55)-(2:57))
+    │   │   │   │       │               │       ├── parsed: true
+    │   │   │   │       │               │       └── valid: true
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (2:57)-(2:58))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:59)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:4)-(3:20))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:4)-(3:7))
+    │   │   │   │   │   ├── content: " item.name " (location: (3:7)-(3:18))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:18)-(3:20))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:20)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:2)-(4:8))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:2)-(4:4))
+    │   │   │   │       ├── tag_name: "div" (location: (4:4)-(4:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

@@ -1,0 +1,8 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0009_comment before content compilation"
+input: "{source: \"<% # This file contains a comment before other content %>\\n<div>Hey there</div>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << '
+<div>Hey there</div>
+'.freeze;
+_buf.to_s

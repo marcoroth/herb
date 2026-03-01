@@ -1,0 +1,78 @@
+---
+source: "Parser::AttributesTest#test_0049_Conditional attribute with ERB on separate line"
+input: |2-
+<span
+  <% if @replaceable %>data-menu-button<% end %>
+  class="css-truncate css-truncate-target"
+></span>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(4:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(4:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "span" (location: (1:1)-(1:5))
+    │   │       ├── tag_closing: ">" (location: (4:0)-(4:1))
+    │   │       ├── children: (2 items)
+    │   │       │   ├── @ ERBIfNode (location: (2:2)-(2:48))
+    │   │       │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │   │   ├── content: " if @replaceable " (location: (2:4)-(2:21))
+    │   │       │   │   ├── tag_closing: "%>" (location: (2:21)-(2:23))
+    │   │       │   │   ├── then_keyword: ∅
+    │   │       │   │   ├── statements: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (2:23)-(2:39))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:23)-(2:39))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (2:23)-(2:39))
+    │   │       │   │   │       │               └── content: "data-menu-button"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: ∅
+    │   │       │   │   │       └── value: ∅
+    │   │       │   │   │
+    │   │       │   │   ├── subsequent: ∅
+    │   │       │   │   └── end_node:
+    │   │       │   │       └── @ ERBEndNode (location: (2:39)-(2:48))
+    │   │       │   │           ├── tag_opening: "<%" (location: (2:39)-(2:41))
+    │   │       │   │           ├── content: " end " (location: (2:41)-(2:46))
+    │   │       │   │           └── tag_closing: "%>" (location: (2:46)-(2:48))
+    │   │       │   │
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (3:2)-(3:42))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:2)-(3:7))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (3:2)-(3:7))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (3:7)-(3:8))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (3:8)-(3:42))
+    │   │       │               ├── open_quote: """ (location: (3:8)-(3:9))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (3:9)-(3:41))
+    │   │       │               │       └── content: "css-truncate css-truncate-target"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (3:41)-(3:42))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "span" (location: (1:1)-(1:5))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (4:1)-(4:8))
+    │   │       ├── tag_opening: "</" (location: (4:1)-(4:3))
+    │   │       ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (4:8)-(5:0))
+        └── content: "\n"

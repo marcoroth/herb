@@ -1,3 +1,12 @@
+---
+source: "Analyze::WhileTest#test_0002_while statement wrapped in element"
+input: |2-
+<h1>
+  <% while true %>
+    true
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:5))
@@ -36,9 +45,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:5))
     │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
     │   │       ├── tag_name: "h1" (location: (5:2)-(5:4))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:4)-(5:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:5)-(6:0))
         └── content: "\n"

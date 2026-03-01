@@ -1,0 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0036_conditional html element with condition false"
+input: "{source: \"<% if @with_icon %>\\n  <div class=\\\"icon\\\">\\n<% end %>\\n\\n  <span>Hello</span>\\n\\n<% if @with_icon %>\\n  </div>\\n<% end %>\\n\", locals: {\"@with_icon\": false}, options: {escape: false}}"
+---
+
+  <span>Hello</span>
+

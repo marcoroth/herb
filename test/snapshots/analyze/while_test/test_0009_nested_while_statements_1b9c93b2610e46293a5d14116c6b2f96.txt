@@ -1,3 +1,14 @@
+---
+source: "Analyze::WhileTest#test_0009_nested while statements"
+input: |2-
+<% while true %>
+  true
+
+  <% while false %>
+    false
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBWhileNode (location: (1:0)-(7:9))

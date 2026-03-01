@@ -1,0 +1,17 @@
+{
+  "name": "templates",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "templates",
+  "projectType": "library",
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bundle exec rake templates"
+      },
+      "inputs": ["{projectRoot}/**/*", "{workspaceRoot}/Rakefile", "{workspaceRoot}/config.yml"],
+      "dependsOn": ["prism:build"]
+    }
+  },
+  "tags": ["templates", "ruby"]
+}

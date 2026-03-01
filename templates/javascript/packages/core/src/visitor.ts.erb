@@ -1,11 +1,27 @@
 import {
   Node,
+  ERBNode,
   <%- nodes.each do |node| -%>
   <%= node.name %>,
   <%- end -%>
 } from "./nodes.js"
 
-export class Visitor {
+/**
+ * Interface that enforces all node visit methods are implemented
+ * This ensures that any class implementing IVisitor must have a visit method for every node type
+ */
+export interface IVisitor {
+  visit(node: Node | null | undefined): void
+  visitAll(nodes: (Node | null | undefined)[]): void
+  visitChildNodes(node: Node): void
+  <%- nodes.each do |node| -%>
+  visit<%= node.name %>(node: <%= node.name %>): void
+  <%- end -%>
+  visitNode(node: Node): void
+  visitERBNode(node: ERBNode): void
+}
+
+export class Visitor implements IVisitor {
   visit(node: Node | null | undefined): void {
     if (!node) return
 
@@ -20,8 +36,20 @@ export class Visitor {
     node.compactChildNodes().forEach(node => node.accept(this))
   }
 
+  visitNode(_node: Node): void {
+    // Default implementation does nothing
+  }
+
+  visitERBNode(_node: ERBNode): void {
+    // Default implementation does nothing
+  }
+
   <%- nodes.each do |node| -%>
   visit<%= node.name %>(node: <%= node.name %>): void {
+    this.visitNode(node)
+    <%- if node.name.start_with?("ERB") -%>
+    this.visitERBNode(node)
+    <%- end -%>
     this.visitChildNodes(node)
   }
 

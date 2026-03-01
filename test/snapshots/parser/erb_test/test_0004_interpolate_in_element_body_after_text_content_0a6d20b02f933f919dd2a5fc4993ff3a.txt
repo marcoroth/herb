@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0004_interpolate in element body after text content"
+input: "<h1>Hello <%= World %></h1>"
+---
 @ DocumentNode (location: (1:0)-(1:27))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:27))
@@ -25,6 +29,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:22)-(1:27))
         │       ├── tag_opening: "</" (location: (1:22)-(1:24))
         │       ├── tag_name: "h1" (location: (1:24)-(1:26))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:26)-(1:27))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

@@ -1,0 +1,39 @@
+---
+source: "Analyze::ThenTest#test_0014_unless else with then keyword"
+input: |2-
+<% unless condition then %>
+  no
+<% else %>
+  yes
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBUnlessNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " unless condition then " (location: (1:2)-(1:25))
+    │   ├── tag_closing: "%>" (location: (1:25)-(1:27))
+    │   ├── then_keyword: (location: (1:20)-(1:24))
+    │   ├── statements: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:27)-(3:0))
+    │   │       └── content: "\n  no\n"
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " else " (location: (3:2)-(3:8))
+    │   │       ├── tag_closing: "%>" (location: (3:8)-(3:10))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (3:10)-(5:0))
+    │   │               └── content: "\n  yes\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

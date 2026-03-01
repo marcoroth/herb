@@ -1,77 +1,80 @@
-import { HTMLOpenTagNode, HTMLElementNode, Visitor, Node } from "@herb-tools/core"
-import { Rule, LintMessage } from "../types.js"
+import { BaseRuleVisitor, getTagName } from "./rule-utils.js"
+import { ParserRule } from "../types.js"
 
-class NestedLinkVisitor extends Visitor {
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
+
+class NestedLinkVisitor extends BaseRuleVisitor {
   private linkStack: HTMLOpenTagNode[] = []
-  private messages: LintMessage[] = []
-  private ruleName: string
 
-  constructor(ruleName: string) {
-    super()
-    this.ruleName = ruleName
-  }
+  private checkNestedLink(openTag: HTMLOpenTagNode): boolean {
+    if (this.linkStack.length > 0) {
+      this.addOffense(
+        "Nested `<a>` elements are not allowed. Links cannot contain other links.",
+        openTag.tag_name!.location,
+      )
 
-  getMessages(): LintMessage[] {
-    return this.messages
+      return true
+    }
+
+    return false
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    // Check if this is a link element
-    if (node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE") {
-      const openTag = node.open_tag as HTMLOpenTagNode
-      if (openTag.tag_name?.value.toLowerCase() === "a") {
-        // If we're already inside a link, this is a nested link
-        if (this.linkStack.length > 0) {
-          this.messages.push({
-            rule: this.ruleName,
-            message: "Nested <a> elements are not allowed. Links cannot contain other links.",
-            location: openTag.tag_name.location,
-            severity: "error"
-          })
+    if (!node.open_tag) {
+      super.visitHTMLElementNode(node)
+      return
+    }
+
+    switch (node.open_tag.type) {
+      case "AST_HTML_OPEN_TAG_NODE": {
+        const openTag = node.open_tag
+        const tagName = getTagName(openTag)
+
+        if (tagName !== "a") {
+          super.visitHTMLElementNode(node)
+          return
         }
 
-        // Add this link to the stack
+        this.checkNestedLink(openTag)
+
         this.linkStack.push(openTag)
-
-        // Visit children
         super.visitHTMLElementNode(node)
-
-        // Remove this link from the stack when done
         this.linkStack.pop()
-      } else {
-        // Not a link, just continue traversing
-        super.visitHTMLElementNode(node)
+        break
       }
-    } else {
-      // Not a proper element, just continue traversing
-      super.visitHTMLElementNode(node)
+
+      case "AST_HTML_CONDITIONAL_OPEN_TAG_NODE":
+        super.visitHTMLElementNode(node)
+        break
     }
   }
 
+  // Handle self-closing <a> tags (though they're not valid HTML, they might exist)
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    // Handle self-closing <a> tags (though they're not valid HTML, they might exist)
-    if (node.tag_name?.value.toLowerCase() === "a" && node.is_void) {
-      if (this.linkStack.length > 0) {
-        this.messages.push({
-          rule: this.ruleName,
-          message: "Nested <a> elements are not allowed. Links cannot contain other links.",
-          location: node.tag_name.location,
-          severity: "error"
-        })
-      }
+    const tagName = getTagName(node)
+
+    if (tagName === "a" && node.is_void) {
+      this.checkNestedLink(node)
     }
 
     super.visitHTMLOpenTagNode(node)
   }
 }
 
-export class HTMLNoNestedLinksRule implements Rule {
+export class HTMLNoNestedLinksRule extends ParserRule {
   name = "html-no-nested-links"
-  description = "Disallow placing one <a> element inside another <a> element"
 
-  check(node: Node): LintMessage[] {
-    const visitor = new NestedLinkVisitor(this.name)
-    visitor.visit(node)
-    return visitor.getMessages()
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new NestedLinkVisitor(this.name, context)
+    visitor.visit(result.value)
+    return visitor.offenses
   }
 }

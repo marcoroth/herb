@@ -1,0 +1,13 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0005_case children compilation"
+input: "{source: \"<% case variable %>\\n  <h1>Children</h1>\\n<% when Integer %>\\n  <h1>Integer</h1>\\n<% when String %>\\n  <h1>String</h1>\\n<% else %>\\n  <h1>else</h1>\\n<% end %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; case variable 
+ when Integer 
+ _buf << '  <h1>Integer</h1>
+'.freeze; when String 
+ _buf << '  <h1>String</h1>
+'.freeze; else 
+ _buf << '  <h1>else</h1>
+'.freeze; end 
+_buf.to_s

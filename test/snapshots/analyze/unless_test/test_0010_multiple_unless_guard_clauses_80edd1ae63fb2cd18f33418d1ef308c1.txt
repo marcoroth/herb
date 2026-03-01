@@ -1,0 +1,90 @@
+---
+source: "Analyze::UnlessTest#test_0010_multiple unless guard clauses"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item %>
+  <% next unless item.active? %>
+  <% next unless item.published? %>
+  <div><%= item.title %></div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each do |item| " (location: (1:2)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:26))
+    │   ├── body: (9 items)
+    │   │   ├── @ HTMLTextNode (location: (1:26)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:24))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " next unless item " (location: (2:4)-(2:22))
+    │   │   │   ├── tag_closing: "%>" (location: (2:22)-(2:24))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:24)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (3:2)-(3:32))
+    │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
+    │   │   │   ├── content: " next unless item.active? " (location: (3:4)-(3:30))
+    │   │   │   ├── tag_closing: "%>" (location: (3:30)-(3:32))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:32)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (4:2)-(4:35))
+    │   │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │   ├── content: " next unless item.published? " (location: (4:4)-(4:33))
+    │   │   │   ├── tag_closing: "%>" (location: (4:33)-(4:35))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (4:35)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (5:2)-(5:30))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (5:2)-(5:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (5:2)-(5:3))
+    │   │   │   │       ├── tag_name: "div" (location: (5:3)-(5:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (5:6)-(5:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (5:3)-(5:6))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ ERBContentNode (location: (5:7)-(5:24))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (5:7)-(5:10))
+    │   │   │   │       ├── content: " item.title " (location: (5:10)-(5:22))
+    │   │   │   │       ├── tag_closing: "%>" (location: (5:22)-(5:24))
+    │   │   │   │       ├── parsed: true
+    │   │   │   │       └── valid: true
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (5:24)-(5:30))
+    │   │   │   │       ├── tag_opening: "</" (location: (5:24)-(5:26))
+    │   │   │   │       ├── tag_name: "div" (location: (5:26)-(5:29))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (5:29)-(5:30))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:30)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

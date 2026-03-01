@@ -19,6 +19,10 @@ export class TokenList implements Iterable<Token> {
     return this.list.length
   }
 
+  get tokens(): Token[] {
+    return this.list
+  }
+
   [Symbol.iterator](): Iterator<Token> {
     return this.list[Symbol.iterator]()
   }

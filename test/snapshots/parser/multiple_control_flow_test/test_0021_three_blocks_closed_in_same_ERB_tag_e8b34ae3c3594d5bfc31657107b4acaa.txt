@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0021_three blocks closed in same ERB tag"
+input: |2-
+<% if a; if b; if c; puts "deep"; end; end; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:50))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if a; if b; if c; puts "deep"; end; end; end " (location: (1:2)-(1:48))
+    │   ├── tag_closing: "%>" (location: (1:48)-(1:50))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:50)-(2:0))
+        └── content: "\n"

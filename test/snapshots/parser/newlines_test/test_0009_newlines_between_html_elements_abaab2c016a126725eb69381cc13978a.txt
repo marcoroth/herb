@@ -1,3 +1,10 @@
+---
+source: "Parser::NewlinesTest#test_0009_newlines between html elements"
+input: |2-
+<h1>Title 1</h1>
+
+<h2>Title 2</h2>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:16))
@@ -18,9 +25,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:11)-(1:16))
     │   │       ├── tag_opening: "</" (location: (1:11)-(1:13))
     │   │       ├── tag_name: "h1" (location: (1:13)-(1:15))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:15)-(1:16))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     ├── @ HTMLTextNode (location: (1:16)-(3:0))
     │   └── content: "\n\n"
@@ -43,9 +52,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (3:11)-(3:16))
     │   │       ├── tag_opening: "</" (location: (3:11)-(3:13))
     │   │       ├── tag_name: "h2" (location: (3:13)-(3:15))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:15)-(3:16))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:16)-(4:0))
         └── content: "\n"

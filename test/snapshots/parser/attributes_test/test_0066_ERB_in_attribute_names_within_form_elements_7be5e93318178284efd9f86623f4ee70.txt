@@ -1,0 +1,198 @@
+---
+source: "Parser::AttributesTest#test_0066_ERB in attribute names within form elements"
+input: |2-
+
+        <form>
+          <input data-<%= user.id %>-field="text">
+          <button data-<% collection %>-list="options"></button>
+          <select prefix-<%# comment %>-suffix="value"></select>
+        </form>
+      
+---
+@ DocumentNode (location: (1:0)-(7:6))
+└── children: (3 items)
+    ├── @ HTMLTextNode (location: (1:0)-(2:8))
+    │   └── content: "\n        "
+    │
+    ├── @ HTMLElementNode (location: (2:8)-(6:15))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:8)-(2:14))
+    │   │       ├── tag_opening: "<" (location: (2:8)-(2:9))
+    │   │       ├── tag_name: "form" (location: (2:9)-(2:13))
+    │   │       ├── tag_closing: ">" (location: (2:13)-(2:14))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "form" (location: (2:9)-(2:13))
+    │   ├── body: (7 items)
+    │   │   ├── @ HTMLTextNode (location: (2:14)-(3:10))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:10)-(3:50))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:10)-(3:50))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:10)-(3:11))
+    │   │   │   │       ├── tag_name: "input" (location: (3:11)-(3:16))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:49)-(3:50))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (3:17)-(3:49))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (3:17)-(3:42))
+    │   │   │   │       │       │       └── children: (3 items)
+    │   │   │   │       │       │           ├── @ LiteralNode (location: (3:17)-(3:22))
+    │   │   │   │       │       │           │   └── content: "data-"
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           ├── @ ERBContentNode (location: (3:22)-(3:36))
+    │   │   │   │       │       │           │   ├── tag_opening: "<%=" (location: (3:22)-(3:25))
+    │   │   │   │       │       │           │   ├── content: " user.id " (location: (3:25)-(3:34))
+    │   │   │   │       │       │           │   ├── tag_closing: "%>" (location: (3:34)-(3:36))
+    │   │   │   │       │       │           │   ├── parsed: true
+    │   │   │   │       │       │           │   └── valid: true
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           └── @ LiteralNode (location: (3:36)-(3:42))
+    │   │   │   │       │       │               └── content: "-field"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (3:42)-(3:43))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (3:43)-(3:49))
+    │   │   │   │       │               ├── open_quote: """ (location: (3:43)-(3:44))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (3:44)-(3:48))
+    │   │   │   │       │               │       └── content: "text"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (3:48)-(3:49))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "input" (location: (3:11)-(3:16))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (3:50)-(4:10))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:10)-(4:64))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:10)-(4:55))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:10)-(4:11))
+    │   │   │   │       ├── tag_name: "button" (location: (4:11)-(4:17))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:54)-(4:55))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (4:18)-(4:54))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (4:18)-(4:44))
+    │   │   │   │       │       │       └── children: (3 items)
+    │   │   │   │       │       │           ├── @ LiteralNode (location: (4:18)-(4:23))
+    │   │   │   │       │       │           │   └── content: "data-"
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           ├── @ ERBContentNode (location: (4:23)-(4:39))
+    │   │   │   │       │       │           │   ├── tag_opening: "<%" (location: (4:23)-(4:25))
+    │   │   │   │       │       │           │   ├── content: " collection " (location: (4:25)-(4:37))
+    │   │   │   │       │       │           │   ├── tag_closing: "%>" (location: (4:37)-(4:39))
+    │   │   │   │       │       │           │   ├── parsed: true
+    │   │   │   │       │       │           │   └── valid: true
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           └── @ LiteralNode (location: (4:39)-(4:44))
+    │   │   │   │       │       │               └── content: "-list"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (4:44)-(4:45))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (4:45)-(4:54))
+    │   │   │   │       │               ├── open_quote: """ (location: (4:45)-(4:46))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (4:46)-(4:53))
+    │   │   │   │       │               │       └── content: "options"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (4:53)-(4:54))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "button" (location: (4:11)-(4:17))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:55)-(4:64))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:55)-(4:57))
+    │   │   │   │       ├── tag_name: "button" (location: (4:57)-(4:63))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:63)-(4:64))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (4:64)-(5:10))
+    │   │   │   └── content: "\n          "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (5:10)-(5:64))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (5:10)-(5:55))
+    │   │   │   │       ├── tag_opening: "<" (location: (5:10)-(5:11))
+    │   │   │   │       ├── tag_name: "select" (location: (5:11)-(5:17))
+    │   │   │   │       ├── tag_closing: ">" (location: (5:54)-(5:55))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (5:18)-(5:54))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (5:18)-(5:46))
+    │   │   │   │       │       │       └── children: (3 items)
+    │   │   │   │       │       │           ├── @ LiteralNode (location: (5:18)-(5:25))
+    │   │   │   │       │       │           │   └── content: "prefix-"
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           ├── @ ERBContentNode (location: (5:25)-(5:39))
+    │   │   │   │       │       │           │   ├── tag_opening: "<%#" (location: (5:25)-(5:28))
+    │   │   │   │       │       │           │   ├── content: " comment " (location: (5:28)-(5:37))
+    │   │   │   │       │       │           │   ├── tag_closing: "%>" (location: (5:37)-(5:39))
+    │   │   │   │       │       │           │   ├── parsed: false
+    │   │   │   │       │       │           │   └── valid: true
+    │   │   │   │       │       │           │
+    │   │   │   │       │       │           └── @ LiteralNode (location: (5:39)-(5:46))
+    │   │   │   │       │       │               └── content: "-suffix"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (5:46)-(5:47))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (5:47)-(5:54))
+    │   │   │   │       │               ├── open_quote: """ (location: (5:47)-(5:48))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (5:48)-(5:53))
+    │   │   │   │       │               │       └── content: "value"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (5:53)-(5:54))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "select" (location: (5:11)-(5:17))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (5:55)-(5:64))
+    │   │   │   │       ├── tag_opening: "</" (location: (5:55)-(5:57))
+    │   │   │   │       ├── tag_name: "select" (location: (5:57)-(5:63))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (5:63)-(5:64))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:64)-(6:8))
+    │   │       └── content: "\n        "
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:8)-(6:15))
+    │   │       ├── tag_opening: "</" (location: (6:8)-(6:10))
+    │   │       ├── tag_name: "form" (location: (6:10)-(6:14))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:14)-(6:15))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (6:15)-(7:6))
+        └── content: "\n      "

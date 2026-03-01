@@ -3,10 +3,12 @@ import { Result } from "./result.js"
 import { DocumentNode } from "./nodes.js"
 import { HerbError } from "./errors.js"
 import { HerbWarning } from "./warning.js"
+import { ParserOptions } from "./parser-options.js"
 
 import type { SerializedHerbError } from "./errors.js"
 import type { SerializedHerbWarning } from "./warning.js"
 import type { SerializedDocumentNode } from "./nodes.js"
+import type { SerializedParserOptions } from "./parser-options.js"
 
 import type { Visitor } from "./visitor.js"
 
@@ -15,6 +17,7 @@ export type SerializedParseResult = {
   source: string
   warnings: SerializedHerbWarning[]
   errors: SerializedHerbError[]
+  options: SerializedParserOptions
 }
 
 /**
@@ -24,6 +27,9 @@ export type SerializedParseResult = {
 export class ParseResult extends Result {
   /** The document node generated from the source code. */
   readonly value: DocumentNode
+
+  /** The parser options used during parsing. */
+  readonly options: ParserOptions
 
   /**
    * Creates a `ParseResult` instance from a serialized result.
@@ -36,6 +42,7 @@ export class ParseResult extends Result {
       result.source,
       result.warnings.map((warning) => HerbWarning.from(warning)),
       result.errors.map((error) => HerbError.from(error)),
+      ParserOptions.from(result.options),
     )
   }
 
@@ -45,15 +52,18 @@ export class ParseResult extends Result {
    * @param source - The source code that was parsed.
    * @param warnings - An array of warnings encountered during parsing.
    * @param errors - An array of errors encountered during parsing.
+   * @param options - The parser options used during parsing.
    */
   constructor(
     value: DocumentNode,
     source: string,
     warnings: HerbWarning[] = [],
     errors: HerbError[] = [],
+    options: ParserOptions = new ParserOptions(),
   ) {
     super(source, warnings, errors)
     this.value = value
+    this.options = options
   }
 
   /**
@@ -61,8 +71,8 @@ export class ParseResult extends Result {
    * @returns `true` if there are errors, otherwise `false`.
    */
   get failed(): boolean {
-    // TODO: this should probably be recursive as noted in the Ruby version
-    return this.errors.length > 0 || this.value.errors.length > 0
+    // Consider errors on this result and recursively in the document tree
+    return this.recursiveErrors().length > 0
   }
 
   /**
@@ -70,7 +80,7 @@ export class ParseResult extends Result {
    * @returns `true` if there are no errors, otherwise `false`.
    */
   get successful(): boolean {
-    return this.errors.length === 0
+    return !this.failed
   }
 
   /**

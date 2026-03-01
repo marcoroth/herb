@@ -1,0 +1,43 @@
+---
+source: "Parser::TagsTest#test_0046_style tag with complex CSS containing HTML-like selectors"
+input: |2-
+<style>
+  /* CSS comment */
+
+  .component > .header {
+    content: "<i class='icon'></i>";
+  }
+
+  .component[data-type="<special>"] {
+    background: url("data:image/svg+xml,<svg><rect/></svg>");
+  }
+</style>
+---
+@ DocumentNode (location: (1:0)-(12:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(11:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "style" (location: (1:1)-(1:6))
+    │   ├── body: (1 item)
+    │   │   └── @ LiteralNode (location: (1:7)-(11:0))
+    │   │       └── content: "\n  /* CSS comment */\n\n  .component > .header {\n    content: \"<i class='icon'></i>\";\n  }\n\n  .component[data-type=\"<special>\"] {\n    background: url(\"data:image/svg+xml,<svg><rect/></svg>\");\n  }\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (11:0)-(11:8))
+    │   │       ├── tag_opening: "</" (location: (11:0)-(11:2))
+    │   │       ├── tag_name: "style" (location: (11:2)-(11:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (11:7)-(11:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (11:8)-(12:0))
+        └── content: "\n"

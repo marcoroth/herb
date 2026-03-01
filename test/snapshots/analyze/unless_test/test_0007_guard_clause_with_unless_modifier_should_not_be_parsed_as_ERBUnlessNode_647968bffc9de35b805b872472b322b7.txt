@@ -1,0 +1,68 @@
+---
+source: "Analyze::UnlessTest#test_0007_guard clause with unless modifier should not be parsed as ERBUnlessNode"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item.visible? %>
+  <div><%= item.name %></div>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each do |item| " (location: (1:2)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:26))
+    │   ├── body: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:26)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:33))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " next unless item.visible? " (location: (2:4)-(2:31))
+    │   │   │   ├── tag_closing: "%>" (location: (2:31)-(2:33))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (2:33)-(3:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (3:2)-(3:29))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (3:2)-(3:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (3:2)-(3:3))
+    │   │   │   │       ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (3:6)-(3:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (3:3)-(3:6))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ ERBContentNode (location: (3:7)-(3:23))
+    │   │   │   │       ├── tag_opening: "<%=" (location: (3:7)-(3:10))
+    │   │   │   │       ├── content: " item.name " (location: (3:10)-(3:21))
+    │   │   │   │       ├── tag_closing: "%>" (location: (3:21)-(3:23))
+    │   │   │   │       ├── parsed: true
+    │   │   │   │       └── valid: true
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (3:23)-(3:29))
+    │   │   │   │       ├── tag_opening: "</" (location: (3:23)-(3:25))
+    │   │   │   │       ├── tag_name: "div" (location: (3:25)-(3:28))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (3:28)-(3:29))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (3:29)-(4:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

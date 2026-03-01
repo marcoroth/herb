@@ -23,7 +23,10 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    contributors.value = contributorsFile.slice(0, props.limit)
+    const excludedUsernames = ['marcoroth', 'dependabot[bot]']
+    const filteredContributors = contributorsFile.filter(contributor => !excludedUsernames.includes(contributor.login))
+    contributors.value = filteredContributors.slice(0, props.limit)
+
     loading.value = false
   } catch (err) {
     error.value = `Failed to load contributors data for ${props.owner}/${props.repo}. Make sure the data file exists.`
@@ -59,7 +62,7 @@ onMounted(async () => {
         />
         <div class="details">
           <span class="username">{{ contributor.login }}</span>
-          <span class="contributions">{{ contributor.contributions }} commits</span>
+          <span class="contributions">{{ contributor.contributions }} {{ contributor.contributions === 1 ? 'commit' : 'commits' }}</span>
         </div>
       </a>
     </div>

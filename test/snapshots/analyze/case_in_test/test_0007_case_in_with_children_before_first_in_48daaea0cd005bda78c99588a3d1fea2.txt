@@ -1,3 +1,12 @@
+---
+source: "Analyze::CaseInTest#test_0007_case in with children before first in"
+input: |2-
+<% case variable %>
+  before in
+<% in [String] %>
+  String
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(5:9))
@@ -13,6 +22,7 @@
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " in [String] " (location: (3:2)-(3:15))
     │   │       ├── tag_closing: "%>" (location: (3:15)-(3:17))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (1 item)
     │   │           └── @ HTMLTextNode (location: (3:17)-(5:0))
     │   │               └── content: "\n  String\n"

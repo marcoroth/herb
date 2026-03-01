@@ -1,0 +1,25 @@
+# Generated from lib/herb/engine/validators/nesting_validator.rb with RBS::Inline
+
+module Herb
+  class Engine
+    module Validators
+      class NestingValidator < Validator
+        def visit_html_element_node: (untyped node) -> untyped
+
+        private
+
+        def validate_html_nesting: (untyped node) -> untyped
+
+        def validate_no_block_elements_in_paragraph: (untyped node) -> untyped
+
+        def validate_no_nested_anchors: (untyped node) -> untyped
+
+        def validate_no_interactive_in_button: (untyped node) -> untyped
+
+        def find_nested_elements: (untyped node, untyped tag_name) ?{ (?) -> untyped } -> untyped
+
+        def add_validation_error: (untyped type, untyped location, untyped message) -> untyped
+      end
+    end
+  end
+end

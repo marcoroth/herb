@@ -1,0 +1,14 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0023_thead tbody tfoot without closing tags - compilation"
+input: "{source: \"<table>\\n  <thead>\\n    <tr><th>Header\\n  <tbody>\\n    <tr><td>Body\\n  <tfoot>\\n    <tr><td>Footer\\n</table>\\n\", options: {strict: false}}"
+---
+_buf = ::String.new; _buf << '<table>
+  <thead>
+    <tr><th>Header
+  <tbody>
+    <tr><td>Body
+  <tfoot>
+    <tr><td>Footer
+</table>
+'.freeze;
+_buf.to_s

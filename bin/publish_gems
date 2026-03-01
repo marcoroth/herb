@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-for gem_file in pkg/*.gem; do
+for gem_file in pkg/**/*.gem; do
   echo "Pushing $gem_file..."
   gem push "$gem_file"
 done

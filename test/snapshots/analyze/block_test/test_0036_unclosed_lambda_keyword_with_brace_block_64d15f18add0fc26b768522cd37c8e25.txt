@@ -1,0 +1,35 @@
+---
+source: "Analyze::BlockTest#test_0036_unclosed lambda keyword with brace block"
+input: |2-
+<% content = lambda { %>
+  Content
+---
+@ DocumentNode (location: (1:0)-(3:0))
+├── errors: (2 errors)
+│   ├── @ RubyParseError (location: (2:9)-(3:0))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:20)-(1:21))
+│       ├── message: "block_term_brace: expected a block beginning with `{` to end with `}`"
+│       ├── error_message: "expected a block beginning with `{` to end with `}`"
+│       ├── diagnostic_id: "block_term_brace"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBBlockNode (location: (1:0)-(3:0))
+        ├── errors: (1 error)
+        │   └── @ MissingERBEndTagError (location: (1:0)-(1:24))
+        │       ├── message: "ERB block started here but never closed with an end tag. The end tag may be in a different scope."
+        │       └── keyword: "ERB block"
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " content = lambda { " (location: (1:2)-(1:22))
+        ├── tag_closing: "%>" (location: (1:22)-(1:24))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:24)-(3:0))
+        │       └── content: "\n  Content\n"
+        │
+        └── end_node: ∅

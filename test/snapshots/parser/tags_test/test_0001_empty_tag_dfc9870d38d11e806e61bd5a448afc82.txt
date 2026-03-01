@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0001_empty tag"
+input: "<span></span>"
+---
 @ DocumentNode (location: (1:0)-(1:13))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:13))
@@ -15,6 +19,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:6)-(1:13))
         │       ├── tag_opening: "</" (location: (1:6)-(1:8))
         │       ├── tag_name: "span" (location: (1:8)-(1:12))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:12)-(1:13))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

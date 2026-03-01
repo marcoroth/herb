@@ -1,0 +1,16 @@
+---
+source: "Analyze::BlockTest#test_0029_inline stabby lambda with do/end in single tag"
+input: |2-
+<% content = -> do; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:26))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content = -> do; end " (location: (1:2)-(1:24))
+    │   ├── tag_closing: "%>" (location: (1:24)-(1:26))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:26)-(2:0))
+        └── content: "\n"

@@ -1,57 +1,64 @@
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, HTMLAttributeNode, HTMLAttributeNameNode, HTMLAttributeValueNode } from "@herb-tools/core"
-import type { Rule, LintMessage } from "../types.js"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { IdentityPrinter } from "@herb-tools/printer"
 
-export class HTMLBooleanAttributesNoValueRule implements Rule {
-  name = "html-boolean-attributes-no-value"
-  description = "Omit attribute values for boolean HTML attributes"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
-  // List of known boolean attributes in HTML
-  private booleanAttributes = new Set([
-    "autofocus", "autoplay", "checked", "controls", "defer", "disabled", "hidden",
-    "loop", "multiple", "muted", "readonly", "required", "reversed", "selected",
-    "open", "default", "formnovalidate", "novalidate", "itemscope", "scoped",
-    "seamless", "allowfullscreen", "async", "compact", "declare", "nohref",
-    "noresize", "noshade", "nowrap", "sortable", "truespeed", "typemustmatch"
-  ])
+interface BooleanAttributeAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLAttributeNode>
+}
 
-  check(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): LintMessage[] {
-    const messages: LintMessage[] = []
+class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttributeAutofixContext> {
+  protected checkStaticAttributeStaticValue({ originalAttributeName, attributeNode }: StaticAttributeStaticValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
+  }
 
-    // Only check nodes that can have attributes (opening and self-closing tags)
-    if (node.type !== "AST_HTML_OPEN_TAG_NODE" && node.type !== "AST_HTML_SELF_CLOSE_TAG_NODE") {
-      return messages
-    }
+  protected checkStaticAttributeDynamicValue({ originalAttributeName, attributeNode }: StaticAttributeDynamicValueParams) {
+    this.checkAttribute(originalAttributeName, attributeNode)
+  }
 
-    const attributes = node.type === "AST_HTML_SELF_CLOSE_TAG_NODE"
-      ? (node as HTMLSelfCloseTagNode).attributes
-      : (node as HTMLOpenTagNode).children
+  private checkAttribute(attributeName: string, attributeNode: HTMLAttributeNode) {
+    if (!isBooleanAttribute(attributeName)) return
+    if (!hasAttributeValue(attributeNode)) return
 
-    for (const child of attributes) {
-      if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-        const attributeNode = child as HTMLAttributeNode
-
-        if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-          const nameNode = attributeNode.name as HTMLAttributeNameNode
-
-          if (nameNode.name) {
-            const attributeName = nameNode.name.value.toLowerCase()
-
-            // Check if this is a boolean attribute with a value
-            if (this.booleanAttributes.has(attributeName) && attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-              const valueNode = attributeNode.value as HTMLAttributeValueNode
-
-              messages.push({
-                rule: this.name,
-                message: `Boolean attribute "${attributeName}" should not have a value. Use "${attributeName}" instead of "${attributeName}=value".`,
-                location: valueNode.location,
-                severity: "error"
-              })
-            }
-          }
-        }
+    this.addOffense(
+      `Boolean attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not have a value. Use \`${attributeName.toLowerCase()}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
+      attributeNode.value!.location,
+      {
+        node: attributeNode
       }
-    }
+    )
+  }
+}
 
-    return messages
+export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttributeAutofixContext> {
+  static autocorrectable = true
+  name = "html-boolean-attributes-no-value"
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
+    const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
+
+    visitor.visit(result.value)
+
+    return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<BooleanAttributeAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node } = offense.autofixContext
+
+    node.equals = null
+    node.value = null
+
+    return result
   }
 }

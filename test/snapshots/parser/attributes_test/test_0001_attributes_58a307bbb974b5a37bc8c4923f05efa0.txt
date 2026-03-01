@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0001_attributes"
+input: "<div id=\"hello\" class=\"container p-3\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:44))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:44))
@@ -10,7 +14,10 @@
         │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:15))
         │       │   │   ├── name:
         │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:7))
-        │       │   │   │       └── name: "id" (location: (1:5)-(1:7))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:7))
+        │       │   │   │               └── content: "id"
+        │       │   │   │
         │       │   │   │
         │       │   │   ├── equals: "=" (location: (1:7)-(1:8))
         │       │   │   └── value:
@@ -27,7 +34,10 @@
         │       │   └── @ HTMLAttributeNode (location: (1:16)-(1:37))
         │       │       ├── name:
         │       │       │   └── @ HTMLAttributeNameNode (location: (1:16)-(1:21))
-        │       │       │       └── name: "class" (location: (1:16)-(1:21))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:16)-(1:21))
+        │       │       │               └── content: "class"
+        │       │       │
         │       │       │
         │       │       ├── equals: "=" (location: (1:21)-(1:22))
         │       │       └── value:
@@ -49,6 +59,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:38)-(1:44))
         │       ├── tag_opening: "</" (location: (1:38)-(1:40))
         │       ├── tag_name: "div" (location: (1:40)-(1:43))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:43)-(1:44))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

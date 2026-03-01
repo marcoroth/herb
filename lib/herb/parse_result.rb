@@ -1,20 +1,28 @@
 # frozen_string_literal: true
+# typed: true
 
 require "json"
 
 module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
+    attr_reader :options #: Herb::ParserOptions
 
-    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
-    def initialize(value, source, warnings, errors)
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
+    def initialize(value, source, warnings, errors, options)
       @value = value
+      @options = options
       super(source, warnings, errors)
+    end
+
+    #: () -> Array[Herb::Errors::Error]
+    def errors
+      super + value.recursive_errors
     end
 
     #: () -> bool
     def failed?
-      errors.any? || value.errors.any? # TODO: this should probably be recursive
+      errors.any?
     end
 
     #: () -> bool
@@ -24,7 +32,7 @@ module Herb
 
     #: () -> String
     def pretty_errors
-      JSON.pretty_generate(errors + value.errors)
+      JSON.pretty_generate(errors)
     end
 
     #: (Visitor) -> void

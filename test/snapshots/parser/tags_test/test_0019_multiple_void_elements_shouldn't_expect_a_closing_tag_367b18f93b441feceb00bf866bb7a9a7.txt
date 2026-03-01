@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0019_multiple void elements shouldn't expect a closing tag"
+input: "<br><input><br><input>"
+---
 @ DocumentNode (location: (1:0)-(1:22))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:4))
@@ -12,7 +16,8 @@
     │   ├── tag_name: "br" (location: (1:1)-(1:3))
     │   ├── body: []
     │   ├── close_tag: ∅
-    │   └── is_void: true
+    │   ├── is_void: true
+    │   └── source: "HTML"
     │
     ├── @ HTMLElementNode (location: (1:4)-(1:11))
     │   ├── open_tag:
@@ -26,7 +31,8 @@
     │   ├── tag_name: "input" (location: (1:5)-(1:10))
     │   ├── body: []
     │   ├── close_tag: ∅
-    │   └── is_void: true
+    │   ├── is_void: true
+    │   └── source: "HTML"
     │
     ├── @ HTMLElementNode (location: (1:11)-(1:15))
     │   ├── open_tag:
@@ -40,7 +46,8 @@
     │   ├── tag_name: "br" (location: (1:12)-(1:14))
     │   ├── body: []
     │   ├── close_tag: ∅
-    │   └── is_void: true
+    │   ├── is_void: true
+    │   └── source: "HTML"
     │
     └── @ HTMLElementNode (location: (1:15)-(1:22))
         ├── open_tag:
@@ -54,4 +61,5 @@
         ├── tag_name: "input" (location: (1:16)-(1:21))
         ├── body: []
         ├── close_tag: ∅
-        └── is_void: true
+        ├── is_void: true
+        └── source: "HTML"
