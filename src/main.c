@@ -4,7 +4,7 @@
 #include "include/ast_nodes.h"
 
 #ifndef HERB_EXCLUDE_PRETTYPRINT
-  #include "include/ast_pretty_print.h"
+#  include "include/ast_pretty_print.h"
 #endif
 
 #include "include/extract.h"
