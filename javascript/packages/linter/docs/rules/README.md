@@ -59,6 +59,7 @@ This page contains documentation for all Herb Linter rules.
 - [`html-tag-name-lowercase`](./html-tag-name-lowercase.md) - Enforces lowercase tag names in HTML
 - [`parser-no-errors`](./parser-no-errors.md) - Disallow parser errors in HTML+ERB documents
 - [`svg-tag-name-capitalization`](./svg-tag-name-capitalization.md) - Enforces proper camelCase capitalization for SVG elements
+- [`turbo-permanent-require-id`](./turbo-permanent-require-id.md) - Require `id` attribute on elements with `data-turbo-permanent`
 
 ## Contributing
 

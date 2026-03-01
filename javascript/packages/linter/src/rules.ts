@@ -59,6 +59,7 @@ import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
 import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
+import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
@@ -124,6 +125,7 @@ export const rules: RuleClass[] = [
   HTMLNoUnderscoresInAttributeNamesRule,
   HTMLRequireClosingTagsRule,
   HTMLTagNameLowercaseRule,
+  TurboPermanentRequireIdRule,
 
   SVGTagNameCapitalizationRule,
 
