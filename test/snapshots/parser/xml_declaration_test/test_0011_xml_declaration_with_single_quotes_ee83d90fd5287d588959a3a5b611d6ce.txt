@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0011_xml declaration with single quotes"
+input: "<?xml version='1.0' encoding='UTF-8'?>"
+---
 @ DocumentNode (location: (1:0)-(1:38))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(1:38))

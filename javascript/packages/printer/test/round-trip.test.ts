@@ -100,6 +100,90 @@ describe("Round-trip Parser Accuracy Tests", () => {
     `)
   })
 
+  test("Conditional Open Tags", () => {
+    expectPrintRoundTrip(dedent`
+      <% if @condition %>
+        <div class="a">
+      <% else %>
+        <div class="b">
+      <% end %>
+        Content
+      </div>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <% if @type == :primary %>
+        <button class="btn-primary">
+      <% elsif @type == :secondary %>
+        <button class="btn-secondary">
+      <% else %>
+        <button class="btn-default">
+      <% end %>
+        Click me
+      </button>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <% unless @minimal %>
+        <div class="full-wrapper">
+      <% else %>
+        <div class="minimal-wrapper">
+      <% end %>
+        <p>Content</p>
+      </div>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <% if @highlighted %>
+        <span class="<%= @highlight_class %>" data-id="<%= @id %>">
+      <% else %>
+        <span class="normal">
+      <% end %>
+        Text content
+      </span>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <% if @card_style == :fancy %>
+        <div class="card fancy">
+      <% else %>
+        <div class="card simple">
+      <% end %>
+        <h2><%= @title %></h2>
+        <p><%= @description %></p>
+      </div>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <% if @expanded_header %>
+        <header class="expanded">
+      <% else %>
+        <header class="collapsed">
+      <% end %>
+        Header
+      </header>
+      <% if @expanded_footer %>
+        <footer class="expanded">
+      <% else %>
+        <footer class="collapsed">
+      <% end %>
+        Footer
+      </footer>
+    `)
+
+    expectPrintRoundTrip(dedent`
+      <%= form_with model: @user do |f| %>
+        <% if @inline %>
+          <div class="inline-form">
+        <% else %>
+          <div class="stacked-form">
+        <% end %>
+          <%= f.text_field :name %>
+        </div>
+      <% end %>
+    `)
+  })
+
   test("Real-world Template Patterns", () => {
     expectPrintRoundTrip(dedent`
       <!DOCTYPE html>

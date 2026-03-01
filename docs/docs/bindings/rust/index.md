@@ -18,7 +18,7 @@ Add the dependency to your `Cargo.toml`:
 :::code-group
 ```toml [Cargo.toml]
 [dependencies]
-herb = "0.7.5"
+herb = "0.8.10"
 ```
 :::
 
@@ -75,10 +75,18 @@ use herb::lex;
 
 fn main() {
   let source = "<h1><%= user.name %></h1>";
-  let result = lex(source);
 
-  for token in result.tokens() {
-    println!("{}", token.inspect());
+  match lex(source) {
+    Ok(result) => {
+      println!("{}", result);
+
+      for token in result.tokens() {
+        // do something with each token
+      }
+    }
+    Err(e) => {
+      eprintln!("Lex error: {}", e);
+    }
   }
 }
 ```

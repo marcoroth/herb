@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0012_inline if modifier in ERB output tag"
+input: |2-
+<%= render 'partial' if user_signed_in? %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:42))

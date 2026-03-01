@@ -1,6 +1,6 @@
 import { IdentityPrinter } from "./identity-printer.js"
 import { PrintOptions, DEFAULT_PRINT_OPTIONS } from "./printer.js"
-import { isERBOutputNode, filterNodes, ERBContentNode, } from "@herb-tools/core"
+import { isERBOutputNode, filterNodes, ERBContentNode, isERBIfNode, isERBUnlessNode, isERBElseNode, isHTMLTextNode } from "@herb-tools/core"
 
 import { HTMLTextNode, ERBIfNode, ERBElseNode, ERBUnlessNode, Node, HTMLAttributeValueNode } from "@herb-tools/core"
 
@@ -34,8 +34,6 @@ export const DEFAULT_ERB_TO_RUBY_STRING_OPTIONS: ERBToRubyStringOptions = {
  * - `<% if logged_in? %>Welcome<% else %>Login<% end %>!` => `"#{logged_in? ? "Welcome" : "Login"}!"`
  */
 export class ERBToRubyStringPrinter extends IdentityPrinter {
-
-  // TODO: cleanup `.type === "AST_*" checks`
   static print(node: Node, options: Partial<ERBToRubyStringOptions> = DEFAULT_ERB_TO_RUBY_STRING_OPTIONS): string {
     const erbNodes = filterNodes([node], ERBContentNode)
 
@@ -51,22 +49,22 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
         return (childErbNodes[0].content?.value || "").trim()
       }
 
-      if (node.children.length === 1 && node.children[0].type === "AST_ERB_IF_NODE" && !options.forceQuotes) {
-        const ifNode = node.children[0] as ERBIfNode
+      const firstChild = node.children[0]
+
+      if (node.children.length === 1 && isERBIfNode(firstChild) && !options.forceQuotes) {
         const printer = new ERBToRubyStringPrinter()
 
-        if (printer.canConvertToTernary(ifNode)) {
-          printer.convertToTernaryWithoutWrapper(ifNode)
+        if (printer.canConvertToTernary(firstChild)) {
+          printer.convertToTernaryWithoutWrapper(firstChild)
           return printer.context.getOutput()
         }
       }
 
-      if (node.children.length === 1 && node.children[0].type === "AST_ERB_UNLESS_NODE" && !options.forceQuotes) {
-        const unlessNode = node.children[0] as ERBUnlessNode
+      if (node.children.length === 1 && isERBUnlessNode(firstChild) && !options.forceQuotes) {
         const printer = new ERBToRubyStringPrinter()
 
-        if (printer.canConvertUnlessToTernary(unlessNode)) {
-          printer.convertUnlessToTernaryWithoutWrapper(unlessNode)
+        if (printer.canConvertUnlessToTernary(firstChild)) {
+          printer.convertUnlessToTernaryWithoutWrapper(firstChild)
           return printer.context.getOutput()
         }
       }
@@ -119,16 +117,16 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
   }
 
   private canConvertToTernary(node: ERBIfNode): boolean {
-    if (node.subsequent && node.subsequent.type !== "AST_ERB_ELSE_NODE") {
+    if (node.subsequent && !isERBElseNode(node.subsequent)) {
       return false
     }
 
-    const ifOnlyText = node.statements ? node.statements.every(statement => statement.type === "AST_HTML_TEXT_NODE") : true
+    const ifOnlyText = node.statements ? node.statements.every(isHTMLTextNode) : true
     if (!ifOnlyText) return false
 
-    if (node.subsequent && node.subsequent.type === "AST_ERB_ELSE_NODE") {
-      return (node.subsequent as ERBElseNode).statements
-        ? (node.subsequent as ERBElseNode).statements.every(statement => statement.type === "AST_HTML_TEXT_NODE")
+    if (isERBElseNode(node.subsequent)) {
+      return node.subsequent.statements
+        ? node.subsequent.statements.every(isHTMLTextNode)
         : true
     }
 
@@ -165,8 +163,8 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
     this.context.write(" : ")
     this.context.write('"')
 
-    if (node.subsequent && node.subsequent.type === "AST_ERB_ELSE_NODE" && (node.subsequent as ERBElseNode).statements) {
-      (node.subsequent as ERBElseNode).statements.forEach(statement => this.visit(statement))
+    if (isERBElseNode(node.subsequent) && node.subsequent.statements) {
+      node.subsequent.statements.forEach(statement => this.visit(statement))
     }
 
     this.context.write('"')
@@ -174,7 +172,7 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
   }
 
   private convertToTernaryWithoutWrapper(node: ERBIfNode) {
-    if (node.subsequent && node.subsequent.type !== "AST_ERB_ELSE_NODE") {
+    if (node.subsequent && !isERBElseNode(node.subsequent)) {
       return false
     }
 
@@ -205,21 +203,21 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
     this.context.write(" : ")
     this.context.write('"')
 
-    if (node.subsequent && node.subsequent.type === "AST_ERB_ELSE_NODE" && (node.subsequent as ERBElseNode).statements) {
-      (node.subsequent as ERBElseNode).statements.forEach(statement => this.visit(statement))
+    if (isERBElseNode(node.subsequent) && node.subsequent.statements) {
+      node.subsequent.statements.forEach(statement => this.visit(statement))
     }
 
     this.context.write('"')
   }
 
   private canConvertUnlessToTernary(node: ERBUnlessNode): boolean {
-    const unlessOnlyText = node.statements ? node.statements.every(statement => statement.type === "AST_HTML_TEXT_NODE") : true
+    const unlessOnlyText = node.statements ? node.statements.every(isHTMLTextNode) : true
 
     if (!unlessOnlyText) return false
 
-    if (node.else_clause && node.else_clause.type === "AST_ERB_ELSE_NODE") {
+    if (isERBElseNode(node.else_clause)) {
       return node.else_clause.statements
-        ? node.else_clause.statements.every(statement => statement.type === "AST_HTML_TEXT_NODE")
+        ? node.else_clause.statements.every(isHTMLTextNode)
         : true
     }
 
@@ -260,7 +258,7 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
     this.context.write(" : ")
     this.context.write('"')
 
-    if (node.else_clause && node.else_clause.type === "AST_ERB_ELSE_NODE") {
+    if (isERBElseNode(node.else_clause)) {
       node.else_clause.statements.forEach(statement => this.visit(statement))
     }
 
@@ -300,7 +298,7 @@ export class ERBToRubyStringPrinter extends IdentityPrinter {
     this.context.write(" : ")
     this.context.write('"')
 
-    if (node.else_clause && node.else_clause.type === "AST_ERB_ELSE_NODE") {
+    if (isERBElseNode(node.else_clause)) {
       node.else_clause.statements.forEach(statement => this.visit(statement))
     }
 

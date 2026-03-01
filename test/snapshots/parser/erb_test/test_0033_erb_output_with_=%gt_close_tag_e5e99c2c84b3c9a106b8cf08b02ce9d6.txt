@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0033_erb output with =%> close tag"
+input: "<%= \"hello\" =%>"
+---
 @ DocumentNode (location: (1:0)-(1:15))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(1:15))

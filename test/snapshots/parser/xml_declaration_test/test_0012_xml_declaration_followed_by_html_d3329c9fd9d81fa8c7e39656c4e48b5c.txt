@@ -1,3 +1,9 @@
+---
+source: "Parser::XMLDeclarationTest#test_0012_xml declaration followed by html"
+input: |2-
+<?xml version="1.0"?>
+<html><body>Hello</body></html>
+---
 @ DocumentNode (location: (1:0)-(2:31))
 └── children: (3 items)
     ├── @ XMLDeclarationNode (location: (1:0)-(1:21))

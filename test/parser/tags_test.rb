@@ -104,17 +104,8 @@ module Parser
       ))
     end
 
-    # TODO: ideal parse result
-    #
-    # - match up the <main> and <div> tags
-    # - <p> should have a missing closing tag
-    # - </span> should have a missing opening tag
-    # - </p> should have a missing opening tag
-    # - no other errors
-    #
     test "should recover from multiple out of order closing tags" do
-      skip
-      assert_parsed_snapshot(%(
+      assert_parsed_snapshot(<<~HTML)
         <main>
           <div>
             <p>
@@ -122,7 +113,7 @@ module Parser
             </div>
           </p>
         </main>
-      ))
+      HTML
     end
 
     test "should recover from void elements used as closing tag" do
@@ -137,16 +128,8 @@ module Parser
       ))
     end
 
-    # TODO: ideal parse result
-    #
-    # - matched up <main> and <div> tags
-    # - </br> VoidElementClosingTagError
-    # - </br> VoidElementClosingTagError
-    # - no other errors
-    #
     test "should recover from multiple void elements used as closing tag" do
-      skip
-      assert_parsed_snapshot(%(
+      assert_parsed_snapshot(<<~HTML)
         <main>
           <div>
             </br>
@@ -155,7 +138,7 @@ module Parser
             <p>World</p>
           </div>
         </main>
-      ))
+      HTML
     end
 
     test "stray closing tag with whitespace" do
@@ -231,7 +214,7 @@ module Parser
     end
 
     test "script tag with complex JavaScript containing multiple HTML-like patterns" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <script>
           function createElements() {
             const div = "<div class='container'>";
@@ -249,7 +232,7 @@ module Parser
     end
 
     test "style tag with complex CSS containing HTML-like selectors" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <style>
           /* CSS comment */
 
@@ -265,21 +248,21 @@ module Parser
     end
 
     test "closing tag with newline before >" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <a href="https://example.com/">Link Text</a
         >
       HTML
     end
 
     test "closing tag with whitespace and newline before >" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <div>Content</div
         >
       HTML
     end
 
     test "multiple closing tags with newlines before >" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <div>
           <span>Text</span
           >
@@ -289,7 +272,7 @@ module Parser
     end
 
     test "nested tags with newlines in closing tags from issue 312" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <div
           id="footer-img"
           class="d-flex align-items-start justify-content-lg-start"
@@ -304,11 +287,23 @@ module Parser
     end
 
     test "self-closing tag with closing tag having newline before >" do
-      assert_parsed_snapshot(<<-HTML)
+      assert_parsed_snapshot(<<~HTML)
         <img src="image.jpg" />
         <br></br
         >
       HTML
+    end
+
+    test "case-insensitive empty tag" do
+      assert_parsed_snapshot("<SPAN></span>")
+    end
+
+    test "case-insensitive script tag" do
+      assert_parsed_snapshot(%(<SCRIPT>var x = 5;</script>))
+    end
+
+    test "case-insensitive style tag" do
+      assert_parsed_snapshot(%(<STYLE>.class { color: red; }</style>))
     end
   end
 end

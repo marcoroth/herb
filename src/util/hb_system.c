@@ -1,13 +1,13 @@
 #include "../include/util/hb_system.h"
 
 #ifdef __linux__
-#define _GNU_SOURCE
+#  define _GNU_SOURCE
 #endif
 
 #ifdef HB_USE_MALLOC
-#include <stdlib.h>
+#  include <stdlib.h>
 #else
-#include <sys/mman.h>
+#  include <sys/mman.h>
 #endif
 
 void* hb_system_allocate_memory(size_t size) {

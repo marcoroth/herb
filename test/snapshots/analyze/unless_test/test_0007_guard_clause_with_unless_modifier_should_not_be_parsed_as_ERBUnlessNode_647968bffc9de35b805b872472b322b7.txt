@@ -1,3 +1,11 @@
+---
+source: "Analyze::UnlessTest#test_0007_guard clause with unless modifier should not be parsed as ERBUnlessNode"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item.visible? %>
+  <div><%= item.name %></div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))

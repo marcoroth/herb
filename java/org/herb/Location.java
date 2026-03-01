@@ -26,6 +26,10 @@ public class Location {
     return String.format("%s-%s", start, end);
   }
 
+  public String treeInspect() {
+    return String.format("%s-%s", start.treeInspect(), end.treeInspect());
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (this == obj) return true;

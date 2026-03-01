@@ -90,6 +90,23 @@ TEST(test_hb_array_free)
   ck_assert_ptr_null(array);
 END
 
+// Test hb_array_size with NULL safety
+TEST(test_hb_array_size)
+  ck_assert_int_eq(hb_array_size(NULL), 0);
+
+  hb_array_T* array = hb_array_init(5);
+  ck_assert_int_eq(hb_array_size(array), 0);
+
+  size_t item1 = 42, item2 = 99;
+  hb_array_append(array, &item1);
+  ck_assert_int_eq(hb_array_size(array), 1);
+
+  hb_array_append(array, &item2);
+  ck_assert_int_eq(hb_array_size(array), 2);
+
+  hb_array_free(&array);
+END
+
 // Register test cases
 TCase *hb_array_tests(void) {
   TCase *array = tcase_create("Herb Array");
@@ -100,6 +117,7 @@ TCase *hb_array_tests(void) {
   tcase_add_test(array, test_hb_array_set);
   tcase_add_test(array, test_hb_array_remove);
   tcase_add_test(array, test_hb_array_free);
+  tcase_add_test(array, test_hb_array_size);
 
   return array;
 }

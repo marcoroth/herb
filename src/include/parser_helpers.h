@@ -54,4 +54,9 @@ void parser_handle_mismatched_tags(
   hb_array_T* errors
 );
 
+void parser_synchronize(parser_T* parser, hb_array_T* errors);
+
+bool parser_can_close_ancestor(const parser_T* parser, hb_string_T tag_name);
+size_t parser_find_ancestor_depth(const parser_T* parser, hb_string_T tag_name);
+
 #endif

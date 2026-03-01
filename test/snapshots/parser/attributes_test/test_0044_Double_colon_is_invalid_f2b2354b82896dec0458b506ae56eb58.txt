@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0044_Double colon is invalid"
+input: "<div ::value=\"hello\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:27))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:27))

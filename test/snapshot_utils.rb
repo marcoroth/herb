@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require "readline"
+require "reline"
 require "digest"
 require_relative "../bin/lib/compare_helpers"
 
@@ -36,6 +36,7 @@ module SnapshotUtils
 
   def assert_compiled_snapshot(source, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
+    require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
     engine_options = options.merge(kwargs)
@@ -46,8 +47,20 @@ module SnapshotUtils
     snapshot_key = { source: source, options: engine_options }.to_s
     assert_snapshot_matches(expected, snapshot_key)
 
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
     if should_compare_with_erubi? || enforce_erubi_equality
-      compare_with_erubi_compiled(source, engine.src, engine_options, enforce_erubi_equality)
+      compare_with_erubi_compiled(source, engine.src, engine_options, enforce_equality: enforce_erubi_equality)
     end
 
     engine
@@ -55,15 +68,35 @@ module SnapshotUtils
 
   def assert_evaluated_snapshot(source, locals = {}, options = {}, **kwargs)
     require_relative "../lib/herb/engine"
+    require "prism"
 
     enforce_erubi_equality = kwargs.delete(:enforce_erubi_equality) || false
     engine_options = options.merge(kwargs)
 
     engine = Herb::Engine.new(source, engine_options)
+
+    prism_result = Prism.parse(engine.src)
+    syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+    assert syntax_errors.empty?, <<~MESSAGE
+      Compiled output is not valid Ruby:
+
+      #{syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")}
+
+      Compiled source:
+      #{engine.src}
+    MESSAGE
+
     binding_context = Object.new
 
     locals.each do |key, value|
-      binding_context.define_singleton_method(key) { value }
+      name = key.to_s
+
+      if name.start_with?("@")
+        binding_context.instance_variable_set(name, value)
+      else
+        binding_context.define_singleton_method(name) { value }
+      end
     end
 
     result = binding_context.instance_eval(engine.src)
@@ -77,7 +110,7 @@ module SnapshotUtils
     assert_snapshot_matches(result, snapshot_key)
 
     if should_compare_with_erubi? || enforce_erubi_equality
-      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_erubi_equality)
+      compare_with_erubi_evaluated(source, result, locals, engine_options, enforce_equality: enforce_erubi_equality)
     end
 
     { engine: engine, result: result }
@@ -85,15 +118,15 @@ module SnapshotUtils
 
   def snapshot_changed?(content, source, options = {})
     if snapshot_file(source, options).exist?
-      previous_content = snapshot_file(source, options).read
+      previous_full_snapshot = snapshot_file(source, options).read
+      current_full_snapshot = format_snapshot_with_metadata(content, source, options)
 
-      if previous_content == content
+      if previous_full_snapshot == current_full_snapshot
         puts "\n\nSnapshot for '#{class_name} #{name}' didn't change: \n#{snapshot_file(source, options)}\n"
         false
       else
         puts "\n\nSnapshot for '#{class_name} #{name}' changed:\n"
-
-        puts Difftastic::Differ.new(color: :always).diff_strings(previous_content, content)
+        puts Difftastic::Differ.new(color: :always).diff_strings(previous_full_snapshot, current_full_snapshot)
         puts "==============="
         true
       end
@@ -110,13 +143,21 @@ module SnapshotUtils
     puts source
     puts "\n\n"
 
-    if !ENV["FORCE_UPDATE_SNAPSHOTS"].nil? ||
-       ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+    should_update = if !ENV["FORCE_UPDATE_SNAPSHOTS"].nil?
+                      true
+                    elsif !$stdin.tty?
+                      puts "\nCannot prompt for snapshot update in non-interactive terminal."
+                      puts "Run with FORCE_UPDATE_SNAPSHOTS=true to update snapshots without prompting.\n"
+                      false
+                    else
+                      ask?("Do you want to update (or create) the snapshot for '#{class_name} #{name}'?")
+                    end
 
+    if should_update
       puts "\nUpdating Snapshot for '#{class_name} #{name}' at: \n#{snapshot_file(source, options)}\n"
 
       FileUtils.mkdir_p(snapshot_file(source, options).dirname)
-      snapshot_file(source, options).write(content)
+      snapshot_file(source, options).write(format_snapshot_with_metadata(content, source, options))
 
       puts "\nSnapshot for '#{class_name} #{name}' written: \n#{snapshot_file(source, options)}\n"
     else
@@ -128,13 +169,19 @@ module SnapshotUtils
     assert snapshot_file(source, options).exist?,
            "Expected snapshot file to exist: \n#{snapshot_file(source, options).to_path}"
 
-    assert_equal snapshot_file(source, options).read, actual
+    expected_full_snapshot = snapshot_file(source, options).read
+    actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
+
+    assert_equal expected_full_snapshot, actual_full_snapshot
   rescue Minitest::Assertion => e
     save_failures_to_snapshot(actual, source, options) if ENV["UPDATE_SNAPSHOTS"] || ENV["FORCE_UPDATE_SNAPSHOTS"]
 
     raise unless snapshot_file(source, options).exist?
 
-    if snapshot_file(source, options)&.read != actual
+    expected_full_snapshot = snapshot_file(source, options).read
+    actual_full_snapshot = format_snapshot_with_metadata(actual, source, options)
+
+    if expected_full_snapshot != actual_full_snapshot
       puts
 
       divider = "=" * `tput cols`.strip.to_i
@@ -142,14 +189,14 @@ module SnapshotUtils
       flunk(<<~MESSAGE)
         \e[0m
         #{divider}
-        #{Difftastic::Differ.new(color: :always).diff_strings(snapshot_file(source, options).read, actual)}
+        #{Difftastic::Differ.new(color: :always).diff_strings(expected_full_snapshot, actual_full_snapshot)}
         \e[31m#{divider}
 
         Snapshots for "#{class_name} #{name}" didn't match.
 
         Run the test using UPDATE_SNAPSHOTS=true to update (or create) the snapshot file for "#{class_name} #{name}"
 
-        UPDATE_SNAPSHOTS=true mtest #{e.location}
+        UPDATE_SNAPSHOTS=true bundle exec minitest #{e.location}
 
         #{divider}
         \e[0m
@@ -264,6 +311,42 @@ module SnapshotUtils
     rescue StandardError
       nil
     end
+  end
+
+  def format_snapshot_with_metadata(content, source, options = {})
+    metadata = build_snapshot_metadata(source, options)
+
+    frontmatter = "---\n"
+    frontmatter += "source: #{metadata["source"].inspect}\n"
+
+    # Use YAML literal block scalar for input (preserves formatting)
+    input_value = metadata["input"]
+    if input_value.include?("\n")
+      # Multiline: use |2- which means start content at column 0 (strip trailing newline)
+      frontmatter += "input: |2-\n"
+      frontmatter += input_value
+      # Ensure there's a newline after the multiline block
+      frontmatter += "\n" unless frontmatter.end_with?("\n")
+    else
+      # Single line: use regular quoted format
+      frontmatter += "input: #{input_value.inspect}\n"
+    end
+
+    frontmatter += "options: #{metadata["options"].inspect}\n" if metadata["options"]
+
+    frontmatter += "---\n"
+
+    frontmatter + content
+  end
+
+  def build_snapshot_metadata(source, options = {})
+    metadata = {
+      "source" => "#{class_name}##{name}",
+      "input" => source.to_s,
+    }
+
+    metadata["options"] = options unless options.empty?
+    metadata
   end
 
   private

@@ -1,3 +1,10 @@
+---
+source: "Parser::NewlinesTest#test_0009_newlines between html elements"
+input: |2-
+<h1>Title 1</h1>
+
+<h2>Title 2</h2>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:16))

@@ -32,4 +32,6 @@ void ast_node_set_positions_from_token(AST_NODE_T* node, const token_T* token);
 
 bool ast_node_is(const AST_NODE_T* node, ast_node_type_T type);
 
+AST_NODE_T* find_erb_content_at_offset(AST_DOCUMENT_NODE_T* document, const char* source, size_t offset);
+
 #endif

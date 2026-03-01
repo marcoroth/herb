@@ -1,0 +1,67 @@
+---
+source: "Parser::YieldTest#test_0005_yield inside case/when"
+input: |2-
+<% case a %>
+<% when String %>
+  <%= yield :string %>
+<% when Integer %>
+  <%= yield :integer %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case a " (location: (1:2)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:12)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:17))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when String " (location: (2:2)-(2:15))
+    │   │   │   ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (3 items)
+    │   │   │       ├── @ HTMLTextNode (location: (2:17)-(3:2))
+    │   │   │       │   └── content: "\n  "
+    │   │   │       │
+    │   │   │       ├── @ ERBYieldNode (location: (3:2)-(3:22))
+    │   │   │       │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │   │       │   ├── content: " yield :string " (location: (3:5)-(3:20))
+    │   │   │       │   └── tag_closing: "%>" (location: (3:20)-(3:22))
+    │   │   │       │
+    │   │   │       └── @ HTMLTextNode (location: (3:22)-(4:0))
+    │   │   │           └── content: "\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (4:0)-(4:18))
+    │   │       ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │   │       ├── content: " when Integer " (location: (4:2)-(4:16))
+    │   │       ├── tag_closing: "%>" (location: (4:16)-(4:18))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (4:18)-(5:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBYieldNode (location: (5:2)-(5:23))
+    │   │           │   ├── tag_opening: "<%=" (location: (5:2)-(5:5))
+    │   │           │   ├── content: " yield :integer " (location: (5:5)-(5:21))
+    │   │           │   └── tag_closing: "%>" (location: (5:21)-(5:23))
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (5:23)-(6:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

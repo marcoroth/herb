@@ -1,6 +1,6 @@
 const fs = require('fs');
 const { Herb } = require('@herb-tools/node-wasm');
-const { Linter } = require('@herb-tools/linter');
+const { Linter, loadCustomRules } = require('@herb-tools/linter/loader');
 const { Formatter } = require('@herb-tools/formatter');
 const { Config } = require('@herb-tools/config');
 
@@ -11,6 +11,7 @@ const { Config } = require('@herb-tools/config');
   const formatterIndentWidth = parseInt(process.argv[5]) || 2;
   const formatterMaxLineLength = parseInt(process.argv[6]) || 80;
   const linterRulesJson = process.argv[7] || '{}';
+  const workspaceRoot = process.argv[8] || process.cwd();
 
   let linterRules = {};
   try {
@@ -57,8 +58,21 @@ const { Config } = require('@herb-tools/config');
             enabled: true,
             rules: linterRules
           }
-        }, { projectPath: process.cwd() });
-        const linter = Linter.from(Herb, config);
+        }, { projectPath: workspaceRoot });
+
+        let customRules = undefined;
+
+        try {
+          const result = await loadCustomRules({
+            baseDir: workspaceRoot,
+            silent: true
+          });
+          customRules = result.rules;
+        } catch (customRuleError) {
+          // Ignore custom rule loading errors in worker
+        }
+
+        const linter = Linter.from(Herb, config, customRules);
         const lintResult = linter.lint(content, { fileName: file });
 
         lintOffenses = lintResult.offenses || [];

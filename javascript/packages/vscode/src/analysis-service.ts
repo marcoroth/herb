@@ -24,9 +24,9 @@ export class AnalysisService {
       let formatterIndentWidth = 2
       let formatterMaxLineLength = 80
       let linterRules = {}
+      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || process.cwd()
 
       try {
-        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
         if (workspaceRoot) {
           const projectConfig = await Config.loadForEditor(workspaceRoot)
           linterEnabled = projectConfig.linter?.enabled ?? true
@@ -50,7 +50,8 @@ export class AnalysisService {
         formatterEnabled.toString(),
         formatterIndentWidth.toString(),
         formatterMaxLineLength.toString(),
-        JSON.stringify(linterRules)
+        JSON.stringify(linterRules),
+        workspaceRoot
       ], { timeout: 1000 })
       const result = JSON.parse(stdout.trim())
       const failed = result.errors > 0 || result.lintErrors > 0

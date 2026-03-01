@@ -1,9 +1,13 @@
 import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HerbDisableCommentValidRuleNameRule } from "../../src/rules/herb-disable-comment-valid-rule-name.js"
+import { ERBCommentSyntax } from "../../src/rules/erb-comment-syntax.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest(HerbDisableCommentValidRuleNameRule)
+const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest([
+  HerbDisableCommentValidRuleNameRule,
+  ERBCommentSyntax,
+])
 
 describe("HerbDisableCommentValidRuleNameRule", () => {
   test("allows valid single rule name", () => {
@@ -25,7 +29,7 @@ describe("HerbDisableCommentValidRuleNameRule", () => {
   })
 
   test("warns on unknown single rule name", () => {
-    expectWarning("Unknown rule `this-rule-doesnt-exist`. Did you mean `erb-no-empty-tags`?")
+    expectWarning("Unknown rule `this-rule-doesnt-exist`. Did you mean `erb-comment-syntax`?")
 
     assertOffenses(dedent`
       <div>test</div> <%# herb:disable this-rule-doesnt-exist %>

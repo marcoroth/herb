@@ -1,0 +1,77 @@
+---
+source: "Parser::TagsTest#test_0051_self-closing tag with closing tag having newline before >"
+input: |2-
+<img src="image.jpg" />
+<br></br
+>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (5 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:23))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:23))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "img" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: "/>" (location: (1:21)-(1:23))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:20))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:8))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:5)-(1:8))
+    │   │       │       │               └── content: "src"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:8)-(1:9))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:9)-(1:20))
+    │   │       │               ├── open_quote: """ (location: (1:9)-(1:10))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:10)-(1:19))
+    │   │       │               │       └── content: "image.jpg"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:19)-(1:20))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: true
+    │   │
+    │   ├── tag_name: "img" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (1:23)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (2:0)-(2:4))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:0)-(2:4))
+    │   │       ├── tag_opening: "<" (location: (2:0)-(2:1))
+    │   │       ├── tag_name: "br" (location: (2:1)-(2:3))
+    │   │       ├── tag_closing: ">" (location: (2:3)-(2:4))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "br" (location: (2:1)-(2:3))
+    │   ├── body: []
+    │   ├── close_tag: ∅
+    │   ├── is_void: true
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLCloseTagNode (location: (2:4)-(3:1))
+    │   ├── errors: (1 error)
+    │   │   └── @ VoidElementClosingTagError (location: (2:4)-(3:1))
+    │   │       ├── message: "`br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`."
+    │   │       ├── tag_name: "br" (location: (2:6)-(2:8))
+    │   │       ├── expected: "<br />"
+    │   │       └── found: "</br>"
+    │   │
+    │   ├── tag_opening: "</" (location: (2:4)-(2:6))
+    │   ├── tag_name: "br" (location: (2:6)-(2:8))
+    │   ├── children: []
+    │   └── tag_closing: ">" (location: (3:0)-(3:1))
+    │
+    └── @ HTMLTextNode (location: (3:1)-(4:0))
+        └── content: "\n"

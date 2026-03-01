@@ -1,3 +1,13 @@
+---
+source: "Parser::NewlinesTest#test_0011_newlines inside open tags"
+input: |2-
+<h1
+  id="header"
+  class="class1 class2"
+>
+  Content
+</h1>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(6:5))

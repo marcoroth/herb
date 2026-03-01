@@ -30,7 +30,7 @@ class UppercaseTagsVisitor extends Visitor {
   }
 }
 
-export class UppercaseTagsRewriter extends ASTRewriter {
+export default class UppercaseTagsRewriter extends ASTRewriter {
   get name() {
     return "uppercase-tags"
   }
@@ -43,9 +43,9 @@ export class UppercaseTagsRewriter extends ASTRewriter {
     // No initialization needed
   }
 
-  rewrite(parseResult, context) {
+  rewrite(node, context) {
     const visitor = new UppercaseTagsVisitor()
-    visitor.visit(parseResult.value)
-    return parseResult
+    visitor.visit(node)
+    return node
   }
 }

@@ -37,9 +37,9 @@ module Herb
       #: () -> Array[Herb::AST::Node?]
       def child_nodes
         [<%= node.fields.map { |field|
-          if field.is_a?(Herb::Template::NodeField)
+          if field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField)
             field.name
-          elsif field.is_a?(Herb::Template::ArrayField) && field.specific_kind.end_with?("Node")
+          elsif field.is_a?(Herb::Template::ArrayField) && (field.specific_kind&.end_with?("Node") || field.union_kind&.all? { |k| k.end_with?("Node") })
             "*#{field.name}"
           else
             nil
@@ -57,12 +57,18 @@ module Herb
         tree_inspect.rstrip.gsub(/\s+$/, "")
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 10)
         output = +""
 
         output += white("@ #{bold(yellow(node_name.to_s))} #{dimmed("(location: #{location.tree_inspect})")}")
         output += "\n"
+
+        if depth >= depth_limit
+          output += dimmed("└── [depth limit reached ...]\n\n")
+
+          return output.gsub(/^/, "    " * indent)
+        end
 
         output += inspect_errors(prefix: "<%= node.fields.any? ? "│   " : "    " %>")
 
@@ -79,13 +85,17 @@ module Herb
         output += white("<%= symbol %> <%= field.name %>: ")
         output += [true, false].include?(<%= field.name %>) ? bold(magenta(<%= field.name %>.to_s)) : magenta("∅")
         output += "\n"
+        <%- when Herb::Template::LocationField -%>
+        output += white("<%= symbol %> <%= field.name %>: ")
+        output += <%= field.name %> ? dimmed("(location: #{<%= field.name %>.tree_inspect})") : magenta("∅")
+        output += "\n"
         <%- when Herb::Template::ElementSourceField -%>
         output += white("<%= symbol %> <%= field.name %>: #{green(<%= field.name %>.inspect)}\n")
         <%- when Herb::Template::PrismNodeField -%>
         # no-op for <%= field.name %>
         <%- when Herb::Template::AnalyzedRubyField -%>
         # no-op for <%= field.name %>
-        <%- when Herb::Template::NodeField -%>
+        <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
         output += white("<%= symbol %> <%= field.name %>: ")
         if <%= field.name %>
           <%- prefix = (node.fields.last == field) ? "    " : "│   " -%>
@@ -95,7 +105,7 @@ module Herb
           <%- else -%>
           output += "│   └── "
           <%- end -%>
-          output += <%= field.name %>.tree_inspect(indent).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
+          output += <%= field.name %>.tree_inspect(indent: indent, depth: depth + 1, depth_limit: depth_limit).gsub(/^/, "    " * (indent + 1)).lstrip.gsub(/^/, "<%= prefix %>").delete_prefix("<%= prefix %>")
           <%- if false -%>
           <%- unless node.fields.last == field -%>
           output += "\n"
@@ -107,7 +117,7 @@ module Herb
         end
         <%- when Herb::Template::ArrayField -%>
         output += white("<%= symbol %> <%= field.name %>: ")
-        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>")
+        output += inspect_array(<%= field.name %>, prefix: "<%= (node.fields.last == field) ? "    " : "│   " %>", indent: indent, depth: depth + 1, depth_limit: depth_limit)
         <%- else -%>
         <%- raise "Unhandled type: #{field.class}" -%>
         <%- end -%>

@@ -1,0 +1,49 @@
+---
+source: "Analyze::ThenTest#test_0007_case when with then keyword and expression"
+input: |2-
+<% header_error = case %>
+<% when header.blank? then t(".required") %>
+<% when @form.headers.count(header) > 1 then t(".duplicate") %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(5:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(4:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " header_error = case " (location: (1:2)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:25)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (2:0)-(2:44))
+    │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │   │   ├── content: " when header.blank? then t(".required") " (location: (2:2)-(2:42))
+    │   │   │   ├── tag_closing: "%>" (location: (2:42)-(2:44))
+    │   │   │   ├── then_keyword: (location: (2:22)-(2:26))
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (2:44)-(3:0))
+    │   │   │           └── content: "\n"
+    │   │   │
+    │   │   │
+    │   │   └── @ ERBWhenNode (location: (3:0)-(3:63))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " when @form.headers.count(header) > 1 then t(".duplicate") " (location: (3:2)-(3:61))
+    │   │       ├── tag_closing: "%>" (location: (3:61)-(3:63))
+    │   │       ├── then_keyword: (location: (3:40)-(3:44))
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (3:63)-(4:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (4:0)-(4:9))
+    │           ├── tag_opening: "<%" (location: (4:0)-(4:2))
+    │           ├── content: " end " (location: (4:2)-(4:7))
+    │           └── tag_closing: "%>" (location: (4:7)-(4:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (4:9)-(5:0))
+        └── content: "\n"

@@ -1,0 +1,15 @@
+<%# app/views/products/product.html.erb %>
+<%graphql
+  fragment ProductFragment on Product {
+    id
+    title
+    description
+    price
+  }
+%>
+
+<article class="product">
+  <h1><%= product.title %></h1>
+  <p class="description"><%= product.description %></p>
+  <span class="price"><%= product.price %></span>
+</article>

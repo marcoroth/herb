@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0003_duplicate attributes"
+input: "<div class=\"hello\" class=\"container p-3\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:47))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:47))

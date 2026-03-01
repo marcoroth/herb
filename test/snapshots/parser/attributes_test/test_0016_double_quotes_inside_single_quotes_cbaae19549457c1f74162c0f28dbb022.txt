@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0016_double quotes inside single quotes"
+input: "<div data-json='{\"key\": \"value\"}'></div>"
+---
 @ DocumentNode (location: (1:0)-(1:40))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:40))

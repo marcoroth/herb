@@ -6,6 +6,7 @@
 
 #include <ruby.h>
 
+void rb_init_error_classes(void);
 VALUE rb_error_from_c_struct(ERROR_T* error);
 VALUE rb_errors_array_from_c_array(hb_array_T* array);
 

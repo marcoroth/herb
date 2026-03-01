@@ -1,0 +1,29 @@
+---
+source: "Parser::TextContentTest#test_0045_arrow in text content"
+input: "<span>a -> b</span>"
+---
+@ DocumentNode (location: (1:0)-(1:19))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:19))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "span" (location: (1:1)-(1:5))
+        │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "span" (location: (1:1)-(1:5))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:6)-(1:12))
+        │       └── content: "a -> b"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:12)-(1:19))
+        │       ├── tag_opening: "</" (location: (1:12)-(1:14))
+        │       ├── tag_name: "span" (location: (1:14)-(1:18))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:18)-(1:19))
+        │
+        ├── is_void: false
+        └── source: "HTML"

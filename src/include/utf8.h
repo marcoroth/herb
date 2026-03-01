@@ -3,6 +3,7 @@
 
 #include "util/hb_string.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 uint32_t utf8_char_byte_length(unsigned char first_byte);

@@ -1,3 +1,9 @@
+---
+source: "Parser::XMLDeclarationTest#test_0010_xml declaration with newlines"
+input: |2-
+<?xml version="1.0"
+      encoding="UTF-8"?>
+---
 @ DocumentNode (location: (1:0)-(2:24))
 └── children: (1 item)
     └── @ XMLDeclarationNode (location: (1:0)-(2:24))

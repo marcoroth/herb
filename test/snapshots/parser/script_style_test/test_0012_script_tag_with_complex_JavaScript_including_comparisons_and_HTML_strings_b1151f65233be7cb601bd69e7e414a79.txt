@@ -1,3 +1,16 @@
+---
+source: "Parser::ScriptStyleTest#test_0012_script tag with complex JavaScript including comparisons and HTML strings"
+input: |2-
+<script>
+  function test() {
+    if (x < 10 && y > 5) {
+      return "<div>" + content + "</div>";
+    }
+    // <span>Comment with HTML</span>
+    var template = `<ul>${items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+  }
+</script>
+---
 @ DocumentNode (location: (1:0)-(10:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(9:9))

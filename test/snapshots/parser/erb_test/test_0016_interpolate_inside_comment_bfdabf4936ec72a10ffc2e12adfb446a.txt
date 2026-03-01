@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0016_interpolate inside comment"
+input: "<!-- <%= \"Comment\" %> -->"
+---
 @ DocumentNode (location: (1:0)-(1:25))
 └── children: (1 item)
     └── @ HTMLCommentNode (location: (1:0)-(1:25))

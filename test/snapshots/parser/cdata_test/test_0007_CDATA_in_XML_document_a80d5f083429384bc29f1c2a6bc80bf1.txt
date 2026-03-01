@@ -1,3 +1,11 @@
+---
+source: "Parser::CDATATest#test_0007_CDATA in XML document"
+input: |2-
+<?xml version="1.0"?>
+<root>
+  <data><![CDATA[Some data here]]></data>
+</root>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (4 items)
     ├── @ XMLDeclarationNode (location: (1:0)-(1:21))

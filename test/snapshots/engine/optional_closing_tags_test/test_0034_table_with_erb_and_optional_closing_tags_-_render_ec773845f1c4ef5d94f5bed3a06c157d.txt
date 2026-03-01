@@ -1,0 +1,24 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0034_table with erb and optional closing tags - render"
+input: "{source: \"<table>\\n  <thead>\\n    <tr>\\n      <th>Name\\n      <th>Age\\n      <th>City\\n  <tbody>\\n    <% users.each do |user| %>\\n      <tr>\\n        <td><%= user[:name] %>\\n        <td><%= user[:age] %>\\n        <td><%= user[:city] %>\\n    <% end %>\\n</table>\\n\", locals: {users: [{name: \"Alice\", age: 30, city: \"New York\"}, {name: \"Bob\", age: 25, city: \"London\"}, {name: \"Charlie\", age: 35, city: \"Paris\"}]}, options: {escape: false, strict: false}}"
+---
+<table>
+  <thead>
+    <tr>
+      <th>Name
+      <th>Age
+      <th>City
+  <tbody>
+      <tr>
+        <td>Alice
+        <td>30
+        <td>New York
+      <tr>
+        <td>Bob
+        <td>25
+        <td>London
+      <tr>
+        <td>Charlie
+        <td>35
+        <td>Paris
+</table>

@@ -1,0 +1,7 @@
+{
+  "name": "test-fixture-v3",
+  "private": true,
+  "dependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

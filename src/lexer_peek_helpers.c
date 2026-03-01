@@ -51,6 +51,10 @@ bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("-->"), false);
 }
 
+bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string("--!>"), false);
+}
+
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("%>"), false);
 }
@@ -72,6 +76,10 @@ bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
     lexer_peek_erb_close_tag(lexer, offset) || lexer_peek_erb_dash_close_tag(lexer, offset)
     || lexer_peek_erb_percent_close_tag(lexer, offset) || lexer_peek_erb_equals_close_tag(lexer, offset)
   );
+}
+
+bool lexer_peek_erb_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string("<%"), false);
 }
 
 bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T token_type) {

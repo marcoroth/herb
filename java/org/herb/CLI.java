@@ -41,33 +41,12 @@ public class CLI {
 
       case "lex":
         LexResult lexResult = Herb.lex(source);
-
-        if (lexResult.getTokens() != null) {
-          for (Token token : lexResult.getTokens()) {
-            System.out.println(token.inspect());
-          }
-        }
+        System.out.print(lexResult.inspect());
         break;
 
       case "parse":
         ParseResult parseResult = Herb.parse(source);
-
-        if (parseResult.getValue() != null) {
-          System.out.print(parseResult.getValue().treeInspect());
-        }
-
-        if (parseResult.getErrors() != null && !parseResult.getErrors().isEmpty()) {
-          System.out.println("Errors:");
-
-          for (Object error : parseResult.getErrors()) {
-            if (error instanceof org.herb.ast.Node) {
-              System.out.println(((org.herb.ast.Node) error).treeInspect());
-            } else {
-              System.out.println("  " + error);
-            }
-          }
-        }
-
+        System.out.print(parseResult.inspect());
         break;
 
       case "ruby":

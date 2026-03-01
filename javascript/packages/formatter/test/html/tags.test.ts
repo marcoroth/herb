@@ -86,21 +86,10 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      One
-
-      <hr>
-
-      Two
-
-      <hr>
-
-      Three
-
-      <hr>
-
-      Four
-
-      <hr>
+      One<hr>
+      Two<hr>
+      Three<hr>
+      Four<hr>
     `)
   })
 

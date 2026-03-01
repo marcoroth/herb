@@ -1,0 +1,318 @@
+---
+source: "Analyze::ConditionalElementTest#test_0015_multiple sequential conditional elements"
+input: |2-
+<% if @first %>
+  <div class="first">
+<% end %>
+  <span>First</span>
+<% if @first %>
+  </div>
+<% end %>
+
+<% if @second %>
+  <section class="second">
+<% end %>
+  <span>Second</span>
+<% if @second %>
+  </section>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(16:0))
+└── children: (4 items)
+    ├── @ HTMLConditionalElementNode (location: (1:0)-(7:9))
+    │   ├── condition: "@first"
+    │   ├── open_conditional:
+    │   │   └── @ ERBIfNode (location: (1:0)-(3:9))
+    │   │       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   │       ├── content: " if @first " (location: (1:2)-(1:13))
+    │   │       ├── tag_closing: "%>" (location: (1:13)-(1:15))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (1:15)-(2:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:21))
+    │   │       │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       │   │   ├── tag_closing: ">" (location: (2:20)-(2:21))
+    │   │       │   │   ├── children: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (2:7)-(2:20))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │       │   │   │       │               └── content: "class"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │   │   │       └── value:
+    │   │       │   │   │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:20))
+    │   │       │   │   │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │   │   │               ├── children: (1 item)
+    │   │       │   │   │               │   └── @ LiteralNode (location: (2:14)-(2:19))
+    │   │       │   │   │               │       └── content: "first"
+    │   │       │   │   │               │
+    │   │       │   │   │               ├── close_quote: """ (location: (2:19)-(2:20))
+    │   │       │   │   │               └── quoted: true
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   └── is_void: false
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (2:21)-(3:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (3:0)-(3:9))
+    │   │               ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │               ├── content: " end " (location: (3:2)-(3:7))
+    │   │               └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │   │
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:21))
+    │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │       ├── tag_closing: ">" (location: (2:20)-(2:21))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (2:7)-(2:20))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (2:13)-(2:20))
+    │   │       │               ├── open_quote: """ (location: (2:13)-(2:14))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (2:14)-(2:19))
+    │   │       │               │       └── content: "first"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (2:19)-(2:20))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (3:9)-(4:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(4:20))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (4:8)-(4:13))
+    │   │   │   │       └── content: "First"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (4:13)-(4:20))
+    │   │   │   │       ├── tag_opening: "</" (location: (4:13)-(4:15))
+    │   │   │   │       ├── tag_name: "span" (location: (4:15)-(4:19))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (4:19)-(4:20))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (4:20)-(5:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (6:2)-(6:8))
+    │   │       ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │       ├── tag_name: "div" (location: (6:4)-(6:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │
+    │   ├── close_conditional:
+    │   │   └── @ ERBIfNode (location: (5:0)-(7:9))
+    │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       ├── content: " if @first " (location: (5:2)-(5:13))
+    │   │       ├── tag_closing: "%>" (location: (5:13)-(5:15))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (5:15)-(6:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLCloseTagNode (location: (6:2)-(6:8))
+    │   │       │   │   ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │       │   │   ├── tag_name: "div" (location: (6:4)-(6:7))
+    │   │       │   │   ├── children: []
+    │   │       │   │   └── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (6:8)-(7:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (7:0)-(7:9))
+    │   │               ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │   │               ├── content: " end " (location: (7:2)-(7:7))
+    │   │               └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │   │
+    │   │
+    │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (7:9)-(9:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ HTMLConditionalElementNode (location: (9:0)-(15:9))
+    │   ├── condition: "@second"
+    │   ├── open_conditional:
+    │   │   └── @ ERBIfNode (location: (9:0)-(11:9))
+    │   │       ├── tag_opening: "<%" (location: (9:0)-(9:2))
+    │   │       ├── content: " if @second " (location: (9:2)-(9:14))
+    │   │       ├── tag_closing: "%>" (location: (9:14)-(9:16))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (9:16)-(10:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLOpenTagNode (location: (10:2)-(10:26))
+    │   │       │   │   ├── tag_opening: "<" (location: (10:2)-(10:3))
+    │   │       │   │   ├── tag_name: "section" (location: (10:3)-(10:10))
+    │   │       │   │   ├── tag_closing: ">" (location: (10:25)-(10:26))
+    │   │       │   │   ├── children: (1 item)
+    │   │       │   │   │   └── @ HTMLAttributeNode (location: (10:11)-(10:25))
+    │   │       │   │   │       ├── name:
+    │   │       │   │   │       │   └── @ HTMLAttributeNameNode (location: (10:11)-(10:16))
+    │   │       │   │   │       │       └── children: (1 item)
+    │   │       │   │   │       │           └── @ LiteralNode (location: (10:11)-(10:16))
+    │   │       │   │   │       │               └── content: "class"
+    │   │       │   │   │       │
+    │   │       │   │   │       │
+    │   │       │   │   │       ├── equals: "=" (location: (10:16)-(10:17))
+    │   │       │   │   │       └── value:
+    │   │       │   │   │           └── @ HTMLAttributeValueNode (location: (10:17)-(10:25))
+    │   │       │   │   │               ├── open_quote: """ (location: (10:17)-(10:18))
+    │   │       │   │   │               ├── children: (1 item)
+    │   │       │   │   │               │   └── @ LiteralNode (location: (10:18)-(10:24))
+    │   │       │   │   │               │       └── content: "second"
+    │   │       │   │   │               │
+    │   │       │   │   │               ├── close_quote: """ (location: (10:24)-(10:25))
+    │   │       │   │   │               └── quoted: true
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   └── is_void: false
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (10:26)-(11:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (11:0)-(11:9))
+    │   │               ├── tag_opening: "<%" (location: (11:0)-(11:2))
+    │   │               ├── content: " end " (location: (11:2)-(11:7))
+    │   │               └── tag_closing: "%>" (location: (11:7)-(11:9))
+    │   │
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (10:2)-(10:26))
+    │   │       ├── tag_opening: "<" (location: (10:2)-(10:3))
+    │   │       ├── tag_name: "section" (location: (10:3)-(10:10))
+    │   │       ├── tag_closing: ">" (location: (10:25)-(10:26))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ HTMLAttributeNode (location: (10:11)-(10:25))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (10:11)-(10:16))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (10:11)-(10:16))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (10:16)-(10:17))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (10:17)-(10:25))
+    │   │       │               ├── open_quote: """ (location: (10:17)-(10:18))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (10:18)-(10:24))
+    │   │       │               │       └── content: "second"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (10:24)-(10:25))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (11:9)-(12:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (12:2)-(12:21))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (12:2)-(12:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (12:2)-(12:3))
+    │   │   │   │       ├── tag_name: "span" (location: (12:3)-(12:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (12:7)-(12:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (12:3)-(12:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (12:8)-(12:14))
+    │   │   │   │       └── content: "Second"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (12:14)-(12:21))
+    │   │   │   │       ├── tag_opening: "</" (location: (12:14)-(12:16))
+    │   │   │   │       ├── tag_name: "span" (location: (12:16)-(12:20))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (12:20)-(12:21))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (12:21)-(13:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (14:2)-(14:12))
+    │   │       ├── tag_opening: "</" (location: (14:2)-(14:4))
+    │   │       ├── tag_name: "section" (location: (14:4)-(14:11))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (14:11)-(14:12))
+    │   │
+    │   ├── close_conditional:
+    │   │   └── @ ERBIfNode (location: (13:0)-(15:9))
+    │   │       ├── tag_opening: "<%" (location: (13:0)-(13:2))
+    │   │       ├── content: " if @second " (location: (13:2)-(13:14))
+    │   │       ├── tag_closing: "%>" (location: (13:14)-(13:16))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (13:16)-(14:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLCloseTagNode (location: (14:2)-(14:12))
+    │   │       │   │   ├── tag_opening: "</" (location: (14:2)-(14:4))
+    │   │       │   │   ├── tag_name: "section" (location: (14:4)-(14:11))
+    │   │       │   │   ├── children: []
+    │   │       │   │   └── tag_closing: ">" (location: (14:11)-(14:12))
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (14:12)-(15:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (15:0)-(15:9))
+    │   │               ├── tag_opening: "<%" (location: (15:0)-(15:2))
+    │   │               ├── content: " end " (location: (15:2)-(15:7))
+    │   │               └── tag_closing: "%>" (location: (15:7)-(15:9))
+    │   │
+    │   │
+    │   ├── tag_name: "section" (location: (10:3)-(10:10))
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (15:9)-(16:0))
+        └── content: "\n"

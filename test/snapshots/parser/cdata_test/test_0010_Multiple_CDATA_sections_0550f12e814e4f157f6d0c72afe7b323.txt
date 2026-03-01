@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0010_Multiple CDATA sections"
+input: "<![CDATA[First]]><![CDATA[Second]]>"
+---
 @ DocumentNode (location: (1:0)-(1:35))
 └── children: (2 items)
     ├── @ CDATANode (location: (1:0)-(1:17))

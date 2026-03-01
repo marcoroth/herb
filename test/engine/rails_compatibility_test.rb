@@ -153,7 +153,7 @@ module Engine
 
       engine = RailsHerb.new(template, escape: true)
 
-      assert_equal "\n @output_buffer.safe_append='<h1>'.freeze; @output_buffer.append=(@title); @output_buffer.safe_append='</h1>'.freeze;\n@output_buffer", engine.src
+      assert_equal " @output_buffer.safe_append='<h1>'.freeze; @output_buffer.append=(@title); @output_buffer.safe_append='</h1>'.freeze;\n@output_buffer", engine.src
     end
 
     test "drop-in replacement compatibility" do

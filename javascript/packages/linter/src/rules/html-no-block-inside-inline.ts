@@ -1,15 +1,12 @@
 import { BaseRuleVisitor, isInlineElement, isBlockElement } from "./rule-utils.js"
-
 import { ParserRule } from "../types.js"
+import { isHTMLOpenTagNode } from "@herb-tools/core"
+
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class BlockInsideInlineVisitor extends BaseRuleVisitor {
   private inlineStack: string[] = []
-
-  private isValidHTMLOpenTag(node: HTMLElementNode): boolean {
-    return !!(node.open_tag && node.open_tag.type === "AST_HTML_OPEN_TAG_NODE")
-  }
 
   private getElementType(tagName: string): { isInline: boolean; isBlock: boolean; isUnknown: boolean } {
     const isInline = isInlineElement(tagName)
@@ -43,25 +40,22 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
   }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (!this.isValidHTMLOpenTag(node)) {
+    if (!isHTMLOpenTagNode(node.open_tag)) {
       super.visitHTMLElementNode(node)
-
       return
     }
 
-    const openTag = node.open_tag as HTMLOpenTagNode
-    const tagName = openTag.tag_name?.value.toLowerCase()
+    const tagName = node.open_tag.tag_name?.value.toLowerCase()
 
     if (!tagName) {
       super.visitHTMLElementNode(node)
-
       return
     }
 
     const { isInline, isBlock, isUnknown } = this.getElementType(tagName)
 
     if ((isBlock || isUnknown) && this.inlineStack.length > 0) {
-      this.addOffenseMessage(tagName, isBlock, openTag)
+      this.addOffenseMessage(tagName, isBlock, node.open_tag)
     }
 
     if (isInline) {

@@ -1,0 +1,54 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0008_detects unclosed double quote reaching tag end"
+input: "<div class=\"test>content</div>"
+---
+@ DocumentNode (location: (1:0)-(1:30))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:30))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:16)-(1:17))
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:16))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               └── content: "class"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:16))
+        │       │               ├── errors: (1 error)
+        │       │               │   └── @ UnclosedQuoteError (location: (1:11)-(1:16))
+        │       │               │       ├── message: "Attribute value opened with \" at (1:11) was never closed."
+        │       │               │       └── opening_quote: """ (location: (1:11)-(1:12))
+        │       │               │
+        │       │               ├── open_quote: """ (location: (1:11)-(1:12))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:12)-(1:16))
+        │       │               │       └── content: "test"
+        │       │               │
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:17)-(1:24))
+        │       └── content: "content"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:24)-(1:30))
+        │       ├── tag_opening: "</" (location: (1:24)-(1:26))
+        │       ├── tag_name: "div" (location: (1:26)-(1:29))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:29)-(1:30))
+        │
+        ├── is_void: false
+        └── source: "HTML"

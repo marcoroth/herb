@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0045_Vue directive with namespace-like syntax"
+input: "<div :v-model=\"user\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:27))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:27))

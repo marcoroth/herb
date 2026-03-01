@@ -1,5 +1,5 @@
 import { ParserRule } from "../types"
-import { BaseRuleVisitor, getTagName, isHeadOnlyTag } from "./rule-utils"
+import { BaseRuleVisitor, getTagName, isHeadOnlyTag, hasAttribute, getOpenTag } from "./rule-utils"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
@@ -23,11 +23,17 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     if (!this.insideBody) return
     if (!isHeadOnlyTag(tagName)) return
     if (tagName === "title" && this.insideSVG) return
+    if (tagName === "style" && this.insideSVG) return
+    if (tagName === "meta" && this.hasItempropAttribute(node)) return
 
     this.addOffense(
       `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
       node.location,
     )
+  }
+
+  private hasItempropAttribute(node: HTMLElementNode): boolean {
+    return hasAttribute(getOpenTag(node), "itemprop")
   }
 
   private get insideHead(): boolean {

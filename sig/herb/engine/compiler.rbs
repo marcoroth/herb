@@ -13,6 +13,8 @@ module Herb
 
       def visit_html_element_node: (untyped node) -> untyped
 
+      def visit_html_conditional_element_node: (untyped node) -> untyped
+
       def visit_html_open_tag_node: (untyped node) -> untyped
 
       def visit_html_attribute_node: (untyped node) -> untyped
@@ -22,6 +24,8 @@ module Herb
       def visit_html_attribute_value_node: (untyped node) -> untyped
 
       def visit_html_close_tag_node: (untyped node) -> untyped
+
+      def visit_html_omitted_close_tag_node: (untyped node) -> untyped
 
       def visit_html_text_node: (untyped node) -> untyped
 
@@ -73,6 +77,8 @@ module Herb
 
       def visit_erb_block_node: (untyped node) -> untyped
 
+      def visit_erb_block_end_node: (untyped node, ?escaped: untyped) -> untyped
+
       def visit_erb_control_with_parts: (untyped node, *untyped parts) -> untyped
 
       private
@@ -89,6 +95,8 @@ module Herb
 
       def add_text: (untyped text) -> untyped
 
+      def add_whitespace: (untyped whitespace) -> untyped
+
       def add_code: (untyped code) -> untyped
 
       def add_expression: (untyped code) -> untyped
@@ -97,13 +105,33 @@ module Herb
 
       def optimize_tokens: (untyped tokens) -> untyped
 
+      def compact_whitespace_tokens: (untyped tokens) -> untyped
+
+      def adjacent_whitespace?: (untyped tokens, untyped index) -> untyped
+
+      def trailing_whitespace?: (untyped token) -> untyped
+
+      def leading_whitespace?: (untyped token) -> untyped
+
+      def whitespace_before_code_sequence?: (untyped tokens, untyped current_index) -> untyped
+
+      def find_token_before_code_sequence: (untyped tokens, untyped whitespace_index) -> untyped
+
       def process_erb_output: (untyped opening, untyped code) -> untyped
 
       def should_escape_output?: (untyped opening) -> untyped
 
       def add_expression_with_escaping: (untyped code, untyped should_escape) -> untyped
 
-      def handle_whitespace_trimming: (untyped node) -> untyped
+      def at_line_start?: () -> untyped
+
+      def extract_lspace: () -> untyped
+
+      def extract_and_remove_lspace!: () -> untyped
+
+      def apply_trim: (untyped node, untyped code) -> untyped
+
+      def remove_trailing_whitespace_from_last_token!: () -> untyped
     end
   end
 end

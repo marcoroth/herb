@@ -1,3 +1,12 @@
+---
+source: "Analyze::IfTest#test_0008_if/else statement in opening tag value"
+input: |2-
+<h1
+  <% if id? %>
+    id="title"
+  <% end %>
+></h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:6))
@@ -11,6 +20,7 @@
     │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │       │       ├── content: " if id? " (location: (2:4)-(2:12))
     │   │       │       ├── tag_closing: "%>" (location: (2:12)-(2:14))
+    │   │       │       ├── then_keyword: ∅
     │   │       │       ├── statements: (1 item)
     │   │       │       │   └── @ HTMLAttributeNode (location: (3:4)-(3:14))
     │   │       │       │       ├── name:

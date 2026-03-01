@@ -1,3 +1,11 @@
+---
+source: "Parser::ERBTest#test_0029_multi-line erb comment"
+input: |2-
+<%#
+  This is a comment
+  across multiple lines
+%>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(4:2))

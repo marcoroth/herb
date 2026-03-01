@@ -1,3 +1,7 @@
+---
+source: "Parser::BooleanAttributesTest#test_0001_boolean attribute"
+input: "<input required />"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:18))

@@ -1,3 +1,6 @@
-output = ::String.new;
- output << '<div>Test</div>'.freeze;
+---
+source: "Engine::EngineTest#test_0010_compilation with custom bufvar"
+input: "{source: \"<div>Test</div>\", options: {bufvar: \"output\"}}"
+---
+output = ::String.new; output << '<div>Test</div>'.freeze;
 output.to_s

@@ -1,32 +1,12 @@
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
-import { SourceRule } from "../types.js"
-import { Location, Position } from "@herb-tools/core"
+import { type Node, Location } from "@herb-tools/core"
 
-import type { Node } from "@herb-tools/core"
+import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { SourceRule } from "../types.js"
 import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
   startOffset: number
   endOffset: number
-}
-
-function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
 }
 
 class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAutofixContext> {

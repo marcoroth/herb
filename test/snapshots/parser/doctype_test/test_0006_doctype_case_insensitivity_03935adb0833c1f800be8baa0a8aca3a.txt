@@ -1,3 +1,7 @@
+---
+source: "Parser::DoctypeTest#test_0006_doctype case insensitivity"
+input: "<!docTYPE>"
+---
 @ DocumentNode (location: (1:0)-(1:10))
 └── children: (1 item)
     └── @ HTMLDoctypeNode (location: (1:0)-(1:10))

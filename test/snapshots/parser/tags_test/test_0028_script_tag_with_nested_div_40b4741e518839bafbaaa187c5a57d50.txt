@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0028_script tag with nested div"
+input: "<script><div>var x = 5;</div></script>"
+---
 @ DocumentNode (location: (1:0)-(1:38))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:38))

@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0048_script tag with closing tag in complex multi-line comment"
+input: |2-
+<script>
+  /*
+   * This is a comment with </script> inside
+   * and some more content </style>
+   */
+  console.log("actual code");
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (6 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:37))
@@ -30,7 +41,7 @@
     ├── @ HTMLCloseTagNode (location: (4:27)-(4:35))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (4:27)-(4:35))
-    │   │       ├── message: "Found closing tag `</style>` at (4:29) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</style>` at (4:29) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "style" (location: (4:29)-(4:34))
     │   │
     │   ├── tag_opening: "</" (location: (4:27)-(4:29))
@@ -44,7 +55,7 @@
     ├── @ HTMLCloseTagNode (location: (7:0)-(7:9))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (7:0)-(7:9))
-    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</script>` at (7:2) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "script" (location: (7:2)-(7:8))
     │   │
     │   ├── tag_opening: "</" (location: (7:0)-(7:2))

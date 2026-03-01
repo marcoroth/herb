@@ -1,3 +1,10 @@
+---
+source: "Analyze::BlockTest#test_0008_upto block"
+input: |2-
+<% 1.upto(5) do |i| %>
+  <%= i %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(3:9))

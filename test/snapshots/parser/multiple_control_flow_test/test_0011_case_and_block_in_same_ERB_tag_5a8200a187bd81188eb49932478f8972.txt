@@ -1,0 +1,73 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0011_case and block in same ERB tag"
+input: |2-
+<% case type; items.each do |item| %>
+  <% when :a %>a
+<% end; end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+├── errors: (5 errors)
+│   ├── @ RubyParseError (location: (1:3)-(1:7))
+│   │   ├── message: "case_missing_conditions: expected a `when` or `in` clause after `case`"
+│   │   ├── error_message: "expected a `when` or `in` clause after `case`"
+│   │   ├── diagnostic_id: "case_missing_conditions"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:3)-(1:7))
+│   │   ├── message: "case_term: expected an `end` to close the `case` statement"
+│   │   ├── error_message: "expected an `end` to close the `case` statement"
+│   │   ├── diagnostic_id: "case_term"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:14)-(1:19))
+│   │   ├── message: "expect_eol_after_statement: unexpected local variable or method, expecting end-of-input"
+│   │   ├── error_message: "unexpected local variable or method, expecting end-of-input"
+│   │   ├── diagnostic_id: "expect_eol_after_statement"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (2:5)-(2:9))
+│   │   ├── message: "unexpected_token_ignore: unexpected 'when', ignoring it"
+│   │   ├── error_message: "unexpected 'when', ignoring it"
+│   │   ├── diagnostic_id: "unexpected_token_ignore"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (3:8)-(3:11))
+│       ├── message: "unexpected_token_ignore: unexpected 'end', ignoring it"
+│       ├── error_message: "unexpected 'end', ignoring it"
+│       ├── diagnostic_id: "unexpected_token_ignore"
+│       └── level: "syntax"
+│
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(3:14))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:37))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case type; items.each do |item| " (location: (1:2)-(1:35))
+    │   ├── tag_closing: "%>" (location: (1:35)-(1:37))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:37)-(2:2))
+    │   │       └── content: "\n  "
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:2)-(2:15))
+    │   │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       ├── content: " when :a " (location: (2:4)-(2:13))
+    │   │       ├── tag_closing: "%>" (location: (2:13)-(2:15))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (1 item)
+    │   │           └── @ HTMLTextNode (location: (2:15)-(3:0))
+    │   │               └── content: "a\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:14))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end; end " (location: (3:2)-(3:12))
+    │           └── tag_closing: "%>" (location: (3:12)-(3:14))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:14)-(4:0))
+        └── content: "\n"

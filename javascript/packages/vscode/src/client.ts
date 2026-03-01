@@ -83,6 +83,7 @@ export class Client {
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
+            rewriter: projectConfig.formatter?.rewriter,
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'),
@@ -175,6 +176,7 @@ export class Client {
             indentWidth: projectConfig.formatter?.indentWidth ?? 2,
             maxLineLength: projectConfig.formatter?.maxLineLength ?? 80,
             exclude: projectConfig.formatter?.exclude,
+            rewriter: projectConfig.formatter?.rewriter,
           },
           trace: {
             server: vscodeConfig.get('trace.server', 'verbose'), // Trace is always from VS Code

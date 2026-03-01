@@ -14,4 +14,5 @@ ignore = [
   "src/ast/nodes.rs",
   "src/errors.rs",
   "src/nodes.rs",
+  "src/union_types.rs",
 ]

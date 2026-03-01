@@ -120,7 +120,6 @@ describe("ERB Formatter Compatibility Tests", () => {
 
       expect(result).toEqual(dedent`
         <% if eeee then "b" else c end %>
-
         <% if eeee then a else c end %>
       `)
     })
@@ -147,7 +146,6 @@ describe("ERB Formatter Compatibility Tests", () => {
 
       expect(result).toEqual(dedent`
         <div <% if eeee then "b" else c end %>></div>
-
         <div <% if eeee then a else c end %>></div>
       `)
     })
@@ -281,10 +279,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       `
 
       const result = formatter.format(source)
-
-      expect(result).toEqual(dedent`
-        <div><%= yield(:header) %><%= yield :footer, class: "mt-4" %></div>
-      `)
+      expect(result).toEqual(source)
     })
   })
 
@@ -328,7 +323,6 @@ describe("ERB Formatter Compatibility Tests", () => {
 
       expect(result).toEqual(dedent`
         <%# This is a comment %>
-
         <div>Content</div>
 
         <% # Another comment style %>
@@ -371,6 +365,7 @@ describe("ERB Formatter Compatibility Tests", () => {
         <% categories.each do |category| %>
           <div class="category">
             <h3><%= category.name %></h3>
+
             <% category.items.each do |item| %>
               <div class="item"><%= item.name %></div>
             <% end %>

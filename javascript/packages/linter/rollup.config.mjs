@@ -49,7 +49,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       json(),
@@ -70,7 +70,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["@herb-tools/core", "@herb-tools/node-wasm"],
+    external: ["@herb-tools/core", "@herb-tools/node-wasm", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       commonjs(),
@@ -79,6 +79,46 @@ export default [
         tsconfig: "./tsconfig.json",
         rootDir: "src/",
         module: "esnext",
+      }),
+    ],
+  },
+
+  // Loader entry point (includes custom rule loader)
+  {
+    input: "src/loader.ts",
+    output: {
+      file: "dist/loader.js",
+      format: "esm",
+      sourcemap: true,
+    },
+    external,
+    plugins: [
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        declaration: true,
+        declarationDir: "./dist/types",
+        rootDir: "src/",
+      }),
+    ],
+  },
+  {
+    input: "src/loader.ts",
+    output: {
+      file: "dist/loader.cjs",
+      format: "cjs",
+      sourcemap: true,
+    },
+    external,
+    plugins: [
+      nodeResolve({ preferBuiltins: true }),
+      commonjs(),
+      json(),
+      typescript({
+        tsconfig: "./tsconfig.json",
+        rootDir: "src/",
       }),
     ],
   },

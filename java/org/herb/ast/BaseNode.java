@@ -59,7 +59,7 @@ public abstract class BaseNode implements Node {
       String nextPrefix = isLast ? "    " : "│   ";
 
       if (error != null) {
-        String tree = error.treeInspect();
+        String tree = error.inspect();
         if (tree.endsWith("\n")) {
           tree = tree.substring(0, tree.length() - 1);
         }
@@ -92,7 +92,7 @@ public abstract class BaseNode implements Node {
       String nextPrefix = isLast ? "    " : "│   ";
 
       if (item != null) {
-        String tree = item.treeInspect();
+        String tree = item.inspect();
 
         if (tree.endsWith("\n")) {
           tree = tree.substring(0, tree.length() - 1);
@@ -120,7 +120,7 @@ public abstract class BaseNode implements Node {
    */
   protected String inspectNode(Node node, String prefix) {
     if (node == null) return "∅\n";
-    String tree = node.treeInspect();
+    String tree = node.inspect();
 
     if (tree.endsWith("\n")) {
       tree = tree.substring(0, tree.length() - 1);

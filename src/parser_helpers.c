@@ -1,12 +1,9 @@
 #include "include/parser_helpers.h"
-#include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
-#include "include/html_util.h"
 #include "include/lexer.h"
 #include "include/parser.h"
 #include "include/token.h"
-#include "include/token_matchers.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
@@ -24,7 +21,7 @@ bool parser_check_matching_tag(const parser_T* parser, hb_string_T tag_name) {
   token_T* top_token = hb_array_last(parser->open_tags_stack);
   if (top_token == NULL || hb_string_is_empty(top_token->value)) { return false; };
 
-  return hb_string_equals(top_token->value, tag_name);
+  return hb_string_equals_case_insensitive(top_token->value, tag_name);
 }
 
 token_T* parser_pop_open_tag(const parser_T* parser) {
@@ -60,8 +57,8 @@ bool parser_in_svg_context(const parser_T* parser) {
 foreign_content_type_T parser_get_foreign_content_type(hb_string_T tag_name) {
   if (hb_string_is_empty(tag_name)) { return FOREIGN_CONTENT_UNKNOWN; }
 
-  if (hb_string_equals(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
-  if (hb_string_equals(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("script"))) { return FOREIGN_CONTENT_SCRIPT; }
+  if (hb_string_equals_case_insensitive(tag_name, hb_string("style"))) { return FOREIGN_CONTENT_STYLE; }
 
   return FOREIGN_CONTENT_UNKNOWN;
 }
@@ -129,11 +126,15 @@ void parser_append_literal_node_from_buffer(
   position_T start
 ) {
   if (buffer->length == 0) { return; }
+
+  hb_string_T content = { .data = buffer->value, .length = (uint32_t) buffer->length };
+
   AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(hb_string(buffer->value), start, parser->current_token->location.start, NULL);
+    ast_literal_node_init(content, start, parser->current_token->location.start, NULL);
 
   if (children != NULL) { hb_array_append(children, literal); }
-  hb_buffer_clear(buffer);
+
+  hb_buffer_init(buffer, 128);
 }
 
 token_T* parser_advance(parser_T* parser) {
@@ -172,7 +173,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
   );
 
   return ast_html_element_node_init(
-    open_tag,
+    (AST_NODE_T*) open_tag,
     open_tag->tag_name,
     body,
     NULL,
@@ -215,5 +216,47 @@ bool parser_is_expected_closing_tag_name(hb_string_T tag_name, foreign_content_t
 
   if (hb_string_is_empty(tag_name) || hb_string_is_empty(expected_tag_name)) { return false; }
 
-  return hb_string_equals(expected_tag_name, tag_name);
+  return hb_string_equals_case_insensitive(expected_tag_name, tag_name);
+}
+
+void parser_synchronize(parser_T* parser, hb_array_T* errors) {
+  (void) errors;
+
+  while (parser->current_token->type != TOKEN_EOF) {
+    token_type_T type = parser->current_token->type;
+
+    if (type == TOKEN_HTML_TAG_START || type == TOKEN_HTML_TAG_START_CLOSE || type == TOKEN_ERB_START
+        || type == TOKEN_HTML_COMMENT_START || type == TOKEN_HTML_DOCTYPE) {
+      return;
+    }
+
+    token_T* skipped = parser_advance(parser);
+    token_free(skipped);
+  }
+}
+
+bool parser_can_close_ancestor(const parser_T* parser, hb_string_T tag_name) {
+  size_t stack_size = hb_array_size(parser->open_tags_stack);
+
+  for (size_t i = stack_size; i > 0; i--) {
+    token_T* open = hb_array_get(parser->open_tags_stack, i - 1);
+
+    if (open && !hb_string_is_empty(open->value) && hb_string_equals_case_insensitive(open->value, tag_name)) { return true; }
+  }
+
+  return false;
+}
+
+size_t parser_find_ancestor_depth(const parser_T* parser, hb_string_T tag_name) {
+  size_t stack_size = hb_array_size(parser->open_tags_stack);
+
+  for (size_t i = stack_size; i > 0; i--) {
+    token_T* open = hb_array_get(parser->open_tags_stack, i - 1);
+
+    if (open && !hb_string_is_empty(open->value) && hb_string_equals_case_insensitive(open->value, tag_name)) {
+      return stack_size - i;
+    }
+  }
+
+  return (size_t) -1;
 }

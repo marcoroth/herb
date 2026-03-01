@@ -1,3 +1,10 @@
+---
+source: "Parser::AttributesTest#test_0013_attribute value with mixed whitespace and newlines around equal sign"
+input: |2-
+<div class
+  =
+  "hello">Content</div>
+---
 @ DocumentNode (location: (1:0)-(3:23))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(3:23))

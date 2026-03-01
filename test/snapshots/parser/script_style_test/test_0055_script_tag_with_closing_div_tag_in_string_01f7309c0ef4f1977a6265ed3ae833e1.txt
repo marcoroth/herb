@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0055_script tag with closing div tag in string"
+input: "<script>var s = \"</div>\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:34))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:34))

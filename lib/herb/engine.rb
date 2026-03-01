@@ -51,6 +51,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -75,6 +76,8 @@ module Herb
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
 
+      preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
+
       @src << "# frozen_string_literal: true\n" if @freeze
 
       if properties[:ensure]
@@ -87,11 +90,9 @@ module Herb
       end
 
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
-
       @src << preamble
-      @src << "\n" unless preamble.end_with?("\n")
 
-      parse_result = ::Herb.parse(input)
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -190,6 +191,8 @@ module Herb
       if code.include?("=begin") || code.include?("=end")
         @src << "\n" << code << "\n"
       else
+        @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
+
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
@@ -212,11 +215,15 @@ module Herb
     end
 
     def add_expression_result(code)
-      with_buffer { @src << " << (" << code << ").to_s" }
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code) << ").to_s"
+      }
     end
 
     def add_expression_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code) << "))"
+      }
     end
 
     def add_expression_block(indicator, code)
@@ -228,11 +235,50 @@ module Herb
     end
 
     def add_expression_block_result(code)
-      with_buffer { @src << " << " << code }
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code)
+      }
     end
 
     def add_expression_block_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
+      }
+    end
+
+    def add_expression_block_end(code, escaped: false)
+      terminate_expression
+
+      trailing_newline = code.end_with?("\n")
+      code_stripped = code.chomp
+
+      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+
+      @src << " " << code_stripped
+      @src << (escaped ? "))" : ")")
+
+      @src << if code.include?("#") || trailing_newline
+                "\n"
+              else
+                ";"
+              end
+
+      @buffer_on_stack = false
+    end
+
+    def trailing_newline(code)
+      return "\n" if comment?(code)
+      return "\n" if heredoc?(code)
+
+      ""
+    end
+
+    def comment?(code)
+      code.include?("#")
+    end
+
+    def heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
     end
 
     def add_postamble(postamble)

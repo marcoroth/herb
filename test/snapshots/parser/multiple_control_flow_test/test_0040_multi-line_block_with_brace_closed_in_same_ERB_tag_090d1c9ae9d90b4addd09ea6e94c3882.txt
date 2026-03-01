@@ -1,0 +1,28 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0040_multi-line block with brace closed in same ERB tag"
+input: |2-
+<%
+  items.map { |item|
+    item.transform
+  }.each { |result|
+    output(result)
+  }
+%>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(7:2))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: "
+    │     items.map { |item|
+    │       item.transform
+    │     }.each { |result|
+    │       output(result)
+    │     }
+    │   " (location: (1:2)-(7:0))
+    │   ├── tag_closing: "%>" (location: (7:0)-(7:2))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (7:2)-(8:0))
+        └── content: "\n"

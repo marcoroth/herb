@@ -6,6 +6,8 @@ import { Linter } from "../../src/linter.js"
 
 import { HerbDisableCommentValidRuleNameRule } from "../../src/rules/herb-disable-comment-valid-rule-name.js"
 import { HerbDisableCommentNoRedundantAllRule } from "../../src/rules/herb-disable-comment-no-redundant-all.js"
+import { HTMLTagNameLowercaseRule } from "../../src/rules/html-tag-name-lowercase.js"
+import { HTMLAttributeDoubleQuotesRule } from "../../src/rules/html-attribute-double-quotes.js"
 
 describe("Herb Disable Comment Precise Locations", () => {
   beforeAll(async () => {
@@ -37,7 +39,11 @@ describe("Herb Disable Comment Precise Locations", () => {
       <div>test</div> <%# herb:disable html-tag-name-lowercase, invalid-rule, html-attribute-double-quotes %>
     `
 
-    const linter = new Linter(Herb, [HerbDisableCommentValidRuleNameRule])
+    const linter = new Linter(Herb, [
+      HerbDisableCommentValidRuleNameRule,
+      HTMLTagNameLowercaseRule,
+      HTMLAttributeDoubleQuotesRule,
+    ])
     const result = linter.lint(html)
 
     expect(result.offenses).toHaveLength(1)

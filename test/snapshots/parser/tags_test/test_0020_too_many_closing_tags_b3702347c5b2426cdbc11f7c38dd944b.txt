@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0020_too many closing tags"
+input: "<div></div></div>"
+---
 @ DocumentNode (location: (1:0)-(1:17))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:11))
@@ -24,7 +28,7 @@
     └── @ HTMLCloseTagNode (location: (1:11)-(1:17))
         ├── errors: (1 error)
         │   └── @ MissingOpeningTagError (location: (1:11)-(1:17))
-        │       ├── message: "Found closing tag `</div>` at (1:13) without a matching opening tag."
+        │       ├── message: "Found closing tag `</div>` at (1:13) without a matching opening tag in the same scope."
         │       └── closing_tag: "div" (location: (1:13)-(1:16))
         │
         ├── tag_opening: "</" (location: (1:11)-(1:13))

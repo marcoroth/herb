@@ -195,6 +195,41 @@ TEST(hb_string_truncate_tests)
   }
 END
 
+TEST(hb_string_range_tests)
+
+  {
+    hb_string_T string = hb_string("Test String");
+    hb_string_T range = hb_string_range(string, 0, 4);
+
+    ck_assert(hb_string_equals(hb_string("Test"), range));
+  }
+
+  {
+    hb_string_T string = hb_string("Test String");
+    hb_string_T range = hb_string_range(string, 0, 1);
+
+    ck_assert(hb_string_equals(hb_string("T"), range));
+  }
+
+  {
+    hb_string_T string = hb_string("Test String");
+    hb_string_T range = hb_string_range(string, 5, 11);
+    ck_assert(hb_string_equals(hb_string("String"), range));
+  }
+
+  {
+    hb_string_T string = hb_string("Test String");
+    hb_string_T range = hb_string_range(string, 5, 11);
+    ck_assert(hb_string_equals(hb_string("String"), range));
+  }
+
+  {
+    hb_string_T string = hb_string(" Test ");
+    hb_string_T range = hb_string_range(string, 1, 5);
+    ck_assert(hb_string_equals(hb_string("Test"), range));
+  }
+END
+
 TCase *hb_string_tests(void) {
   TCase *tags = tcase_create("Herb String");
 
@@ -204,6 +239,7 @@ TCase *hb_string_tests(void) {
   tcase_add_test(tags, hb_string_is_empty_tests);
   tcase_add_test(tags, hb_string_starts_with_tests);
   tcase_add_test(tags, hb_string_truncate_tests);
+  tcase_add_test(tags, hb_string_range_tests);
 
   return tags;
 }

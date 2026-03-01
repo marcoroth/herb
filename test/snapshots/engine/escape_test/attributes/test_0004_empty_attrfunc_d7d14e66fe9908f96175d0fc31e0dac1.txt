@@ -1,3 +1,6 @@
-_buf = ::String.new;
- _buf << '<div class="'.freeze; _buf << ((value)); _buf << '"></div>'.freeze;
+---
+source: "Engine::EscapeTest::attributes#test_0004_empty attrfunc"
+input: "{source: \"<div class=\\\"<%= value %>\\\"></div>\", options: {attrfunc: \"\"}}"
+---
+_buf = ::String.new; _buf << '<div class="'.freeze; _buf << ((value)); _buf << '"></div>'.freeze;
 _buf.to_s

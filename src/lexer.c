@@ -3,7 +3,6 @@
 #include "include/token.h"
 #include "include/utf8.h"
 #include "include/util.h"
-#include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
 #include <ctype.h>
@@ -58,7 +57,7 @@ void lexer_init(lexer_T* lexer, const char* source) {
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {
   size_t error_message_length = 128;
-  char* error_message = malloc(sizeof(char) * error_message_length); // hb_arena_alloc(lexer->allocator, sizeof(char) * error_message_length);
+  char* error_message = malloc(sizeof(char) * error_message_length);
 
   snprintf(
     error_message,
@@ -117,36 +116,31 @@ static token_T* lexer_advance_with_next(lexer_T* lexer, size_t count, token_type
     lexer_advance(lexer);
   }
 
-  uint32_t end_position = lexer->current_position;
-
-  hb_string_T value = hb_string_slice(lexer->source, start_position);
-  value = hb_string_truncate(value, end_position - start_position);
-
-  token_T* token = token_init(
-    value,
-    type,
-    lexer
-  );
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
   return token;
 }
 
 static token_T* lexer_advance_current(lexer_T* lexer, const token_type_T type) {
-  hb_string_T value = { .data = lexer->source.data + lexer->current_position, .length = 1 };
-  return lexer_advance_with(lexer, value, type);
+  return lexer_advance_with_next(lexer, 1, type);
 }
 
 static token_T* lexer_advance_utf8_character(lexer_T* lexer, const token_type_T type) {
   uint32_t char_byte_length = utf8_sequence_length(hb_string_slice(lexer->source, lexer->current_position));
+
   if (char_byte_length <= 1) { return lexer_advance_current(lexer, type); }
 
-  size_t start_position = lexer->current_position;
+  uint32_t start_position = lexer->current_position;
+
+  for (uint32_t i = 0; i < char_byte_length; i++) {
+    if (lexer->current_position + i >= lexer->source.length) { return lexer_advance_current(lexer, type); }
+  }
+
   lexer_advance_utf8_bytes(lexer, char_byte_length);
 
-  hb_string_T utf8_char = hb_string_slice(lexer->source, start_position);
-  utf8_char = hb_string_truncate(utf8_char, char_byte_length);
+  token_T* token = token_init(hb_string_range(lexer->source, start_position, lexer->current_position), type, lexer);
 
-  return token_init(utf8_char, type, lexer);
+  return token;
 }
 
 static token_T* lexer_match_and_advance(lexer_T* lexer, hb_string_T value, const token_type_T type) {
@@ -160,16 +154,14 @@ static token_T* lexer_match_and_advance(lexer_T* lexer, hb_string_T value, const
 
 static token_T* lexer_parse_whitespace(lexer_T* lexer) {
   uint32_t start_position = lexer->current_position;
+
   while (isspace(lexer->current_character) && lexer->current_character != '\n' && lexer->current_character != '\r'
          && !lexer_eof(lexer)) {
     lexer_advance(lexer);
   }
-  uint32_t end_position = lexer->current_position;
 
-  hb_string_T value = hb_string_slice(lexer->source, start_position);
-  value = hb_string_truncate(value, end_position - start_position);
-
-  token_T* token = token_init(value, TOKEN_WHITESPACE, lexer);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_WHITESPACE, lexer);
 
   return token;
 }
@@ -179,16 +171,14 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 
   while ((isalnum(lexer->current_character) || lexer->current_character == '-' || lexer->current_character == '_'
           || lexer->current_character == ':')
-         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_eof(lexer)) {
+         && !lexer_peek_for_html_comment_end(lexer, 0) && !lexer_peek_for_html_comment_invalid_end(lexer, 0)
+         && !lexer_eof(lexer)) {
+
     lexer_advance(lexer);
   }
-  uint32_t end_position = lexer->current_position;
 
-  hb_string_T value = hb_string_slice(lexer->source, start_position);
-  value = hb_string_truncate(value, end_position - start_position);
-  value.length = end_position - start_position;
-
-  token_T* token = token_init(value, TOKEN_IDENTIFIER, lexer);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_IDENTIFIER, lexer);
 
   return token;
 }
@@ -196,13 +186,11 @@ static token_T* lexer_parse_identifier(lexer_T* lexer) {
 // ===== ERB Parsing
 
 static token_T* lexer_parse_erb_open(lexer_T* lexer) {
-  hb_string_T erb_patterns[7] = { hb_string("<%=="), hb_string("<%%="),
-                                  hb_string("<%="),  hb_string("<%#"),
-                                  hb_string("<%-"),  hb_string("<%%"),
-                                  hb_string("<%") };
+  hb_string_T erb_patterns[] = { hb_string("<%=="), hb_string("<%%="), hb_string("<%="),       hb_string("<%#"),
+                                 hb_string("<%-"),  hb_string("<%%"),  hb_string("<%graphql"), hb_string("<%") };
 
   lexer->state = STATE_ERB_CONTENT;
-  for (size_t i = 0; i < 7; i++) {
+  for (size_t i = 0; i < 8; i++) {
     token_T* match = lexer_match_and_advance(lexer, erb_patterns[i], TOKEN_ERB_START);
     if (match) { return match; }
   }
@@ -211,15 +199,23 @@ static token_T* lexer_parse_erb_open(lexer_T* lexer) {
 }
 
 static token_T* lexer_parse_erb_content(lexer_T* lexer) {
-  size_t start_position = lexer->current_position;
+  uint32_t start_position = lexer->current_position;
+
   while (!lexer_peek_erb_end(lexer, 0)) {
     if (lexer_eof(lexer)) {
-      uint32_t end_position = lexer->current_position;
+      token_T* token =
+        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
-      hb_string_T value = hb_string_slice(lexer->source, start_position);
-      value.length = end_position - start_position;
+      return token;
+    }
 
-      return token_init(value, TOKEN_ERROR, lexer); // Handle unexpected EOF
+    if (lexer_peek_erb_start(lexer, 0)) {
+      lexer->state = STATE_DATA;
+
+      token_T* token =
+        token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
+
+      return token;
     }
 
     if (is_newline(lexer->current_character)) {
@@ -235,25 +231,18 @@ static token_T* lexer_parse_erb_content(lexer_T* lexer) {
 
   lexer->state = STATE_ERB_CLOSE;
 
-  uint32_t end_position = lexer->current_position;
-  hb_string_T value = hb_string_slice(lexer->source, start_position);
-  value = hb_string_truncate(value, end_position - start_position);
+  token_T* token =
+    token_init(hb_string_range(lexer->source, start_position, lexer->current_position), TOKEN_ERB_CONTENT, lexer);
 
-  return token_init(value, TOKEN_ERB_CONTENT, lexer);
+  return token;
 }
 
 static token_T* lexer_parse_erb_close(lexer_T* lexer) {
   lexer->state = STATE_DATA;
 
-  if (lexer_peek_erb_percent_close_tag(lexer, 0)) {
-    return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END);
-  }
-  if (lexer_peek_erb_equals_close_tag(lexer, 0)) {
-    return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END);
-  }
-  if (lexer_peek_erb_dash_close_tag(lexer, 0)) {
-    return lexer_advance_with(lexer, hb_string("-%>"), TOKEN_ERB_END);
-  }
+  if (lexer_peek_erb_percent_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("%%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_equals_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("=%>"), TOKEN_ERB_END); }
+  if (lexer_peek_erb_dash_close_tag(lexer, 0)) { return lexer_advance_with(lexer, hb_string("-%>"), TOKEN_ERB_END); }
 
   return lexer_advance_with(lexer, hb_string("%>"), TOKEN_ERB_END);
 }
@@ -261,7 +250,7 @@ static token_T* lexer_parse_erb_close(lexer_T* lexer) {
 // ===== Tokenizing Function
 
 token_T* lexer_next_token(lexer_T* lexer) {
-  if (lexer_eof(lexer)) { token_init(hb_string(""), TOKEN_EOF, lexer); }
+  if (lexer_eof(lexer)) { return token_init(hb_string(""), TOKEN_EOF, lexer); }
   if (lexer_stalled(lexer)) { return lexer_error(lexer, "Lexer stalled after 5 iterations"); }
 
   if (lexer->state == STATE_ERB_CONTENT) { return lexer_parse_erb_content(lexer); }
@@ -295,7 +284,7 @@ token_T* lexer_next_token(lexer_T* lexer) {
         return lexer_advance_with_next(lexer, strlen("<![CDATA["), TOKEN_CDATA_START);
       }
 
-      if (isalnum(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
+      if (isalpha(lexer_peek(lexer, 1))) { return lexer_advance_current(lexer, TOKEN_HTML_TAG_START); }
 
       if (lexer_peek_for_html_comment_start(lexer, 0)) {
         return lexer_advance_with(lexer, hb_string("<!--"), TOKEN_HTML_COMMENT_START);
@@ -319,7 +308,10 @@ token_T* lexer_next_token(lexer_T* lexer) {
     }
 
     case '-': {
-      token_T* token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
+      token_T* token = lexer_match_and_advance(lexer, hb_string("--!>"), TOKEN_HTML_COMMENT_INVALID_END);
+      if (token) { return token; }
+
+      token = lexer_match_and_advance(lexer, hb_string("-->"), TOKEN_HTML_COMMENT_END);
       return token ? token : lexer_advance_current(lexer, TOKEN_DASH);
     }
 

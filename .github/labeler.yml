@@ -29,8 +29,12 @@ rust:
 javascript:
   - changed-files:
     - any-glob-to-any-file:
-      - 'javascript/**/*'
-      - 'templates/javascript/**/*'
+      - 'javascript/**/*.js'
+      - 'javascript/**/*.mjs'
+      - 'javascript/**/*.cjs'
+      - 'templates/javascript/**/*.js.erb'
+      - 'templates/javascript/**/*.mjs.erb'
+      - 'templates/javascript/**/*.cjs.erb'
 
 typescript:
   - changed-files:

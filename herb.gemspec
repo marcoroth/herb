@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
     "README.md",
     "config.yml",
     "lib/**/*.rb",
+    "lib/**/*.yml",
     "sig/**/*.rbs",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",

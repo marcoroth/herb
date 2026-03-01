@@ -1,7 +1,11 @@
+mod common;
+
 use herb::parse;
 
 #[test]
 fn test_parse_result_success_with_valid_html() {
+  common::no_color();
+
   let source = "<div>Hello</div>";
   let result = parse(source).unwrap();
 
@@ -23,6 +27,8 @@ fn test_parse_result_success_with_valid_html() {
 
 #[test]
 fn test_parse_result_failed_with_unclosed_element() {
+  common::no_color();
+
   let source = "<div class=\"test\">";
   let result = parse(source).unwrap();
 
@@ -45,15 +51,13 @@ fn test_parse_result_failed_with_unclosed_element() {
 
   assert!(errors
     .iter()
-    .any(|e| e.error_type() == "UNCLOSED_ELEMENT_ERROR"));
-
-  assert!(errors
-    .iter()
     .any(|e| e.error_type() == "MISSING_CLOSING_TAG_ERROR"));
 }
 
 #[test]
 fn test_parse_result_failed_with_tag_mismatch() {
+  common::no_color();
+
   let source = "<div></span>";
   let result = parse(source).unwrap();
 
@@ -73,11 +77,17 @@ fn test_parse_result_failed_with_tag_mismatch() {
 
   assert!(errors
     .iter()
-    .any(|e| e.error_type() == "TAG_NAMES_MISMATCH_ERROR"));
+    .any(|e| e.error_type() == "MISSING_OPENING_TAG_ERROR"));
+
+  assert!(errors
+    .iter()
+    .any(|e| e.error_type() == "MISSING_CLOSING_TAG_ERROR"));
 }
 
 #[test]
 fn test_parse_result_errors_are_recursive() {
+  common::no_color();
+
   let source = "<div><span></div></span>";
   let result = parse(source).unwrap();
 

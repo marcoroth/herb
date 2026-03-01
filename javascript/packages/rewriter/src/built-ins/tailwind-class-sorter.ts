@@ -7,7 +7,6 @@ import { asMutable } from "../mutable.js"
 
 import type { RewriteContext } from "../context.js"
 import type {
-  ParseResult,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   Node,
@@ -244,20 +243,36 @@ export class TailwindClassSorterRewriter extends ASTRewriter {
   }
 
   async initialize(context: RewriteContext): Promise<void> {
-    this.sorter = await TailwindClassSorter.fromConfig({
-      baseDir: context.baseDir
-    })
+    try {
+      this.sorter = await TailwindClassSorter.fromConfig({
+        baseDir: context.baseDir
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+
+      if (errorMessage.includes('Cannot find module') || errorMessage.includes('ENOENT')) {
+        throw new Error(
+          `Tailwind CSS is not installed in this project. ` +
+          `To use the Tailwind class sorter, install Tailwind CSS itself using: npm install -D tailwindcss, ` +
+          `or remove the "tailwind-class-sorter" rewriter from your .herb.yml config file.\n` +
+          `If "tailwindcss" is already part of your package.json, make sure your NPM dependencies are installed.\n` +
+          `Original error: ${errorMessage}.`
+        )
+      }
+
+      throw error
+    }
   }
 
-  rewrite(parseResult: ParseResult, _context: RewriteContext): ParseResult {
+  rewrite<T extends Node>(node: T, _context: RewriteContext): T {
     if (!this.sorter) {
-      return parseResult
+      return node
     }
 
     const visitor = new TailwindClassSorterVisitor(this.sorter)
 
-    visitor.visit(parseResult.value)
+    visitor.visit(node)
 
-    return parseResult
+    return node
   }
 }

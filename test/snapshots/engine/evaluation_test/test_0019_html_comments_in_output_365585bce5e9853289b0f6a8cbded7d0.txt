@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0019_html comments in output"
+input: "{source: \"<div>\\n  <!-- HTML comment -->\\n  <p>Content</p>\\n  <!-- Comment with <%= \\\"ERB\\\" %> -->\\n</div>\\n\", locals: {}, options: {escape: false}}"
+---
 <div>
   <!-- HTML comment -->
   <p>Content</p>

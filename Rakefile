@@ -22,17 +22,17 @@ end
 begin
   require "rake/extensiontask"
 
-  PLATFORMS = %w[
-    aarch64-linux-gnu
-    aarch64-linux-musl
-    arm-linux-gnu
-    arm-linux-musl
-    arm64-darwin
-    x86_64-darwin
-    x86_64-linux-gnu
-    x86_64-linux-musl
-    x86-linux-gnu
-    x86-linux-musl
+  PLATFORMS = [
+    "aarch64-linux-gnu",
+    "aarch64-linux-musl",
+    "arm-linux-gnu",
+    "arm-linux-musl",
+    "arm64-darwin",
+    "x86_64-darwin",
+    "x86_64-linux-gnu",
+    "x86_64-linux-musl",
+    "x86-linux-gnu",
+    "x86-linux-musl"
   ].freeze
 
   exttask = Rake::ExtensionTask.new do |ext|
@@ -158,6 +158,13 @@ namespace :prism do
       vendored_file_path = prism_vendor_path + "/#{file}"
       puts "Vendoring '#{file}' Prism file to #{vendored_file_path}"
       FileUtils.cp_r(prism_bundle_path + "/#{file}", prism_vendor_path)
+    end
+
+    prism_ast_header = "#{prism_vendor_path}/include/prism/ast.h"
+
+    unless File.exist?(prism_ast_header)
+      puts "Generating Prism template files..."
+      system("ruby #{prism_vendor_path}/templates/template.rb", exception: true)
     end
   end
 

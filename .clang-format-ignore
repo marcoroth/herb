@@ -1,9 +1,12 @@
 ext/herb/error_helpers.c
 ext/herb/nodes.c
+src/analyze_missing_end.c
+src/analyze_transform.c
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c
 src/include/ast_nodes.h
 src/include/ast_pretty_print.h
 src/include/errors.h
+src/parser_match_tags.c
 src/visitor.c

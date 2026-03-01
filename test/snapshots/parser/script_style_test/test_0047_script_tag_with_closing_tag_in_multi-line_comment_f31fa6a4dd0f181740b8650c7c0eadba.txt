@@ -1,3 +1,10 @@
+---
+source: "Parser::ScriptStyleTest#test_0047_script tag with closing tag in multi-line comment"
+input: |2-
+<script>
+  /* </script> */
+</script>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(2:14))
@@ -30,7 +37,7 @@
     ├── @ HTMLCloseTagNode (location: (3:0)-(3:9))
     │   ├── errors: (1 error)
     │   │   └── @ MissingOpeningTagError (location: (3:0)-(3:9))
-    │   │       ├── message: "Found closing tag `</script>` at (3:2) without a matching opening tag."
+    │   │       ├── message: "Found closing tag `</script>` at (3:2) without a matching opening tag in the same scope."
     │   │       └── closing_tag: "script" (location: (3:2)-(3:8))
     │   │
     │   ├── tag_opening: "</" (location: (3:0)-(3:2))

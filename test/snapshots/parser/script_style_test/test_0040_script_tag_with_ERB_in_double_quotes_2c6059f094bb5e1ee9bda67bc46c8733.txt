@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0040_script tag with ERB in double quotes"
+input: "<script>var msg = \"Hello <%= @user.name %> world\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:59))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:59))

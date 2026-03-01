@@ -68,8 +68,6 @@ module Analyze
     end
 
     test "nested cases ins" do
-      skip
-
       assert_parsed_snapshot(<<~HTML)
         <% case variable %>
         <% in [String] %>

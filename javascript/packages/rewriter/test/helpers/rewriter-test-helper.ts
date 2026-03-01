@@ -4,15 +4,15 @@ import { Herb } from "@herb-tools/node-wasm"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { ASTRewriter, RewriteContext } from "../../src/index.js"
-import type { ParseResult } from "@herb-tools/core"
+import type { Node } from "@herb-tools/core"
 
 interface RewriterTestOptions {
   context?: RewriteContext
 }
 
 interface RewriterTestHelpers {
-  expectTransform: (input: string, expected: string, options?: RewriterTestOptions) => Promise<ParseResult>
-  expectNoTransform: (input: string, options?: RewriterTestOptions) => Promise<ParseResult>
+  expectTransform: (input: string, expected: string, options?: RewriterTestOptions) => Promise<Node>
+  expectNoTransform: (input: string, options?: RewriterTestOptions) => Promise<Node>
 }
 
 /**
@@ -36,9 +36,8 @@ export function createRewriterTest(
     input: string,
     expected: string,
     options?: RewriterTestOptions
-  ): Promise<ParseResult> => {
+  ): Promise<Node> => {
     const context = options?.context ?? { baseDir: process.cwd() }
-
     const parseResult = Herb.parse(input, { track_whitespace: true })
 
     if (parseResult.failed) {
@@ -49,27 +48,18 @@ export function createRewriterTest(
       )
     }
 
-    const rewritten = rewriter.rewrite(parseResult, context)
-
-    if (rewritten.failed) {
-      throw new Error(
-        `Rewriter failed to process input.\n` +
-        `Input:\n${input}\n\n` +
-        `Errors:\n${rewritten.recursiveErrors().map(e => `  - ${e.message}`).join('\n')}`
-      )
-    }
-
-    const output = IdentityPrinter.print(rewritten.value)
+    const node = rewriter.rewrite(parseResult.value, context)
+    const output = IdentityPrinter.print(node)
 
     expect(output).toBe(expected)
 
-    return rewritten
+    return node
   }
 
   const expectNoTransform = async (
     input: string,
     options?: RewriterTestOptions
-  ): Promise<ParseResult> => {
+  ): Promise<Node> => {
     return await expectTransform(input, input, options)
   }
 

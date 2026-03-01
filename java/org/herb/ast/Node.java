@@ -1,6 +1,7 @@
 package org.herb.ast;
 
 import org.herb.Location;
+import java.util.List;
 
 /**
  * Base interface for all AST nodes.
@@ -29,5 +30,10 @@ public interface Node {
   /**
    * Return a tree-like string representation of this node with all its fields.
    */
-  String treeInspect();
+  String inspect();
+
+  /**
+   * Get all errors from this node and recursively from all child nodes.
+   */
+  List<Node> recursiveErrors();
 }

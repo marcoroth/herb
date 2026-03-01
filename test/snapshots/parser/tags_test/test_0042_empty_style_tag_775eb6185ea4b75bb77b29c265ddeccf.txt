@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0042_empty style tag"
+input: "<style></style>"
+---
 @ DocumentNode (location: (1:0)-(1:15))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:15))

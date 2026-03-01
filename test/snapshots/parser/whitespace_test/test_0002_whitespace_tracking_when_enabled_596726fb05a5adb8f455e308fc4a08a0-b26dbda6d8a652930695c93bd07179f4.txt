@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0002_whitespace tracking when enabled"
+input: |2-
+<div     class="hello">content</div>
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:36))

@@ -1,3 +1,10 @@
+---
+source: "Parser::ERBTest#test_0026_multi-line erb content"
+input: |2-
+<%=
+  hello
+%>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(3:2))

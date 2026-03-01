@@ -1,3 +1,15 @@
+---
+source: "Analyze::UnlessTest#test_0011_distinguishes between block unless and modifier unless"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item.visible? %>
+  <% unless item.special? %>
+    <div class="normal"><%= item.name %></div>
+  <% else %>
+    <div class="special"><%= item.name %></div>
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(9:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(8:9))
@@ -22,6 +34,7 @@
     │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │   │   ├── content: " unless item.special? " (location: (3:4)-(3:26))
     │   │   │   ├── tag_closing: "%>" (location: (3:26)-(3:28))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (3 items)
     │   │   │   │   ├── @ HTMLTextNode (location: (3:28)-(4:4))
     │   │   │   │   │   └── content: "\n    "

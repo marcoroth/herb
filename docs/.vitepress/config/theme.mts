@@ -132,6 +132,7 @@ export function createThemeConfig() {
     logo: "/herb.svg",
     nav: [
       { text: "Home", link: "/" },
+      { text: "Blog", link: "/blog/whats-new-in-herb-v0-8" },
       { text: "Documentation", link: "/overview" },
       { text: "Playground", link: "/playground" },
     ],
@@ -152,7 +153,11 @@ export function createThemeConfig() {
     editLink: {
       pattern: ({ filePath }) => {
         if (filePath.startsWith('linter/rules/')) {
-          const fileName = filePath.replace('linter/rules/', '')
+          let fileName = filePath.replace('linter/rules/', '')
+
+          if (fileName === 'index.md') {
+            fileName = 'README.md'
+          }
 
           return `https://github.com/marcoroth/herb/edit/main/javascript/packages/linter/docs/rules/${fileName}`
         }
@@ -180,6 +185,7 @@ export function createThemeConfig() {
         }
       ],
       '/projects/linter': linterSidebar,
+      '/blog': [],
       '/': defaultSidebar
     },
     socialLinks: [

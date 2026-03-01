@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0033_script tag with mixed HTML tags and JavaScript"
+input: "<script><span>function test() { return x > y; }</span></script>"
+---
 @ DocumentNode (location: (1:0)-(1:63))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:63))

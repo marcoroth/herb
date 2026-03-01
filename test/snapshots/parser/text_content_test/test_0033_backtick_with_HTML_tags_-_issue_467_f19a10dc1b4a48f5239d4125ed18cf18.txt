@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0033_backtick with HTML tags - issue 467"
+input: "a `<b></b>` c"
+---
 @ DocumentNode (location: (1:0)-(1:13))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:3))

@@ -29,8 +29,9 @@ bool utf8_is_valid_continuation_byte(unsigned char byte) {
 uint32_t utf8_sequence_length(hb_string_T value) {
   if (hb_string_is_empty(value)) { return 0; }
 
-  uint32_t expected_length = utf8_char_byte_length(value.data[0]);
-  if (value.length - expected_length < expected_length) {
+  uint32_t expected_length = utf8_char_byte_length((unsigned char) value.data[0]);
+
+  if (value.length < expected_length) {
     return 1; // Not enough bytes, treat as single byte
   }
 

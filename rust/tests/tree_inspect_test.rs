@@ -1,8 +1,12 @@
+mod common;
+
 use herb::nodes::{AnyNode, DocumentNode, HTMLTextNode, Node};
 use herb::{Location, Position};
 
 #[test]
 fn test_document_with_text_node() {
+  common::no_color();
+
   let loc = Location::new(Position::new(1, 0), Position::new(1, 5));
 
   let text_node = HTMLTextNode {

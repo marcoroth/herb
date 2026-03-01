@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBTest#test_0004_interpolate in element body after text content"
+input: "<h1>Hello <%= World %></h1>"
+---
 @ DocumentNode (location: (1:0)-(1:27))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:27))

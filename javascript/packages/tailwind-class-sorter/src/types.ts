@@ -38,18 +38,18 @@ export interface TailwindContext {
 }
 
 export interface SortEnv {
-  context: TailwindContext
-  generateRules: (
+  context: TailwindContext | null
+  generateRules: ((
     classes: Iterable<string>,
     context: TailwindContext,
-  ) => [bigint][]
+  ) => [bigint][]) | null
   options: SortTailwindClassesOptions
 }
 
 export interface ContextContainer {
-  context: any
-  generateRules: (
+  context: any | null
+  generateRules: ((
     classes: Iterable<string>,
     context: TailwindContext,
-  ) => [bigint][]
+  ) => [bigint][]) | null
 }

@@ -1,5 +1,5 @@
 import { pathToFileURL } from "url"
-import { glob } from "glob"
+import { glob } from "tinyglobby"
 import { isRewriterClass } from "./type-guards.js"
 
 import type { RewriterClass } from "./type-guards.js"
@@ -25,7 +25,7 @@ export interface CustomRewriterLoaderOptions {
 }
 
 const DEFAULT_PATTERNS = [
-  ".herb/rewriters/**/*.{js,mjs,cjs}",
+  ".herb/rewriters/**/*.mjs",
 ]
 
 /**
@@ -61,8 +61,7 @@ export class CustomRewriterLoader {
       try {
         const files = await glob(pattern, {
           cwd: this.baseDir,
-          absolute: true,
-          nodir: true
+          absolute: true
         })
 
         allFiles.push(...files)
@@ -82,25 +81,18 @@ export class CustomRewriterLoader {
   async loadRewriterFile(filePath: string): Promise<RewriterClass[]> {
     try {
       const fileUrl = pathToFileURL(filePath).href
-      const module = await import(fileUrl)
-
-      const rewriters: RewriterClass[] = []
+      const cacheBustedUrl = `${fileUrl}?t=${Date.now()}`
+      const module = await import(cacheBustedUrl)
 
       if (module.default && isRewriterClass(module.default)) {
-        rewriters.push(module.default)
+        return [module.default]
       }
 
-      for (const [exportName, exportValue] of Object.entries(module)) {
-        if (exportName !== 'default' && isRewriterClass(exportValue as any)) {
-          rewriters.push(exportValue as RewriterClass)
-        }
+      if (!this.silent) {
+        console.warn(`Warning: No valid default export found in "${filePath}". Custom rewriters must use default export.`)
       }
 
-      if (rewriters.length === 0 && !this.silent) {
-        console.warn(`Warning: No valid rewriter classes found in "${filePath}"`)
-      }
-
-      return rewriters
+      return []
     } catch (error) {
       if (!this.silent) {
         console.error(`Error loading rewriter file "${filePath}": ${error}`)

@@ -1,3 +1,13 @@
+---
+source: "Analyze::UnlessTest#test_0010_multiple unless guard clauses"
+input: |2-
+<% items.each do |item| %>
+  <% next unless item %>
+  <% next unless item.active? %>
+  <% next unless item.published? %>
+  <div><%= item.title %></div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(6:9))

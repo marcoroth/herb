@@ -4,8 +4,8 @@ import { promises as fs } from "fs"
 import { stringify, parse, parseDocument, isMap } from "yaml"
 import { ZodError } from "zod"
 import { fromZodError } from "zod-validation-error"
-import { minimatch } from "minimatch"
-import { glob } from "glob"
+import picomatch from "picomatch"
+import { glob } from "tinyglobby"
 
 import { DiagnosticSeverity } from "@herb-tools/core"
 import { HerbConfigSchema } from "./config-schema.js"
@@ -13,8 +13,10 @@ import { deepMerge } from "./merge.js"
 
 import packageJson from "../package.json"
 import configTemplate from "./config-template.yml"
+import defaultsYaml from "../../../../lib/herb/defaults.yml"
 
 const DEFAULT_VERSION = packageJson.version
+const PARSED_DEFAULTS = parse(defaultsYaml) as Omit<HerbConfig, 'version'>
 
 export interface ConfigValidationError {
   message: string
@@ -41,6 +43,7 @@ export type RuleConfig = {
 
 export type LinterConfig = {
   enabled?: boolean
+  failLevel?: DiagnosticSeverity
   include?: string[]
   exclude?: string[]
   rules?: Record<string, RuleConfig>
@@ -85,6 +88,8 @@ export class Config {
 
   private static PROJECT_INDICATORS = [
     '.git',
+    '.herb',
+    '.herb.yml',
     'Gemfile',
     'package.json',
     'Rakefile',
@@ -139,10 +144,10 @@ export class Config {
 
   /**
    * Check if the formatter is enabled.
-   * @returns true if formatter is enabled (default), false if explicitly disabled
+   * @returns true if formatter is explicitly enabled, false otherwise (default)
    */
   public get isFormatterEnabled(): boolean {
-    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? true
+    return this.config.formatter?.enabled ?? Config.getDefaultConfig().formatter?.enabled ?? false
   }
 
   /**
@@ -165,8 +170,9 @@ export class Config {
 
   /**
    * Get the files configuration for a specific tool.
-   * Tool-specific file config takes precedence over top-level config.
-   * Include patterns are additive (defaults are already merged in this.config).
+   * Both include and exclude patterns are additive:
+   * - Include: defaults + files.include + tool.include
+   * - Exclude: defaults + files.exclude + tool.exclude
    * @param tool - The tool to get files config for ('linter' or 'formatter')
    * @returns The merged files configuration
    */
@@ -178,7 +184,9 @@ export class Config {
     const toolInclude = toolConfig?.include || []
     const include = [...topLevelInclude, ...toolInclude]
 
-    const exclude = toolConfig?.exclude || topLevelFiles.exclude || []
+    const topLevelExclude = topLevelFiles.exclude || []
+    const toolExclude = toolConfig?.exclude || []
+    const exclude = [...topLevelExclude, ...toolExclude]
 
     return {
       include,
@@ -224,7 +232,6 @@ export class Config {
     return await glob(patterns, {
       cwd: searchDir,
       absolute: true,
-      nodir: true,
       ignore: filesConfig.exclude || []
     })
   }
@@ -258,7 +265,7 @@ export class Config {
       return false
     }
 
-    return excludePatterns.some(pattern => minimatch(filePath, pattern))
+    return excludePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**
@@ -272,12 +279,12 @@ export class Config {
       return true
     }
 
-    return includePatterns.some(pattern => minimatch(filePath, pattern))
+    return includePatterns.some(pattern => picomatch.isMatch(filePath, pattern))
   }
 
   /**
    * Check if a tool (linter or formatter) is enabled for a specific file path.
-   * Respects both the tool's enabled state and its exclude patterns.
+   * Respects the tool's enabled state and all exclude patterns (defaults + files.exclude + tool.exclude).
    * @param filePath - The file path to check
    * @param tool - The tool to check ('linter' or 'formatter')
    * @returns true if the tool is enabled for this path
@@ -289,8 +296,8 @@ export class Config {
       return false
     }
 
-    const toolConfig = tool === 'linter' ? this.config.linter : this.config.formatter
-    const excludePatterns = toolConfig?.exclude || []
+    const filesConfig = this.getFilesConfigForTool(tool)
+    const excludePatterns = filesConfig.exclude || []
 
     return !this.isPathExcluded(filePath, excludePatterns)
   }
@@ -317,11 +324,11 @@ export class Config {
 
   /**
    * Check if a specific rule is enabled for a specific file path.
-   * Respects linter.enabled, linter.exclude, rule.enabled, rule.include, rule.only, and rule.exclude patterns.
+   * Respects rule.enabled, rule.include, rule.only, and rule.exclude patterns.
    *
    * Pattern precedence:
-   * - If rule.only is specified: Only files matching 'only' patterns (ignores all 'include' patterns)
-   * - If rule.only is NOT specified: Files matching 'include' patterns (if specified, additive)
+   * - If rule.only or rule.include matches the path: bypasses parent excludes (linter.exclude, files.exclude, defaults)
+   * - If no rule.only/include patterns or path doesn't match: respects all parent excludes
    * - rule.exclude is always applied regardless of 'only' or 'include'
    *
    * @param ruleName - The name of the rule to check
@@ -329,7 +336,7 @@ export class Config {
    * @returns true if the rule is enabled for this path
    */
   public isRuleEnabledForPath(ruleName: string, filePath: string): boolean {
-    if (!this.isLinterEnabledForPath(filePath)) {
+    if (!this.isLinterEnabled) {
       return false
     }
 
@@ -342,12 +349,24 @@ export class Config {
     const ruleIncludePatterns = ruleConfig?.include || []
     const ruleExcludePatterns = ruleConfig?.exclude || []
 
+    let bypassParentExcludes = false
+
     if (ruleOnlyPatterns.length > 0) {
-      if (!this.isPathIncluded(filePath, ruleOnlyPatterns)) {
+      if (this.isPathIncluded(filePath, ruleOnlyPatterns)) {
+        bypassParentExcludes = true
+      } else {
         return false
       }
     } else if (ruleIncludePatterns.length > 0) {
-      if (!this.isPathIncluded(filePath, ruleIncludePatterns)) {
+      if (this.isPathIncluded(filePath, ruleIncludePatterns)) {
+        bypassParentExcludes = true
+      } else {
+        return false
+      }
+    }
+
+    if (!bypassParentExcludes) {
+      if (!this.isLinterEnabledForPath(filePath)) {
         return false
       }
     }
@@ -421,6 +440,71 @@ export class Config {
       return true
     } catch {
       return false
+    }
+  }
+
+  /**
+   * Find the project root by walking up from a given path.
+   * Looks for .herb.yml first, then falls back to project indicators
+   * (.git, Gemfile, package.json, etc.)
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static async findProjectRoot(startPath: string): Promise<string> {
+    const { projectRoot } = await this.findConfigFile(startPath)
+
+    return projectRoot
+  }
+
+  /**
+   * Synchronous version of findProjectRoot for use in CLIs.
+   *
+   * @param startPath - File or directory path to start searching from
+   * @returns The project root directory path
+   */
+  static findProjectRootSync(startPath: string): string {
+    const fsSync = require('fs')
+    let currentPath = path.resolve(startPath)
+
+    try {
+      const stats = fsSync.statSync(currentPath)
+
+      if (stats.isFile()) {
+        currentPath = path.dirname(currentPath)
+      }
+    } catch {
+      currentPath = path.resolve(process.cwd())
+    }
+
+    while (true) {
+      const configPath = path.join(currentPath, this.configPath)
+
+      try {
+        fsSync.accessSync(configPath)
+
+        return currentPath
+      } catch {
+        // Config not in this directory, continue
+      }
+
+      for (const indicator of this.PROJECT_INDICATORS) {
+        try {
+          fsSync.accessSync(path.join(currentPath, indicator))
+
+          return currentPath
+        } catch {
+          // Indicator not found, continue checking
+        }
+      }
+
+      const parentPath = path.dirname(currentPath)
+
+      if (parentPath === currentPath) {
+        return process.cwd()
+      }
+
+      currentPath = parentPath
     }
   }
 
@@ -1077,29 +1161,7 @@ export class Config {
   private static getDefaultConfig(version: string = DEFAULT_VERSION): HerbConfig {
     return {
       version,
-      files: {
-        include: [
-          '**/*.html',
-          '**/*.rhtml',
-          '**/*.html.erb',
-          '**/*.html+*.erb',
-          '**/*.turbo_stream.erb'
-        ],
-        exclude: [
-          'node_modules/**/*',
-          'vendor/bundle/**/*',
-          'coverage/**/*',
-        ]
-      },
-      linter: {
-        enabled: true,
-        rules: {}
-      },
-      formatter: {
-        enabled: true,
-        indentWidth: 2,
-        maxLineLength: 80
-      }
+      ...PARSED_DEFAULTS
     }
   }
 }

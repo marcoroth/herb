@@ -6,11 +6,13 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 import { HerbDisableCommentUnnecessaryRule } from "../../src/rules/herb-disable-comment-unnecessary.js"
 import { HTMLTagNameLowercaseRule } from "../../src/rules/html-tag-name-lowercase.js"
 import { HTMLAttributeDoubleQuotesRule } from "../../src/rules/html-attribute-double-quotes.js"
+import { ERBCommentSyntax } from "../../src/rules/erb-comment-syntax.js"
 
 const { expectNoOffenses, expectWarning, assertOffenses } = createLinterTest([
   HerbDisableCommentUnnecessaryRule,
   HTMLTagNameLowercaseRule,
   HTMLAttributeDoubleQuotesRule,
+  ERBCommentSyntax,
 ])
 
 describe("HerbDisableCommentUnnecessaryRule", () => {

@@ -4,12 +4,12 @@ expression: result
 ---
                   
 
-   if valid?   
+   if valid?  ;
                                      
-        "Valid"   
+        "Valid"  ;
        
-   else   
+   else  ;
                                     
            
        
-   end
+   end  ;

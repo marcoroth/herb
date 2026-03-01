@@ -1,0 +1,38 @@
+---
+source: "Parser::TextContentTest#test_0056_xml-like content in code"
+input: "<code><foo></code>"
+---
+@ DocumentNode (location: (1:0)-(1:18))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:18))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "code" (location: (1:1)-(1:5))
+        │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "code" (location: (1:1)-(1:5))
+        ├── body: (1 item)
+        │   └── @ HTMLOpenTagNode (location: (1:6)-(1:11))
+        │       ├── errors: (1 error)
+        │       │   └── @ MissingClosingTagError (location: (1:6)-(1:11))
+        │       │       ├── message: "Opening tag `<foo>` at (1:7) doesn't have a matching closing tag `</foo>` in the same scope."
+        │       │       └── opening_tag: "foo" (location: (1:7)-(1:10))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:6)-(1:7))
+        │       ├── tag_name: "foo" (location: (1:7)-(1:10))
+        │       ├── tag_closing: ">" (location: (1:10)-(1:11))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:11)-(1:18))
+        │       ├── tag_opening: "</" (location: (1:11)-(1:13))
+        │       ├── tag_name: "code" (location: (1:13)-(1:17))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:17)-(1:18))
+        │
+        ├── is_void: false
+        └── source: "HTML"

@@ -19,7 +19,7 @@ make all          # Generate templates and build
 
 ## Usage
 
-### CLI
+### CLI (within the Herb repo)
 
 ```bash
 ./bin/herb-rust version
@@ -32,14 +32,19 @@ make all          # Generate templates and build
 ### As a Library
 
 ```rust
-use herb::{lex, Token};
+use herb::{lex, parse};
 
 fn main() {
-  let source = r#"<div><%= name %></div>"#;
-  let result = lex(source);
+  let template = "<h1><%= title %></h1>";
 
-  for token in result.tokens() {
-    println!("{}", token.inspect());
+  match lex(template) {
+    Ok(result) => { println!("{}", result); }
+    Err(error) => { eprintln!("Lex error: {}", error); }
+  }
+
+  match parse(template) {
+    Ok(result) => { println!("{}", result); }
+    Err(error) => { eprintln!("Parse error: {}", error); }
   }
 }
 ```
@@ -49,6 +54,17 @@ fn main() {
 ```bash
 cargo test
 ```
+
+## Publishing
+
+Before publishing to crates.io, vendor the C sources:
+
+```bash
+make vendor                        # Vendor C sources from ../src and prism
+cargo publish --allow-dirty        # Publish to crates.io
+```
+
+The `vendor/` directory is gitignored to avoid committing duplicate files. The `make vendor` task copies C sources from the parent directory into `vendor/libherb` and `vendor/prism` so the published crate is self-contained.
 
 ## Cleaning
 

@@ -1,5 +1,9 @@
 import type { EnhanceAppContext } from "vitepress"
 import Theme from "vitepress/theme"
+import { h } from "vue"
+import { onMounted, watch, nextTick } from 'vue'
+import { useRoute } from 'vitepress'
+import mediumZoom from 'medium-zoom'
 
 import TwoslashFloatingVue from "@shikijs/vitepress-twoslash/client"
 
@@ -16,6 +20,25 @@ export default {
     app.component("GitHubContributors", GitHubContributors)
   },
   setup() {
+    const route = useRoute()
+
+    const initZoom = () => {
+      mediumZoom('.main img', {
+        background: 'var(--vp-c-bg)',
+        margin: 24,
+        scrollOffset: 0
+      })
+    }
+
+    onMounted(() => {
+      initZoom()
+    })
+
+    watch(
+      () => route.path,
+      () => nextTick(() => initZoom())
+    )
+
     if (typeof window !== 'undefined') {
       const updateThemeState = () => {
         const isDark = document.documentElement.classList.contains('dark')

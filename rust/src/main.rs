@@ -65,9 +65,14 @@ fn lex_command(file_path: &str) {
     }
   };
 
-  let result = herb::lex(&source);
-  for token in result.tokens() {
-    println!("{}", token.inspect());
+  match herb::lex(&source) {
+    Ok(result) => {
+      println!("{}", result);
+    }
+    Err(e) => {
+      eprintln!("Lex error: {}", e);
+      std::process::exit(1);
+    }
   }
 }
 
@@ -82,7 +87,7 @@ fn parse_command(file_path: &str) {
 
   match herb::parse(&source) {
     Ok(result) => {
-      println!("{}", result.tree_inspect());
+      println!("{}", result.inspect());
     }
     Err(e) => {
       eprintln!("Parse error: {}", e);

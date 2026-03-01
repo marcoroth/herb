@@ -8,7 +8,7 @@ class HTMLBodyOnlyElementsVisitor extends BaseRuleVisitor {
   private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node.open_tag)?.toLowerCase()
+    const tagName = getTagName(node)?.toLowerCase()
     if (!tagName) return
 
     this.checkBodyOnlyElement(node, tagName)

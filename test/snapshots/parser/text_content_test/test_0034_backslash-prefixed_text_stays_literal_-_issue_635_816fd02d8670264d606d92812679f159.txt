@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0034_backslash-prefixed text stays literal - issue 635"
+input: "<p>\\Asome-regexp\\z</p>"
+---
 @ DocumentNode (location: (1:0)-(1:22))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:22))

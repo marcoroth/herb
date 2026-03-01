@@ -1,0 +1,7 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0007_right trim does not affect non-newline content"
+input: "{source: \"<% if true -%>text<% end -%>more\", options: {}}"
+---
+_buf = ::String.new; if true 
+ _buf << 'text'.freeze; end; _buf << 'more'.freeze;
+_buf.to_s

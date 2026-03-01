@@ -23,6 +23,7 @@ export class CodeActionService {
 
   setConfig(config: Config) {
     this.config = config
+    this.linter = Linter.from(Herb, config)
   }
 
   createCodeActions(uri: string, diagnostics: Diagnostic[], documentText: string): CodeAction[] {
@@ -108,6 +109,19 @@ export class CodeActionService {
         }
 
         codeActions.push(codeAction)
+      } else {
+        const unsafeFixResult = this.linter.autofix(text, { fileName: document.uri }, [offense], { includeUnsafe: true })
+
+        if (unsafeFixResult.fixed.length > 0 && unsafeFixResult.source !== text) {
+          const codeAction: CodeAction = {
+            title: `Herb Linter: Unsafely fix "${offense.message}"`,
+            kind: CodeActionKind.QuickFix,
+            diagnostics: [diagnostic],
+            edit: this.createDocumentEdit(document, unsafeFixResult.source)
+          }
+
+          codeActions.push(codeAction)
+        }
       }
     }
 

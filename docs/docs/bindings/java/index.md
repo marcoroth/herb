@@ -60,10 +60,7 @@ public class Example {
     String source = "<h1><%= user.name %></h1>";
 
     ParseResult result = Herb.parse(source);
-
-    if (result.getValue() != null) {
-      System.out.println(result.getValue().treeInspect());
-    }
+    System.out.println(result.value.inspect());
   }
 }
 ```
@@ -85,7 +82,7 @@ public class LexExample {
 
     LexResult result = Herb.lex(source);
 
-    for (Token token : result.getTokens()) {
+    for (Token token : result.tokens) {
       System.out.println(token.inspect());
     }
   }

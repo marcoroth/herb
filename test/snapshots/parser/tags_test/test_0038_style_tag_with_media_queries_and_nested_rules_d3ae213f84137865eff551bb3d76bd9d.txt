@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0038_style tag with media queries and nested rules"
+input: "<style>@media (max-width: 768px) { .class > .nested { display: none; } }</style>"
+---
 @ DocumentNode (location: (1:0)-(1:80))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:80))

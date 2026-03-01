@@ -27,13 +27,9 @@ describe("Spacing", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div>One</div>
-
       <div>Two</div>
-
       <div>Three</div>
-
       <div>Four</div>
-
       <div>Five</div>
     `)
   })
@@ -98,18 +94,13 @@ describe("Spacing", () => {
     expect(result).toEqual(dedent`
       <div>
         <div>One</div>
-
         <div>Two</div>
-
         <div>Three</div>
-
         <div>Four</div>
-
         <div>Five</div>
       </div>
 
       <div>Next</div>
-
       <div>One</div>
     `)
   })
@@ -134,13 +125,9 @@ describe("Spacing", () => {
         <div>
           <div>
             <div>One</div>
-
             <div>Two</div>
-
             <div>Three</div>
-
             <div>Four</div>
-
             <div>Five</div>
           </div>
         </div>
@@ -196,6 +183,7 @@ describe("Spacing", () => {
               <span>
                 <%= link_to speaker.name, edit_speaker_path(speaker), class: "underline link", data: {turbo_frame: "modal"} %>
               </span>
+
               <span>
                 <%= link_to "https://github.com/search?q=#{speaker.name}&type=users", target: "_blank", class: "underline link" do %>
                   <%= fa("magnifying-glass", style: :regular) %>
@@ -309,6 +297,7 @@ describe("Spacing", () => {
             <td>Cell 3</td>
             <td>Cell 4</td>
           </tr>
+
           <tr>
             <td>Cell 5</td>
             <td>Cell 6</td>
@@ -358,11 +347,8 @@ describe("Spacing", () => {
       expect(result).toEqual(dedent`
         <main>
           <section>Section 1</section>
-
           <section>Section 2</section>
-
           <section>Section 3</section>
-
           <section>Section 4</section>
         </main>
       `)
@@ -380,9 +366,7 @@ describe("Spacing", () => {
       expect(result).toEqual(dedent`
         <div>
           <article>Article 1</article>
-
           <article>Article 2</article>
-
           <article>Article 3</article>
         </div>
       `)
@@ -400,9 +384,7 @@ describe("Spacing", () => {
       expect(result).toEqual(dedent`
         <div>
           <figure>Figure 1</figure>
-
           <figure>Figure 2</figure>
-
           <figure>Figure 3</figure>
         </div>
       `)
@@ -426,6 +408,7 @@ describe("Spacing", () => {
           <span>Span 1</span>
           <span>Span 2</span>
           <span>Span 3</span>
+
           <em>Emphasis</em>
           <strong>Strong</strong>
         </p>
@@ -482,9 +465,7 @@ describe("Spacing", () => {
       expect(result).toEqual(dedent`
         <div>
           <div>First</div>
-
           <div>Second</div>
-
           <div>Third</div>
         </div>
       `)
@@ -509,7 +490,6 @@ describe("Spacing", () => {
       expect(result).toEqual(dedent`
         <div>
           <section>Section 1</section>
-
           <section>Section 2</section>
 
           <nav>
@@ -550,9 +530,7 @@ describe("Spacing", () => {
 
             <section>
               <div>Content 1</div>
-
               <div>Content 2</div>
-
               <div>Content 3</div>
             </section>
 

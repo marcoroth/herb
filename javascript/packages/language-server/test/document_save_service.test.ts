@@ -274,7 +274,7 @@ describe('DocumentSaveService', () => {
         )
 
         expect(connection.console.log).toHaveBeenCalledWith(
-          '[DocumentSave] fixOnSave=true, formatterEnabled=true'
+          '[DocumentSave] applyFixesAndFormatting fixOnSave=true, formatterEnabled=true'
         )
       })
     })
