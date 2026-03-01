@@ -1,0 +1,75 @@
+#include "error_helpers.h"
+#include "extension_helpers.h"
+
+#include "../../src/include/ast_node.h"
+#include "../../src/include/errors.h"
+
+#include <stdlib.h>
+
+<%- errors.each do |error| -%>
+jobject <%= error.name %>FromCStruct(JNIEnv* env, <%= error.struct_type %>* <%= error.human %>) {
+  if (!<%= error.human %>) { return NULL; }
+
+  jclass errorClass = (*env)->FindClass(env, "org/herb/ast/ErrorNode");
+  if (!errorClass) { return NULL; }
+
+  jmethodID constructor = (*env)->GetMethodID(env, errorClass, "<init>", "(Ljava/lang/String;Lorg/herb/Location;Ljava/lang/String;)V");
+  if (!constructor) { return NULL; }
+
+  jstring jtype = (*env)->NewStringUTF(env, "<%= error.name %>");
+  jobject location = CreateLocation(env, <%= error.human %>->base.location);
+  jstring jmessage = (*env)->NewStringUTF(env, <%= error.human %>->base.message);
+
+  return (*env)->NewObject(env, errorClass, constructor, jtype, location, jmessage);
+}
+
+<%- end -%>
+
+jobject ErrorFromCStruct(JNIEnv* env, ERROR_T* error) {
+  if (!error) { return NULL; }
+
+  switch (error->type) {
+  <%- errors.each do |error| -%>
+  case <%= error.type %>:
+    return <%= error.name %>FromCStruct(env, (<%= error.struct_type %>*) error);
+  <%- end -%>
+  default:
+    return NULL;
+  }
+}
+
+jobject ErrorsArrayFromCArray(JNIEnv* env, hb_array_T* array) {
+  jclass arrayListClass = (*env)->FindClass(env, "java/util/ArrayList");
+  jmethodID arrayListConstructor = (*env)->GetMethodID(env, arrayListClass, "<init>", "(I)V");
+  jmethodID addMethod = (*env)->GetMethodID(env, arrayListClass, "add", "(Ljava/lang/Object;)Z");
+
+  jobject javaList = (*env)->NewObject(env, arrayListClass, arrayListConstructor, 0);
+
+  if (array) {
+    for (size_t i = 0; i < hb_array_size(array); i++) {
+      ERROR_T* error = (ERROR_T*) hb_array_get(array, i);
+
+      if (error) {
+        jobject errorObj = ErrorFromCStruct(env, error);
+        if (errorObj) {
+          (*env)->CallBooleanMethod(env, javaList, addMethod, errorObj);
+        }
+      }
+    }
+  }
+
+  return javaList;
+}
+
+jobject CreateErrorNode(JNIEnv* env, AST_NODE_T* error_node) {
+  if (!error_node) { return NULL; }
+
+  switch (error_node->type) {
+  <%- errors.each do |error| -%>
+  case <%= error.type %>:
+    return <%= error.name %>FromCStruct(env, (<%= error.struct_type %>*) error_node);
+  <%- end -%>
+  default:
+    return NULL;
+  }
+}

@@ -1,6 +1,4 @@
 #include "include/pretty_print.h"
-#include "include/analyzed_ruby.h"
-#include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
 #include "include/errors.h"
@@ -26,7 +24,7 @@ void pretty_print_newline(const size_t indent, const size_t relative_indent, hb_
 }
 
 void pretty_print_label(
-  const char* name,
+  hb_string_T name,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
@@ -41,50 +39,50 @@ void pretty_print_label(
     hb_buffer_append(buffer, "├── ");
   }
 
-  hb_buffer_append(buffer, name);
+  hb_buffer_append_string(buffer, name);
   hb_buffer_append(buffer, ": ");
 }
 
 void pretty_print_quoted_property(
-  const char* name,
-  const char* value,
+  hb_string_T name,
+  hb_string_T value,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  hb_string_T quoted = quoted_string(hb_string(value));
-  pretty_print_property(name, quoted.data, indent, relative_indent, last_property, buffer);
+  hb_string_T quoted = quoted_string(value);
+  pretty_print_property(name, quoted, indent, relative_indent, last_property, buffer);
   free(quoted.data);
 }
 
 void pretty_print_boolean_property(
-  const char* name,
+  hb_string_T name,
   bool value,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  pretty_print_property(name, value ? "true" : "false", indent, relative_indent, last_property, buffer);
+  pretty_print_property(name, hb_string(value ? "true" : "false"), indent, relative_indent, last_property, buffer);
 }
 
 void pretty_print_property(
-  const char* name,
-  const char* value,
+  hb_string_T name,
+  hb_string_T value,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
   hb_buffer_T* buffer
 ) {
   pretty_print_label(name, indent, relative_indent, last_property, buffer);
-  hb_buffer_append(buffer, value);
+  hb_buffer_append_string(buffer, value);
   hb_buffer_append(buffer, "\n");
 }
 
 void pretty_print_size_t_property(
   size_t value,
-  const char* name,
+  hb_string_T name,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
@@ -100,7 +98,7 @@ void pretty_print_size_t_property(
 }
 
 void pretty_print_array(
-  const char* name,
+  hb_string_T name,
   hb_array_T* array,
   const size_t indent,
   const size_t relative_indent,
@@ -108,13 +106,13 @@ void pretty_print_array(
   hb_buffer_T* buffer
 ) {
   if (array == NULL) {
-    pretty_print_property(name, "∅", indent, relative_indent, last_property, buffer);
+    pretty_print_property(name, hb_string("∅"), indent, relative_indent, last_property, buffer);
 
     return;
   }
 
   if (hb_array_size(array) == 0) {
-    pretty_print_property(name, "[]", indent, relative_indent, last_property, buffer);
+    pretty_print_property(name, hb_string("[]"), indent, relative_indent, last_property, buffer);
 
     return;
   }
@@ -155,7 +153,7 @@ void pretty_print_errors(
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  if (node->errors != NULL && hb_array_size(node->errors) > 0) {
+  if (hb_array_size(node->errors) > 0) {
     error_pretty_print_array("errors", node->errors, indent, relative_indent, last_property, buffer);
     hb_buffer_append(buffer, "\n");
   }
@@ -178,7 +176,7 @@ void pretty_print_location(location_T location, hb_buffer_T* buffer) {
 
 void pretty_print_position_property(
   position_T* position,
-  const char* name,
+  hb_string_T name,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
@@ -204,7 +202,7 @@ void pretty_print_position_property(
 
 void pretty_print_token_property(
   token_T* token,
-  const char* name,
+  hb_string_T name,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
@@ -227,27 +225,27 @@ void pretty_print_token_property(
 }
 
 void pretty_print_string_property(
-  const char* string,
-  const char* name,
+  hb_string_T string,
+  hb_string_T name,
   const size_t indent,
   const size_t relative_indent,
   const bool last_property,
   hb_buffer_T* buffer
 ) {
-  const char* value = "∅";
-  char* escaped = NULL;
+  hb_string_T value = hb_string("∅");
+  hb_string_T escaped = { .data = NULL, .length = 0 };
   hb_string_T quoted;
 
-  if (string != NULL) {
+  if (!hb_string_is_empty(string)) {
     escaped = escape_newlines(string);
-    quoted = quoted_string(hb_string(escaped));
-    value = quoted.data;
+    quoted = quoted_string(escaped);
+    value = quoted;
   }
 
   pretty_print_property(name, value, indent, relative_indent, last_property, buffer);
 
-  if (string != NULL) {
-    if (escaped != NULL) { free(escaped); }
+  if (!hb_string_is_empty(string)) {
+    if (!hb_string_is_empty(escaped)) { free(escaped.data); }
     if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
 }

@@ -1,7 +1,7 @@
 import {
   Visitor,
-  Position,
   Location,
+  Position,
   getStaticAttributeName,
   hasDynamicAttributeName as hasNodeDynamicAttributeName,
   getCombinedAttributeName,
@@ -9,17 +9,22 @@ import {
   getStaticContentFromNodes,
   hasStaticContent,
   isEffectivelyStatic,
-  getValidatableStaticContent
+  isLiteralNode,
+  isERBContentNode,
+  isHTMLAttributeNode,
+  isHTMLAttributeValueNode,
+  isHTMLAttributeNameNode,
+  getValidatableStaticContent,
+  filterLiteralNodes,
+  filterHTMLAttributeNodes,
 } from "@herb-tools/core"
 
 import type {
-  ERBContentNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
   HTMLAttributeValueNode,
   HTMLElementNode,
   HTMLOpenTagNode,
-  LiteralNode,
   LexResult,
   Token,
   Node
@@ -28,7 +33,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
-import type { LintOffense, LintSeverity, LintContext, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -39,7 +44,7 @@ export enum ControlFlowType {
  * Base visitor class that provides common functionality for rule visitors
  */
 export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> extends Visitor {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -51,16 +56,16 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
   }
 
   /**
-   * Helper method to create a lint offense
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -68,8 +73,8 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 }
 
@@ -89,7 +94,7 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   /**
    * Handle visiting a control flow node with proper scope management
    */
-  protected handleControlFlowNode(node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
+  protected handleControlFlowNode(_node: Node, controlFlowType: ControlFlowType, visitChildren: () => void): void {
     const wasInControlFlow = this.isInControlFlow
     const previousControlFlowType = this.currentControlFlowType
 
@@ -167,13 +172,38 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
  * Gets attributes from an HTMLOpenTagNode
  */
 export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
-  return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
+  return node.children.filter(isHTMLAttributeNode)
+}
+
+/**
+ * Gets the open tag node from an HTMLElementNode, handling both regular and conditional open tags.
+ * For conditional open tags, returns null
+ */
+export function getOpenTag(element: HTMLElementNode | null | undefined): HTMLOpenTagNode | null {
+  if (!element?.open_tag) return null
+
+  switch (element.open_tag.type) {
+    case "AST_HTML_OPEN_TAG_NODE": return element.open_tag
+    case "AST_HTML_CONDITIONAL_OPEN_TAG_NODE": return null
+    default: return null
+  }
+
+  return null
+}
+
+/**
+ * Gets attributes from an element's open tag (handles both regular and conditional open tags)
+ */
+export function getAttributesFromElement(element: HTMLElementNode | null | undefined): HTMLAttributeNode[] {
+  const openTag = getOpenTag(element)
+
+  return openTag ? getAttributes(openTag) : []
 }
 
 /**
  * Gets the tag name from an HTML tag node (lowercased)
  */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
   if (!node) return null
 
   return node.tag_name?.value.toLowerCase() || null
@@ -184,28 +214,22 @@ export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | un
  * Returns null if the attribute name contains dynamic content (ERB)
  */
 export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    const staticName = getStaticAttributeName(nameNode)
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return null
 
-    if (!lowercase) return staticName
+  const staticName = getStaticAttributeName(attributeNode.name)
 
-    return staticName ? staticName.toLowerCase() : null
-  }
+  if (!lowercase) return staticName
 
-  return null
+  return staticName ? staticName.toLowerCase() : null
 }
 
 /**
  * Checks if an attribute has a dynamic (ERB-containing) name
  */
 export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    return hasNodeDynamicAttributeName(nameNode)
-  }
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return false
 
-  return false
+  return hasNodeDynamicAttributeName(attributeNode.name)
 }
 
 /**
@@ -213,35 +237,27 @@ export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boole
  * This includes both static content and ERB syntax
  */
 export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return ""
 
-    return getCombinedAttributeName(nameNode)
-  }
-
-  return ""
+  return getCombinedAttributeName(attributeNode.name)
 }
 
 /**
  * Checks if an attribute value contains only static content (no ERB)
  */
 export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+  if (!attributeNode.value?.children) return false
 
-  if (!valueNode?.children) return false
-
-  return valueNode.children.every(child => child.type === "AST_LITERAL_NODE")
+  return attributeNode.value.children.every(isLiteralNode)
 }
 
 /**
  * Checks if an attribute value contains dynamic content (ERB)
  */
 export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
+  if (!attributeNode.value?.children) return false
 
-  if (!valueNode?.children) return false
-
-  return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
+  return attributeNode.value.children.some(isERBContentNode)
 }
 
 /**
@@ -250,23 +266,17 @@ export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): bool
 export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
   if (!hasStaticAttributeValue(attributeNode)) return null
 
-  const valueNode = attributeNode.value as HTMLAttributeValueNode
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
 
-  const result = valueNode.children
-    ?.filter(child => child.type === "AST_LITERAL_NODE")
-    .map(child => (child as LiteralNode).content)
-    .join("") || ""
-
-  return result
+  return filterLiteralNodes(valueNode.children).map(child => child.content).join("") || ""
 }
 
 /**
  * Gets the value nodes array for dynamic inspection
  */
 export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
-
-  return valueNode?.children || []
+  return attributeNode.value ?.children || []
 }
 
 /**
@@ -292,9 +302,8 @@ export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode)
  * Gets the attribute value content from an HTMLAttributeValueNode
  */
 export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
-
-  if (valueNode === null) return null
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
 
   if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
     return null
@@ -303,21 +312,12 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
   let result = ""
 
   for (const child of valueNode.children) {
-    switch (child.type) {
-      case "AST_ERB_CONTENT_NODE": {
-        const erbNode = child as ERBContentNode
-
-        if (erbNode.content) {
-          result += `${erbNode.tag_opening?.value}${erbNode.content.value}${erbNode.tag_closing?.value}`
-        }
-
-        break
+    if (isERBContentNode(child)) {
+      if (child.content) {
+        result += `${child.tag_opening?.value}${child.content.value}${child.tag_closing?.value}`
       }
-
-      case "AST_LITERAL_NODE": {
-        result += (child as LiteralNode).content
-        break
-      }
+    } else if (isLiteralNode(child)) {
+      result += child.content
     }
   }
 
@@ -328,48 +328,32 @@ export function getAttributeValue(attributeNode: HTMLAttributeNode): string | nu
  * Checks if an attribute has a value
  */
 export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  return attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE"
+  return isHTMLAttributeValueNode(attributeNode.value)
 }
 
 /**
  * Gets the quote type used for an attribute value
  */
-export function getAttributeValueQuoteType(nodeOrAttribute: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
-  let valueNode: HTMLAttributeValueNode | undefined
+export function getAttributeValueQuoteType(node: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
+  const valueNode = isHTMLAttributeValueNode(node) ? node : node.value
+  if (!valueNode) return null
 
-  if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_NODE") {
-    const attributeNode = nodeOrAttribute as HTMLAttributeNode
-
-    if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-      valueNode = attributeNode.value as HTMLAttributeValueNode
-    }
-  } else if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    valueNode = nodeOrAttribute as HTMLAttributeValueNode
+  if (valueNode.quoted && valueNode.open_quote) {
+    return valueNode.open_quote.value === '"' ? "double" : "single"
   }
 
-  if (valueNode) {
-    if (valueNode.quoted && valueNode.open_quote) {
-      return valueNode.open_quote.value === '"' ? "double" : "single"
-    }
-
-    return "none"
-  }
-
-  return null
+  return "none"
 }
 
 /**
  * Finds an attribute by name in a list of attributes
  */
 export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      const attributeNode = child as HTMLAttributeNode
-      const name = getAttributeName(attributeNode)
+  for (const attribute of filterHTMLAttributeNodes(attributes)) {
+    const name = getAttributeName(attribute)
 
-      if (name === attributeName.toLowerCase()) {
-        return attributeNode
-      }
+    if (name === attributeName.toLowerCase()) {
+      return attribute
     }
   }
 
@@ -379,7 +363,9 @@ export function findAttributeByName(attributes: Node[], attributeName: string): 
 /**
  * Checks if a tag has a specific attribute
  */
-export function hasAttribute(node: HTMLOpenTagNode, attributeName: string): boolean {
+export function hasAttribute(node: HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+  if (!node) return false
+
   return getAttribute(node, attributeName) !== null
 }
 
@@ -485,6 +471,26 @@ export const VALID_ARIA_ROLES = new Set([
 ]);
 
 /**
+ * Abstract ARIA roles used to support the WAI-ARIA Roles Model.
+ * Authors MUST NOT use abstract roles in content.
+ * @see https://www.w3.org/TR/wai-aria-1.0/roles#abstract_roles
+ */
+export const ABSTRACT_ARIA_ROLES = new Set([
+  "command",
+  "composite",
+  "input",
+  "landmark",
+  "range",
+  "roletype",
+  "section",
+  "sectionhead",
+  "select",
+  "structure",
+  "widget",
+  "window"
+]);
+
+/**
  * Parameter types for AttributeVisitorMixin methods
  */
 export interface StaticAttributeStaticValueParams {
@@ -582,10 +588,8 @@ export function createEndOfFileLocation(source: string): Location {
   const lastColumnNumber = lastLine.length
 
   const startColumn = lastColumnNumber > 0 ? lastColumnNumber - 1 : 0
-  const start = new Position(lastLineNumber, startColumn)
-  const end = new Position(lastLineNumber, lastColumnNumber)
 
-  return new Location(start, end)
+  return Location.from(lastLineNumber, startColumn, lastLineNumber, lastColumnNumber)
 }
 
 /**
@@ -639,7 +643,7 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
   private checkAttributesOnNode(node: HTMLOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
-      const originalAttributeName = getAttributeName(attributeNode, false) || ""
+      const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
@@ -712,28 +716,17 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
  * Checks if an attribute value is quoted
  */
 export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
+  if (!isHTMLAttributeValueNode(attributeNode.value)) return false
 
-    return !!valueNode.quoted
-  }
-
-  return false
+  return !!attributeNode.value.quoted
 }
 
 /**
  * Iterates over all attributes of a tag node, calling the callback for each attribute
  */
-export function forEachAttribute(
-  node: HTMLOpenTagNode,
-  callback: (attributeNode: HTMLAttributeNode) => void
-): void {
-  const attributes = getAttributes(node)
-
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      callback(child as HTMLAttributeNode)
-    }
+export function forEachAttribute(node: HTMLOpenTagNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
+  for (const attribute of getAttributes(node)) {
+    callback(attribute)
   }
 }
 
@@ -741,7 +734,7 @@ export function forEachAttribute(
  * Base lexer visitor class that provides common functionality for lexer-based rule visitors
  */
 export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -751,16 +744,16 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
   }
 
   /**
-   * Helper method to create a lint offense for lexer rules
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -768,8 +761,8 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 
   /**
@@ -803,7 +796,7 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
  * Base source visitor class that provides common functionality for source-based rule visitors
  */
 export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
-  public readonly offenses: LintOffense<TAutofixContext>[] = []
+  public readonly offenses: UnboundLintOffense<TAutofixContext>[] = []
   protected ruleName: string
   protected context: LintContext
 
@@ -813,16 +806,16 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
   }
 
   /**
-   * Helper method to create a lint offense for source rules
+   * Helper method to create an unbound lint offense (without severity).
+   * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): LintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
       source: "Herb Linter",
       message,
       location,
-      severity,
       autofixContext,
     }
   }
@@ -830,8 +823,8 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, severity: LintSeverity = "error", autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, severity, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext))
   }
 
   /**
@@ -1065,4 +1058,114 @@ export function isHeadTag(tagName: string): boolean {
     !isHtmlOnlyTag(tag) &&
     (isHeadOnlyTag(tag) || isHeadAndBodyTag(tag))
   )
+}
+
+/**
+ * Converts a character offset in a source string to a Position (line, column).
+ * Lines are 1-based, columns are 0-based.
+ */
+export function positionFromOffset(source: string, offset: number): Position {
+  let line = 1
+  let column = 0
+  let currentOffset = 0
+
+  for (let i = 0; i < source.length && currentOffset < offset; i++) {
+    const char = source[i]
+    currentOffset++
+    if (char === "\n") {
+      line++
+      column = 0
+    } else {
+      column++
+    }
+  }
+
+  return new Position(line, column)
+}
+
+/**
+ * Checks if a position (line, column) is within a node's location range.
+ * @param node - The node to check
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @returns true if the position is within the node's location
+ */
+function isPositionInNode(node: Node, line: number, column: number): boolean {
+  if (!node.location) return false
+
+  const { start, end } = node.location
+
+  if (line < start.line) return false
+  if (line === start.line && column < start.column) return false
+
+  if (line > end.line) return false
+  if (line === end.line && column >= end.column) return false
+
+  return true
+}
+
+/**
+ * Finds a node in the AST that contains a specific position.
+ * Returns the deepest (most specific) node that matches the position and optional predicate.
+ *
+ * @param root - The root node to search from
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @param predicate - Optional predicate function to filter nodes
+ * @returns The matching node or null if not found
+ */
+export function findNodeAtPosition(root: Node, line: number, column: number, predicate?: (node: Node) => boolean): Node | null {
+  let bestMatch: Node | null = null
+  const visited = new Set<Node>()
+
+  function search(node: Node): void {
+    if (!node || visited.has(node)) return
+    visited.add(node)
+
+    if (isPositionInNode(node, line, column)) {
+      if (!predicate || predicate(node)) {
+        if (!bestMatch || isMoreSpecific(node, bestMatch)) {
+          bestMatch = node
+        }
+      }
+    }
+
+    const nodeAny = node as any
+
+    if (typeof nodeAny.compactChildNodes === 'function') {
+      for (const child of nodeAny.compactChildNodes()) {
+        search(child)
+      }
+    } else {
+      if (nodeAny.children && Array.isArray(nodeAny.children)) {
+        for (const child of nodeAny.children) {
+          if (child) search(child)
+        }
+      }
+
+      if (nodeAny.body && Array.isArray(nodeAny.body)) {
+        for (const child of nodeAny.body) {
+          if (child) search(child)
+        }
+      }
+    }
+  }
+
+  function isMoreSpecific(nodeA: Node, nodeB: Node): boolean {
+    if (!nodeA.location || !nodeB.location) return false
+
+    const aStart = nodeA.location.start
+    const aEnd = nodeA.location.end
+    const bStart = nodeB.location.start
+    const bEnd = nodeB.location.end
+
+    const startsAtOrAfter = aStart.line > bStart.line || (aStart.line === bStart.line && aStart.column >= bStart.column)
+    const endsAtOrBefore = aEnd.line < bEnd.line || (aEnd.line === bEnd.line && aEnd.column <= bEnd.column)
+
+    return startsAtOrAfter && endsAtOrBefore
+  }
+
+  search(root)
+
+  return bestMatch
 }

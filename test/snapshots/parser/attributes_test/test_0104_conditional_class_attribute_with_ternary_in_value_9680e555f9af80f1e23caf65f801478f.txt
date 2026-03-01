@@ -1,0 +1,64 @@
+---
+source: "Parser::AttributesTest#test_0104_conditional class attribute with ternary in value"
+input: "<div <% if styled? %>class=\"<%= active ? 'active' : 'inactive' %>\"<% end %>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:82))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:82))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:76))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:75)-(1:76))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBIfNode (location: (1:5)-(1:75))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: " if styled? " (location: (1:7)-(1:19))
+        │       │       ├── tag_closing: "%>" (location: (1:19)-(1:21))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:21)-(1:66))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:21)-(1:26))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:21)-(1:26))
+        │       │       │       │               └── content: "class"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: "=" (location: (1:26)-(1:27))
+        │       │       │       └── value:
+        │       │       │           └── @ HTMLAttributeValueNode (location: (1:27)-(1:66))
+        │       │       │               ├── open_quote: """ (location: (1:27)-(1:28))
+        │       │       │               ├── children: (1 item)
+        │       │       │               │   └── @ ERBContentNode (location: (1:28)-(1:65))
+        │       │       │               │       ├── tag_opening: "<%=" (location: (1:28)-(1:31))
+        │       │       │               │       ├── content: " active ? 'active' : 'inactive' " (location: (1:31)-(1:63))
+        │       │       │               │       ├── tag_closing: "%>" (location: (1:63)-(1:65))
+        │       │       │               │       ├── parsed: true
+        │       │       │               │       └── valid: true
+        │       │       │               │
+        │       │       │               ├── close_quote: """ (location: (1:65)-(1:66))
+        │       │       │               └── quoted: true
+        │       │       │
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:66)-(1:75))
+        │       │               ├── tag_opening: "<%" (location: (1:66)-(1:68))
+        │       │               ├── content: " end " (location: (1:68)-(1:73))
+        │       │               └── tag_closing: "%>" (location: (1:73)-(1:75))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:76)-(1:82))
+        │       ├── tag_opening: "</" (location: (1:76)-(1:78))
+        │       ├── tag_name: "div" (location: (1:78)-(1:81))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:81)-(1:82))
+        │
+        ├── is_void: false
+        └── source: "HTML"

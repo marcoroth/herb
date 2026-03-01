@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0032_at symbol in attribute value"
+input: "<a href=\"mailto:support@example.com\">Contact @support</a>"
+---
 @ DocumentNode (location: (1:0)-(1:57))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:57))

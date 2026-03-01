@@ -2,13 +2,18 @@
 # typed: true
 
 module Herb
+  #: type serialized_node = {
+  #|  type: String,
+  #|  location: serialized_location?,
+  #|  errors: Array[serialized_error]
+  #| }
   module AST
     class Node
       attr_reader :type #: String
       attr_reader :location #: Location
       attr_reader :errors #: Array[Herb::Errors::Error]
 
-      #: (String, Location, Array[Herb::Errors::Error]) -> void
+      #: (String, Location, ?Array[Herb::Errors::Error]) -> void
       def initialize(type, location, errors = [])
         @type = type
         @location = location
@@ -19,7 +24,7 @@ module Herb
       def to_hash
         {
           type: type,
-          location: location&.to_hash,
+          location: location.to_hash,
           errors: errors.map(&:to_hash),
         }
       end
@@ -46,8 +51,15 @@ module Herb
         "├── errors: #{inspect_array(errors, item_name: "error", prefix: prefix)}"
       end
 
-      #: (Array[Herb::AST::Node|Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
-      def inspect_array(array, item_name: "item", prefix: "    ")
+      #: (
+      #|   Array[Herb::AST::Node|Herb::Errors::Error],
+      #|   ?item_name: String,
+      #|   ?prefix: String,
+      #|   ?indent: Integer,
+      #|   ?depth: Integer,
+      #|   ?depth_limit: Integer
+      #| ) -> String
+      def inspect_array(array, item_name: "item", prefix: "    ", indent: 0, depth: 0, depth_limit: 25)
         output = +""
 
         if array.any?
@@ -55,10 +67,12 @@ module Herb
           output += "\n"
 
           items = array.map { |item|
+            kwargs = { indent: indent, depth: depth, depth_limit: depth_limit }
+
             if array.last == item
-              "└── #{item.tree_inspect.gsub(/^/, "    ").lstrip}"
+              "└── #{item.tree_inspect(**kwargs).gsub(/^/, "    ").lstrip}"
             else
-              "├── #{item.tree_inspect.gsub(/^/, "│   ")}".gsub("├── │  ", "├──")
+              "├── #{item.tree_inspect(**kwargs).gsub(/^/, "│   ")}".gsub("├── │  ", "├──")
             end
           }
 
@@ -71,8 +85,8 @@ module Herb
         output
       end
 
-      #: (?Integer) -> String
-      def tree_inspect(_indent = 0)
+      #: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect(indent: 0, depth: 0, depth_limit: 25)
         raise NotImplementedError
       end
 

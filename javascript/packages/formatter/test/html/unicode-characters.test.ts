@@ -40,7 +40,6 @@ describe("Unicode character handling", () => {
       </div>
 
       <!-- HTML comment -->
-
       <%# ERB comment %>
     `)
   })
@@ -92,7 +91,6 @@ describe("Unicode character handling", () => {
       </div>
 
       <!-- HTML comment -->
-
       <%# ERB comment %>
     `)
   })
@@ -160,10 +158,12 @@ describe("Unicode character handling", () => {
         <header>
           <h1>Article — Title with 'quotes'</h1>
         </header>
+
         <div class="content">
           <p>
             First paragraph with — em dash and ’curly quotes’
           </p>
+
           <p>
             Second paragraph with – en dash
           </p>
@@ -171,7 +171,6 @@ describe("Unicode character handling", () => {
       </article>
 
       <!-- HTML comment here -->
-
       <%# ERB comment here %>
     `)
   })
@@ -189,8 +188,63 @@ describe("Unicode character handling", () => {
       <div>Content</div>
 
       <!-- Comment with — em dash and 'quotes' -->
-
       <%# ERB comment with — dash and 'apostrophe' %>
     `)
+  })
+
+  test("Issue #930: Full-width ideographic space (U+3000) should be preserved", () => {
+    const source = '<p>a\u3000b</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>a\u3000b</p>')
+  })
+
+  test("Issue #930: Full-width space literal from playground should be preserved", () => {
+    const source = '<p>a　b</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>a　b</p>')
+  })
+
+  test("Non-breaking space (U+00A0) should be preserved", () => {
+    const source = '<p>a\u00A0b</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>a\u00A0b</p>')
+  })
+
+  test("Non-breaking space in text content should be preserved", () => {
+    const source = '<p>10\u00A0kg of weight</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>10\u00A0kg of weight</p>')
+  })
+
+  test("Full-width space in CJK text should be preserved", () => {
+    const source = '<p>日本語\u3000テスト</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>日本語\u3000テスト</p>')
+  })
+
+  test("Non-breaking space in attributes should be preserved", () => {
+    const source = '<div title="10\u00A0kg">Content</div>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<div title="10\u00A0kg">Content</div>')
+  })
+
+  test("Mixed NBSP and full-width space should all be preserved", () => {
+    const source = '<p>word1\u00A0word2\u3000word3</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>word1\u00A0word2\u3000word3</p>')
+  })
+
+  test("NBSP preserved while regular spaces get normalized", () => {
+    const source = '<p>word1   word2\u00A0word3   word4</p>'
+    const result = formatter.format(source)
+
+    expect(result).toBe('<p>word1 word2\u00A0word3 word4</p>')
   })
 })

@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0013_trim with nested blocks"
+input: "{source: \"<%- [1, 2, 3].each do |i| -%>\\n  <%- if i > 1 -%>\\n    <p><%- i -%></p>\\n  <%- end -%>\\n<%- end -%>\\n\", locals: {}, options: {}}"
+---
+    <p></p>
+    <p></p>

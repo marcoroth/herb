@@ -1,7 +1,7 @@
 import { describe, test, beforeAll } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
-import { DocumentNode } from "@herb-tools/core"
+import { DocumentNode, Location } from "@herb-tools/core"
 
 import { expectNodeToPrint, expectPrintRoundTrip } from "../helpers/printer-test-helpers.js"
 
@@ -13,7 +13,7 @@ describe("DocumentNode Printing", () => {
   test("can print from node", () => {
     const node = DocumentNode.from({
       type: "AST_DOCUMENT_NODE",
-      location: { start: { line: 1, column: 1 }, end: { line: 1, column: 1 } },
+      location: Location.from(1, 1, 1, 1),
       errors: [],
       children: []
     })

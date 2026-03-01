@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
 import { filterLiteralNodes } from "@herb-tools/core"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 interface AttributeDoubleQuotesAutofixContext extends BaseAutofixContext {
@@ -19,7 +19,6 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin<AttributeDouble
     this.addOffense(
       `Attribute \`${attributeName}\` uses single quotes. Prefer double quotes for HTML attribute values: \`${attributeName}="${attributeValue}"\`.`,
       attributeNode.value!.location,
-      "warning",
       {
         node: attributeNode,
         valueContent: attributeValue
@@ -35,7 +34,6 @@ class AttributeDoubleQuotesVisitor extends AttributeVisitorMixin<AttributeDouble
     this.addOffense(
       `Attribute \`${attributeName}\` uses single quotes. Prefer double quotes for HTML attribute values: \`${attributeName}="${combinedValue}"\`.`,
       attributeNode.value!.location,
-      "warning",
       {
         node: attributeNode,
         valueContent: combinedValue || ""
@@ -48,7 +46,14 @@ export class HTMLAttributeDoubleQuotesRule extends ParserRule<AttributeDoubleQuo
   static autocorrectable = true
   name = "html-attribute-double-quotes"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<AttributeDoubleQuotesAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "warning"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<AttributeDoubleQuotesAutofixContext>[] {
     const visitor = new AttributeDoubleQuotesVisitor(this.name, context)
 
     visitor.visit(result.value)

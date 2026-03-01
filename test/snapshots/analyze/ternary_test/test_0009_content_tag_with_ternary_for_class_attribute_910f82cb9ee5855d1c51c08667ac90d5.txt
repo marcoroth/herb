@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0009_content_tag with ternary for class attribute"
+input: |2-
+<%= content_tag :div, "Hello World", class: current_user.admin? ? "admin-panel" : "user-panel" %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:97))

@@ -1,4 +1,3 @@
-/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [],
   theme: {
@@ -6,11 +5,12 @@ module.exports = {
       colors: {
         'custom-primary': '#3b82f6',
         'custom-secondary': '#10b981',
-        'brand': {
-          'light': '#dbeafe',
-          'DEFAULT': '#2563eb',
-          'dark': '#1e40af',
-        },
+        'brand': '#2563eb',
+        'brand-primary': '#3b82f6',
+        'brand-secondary': '#10b981',
+        'brand-dark': '#1e40af',
+        'brand-light': '#60a5fa',
+        'neon-pink': '#ff1493',
         'accent': {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -26,7 +26,6 @@ module.exports = {
         'custom-sm': '0.75rem',
         'custom-xl': '1.5rem',
       }
-    },
-  },
-  plugins: [],
+    }
+  }
 }

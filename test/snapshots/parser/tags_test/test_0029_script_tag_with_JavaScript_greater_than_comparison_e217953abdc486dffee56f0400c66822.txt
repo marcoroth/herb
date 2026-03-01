@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0029_script tag with JavaScript greater than comparison"
+input: "<script>if (something > 3) { alert(\"hello\"); }</script>"
+---
 @ DocumentNode (location: (1:0)-(1:55))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:55))

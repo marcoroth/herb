@@ -1,21 +1,19 @@
 import dedent from "dedent"
 
 import { parseArgs } from "util"
-import { statSync } from "fs"
-import { join } from "path"
-
 import { Herb } from "@herb-tools/node-wasm"
-import { HERB_FILES_GLOB } from "@herb-tools/core"
 
 import { THEME_NAMES, DEFAULT_THEME } from "@herb-tools/highlighter"
 import type { ThemeInput } from "@herb-tools/highlighter"
+import type { DiagnosticSeverity } from "@herb-tools/core"
 
 import { name, version, dependencies } from "../../package.json"
 
 export type FormatOption = "simple" | "detailed" | "json"
 
 export interface ParsedArguments {
-  pattern: string
+  patterns: string[]
+  configFile?: string
   formatOption: FormatOption
   showTiming: boolean
   theme: ThemeInput
@@ -23,31 +21,43 @@ export interface ParsedArguments {
   truncateLines: boolean
   useGitHubActions: boolean
   fix: boolean
+  fixUnsafe: boolean
+  ignoreDisableComments: boolean
+  force: boolean
+  init: boolean
+  loadCustomRules: boolean
+  failLevel?: DiagnosticSeverity
 }
 
 export class ArgumentParser {
   private readonly usage = dedent`
-    Usage: herb-lint [file|glob-pattern|directory] [options]
+    Usage: herb-lint [files|directories|glob-patterns...] [options]
 
     Arguments:
-      file             Single file to lint
-      glob-pattern     Files to lint (defaults to \`${HERB_FILES_GLOB}\`)
-      directory        Directory to lint (automatically appends \`${HERB_FILES_GLOB}\`)
+      files            Files, directories, or glob patterns to lint (defaults to configured extensions in .herb.yml)
+                       Multiple arguments are supported (e.g., herb-lint file1.erb file2.erb dir/ "**/*.erb")
 
     Options:
-      -h, --help       show help
-      -v, --version    show version
-      --fix            automatically fix auto-correctable offenses
-      --format         output format (simple|detailed|json) [default: detailed]
-      --simple         use simple output format (shortcut for --format simple)
-      --json           use JSON output format (shortcut for --format json)
-      --github         enable GitHub Actions annotations (combines with --format)
-      --no-github      disable GitHub Actions annotations (even in GitHub Actions environment)
-      --theme          syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
-      --no-color       disable colored output
-      --no-timing      hide timing information
-      --no-wrap-lines  disable line wrapping
-      --truncate-lines enable line truncation (mutually exclusive with line wrapping)
+      -h, --help                    show help
+      -v, --version                 show version
+      --init                        create a .herb.yml configuration file in the current directory
+      -c, --config-file <path>      explicitly specify path to .herb.yml config file
+      --force                       force linting even if disabled in .herb.yml
+      --fix                         automatically fix auto-correctable offenses
+      --fix-unsafely                also apply unsafe auto-fixes (implies --fix)
+      --ignore-disable-comments     report offenses even when suppressed with <%# herb:disable %> comments
+      --fail-level <severity>       exit with error code when diagnostics of this severity or higher are present (error|warning|info|hint) [default: error]
+      --format                      output format (simple|detailed|json) [default: detailed]
+      --simple                      use simple output format (shortcut for --format simple)
+      --json                        use JSON output format (shortcut for --format json)
+      --github                      enable GitHub Actions annotations (combines with --format)
+      --no-github                   disable GitHub Actions annotations (even in GitHub Actions environment)
+      --no-custom-rules             disable loading custom rules from project (custom rules are loaded by default from .herb/rules/**/*.{mjs,js})
+      --theme                       syntax highlighting theme (${THEME_NAMES.join("|")}) or path to custom theme file [default: ${DEFAULT_THEME}]
+      --no-color                    disable colored output
+      --no-timing                   hide timing information
+      --no-wrap-lines               disable line wrapping
+      --truncate-lines              enable line truncation (mutually exclusive with line wrapping)
   `
 
   parse(argv: string[]): ParsedArguments {
@@ -56,7 +66,13 @@ export class ArgumentParser {
       options: {
         help: { type: "boolean", short: "h" },
         version: { type: "boolean", short: "v" },
+        init: { type: "boolean" },
+        "config-file": { type: "string", short: "c" },
+        force: { type: "boolean" },
         fix: { type: "boolean" },
+        "fix-unsafely": { type: "boolean" },
+        "ignore-disable-comments": { type: "boolean" },
+        "fail-level": { type: "string" },
         format: { type: "string" },
         simple: { type: "boolean" },
         json: { type: "boolean" },
@@ -66,7 +82,8 @@ export class ArgumentParser {
         "no-color": { type: "boolean" },
         "no-timing": { type: "boolean" },
         "no-wrap-lines": { type: "boolean" },
-        "truncate-lines": { type: "boolean" }
+        "truncate-lines": { type: "boolean" },
+        "no-custom-rules": { type: "boolean" }
       },
       allowPositionals: true
     })
@@ -126,24 +143,30 @@ export class ArgumentParser {
     }
 
     const theme = values.theme || DEFAULT_THEME
-    const pattern = this.getFilePattern(positionals)
-    const fix = values.fix || false
+    const patterns = this.getFilePatterns(positionals)
+    const fixUnsafe = values["fix-unsafely"] || false
+    const fix = values.fix || fixUnsafe  // --fix-unsafely implies --fix
+    const force = !!values.force
+    const ignoreDisableComments = values["ignore-disable-comments"] || false
+    const configFile = values["config-file"]
+    const init = values.init || false
+    const loadCustomRules = !values["no-custom-rules"]
 
-    return { pattern, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix }
-  }
-
-  private getFilePattern(positionals: string[]): string {
-    let pattern = positionals.length > 0 ? positionals[0] : HERB_FILES_GLOB
-
-    try {
-      const stat = statSync(pattern)
-      if (stat.isDirectory()) {
-        pattern = join(pattern, HERB_FILES_GLOB)
+    let failLevel: DiagnosticSeverity | undefined
+    if (values["fail-level"]) {
+      const level = values["fail-level"]
+      if (level === "error" || level === "warning" || level === "info" || level === "hint") {
+        failLevel = level
+      } else {
+        console.error(`Error: Invalid --fail-level value "${level}". Must be one of: error, warning, info, hint`)
+        process.exit(1)
       }
-    } catch {
-      // Not a file/directory, treat as glob pattern
     }
 
-    return pattern
+    return { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel }
+  }
+
+  private getFilePatterns(positionals: string[]): string[] {
+    return positionals
   }
 }

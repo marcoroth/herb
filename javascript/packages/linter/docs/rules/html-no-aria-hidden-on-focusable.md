@@ -17,7 +17,7 @@ Elements with `aria-hidden="true"` are completely hidden from assistive technolo
 ```erb
 <button>Submit</button>
 <a href="/link">Link</a>
-<input type="text">
+<input type="text" autocomplete="off">
 <textarea></textarea>
 
 <div aria-hidden="true">Decorative content</div>
@@ -33,7 +33,7 @@ Elements with `aria-hidden="true"` are completely hidden from assistive technolo
 
 <a href="/link" aria-hidden="true">Link</a>
 
-<input type="text" aria-hidden="true">
+<input type="text" autocomplete="off" aria-hidden="true">
 
 <textarea aria-hidden="true"></textarea>
 

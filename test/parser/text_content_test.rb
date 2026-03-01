@@ -156,5 +156,93 @@ module Parser
         <p class="help">Regexp with captures, must consume whole string like: <kbd>\\Ahttps?://github.com/+([^/]+).*\\z</kbd></p>
       HTML
     end
+
+    test "greater than sign as text content - issue 914" do
+      assert_parsed_snapshot("<kbd>></kbd>")
+    end
+
+    test "greater than sign in text content" do
+      assert_parsed_snapshot("<p>5 > 3</p>")
+    end
+
+    test "multiple greater than signs in text content" do
+      assert_parsed_snapshot("<code>a >> b</code>")
+    end
+
+    test "greater than sign at start of text content" do
+      assert_parsed_snapshot("<span>> quote</span>")
+    end
+
+    test "less than sign as text content" do
+      assert_parsed_snapshot("<kbd><</kbd>")
+    end
+
+    test "less than sign in text content" do
+      assert_parsed_snapshot("<p>5 < 3</p>")
+    end
+
+    test "multiple less than signs in text content" do
+      assert_parsed_snapshot("<code><<</code>")
+    end
+
+    test "less than sign at start of text content" do
+      assert_parsed_snapshot("<span>< quote</span>")
+    end
+
+    test "less than and greater than in text content" do
+      assert_parsed_snapshot("<p>a < b > c</p>")
+    end
+
+    test "arrow in text content" do
+      assert_parsed_snapshot("<span>a -> b</span>")
+    end
+
+    test "generic syntax in text content" do
+      assert_parsed_snapshot("<code>Array<String></code>")
+    end
+
+    test "less than followed by space" do
+      assert_parsed_snapshot("<p>< /span></p>")
+    end
+
+    test "less than followed by number" do
+      assert_parsed_snapshot("<p><5</p>")
+    end
+
+    test "triple less than" do
+      assert_parsed_snapshot("<code><<<</code>")
+    end
+
+    test "heredoc style" do
+      assert_parsed_snapshot("<code><<~HTML</code>")
+    end
+
+    test "bit shift operators" do
+      assert_parsed_snapshot("<code>x << 2 >> 1</code>")
+    end
+
+    test "spaceship operator" do
+      assert_parsed_snapshot("<code>a <=> b</code>")
+    end
+
+    test "not equal operator" do
+      assert_parsed_snapshot("<code>a <> b</code>")
+    end
+
+    test "less than or equal" do
+      assert_parsed_snapshot("<code>a <= b</code>")
+    end
+
+    test "greater than or equal" do
+      assert_parsed_snapshot("<code>a >= b</code>")
+    end
+
+    test "xml-like content in code" do
+      assert_parsed_snapshot("<code><foo></code>")
+    end
+
+    test "template literal style" do
+      assert_parsed_snapshot("<code>${value}</code>")
+    end
   end
 end

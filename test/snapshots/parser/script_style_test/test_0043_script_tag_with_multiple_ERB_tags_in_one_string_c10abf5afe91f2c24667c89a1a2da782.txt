@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0043_script tag with multiple ERB tags in one string"
+input: "<script>var info = \"User <%= @user.id %>: <%= @user.name %>\";</script>"
+---
 @ DocumentNode (location: (1:0)-(1:70))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:70))

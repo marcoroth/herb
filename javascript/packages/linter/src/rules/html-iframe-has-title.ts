@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { BaseRuleVisitor, getTagName, getAttribute, getAttributeValue } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class IframeHasTitleVisitor extends BaseRuleVisitor {
@@ -31,7 +31,6 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
       this.addOffense(
         "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
         node.location,
-        "error"
       )
 
       return
@@ -43,7 +42,6 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
       this.addOffense(
         "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
         node.location,
-        "error"
       )
     }
   }
@@ -52,7 +50,14 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
 export class HTMLIframeHasTitleRule extends ParserRule {
   name = "html-iframe-has-title"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new IframeHasTitleVisitor(this.name, context)
 
     visitor.visit(result.value)

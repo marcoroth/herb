@@ -2,7 +2,7 @@ import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
 import { IdentityPrinter } from "@herb-tools/printer"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 interface BooleanAttributeAutofixContext extends BaseAutofixContext {
@@ -25,7 +25,6 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
     this.addOffense(
       `Boolean attribute \`${IdentityPrinter.print(attributeNode.name)}\` should not have a value. Use \`${attributeName.toLowerCase()}\` instead of \`${IdentityPrinter.print(attributeNode)}\`.`,
       attributeNode.value!.location,
-      "error",
       {
         node: attributeNode
       }
@@ -37,7 +36,14 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   static autocorrectable = true
   name = "html-boolean-attributes-no-value"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense<BooleanAttributeAutofixContext>[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
     const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
 
     visitor.visit(result.value)

@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, VALID_ARIA_ROLES, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 class AriaRoleMustBeValid extends AttributeVisitorMixin {
@@ -13,7 +13,6 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
     this.addOffense(
       `The \`role\` attribute must be a valid ARIA role. Role \`${attributeValue}\` is not recognized.`,
       attributeNode.location,
-      "error"
     )
   }
 }
@@ -21,7 +20,14 @@ class AriaRoleMustBeValid extends AttributeVisitorMixin {
 export class HTMLAriaRoleMustBeValidRule extends ParserRule {
   name = "html-aria-role-must-be-valid"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new AriaRoleMustBeValid(this.name, context)
 
     visitor.visit(result.value)

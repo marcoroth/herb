@@ -1,3 +1,9 @@
+---
+source: "Parser::WhitespaceTest#test_0010_self-closing tag with whitespace before slash"
+input: |2-
+<img src="test.jpg"     />
+options: {track_whitespace: true}
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:26))

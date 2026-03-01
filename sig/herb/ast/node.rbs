@@ -1,6 +1,11 @@
 # Generated from lib/herb/ast/node.rb with RBS::Inline
 
 module Herb
+  # : type serialized_node = {
+  # |  type: String,
+  # |  location: serialized_location?,
+  # |  errors: Array[serialized_error]
+  # | }
   module AST
     class Node
       attr_reader type: String
@@ -9,8 +14,8 @@ module Herb
 
       attr_reader errors: Array[Herb::Errors::Error]
 
-      # : (String, Location, Array[Herb::Errors::Error]) -> void
-      def initialize: (String, Location, Array[Herb::Errors::Error]) -> void
+      # : (String, Location, ?Array[Herb::Errors::Error]) -> void
+      def initialize: (String, Location, ?Array[Herb::Errors::Error]) -> void
 
       # : () -> serialized_node
       def to_hash: () -> serialized_node
@@ -27,11 +32,18 @@ module Herb
       # : (?prefix: String) -> String
       def inspect_errors: (?prefix: String) -> String
 
-      # : (Array[Herb::AST::Node|Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
-      def inspect_array: (Array[Herb::AST::Node | Herb::Errors::Error], ?item_name: String, ?prefix: String) -> String
+      # : (
+      # |   Array[Herb::AST::Node|Herb::Errors::Error],
+      # |   ?item_name: String,
+      # |   ?prefix: String,
+      # |   ?indent: Integer,
+      # |   ?depth: Integer,
+      # |   ?depth_limit: Integer
+      # | ) -> String
+      def inspect_array: (untyped array, ?item_name: untyped, ?prefix: untyped, ?indent: untyped, ?depth: untyped, ?depth_limit: untyped) -> untyped
 
-      # : (?Integer) -> String
-      def tree_inspect: (?Integer) -> String
+      # : (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
+      def tree_inspect: (?indent: Integer, ?depth: Integer, ?depth_limit: Integer) -> String
 
       # : (Visitor) -> void
       def accept: (Visitor) -> void

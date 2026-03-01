@@ -1,9 +1,21 @@
+---
+source: "Analyze::IfTest#test_0005_if/elsif/else statement with children"
+input: |2-
+<% if true %>
+  <h1>true</h1>
+<% elsif false %>
+  <h1>false</h1>
+<% else %>
+  <h1>else</h1>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBIfNode (location: (1:0)-(7:9))
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if true " (location: (1:2)-(1:11))
     │   ├── tag_closing: "%>" (location: (1:11)-(1:13))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:13)-(2:2))
     │   │   │   └── content: "\n  "
@@ -40,6 +52,7 @@
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " elsif false " (location: (3:2)-(3:15))
     │   │       ├── tag_closing: "%>" (location: (3:15)-(3:17))
+    │   │       ├── then_keyword: ∅
     │   │       ├── statements: (3 items)
     │   │       │   ├── @ HTMLTextNode (location: (3:17)-(4:2))
     │   │       │   │   └── content: "\n  "

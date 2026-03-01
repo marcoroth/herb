@@ -1,3 +1,6 @@
-_buf = ::String.new;
- _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb">'.freeze; _buf << (yield :title).to_s; _buf << '</h1>'.freeze;
+---
+source: "Engine::DebugModeTest#test_0031_yield expressions get NOT erb-output outline type"
+input: "{source: \"<h1><%= yield :title %></h1>\", options: {debug: true, filename: \"layout.html.erb\"}}"
+---
+_buf = ::String.new; _buf << '<h1 data-herb-debug-outline-type="view" data-herb-debug-file-name="layout.html.erb" data-herb-debug-file-relative-path="layout.html.erb" data-herb-debug-file-full-path="layout.html.erb">'.freeze; _buf << (yield :title).to_s; _buf << '</h1>'.freeze;
 _buf.to_s

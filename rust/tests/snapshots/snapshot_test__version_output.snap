@@ -1,0 +1,5 @@
+---
+source: tests/snapshot_test.rs
+expression: output
+---
+herb rust v0.8.10, libprism v1.9.0, libherb v0.8.10 (Rust FFI)

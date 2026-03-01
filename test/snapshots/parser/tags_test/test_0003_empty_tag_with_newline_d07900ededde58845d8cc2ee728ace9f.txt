@@ -1,3 +1,9 @@
+---
+source: "Parser::TagsTest#test_0003_empty tag with newline"
+input: |2-
+<span>
+</span>
+---
 @ DocumentNode (location: (1:0)-(2:7))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(2:7))

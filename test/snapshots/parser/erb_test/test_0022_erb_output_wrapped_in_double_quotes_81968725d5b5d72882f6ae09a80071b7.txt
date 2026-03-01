@@ -1,3 +1,8 @@
+---
+source: "Parser::ERBTest#test_0022_erb output wrapped in double quotes"
+input: |2-
+"<%= value %>"
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(1:1))

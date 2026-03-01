@@ -1,3 +1,14 @@
+---
+source: "Parser::ERBTest#test_0027_multi-line erb content with complex ruby"
+input: |2-
+<%=
+  if condition
+    "value1"
+  else
+    "value2"
+  end
+%>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(7:2))

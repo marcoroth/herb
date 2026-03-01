@@ -46,7 +46,7 @@ Self-closing tags (`<img />`, `<br />`) should have exactly one space before the
 
 <div class="foo" ></div>
 
-<img alt="Logo" src="/logo.png"/>
+<img alt="Logo" src="/logo.png">
 
 <div class="foo"      data-x="bar"></div>
 

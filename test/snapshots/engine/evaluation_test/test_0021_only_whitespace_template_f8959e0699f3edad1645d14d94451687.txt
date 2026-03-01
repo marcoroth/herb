@@ -1,3 +1,7 @@
+---
+source: "Engine::EvaluationTest#test_0021_only whitespace template"
+input: "{source: \"   \\n  \\t  \\n   \", locals: {}, options: {escape: false}}"
+---
    
   	  
    

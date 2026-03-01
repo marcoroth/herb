@@ -1,0 +1,16 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0022_nested case inside block closed in same ERB tag"
+input: |2-
+<% items.each do |item|; case item.type; when :a; puts "a"; end; end %>
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:71))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " items.each do |item|; case item.type; when :a; puts "a"; end; end " (location: (1:2)-(1:69))
+    │   ├── tag_closing: "%>" (location: (1:69)-(1:71))
+    │   ├── parsed: true
+    │   └── valid: true
+    │
+    └── @ HTMLTextNode (location: (1:71)-(2:0))
+        └── content: "\n"

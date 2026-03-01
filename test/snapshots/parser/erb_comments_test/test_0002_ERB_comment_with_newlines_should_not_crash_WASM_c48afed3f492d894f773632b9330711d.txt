@@ -1,3 +1,9 @@
+---
+source: "Parser::ERBCommentsTest#test_0002_ERB comment with newlines should not crash WASM"
+input: |2-
+<%# ERB
+Comment %>
+---
 @ DocumentNode (location: (1:0)-(2:10))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(2:10))

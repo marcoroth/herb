@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0001_text content"
+input: "Hello World"
+---
 @ DocumentNode (location: (1:0)-(1:11))
 └── children: (1 item)
     └── @ HTMLTextNode (location: (1:0)-(1:11))

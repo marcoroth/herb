@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0042_Standalone colon with space is invalid"
+input: "<div : class=\"hello\"></div>"
+---
 @ DocumentNode (location: (1:0)-(1:27))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:27))

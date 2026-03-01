@@ -1,3 +1,11 @@
+---
+source: "Parser::ERBTest#test_0028_multi-line erb silent tag"
+input: |2-
+<%
+  x = 1
+  y = 2
+%>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(4:2))

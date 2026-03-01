@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0018_apostrophe inside single quotes"
+input: "<div data-msg='Don't worry'>Text</div>"
+---
 @ DocumentNode (location: (1:0)-(1:38))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:38))
@@ -20,9 +24,9 @@
         │       │           └── @ HTMLAttributeValueNode (location: (1:14)-(1:27))
         │       │               ├── errors: (1 error)
         │       │               │   └── @ UnexpectedError (location: (1:18)-(1:19))
-        │       │               │       ├── message: "Unescaped quote character in attribute value. Expected: `escaped quote (\\') or different quote style (\")`, found: `'`."
+        │       │               │       ├── message: "Unescaped quote character in attribute value. Expected: `HTML entity (&apos;/&quot;) or different quote style`, found: `'`."
         │       │               │       ├── description: "Unescaped quote character in attribute value"
-        │       │               │       ├── expected: "escaped quote (\\') or different quote style (\")"
+        │       │               │       ├── expected: "HTML entity (&apos;/&quot;) or different quote style"
         │       │               │       └── found: "'"
         │       │               │
         │       │               ├── open_quote: "'" (location: (1:14)-(1:15))

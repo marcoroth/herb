@@ -1,3 +1,8 @@
+---
+source: "Parser::UTF8Test#test_0007_multiple utf8 characters in html content"
+input: |2-
+<div>▌🌿▌</div>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:14))

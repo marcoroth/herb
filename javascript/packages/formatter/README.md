@@ -35,17 +35,22 @@ bun add -g @herb-tools/formatter
 
 :::
 
-Then run directly:
-```bash
-herb-format template.html.erb
-```
-
 ### One-time Usage
 For occasional use without installing:
 
 ```bash
 npx @herb-tools/formatter template.html.erb
 ```
+
+### Preview Releases
+
+Want to try unreleased features? Use pkg.pr.new to run the formatter from any commit or PR:
+
+```bash
+npx https://pkg.pr.new/@herb-tools/formatter@{commit} template.html.erb
+```
+
+Replace `{commit}` with a commit SHA (e.g., `0d2eabe`) or branch name (e.g., `main`). Find available previews at [pkg.pr.new/~/marcoroth/herb](https://pkg.pr.new/~/marcoroth/herb).
 
 ### Project Installation
 
@@ -69,8 +74,30 @@ bun add -D @herb-tools/formatter
 
 :::
 
-After installing as a dev dependency, add format scripts to your `package.json`:
-```json
+After installing as a dev dependency, initialize the configuration:
+
+:::code-group
+
+```shell [npm]
+npx herb-format --init
+```
+
+```shell [pnpm]
+pnpm herb-format --init
+```
+
+```shell [yarn]
+yarn herb-format --init
+```
+
+```shell [bun]
+bunx herb-format --init
+```
+
+:::
+
+Then add format scripts to your `package.json`:
+```json [package.json]
 {
   "scripts": {
     "herb:format": "herb-format",
@@ -116,6 +143,12 @@ herb-format template.html.erb
 herb-format templates/
 ```
 
+**Initialize configuration:**
+```bash
+# Create a .herb.yml configuration file
+herb-format --init
+```
+
 #### Options
 
 **Check Mode:**
@@ -151,10 +184,120 @@ herb-format --help
 herb-format --version
 ```
 
-<!-- #### Configuration Options -->
+## Configuration
 
-<!-- TODO -->
+Create a `.herb.yml` file in your project root to configure the formatter:
 
-<!-- #### CLI Usage -->
+```bash
+herb-format --init
+```
 
-<!-- TODO -->
+### Basic Configuration
+
+```yaml [.herb.yml]
+formatter:
+  enabled: true  # Must be enabled for formatting to work
+  indentWidth: 2
+  maxLineLength: 80
+
+  # Additional glob patterns to include (additive to defaults)
+  include:
+    - '**/*.xml.erb'
+
+  # Glob patterns to exclude from formatting
+  exclude:
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'app/views/generated/**/*'
+```
+
+### Default File Patterns
+
+By default, the formatter processes:
+- `**/*.html`
+- `**/*.rhtml`
+- `**/*.html.erb`
+- `**/*.html+*.erb`
+- `**/*.turbo_stream.erb`
+
+The `include` patterns are **additive** - they add to the defaults.
+
+### Configuration Options
+
+- **`enabled`**: `true` or `false` - Must be `true` to enable formatting
+- **`indentWidth`**: Number (default: `2`) - Spaces per indentation level
+- **`maxLineLength`**: Number (default: `80`) - Maximum line length before wrapping
+- **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
+- **`exclude`**: Array of glob patterns - Patterns to exclude from formatting
+
+### Force Flag
+
+Format files even when formatter is disabled:
+
+```bash
+# Force formatting when disabled in config
+herb-format --force
+
+# Force formatting on an excluded file
+herb-format --force app/views/excluded-file.html.erb
+```
+
+When using `--force` on an excluded file, the formatter will show a warning but proceed with formatting.
+
+### Disabling Formatting for Entire Files <Badge type="info" text="v0.8.2+" />
+
+You can disable formatting for an entire file by adding the `ignore` directive anywhere in your template:
+
+```erb
+<%# herb:formatter ignore %>
+```
+
+**Example:**
+
+:::code-group
+```erb [ignored.html.erb]
+<%# herb:formatter ignore %>
+
+<div><div>This entire file will not be formatted</div></div>
+```
+
+```erb [formatted.html.erb]
+<div>
+  <div>This file will be formatted</div>
+</div>
+```
+:::
+
+::: warning Important
+The `<%# herb:formatter ignore %>` directive must be an exact match. Extra text or spacing will prevent it from working.
+:::
+
+## Rewriters
+
+The formatter supports **rewriters** that allow you to transform templates before and after formatting.
+
+Configure rewriters in your `.herb.yml`:
+
+```yaml [.herb.yml]
+formatter:
+  enabled: true
+  indentWidth: 2
+
+  rewriter:
+    # Pre-format rewriters (run before formatting)
+    pre:
+      - tailwind-class-sorter
+
+    # Post-format rewriters (run after formatting)
+    post: []
+```
+
+### Built-in Rewriters
+
+- **`tailwind-class-sorter`** - Automatically sorts Tailwind CSS classes according to the recommended order
+
+### Custom Rewriters
+
+You can create custom rewriters by placing them in `.herb/rewriters/` and referencing them in your config.
+
+For detailed documentation on creating and using rewriters, see the [Rewriter Documentation](/projects/rewriter).

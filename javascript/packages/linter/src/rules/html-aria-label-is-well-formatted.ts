@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult } from "@herb-tools/core"
 
 class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
@@ -12,7 +12,6 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
       this.addOffense(
         "The `aria-label` attribute value text should not contain line breaks. Use concise, single-line descriptions.",
         attributeNode.location,
-        "error"
       )
 
       return
@@ -22,7 +21,6 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
       this.addOffense(
         "The `aria-label` attribute value should not be formatted like an ID. Use natural, sentence-case text instead.",
         attributeNode.location,
-        "error"
       )
 
       return
@@ -32,7 +30,6 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
       this.addOffense(
         "The `aria-label` attribute value text should be formatted like visual text. Use sentence case (capitalize the first letter).",
         attributeNode.location,
-        "error"
       )
     }
   }
@@ -49,7 +46,14 @@ class AriaLabelIsWellFormattedVisitor extends AttributeVisitorMixin {
 export class HTMLAriaLabelIsWellFormattedRule extends ParserRule {
   name = "html-aria-label-is-well-formatted"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new AriaLabelIsWellFormattedVisitor(this.name, context)
 
     visitor.visit(result.value)

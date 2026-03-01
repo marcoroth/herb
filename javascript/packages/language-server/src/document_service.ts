@@ -7,9 +7,6 @@ export class DocumentService {
 
   constructor(connection: Connection) {
     this.documents = new TextDocuments(TextDocument)
-
-    // Make the text document manager listen on the connection
-    // for open, change and close text document events
     this.documents.listen(connection)
   }
 

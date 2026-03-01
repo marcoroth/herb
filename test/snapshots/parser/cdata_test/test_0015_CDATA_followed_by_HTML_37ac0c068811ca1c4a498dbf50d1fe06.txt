@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0015_CDATA followed by HTML"
+input: "<![CDATA[Data]]><div>HTML</div>"
+---
 @ DocumentNode (location: (1:0)-(1:31))
 └── children: (2 items)
     ├── @ CDATANode (location: (1:0)-(1:16))

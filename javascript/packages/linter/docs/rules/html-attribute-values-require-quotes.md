@@ -23,7 +23,7 @@ Additionally, always quoting is the common convention in most HTML formatters, l
 ```html
 <div id="hello"></div>
 
-<input type="text">
+<input type="text" autocomplete="off">
 
 <a href="/profile">Profile</a>
 ```
@@ -33,9 +33,9 @@ Additionally, always quoting is the common convention in most HTML formatters, l
 ```html
 <div id=hello></div>
 
-<input type=text>
+<input type=text autocomplete="off">
 
-<a href=/profile></a>
+<a href=profile></a>
 ```
 
 ## References

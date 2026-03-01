@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0027_non-breaking space in attribute value"
+input: "<div title=\"Hello World\">Content</div>"
+---
 @ DocumentNode (location: (1:0)-(1:38))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:38))

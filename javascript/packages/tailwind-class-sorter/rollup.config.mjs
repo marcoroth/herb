@@ -11,7 +11,16 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["tailwindcss", "tailwindcss/loadConfig", "tailwindcss/resolveConfig", "fs/promises", "path", "url"],
+    external: [
+      "tailwindcss",
+      "tailwindcss/loadConfig.js",
+      "tailwindcss/resolveConfig.js",
+      "tailwindcss/lib/lib/generateRules.js",
+      "tailwindcss/lib/lib/setupContextUtils.js",
+      "fs/promises",
+      "path",
+      "url"
+    ],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),
@@ -32,7 +41,16 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["tailwindcss", "tailwindcss/loadConfig", "tailwindcss/resolveConfig", "fs/promises", "path", "url"],
+    external: [
+      "tailwindcss",
+      "tailwindcss/loadConfig.js",
+      "tailwindcss/resolveConfig.js",
+      "tailwindcss/lib/lib/generateRules.js",
+      "tailwindcss/lib/lib/setupContextUtils.js",
+      "fs/promises",
+      "path",
+      "url"
+    ],
     plugins: [
       nodeResolve({ preferBuiltins: true }),
       commonjs(),

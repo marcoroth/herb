@@ -1,3 +1,17 @@
+---
+source: "Parser::ScriptStyleTest#test_0024_script tag followed by style tag with complex content"
+input: |2-
+<script>
+  if (window.width < 768) {
+    document.body.className = "mobile";
+  }
+</script>
+<style>
+  .mobile > .header {
+    font-size: 14px;
+  }
+</style>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (4 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:9))

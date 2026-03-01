@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0031_at symbol mixed with ERB"
+input: "<p>Contact <%= user.name %> @support</p>"
+---
 @ DocumentNode (location: (1:0)-(1:40))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:40))

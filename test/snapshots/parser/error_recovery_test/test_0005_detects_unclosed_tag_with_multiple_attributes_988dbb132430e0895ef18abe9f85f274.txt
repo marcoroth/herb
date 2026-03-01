@@ -1,0 +1,81 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0005_detects unclosed tag with multiple attributes"
+input: "<input type=\"text\" name=\"field\"<span>content</span>"
+---
+@ DocumentNode (location: (1:0)-(1:51))
+└── children: (2 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:31))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:31))
+    │   │       ├── message: "Opening tag `<input>` at (1:1) is missing closing `>`."
+    │   │       └── tag_name: "input" (location: (1:1)-(1:6))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "input" (location: (1:1)-(1:6))
+    │   ├── tag_closing: ∅
+    │   ├── children: (2 items)
+    │   │   ├── @ HTMLAttributeNode (location: (1:7)-(1:18))
+    │   │   │   ├── name:
+    │   │   │   │   └── @ HTMLAttributeNameNode (location: (1:7)-(1:11))
+    │   │   │   │       └── children: (1 item)
+    │   │   │   │           └── @ LiteralNode (location: (1:7)-(1:11))
+    │   │   │   │               └── content: "type"
+    │   │   │   │
+    │   │   │   │
+    │   │   │   ├── equals: "=" (location: (1:11)-(1:12))
+    │   │   │   └── value:
+    │   │   │       └── @ HTMLAttributeValueNode (location: (1:12)-(1:18))
+    │   │   │           ├── open_quote: """ (location: (1:12)-(1:13))
+    │   │   │           ├── children: (1 item)
+    │   │   │           │   └── @ LiteralNode (location: (1:13)-(1:17))
+    │   │   │           │       └── content: "text"
+    │   │   │           │
+    │   │   │           ├── close_quote: """ (location: (1:17)-(1:18))
+    │   │   │           └── quoted: true
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLAttributeNode (location: (1:19)-(1:31))
+    │   │       ├── name:
+    │   │       │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:23))
+    │   │       │       └── children: (1 item)
+    │   │       │           └── @ LiteralNode (location: (1:19)-(1:23))
+    │   │       │               └── content: "name"
+    │   │       │
+    │   │       │
+    │   │       ├── equals: "=" (location: (1:23)-(1:24))
+    │   │       └── value:
+    │   │           └── @ HTMLAttributeValueNode (location: (1:24)-(1:31))
+    │   │               ├── open_quote: """ (location: (1:24)-(1:25))
+    │   │               ├── children: (1 item)
+    │   │               │   └── @ LiteralNode (location: (1:25)-(1:30))
+    │   │               │       └── content: "field"
+    │   │               │
+    │   │               ├── close_quote: """ (location: (1:30)-(1:31))
+    │   │               └── quoted: true
+    │   │
+    │   │
+    │   └── is_void: false
+    │
+    └── @ HTMLElementNode (location: (1:31)-(1:51))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:31)-(1:37))
+        │       ├── tag_opening: "<" (location: (1:31)-(1:32))
+        │       ├── tag_name: "span" (location: (1:32)-(1:36))
+        │       ├── tag_closing: ">" (location: (1:36)-(1:37))
+        │       ├── children: []
+        │       └── is_void: false
+        │
+        ├── tag_name: "span" (location: (1:32)-(1:36))
+        ├── body: (1 item)
+        │   └── @ HTMLTextNode (location: (1:37)-(1:44))
+        │       └── content: "content"
+        │
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:44)-(1:51))
+        │       ├── tag_opening: "</" (location: (1:44)-(1:46))
+        │       ├── tag_name: "span" (location: (1:46)-(1:50))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:50)-(1:51))
+        │
+        ├── is_void: false
+        └── source: "HTML"

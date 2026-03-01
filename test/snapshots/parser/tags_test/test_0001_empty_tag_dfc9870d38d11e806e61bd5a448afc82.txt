@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0001_empty tag"
+input: "<span></span>"
+---
 @ DocumentNode (location: (1:0)-(1:13))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:13))

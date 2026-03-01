@@ -15,56 +15,34 @@ Headings relay the structure of a webpage and provide a meaningful, hierarchical
 ### ✅ Good
 
 ```erb
-<h*>Heading Content</h*>
-```
+<h1>Heading Content</h1>
 
-```erb
-<h*><span>Text</span><h*>
-```
+<h1><span>Text</span></h1>
 
-```erb
 <div role="heading" aria-level="1">Heading Content</div>
-```
 
-```erb
-<h* aria-hidden="true">Heading Content</h*>
-```
+<h1 aria-hidden="true">Heading Content</h1>
 
-```erb
-<h* hidden>Heading Content</h*>
+<h1 hidden>Heading Content</h1>
 ```
 
 ### 🚫 Bad
 
 ```erb
 <h1></h1>
-```
 
-```erb
 <h2></h2>
-```
 
-```erb
 <h3></h3>
-```
 
-```erb
 <h4></h4>
-```
 
-```erb
 <h5></h5>
-```
 
-```erb
 <h6></h6>
-```
 
-```erb
 <div role="heading" aria-level="1"></div>
-```
 
-```erb
 <h1><span aria-hidden="true">Inaccessible text</span></h1>
 ```
 

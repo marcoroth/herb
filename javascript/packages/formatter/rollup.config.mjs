@@ -8,6 +8,7 @@ const external = [
   "url",
   "fs",
   "module",
+  "@herb-tools/rewriter"
 ]
 
 function isExternal(id) {

@@ -1,3 +1,4 @@
+import dedent from "dedent"
 import { describe, test } from "vitest"
 import { HTMLNoEmptyAttributesRule } from "../../src/rules/html-no-empty-attributes.js"
 import { createLinterTest } from "../helpers/linter-test-helper.js"
@@ -142,5 +143,31 @@ describe("html-no-empty-attributes", () => {
   test("fails for data-turbo-permanent with explicit empty value", () => {
     expectWarning('Data attribute `data-turbo-permanent` should not have an empty value. Either provide a meaningful value or use `data-turbo-permanent` instead of `data-turbo-permanent=""`.')
     assertOffenses(`<div data-turbo-permanent="">Content</div>`)
+  })
+
+  test("passes for class with ERB control flow containing static text", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> valid <% else %> error <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("passes for class with ERB control flow containing output tags", () => {
+    expectNoOffenses(dedent`
+      <h1 class="<% if valid? %> <%= valid %> <% else %> <%= error %> <% end %>">
+         Content
+      </h1>
+    `)
+  })
+
+  test("fails for class with ERB control flow containing only non-output tags", () => {
+    expectWarning('Attribute `class` must not be empty. Either provide a meaningful value or remove the attribute entirely.')
+
+    assertOffenses(dedent`
+      <h1 class="<% if valid? %> <% no_op %> <% else %> <% no_op %> <% end %>">
+         Content
+      </h1>
+    `)
   })
 })

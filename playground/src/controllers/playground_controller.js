@@ -69,6 +69,7 @@ export default class extends Controller {
     "printerVerification",
     "printerIgnoreErrors",
     "printerDiff",
+    "formatterMaxLineLength",
     "printerDiffContent",
     "printerLegend",
     "shareButton",
@@ -114,6 +115,7 @@ export default class extends Controller {
     this.restoreActiveTab()
     this.restoreParserOptions()
     this.restorePrinterOptions()
+    this.restoreFormatterOptions()
     this.inputTarget.focus()
     this.load()
 
@@ -204,7 +206,7 @@ export default class extends Controller {
     this.removePrinterVerificationTooltip()
   }
 
-  handlePopState = async (event) => {
+  handlePopState = async (_event) => {
     if (this.urlUpdatedFromChangeEvent === false) {
       this.editor.setValue(this.decompressedValue)
     }
@@ -220,8 +222,10 @@ export default class extends Controller {
 
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
+    const formatterOptions = this.getFormatterOptions()
     this.setOptionsInURL(options)
     this.setPrinterOptionsInURL(printerOptions)
+    this.setFormatterOptionsInURL(formatterOptions)
   }
 
   async insert(event) {
@@ -258,7 +262,7 @@ export default class extends Controller {
 
       button.querySelector(".fa-circle-check").classList.remove("hidden")
       this.showShareSuccessMessage()
-    } catch (error) {
+    } catch (_error) {
       button.querySelector(".fa-circle-xmark").classList.remove("hidden")
       this.showShareErrorMessage()
     }
@@ -432,9 +436,23 @@ export default class extends Controller {
     }
   }
 
+  restoreFormatterOptions() {
+    const formatterOptionsFromURL = this.getFormatterOptionsFromURL()
+
+    if (Object.keys(formatterOptionsFromURL).length > 0) {
+      this.setFormatterOptions(formatterOptionsFromURL)
+    }
+  }
+
   setPrinterOptions(printerOptions) {
     if (this.hasPrinterIgnoreErrorsTarget && printerOptions.hasOwnProperty('ignoreErrors')) {
       this.printerIgnoreErrorsTarget.checked = Boolean(printerOptions.ignoreErrors)
+    }
+  }
+
+  setFormatterOptions(formatterOptions) {
+    if (this.hasFormatterMaxLineLengthTarget && formatterOptions.hasOwnProperty('maxLineLength')) {
+      this.formatterMaxLineLengthTarget.value = formatterOptions.maxLineLength
     }
   }
 
@@ -501,7 +519,7 @@ export default class extends Controller {
     )
   }
 
-  selectViewer(event) {
+  selectViewer(_event) {
     const button = this.getClosestButton(event.target)
     const tabName = button.dataset.viewer
 
@@ -509,7 +527,7 @@ export default class extends Controller {
     this.updateTabInURL(tabName)
   }
 
-  showDiagnostics(event) {
+  showDiagnostics(_event) {
     this.setActiveTab('diagnostics')
     this.updateTabInURL('diagnostics')
   }
@@ -525,7 +543,7 @@ export default class extends Controller {
     }
   }
 
-  enclargeViewer(event) {
+  enclargeViewer(_event) {
     this.currentViewer.style.position = "absolute"
     this.currentViewer.style.top = `0px`
     this.currentViewer.style.right = `10px`
@@ -537,7 +555,7 @@ export default class extends Controller {
     this.currentViewer.style.cursor = "zoom-out"
   }
 
-  shrinkViewer(event) {
+  shrinkViewer(_event) {
     this.currentViewer.style.position = null
     this.currentViewer.style.left = null
     this.currentViewer.style.top = null
@@ -603,7 +621,8 @@ export default class extends Controller {
 
     try {
       const value = this.editor ? this.editor.getValue() : this.inputTarget.value
-      const result = await analyze(Herb, value)
+      const formatterOptions = this.getFormatterOptions()
+      const result = await analyze(Herb, value, {}, {}, formatterOptions)
 
       if (result.formatted) {
         if (this.editor) {
@@ -684,7 +703,8 @@ export default class extends Controller {
     const value = this.editor ? this.editor.getValue() : this.inputTarget.value
     const options = this.getParserOptions()
     const printerOptions = this.getPrinterOptions()
-    const result = await analyze(Herb, value, options, printerOptions)
+    const formatterOptions = this.getFormatterOptions()
+    const result = await analyze(Herb, value, options, printerOptions, formatterOptions)
 
     this.updatePosition(1, 0, value.length)
 
@@ -738,7 +758,7 @@ export default class extends Controller {
     }
 
     if (this.hasTimeTarget) {
-      if (result.duration.toFixed(2) == 0.0) {
+      if (result.duration.toFixed(2) === 0.0) {
         this.timeTarget.textContent = `(in < 0.00 ms)`
       } else {
         this.timeTarget.textContent = `(in ${result.duration.toFixed(2)} ms)`
@@ -778,16 +798,25 @@ export default class extends Controller {
     if (this.hasCommitHashTarget) {
       if (typeof __COMMIT_INFO__ !== 'undefined') {
         const commitInfo = __COMMIT_INFO__
-        const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
-        if (commitInfo.ahead > 0) {
-          this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+        if (commitInfo.prNumber) {
+          const prUrl = `https://github.com/marcoroth/herb/pull/${commitInfo.prNumber}`
+
+          this.commitHashTarget.textContent = `PR #${commitInfo.prNumber} @ ${commitInfo.hash}`
+          this.commitHashTarget.href = prUrl
+          this.commitHashTarget.title = `View PR #${commitInfo.prNumber} on GitHub (commit ${commitInfo.hash})`
         } else {
-          this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
-        }
+          const githubUrl = `https://github.com/marcoroth/herb/commit/${commitInfo.hash}`
 
-        this.commitHashTarget.href = githubUrl
-        this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+          if (commitInfo.ahead > 0) {
+            this.commitHashTarget.textContent = `${commitInfo.tag} (+${commitInfo.ahead} commits) ${commitInfo.hash}`
+          } else {
+            this.commitHashTarget.textContent = `${commitInfo.tag} ${commitInfo.hash}`
+          }
+
+          this.commitHashTarget.href = githubUrl
+          this.commitHashTarget.title = `View commit ${commitInfo.hash} on GitHub`
+        }
       } else {
         this.commitHashTarget.textContent = 'unknown'
         this.commitHashTarget.removeAttribute('href')
@@ -1001,12 +1030,17 @@ export default class extends Controller {
     })
   }
 
-  onOptionChange(event) {
+  onOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
 
-  onPrinterOptionChange(event) {
+  onPrinterOptionChange(_event) {
+    this.updateURL()
+    this.analyze()
+  }
+
+  onFormatterOptionChange(_event) {
     this.updateURL()
     this.analyze()
   }
@@ -1016,6 +1050,20 @@ export default class extends Controller {
     if (this.hasPrinterIgnoreErrorsTarget) {
       options.ignoreErrors = this.printerIgnoreErrorsTarget.checked
     }
+    return options
+  }
+
+  getFormatterOptions() {
+    const options = {}
+
+    if (this.hasFormatterMaxLineLengthTarget) {
+      const value = parseInt(this.formatterMaxLineLengthTarget.value, 10)
+
+      if (!isNaN(value) && value > 0) {
+        options.maxLineLength = value
+      }
+    }
+
     return options
   }
 
@@ -1037,11 +1085,20 @@ export default class extends Controller {
   setOptionsInURL(options) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      track_whitespace: false,
+      analyze: true,
+      strict: true,
+    }
+
     const nonDefaultOptions = {}
 
     Object.keys(options).forEach(key => {
-      if (options[key] !== false && options[key] !== '' && options[key] !== null && options[key] !== undefined) {
-        nonDefaultOptions[key] = options[key]
+      const value = options[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultOptions[key] = value
       }
     })
 
@@ -1057,11 +1114,18 @@ export default class extends Controller {
   setPrinterOptionsInURL(printerOptions) {
     const url = new URL(window.parent.location)
 
+    const defaults = {
+      ignoreErrors: false,
+    }
+
     const nonDefaultPrinterOptions = {}
 
     Object.keys(printerOptions).forEach(key => {
-      if (printerOptions[key] !== false && printerOptions[key] !== '' && printerOptions[key] !== null && printerOptions[key] !== undefined) {
-        nonDefaultPrinterOptions[key] = printerOptions[key]
+      const value = printerOptions[key]
+      const defaultValue = defaults[key]
+
+      if (value !== defaultValue && value !== '' && value !== null && value !== undefined) {
+        nonDefaultPrinterOptions[key] = value
       }
     })
 
@@ -1083,6 +1147,41 @@ export default class extends Controller {
         return JSON.parse(decodeURIComponent(printerOptionsString))
       } catch (e) {
         console.warn('Failed to parse printer options from URL:', e)
+      }
+    }
+
+    return {}
+  }
+
+  setFormatterOptionsInURL(formatterOptions) {
+    const url = new URL(window.parent.location)
+
+    const nonDefaultFormatterOptions = {}
+
+    Object.keys(formatterOptions).forEach(key => {
+      if (key === 'maxLineLength' && formatterOptions[key] !== 80) {
+        nonDefaultFormatterOptions[key] = formatterOptions[key]
+      }
+    })
+
+    if (Object.keys(nonDefaultFormatterOptions).length > 0) {
+      url.searchParams.set('formatterOptions', JSON.stringify(nonDefaultFormatterOptions))
+    } else {
+      url.searchParams.delete('formatterOptions')
+    }
+
+    window.parent.history.replaceState({}, '', url)
+  }
+
+  getFormatterOptionsFromURL() {
+    const urlParams = new URLSearchParams(window.parent.location.search)
+    const formatterOptionsString = urlParams.get('formatterOptions')
+
+    if (formatterOptionsString) {
+      try {
+        return JSON.parse(decodeURIComponent(formatterOptionsString))
+      } catch (e) {
+        console.warn('Failed to parse formatter options from URL:', e)
       }
     }
 
@@ -1166,7 +1265,7 @@ export default class extends Controller {
         const startLine = diagnostic.line || diagnostic.startLineNumber || 1
         const startColumn = (diagnostic.column || diagnostic.startColumn || 0) + 1
         const endLine = diagnostic.endLine || diagnostic.endLineNumber || startLine
-        const endColumn = (diagnostic.endColumn || diagnostic.endColumn || diagnostic.column || 0) + 1
+        const endColumn = (diagnostic.endColumn || diagnostic.column || 0) + 1
 
         groupHtml += `
           <div
@@ -1643,7 +1742,7 @@ export default class extends Controller {
       }
     }
 
-    let containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
+    const containerDiv = this.noDiagnosticsTarget.querySelector('.absolute.inset-0')
 
     if (!containerDiv) {
       this.noDiagnosticsTarget.innerHTML = `
@@ -1726,7 +1825,7 @@ export default class extends Controller {
   }
 
 
-  openGitHubIssue(event) {
+  openGitHubIssue(_event) {
     const currentUrl = window.parent.location.href
 
     const issueTitle = encodeURIComponent('Bug report from Herb Playground')

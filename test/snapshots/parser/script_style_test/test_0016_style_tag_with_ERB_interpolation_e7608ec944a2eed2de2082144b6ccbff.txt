@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0016_style tag with ERB interpolation"
+input: "<style>.user-<%= @user.id %> { color: <%= @theme_color %>; }</style>"
+---
 @ DocumentNode (location: (1:0)-(1:68))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:68))

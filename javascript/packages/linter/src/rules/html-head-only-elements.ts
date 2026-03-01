@@ -1,8 +1,8 @@
 import { ParserRule } from "../types"
-import { BaseRuleVisitor, getTagName, isHeadOnlyTag } from "./rule-utils"
+import { BaseRuleVisitor, getTagName, isHeadOnlyTag, hasAttribute, getOpenTag } from "./rule-utils"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   private elementStack: string[] = []
@@ -23,12 +23,17 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
     if (!this.insideBody) return
     if (!isHeadOnlyTag(tagName)) return
     if (tagName === "title" && this.insideSVG) return
+    if (tagName === "style" && this.insideSVG) return
+    if (tagName === "meta" && this.hasItempropAttribute(node)) return
 
     this.addOffense(
       `Element \`<${tagName}>\` must be placed inside the \`<head>\` tag.`,
       node.location,
-      "error"
     )
+  }
+
+  private hasItempropAttribute(node: HTMLElementNode): boolean {
+    return hasAttribute(getOpenTag(node), "itemprop")
   }
 
   private get insideHead(): boolean {
@@ -48,14 +53,15 @@ export class HTMLHeadOnlyElementsRule extends ParserRule {
   static autocorrectable = false
   name = "html-head-only-elements"
 
-  isEnabled(_result: ParseResult, context?: Partial<LintContext>): boolean {
-    if (context?.fileName?.endsWith(".xml")) return false
-    if (context?.fileName?.endsWith(".xml.erb")) return false
-
-    return true
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
   }
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HeadOnlyElementsVisitor(this.name, context)
 
     visitor.visit(result.value)

@@ -1,8 +1,9 @@
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
-#include "include/token.h"
+#include "include/position.h"
 #include "include/util.h"
+#include "include/visitor.h"
 
 #include <prism.h>
 #include <stdio.h>
@@ -28,6 +29,8 @@ void ast_node_init(AST_NODE_T* node, const ast_node_type_T type, position_T star
 
 AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
   AST_LITERAL_NODE_T* literal = malloc(sizeof(AST_LITERAL_NODE_T));
+
+  if (!literal) { return NULL; }
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
@@ -75,4 +78,31 @@ void ast_node_set_positions_from_token(AST_NODE_T* node, const token_T* token) {
 
 bool ast_node_is(const AST_NODE_T* node, const ast_node_type_T type) {
   return node->type == type;
+}
+
+typedef struct {
+  position_T position;
+  AST_NODE_T* found_node;
+} find_erb_at_position_context_T;
+
+static bool find_erb_at_position_visitor(const AST_NODE_T* node, void* data) {
+  find_erb_at_position_context_T* context = (find_erb_at_position_context_T*) data;
+
+  if (node->type == AST_ERB_CONTENT_NODE) {
+    if (position_is_within_range(context->position, node->location.start, node->location.end)) {
+      context->found_node = (AST_NODE_T*) node;
+      return false;
+    }
+  }
+
+  return true;
+}
+
+AST_NODE_T* find_erb_content_at_offset(AST_DOCUMENT_NODE_T* document, const char* source, size_t offset) {
+  position_T position = position_from_source_with_offset(source, offset);
+  find_erb_at_position_context_T context = { .position = position, .found_node = NULL };
+
+  herb_visit_node((AST_NODE_T*) document, find_erb_at_position_visitor, &context);
+
+  return context.found_node;
 }

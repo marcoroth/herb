@@ -1,3 +1,8 @@
+---
+source: "Parser::TextContentTest#test_0035_backslash-prefixed text - issue 633"
+input: |2-
+<p class="help">Regexp with captures, must consume whole string like: <kbd>\Ahttps?://github.com/+([^/]+).*\z</kbd></p>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:119))

@@ -10,6 +10,7 @@ import { Project } from '../src/project'
 import { Settings } from '../src/settings'
 
 import { Herb } from '@herb-tools/node-wasm'
+import { Config } from '@herb-tools/config'
 
 describe('FormattingService', () => {
   let connection: Connection
@@ -44,6 +45,16 @@ describe('FormattingService', () => {
     } as unknown as Settings
 
     formattingService = new FormattingService(connection, documents, project, settings)
+
+    formattingService['config'] = {
+      projectPath: '/test/project',
+      formatter: {
+        enabled: true,
+        indentWidth: 2,
+        maxLineLength: 80
+      },
+      isFormatterEnabledForPath: () => true
+    } as unknown as Config
   })
 
   describe('formatDocument', () => {
@@ -108,9 +119,7 @@ describe('FormattingService', () => {
       const expected = dedent`
         <div>
           <h1>Title</h1>
-
           <p>Some content that is long enough to force multi-line formatting</p>
-
           <div><span>Nested content</span></div>
         </div>
       ` + '\n'
@@ -144,9 +153,7 @@ describe('FormattingService', () => {
       const expected = dedent`
         <div>
             <h1>Title</h1>
-
             <p>Content with multiple elements</p>
-
             <div><span>Nested</span></div>
         </div>
       ` + '\n'
@@ -192,6 +199,31 @@ describe('FormattingService', () => {
       ` + '\n'
 
       expect(result[0].newText).toBe(expected)
+    })
+
+    it('should add trailing newline to formatted document', async () => {
+      vi.mocked(settings.getDocumentSettings).mockResolvedValue({} as any)
+
+      const input = '<div>test</div>'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const result = await formattingService.formatDocument(params)
+
+      expect(result[0].newText).toBe('<div>test</div>\n')
+      expect(result[0].newText.endsWith('\n')).toBe(true)
+    })
+
+    it('should add trailing newline even when input already has content after last tag', async () => {
+      vi.mocked(settings.getDocumentSettings).mockResolvedValue({} as any)
+
+      const input = '<div>test</div>extra'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const result = await formattingService.formatDocument(params)
+
+      expect(result[0].newText.endsWith('\n')).toBe(true)
     })
   })
 
@@ -347,6 +379,67 @@ describe('FormattingService', () => {
         expect(result[0].newText).toMatch(/^\s*<span>test<\/span>/)
       }
     })
+
+    it('should NOT add trailing newline to range-formatted text', async () => {
+      vi.mocked(settings.getDocumentSettings).mockResolvedValue({} as any)
+
+      const input = '<div class="">test</div>'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const range: Range = {
+        start: Position.create(0, 12),
+        end: Position.create(0, 12)
+      }
+
+      const params = createRangeParams(range)
+      const result = await formattingService.formatRange(params)
+
+      if (result.length > 0) {
+        expect(result[0].newText.endsWith('\n')).toBe(false)
+      }
+    })
+
+    it('should NOT add trailing newline when formatting a simple range (issue #1125)', async () => {
+      vi.mocked(settings.getDocumentSettings).mockResolvedValue({} as any)
+
+      const input = '<div><span>content</span></div>'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const range: Range = {
+        start: Position.create(0, 5),
+        end: Position.create(0, 25)
+      }
+
+      const params = createRangeParams(range)
+      const result = await formattingService.formatRange(params)
+
+      if (result.length > 0) {
+        expect(result[0].newText.endsWith('\n')).toBe(false)
+      }
+    })
+
+    it('should preserve original trailing whitespace behavior in range formatting', async () => {
+      vi.mocked(settings.getDocumentSettings).mockResolvedValue({} as any)
+
+      const input = '<p>Hello</p>'
+      const document = TextDocument.create('file:///test/file.erb', 'erb', 1, input)
+      vi.mocked(documents.get).mockReturnValue(document)
+
+      const range: Range = {
+        start: Position.create(0, 0),
+        end: Position.create(0, 12)
+      }
+
+      const params = createRangeParams(range)
+      const result = await formattingService.formatRange(params)
+
+      if (result.length > 0) {
+        expect(result[0].newText).toBe('<p>Hello</p>')
+        expect(result[0].newText.endsWith('\n')).toBe(false)
+      }
+    })
   })
 
   describe('formatRangeIgnoreConfig', () => {
@@ -405,7 +498,7 @@ describe('FormattingService', () => {
         '      <p>\n' +
         '        some <%= formatted %> text, that needs <% needs %> <% to_be_formatted %>\n' +
         '        without being reset to the <b><i>start of the line</i></b>.\n' +
-        '      </p>\n'
+        '      </p>'
       )
     })
   })

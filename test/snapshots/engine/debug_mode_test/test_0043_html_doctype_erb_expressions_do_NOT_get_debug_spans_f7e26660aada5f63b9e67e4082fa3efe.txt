@@ -1,0 +1,8 @@
+---
+source: "Engine::DebugModeTest#test_0043_html doctype erb expressions do NOT get debug spans"
+input: "{source: \"<!DOCTYPE html PUBLIC \\\"-//W3C//DTD XHTML 1.0 Transitional//EN\\\" \\\"<%= @dtd_url %>\\\">\\n<!DOCTYPE html <%= @some_attr %>>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "'.freeze; _buf << (@dtd_url).to_s; _buf << '">
+<!DOCTYPE html '.freeze; _buf << (@some_attr).to_s; _buf << '>
+'.freeze;
+_buf.to_s

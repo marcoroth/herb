@@ -21,7 +21,7 @@ For example, instead of writing `disabled="disabled"` or `disabled="true"`, simp
 
 <button disabled>Submit</button>
 
-<select multiple>
+<select multiple></select>
 ```
 
 ### 🚫 Bad
@@ -31,7 +31,7 @@ For example, instead of writing `disabled="disabled"` or `disabled="true"`, simp
 
 <button disabled="true">Submit</button>
 
-<select multiple="multiple">
+<select multiple="multiple"></select>
 ```
 
 ## References

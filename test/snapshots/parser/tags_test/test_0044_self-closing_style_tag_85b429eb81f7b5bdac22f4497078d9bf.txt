@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0044_self-closing style tag"
+input: "<style />"
+---
 @ DocumentNode (location: (1:0)-(1:9))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:9))

@@ -1,3 +1,7 @@
+---
+source: "Lexer::Utf8Test#test_0012_Arabic text"
+input: "مرحبا"
+---
 #<Herb::Token type="TOKEN_CHARACTER" value="م" range=[0, 2] start=(1:0) end=(1:1)>
 #<Herb::Token type="TOKEN_CHARACTER" value="ر" range=[2, 4] start=(1:1) end=(1:2)>
 #<Herb::Token type="TOKEN_CHARACTER" value="ح" range=[4, 6] start=(1:2) end=(1:3)>

@@ -1,3 +1,11 @@
+---
+source: "Analyze::UnlessTest#test_0009_guard clause with break unless modifier"
+input: |2-
+<% loop do %>
+  <% break unless continue? %>
+  <div>Loop content</div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))

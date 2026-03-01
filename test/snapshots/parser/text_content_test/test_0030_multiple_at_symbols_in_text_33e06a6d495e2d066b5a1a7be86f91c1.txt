@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0030_multiple at symbols in text"
+input: "<p>Email me @john@example.com</p>"
+---
 @ DocumentNode (location: (1:0)-(1:33))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:33))

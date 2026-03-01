@@ -1,0 +1,115 @@
+---
+source: "Analyze::ConditionalOpenTagTest#test_0012_non-matching: void element in conditional"
+input: |2-
+<% if @condition %>
+  <br class="a">
+<% else %>
+  <br class="b">
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(6:0))
+└── children: (2 items)
+    ├── @ ERBIfNode (location: (1:0)-(5:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if @condition " (location: (1:2)-(1:17))
+    │   ├── tag_closing: "%>" (location: (1:17)-(1:19))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:19)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:16))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:16))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "br" (location: (2:3)-(2:5))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:15)-(2:16))
+    │   │   │   │       ├── children: (1 item)
+    │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:6)-(2:15))
+    │   │   │   │       │       ├── name:
+    │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:6)-(2:11))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:6)-(2:11))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
+    │   │   │   │       │       │
+    │   │   │   │       │       ├── equals: "=" (location: (2:11)-(2:12))
+    │   │   │   │       │       └── value:
+    │   │   │   │       │           └── @ HTMLAttributeValueNode (location: (2:12)-(2:15))
+    │   │   │   │       │               ├── open_quote: """ (location: (2:12)-(2:13))
+    │   │   │   │       │               ├── children: (1 item)
+    │   │   │   │       │               │   └── @ LiteralNode (location: (2:13)-(2:14))
+    │   │   │   │       │               │       └── content: "a"
+    │   │   │   │       │               │
+    │   │   │   │       │               ├── close_quote: """ (location: (2:14)-(2:15))
+    │   │   │   │       │               └── quoted: true
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "br" (location: (2:3)-(2:5))
+    │   │   │   ├── body: []
+    │   │   │   ├── close_tag: ∅
+    │   │   │   ├── is_void: true
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:16)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent:
+    │   │   └── @ ERBElseNode (location: (3:0)-(5:0))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " else " (location: (3:2)-(3:8))
+    │   │       ├── tag_closing: "%>" (location: (3:8)-(3:10))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (3:10)-(4:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (4:2)-(4:16))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:16))
+    │   │           │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │           │   │       ├── tag_name: "br" (location: (4:3)-(4:5))
+    │   │           │   │       ├── tag_closing: ">" (location: (4:15)-(4:16))
+    │   │           │   │       ├── children: (1 item)
+    │   │           │   │       │   └── @ HTMLAttributeNode (location: (4:6)-(4:15))
+    │   │           │   │       │       ├── name:
+    │   │           │   │       │       │   └── @ HTMLAttributeNameNode (location: (4:6)-(4:11))
+    │   │           │   │       │       │       └── children: (1 item)
+    │   │           │   │       │       │           └── @ LiteralNode (location: (4:6)-(4:11))
+    │   │           │   │       │       │               └── content: "class"
+    │   │           │   │       │       │
+    │   │           │   │       │       │
+    │   │           │   │       │       ├── equals: "=" (location: (4:11)-(4:12))
+    │   │           │   │       │       └── value:
+    │   │           │   │       │           └── @ HTMLAttributeValueNode (location: (4:12)-(4:15))
+    │   │           │   │       │               ├── open_quote: """ (location: (4:12)-(4:13))
+    │   │           │   │       │               ├── children: (1 item)
+    │   │           │   │       │               │   └── @ LiteralNode (location: (4:13)-(4:14))
+    │   │           │   │       │               │       └── content: "b"
+    │   │           │   │       │               │
+    │   │           │   │       │               ├── close_quote: """ (location: (4:14)-(4:15))
+    │   │           │   │       │               └── quoted: true
+    │   │           │   │       │
+    │   │           │   │       │
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "br" (location: (4:3)-(4:5))
+    │   │           │   ├── body: []
+    │   │           │   ├── close_tag: ∅
+    │   │           │   ├── is_void: true
+    │   │           │   └── source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (4:16)-(5:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (5:0)-(5:9))
+    │           ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │           ├── content: " end " (location: (5:2)-(5:7))
+    │           └── tag_closing: "%>" (location: (5:7)-(5:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (5:9)-(6:0))
+        └── content: "\n"

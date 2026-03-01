@@ -2,7 +2,7 @@ import { getTagName } from "@herb-tools/core"
 import { BaseRuleVisitor, getAttribute, getAttributeValue, getStaticAttributeValueContent } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLOpenTagNode } from "@herb-tools/core"
 
 class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
@@ -68,7 +68,14 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
   name = "html-input-require-autocomplete"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HTMLInputRequireAutocompleteVisitor(this.name, context)
 
     visitor.visit(result.value)

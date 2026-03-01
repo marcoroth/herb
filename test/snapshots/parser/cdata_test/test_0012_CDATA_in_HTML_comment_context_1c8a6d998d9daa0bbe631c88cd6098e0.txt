@@ -1,3 +1,7 @@
+---
+source: "Parser::CDATATest#test_0012_CDATA in HTML comment context"
+input: "<!-- Before --><![CDATA[Data]]><!-- After -->"
+---
 @ DocumentNode (location: (1:0)-(1:45))
 └── children: (3 items)
     ├── @ HTMLCommentNode (location: (1:0)-(1:15))

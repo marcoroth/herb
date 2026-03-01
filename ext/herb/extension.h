@@ -11,5 +11,6 @@ extern VALUE cToken;
 extern VALUE cResult;
 extern VALUE cLexResult;
 extern VALUE cParseResult;
+extern VALUE cParserOptions;
 
 #endif

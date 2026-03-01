@@ -1,0 +1,6 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0006_left trim does not affect non-whitespace content"
+input: "{source: \"text<%- if true %>content<%- end %>\", options: {}}"
+---
+_buf = ::String.new; _buf << 'text'.freeze; if true; _buf << 'content'.freeze; end;
+_buf.to_s

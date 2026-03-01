@@ -1,3 +1,9 @@
+---
+source: "Parser::AttributesTest#test_0010_attribute value with newline before equal sign"
+input: |2-
+<input value
+="value" />
+---
 @ DocumentNode (location: (1:0)-(2:11))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(2:11))

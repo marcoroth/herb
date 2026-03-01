@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0001_script tag with less than comparison"
+input: "<script>if (x < 10) { console.log(\"less\"); }</script>"
+---
 @ DocumentNode (location: (1:0)-(1:53))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:53))

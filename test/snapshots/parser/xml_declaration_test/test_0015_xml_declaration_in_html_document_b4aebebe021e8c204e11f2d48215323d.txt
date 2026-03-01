@@ -1,3 +1,10 @@
+---
+source: "Parser::XMLDeclarationTest#test_0015_xml declaration in html document"
+input: |2-
+<!DOCTYPE html>
+<?xml version="1.0"?>
+<html><body>Content</body></html>
+---
 @ DocumentNode (location: (1:0)-(3:33))
 └── children: (3 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))

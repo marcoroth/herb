@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Herb Java CLI wrapper script
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="$SCRIPT_DIR/../../build"
+CLASSES_DIR="$SCRIPT_DIR/../target/classes"
+
+JAVA_CMD=java
+
+exec "$JAVA_CMD" \
+  --enable-native-access=ALL-UNNAMED \
+  -Djava.library.path="$BUILD_DIR" \
+  -cp "$CLASSES_DIR" \
+  org.herb.CLI "$@"

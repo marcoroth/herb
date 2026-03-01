@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("formats ERB comments", () => {
@@ -101,11 +105,8 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <%# level 1 %>
-
       <%#   level 2 %>
-
       <%#     level 3 %>
-
       <%#       level 4 %>
     `)
   })
@@ -130,11 +131,8 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <%# level 1 %>
-
       <%# level 2 %>
-
       <%# level 3 %>
-
       <%# level 4 %>
     `)
   })
@@ -314,10 +312,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("handles long ERB comments that exceed maxLineLength", () => {
-    const source = '<%# herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp %>'
-
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch('<%# herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp herb lsp %>')
   })
 
   test("handles various long ERB comment lengths", () => {

@@ -35,6 +35,7 @@ module Parser
     end
 
     test "script tag with ERB-like content in string" do
+      # TODO: this is not right yet
       assert_parsed_snapshot(%(<script>console.log("<%");</script>))
     end
 

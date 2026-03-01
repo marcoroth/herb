@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0035_style tag with CSS greater than selector"
+input: "<style>.parent > .child { margin: 0; }</style>"
+---
 @ DocumentNode (location: (1:0)-(1:46))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:46))

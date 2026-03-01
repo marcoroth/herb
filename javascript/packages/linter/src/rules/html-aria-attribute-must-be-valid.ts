@@ -1,7 +1,7 @@
 import { ParserRule } from "../types.js"
 import { ARIA_ATTRIBUTES, AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
 
-import type { LintOffense, LintContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
 
 class AriaAttributeMustBeValid extends AttributeVisitorMixin {
@@ -20,7 +20,6 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
     this.addOffense(
       `The attribute \`${attributeName}\` is not a valid ARIA attribute. ARIA attributes must match the WAI-ARIA specification.`,
       attributeNode.location,
-      "error"
     )
   }
 }
@@ -28,7 +27,14 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
 export class HTMLAriaAttributeMustBeValid extends ParserRule {
   name = "html-aria-attribute-must-be-valid"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new AriaAttributeMustBeValid(this.name, context)
 
     visitor.visit(result.value)

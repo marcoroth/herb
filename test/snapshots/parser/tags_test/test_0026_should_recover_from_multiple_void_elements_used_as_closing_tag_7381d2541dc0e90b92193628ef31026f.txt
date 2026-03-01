@@ -1,0 +1,153 @@
+---
+source: "Parser::TagsTest#test_0026_should recover from multiple void elements used as closing tag"
+input: |2-
+<main>
+  <div>
+    </br>
+    <span>Hello</span>
+    </br>
+    <p>World</p>
+  </div>
+</main>
+---
+@ DocumentNode (location: (1:0)-(9:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(8:7))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:6))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "main" (location: (1:1)-(1:5))
+    │   │       ├── tag_closing: ">" (location: (1:5)-(1:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "main" (location: (1:1)-(1:5))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:6)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(7:8))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:7))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:6)-(2:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (2:3)-(2:6))
+    │   │   │   ├── body: (9 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:7)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLCloseTagNode (location: (3:4)-(3:9))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ VoidElementClosingTagError (location: (3:4)-(3:9))
+    │   │   │   │   │   │       ├── message: "`br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`."
+    │   │   │   │   │   │       ├── tag_name: "br" (location: (3:6)-(3:8))
+    │   │   │   │   │   │       ├── expected: "<br />"
+    │   │   │   │   │   │       └── found: "</br>"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "</" (location: (3:4)-(3:6))
+    │   │   │   │   │   ├── tag_name: "br" (location: (3:6)-(3:8))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── tag_closing: ">" (location: (3:8)-(3:9))
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLTextNode (location: (3:9)-(4:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (4:4)-(4:22))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (4:4)-(4:10))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (4:4)-(4:5))
+    │   │   │   │   │   │       ├── tag_name: "span" (location: (4:5)-(4:9))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (4:9)-(4:10))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "span" (location: (4:5)-(4:9))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (4:10)-(4:15))
+    │   │   │   │   │   │       └── content: "Hello"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (4:15)-(4:22))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (4:15)-(4:17))
+    │   │   │   │   │   │       ├── tag_name: "span" (location: (4:17)-(4:21))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (4:21)-(4:22))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLTextNode (location: (4:22)-(5:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLCloseTagNode (location: (5:4)-(5:9))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ VoidElementClosingTagError (location: (5:4)-(5:9))
+    │   │   │   │   │   │       ├── message: "`br` is a void element and should not be used as a closing tag. Use `<br>` or `<br />` instead of `</br>`."
+    │   │   │   │   │   │       ├── tag_name: "br" (location: (5:6)-(5:8))
+    │   │   │   │   │   │       ├── expected: "<br />"
+    │   │   │   │   │   │       └── found: "</br>"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "</" (location: (5:4)-(5:6))
+    │   │   │   │   │   ├── tag_name: "br" (location: (5:6)-(5:8))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── tag_closing: ">" (location: (5:8)-(5:9))
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLTextNode (location: (5:9)-(6:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (6:4)-(6:16))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (6:4)-(6:7))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (6:4)-(6:5))
+    │   │   │   │   │   │       ├── tag_name: "p" (location: (6:5)-(6:6))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (6:6)-(6:7))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "p" (location: (6:5)-(6:6))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLTextNode (location: (6:7)-(6:12))
+    │   │   │   │   │   │       └── content: "World"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (6:12)-(6:16))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (6:12)-(6:14))
+    │   │   │   │   │   │       ├── tag_name: "p" (location: (6:14)-(6:15))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (6:15)-(6:16))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (6:16)-(7:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (7:2)-(7:8))
+    │   │   │   │       ├── tag_opening: "</" (location: (7:2)-(7:4))
+    │   │   │   │       ├── tag_name: "div" (location: (7:4)-(7:7))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (7:7)-(7:8))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (7:8)-(8:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (8:0)-(8:7))
+    │   │       ├── tag_opening: "</" (location: (8:0)-(8:2))
+    │   │       ├── tag_name: "main" (location: (8:2)-(8:6))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (8:6)-(8:7))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (8:7)-(9:0))
+        └── content: "\n"

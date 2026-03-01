@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0028_at symbol (@) in text content - issue 285"
+input: "<p>Did we get it wrong? Respond with <em>@reverse</em> to remove the receipt.</p>"
+---
 @ DocumentNode (location: (1:0)-(1:81))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:81))

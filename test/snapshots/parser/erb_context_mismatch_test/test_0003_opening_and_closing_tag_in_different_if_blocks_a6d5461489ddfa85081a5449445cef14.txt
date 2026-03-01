@@ -1,0 +1,123 @@
+---
+source: "Parser::ERBContextMismatchTest#test_0003_opening and closing tag in different if blocks"
+input: |2-
+<% if wrap_in_dialog? %>
+  <dialog>
+<% end %>
+
+<div>Stuff</div>
+
+<% if wrap_in_dialog? %>
+  </dialog>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(10:0))
+└── children: (2 items)
+    ├── @ HTMLConditionalElementNode (location: (1:0)-(9:9))
+    │   ├── condition: "wrap_in_dialog?"
+    │   ├── open_conditional:
+    │   │   └── @ ERBIfNode (location: (1:0)-(3:9))
+    │   │       ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   │       ├── content: " if wrap_in_dialog? " (location: (1:2)-(1:22))
+    │   │       ├── tag_closing: "%>" (location: (1:22)-(1:24))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (1:24)-(2:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:10))
+    │   │       │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       │   │   ├── tag_name: "dialog" (location: (2:3)-(2:9))
+    │   │       │   │   ├── tag_closing: ">" (location: (2:9)-(2:10))
+    │   │       │   │   ├── children: []
+    │   │       │   │   └── is_void: false
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (2:10)-(3:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (3:0)-(3:9))
+    │   │               ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │               ├── content: " end " (location: (3:2)-(3:7))
+    │   │               └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │   │
+    │   │
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:10))
+    │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │       ├── tag_name: "dialog" (location: (2:3)-(2:9))
+    │   │       ├── tag_closing: ">" (location: (2:9)-(2:10))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (3:9)-(5:0))
+    │   │   │   └── content: "\n\n"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (5:0)-(5:16))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (5:0)-(5:5))
+    │   │   │   │       ├── tag_opening: "<" (location: (5:0)-(5:1))
+    │   │   │   │       ├── tag_name: "div" (location: (5:1)-(5:4))
+    │   │   │   │       ├── tag_closing: ">" (location: (5:4)-(5:5))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "div" (location: (5:1)-(5:4))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (5:5)-(5:10))
+    │   │   │   │       └── content: "Stuff"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (5:10)-(5:16))
+    │   │   │   │       ├── tag_opening: "</" (location: (5:10)-(5:12))
+    │   │   │   │       ├── tag_name: "div" (location: (5:12)-(5:15))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (5:15)-(5:16))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:16)-(7:0))
+    │   │       └── content: "\n\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (8:2)-(8:11))
+    │   │       ├── tag_opening: "</" (location: (8:2)-(8:4))
+    │   │       ├── tag_name: "dialog" (location: (8:4)-(8:10))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (8:10)-(8:11))
+    │   │
+    │   ├── close_conditional:
+    │   │   └── @ ERBIfNode (location: (7:0)-(9:9))
+    │   │       ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │   │       ├── content: " if wrap_in_dialog? " (location: (7:2)-(7:22))
+    │   │       ├── tag_closing: "%>" (location: (7:22)-(7:24))
+    │   │       ├── then_keyword: ∅
+    │   │       ├── statements: (3 items)
+    │   │       │   ├── @ HTMLTextNode (location: (7:24)-(8:2))
+    │   │       │   │   └── content: "\n  "
+    │   │       │   │
+    │   │       │   ├── @ HTMLCloseTagNode (location: (8:2)-(8:11))
+    │   │       │   │   ├── tag_opening: "</" (location: (8:2)-(8:4))
+    │   │       │   │   ├── tag_name: "dialog" (location: (8:4)-(8:10))
+    │   │       │   │   ├── children: []
+    │   │       │   │   └── tag_closing: ">" (location: (8:10)-(8:11))
+    │   │       │   │
+    │   │       │   └── @ HTMLTextNode (location: (8:11)-(9:0))
+    │   │       │       └── content: "\n"
+    │   │       │
+    │   │       ├── subsequent: ∅
+    │   │       └── end_node:
+    │   │           └── @ ERBEndNode (location: (9:0)-(9:9))
+    │   │               ├── tag_opening: "<%" (location: (9:0)-(9:2))
+    │   │               ├── content: " end " (location: (9:2)-(9:7))
+    │   │               └── tag_closing: "%>" (location: (9:7)-(9:9))
+    │   │
+    │   │
+    │   ├── tag_name: "dialog" (location: (2:3)-(2:9))
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (9:9)-(10:0))
+        └── content: "\n"

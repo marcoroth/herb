@@ -1,32 +1,12 @@
-import { BaseSourceRuleVisitor } from "./rule-utils.js"
-import { SourceRule } from "../types.js"
-import { Location, Position } from "@herb-tools/core"
+import { type Node, Location } from "@herb-tools/core"
 
-import type { Node } from "@herb-tools/core"
-import type { LintOffense, LintContext, BaseAutofixContext } from "../types.js"
+import { BaseSourceRuleVisitor, positionFromOffset } from "./rule-utils.js"
+import { SourceRule } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, BaseAutofixContext, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraNewLineAutofixContext extends BaseAutofixContext {
   startOffset: number
   endOffset: number
-}
-
-function positionFromOffset(source: string, offset: number): Position {
-  let line = 1
-  let column = 0
-  let currentOffset = 0
-
-  for (let i = 0; i < source.length && currentOffset < offset; i++) {
-    const char = source[i]
-    currentOffset++
-    if (char === "\n") {
-      line++
-      column = 0
-    } else {
-      column++
-    }
-  }
-
-  return new Position(line, column)
 }
 
 class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAutofixContext> {
@@ -49,7 +29,6 @@ class ERBNoExtraNewLineVisitor extends BaseSourceRuleVisitor<ERBNoExtraNewLineAu
       this.addOffense(
         `Extra blank line detected. Remove ${extraLines} blank ${extraLines === 1 ? "line" : "lines"} to maintain consistent spacing (max 2 allowed).`,
         location,
-        "error",
         {
           node: null as any as Node,
           startOffset,
@@ -64,7 +43,14 @@ export class ERBNoExtraNewLineRule extends SourceRule {
   static autocorrectable = true
   name = "erb-no-extra-newline"
 
-  check(source: string, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new ERBNoExtraNewLineVisitor(this.name, context)
 
     visitor.visit(source)

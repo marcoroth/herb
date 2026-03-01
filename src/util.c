@@ -2,7 +2,6 @@
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,13 +10,25 @@ int is_newline(int character) {
   return character == '\n' || character == '\r';
 }
 
-char* escape_newlines(const char* input) {
+int is_whitespace(int character) {
+  return character == ' ' || character == '\t' || character == '\n' || character == '\r';
+}
+
+const char* skip_whitespace(const char* pointer) {
+  while (is_whitespace(*pointer)) {
+    pointer++;
+  }
+
+  return pointer;
+}
+
+hb_string_T escape_newlines(hb_string_T input) {
   hb_buffer_T buffer;
 
-  hb_buffer_init(&buffer, strlen(input));
+  hb_buffer_init(&buffer, input.length);
 
-  for (size_t i = 0; i < strlen(input); ++i) {
-    switch (input[i]) {
+  for (size_t i = 0; i < input.length; ++i) {
+    switch (input.data[i]) {
       case '\n': {
         hb_buffer_append_char(&buffer, '\\');
         hb_buffer_append_char(&buffer, 'n');
@@ -27,12 +38,12 @@ char* escape_newlines(const char* input) {
         hb_buffer_append_char(&buffer, 'r');
       } break;
       default: {
-        hb_buffer_append_char(&buffer, input[i]);
+        hb_buffer_append_char(&buffer, input.data[i]);
       }
     }
   }
 
-  return buffer.value;
+  return hb_string(buffer.value);
 }
 
 static hb_string_T wrap_string(hb_string_T input, char character) {

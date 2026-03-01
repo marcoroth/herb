@@ -1,3 +1,11 @@
+---
+source: "Analyze::IfTest#test_0012_guard clause with break if modifier"
+input: |2-
+<% loop do %>
+  <% break if condition %>
+  <div>Loop content</div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(4:9))

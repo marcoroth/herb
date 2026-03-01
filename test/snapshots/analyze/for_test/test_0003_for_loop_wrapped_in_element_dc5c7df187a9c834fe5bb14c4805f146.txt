@@ -1,3 +1,12 @@
+---
+source: "Analyze::ForTest#test_0003_for loop wrapped in element"
+input: |2-
+<h1>
+  <% for i in 1..5 %>
+    <%= i %>
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:5))

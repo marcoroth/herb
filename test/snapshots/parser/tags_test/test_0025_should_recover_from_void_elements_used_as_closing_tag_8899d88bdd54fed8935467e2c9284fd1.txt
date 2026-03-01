@@ -1,3 +1,16 @@
+---
+source: "Parser::TagsTest#test_0025_should recover from void elements used as closing tag"
+input: |2-
+
+        <main>
+          <div>
+            </br>
+            <span>Hello</span>
+            <p>World</p>
+          </div>
+        </main>
+      
+---
 @ DocumentNode (location: (1:0)-(9:6))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:8))

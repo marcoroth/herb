@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0025_non-breaking space mixed with ERB - issue 310"
+input: "<p><%= hello %> !</p>"
+---
 @ DocumentNode (location: (1:0)-(1:21))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:21))

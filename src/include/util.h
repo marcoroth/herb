@@ -6,8 +6,10 @@
 #include <stdlib.h>
 
 int is_newline(int character);
+int is_whitespace(int character);
+const char* skip_whitespace(const char* pointer);
 
-char* escape_newlines(const char* input);
+hb_string_T escape_newlines(hb_string_T input);
 hb_string_T quoted_string(hb_string_T input);
 char* herb_strdup(const char* s);
 

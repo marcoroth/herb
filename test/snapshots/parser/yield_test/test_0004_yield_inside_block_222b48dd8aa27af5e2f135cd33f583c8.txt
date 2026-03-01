@@ -1,0 +1,34 @@
+---
+source: "Parser::YieldTest#test_0004_yield inside block"
+input: |2-
+<% container do %>
+  <%= yield :content %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " container do " (location: (1:2)-(1:16))
+    │   ├── tag_closing: "%>" (location: (1:16)-(1:18))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:18)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBYieldNode (location: (2:2)-(2:23))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " yield :content " (location: (2:5)-(2:21))
+    │   │   │   └── tag_closing: "%>" (location: (2:21)-(2:23))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:23)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

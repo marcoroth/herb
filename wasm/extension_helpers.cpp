@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 
 #include "nodes.h"
 
@@ -25,6 +26,16 @@ using namespace emscripten;
 
 val CreateString(const char* string) {
   return string ? val(string) : val::null();
+}
+
+val CreateStringFromHbString(hb_string_T string) {
+  if (hb_string_is_empty(string)) {
+    return val::null();
+  } else {
+    std::string cppString(string.data, string.length);
+
+    return val(cppString);
+  }
 }
 
 val CreatePosition(position_T position) {
@@ -104,7 +115,7 @@ val CreateLexResult(hb_array_T* tokens, const std::string& source) {
   return result;
 }
 
-val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
+val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source, parser_options_T* options){
   val Object = val::global("Object");
   val Array = val::global("Array");
 
@@ -117,6 +128,13 @@ val CreateParseResult(AST_DOCUMENT_NODE_T *root, const std::string& source){
   result.set("source", val(source));
   result.set("warnings", warningsArray);
   result.set("errors", errorsArray);
+
+  val options_object = Object.new_();
+  options_object.set("strict", val(options->strict));
+  options_object.set("track_whitespace", val(options->track_whitespace));
+  options_object.set("analyze", val(options->analyze));
+
+  result.set("options", options_object);
 
   return result;
 }

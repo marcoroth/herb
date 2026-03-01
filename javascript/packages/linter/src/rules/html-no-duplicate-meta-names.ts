@@ -1,16 +1,17 @@
-import { isHTMLElementNode } from "@herb-tools/core"
+import { isHTMLElementNode, isHTMLOpenTagNode } from "@herb-tools/core"
 import { getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
 
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
 import { ParserRule, BaseAutofixContext } from "../types"
 
 import type { ParseResult, HTMLElementNode, HTMLAttributeNode } from "@herb-tools/core"
-import type { LintOffense, LintContext } from "../types"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
 
 interface MetaTag {
   node: HTMLElementNode
   nameValue?: string
   httpEquivValue?: string
+  mediaValue?: string
 }
 
 interface ControlFlowState {
@@ -103,18 +104,21 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
   }
 
   private extractAttributes(node: HTMLElementNode, metaTag: MetaTag): void {
-    if (isHTMLElementNode(node) && node.open_tag) {
-      forEachAttribute(node.open_tag as any, (attributeNode: HTMLAttributeNode) => {
-        const name = getAttributeName(attributeNode)
-        const value = getAttributeValue(attributeNode)?.trim()
+    if (!isHTMLElementNode(node)) return
+    if (!isHTMLOpenTagNode(node.open_tag)) return
 
-        if (name === "name" && value) {
-          metaTag.nameValue = value
-        } else if (name === "http-equiv" && value) {
-          metaTag.httpEquivValue = value
-        }
-      })
-    }
+    forEachAttribute(node.open_tag, (attributeNode: HTMLAttributeNode) => {
+      const name = getAttributeName(attributeNode)
+      const value = getAttributeValue(attributeNode)?.trim()
+
+      if (name === "name" && value) {
+        metaTag.nameValue = value
+      } else if (name === "http-equiv" && value) {
+        metaTag.httpEquivValue = value
+      } else if (name === "media" && value) {
+        metaTag.mediaValue = value
+      }
+    })
   }
 
   private handleControlFlowMeta(metaTag: MetaTag): void {
@@ -147,7 +151,6 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
         this.addOffense(
           `Duplicate \`<meta>\` tag with ${attributeDescription}${contextMsg}. ${attributeType} should be unique within the \`<head>\` section.`,
           metaTag.node.location,
-          "error"
         )
 
         return
@@ -156,6 +159,16 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
   }
 
   private areMetaTagsDuplicate(meta1: MetaTag, meta2: MetaTag): boolean {
+    if (meta1.mediaValue && meta2.mediaValue) {
+      if (meta1.mediaValue.toLowerCase() !== meta2.mediaValue.toLowerCase()) {
+        return false
+      }
+    }
+
+    if ((meta1.mediaValue && !meta2.mediaValue) || (!meta1.mediaValue && meta2.mediaValue)) {
+      return false
+    }
+
     if (meta1.nameValue && meta2.nameValue) {
       return meta1.nameValue.toLowerCase() === meta2.nameValue.toLowerCase()
     }
@@ -172,7 +185,14 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
   name = "html-no-duplicate-meta-names"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
     const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
 
     visitor.visit(result.value)

@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 require "json"
 require "time"
@@ -30,6 +31,9 @@ module Herb
     class CompilationError < StandardError
     end
 
+    class InvalidRubyError < CompilationError
+    end
+
     def initialize(input, properties = {})
       @filename = properties[:filename] ? ::Pathname.new(properties[:filename]) : nil
       @project_path = ::Pathname.new(properties[:project_path] || Dir.pwd)
@@ -43,7 +47,7 @@ module Herb
 
       @bufvar = properties[:bufvar] || properties[:outvar] || "_buf"
       @escape = properties.fetch(:escape) { properties.fetch(:escape_html, false) }
-      @escapefunc = properties[:escapefunc]
+      @escapefunc = properties.fetch(:escapefunc, @escape ? "__herb.h" : "::Herb::Engine.h")
       @src = properties[:src] || String.new
       @chain_appends = properties[:chain_appends]
       @buffer_on_stack = false
@@ -51,6 +55,7 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
       if @debug && @visitors.empty?
@@ -67,12 +72,6 @@ module Herb
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
       end
 
-      @escapefunc ||= if @escape
-                        "__herb.h"
-                      else
-                        "::Herb::Engine.h"
-                      end
-
       @freeze = properties[:freeze]
       @freeze_template_literals = properties.fetch(:freeze_template_literals, true)
       @text_end = @freeze_template_literals ? "'.freeze" : "'"
@@ -80,6 +79,8 @@ module Herb
       bufval = properties[:bufval] || "::String.new"
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
+
+      preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
 
       @src << "# frozen_string_literal: true\n" if @freeze
 
@@ -93,11 +94,9 @@ module Herb
       end
 
       @src << "__herb = ::Herb::Engine; " if @escape && @escapefunc == "__herb.h"
-
       @src << preamble
-      @src << "\n" unless preamble.end_with?("\n")
 
-      parse_result = ::Herb.parse(input)
+      parse_result = ::Herb.parse(input, track_whitespace: true, strict: @strict)
       ast = parse_result.value
       parser_errors = parse_result.errors
 
@@ -136,9 +135,21 @@ module Herb
       end
 
       @src << "\n" unless @src.end_with?("\n")
-      send(:add_postamble, postamble)
+      add_postamble(postamble)
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
+
+      if properties.fetch(:validate_ruby, false)
+        require "prism"
+
+        prism_result = Prism.parse(@src)
+        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+        if syntax_errors.any?
+          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
+          raise InvalidRubyError, "Compiled template produced invalid Ruby:\n#{details}"
+        end
+      end
 
       @src.freeze
       freeze
@@ -180,6 +191,14 @@ module Herb
       end
     end
 
+    def self.comment?(code)
+      code.include?("#")
+    end
+
+    def self.heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
     protected
 
     def add_text(text)
@@ -196,11 +215,13 @@ module Herb
       if code.include?("=begin") || code.include?("=end")
         @src << "\n" << code << "\n"
       else
+        @src.chomp! if @src.end_with?("\n") && code.start_with?(" ") && !code.end_with?("\n")
+
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if code.include?("#")
-          @src << "\n"
+        if self.class.comment?(code) || self.class.heredoc?(code)
+          @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
         end
@@ -218,11 +239,15 @@ module Herb
     end
 
     def add_expression_result(code)
-      with_buffer { @src << " << (" << code << ").to_s" }
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code) << ").to_s"
+      }
     end
 
     def add_expression_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "((" << code << "))" }
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code) << "))"
+      }
     end
 
     def add_expression_block(indicator, code)
@@ -234,11 +259,42 @@ module Herb
     end
 
     def add_expression_block_result(code)
-      with_buffer { @src << " << " << code }
+      with_buffer {
+        @src << " << (" << code << trailing_newline(code)
+      }
     end
 
     def add_expression_block_result_escaped(code)
-      with_buffer { @src << " << " << @escapefunc << "(" << code << ")" }
+      with_buffer {
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
+      }
+    end
+
+    def add_expression_block_end(code, escaped: false)
+      terminate_expression
+
+      trailing_newline = code.end_with?("\n")
+      code_stripped = code.chomp
+
+      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+
+      @src << " " << code_stripped
+      @src << (escaped ? "))" : ")")
+
+      @src << if code.include?("#") || trailing_newline
+                "\n"
+              else
+                ";"
+              end
+
+      @buffer_on_stack = false
+    end
+
+    def trailing_newline(code)
+      return "\n" if self.class.comment?(code)
+      return "\n" if self.class.heredoc?(code)
+
+      ""
     end
 
     def add_postamble(postamble)
@@ -291,10 +347,10 @@ module Herb
       when :overlay
         add_parser_error_overlay(parser_errors, input)
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       when :none
         @src << "\n" unless @src.end_with?("\n")
-        send(:add_postamble, "#{@bufvar}.to_s\n")
+        add_postamble("#{@bufvar}.to_s\n")
       end
     end
 
@@ -350,7 +406,7 @@ module Herb
             data-filename="#{escape_attr(@relative_file_path)}"
             data-message="#{escaped_message}"
             #{"data-suggestion=\"#{escaped_suggestion}\"" if error[:suggestion]}
-            data-timestamp="#{Time.now.iso8601}"
+            data-timestamp="#{Time.now.utc.iso8601}"
           >#{html_fragment}</template>
         TEMPLATE
       }.join

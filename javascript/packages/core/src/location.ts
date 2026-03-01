@@ -10,11 +10,20 @@ export class Location {
   readonly start: Position
   readonly end: Position
 
-  static from(location: SerializedLocation) {
-    const start = Position.from(location.start)
-    const end = Position.from(location.end)
+  static from(location: SerializedLocation): Location
+  static from(line: number, column: number, endLine: number, endColumn: number): Location
+  static from(locationOrLine: SerializedLocation | number, column?: number, endLine?: number, endColumn?: number): Location {
+    if (typeof locationOrLine === "number") {
+      const start = Position.from(locationOrLine, column!)
+      const end = Position.from(endLine!, endColumn!)
 
-    return new Location(start, end)
+      return new Location(start, end)
+    } else {
+      const start = Position.from(locationOrLine.start)
+      const end = Position.from(locationOrLine.end)
+
+      return new Location(start, end)
+    }
   }
 
   static get zero() {

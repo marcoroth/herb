@@ -1,3 +1,7 @@
+---
+source: "Parser::BooleanAttributesTest#test_0003_boolean attribute without whitespace and without self-closing tag"
+input: "<input required>"
+---
 @ DocumentNode (location: (1:0)-(1:16))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:16))

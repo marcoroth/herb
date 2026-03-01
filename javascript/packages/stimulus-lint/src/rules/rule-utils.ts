@@ -53,8 +53,7 @@ export abstract class StimulusRuleVisitor extends BaseRuleVisitor {
 
       this.addOffense(
         `Unknown Stimulus controller \`${identifier}\`. Make sure the controller is defined in your project.${suggestion}`,
-        location,
-        "error"
+        location
       )
 
       return true
@@ -214,7 +213,7 @@ export abstract class StimulusAttributeVisitor extends AttributeVisitorMixin {
 
 export abstract class HerbParserRule extends ParserRule {
   isEnabled(_result: ParseResult, context?: Partial<StimulusLintContext>): boolean {
-    if (!context || !context.stimulusProject) return false
+    if (!context || !context.stimulusProject) return false
 
     return true
   }

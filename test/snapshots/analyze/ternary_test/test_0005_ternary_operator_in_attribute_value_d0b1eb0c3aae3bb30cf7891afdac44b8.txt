@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0005_ternary operator in attribute value"
+input: |2-
+<div class="<%= active? ? 'active' : 'inactive' %>">Content</div>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:65))

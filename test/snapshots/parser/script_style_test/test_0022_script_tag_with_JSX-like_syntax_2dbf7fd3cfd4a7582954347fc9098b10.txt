@@ -1,3 +1,14 @@
+---
+source: "Parser::ScriptStyleTest#test_0022_script tag with JSX-like syntax"
+input: |2-
+<script>
+  const element = (
+    <div className="greeting">
+      <h1>Hello, {name}!</h1>
+    </div>
+  );
+</script>
+---
 @ DocumentNode (location: (1:0)-(8:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(7:9))

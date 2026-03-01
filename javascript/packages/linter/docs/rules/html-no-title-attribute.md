@@ -33,7 +33,7 @@ This rule allows `title` on `<iframe>` and `<link>` elements where it serves spe
 <button aria-label="Close dialog">×</button>
 
 <!-- Use aria-describedby for additional context -->
-<input type="password" aria-describedby="pwd-help">
+<input type="password" aria-describedby="pwd-help" autocomplete="off">
 <div id="pwd-help">Password must be at least 8 characters</div>
 
 <!-- Exceptions: title allowed on iframe and links -->
@@ -52,7 +52,7 @@ This rule allows `title` on `<iframe>` and `<link>` elements where it serves spe
 <span title="Required field">*</span>
 
 <!-- Don't use title on form elements -->
-<input type="text" title="Enter your name">
+<input type="text" title="Enter your name" autocomplete="off">
 
 <select title="Choose your country">
   <option>US</option>

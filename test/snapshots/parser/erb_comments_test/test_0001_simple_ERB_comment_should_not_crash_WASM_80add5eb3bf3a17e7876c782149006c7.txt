@@ -1,3 +1,7 @@
+---
+source: "Parser::ERBCommentsTest#test_0001_simple ERB comment should not crash WASM"
+input: "<%# ERB Comment %>"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(1:18))

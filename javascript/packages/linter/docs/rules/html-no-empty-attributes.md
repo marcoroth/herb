@@ -40,7 +40,7 @@ This rule helps ensure that required attributes are only added when they are pop
 ```erb
 <div id="header"></div>
 <img src="/logo.png" alt="Company logo">
-<input type="text" name="email">
+<input type="text" name="email" autocomplete="off">
 
 <!-- Dynamic attributes with meaningful values -->
 <div data-<%= key %>="<%= value %>" aria-<%= prop %>="<%= description %>">
@@ -55,8 +55,8 @@ This rule helps ensure that required attributes are only added when they are pop
 
 ```erb
 <div id=""></div>
-<img src="">
-<input name="">
+<img src="" alt="Company logo">
+<input name="" autocomplete="off">
 
 <div data-config="">Content</div>
 <button aria-label="">×</button>

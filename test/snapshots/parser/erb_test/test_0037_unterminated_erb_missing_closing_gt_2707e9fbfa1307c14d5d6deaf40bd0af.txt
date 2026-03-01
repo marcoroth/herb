@@ -1,0 +1,48 @@
+---
+source: "Parser::ERBTest#test_0037_unterminated erb missing closing >"
+input: "<% if true %"
+---
+@ DocumentNode (location: (1:0)-(1:12))
+├── errors: (5 errors)
+│   ├── @ RubyParseError (location: (1:12)-(1:12))
+│   │   ├── message: "expect_expression_after_operator: unexpected end-of-input; expected an expression after the operator"
+│   │   ├── error_message: "unexpected end-of-input; expected an expression after the operator"
+│   │   ├── diagnostic_id: "expect_expression_after_operator"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:12)-(1:12))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:12)-(1:12))
+│   │   ├── message: "conditional_predicate_term: expected `then` or `;` or '\\n'"
+│   │   ├── error_message: "expected `then` or `;` or '\\n'"
+│   │   ├── diagnostic_id: "conditional_predicate_term"
+│   │   └── level: "syntax"
+│   │
+│   ├── @ RubyParseError (location: (1:12)-(1:12))
+│   │   ├── message: "unexpected_token_close_context: unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── error_message: "unexpected end-of-input, assuming it is closing the parent top level context"
+│   │   ├── diagnostic_id: "unexpected_token_close_context"
+│   │   └── level: "syntax"
+│   │
+│   └── @ RubyParseError (location: (1:3)-(1:5))
+│       ├── message: "conditional_term: expected an `end` to close the conditional clause"
+│       ├── error_message: "expected an `end` to close the conditional clause"
+│       ├── diagnostic_id: "conditional_term"
+│       └── level: "syntax"
+│
+└── children: (1 item)
+    └── @ ERBContentNode (location: (1:0)-(1:12))
+        ├── errors: (1 error)
+        │   └── @ UnclosedERBTagError (location: (1:0)-(1:12))
+        │       ├── message: "ERB tag `<%` at (1:0) is missing closing `%>`."
+        │       └── opening_tag: "<%" (location: (1:0)-(1:2))
+        │
+        ├── tag_opening: "<%" (location: (1:0)-(1:2))
+        ├── content: " if true %" (location: (1:2)-(1:12))
+        ├── tag_closing: ∅
+        ├── parsed: true
+        └── valid: false

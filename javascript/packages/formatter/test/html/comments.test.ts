@@ -54,7 +54,6 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <!-- HTML Comment -->
-
       <%# ERB Comment %>
     `)
   })

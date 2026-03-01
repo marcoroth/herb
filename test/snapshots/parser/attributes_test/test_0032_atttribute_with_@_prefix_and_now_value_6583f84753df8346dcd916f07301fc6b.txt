@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0032_atttribute with @ prefix and now value"
+input: "<div @click></div>"
+---
 @ DocumentNode (location: (1:0)-(1:18))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:18))

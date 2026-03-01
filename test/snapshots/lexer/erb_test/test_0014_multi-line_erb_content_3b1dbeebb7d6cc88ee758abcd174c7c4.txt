@@ -1,3 +1,10 @@
+---
+source: "Lexer::ERBTest#test_0014_multi-line erb content"
+input: |2-
+<%=
+  hello
+%>
+---
 #<Herb::Token type="TOKEN_ERB_START" value="<%=" range=[0, 3] start=(1:0) end=(1:3)>
 #<Herb::Token type="TOKEN_ERB_CONTENT" value="\n  hello\n" range=[3, 12] start=(1:3) end=(3:0)>
 #<Herb::Token type="TOKEN_ERB_END" value="%>" range=[12, 14] start=(3:0) end=(3:2)>

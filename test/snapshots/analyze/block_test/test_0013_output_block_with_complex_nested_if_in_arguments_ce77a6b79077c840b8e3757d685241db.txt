@@ -1,3 +1,20 @@
+---
+source: "Analyze::BlockTest#test_0013_output block with complex nested if in arguments"
+input: |2-
+<%= form_builder.fieldset(
+  "foo",
+  :foo,
+  required: true,
+  hint:
+    if some_condition?
+      "foo"
+    else
+      "bar"
+    end
+) do %>
+    <%# ... %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(14:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(13:9))

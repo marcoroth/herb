@@ -40,6 +40,7 @@ describe("XML ERB Integration", () => {
         <channel>
           <title><%= @title %></title>
           <description><%= @description %></description>
+
           <% @items.each do |item| %>
             <item>
               <title><%= item.title %></title>
@@ -87,6 +88,7 @@ describe("XML ERB Integration", () => {
             <debug>true</debug>
           <% end %>
         </settings>
+
         <database>
           <host><%= database_host %></host>
           <port><%= database_port || 5432 %></port>
@@ -125,6 +127,7 @@ describe("XML ERB Integration", () => {
           <% permissions.each do |permission| %>
             <uses-permission android:name="<%= permission %>" />
           <% end %>
+
           <% features.each_with_index do |feature, index| %>
             <uses-feature
               android:name="<%= feature.name %>"
@@ -174,16 +177,19 @@ describe("XML ERB Integration", () => {
         <header>
           <title>Document Title</title>
         </header>
+
         <content>
           <% if @show_intro %>
             <introduction>
               <p>This is an introduction paragraph.</p>
             </introduction>
           <% end %>
+
           <main>
             <% @sections.each do |section| %>
               <section id="<%= section.id %>">
                 <h2><%= section.title %></h2>
+
                 <% section.paragraphs.each do |p| %>
                   <p><%= p %></p>
                 <% end %>

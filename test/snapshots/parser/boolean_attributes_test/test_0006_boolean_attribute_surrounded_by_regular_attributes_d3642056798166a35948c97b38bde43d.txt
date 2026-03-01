@@ -1,3 +1,7 @@
+---
+source: "Parser::BooleanAttributesTest#test_0006_boolean attribute surrounded by regular attributes"
+input: "<input class=\"classes\" required id=\"ids\"/>"
+---
 @ DocumentNode (location: (1:0)-(1:42))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:42))

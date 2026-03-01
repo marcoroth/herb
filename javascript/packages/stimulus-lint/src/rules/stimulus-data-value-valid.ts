@@ -8,7 +8,7 @@ import {
   hasStaticAttributeValue
 } from './rule-utils.js'
 
-import type { LintOffense, StimulusLintContext } from '../types.js'
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from '../types.js'
 import type { ParseResult, HTMLOpenTagNode, HTMLAttributeNode } from '@herb-tools/core'
 
 export class DataValueValidVisitor extends StimulusRuleVisitor {
@@ -39,8 +39,7 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
     if (!this.isControllerAvailable(identifier)) {
       this.addOffense(
         `Unknown Stimulus controller \`${identifier}\` in value attribute. Make sure the controller is defined in your project.`,
-        attributeNode.location,
-        'error'
+        attributeNode.location
       )
       return
     }
@@ -50,8 +49,7 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
 
       this.addOffense(
         `Value name \`${valueName}\` should be dasherized. Did you mean \`${dasherized}\`?`,
-        attributeNode.location,
-        'error'
+        attributeNode.location
       )
 
       return
@@ -68,8 +66,7 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
 
           this.addOffense(
             `Unknown value \`${valueName}\` on controller \`${identifier}\`.${suggestion}`,
-            attributeNode.location,
-            'error'
+            attributeNode.location
           )
           return
         }
@@ -111,8 +108,7 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
     if (actualType && actualType !== expectedType) {
       this.addOffense(
         `Value \`${valueName}\` on controller \`${identifier}\` expects type \`${expectedType}\` but received \`${actualType}\`.`,
-        attributeNode.location,
-        'error'
+        attributeNode.location
       )
     }
   }
@@ -121,7 +117,14 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
 export class StimulusDataValueValidRule extends HerbParserRule {
   name = 'stimulus-data-value-valid'
 
-  check(result: ParseResult, context?: Partial<StimulusLintContext>): LintOffense[] {
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: 'error'
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
     const visitor = new DataValueValidVisitor(this.name, context)
 
     visitor.visit(result.value)

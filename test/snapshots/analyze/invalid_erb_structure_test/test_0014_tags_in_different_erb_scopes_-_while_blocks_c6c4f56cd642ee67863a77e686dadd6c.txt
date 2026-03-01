@@ -1,0 +1,77 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0014_tags in different erb scopes - while blocks"
+input: |2-
+<% while items.any? %>
+  <ul>
+<% end %>
+
+<% while other_items.any? %>
+  </ul>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (4 items)
+    ├── @ ERBWhileNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " while items.any? " (location: (1:2)-(1:20))
+    │   ├── tag_closing: "%>" (location: (1:20)-(1:22))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:22)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (2:2)-(2:6))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (2:2)-(2:6))
+    │   │   │   │       ├── message: "Opening tag `<ul>` at (2:3) doesn't have a matching closing tag `</ul>` in the same scope."
+    │   │   │   │       └── opening_tag: "ul" (location: (2:3)-(2:5))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   ├── tag_name: "ul" (location: (2:3)-(2:5))
+    │   │   │   ├── tag_closing: ">" (location: (2:5)-(2:6))
+    │   │   │   ├── children: []
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:6)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (3:9)-(5:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ ERBWhileNode (location: (5:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   ├── content: " while other_items.any? " (location: (5:2)-(5:26))
+    │   ├── tag_closing: "%>" (location: (5:26)-(5:28))
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (5:28)-(6:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (6:2)-(6:7))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (6:2)-(6:7))
+    │   │   │   │       ├── message: "Found closing tag `</ul>` at (6:4) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "ul" (location: (6:4)-(6:6))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │   │   ├── tag_name: "ul" (location: (6:4)-(6:6))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (6:6)-(6:7))
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:7)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

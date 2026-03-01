@@ -1,3 +1,10 @@
+---
+source: "Parser::ERBTest#test_0021_multi-line comment with Ruby keyword"
+input: |2-
+<%#
+  end
+%>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(3:2))

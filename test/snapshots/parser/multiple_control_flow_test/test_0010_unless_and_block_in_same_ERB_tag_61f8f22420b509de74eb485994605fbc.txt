@@ -1,0 +1,42 @@
+---
+source: "Parser::MultipleControlFlowTest#test_0010_unless and block in same ERB tag"
+input: |2-
+<% unless skip; items.each do |item| %>
+  <%= item %>
+<% end; end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBUnlessNode (location: (1:0)-(3:14))
+    │   ├── errors: (1 error)
+    │   │   └── @ ERBMultipleBlocksInTagError (location: (1:0)-(1:39))
+    │   │       └── message: "Multiple unclosed control flow blocks in a single ERB tag. Split each block into its own ERB tag, or close all blocks within the same tag."
+    │   │
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " unless skip; items.each do |item| " (location: (1:2)-(1:37))
+    │   ├── tag_closing: "%>" (location: (1:37)-(1:39))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:39)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (2:2)-(2:13))
+    │   │   │   ├── tag_opening: "<%=" (location: (2:2)-(2:5))
+    │   │   │   ├── content: " item " (location: (2:5)-(2:11))
+    │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:13)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:14))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end; end " (location: (3:2)-(3:12))
+    │           └── tag_closing: "%>" (location: (3:12)-(3:14))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:14)-(4:0))
+        └── content: "\n"

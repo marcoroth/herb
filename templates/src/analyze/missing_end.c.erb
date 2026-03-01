@@ -1,0 +1,36 @@
+#include "../include/analyze/helpers.h"
+#include "../include/errors.h"
+
+<%-
+  nodes_with_end_node = nodes.select do |node|
+    node.fields.any? { |field| field.name == "end_node" && field.is_a?(Herb::Template::NodeField) }
+  end
+-%>
+
+void check_erb_node_for_missing_end(const AST_NODE_T* node) {
+  switch (node->type) {
+    <%- nodes_with_end_node.each do |node| -%>
+    <%- keyword = node.name.gsub(/^ERB/, '').gsub(/Match|Node$/, '').downcase -%>
+    case <%= node.type %>: {
+      const <%= node.struct_type %>* <%= node.human %> = (const <%= node.struct_type %>*) node;
+
+      if (<%= node.human %>->end_node == NULL) {
+        append_missingerb_end_tag_error(
+        <%- if keyword == "block" -%>
+          "ERB block",
+        <%- else -%>
+          "`<" "%" " <%= keyword %> " "%" ">`",
+        <%- end -%>
+          <%= node.human %>->tag_opening->location.start,
+          <%= node.human %>->tag_closing->location.end,
+          node->errors
+        );
+      }
+
+      break;
+    }
+
+    <%- end -%>
+    default: break;
+  }
+}

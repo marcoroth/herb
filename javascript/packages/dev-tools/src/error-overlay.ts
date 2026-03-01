@@ -76,7 +76,7 @@ export class ErrorOverlay {
 
     htmlTemplates.forEach((template, _index) => {
       try {
-        let htmlContent = template.innerHTML?.trim() || template.textContent?.trim();
+        const htmlContent = template.innerHTML?.trim() || template.textContent?.trim();
 
         if (htmlContent) {
           this.displayParserErrorOverlay(htmlContent);

@@ -1,3 +1,13 @@
+---
+source: "Parser::ScriptStyleTest#test_0026_script tag with JSON containing HTML"
+input: |2-
+<script>
+  var data = {
+    "template": "<div class='widget'>{{content}}</div>",
+    "items": ["<span>A</span>", "<span>B</span>"]
+  };
+</script>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(6:9))

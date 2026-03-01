@@ -1,3 +1,7 @@
+---
+source: "Parser::AttributesTest#test_0009_attribute value with space before and after equal sign"
+input: "<div class    =    \"hello\">Content</div>"
+---
 @ DocumentNode (location: (1:0)-(1:40))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:40))

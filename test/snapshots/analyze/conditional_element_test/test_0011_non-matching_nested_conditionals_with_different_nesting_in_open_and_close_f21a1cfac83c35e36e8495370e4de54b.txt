@@ -1,0 +1,223 @@
+---
+source: "Analyze::ConditionalElementTest#test_0011_non-matching: nested conditionals with different nesting in open and close"
+input: |2-
+<% if true? %>
+  <% if something? %>
+    <div class="outer">
+  <% end %>
+  <div class="inner">
+<% end %>
+<span>Body</span>
+<% if true? %>
+    </div>
+  <% if something? %>
+    </div>
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(14:0))
+└── children: (6 items)
+    ├── @ ERBIfNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " if true? " (location: (1:2)-(1:12))
+    │   ├── tag_closing: "%>" (location: (1:12)-(1:14))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (1:14)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBIfNode (location: (2:2)-(4:11))
+    │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │   │   ├── content: " if something? " (location: (2:4)-(2:19))
+    │   │   │   ├── tag_closing: "%>" (location: (2:19)-(2:21))
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   ├── statements: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:21)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLOpenTagNode (location: (3:4)-(3:23))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ MissingClosingTagError (location: (3:4)-(3:23))
+    │   │   │   │   │   │       ├── message: "Opening tag `<div>` at (3:5) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │   │   │   │   │       └── opening_tag: "div" (location: (3:5)-(3:8))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   ├── tag_name: "div" (location: (3:5)-(3:8))
+    │   │   │   │   │   ├── tag_closing: ">" (location: (3:22)-(3:23))
+    │   │   │   │   │   ├── children: (1 item)
+    │   │   │   │   │   │   └── @ HTMLAttributeNode (location: (3:9)-(3:22))
+    │   │   │   │   │   │       ├── name:
+    │   │   │   │   │   │       │   └── @ HTMLAttributeNameNode (location: (3:9)-(3:14))
+    │   │   │   │   │   │       │       └── children: (1 item)
+    │   │   │   │   │   │       │           └── @ LiteralNode (location: (3:9)-(3:14))
+    │   │   │   │   │   │       │               └── content: "class"
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── equals: "=" (location: (3:14)-(3:15))
+    │   │   │   │   │   │       └── value:
+    │   │   │   │   │   │           └── @ HTMLAttributeValueNode (location: (3:15)-(3:22))
+    │   │   │   │   │   │               ├── open_quote: """ (location: (3:15)-(3:16))
+    │   │   │   │   │   │               ├── children: (1 item)
+    │   │   │   │   │   │               │   └── @ LiteralNode (location: (3:16)-(3:21))
+    │   │   │   │   │   │               │       └── content: "outer"
+    │   │   │   │   │   │               │
+    │   │   │   │   │   │               ├── close_quote: """ (location: (3:21)-(3:22))
+    │   │   │   │   │   │               └── quoted: true
+    │   │   │   │   │   │
+    │   │   │   │   │   │
+    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:23)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── subsequent: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │           ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │           └── tag_closing: "%>" (location: (4:9)-(4:11))
+    │   │   │
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (4:11)-(5:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLOpenTagNode (location: (5:2)-(5:21))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingClosingTagError (location: (5:2)-(5:21))
+    │   │   │   │       ├── message: "Opening tag `<div>` at (5:3) doesn't have a matching closing tag `</div>` in the same scope."
+    │   │   │   │       └── opening_tag: "div" (location: (5:3)-(5:6))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<" (location: (5:2)-(5:3))
+    │   │   │   ├── tag_name: "div" (location: (5:3)-(5:6))
+    │   │   │   ├── tag_closing: ">" (location: (5:20)-(5:21))
+    │   │   │   ├── children: (1 item)
+    │   │   │   │   └── @ HTMLAttributeNode (location: (5:7)-(5:20))
+    │   │   │   │       ├── name:
+    │   │   │   │       │   └── @ HTMLAttributeNameNode (location: (5:7)-(5:12))
+    │   │   │   │       │       └── children: (1 item)
+    │   │   │   │       │           └── @ LiteralNode (location: (5:7)-(5:12))
+    │   │   │   │       │               └── content: "class"
+    │   │   │   │       │
+    │   │   │   │       │
+    │   │   │   │       ├── equals: "=" (location: (5:12)-(5:13))
+    │   │   │   │       └── value:
+    │   │   │   │           └── @ HTMLAttributeValueNode (location: (5:13)-(5:20))
+    │   │   │   │               ├── open_quote: """ (location: (5:13)-(5:14))
+    │   │   │   │               ├── children: (1 item)
+    │   │   │   │               │   └── @ LiteralNode (location: (5:14)-(5:19))
+    │   │   │   │               │       └── content: "inner"
+    │   │   │   │               │
+    │   │   │   │               ├── close_quote: """ (location: (5:19)-(5:20))
+    │   │   │   │               └── quoted: true
+    │   │   │   │
+    │   │   │   │
+    │   │   │   └── is_void: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (5:21)-(6:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    ├── @ HTMLTextNode (location: (6:9)-(7:0))
+    │   └── content: "\n"
+    │
+    ├── @ HTMLElementNode (location: (7:0)-(7:17))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "<" (location: (7:0)-(7:1))
+    │   │       ├── tag_name: "span" (location: (7:1)-(7:5))
+    │   │       ├── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "span" (location: (7:1)-(7:5))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (7:6)-(7:10))
+    │   │       └── content: "Body"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:10)-(7:17))
+    │   │       ├── tag_opening: "</" (location: (7:10)-(7:12))
+    │   │       ├── tag_name: "span" (location: (7:12)-(7:16))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:16)-(7:17))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    ├── @ HTMLTextNode (location: (7:17)-(8:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBIfNode (location: (8:0)-(13:9))
+    │   ├── tag_opening: "<%" (location: (8:0)-(8:2))
+    │   ├── content: " if true? " (location: (8:2)-(8:12))
+    │   ├── tag_closing: "%>" (location: (8:12)-(8:14))
+    │   ├── then_keyword: ∅
+    │   ├── statements: (5 items)
+    │   │   ├── @ HTMLTextNode (location: (8:14)-(9:4))
+    │   │   │   └── content: "\n    "
+    │   │   │
+    │   │   ├── @ HTMLCloseTagNode (location: (9:4)-(9:10))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ MissingOpeningTagError (location: (9:4)-(9:10))
+    │   │   │   │       ├── message: "Found closing tag `</div>` at (9:6) without a matching opening tag in the same scope."
+    │   │   │   │       └── closing_tag: "div" (location: (9:6)-(9:9))
+    │   │   │   │
+    │   │   │   ├── tag_opening: "</" (location: (9:4)-(9:6))
+    │   │   │   ├── tag_name: "div" (location: (9:6)-(9:9))
+    │   │   │   ├── children: []
+    │   │   │   └── tag_closing: ">" (location: (9:9)-(9:10))
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (9:10)-(10:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ ERBIfNode (location: (10:2)-(12:11))
+    │   │   │   ├── tag_opening: "<%" (location: (10:2)-(10:4))
+    │   │   │   ├── content: " if something? " (location: (10:4)-(10:19))
+    │   │   │   ├── tag_closing: "%>" (location: (10:19)-(10:21))
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   ├── statements: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (10:21)-(11:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLCloseTagNode (location: (11:4)-(11:10))
+    │   │   │   │   │   ├── errors: (1 error)
+    │   │   │   │   │   │   └── @ MissingOpeningTagError (location: (11:4)-(11:10))
+    │   │   │   │   │   │       ├── message: "Found closing tag `</div>` at (11:6) without a matching opening tag in the same scope."
+    │   │   │   │   │   │       └── closing_tag: "div" (location: (11:6)-(11:9))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_opening: "</" (location: (11:4)-(11:6))
+    │   │   │   │   │   ├── tag_name: "div" (location: (11:6)-(11:9))
+    │   │   │   │   │   ├── children: []
+    │   │   │   │   │   └── tag_closing: ">" (location: (11:9)-(11:10))
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (11:10)-(12:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── subsequent: ∅
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (12:2)-(12:11))
+    │   │   │           ├── tag_opening: "<%" (location: (12:2)-(12:4))
+    │   │   │           ├── content: " end " (location: (12:4)-(12:9))
+    │   │   │           └── tag_closing: "%>" (location: (12:9)-(12:11))
+    │   │   │
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (12:11)-(13:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── subsequent: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (13:0)-(13:9))
+    │           ├── tag_opening: "<%" (location: (13:0)-(13:2))
+    │           ├── content: " end " (location: (13:2)-(13:7))
+    │           └── tag_closing: "%>" (location: (13:7)-(13:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (13:9)-(14:0))
+        └── content: "\n"

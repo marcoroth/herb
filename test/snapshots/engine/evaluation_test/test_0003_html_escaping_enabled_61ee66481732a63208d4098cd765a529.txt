@@ -1,1 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0003_html escaping enabled"
+input: "{source: \"<div><%= content %></div>\", locals: {content: \"<script>alert('xss')</script>\"}, options: {escape: true}}"
+---
 <div>&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;</div>

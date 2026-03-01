@@ -1,3 +1,12 @@
+---
+source: "Parser::ERBTest#test_0032_multi-line erb comment with equals sign"
+input: |2-
+<%#=
+  link_to "New watch list",
+  new_watch_list_path,
+  class: "btn btn-ghost"
+%>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(5:2))

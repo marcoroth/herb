@@ -1,37 +1,44 @@
+---
+source: "Parser::CDATATest#test_0017_CDATA with ERB loop"
+input: |2-
+<![CDATA[
+  <% @items.each do |item| %>
+    <item><%= item.name %></item>
+  <% end %>
+]]>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ CDATANode (location: (1:0)-(5:3))
     │   ├── tag_opening: "<![CDATA[" (location: (1:0)-(1:9))
-    │   ├── children: (7 items)
+    │   ├── children: (3 items)
     │   │   ├── @ LiteralNode (location: (1:9)-(2:2))
     │   │   │   └── content: "\n  "
     │   │   │
-    │   │   ├── @ ERBContentNode (location: (2:2)-(2:29))
+    │   │   ├── @ ERBBlockNode (location: (2:2)-(4:11))
     │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │   │   ├── content: " @items.each do |item| " (location: (2:4)-(2:27))
     │   │   │   ├── tag_closing: "%>" (location: (2:27)-(2:29))
-    │   │   │   ├── parsed: true
-    │   │   │   └── valid: false
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ LiteralNode (location: (2:29)-(3:10))
+    │   │   │   │   │   └── content: "\n    <item>"
+    │   │   │   │   │
+    │   │   │   │   ├── @ ERBContentNode (location: (3:10)-(3:26))
+    │   │   │   │   │   ├── tag_opening: "<%=" (location: (3:10)-(3:13))
+    │   │   │   │   │   ├── content: " item.name " (location: (3:13)-(3:24))
+    │   │   │   │   │   ├── tag_closing: "%>" (location: (3:24)-(3:26))
+    │   │   │   │   │   ├── parsed: true
+    │   │   │   │   │   └── valid: true
+    │   │   │   │   │
+    │   │   │   │   └── @ LiteralNode (location: (3:26)-(4:2))
+    │   │   │   │       └── content: "</item>\n  "
+    │   │   │   │
+    │   │   │   └── end_node:
+    │   │   │       └── @ ERBEndNode (location: (4:2)-(4:11))
+    │   │   │           ├── tag_opening: "<%" (location: (4:2)-(4:4))
+    │   │   │           ├── content: " end " (location: (4:4)-(4:9))
+    │   │   │           └── tag_closing: "%>" (location: (4:9)-(4:11))
     │   │   │
-    │   │   ├── @ LiteralNode (location: (2:29)-(3:10))
-    │   │   │   └── content: "\n    <item>"
-    │   │   │
-    │   │   ├── @ ERBContentNode (location: (3:10)-(3:26))
-    │   │   │   ├── tag_opening: "<%=" (location: (3:10)-(3:13))
-    │   │   │   ├── content: " item.name " (location: (3:13)-(3:24))
-    │   │   │   ├── tag_closing: "%>" (location: (3:24)-(3:26))
-    │   │   │   ├── parsed: true
-    │   │   │   └── valid: true
-    │   │   │
-    │   │   ├── @ LiteralNode (location: (3:26)-(4:2))
-    │   │   │   └── content: "</item>\n  "
-    │   │   │
-    │   │   ├── @ ERBContentNode (location: (4:2)-(4:11))
-    │   │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
-    │   │   │   ├── content: " end " (location: (4:4)-(4:9))
-    │   │   │   ├── tag_closing: "%>" (location: (4:9)-(4:11))
-    │   │   │   ├── parsed: true
-    │   │   │   └── valid: false
     │   │   │
     │   │   └── @ LiteralNode (location: (4:11)-(5:0))
     │   │       └── content: "\n"

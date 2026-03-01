@@ -1,0 +1,71 @@
+---
+source: "Parser::AttributesTest#test_0059_Empty conditional block in attributes"
+input: "<div data-static <% if false %><% end %> data-other=\"value\"></div>"
+---
+@ DocumentNode (location: (1:0)-(1:66))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:66))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:60))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:59)-(1:60))
+        │       ├── children: (3 items)
+        │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:16))
+        │       │   │   ├── name:
+        │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:16))
+        │       │   │   │       └── children: (1 item)
+        │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:16))
+        │       │   │   │               └── content: "data-static"
+        │       │   │   │
+        │       │   │   │
+        │       │   │   ├── equals: ∅
+        │       │   │   └── value: ∅
+        │       │   │
+        │       │   ├── @ ERBIfNode (location: (1:17)-(1:40))
+        │       │   │   ├── tag_opening: "<%" (location: (1:17)-(1:19))
+        │       │   │   ├── content: " if false " (location: (1:19)-(1:29))
+        │       │   │   ├── tag_closing: "%>" (location: (1:29)-(1:31))
+        │       │   │   ├── then_keyword: ∅
+        │       │   │   ├── statements: []
+        │       │   │   ├── subsequent: ∅
+        │       │   │   └── end_node:
+        │       │   │       └── @ ERBEndNode (location: (1:31)-(1:40))
+        │       │   │           ├── tag_opening: "<%" (location: (1:31)-(1:33))
+        │       │   │           ├── content: " end " (location: (1:33)-(1:38))
+        │       │   │           └── tag_closing: "%>" (location: (1:38)-(1:40))
+        │       │   │
+        │       │   │
+        │       │   └── @ HTMLAttributeNode (location: (1:41)-(1:59))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:41)-(1:51))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:41)-(1:51))
+        │       │       │               └── content: "data-other"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:51)-(1:52))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:52)-(1:59))
+        │       │               ├── open_quote: """ (location: (1:52)-(1:53))
+        │       │               ├── children: (1 item)
+        │       │               │   └── @ LiteralNode (location: (1:53)-(1:58))
+        │       │               │       └── content: "value"
+        │       │               │
+        │       │               ├── close_quote: """ (location: (1:58)-(1:59))
+        │       │               └── quoted: true
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:60)-(1:66))
+        │       ├── tag_opening: "</" (location: (1:60)-(1:62))
+        │       ├── tag_name: "div" (location: (1:62)-(1:65))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:65)-(1:66))
+        │
+        ├── is_void: false
+        └── source: "HTML"

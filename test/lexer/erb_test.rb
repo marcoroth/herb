@@ -86,5 +86,9 @@ module Lexer
         %>
       HTML
     end
+
+    test "erb tag followed by literal closing delimiter" do
+      assert_lexed_snapshot(%(<% content %> %>))
+    end
   end
 end

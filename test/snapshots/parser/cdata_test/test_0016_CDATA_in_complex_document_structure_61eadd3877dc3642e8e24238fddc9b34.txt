@@ -1,3 +1,24 @@
+---
+source: "Parser::CDATATest#test_0016_CDATA in complex document structure"
+input: |2-
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      <![CDATA[
+        function test() {
+          if (x < 5 && y > 3) {
+            return true;
+          }
+        }
+      ]]>
+    </script>
+  </head>
+  <body>
+    <div><![CDATA[<%= render partial: 'test' %>]]></div>
+  </body>
+</html>
+---
 @ DocumentNode (location: (1:0)-(18:0))
 └── children: (4 items)
     ├── @ HTMLDoctypeNode (location: (1:0)-(1:15))

@@ -21,8 +21,9 @@ typedef enum {
   TOKEN_HTML_TAG_END,         // >
   TOKEN_HTML_TAG_SELF_CLOSE,  // />
 
-  TOKEN_HTML_COMMENT_START, // <!--
-  TOKEN_HTML_COMMENT_END,   // -->
+  TOKEN_HTML_COMMENT_START,       // <!--
+  TOKEN_HTML_COMMENT_END,         // -->
+  TOKEN_HTML_COMMENT_INVALID_END, // --!>
 
   TOKEN_ERB_START,   // <%, <%=, <%%=, <%#, <%-, <%==, <%%
   TOKEN_ERB_CONTENT, // Ruby Code

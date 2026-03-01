@@ -1,3 +1,17 @@
+---
+source: "Analyze::CaseTest#test_0011_case with block in multiple when clauses"
+input: |2-
+<% case type %>
+<% when :a %>
+  <%= form_for(obj) do |f| %>
+    Form A
+  <% end %>
+<% when :b %>
+  <%= form_for(obj) do |f| %>
+    Form B
+  <% end %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(10:9))
@@ -13,6 +27,7 @@
     │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │   │   ├── content: " when :a " (location: (2:2)-(2:11))
     │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (3 items)
     │   │   │       ├── @ HTMLTextNode (location: (2:13)-(3:2))
     │   │   │       │   └── content: "\n  "
@@ -40,6 +55,7 @@
     │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
     │   │       ├── content: " when :b " (location: (6:2)-(6:11))
     │   │       ├── tag_closing: "%>" (location: (6:11)-(6:13))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (6:13)-(7:2))
     │   │           │   └── content: "\n  "

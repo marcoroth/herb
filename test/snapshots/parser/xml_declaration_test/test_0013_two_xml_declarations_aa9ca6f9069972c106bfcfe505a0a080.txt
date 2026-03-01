@@ -1,3 +1,7 @@
+---
+source: "Parser::XMLDeclarationTest#test_0013_two xml declarations"
+input: "<?xml version=\"1.0\"?><?xml version=\"1.1\"?>"
+---
 @ DocumentNode (location: (1:0)-(1:42))
 └── children: (2 items)
     ├── @ XMLDeclarationNode (location: (1:0)-(1:21))

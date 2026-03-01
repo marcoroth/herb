@@ -1,3 +1,7 @@
+---
+source: "Parser::ScriptStyleTest#test_0025_script tag with minified JavaScript containing many angle brackets"
+input: "<script>!function(){for(var i=0;i<10;i++)if(arr[i]>5&&arr[i]<15)console.log(\"<item>\"+arr[i]+\"</item>\")}();</script>"
+---
 @ DocumentNode (location: (1:0)-(1:115))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:115))

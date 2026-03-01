@@ -11,52 +11,37 @@ module Engine
     test "debug mode disabled by default" do
       template = "<h1>Hello <%= @name %>!</h1>"
 
-      engine = Herb::Engine.new(template)
-      refute engine.debug
-      refute_includes engine.src, "data-herb-debug"
-      refute_includes engine.src, "erb-value"
+      assert_compiled_snapshot(template)
     end
 
     test "debug mode enabled" do
       template = "<h1>Hello <%= @name %>!</h1>"
 
-      engine = Herb::Engine.new(template, debug: true)
-      assert engine.debug
+      assert_compiled_snapshot(template, debug: true)
     end
 
     test "debug mode options" do
       template = "<div>Test</div>"
 
-      engine = Herb::Engine.new(template,
-                                debug: true,
-                                filename: "app/views/test.html.erb")
-
-      assert engine.debug
-      assert_equal "app/views/test.html.erb", engine.filename.to_s
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/test.html.erb")
     end
 
     test "visible erb expression gets debug span" do
       template = "<h1>Welcome <%= @user.name %>!</h1>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "multiple visible erb expressions get debug spans" do
       template = "<h1>Hello <%= @name %> on <%= Date.today %>!</h1>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "attribute erb expressions do NOT get debug spans" do
       template = '<div class="<%= css_class %>" data-id="<%= @user.id %>">Content</div>'
 
-      engine = Herb::Engine.new(template, debug: true, filename: "test.html.erb")
-
-      refute_includes engine.src, "erb-value"
-      refute_includes engine.src, "data-herb-debug-erb"
-
-      assert_includes engine.src, "css_class"
-      assert_includes engine.src, "@user.id"
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "script content erb expressions do NOT get debug spans" do
@@ -67,10 +52,7 @@ module Engine
         </script>
       ERB
 
-      engine = Herb::Engine.new(template, debug: true)
-
-      refute_includes engine.src, "erb-value"
-      refute_includes engine.src, "data-herb-debug-erb"
+      assert_compiled_snapshot(template, debug: true)
     end
 
     test "style content erb expressions do NOT get debug spans" do
@@ -81,40 +63,37 @@ module Engine
         </style>
       ERB
 
-      engine = Herb::Engine.new(template, debug: true)
-
-      refute_includes engine.src, "erb-value"
-      refute_includes engine.src, "data-herb-debug-erb"
+      assert_compiled_snapshot(template, debug: true)
     end
 
     test "render calls get outline boundaries" do
       template = '<%= render "shared/header" %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "partial render calls get partial outline boundaries" do
       template = '<%= render partial: "user_card", locals: { user: @user } %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "top-level element with only ERB output as child" do
       template = "<h1><%= hello %></h1>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "top-level element with only ERB output as child for partial" do
       template = "<h1><%= hello %></h1>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "_test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "_test.html.erb")
     end
 
     test "collection render calls get outline boundaries" do
       template = "<%= render @posts %>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "erb control flow does NOT get debug markup" do
@@ -126,10 +105,7 @@ module Engine
         <% end %>
       ERB
 
-      engine = Herb::Engine.new(template, debug: true)
-
-      refute_includes engine.src, "erb-value"
-      refute_includes engine.src, "data-herb-debug-erb"
+      assert_compiled_snapshot(template, debug: true)
     end
 
     test "erb comments do NOT get debug markup" do
@@ -139,10 +115,7 @@ module Engine
         <p>More content</p>
       ERB
 
-      engine = Herb::Engine.new(template, debug: true)
-
-      refute_includes engine.src, "erb-value"
-      refute_includes engine.src, "data-herb-debug-erb"
+      assert_compiled_snapshot(template, debug: true)
     end
 
     test "block expressions get debug spans" do
@@ -152,7 +125,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "render block expressions get outline boundaries" do
@@ -162,7 +135,7 @@ module Engine
         <% end %>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "mixed content and attributes" do
@@ -173,7 +146,7 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "nested erb expressions with render calls" do
@@ -187,25 +160,25 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "app/views/welcome.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/welcome.html.erb")
     end
 
     test "debug mode with escape enabled" do
       template = "<p>User input: <%= user_content %></p>"
 
-      assert_compiled_snapshot(template, { debug: true, escape: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, escape: true, filename: "test.html.erb")
     end
 
     test "debug mode with escape disabled" do
       template = "<p>Safe content: <%= safe_html %></p>"
 
-      assert_compiled_snapshot(template, { debug: true, escape: false, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, escape: false, filename: "test.html.erb")
     end
 
     test "erb yield expressions get debug spans" do
       template = "<div><%= yield :sidebar %></div>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "layout.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "layout.erb")
     end
 
     test "complex nested template with all features" do
@@ -238,7 +211,7 @@ module Engine
         </html>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "app/views/layouts/application.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/layouts/application.html.erb")
     end
 
     test "zero overhead when debug disabled" do
@@ -253,43 +226,43 @@ module Engine
     test "turbo_frame_tag does NOT get erb-output outline type" do
       template = '<%= turbo_frame_tag "posts" do %><p>Content</p><% end %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "content_for with block does NOT get erb-output outline type" do
       template = "<%= content_for :sidebar do %><div>Sidebar content</div><% end %>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "content_tag with block does NOT get erb-output outline type" do
       template = '<%= content_tag :div, class: "wrapper" do %>Content<% end %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "link_to with block does NOT get erb-output outline type" do
       template = '<%= link_to "/users" do %>View Users<% end %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "tag helper with block does NOT get erb-output outline type" do
       template = '<%= tag.div class: "container" do %>Content<% end %>'
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "form_with block does NOT get erb-output outline type" do
       template = "<%= form_with model: @user do |f| %>Form content<% end %>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "yield expressions get NOT erb-output outline type" do
       template = "<h1><%= yield :title %></h1>"
 
-      assert_compiled_snapshot(template, { debug: true, filename: "layout.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "layout.html.erb")
     end
 
     test "if with elements" do
@@ -310,11 +283,11 @@ module Engine
         </div>
       HTML
 
-      assert_compiled_snapshot(template, { debug: true, filename: "layout.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "layout.html.erb")
     end
 
     test "gets view and erb output view type for just output tag" do
-      assert_compiled_snapshot("<%= hello %>", { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot("<%= hello %>", debug: true, filename: "test.html.erb")
     end
 
     test "puts debug span on parent if HTMLTextContent is only spaces" do
@@ -322,7 +295,7 @@ module Engine
     end
 
     test "puts debug span on parent if HTMLTextContent is only whitespace" do
-      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(<<~HTML, debug: true, filename: "test.html.erb")
         <h1>
           <%= hello %>
         </h1>
@@ -330,36 +303,18 @@ module Engine
     end
 
     test "mulitple top-level elements should be wrapped in type=view div" do
-      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(<<~HTML, debug: true, filename: "test.html.erb")
         <h1>Hello</h1>
         <p>World</p>
       HTML
     end
 
     test "non HTML-element top-level node should be wrapped in type=view div" do
-      assert_compiled_snapshot(<<~HTML, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(<<~HTML, debug: true, filename: "test.html.erb")
         <%= content_tag :div do %>
           Content
         <% end %>
       HTML
-    end
-
-    test "script content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, debug: true)
-        <script>
-          var userId = <%= @user.id %>;
-          var name = "<%= @user.name %>";
-        </script>
-      ERB
-    end
-
-    test "style content erb expressions do NOT get debug spans" do
-      assert_compiled_snapshot(<<~ERB, debug: true)
-        <style>
-          .user-color { color: <%= @user.color %>; }
-          .theme { background: <%= theme_color %>; }
-        </style>
-      ERB
     end
 
     test "head content erb expressions do NOT get debug spans" do
@@ -430,11 +385,167 @@ module Engine
         </div>
       ERB
 
-      assert_compiled_snapshot(template, { debug: true, filename: "test.html.erb" })
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
     end
 
     test "regular div content still gets debug spans after excluded context tests" do
       assert_compiled_snapshot("<div><%= @content %></div>", debug: true)
+    end
+
+    test "javascript_tag content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <%= javascript_tag do %>
+          var userId = <%= @user.id %>;
+          var name = "<%= @user.name %>";
+        <% end %>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "svg content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <svg viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="<%= @radius %>" />
+          <text x="50" y="50"><%= @label %></text>
+        </svg>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "svg with defs and style erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29">
+          <defs>
+            <style>
+              .cls-1 {fill:none;stroke:<%= @stroke_color %>}
+            </style>
+          </defs>
+          <g transform="rotate(<%= @angle %> 50 50)">
+            <line x1="50" y1="10" x2="50" y2="50" stroke="red" />
+          </g>
+        </svg>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "nested svg inside div erb expressions do NOT get debug spans inside svg" do
+      template = <<~ERB
+        <div class="chart-container">
+          <h2><%= @chart_title %></h2>
+          <svg viewBox="0 0 100 100">
+            <rect width="<%= @width %>" height="<%= @height %>" />
+            <text><%= @value %></text>
+          </svg>
+          <p><%= @description %></p>
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
+    end
+
+    test "math content erb expressions do NOT get debug spans" do
+      template = <<~ERB
+        <math>
+          <mrow>
+            <mi><%= @variable %></mi>
+            <mo>=</mo>
+            <mn><%= @value %></mn>
+          </mrow>
+        </math>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true)
+    end
+
+    test "nested math inside div erb expressions do NOT get debug spans inside math" do
+      template = <<~ERB
+        <div class="equation">
+          <p><%= @equation_name %></p>
+          <math>
+            <msup>
+              <mi><%= @base %></mi>
+              <mn><%= @exponent %></mn>
+            </msup>
+          </math>
+        </div>
+      ERB
+
+      assert_compiled_snapshot(template, debug: true, filename: "test.html.erb")
+    end
+
+    test "sidecar component displays component name instead of component.html.erb" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.erb")
+    end
+
+    test "sidecar component with snake_case name converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/user_card/component.html.erb")
+    end
+
+    test "sidecar component with nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/user_card/component.html.erb")
+    end
+
+    test "sidecar component with deeply nested namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/admin/settings/user_card/component.html.erb")
+    end
+
+    test "regular component file converts to PascalCase" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/button_component.html.erb")
+    end
+
+    test "sidecar component with erb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.erb")
+    end
+
+    test "sidecar component with herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.herb")
+    end
+
+    test "sidecar component with html.herb extension" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/example/component.html.herb")
+    end
+
+    test "namespaced regular component includes namespace" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/components/ui/avatar_component.html.erb")
+    end
+
+    test "regular view keeps original basename" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/show.html.erb")
+    end
+
+    test "partial keeps original basename with underscore" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/users/_card.html.erb")
+    end
+
+    test "partial in components subfolder is not treated as component" do
+      template = "<div>Hello</div>"
+
+      assert_compiled_snapshot(template, debug: true, filename: "app/views/page/components/_dropdowns.html.erb")
     end
   end
 end

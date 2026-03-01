@@ -1,3 +1,17 @@
+---
+source: "Analyze::CaseInTest#test_0005_case in statement wrapped in element"
+input: |2-
+<h1>
+  <% case variable %>
+  <% in [String] %>
+    String
+  <% in [Integer] %>
+    Integer
+  <% else %>
+    else
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(11:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(10:5))
@@ -27,6 +41,7 @@
     │   │   │   │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │   │   │   │   ├── content: " in [String] " (location: (3:4)-(3:17))
     │   │   │   │   │   ├── tag_closing: "%>" (location: (3:17)-(3:19))
+    │   │   │   │   │   ├── then_keyword: ∅
     │   │   │   │   │   └── statements: (1 item)
     │   │   │   │   │       └── @ HTMLTextNode (location: (3:19)-(5:2))
     │   │   │   │   │           └── content: "\n    String\n  "
@@ -36,6 +51,7 @@
     │   │   │   │       ├── tag_opening: "<%" (location: (5:2)-(5:4))
     │   │   │   │       ├── content: " in [Integer] " (location: (5:4)-(5:18))
     │   │   │   │       ├── tag_closing: "%>" (location: (5:18)-(5:20))
+    │   │   │   │       ├── then_keyword: ∅
     │   │   │   │       └── statements: (1 item)
     │   │   │   │           └── @ HTMLTextNode (location: (5:20)-(7:2))
     │   │   │   │               └── content: "\n    Integer\n  "

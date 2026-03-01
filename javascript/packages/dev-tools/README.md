@@ -6,7 +6,6 @@
 
 Development tools for visual debugging in HTML+ERB templates. Provides a browser-based interface for inspecting ERB expressions, template boundaries, and more debugging information.
 
-
 ## Installation
 
 ```bash

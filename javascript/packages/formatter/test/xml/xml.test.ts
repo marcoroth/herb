@@ -40,6 +40,7 @@ describe("XML", () => {
           <title>XML Basics</title>
           <author>John Doe</author>
         </book>
+
         <book>
           <title>Advanced XML</title>
           <author>Jane Smith</author>
@@ -76,6 +77,7 @@ describe("XML", () => {
           <bk:title>XML Basics</bk:title>
           <auth:author>John Doe</auth:author>
         </bk:book>
+
         <bk:book>
           <bk:title>Advanced XML</bk:title>
           <auth:author>Jane Smith</auth:author>
@@ -160,6 +162,7 @@ describe("XML", () => {
             <% @featured_books.each do |book| %>
               <book id="<%= book.id %>">
                 <title><%= book.title %></title>
+
                 <% if book.author %>
                   <author><%= book.author.name %></author>
                 <% else %>
@@ -221,6 +224,7 @@ describe("XML", () => {
         <% when 'book' %>
           <book>
             <title><%= @title %></title>
+
             <chapters>
               <% @chapters.each do |chapter| %>
                 <chapter number="<%= chapter.number %>">
@@ -286,9 +290,11 @@ describe("XML", () => {
             <% pages.each do |page| %>
               <url>
                 <loc><%= page_url(page) %></loc>
+
                 <% if page.updated_at %>
                   <lastmod><%= page.updated_at.iso8601 %></lastmod>
                 <% end %>
+
                 <changefreq><%= page.change_frequency || 'monthly' %></changefreq>
                 <priority><%= page.priority || 0.5 %></priority>
               </url>
@@ -500,11 +506,13 @@ describe("XML", () => {
                 </Emphasis>
                 for verification.
               </Title>
+
               <Description styleName="text-sm text-secondary">
                 Our system will verify your table matches your reservation. This helps
                 us ensure food safety and accurate delivery to the right location.
               </Description>
             </SectionHeader>
+
             <ImageGallery
               orientation="horizontal"
               containerClass="gap-3 pt-4 pr-4"

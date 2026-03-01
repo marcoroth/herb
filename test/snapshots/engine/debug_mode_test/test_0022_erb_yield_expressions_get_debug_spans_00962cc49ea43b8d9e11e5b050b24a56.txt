@@ -1,3 +1,6 @@
-_buf = ::String.new;
- _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="layout.erb" data-herb-debug-file-relative-path="layout.erb" data-herb-debug-file-full-path="layout.erb">'.freeze; _buf << (yield :sidebar).to_s; _buf << '</div>'.freeze;
+---
+source: "Engine::DebugModeTest#test_0022_erb yield expressions get debug spans"
+input: "{source: \"<div><%= yield :sidebar %></div>\", options: {debug: true, filename: \"layout.erb\"}}"
+---
+_buf = ::String.new; _buf << '<div data-herb-debug-outline-type="view" data-herb-debug-file-name="layout.erb" data-herb-debug-file-relative-path="layout.erb" data-herb-debug-file-full-path="layout.erb">'.freeze; _buf << (yield :sidebar).to_s; _buf << '</div>'.freeze;
 _buf.to_s

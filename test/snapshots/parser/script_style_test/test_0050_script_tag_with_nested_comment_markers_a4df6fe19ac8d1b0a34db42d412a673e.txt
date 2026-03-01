@@ -1,3 +1,12 @@
+---
+source: "Parser::ScriptStyleTest#test_0050_script tag with nested comment markers"
+input: |2-
+<script>
+  // First comment // with nested comment marker
+  /* Outer comment /* with nested comment marker */ still in comment */
+  console.log("done");
+</script>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:9))
