@@ -277,7 +277,7 @@ test/fixtures/ignored.html.erb:6:14
 `;
 
 exports[`CLI Output Formatting > diplays only parsers errors if one is present 1`] = `
-"[error] Unexpected Token. Expected: \`TOKEN_IDENTIFIER, TOKEN_AT, TOKEN_ERB_START,TOKEN_WHITESPACE, or TOKEN_NEWLINE\`, found: \`TOKEN_CHARACTER\`. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
+"[error] Unexpected Token. Expected: an identifier, \`@\`, \`<%\`, whitespace, or a newline, found: a character. (\`UNEXPECTED_ERROR\`) (parser-no-errors)
 
 test/fixtures/parser-errors.html.erb:2:16
 
