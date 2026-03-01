@@ -57,6 +57,8 @@ static analyzed_ruby_T* herb_analyze_ruby(hb_string_T source) {
 }
 
 static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
+  const parser_options_T* options = (const parser_options_T*) data;
+
   if (node->type == AST_ERB_CONTENT_NODE) {
     AST_ERB_CONTENT_NODE_T* erb_content_node = (AST_ERB_CONTENT_NODE_T*) node;
 
@@ -78,9 +80,7 @@ static bool analyze_erb_content(const AST_NODE_T* node, void* data) {
         );
       }
 
-      if (!analyzed->valid
-          && ((analyzed->case_node_count > 0 && analyzed->when_node_count > 0)
-              || (analyzed->case_match_node_count > 0 && analyzed->in_node_count > 0))) {
+      if (options && options->strict && !analyzed->valid && has_inline_case_condition(analyzed)) {
         append_erb_case_with_conditions_error(
           erb_content_node->base.location.start,
           erb_content_node->base.location.end,
@@ -279,6 +279,10 @@ static size_t process_case_structure(
   hb_array_T* in_conditions = hb_array_init(8);
   hb_array_T* non_when_non_in_children = hb_array_init(8);
 
+  analyzed_ruby_T* analyzed = erb_node->analyzed_ruby;
+  bool has_inline_when = has_case_node(analyzed) && has_when_node(analyzed);
+  bool has_inline_in = has_case_match_node(analyzed) && has_in_node(analyzed);
+
   index++;
 
   const control_type_t prelude_stop[] = { CONTROL_TYPE_WHEN, CONTROL_TYPE_IN, CONTROL_TYPE_END };
@@ -289,6 +293,33 @@ static size_t process_case_structure(
     prelude_stop,
     sizeof(prelude_stop) / sizeof(prelude_stop[0])
   );
+
+  // Create a synthetic when/in node for inline when/in (e.g., <% case variable when "a" %>),
+  if (has_inline_when || has_inline_in) {
+    hb_array_T* statements = non_when_non_in_children;
+    non_when_non_in_children = hb_array_init(8);
+
+    position_T start_position =
+      erb_node->tag_closing ? erb_node->tag_closing->location.end : erb_node->content->location.end;
+    position_T end_position = start_position;
+
+    if (hb_array_size(statements) > 0) {
+      AST_NODE_T* last_child = hb_array_last(statements);
+      end_position = last_child->location.end;
+    }
+
+    if (has_inline_when) {
+      AST_NODE_T* synthetic_node = (AST_NODE_T*)
+        ast_erb_when_node_init(NULL, NULL, NULL, NULL, statements, start_position, end_position, hb_array_init(0));
+
+      hb_array_append(when_conditions, synthetic_node);
+    } else {
+      AST_NODE_T* synthetic_node = (AST_NODE_T*)
+        ast_erb_in_node_init(NULL, NULL, NULL, NULL, statements, start_position, end_position, hb_array_init(0));
+
+      hb_array_append(in_conditions, synthetic_node);
+    }
+  }
 
   while (index < hb_array_size(array)) {
     AST_ERB_CONTENT_NODE_T* next_erb = get_erb_content_at(array, index);
@@ -754,8 +785,8 @@ hb_array_T* rewrite_node_array(AST_NODE_T* node, hb_array_T* array, analyze_ruby
   return new_array;
 }
 
-void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, bool strict) {
-  herb_visit_node((AST_NODE_T*) document, analyze_erb_content, NULL);
+void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, const parser_options_T* options) {
+  herb_visit_node((AST_NODE_T*) document, analyze_erb_content, (void*) options);
 
   analyze_ruby_context_T* context = malloc(sizeof(analyze_ruby_context_T));
 
@@ -784,7 +815,7 @@ void herb_analyze_parse_tree(AST_DOCUMENT_NODE_T* document, const char* source, 
 
   herb_analyze_parse_errors(document, source);
 
-  herb_parser_match_html_tags_post_analyze(document, strict);
+  herb_parser_match_html_tags_post_analyze(document, options);
 
   hb_array_free(&context->ruby_context_stack);
 

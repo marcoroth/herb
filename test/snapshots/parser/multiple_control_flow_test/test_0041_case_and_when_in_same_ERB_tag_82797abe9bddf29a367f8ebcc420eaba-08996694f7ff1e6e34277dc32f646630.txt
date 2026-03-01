@@ -6,22 +6,30 @@ input: |2-
 <% when "b" %>
   B
 <% end %>
+options: {strict: true}
 ---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBCaseNode (location: (1:0)-(5:9))
     │   ├── errors: (1 error)
     │   │   └── @ ERBCaseWithConditionsError (location: (1:0)-(1:28))
-    │   │       └── message: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+    │   │       └── message: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
     │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case variable when "a" " (location: (1:2)-(1:26))
     │   ├── tag_closing: "%>" (location: (1:26)-(1:28))
-    │   ├── children: (1 item)
-    │   │   └── @ HTMLTextNode (location: (1:28)-(3:0))
-    │   │       └── content: "\n  A\n"
-    │   │
-    │   ├── conditions: (1 item)
+    │   ├── children: []
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBWhenNode (location: (1:28)-(3:0))
+    │   │   │   ├── tag_opening: ∅
+    │   │   │   ├── content: ∅
+    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (1:28)-(3:0))
+    │   │   │           └── content: "\n  A\n"
+    │   │   │
+    │   │   │
     │   │   └── @ ERBWhenNode (location: (3:0)-(3:14))
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " when "b" " (location: (3:2)-(3:12))

@@ -26,6 +26,7 @@ bool has_ensure_node(analyzed_ruby_T* analyzed);
 bool has_unless_node(analyzed_ruby_T* analyzed);
 bool has_yield_node(analyzed_ruby_T* analyzed);
 bool has_then_keyword(analyzed_ruby_T* analyzed);
+bool has_inline_case_condition(analyzed_ruby_T* analyzed);
 
 bool has_error_message(analyzed_ruby_T* anlayzed, const char* message);
 

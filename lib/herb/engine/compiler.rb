@@ -194,7 +194,9 @@ module Herb
       end
 
       def visit_erb_control_node(node, &_block)
-        apply_trim(node, node.content.value.strip)
+        if node.content
+          apply_trim(node, node.content.value.strip)
+        end
 
         yield if block_given?
       end

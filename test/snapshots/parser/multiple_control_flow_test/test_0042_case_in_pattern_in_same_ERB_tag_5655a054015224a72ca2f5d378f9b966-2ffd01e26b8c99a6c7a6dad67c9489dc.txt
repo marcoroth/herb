@@ -6,22 +6,26 @@ input: |2-
 <% in 2 %>
   Two
 <% end %>
+options: {strict: false}
 ---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBCaseMatchNode (location: (1:0)-(5:9))
-    │   ├── errors: (1 error)
-    │   │   └── @ ERBCaseWithConditionsError (location: (1:0)-(1:21))
-    │   │       └── message: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
-    │   │
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " case value in 1 " (location: (1:2)-(1:19))
     │   ├── tag_closing: "%>" (location: (1:19)-(1:21))
-    │   ├── children: (1 item)
-    │   │   └── @ HTMLTextNode (location: (1:21)-(3:0))
-    │   │       └── content: "\n  One\n"
-    │   │
-    │   ├── conditions: (1 item)
+    │   ├── children: []
+    │   ├── conditions: (2 items)
+    │   │   ├── @ ERBInNode (location: (1:21)-(3:0))
+    │   │   │   ├── tag_opening: ∅
+    │   │   │   ├── content: ∅
+    │   │   │   ├── tag_closing: ∅
+    │   │   │   ├── then_keyword: ∅
+    │   │   │   └── statements: (1 item)
+    │   │   │       └── @ HTMLTextNode (location: (1:21)-(3:0))
+    │   │   │           └── content: "\n  One\n"
+    │   │   │
+    │   │   │
     │   │   └── @ ERBInNode (location: (3:0)-(3:10))
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " in 2 " (location: (3:2)-(3:8))

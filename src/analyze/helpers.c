@@ -6,79 +6,84 @@
 #include "../include/util/string.h"
 
 bool has_if_node(analyzed_ruby_T* analyzed) {
-  return analyzed->if_node_count > 0;
+  return analyzed && analyzed->if_node_count > 0;
 }
 
 bool has_elsif_node(analyzed_ruby_T* analyzed) {
-  return analyzed->elsif_node_count > 0;
+  return analyzed && analyzed->elsif_node_count > 0;
 }
 
 bool has_else_node(analyzed_ruby_T* analyzed) {
-  return analyzed->else_node_count > 0;
+  return analyzed && analyzed->else_node_count > 0;
 }
 
 bool has_end(analyzed_ruby_T* analyzed) {
-  return analyzed->end_count > 0;
+  return analyzed && analyzed->end_count > 0;
 }
 
 bool has_block_node(analyzed_ruby_T* analyzed) {
-  return analyzed->block_node_count > 0;
+  return analyzed && analyzed->block_node_count > 0;
 }
 
 bool has_block_closing(analyzed_ruby_T* analyzed) {
-  return analyzed->block_closing_count > 0;
+  return analyzed && analyzed->block_closing_count > 0;
 }
 
 bool has_case_node(analyzed_ruby_T* analyzed) {
-  return analyzed->case_node_count > 0;
+  return analyzed && analyzed->case_node_count > 0;
 }
 
 bool has_case_match_node(analyzed_ruby_T* analyzed) {
-  return analyzed->case_match_node_count > 0;
+  return analyzed && analyzed->case_match_node_count > 0;
 }
 
 bool has_when_node(analyzed_ruby_T* analyzed) {
-  return analyzed->when_node_count > 0;
+  return analyzed && analyzed->when_node_count > 0;
 }
 
 bool has_in_node(analyzed_ruby_T* analyzed) {
-  return analyzed->in_node_count > 0;
+  return analyzed && analyzed->in_node_count > 0;
 }
 
 bool has_for_node(analyzed_ruby_T* analyzed) {
-  return analyzed->for_node_count > 0;
+  return analyzed && analyzed->for_node_count > 0;
 }
 
 bool has_while_node(analyzed_ruby_T* analyzed) {
-  return analyzed->while_node_count > 0;
+  return analyzed && analyzed->while_node_count > 0;
 }
 
 bool has_until_node(analyzed_ruby_T* analyzed) {
-  return analyzed->until_node_count > 0;
+  return analyzed && analyzed->until_node_count > 0;
 }
 
 bool has_begin_node(analyzed_ruby_T* analyzed) {
-  return analyzed->begin_node_count > 0;
+  return analyzed && analyzed->begin_node_count > 0;
 }
 
 bool has_rescue_node(analyzed_ruby_T* analyzed) {
-  return analyzed->rescue_node_count > 0;
+  return analyzed && analyzed->rescue_node_count > 0;
 }
 
 bool has_ensure_node(analyzed_ruby_T* analyzed) {
-  return analyzed->ensure_node_count > 0;
+  return analyzed && analyzed->ensure_node_count > 0;
 }
 
 bool has_unless_node(analyzed_ruby_T* analyzed) {
-  return analyzed->unless_node_count > 0;
+  return analyzed && analyzed->unless_node_count > 0;
 }
 
 bool has_yield_node(analyzed_ruby_T* analyzed) {
-  return analyzed->yield_node_count > 0;
+  return analyzed && analyzed->yield_node_count > 0;
 }
 
 bool has_then_keyword(analyzed_ruby_T* analyzed) {
-  return analyzed->then_keyword_count > 0;
+  return analyzed && analyzed->then_keyword_count > 0;
+}
+
+bool has_inline_case_condition(analyzed_ruby_T* analyzed) {
+  return (has_case_node(analyzed) && has_when_node(analyzed))
+      || (has_case_match_node(analyzed) && has_in_node(analyzed));
 }
 
 bool has_error_message(analyzed_ruby_T* analyzed, const char* message) {

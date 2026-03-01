@@ -1536,9 +1536,18 @@ static size_t find_implicit_close_index(hb_array_T* nodes, size_t start_idx, hb_
   return hb_array_size(nodes);
 }
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict);
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  const parser_options_T* options
+);
 
-static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T* errors, bool strict) {
+static hb_array_T* parser_build_elements_from_tags(
+  hb_array_T* nodes,
+  hb_array_T* errors,
+  const parser_options_T* options
+) {
+  bool strict = options ? options->strict : false;
   hb_array_T* result = hb_array_init(hb_array_size(nodes));
 
   for (size_t index = 0; index < hb_array_size(nodes); index++) {
@@ -1561,7 +1570,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
             hb_array_append(body, hb_array_get(nodes, j));
           }
 
-          hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
+          hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, options);
           hb_array_free(&body);
 
           position_T end_position = open_tag->base.location.end;
@@ -1622,7 +1631,7 @@ static hb_array_T* parser_build_elements_from_tags(hb_array_T* nodes, hb_array_T
           hb_array_append(body, hb_array_get(nodes, j));
         }
 
-        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, strict);
+        hb_array_T* processed_body = parser_build_elements_from_tags(body, errors, options);
         hb_array_free(&body);
 
         hb_array_T* element_errors = hb_array_init(8);
@@ -1728,10 +1737,10 @@ void herb_parser_deinit(parser_T* parser) {
   }
 }
 
-void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict) {
+void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, const parser_options_T* options) {
   if (nodes == NULL || hb_array_size(nodes) == 0) { return; }
 
-  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors, strict);
+  hb_array_T* processed = parser_build_elements_from_tags(nodes, errors, options);
 
   nodes->size = 0;
 
@@ -1741,7 +1750,7 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict
 
   hb_array_free(&processed);
 
-  match_tags_context_T context = { .errors = errors, .strict = strict };
+  match_tags_context_T context = { .errors = errors, .options = options };
 
   for (size_t i = 0; i < hb_array_size(nodes); i++) {
     AST_NODE_T* node = (AST_NODE_T*) hb_array_get(nodes, i);
@@ -1751,8 +1760,8 @@ void match_tags_in_node_array(hb_array_T* nodes, hb_array_T* errors, bool strict
   }
 }
 
-void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, bool strict) {
+void herb_parser_match_html_tags_post_analyze(AST_DOCUMENT_NODE_T* document, const parser_options_T* options) {
   if (document == NULL) { return; }
 
-  match_tags_in_node_array(document->children, document->base.errors, strict);
+  match_tags_in_node_array(document->children, document->base.errors, options);
 }

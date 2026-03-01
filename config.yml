@@ -164,7 +164,7 @@ errors:
 
     - name: ERBCaseWithConditionsError
       message:
-        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
         arguments: []
 
       fields: []
