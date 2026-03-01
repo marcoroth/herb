@@ -4,49 +4,52 @@ input: "<div class=</div>"
 ---
 @ DocumentNode (location: (1:0)-(1:17))
 └── children: (1 item)
-    └── @ HTMLOpenTagNode (location: (1:0)-(1:17))
-        ├── errors: (1 error)
-        │   └── @ MissingClosingTagError (location: (1:0)-(1:17))
-        │       ├── message: "Opening tag `<div>` at (1:1) doesn't have a matching closing tag `</div>` in the same scope."
-        │       └── opening_tag: "div" (location: (1:1)-(1:4))
+    └── @ HTMLElementNode (location: (1:0)-(1:17))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:11))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnclosedOpenTagError (location: (1:1)-(1:11))
+        │       │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+        │       │       └── tag_name: "div" (location: (1:1)-(1:4))
+        │       │
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ∅
+        │       ├── children: (1 item)
+        │       │   └── @ HTMLAttributeNode (location: (1:5)-(1:13))
+        │       │       ├── name:
+        │       │       │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+        │       │       │       └── children: (1 item)
+        │       │       │           └── @ LiteralNode (location: (1:5)-(1:10))
+        │       │       │               └── content: "class"
+        │       │       │
+        │       │       │
+        │       │       ├── equals: "=" (location: (1:10)-(1:11))
+        │       │       └── value:
+        │       │           └── @ HTMLAttributeValueNode (location: (1:11)-(1:13))
+        │       │               ├── errors: (1 error)
+        │       │               │   └── @ UnexpectedError (location: (1:11)-(1:13))
+        │       │               │       ├── message: "Unexpected Token. Expected: an identifier, a quote, or `<%`, found: `</`."
+        │       │               │       ├── description: "Unexpected Token"
+        │       │               │       ├── expected: "an identifier, a quote, or `<%`"
+        │       │               │       └── found: "`</`"
+        │       │               │
+        │       │               ├── open_quote: ∅
+        │       │               ├── children: []
+        │       │               ├── close_quote: ∅
+        │       │               └── quoted: false
+        │       │
+        │       │
+        │       └── is_void: false
         │
-        ├── tag_opening: "<" (location: (1:0)-(1:1))
         ├── tag_name: "div" (location: (1:1)-(1:4))
-        ├── tag_closing: ">" (location: (1:16)-(1:17))
-        ├── children: (2 items)
-        │   ├── @ HTMLAttributeNode (location: (1:5)-(1:16))
-        │   │   ├── name:
-        │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
-        │   │   │       └── children: (1 item)
-        │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
-        │   │   │               └── content: "class"
-        │   │   │
-        │   │   │
-        │   │   ├── equals: "=" (location: (1:10)-(1:11))
-        │   │   └── value:
-        │   │       └── @ HTMLAttributeValueNode (location: (1:13)-(1:16))
-        │   │           ├── errors: (1 error)
-        │   │           │   └── @ UnexpectedError (location: (1:11)-(1:13))
-        │   │           │       ├── message: "Unexpected Token. Expected: an identifier, a quote, or `<%`, found: `</`."
-        │   │           │       ├── description: "Unexpected Token"
-        │   │           │       ├── expected: "an identifier, a quote, or `<%`"
-        │   │           │       └── found: "`</`"
-        │   │           │
-        │   │           ├── open_quote: ∅
-        │   │           ├── children: []
-        │   │           ├── close_quote: ∅
-        │   │           └── quoted: false
-        │   │
-        │   │
-        │   └── @ HTMLAttributeNode (location: (1:13)-(1:16))
-        │       ├── name:
-        │       │   └── @ HTMLAttributeNameNode (location: (1:13)-(1:16))
-        │       │       └── children: (1 item)
-        │       │           └── @ LiteralNode (location: (1:13)-(1:16))
-        │       │               └── content: "div"
-        │       │
-        │       │
-        │       ├── equals: ∅
-        │       └── value: ∅
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:11)-(1:17))
+        │       ├── tag_opening: "</" (location: (1:11)-(1:13))
+        │       ├── tag_name: "div" (location: (1:13)-(1:16))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:16)-(1:17))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

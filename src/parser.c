@@ -645,7 +645,18 @@ static AST_HTML_ATTRIBUTE_VALUE_NODE_T* parser_parse_html_attribute_value(parser
     return value;
   }
 
-  parser_append_unexpected_error(parser, errors, "Unexpected Token", TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
+  char* expected = token_types_to_friendly_string(TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START);
+
+  append_unexpected_error(
+    "Unexpected Token",
+    expected,
+    token_type_to_friendly_string(parser->current_token->type),
+    parser->current_token->location.start,
+    parser->current_token->location.end,
+    errors
+  );
+
+  free(expected);
 
   AST_HTML_ATTRIBUTE_VALUE_NODE_T* value = ast_html_attribute_value_node_init(
     NULL,
