@@ -90,7 +90,12 @@
       ],
       "defines": [
         "PRISM_EXPORT_SYMBOLS=static",
-        "PRISM_STATIC=1"
+        "PRISM_STATIC=1",
+        "HERB_EXCLUDE_PRETTYPRINT",
+        "PRISM_EXCLUDE_PRETTYPRINT",
+        "PRISM_EXCLUDE_JSON",
+        "PRISM_EXCLUDE_PACK",
+        "PRISM_EXCLUDE_SERIALIZATION"
       ],
       "cflags": [
         "-Wall",

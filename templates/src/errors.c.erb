@@ -161,6 +161,8 @@ void error_free(ERROR_T* error) {
   }
 }
 
+#ifndef HERB_EXCLUDE_PRETTYPRINT
+
 void error_pretty_print_array(
   const char* name, hb_array_T* array, const size_t indent, const size_t relative_indent, const bool last_property,
   hb_buffer_T* buffer
@@ -245,3 +247,5 @@ void error_pretty_print(ERROR_T* error, const size_t indent, const size_t relati
     <%- end -%>
   }
 }
+
+#endif

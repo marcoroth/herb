@@ -41,6 +41,11 @@ fn main() {
         .flag("-std=c99")
         .flag("-fPIC")
         .opt_level(2)
+        .define("HERB_EXCLUDE_PRETTYPRINT", None)
+        .define("PRISM_EXCLUDE_PRETTYPRINT", None)
+        .define("PRISM_EXCLUDE_JSON", None)
+        .define("PRISM_EXCLUDE_PACK", None)
+        .define("PRISM_EXCLUDE_SERIALIZATION", None)
         .include(&vendor_prism_include)
         .files(&prism_sources)
         .warnings(false);
@@ -72,6 +77,11 @@ fn main() {
       .flag("-Wno-unused-parameter")
       .flag("-fPIC")
       .opt_level(2)
+      .define("HERB_EXCLUDE_PRETTYPRINT", None)
+      .define("PRISM_EXCLUDE_PRETTYPRINT", None)
+      .define("PRISM_EXCLUDE_JSON", None)
+      .define("PRISM_EXCLUDE_PACK", None)
+      .define("PRISM_EXCLUDE_SERIALIZATION", None)
       .include(&include_dir)
       .include(&prism_include)
       .files(&c_sources);

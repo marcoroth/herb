@@ -1,3 +1,7 @@
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+  // Pretty print support excluded
+#else
+
 #include "include/analyze/helpers.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
@@ -110,3 +114,5 @@ void ast_pretty_print_node(AST_NODE_T* node, const size_t indent, const size_t r
     <%- end -%>
   }
 }
+
+#endif

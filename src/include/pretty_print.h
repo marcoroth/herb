@@ -1,6 +1,10 @@
 #ifndef HERB_PRETTY_PRINT_H
 #define HERB_PRETTY_PRINT_H
 
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+  // Pretty print support excluded
+#else
+
 #include "analyze/analyzed_ruby.h"
 #include "ast_nodes.h"
 #include "location.h"
@@ -100,4 +104,5 @@ void pretty_print_errors(
   hb_buffer_T* buffer
 );
 
+#endif
 #endif

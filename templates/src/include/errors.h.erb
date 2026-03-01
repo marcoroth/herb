@@ -48,11 +48,13 @@ const char* error_human_type(ERROR_T* error);
 
 void error_free(ERROR_T* error);
 
-void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, hb_buffer_T* buffer);
+#ifndef HERB_EXCLUDE_PRETTYPRINT
+  void error_pretty_print(ERROR_T* error, size_t indent, size_t relative_indent, hb_buffer_T* buffer);
 
-void error_pretty_print_array(
-  const char* name, hb_array_T* array, size_t indent, size_t relative_indent, bool last_property,
-  hb_buffer_T* buffer
-);
+  void error_pretty_print_array(
+    const char* name, hb_array_T* array, size_t indent, size_t relative_indent, bool last_property,
+    hb_buffer_T* buffer
+  );
+#endif
 
 #endif

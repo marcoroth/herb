@@ -1,3 +1,7 @@
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+  // Pretty print support excluded
+#else
+
 #include "include/pretty_print.h"
 #include "include/ast_nodes.h"
 #include "include/ast_pretty_print.h"
@@ -249,3 +253,5 @@ void pretty_print_string_property(
     if (!hb_string_is_empty(quoted)) { free(quoted.data); }
   }
 }
+
+#endif

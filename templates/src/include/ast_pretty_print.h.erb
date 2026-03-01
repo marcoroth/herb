@@ -1,6 +1,10 @@
 #ifndef HERB_AST_PRETTY_PRINT_H
 #define HERB_AST_PRETTY_PRINT_H
 
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+  // Pretty print support excluded
+#else
+
 #include "ast_nodes.h"
 #include "util/hb_buffer.h"
 
@@ -11,4 +15,5 @@ void ast_pretty_print_node(
   hb_buffer_T* buffer
 );
 
+#endif
 #endif
