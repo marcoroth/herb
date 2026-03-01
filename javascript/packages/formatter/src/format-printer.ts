@@ -1881,7 +1881,7 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    const match = trimmedText.match(/^[.!?:;]+/)
+    const match = trimmedText.match(/^[.!?:;%]+/)
 
     if (!match) {
       return {
@@ -1940,16 +1940,20 @@ export class FormatPrinter extends Printer {
   /**
    * Render adjacent inline elements together on one line
    */
-  private renderAdjacentInlineElements(children: Node[], count: number): { processedIndices: Set<number> } {
+  private renderAdjacentInlineElements(children: Node[], count: number, startIndex = 0, alreadyProcessed?: Set<number>): { processedIndices: Set<number>; lastIndex: number } {
     let inlineContent = ""
     let processedCount = 0
     let lastProcessedIndex = -1
     const processedIndices = new Set<number>()
 
-    for (let index = 0; index < children.length && processedCount < count; index++) {
+    for (let index = startIndex; index < children.length && processedCount < count; index++) {
       const child = children[index]
 
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        continue
+      }
+
+      if (alreadyProcessed?.has(index)) {
         continue
       }
 
@@ -1979,21 +1983,27 @@ export class FormatPrinter extends Printer {
           continue
         }
 
+        if (alreadyProcessed?.has(index)) {
+          break
+        }
+
         if (isNode(child, ERBContentNode)) {
           inlineContent += this.renderERBAsString(child)
           processedIndices.add(index)
+          lastProcessedIndex = index
           continue
         }
 
         if (isNode(child, HTMLTextNode)) {
           const trimmed = child.content.trim()
 
-          if (trimmed && /^[.!?:;]/.test(trimmed)) {
+          if (trimmed && /^[.!?:;%]/.test(trimmed)) {
             const wrapWidth = this.maxLineLength - this.indent.length
             const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
 
             inlineContent = result.mergedContent
             processedIndices.add(index)
+            lastProcessedIndex = index
 
             if (result.shouldStop) {
               if (inlineContent) {
@@ -2002,7 +2012,7 @@ export class FormatPrinter extends Printer {
 
               result.wrappedLines.forEach(line => this.push(line))
 
-              return { processedIndices }
+              return { processedIndices, lastIndex: lastProcessedIndex }
             }
           }
         }
@@ -2015,7 +2025,10 @@ export class FormatPrinter extends Printer {
       this.pushWithIndent(inlineContent)
     }
 
-    return { processedIndices }
+    return {
+      processedIndices,
+      lastIndex: lastProcessedIndex >= 0 ? lastProcessedIndex : startIndex + count - 1
+    }
   }
 
   /**
@@ -2054,21 +2067,37 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Visit remaining children after processing adjacent inline elements
+   * Visit remaining children after processing adjacent inline elements.
+   * Detects and renders subsequent groups of adjacent inline elements.
    */
   private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
-    for (let index = 0; index < children.length; index++) {
+    let index = 0
+
+    while (index < children.length) {
       const child = children[index]
 
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        index++
         continue
       }
 
       if (processedIndices.has(index)) {
+        index++
         continue
       }
 
-      this.visit(child)
+      const adjacentCount = countAdjacentInlineElements(children, index, processedIndices)
+
+      if (adjacentCount >= 2) {
+        const { processedIndices: newProcessedIndices, lastIndex } =
+          this.renderAdjacentInlineElements(children, adjacentCount, index, processedIndices)
+
+        newProcessedIndices.forEach(i => processedIndices.add(i))
+        index = lastIndex + 1
+      } else {
+        this.visit(child)
+        index++
+      }
     }
   }
 
