@@ -1851,170 +1851,7 @@ export class FormatPrinter extends Printer {
   /**
    * Render adjacent inline elements together on one line
    */
-  private renderAdjacentInlineElements(children: Node[], count: number): { processedIndices: Set<number> } {
-    let inlineContent = ""
-    let processedCount = 0
-    let lastProcessedIndex = -1
-    const processedIndices = new Set<number>()
-
-    for (let index = 0; index < children.length && processedCount < count; index++) {
-      const child = children[index]
-
-      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
-        continue
-      }
-
-      if (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) {
-        inlineContent += this.renderInlineElementAsString(child)
-        processedCount++
-        lastProcessedIndex = index
-        processedIndices.add(index)
-
-        if (inlineContent && isLineBreakingElement(child)) {
-          this.pushWithIndent(inlineContent)
-          inlineContent = ""
-        }
-      } else if (isNode(child, ERBContentNode)) {
-        inlineContent += this.renderERBAsString(child)
-        processedCount++
-        lastProcessedIndex = index
-        processedIndices.add(index)
-      }
-    }
-
-    if (lastProcessedIndex >= 0) {
-      for (let index = lastProcessedIndex + 1; index < children.length; index++) {
-        const child = children[index]
-
-        if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
-          continue
-        }
-
-        if (isNode(child, ERBContentNode)) {
-          inlineContent += this.renderERBAsString(child)
-          processedIndices.add(index)
-          continue
-        }
-
-        if (isNode(child, HTMLTextNode)) {
-          const trimmed = child.content.trim()
-
-          if (trimmed && /^[.!?:;%]/.test(trimmed)) {
-            const wrapWidth = this.maxLineLength - this.indent.length
-            const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
-
-            inlineContent = result.mergedContent
-            processedIndices.add(index)
-
-            if (result.shouldStop) {
-              if (inlineContent) {
-                this.pushWithIndent(inlineContent)
-              }
-
-              result.wrappedLines.forEach(line => this.push(line))
-
-              return { processedIndices }
-            }
-          }
-        }
-
-        break
-      }
-    }
-
-    if (inlineContent) {
-      this.pushWithIndent(inlineContent)
-    }
-
-    return { processedIndices }
-  }
-
-  /**
-   * Render an inline element as a string
-   */
-  private renderInlineElementAsString(element: HTMLElementNode): string {
-    const tagName = getTagName(element)
-
-    if (element.is_void || element.open_tag?.tag_closing?.value === "/>") {
-      const attributes = filterNodes(element.open_tag?.children, HTMLAttributeNode)
-      const attributesString = this.renderAttributesString(attributes)
-      const isSelfClosing = element.open_tag?.tag_closing?.value === "/>"
-
-      return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
-    }
-
-    const childrenToRender = this.getFilteredChildren(element.body)
-
-    const childInline = this.tryRenderInlineFull(element, tagName,
-      filterNodes(element.open_tag?.children, HTMLAttributeNode),
-      childrenToRender
-    )
-
-    return childInline !== null ? childInline : ""
-  }
-
-  /**
-   * Render an ERB node as a string
-   */
-  private renderERBAsString(node: ERBContentNode): string {
-    return this.capture(() => {
-      this.inlineMode = true
-      this.visit(node)
-    }).join("")
-  }
-
-  /**
-   * Count adjacent inline elements starting from a specific index
-   * Skips indices that are already processed
-   */
-  private countAdjacentInlineElementsFromIndex(
-    children: Node[],
-    startIndex: number,
-    processedIndices: Set<number>
-  ): number {
-    let count = 0
-    let lastSignificantIndex = -1
-
-    for (let i = startIndex; i < children.length; i++) {
-      const child = children[i]
-
-      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
-        continue
-      }
-
-      if (processedIndices.has(i)) {
-        break
-      }
-
-      const isInlineOrERB =
-        (isNode(child, HTMLElementNode) && isInlineElement(getTagName(child))) ||
-        isNode(child, ERBContentNode)
-
-      if (!isInlineOrERB) {
-        break
-      }
-
-      if (lastSignificantIndex >= 0 && hasWhitespaceBetween(children, lastSignificantIndex, i)) {
-        break
-      }
-
-      count++
-      lastSignificantIndex = i
-    }
-
-    return count
-  }
-
-  /**
-   * Render adjacent inline elements starting from a specific index
-   * Similar to renderAdjacentInlineElements but works from an arbitrary start point
-   */
-  private renderAdjacentInlineElementsFromIndex(
-    children: Node[],
-    startIndex: number,
-    count: number,
-    alreadyProcessed: Set<number>
-  ): { processedIndices: Set<number>; lastIndex: number } {
+  private renderAdjacentInlineElements(children: Node[], count: number, startIndex = 0, alreadyProcessed?: Set<number>): { processedIndices: Set<number>; lastIndex: number } {
     let inlineContent = ""
     let processedCount = 0
     let lastProcessedIndex = -1
@@ -2027,7 +1864,7 @@ export class FormatPrinter extends Printer {
         continue
       }
 
-      if (alreadyProcessed.has(index)) {
+      if (alreadyProcessed?.has(index)) {
         continue
       }
 
@@ -2057,7 +1894,7 @@ export class FormatPrinter extends Printer {
           continue
         }
 
-        if (alreadyProcessed.has(index)) {
+        if (alreadyProcessed?.has(index)) {
           break
         }
 
@@ -2106,8 +1943,42 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Visit remaining children after processing adjacent inline elements
-   * Recursively handles groups of adjacent inline elements
+   * Render an inline element as a string
+   */
+  private renderInlineElementAsString(element: HTMLElementNode): string {
+    const tagName = getTagName(element)
+
+    if (element.is_void || element.open_tag?.tag_closing?.value === "/>") {
+      const attributes = filterNodes(element.open_tag?.children, HTMLAttributeNode)
+      const attributesString = this.renderAttributesString(attributes)
+      const isSelfClosing = element.open_tag?.tag_closing?.value === "/>"
+
+      return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
+    }
+
+    const childrenToRender = this.getFilteredChildren(element.body)
+
+    const childInline = this.tryRenderInlineFull(element, tagName,
+      filterNodes(element.open_tag?.children, HTMLAttributeNode),
+      childrenToRender
+    )
+
+    return childInline !== null ? childInline : ""
+  }
+
+  /**
+   * Render an ERB node as a string
+   */
+  private renderERBAsString(node: ERBContentNode): string {
+    return this.capture(() => {
+      this.inlineMode = true
+      this.visit(node)
+    }).join("")
+  }
+
+  /**
+   * Visit remaining children after processing adjacent inline elements.
+   * Detects and renders subsequent groups of adjacent inline elements.
    */
   private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
     let index = 0
@@ -2125,11 +1996,11 @@ export class FormatPrinter extends Printer {
         continue
       }
 
-      const adjacentCount = this.countAdjacentInlineElementsFromIndex(children, index, processedIndices)
+      const adjacentCount = countAdjacentInlineElements(children, index, processedIndices)
 
       if (adjacentCount >= 2) {
         const { processedIndices: newProcessedIndices, lastIndex } =
-          this.renderAdjacentInlineElementsFromIndex(children, index, adjacentCount, processedIndices)
+          this.renderAdjacentInlineElements(children, adjacentCount, index, processedIndices)
 
         newProcessedIndices.forEach(i => processedIndices.add(i))
         index = lastIndex + 1
