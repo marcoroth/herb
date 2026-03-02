@@ -3,6 +3,7 @@
 #include "include/errors.h"
 #include "include/position.h"
 #include "include/util.h"
+#include "include/util/hb_string.h"
 #include "include/visitor.h"
 
 #include <prism.h>
@@ -34,7 +35,7 @@ AST_LITERAL_NODE_T* ast_literal_node_init_from_token(const token_T* token) {
 
   ast_node_init(&literal->base, AST_LITERAL_NODE, token->location.start, token->location.end, NULL);
 
-  literal->content = token->value;
+  literal->content = hb_string_copy(token->value);
 
   return literal;
 }

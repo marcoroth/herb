@@ -161,6 +161,7 @@ void parser_append_literal_node_from_buffer(
 
   if (children != NULL) { hb_array_append(children, literal); }
 
+  free(buffer->value);
   hb_buffer_init(buffer, 128);
 }
 

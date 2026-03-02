@@ -303,8 +303,9 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
     text_node = ast_html_text_node_init(hb_string(content.value), start, parser->current_token->location.start, errors);
   } else {
     text_node = ast_html_text_node_init(hb_string(""), start, parser->current_token->location.start, errors);
-    free(content.value);
   }
+
+  free(content.value);
 
   return text_node;
 }

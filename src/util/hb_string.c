@@ -62,6 +62,16 @@ hb_string_T hb_string_range(hb_string_T string, uint32_t from, uint32_t to) {
   return hb_string_truncate(hb_string_slice(string, from), to - from);
 }
 
+hb_string_T hb_string_copy(hb_string_T string) {
+  if (hb_string_is_empty(string)) {
+    return (hb_string_T){ .data = NULL, .length = 0 };
+  }
+
+  char* copy = hb_string_to_c_string_using_malloc(string);
+
+  return (hb_string_T){ .data = copy, .length = string.length };
+}
+
 char* hb_string_to_c_string_using_malloc(hb_string_T string) {
   size_t string_length_in_bytes = sizeof(char) * (string.length);
   char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
