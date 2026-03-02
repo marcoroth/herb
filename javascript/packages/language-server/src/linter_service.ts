@@ -113,7 +113,27 @@ export class LinterService {
     }
   }
 
+  private shouldLintFile(uri: string): boolean {
+    const filePath = uri.replace(/^file:\/\//, '')
+
+    if (filePath.endsWith('.herb.yml')) return false
+
+    const config = this.settings.projectConfig
+    if (!config) return true
+
+    const hasConfigFile = Config.exists(config.projectPath)
+    if (!hasConfigFile) return true
+
+    const relativePath = filePath.replace(this.project.projectPath + '/', '')
+
+    return config.isLinterEnabledForPath(relativePath)
+  }
+
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
+    if (!this.shouldLintFile(textDocument.uri)) {
+      return { diagnostics: [] }
+    }
+
     const settings = await this.settings.getDocumentSettings(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
