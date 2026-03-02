@@ -741,6 +741,13 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         continue
       }
 
+      if (shouldAppendToLastLine(child, body, index)) {
+        this.appendChildToLastLine(child, body, index)
+        lastMeaningfulNode = child
+        hasHandledSpacing = false
+        continue
+      }
+
       const childStartLine = this.stringLineCount
       this.visit(child)
 
