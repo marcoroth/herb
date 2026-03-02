@@ -84,7 +84,8 @@ static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
 
   VALUE source_value = read_file_to_ruby_string(file_path);
-  lex_args_T args = { .tokens = herb_lex_file(file_path), .source = source_value };
+  char* source = (char*) check_string(source_value);
+  lex_args_T args = { .tokens = herb_lex(source), .source = source_value };
 
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
