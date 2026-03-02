@@ -2,17 +2,18 @@ import dedent from "dedent"
 
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 import { TextFlowEngine } from "./text-flow-engine.js"
+import { AttributeRenderer } from "./attribute-renderer.js"
 import { isTextFlowNode } from "./text-flow-helpers.js"
 
 import type { ERBNode } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
 import type { TextFlowDelegate } from "./text-flow-engine.js"
+import type { AttributeRendererDelegate } from "./attribute-renderer.js"
 import type { ElementFormattingAnalysis } from "./format-helpers.js"
 
 import {
   getTagName,
   getCombinedAttributeName,
-  getCombinedStringFromNodes,
   isNode,
   isToken,
   isParseResult,
@@ -46,10 +47,9 @@ import {
 } from "./format-helpers.js"
 
 import {
-  FORMATTABLE_ATTRIBUTES,
+  ASCII_WHITESPACE,
   INLINE_ELEMENTS,
   SPACEABLE_CONTAINERS,
-  TOKEN_LIST_ATTRIBUTES,
 } from "./format-helpers.js"
 
 import {
@@ -92,12 +92,6 @@ import {
 } from "@herb-tools/core"
 
 /**
- * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
- * characters like NBSP (U+00A0) and full-width space (U+3000)
- */
-const ASCII_WHITESPACE = /[ \t\n\r]+/g
-
-/**
  * Gets the children of an open tag, narrowing from the union type.
  * Returns empty array for conditional open tags.
  */
@@ -117,7 +111,7 @@ function getOpenTagClosing(element: HTMLElementNode): Token | null {
  * Printer traverses the Herb AST using the Visitor pattern
  * and emits a formatted string with proper indentation, line breaks, and attribute wrapping.
  */
-export class FormatPrinter extends Printer implements TextFlowDelegate {
+export class FormatPrinter extends Printer implements TextFlowDelegate, AttributeRendererDelegate {
   /**
    * @deprecated integrate indentWidth into this.options and update FormatOptions to extend from @herb-tools/printer options
    */
@@ -135,7 +129,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
   private indentLevel: number = 0
   private inlineMode: boolean = false
   private inConditionalOpenTagContext: boolean = false
-  private currentAttributeName: string | null = null
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
   private nodeIsMultiline = new Map<Node, boolean>()
@@ -143,7 +136,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
   private tagGroupsCache = new Map<Node[], Map<number, { tagName: string; groupStart: number; groupEnd: number }>>()
   private allSingleLineCache = new Map<Node[], boolean>()
   private textFlow: TextFlowEngine
-
+  private attributeRenderer: AttributeRenderer
 
   public source: string
 
@@ -154,6 +147,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
     this.indentWidth = options.indentWidth
     this.maxLineLength = options.maxLineLength
     this.textFlow = new TextFlowEngine(this)
+    this.attributeRenderer = new AttributeRenderer(this, this.maxLineLength, this.indentWidth)
   }
 
   print(input: Node | ParseResult | Token): string {
@@ -520,218 +514,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
   }
 
   /**
-   * Check if we're currently processing a token list attribute that needs spacing
-   */
-  private get isInTokenListAttribute(): boolean {
-    return this.currentAttributeName !== null && TOKEN_LIST_ATTRIBUTES.has(this.currentAttributeName)
-  }
-
-  /**
-   * Render attributes as a space-separated string
-   */
-  private renderAttributesString(attributes: HTMLAttributeNode[]): string {
-    if (attributes.length === 0) return ""
-
-    return ` ${attributes.map(attribute => this.renderAttribute(attribute)).join(" ")}`
-  }
-
-  /**
-   * Determine if a tag should be rendered inline based on attribute count and other factors
-   */
-  private shouldRenderInline(
-    totalAttributeCount: number,
-    inlineLength: number,
-    indentLength: number,
-    maxLineLength: number = this.maxLineLength,
-    hasComplexERB: boolean = false,
-    hasMultilineAttributes: boolean = false,
-    attributes: HTMLAttributeNode[] = []
-  ): boolean {
-    if (hasComplexERB || hasMultilineAttributes) return false
-
-    if (totalAttributeCount === 0) {
-      return inlineLength + indentLength <= maxLineLength
-    }
-
-    if (totalAttributeCount === 1 && attributes.length === 1) {
-      const attribute = attributes[0]
-      const attributeName = this.getAttributeName(attribute)
-
-      if (attributeName === 'class') {
-        const attributeValue = this.getAttributeValue(attribute)
-        const wouldBeMultiline = this.wouldClassAttributeBeMultiline(attributeValue, indentLength)
-
-        if (!wouldBeMultiline) {
-          return true
-        } else {
-          return false
-        }
-      }
-    }
-
-    if (totalAttributeCount > 3 || inlineLength + indentLength > maxLineLength) {
-      return false
-    }
-
-    return true
-  }
-
-  private wouldClassAttributeBeMultiline(content: string, indentLength: number): boolean {
-    const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-    const hasActualNewlines = /\r?\n/.test(content)
-
-    if (hasActualNewlines && normalizedContent.length > 80) {
-      const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line)
-
-      if (lines.length > 1) {
-        return true
-      }
-    }
-
-    const attributeLine = `class="${normalizedContent}"`
-    const currentIndent = indentLength
-
-    if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%[^%]*%>/.test(normalizedContent)) {
-        return false
-      }
-
-      const classes = normalizedContent.split(' ')
-      const lines = this.breakTokensIntoLines(classes, currentIndent)
-      return lines.length > 1
-    }
-
-    return false
-  }
-
-  // TOOD: extract to core or reuse function from core
-  private getAttributeName(attribute: HTMLAttributeNode): string {
-    return attribute.name ? getCombinedAttributeName(attribute.name) : ""
-  }
-
-  // TOOD: extract to core or reuse function from core
-  private getAttributeValue(attribute: HTMLAttributeNode): string {
-    if (isNode(attribute.value, HTMLAttributeValueNode)) {
-      return attribute.value.children.map(child => isNode(child, HTMLTextNode) ? child.content : IdentityPrinter.print(child)).join('')
-    }
-
-    return ''
-  }
-
-  private hasMultilineAttributes(attributes: HTMLAttributeNode[]): boolean {
-    return attributes.some(attribute => {
-      if (isNode(attribute.value, HTMLAttributeValueNode)) {
-        const content = getCombinedStringFromNodes(attribute.value.children)
-
-        if (/\r?\n/.test(content)) {
-          const name = attribute.name ? getCombinedAttributeName(attribute.name) : ""
-
-          if (name === "class") {
-            const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-
-            return normalizedContent.length > 80
-          }
-
-          const lines = content.split(/\r?\n/)
-
-          if (lines.length > 1) {
-            return lines.slice(1).some(line => /^[ \t\n\r]+/.test(line))
-          }
-        }
-      }
-
-      return false
-    })
-  }
-
-  private formatClassAttribute(content: string, name: string, equals: string, open_quote: string, close_quote: string): string {
-    const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-    const hasActualNewlines = /\r?\n/.test(content)
-
-    if (hasActualNewlines && normalizedContent.length > 80) {
-      const lines = content.split(/\r?\n/).map(line => line.trim()).filter(line => line)
-
-      if (lines.length > 1) {
-        return open_quote + this.formatMultilineAttributeValue(lines) + close_quote
-      }
-    }
-
-    const currentIndent = this.indentLevel * this.indentWidth
-    const attributeLine = `${name}${equals}${open_quote}${normalizedContent}${close_quote}`
-
-    if (currentIndent + attributeLine.length > this.maxLineLength && normalizedContent.length > 60) {
-      if (/<%[^%]*%>/.test(normalizedContent)) {
-        return open_quote + normalizedContent + close_quote
-      }
-
-      const classes = normalizedContent.split(' ')
-      const lines = this.breakTokensIntoLines(classes, currentIndent)
-
-      if (lines.length > 1) {
-        return open_quote + this.formatMultilineAttributeValue(lines) + close_quote
-      }
-    }
-
-    return open_quote + normalizedContent + close_quote
-  }
-
-  private isFormattableAttribute(attributeName: string, tagName: string): boolean {
-    const globalFormattable = FORMATTABLE_ATTRIBUTES['*'] || []
-    const tagSpecificFormattable = FORMATTABLE_ATTRIBUTES[tagName.toLowerCase()] || []
-
-    return globalFormattable.includes(attributeName) || tagSpecificFormattable.includes(attributeName)
-  }
-
-  private formatMultilineAttribute(content: string, name: string, open_quote: string, close_quote: string): string {
-    if (name === 'srcset' || name === 'sizes') {
-      const normalizedContent = content.replace(ASCII_WHITESPACE, ' ').trim()
-
-      return open_quote + normalizedContent + close_quote
-    }
-
-    const lines = content.split('\n')
-
-    if (lines.length <= 1) {
-      return open_quote + content + close_quote
-    }
-
-    const formattedContent = this.formatMultilineAttributeValue(lines)
-
-    return open_quote + formattedContent + close_quote
-  }
-
-  private formatMultilineAttributeValue(lines: string[]): string {
-    const indent = " ".repeat((this.indentLevel + 1) * this.indentWidth)
-    const closeIndent = " ".repeat(this.indentLevel * this.indentWidth)
-
-    return "\n" + lines.map(line => indent + line).join("\n") + "\n" + closeIndent
-  }
-
-  private breakTokensIntoLines(tokens: string[], currentIndent: number, separator: string = ' '): string[] {
-    const lines: string[] = []
-    let currentLine = ''
-
-    for (const token of tokens) {
-      const testLine = currentLine ? currentLine + separator + token : token
-
-      if (testLine.length > (this.maxLineLength - currentIndent - 6)) {
-        if (currentLine) {
-          lines.push(currentLine)
-          currentLine = token
-        } else {
-          lines.push(token)
-        }
-      } else {
-        currentLine = testLine
-      }
-    }
-
-    if (currentLine) lines.push(currentLine)
-
-    return lines
-  }
-
-  /**
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
@@ -758,9 +540,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
     this.pushWithIndent(openingLine)
 
     this.withIndent(() => {
+      this.attributeRenderer.indentLevel = this.indentLevel
       allChildren.forEach(child => {
         if (isNode(child, HTMLAttributeNode)) {
-          this.pushWithIndent(this.renderAttribute(child))
+          this.pushWithIndent(this.attributeRenderer.renderAttribute(child, tagName))
         } else if (!isNode(child, WhitespaceNode)) {
           if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
             return
@@ -782,7 +565,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
    * Reconstruct the text representation of an ERB node
    * @param withFormatting - if true, format the content; if false, preserve original
    */
-  private reconstructERBNode(node: ERBNode, withFormatting: boolean = true): string {
+  reconstructERBNode(node: ERBNode, withFormatting: boolean = true): string {
     const open = node.tag_opening?.value ?? ""
     const close = node.tag_closing?.value ?? ""
     const content = node.content?.value ?? ""
@@ -1287,13 +1070,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
 
     const inline = this.renderInlineOpen(getTagName(node), attributes, isSelfClosing, inlineNodes, node.children)
     const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-    const shouldKeepInline = this.shouldRenderInline(
+    this.attributeRenderer.indentLevel = this.indentLevel
+    const shouldKeepInline = this.attributeRenderer.shouldRenderInline(
       totalAttributeCount,
       inline.length,
       this.indent.length,
       this.maxLineLength,
       false,
-      this.hasMultilineAttributes(attributes),
+      this.attributeRenderer.hasMultilineAttributes(attributes),
       attributes
     )
 
@@ -1352,7 +1136,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
   }
 
   visitHTMLAttributeNode(node: HTMLAttributeNode) {
-    this.pushWithIndent(this.renderAttribute(node))
+    this.attributeRenderer.indentLevel = this.indentLevel
+    this.pushWithIndent(this.attributeRenderer.renderAttribute(node, this.currentTagName))
   }
 
   visitHTMLAttributeNameNode(node: HTMLAttributeNameNode) {
@@ -1553,9 +1338,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
         node.statements.forEach(child => {
           if (isNode(child, HTMLAttributeNode)) {
             this.lines.push(" ")
-            this.lines.push(this.renderAttribute(child))
+            this.attributeRenderer.indentLevel = this.indentLevel
+            this.lines.push(this.attributeRenderer.renderAttribute(child, this.currentTagName))
           } else {
-            const shouldAddSpaces = this.isInTokenListAttribute
+            const shouldAddSpaces = this.attributeRenderer.isInTokenListAttribute
 
             if (shouldAddSpaces) {
               this.lines.push(" ")
@@ -1570,7 +1356,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
         })
 
         const hasHTMLAttributes = node.statements.some(child => isNode(child, HTMLAttributeNode))
-        const isTokenList = this.isInTokenListAttribute
+        const isTokenList = this.attributeRenderer.isInTokenListAttribute
 
         if ((hasHTMLAttributes || isTokenList) && node.end_node) {
           this.lines.push(" ")
@@ -1712,7 +1498,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
     if (hasComplexERB) return false
 
     const totalAttributeCount = this.getTotalAttributeCount(attributes, inlineNodes)
-    const hasMultilineAttrs = this.hasMultilineAttributes(attributes)
+    this.attributeRenderer.indentLevel = this.indentLevel
+    const hasMultilineAttrs = this.attributeRenderer.hasMultilineAttributes(attributes)
 
     if (hasMultilineAttrs) return false
 
@@ -1724,7 +1511,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
       children
     )
 
-    return this.shouldRenderInline(
+    return this.attributeRenderer.shouldRenderInline(
       totalAttributeCount,
       inline.length,
       this.indent.length,
@@ -1898,7 +1685,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
 
     if (element.is_void || tagClosing?.value === "/>") {
       const attributes = filterNodes(getOpenTagChildren(element), HTMLAttributeNode)
-      const attributesString = this.renderAttributesString(attributes)
+      this.attributeRenderer.indentLevel = this.indentLevel
+      const attributesString = this.attributeRenderer.renderAttributesString(attributes, tagName)
       const isSelfClosing = tagClosing?.value === "/>"
 
       return `<${tagName}${attributesString}${isSelfClosing ? " />" : ">"}`
@@ -1936,7 +1724,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
 
 
   private renderInlineOpen(name: string, attributes: HTMLAttributeNode[], selfClose: boolean, inlineNodes: Node[] = [], allChildren: Node[] = []): string {
-    const parts = attributes.map(attribute => this.renderAttribute(attribute))
+    this.attributeRenderer.indentLevel = this.indentLevel
+    const parts = attributes.map(attribute => this.attributeRenderer.renderAttribute(attribute, name))
 
     if (inlineNodes.length > 0) {
       let result = `<${name}`
@@ -1945,7 +1734,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
         const lines = this.capture(() => {
           allChildren.forEach(child => {
             if (isNode(child, HTMLAttributeNode)) {
-              this.lines.push(" " + this.renderAttribute(child))
+              this.lines.push(" " + this.attributeRenderer.renderAttribute(child, name))
             } else if (!(isNode(child, WhitespaceNode))) {
               const wasInlineMode = this.inlineMode
 
@@ -1989,70 +1778,14 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
     return `<${name}${parts.length ? " " + parts.join(" ") : ""}${selfClose ? " />" : ">"}`
   }
 
-  renderAttribute(attribute: HTMLAttributeNode): string {
-    const name = attribute.name ? getCombinedAttributeName(attribute.name) : ""
-    const equals = attribute.equals?.value ?? ""
-
-    this.currentAttributeName = name
-
-    let value = ""
-
-    if (isNode(attribute.value, HTMLAttributeValueNode)) {
-      const attributeValue = attribute.value
-
-      let open_quote = attributeValue.open_quote?.value ?? ""
-      let close_quote = attributeValue.close_quote?.value ?? ""
-      let htmlTextContent = ""
-
-      const content = attributeValue.children.map((child: Node) => {
-        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
-          htmlTextContent += child.content
-
-          return child.content
-        } else if (isNode(child, ERBContentNode)) {
-          return this.reconstructERBNode(child, true)
-        } else {
-          const printed = IdentityPrinter.print(child)
-
-          if (this.isInTokenListAttribute) {
-            return printed.replace(/%>([^<\s])/g, '%> $1').replace(/([^>\s])<%/g, '$1 <%')
-          }
-
-          return printed
-        }
-      }).join("")
-
-      if (open_quote === "" && close_quote === "") {
-        open_quote = '"'
-        close_quote = '"'
-      } else if (open_quote === "'" && close_quote === "'" && !htmlTextContent.includes('"')) {
-        open_quote = '"'
-        close_quote = '"'
-      }
-
-      if (this.isFormattableAttribute(name, this.currentTagName)) {
-        if (name === 'class') {
-          value = this.formatClassAttribute(content, name, equals, open_quote, close_quote)
-        } else {
-          value = this.formatMultilineAttribute(content, name, open_quote, close_quote)
-        }
-      } else {
-        value = open_quote + content + close_quote
-      }
-    }
-
-    this.currentAttributeName = null
-
-    return name + equals + value
-  }
-
   /**
    * Try to render a complete element inline including opening tag, children, and closing tag
    */
   private tryRenderInlineFull(_node: HTMLElementNode, tagName: string, attributes: HTMLAttributeNode[], children: Node[]): string | null {
     let result = `<${tagName}`
 
-    result += this.renderAttributesString(attributes)
+    this.attributeRenderer.indentLevel = this.indentLevel
+    result += this.attributeRenderer.renderAttributesString(attributes, tagName)
     result += ">"
 
     const childrenContent = this.tryRenderChildrenInline(children, tagName)
@@ -2218,7 +1951,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate {
       } else if (isNode(child, HTMLElementNode)) {
         const tagName = getTagName(child)
         const attributes = filterNodes(getOpenTagChildren(child), HTMLAttributeNode)
-        const attributesString = this.renderAttributesString(attributes)
+        this.attributeRenderer.indentLevel = this.indentLevel
+        const attributesString = this.attributeRenderer.renderAttributesString(attributes, tagName)
         const childContent = this.renderElementInline(child)
 
         content += `<${tagName}${attributesString}>${childContent}</${tagName}>`

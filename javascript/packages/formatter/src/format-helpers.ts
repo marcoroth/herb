@@ -34,6 +34,12 @@ export interface ContentUnitWithNode {
 
 // --- Constants ---
 
+/**
+ * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
+ * characters like NBSP (U+00A0) and full-width space (U+3000)
+ */
+export const ASCII_WHITESPACE = /[ \t\n\r]+/g
+
 // TODO: we can probably expand this list with more tags/attributes
 export const FORMATTABLE_ATTRIBUTES: Record<string, string[]> = {
   '*': ['class'],
