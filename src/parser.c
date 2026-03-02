@@ -300,8 +300,7 @@ static AST_HTML_TEXT_NODE_T* parser_parse_text_content(parser_T* parser, hb_arra
   AST_HTML_TEXT_NODE_T* text_node = NULL;
 
   if (hb_buffer_length(&content) > 0) {
-    text_node =
-      ast_html_text_node_init(hb_string(content.value), start, parser->current_token->location.start, errors);
+    text_node = ast_html_text_node_init(hb_string(content.value), start, parser->current_token->location.start, errors);
   } else {
     text_node = ast_html_text_node_init(hb_string(""), start, parser->current_token->location.start, errors);
     free(content.value);
@@ -911,7 +910,10 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
   const char* data = content->value.data;
   size_t remaining = content->value.length;
 
-  while (remaining > 0 && is_whitespace(*data)) { data++; remaining--; }
+  while (remaining > 0 && is_whitespace(*data)) {
+    data++;
+    remaining--;
+  }
 
   bool is_control_flow = starts_with_keyword(data, remaining, "end") || starts_with_keyword(data, remaining, "else")
                       || starts_with_keyword(data, remaining, "elsif") || starts_with_keyword(data, remaining, "in")
@@ -925,7 +927,7 @@ static bool parser_lookahead_erb_is_control_flow(parser_T* parser) {
 
 static void parser_handle_erb_in_open_tag(parser_T* parser, hb_array_T* children) {
   bool is_output_tag = !hb_string_is_empty(parser->current_token->value)
-    && hb_string_starts_with(parser->current_token->value, hb_string("<%="));
+                    && hb_string_starts_with(parser->current_token->value, hb_string("<%="));
 
   if (!is_output_tag) {
     hb_array_append(children, parser_parse_erb_tag(parser));
@@ -1360,8 +1362,7 @@ static void parser_parse_foreign_content(parser_T* parser, hb_array_T* children,
       bool is_potential_match = false;
 
       if (next_token && next_token->type == TOKEN_IDENTIFIER && !hb_string_is_empty(next_token->value)) {
-        is_potential_match =
-          parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
+        is_potential_match = parser_is_expected_closing_tag_name(next_token->value, parser->foreign_content_type);
       }
 
       lexer_restore_state(parser->lexer, saved_state);

@@ -97,7 +97,8 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
       if (result.tag) {
         hb_string_T tag_name = get_open_tag_name(result.tag);
 
-        if (!hb_string_is_empty(tag_name) && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
+        if (!hb_string_is_empty(tag_name)
+            && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
           result.tag = NULL;
           result.has_multiple_tags = false;
           result.second_tag = NULL;
@@ -127,8 +128,8 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
     if (result.has_multiple_tags && result.second_tag) {
       hb_string_T first_tag_name =
         get_open_tag_name((AST_HTML_OPEN_TAG_NODE_T*) hb_array_get(statements, first_tag_index));
-      bool first_has_close =
-        !hb_string_is_empty(first_tag_name) && has_matching_close_tag_in_statements(statements, first_tag_index, first_tag_name);
+      bool first_has_close = !hb_string_is_empty(first_tag_name)
+                          && has_matching_close_tag_in_statements(statements, first_tag_index, first_tag_name);
 
       if (first_has_close) {
         result.has_multiple_tags = false;
@@ -140,7 +141,9 @@ static single_open_tag_result_T get_single_open_tag_from_statements(hb_array_T* 
   if (result.tag) {
     hb_string_T tag_name = get_open_tag_name(result.tag);
 
-    if (!hb_string_is_empty(tag_name) && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) { result.tag = NULL; }
+    if (!hb_string_is_empty(tag_name) && has_matching_close_tag_in_statements(statements, first_tag_index, tag_name)) {
+      result.tag = NULL;
+    }
   }
 
   return result;

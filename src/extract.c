@@ -57,8 +57,7 @@ void herb_extract_ruby_to_buffer_with_options(
             is_comment_tag = true;
             if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
           }
-        } else if (hb_string_equals(token->value, hb_string("<%%"))
-                   || hb_string_equals(token->value, hb_string("<%%="))
+        } else if (hb_string_equals(token->value, hb_string("<%%")) || hb_string_equals(token->value, hb_string("<%%="))
                    || hb_string_equals(token->value, hb_string("<%graphql"))) {
           skip_erb_content = true;
           is_comment_tag = false;

@@ -165,7 +165,8 @@ char* token_types_to_friendly_string_va(token_type_T first_token, ...) {
 
 hb_string_T token_to_string(const token_T* token) {
   hb_string_T type_string = token_type_to_string(token->type);
-  hb_string_T template = hb_string("#<Herb::Token type=\"%.*s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>");
+  hb_string_T template =
+    hb_string("#<Herb::Token type=\"%.*s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>");
 
   char* string = calloc(template.length + type_string.length + token->value.length + 16, sizeof(char));
 

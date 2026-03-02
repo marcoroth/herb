@@ -34,21 +34,35 @@ static hb_string_T extract_condition_from_erb_content(AST_NODE_T* erb_node, bool
   const char* data = content_token->value.data;
   size_t remaining = content_token->value.length;
 
-  while (remaining > 0 && is_whitespace(*data)) { data++; remaining--; }
-
-  if (*is_if) {
-    if (remaining >= 3 && strncmp(data, "if", 2) == 0 && is_whitespace(data[2])) { data += 3; remaining -= 3; }
-  } else {
-    if (remaining >= 7 && strncmp(data, "unless", 6) == 0 && is_whitespace(data[6])) { data += 7; remaining -= 7; }
+  while (remaining > 0 && is_whitespace(*data)) {
+    data++;
+    remaining--;
   }
 
-  while (remaining > 0 && is_whitespace(*data)) { data++; remaining--; }
+  if (*is_if) {
+    if (remaining >= 3 && strncmp(data, "if", 2) == 0 && is_whitespace(data[2])) {
+      data += 3;
+      remaining -= 3;
+    }
+  } else {
+    if (remaining >= 7 && strncmp(data, "unless", 6) == 0 && is_whitespace(data[6])) {
+      data += 7;
+      remaining -= 7;
+    }
+  }
+
+  while (remaining > 0 && is_whitespace(*data)) {
+    data++;
+    remaining--;
+  }
   if (remaining == 0) { return hb_string(""); }
 
-  while (remaining > 0 && is_whitespace(data[remaining - 1])) { remaining--; }
+  while (remaining > 0 && is_whitespace(data[remaining - 1])) {
+    remaining--;
+  }
   if (remaining == 0) { return hb_string(""); }
 
-  return (hb_string_T){ .data = (char*) data, .length = (uint32_t) remaining };
+  return (hb_string_T) { .data = (char*) data, .length = (uint32_t) remaining };
 }
 
 static bool is_simple_erb_conditional(AST_NODE_T* node) {
@@ -318,16 +332,12 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       conditional_open_tag_T* entry = (conditional_open_tag_T*) hb_array_get(open_stack, stack_index - 1);
 
       if (!entry) { continue; }
-      if (!hb_string_equals_case_insensitive(entry->tag_name, close_tag->tag_name->value)) {
-        continue;
-      }
+      if (!hb_string_equals_case_insensitive(entry->tag_name, close_tag->tag_name->value)) { continue; }
 
       bool close_is_if;
       hb_string_T close_condition = extract_condition_from_erb_content(node, &close_is_if);
 
-      if (entry->is_if != close_is_if) {
-        continue;
-      }
+      if (entry->is_if != close_is_if) { continue; }
 
       if (!conditions_are_equivalent(entry->condition, close_condition)) {
         if (!mismatched_open && entry->open_index < node_index) {
@@ -425,9 +435,7 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
   for (size_t stack_index = 0; stack_index < hb_array_size(open_stack); stack_index++) {
     conditional_open_tag_T* entry = (conditional_open_tag_T*) hb_array_get(open_stack, stack_index);
 
-    if (entry) {
-      free(entry);
-    }
+    if (entry) { free(entry); }
   }
 
   hb_array_free(&open_stack);

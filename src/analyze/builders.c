@@ -29,7 +29,8 @@ location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_
   }
 
   token_T* content = erb_node->content;
-  char* source = (content && !hb_string_is_empty(content->value)) ? hb_string_to_c_string_using_malloc(content->value) : NULL;
+  char* source =
+    (content && !hb_string_is_empty(content->value)) ? hb_string_to_c_string_using_malloc(content->value) : NULL;
   location_T* then_keyword = NULL;
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {

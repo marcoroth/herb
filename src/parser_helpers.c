@@ -157,8 +157,7 @@ void parser_append_literal_node_from_buffer(
 
   hb_string_T content = { .data = buffer->value, .length = (uint32_t) buffer->length };
 
-  AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(content, start, parser->current_token->location.start, NULL);
+  AST_LITERAL_NODE_T* literal = ast_literal_node_init(content, start, parser->current_token->location.start, NULL);
 
   if (children != NULL) { hb_array_append(children, literal); }
 
@@ -269,7 +268,9 @@ bool parser_can_close_ancestor(const parser_T* parser, hb_string_T tag_name) {
   for (size_t i = stack_size; i > 0; i--) {
     token_T* open = hb_array_get(parser->open_tags_stack, i - 1);
 
-    if (open && !hb_string_is_empty(open->value) && hb_string_equals_case_insensitive(open->value, tag_name)) { return true; }
+    if (open && !hb_string_is_empty(open->value) && hb_string_equals_case_insensitive(open->value, tag_name)) {
+      return true;
+    }
   }
 
   return false;
