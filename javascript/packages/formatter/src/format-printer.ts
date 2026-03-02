@@ -1831,9 +1831,9 @@ export class FormatPrinter extends Printer {
     const adjacentInlineCount = countAdjacentInlineElements(children)
 
     if (adjacentInlineCount >= 2) {
-      const lastProcessedIndex = this.renderAdjacentInlinePrefix(children, adjacentInlineCount)
-      const remainingChildren = children.slice(lastProcessedIndex + 1)
-      this.buildAndWrapTextFlow(remainingChildren)
+      const { processedIndices } = this.renderAdjacentInlineElements(children, adjacentInlineCount)
+      this.visitRemainingChildrenAsTextFlow(children, processedIndices)
+
       return
     }
 
@@ -1841,19 +1841,119 @@ export class FormatPrinter extends Printer {
   }
 
   /**
-   * Render adjacent inline elements at the start of children as a prefix.
-   * Handles line-breaking elements (br, hr) by flushing accumulated content.
-   * Returns the index of the last processed child.
+   * Wrap remaining words that don't fit on the current line
+   * Returns the wrapped lines with proper indentation
    */
-  private renderAdjacentInlinePrefix(children: Node[], count: number): number {
+  private wrapRemainingWords(words: string[], wrapWidth: number): string[] {
+    const lines: string[] = []
+    let line = ""
+
+    for (const word of words) {
+      const testLine = line + (line ? " " : "") + word
+
+      if (testLine.length > wrapWidth && line) {
+        lines.push(this.indent + line)
+        line = word
+      } else {
+        line = testLine
+      }
+    }
+
+    if (line) {
+      lines.push(this.indent + line)
+    }
+
+    return lines
+  }
+
+  /**
+   * Try to merge text starting with punctuation to inline content
+   * Returns object with merged content and whether processing should stop
+   */
+  private tryMergePunctuationText(inlineContent: string, trimmedText: string, wrapWidth: number): { mergedContent: string, shouldStop: boolean, wrappedLines: string[] } {
+    const combined = inlineContent + trimmedText
+
+    if (combined.length <= wrapWidth) {
+      return {
+        mergedContent: inlineContent + trimmedText,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const match = trimmedText.match(/^[.!?:;%]+/)
+
+    if (!match) {
+      return {
+        mergedContent: inlineContent,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const punctuation = match[0]
+    const restText = trimmedText.substring(punctuation.length).trim()
+
+    if (!restText) {
+      return {
+        mergedContent: inlineContent + punctuation,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const words = restText.split(/[ \t\n\r]+/)
+    let toMerge = punctuation
+    let mergedWordCount = 0
+
+    for (const word of words) {
+      const testMerge = toMerge + ' ' + word
+
+      if ((inlineContent + testMerge).length <= wrapWidth) {
+        toMerge = testMerge
+        mergedWordCount++
+      } else {
+        break
+      }
+    }
+
+    const mergedContent = inlineContent + toMerge
+
+    if (mergedWordCount >= words.length) {
+      return {
+        mergedContent,
+        shouldStop: false,
+        wrappedLines: []
+      }
+    }
+
+    const remainingWords = words.slice(mergedWordCount)
+    const wrappedLines = this.wrapRemainingWords(remainingWords, wrapWidth)
+
+    return {
+      mergedContent,
+      shouldStop: true,
+      wrappedLines
+    }
+  }
+
+  /**
+   * Render adjacent inline elements together on one line
+   */
+  private renderAdjacentInlineElements(children: Node[], count: number, startIndex = 0, alreadyProcessed?: Set<number>): { processedIndices: Set<number>; lastIndex: number } {
     let inlineContent = ""
     let processedCount = 0
     let lastProcessedIndex = -1
+    const processedIndices = new Set<number>()
 
-    for (let index = 0; index < children.length && processedCount < count; index++) {
+    for (let index = startIndex; index < children.length && processedCount < count; index++) {
       const child = children[index]
 
       if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        continue
+      }
+
+      if (alreadyProcessed?.has(index)) {
         continue
       }
 
@@ -1861,8 +1961,9 @@ export class FormatPrinter extends Printer {
         inlineContent += this.renderInlineElementAsString(child)
         processedCount++
         lastProcessedIndex = index
+        processedIndices.add(index)
 
-        if (isLineBreakingElement(child)) {
+        if (inlineContent && isLineBreakingElement(child)) {
           this.pushWithIndent(inlineContent)
           inlineContent = ""
         }
@@ -1870,6 +1971,7 @@ export class FormatPrinter extends Printer {
         inlineContent += this.renderERBAsString(child)
         processedCount++
         lastProcessedIndex = index
+        processedIndices.add(index)
       }
     }
 
@@ -1878,15 +1980,40 @@ export class FormatPrinter extends Printer {
         const child = children[index]
 
         if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+          continue
+        }
+
+        if (alreadyProcessed?.has(index)) {
           break
         }
 
-        if (isNode(child, HTMLTextNode)) {
-          const words = normalizeAndSplitWords(child.content)
+        if (isNode(child, ERBContentNode)) {
+          inlineContent += this.renderERBAsString(child)
+          processedIndices.add(index)
+          lastProcessedIndex = index
+          continue
+        }
 
-          if (words.length > 0 && words[0] && !' \t\n\r'.includes(words[0][0])) {
-            inlineContent += words[0]
+        if (isNode(child, HTMLTextNode)) {
+          const trimmed = child.content.trim()
+
+          if (trimmed && /^[.!?:;%]/.test(trimmed)) {
+            const wrapWidth = this.maxLineLength - this.indent.length
+            const result = this.tryMergePunctuationText(inlineContent, trimmed, wrapWidth)
+
+            inlineContent = result.mergedContent
+            processedIndices.add(index)
             lastProcessedIndex = index
+
+            if (result.shouldStop) {
+              if (inlineContent) {
+                this.pushWithIndent(inlineContent)
+              }
+
+              result.wrappedLines.forEach(line => this.push(line))
+
+              return { processedIndices, lastIndex: lastProcessedIndex }
+            }
           }
         }
 
@@ -1898,7 +2025,10 @@ export class FormatPrinter extends Printer {
       this.pushWithIndent(inlineContent)
     }
 
-    return lastProcessedIndex
+    return {
+      processedIndices,
+      lastIndex: lastProcessedIndex >= 0 ? lastProcessedIndex : startIndex + count - 1
+    }
   }
 
   /**
@@ -1934,6 +2064,90 @@ export class FormatPrinter extends Printer {
       this.inlineMode = true
       this.visit(node)
     }).join("")
+  }
+
+  /**
+   * Visit remaining children after processing adjacent inline elements.
+   * Detects and renders subsequent groups of adjacent inline elements.
+   */
+  private visitRemainingChildren(children: Node[], processedIndices: Set<number>): void {
+    let index = 0
+
+    while (index < children.length) {
+      const child = children[index]
+
+      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        index++
+        continue
+      }
+
+      if (processedIndices.has(index)) {
+        index++
+        continue
+      }
+
+      const adjacentCount = countAdjacentInlineElements(children, index, processedIndices)
+
+      if (adjacentCount >= 2) {
+        const { processedIndices: newProcessedIndices, lastIndex } =
+          this.renderAdjacentInlineElements(children, adjacentCount, index, processedIndices)
+
+        newProcessedIndices.forEach(i => processedIndices.add(i))
+        index = lastIndex + 1
+      } else {
+        this.visit(child)
+        index++
+      }
+    }
+  }
+
+  /**
+   * Visit remaining children as text flow after processing adjacent inline elements.
+   * Detects subsequent groups of adjacent inline elements and renders them as a group,
+   * while passing non-group children through text flow wrapping.
+   */
+  private visitRemainingChildrenAsTextFlow(children: Node[], processedIndices: Set<number>): void {
+    let index = 0
+    let textFlowBuffer: Node[] = []
+
+    const flushTextFlow = () => {
+      if (textFlowBuffer.length > 0) {
+        this.buildAndWrapTextFlow(textFlowBuffer)
+        textFlowBuffer = []
+      }
+    }
+
+    while (index < children.length) {
+      const child = children[index]
+
+      if (processedIndices.has(index)) {
+        index++
+        continue
+      }
+
+      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        textFlowBuffer.push(child)
+        index++
+        continue
+      }
+
+      const adjacentCount = countAdjacentInlineElements(children, index, processedIndices)
+
+      if (adjacentCount >= 2) {
+        flushTextFlow()
+
+        const { processedIndices: newProcessedIndices, lastIndex } =
+          this.renderAdjacentInlineElements(children, adjacentCount, index, processedIndices)
+
+        newProcessedIndices.forEach(i => processedIndices.add(i))
+        index = lastIndex + 1
+      } else {
+        textFlowBuffer.push(child)
+        index++
+      }
+    }
+
+    flushTextFlow()
   }
 
   /**
@@ -1987,6 +2201,9 @@ export class FormatPrinter extends Printer {
       }
     }
 
+    // Trim trailing space from last word before final flush - trailing spaces are
+    // informational for spacing with subsequent words but shouldn't inflate
+    // effective length when it's the final word (it gets trimmed from output anyway)
     if (words.length > 0) {
       words[words.length - 1].word = words[words.length - 1].word.trimEnd()
     }
@@ -2140,44 +2357,11 @@ export class FormatPrinter extends Printer {
       return false
     }
 
-    const hasWhitespace = lastProcessedIndex >= 0 ? hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result) : true
+    if (lastProcessedIndex >= 0) {
+      const hasWhitespace = hasWhitespaceBetween(children, lastProcessedIndex, index) || this.lastUnitEndsWithWhitespace(result)
 
-    if (isLineBreakingElement(child)) {
-      if (!hasWhitespace && result.length > 0) {
-        const lastUnit = result[result.length - 1]
-
-        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
-          lastUnit.unit.content += inlineContent
-
-          result.push({
-            unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
-            node: null
-          })
-
-          return true
-        }
-      }
-
-      result.push({
-        unit: { content: '', type: 'block', isAtomic: false, breaksFlow: true },
-        node: child
-      })
-
-      return false
-    }
-
-    if (!hasWhitespace && lastProcessedIndex >= 0) {
-      if (this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
+      if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, inlineContent, 'inline', child)) {
         return true
-      }
-
-      if (result.length > 0) {
-        const lastUnit = result[result.length - 1]
-
-        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
-          lastUnit.unit.content += inlineContent
-          return true
-        }
       }
     }
 
@@ -2201,15 +2385,6 @@ export class FormatPrinter extends Printer {
 
       if (!hasWhitespace && this.tryMergeAtomicAfterText(result, children, lastProcessedIndex, erbContent, 'erb', child)) {
         return true
-      }
-
-      if (!hasWhitespace && result.length > 0) {
-        const lastUnit = result[result.length - 1]
-
-        if (lastUnit.unit.isAtomic && (lastUnit.unit.type === 'inline' || lastUnit.unit.type === 'erb')) {
-          lastUnit.unit.content += erbContent
-          return true
-        }
       }
 
       if (hasWhitespace && result.length > 0) {
