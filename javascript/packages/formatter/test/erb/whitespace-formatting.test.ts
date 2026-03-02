@@ -33,7 +33,7 @@ describe("ERB whitespace formatting", () => {
       `
       const result = formatter.format(source)
 
-      expect(result).toBe(dedent`
+      const expected = dedent`
         <a
           href="/path"
           <% if disabled %>
@@ -42,21 +42,14 @@ describe("ERB whitespace formatting", () => {
         >
           Text
         </a>
-      `)
+      `
 
-      expect(result).toContain('<% if disabled %>')
-      expect(result).toContain('<% end %>')
-
-      expect(result).not.toContain('<% if disabled%>')
-      expect(result).not.toContain('<%end%>')
+      expect(result).toBe(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("preserves already properly spaced ERB tags", () => {
-      const source = '<div <% if condition %> class="test" <% end %>></div>'
-      const result = formatter.format(source)
-
-      expect(result).toContain('<% if condition %>')
-      expect(result).toContain('<% end %>')
+      expectFormattedToMatch('<div <% if condition %> class="test" <% end %>></div>')
     })
 
     test("formats standalone ERB content tags with proper spacing", () => {
@@ -87,10 +80,7 @@ describe("ERB whitespace formatting", () => {
     })
 
     test("preserves ERB comment formatting", () => {
-      const source = '<%# This is a comment %>'
-      const result = formatter.format(source)
-
-      expect(result).toEqual('<%# This is a comment %>')
+      expectFormattedToMatch('<%# This is a comment %>')
     })
 
     test("handles complex ERB structures that get inlined", () => {
@@ -103,11 +93,13 @@ describe("ERB whitespace formatting", () => {
       `
       const result = formatter.format(source)
 
-      expect(result).toContain('<%= user.name %>')
-      expect(result).toContain('<div>')
-      expect(result).toContain('</div>')
-      expect(result).toContain('<span>')
-      expect(result).toContain('</span>')
+      expect(result).toBe(dedent`
+        <div>
+          <% users.each do |user| %>
+            <span><%= user.name %></span>
+          <% end %>
+        </div>
+      `)
     })
 
     test("does not add whitespace before apostrophe after ERB tag (issue #855)", () => {
@@ -390,6 +382,119 @@ describe("ERB whitespace formatting", () => {
     })
   })
 
+  describe("line breaking elements and text flow", () => {
+    test("does not add line breaks after ERB tags following <br>", () => {
+      const source = dedent`
+        <p><strong>Ut enim ad minima veniam</strong><br>
+         <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet...</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <p>
+          <strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit
+          amet...
+        </p>
+      `)
+    })
+
+    test("keeps period attached to ERB tag in text flow", () => {
+      const source = `<p><strong>Summary:</strong><br> Lorem ipsum <%= foo %> dolor <%= bar %>. Sit amet...</p>`
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <p>
+          <strong>Summary:</strong><br>
+          Lorem ipsum <%= foo %> dolor <%= bar %>. Sit amet...
+        </p>
+      `)
+    })
+
+    test("issue 903: does not separate ERB tags from surrounding text", () => {
+      expectFormattedToMatch(`Failed to <%= model.ignored? ? "unignore" : "ignore" %> model`)
+    })
+
+    test("issue 903: preserves apostrophe with ERB tag inline", () => {
+      expectFormattedToMatch(`<p><%= user.name %>'s profile</p>`)
+    })
+
+    test("issue 903: preserves possessive apostrophe after ERB tag", () => {
+      expectFormattedToMatch(`Waiting for <%= contractor.name.first_or_business %>'s signature.`)
+    })
+
+    test("issue 903: multiple ERB tags in text flow after <br>", () => {
+      const source = dedent`
+        <p><strong>Summary:</strong><br>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, <%= foo %> quis nostrud exercitation ullamco laboris. Duis aute irure dolor in reprehenderit <%= bar %> that <%= baz %> sed quia non numquam eius modi tempora.</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <p>
+          <strong>Summary:</strong><br>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua, <%= foo %> quis nostrud
+          exercitation ullamco laboris. Duis aute irure dolor in reprehenderit
+          <%= bar %> that <%= baz %> sed quia non numquam eius modi tempora.
+        </p>
+      `)
+    })
+
+    test("issue 903: full example with two paragraphs containing <br> and ERB", () => {
+      const source = dedent`
+        <p><strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+
+        <p><strong>Summary:</strong><br>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, <%= foo %> quis nostrud exercitation ullamco laboris. Duis aute irure dolor in reprehenderit <%= bar %> that <%= baz %> sed quia non numquam eius modi tempora.</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <p>
+          <strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet
+          consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+          dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+          officia deserunt mollit anim id est laborum.
+        </p>
+
+        <p>
+          <strong>Summary:</strong><br>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua, <%= foo %> quis nostrud
+          exercitation ullamco laboris. Duis aute irure dolor in reprehenderit
+          <%= bar %> that <%= baz %> sed quia non numquam eius modi tempora.
+        </p>
+      `)
+    })
+
+    test("handles long text with ERB tags after <br>", () => {
+      const source = dedent`
+        <p><strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      `
+      const result = formatter.format(source)
+
+      expect(result).toBe(dedent`
+        <p>
+          <strong>Ut enim ad minima veniam</strong><br>
+          <%= foo %> sed quia consequuntur magni <%= bar %>. Lorem ipsum dolor sit amet
+          consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+          dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+          ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+          officia deserunt mollit anim id est laborum.
+        </p>
+      `)
+    })
+  })
+
   describe("shared utility validation", () => {
     test("demonstrates consistent ERB content formatting where it applies", () => {
       const erbContentCases = [
@@ -406,14 +511,8 @@ describe("ERB whitespace formatting", () => {
     })
 
     test("documents current behavior for ERB logic tags", () => {
-      const logicCases = ['<% if condition%>', '<%end%>']
-
-      logicCases.forEach(testCase => {
-        const result = formatter.format(testCase)
-
-        expect(result).toContain('<%')
-        expect(result).toContain('%>')
-      })
+      expect(formatter.format('<% if condition%>')).toBe('<% if condition%>')
+      expect(formatter.format('<%end%>')).toBe('<%end%>')
     })
   })
 })

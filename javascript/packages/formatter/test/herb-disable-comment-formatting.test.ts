@@ -30,8 +30,8 @@ describe("herb:disable comment formatting", () => {
     expect(result).toBe(dedent`
       <DIV> <%# herb:disable html-tag-name-lowercase %>
         Dolores id occaecati ipsam. Eius blanditiis odio quas. Corrupti officia quasi
-        sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut omnis quia
-        ut dolores reiciendis. Numquam voluptate esse voluptas.
+        sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut omnis quia ut
+        dolores reiciendis. Numquam voluptate esse voluptas.
       </DIV> <%# herb:disable html-tag-name-lowercase %>
     `)
   })
@@ -51,8 +51,8 @@ describe("herb:disable comment formatting", () => {
       <div>
         <DIV> <%# herb:disable html-tag-name-lowercase %>
           Dolores id occaecati ipsam. Eius blanditiis odio quas. Corrupti officia
-          quasi sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut
-          omnis quia ut dolores reiciendis. Numquam voluptate esse voluptas.
+          quasi sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut omnis
+          quia ut dolores reiciendis. Numquam voluptate esse voluptas.
         </DIV> <%# herb:disable html-tag-name-lowercase %>
       </div>
     `)
@@ -85,8 +85,8 @@ describe("herb:disable comment formatting", () => {
 
     expect(result).toBe(dedent`
       <p> <%# herb:disable some-rule %>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua.
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+        incididunt ut labore et dolore magna aliqua.
       </p>
     `)
   })
@@ -102,8 +102,8 @@ describe("herb:disable comment formatting", () => {
 
     expect(result).toBe(dedent`
       <SPAN> <%# herb:disable all %>
-        Some content that needs wrapping because it is quite long and exceeds the
-        line length limit.
+        Some content that needs wrapping because it is quite long and exceeds the line
+        length limit.
       </SPAN>
     `)
   })
@@ -152,8 +152,7 @@ describe("herb:disable comment formatting", () => {
 
     expect(result).toBe(dedent`
       <p>
-        Some text with <span> <%# herb:disable some-rule %>inline content</span>
-        here.
+        Some text with <span> <%# herb:disable some-rule %>inline content</span> here.
       </p>
     `)
   })
@@ -286,8 +285,8 @@ describe("herb:disable comment formatting", () => {
     const expectedOutput = dedent`
       <DIV> <%# herb:disable html-tag-name-lowercase %>
         Dolores id occaecati ipsam. Eius blanditiis odio quas. Corrupti officia quasi
-        sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut omnis quia
-        ut dolores reiciendis. Numquam voluptate esse voluptas.
+        sunt neque soluta veritatis. Sint esse nihil alias quia qui. Aut omnis quia ut
+        dolores reiciendis. Numquam voluptate esse voluptas.
       </DIV> <%# herb:disable html-tag-name-lowercase %>
     `
 

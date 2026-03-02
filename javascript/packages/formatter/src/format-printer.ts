@@ -1832,7 +1832,7 @@ export class FormatPrinter extends Printer {
 
     if (adjacentInlineCount >= 2) {
       const { processedIndices } = this.renderAdjacentInlineElements(children, adjacentInlineCount)
-      this.visitRemainingChildren(children, processedIndices)
+      this.visitRemainingChildrenAsTextFlow(children, processedIndices)
 
       return
     }
@@ -1975,7 +1975,7 @@ export class FormatPrinter extends Printer {
       }
     }
 
-    if (lastProcessedIndex >= 0) {
+    if (inlineContent && lastProcessedIndex >= 0) {
       for (let index = lastProcessedIndex + 1; index < children.length; index++) {
         const child = children[index]
 
@@ -2102,6 +2102,55 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Visit remaining children as text flow after processing adjacent inline elements.
+   * Detects subsequent groups of adjacent inline elements and renders them as a group,
+   * while passing non-group children through text flow wrapping.
+   */
+  private visitRemainingChildrenAsTextFlow(children: Node[], processedIndices: Set<number>): void {
+    let index = 0
+    let textFlowBuffer: Node[] = []
+
+    const flushTextFlow = () => {
+      if (textFlowBuffer.length > 0) {
+        this.buildAndWrapTextFlow(textFlowBuffer)
+        textFlowBuffer = []
+      }
+    }
+
+    while (index < children.length) {
+      const child = children[index]
+
+      if (processedIndices.has(index)) {
+        index++
+        continue
+      }
+
+      if (isPureWhitespaceNode(child) || isNode(child, WhitespaceNode)) {
+        textFlowBuffer.push(child)
+        index++
+        continue
+      }
+
+      const adjacentCount = countAdjacentInlineElements(children, index, processedIndices)
+
+      if (adjacentCount >= 2) {
+        flushTextFlow()
+
+        const { processedIndices: newProcessedIndices, lastIndex } =
+          this.renderAdjacentInlineElements(children, adjacentCount, index, processedIndices)
+
+        newProcessedIndices.forEach(i => processedIndices.add(i))
+        index = lastIndex + 1
+      } else {
+        textFlowBuffer.push(child)
+        index++
+      }
+    }
+
+    flushTextFlow()
+  }
+
+  /**
    * Build words array from text/inline/ERB and wrap them
    */
   private buildAndWrapTextFlow(children: Node[]): void {
@@ -2150,6 +2199,13 @@ export class FormatPrinter extends Printer {
           }
         }
       }
+    }
+
+    // Trim trailing space from last word before final flush - trailing spaces are
+    // informational for spacing with subsequent words but shouldn't inflate
+    // effective length when it's the final word (it gets trimmed from output anyway)
+    if (words.length > 0) {
+      words[words.length - 1].word = words[words.length - 1].word.trimEnd()
     }
 
     this.flushWords(words)
@@ -2462,7 +2518,7 @@ export class FormatPrinter extends Printer {
         nextEffectiveLength = effectiveLength + spaceBefore + word.length
       }
 
-      if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength >= wrapWidth) {
+      if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength > wrapWidth) {
         lines.push(this.indent + currentLine.trimEnd())
 
         currentLine = word

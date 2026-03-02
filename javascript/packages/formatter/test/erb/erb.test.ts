@@ -312,8 +312,7 @@ describe("@herb-tools/formatter", () => {
       <p>
         This will be the all-in-one home for everything to do with
         <a href="https://hanamirb.org">Hanami</a>,
-        <a href="https://dry-rb.org">Dry</a> and
-        <a href="https://rom-rb.org">Rom</a>.
+        <a href="https://dry-rb.org">Dry</a> and <a href="https://rom-rb.org">Rom</a>.
       </p>
     `)
 
@@ -384,13 +383,13 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(input)
 
     expect(result).toBe(dedent`
-       <p>
-         Visit
-         <a href="/products">our amazing product catalog with hundreds of items</a>
-         or <a href="/support">contact our customer support team</a> for assistance
-         with your order.
-       </p>
-     `)
+      <p>
+        Visit
+        <a href="/products">our amazing product catalog with hundreds of items</a> or
+        <a href="/support">contact our customer support team</a> for assistance with
+        your order.
+      </p>
+    `)
   })
 
   test("handles multiple inline elements with adjacent text", () => {
@@ -676,8 +675,8 @@ describe("@herb-tools/formatter", () => {
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
 
                             <p class="text-muted-foreground text-sm leading-5">
-                              &copy;<%= Time.current.year %> - Company Inc, All
-                              rights reserved.
+                              &copy;<%= Time.current.year %> - Company Inc, All rights
+                              reserved.
                               <br />
                               Main Street, San Francisco, CAs, USA 12345
                               <br />
@@ -1387,9 +1386,7 @@ describe("@herb-tools/formatter", () => {
             <span>
               <strong>Cover Image</strong><br>
               Dimensions
-              <strong>
-                <%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %>
-              </strong>
+              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
               &mdash;
               <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
             </span>
@@ -1397,6 +1394,7 @@ describe("@herb-tools/formatter", () => {
         </figure>
       <% end %>
      `)
+
   })
 
   test("adjecent ERB text within elements", () => {
@@ -1461,8 +1459,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <div>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       </div>
     `
 
@@ -1472,12 +1470,12 @@ describe("@herb-tools/formatter", () => {
 
   test("ERB output after adjecent text within HTML element causing line-break", () => {
     const input = dedent`
-      <div>some text some text some text some text some text some text<%= icon("icon") %></div>
+      <div>some text some text some text some text some text somes text<%= icon("icon") %></div>
     `
 
     const expected = dedent`
       <div>
-        some text some text some text some text some text some
+        some text some text some text some text some text somes
         text<%= icon("icon") %>
       </div>
     `
@@ -1554,8 +1552,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <%= link_to "/" do %>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       <% end %>
     `
 
