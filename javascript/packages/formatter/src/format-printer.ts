@@ -1100,6 +1100,117 @@ export class FormatPrinter extends Printer {
   }
 
   /**
+   * Check if there's a blank line (double newline) in the nodes at the given index
+   */
+  private hasBlankLineBetween(body: Node[], index: number): boolean {
+    for (let lookbackIndex = index - 1; lookbackIndex >= 0 && lookbackIndex >= index - 2; lookbackIndex--) {
+      const node = body[lookbackIndex]
+
+      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
+        return true
+      }
+
+      if (isNode(node, WhitespaceNode)) {
+        continue
+      }
+
+      break
+    }
+
+    for (let lookaheadIndex = index; lookaheadIndex < body.length && lookaheadIndex <= index + 1; lookaheadIndex++) {
+      const node = body[lookaheadIndex]
+
+      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
+        return true
+      }
+
+      if (isNode(node, WhitespaceNode)) {
+        continue
+      }
+
+      break
+    }
+
+    return false
+  }
+
+  /**
+   * Check if a node is part of a text flow run (text, ERB, or inline element)
+   */
+  private isTextFlowNode(node: Node): boolean {
+    if (isNode(node, ERBContentNode)) return true
+    if (isNode(node, HTMLTextNode) && node.content.trim() !== "") return true
+    if (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))) return true
+
+    return false
+  }
+
+  /**
+   * Check if a node is whitespace that can appear within a text flow run
+   */
+  private isTextFlowWhitespace(node: Node): boolean {
+    if (isNode(node, WhitespaceNode)) return true
+    if (isNode(node, HTMLTextNode) && node.content.trim() === "" && !node.content.includes('\n\n')) return true
+
+    return false
+  }
+
+  /**
+   * Collect a run of text flow nodes starting at the given index.
+   * Returns the nodes in the run and the index after the last node.
+   */
+  private collectTextFlowRun(body: Node[], startIndex: number): { nodes: Node[], endIndex: number } | null {
+    const nodes: Node[] = []
+    let index = startIndex
+    let textFlowCount = 0
+
+    while (index < body.length) {
+      const child = body[index]
+
+      if (this.isTextFlowNode(child)) {
+        nodes.push(child)
+        textFlowCount++
+        index++
+      } else if (this.isTextFlowWhitespace(child)) {
+        let hasMoreTextFlow = false
+
+        for (let lookaheadIndex = index + 1; lookaheadIndex < body.length; lookaheadIndex++) {
+          if (this.isTextFlowNode(body[lookaheadIndex])) {
+            hasMoreTextFlow = true
+            break
+          }
+
+          if (this.isTextFlowWhitespace(body[lookaheadIndex])) {
+            continue
+          }
+
+          break
+        }
+
+        if (hasMoreTextFlow) {
+          nodes.push(child)
+          index++
+        } else {
+          break
+        }
+      } else {
+        break
+      }
+    }
+
+    if (textFlowCount >= 2) {
+      const hasText = nodes.some(node => isNode(node, HTMLTextNode) && node.content.trim() !== "")
+      const hasAtomicContent = nodes.some(node => isNode(node, ERBContentNode) || (isNode(node, HTMLElementNode) && isInlineElement(getTagName(node))))
+
+      if (hasText && hasAtomicContent) {
+        return { nodes, endIndex: index }
+      }
+    }
+
+    return null
+  }
+
+  /**
    * Visit element children with intelligent spacing logic
    *
    * Tracks line positions and immediately splices blank lines after rendering each child.
@@ -1129,6 +1240,41 @@ export class FormatPrinter extends Printer {
       }
 
       if (!isNonWhitespaceNode(child)) continue
+
+      if (this.isTextFlowNode(child)) {
+        const run = this.collectTextFlowRun(body, index)
+
+        if (run) {
+          if (lastMeaningfulNode && !hasHandledSpacing) {
+            const hasBlankLineBefore = this.hasBlankLineBetween(body, index)
+
+            if (hasBlankLineBefore) {
+              this.push("")
+            }
+          }
+
+          this.visitTextFlowChildren(run.nodes)
+
+          const lastRunNode = run.nodes[run.nodes.length - 1]
+          const hasBlankLineInTrailing = isNode(lastRunNode, HTMLTextNode) && lastRunNode.content.includes('\n\n')
+          const hasBlankLineAfter = hasBlankLineInTrailing || this.hasBlankLineBetween(body, run.endIndex)
+
+          if (hasBlankLineAfter) {
+            this.push("")
+            hasHandledSpacing = true
+          }
+
+          lastMeaningfulNode = run.nodes[run.nodes.length - 1]
+
+          if (!hasBlankLineAfter) {
+            hasHandledSpacing = false
+          }
+
+          index = run.endIndex - 1
+
+          continue
+        }
+      }
 
       let hasTrailingHerbDisable = false
 

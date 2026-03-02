@@ -495,6 +495,43 @@ describe("ERB whitespace formatting", () => {
     })
   })
 
+  describe("issue 931: punctuation after ERB link_to tags", () => {
+    test("issue 931: keeps commas and periods attached to ERB link_to tags (@adrianthedev)", () => {
+      const formatter120 = new Formatter(Herb, { indentWidth: 2, maxLineLength: 120 })
+
+      const source = dedent`
+        <div class="py-6 min-h-24">
+          <div class="px-6 space-y-4">
+            <h3>What a nice new tool</h3>
+
+            Go to <%= link_to "new comment", app.new_resources_comment_path %>, <%= link_to 'the first user', app.resources_user_path(1) %>, or <%= link_to 'hey on main app', main_app.hey_path %>.
+
+            <p>
+              You can edit this file here <code class="p-1 rounded-sm bg-gray-500 text-white text-sm">app/views/app/tools/custom_tool.html.erb</code>.
+            </p>
+          </div>
+        </div>
+      `
+      const result = formatter120.format(source)
+
+      expect(result).toBe(dedent`
+        <div class="py-6 min-h-24">
+          <div class="px-6 space-y-4">
+            <h3>What a nice new tool</h3>
+
+            Go to <%= link_to "new comment", app.new_resources_comment_path %>,
+            <%= link_to 'the first user', app.resources_user_path(1) %>, or <%= link_to 'hey on main app', main_app.hey_path %>.
+
+            <p>
+              You can edit this file here
+              <code class="p-1 rounded-sm bg-gray-500 text-white text-sm">app/views/app/tools/custom_tool.html.erb</code>.
+            </p>
+          </div>
+        </div>
+      `)
+    })
+  })
+
   describe("shared utility validation", () => {
     test("demonstrates consistent ERB content formatting where it applies", () => {
       const erbContentCases = [
