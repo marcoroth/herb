@@ -63,7 +63,7 @@ class NestedLinkVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoNestedLinksRule extends ParserRule {
-  name = "html-no-nested-links"
+  static ruleName = "html-no-nested-links"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -73,7 +73,7 @@ export class HTMLNoNestedLinksRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NestedLinkVisitor(this.name, context)
+    const visitor = new NestedLinkVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

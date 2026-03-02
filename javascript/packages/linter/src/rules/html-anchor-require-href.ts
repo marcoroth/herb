@@ -39,7 +39,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAnchorRequireHrefRule extends ParserRule {
-  name = "html-anchor-require-href"
+  static ruleName = "html-anchor-require-href"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -49,7 +49,7 @@ export class HTMLAnchorRequireHrefRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AnchorRequireHrefVisitor(this.name, context)
+    const visitor = new AnchorRequireHrefVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

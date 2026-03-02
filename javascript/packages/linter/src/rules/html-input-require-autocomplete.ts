@@ -66,7 +66,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLInputRequireAutocompleteRule extends ParserRule {
-  name = "html-input-require-autocomplete"
+  static ruleName = "html-input-require-autocomplete"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -76,7 +76,7 @@ export class HTMLInputRequireAutocompleteRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLInputRequireAutocompleteVisitor(this.name, context)
+    const visitor = new HTMLInputRequireAutocompleteVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

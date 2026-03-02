@@ -69,7 +69,7 @@ class SVGTagNameCapitalizationVisitor extends BaseRuleVisitor<SVGTagNameCapitali
 
 export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitalizationAutofixContext> {
   static autocorrectable = true
-  name = "svg-tag-name-capitalization"
+  static ruleName = "svg-tag-name-capitalization"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -79,7 +79,7 @@ export class SVGTagNameCapitalizationRule extends ParserRule<SVGTagNameCapitaliz
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<SVGTagNameCapitalizationAutofixContext>[] {
-    const visitor = new SVGTagNameCapitalizationVisitor(this.name, context)
+    const visitor = new SVGTagNameCapitalizationVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

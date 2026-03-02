@@ -52,7 +52,7 @@ class DataActionValidVisitor extends StimulusRuleVisitor {
 }
 
 export class StimulusDataActionValidRule extends HerbParserRule {
-  name = "stimulus-data-action-valid"
+  static ruleName = "stimulus-data-action-valid"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -62,7 +62,7 @@ export class StimulusDataActionValidRule extends HerbParserRule {
   }
 
   check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
-    const visitor = new DataActionValidVisitor(this.name, context)
+    const visitor = new DataActionValidVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

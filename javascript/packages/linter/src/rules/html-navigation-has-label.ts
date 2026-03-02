@@ -51,7 +51,7 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNavigationHasLabelRule extends ParserRule {
-  name = "html-navigation-has-label"
+  static ruleName = "html-navigation-has-label"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -61,7 +61,7 @@ export class HTMLNavigationHasLabelRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NavigationHasLabelVisitor(this.name, context)
+    const visitor = new NavigationHasLabelVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

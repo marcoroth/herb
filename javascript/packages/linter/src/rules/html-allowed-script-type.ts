@@ -65,7 +65,7 @@ class AllowedScriptTypeVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAllowedScriptTypeRule extends ParserRule {
-  name = "html-allowed-script-type"
+  static ruleName = "html-allowed-script-type"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -75,7 +75,7 @@ export class HTMLAllowedScriptTypeRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AllowedScriptTypeVisitor(this.name, context)
+    const visitor = new AllowedScriptTypeVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

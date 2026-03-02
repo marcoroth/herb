@@ -29,7 +29,7 @@ class NoTitleAttributeVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoTitleAttributeRule extends ParserRule {
-  name = "html-no-title-attribute"
+  static ruleName = "html-no-title-attribute"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -39,7 +39,7 @@ export class HTMLNoTitleAttributeRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoTitleAttributeVisitor(this.name, context)
+    const visitor = new NoTitleAttributeVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -99,9 +99,7 @@ export class CustomRuleLoader {
     if (typeof value !== 'function') return false
     if (!value.prototype) return false
 
-    const instance = new value()
-
-    return typeof instance.check === 'function' && typeof instance.name === 'string'
+    return typeof value.ruleName === 'string' && typeof value.prototype.check === 'function'
   }
 
   /**
@@ -142,8 +140,7 @@ export class CustomRuleLoader {
     for (const filePath of ruleFiles) {
       const rules = await this.loadRuleFile(filePath)
       for (const RuleClass of rules) {
-        const instance = new RuleClass()
-        const ruleName = instance.name
+        const ruleName = RuleClass.ruleName
 
         if (seenNames.has(ruleName)) {
           const firstPath = seenNames.get(ruleName)!

@@ -144,7 +144,7 @@ class HTMLNoSpaceInTagVisitor extends BaseRuleVisitor<HTMLNoSpaceInTagAutofixCon
 export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixContext> {
   // TODO: enable and fix autofix
   static autocorrectable = false
-  name = "html-no-space-in-tag"
+  static ruleName = "html-no-space-in-tag"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -154,7 +154,7 @@ export class HTMLNoSpaceInTagRule extends ParserRule<HTMLNoSpaceInTagAutofixCont
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<HTMLNoSpaceInTagAutofixContext>[] {
-    const visitor = new HTMLNoSpaceInTagVisitor(this.name, context)
+    const visitor = new HTMLNoSpaceInTagVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -88,7 +88,7 @@ describe("@herb-tools/linter", () => {
 
   describe("Rule enablement", () => {
     class EnabledParserRule extends ParserRule {
-      name = "enabled-parser-rule"
+      static ruleName = "enabled-parser-rule"
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -98,15 +98,15 @@ describe("@herb-tools/linter", () => {
         return [{
           message: "Test offense",
           location: Location.from(1, 1, 1, 1),
-          rule: this.name,
-          code: this.name,
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class DisabledParserRule extends ParserRule {
-      name = "disabled-parser-rule"
+      static ruleName = "disabled-parser-rule"
 
       get defaultConfig() {
         return { enabled: true, severity: "error" as const }
@@ -120,15 +120,15 @@ describe("@herb-tools/linter", () => {
         return [{
           message: "This should never appear",
           location: Location.from(1, 1, 1, 1),
-          rule: this.name,
-          code: this.name,
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class FileBasedRule extends SourceRule {
-      name = "file-based-rule"
+      static ruleName = "file-based-rule"
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -142,15 +142,15 @@ describe("@herb-tools/linter", () => {
         return [{
           message: "ERB file detected",
           location: Location.from(1, 1, 1, 1),
-          rule: this.name,
-          code: this.name,
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
     }
 
     class ContentBasedRule extends ParserRule {
-      name = "content-based-rule"
+      static ruleName = "content-based-rule"
 
       get defaultConfig() {
         return { enabled: true, severity: "info" as const }
@@ -164,8 +164,8 @@ describe("@herb-tools/linter", () => {
         return [{
           message: "Div found",
           location: Location.from(1, 1, 1, 1),
-          rule: this.name,
-          code: this.name,
+          rule: this.ruleName,
+          code: this.ruleName,
           source: "linter"
         }]
       }
@@ -384,7 +384,7 @@ describe("@herb-tools/linter", () => {
 
     test("filters rules based on default config", () => {
       class EnabledByDefaultRule extends ParserRule {
-        name = "enabled-by-default-rule"
+        static ruleName = "enabled-by-default-rule"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -397,15 +397,15 @@ describe("@herb-tools/linter", () => {
           return [{
             message: "Enabled rule triggered",
             location: Location.from(1, 1, 1, 1),
-            rule: this.name,
-            code: this.name,
+            rule: this.ruleName,
+            code: this.ruleName,
             source: "linter"
           }]
         }
       }
 
       class DisabledByDefaultRule extends ParserRule {
-        name = "disabled-by-default-rule"
+        static ruleName = "disabled-by-default-rule"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -418,8 +418,8 @@ describe("@herb-tools/linter", () => {
           return [{
             message: "This should not appear",
             location: Location.from(1, 1, 1, 1),
-            rule: this.name,
-            code: this.name,
+            rule: this.ruleName,
+            code: this.ruleName,
             source: "linter"
           }]
         }
@@ -436,7 +436,7 @@ describe("@herb-tools/linter", () => {
 
     test("user config can enable a disabled-by-default rule", () => {
       class DisabledByDefaultRule extends ParserRule {
-        name = "disabled-by-default-rule"
+        static ruleName = "disabled-by-default-rule"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -449,8 +449,8 @@ describe("@herb-tools/linter", () => {
           return [{
             message: "Rule enabled by user",
             location: Location.from(1, 1, 1, 1),
-            rule: this.name,
-            code: this.name,
+            rule: this.ruleName,
+            code: this.ruleName,
             source: "linter"
           }]
         }
@@ -555,7 +555,7 @@ describe("@herb-tools/linter", () => {
 
     test("Linter.from() with config enables and overrides severity", () => {
       class TestRule extends ParserRule {
-        name = "test-rule"
+        static ruleName = "test-rule"
 
         get defaultConfig(): FullRuleConfig {
           return {
@@ -568,8 +568,8 @@ describe("@herb-tools/linter", () => {
           return [{
             message: "Test offense",
             location: Location.from(1, 1, 1, 1),
-            rule: this.name,
-            code: this.name,
+            rule: this.ruleName,
+            code: this.ruleName,
             source: "linter"
           }]
         }
@@ -613,7 +613,7 @@ describe("@herb-tools/linter", () => {
 
     test("Linter.filterRulesByConfig with empty config returns default enabled", () => {
       class EnabledRule extends ParserRule {
-        name = "enabled-rule"
+        static ruleName = "enabled-rule"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -623,7 +623,7 @@ describe("@herb-tools/linter", () => {
       }
 
       class DisabledRule extends ParserRule {
-        name = "disabled-rule"
+        static ruleName = "disabled-rule"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -635,12 +635,12 @@ describe("@herb-tools/linter", () => {
       const filtered = Linter.filterRulesByConfig([EnabledRule, DisabledRule])
 
       expect(filtered).toHaveLength(1)
-      expect(new filtered[0]().name).toBe("enabled-rule")
+      expect(filtered[0].ruleName).toBe("enabled-rule")
     })
 
     test("Linter.filterRulesByConfig respects user config", () => {
       class EnabledRule extends ParserRule {
-        name = "enabled-rule"
+        static ruleName = "enabled-rule"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: true, severity: "error" }
@@ -650,7 +650,7 @@ describe("@herb-tools/linter", () => {
       }
 
       class DisabledRule extends ParserRule {
-        name = "disabled-rule"
+        static ruleName = "disabled-rule"
 
         get defaultConfig(): FullRuleConfig {
           return { enabled: false, severity: "error" }
@@ -667,7 +667,7 @@ describe("@herb-tools/linter", () => {
       const filtered = Linter.filterRulesByConfig([EnabledRule, DisabledRule], config)
 
       expect(filtered).toHaveLength(1)
-      expect(new filtered[0]().name).toBe("disabled-rule")
+      expect(filtered[0].ruleName).toBe("disabled-rule")
     })
   })
 })

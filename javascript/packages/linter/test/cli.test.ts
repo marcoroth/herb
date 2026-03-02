@@ -649,7 +649,7 @@ describe("CLI Output Formatting", () => {
 
         writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
           export default class NoHelloWorldRule {
-            name = "no-hello-world"
+            static ruleName = "no-hello-world"
 
             check(document, context) {
               const errors = []

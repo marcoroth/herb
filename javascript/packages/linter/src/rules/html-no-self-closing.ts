@@ -40,7 +40,7 @@ class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> 
 
 export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContext> {
   static autocorrectable = true
-  name = "html-no-self-closing"
+  static ruleName = "html-no-self-closing"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -51,7 +51,7 @@ export class HTMLNoSelfClosingRule extends ParserRule<NoSelfClosingAutofixContex
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<NoSelfClosingAutofixContext>[] {
-    const visitor = new NoSelfClosingVisitor(this.name, context)
+    const visitor = new NoSelfClosingVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

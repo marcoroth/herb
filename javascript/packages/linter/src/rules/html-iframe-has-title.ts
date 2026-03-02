@@ -48,7 +48,7 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLIframeHasTitleRule extends ParserRule {
-  name = "html-iframe-has-title"
+  static ruleName = "html-iframe-has-title"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -58,7 +58,7 @@ export class HTMLIframeHasTitleRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new IframeHasTitleVisitor(this.name, context)
+    const visitor = new IframeHasTitleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

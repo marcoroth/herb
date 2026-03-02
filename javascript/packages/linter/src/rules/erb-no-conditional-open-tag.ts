@@ -18,7 +18,7 @@ class ERBNoConditionalOpenTagRuleVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoConditionalOpenTagRule extends ParserRule {
-  name = "erb-no-conditional-open-tag"
+  static ruleName = "erb-no-conditional-open-tag"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -28,7 +28,7 @@ export class ERBNoConditionalOpenTagRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoConditionalOpenTagRuleVisitor(this.name, context)
+    const visitor = new ERBNoConditionalOpenTagRuleVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

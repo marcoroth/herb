@@ -38,7 +38,7 @@ class NoAriaHiddenBodyVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoAriaHiddenOnBodyRule extends ParserRule {
-  name = "html-no-aria-hidden-on-body"
+  static ruleName = "html-no-aria-hidden-on-body"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -48,7 +48,7 @@ export class HTMLNoAriaHiddenOnBodyRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoAriaHiddenBodyVisitor(this.name, context)
+    const visitor = new NoAriaHiddenBodyVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

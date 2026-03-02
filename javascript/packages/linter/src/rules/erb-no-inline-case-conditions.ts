@@ -31,7 +31,7 @@ class ERBNoInlineCaseConditionsVisitor extends BaseRuleVisitor {
 }
 
 export class ERBNoInlineCaseConditionsRule extends ParserRule {
-  name = "erb-no-inline-case-conditions"
+  static ruleName = "erb-no-inline-case-conditions"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -45,7 +45,7 @@ export class ERBNoInlineCaseConditionsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBNoInlineCaseConditionsVisitor(this.name, context)
+    const visitor = new ERBNoInlineCaseConditionsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

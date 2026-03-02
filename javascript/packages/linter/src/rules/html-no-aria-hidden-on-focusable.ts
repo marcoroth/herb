@@ -77,7 +77,7 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
-  name = "html-no-aria-hidden-on-focusable"
+  static ruleName = "html-no-aria-hidden-on-focusable"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -87,7 +87,7 @@ export class HTMLNoAriaHiddenOnFocusableRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoAriaHiddenOnFocusableVisitor(this.name, context)
+    const visitor = new NoAriaHiddenOnFocusableVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
