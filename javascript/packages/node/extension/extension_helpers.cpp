@@ -104,26 +104,14 @@ napi_value CreateToken(napi_env env, token_T* token) {
   napi_value result;
   napi_create_object(env, &result);
 
-  // Value
-  napi_value value = token->value ? CreateString(env, token->value) : nullptr;
-  if (value) {
-    napi_set_named_property(env, result, "value", value);
-  } else {
-    napi_value null_value;
-    napi_get_null(env, &null_value);
-    napi_set_named_property(env, result, "value", null_value);
-  }
-
-  // Range
+  napi_value value = CreateStringFromHbString(env, token->value);
   napi_value range = CreateRange(env, token->range);
-  napi_set_named_property(env, result, "range", range);
-
-  // Location
   napi_value location = CreateLocation(env, token->location);
-  napi_set_named_property(env, result, "location", location);
+  napi_value type = CreateStringFromHbString(env, token_type_to_string(token->type));
 
-  // Type
-  napi_value type = CreateString(env, token_type_to_string(token->type));
+  napi_set_named_property(env, result, "value", value);
+  napi_set_named_property(env, result, "range", range);
+  napi_set_named_property(env, result, "location", location);
   napi_set_named_property(env, result, "type", type);
 
   return result;
@@ -151,10 +139,10 @@ napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) 
   napi_create_array(env, &errors_array);
   napi_create_array(env, &warnings_array);
 
-  // Add tokens to array
   if (tokens) {
     for (size_t i = 0; i < hb_array_size(tokens); i++) {
       token_T* token = (token_T*)hb_array_get(tokens, i);
+
       if (token) {
         napi_value token_obj = CreateToken(env, token);
         napi_set_element(env, tokens_array, i, token_obj);
@@ -177,8 +165,8 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_create_array(env, &errors_array);
   napi_create_array(env, &warnings_array);
 
-  // Convert the AST to a JavaScript object
   napi_value ast_value;
+
   if (root) {
     ast_value = NodeFromCStruct(env, (AST_NODE_T*)root);
   } else {
@@ -201,7 +189,6 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_set_named_property(env, options_object, "strict", strict_value);
   napi_set_named_property(env, options_object, "track_whitespace", track_whitespace_value);
   napi_set_named_property(env, options_object, "analyze", analyze_value);
-
   napi_set_named_property(env, result, "options", options_object);
 
   return result;

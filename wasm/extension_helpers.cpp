@@ -76,13 +76,8 @@ val CreateToken(token_T* token) {
   val Object = val::global("Object");
   val result = Object.new_();
 
-  if (token->value) {
-    result.set("value", std::string(token->value));
-  } else {
-    result.set("value", val::null());
-  }
-
-  result.set("type", std::string(token_type_to_string(token->type)));
+  result.set("value", CreateStringFromHbString(token->value));
+  result.set("type", CreateStringFromHbString(token_type_to_string(token->type)));
   result.set("range", CreateRange(token->range));
   result.set("location", CreateLocation(token->location));
 

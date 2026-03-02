@@ -10,10 +10,23 @@
 #include "../../src/include/range.h"
 #include "../../src/include/token.h"
 #include "../../src/include/util/hb_array.h"
+#include "../../src/include/util/hb_string.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+jstring CreateStringFromHbString(JNIEnv* env, hb_string_T string) {
+  if (hb_string_is_empty(string)) { return NULL; }
+
+  char* cstr = hb_string_to_c_string_using_malloc(string);
+  if (!cstr) { return NULL; }
+
+  jstring result = (*env)->NewStringUTF(env, cstr);
+  free(cstr);
+
+  return result;
+}
 
 jobject CreatePosition(JNIEnv* env, position_T position) {
   jclass positionClass = (*env)->FindClass(env, "org/herb/Position");
@@ -47,8 +60,8 @@ jobject CreateToken(JNIEnv* env, token_T* token) {
   jmethodID constructor = (*env)->GetMethodID(
       env, tokenClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Lorg/herb/Location;Lorg/herb/Range;)V");
 
-  jstring type = (*env)->NewStringUTF(env, token_type_to_string(token->type));
-  jstring value = (*env)->NewStringUTF(env, token->value);
+  jstring type = CreateStringFromHbString(env, token_type_to_string(token->type));
+  jstring value = CreateStringFromHbString(env, token->value);
   jobject location = CreateLocation(env, token->location);
   jobject range = CreateRange(env, token->range);
 

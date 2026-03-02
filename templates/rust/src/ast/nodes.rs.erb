@@ -1,11 +1,11 @@
 use crate::bindings::*;
-use crate::convert::token_from_c;
+use crate::convert::{token_from_c, string_from_hb_string};
 use crate::errors::*;
 use crate::nodes::*;
 use crate::union_types::*;
 use crate::{Location, Position};
 use std::ffi::CStr;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::c_void;
 
 unsafe fn convert_location(c_location: location_T) -> Location {
   Location::new(
@@ -42,7 +42,7 @@ unsafe fn convert_<%= snake_name %>(error_ptr: *const <%= error.c_type %>) -> <%
     if error_ref.<%= field.name %> == u32::MAX {
       None
     } else {
-      Some(CStr::from_ptr(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)).to_string_lossy().into_owned())
+      Some(string_from_hb_string(crate::ffi::token_type_to_string(error_ref.<%= field.name %>)))
     },
     <%- when Herb::Template::SizeTField -%>
     error_ref.<%= field.name %>,
@@ -88,12 +88,8 @@ unsafe fn convert_errors(errors_array: *mut hb_array_T) -> Vec<AnyError> {
   errors
 }
 
-unsafe fn get_string_field(string_ptr: *const c_char) -> String {
-  if string_ptr.is_null() {
-    String::new()
-  } else {
-    CStr::from_ptr(string_ptr).to_string_lossy().into_owned()
-  }
+unsafe fn get_string_field(hb_string: hb_string_T) -> String {
+  string_from_hb_string(hb_string)
 }
 
 unsafe fn convert_element_source(source: u32) -> String {

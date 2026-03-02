@@ -25,7 +25,7 @@ jobject <%= node.name %>FromCStruct(JNIEnv* env, <%= node.struct_type %>* <%= no
 
   <%- node.fields.each do |field| -%>
   <%- if field.is_a?(Herb::Template::StringField) -%>
-  jstring <%= field.name %> = (*env)->NewStringUTF(env, <%= node.human %>-><%= field.name %>);
+  jstring <%= field.name %> = CreateStringFromHbString(env, <%= node.human %>-><%= field.name %>);
   <%- elsif field.is_a?(Herb::Template::TokenField) -%>
   jobject <%= field.name %> = <%= node.human %>-><%= field.name %> ? CreateToken(env, <%= node.human %>-><%= field.name %>) : NULL;
   <%- elsif field.is_a?(Herb::Template::BooleanField) -%>
