@@ -6,6 +6,8 @@
 #include <strings.h>
 
 hb_string_T hb_string(const char* null_terminated_c_string) {
+  if (null_terminated_c_string == NULL) { return (hb_string_T) { .data = NULL, .length = 0 }; }
+
   hb_string_T string;
 
   string.data = (char*) null_terminated_c_string;
@@ -46,6 +48,10 @@ bool hb_string_starts_with(hb_string_T string, hb_string_T expected_prefix) {
   if (string.length < expected_prefix.length) { return false; }
 
   return strncmp(string.data, expected_prefix.data, expected_prefix.length) == 0;
+}
+
+bool hb_string_is_null(hb_string_T string) {
+  return string.data == NULL;
 }
 
 bool hb_string_is_empty(hb_string_T string) {

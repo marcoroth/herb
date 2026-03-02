@@ -13,6 +13,7 @@ extern "C" {
 #include "../extension/libherb/include/token.h"
 #include "../extension/libherb/include/util/hb_array.h"
 #include "../extension/libherb/include/util/hb_buffer.h"
+#include "../extension/libherb/include/util/hb_string.h"
 }
 
 #include "error_helpers.h"
@@ -47,6 +48,12 @@ napi_value CreateString(napi_env env, const char* str) {
 }
 
 napi_value CreateStringFromHbString(napi_env env, hb_string_T string) {
+  if (hb_string_is_null(string)) {
+    napi_value null_value;
+    napi_get_null(env, &null_value);
+    return null_value;
+  }
+
   napi_value result;
   napi_create_string_utf8(env, string.data, string.length, &result);
   return result;

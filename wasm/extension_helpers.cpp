@@ -25,17 +25,17 @@ extern "C" {
 using namespace emscripten;
 
 val CreateString(const char* string) {
-  return string ? val(string) : val::null();
+  return string ? val::u8string(string) : val::null();
 }
 
 val CreateStringFromHbString(hb_string_T string) {
-  if (hb_string_is_empty(string)) {
+  if (hb_string_is_null(string)) {
     return val::null();
-  } else {
-    std::string cppString(string.data, string.length);
-
-    return val(cppString);
   }
+
+  std::string cppString(string.data, string.length);
+
+  return val::u8string(cppString.c_str());
 }
 
 val CreatePosition(position_T position) {
