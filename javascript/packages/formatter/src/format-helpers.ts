@@ -499,6 +499,21 @@ export function isHerbDisableComment(node: Node): boolean {
 }
 
 /**
+ * Check if children contain a leading herb:disable comment (after optional whitespace)
+ */
+export function hasLeadingHerbDisable(children: Node[]): boolean {
+  for (const child of children) {
+    if (isNode(child, WhitespaceNode) || (isNode(child, HTMLTextNode) && child.content.trim() === "")) {
+      continue
+    }
+
+    return isNode(child, ERBContentNode) && isHerbDisableComment(child)
+  }
+
+  return false
+}
+
+/**
  * Check if a text node is YAML frontmatter (starts and ends with ---)
  */
 export function isFrontmatter(node: Node): node is HTMLTextNode {
