@@ -4,6 +4,7 @@ import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } f
 import type { ContentUnitWithNode } from "./format-helpers.js"
 
 import {
+  ASCII_WHITESPACE,
   buildLineWithWord,
   countAdjacentInlineElements,
   isClosingPunctuation,
@@ -22,12 +23,6 @@ import {
 
 import { TextFlowAnalyzer } from "./text-flow-analyzer.js"
 import type { TextFlowAnalyzerDelegate } from "./text-flow-analyzer.js"
-
-/**
- * ASCII whitespace pattern - use instead of \s to preserve Unicode whitespace
- * characters like NBSP (U+00A0) and full-width space (U+3000)
- */
-const ASCII_WHITESPACE = /[ \t\n\r]+/g
 
 /**
  * Interface that the FormatPrinter implements to provide
