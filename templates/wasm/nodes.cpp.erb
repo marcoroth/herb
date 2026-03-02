@@ -28,7 +28,7 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::StringField -%>
-  result.set("<%= field.name %>", CreateString(<%= node.human %>-><%= field.name %>));
+  result.set("<%= field.name %>", CreateStringFromHbString(<%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::NodeField, Herb::Template::BorrowedNodeField -%>
   result.set("<%= field.name %>", NodeFromCStruct((AST_NODE_T*) <%= node.human %>-><%= field.name %>));
   <%- when Herb::Template::TokenField -%>
