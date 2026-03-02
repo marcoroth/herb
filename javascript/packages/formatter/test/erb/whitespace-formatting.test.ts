@@ -33,7 +33,7 @@ describe("ERB whitespace formatting", () => {
       `
       const result = formatter.format(source)
 
-      expect(result).toBe(dedent`
+      const expected = dedent`
         <a
           href="/path"
           <% if disabled %>
@@ -42,16 +42,14 @@ describe("ERB whitespace formatting", () => {
         >
           Text
         </a>
-      `)
+      `
 
-      expect(formatter.format(result)).toBe(result)
+      expect(result).toBe(expected)
+      expectFormattedToMatch(expected)
     })
 
     test("preserves already properly spaced ERB tags", () => {
-      const source = '<div <% if condition %> class="test" <% end %>></div>'
-      const result = formatter.format(source)
-
-      expect(result).toBe('<div <% if condition %> class="test" <% end %>></div>')
+      expectFormattedToMatch('<div <% if condition %> class="test" <% end %>></div>')
     })
 
     test("formats standalone ERB content tags with proper spacing", () => {
@@ -82,10 +80,7 @@ describe("ERB whitespace formatting", () => {
     })
 
     test("preserves ERB comment formatting", () => {
-      const source = '<%# This is a comment %>'
-      const result = formatter.format(source)
-
-      expect(result).toEqual('<%# This is a comment %>')
+      expectFormattedToMatch('<%# This is a comment %>')
     })
 
     test("handles complex ERB structures that get inlined", () => {
