@@ -1,9 +1,9 @@
-import dedent from "dedent"
-
 import { Printer, IdentityPrinter } from "@herb-tools/printer"
 import { TextFlowEngine } from "./text-flow-engine.js"
 import { AttributeRenderer } from "./attribute-renderer.js"
+import { SpacingAnalyzer } from "./spacing-analyzer.js"
 import { isTextFlowNode } from "./text-flow-helpers.js"
+import { extractHTMLCommentContent, formatHTMLCommentInner, formatERBCommentLines } from "./comment-helpers.js"
 
 import type { ERBNode } from "@herb-tools/core"
 import type { FormatOptions } from "./options.js"
@@ -22,7 +22,6 @@ import {
   isCommentNode,
   isERBControlFlowNode,
   isERBCommentNode,
-  isERBOutputNode,
   isHTMLOpenTagNode,
   filterNodes,
 } from "@herb-tools/core"
@@ -31,13 +30,12 @@ import {
   areAllNestedElementsInline,
   filterEmptyNodesForHerbDisable,
   filterSignificantChildren,
-  findPreviousMeaningfulSibling,
   hasComplexERBControlFlow,
   hasMixedTextAndInlineContent,
   hasMultilineTextContent,
-  isBlockLevelNode,
   isContentPreserving,
   isFrontmatter,
+  hasLeadingHerbDisable,
   isHerbDisableComment,
   isInlineElement,
   isNonWhitespaceNode,
@@ -48,7 +46,6 @@ import {
 
 import {
   ASCII_WHITESPACE,
-  INLINE_ELEMENTS,
   SPACEABLE_CONTAINERS,
 } from "./format-helpers.js"
 
@@ -67,7 +64,6 @@ import {
   HTMLTextNode,
   HTMLCommentNode,
   HTMLDoctypeNode,
-  LiteralNode,
   WhitespaceNode,
   ERBContentNode,
   ERBBlockNode,
@@ -133,10 +129,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
   private nodeIsMultiline = new Map<Node, boolean>()
   private stringLineCount: number = 0
-  private tagGroupsCache = new Map<Node[], Map<number, { tagName: string; groupStart: number; groupEnd: number }>>()
-  private allSingleLineCache = new Map<Node[], boolean>()
   private textFlow: TextFlowEngine
   private attributeRenderer: AttributeRenderer
+  private spacingAnalyzer: SpacingAnalyzer
 
   public source: string
 
@@ -148,6 +143,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.maxLineLength = options.maxLineLength
     this.textFlow = new TextFlowEngine(this)
     this.attributeRenderer = new AttributeRenderer(this, this.maxLineLength, this.indentWidth)
+    this.spacingAnalyzer = new SpacingAnalyzer(this.nodeIsMultiline)
   }
 
   print(input: Node | ParseResult | Token): string {
@@ -160,8 +156,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.indentLevel = 0
     this.stringLineCount = 0
     this.nodeIsMultiline.clear()
-    this.tagGroupsCache.clear()
-    this.allSingleLineCache.clear()
+    this.spacingAnalyzer.clear()
 
     this.visit(node)
 
@@ -331,189 +326,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   /**
-   * Check if a node will render as multiple lines when formatted.
-   */
-  private isMultilineElement(node: Node): boolean {
-    if (isNode(node, ERBContentNode)) {
-      return (node.content?.value || "").includes("\n")
-    }
-
-    if (isNode(node, HTMLElementNode) && isContentPreserving(node)) {
-      return true
-    }
-
-    const tracked = this.nodeIsMultiline.get(node)
-
-    if (tracked !== undefined) {
-      return tracked
-    }
-
-    return false
-  }
-
-  /**
-   * Get a grouping key for a node (tag name for HTML, ERB type for ERB)
-   */
-  private getGroupingKey(node: Node): string | null {
-    if (isNode(node, HTMLElementNode)) {
-      return getTagName(node)
-    }
-
-    if (isERBOutputNode(node)) return "erb-output"
-    if (isERBCommentNode(node)) return "erb-comment"
-    if (isERBNode(node)) return "erb-code"
-
-    return null
-  }
-
-  /**
-   * Detect groups of consecutive same-tag/same-type single-line elements
-   * Returns a map of index -> group info for efficient lookup
-   */
-  private detectTagGroups(siblings: Node[]): Map<number, { tagName: string; groupStart: number; groupEnd: number }> {
-    const cached = this.tagGroupsCache.get(siblings)
-    if (cached) return cached
-
-    const groupMap = new Map<number, { tagName: string; groupStart: number; groupEnd: number }>()
-    const meaningfulNodes: Array<{ index: number; groupKey: string }> = []
-
-    for (let i = 0; i < siblings.length; i++) {
-      const node = siblings[i]
-
-      if (!this.isMultilineElement(node)) {
-        const groupKey = this.getGroupingKey(node)
-
-        if (groupKey) {
-          meaningfulNodes.push({ index: i, groupKey })
-        }
-      }
-    }
-
-    let groupStart = 0
-
-    while (groupStart < meaningfulNodes.length) {
-      const startGroupKey = meaningfulNodes[groupStart].groupKey
-      let groupEnd = groupStart
-
-      while (groupEnd + 1 < meaningfulNodes.length && meaningfulNodes[groupEnd + 1].groupKey === startGroupKey) {
-        groupEnd++
-      }
-
-      if (groupEnd > groupStart) {
-        const groupStartIndex = meaningfulNodes[groupStart].index
-        const groupEndIndex = meaningfulNodes[groupEnd].index
-
-        for (let i = groupStart; i <= groupEnd; i++) {
-          groupMap.set(meaningfulNodes[i].index, {
-            tagName: startGroupKey,
-            groupStart: groupStartIndex,
-            groupEnd: groupEndIndex
-          })
-        }
-      }
-
-      groupStart = groupEnd + 1
-    }
-
-    this.tagGroupsCache.set(siblings, groupMap)
-
-    return groupMap
-  }
-
-  /**
-   * Determine if spacing should be added between sibling elements
-   *
-   * This implements the "rule of three" intelligent spacing system:
-   * - Adds spacing between 3 or more meaningful siblings
-   * - Respects semantic groupings (e.g., ul/li, nav/a stay tight)
-   * - Groups comments with following elements
-   * - Preserves user-added spacing
-   *
-   * @param parentElement - The parent element containing the siblings
-   * @param siblings - Array of all sibling nodes
-   * @param currentIndex - Index of the current node being evaluated
-   * @param hasExistingSpacing - Whether user-added spacing already exists
-   * @returns true if spacing should be added before the current element
-   */
-  private shouldAddSpacingBetweenSiblings(parentElement: HTMLElementNode | null, siblings: Node[], currentIndex: number): boolean {
-    const currentNode = siblings[currentIndex]
-    const previousMeaningfulIndex = findPreviousMeaningfulSibling(siblings, currentIndex)
-    const previousNode = previousMeaningfulIndex !== -1 ? siblings[previousMeaningfulIndex] : null
-
-    if (previousNode && (isNode(previousNode, XMLDeclarationNode) || isNode(previousNode, HTMLDoctypeNode))) {
-      return true
-    }
-
-    const hasMixedContent = siblings.some(child => isNode(child, HTMLTextNode) && child.content.trim() !== "")
-
-    if (hasMixedContent) return false
-
-    const isCurrentComment = isCommentNode(currentNode)
-    const isPreviousComment = previousNode ? isCommentNode(previousNode) : false
-    const isCurrentMultiline = this.isMultilineElement(currentNode)
-    const isPreviousMultiline = previousNode ? this.isMultilineElement(previousNode) : false
-
-    if (isPreviousComment && !isCurrentComment && (isNode(currentNode, HTMLElementNode) || isERBNode(currentNode))) {
-      return isPreviousMultiline && isCurrentMultiline
-    }
-
-    if (isPreviousComment && isCurrentComment) {
-      return false
-    }
-
-    if (isCurrentMultiline || isPreviousMultiline) {
-      return true
-    }
-
-    const meaningfulSiblings = siblings.filter(child => isNonWhitespaceNode(child))
-    const parentTagName = parentElement ? getTagName(parentElement) : null
-    const isSpaceableContainer = !parentTagName || SPACEABLE_CONTAINERS.has(parentTagName)
-    const tagGroups = this.detectTagGroups(siblings)
-
-    const cached = this.allSingleLineCache.get(siblings)
-    let allSingleLineHTMLElements: boolean
-    if (cached !== undefined) {
-      allSingleLineHTMLElements = cached
-    } else {
-      allSingleLineHTMLElements = meaningfulSiblings.every(node => isNode(node, HTMLElementNode) && !this.isMultilineElement(node))
-      this.allSingleLineCache.set(siblings, allSingleLineHTMLElements)
-    }
-
-    if (!isSpaceableContainer && meaningfulSiblings.length < 5) {
-      return false
-    }
-
-    const currentGroup = tagGroups.get(currentIndex)
-    const previousGroup = previousNode ? tagGroups.get(previousMeaningfulIndex) : undefined
-
-    if (currentGroup && previousGroup && currentGroup.groupStart === previousGroup.groupStart && currentGroup.groupEnd === previousGroup.groupEnd) {
-      return false
-    }
-
-    if (previousGroup && previousGroup.groupEnd === previousMeaningfulIndex) {
-      return true
-    }
-
-    if (allSingleLineHTMLElements && tagGroups.size === 0) {
-      return false
-    }
-
-    if (isNode(currentNode, HTMLElementNode)) {
-      const currentTagName = getTagName(currentNode)
-
-      if (currentTagName && INLINE_ELEMENTS.has(currentTagName)) {
-        return false
-      }
-    }
-
-    const isBlockElement = isBlockLevelNode(currentNode)
-    const isERBBlock = isERBNode(currentNode) && isERBControlFlowNode(currentNode)
-    const isComment = isCommentNode(currentNode)
-
-    return isBlockElement || isERBBlock || isComment
-  }
-
-  /**
    * Render multiline attributes for a tag
    */
   private renderMultilineAttributes(tagName: string, allChildren: Node[] = [], isSelfClosing: boolean = false,) {
@@ -630,7 +442,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       this.visit(child)
 
       if (lastMeaningfulNode && !hasHandledSpacing) {
-        const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings( null, children, i)
+        const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings( null, children, i)
 
         if (shouldAddSpacing) {
           this.lines.splice(childStartLine, 0, "")
@@ -876,41 +688,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   /**
-   * Check if there's a blank line (double newline) in the nodes at the given index
-   */
-  private hasBlankLineBetween(body: Node[], index: number): boolean {
-    for (let lookbackIndex = index - 1; lookbackIndex >= 0 && lookbackIndex >= index - 2; lookbackIndex--) {
-      const node = body[lookbackIndex]
-
-      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
-        return true
-      }
-
-      if (isNode(node, WhitespaceNode)) {
-        continue
-      }
-
-      break
-    }
-
-    for (let lookaheadIndex = index; lookaheadIndex < body.length && lookaheadIndex <= index + 1; lookaheadIndex++) {
-      const node = body[lookaheadIndex]
-
-      if (isNode(node, HTMLTextNode) && node.content.includes('\n\n')) {
-        return true
-      }
-
-      if (isNode(node, WhitespaceNode)) {
-        continue
-      }
-
-      break
-    }
-
-    return false
-  }
-
-  /**
    * Visit element children with intelligent spacing logic
    *
    * Tracks line positions and immediately splices blank lines after rendering each child.
@@ -946,7 +723,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
         if (run) {
           if (lastMeaningfulNode && !hasHandledSpacing) {
-            const hasBlankLineBefore = this.hasBlankLineBetween(body, index)
+            const hasBlankLineBefore = this.spacingAnalyzer.hasBlankLineBetween(body, index)
 
             if (hasBlankLineBefore) {
               this.push("")
@@ -957,7 +734,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
           const lastRunNode = run.nodes[run.nodes.length - 1]
           const hasBlankLineInTrailing = isNode(lastRunNode, HTMLTextNode) && lastRunNode.content.includes('\n\n')
-          const hasBlankLineAfter = hasBlankLineInTrailing || this.hasBlankLineBetween(body, run.endIndex)
+          const hasBlankLineAfter = hasBlankLineInTrailing || this.spacingAnalyzer.hasBlankLineBetween(body, run.endIndex)
 
           if (hasBlankLineAfter) {
             this.push("")
@@ -993,7 +770,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
             this.visit(child)
 
             if (lastMeaningfulNode && !hasHandledSpacing) {
-              const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+              const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
 
               if (shouldAddSpacing) {
                 this.lines.splice(childStartLine, 0, "")
@@ -1028,7 +805,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         this.visit(child)
 
         if (lastMeaningfulNode && !hasHandledSpacing) {
-          const shouldAddSpacing = this.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+          const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
 
           if (shouldAddSpacing) {
             this.lines.splice(childStartLine, 0, "")
@@ -1148,119 +925,39 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.pushWithIndent(IdentityPrinter.print(node))
   }
 
-  // TODO: rework
   visitHTMLCommentNode(node: HTMLCommentNode) {
     const open = node.comment_start?.value ?? ""
     const close = node.comment_end?.value ?? ""
-
-    let inner: string
-
-    if (node.children && node.children.length > 0) {
-      inner = node.children.map(child => {
-        if (isNode(child, HTMLTextNode) || isNode(child, LiteralNode)) {
-          return child.content
-        } else if (isERBNode(child)) {
-          return IdentityPrinter.print(child)
-        } else {
-          return ""
-        }
-      }).join("")
-
-      const trimmedInner = inner.trim()
-
-      if (trimmedInner.startsWith('[if ') && trimmedInner.endsWith('<![endif]')) {
-        this.pushWithIndent(open + inner + close)
-
-        return
-      }
-
-      const hasNewlines = inner.includes('\n')
-
-      if (hasNewlines) {
-        const lines = inner.split('\n')
-        const childIndent = " ".repeat(this.indentWidth)
-        const firstLineHasContent = lines[0].trim() !== ''
-
-        if (firstLineHasContent && lines.length > 1) {
-          const contentLines = lines.map(line => line.trim()).filter(line => line !== '')
-          inner = '\n' + contentLines.map(line => childIndent + line).join('\n') + '\n'
-        } else {
-          const contentLines = lines.filter((line, index) => {
-            return line.trim() !== '' && !(index === 0 || index === lines.length - 1)
-          })
-
-          const minIndent = contentLines.length > 0 ? Math.min(...contentLines.map(line => line.length - line.trimStart().length)) : 0
-
-          const processedLines = lines.map((line, index) => {
-            const trimmedLine = line.trim()
-
-            if ((index === 0 || index === lines.length - 1) && trimmedLine === '') {
-              return line
-            }
-
-            if (trimmedLine !== '') {
-              const currentIndent = line.length - line.trimStart().length
-              const relativeIndent = Math.max(0, currentIndent - minIndent)
-
-              return childIndent + " ".repeat(relativeIndent) + trimmedLine
-            }
-
-            return line
-          })
-
-          inner = processedLines.join('\n')
-        }
-      } else {
-        inner = ` ${inner.trim()} `
-      }
-    } else {
-      inner = ""
-    }
+    const rawInner = node.children && node.children.length > 0
+      ? extractHTMLCommentContent(node.children)
+      : ""
+    const inner = rawInner ? formatHTMLCommentInner(rawInner, this.indentWidth) : ""
 
     this.pushWithIndent(open + inner + close)
   }
 
   visitERBCommentNode(node: ERBContentNode) {
-    const open = node.tag_opening?.value || "<%#"
-    const content = node?.content?.value || ""
-    const close = node.tag_closing?.value || "%>"
+    const result = formatERBCommentLines(
+      node.tag_opening?.value || "<%#",
+      node?.content?.value || "",
+      node.tag_closing?.value || "%>"
+    )
 
-    const contentLines = content.split("\n")
-    const contentTrimmedLines = content.trim().split("\n")
-
-    if (contentLines.length === 1 && contentTrimmedLines.length === 1) {
-      const startsWithSpace = content[0] === " "
-      const before = startsWithSpace ? "" : " "
-
+    if (result.type === 'single-line') {
       if (this.inlineMode) {
-        this.push(open + before + content.trimEnd() + ' ' + close)
+        this.push(result.text)
       } else {
-        this.pushWithIndent(open + before + content.trimEnd() + ' ' + close)
+        this.pushWithIndent(result.text)
       }
+    } else {
+      this.pushWithIndent(result.header)
 
-      return
+      this.withIndent(() => {
+        result.contentLines.forEach(line => this.pushWithIndent(line))
+      })
+
+      this.pushWithIndent(result.footer)
     }
-
-    if (contentTrimmedLines.length === 1) {
-      if (this.inlineMode) {
-        this.push(open + ' ' + content.trim() + ' ' + close)
-      } else {
-        this.pushWithIndent(open + ' ' + content.trim() + ' ' + close)
-      }
-
-      return
-    }
-
-    const firstLineEmpty = contentLines[0].trim() === ""
-    const dedentedContent = dedent(firstLineEmpty ? content : content.trimStart())
-
-    this.pushWithIndent(open)
-
-    this.withIndent(() => {
-      dedentedContent.split("\n").forEach(line => this.pushWithIndent(line))
-    })
-
-    this.pushWithIndent(close)
   }
 
   visitHTMLDoctypeNode(node: HTMLDoctypeNode) {
@@ -1799,21 +1496,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   /**
-   * Check if children contain a leading herb:disable comment (after optional whitespace)
-   */
-  private hasLeadingHerbDisable(children: Node[]): boolean {
-    for (const child of children) {
-      if (isNode(child, WhitespaceNode) || (isNode(child, HTMLTextNode) && child.content.trim() === "")) {
-        continue
-      }
-
-      return isNode(child, ERBContentNode) && isHerbDisableComment(child)
-    }
-
-    return false
-  }
-
-  /**
    * Try to render just the children inline (without tags)
    */
   private tryRenderChildrenInline(children: Node[], tagName?: string): string | null {
@@ -1821,7 +1503,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     let hasInternalWhitespace = false
     let addedLeadingSpace = false
 
-    const hasHerbDisable = this.hasLeadingHerbDisable(children)
+    const hasHerbDisable = hasLeadingHerbDisable(children)
     const hasOnlyTextContent = children.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
     const shouldPreserveSpaces = hasOnlyTextContent && tagName && isInlineElement(tagName)
 
