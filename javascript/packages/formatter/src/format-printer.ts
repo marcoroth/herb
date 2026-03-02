@@ -11,6 +11,12 @@ import type { TextFlowDelegate } from "./text-flow-engine.js"
 import type { AttributeRendererDelegate } from "./attribute-renderer.js"
 import type { ElementFormattingAnalysis } from "./format-helpers.js"
 
+interface ChildVisitResult {
+  newIndex: number
+  lastMeaningfulNode: Node | null
+  hasHandledSpacing: boolean
+}
+
 import {
   getTagName,
   getCombinedAttributeName,
@@ -19,7 +25,6 @@ import {
   isParseResult,
   isNoneOf,
   isERBNode,
-  isCommentNode,
   isERBControlFlowNode,
   isERBCommentNode,
   isHTMLOpenTagNode,
@@ -520,97 +525,124 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
-    const tagName = getTagName(element)
-
     if (isContentPreserving(element)) {
-      element.body.map(child => {
-        if (isNode(child, HTMLElementNode)) {
-          const wasInlineMode = this.inlineMode
-          this.inlineMode = true
-
-          const formattedElement = this.capture(() => this.visit(child)).join("")
-          this.pushToLastLine(formattedElement)
-
-          this.inlineMode = wasInlineMode
-        } else {
-          this.pushToLastLine(IdentityPrinter.print(child))
-        }
-      })
-
+      this.visitContentPreservingBody(element)
       return
     }
 
+    const tagName = getTagName(element)
     const analysis = this.elementFormattingAnalysis.get(element)
     const hasTextFlow = this.textFlow.isInTextFlowContext(body)
     const children = filterSignificantChildren(body)
 
     if (analysis?.elementContentInline) {
-      if (children.length === 0) return
-
-      const oldInlineMode = this.inlineMode
-      const nodesToRender = hasTextFlow ? body : children
-
-      const hasOnlyTextContent = nodesToRender.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
-      const shouldPreserveSpaces = hasOnlyTextContent && isInlineElement(tagName)
-
-      this.inlineMode = true
-
-      const lines = this.capture(() => {
-        nodesToRender.forEach(child => {
-          if (isNode(child, HTMLTextNode)) {
-            if (hasTextFlow) {
-              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
-
-              if (normalizedContent && normalizedContent !== ' ') {
-                this.push(normalizedContent)
-              } else if (normalizedContent === ' ') {
-                this.push(' ')
-              }
-            } else {
-              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
-
-              if (shouldPreserveSpaces && normalizedContent) {
-                this.push(normalizedContent)
-              } else {
-                const trimmedContent = normalizedContent.trim()
-
-                if (trimmedContent) {
-                  this.push(trimmedContent)
-                } else if (normalizedContent === ' ') {
-                  this.push(' ')
-                }
-              }
-            }
-          } else if (isNode(child, WhitespaceNode)) {
-            return
-          } else {
-            this.visit(child)
-          }
-        })
-      })
-
-      const content = lines.join('')
-
-      const inlineContent = shouldPreserveSpaces
-        ? (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content)
-        : (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ').trim() : content.trim())
-
-      if (inlineContent) {
-        this.pushToLastLine(inlineContent)
-      }
-
-      this.inlineMode = oldInlineMode
-
+      this.visitInlineElementBody(body, tagName, hasTextFlow, children)
       return
     }
 
     if (children.length === 0) return
 
+    const { comment, hasLeadingWhitespace, remainingChildren, remainingBody } = this.stripLeadingHerbDisable(children, body)
+
+    if (comment) {
+      const herbDisableString = this.captureHerbDisableInline(comment)
+      this.pushToLastLine((hasLeadingWhitespace ? ' ' : '') + herbDisableString)
+    }
+
+    if (remainingChildren.length === 0) return
+
+    this.withIndent(() => {
+      if (hasTextFlow) {
+        this.textFlow.visitTextFlowChildren(remainingBody)
+      } else {
+        this.visitElementChildren(comment ? remainingChildren : body, element)
+      }
+    })
+  }
+
+  private visitContentPreservingBody(element: HTMLElementNode) {
+    element.body.map(child => {
+      if (isNode(child, HTMLElementNode)) {
+        const wasInlineMode = this.inlineMode
+        this.inlineMode = true
+
+        const formattedElement = this.capture(() => this.visit(child)).join("")
+        this.pushToLastLine(formattedElement)
+
+        this.inlineMode = wasInlineMode
+      } else {
+        this.pushToLastLine(IdentityPrinter.print(child))
+      }
+    })
+  }
+
+  private visitInlineElementBody(body: Node[], tagName: string, hasTextFlow: boolean, children: Node[]) {
+    if (children.length === 0) return
+
+    const oldInlineMode = this.inlineMode
+    const nodesToRender = hasTextFlow ? body : children
+
+    const hasOnlyTextContent = nodesToRender.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
+    const shouldPreserveSpaces = hasOnlyTextContent && isInlineElement(tagName)
+
+    this.inlineMode = true
+
+    const lines = this.capture(() => {
+      nodesToRender.forEach(child => {
+        if (isNode(child, HTMLTextNode)) {
+          if (hasTextFlow) {
+            const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
+
+            if (normalizedContent && normalizedContent !== ' ') {
+              this.push(normalizedContent)
+            } else if (normalizedContent === ' ') {
+              this.push(' ')
+            }
+          } else {
+            const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
+
+            if (shouldPreserveSpaces && normalizedContent) {
+              this.push(normalizedContent)
+            } else {
+              const trimmedContent = normalizedContent.trim()
+
+              if (trimmedContent) {
+                this.push(trimmedContent)
+              } else if (normalizedContent === ' ') {
+                this.push(' ')
+              }
+            }
+          }
+        } else if (isNode(child, WhitespaceNode)) {
+          return
+        } else {
+          this.visit(child)
+        }
+      })
+    })
+
+    const content = lines.join('')
+
+    const inlineContent = shouldPreserveSpaces
+      ? (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ') : content)
+      : (hasTextFlow ? content.replace(ASCII_WHITESPACE, ' ').trim() : content.trim())
+
+    if (inlineContent) {
+      this.pushToLastLine(inlineContent)
+    }
+
+    this.inlineMode = oldInlineMode
+  }
+
+  private stripLeadingHerbDisable(children: Node[], body: Node[]): {
+    comment: Node | null
+    hasLeadingWhitespace: boolean
+    remainingChildren: Node[]
+    remainingBody: Node[]
+  } {
     let leadingHerbDisableComment: Node | null = null
     let leadingHerbDisableIndex = -1
     let firstWhitespaceIndex = -1
-    let remainingChildren = children
-    let remainingBodyUnfiltered = body
 
     for (let i = 0; i < children.length; i++) {
       const child = children[i]
@@ -631,60 +663,30 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       break
     }
 
-    if (leadingHerbDisableComment && leadingHerbDisableIndex >= 0) {
-      remainingChildren = children.filter((_, index) => {
-        if (index === leadingHerbDisableIndex) return false
-
-        if (firstWhitespaceIndex >= 0 && index === leadingHerbDisableIndex - 1) {
-          const child = children[index]
-
-          if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
-            return false
-          }
-        }
-
-        return true
-      })
-
-      remainingBodyUnfiltered = body.filter((_, index) => {
-        if (index === leadingHerbDisableIndex) return false
-
-        if (firstWhitespaceIndex >= 0 && index === leadingHerbDisableIndex - 1) {
-          const child = body[index]
-
-          if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
-            return false
-          }
-        }
-
-        return true
-      })
+    if (!leadingHerbDisableComment || leadingHerbDisableIndex < 0) {
+      return { comment: null, hasLeadingWhitespace: false, remainingChildren: children, remainingBody: body }
     }
 
-    if (leadingHerbDisableComment) {
-      const herbDisableString = this.capture(() => {
-        const savedIndentLevel = this.indentLevel
-        this.indentLevel = 0
-        this.inlineMode = true
-        this.visit(leadingHerbDisableComment)
-        this.inlineMode = false
-        this.indentLevel = savedIndentLevel
-      }).join("")
+    const filterOut = (nodes: Node[]) => nodes.filter((_, index) => {
+      if (index === leadingHerbDisableIndex) return false
 
-      const hasLeadingWhitespace = firstWhitespaceIndex >= 0 && firstWhitespaceIndex < leadingHerbDisableIndex
+      if (firstWhitespaceIndex >= 0 && index === leadingHerbDisableIndex - 1) {
+        const child = nodes[index]
 
-      this.pushToLastLine((hasLeadingWhitespace ? ' ' : '') + herbDisableString)
-    }
-
-    if (remainingChildren.length === 0) return
-
-    this.withIndent(() => {
-      if (hasTextFlow) {
-        this.textFlow.visitTextFlowChildren(remainingBodyUnfiltered)
-      } else {
-        this.visitElementChildren(leadingHerbDisableComment ? remainingChildren : body, element)
+        if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
+          return false
+        }
       }
+
+      return true
     })
+
+    return {
+      comment: leadingHerbDisableComment,
+      hasLeadingWhitespace: firstWhitespaceIndex >= 0 && firstWhitespaceIndex < leadingHerbDisableIndex,
+      remainingChildren: filterOut(children),
+      remainingBody: filterOut(body),
+    }
   }
 
   /**
@@ -718,89 +720,87 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
       if (!isNonWhitespaceNode(child)) continue
 
-      if (isTextFlowNode(child)) {
-        const run = this.textFlow.collectTextFlowRun(body, index)
+      const textFlowResult = this.visitTextFlowRunInChildren(body, index, lastMeaningfulNode, hasHandledSpacing)
 
-        if (run) {
-          if (lastMeaningfulNode && !hasHandledSpacing) {
-            const hasBlankLineBefore = this.spacingAnalyzer.hasBlankLineBetween(body, index)
+      if (textFlowResult) {
+        index = textFlowResult.newIndex
+        lastMeaningfulNode = textFlowResult.lastMeaningfulNode
+        hasHandledSpacing = textFlowResult.hasHandledSpacing
+        continue
+      }
 
-            if (hasBlankLineBefore) {
-              this.push("")
-            }
-          }
+      const herbDisableResult: ChildVisitResult | null =
+        isNode(child, HTMLElementNode) && child.close_tag
+          ? this.visitChildWithTrailingHerbDisable(child, body, index, parentElement, lastMeaningfulNode, hasHandledSpacing)
+          : null
 
-          this.textFlow.visitTextFlowChildren(run.nodes)
+      if (herbDisableResult) {
+        index = herbDisableResult.newIndex
+        lastMeaningfulNode = herbDisableResult.lastMeaningfulNode
+        hasHandledSpacing = herbDisableResult.hasHandledSpacing
+        continue
+      }
 
-          const lastRunNode = run.nodes[run.nodes.length - 1]
-          const hasBlankLineInTrailing = isNode(lastRunNode, HTMLTextNode) && lastRunNode.content.includes('\n\n')
-          const hasBlankLineAfter = hasBlankLineInTrailing || this.spacingAnalyzer.hasBlankLineBetween(body, run.endIndex)
+      const childStartLine = this.stringLineCount
+      this.visit(child)
 
-          if (hasBlankLineAfter) {
-            this.push("")
-            hasHandledSpacing = true
-          }
+      if (lastMeaningfulNode && !hasHandledSpacing) {
+        const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
 
-          lastMeaningfulNode = run.nodes[run.nodes.length - 1]
-
-          if (!hasBlankLineAfter) {
-            hasHandledSpacing = false
-          }
-
-          index = run.endIndex - 1
-
-          continue
+        if (shouldAddSpacing) {
+          this.lines.splice(childStartLine, 0, "")
+          this.stringLineCount++
         }
       }
 
-      let hasTrailingHerbDisable = false
+      lastMeaningfulNode = child
+      hasHandledSpacing = false
+    }
+  }
 
-      if (isNode(child, HTMLElementNode) && child.close_tag) {
-        for (let j = index + 1; j < body.length; j++) {
-          const nextChild = body[j]
+  private visitTextFlowRunInChildren(body: Node[], index: number, lastMeaningfulNode: Node | null, hasHandledSpacing: boolean): ChildVisitResult | null {
+    const child = body[index]
 
-          if (isNode(nextChild, WhitespaceNode) || isPureWhitespaceNode(nextChild)) {
-            continue
-          }
+    if (!isTextFlowNode(child)) return null
 
-          if (isNode(nextChild, ERBContentNode) && isHerbDisableComment(nextChild)) {
-            hasTrailingHerbDisable = true
+    const run = this.textFlow.collectTextFlowRun(body, index)
 
-            const childStartLine = this.stringLineCount
-            this.visit(child)
+    if (!run) return null
 
-            if (lastMeaningfulNode && !hasHandledSpacing) {
-              const shouldAddSpacing = this.spacingAnalyzer.shouldAddSpacingBetweenSiblings(parentElement, body, index)
+    if (lastMeaningfulNode && !hasHandledSpacing) {
+      const hasBlankLineBefore = this.spacingAnalyzer.hasBlankLineBetween(body, index)
 
-              if (shouldAddSpacing) {
-                this.lines.splice(childStartLine, 0, "")
-                this.stringLineCount++
-              }
-            }
+      if (hasBlankLineBefore) {
+        this.push("")
+      }
+    }
 
-            const herbDisableString = this.capture(() => {
-              const savedIndentLevel = this.indentLevel
-              this.indentLevel = 0
-              this.inlineMode = true
-              this.visit(nextChild)
-              this.inlineMode = false
-              this.indentLevel = savedIndentLevel
-            }).join("")
+    this.textFlow.visitTextFlowChildren(run.nodes)
 
-            this.pushToLastLine(' ' + herbDisableString)
+    const lastRunNode = run.nodes[run.nodes.length - 1]
+    const hasBlankLineInTrailing = isNode(lastRunNode, HTMLTextNode) && lastRunNode.content.includes('\n\n')
+    const hasBlankLineAfter = hasBlankLineInTrailing || this.spacingAnalyzer.hasBlankLineBetween(body, run.endIndex)
 
-            index = j
-            lastMeaningfulNode = child
-            hasHandledSpacing = false
+    if (hasBlankLineAfter) {
+      this.push("")
+    }
 
-            break
-          }
+    return {
+      newIndex: run.endIndex - 1,
+      lastMeaningfulNode: run.nodes[run.nodes.length - 1],
+      hasHandledSpacing: hasBlankLineAfter,
+    }
+  }
 
-          break
-        }
+  private visitChildWithTrailingHerbDisable(child: HTMLElementNode, body: Node[], index: number, parentElement: HTMLElementNode | null, lastMeaningfulNode: Node | null, hasHandledSpacing: boolean): ChildVisitResult | null {
+    for (let j = index + 1; j < body.length; j++) {
+      const nextChild = body[j]
+
+      if (isNode(nextChild, WhitespaceNode) || isPureWhitespaceNode(nextChild)) {
+        continue
       }
 
-      if (!hasTrailingHerbDisable) {
+      if (isNode(nextChild, ERBContentNode) && isHerbDisableComment(nextChild)) {
         const childStartLine = this.stringLineCount
         this.visit(child)
 
@@ -813,10 +813,21 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
           }
         }
 
-        lastMeaningfulNode = child
-        hasHandledSpacing = false
+        const herbDisableString = this.captureHerbDisableInline(nextChild)
+
+        this.pushToLastLine(' ' + herbDisableString)
+
+        return {
+          newIndex: j,
+          lastMeaningfulNode: child,
+          hasHandledSpacing: false,
+        }
       }
+
+      break
     }
+
+    return null
   }
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
@@ -1240,19 +1251,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
     if (hasNonInlineChildElements) return false
 
-    let hasLeadingHerbDisable = false
-
-    for (const child of node.body) {
-      if (isNode(child, WhitespaceNode) || isPureWhitespaceNode(child)) {
-        continue
-      }
-      if (isNode(child, ERBContentNode) && isHerbDisableComment(child)) {
-        hasLeadingHerbDisable = true
-      }
-      break
-    }
-
-    if (hasLeadingHerbDisable && !isInlineElement(tagName)) {
+    if (hasLeadingHerbDisable(node.body) && !isInlineElement(tagName)) {
       return false
     }
 
@@ -1260,8 +1259,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
       if (fullInlineResult) {
-        const totalLength = this.indent.length + fullInlineResult.length
-        return totalLength <= this.maxLineLength
+        return this.fitsOnCurrentLine(fullInlineResult)
       }
 
       return false
@@ -1280,12 +1278,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (allNestedAreInline && (!hasMultilineText || hasMixedContent)) {
       const fullInlineResult = this.tryRenderInlineFull(node, tagName, filterNodes(getOpenTagChildren(node), HTMLAttributeNode), node.body)
 
-      if (fullInlineResult) {
-        const totalLength = this.indent.length + fullInlineResult.length
-
-        if (totalLength <= this.maxLineLength) {
-          return true
-        }
+      if (fullInlineResult && this.fitsOnCurrentLine(fullInlineResult)) {
+        return true
       }
     }
 
@@ -1302,9 +1296,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
       const childrenContent = this.renderChildrenInline(children)
       const fullLine = openTagResult + childrenContent + `</${tagName}>`
-      const totalLength = this.indent.length + fullLine.length
 
-      if (totalLength <= this.maxLineLength) {
+      if (this.fitsOnCurrentLine(fullLine)) {
         return true
       }
     }
@@ -1329,6 +1322,21 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
 
   // --- Utility methods ---
+
+  private captureHerbDisableInline(node: Node): string {
+    return this.capture(() => {
+      const savedIndentLevel = this.indentLevel
+      this.indentLevel = 0
+      this.inlineMode = true
+      this.visit(node)
+      this.inlineMode = false
+      this.indentLevel = savedIndentLevel
+    }).join("")
+  }
+
+  private fitsOnCurrentLine(content: string): boolean {
+    return this.indent.length + content.length <= this.maxLineLength
+  }
 
   private formatFrontmatter(node: DocumentNode): Node[] {
     const firstChild = node.children[0]
