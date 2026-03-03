@@ -287,6 +287,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     return result
   }
 
+  private withInlineMode<T>(callback: () => T): T {
+    const was = this.inlineMode
+    this.inlineMode = true
+    const result = callback()
+    this.inlineMode = was
+
+    return result
+  }
+
   private withContentPreserving<T>(callback: () => T): T {
     const was = this.inContentPreservingContext
     this.inContentPreservingContext = true
@@ -353,11 +362,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (herbDisableComments.length > 0) {
       const commentLines = this.capture(() => {
         herbDisableComments.forEach(comment => {
-          const wasInlineMode = this.inlineMode
-          this.inlineMode = true
-          this.lines.push(" ")
-          this.visit(comment)
-          this.inlineMode = wasInlineMode
+          this.withInlineMode(() => {
+            this.lines.push(" ")
+            this.visit(comment)
+          })
         })
       })
 
@@ -418,12 +426,9 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const hasTextFlow = this.textFlow.isInTextFlowContext(children)
 
     if (hasTextFlow) {
-      const wasInlineMode = this.inlineMode
-      this.inlineMode = true
-
-      this.textFlow.visitTextFlowChildren(children)
-
-      this.inlineMode = wasInlineMode
+      this.withInlineMode(() => {
+        this.textFlow.visitTextFlowChildren(children)
+      })
 
       return
     }
@@ -574,13 +579,8 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.withContentPreserving(() => {
       element.body.map(child => {
         if (isNode(child, HTMLElementNode)) {
-          const wasInlineMode = this.inlineMode
-          this.inlineMode = true
-
-          const formattedElement = this.capture(() => this.visit(child)).join("")
+          const formattedElement = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
           this.pushToLastLine(formattedElement)
-
-          this.inlineMode = wasInlineMode
         } else {
           this.pushToLastLine(IdentityPrinter.print(child))
         }
@@ -591,45 +591,44 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private visitInlineElementBody(body: Node[], tagName: string, hasTextFlow: boolean, children: Node[]) {
     if (children.length === 0) return
 
-    const oldInlineMode = this.inlineMode
     const nodesToRender = hasTextFlow ? body : children
 
     const hasOnlyTextContent = nodesToRender.every(child => isNode(child, HTMLTextNode) || isNode(child, WhitespaceNode))
     const shouldPreserveSpaces = hasOnlyTextContent && isInlineElement(tagName)
 
-    this.inlineMode = true
+    const lines = this.withInlineMode(() => {
+      return this.capture(() => {
+        nodesToRender.forEach(child => {
+          if (isNode(child, HTMLTextNode)) {
+            if (hasTextFlow) {
+              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
 
-    const lines = this.capture(() => {
-      nodesToRender.forEach(child => {
-        if (isNode(child, HTMLTextNode)) {
-          if (hasTextFlow) {
-            const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
-
-            if (normalizedContent && normalizedContent !== ' ') {
-              this.push(normalizedContent)
-            } else if (normalizedContent === ' ') {
-              this.push(' ')
-            }
-          } else {
-            const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
-
-            if (shouldPreserveSpaces && normalizedContent) {
-              this.push(normalizedContent)
-            } else {
-              const trimmedContent = normalizedContent.trim()
-
-              if (trimmedContent) {
-                this.push(trimmedContent)
+              if (normalizedContent && normalizedContent !== ' ') {
+                this.push(normalizedContent)
               } else if (normalizedContent === ' ') {
                 this.push(' ')
               }
+            } else {
+              const normalizedContent = child.content.replace(ASCII_WHITESPACE, ' ')
+
+              if (shouldPreserveSpaces && normalizedContent) {
+                this.push(normalizedContent)
+              } else {
+                const trimmedContent = normalizedContent.trim()
+
+                if (trimmedContent) {
+                  this.push(trimmedContent)
+                } else if (normalizedContent === ' ') {
+                  this.push(' ')
+                }
+              }
             }
+          } else if (isNode(child, WhitespaceNode)) {
+            return
+          } else {
+            this.visit(child)
           }
-        } else if (isNode(child, WhitespaceNode)) {
-          return
-        } else {
-          this.visit(child)
-        }
+        })
       })
     })
 
@@ -642,8 +641,6 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     if (inlineContent) {
       this.pushToLastLine(inlineContent)
     }
-
-    this.inlineMode = oldInlineMode
   }
 
   private stripLeadingHerbDisable(children: Node[], body: Node[]): {
@@ -1358,9 +1355,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     return this.capture(() => {
       const savedIndentLevel = this.indentLevel
       this.indentLevel = 0
-      this.inlineMode = true
-      this.visit(node)
-      this.inlineMode = false
+      this.withInlineMode(() => this.visit(node))
       this.indentLevel = savedIndentLevel
     }).join("")
   }
@@ -1401,10 +1396,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       }
 
-      const oldInlineMode = this.inlineMode
-      this.inlineMode = true
-      const inlineContent = this.capture(() => this.visit(child)).join("")
-      this.inlineMode = oldInlineMode
+      const inlineContent = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
       this.pushToLastLine((hasSpaceBefore ? " " : "") + inlineContent)
     }
   }
@@ -1442,10 +1434,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
    * Render an ERB node as a string
    */
   renderERBAsString(node: ERBContentNode): string {
-    return this.capture(() => {
-      this.inlineMode = true
-      this.visit(node)
-    }).join("")
+    return this.withInlineMode(() => this.capture(() => this.visit(node)).join(""))
   }
 
   /**
@@ -1472,13 +1461,10 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
             if (isNode(child, HTMLAttributeNode)) {
               this.lines.push(" " + this.attributeRenderer.renderAttribute(child, name))
             } else if (!(isNode(child, WhitespaceNode))) {
-              const wasInlineMode = this.inlineMode
-
-              this.inlineMode = true
-
-              this.lines.push(" ")
-              this.visit(child)
-              this.inlineMode = wasInlineMode
+              this.withInlineMode(() => {
+                this.lines.push(" ")
+                this.visit(child)
+              })
             }
           })
         })
@@ -1491,15 +1477,11 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
         const lines = this.capture(() => {
           inlineNodes.forEach(node => {
-            const wasInlineMode = this.inlineMode
-
             if (!isERBControlFlowNode(node)) {
-              this.inlineMode = true
+              this.withInlineMode(() => this.visit(node))
+            } else {
+              this.visit(node)
             }
-
-            this.visit(node)
-
-            this.inlineMode = wasInlineMode
           })
         })
 
@@ -1597,10 +1579,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
 
         result += childInline
       } else if (!isNode(child, HTMLTextNode) && !isWhitespace) {
-        const wasInlineMode = this.inlineMode
-        this.inlineMode = true
-        const captured = this.capture(() => this.visit(child)).join("")
-        this.inlineMode = wasInlineMode
+        const captured = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
         result += captured
       }
     }
