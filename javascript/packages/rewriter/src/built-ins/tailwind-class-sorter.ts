@@ -170,6 +170,18 @@ class ClassAttributeSorter extends Visitor {
     return result
   }
 
+  /**
+   * Groups split nodes into "class groups" where each group represents a single
+   * class name (possibly spanning multiple nodes when ERB is interpolated).
+   *
+   * For example, `text-<%= color %>-500 bg-blue-500` produces two groups:
+   *   - [`text-`, ERB, `-500`] (interpolated class)
+   *   - [`bg-blue-500`] (static class)
+   *
+   * The key heuristic: a hyphen at a node boundary means the nodes are part of
+   * the same class name (e.g., `bg-` + ERB + `-500`), while whitespace means
+   * a new class name starts.
+   */
   private groupNodesByClass(nodes: Node[]): Node[][] {
     if (nodes.length === 0) return []
 
@@ -239,13 +251,7 @@ class ClassAttributeSorter extends Visitor {
       .join("")
   }
 
-  private formatNodes(nodes: Node[], isNested: boolean): Node[] {
-    if (nodes.length === 0) return nodes
-    if (nodes.every(n => this.isWhitespaceLiteral(n))) return nodes
-
-    const splitNodes = this.splitLiteralsAtWhitespace(nodes)
-    const groups = this.groupNodesByClass(splitNodes)
-
+  private categorizeGroups(groups: Node[][]): { staticClasses: string[], interpolationGroups: Node[][], standaloneERBNodes: Node[] } {
     const staticClasses: string[] = []
     const interpolationGroups: Node[][] = []
     const standaloneERBNodes: Node[] = []
@@ -283,6 +289,17 @@ class ClassAttributeSorter extends Visitor {
       }
     }
 
+    return { staticClasses, interpolationGroups, standaloneERBNodes }
+  }
+
+  private formatNodes(nodes: Node[], isNested: boolean): Node[] {
+    if (nodes.length === 0) return nodes
+    if (nodes.every(n => this.isWhitespaceLiteral(n))) return nodes
+
+    const splitNodes = this.splitLiteralsAtWhitespace(nodes)
+    const groups = this.groupNodesByClass(splitNodes)
+    const { staticClasses, interpolationGroups, standaloneERBNodes } = this.categorizeGroups(groups)
+
     const allStaticContent = staticClasses.join(" ")
     let sortedContent = allStaticContent
 
@@ -294,53 +311,37 @@ class ClassAttributeSorter extends Visitor {
       }
     }
 
-    let addedLeadingSpace = false
-
-    const result: Node[] = []
-    const hasContent = sortedContent || interpolationGroups.length > 0 || standaloneERBNodes.length > 0
-    const needsLeadingSpace = isNested && hasContent
+    const parts: Node[] = []
 
     if (sortedContent) {
-      const literal = new LiteralNode({
+      parts.push(new LiteralNode({
         type: "AST_LITERAL_NODE",
-        content: (needsLeadingSpace ? " " : "") + sortedContent,
+        content: sortedContent,
         errors: [],
         location: Location.zero
-      })
-
-      result.push(literal)
-
-      addedLeadingSpace = !!needsLeadingSpace
+      }))
     }
 
     for (const group of interpolationGroups) {
-      if (result.length > 0) {
-        result.push(this.spaceLiteral)
-      } else if (needsLeadingSpace && !addedLeadingSpace) {
-        result.push(this.spaceLiteral)
-        addedLeadingSpace = true
+      if (parts.length > 0) {
+        parts.push(this.spaceLiteral)
       }
 
-      const trimmedGroup = this.trimGroupWhitespace(group)
-
-      result.push(...trimmedGroup)
+      parts.push(...this.trimGroupWhitespace(group))
     }
 
     for (const node of standaloneERBNodes) {
-      if (result.length > 0) {
-        result.push(this.spaceLiteral)
-      } else if (needsLeadingSpace && !addedLeadingSpace) {
-        result.push(this.spaceLiteral)
-        addedLeadingSpace = true
+      if (parts.length > 0) {
+        parts.push(this.spaceLiteral)
       }
-      result.push(node)
+      parts.push(node)
     }
 
-    if (isNested && result.length > 0) {
-      result.push(this.spaceLiteral)
+    if (isNested && parts.length > 0) {
+      return [this.spaceLiteral, ...parts, this.spaceLiteral]
     }
 
-    return result
+    return parts
   }
 
   private trimGroupWhitespace(group: Node[]): Node[] {
@@ -380,7 +381,6 @@ class ClassAttributeSorter extends Visitor {
 
     return result
   }
-
 }
 
 /**
