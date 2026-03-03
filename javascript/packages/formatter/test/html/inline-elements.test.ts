@@ -212,6 +212,20 @@ describe("@herb-tools/formatter - inline elements", () => {
     `)
   })
 
+  test("spaced ERB tags on separate line from block element preserves format", () => {
+    const source = dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
   test("preserves ERB interpolation in attributes", () => {
     expectFormattedToMatch(dedent`
       <div class="<%= some_var %> style="<%= some_other_var" %>"></div>
