@@ -1,4 +1,4 @@
-import { getStaticAttributeName, isLiteralNode } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isWhitespaceLiteral, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { LiteralNode, Location, Visitor } from "@herb-tools/core"
 
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
@@ -143,107 +143,12 @@ class ClassAttributeSorter extends Visitor {
     })
   }
 
-  private isWhitespaceLiteral(node: Node): boolean {
-    return isLiteralNode(node) && !node.content.trim()
-  }
-
-  private splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
-    const result: Node[] = []
-
-    for (const node of nodes) {
-      if (isLiteralNode(node)) {
-        const parts = node.content.match(/(\S+|\s+)/g) || []
-
-        for (const part of parts) {
-          result.push(new LiteralNode({
-            type: "AST_LITERAL_NODE",
-            content: part,
-            errors: [],
-            location: node.location
-          }))
-        }
-      } else {
-        result.push(node)
-      }
-    }
-
-    return result
-  }
-
-  /**
-   * Groups split nodes into "class groups" where each group represents a single
-   * class name (possibly spanning multiple nodes when ERB is interpolated).
-   *
-   * For example, `text-<%= color %>-500 bg-blue-500` produces two groups:
-   *   - [`text-`, ERB, `-500`] (interpolated class)
-   *   - [`bg-blue-500`] (static class)
-   *
-   * The key heuristic: a hyphen at a node boundary means the nodes are part of
-   * the same class name (e.g., `bg-` + ERB + `-500`), while whitespace means
-   * a new class name starts.
-   */
-  private groupNodesByClass(nodes: Node[]): Node[][] {
-    if (nodes.length === 0) return []
-
-    const groups: Node[][] = []
-    let currentGroup: Node[] = []
-
-    for (let i = 0; i < nodes.length; i++) {
-      const node = nodes[i]
-      const previousNode = i > 0 ? nodes[i - 1] : null
-
-      let startNewGroup = false
-
-      if (currentGroup.length === 0) {
-        startNewGroup = false
-      } else if (isLiteralNode(node)) {
-        if (/^\s/.test(node.content)) {
-          startNewGroup = true
-        } else if (/^-/.test(node.content)) {
-          startNewGroup = false
-        } else if (previousNode && !isLiteralNode(previousNode)) {
-          startNewGroup = true
-        } else if (currentGroup.every(member => this.isWhitespaceLiteral(member))) {
-          startNewGroup = true
-        }
-
-      } else {
-        if (previousNode && isLiteralNode(previousNode)) {
-          if (/\s$/.test(previousNode.content)) {
-            startNewGroup = true
-          } else if (/-$/.test(previousNode.content)) {
-            startNewGroup = false
-          } else {
-            startNewGroup = true
-          }
-
-        } else if (previousNode && !isLiteralNode(previousNode)) {
-          startNewGroup = false
-        }
-      }
-
-      if (startNewGroup && currentGroup.length > 0) {
-        groups.push(currentGroup)
-
-        currentGroup = []
-      }
-
-      currentGroup.push(node)
-    }
-
-    if (currentGroup.length > 0) {
-      groups.push(currentGroup)
-    }
-
-    return groups
-  }
-
   private isInterpolatedGroup(group: Node[]): boolean {
     return group.some(node => !isLiteralNode(node))
   }
 
   private isWhitespaceGroup(group: Node[]): boolean {
-    return group.every(node => this.isWhitespaceLiteral(node))
+    return group.every(node => isWhitespaceLiteral(node))
   }
 
   private getStaticClassContent(group: Node[]): string {
@@ -296,10 +201,10 @@ class ClassAttributeSorter extends Visitor {
 
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
     if (nodes.length === 0) return nodes
-    if (nodes.every(child => this.isWhitespaceLiteral(child))) return nodes
+    if (nodes.every(child => isWhitespaceLiteral(child))) return nodes
 
-    const splitNodes = this.splitLiteralsAtWhitespace(nodes)
-    const groups = this.groupNodesByClass(splitNodes)
+    const splitNodes = splitLiteralsAtWhitespace(nodes)
+    const groups = groupNodesByClass(splitNodes)
     const groupPrecedingWhitespace = new Map<Node[], Node[]>()
     const nodePrecedingWhitespace = new Map<Node, Node[]>()
 
