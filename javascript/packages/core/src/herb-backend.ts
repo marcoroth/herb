@@ -7,7 +7,7 @@ import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
 import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
-import type { ParserOptions } from "./parser-options.js"
+import type { ParseOptions } from "./parser-options.js"
 import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 
 /**
@@ -72,7 +72,7 @@ export abstract class HerbBackend {
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string, options?: ParserOptions): ParseResult {
+  parse(source: string, options?: ParseOptions): ParseResult {
     this.ensureBackend()
 
     const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }

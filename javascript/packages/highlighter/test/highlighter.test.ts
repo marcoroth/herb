@@ -11,6 +11,7 @@ import {
 } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { ANSI_REGEX } from "../src/color.js"
 import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
 
 describe("Highlighter", () => {
@@ -304,7 +305,7 @@ describe("Standalone utility functions", () => {
     expect(result).toContain("…")
     expect(result).not.toContain("maximum-width")
 
-    const strippedResult = result.replace(/\x1b\[[0-9;]*m/g, "")
+    const strippedResult = result.replace(ANSI_REGEX, "")
     expect(strippedResult).toContain("Short line")
   })
 })

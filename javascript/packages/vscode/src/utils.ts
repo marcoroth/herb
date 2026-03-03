@@ -47,7 +47,7 @@ export async function getHerbSettings(): Promise<PersonalHerbSettings> {
       const configPath = path.join(workspaceRoot, '.herb.yml')
       projectConfig = await fs.readFile(configPath, 'utf8')
     }
-  } catch (error) {
+  } catch (_error) {
     projectConfig = null
   }
 

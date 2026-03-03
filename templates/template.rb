@@ -345,7 +345,7 @@ module Herb
         base_length = template.length
         total_size = base_length
 
-        format_specifiers = template.scan(/%[sdulfz]/)
+        format_specifiers = template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)
 
         format_specifiers.each_with_index do |specifier, _i|
           estimated_size = ESTIMATED_SIZES[specifier] || 16 # Default extra buffer

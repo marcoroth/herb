@@ -45,7 +45,11 @@ val <%= node.name %>FromCStruct(<%= node.struct_type %>* <%= node.human %>) {
   } else {
     result.set("<%= field.name %>", val::null());
   }
+  <%- when Herb::Template::AnalyzedRubyField, Herb::Template::PrismNodeField, Herb::Template::VoidPointerField -%>
+  /* <%= field.name %> is internal parser state, not exposed to JavaScript */
+  result.set("<%= field.name %>", val::null());
   <%- else -%>
+  /* Unhandled field type: <%= field.class.name %> */
   result.set("<%= field.name %>", val::null());
   <%- end -%>
   <%- end -%>
@@ -77,7 +81,7 @@ val NodesArrayFromCArray(hb_array_T* array) {
     AST_NODE_T* child_node = (AST_NODE_T*) hb_array_get(array, i);
 
     if (child_node) {
-      jsArray.set(i, NodeFromCStruct(child_node));
+      jsArray.call<void>("push", NodeFromCStruct(child_node));
     }
   }
 

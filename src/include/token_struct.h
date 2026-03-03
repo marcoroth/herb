@@ -51,12 +51,14 @@ typedef enum {
   TOKEN_EOF,
 } token_type_T;
 
+// Sentinel value for variadic functions
+#define TOKEN_SENTINEL 99999999
+
 typedef struct TOKEN_STRUCT {
   char* value;
   range_T range;
   location_T location;
   token_type_T type;
-  bool arena_allocated;
 } token_T;
 
 #endif

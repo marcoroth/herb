@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+# typed: false
 
 require "json"
 require "time"
@@ -28,6 +29,9 @@ module Herb
     }.freeze
 
     class CompilationError < StandardError
+    end
+
+    class InvalidRubyError < CompilationError
     end
 
     def initialize(input, properties = {})
@@ -75,6 +79,8 @@ module Herb
       bufval = properties[:bufval] || "::String.new"
       preamble = properties[:preamble] || "#{@bufvar} = #{bufval};"
       postamble = properties[:postamble] || "#{@bufvar}.to_s\n"
+
+      preamble = "#{preamble}; " unless preamble.empty? || preamble.end_with?(";", " ", "\n")
 
       @src << "# frozen_string_literal: true\n" if @freeze
 
@@ -133,6 +139,18 @@ module Herb
 
       @src << "; ensure\n  #{@bufvar} = __original_outvar\nend\n" if properties[:ensure]
 
+      if properties.fetch(:validate_ruby, false)
+        require "prism"
+
+        prism_result = Prism.parse(@src)
+        syntax_errors = prism_result.errors.reject { |e| e.type == :invalid_yield }
+
+        if syntax_errors.any?
+          details = syntax_errors.map { |e| "  - #{e.message} (line #{e.location.start_line})" }.join("\n")
+          raise InvalidRubyError, "Compiled template produced invalid Ruby:\n#{details}"
+        end
+      end
+
       @src.freeze
       freeze
     end
@@ -173,6 +191,14 @@ module Herb
       end
     end
 
+    def self.comment?(code)
+      code.include?("#")
+    end
+
+    def self.heredoc?(code)
+      code.match?(/<<[~-]?\s*['"`]?\w/)
+    end
+
     protected
 
     def add_text(text)
@@ -194,8 +220,8 @@ module Herb
         @src << " " << code
 
         # TODO: rework and check for Prism::InlineComment as soon as we expose the Prism Nodes in the Herb AST
-        if code.include?("#")
-          @src << "\n"
+        if self.class.comment?(code) || self.class.heredoc?(code)
+          @src << "\n" unless code[-1] == "\n"
         else
           @src << ";" unless code[-1] == "\n"
         end
@@ -214,13 +240,13 @@ module Herb
 
     def add_expression_result(code)
       with_buffer {
-        @src << " << (" << code << comment_aware_newline(code) << ").to_s"
+        @src << " << (" << code << trailing_newline(code) << ").to_s"
       }
     end
 
     def add_expression_result_escaped(code)
       with_buffer {
-        @src << " << " << @escapefunc << "((" << code << comment_aware_newline(code) << "))"
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code) << "))"
       }
     end
 
@@ -234,18 +260,41 @@ module Herb
 
     def add_expression_block_result(code)
       with_buffer {
-        @src << " << " << code << comment_aware_newline(code)
+        @src << " << (" << code << trailing_newline(code)
       }
     end
 
     def add_expression_block_result_escaped(code)
       with_buffer {
-        @src << " << " << @escapefunc << "(" << code << comment_aware_newline(code) << ")"
+        @src << " << " << @escapefunc << "((" << code << trailing_newline(code)
       }
     end
 
-    def comment_aware_newline(code)
-      code.include?("#") ? "\n" : ""
+    def add_expression_block_end(code, escaped: false)
+      terminate_expression
+
+      trailing_newline = code.end_with?("\n")
+      code_stripped = code.chomp
+
+      @src.chomp! if @src.end_with?("\n") && code_stripped.start_with?(" ")
+
+      @src << " " << code_stripped
+      @src << (escaped ? "))" : ")")
+
+      @src << if code.include?("#") || trailing_newline
+                "\n"
+              else
+                ";"
+              end
+
+      @buffer_on_stack = false
+    end
+
+    def trailing_newline(code)
+      return "\n" if self.class.comment?(code)
+      return "\n" if self.class.heredoc?(code)
+
+      ""
     end
 
     def add_postamble(postamble)

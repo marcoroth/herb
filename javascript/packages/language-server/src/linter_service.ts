@@ -1,7 +1,7 @@
 import { Diagnostic, Range, Position, CodeDescription, Connection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
-import { Linter, rules, type RuleClass } from "@herb-tools/linter"
+import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
 import { loadCustomRules as loadCustomRulesFromFs } from "@herb-tools/linter/loader"
 import { Herb } from "@herb-tools/node-wasm"
 import { Config } from "@herb-tools/config"
@@ -113,7 +113,27 @@ export class LinterService {
     }
   }
 
+  private shouldLintFile(uri: string): boolean {
+    const filePath = uri.replace(/^file:\/\//, '')
+
+    if (filePath.endsWith('.herb.yml')) return false
+
+    const config = this.settings.projectConfig
+    if (!config) return true
+
+    const hasConfigFile = Config.exists(config.projectPath)
+    if (!hasConfigFile) return true
+
+    const relativePath = filePath.replace(this.project.projectPath + '/', '')
+
+    return config.isLinterEnabledForPath(relativePath)
+  }
+
   async lintDocument(textDocument: TextDocument): Promise<LintServiceResult> {
+    if (!this.shouldLintFile(textDocument.uri)) {
+      return { diagnostics: [] }
+    }
+
     const settings = await this.settings.getDocumentSettings(textDocument.uri)
     const linterEnabled = settings?.linter?.enabled ?? true
 
@@ -158,7 +178,7 @@ export class LinterService {
       const codeDescription: CodeDescription = {
         href: customRulePath
           ? `file://${customRulePath}`
-          : `https://herb-tools.dev/linter/rules/${offense.rule}`
+          : ruleDocumentationUrl(offense.rule)
       }
 
       return {

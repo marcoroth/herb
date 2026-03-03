@@ -1,31 +1,32 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
 
 #include <prism.h>
 
-#include "include/analyzed_ruby.h"
+#include "include/analyze/analyzed_ruby.h"
 #include "include/ast_node.h"
 #include "include/ast_nodes.h"
 #include "include/errors.h"
 #include "include/token.h"
 #include "include/util.h"
-#include "include/util/hb_arena.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_array.h"
 
 <%- nodes.each do |node| -%>
 <%- node_arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join } : [] -%>
-<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors", "hb_arena_T* arena"] -%>
+<%- arguments = node_arguments + ["position_T start_position", "position_T end_position", "hb_array_T* errors", "hb_allocator_T* allocator"] -%>
 
 <%= node.struct_type %>* ast_<%= node.human %>_init(<%= arguments.join(", ") %>) {
-  <%= node.struct_type %>* <%= node.human %> = arena ? hb_arena_alloc(arena, sizeof(<%= node.struct_type %>)) : malloc(sizeof(<%= node.struct_type %>));
+  <%= node.struct_type %>* <%= node.human %> = hb_allocator_alloc(allocator, sizeof(<%= node.struct_type %>));
+
+  if (!<%= node.human %>) { return NULL; }
 
   ast_node_init(&<%= node.human %>->base, <%= node.type %>, start_position, end_position, errors);
 
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>, arena);
+  <%= node.human %>-><%= field.name %> = token_copy(<%= field.name %>, allocator);
   <%- when Herb::Template::NodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::ArrayField -%>
@@ -37,13 +38,7 @@
   <%- when Herb::Template::PrismNodeField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::StringField -%>
-  if (arena) {
-    char* temp = (char*) hb_arena_alloc(arena, strlen(<%= field.name %>) + 1);
-    strcpy(temp, <%= field.name %>);
-    <%= node.human %>-><%= field.name %> = temp;
-  } else {
-    <%= node.human %>-><%= field.name %> = herb_strdup(<%= field.name %>);
-  }
+  <%= node.human %>-><%= field.name %> = hb_allocator_strdup(allocator, <%= field.name %>);
   <%- when Herb::Template::AnalyzedRubyField -%>
   <%= node.human %>-><%= field.name %> = <%= field.name %>;
   <%- when Herb::Template::VoidPointerField -%>
@@ -53,10 +48,6 @@
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
-  <%- end -%>
-
-  <%- if node.human == "document_node" -%>
-  <%= node.human %>->arena = arena;
   <%- end -%>
 
   return <%= node.human %>;
@@ -83,80 +74,46 @@ hb_string_T ast_node_human_type(AST_NODE_T* node) {
   return hb_string("Unknown ast_node_type_T");
 }
 
-void ast_free_base_node(AST_NODE_T* node) {
-  // Base node cleanup is intentionally empty in the arena-based implementation.
-  // The node itself is arena-allocated and freed when the arena is destroyed.
-  // The errors array is freed by ast_free_arrays_recursive() before arena cleanup.
-  // This function is kept as an extension point for any future non-arena base node cleanup.
-}
+void ast_free_base_node(AST_NODE_T* node, hb_allocator_T* allocator) {
+  if (node == NULL) { return; }
 
-<%- nodes.each do |node| -%>
-static void ast_free_arrays_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>);
-<%- end -%>
-
-static void ast_free_arrays_recursive(AST_NODE_T* node) {
-  if (!node) { return; }
-
-  switch (node->type) {
-  <%- nodes.each do |node| -%>
-  case <%= node.type %>: ast_free_arrays_<%= node.human %>((<%= node.struct_type %>*) node); break;
-  <%- end -%>
-  }
-}
-
-<%- nodes.each do |node| -%>
-
-static void ast_free_arrays_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>) {
-  if (!<%= node.human %>) { return; }
-
-  <%- node.fields.each do |field| -%>
-  <%- case field -%>
-  <%- when Herb::Template::NodeField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) {
-    ast_free_arrays_recursive((AST_NODE_T*) <%= node.human %>-><%= field.name %>);
-  }
-  <%- when Herb::Template::ArrayField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) {
-    for (size_t i = 0; i < hb_array_size(<%= node.human %>-><%= field.name %>); i++) {
-      AST_NODE_T* child = (AST_NODE_T*) hb_array_get(<%= node.human %>-><%= field.name %>, i);
-      ast_free_arrays_recursive(child);
+  if (node->errors) {
+    for (size_t i = 0; i < hb_array_size(node->errors); i++) {
+      ERROR_T* child = hb_array_get(node->errors, i);
+      if (child != NULL) { error_free(child, allocator); }
     }
 
-    hb_array_free(&<%= node.human %>-><%= field.name %>);
+    hb_array_free(&node->errors);
   }
-  <%- when Herb::Template::AnalyzedRubyField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) {
-    free_analyzed_ruby(<%= node.human %>-><%= field.name %>);
-  }
-  <%- end -%>
-  <%- end -%>
 
-  if (<%= node.human %>->base.errors != NULL) {
-    hb_array_free(&<%= node.human %>->base.errors);
-  }
+  hb_allocator_dealloc(allocator, node);
 }
 
-<%- end -%>
-
 <%- nodes.each do |node| -%>
-<%- arguments = node.fields.any? ? node.fields.map { |field| [field.c_type, " ", field.name].join }.join(", ") : "void" -%>
 
-static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>) {
+static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %>, hb_allocator_T* allocator) {
   <%- if node.fields.none? -%>
   /* no <%= node.struct_type %> specific fields to free up */
   <%- end -%>
   <%- node.fields.each do |field| -%>
   <%- case field -%>
   <%- when Herb::Template::TokenField -%>
-  // Token is arena-allocated, will be freed with arena
+  if (<%= node.human %>-><%= field.name %> != NULL) { token_free(<%= node.human %>-><%= field.name %>, allocator); }
   <%- when Herb::Template::BorrowedNodeField -%>
   /* <%= field.name %> is a borrowed reference, not freed here (owned by another field) */
   <%- when Herb::Template::NodeField -%>
-  // Node is arena-allocated, will be freed with arena
+  ast_node_free((AST_NODE_T*) <%= node.human %>-><%= field.name %>, allocator);
   <%- when Herb::Template::ArrayField -%>
-  // Array freed by ast_free_arrays_recursive() before arena cleanup
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    for (size_t i = 0; i < hb_array_size(<%= node.human %>-><%= field.name %>); i++) {
+      AST_NODE_T* child = hb_array_get(<%= node.human %>-><%= field.name %>, i);
+      if (child) { ast_node_free(child, allocator); }
+    }
+
+    hb_array_free(&<%= node.human %>-><%= field.name %>);
+  }
   <%- when Herb::Template::StringField -%>
-  // String is arena-allocated, will be freed with arena
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, (char*) <%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::PrismNodeField -%>
   if (<%= node.human %>-><%= field.name %> != NULL) {
     // The first argument to `pm_node_destroy` is a `pm_parser_t`, but it's currently unused:
@@ -165,41 +122,30 @@ static void ast_free_<%= node.human %>(<%= node.struct_type %>* <%= node.human %
     pm_node_destroy(NULL, <%= node.human %>-><%= field.name %>);
   }
   <%- when Herb::Template::AnalyzedRubyField -%>
-  // AnalyzedRuby freed by ast_free_arrays_recursive() before arena cleanup
+  if (<%= node.human %>-><%= field.name %> != NULL) {
+    free_analyzed_ruby(<%= node.human %>-><%= field.name %>);
+  }
   <%- when Herb::Template::VoidPointerField -%>
-  free(<%= node.human %>-><%= field.name %>);
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>); }
   <%- when Herb::Template::BooleanField -%>
   <%- when Herb::Template::ElementSourceField -%>
   <%- when Herb::Template::LocationField -%>
-  if (<%= node.human %>-><%= field.name %> != NULL) { free(<%= node.human %>-><%= field.name %>); }
+  if (<%= node.human %>-><%= field.name %> != NULL) { hb_allocator_dealloc(allocator, <%= node.human %>-><%= field.name %>); }
   <%- else -%>
   <%= field.inspect %>
   <%- end -%>
   <%- end -%>
 
-  <%- if node.human == "document_node" -%>
-  ast_free_arrays_recursive((AST_NODE_T*)<%= node.human %>);
-
-  hb_arena_T* arena = <%= node.human %>->arena;
-
-  ast_free_base_node(&<%= node.human %>->base);
-
-  if (arena != NULL) {
-    hb_arena_free(arena);
-    free(arena);
-  }
-  <%- else -%>
-  ast_free_base_node(&<%= node.human %>->base);
-  <%- end -%>
+  ast_free_base_node(&<%= node.human %>->base, allocator);
 }
 <%- end -%>
 
-void ast_node_free(AST_NODE_T* node) {
+void ast_node_free(AST_NODE_T* node, hb_allocator_T* allocator) {
   if (!node) { return; }
 
   switch (node->type) {
     <%- nodes.each do |node| -%>
-    case <%= node.type %>: ast_free_<%= node.human %>((<%= node.struct_type %>*) node); break;
+    case <%= node.type %>: ast_free_<%= node.human %>((<%= node.struct_type %>*) node, allocator); break;
     <%- end -%>
   }
 }

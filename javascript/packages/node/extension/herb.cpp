@@ -3,10 +3,9 @@ extern "C" {
 #include "../extension/libherb/include/extract.h"
 #include "../extension/libherb/include/herb.h"
 #include "../extension/libherb/include/location.h"
-#include "../extension/libherb/include/macros.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
-#include "../extension/libherb/include/util/hb_arena.h"
+#include "../extension/libherb/include/util/hb_allocator.h"
 #include "../extension/libherb/include/util/hb_array.h"
 #include "../extension/libherb/include/util/hb_buffer.h"
 }
@@ -33,31 +32,18 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(string);
-    return nullptr;
-  }
+  hb_array_T* tokens = herb_lex(string, &allocator);
+  napi_value result = CreateLexResult(env, tokens, args[0]);
 
-  herb_lex_result_T* lex_result = herb_lex(string, arena);
-
-  if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
-    free(string);
-    return nullptr;
-  }
-
-  napi_value result = CreateLexResult(env, lex_result->tokens, args[0]);
-
-  herb_free_lex_result(&lex_result);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
   free(string);
 
   return result;
@@ -76,32 +62,19 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   char* file_path = CheckString(env, args[0]);
   if (!file_path) { return nullptr; }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(file_path);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(file_path);
-    return nullptr;
-  }
-
-  herb_lex_result_T* lex_result = herb_lex_file(file_path, arena);
-
-  if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
-    free(file_path);
-    return nullptr;
-  }
-
+  hb_array_T* tokens = herb_lex_file(file_path, &allocator);
   napi_value source_value = ReadFileToString(env, file_path);
-  napi_value result = CreateLexResult(env, lex_result->tokens, source_value);
+  napi_value result = CreateLexResult(env, tokens, source_value);
 
-  herb_free_lex_result(&lex_result);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
   free(file_path);
 
   return result;
@@ -168,30 +141,18 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
     }
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(string);
-    return nullptr;
-  }
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
+  napi_value result = CreateParseResult(env, root, args[0], &parser_options);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, arena);
-
-  if (!root) {
-    hb_arena_free(arena);
-    free(arena);
-    free(string);
-    return nullptr;
-  }
-  napi_value result = CreateParseResult(env, root, args[0]);
-
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
+  hb_allocator_destroy(&allocator);
   free(string);
 
   return result;
@@ -218,34 +179,20 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     free(file_path);
     free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
     return nullptr;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    free(file_path);
-    free(string);
-    return nullptr;
-  }
+  parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
+  napi_value result = CreateParseResult(env, root, source_value, &parser_options);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, nullptr, arena);
-
-  if (!root) {
-    hb_arena_free(arena);
-    free(arena);
-    free(file_path);
-    free(string);
-    return nullptr;
-  }
-
-  napi_value result = CreateParseResult(env, root, source_value);
-
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
+  hb_allocator_destroy(&allocator);
   free(file_path);
   free(string);
 
@@ -308,11 +255,20 @@ napi_value Herb_extract_ruby(napi_env env, napi_callback_info info) {
     }
   }
 
-  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
+    return nullptr;
+  }
+
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
 
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   free(string);
   return result;
@@ -338,11 +294,20 @@ napi_value Herb_extract_html(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
-  herb_extract_html_to_buffer(string, &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    free(string);
+    napi_throw_error(env, nullptr, "Failed to initialize allocator");
+    return nullptr;
+  }
+
+  herb_extract_html_to_buffer(string, &output, &allocator);
 
   napi_value result;
   napi_create_string_utf8(env, output.value, NAPI_AUTO_LENGTH, &result);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   free(string);
   return result;

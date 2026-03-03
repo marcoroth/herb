@@ -2,6 +2,12 @@
 # typed: true
 
 module Herb
+  #: type serialized_token = {
+  #|  value: String,
+  #|  range: serialized_range?,
+  #|  location: serialized_location?,
+  #|  type: String
+  #| }
   class Token
     include Colors
 
@@ -25,7 +31,7 @@ module Herb
         range: range&.to_a,
         location: location&.to_hash,
         type: type,
-      } #: Herb::serialized_token
+      }
     end
 
     #: (?untyped) -> String

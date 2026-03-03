@@ -1,4 +1,4 @@
-import { colorize, severityColor } from "./color.js"
+import { colorize, hyperlink, severityColor, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
 import { applyDimToStyledText } from "./util.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
@@ -13,6 +13,9 @@ export interface DiagnosticRenderOptions {
   wrapLines?: boolean
   maxWidth?: number
   truncateLines?: boolean
+  codeUrl?: string
+  fileUrl?: string
+  suffix?: string
 }
 
 export class DiagnosticRenderer {
@@ -38,8 +41,7 @@ export class DiagnosticRenderer {
     diagnosticEnd: number,
     maxWidth: number
   ): { line: string; adjustedStart: number; adjustedEnd: number } {
-    const ansiRegex = /\x1b\[[0-9;]*m/g
-    const plainLine = line.replace(ansiRegex, "")
+    const plainLine = line.replace(ANSI_REGEX, "")
 
     if (plainLine.length <= maxWidth) {
       return { line, adjustedStart: diagnosticStart, adjustedEnd: diagnosticEnd }
@@ -98,8 +100,8 @@ export class DiagnosticRenderer {
     while (styledIndex < styledLine.length && plainIndex <= endPos) {
       const char = styledLine[styledIndex]
 
-      if (char === "\x1b") {
-        const ansiMatch = styledLine.slice(styledIndex).match(/^\x1b\[[0-9;]*m/)
+      if (char === ANSI_ESCAPE) {
+        const ansiMatch = styledLine.slice(styledIndex).match(ANSI_REGEX_START)
         if (ansiMatch) {
           if (inRange || plainIndex >= startPos) {
             result += ansiMatch[0]
@@ -132,7 +134,7 @@ export class DiagnosticRenderer {
   ): string {
     const {
       contextLines = 2,
-      showLineNumbers: _showLineNumbers = true,
+      showLineNumbers: _showLineNumbers = true, // eslint-disable-line no-unused-vars
       optimizeHighlighting = true,
       wrapLines = true,
       maxWidth = LineWrapper.getTerminalWidth(),
@@ -141,11 +143,14 @@ export class DiagnosticRenderer {
 
     const shouldWrap = wrapLines && !truncateLines
     const shouldTruncate = truncateLines
-    const fileHeader = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
+    const fileHeaderText = `${colorize(path, "cyan")}:${colorize(`${diagnostic.location.start.line}:${diagnostic.location.start.column}`, "cyan")}`
+    const { codeUrl, fileUrl: fileUrlOption } = options
+    const fileHeader = fileUrlOption ? hyperlink(fileHeaderText, fileUrlOption) : fileHeaderText
 
-    const text = diagnostic.severity
     const color = severityColor(diagnostic.severity)
-    const diagnosticId = colorize(diagnostic.code || "-", "gray")
+    const text = colorize(colorize(diagnostic.severity, color), "bold")
+    const diagnosticIdText = diagnostic.code || "-"
+    const diagnosticId = codeUrl ? hyperlink(diagnosticIdText, codeUrl) : diagnosticIdText
 
     const originalLines = content.split("\n")
     const targetLineNumber = diagnostic.location.start.line
@@ -246,8 +251,10 @@ export class DiagnosticRenderer {
     }
 
     const highlightedMessage = this.highlightBackticks(diagnostic.message)
+    const { suffix } = options
+    const suffixText = suffix ? ` ${suffix}` : ""
 
-    return `[${text}] ${highlightedMessage} (${diagnosticId})
+    return `[${text}] ${highlightedMessage} (${diagnosticId})${suffixText}
 
 ${fileHeader}
 

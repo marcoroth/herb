@@ -8,10 +8,11 @@
 #include "include/util/hb_buffer.h"
 #include "include/util/hb_string.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 
 void parser_push_open_tag(const parser_T* parser, token_T* tag_name) {
-  token_T* copy = token_copy(tag_name, parser->arena);
+  token_T* copy = token_copy(tag_name, parser->allocator);
   hb_array_push(parser->open_tags_stack, copy);
 }
 
@@ -90,25 +91,53 @@ void parser_exit_foreign_content(parser_T* parser) {
   parser->foreign_content_type = FOREIGN_CONTENT_UNKNOWN;
 }
 
-void parser_append_unexpected_error(
+void parser_append_unexpected_error_impl(
   parser_T* parser,
+  hb_array_T* errors,
   const char* description,
-  const char* expected,
-  hb_array_T* errors
+  token_type_T first_token,
+  ...
+) {
+  token_T* token = parser_advance(parser);
+
+  va_list args;
+  va_start(args, first_token);
+  char* expected = token_types_to_friendly_string_valist(first_token, args);
+  va_end(args);
+
+  append_unexpected_error(
+    description,
+    expected,
+    token_type_to_friendly_string(token->type),
+    token->location.start,
+    token->location.end,
+    parser->allocator,
+    errors
+  );
+
+  free(expected);
+  token_free(token, parser->allocator);
+}
+
+void parser_append_unexpected_error_string(
+  parser_T* parser,
+  hb_array_T* errors,
+  const char* description,
+  const char* expected
 ) {
   token_T* token = parser_advance(parser);
 
   append_unexpected_error(
     description,
     expected,
-    token_type_to_string(token->type),
+    token_type_to_friendly_string(token->type),
     token->location.start,
     token->location.end,
-    errors,
-    parser->arena
+    parser->allocator,
+    errors
   );
 
-  token_free(token);
+  token_free(token, parser->allocator);
 }
 
 void parser_append_unexpected_token_error(parser_T* parser, token_type_T expected_type, hb_array_T* errors) {
@@ -117,8 +146,8 @@ void parser_append_unexpected_token_error(parser_T* parser, token_type_T expecte
     parser->current_token,
     parser->current_token->location.start,
     parser->current_token->location.end,
-    errors,
-    parser->arena
+    parser->allocator,
+    errors
   );
 }
 
@@ -130,8 +159,13 @@ void parser_append_literal_node_from_buffer(
 ) {
   if (hb_buffer_length(buffer) == 0) { return; }
 
-  AST_LITERAL_NODE_T* literal =
-    ast_literal_node_init(hb_buffer_value(buffer), start, parser->current_token->location.start, NULL, parser->arena);
+  AST_LITERAL_NODE_T* literal = ast_literal_node_init(
+    hb_buffer_value(buffer),
+    start,
+    parser->current_token->location.start,
+    NULL,
+    parser->allocator
+  );
 
   if (children != NULL) { hb_array_append(children, literal); }
   hb_buffer_clear(buffer);
@@ -159,8 +193,8 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
       token,
       token->location.start,
       token->location.end,
-      array,
-      parser->arena
+      parser->allocator,
+      array
     );
   }
 
@@ -168,7 +202,7 @@ token_T* parser_consume_expected(parser_T* parser, const token_type_T expected_t
 }
 
 AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
-  const parser_T* parser,
+  parser_T* parser,
   AST_HTML_OPEN_TAG_NODE_T* open_tag,
   hb_array_T* body,
   hb_array_T* errors
@@ -177,8 +211,8 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     open_tag->tag_name,
     open_tag->tag_name->location.start,
     open_tag->tag_name->location.end,
-    errors,
-    parser->arena
+    parser->allocator,
+    errors
   );
 
   return ast_html_element_node_init(
@@ -191,7 +225,7 @@ AST_HTML_ELEMENT_NODE_T* parser_handle_missing_close_tag(
     open_tag->base.location.start,
     open_tag->base.location.end,
     errors,
-    parser->arena
+    parser->allocator
   );
 }
 
@@ -209,16 +243,16 @@ void parser_handle_mismatched_tags(
       actual_tag,
       actual_tag->location.start,
       actual_tag->location.end,
-      errors,
-      parser->arena
+      parser->allocator,
+      errors
     );
   } else {
     append_missing_opening_tag_error(
       close_tag->tag_name,
       close_tag->tag_name->location.start,
       close_tag->tag_name->location.end,
-      errors,
-      parser->arena
+      parser->allocator,
+      errors
     );
   }
 }
@@ -243,7 +277,7 @@ void parser_synchronize(parser_T* parser, hb_array_T* errors) {
     }
 
     token_T* skipped = parser_advance(parser);
-    token_free(skipped);
+    token_free(skipped, parser->allocator);
   }
 }
 

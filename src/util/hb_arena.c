@@ -1,13 +1,40 @@
 #include "../include/util/hb_arena.h"
 #include "../include/macros.h"
-#include "../include/util/hb_system.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
-#define hb_arena_for_each_page(allocator, _page)                                                                       \
+#ifdef HERB_USE_MALLOC
+#  include <stdlib.h>
+#else
+#  ifdef __linux__
+#    define _GNU_SOURCE
+#  endif
+#  include <sys/mman.h>
+#endif
+
+static void* hb_arena_allocate_page(size_t size) {
+#ifdef HERB_USE_MALLOC
+  return malloc(size);
+#else
+  void* memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (memory == MAP_FAILED) { return NULL; }
+
+  return memory;
+#endif
+}
+
+static void hb_arena_free_page(void* pointer, size_t size) {
+#ifdef HERB_USE_MALLOC
+  free(pointer);
+#else
+  munmap(pointer, size);
+#endif
+}
+
+#define hb_arena_for_each_page(allocator, page)                                                                        \
   for (hb_arena_page_T* page = (allocator)->head; page != NULL; page = page->next)
 
 static inline size_t hb_arena_align_size(size_t size, size_t alignment) {
@@ -50,7 +77,7 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   assert(page_size <= SIZE_MAX - sizeof(hb_arena_page_T));
   size_t total_size = page_size + sizeof(hb_arena_page_T);
 
-  hb_arena_page_T* page = hb_system_allocate_memory(total_size);
+  hb_arena_page_T* page = hb_arena_allocate_page(total_size);
   if (page == NULL) { return false; }
 
   *page = (hb_arena_page_T) { .next = NULL, .capacity = page_size, .position = 0 };
@@ -107,37 +134,6 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   if (!allocated) { return NULL; }
 
   return hb_arena_page_alloc_from(allocator->tail, required_size);
-}
-
-char* hb_arena_strdup(hb_arena_T* allocator, const char* string) {
-  assert(allocator != NULL);
-
-  if (string == NULL) { return NULL; }
-
-  size_t length = strlen(string);
-  char* copy = hb_arena_alloc(allocator, length + 1);
-
-  if (copy != NULL) {
-    memcpy(copy, string, length);
-    copy[length] = '\0';
-  }
-
-  return copy;
-}
-
-char* hb_arena_strndup(hb_arena_T* allocator, const char* string, size_t length) {
-  assert(allocator != NULL);
-
-  if (string == NULL) { return NULL; }
-
-  char* copy = hb_arena_alloc(allocator, length + 1);
-
-  if (copy != NULL) {
-    memcpy(copy, string, length);
-    copy[length] = '\0';
-  }
-
-  return copy;
 }
 
 size_t hb_arena_position(hb_arena_T* allocator) {
@@ -199,7 +195,7 @@ void hb_arena_free(hb_arena_T* allocator) {
   for (hb_arena_page_T* current = allocator->head; current != NULL;) {
     hb_arena_page_T* next = current->next;
     size_t total_size = sizeof(hb_arena_page_T) + current->capacity;
-    hb_system_free_memory(current, total_size);
+    hb_arena_free_page(current, total_size);
 
     current = next;
   }

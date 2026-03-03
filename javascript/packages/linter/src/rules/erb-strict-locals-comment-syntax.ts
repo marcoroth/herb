@@ -42,7 +42,7 @@ function detectLocalsWithoutColon(content: string): boolean {
 }
 
 function detectSingularLocal(content: string): boolean {
-  return /^local:/.test(content)
+  return content.startsWith('local:')
 }
 
 function detectMissingColonBeforeParens(content: string): boolean {
@@ -50,7 +50,7 @@ function detectMissingColonBeforeParens(content: string): boolean {
 }
 
 function detectMissingSpaceAfterColon(content: string): boolean {
-  return /^locals:\(/.test(content)
+  return content.startsWith('locals:(')
 }
 
 function detectMissingParentheses(content: string): boolean {
@@ -264,7 +264,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
 }
 
 export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
-  name = "erb-strict-locals-comment-syntax"
+  static ruleName = "erb-strict-locals-comment-syntax"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -274,7 +274,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.name, context)
+    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

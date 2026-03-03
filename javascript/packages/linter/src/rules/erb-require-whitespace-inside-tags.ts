@@ -114,7 +114,7 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
 
 export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAutofixContext> {
   static autocorrectable = true
-  name = "erb-require-whitespace-inside-tags"
+  static ruleName = "erb-require-whitespace-inside-tags"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -124,7 +124,7 @@ export class ERBRequireWhitespaceRule extends ParserRule<ERBRequireWhitespaceAut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBRequireWhitespaceAutofixContext>[] {
-    const visitor = new RequireWhitespaceInsideTags(this.name, context)
+    const visitor = new RequireWhitespaceInsideTags(this.ruleName, context)
 
     visitor.visit(result.value)
 

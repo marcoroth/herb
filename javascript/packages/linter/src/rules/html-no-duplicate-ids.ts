@@ -199,7 +199,7 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
 }
 
 export class HTMLNoDuplicateIdsRule extends ParserRule {
-  name = "html-no-duplicate-ids"
+  static ruleName = "html-no-duplicate-ids"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -209,7 +209,7 @@ export class HTMLNoDuplicateIdsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoDuplicateIdsVisitor(this.name, context)
+    const visitor = new NoDuplicateIdsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

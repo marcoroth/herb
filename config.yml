@@ -12,7 +12,7 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "%s. Expected: `%s`, found: `%s`."
+        template: "%s. Expected: %s, found: %s."
         arguments:
           - description
           - expected
@@ -30,10 +30,10 @@ errors:
 
     - name: UnexpectedTokenError
       message:
-        template: "Found `%s` when expecting `%s` at (%u:%u)."
+        template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_string(found->type)
-          - token_type_to_string(expected_type)
+          - token_type_to_friendly_string(found->type)
+          - token_type_to_friendly_string(expected_type)
           - found->location.start.line
           - found->location.start.column
 
@@ -164,7 +164,7 @@ errors:
 
     - name: ERBCaseWithConditionsError
       message:
-        template: "A `case` statement with `when`/`in` in a single ERB tag cannot be formatted. Use separate tags for `case` and its conditions."
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
         arguments: []
 
       fields: []
@@ -259,6 +259,18 @@ errors:
         - name: tag_name
           type: token
 
+    - name: UnclosedCloseTagError
+      message:
+        template: "Closing tag `</%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
     - name: UnclosedQuoteError
       message:
         template: "Attribute value opened with %s at (%u:%u) was never closed."
@@ -295,9 +307,18 @@ errors:
         - name: opening_tag
           type: token
 
+    - name: StrayERBClosingTagError
+      message:
+        template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
+        arguments:
+          - start.line
+          - start.column
+
+      fields: []
+
     - name: NestedERBTagError
       message:
-        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%u:%u). Nesting `<%%` tags is not supported."
+        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
         arguments:
           - opening_tag->value
           - opening_tag->location.start.line

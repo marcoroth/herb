@@ -15,7 +15,7 @@ If you encounter any issues when following along with this file please don't hes
 - [**Prism Ruby Parser v1.9.0**](https://github.com/ruby/prism/releases/tag/v1.9.0): We use Prism for Parsing the Ruby Source Code in the HTML+ERB files.
 - [**Ruby**](https://www.ruby-lang.org/en/): We need Ruby as a dependency for `bundler`.
 - [**Bundler**](https://bundler.io): We are using `bundler` to build [`prism`](https://github.com/ruby/prism) from source so we can build `herb` against it.
-- [**Emscripten**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
+- [**Emscripten 5**](https://emscripten.org): For the WebAssembly build of `libherb` so it can be used in the browser using the [`@herb-tools/browser`](https://github.com/marcoroth/herb/blob/main/javascript/packages/browser) package.
 - [**Doxygen**](https://www.doxygen.nl): For building the C-Reference documentation pages.
 
 
@@ -80,7 +80,7 @@ The `herb` executable exposes a few commands for interacting with `.html.erb` fi
 ❯ ./herb
 ./herb [command] [options]
 
-Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
+Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
 
 ./herb lex [file]      -  Lex a file
 ./herb parse [file]    -  Parse a file

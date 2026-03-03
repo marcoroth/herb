@@ -29,10 +29,10 @@ input: "<div data-template=`<span>Hello</span>`></div>"
         │       │           └── @ HTMLAttributeValueNode (location: (1:19)-(1:20))
         │       │               ├── errors: (1 error)
         │       │               │   └── @ UnexpectedError (location: (1:19)-(1:20))
-        │       │               │       ├── message: "Invalid quote character for HTML attribute. Expected: `single quote (') or double quote (\")`, found: `backtick (`)`."
+        │       │               │       ├── message: "Invalid quote character for HTML attribute. Expected: single quote (') or double quote (\"), found: a backtick."
         │       │               │       ├── description: "Invalid quote character for HTML attribute"
         │       │               │       ├── expected: "single quote (') or double quote (\")"
-        │       │               │       └── found: "backtick (`)"
+        │       │               │       └── found: "a backtick"
         │       │               │
         │       │               ├── open_quote: ∅
         │       │               ├── children: []

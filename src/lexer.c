@@ -30,7 +30,9 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source, hb_arena_T* arena) {
+void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
+  lexer->allocator = allocator;
+
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {
@@ -51,8 +53,6 @@ void lexer_init(lexer_T* lexer, const char* source, hb_arena_T* arena) {
   lexer->stall_counter = 0;
   lexer->last_position = 0;
   lexer->stalled = false;
-
-  lexer->arena = arena;
 }
 
 token_T* lexer_error(lexer_T* lexer, const char* message) {

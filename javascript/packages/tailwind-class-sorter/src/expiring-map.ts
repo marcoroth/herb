@@ -4,11 +4,11 @@ interface ExpiringMap<K, V> {
 }
 
 export function expiringMap<K, V>(duration: number): ExpiringMap<K, V> {
-  let map = new Map<K, { value: V; expiration: Date }>()
+  const map = new Map<K, { value: V; expiration: Date }>()
 
   return {
     get(key: K) {
-      let result = map.get(key)
+      const result = map.get(key)
       if (!result) return undefined
       if (result.expiration <= new Date()) {
         map.delete(key)
@@ -19,7 +19,7 @@ export function expiringMap<K, V>(duration: number): ExpiringMap<K, V> {
     },
 
     set(key: K, value: V) {
-      let expiration = new Date()
+      const expiration = new Date()
       expiration.setMilliseconds(expiration.getMilliseconds() + duration)
 
       map.set(key, {

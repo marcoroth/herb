@@ -11,6 +11,7 @@ require_relative "herb/token_list"
 
 require_relative "herb/result"
 require_relative "herb/lex_result"
+require_relative "herb/parser_options"
 require_relative "herb/parse_result"
 
 require_relative "herb/ast"
@@ -34,12 +35,12 @@ begin
   major, minor, _patch = RUBY_VERSION.split(".") #: [String, String, String]
 
   if RUBY_PATCHLEVEL == -1
-    require_relative "herb/herb"
+    require "herb/herb"
   else
     begin
-      require_relative "herb/#{major}.#{minor}/herb"
+      require "herb/#{major}.#{minor}/herb"
     rescue LoadError
-      require_relative "herb/herb"
+      require "herb/herb"
     end
   end
 rescue LoadError => e

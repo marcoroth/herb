@@ -3,8 +3,7 @@
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
-#include "../../src/include/macros.h"
-#include "../../src/include/util/hb_arena.h"
+#include "../../src/include/util/hb_allocator.h"
 #include "../../src/include/util/hb_buffer.h"
 
 #include <stdlib.h>
@@ -63,25 +62,18 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     }
   }
 
-  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     (*env)->ReleaseStringUTFChars(env, source, src);
     return NULL;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    (*env)->ReleaseStringUTFChars(env, source, src);
-
-    return NULL;
-  }
-
-  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, arena);
+  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
   jobject result = CreateParseResult(env, ast, source);
 
-  ast_node_free((AST_NODE_T*) ast);
+  ast_node_free((AST_NODE_T*) ast, &allocator);
+  hb_allocator_destroy(&allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -91,30 +83,18 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  hb_arena_T* arena = malloc(sizeof(hb_arena_T));
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     (*env)->ReleaseStringUTFChars(env, source, src);
     return NULL;
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    (*env)->ReleaseStringUTFChars(env, source, src);
-    return NULL;
-  }
+  hb_array_T* tokens = herb_lex(src, &allocator);
 
-  herb_lex_result_T* lex_result = herb_lex(src, arena);
+  jobject result = CreateLexResult(env, tokens, source);
 
-  if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
-    (*env)->ReleaseStringUTFChars(env, source, src);
-    return NULL;
-  }
-
-  jobject result = CreateLexResult(env, lex_result->tokens, source);
-
-  herb_free_lex_result(&lex_result);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -156,10 +136,17 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobjec
     }
   }
 
-  herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options, &allocator);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
@@ -178,10 +165,18 @@ Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
     return NULL;
   }
 
-  herb_extract_html_to_buffer(src, &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  herb_extract_html_to_buffer(src, &output, &allocator);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 

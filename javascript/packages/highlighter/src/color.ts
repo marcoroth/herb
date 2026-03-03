@@ -1,5 +1,16 @@
 import { DiagnosticSeverity } from "@herb-tools/core"
 
+export const ANSI_ESCAPE = "\x1b"
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX = /\x1b\[[0-9;]*m/g
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX_START = /^\x1b\[[0-9;]*m/
+
+// eslint-disable-next-line no-control-regex
+export const ANSI_REGEX_CAPTURE = /(\x1b\[[0-9;]*m)/g
+
 export const colors = {
   reset: "\x1b[0m",
   bold: "\x1b[1m",
@@ -75,6 +86,14 @@ export const colorize = (
   }
 
   return text
+}
+
+export const hyperlink = (text: string, url: string): string => {
+  if (process.env.NO_COLOR !== undefined) {
+    return text
+  }
+
+  return `\x1b]8;;${url}\x1b\\${text}\x1b]8;;\x1b\\`
 }
 
 export const severityColor = (severity: DiagnosticSeverity): Color => {

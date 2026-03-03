@@ -1,11 +1,18 @@
 module Herb
   module AST
     <%- nodes.each do |node| -%>
+    #: type serialized_<%= node.human %> = {
+      <%- node.fields.each do |field| -%>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+    #|  <%= field.name %>: <%= field.ruby_type %><%= if is_nilable then "?" end %>,
+      <%- end -%>
+    #| }
     class <%= node.name -%> < Node
       include Colors
 
       <%- node.fields.each do |field| -%>
-      attr_reader :<%= field.name %> #: <%= field.ruby_type %>
+      <%- is_nilable = !%w[Array[Herb::AST::Node] Array[Herb::AST::ERBWhenNode] Array[Herb::AST::ERBInNode] bool nil].include?(field.ruby_type) -%>
+      attr_reader :<%= field.name %> #: <%= field.ruby_type %><%= if is_nilable then "?" end %>
       <%- end -%>
 
       #: (<%= ["String", "Location", "Array[Herb::Errors::Error]", *node.fields.map(&:ruby_type)].join(", ") %>) -> void
@@ -40,7 +47,7 @@ module Herb
           if field.is_a?(Herb::Template::NodeField) || field.is_a?(Herb::Template::BorrowedNodeField)
             field.name
           elsif field.is_a?(Herb::Template::ArrayField) && (field.specific_kind&.end_with?("Node") || field.union_kind&.all? { |k| k.end_with?("Node") })
-            "*#{field.name}"
+            "*(#{field.name} || [])"
           else
             nil
           end

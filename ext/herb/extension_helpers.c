@@ -73,14 +73,22 @@ VALUE create_lex_result(hb_array_T* tokens, VALUE source) {
   return rb_class_new_instance(4, args, cLexResult);
 }
 
-VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source) {
+VALUE create_parse_result(AST_DOCUMENT_NODE_T* root, VALUE source, const parser_options_T* options) {
   VALUE value = rb_node_from_c_struct((AST_NODE_T*) root);
   VALUE warnings = rb_ary_new();
   VALUE errors = rb_ary_new();
 
-  VALUE args[4] = { value, source, warnings, errors };
+  VALUE kwargs = rb_hash_new();
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("strict")), options->strict ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("track_whitespace")), options->track_whitespace ? Qtrue : Qfalse);
+  rb_hash_aset(kwargs, ID2SYM(rb_intern("analyze")), options->analyze ? Qtrue : Qfalse);
 
-  return rb_class_new_instance(4, args, cParseResult);
+  VALUE parser_options_args[1] = { kwargs };
+  VALUE parser_options = rb_class_new_instance_kw(1, parser_options_args, cParserOptions, RB_PASS_KEYWORDS);
+
+  VALUE args[5] = { value, source, warnings, errors, parser_options };
+
+  return rb_class_new_instance(5, args, cParseResult);
 }
 
 VALUE read_file_to_ruby_string(const char* file_path) {

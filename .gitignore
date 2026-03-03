@@ -112,10 +112,11 @@ rust/src/ast/nodes.rs
 rust/src/errors.rs
 rust/src/nodes.rs
 rust/src/union_types.rs
+rust/src/visitor.rs
 sig/serialized_ast_errors.rbs
 sig/serialized_ast_nodes.rbs
-src/analyze_missing_end.c
-src/analyze_transform.c
+src/analyze/missing_end.c
+src/analyze/transform.c
 src/ast_nodes.c
 src/ast_pretty_print.c
 src/errors.c
@@ -132,6 +133,7 @@ wasm/nodes.h
 # Java Build Artifacts
 java/target/
 java/.java_compiled
+java/lib/*.jar
 
 # Rust Build Artifacts
 rust/target/

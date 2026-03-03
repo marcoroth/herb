@@ -50,7 +50,7 @@ async function updateConfigStatusBarItem() {
     configStatusBarItem.command = 'herb.showConfigDetails'
 
     configStatusBarItem.show()
-  } catch (error) {
+  } catch (_error) {
     configStatusBarItem.text = '$(settings-gear) Herb (Personal Settings)'
     configStatusBarItem.tooltip = 'Herb using personal VS Code settings\n\nClick to view configuration details or create .herb.yml'
     configStatusBarItem.command = 'herb.showConfigDetails'

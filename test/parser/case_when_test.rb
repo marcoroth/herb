@@ -109,5 +109,21 @@ module Parser
         <% end %>
       HTML
     end
+
+    test "case without when" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case 1 %>
+        <% end %>
+      HTML
+    end
+
+    test "case with single when" do
+      assert_parsed_snapshot(<<~HTML)
+        <% case 1 %>
+        <% when 1 %>
+          <p>one</p>
+        <% end %>
+      HTML
+    end
   end
 end

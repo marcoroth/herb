@@ -4,25 +4,34 @@
 #include <stdbool.h>
 #include <string.h>
 
-void hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacity) {
+bool hb_narray_init(hb_narray_T* array, size_t item_size, size_t initial_capacity) {
   assert(initial_capacity != 0);
 
   array->item_size = item_size;
   array->capacity = initial_capacity;
   array->size = 0;
   array->items = malloc(array->capacity * array->item_size);
+
+  if (!array->items) { return false; }
+
+  return true;
 }
 
-void hb_narray_append(hb_narray_T* array, void* item) {
+bool hb_narray_append(hb_narray_T* array, void* item) {
   if (array->size + 1 > array->capacity) {
-    array->capacity *= 2;
-    void* new_buffer = realloc(array->items, array->capacity * array->item_size);
-    assert(new_buffer != NULL);
+    size_t new_capacity = array->capacity * 2;
+    void* new_buffer = realloc(array->items, new_capacity * array->item_size);
+
+    if (!new_buffer) { return false; }
+
     array->items = new_buffer;
+    array->capacity = new_capacity;
   }
 
   memcpy(array->items + (array->size * array->item_size), item, array->item_size);
   array->size += 1;
+
+  return true;
 }
 
 static inline uint8_t* hb_narray_memory_position(const hb_narray_T* array, size_t index) {

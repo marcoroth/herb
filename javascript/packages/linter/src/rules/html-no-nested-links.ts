@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getTagName } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getTagLocalName } from "@herb-tools/core"
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -29,7 +30,7 @@ class NestedLinkVisitor extends BaseRuleVisitor {
     switch (node.open_tag.type) {
       case "AST_HTML_OPEN_TAG_NODE": {
         const openTag = node.open_tag
-        const tagName = getTagName(openTag)
+        const tagName = getTagLocalName(openTag)
 
         if (tagName !== "a") {
           super.visitHTMLElementNode(node)
@@ -52,7 +53,7 @@ class NestedLinkVisitor extends BaseRuleVisitor {
 
   // Handle self-closing <a> tags (though they're not valid HTML, they might exist)
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName === "a" && node.is_void) {
       this.checkNestedLink(node)
@@ -63,7 +64,7 @@ class NestedLinkVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoNestedLinksRule extends ParserRule {
-  name = "html-no-nested-links"
+  static ruleName = "html-no-nested-links"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -73,7 +74,7 @@ export class HTMLNoNestedLinksRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NestedLinkVisitor(this.name, context)
+    const visitor = new NestedLinkVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

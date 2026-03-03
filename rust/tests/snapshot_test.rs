@@ -33,12 +33,7 @@ fn test_lex_output() {
   common::no_color();
 
   let result = lex(TEST_INPUT).expect("Failed to lex");
-  let output = result
-    .tokens()
-    .iter()
-    .map(|token| token.inspect())
-    .collect::<Vec<_>>()
-    .join("\n");
+  let output = result.tokens().iter().map(|token| token.inspect()).collect::<Vec<_>>().join("\n");
 
   insta::assert_snapshot!(output);
 }

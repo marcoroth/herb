@@ -1,8 +1,10 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -12,6 +14,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("incomplete ERB output tag opening", () => {
@@ -33,296 +37,198 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("incomplete ERB silent tag opening", () => {
-    const source = `<%`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%`)
   })
 
   test("incomplete ERB silent tag with content", () => {
-    const source = `<% if user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% if user`)
   })
 
   test("incomplete ERB comment tag opening", () => {
-    const source = `<%#`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%#`)
   })
 
   test("incomplete ERB comment with content", () => {
-    const source = `<%# This is a comment`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%# This is a comment`)
   })
 
   test("incomplete ERB tag with single percent", () => {
-    const source = `<%= user.name %`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= user.name %`)
   })
 
   test("incomplete ERB nested in HTML", () => {
-    const source = `<div><%= user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<div><%= user`)
   })
 
   test("incomplete ERB with method chaining", () => {
-    const source = `<%= user.name.upcase`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= user.name.upcase`)
   })
 
   test("incomplete ERB with partial block", () => {
-    const source = `<% users.each do |user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% users.each do |user`)
   })
 
   test("incomplete ERB with partial pipe syntax", () => {
-    const source = `<% users.each do |`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% users.each do |`)
   })
 
   test("incomplete ERB with string literal", () => {
-    const source = `<%= "Hello`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= "Hello`)
   })
 
   test("incomplete ERB with hash syntax", () => {
-    const source = `<%= { name:`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= { name:`)
   })
 
   test("incomplete ERB with array syntax", () => {
-    const source = `<%= [`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= [`)
   })
 
   test("incomplete ERB with parentheses", () => {
-    const source = `<%= helper_method(`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= helper_method(`)
   })
 
   test("incomplete ERB with instance variable", () => {
-    const source = `<%= @user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= @user`)
   })
 
   test("incomplete ERB with class variable", () => {
-    const source = `<%= @@count`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= @@count`)
   })
 
   test("incomplete ERB with global variable", () => {
-    const source = `<%= $global`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= $global`)
   })
 
   test("incomplete ERB control structure", () => {
-    const source = `<% if`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% if`)
   })
 
   test("incomplete ERB unless statement", () => {
-    const source = `<% unless user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% unless user`)
   })
 
   test("incomplete ERB case statement", () => {
-    const source = `<% case user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% case user`)
   })
 
   test("incomplete ERB when clause", () => {
-    const source = `<% when`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% when`)
   })
 
   test("incomplete ERB for loop", () => {
-    const source = `<% for user in`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% for user in`)
   })
 
   test("incomplete ERB while loop", () => {
-    const source = `<% while user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% while user`)
   })
 
   test("incomplete ERB begin block", () => {
-    const source = `<% begin`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% begin`)
   })
 
   test("incomplete ERB rescue clause", () => {
-    const source = `<% rescue`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% rescue`)
   })
 
   test("incomplete ERB ensure clause", () => {
-    const source = `<% ensure`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% ensure`)
   })
 
   test("incomplete ERB mixed with HTML attributes", () => {
-    const source = `<div class="<%= user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<div class="<%= user`)
   })
 
   test("incomplete ERB in HTML comment", () => {
-    const source = `<!-- <%= comment`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<!-- <%= comment`)
   })
 
   test("incomplete ERB with method call chain", () => {
-    const source = `<%= user.profile.avatar.url`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= user.profile.avatar.url`)
   })
 
   test("incomplete ERB with Rails helper", () => {
-    const source = `<%= link_to "Home", root_path,`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= link_to "Home", root_path,`)
   })
 
   test("incomplete ERB with nested parentheses", () => {
-    const source = `<%= render(partial: "shared/header", locals: { title:`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= render(partial: "shared/header", locals: { title:`)
   })
 
   test("incomplete ERB with regex literal", () => {
-    const source = `<%= text.gsub(/pattern`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= text.gsub(/pattern`)
   })
 
   test("incomplete ERB with symbol", () => {
-    const source = `<%= link_to "Home", :root`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= link_to "Home", :root`)
   })
 
   test("incomplete ERB with string interpolation", () => {
-    const source = `<%= "Hello #{user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= "Hello #{user`)
   })
 
   test("incomplete ERB with conditional operator", () => {
-    const source = `<%= user.active? ?`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= user.active? ?`)
   })
 
   test("incomplete ERB with range", () => {
-    const source = `<%= (1..`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= (1..`)
   })
 
   test("incomplete ERB with multiple assignment", () => {
-    const source = `<% a, b =`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% a, b =`)
   })
 
   test("incomplete ERB with block argument", () => {
-    const source = `<% items.map { |item`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% items.map { |item`)
   })
 
   test("incomplete ERB with heredoc", () => {
-    const source = `<%= <<~SQL`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= <<~SQL`)
   })
 
   test("incomplete ERB with constant", () => {
-    const source = `<%= API::`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= API::`)
   })
 
   test("incomplete ERB with safe navigation", () => {
-    const source = `<%= user&.`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= user&.`)
   })
 
   test("incomplete ERB with splat operator", () => {
-    const source = `<%= method(*`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= method(*`)
   })
 
   test("incomplete ERB with double splat", () => {
-    const source = `<%= method(**`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= method(**`)
   })
 
   test("incomplete ERB with keyword arguments", () => {
-    const source = `<%= method(name:`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= method(name:`)
   })
 
   test("incomplete ERB content tag with attributes", () => {
-    const source = `<%= content_tag :div, class:`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= content_tag :div, class:`)
   })
 
   test("incomplete ERB with nested ERB tags", () => {
-    const source = `<%= render "user", user: <%= current_user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= render "user", user: <%= current_user`)
   })
 
   test("incomplete ERB if statement with incomplete end tag", () => {
-    const source = `<% if true %> <% end`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% if true %> <% end`)
   })
 
   test("incomplete ERB elsif clause", () => {
-    const source = `<% elsif user`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% elsif user`)
   })
 
   test("incomplete ERB with trailing operators", () => {
-    const source = `<%= value +`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<%= value +`)
   })
 
   test("incomplete ERB with incomplete method definition", () => {
-    const source = `<% def helper`
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    expectFormattedToMatch(`<% def helper`)
   })
 })

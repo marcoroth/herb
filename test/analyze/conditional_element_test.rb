@@ -216,5 +216,93 @@ module Analyze
         <% end %>
       HTML
     end
+
+    test "complete elements inside matching if blocks should not trigger multiple tags error" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <h2>Title</h2>
+            <p>Description</p>
+          </div>
+        <% end %>
+
+        <% if condition %>
+          <div>
+            <h2>Title</h2>
+            <p>Description</p>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "complete elements with same condition in nested scope should not trigger error" do
+      assert_parsed_snapshot(<<~HTML)
+        <div>
+          <% if @is_owner %>
+            <div class="section">
+              <h2>Title</h2>
+              <p>Description</p>
+            </div>
+          <% end %>
+
+          <% if @is_owner %>
+            <div class="section">
+              <h2>Title</h2>
+              <p>Description</p>
+            </div>
+          <% end %>
+        </div>
+      HTML
+    end
+
+    test "matching unless blocks with balanced tags should not trigger error" do
+      assert_parsed_snapshot(<<~HTML)
+        <% unless hidden %>
+          <div>
+            <h2>Title</h2>
+          </div>
+        <% end %>
+        <% unless hidden %>
+          <div>
+            <span>Content</span>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "if blocks with deeply nested balanced tags should not trigger error" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+            <section>
+              <h1>Title</h1>
+              <p>Description</p>
+            </section>
+          </div>
+        <% end %>
+        <% if condition %>
+          <div>
+            <section>
+              <h1>Title</h1>
+              <p>Description</p>
+            </section>
+          </div>
+        <% end %>
+      HTML
+    end
+
+    test "actual unmatched multiple tags in matching conditionals" do
+      assert_parsed_snapshot(<<~HTML)
+        <% if condition %>
+          <div>
+          <span>
+        <% end %>
+          content
+        <% if condition %>
+          </span>
+          </div>
+        <% end %>
+      HTML
+    end
   end
 end

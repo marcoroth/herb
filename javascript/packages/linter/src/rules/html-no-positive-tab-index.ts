@@ -20,7 +20,7 @@ class NoPositiveTabIndexVisitor extends AttributeVisitorMixin {
 }
 
 export class HTMLNoPositiveTabIndexRule extends ParserRule {
-  name = "html-no-positive-tab-index"
+  static ruleName = "html-no-positive-tab-index"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -30,7 +30,7 @@ export class HTMLNoPositiveTabIndexRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoPositiveTabIndexVisitor(this.name, context)
+    const visitor = new NoPositiveTabIndexVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

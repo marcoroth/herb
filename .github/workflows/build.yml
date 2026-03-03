@@ -56,11 +56,11 @@ jobs:
       - name: Steep
         run: bundle exec steep check
 
+      - name: Sorbet
+        run: bundle exec srb tc
+
       - name: RBS Inline
         run: bundle exec rake rbs_inline
-
-      # - name: Sorbet
-      #   run: bundle exec srb tc
 
       - name: clang-tidy version
         run: clang-tidy-21 --version
@@ -75,7 +75,7 @@ jobs:
         run: bundle exec rake compile
 
       - name: Run Ruby Tests
-        run: bundle exec rake test
+        run: bundle exec rake test:all
 
       - name: Run C tests
         run: ./run_herb_tests

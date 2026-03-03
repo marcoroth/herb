@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter", () => {
   beforeAll(async () => {
@@ -14,6 +16,8 @@ describe("@herb-tools/formatter", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("formats simple HTML with ERB content", () => {
@@ -31,12 +35,10 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB output tags on two lines on top-level", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <%= title %>
       <%= title %>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("adjecent ERB output tags without space on top-level", () => {
@@ -102,16 +104,13 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("should not add extra % to ERB closing tags with quoted strings", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <div>
         <%= link_to "Nederlands", url_for(locale: 'nl'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "Français", url_for(locale: 'fr'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
         <%= link_to "English", url_for(locale: 'en'), class: "px-4 py-2 hover:bg-slate-100 rounded block" %>
       </div>
-    `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+    `)
   })
 
   test("should handle complex ERB in layout files", () => {
@@ -270,6 +269,30 @@ describe("@herb-tools/formatter", () => {
     expect(secondFormat).toBe(result)
   })
 
+  test("issue 978: does not duplicate content with multiple adjacent inline/ERB groups separated by br", () => {
+    const input = dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `
+
+    const result = formatter.format(input)
+
+    expect(result).toBe(dedent`
+      <p class="text-reversed">
+        <strong><%= t("admin.tickets.form.savings") %></strong><%= ticket.ticketable.savings_percentage %>%
+        <br>
+        <strong><%= t("admin.tickets.form.price_per_ticket") %></strong><%= format_price(ticket.ticketable.price_per_ticket) %>
+      </p>
+    `)
+
+    // Test idempotency
+    const secondFormat = formatter.format(result)
+    expect(secondFormat).toBe(result)
+  })
+
   test("https://github.com/hanakai-rb/site/blob/8adc128d9d464f3e37615be2aa29d57979904533/app/templates/pages/home.html.erb", () => {
     const input = dedent`
       <h1>Hanakai</h1>
@@ -289,8 +312,7 @@ describe("@herb-tools/formatter", () => {
       <p>
         This will be the all-in-one home for everything to do with
         <a href="https://hanamirb.org">Hanami</a>,
-        <a href="https://dry-rb.org">Dry</a> and
-        <a href="https://rom-rb.org">Rom</a>.
+        <a href="https://dry-rb.org">Dry</a> and <a href="https://rom-rb.org">Rom</a>.
       </p>
     `)
 
@@ -361,13 +383,13 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(input)
 
     expect(result).toBe(dedent`
-       <p>
-         Visit
-         <a href="/products">our amazing product catalog with hundreds of items</a>
-         or <a href="/support">contact our customer support team</a> for assistance
-         with your order.
-       </p>
-     `)
+      <p>
+        Visit
+        <a href="/products">our amazing product catalog with hundreds of items</a> or
+        <a href="/support">contact our customer support team</a> for assistance with
+        your order.
+      </p>
+    `)
   })
 
   test("handles multiple inline elements with adjacent text", () => {
@@ -653,8 +675,8 @@ describe("@herb-tools/formatter", () => {
                             <%= hosted_image_tag('mailer/footer-logo.png', class: 'h-[48px] mb-1') %>
 
                             <p class="text-muted-foreground text-sm leading-5">
-                              &copy;<%= Time.current.year %> - Company Inc, All
-                              rights reserved.
+                              &copy;<%= Time.current.year %> - Company Inc, All rights
+                              reserved.
                               <br />
                               Main Street, San Francisco, CAs, USA 12345
                               <br />
@@ -897,7 +919,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 3", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <style>
         [data-test-page-header] {
           margin-bottom: 0px;
@@ -922,10 +944,7 @@ describe("@herb-tools/formatter", () => {
       </script>
 
       <div class="pt-3" id="chat"></div>
-     `
-
-    const result = formatter.format(input)
-    expect(result).toBe(input)
+     `)
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3219820557 Example 4", () => {
@@ -1358,7 +1377,7 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("https://github.com/marcoroth/herb/issues/436#issuecomment-3356738094", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <% if cover.present? %>
         <figure class="figure">
           <%= image_tag attachment_url(cover), size: "460x249", class: "img-fluid figure-img" %>
@@ -1367,19 +1386,15 @@ describe("@herb-tools/formatter", () => {
             <span>
               <strong>Cover Image</strong><br>
               Dimensions
-              <strong>
-                <%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %>
-              </strong>
+              <strong><%= "#{cover.metadata['width']}x#{cover.metadata['height']}" %></strong>
               &mdash;
               <%= link_to "View original", rails_blob_path(cover), target: "_blank", rel: "noopener" %>
             </span>
           </figcaption>
         </figure>
       <% end %>
-     `
+     `)
 
-    const result = formatter.format(input)
-    expect(result).toBe(input)
   })
 
   test("adjecent ERB text within elements", () => {
@@ -1444,8 +1459,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <div>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       </div>
     `
 
@@ -1455,12 +1470,12 @@ describe("@herb-tools/formatter", () => {
 
   test("ERB output after adjecent text within HTML element causing line-break", () => {
     const input = dedent`
-      <div>some text some text some text some text some text some text<%= icon("icon") %></div>
+      <div>some text some text some text some text some text somes text<%= icon("icon") %></div>
     `
 
     const expected = dedent`
       <div>
-        some text some text some text some text some text some
+        some text some text some text some text some text somes
         text<%= icon("icon") %>
       </div>
     `
@@ -1537,8 +1552,8 @@ describe("@herb-tools/formatter", () => {
 
     const expected = dedent`
       <%= link_to "/" do %>
-        <%= icon("icon") %>some text some text some text some text some text some
-        text some text
+        <%= icon("icon") %>some text some text some text some text some text some text
+        some text
       <% end %>
     `
 
@@ -1579,97 +1594,65 @@ describe("@herb-tools/formatter", () => {
   })
 
   test("ERB output with heredoc (issue 476)", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<EXAMPLE
       example
       EXAMPLE
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with squiggly heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<~HEREDOC
         example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with hyphen heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<-HEREDOC
       example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with single-quoted heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<'HEREDOC'
       no #{interpolation}
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with double-quoted heredoc", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<"HEREDOC"
       with #{interpolation}
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with heredoc and method chaining", () => {
-    const input = dedent`
+    expectFormattedToMatch(dedent`
       <%= <<HEREDOC.strip
       example
       HEREDOC
       %>
-    `
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    `)
   })
 
   test("ERB output with bitshift operator", () => {
-    const input = `<%= 1 << 4 %>`
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    expectFormattedToMatch(`<%= 1 << 4 %>`)
   })
 
   test("ERB output with append operator", () => {
-    const input = `<%= array << item %>`
-
-    const result = formatter.format(input)
-
-    expect(result).toBe(input)
+    expectFormattedToMatch(`<%= array << item %>`)
   })
 
   // The heredoc is not detected because it doesn't start with "<<".

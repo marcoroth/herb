@@ -74,7 +74,7 @@ export class HerbAnalysisProvider implements TreeDataProvider<TreeNode> {
         if (commonExclude.length > 0) {
           excludePattern = `{${commonExclude.join(',')}}`
         }
-      } catch (error) {
+      } catch (_error) {
         window.showErrorMessage(
           'Cannot run Herb analysis: Configuration file has errors. Please fix .herb.yml and try again.',
           'Edit Config'

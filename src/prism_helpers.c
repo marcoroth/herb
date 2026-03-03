@@ -23,7 +23,8 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
   const pm_diagnostic_t* error,
   const AST_NODE_T* node,
   const char* source,
-  pm_parser_t* parser
+  pm_parser_t* parser,
+  hb_allocator_T* allocator
 ) {
   size_t start_offset = (size_t) (error->location.start - parser->start);
   size_t end_offset = (size_t) (error->location.end - parser->start);
@@ -37,14 +38,15 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error(
     pm_error_level_to_string(error->level),
     start,
     end,
-    NULL
+    allocator
   );
 }
 
 RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
   const pm_diagnostic_t* error,
   position_T start,
-  position_T end
+  position_T end,
+  hb_allocator_T* allocator
 ) {
   return ruby_parse_error_init(
     error->message,
@@ -52,7 +54,7 @@ RUBY_PARSE_ERROR_T* ruby_parse_error_from_prism_error_with_positions(
     pm_error_level_to_string(error->level),
     start,
     end,
-    NULL
+    allocator
   );
 }
 

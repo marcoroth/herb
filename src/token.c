@@ -3,28 +3,28 @@
 #include "include/range.h"
 #include "include/token_struct.h"
 #include "include/util.h"
+#include "include/util/hb_buffer.h"
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-size_t token_sizeof(void) {
-  return sizeof(struct TOKEN_STRUCT);
-}
-
 token_T* token_init(hb_string_T value, const token_type_T type, lexer_T* lexer) {
-  token_T* token = hb_arena_alloc(lexer->arena, token_sizeof());
+  hb_allocator_T* allocator = lexer->allocator;
+  token_T* token = hb_allocator_alloc(allocator, sizeof(token_T));
+
+  if (!token) { return NULL; }
 
   if (type == TOKEN_NEWLINE) {
     lexer->current_line++;
     lexer->current_column = 0;
   }
 
-  token->value = value.data ? hb_arena_strndup(lexer->arena, value.data, value.length) : NULL;
+  token->value = hb_allocator_strndup(allocator, value.data, value.length);
 
   token->type = type;
-  token->arena_allocated = true;
   token->range = (range_T) { .from = lexer->previous_position, .to = lexer->current_position };
 
   location_from(
@@ -81,15 +81,93 @@ const char* token_type_to_string(const token_type_T type) {
     case TOKEN_ERROR: return "TOKEN_ERROR";
     case TOKEN_EOF: return "TOKEN_EOF";
   }
+}
 
-  return "Unknown token_type_T";
+const char* token_type_to_friendly_string(const token_type_T type) {
+  switch (type) {
+    case TOKEN_WHITESPACE: return "whitespace";
+    case TOKEN_NBSP: return "non-breaking space";
+    case TOKEN_NEWLINE: return "a newline";
+    case TOKEN_IDENTIFIER: return "an identifier";
+    case TOKEN_HTML_DOCTYPE: return "`<!DOCTYPE`";
+    case TOKEN_XML_DECLARATION: return "`<?xml`";
+    case TOKEN_XML_DECLARATION_END: return "`?>`";
+    case TOKEN_CDATA_START: return "`<![CDATA[`";
+    case TOKEN_CDATA_END: return "`]]>`";
+    case TOKEN_HTML_TAG_START: return "`<`";
+    case TOKEN_HTML_TAG_END: return "`>`";
+    case TOKEN_HTML_TAG_START_CLOSE: return "`</`";
+    case TOKEN_HTML_TAG_SELF_CLOSE: return "`/>`";
+    case TOKEN_HTML_COMMENT_START: return "`<!--`";
+    case TOKEN_HTML_COMMENT_END: return "`-->`";
+    case TOKEN_HTML_COMMENT_INVALID_END: return "`--!>`";
+    case TOKEN_EQUALS: return "`=`";
+    case TOKEN_QUOTE: return "a quote";
+    case TOKEN_BACKTICK: return "a backtick";
+    case TOKEN_BACKSLASH: return "`\\`";
+    case TOKEN_DASH: return "`-`";
+    case TOKEN_UNDERSCORE: return "`_`";
+    case TOKEN_EXCLAMATION: return "`!`";
+    case TOKEN_SLASH: return "`/`";
+    case TOKEN_SEMICOLON: return "`;`";
+    case TOKEN_COLON: return "`:`";
+    case TOKEN_AT: return "`@`";
+    case TOKEN_LT: return "`<`";
+    case TOKEN_PERCENT: return "`%`";
+    case TOKEN_AMPERSAND: return "`&`";
+    case TOKEN_ERB_START: return "`<%`";
+    case TOKEN_ERB_CONTENT: return "ERB content";
+    case TOKEN_ERB_END: return "`%>`";
+    case TOKEN_CHARACTER: return "a character";
+    case TOKEN_ERROR: return "an error token";
+    case TOKEN_EOF: return "end of file";
+  }
+}
+
+char* token_types_to_friendly_string_valist(token_type_T first_token, va_list args) {
+  if ((int) first_token == TOKEN_SENTINEL) { return herb_strdup(""); }
+
+  size_t count = 0;
+  const char* names[32];
+  token_type_T current = first_token;
+
+  while ((int) current != TOKEN_SENTINEL && count < 32) {
+    names[count++] = token_type_to_friendly_string(current);
+    current = va_arg(args, token_type_T);
+  }
+
+  hb_buffer_T buffer;
+  hb_buffer_init(&buffer, 128);
+
+  for (size_t i = 0; i < count; i++) {
+    hb_buffer_append(&buffer, names[i]);
+
+    if (i < count - 1) {
+      if (count > 2) { hb_buffer_append(&buffer, ", "); }
+      if (i == count - 2) { hb_buffer_append(&buffer, count == 2 ? " or " : "or "); }
+    }
+  }
+
+  return hb_buffer_value(&buffer);
+}
+
+char* token_types_to_friendly_string_va(token_type_T first_token, ...) {
+  va_list args;
+  va_start(args, first_token);
+  char* result = token_types_to_friendly_string_valist(first_token, args);
+  va_end(args);
+  return result;
 }
 
 hb_string_T token_to_string(const token_T* token) {
   const char* type_string = token_type_to_string(token->type);
   const char* template = "#<Herb::Token type=\"%s\" value=\"%.*s\" range=[%u, %u] start=(%u:%u) end=(%u:%u)>";
+  const char* value = token->value ? token->value : "";
 
-  char* string = calloc(strlen(type_string) + strlen(template) + strlen(token->value) + 16, sizeof(char));
+  char* string = calloc(strlen(type_string) + strlen(template) + strlen(value) + 16, sizeof(char));
+
+  if (!string) { return hb_string(""); }
+
   hb_string_T escaped;
 
   if (token->type == TOKEN_EOF) {
@@ -117,23 +195,19 @@ hb_string_T token_to_string(const token_T* token) {
   return hb_string(string);
 }
 
-token_T* token_copy(token_T* token, hb_arena_T* arena) {
+token_T* token_copy(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return NULL; }
 
-  token_T* new_token = arena ? hb_arena_alloc(arena, token_sizeof()) : calloc(1, token_sizeof());
+  token_T* new_token = hb_allocator_alloc(allocator, sizeof(token_T));
 
   if (!new_token) { return NULL; }
 
   if (token->value) {
-    if (arena) {
-      new_token->value = hb_arena_strdup(arena, token->value);
-    } else {
-      new_token->value = herb_strdup(token->value);
+    new_token->value = hb_allocator_strdup(allocator, token->value);
 
-      if (!new_token->value) {
-        free(new_token);
-        return NULL;
-      }
+    if (!new_token->value) {
+      hb_allocator_dealloc(allocator, new_token);
+      return NULL;
     }
   } else {
     new_token->value = NULL;
@@ -142,7 +216,6 @@ token_T* token_copy(token_T* token, hb_arena_T* arena) {
   new_token->type = token->type;
   new_token->range = token->range;
   new_token->location = token->location;
-  new_token->arena_allocated = arena != NULL;
 
   return new_token;
 }
@@ -151,12 +224,10 @@ bool token_value_empty(const token_T* token) {
   return token == NULL || token->value == NULL || token->value[0] == '\0';
 }
 
-void token_free(token_T* token) {
+void token_free(token_T* token, hb_allocator_T* allocator) {
   if (!token) { return; }
 
-  if (!token->arena_allocated) {
-    if (token->value != NULL) { free(token->value); }
+  if (token->value != NULL) { hb_allocator_dealloc(allocator, token->value); }
 
-    free(token);
-  }
+  hb_allocator_dealloc(allocator, token);
 }

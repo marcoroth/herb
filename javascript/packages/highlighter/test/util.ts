@@ -1,3 +1,5 @@
+import { ANSI_REGEX } from "../src/color.js"
+
 export const stripAnsiColors = (text: string): string => {
-  return text.replace(/\x1b\[[0-9;]*m/g, "")
+  return text.replace(ANSI_REGEX, "")
 }

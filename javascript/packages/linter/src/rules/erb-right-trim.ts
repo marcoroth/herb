@@ -26,7 +26,7 @@ class ERBRightTrimVisitor extends BaseRuleVisitor<ERBRightTrimAutofixContext> {
 
 export class ERBRightTrimRule extends ParserRule<ERBRightTrimAutofixContext> {
   static autocorrectable = true
-  name = "erb-right-trim"
+  static ruleName = "erb-right-trim"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -36,7 +36,7 @@ export class ERBRightTrimRule extends ParserRule<ERBRightTrimAutofixContext> {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBRightTrimAutofixContext>[] {
-    const visitor = new ERBRightTrimVisitor(this.name, context)
+    const visitor = new ERBRightTrimVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

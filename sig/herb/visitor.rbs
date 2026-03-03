@@ -4,11 +4,11 @@ module Herb
   class Visitor
     include AST::Helpers
 
-    # : (Herb::AST::Node) -> void
-    def visit: (Herb::AST::Node) -> void
+    # : (Herb::AST::Node?) -> void
+    def visit: (Herb::AST::Node?) -> void
 
-    # : (Array[Herb::AST::Node]) -> void
-    def visit_all: (Array[Herb::AST::Node]) -> void
+    # : (Array[Herb::AST::Node?]) -> void
+    def visit_all: (Array[Herb::AST::Node?]) -> void
 
     # : (Herb::AST::Node) -> void
     def visit_child_nodes: (Herb::AST::Node) -> void

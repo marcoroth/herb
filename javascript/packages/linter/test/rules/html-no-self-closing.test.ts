@@ -8,10 +8,6 @@ import { createLinterTest } from "../helpers/linter-test-helper.js"
 const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLNoSelfClosingRule)
 
 describe("html-no-self-closing", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for standard HTML tags", () => {
     expectNoOffenses(`
       <div></div>

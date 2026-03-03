@@ -29,10 +29,10 @@ input: "<div class= <span>test</span></div>"
         │       │           └── @ HTMLAttributeValueNode (location: (1:12)-(1:13))
         │       │               ├── errors: (1 error)
         │       │               │   └── @ UnexpectedError (location: (1:12)-(1:13))
-        │       │               │       ├── message: "Unexpected Token. Expected: `TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START`, found: `TOKEN_HTML_TAG_START`."
+        │       │               │       ├── message: "Unexpected Token. Expected: an identifier, a quote, or `<%`, found: `<`."
         │       │               │       ├── description: "Unexpected Token"
-        │       │               │       ├── expected: "TOKEN_IDENTIFIER, TOKEN_QUOTE, TOKEN_ERB_START"
-        │       │               │       └── found: "TOKEN_HTML_TAG_START"
+        │       │               │       ├── expected: "an identifier, a quote, or `<%`"
+        │       │               │       └── found: "`<`"
         │       │               │
         │       │               ├── open_quote: ∅
         │       │               ├── children: []

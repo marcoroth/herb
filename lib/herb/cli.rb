@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :no_interactive, :no_log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :arena_stats
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate
 
   def initialize(args)
     @args = args
@@ -84,28 +84,29 @@ class Herb::CLI
 
   def help(exit_code = 0)
     message = <<~HELP
-      ▗▖ ▗▖▗▄▄▄▖▗▄▄▖ ▗▄▄▖
-      ▐▌ ▐▌▐▌   ▐▌ ▐▌▐▌ ▐▌
-      ▐▛▀▜▌▐▛▀▀▘▐▛▀▚▖▐▛▀▚▖
-      ▐▌ ▐▌▐▙▄▄▖▐▌ ▐▌▐▙▄▞▘
-
-      Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
+      Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
 
       Usage:
         bundle exec herb [command] [options]
 
       Commands:
-        bundle exec herb lex [file]         Lex a file.
-        bundle exec herb parse [file]       Parse a file.
-        bundle exec herb compile [file]     Compile ERB template to Ruby code.
-        bundle exec herb render [file]      Compile and render ERB template to final output.
-        bundle exec herb analyze [path]     Analyze a project by passing a directory to the root of the project
-        bundle exec herb config [path]      Show configuration and file patterns for a project
-        bundle exec herb ruby [file]        Extract Ruby from a file.
-        bundle exec herb html [file]        Extract HTML from a file.
-        bundle exec herb prism [file]       Extract Ruby from a file and parse the Ruby source with Prism.
-        bundle exec herb playground [file]  Open the content of the source file in the playground
-        bundle exec herb version            Prints the versions of the Herb gem and the libherb library.
+        bundle exec herb lex [file]           Lex a file.
+        bundle exec herb parse [file]         Parse a file.
+        bundle exec herb compile [file]       Compile ERB template to Ruby code.
+        bundle exec herb render [file]        Compile and render ERB template to final output.
+        bundle exec herb analyze [path]       Analyze a project by passing a directory to the root of the project
+        bundle exec herb report [file]        Generate a Markdown bug report for a file
+        bundle exec herb config [path]        Show configuration and file patterns for a project
+        bundle exec herb ruby [file]          Extract Ruby from a file.
+        bundle exec herb html [file]          Extract HTML from a file.
+        bundle exec herb playground [file]    Open the content of the source file in the playground
+        bundle exec herb version              Prints the versions of the Herb gem and the libherb library.
+
+        bundle exec herb lint [patterns]      Lint templates (delegates to @herb-tools/linter)
+        bundle exec herb format [patterns]    Format templates (delegates to @herb-tools/formatter)
+        bundle exec herb highlight [file]     Syntax highlight templates (delegates to @herb-tools/highlighter)
+        bundle exec herb print [file]         Print AST (delegates to @herb-tools/printer)
+        bundle exec herb lsp                  Start the language server (delegates to @herb-tools/language-server)
 
       stdin:
         Commands that accept [file] also accept input via stdin:
@@ -128,24 +129,42 @@ class Herb::CLI
   def result
     @result ||= case @command
                 when "analyze"
-                  project = Herb::Project.new(directory)
-                  project.no_interactive = no_interactive
-                  project.no_log_file = no_log_file
+                  path = @file || "."
+
+                  if path != "-" && File.file?(path)
+                    project = Herb::Project.new(File.dirname(path))
+                    project.file_paths = [File.expand_path(path)]
+                  else
+                    unless File.directory?(path)
+                      puts "Not a file or directory: '#{path}'."
+                      exit(1)
+                    end
+
+                    project = Herb::Project.new(path)
+                  end
+
+                  project.no_log_file = log_file ? false : true
                   project.no_timing = no_timing
                   project.silent = silent
-                  has_issues = project.parse!
+                  project.verbose = verbose || ci?
+                  project.isolate = isolate
+                  project.validate_ruby = true
+                  has_issues = project.analyze!
                   exit(has_issues ? 1 : 0)
+                when "report"
+                  generate_report
+                  exit(0)
                 when "config"
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, arena_stats: arena_stats)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false)
                 when "compile"
                   compile_template
                 when "render"
                   render_template
                 when "lex"
-                  Herb.lex(file_content, arena_stats: arena_stats)
+                  Herb.lex(file_content)
                 when "ruby"
                   puts Herb.extract_ruby(file_content)
                   exit(0)
@@ -153,7 +172,12 @@ class Herb::CLI
                   puts Herb.extract_html(file_content)
                   exit(0)
                 when "playground"
-                  require "lz_string"
+                  require "bundler/inline"
+
+                  gemfile do
+                    source "https://rubygems.org"
+                    gem "lz_string"
+                  end
 
                   hash = LZString::UriSafe.compress(file_content)
                   local_url = "http://localhost:5173"
@@ -171,6 +195,16 @@ class Herb::CLI
                     system(%(open "#{url}##{hash}"))
                     exit(0)
                   end
+                when "lint"
+                  run_node_tool("herb-lint", "@herb-tools/linter")
+                when "format"
+                  run_node_tool("herb-format", "@herb-tools/formatter")
+                when "print"
+                  run_node_tool("herb-print", "@herb-tools/printer")
+                when "highlight"
+                  run_node_tool("herb-highlight", "@herb-tools/highlighter")
+                when "lsp"
+                  run_node_tool("herb-language-server", "@herb-tools/language-server")
                 when "help"
                   help
                 when "version"
@@ -206,12 +240,16 @@ class Herb::CLI
         self.silent = true
       end
 
-      parser.on("-n", "--non-interactive", "Disable interactive output (progress bars, terminal clearing)") do
-        self.no_interactive = true
+      parser.on("--verbose", "Show detailed per-file progress (default in CI)") do
+        self.verbose = true
       end
 
-      parser.on("--no-log-file", "Disable log file generation") do
-        self.no_log_file = true
+      parser.on("--isolate", "Fork each file into its own process for crash isolation (slower)") do
+        self.isolate = true
+      end
+
+      parser.on("--log-file", "Enable log file generation") do
+        self.log_file = true
       end
 
       parser.on("--no-timing", "Disable timing output") do
@@ -246,21 +284,82 @@ class Herb::CLI
         self.strict = false
       end
 
-      parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
-        self.tool = t.to_sym
+      parser.on("--analyze", "Enable analyze mode (for parse command) (default: true)") do
+        self.analyze = true
       end
 
-      parser.on("--arena-stats", "Print arena memory statistics (for lex/parse commands)") do
-        self.arena_stats = true
+      parser.on("--no-analyze", "Disable analyze mode (for parse command)") do
+        self.analyze = false
+      end
+
+      parser.on("--track-whitespace", "Enable whitespace tracking (for parse command) (default: false)") do
+        self.track_whitespace = true
+      end
+
+      parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
+        self.tool = t.to_sym
       end
     end
   end
 
   def options
+    return if ["lint", "format", "print", "highlight", "lsp"].include?(@command)
+
     option_parser.parse!(@args)
   end
 
   private
+
+  def ci?
+    ENV["CI"] == "true" || ENV.key?("GITHUB_ACTIONS") || ENV.key?("BUILDKITE") || ENV.key?("JENKINS_URL") || ENV.key?("CIRCLECI") || ENV.key?("TRAVIS")
+  end
+
+  def find_node_binary(name)
+    local_bin = File.join(Dir.pwd, "node_modules", ".bin", name)
+    return local_bin if File.executable?(local_bin)
+
+    path_result = `which #{name} 2>/dev/null`.strip
+    return path_result unless path_result.empty?
+
+    nil
+  end
+
+  def node_available?
+    system("which node > /dev/null 2>&1")
+  end
+
+  def run_node_tool(binary_name, package_name)
+    unless node_available?
+      warn "Error: Node.js is required to run 'herb #{@command}'."
+      warn ""
+      warn "Install the tool:"
+      warn "  npm install #{package_name}"
+      warn "  yarn add #{package_name}"
+      warn "  pnpm add #{package_name}"
+      warn "  bun add #{package_name}"
+      warn ""
+      warn "Or install Node.js from https://nodejs.org"
+      exit 1
+    end
+
+    remaining_args = @args[1..]
+    binary = find_node_binary(binary_name)
+    node_version = `node --version 2>/dev/null`.strip
+
+    command_parts = if binary
+                      [binary, *remaining_args]
+                    else
+                      ["npx", package_name, *remaining_args]
+                    end
+
+    escaped_command = command_parts.map { |arg| arg.include?(" ") ? "\"#{arg}\"" : arg }.join(" ")
+
+    warn "Node.js: #{node_version}"
+    warn "Running: #{escaped_command}"
+    warn ""
+
+    exec(*command_parts)
+  end
 
   def print_error_summary(errors)
     puts
@@ -289,6 +388,35 @@ class Herb::CLI
     end
   end
 
+  def generate_report
+    unless @file
+      puts "Usage: herb report <file>"
+      exit(1)
+    end
+
+    unless File.file?(@file)
+      puts "File not found: #{@file}"
+      exit(1)
+    end
+
+    project = Herb::Project.new(File.dirname(@file))
+    project.file_paths = [File.expand_path(@file)]
+    project.no_log_file = true
+    project.no_timing = true
+    project.silent = true
+    project.validate_ruby = true
+
+    original_stdout = $stdout
+    $stdout = StringIO.new
+    begin
+      project.analyze!
+    ensure
+      $stdout = original_stdout
+    end
+
+    project.print_file_report(@file)
+  end
+
   def compile_template
     require_relative "engine"
 
@@ -304,6 +432,7 @@ class Herb::CLI
         options[:debug_filename] = @file if @file
       end
 
+      options[:validate_ruby] = true
       engine = Herb::Engine.new(file_content, options)
 
       if json

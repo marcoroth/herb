@@ -2,8 +2,11 @@ import type { RuleClass } from "./types.js"
 
 import { ERBCommentSyntax } from "./rules/erb-comment-syntax.js";
 import { ERBNoCaseNodeChildrenRule } from "./rules/erb-no-case-node-children.js"
+import { ERBNoInlineCaseConditionsRule } from "./rules/erb-no-inline-case-conditions.js"
 import { ERBNoConditionalHTMLElementRule } from "./rules/erb-no-conditional-html-element.js"
+import { ERBNoConditionalOpenTagRule } from "./rules/erb-no-conditional-open-tag.js"
 import { ERBNoEmptyTagsRule } from "./rules/erb-no-empty-tags.js"
+import { ERBNoInterpolatedClassNamesRule } from "./rules/erb-no-interpolated-class-names.js"
 import { ERBNoExtraNewLineRule } from "./rules/erb-no-extra-newline.js"
 import { ERBNoExtraWhitespaceRule } from "./rules/erb-no-extra-whitespace-inside-tags.js"
 import { ERBNoOutputControlFlowRule } from "./rules/erb-no-output-control-flow.js"
@@ -23,6 +26,7 @@ import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
 
+import { HTMLAllowedScriptTypeRule } from "./rules/html-allowed-script-type.js"
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
 import { HTMLAriaLabelIsWellFormattedRule } from "./rules/html-aria-label-is-well-formatted.js"
@@ -55,7 +59,9 @@ import { HTMLNoSelfClosingRule } from "./rules/html-no-self-closing.js"
 import { HTMLNoSpaceInTagRule } from "./rules/html-no-space-in-tag.js"
 import { HTMLNoTitleAttributeRule } from "./rules/html-no-title-attribute.js"
 import { HTMLNoUnderscoresInAttributeNamesRule } from "./rules/html-no-underscores-in-attribute-names.js"
+import { HTMLRequireClosingTagsRule } from "./rules/html-require-closing-tags.js"
 import { HTMLTagNameLowercaseRule } from "./rules/html-tag-name-lowercase.js"
+import { TurboPermanentRequireIdRule } from "./rules/turbo-permanent-require-id.js"
 
 import { SVGTagNameCapitalizationRule } from "./rules/svg-tag-name-capitalization.js"
 
@@ -64,8 +70,11 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 export const rules: RuleClass[] = [
   ERBCommentSyntax,
   ERBNoCaseNodeChildrenRule,
+  ERBNoInlineCaseConditionsRule,
   ERBNoConditionalHTMLElementRule,
+  ERBNoConditionalOpenTagRule,
   ERBNoEmptyTagsRule,
+  ERBNoInterpolatedClassNamesRule,
   ERBNoExtraNewLineRule,
   ERBNoExtraWhitespaceRule,
   ERBNoOutputControlFlowRule,
@@ -85,6 +94,7 @@ export const rules: RuleClass[] = [
   HerbDisableCommentMalformedRule,
   HerbDisableCommentUnnecessaryRule,
 
+  HTMLAllowedScriptTypeRule,
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,
   HTMLAriaLabelIsWellFormattedRule,
@@ -117,7 +127,9 @@ export const rules: RuleClass[] = [
   HTMLNoSpaceInTagRule,
   HTMLNoTitleAttributeRule,
   HTMLNoUnderscoresInAttributeNamesRule,
+  HTMLRequireClosingTagsRule,
   HTMLTagNameLowercaseRule,
+  TurboPermanentRequireIdRule,
 
   SVGTagNameCapitalizationRule,
 

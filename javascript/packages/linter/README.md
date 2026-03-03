@@ -532,7 +532,7 @@ class NoDivTagsVisitor extends BaseRuleVisitor {
 }
 
 export default class NoDivTagsRule extends ParserRule {
-  name = "no-div-tags"
+  static ruleName = "no-div-tags"
 
   check(result, context) {
     const visitor = new NoDivTagsVisitor(this.name, context)
@@ -566,7 +566,7 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
 }
 
 export default class NoInlineStylesRule {
-  name = "no-inline-styles"
+  static ruleName = "no-inline-styles"
 
   check(parseResult, context) {
     const visitor = new NoInlineStylesVisitor(this.name, context)
@@ -590,7 +590,7 @@ You can override the `defaultConfig` getter to customize these defaults, as show
 **Rule Properties:**
 
 - `static type` - Optional, defaults to `"parser"`. Can be `"parser"`, `"lexer"`, or `"source"`
-- `name` - Required, the rule identifier used in configuration and output
+- `static ruleName` - Required, the rule identifier used in configuration and output
 - `check()` - Required, the method that checks for offenses
 - `defaultConfig` - Optional, returns the default configuration for the rule
 - `isEnabled()` - Optional, dynamically determines if the rule should run

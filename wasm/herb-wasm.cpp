@@ -7,8 +7,7 @@
 #include "extension_helpers.h"
 
 extern "C" {
-#include "../src/include/macros.h"
-#include "../src/include/util/hb_arena.h"
+#include "../src/include/util/hb_allocator.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -26,28 +25,17 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     return val::null();
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    return val::null();
-  }
+  hb_array_T* tokens = herb_lex(source.c_str(), &allocator);
 
-  herb_lex_result_T* lex_result = herb_lex(source.c_str(), arena);
+  val result = CreateLexResult(tokens, source);
 
-  if (!lex_result) {
-    hb_arena_free(arena);
-    free(arena);
-    return val::null();
-  }
-
-  val result = CreateLexResult(lex_result->tokens, source);
-
-  herb_free_lex_result(&lex_result);
+  herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
@@ -75,28 +63,17 @@ val Herb_parse(const std::string& source, val options) {
     }
   }
 
-  hb_arena_T* arena = (hb_arena_T*) malloc(sizeof(hb_arena_T));
-
-  if (!arena) {
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
     return val::null();
   }
 
-  if (!hb_arena_init(arena, KB(512))) {
-    free(arena);
-    return val::null();
-  }
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, &allocator);
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, arena);
+  val result = CreateParseResult(root, source, &parser_options);
 
-  if (!root) {
-    hb_arena_free(arena);
-    free(arena);
-    return val::null();
-  }
-
-  val result = CreateParseResult(root, source);
-
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
+  hb_allocator_destroy(&allocator);
 
   return result;
 }
@@ -121,8 +98,14 @@ std::string Herb_extract_ruby(const std::string& source, val options) {
     }
   }
 
-  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    return std::string();
+  }
+
+  herb_extract_ruby_to_buffer_with_options(source.c_str(), &output, &extract_options, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }
@@ -131,8 +114,15 @@ std::string Herb_extract_html(const std::string& source) {
   hb_buffer_T output;
   hb_buffer_init(&output, source.length());
 
-  herb_extract_html_to_buffer(source.c_str(), &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    return std::string();
+  }
+
+  herb_extract_html_to_buffer(source.c_str(), &output, &allocator);
   std::string result(hb_buffer_value(&output));
+  hb_allocator_destroy(&allocator);
   free(output.value);
   return result;
 }

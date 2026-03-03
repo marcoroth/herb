@@ -10,16 +10,25 @@
 
 VALUE rb_error_from_c_struct(ERROR_T* error);
 
+static VALUE mErrors;
+static VALUE cError;
+<%- errors.each do |error| -%>
+static VALUE c<%= error.name %>;
+<%- end -%>
+
+void rb_init_error_classes(void) {
+  mErrors = rb_define_module_under(mHerb, "Errors");
+  cError = rb_define_class_under(mErrors, "Error", rb_cObject);
+  <%- errors.each do |error| -%>
+  c<%= error.name %> = rb_define_class_under(mErrors, "<%= error.name %>", cError);
+  <%- end -%>
+}
+
 <%- errors.each do |error| -%>
 static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= error.human %>) {
   if (<%= error.human %> == NULL) { return Qnil; }
 
   ERROR_T* error = &<%= error.human %>->base;
-
-  VALUE Herb = rb_define_module("Herb");
-  VALUE Errors = rb_define_module_under(Herb, "Errors");
-  VALUE Error = rb_define_class_under(Errors, "Error", rb_cObject);
-  VALUE <%= error.name %> = rb_define_class_under(Errors, "<%= error.name %>", Error);
 
   VALUE type = rb_utf8_str_new_cstr(error_type_to_string(error));
   VALUE location = rb_location_from_c_struct(error->location);
@@ -38,7 +47,7 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
   <%- when Herb::Template::SizeTField -%>
   VALUE <%= error.human %>_<%= field.name %> = ULONG2NUM(<%= error.human %>-><%= field.name %>);
   <%- else -%>
-  /* <%= field.inspect %> */
+  /* Unhandled field type: <%= field.class.name %> */
   VALUE <%= error.human %>_<%= field.name %> = Qnil;
   <%- end -%>
   <%- end -%>
@@ -52,7 +61,7 @@ static VALUE rb_<%= error.human %>_from_c_struct(<%= error.struct_type %>* <%= e
     <%- end -%>
   };
 
-  return rb_class_new_instance(<%= 3 + error.fields.count %>, args, <%= error.name %>);
+  return rb_class_new_instance(<%= 3 + error.fields.count %>, args, c<%= error.name %>);
 };
 
 <%- end -%>

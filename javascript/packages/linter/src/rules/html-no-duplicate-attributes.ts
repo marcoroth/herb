@@ -1,5 +1,6 @@
 import { ParserRule, BaseAutofixContext } from "../types.js"
-import { ControlFlowTrackingVisitor, ControlFlowType, getAttributeName } from "./rule-utils.js"
+import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils.js"
+import { getAttributeName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, HTMLAttributeNode, ParseResult, Location } from "@herb-tools/core"
@@ -162,7 +163,7 @@ class NoDuplicateAttributesVisitor extends ControlFlowTrackingVisitor<
 }
 
 export class HTMLNoDuplicateAttributesRule extends ParserRule {
-  name = "html-no-duplicate-attributes"
+  static ruleName = "html-no-duplicate-attributes"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -172,7 +173,7 @@ export class HTMLNoDuplicateAttributesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoDuplicateAttributesVisitor(this.name, context)
+    const visitor = new NoDuplicateAttributesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 
