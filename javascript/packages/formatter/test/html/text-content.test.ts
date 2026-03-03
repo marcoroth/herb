@@ -290,7 +290,9 @@ describe("@herb-tools/formatter", () => {
     `)
 
     expect(result).toEqual(dedent`
-      <div>Check <em>this</em> : it works!</div>
+      <div>
+        Check <em>this</em>: it works!
+      </div>
     `)
   })
 
@@ -392,6 +394,18 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
+  test("block element with mixed content and user newlines preserves line breaks", () => {
+    expectFormattedToMatch(dedent`
+      <div class="foo">
+        This is some text and some <strong>bold</strong> text.
+      </div>
+    `)
+
+    expectFormattedToMatch(dedent`
+      <div class="foo">This is some text and some <strong>bold</strong> text.</div>
+    `)
+  })
+
   test("multiline span with text collapses to inline with spaces", () => {
     const source = dedent`
       <span>
@@ -462,7 +476,9 @@ describe("@herb-tools/formatter", () => {
     expect(result).toEqual(dedent`
       <p><b><%= a_thing %> <%= another_thing %></b></p>
 
-      <p><b><%= a_thing %> <%= another_thing %></b>a</p>
+      <p>
+        <b><%= a_thing %> <%= another_thing %></b>a
+      </p>
 
       <p>
         <b><%= a_thing %> <%= another_thing %></b>

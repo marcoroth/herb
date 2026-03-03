@@ -1244,6 +1244,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     const tagName = getTagName(node)
     const children = filterSignificantChildren(node.body)
     const openTagInline = this.shouldRenderOpenTagInline(node)
+    const openTagClosing = getOpenTagClosing(node)
 
     if (!openTagInline) return false
     if (children.length === 0) return true
@@ -1276,6 +1277,17 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const allChildrenAreERB = children.length > 1 && children.every(child => isERBNode(child))
 
       if (allChildrenAreERB) return false
+    }
+
+    if (!isInlineElement(tagName) && hasMixedTextAndInlineContent(children) && openTagClosing) {
+      const first = children[0]
+      const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
+      const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
+      const contentStartsOnNewLine = startsOnNewLine || hasLeadingNewline
+
+      if (contentStartsOnNewLine) {
+        return false
+      }
     }
 
     const allNestedAreInline = areAllNestedElementsInline(children)
