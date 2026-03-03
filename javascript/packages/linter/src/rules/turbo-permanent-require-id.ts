@@ -29,7 +29,7 @@ class TurboPermanentRequireIdVisitor extends BaseRuleVisitor {
 }
 
 export class TurboPermanentRequireIdRule extends ParserRule {
-  name = "turbo-permanent-require-id"
+  static ruleName = "turbo-permanent-require-id"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -39,7 +39,7 @@ export class TurboPermanentRequireIdRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new TurboPermanentRequireIdVisitor(this.name, context)
+    const visitor = new TurboPermanentRequireIdVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

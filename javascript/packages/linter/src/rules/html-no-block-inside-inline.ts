@@ -68,7 +68,7 @@ class BlockInsideInlineVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoBlockInsideInlineRule extends ParserRule {
-  name = "html-no-block-inside-inline"
+  static ruleName = "html-no-block-inside-inline"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -78,7 +78,7 @@ export class HTMLNoBlockInsideInlineRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new BlockInsideInlineVisitor(this.name, context)
+    const visitor = new BlockInsideInlineVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

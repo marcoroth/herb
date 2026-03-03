@@ -183,7 +183,7 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
 
 export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
-  name = "html-no-duplicate-meta-names"
+  static ruleName = "html-no-duplicate-meta-names"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -193,7 +193,7 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
+    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -65,7 +65,7 @@ class SkipZoneCollector extends Visitor {
 
 export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitespaceAutofixContext> {
   static autocorrectable = true
-  name = "erb-no-trailing-whitespace"
+  static ruleName = "erb-no-trailing-whitespace"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -89,7 +89,7 @@ export class ERBNoTrailingWhitespaceRule extends ParserRule<ERBNoTrailingWhitesp
         const node = findNodeAtPosition(result.value, candidate.line, candidate.column, (n) => isHTMLTextNode(n) || isLiteralNode(n)) as HTMLTextNode | LiteralNode | null
 
         offenses.push({
-          rule: this.name,
+          rule: this.ruleName,
           message: "Extra whitespace detected at end of line.",
           location,
           autofixContext: node ? { node } : undefined

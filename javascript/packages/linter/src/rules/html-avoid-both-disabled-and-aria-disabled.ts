@@ -52,7 +52,7 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
-  name = "html-avoid-both-disabled-and-aria-disabled"
+  static ruleName = "html-avoid-both-disabled-and-aria-disabled"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -62,7 +62,7 @@ export class HTMLAvoidBothDisabledAndAriaDisabledRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AvoidBothDisabledAndAriaDisabledVisitor(this.name, context)
+    const visitor = new AvoidBothDisabledAndAriaDisabledVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

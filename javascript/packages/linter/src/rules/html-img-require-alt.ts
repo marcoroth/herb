@@ -27,7 +27,7 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLImgRequireAltRule extends ParserRule {
-  name = "html-img-require-alt"
+  static ruleName = "html-img-require-alt"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -37,7 +37,7 @@ export class HTMLImgRequireAltRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ImgRequireAltVisitor(this.name, context)
+    const visitor = new ImgRequireAltVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

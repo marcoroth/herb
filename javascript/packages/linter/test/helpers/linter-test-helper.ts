@@ -71,7 +71,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
-  const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors"
   const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
   const parseCache = new ParseCache(Herb)
   const ruleConfigOverride = configOverride
@@ -135,8 +135,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      const isPrimary = instance.name === ruleInstance.name
-      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
         ? { ...instance.defaultConfig, ...ruleConfigOverride }
         : instance.defaultConfig
     })
@@ -150,7 +150,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
 
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
     const primaryOffenses = lintResult.offenses.filter(offense => offense.rule === ruleName)
 
     expect(primaryOffenses).toHaveLength(0)
@@ -214,8 +214,8 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      const isPrimary = instance.name === ruleInstance.name
-      rulesConfig[instance.name] = isPrimary && ruleConfigOverride
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
         ? { ...instance.defaultConfig, ...ruleConfigOverride }
         : instance.defaultConfig
     })
@@ -228,7 +228,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?
 
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
 
     const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
     const primaryErrors = primaryOffenses.filter(o => o.severity === "error")

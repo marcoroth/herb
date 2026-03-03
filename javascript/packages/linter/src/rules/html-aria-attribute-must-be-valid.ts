@@ -25,7 +25,7 @@ class AriaAttributeMustBeValid extends AttributeVisitorMixin {
 }
 
 export class HTMLAriaAttributeMustBeValid extends ParserRule {
-  name = "html-aria-attribute-must-be-valid"
+  static ruleName = "html-aria-attribute-must-be-valid"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -35,7 +35,7 @@ export class HTMLAriaAttributeMustBeValid extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AriaAttributeMustBeValid(this.name, context)
+    const visitor = new AriaAttributeMustBeValid(this.ruleName, context)
 
     visitor.visit(result.value)
 

@@ -109,10 +109,9 @@ export class Linter {
   ): RuleClass[] {
     return allRules.filter(ruleClass => {
       const instance = new ruleClass()
-      const ruleName = instance.name
 
       const defaultEnabled = instance.defaultConfig?.enabled ?? DEFAULT_RULE_CONFIG.enabled
-      const userRuleConfig = userRulesConfig?.[ruleName]
+      const userRuleConfig = userRulesConfig?.[ruleClass.ruleName]
 
       if (userRuleConfig !== undefined) {
         return userRuleConfig.enabled !== false
@@ -193,13 +192,15 @@ export class Linter {
     source: string,
     context?: Partial<LintContext>
   ): UnboundLintOffense[] {
+    const ruleName = rule.ruleName
+
     if (this.config && context?.fileName) {
-      if (!this.config.isRuleEnabledForPath(rule.name, context.fileName)) {
+      if (!this.config.isRuleEnabledForPath(ruleName, context.fileName)) {
         return []
       }
     }
 
-    if (context?.fileName && !this.config?.linter?.rules?.[rule.name]?.exclude) {
+    if (context?.fileName && !this.config?.linter?.rules?.[ruleName]?.exclude) {
       const defaultExclude = rule.defaultConfig?.exclude ?? DEFAULT_RULE_CONFIG.exclude
 
       if (defaultExclude && defaultExclude.length > 0) {
@@ -335,7 +336,7 @@ export class Linter {
     const herbDisableCache = new Map<number, string[]>()
 
     if (hasParserErrors) {
-      const hasParserRule = this.rules.find(RuleClass => (new RuleClass()).name === "parser-no-errors")
+      const hasParserRule = this.rules.find(RuleClass => RuleClass.ruleName === "parser-no-errors")
 
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
@@ -355,15 +356,11 @@ export class Linter {
 
     context = {
       ...context,
-      validRuleNames: this.getAvailableRules().map(RuleClass => new RuleClass().name),
+      validRuleNames: this.getAvailableRules().map(RuleClass => RuleClass.ruleName),
       ignoredOffensesByLine
     }
 
-    const regularRules = this.rules.filter(RuleClass => {
-      const rule = new RuleClass()
-
-      return rule.name !== "herb-disable-comment-unnecessary"
-    })
+    const regularRules = this.rules.filter(RuleClass => RuleClass.ruleName !== "herb-disable-comment-unnecessary")
 
     for (const RuleClass of regularRules) {
       const rule = new RuleClass()
@@ -379,11 +376,11 @@ export class Linter {
       }
 
       const unboundOffenses = this.executeRule(rule, parseResult, lexResult, source, context)
-      const boundOffenses = this.bindSeverity(unboundOffenses, rule.name)
+      const boundOffenses = this.bindSeverity(unboundOffenses, RuleClass.ruleName)
 
       const { kept, ignored, wouldBeIgnored } = this.filterOffenses(
         boundOffenses,
-        rule.name,
+        RuleClass.ruleName,
         ignoredOffensesByLine,
         herbDisableCache,
         context?.ignoreDisableComments
@@ -394,17 +391,13 @@ export class Linter {
       this.offenses.push(...kept)
     }
 
-    const unnecessaryRuleClass = this.rules.find(RuleClass => {
-      const rule = new RuleClass()
-
-      return rule.name === "herb-disable-comment-unnecessary"
-    })
+    const unnecessaryRuleClass = this.rules.find(RuleClass => RuleClass.ruleName === "herb-disable-comment-unnecessary")
 
     if (unnecessaryRuleClass) {
       const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
       const parseResult = this.parseCache.get(source, unnecessaryRule.parserOptions)
       const unboundOffenses = unnecessaryRule.check(parseResult, context)
-      const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRule.name)
+      const boundOffenses = this.bindSeverity(unboundOffenses, unnecessaryRuleClass.ruleName)
 
       this.offenses.push(...boundOffenses)
     }
@@ -444,10 +437,7 @@ export class Linter {
    * @returns Array of offenses with severity bound
    */
   protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string): LintOffense[] {
-    const RuleClass = this.rules.find(rule => {
-      const instance = new rule()
-      return instance.name === ruleName
-    })
+    const RuleClass = this.rules.find(rule => rule.ruleName === ruleName)
 
     if (!RuleClass) {
       return unboundOffenses.map(offense => ({
@@ -487,11 +477,7 @@ export class Linter {
     const sourceOffenses: LintOffense[] = []
 
     for (const offense of lintResult.offenses) {
-      const RuleClass = this.rules.find(rule => {
-        const instance = new rule()
-
-        return instance.name === offense.rule
-      })
+      const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
 
       if (!RuleClass) continue
 
@@ -512,7 +498,7 @@ export class Linter {
       const parseResult = this.parseCache.get(currentSource)
 
       for (const offense of parserOffenses) {
-        const RuleClass = this.rules.find(rule => new rule().name === offense.rule)
+        const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
 
         if (!RuleClass) {
           unfixed.push(offense)
@@ -579,7 +565,7 @@ export class Linter {
       })
 
       for (const offense of sortedSourceOffenses) {
-        const RuleClass = this.rules.find(rule => new rule().name === offense.rule)
+        const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
 
         if (!RuleClass) {
           unfixed.push(offense)

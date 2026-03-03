@@ -125,7 +125,7 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLNoEmptyHeadingsRule extends ParserRule {
-  name = "html-no-empty-headings"
+  static ruleName = "html-no-empty-headings"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -135,7 +135,7 @@ export class HTMLNoEmptyHeadingsRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new NoEmptyHeadingsVisitor(this.name, context)
+    const visitor = new NoEmptyHeadingsVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }
