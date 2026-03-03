@@ -203,6 +203,8 @@ class ClassAttributeSorter extends Visitor {
           startNewGroup = false
         } else if (previousNode && !isLiteralNode(previousNode)) {
           startNewGroup = true
+        } else if (currentGroup.every(member => this.isWhitespaceLiteral(member))) {
+          startNewGroup = true
         }
 
       } else {
@@ -294,10 +296,37 @@ class ClassAttributeSorter extends Visitor {
 
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
     if (nodes.length === 0) return nodes
-    if (nodes.every(n => this.isWhitespaceLiteral(n))) return nodes
+    if (nodes.every(child => this.isWhitespaceLiteral(child))) return nodes
 
     const splitNodes = this.splitLiteralsAtWhitespace(nodes)
     const groups = this.groupNodesByClass(splitNodes)
+    const groupPrecedingWhitespace = new Map<Node[], Node[]>()
+    const nodePrecedingWhitespace = new Map<Node, Node[]>()
+
+    for (let i = 1; i < groups.length; i++) {
+      if (!this.isWhitespaceGroup(groups[i]) && this.isWhitespaceGroup(groups[i - 1])) {
+        groupPrecedingWhitespace.set(groups[i], groups[i - 1])
+
+        for (const node of groups[i]) {
+          if (!isLiteralNode(node)) {
+            nodePrecedingWhitespace.set(node, groups[i - 1])
+          }
+        }
+      }
+    }
+
+    let leadingWhitespace: Node[] | null = null
+    let trailingWhitespace: Node[] | null = null
+
+    if (isNested && groups.length > 0) {
+      if (this.isWhitespaceGroup(groups[0])) {
+        leadingWhitespace = groups[0]
+      }
+      if (groups.length > 1 && this.isWhitespaceGroup(groups[groups.length - 1])) {
+        trailingWhitespace = groups[groups.length - 1]
+      }
+    }
+
     const { staticClasses, interpolationGroups, standaloneERBNodes } = this.categorizeGroups(groups)
 
     const allStaticContent = staticClasses.join(" ")
@@ -324,7 +353,8 @@ class ClassAttributeSorter extends Visitor {
 
     for (const group of interpolationGroups) {
       if (parts.length > 0) {
-        parts.push(this.spaceLiteral)
+        const whitespace = groupPrecedingWhitespace.get(group)
+        parts.push(...(whitespace ?? [this.spaceLiteral]))
       }
 
       parts.push(...this.trimGroupWhitespace(group))
@@ -332,13 +362,16 @@ class ClassAttributeSorter extends Visitor {
 
     for (const node of standaloneERBNodes) {
       if (parts.length > 0) {
-        parts.push(this.spaceLiteral)
+        const whitespace = nodePrecedingWhitespace.get(node)
+        parts.push(...(whitespace ?? [this.spaceLiteral]))
       }
       parts.push(node)
     }
 
     if (isNested && parts.length > 0) {
-      return [this.spaceLiteral, ...parts, this.spaceLiteral]
+      const leading = leadingWhitespace ?? [this.spaceLiteral]
+      const trailing = trailingWhitespace ?? [this.spaceLiteral]
+      return [...leading, ...parts, ...trailing]
     }
 
     return parts

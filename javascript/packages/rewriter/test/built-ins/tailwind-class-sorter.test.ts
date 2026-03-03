@@ -334,7 +334,74 @@ describe("tailwind-class-sorter", () => {
             rounded">
           </div>
         `,
-        `<div class="rounded px-4 <% if valid? %> bg-green-500 font-bold text-green-800 <% else %> bg-red-500 font-bold text-red-800 <% end %>">\n</div>`
+        dedent`
+          <div class="rounded px-4
+            <% if valid? %>
+              bg-green-500 font-bold text-green-800
+            <% else %>
+              bg-red-500 font-bold text-red-800
+            <% end %>">
+          </div>
+        `
+      )
+    })
+
+    test("sorts multiline conditional with classes before and after", async () => {
+      await expectTransform(
+        dedent`
+          <div class="px-4 text-white
+            <% if valid? %>
+              font-bold text-green-800 bg-green-500
+            <% else %>
+              font-bold bg-red-500 text-red-800
+            <% end %>
+            rounded bg-blue-500">
+          </div>
+        `,
+        dedent`
+          <div class="rounded bg-blue-500 px-4 text-white
+            <% if valid? %>
+              bg-green-500 font-bold text-green-800
+            <% else %>
+              bg-red-500 font-bold text-red-800
+            <% end %>">
+          </div>
+        `
+      )
+    })
+
+    test("sorts multiline template with two conditional blocks and classes between", async () => {
+      await expectTransform(
+        dedent`
+          <div class="px-4 text-white
+            <% if valid? %>
+              font-bold text-green-800 bg-green-500
+            <% else %>
+              font-bold bg-red-500 text-red-800
+            <% end %>
+            rounded bg-blue-500
+            <% if highlighted? %>
+              border-2 border-blue-500
+            <% else %>
+              border border-gray-300
+            <% end %>
+            py-2 mt-4">
+          </div>
+        `,
+        dedent`
+          <div class="mt-4 rounded bg-blue-500 px-4 py-2 text-white
+            <% if valid? %>
+              bg-green-500 font-bold text-green-800
+            <% else %>
+              bg-red-500 font-bold text-red-800
+            <% end %>
+            <% if highlighted? %>
+              border-2 border-blue-500
+            <% else %>
+              border border-gray-300
+            <% end %>">
+          </div>
+        `
       )
     })
 
