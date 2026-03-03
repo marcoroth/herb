@@ -685,5 +685,40 @@ describe("CLI Output Formatting", () => {
         }
       }
     })
+
+    test("exits with an error when a custom rule uses the deprecated 'name' instance property", () => {
+      try {
+        mkdirSync(join(tempDir, ".herb/rules"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.10
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, ".herb/rules/deprecated-rule.mjs"), dedent`
+          export default class DeprecatedRule {
+            name = "deprecated-rule"
+
+            check(document, context) {
+              return []
+            }
+          }
+        `)
+
+        writeFileSync(join(tempDir, "app/views/test.html.erb"), "<div></div>")
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views/test.html.erb"))
+
+        expect(output).toContain("sets 'name' as an instance property")
+        expect(output).toContain("static ruleName = \"deprecated-rule\"")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
   })
 })

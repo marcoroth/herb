@@ -75,8 +75,14 @@ export class CustomRuleLoader {
       const cacheBustedUrl = `${fileUrl}?t=${Date.now()}`
       const module = await import(cacheBustedUrl)
 
-      if (module.default && this.isValidRuleClass(module.default)) {
+      if (this.isValidRuleClass(module.default)) {
         return [module.default]
+      }
+
+      if (this.hasDeprecatedNameProperty(module.default)) {
+        const name = new module.default().name
+        console.error(`Error: Custom rule in "${filePath}" sets 'name' as an instance property, which is no longer supported. Use 'static ruleName = "${name}"' instead.`)
+        process.exit(1)
       }
 
       if (!this.silent) {
@@ -96,10 +102,22 @@ export class CustomRuleLoader {
    * Type guard to check if an export is a valid rule class
    */
   private isValidRuleClass(value: any): value is RuleClass {
+    if (!value) return false
     if (typeof value !== 'function') return false
     if (!value.prototype) return false
 
     return typeof value.ruleName === 'string' && typeof value.prototype.check === 'function'
+  }
+
+  /**
+   * Check for usage of deprecated 'name' property instead of 'static ruleName'
+   */
+  private hasDeprecatedNameProperty(value: any): boolean {
+    if (!value) return false
+    if (typeof value !== 'function') return false
+
+    const instance = new value()
+    return Object.prototype.hasOwnProperty.call(instance, 'name')
   }
 
   /**
