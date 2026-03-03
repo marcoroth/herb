@@ -1,6 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributes, findAttributeByName } from "./rule-utils.js"
-import { isHTMLAttributeValueNode, isERBContentNode } from "@herb-tools/core"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { isHTMLAttributeValueNode, isERBContentNode, getAttributes, findAttributeByName, hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -16,7 +16,7 @@ class AvoidBothDisabledAndAriaDisabledVisitor extends BaseRuleVisitor {
   }
 
   private checkElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (!tagName || !ELEMENTS_WITH_NATIVE_DISABLED_ATTRIBUTE_SUPPORT.has(tagName)) {
       return

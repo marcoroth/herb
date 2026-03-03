@@ -1,5 +1,6 @@
 import { ParserRule } from "../types"
-import { BaseRuleVisitor, getTagName, isHeadOnlyTag, hasAttribute, getOpenTag } from "./rule-utils"
+import { BaseRuleVisitor, isHeadOnlyTag } from "./rule-utils"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import type { ParseResult, HTMLElementNode } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types"
@@ -8,7 +9,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node)?.toLowerCase()
+    const tagName = getTagLocalName(node)
     if (!tagName) return
 
     this.checkHeadOnlyElement(node, tagName)
@@ -33,7 +34,7 @@ class HeadOnlyElementsVisitor extends BaseRuleVisitor {
   }
 
   private hasItempropAttribute(node: HTMLElementNode): boolean {
-    return hasAttribute(getOpenTag(node), "itemprop")
+    return hasAttribute(node, "itemprop")
   }
 
   private get insideHead(): boolean {

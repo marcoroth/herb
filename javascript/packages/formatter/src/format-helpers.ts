@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput } from "@herb-tools/core"
+import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -55,6 +55,22 @@ export const INLINE_ELEMENTS = new Set([
 
 export const CONTENT_PRESERVING_ELEMENTS = new Set([
   'script', 'style', 'pre', 'textarea'
+])
+
+// https://tailwindcss.com/docs/white-space
+export const WHITESPACE_PRESERVING_CLASSES = [
+  'whitespace-pre-line',
+  'whitespace-pre-wrap',
+  'whitespace-pre',
+  'whitespace-break-spaces',
+]
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/white-space
+export const WHITESPACE_PRESERVING_STYLE_VALUES = new Set([
+  'pre',
+  'pre-line',
+  'pre-wrap',
+  'break-spaces',
 ])
 
 export const SPACEABLE_CONTAINERS = new Set([
@@ -397,10 +413,31 @@ export function hasMixedTextAndInlineContent(children: Node[]): boolean {
   return (hasText && hasInlineElements) || (hasERBOutput(children) && hasText)
 }
 
+export function hasWhitespacePreservingStyle(element: HTMLElementNode): boolean {
+  if (getTokenList(element, "class").some(klass => WHITESPACE_PRESERVING_CLASSES.some(whitespace => klass.includes(whitespace)))) return true
+
+  const styleValue = getStaticAttributeValue(element, "style")
+  if (styleValue) {
+    const match = styleValue.match(/white-space\s*:\s*([^;!]+)/)
+
+    if (match) {
+      const value = match[1].trim().toLowerCase()
+      if (WHITESPACE_PRESERVING_STYLE_VALUES.has(value)) return true
+    }
+  }
+
+  return false
+}
+
 export function isContentPreserving(element: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): boolean {
   const tagName = getTagName(element)
+  if (CONTENT_PRESERVING_ELEMENTS.has(tagName)) return true
 
-  return CONTENT_PRESERVING_ELEMENTS.has(tagName)
+  if (isNode(element, HTMLElementNode)) {
+    return hasWhitespacePreservingStyle(element)
+  }
+
+  return false
 }
 
 /**

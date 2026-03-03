@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, getAttribute, getAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getStaticAttributeValue, getAttribute, getAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -11,18 +12,14 @@ class IframeHasTitleVisitor extends BaseRuleVisitor {
   }
 
   private checkIframeElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "iframe") {
       return
     }
 
-    const ariaHiddenAttribute = getAttribute(node, "aria-hidden")
-    if (ariaHiddenAttribute) {
-      const ariaHiddenValue = getAttributeValue(ariaHiddenAttribute)
-      if (ariaHiddenValue === "true") {
-        return
-      }
+    if (getStaticAttributeValue(node, "aria-hidden") === "true") {
+      return
     }
 
     const attribute = getAttribute(node, "title")

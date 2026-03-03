@@ -1,4 +1,5 @@
-import { StimulusRuleVisitor, HerbParserRule, getAttributeName, getAttributeValue, getStaticAttributeValue, hasStaticAttributeValue } from "./rule-utils.js"
+import { StimulusRuleVisitor, HerbParserRule } from "./rule-utils.js"
+import { getAttributeName, getStaticAttributeValue, hasStaticAttributeValue, getAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"

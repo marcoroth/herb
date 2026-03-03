@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
 import { isVoidElement, findParent, BaseRuleVisitor } from "./rule-utils.js"
-import { getTagName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
+import { getTagName, getTagLocalName, isWhitespaceNode, Location, HTMLCloseTagNode } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, LintOffense, FullRuleConfig } from "../types.js"
 import type { Node, HTMLOpenTagNode, HTMLElementNode, SerializedToken, ParseResult } from "@herb-tools/core"
@@ -13,7 +13,7 @@ interface NoSelfClosingAutofixContext extends BaseAutofixContext {
 
 class NoSelfClosingVisitor extends BaseRuleVisitor<NoSelfClosingAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    if (getTagName(node) === "svg") {
+    if (getTagLocalName(node) === "svg") {
       this.visit(node.open_tag)
     } else {
       this.visitChildNodes(node)

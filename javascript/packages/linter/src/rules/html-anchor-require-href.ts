@@ -1,4 +1,5 @@
-import { BaseRuleVisitor, getTagName, getAttribute, getStaticAttributeValue } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getAttribute, getStaticAttributeValue, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -11,7 +12,7 @@ class AnchorRequireHrefVisitor extends BaseRuleVisitor {
   }
 
   private checkATag(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "a") {
       return

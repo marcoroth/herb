@@ -129,6 +129,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   private lines: string[] = []
   private indentLevel: number = 0
   private inlineMode: boolean = false
+  private inContentPreservingContext: boolean = false
   private inConditionalOpenTagContext: boolean = false
   private elementStack: HTMLElementNode[] = []
   private elementFormattingAnalysis = new Map<HTMLElementNode, ElementFormattingAnalysis>()
@@ -282,6 +283,15 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
     this.indentLevel++
     const result = callback()
     this.indentLevel--
+
+    return result
+  }
+
+  private withContentPreserving<T>(callback: () => T): T {
+    const was = this.inContentPreservingContext
+    this.inContentPreservingContext = true
+    const result = callback()
+    this.inContentPreservingContext = was
 
     return result
   }
@@ -525,7 +535,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   visitHTMLElementBody(body: Node[], element: HTMLElementNode) {
-    if (isContentPreserving(element)) {
+    if (isContentPreserving(element) || this.inContentPreservingContext) {
       this.visitContentPreservingBody(element)
       return
     }
@@ -561,18 +571,20 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
   }
 
   private visitContentPreservingBody(element: HTMLElementNode) {
-    element.body.map(child => {
-      if (isNode(child, HTMLElementNode)) {
-        const wasInlineMode = this.inlineMode
-        this.inlineMode = true
+    this.withContentPreserving(() => {
+      element.body.map(child => {
+        if (isNode(child, HTMLElementNode)) {
+          const wasInlineMode = this.inlineMode
+          this.inlineMode = true
 
-        const formattedElement = this.capture(() => this.visit(child)).join("")
-        this.pushToLastLine(formattedElement)
+          const formattedElement = this.capture(() => this.visit(child)).join("")
+          this.pushToLastLine(formattedElement)
 
-        this.inlineMode = wasInlineMode
-      } else {
-        this.pushToLastLine(IdentityPrinter.print(child))
-      }
+          this.inlineMode = wasInlineMode
+        } else {
+          this.pushToLastLine(IdentityPrinter.print(child))
+        }
+      })
     })
   }
 

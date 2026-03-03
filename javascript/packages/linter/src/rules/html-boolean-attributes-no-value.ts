@@ -1,5 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute, hasAttributeValue } from "./rule-utils.js"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, isBooleanAttribute } from "./rule-utils.js"
+import { hasAttributeValue } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"

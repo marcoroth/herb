@@ -1,5 +1,5 @@
-import { getTagName } from "@herb-tools/core"
-import { BaseRuleVisitor, getAttribute, getAttributeValue, getStaticAttributeValueContent } from "./rule-utils.js"
+import { getTagLocalName, getStaticAttributeValue, getAttribute, getAttributeValue } from "@herb-tools/core"
+import { BaseRuleVisitor } from "./rule-utils.js"
 import { ParserRule } from "../types.js"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
@@ -30,10 +30,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
   private checkInputTag(node: HTMLOpenTagNode): void {
     if (!this.isInputTag(node) || this.hasAutocomplete(node)) return
 
-    const typeAttribute = getAttribute(node, "type");
-    if (!typeAttribute) return
-
-    const typeValue = getStaticAttributeValueContent(typeAttribute)
+    const typeValue = getStaticAttributeValue(node, "type")
     if (!typeValue) return
 
     if (!this.HTML_INPUT_TYPES_REQUIRING_AUTOCOMPLETE.has(typeValue)) return
@@ -55,7 +52,7 @@ class HTMLInputRequireAutocompleteVisitor extends BaseRuleVisitor {
   }
 
   private isInputTag(node: HTMLOpenTagNode) {
-    const tagName = getTagName(node);
+    const tagName = getTagLocalName(node);
 
     if (tagName === "input") {
       return true
