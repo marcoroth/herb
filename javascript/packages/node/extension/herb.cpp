@@ -5,6 +5,7 @@ extern "C" {
 #include "../extension/libherb/include/location.h"
 #include "../extension/libherb/include/range.h"
 #include "../extension/libherb/include/token.h"
+#include "../extension/libherb/include/util/hb_allocator.h"
 #include "../extension/libherb/include/util/hb_array.h"
 #include "../extension/libherb/include/util/hb_buffer.h"
 }
@@ -31,10 +32,11 @@ napi_value Herb_lex(napi_env env, napi_callback_info info) {
   char* string = CheckString(env, args[0]);
   if (!string) { return nullptr; }
 
-  hb_array_T* tokens = herb_lex(string);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_array_T* tokens = herb_lex(string, &allocator);
   napi_value result = CreateLexResult(env, tokens, args[0]);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
   free(string);
 
   return result;
@@ -53,11 +55,12 @@ napi_value Herb_lex_file(napi_env env, napi_callback_info info) {
   char* file_path = CheckString(env, args[0]);
   if (!file_path) { return nullptr; }
 
-  hb_array_T* tokens = herb_lex_file(file_path);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_array_T* tokens = herb_lex_file(file_path, &allocator);
   napi_value source_value = ReadFileToString(env, file_path);
   napi_value result = CreateLexResult(env, tokens, source_value);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
   free(file_path);
 
   return result;
@@ -124,10 +127,11 @@ napi_value Herb_parse(napi_env env, napi_callback_info info) {
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
   napi_value result = CreateParseResult(env, root, args[0], &parser_options);
 
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
   free(string);
 
   return result;
@@ -154,11 +158,12 @@ napi_value Herb_parse_file(napi_env env, napi_callback_info info) {
     return nullptr;
   }
 
+  hb_allocator_T allocator = hb_allocator_with_malloc();
   parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
-  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options);
+  AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
   napi_value result = CreateParseResult(env, root, source_value, &parser_options);
 
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
   free(file_path);
   free(string);
 

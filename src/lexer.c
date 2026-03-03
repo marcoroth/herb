@@ -30,7 +30,9 @@ static bool lexer_stalled(lexer_T* lexer) {
   return lexer->stalled;
 }
 
-void lexer_init(lexer_T* lexer, const char* source) {
+void lexer_init(lexer_T* lexer, const char* source, hb_allocator_T* allocator) {
+  lexer->allocator = allocator;
+
   if (source != NULL) {
     lexer->source = hb_string(source);
   } else {

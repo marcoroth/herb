@@ -7,6 +7,7 @@
 #include "extension_helpers.h"
 
 extern "C" {
+#include "../src/include/util/hb_allocator.h"
 #include "../src/include/util/hb_array.h"
 #include "../src/include/ast_node.h"
 #include "../src/include/ast_nodes.h"
@@ -24,11 +25,12 @@ extern "C" {
 using namespace emscripten;
 
 val Herb_lex(const std::string& source) {
-  hb_array_T* tokens = herb_lex(source.c_str());
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_array_T* tokens = herb_lex(source.c_str(), &allocator);
 
   val result = CreateLexResult(tokens, source);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
 
   return result;
 }
@@ -56,11 +58,12 @@ val Herb_parse(const std::string& source, val options) {
     }
   }
 
-  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  AST_DOCUMENT_NODE_T* root = herb_parse(source.c_str(), &parser_options, &allocator);
 
   val result = CreateParseResult(root, source, &parser_options);
 
-  ast_node_free((AST_NODE_T *) root);
+  ast_node_free((AST_NODE_T *) root, &allocator);
 
   return result;
 }

@@ -2,6 +2,7 @@
 #include "include/test.h"
 #include "../../src/include/herb.h"
 #include "../../src/include/token.h"
+#include "../../src/include/util/hb_allocator.h"
 
 TEST(test_token)
   ck_assert_str_eq(token_type_to_string(TOKEN_IDENTIFIER), "TOKEN_IDENTIFIER");
@@ -52,7 +53,8 @@ END
 TEST(test_token_to_string)
   hb_buffer_T output;
   hb_buffer_init(&output, 1024);
-  herb_lex_to_buffer("hello", &output);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  herb_lex_to_buffer("hello", &output, &allocator);
 
   ck_assert_str_eq(
     output.value,

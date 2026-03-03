@@ -1,5 +1,6 @@
 #include "include/herb.h"
 #include "include/io.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/string.h"
@@ -19,7 +20,8 @@ void herb_extract_ruby_to_buffer_with_options(
 ) {
   herb_extract_ruby_options_T extract_options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
-  hb_array_T* tokens = herb_lex(source);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_array_T* tokens = herb_lex(source, &allocator);
   bool skip_erb_content = false;
   bool is_comment_tag = false;
   bool is_erb_comment_tag = false;
@@ -136,7 +138,7 @@ void herb_extract_ruby_to_buffer_with_options(
     }
   }
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
 }
 
 void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
@@ -144,7 +146,8 @@ void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
 }
 
 void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
-  hb_array_T* tokens = herb_lex(source);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_array_T* tokens = herb_lex(source, &allocator);
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
@@ -157,7 +160,7 @@ void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
     }
   }
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
 }
 
 char* herb_extract_ruby_with_semicolons(const char* source) {

@@ -11,6 +11,7 @@
 #include "include/herb.h"
 #include "include/io.h"
 #include "include/ruby_parser.h"
+#include "include/util/hb_allocator.h"
 #include "include/util/hb_buffer.h"
 #include "include/util/string.h"
 
@@ -62,12 +63,13 @@ int main(const int argc, char* argv[]) {
   if (!hb_buffer_init(&output, 4096)) { return 1; }
 
   char* source = herb_read_file(argv[2]);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
 
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
   if (string_equals(argv[1], "lex")) {
-    herb_lex_to_buffer(source, &output);
+    herb_lex_to_buffer(source, &output, &allocator);
     clock_gettime(CLOCK_MONOTONIC, &end);
 
     puts(output.value);
@@ -80,7 +82,7 @@ int main(const int argc, char* argv[]) {
   }
 
   if (string_equals(argv[1], "parse")) {
-    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL);
+    AST_DOCUMENT_NODE_T* root = herb_parse(source, NULL, &allocator);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
 
@@ -96,7 +98,7 @@ int main(const int argc, char* argv[]) {
       print_time_diff(start, end, "parsing");
     }
 
-    ast_node_free((AST_NODE_T*) root);
+    ast_node_free((AST_NODE_T*) root, &allocator);
     free(output.value);
     free(source);
 

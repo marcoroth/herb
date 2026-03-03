@@ -40,7 +40,8 @@ impl Default for ExtractRubyOptions {
 pub fn lex(source: &str) -> Result<LexResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
-    let c_tokens = crate::ffi::herb_lex(c_source.as_ptr());
+    let mut allocator = crate::ffi::hb_allocator_with_malloc();
+    let c_tokens = crate::ffi::herb_lex(c_source.as_ptr(), &mut allocator);
 
     if c_tokens.is_null() {
       return Err("Failed to lex source".to_string());
@@ -58,7 +59,7 @@ pub fn lex(source: &str) -> Result<LexResult, String> {
     }
 
     let mut c_tokens_ptr = c_tokens;
-    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T);
+    crate::ffi::herb_free_tokens(&mut c_tokens_ptr as *mut *mut hb_array_T, &mut allocator);
 
     Ok(LexResult::new(tokens))
   }
@@ -71,6 +72,7 @@ pub fn parse(source: &str) -> Result<ParseResult, String> {
 pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<ParseResult, String> {
   unsafe {
     let c_source = CString::new(source).map_err(|e| e.to_string())?;
+    let mut allocator = crate::ffi::hb_allocator_with_malloc();
 
     let c_parser_options = crate::bindings::parser_options_T {
       track_whitespace: options.track_whitespace,
@@ -78,7 +80,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
       strict: options.strict,
     };
 
-    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options);
+    let ast = crate::ffi::herb_parse(c_source.as_ptr(), &c_parser_options, &mut allocator);
 
     if ast.is_null() {
       return Err("Failed to parse source".to_string());
@@ -88,7 +90,7 @@ pub fn parse_with_options(source: &str, options: &ParserOptions) -> Result<Parse
 
     let result = ParseResult::new(document_node, source.to_string(), Vec::new(), options);
 
-    crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T);
+    crate::ffi::ast_node_free(ast as *mut crate::bindings::AST_NODE_T, &mut allocator);
 
     Ok(result)
   }
