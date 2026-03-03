@@ -487,6 +487,110 @@ export function forEachAttribute(node: HTMLElementNode | HTMLOpenTagNode, callba
   }
 }
 
+// --- Class Name Grouping Utilities ---
+
+/**
+ * Checks if a node is a whitespace-only literal (no visible content)
+ */
+export function isWhitespaceLiteral(node: Node): boolean {
+  return isLiteralNode(node) && !node.content.trim()
+}
+
+/**
+ * Splits literal nodes at whitespace boundaries into separate nodes.
+ * Non-literal nodes are passed through unchanged.
+ *
+ * For example, a literal `"bg-blue-500 text-white"` becomes two literals:
+ * `"bg-blue-500"` and `" "` and `"text-white"`.
+ */
+export function splitLiteralsAtWhitespace(nodes: Node[]): Node[] {
+  const result: Node[] = []
+
+  for (const node of nodes) {
+    if (isLiteralNode(node)) {
+      const parts = node.content.match(/(\S+|\s+)/g) || []
+
+      for (const part of parts) {
+        result.push(new LiteralNode({
+          type: "AST_LITERAL_NODE",
+          content: part,
+          errors: [],
+          location: node.location
+        }))
+      }
+    } else {
+      result.push(node)
+    }
+  }
+
+  return result
+}
+
+/**
+ * Groups split nodes into "class groups" where each group represents a single
+ * class name (possibly spanning multiple nodes when ERB is interpolated).
+ *
+ * For example, `text-<%= color %>-500 bg-blue-500` produces two groups:
+ *   - [`text-`, ERB, `-500`] (interpolated class)
+ *   - [`bg-blue-500`] (static class)
+ *
+ * The key heuristic: a hyphen at a node boundary means the nodes are part of
+ * the same class name (e.g., `bg-` + ERB + `-500`), while whitespace means
+ * a new class name starts.
+ */
+export function groupNodesByClass(nodes: Node[]): Node[][] {
+  if (nodes.length === 0) return []
+
+  const groups: Node[][] = []
+  let currentGroup: Node[] = []
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]
+    const previousNode = i > 0 ? nodes[i - 1] : null
+
+    let startNewGroup = false
+
+    if (currentGroup.length === 0) {
+      startNewGroup = false
+    } else if (isLiteralNode(node)) {
+      if (/^\s/.test(node.content)) {
+        startNewGroup = true
+      } else if (/^-/.test(node.content)) {
+        startNewGroup = false
+      } else if (previousNode && !isLiteralNode(previousNode)) {
+        startNewGroup = true
+      } else if (currentGroup.every(member => isWhitespaceLiteral(member))) {
+        startNewGroup = true
+      }
+    } else {
+      if (previousNode && isLiteralNode(previousNode)) {
+        if (/\s$/.test(previousNode.content)) {
+          startNewGroup = true
+        } else if (/-$/.test(previousNode.content)) {
+          startNewGroup = false
+        } else {
+          startNewGroup = true
+        }
+      } else if (previousNode && !isLiteralNode(previousNode)) {
+        startNewGroup = false
+      }
+    }
+
+    if (startNewGroup && currentGroup.length > 0) {
+      groups.push(currentGroup)
+      currentGroup = []
+    }
+
+    currentGroup.push(node)
+  }
+
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup)
+  }
+
+  return groups
+}
+
 // --- Position Utilities ---
 
 /**
