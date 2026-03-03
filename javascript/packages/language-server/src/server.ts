@@ -12,6 +12,7 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
+  DocumentHighlightParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -53,6 +54,7 @@ export class Server {
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
+          documentHighlightProvider: true,
         },
       }
 
@@ -155,6 +157,14 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.service.formattingService.formatRange(params)
+    })
+
+    this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {
