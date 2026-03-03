@@ -14,7 +14,9 @@ import {
   HTMLElementNode,
   HTMLOpenTagNode,
   HTMLCloseTagNode,
+  HTMLAttributeNode,
   HTMLAttributeNameNode,
+  HTMLAttributeValueNode,
   HTMLCommentNode
 } from "./nodes.js"
 
@@ -24,8 +26,13 @@ import {
   isERBNode,
   isERBContentNode,
   isHTMLCommentNode,
+  isHTMLElementNode,
+  isHTMLOpenTagNode,
+  isHTMLAttributeNameNode,
+  isHTMLAttributeValueNode,
   areAllOfType,
-  filterLiteralNodes
+  filterLiteralNodes,
+  filterHTMLAttributeNodes
 } from "./node-type-guards.js"
 
 import type { Location } from "./location.js"
@@ -208,10 +215,26 @@ export function getCombinedAttributeName(attributeNameNode: HTMLAttributeNameNod
 }
 
 /**
- * Gets the tag name of an HTML element node
+ * Gets the tag name of an HTML element, open tag, or close tag node.
+ * Returns null if the node is null/undefined.
  */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string {
-  return node.tag_name?.value ?? ""
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode | null | undefined): string | null
+export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode | null | undefined): string | null {
+  if (!node) return null
+
+  return node.tag_name?.value ?? null
+}
+
+/**
+ * Gets the lowercased tag name of an HTML element, open tag, or close tag node.
+ * Similar to `Element.localName` in the DOM API.
+ * Returns null if the node is null/undefined.
+ */
+export function getTagLocalName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode): string
+export function getTagLocalName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode | null | undefined): string | null
+export function getTagLocalName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTagNode | null | undefined): string | null {
+  return getTagName(node)?.toLowerCase() ?? null
 }
 
 /**
@@ -220,6 +243,251 @@ export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | HTMLCloseTa
 export function isCommentNode(node: Node): node is HTMLCommentNode | ERBCommentNode {
   return isHTMLCommentNode(node) || isERBCommentNode(node)
 }
+
+/**
+ * Gets the open tag node from an HTMLElementNode, handling both regular and conditional open tags.
+ * For conditional open tags, returns null.
+ * If given an HTMLOpenTagNode directly, returns it as-is.
+ */
+export function getOpenTag(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLOpenTagNode | null {
+  if (!node) return null
+  if (isHTMLOpenTagNode(node)) return node
+  if (isHTMLElementNode(node)) return isHTMLOpenTagNode(node.open_tag) ? node.open_tag : null
+
+  return null
+}
+
+/**
+ * Gets attributes from an HTMLElementNode or HTMLOpenTagNode
+ */
+export function getAttributes(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): HTMLAttributeNode[] {
+  const openTag = getOpenTag(node)
+
+  return openTag ? filterHTMLAttributeNodes(openTag.children) : []
+}
+
+/**
+ * Gets the attribute name from an HTMLAttributeNode (lowercased)
+ * Returns null if the attribute name contains dynamic content (ERB)
+ */
+export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return null
+
+  const staticName = getStaticAttributeName(attributeNode.name)
+
+  if (!lowercase) return staticName
+
+  return staticName ? staticName.toLowerCase() : null
+}
+
+/**
+ * Checks if an attribute value contains only static content (no ERB).
+ * Accepts an HTMLAttributeNode directly, or an element/open tag + attribute name.
+ * Returns false for null/undefined input.
+ */
+export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): boolean
+export function hasStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean
+export function hasStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): boolean {
+  const attributeNode = attributeName
+    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    : nodeOrAttribute as HTMLAttributeNode | null | undefined
+
+  if (!attributeNode?.value?.children) return false
+
+  return attributeNode.value.children.every(isLiteralNode)
+}
+
+/**
+ * Gets the static string value of an attribute (returns null if it contains ERB).
+ * Accepts an HTMLAttributeNode directly, or an element/open tag + attribute name.
+ * Returns null for null/undefined input.
+ */
+export function getStaticAttributeValue(attributeNode: HTMLAttributeNode | null | undefined): string | null
+export function getStaticAttributeValue(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string | null
+export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string | null {
+  const attributeNode = attributeName
+    ? getAttribute(nodeOrAttribute as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    : nodeOrAttribute as HTMLAttributeNode | null | undefined
+
+  if (!attributeNode) return null
+  if (!hasStaticAttributeValue(attributeNode)) return null
+
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
+
+  return filterLiteralNodes(valueNode.children).map(child => child.content).join("") || ""
+}
+
+/**
+ * Splits a space-separated attribute value into individual tokens.
+ * Accepts a string, or an element/open tag + attribute name to look up.
+ * Returns an empty array for null/undefined/empty input.
+ */
+export function getTokenList(value: string | null | undefined): string[]
+export function getTokenList(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): string[]
+export function getTokenList(valueOrNode: string | HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName?: string): string[] {
+  const value = attributeName
+    ? getStaticAttributeValue(valueOrNode as HTMLElementNode | HTMLOpenTagNode, attributeName)
+    : valueOrNode as string | null | undefined
+
+  if (!value) return []
+
+  return value.trim().split(/\s+/).filter(token => token.length > 0)
+}
+
+/**
+ * Finds an attribute by name in a list of attribute nodes
+ */
+export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
+  for (const attribute of filterHTMLAttributeNodes(attributes)) {
+    const name = getAttributeName(attribute)
+
+    if (name === attributeName.toLowerCase()) {
+      return attribute
+    }
+  }
+
+  return null
+}
+
+/**
+ * Gets a specific attribute from an HTMLElementNode or HTMLOpenTagNode by name
+ */
+export function getAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): HTMLAttributeNode | null {
+  const attributes = getAttributes(node)
+
+  return findAttributeByName(attributes, attributeName)
+}
+
+/**
+ * Checks if an element or open tag has a specific attribute
+ */
+export function hasAttribute(node: HTMLElementNode | HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
+  if (!node) return false
+
+  return getAttribute(node, attributeName) !== null
+}
+
+/**
+ * Checks if an attribute has a dynamic (ERB-containing) name.
+ * Accepts an HTMLAttributeNode (wraps the core HTMLAttributeNameNode-level check).
+ */
+export function hasDynamicAttributeNameOnAttribute(attributeNode: HTMLAttributeNode): boolean {
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return false
+
+  return hasDynamicAttributeName(attributeNode.name)
+}
+
+/**
+ * Gets the combined string representation of an attribute name (including ERB syntax).
+ * Accepts an HTMLAttributeNode (wraps the core HTMLAttributeNameNode-level check).
+ */
+export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
+  if (!isHTMLAttributeNameNode(attributeNode.name)) return ""
+
+  return getCombinedAttributeName(attributeNode.name)
+}
+
+/**
+ * Checks if an attribute value contains dynamic content (ERB)
+ */
+export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  if (!attributeNode.value?.children) return false
+
+  return attributeNode.value.children.some(isERBContentNode)
+}
+
+/**
+ * Gets the value nodes array from an attribute for dynamic inspection
+ */
+export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
+  return attributeNode.value?.children || []
+}
+
+/**
+ * Checks if an attribute value contains any static content (for validation purposes)
+ */
+export function hasStaticAttributeValueContent(attributeNode: HTMLAttributeNode): boolean {
+  return hasStaticContent(getAttributeValueNodes(attributeNode))
+}
+
+/**
+ * Gets the static content of an attribute value (all literal parts combined).
+ * Unlike getStaticAttributeValue, this extracts only the static portions from mixed content.
+ * Returns the concatenated literal content, or null if no literal nodes exist.
+ */
+export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode): string | null {
+  return getStaticContentFromNodes(getAttributeValueNodes(attributeNode))
+}
+
+/**
+ * Gets the combined attribute value including both static text and ERB tag syntax.
+ * For ERB nodes, includes the full tag syntax (e.g., "<%= foo %>").
+ * Returns null if the attribute has no value.
+ */
+export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
+  const valueNode = attributeNode.value
+  if (!valueNode) return null
+
+  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
+    return null
+  }
+
+  let result = ""
+
+  for (const child of valueNode.children) {
+    if (isERBContentNode(child)) {
+      if (child.content) {
+        result += `${child.tag_opening?.value}${child.content.value}${child.tag_closing?.value}`
+      }
+    } else if (isLiteralNode(child)) {
+      result += child.content
+    }
+  }
+
+  return result
+}
+
+/**
+ * Checks if an attribute has a value node
+ */
+export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
+  return isHTMLAttributeValueNode(attributeNode.value)
+}
+
+/**
+ * Gets the quote type used for an attribute value
+ */
+export function getAttributeValueQuoteType(node: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
+  const valueNode = isHTMLAttributeValueNode(node) ? node : node.value
+  if (!valueNode) return null
+
+  if (valueNode.quoted && valueNode.open_quote) {
+    return valueNode.open_quote.value === '"' ? "double" : "single"
+  }
+
+  return "none"
+}
+
+/**
+ * Checks if an attribute value is quoted
+ */
+export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolean {
+  if (!isHTMLAttributeValueNode(attributeNode.value)) return false
+
+  return !!attributeNode.value.quoted
+}
+
+/**
+ * Iterates over all attributes of an element or open tag node
+ */
+export function forEachAttribute(node: HTMLElementNode | HTMLOpenTagNode, callback: (attributeNode: HTMLAttributeNode) => void): void {
+  for (const attribute of getAttributes(node)) {
+    callback(attribute)
+  }
+}
+
+// --- Position Utilities ---
 
 /**
  * Compares two positions to determine if the first comes before the second

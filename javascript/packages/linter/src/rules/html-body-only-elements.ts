@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, isBodyOnlyTag } from "./rule-utils.js"
+import { BaseRuleVisitor, isBodyOnlyTag } from "./rule-utils.js"
+import { getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
@@ -8,7 +9,7 @@ class HTMLBodyOnlyElementsVisitor extends BaseRuleVisitor {
   private elementStack: string[] = []
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node)?.toLowerCase()
+    const tagName = getTagLocalName(node)
     if (!tagName) return
 
     this.checkBodyOnlyElement(node, tagName)

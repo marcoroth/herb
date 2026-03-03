@@ -1,12 +1,5 @@
-import {
-  StimulusRuleVisitor,
-  HerbParserRule,
-  didyoumean,
-  forEachAttribute,
-  getAttributeName,
-  getStaticAttributeValue,
-  hasStaticAttributeValue
-} from './rule-utils.js'
+import { StimulusRuleVisitor, HerbParserRule } from './rule-utils.js'
+import { getAttributeName, getStaticAttributeValue, hasStaticAttributeValue, forEachAttribute, didyoumean } from "@herb-tools/core"
 
 import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from '../types.js'
 import type { ParseResult, HTMLOpenTagNode, HTMLAttributeNode } from '@herb-tools/core'
@@ -62,7 +55,8 @@ export class DataValueValidVisitor extends StimulusRuleVisitor {
         const valueDefinition = controller.controllerDefinition.values.find(value => value.name === valueName)
 
         if (!valueDefinition) {
-          const suggestion = didyoumean(valueName, controller.controllerDefinition.values.map((v: any) => v.name))
+          const match = didyoumean(valueName, controller.controllerDefinition.values.map((v: any) => v.name), 2)
+          const suggestion = match ? ` Did you mean \`${match}\`?` : ""
 
           this.addOffense(
             `Unknown value \`${valueName}\` on controller \`${identifier}\`.${suggestion}`,

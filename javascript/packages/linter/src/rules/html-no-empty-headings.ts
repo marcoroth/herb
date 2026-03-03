@@ -1,14 +1,15 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, getAttributes, findAttributeByName, getAttributeValue, HEADING_TAGS, getOpenTag } from "./rule-utils.js"
-import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode } from "@herb-tools/core"
+import { BaseRuleVisitor, HEADING_TAGS } from "./rule-utils.js"
+import { getTagLocalName } from "@herb-tools/core"
+import { isLiteralNode, isHTMLTextNode, isHTMLElementNode, isERBOutputNode, isERBControlFlowNode, getStaticAttributeValue } from "@herb-tools/core"
 
 import type { Node } from "@herb-tools/core"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+import type { HTMLElementNode, ParseResult } from "@herb-tools/core"
 
 class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = getTagName(node)?.toLowerCase()
+    const tagName = getTagLocalName(node)
     if (tagName === "template") return
 
     this.checkHeadingElement(node)
@@ -16,14 +17,11 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
   }
 
   private checkHeadingElement(node: HTMLElementNode): void {
-    const openTag = getOpenTag(node)
-    if (!openTag) return
-
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     if (!tagName) return
 
     const isStandardHeading = HEADING_TAGS.has(tagName)
-    const isAriaHeading = this.hasHeadingRole(openTag)
+    const isAriaHeading = this.hasHeadingRole(node)
 
     if (!isStandardHeading && !isAriaHeading) {
       return
@@ -89,31 +87,13 @@ class NoEmptyHeadingsVisitor extends BaseRuleVisitor {
     return false
   }
 
-  private hasHeadingRole(node: HTMLOpenTagNode): boolean {
-    const attributes = getAttributes(node)
-    const roleAttribute = findAttributeByName(attributes, "role")
-
-    if (!roleAttribute) {
-      return false
-    }
-
-    const roleValue = getAttributeValue(roleAttribute)
-    return roleValue === "heading"
+  private hasHeadingRole(node: HTMLElementNode): boolean {
+    return getStaticAttributeValue(node, "role") === "heading"
   }
 
   private isElementAccessible(node: HTMLElementNode): boolean {
-    const openTag = getOpenTag(node)
-    if (!openTag) return true
-
-    const attributes = getAttributes(openTag)
-    const ariaHiddenAttribute = findAttributeByName(attributes, "aria-hidden")
-
-    if (ariaHiddenAttribute) {
-      const ariaHiddenValue = getAttributeValue(ariaHiddenAttribute)
-
-      if (ariaHiddenValue === "true") {
-        return false
-      }
+    if (getStaticAttributeValue(node, "aria-hidden") === "true") {
+      return false
     }
 
     if (!node.body || node.body.length === 0) {

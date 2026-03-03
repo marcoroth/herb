@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import { ERBToRubyStringPrinter } from "@herb-tools/printer"
 import { filterNodes, ERBContentNode, LiteralNode, isNode } from "@herb-tools/core"
@@ -14,7 +15,7 @@ class ERBPreferImageTagHelperVisitor extends BaseRuleVisitor {
   }
 
   private checkImgTag(openTag: HTMLOpenTagNode): void {
-    const tagName = getTagName(openTag)
+    const tagName = getTagLocalName(openTag)
 
     if (tagName !== "img") return
 

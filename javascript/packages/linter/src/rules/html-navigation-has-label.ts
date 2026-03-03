@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -11,7 +12,7 @@ class NavigationHasLabelVisitor extends BaseRuleVisitor {
   }
 
   private checkNavigationElement(node: HTMLOpenTagNode): void {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     const isNavElement = tagName === "nav"
     const hasNavigationRole = this.hasRoleNavigation(node)
 

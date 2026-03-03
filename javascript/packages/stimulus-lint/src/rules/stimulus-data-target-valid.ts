@@ -1,4 +1,5 @@
-import { StimulusRuleVisitor, HerbParserRule, didyoumean, getStaticAttributeValue, hasStaticAttributeValue, getAttributeName } from "./rule-utils.js"
+import { StimulusRuleVisitor, HerbParserRule } from "./rule-utils.js"
+import { getStaticAttributeValue, hasStaticAttributeValue, getAttributeName, getTokenList, didyoumean } from "@herb-tools/core"
 
 import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"
@@ -27,14 +28,15 @@ class DataTargetValidVisitor extends StimulusRuleVisitor {
       return
     }
 
-    const targetNames = value.trim().split(/\s+/).filter((name: string) => name.length > 0)
+    const targetNames = getTokenList(value)
 
     for (const targetName of targetNames) {
       if (this.stimulusProject) {
         const controller = this.stimulusProject.registeredControllers.find(controller => controller.identifier === identifier)
 
         if (controller && controller.controllerDefinition.targetNames && !controller.controllerDefinition.targetNames.includes(targetName)) {
-          const suggestion = didyoumean(targetName, controller.controllerDefinition.targetNames)
+          const match = didyoumean(targetName, controller.controllerDefinition.targetNames, 2)
+          const suggestion = match ? ` Did you mean \`${match}\`?` : ""
           this.addOffense(`Unknown target \`${targetName}\` on controller \`${identifier}\`.${suggestion}`, attributeNode.location)
         }
       }

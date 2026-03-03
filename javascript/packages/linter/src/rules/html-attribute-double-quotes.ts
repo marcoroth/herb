@@ -1,6 +1,6 @@
 import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
-import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams, getAttributeValueQuoteType, hasAttributeValue } from "./rule-utils.js"
-import { filterLiteralNodes } from "@herb-tools/core"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams, StaticAttributeDynamicValueParams } from "./rule-utils.js"
+import { filterLiteralNodes, getAttributeValueQuoteType, hasAttributeValue } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, HTMLAttributeNode } from "@herb-tools/core"

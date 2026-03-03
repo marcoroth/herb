@@ -1,5 +1,6 @@
 import { ParserRule } from "../types.js"
-import { BaseRuleVisitor, getTagName, hasAttribute, getAttributeValue, findAttributeByName, getAttributes } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getAttributeValue, findAttributeByName, getAttributes, getTagLocalName } from "@herb-tools/core"
 
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
@@ -37,7 +38,7 @@ class NoAriaHiddenOnFocusableVisitor extends BaseRuleVisitor {
   }
 
   private isFocusable(node: HTMLOpenTagNode): boolean {
-    const tagName = getTagName(node)
+    const tagName = getTagLocalName(node)
     if (!tagName) return false
 
     const tabIndexValue = this.getTabIndexValue(node)

@@ -213,17 +213,132 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("spaced ERB tags on separate line from block element preserves format", () => {
-    const source = dedent`
-      <div class="form-inputs">
-        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
-      </div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <div class="form-inputs">
         <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
       </div>
     `)
+  })
+
+  test("preserves content of element with whitespace-pre-line class (issue #1095)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("preserves content of element with whitespace-pre-line class and multiline body (issue #1095)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line">
+                  <%= option[:value] %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("preserves content of element with whitespace-pre class", () => {
+    expectFormattedToMatch(`<span class="whitespace-pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with whitespace-pre-wrap class", () => {
+    expectFormattedToMatch(`<span class="whitespace-pre-wrap">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with whitespace-break-spaces class", () => {
+    expectFormattedToMatch(`<span class="whitespace-break-spaces">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space: pre", () => {
+    expectFormattedToMatch(`<span style="white-space: pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space: pre-line", () => {
+    expectFormattedToMatch(`<span style="white-space: pre-line">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space:pre (no space)", () => {
+    expectFormattedToMatch(`<span style="white-space:pre">  some   spaced   text  </span>`)
+  })
+
+  test("does not treat whitespace-normal class as content preserving", () => {
+    expectFormattedToMatch(`<span class="whitespace-normal">some text</span>`)
+  })
+
+  test("does not treat whitespace-nowrap class as content preserving", () => {
+    expectFormattedToMatch(`<span class="whitespace-nowrap">some text</span>`)
+  })
+
+  test("does not treat inline style white-space: normal as content preserving", () => {
+    expectFormattedToMatch(`<span style="white-space: normal">some text</span>`)
+  })
+
+  test("does not treat inline style white-space: nowrap as content preserving", () => {
+    expectFormattedToMatch(`<span style="white-space: nowrap">some text</span>`)
+  })
+
+  test("preserves content with Tailwind responsive prefix md:whitespace-pre-line", () => {
+    expectFormattedToMatch(`<span class="md:whitespace-pre-line">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with Tailwind state prefix hover:whitespace-pre", () => {
+    expectFormattedToMatch(`<span class="hover:whitespace-pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with chained Tailwind prefix lg:hover:whitespace-pre-wrap", () => {
+    expectFormattedToMatch(`<span class="lg:hover:whitespace-pre-wrap">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with inline style white-space: pre !important", () => {
+    expectFormattedToMatch(`<span style="white-space: pre !important">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with white-space among other style properties", () => {
+    expectFormattedToMatch(`<span style="color: red; white-space: pre-wrap; font-size: 12px">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of block element with whitespace-preserving class", () => {
+    expectFormattedToMatch(dedent`
+      <div class="whitespace-pre">  some   spaced
+        text  with
+        newlines  </div>
+    `)
+  })
+
+  test("preserves content when whitespace-preserving class is among many classes", () => {
+    expectFormattedToMatch(`<span class="flex items-center whitespace-pre-line text-sm truncate">  some   spaced   text  </span>`)
+  })
+
+  test("preserves nested elements inside whitespace-preserving parent", () => {
+    expectFormattedToMatch(dedent`
+      <div class="whitespace-pre-line">
+        <span>  some   text  </span>
+        <strong>  more   text  </strong>
+      </div>
+    `)
+  })
+
+  test("preserves content with white-space as last style property without trailing semicolon", () => {
+    expectFormattedToMatch(`<span style="color: red; white-space: pre">  some   spaced   text  </span>`)
+    expectFormattedToMatch(`<span style="color: red; white-space: pre;">  some   spaced   text  </span>`)
+    expectFormattedToMatch(`<span style="white-space: pre; color: red; ">  some   spaced   text  </span>`)
   })
 
   test("preserves ERB interpolation in attributes", () => {

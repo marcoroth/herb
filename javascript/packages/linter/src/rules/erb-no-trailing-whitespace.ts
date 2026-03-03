@@ -1,6 +1,8 @@
-import { Location, isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, Visitor } from "@herb-tools/core"
-import { getTagName, findNodeAtPosition } from "./rule-utils.js"
+import { Location, Visitor } from "@herb-tools/core"
 import { ParserRule, Mutable, BaseAutofixContext } from "../types.js"
+
+import { isHTMLOpenTagNode, isHTMLTextNode, isLiteralNode, getTagLocalName } from "@herb-tools/core"
+import { findNodeAtPosition } from "./rule-utils.js"
 
 import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLElementNode, HTMLTextNode, LiteralNode, ParseResult, DocumentNode, ERBNode } from "@herb-tools/core"
@@ -33,7 +35,7 @@ class SkipZoneCollector extends Visitor {
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     if (isHTMLOpenTagNode(node.open_tag)) {
-      const tagName = getTagName(node.open_tag)
+      const tagName = getTagLocalName(node.open_tag)
 
       if (tagName && this.SKIP_TAGS.has(tagName)) {
         this.skipZones.push({
