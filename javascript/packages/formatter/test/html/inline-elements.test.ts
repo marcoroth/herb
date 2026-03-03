@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter - inline elements", () => {
   beforeAll(async () => {
@@ -14,74 +16,48 @@ describe("@herb-tools/formatter - inline elements", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves inline elements in text flow (issue #251)", () => {
-    const source = dedent`
-      <p>Em<em>pha</em>sis</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Em<em>pha</em>sis</p>
     `)
   })
 
   test("preserves strong elements inline", () => {
-    const source = dedent`
-      <p>This is <strong>important</strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This is <strong>important</strong> text.</p>
     `)
   })
 
   test("preserves span elements inline", () => {
-    const source = dedent`
-      <div>Some <span>inline</span> content</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <div>Some <span>inline</span> content</div>
     `)
   })
 
   test("preserves links with attributes inline", () => {
-    const source = dedent`
-      <p>A <a href="/link">link</a> in text</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>A <a href="/link">link</a> in text</p>
     `)
   })
 
   test("preserves multiple inline elements", () => {
-    const source = dedent`
-      <p>This has <em>emphasis</em> and <strong>strong</strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This has <em>emphasis</em> and <strong>strong</strong> text.</p>
     `)
   })
 
   test("preserves nested inline elements", () => {
-    const source = dedent`
-      <p>This is <strong>very <em>important</em></strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This is <strong>very <em>important</em></strong> text.</p>
     `)
   })
 
   test("preserves code elements inline", () => {
-    const source = dedent`
-      <p>Use the <code>foo()</code> function.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Use the <code>foo()</code> function.</p>
     `)
   })
@@ -99,11 +75,7 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("preserves del and ins elements inline", () => {
-    const source = dedent`
-      <p>The price is <del>$50</del> <ins>$40</ins>.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>The price is <del>$50</del> <ins>$40</ins>.</p>
     `)
   })
@@ -123,13 +95,13 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("preserves inline elements with multiple attributes", () => {
-    const source = dedent`
-      <p>Visit <a href="/page" class="link" target="_blank">our page</a> today.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Visit <a href="/page" class="link" target="_blank">our page</a> today.</p>
     `)
+  })
+
+  test("preserves inline elements when content starts on same line", () => {
+    expectFormattedToMatch(`<p>Em<em>pha</em>sis</p>`)
   })
 
   test("normalizes malformed closing tag placement", () => {
@@ -139,7 +111,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
@@ -151,7 +125,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
@@ -198,12 +174,47 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("Element with ERB interpolation in text content", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <h2 class="title">Posts (<%= @posts.count %>)</h2>
+    `)
+  })
+
+  test("block element with ERB children on separate lines preserves format", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %>
+        <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("adjacent ERB tags on same line as block element expand to multiline", () => {
+    const source = dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %><%= f.input :password_confirmation %></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <h2 class="title">Posts (<%= @posts.count %>)</h2>
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %><%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("spaced ERB tags on same line as block element expand to multiline", () => {
+    const source = dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %> <%= f.input :password_confirmation %></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("preserves ERB interpolation in attributes", () => {
+    expectFormattedToMatch(dedent`
+      <div class="<%= some_var %> style="<%= some_other_var" %>"></div>
     `)
   })
 })
