@@ -1,4 +1,9 @@
 # Generated from lib/herb.rb with RBS::Inline
 
 module Herb
+  def self.configuration: (?untyped project_path) -> untyped
+
+  def self.configure: (?untyped project_path) -> untyped
+
+  def self.reset_configuration!: () -> untyped
 end

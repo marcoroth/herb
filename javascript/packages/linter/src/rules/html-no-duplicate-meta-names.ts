@@ -1,4 +1,4 @@
-import { isHTMLElementNode } from "@herb-tools/core"
+import { isHTMLElementNode, isHTMLOpenTagNode } from "@herb-tools/core"
 import { getTagName, getAttributeName, getAttributeValue, forEachAttribute } from "./rule-utils"
 
 import { ControlFlowTrackingVisitor, ControlFlowType } from "./rule-utils"
@@ -104,20 +104,21 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
   }
 
   private extractAttributes(node: HTMLElementNode, metaTag: MetaTag): void {
-    if (isHTMLElementNode(node) && node.open_tag) {
-      forEachAttribute(node.open_tag as any, (attributeNode: HTMLAttributeNode) => {
-        const name = getAttributeName(attributeNode)
-        const value = getAttributeValue(attributeNode)?.trim()
+    if (!isHTMLElementNode(node)) return
+    if (!isHTMLOpenTagNode(node.open_tag)) return
 
-        if (name === "name" && value) {
-          metaTag.nameValue = value
-        } else if (name === "http-equiv" && value) {
-          metaTag.httpEquivValue = value
-        } else if (name === "media" && value) {
-          metaTag.mediaValue = value
-        }
-      })
-    }
+    forEachAttribute(node.open_tag, (attributeNode: HTMLAttributeNode) => {
+      const name = getAttributeName(attributeNode)
+      const value = getAttributeValue(attributeNode)?.trim()
+
+      if (name === "name" && value) {
+        metaTag.nameValue = value
+      } else if (name === "http-equiv" && value) {
+        metaTag.httpEquivValue = value
+      } else if (name === "media" && value) {
+        metaTag.mediaValue = value
+      }
+    })
   }
 
   private handleControlFlowMeta(metaTag: MetaTag): void {
@@ -182,7 +183,7 @@ class HTMLNoDuplicateMetaNamesVisitor extends ControlFlowTrackingVisitor<BaseAut
 
 export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   static autocorrectable = false
-  name = "html-no-duplicate-meta-names"
+  static ruleName = "html-no-duplicate-meta-names"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -192,7 +193,7 @@ export class HTMLNoDuplicateMetaNamesRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.name, context)
+    const visitor = new HTMLNoDuplicateMetaNamesVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

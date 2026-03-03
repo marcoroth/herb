@@ -1,11 +1,10 @@
-import { colorize } from "./color.js"
+import { colorize, ANSI_REGEX, ANSI_REGEX_START, ANSI_ESCAPE } from "./color.js"
 
 export class LineWrapper {
   static wrapLine(line: string, maxWidth: number, indent: string = ""): string[] {
     if (maxWidth <= 0) return [line]
 
-    const ansiRegex = /\x1b\[[0-9;]*m/g
-    const plainLine = line.replace(ansiRegex, "")
+    const plainLine = line.replace(ANSI_REGEX, "")
 
     if (plainLine.length <= maxWidth) {
       return [line]
@@ -79,8 +78,8 @@ export class LineWrapper {
     while (plainIndex < endIndex && styledIndex < styledLine.length) {
       const char = styledLine[styledIndex]
 
-      if (char === "\x1b") {
-        const ansiMatch = styledLine.slice(styledIndex).match(/^\x1b\[[0-9;]*m/)
+      if (char === ANSI_ESCAPE) {
+        const ansiMatch = styledLine.slice(styledIndex).match(ANSI_REGEX_START)
 
         if (ansiMatch) {
           result += ansiMatch[0]
@@ -104,8 +103,8 @@ export class LineWrapper {
     while (plainIndex < startIndex && styledIndex < styledLine.length) {
       const char = styledLine[styledIndex]
 
-      if (char === "\x1b") {
-        const ansiMatch = styledLine.slice(styledIndex).match(/^\x1b\[[0-9;]*m/)
+      if (char === ANSI_ESCAPE) {
+        const ansiMatch = styledLine.slice(styledIndex).match(ANSI_REGEX_START)
 
         if (ansiMatch) {
           styledIndex += ansiMatch[0].length
@@ -122,8 +121,7 @@ export class LineWrapper {
 
   static truncateLine(line: string, maxWidth: number): string {
     if (maxWidth <= 0) return line
-    const ansiRegex = /\x1b\[[0-9;]*m/g
-    const plainLine = line.replace(ansiRegex, "")
+    const plainLine = line.replace(ANSI_REGEX, "")
 
     if (plainLine.length <= maxWidth) {
       return line

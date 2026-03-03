@@ -144,7 +144,7 @@ export class CLI {
     const startTime = Date.now()
     const startDate = new Date()
 
-    let { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
+    const { patterns, configFile, formatOption, showTiming, theme, wrapLines, truncateLines, useGitHubActions, fix, fixUnsafe, ignoreDisableComments, force, init, loadCustomRules, failLevel } = this.argumentParser.parse(process.argv)
 
     this.determineProjectPath(patterns)
 
@@ -199,7 +199,7 @@ export class CLI {
       }
 
       let files: string[]
-      let explicitFiles: string[] = []
+      const explicitFiles: string[] = []
 
       if (patterns.length === 0) {
         files = await config.findFilesForTool('linter', this.projectPath)

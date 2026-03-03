@@ -57,6 +57,12 @@ module Herb
 
       def component?: () -> untyped
 
+      def sidecar_component?: () -> untyped
+
+      def component_display_name: () -> untyped
+
+      def classify: (untyped name) -> untyped
+
       def in_head_context?: () -> untyped
 
       def in_script_or_style_context?: () -> untyped

@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+npm login
+
 echo "Building all packages..."
 yarn nx run-many -t build --all
 
@@ -18,7 +20,7 @@ for package_dir in javascript/packages/*; do
     fi
 
     echo "Publishing $package..."
-    (cd "$package_dir" && yarn publish)
+    (cd "$package_dir" && npm publish)
   fi
 done
 

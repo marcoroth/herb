@@ -566,7 +566,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.7
+          version: 0.8.10
           linter:
             enabled: true
         `)
@@ -592,7 +592,7 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.7
+          version: 0.8.10
           linter:
             enabled: true
         `)
@@ -642,14 +642,14 @@ describe("CLI Output Formatting", () => {
         mkdirSync(join(tempDir, "app/views/widgets"), { recursive: true })
 
         writeFileSync(join(tempDir, ".herb.yml"), dedent`
-          version: 0.8.7
+          version: 0.8.10
           linter:
             enabled: true
         `)
 
         writeFileSync(join(tempDir, ".herb/rules/no-hello-world.mjs"), dedent`
           export default class NoHelloWorldRule {
-            name = "no-hello-world"
+            static ruleName = "no-hello-world"
 
             check(document, context) {
               const errors = []
@@ -678,6 +678,41 @@ describe("CLI Output Formatting", () => {
         expect(output).toContain("Loaded 1 custom rule")
         expect(output).toContain("no-hello-world")
         expect(output).toContain("Text contains 'hello world' which is not allowed")
+        expect(exitCode).toBe(1)
+      } finally {
+        if (existsSync(tempDir)) {
+          rmSync(tempDir, { recursive: true, force: true })
+        }
+      }
+    })
+
+    test("exits with an error when a custom rule uses the deprecated 'name' instance property", () => {
+      try {
+        mkdirSync(join(tempDir, ".herb/rules"), { recursive: true })
+        mkdirSync(join(tempDir, "app/views"), { recursive: true })
+
+        writeFileSync(join(tempDir, ".herb.yml"), dedent`
+          version: 0.8.10
+          linter:
+            enabled: true
+        `)
+
+        writeFileSync(join(tempDir, ".herb/rules/deprecated-rule.mjs"), dedent`
+          export default class DeprecatedRule {
+            name = "deprecated-rule"
+
+            check(document, context) {
+              return []
+            }
+          }
+        `)
+
+        writeFileSync(join(tempDir, "app/views/test.html.erb"), "<div></div>")
+
+        const { output, exitCode } = runLinterFromPath(join(tempDir, "app/views/test.html.erb"))
+
+        expect(output).toContain("sets 'name' as an instance property")
+        expect(output).toContain("static ruleName = \"deprecated-rule\"")
         expect(exitCode).toBe(1)
       } finally {
         if (existsSync(tempDir)) {

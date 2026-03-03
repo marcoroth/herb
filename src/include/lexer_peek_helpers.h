@@ -28,7 +28,9 @@ bool lexer_peek_for_cdata_end(const lexer_T* lexer, uint32_t offset);
 
 bool lexer_peek_for_html_comment_start(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset);
+bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer, uint32_t offset);
 
+bool lexer_peek_erb_start(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_erb_dash_close_tag(const lexer_T* lexer, uint32_t offset);
 bool lexer_peek_erb_percent_close_tag(const lexer_T* lexer, uint32_t offset);

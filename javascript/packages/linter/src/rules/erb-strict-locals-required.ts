@@ -29,7 +29,7 @@ class ERBStrictLocalsRequiredVisitor extends BaseSourceRuleVisitor {
 
 export class ERBStrictLocalsRequiredRule extends SourceRule {
   static unsafeAutocorrectable = true
-  name = "erb-strict-locals-required"
+  static ruleName = "erb-strict-locals-required"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -39,7 +39,7 @@ export class ERBStrictLocalsRequiredRule extends SourceRule {
   }
 
   check(source: string, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBStrictLocalsRequiredVisitor(this.name, context)
+    const visitor = new ERBStrictLocalsRequiredVisitor(this.ruleName, context)
 
     visitor.visit(source)
 

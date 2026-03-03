@@ -267,7 +267,7 @@ npx @herb-tools/linter --format=simple --github
 
 **Example: `--github` (GitHub annotations + detailed format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.10::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 [error] Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
 
@@ -282,7 +282,7 @@ template.html.erb:3:3
 
 **Example: `--format=simple --github` (GitHub annotations + simple format)**
 ```
-::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.7::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
+::error file=template.html.erb,line=3,col=3,title=html-img-require-alt • @herb-tools/linter@0.8.10::Missing required `alt` attribute on `<img>` tag [html-img-require-alt]%0A%0A%0Atemplate.html.erb:3:3%0A%0A      1 │ <div>%0A      2 │   <span>Test content</span>%0A  →   3 │   <img src="test.jpg">%0A        │    ~~~%0A      4 │ </div>%0A
 
 template.html.erb:
   3:3 ✗ Missing required `alt` attribute on `<img>` tag [html-img-require-alt]
@@ -532,7 +532,7 @@ class NoDivTagsVisitor extends BaseRuleVisitor {
 }
 
 export default class NoDivTagsRule extends ParserRule {
-  name = "no-div-tags"
+  static ruleName = "no-div-tags"
 
   check(result, context) {
     const visitor = new NoDivTagsVisitor(this.name, context)
@@ -566,7 +566,7 @@ class NoInlineStylesVisitor extends BaseRuleVisitor {
 }
 
 export default class NoInlineStylesRule {
-  name = "no-inline-styles"
+  static ruleName = "no-inline-styles"
 
   check(parseResult, context) {
     const visitor = new NoInlineStylesVisitor(this.name, context)
@@ -590,7 +590,7 @@ You can override the `defaultConfig` getter to customize these defaults, as show
 **Rule Properties:**
 
 - `static type` - Optional, defaults to `"parser"`. Can be `"parser"`, `"lexer"`, or `"source"`
-- `name` - Required, the rule identifier used in configuration and output
+- `static ruleName` - Required, the rule identifier used in configuration and output
 - `check()` - Required, the method that checks for offenses
 - `defaultConfig` - Optional, returns the default configuration for the rule
 - `isEnabled()` - Optional, dynamically determines if the rule should run

@@ -7,7 +7,7 @@ import { hasBalancedParentheses, splitByTopLevelComma } from "./string-utils.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { ParseResult, ERBContentNode } from "@herb-tools/core"
 
-export const STRICT_LOCALS_PATTERN = /^locals:\s*\([^)]*\)\s*$/
+export const STRICT_LOCALS_PATTERN = /^locals:\s+\(.*\)\s*$/s
 
 function isValidStrictLocalsFormat(content: string): boolean {
   return STRICT_LOCALS_PATTERN.test(content)
@@ -42,11 +42,15 @@ function detectLocalsWithoutColon(content: string): boolean {
 }
 
 function detectSingularLocal(content: string): boolean {
-  return /^local:/.test(content)
+  return content.startsWith('local:')
 }
 
 function detectMissingColonBeforeParens(content: string): boolean {
   return /^locals\s+\(/.test(content)
+}
+
+function detectMissingSpaceAfterColon(content: string): boolean {
+  return content.startsWith('locals:(')
 }
 
 function detectMissingParentheses(content: string): boolean {
@@ -240,6 +244,11 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
       return
     }
 
+    if (detectMissingSpaceAfterColon(commentContent)) {
+      this.addOffense("Missing space after `locals:`. Rails Strict Locals require a space after the colon: `<%# locals: (...) %>`.", node.location)
+      return
+    }
+
     if (detectMissingParentheses(commentContent)) {
       this.addOffense("Wrap parameters in parentheses: `locals: (name:)` or `locals: (name: default)`.", node.location)
       return
@@ -255,7 +264,7 @@ class ERBStrictLocalsCommentSyntaxVisitor extends BaseRuleVisitor {
 }
 
 export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
-  name = "erb-strict-locals-comment-syntax"
+  static ruleName = "erb-strict-locals-comment-syntax"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -265,7 +274,7 @@ export class ERBStrictLocalsCommentSyntaxRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.name, context)
+    const visitor = new ERBStrictLocalsCommentSyntaxVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

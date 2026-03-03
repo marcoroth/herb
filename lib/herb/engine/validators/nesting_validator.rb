@@ -31,7 +31,7 @@ module Herb
         end
 
         def validate_no_block_elements_in_paragraph(node)
-          block_elements = %w[div section article header footer nav aside p h1 h2 h3 h4 h5 h6 ul ol dl table form]
+          block_elements = ["div", "section", "article", "header", "footer", "nav", "aside", "p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dl", "table", "form"]
 
           node.body.each do |child|
             next unless child.is_a?(Herb::AST::HTMLElementNode)
@@ -58,7 +58,7 @@ module Herb
         end
 
         def validate_no_interactive_in_button(node)
-          interactive_elements = %w[a button input select textarea]
+          interactive_elements = ["a", "button", "input", "select", "textarea"]
 
           node.body.each do |child|
             next unless child.is_a?(Herb::AST::HTMLElementNode)

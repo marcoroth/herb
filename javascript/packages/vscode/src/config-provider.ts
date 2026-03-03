@@ -302,7 +302,7 @@ export class HerbConfigProvider implements vscode.TreeDataProvider<ConfigItem> {
     try {
       const document = await vscode.workspace.openTextDocument(configPath)
       await vscode.window.showTextDocument(document)
-    } catch (error) {
+    } catch (_error) {
       const result = await vscode.window.showInformationMessage(
         "Herb configuration file (.herb.yml) not found. Would you like to create one?",
         "Create Config",
@@ -332,7 +332,7 @@ class ConfigItem extends vscode.TreeItem {
     public readonly contextValue: string
   ) {
     super(label, collapsibleState)
+
     this.tooltip = `${this.label}: ${this.description}`
-    this.description = description
   }
 }

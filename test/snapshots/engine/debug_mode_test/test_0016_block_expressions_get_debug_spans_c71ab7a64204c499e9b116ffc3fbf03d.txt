@@ -2,7 +2,7 @@
 source: "Engine::DebugModeTest#test_0016_block expressions get debug spans"
 input: "{source: \"<%= content_for :sidebar do %>\\n  <div>Sidebar content</div>\\n<% end %>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << content_for :sidebar do; _buf << '
+_buf = ::String.new; _buf << (content_for :sidebar do; _buf << '
   <div>Sidebar content</div>
-'.freeze; end 
+'.freeze; end )
 _buf.to_s

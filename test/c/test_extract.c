@@ -1,8 +1,9 @@
 #include "include/test.h"
 
-#include "../../src/include/herb.h"
 #include "../../src/include/extract.h"
 #include "../../src/include/util/hb_buffer.h"
+
+#include <string.h>
 
 TEST(extract_ruby_single_erb_with_semicolons)
   char* source = "<% if %>\n<% end %>";
@@ -145,6 +146,84 @@ TEST(extract_ruby_inline_comment_complex)
   free(result);
 END
 
+TEST(extract_ruby_with_options_semicolons_false)
+  char* source = "<% x = 1 %> <% y = 2 %>";
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
+
+  herb_extract_ruby_options_T options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  options.semicolons = false;
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &options);
+
+  ck_assert_str_eq(output.value, "   x = 1       y = 2   ");
+
+  free(output.value);
+END
+
+TEST(extract_ruby_with_options_comments_true)
+  char* source = "<%# comment %>\n<% code %>";
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
+
+  herb_extract_ruby_options_T options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  options.comments = true;
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &options);
+
+  ck_assert_str_eq(output.value, "  # comment   \n   code  ;");
+
+  free(output.value);
+END
+
+TEST(extract_ruby_with_options_preserve_positions_false)
+  char* source = "<% x = 1 %> <% y = 2 %>";
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
+
+  herb_extract_ruby_options_T options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  options.preserve_positions = false;
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &options);
+
+  ck_assert_str_eq(output.value, " x = 1 \n y = 2 ");
+
+  free(output.value);
+END
+
+TEST(extract_ruby_with_options_preserve_positions_false_and_comments_true)
+  char* source = "<%# comment %><%= something %>";
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
+
+  herb_extract_ruby_options_T options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+  options.preserve_positions = false;
+  options.comments = true;
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &options);
+
+  ck_assert_str_eq(output.value, "# comment \n something ");
+
+  free(output.value);
+END
+
+TEST(extract_ruby_with_options_default)
+  char* source = "<% x = 1 %> <% y = 2 %>";
+
+  hb_buffer_T output;
+  hb_buffer_init(&output, strlen(source));
+
+  herb_extract_ruby_to_buffer_with_options(source, &output, &HERB_EXTRACT_RUBY_DEFAULT_OPTIONS);
+
+  ck_assert_str_eq(output.value, "   x = 1  ;    y = 2  ;");
+
+  free(output.value);
+END
+
 TCase *extract_tests(void) {
   TCase *extract = tcase_create("Extract");
 
@@ -163,6 +242,11 @@ TCase *extract_tests(void) {
   tcase_add_test(extract, extract_ruby_inline_comment_multiline);
   tcase_add_test(extract, extract_ruby_inline_comment_between_code);
   tcase_add_test(extract, extract_ruby_inline_comment_complex);
+  tcase_add_test(extract, extract_ruby_with_options_semicolons_false);
+  tcase_add_test(extract, extract_ruby_with_options_comments_true);
+  tcase_add_test(extract, extract_ruby_with_options_preserve_positions_false);
+  tcase_add_test(extract, extract_ruby_with_options_preserve_positions_false_and_comments_true);
+  tcase_add_test(extract, extract_ruby_with_options_default);
 
   return extract;
 }

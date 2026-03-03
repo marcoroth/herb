@@ -21,8 +21,9 @@ typedef enum {
   TOKEN_HTML_TAG_END,         // >
   TOKEN_HTML_TAG_SELF_CLOSE,  // />
 
-  TOKEN_HTML_COMMENT_START, // <!--
-  TOKEN_HTML_COMMENT_END,   // -->
+  TOKEN_HTML_COMMENT_START,       // <!--
+  TOKEN_HTML_COMMENT_END,         // -->
+  TOKEN_HTML_COMMENT_INVALID_END, // --!>
 
   TOKEN_ERB_START,   // <%, <%=, <%%=, <%#, <%-, <%==, <%%
   TOKEN_ERB_CONTENT, // Ruby Code
@@ -47,6 +48,9 @@ typedef enum {
   TOKEN_ERROR,
   TOKEN_EOF,
 } token_type_T;
+
+// Sentinel value for variadic functions
+#define TOKEN_SENTINEL 99999999
 
 typedef struct TOKEN_STRUCT {
   char* value;

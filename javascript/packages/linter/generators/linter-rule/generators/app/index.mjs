@@ -156,7 +156,7 @@ export default class extends Generator {
     const newImport = `import { ${this.ruleClassName} } from "./rules/${this.ruleName}.js"`
 
     try {
-      let defaultRulesContent = await fs.readFile(defaultRulesPath, "utf8")
+      const defaultRulesContent = await fs.readFile(defaultRulesPath, "utf8")
 
       const lines = defaultRulesContent.split("\n")
       const lastImportIndex = lines.findLastIndex(line => line.startsWith("import"))
@@ -174,7 +174,7 @@ export default class extends Generator {
     const newRule = `- [\`${this.ruleName}\`](./${this.ruleName}.md) - ${this.description}`
 
     try {
-      let readmeContent = await fs.readFile(readmePath, "utf8")
+      const readmeContent = await fs.readFile(readmePath, "utf8")
 
       if (!readmeContent.includes(newRule)) {
         const lines = readmeContent.split("\n")

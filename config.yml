@@ -12,7 +12,7 @@ errors:
   types:
     - name: UnexpectedError
       message:
-        template: "%s. Expected: `%s`, found: `%s`."
+        template: "%s. Expected: %s, found: %s."
         arguments:
           - description
           - expected
@@ -30,10 +30,10 @@ errors:
 
     - name: UnexpectedTokenError
       message:
-        template: "Found `%s` when expecting `%s` at (%u:%u)."
+        template: "Found %s when expecting %s at (%u:%u)."
         arguments:
-          - token_type_to_string(found->type)
-          - token_type_to_string(expected_type)
+          - token_type_to_friendly_string(found->type)
+          - token_type_to_friendly_string(expected_type)
           - found->location.start.line
           - found->location.start.column
 
@@ -85,22 +85,6 @@ errors:
           type: token
 
         - name: closing_tag
-          type: token
-
-    - name: QuotesMismatchError
-      message:
-        template: "String opened with %s but closed with %s at (%u:%u)."
-        arguments:
-          - opening_quote->value
-          - closing_quote->value
-          - closing_quote->location.start.line
-          - closing_quote->location.start.column
-
-      fields:
-        - name: opening_quote
-          type: token
-
-        - name: closing_quote
           type: token
 
     - name: VoidElementClosingTagError
@@ -178,6 +162,180 @@ errors:
 
       fields: []
 
+    - name: ERBCaseWithConditionsError
+      message:
+        template: "A `case` statement with `when`/`in` conditions in a single ERB tag cannot be reliably parsed, compiled, and formatted. Use separate ERB tags for `case` and its conditions (e.g., `<% case x %>` followed by `<% when y %>`)."
+        arguments: []
+
+      fields: []
+
+    - name: ConditionalElementMultipleTagsError
+      message:
+        template: "Conditional element pattern detected at (%zu:%zu) but the conditional block contains multiple HTML tags. Each conditional element must wrap exactly one opening and one closing tag. Consider nesting the conditionals individually."
+        arguments:
+          - line
+          - column
+
+      fields:
+        - name: line
+          type: size_t
+
+        - name: column
+          type: size_t
+
+    - name: ConditionalElementConditionMismatchError
+      message:
+        template: "Conditional element `<%s>` has mismatched conditions: opening uses `%s` at (%zu:%zu) but closing uses `%s` at (%zu:%zu). Both conditions must be identical."
+        arguments:
+          - tag_name
+          - open_condition
+          - open_line
+          - open_column
+          - close_condition
+          - close_line
+          - close_column
+
+      fields:
+        - name: tag_name
+          type: string
+
+        - name: open_condition
+          type: string
+
+        - name: open_line
+          type: size_t
+
+        - name: open_column
+          type: size_t
+
+        - name: close_condition
+          type: string
+
+        - name: close_line
+          type: size_t
+
+        - name: close_column
+          type: size_t
+
+    - name: InvalidCommentClosingTagError
+      message:
+        template: "Invalid comment closing tag `%s` at (%u:%u). Use `-->` instead of `--!>`."
+        arguments:
+          - closing_tag->value
+          - closing_tag->location.start.line
+          - closing_tag->location.start.column
+
+      fields:
+        - name: closing_tag
+          type: token
+
+    - name: OmittedClosingTagError
+      message:
+        template: "Element `<%s>` at (%u:%u) has its closing tag omitted. While valid HTML, consider adding an explicit `</%s>` closing tag at (%u:%u) for clarity, or set `strict: false` to allow this."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - opening_tag->value
+          - insertion_point.line
+          - insertion_point.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: insertion_point
+          type: position
+
+    - name: UnclosedOpenTagError
+      message:
+        template: "Opening tag `<%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
+    - name: UnclosedCloseTagError
+      message:
+        template: "Closing tag `</%s>` at (%u:%u) is missing closing `>`."
+        arguments:
+          - tag_name->value
+          - tag_name->location.start.line
+          - tag_name->location.start.column
+
+      fields:
+        - name: tag_name
+          type: token
+
+    - name: UnclosedQuoteError
+      message:
+        template: "Attribute value opened with %s at (%u:%u) was never closed."
+        arguments:
+          - opening_quote->value
+          - opening_quote->location.start.line
+          - opening_quote->location.start.column
+
+      fields:
+        - name: opening_quote
+          type: token
+
+    - name: MissingAttributeValueError
+      message:
+        template: "Attribute `%s` at (%u:%u) is missing a value after the equals sign."
+        arguments:
+          - attribute_name
+          - start.line
+          - start.column
+
+      fields:
+        - name: attribute_name
+          type: string
+
+    - name: UnclosedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) is missing closing `%%>`."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+    - name: StrayERBClosingTagError
+      message:
+        template: "Stray `%%>` found at (%u:%u). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%%>`, use the HTML entities `&percnt;&gt;` instead."
+        arguments:
+          - start.line
+          - start.column
+
+      fields: []
+
+    - name: NestedERBTagError
+      message:
+        template: "ERB tag `%s` at (%u:%u) was terminated by nested `<%%` tag at (%zu:%zu). Nesting `<%%` tags is not supported."
+        arguments:
+          - opening_tag->value
+          - opening_tag->location.start.line
+          - opening_tag->location.start.column
+          - nested_tag_line
+          - nested_tag_column
+
+      fields:
+        - name: opening_tag
+          type: token
+
+        - name: nested_tag_line
+          type: size_t
+
+        - name: nested_tag_column
+          type: size_t
+
 warnings:
   fields: []
   types: []
@@ -234,6 +392,20 @@ nodes:
         - name: is_void
           type: boolean
 
+    - name: HTMLConditionalOpenTagNode
+      fields:
+        - name: conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: tag_name
+          type: token
+
+        - name: is_void
+          type: boolean
+
     - name: HTMLCloseTagNode
       fields:
         - name: tag_opening
@@ -244,16 +416,23 @@ nodes:
 
         - name: children
           type: array
-          kind: Node
+          kind: WhitespaceNode
 
         - name: tag_closing
+          type: token
+
+    - name: HTMLOmittedCloseTagNode
+      fields:
+        - name: tag_name
           type: token
 
     - name: HTMLElementNode
       fields:
         - name: open_tag
           type: node
-          kind: HTMLOpenTagNode
+          kind:
+            - HTMLOpenTagNode
+            - HTMLConditionalOpenTagNode
 
         - name: tag_name
           type: token
@@ -264,10 +443,49 @@ nodes:
 
         - name: close_tag
           type: node
-          kind: HTMLCloseTagNode
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
 
         - name: is_void
           type: boolean
+
+        - name: source
+          type: element_source
+
+    - name: HTMLConditionalElementNode
+      fields:
+        - name: condition
+          type: string
+
+        - name: open_conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: open_tag
+          type: borrowed_node
+          kind: HTMLOpenTagNode
+
+        - name: body
+          type: array
+          kind: Node
+
+        - name: close_tag
+          type: borrowed_node
+          kind:
+            - HTMLCloseTagNode
+            - HTMLOmittedCloseTagNode
+
+        - name: close_conditional
+          type: node
+          kind:
+            - ERBIfNode
+            - ERBUnlessNode
+
+        - name: tag_name
+          type: token
 
         - name: source
           type: element_source
@@ -291,11 +509,9 @@ nodes:
       fields:
         - name: children
           type: array
-          kind: Node
-          # kind:
-          #   - LiteralNode
-          #   - ERBContentNode
-          #   - WhitespaceNode
+          kind:
+            - LiteralNode
+            - ERBContentNode
 
     - name: HTMLAttributeNode
       fields:
@@ -437,10 +653,9 @@ nodes:
 
         - name: subsequent
           type: node
-          kind: Node
-          # kind:
-          #   - ERBIfNode
-          #   - ERBElseNode
+          kind:
+            - ERBIfNode
+            - ERBElseNode
 
         - name: end_node
           type: node

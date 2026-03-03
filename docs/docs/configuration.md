@@ -125,20 +125,30 @@ linter:
 ### Default File Patterns
 
 By default, Herb processes these file patterns:
+- `**/*.herb`
 - `**/*.html`
-- `**/*.rhtml`
 - `**/*.html.erb`
+- `**/*.html.herb`
 - `**/*.html+*.erb`
+- `**/*.rhtml`
 - `**/*.turbo_stream.erb`
 
-The `include` patterns are **additive** - they add to the defaults rather than replacing them.
+And excludes these patterns by default:
+- `coverage/**/*`
+- `log/**/*`
+- `node_modules/**/*`
+- `storage/**/*`
+- `tmp/**/*`
+- `vendor/**/*`
+
+Both `include` and `exclude` patterns are **additive**, they add to the defaults rather than replacing them.
 
 ### Linter Options
 
 - **`enabled`**: `true` or `false` - Enable or disable the linter globally
 - **`failLevel`** <Badge type="info" text="v0.8.7+" />: `error`, `warning`, `info`, or `hint` - Exit with error code when diagnostics of this severity or higher are present (default: `error`). Useful for CI/CD pipelines where you want stricter enforcement. Can also be set via `--fail-level` CLI flag.
 - **`include`**: Array of glob patterns - Additional file patterns to lint (additive to defaults)
-- **`exclude`**: Array of glob patterns - File patterns to exclude from linting
+- **`exclude`**: Array of glob patterns - Additional patterns to exclude from linting (additive to defaults)
 
 ### Rule Configuration Options
 
@@ -146,17 +156,29 @@ Each rule can be configured with the following options:
 
 - **`enabled`**: `true` or `false` - Enable or disable the rule
 - **`severity`**: `error`, `warning`, `info`, or `hint` - Set the severity level
-- **`include`**: Array of glob patterns - Apply rule to additional files (additive, ignored when `only` is present)
-- **`only`**: Array of glob patterns - Restrict rule to ONLY these files (overrides all `include` patterns)
+- **`include`**: Array of glob patterns - Restrict rule to files matching these patterns (can override parent excludes)
+- **`only`**: Array of glob patterns - Restrict rule to ONLY these files (can override parent excludes, overrides `include`)
 - **`exclude`**: Array of glob patterns - Exclude files from this rule (always applied)
 
 #### Pattern Precedence
 
-When configuring rule-level file patterns, the precedence is:
+When configuring rule-level file patterns:
 
-1. If **`only`** is specified: Rule applies ONLY to files matching `only` patterns (all `include` patterns are ignored)
-2. If **`only`** is NOT specified but **`include`** is: Rule applies ONLY to files matching `include` patterns
+1. If **`only`** or **`include`** matches the path: **bypasses parent-level excludes** (`linter.exclude`, `files.exclude`, defaults)
+2. If no `only`/`include` patterns or path doesn't match: respects all parent-level excludes
 3. **`exclude`** is always applied regardless of `include` or `only`
+
+::: tip Overriding Parent Excludes
+Use `rule.include` or `rule.only` to run a specific rule on files that are normally excluded. For example, to lint files in `vendor/` with a specific rule even though `vendor/**/*` is excluded by default:
+
+```yaml
+linter:
+  rules:
+    html-tag-name-lowercase:
+      include:
+        - 'vendor/**/*'
+```
+:::
 
 Example:
 
@@ -206,7 +228,7 @@ formatter:
 - **`indentWidth`**: Number (default: `2`) - Spaces per indent level
 - **`maxLineLength`**: Number (default: `80`) - Maximum line length
 - **`include`**: Array of glob patterns - Additional patterns to format (additive to defaults)
-- **`exclude`**: Array of glob patterns - Patterns to exclude from formatting
+- **`exclude`**: Array of glob patterns - Additional patterns to exclude from formatting (additive to defaults)
 
 ::: warning Experimental Feature
 The formatter is currently experimental. Enable it in `.herb.yml` and test thoroughly before using in production.
@@ -218,41 +240,161 @@ Global file configuration that applies to both linter and formatter:
 
 ```yaml [.herb.yml]
 files:
-  # Additional glob patterns to include (additive to defaults)
+  # Additional glob patterns to include (additive to defaults, applies to all tools)
   include:
     - '**/*.xml.erb'
     - '**/*.rss.erb'
 
-  # Global exclude patterns (applies to all tools)
+  # Additional global exclude patterns (additive to defaults, applies to all tools)
   exclude:
     - 'public/**/*'
-    - 'tmp/**/*'
-    - 'vendor/**/*'
+    - 'generated/**/*'
 ```
 
 ### Configuration Merging
 
+Both `include` and `exclude` patterns are **additive** at all levels - your patterns are added to the defaults rather than replacing them.
+
 File patterns are merged in the following order:
 
-1. **Defaults**: Built-in patterns (`**/*.html.erb`, etc.)
-2. **Top-level `files.include`**: Added to defaults
-3. **Tool-level `include`** (e.g., `linter.include`): Added to the combined list
-4. **Exclusions**: Tool-level `exclude` takes precedence over top-level `files.exclude`
+1. **Defaults**: Built-in include patterns (`**/*.html.erb`, etc.) and exclude patterns (`node_modules/**/*`, `vendor/**/*`, etc.)
+2. **Top-level `files.include`/`files.exclude`**: Added to defaults
+3. **Tool-level patterns** (e.g., `linter.include`, `linter.exclude`): Added to the combined list
 
 Example:
 
 ```yaml [.herb.yml]
 files:
   include:
-    - '**/*.xml.erb'    # Applies to both linter and formatter
+    - '**/*.xml.erb'    # Applies to all tools
+  exclude:
+    - 'public/**/*'     # Added to default excludes for all tools
 
 linter:
   include:
     - '**/*.custom.erb' # Only applies to linter
   exclude:
-    - 'vendor/**/*'     # Linter-specific exclusion
+    - 'legacy/**/*'     # Added to excludes for linter only
 ```
 
 Result for linter:
 - Includes: All defaults + `**/*.xml.erb` + `**/*.custom.erb`
-- Excludes: `vendor/**/*`
+- Excludes: All defaults + `public/**/*` + `legacy/**/*`
+
+::: tip Including Previously Excluded Files
+If you want to include files from a default-excluded directory (e.g., `coverage/**`), add a more specific pattern to `include`. Include patterns are checked before exclude patterns when finding files.
+:::
+
+## Inspecting Configuration
+
+Use the `bundle exec herb config` command to inspect the resolved configuration and see which files will be processed:
+
+Show general configuration and files:
+
+```bash
+bundle exec herb config
+```
+
+Show configuration for a specific tool:
+```bash
+bundle exec herb config --tool linter
+bundle exec herb config --tool formatter
+```
+
+If you don't specify a path it assume the current directory
+```bash
+bundle exec herb config .
+```
+
+You can also pass in a path to another directory:
+```bash
+bundle exec herb config ../other-project/
+```
+
+### General Configuration
+
+Running `bundle exec herb config .` displays:
+
+- **Project root**: The detected project root directory
+- **Config file**: Path to the `.herb.yml` file (or "(using defaults)" if none)
+- **Include patterns**: All patterns used to find files
+- **Exclude patterns**: All patterns used to exclude files
+- **Files**: List of included and excluded files with their status
+
+Example output:
+
+```
+Herb Configuration
+
+Project root: /path/to/project
+Config file:  /path/to/project/.herb.yml
+
+Include patterns:
+  + **/*.herb
+  + **/*.html.erb
+  + **/*.html
+  + **/*.turbo_stream.erb
+
+Exclude patterns:
+  - coverage/**/*
+  - node_modules/**/*
+  - vendor/**/*
+
+Files (42 included, 5 excluded):
+
+  Included:
+    ✓ app/views/home/index.html.erb
+    ✓ app/views/layouts/application.html.erb
+
+  Excluded:
+    ✗ vendor/bundle/gem/template.html.erb (vendor/**/*)]
+
+Tip: Use --tool linter or --tool formatter to see tool-specific configuration
+```
+
+### Tool-Specific Configuration
+
+Use the `--tool` flag to see configuration for a specific tool:
+
+```bash
+bundle exec herb config . --tool linter
+```
+
+This shows:
+- Combined patterns from `files.*` and `linter.*` (or `formatter.*`)
+- Files that would be processed by that specific tool
+- A warning if the tool is disabled in configuration
+
+Example output:
+
+```
+Herb Configuration for Linter
+
+Project root: /path/to/project
+Config file:  /path/to/project/.herb.yml
+
+Include patterns (files + linter):
+  + **/*.html.erb
+  + **/*.custom.erb
+
+Exclude patterns (files + linter):
+  - node_modules/**/*
+  - vendor/**/*
+  - legacy/**/*
+
+Files for linter (40 included, 7 excluded):
+
+  Included:
+    ✓ app/views/home/index.html.erb
+
+  Excluded:
+    ✗ legacy/old.html.erb (legacy/**/*)
+```
+
+::: tip Debugging Configuration
+The `bundle exec herb config` command is useful for:
+- Verifying your `.herb.yml` is being read correctly
+- Understanding why certain files are included or excluded
+- Debugging tool-specific patterns
+- Confirming the project root detection
+:::

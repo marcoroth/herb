@@ -21,7 +21,7 @@ export async function showConfigDetails() {
 
       hasConfigFile = true
       config = await Config.loadForEditor(workspaceRoot!)
-    } catch (error) {
+    } catch (_error) {
       // No config file or failed to load
     }
   }

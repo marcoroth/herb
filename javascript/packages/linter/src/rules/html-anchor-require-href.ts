@@ -1,10 +1,10 @@
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor, getTagName, getAttribute, getStaticAttributeValue } from "./rule-utils.js"
 
 import { ParserRule } from "../types.js"
 import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
 import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
-class AnchorRechireHrefVisitor extends BaseRuleVisitor {
+class AnchorRequireHrefVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
     this.checkATag(node)
     super.visitHTMLOpenTagNode(node)
@@ -17,9 +17,21 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
       return
     }
 
-    if (!hasAttribute(node, "href")) {
+    const hrefAttribute = getAttribute(node, "href")
+
+    if (!hrefAttribute) {
       this.addOffense(
-        "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
+        "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a `<button>` instead.",
+        node.tag_name!.location,
+      )
+      return
+    }
+
+    const hrefValue = getStaticAttributeValue(hrefAttribute)
+
+    if (hrefValue === "#") {
+      this.addOffense(
+        "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a `<button>` instead.",
         node.tag_name!.location,
       )
     }
@@ -27,7 +39,7 @@ class AnchorRechireHrefVisitor extends BaseRuleVisitor {
 }
 
 export class HTMLAnchorRequireHrefRule extends ParserRule {
-  name = "html-anchor-require-href"
+  static ruleName = "html-anchor-require-href"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -37,7 +49,7 @@ export class HTMLAnchorRequireHrefRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AnchorRechireHrefVisitor(this.name, context)
+    const visitor = new AnchorRequireHrefVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

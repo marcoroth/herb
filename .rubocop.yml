@@ -29,10 +29,12 @@ Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
 Style/WordArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/SymbolArray:
-  Enabled: false
+  Enabled: true
+  EnforcedStyle: brackets
 
 Style/BlockDelimiters:
   Enabled: false
@@ -89,12 +91,13 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Exclude:
+    - bin/**/*
     - lib/herb/cli.rb
-    - lib/herb/project.rb
-    - lib/herb/visitor.rb
+    - lib/herb/configuration.rb
     - lib/herb/engine.rb
     - lib/herb/engine/**/*.rb
-    - bin/**/*
+    - lib/herb/project.rb
+    - lib/herb/visitor.rb
     - test/**/*_test.rb
 
 Metrics/ModuleLength:

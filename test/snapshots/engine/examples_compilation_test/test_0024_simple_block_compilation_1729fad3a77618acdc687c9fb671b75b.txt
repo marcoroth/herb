@@ -1,0 +1,12 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0024_simple block compilation"
+input: "{source: \"<% tag.div do %>\\n  <% if true %>\\n    Hello1\\n  <% else %>\\n    Hello2\\n  <% end %>\\n<% end %>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; tag.div do 
+   if true 
+ _buf << '    Hello1
+'.freeze;   else 
+ _buf << '    Hello2
+'.freeze;   end 
+ end 
+_buf.to_s

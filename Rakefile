@@ -7,6 +7,34 @@ require "rake/testtask"
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
   t.libs << "lib"
+  t.test_files = FileList["test/**/*_test.rb"].exclude("test/engine/**/*_test.rb", "test/integration/**/*_test.rb")
+end
+
+task :test_tip do
+  puts "TIP: This only runs core tests. Other test tasks available:"
+  puts "  rake test:all"
+  puts "  rake test:engine"
+  puts "  rake test:integration"
+  puts
+end
+
+Rake::Task[:test].enhance([:test_tip])
+
+Rake::TestTask.new("test:engine") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = FileList["test/engine/**/*_test.rb"]
+end
+
+Rake::TestTask.new("test:integration") do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = FileList["test/integration/**/*_test.rb"]
+end
+
+Rake::TestTask.new("test:all") do |t|
+  t.libs << "test"
+  t.libs << "lib"
   t.test_files = FileList["test/**/*_test.rb"]
 end
 
@@ -22,17 +50,17 @@ end
 begin
   require "rake/extensiontask"
 
-  PLATFORMS = %w[
-    aarch64-linux-gnu
-    aarch64-linux-musl
-    arm-linux-gnu
-    arm-linux-musl
-    arm64-darwin
-    x86_64-darwin
-    x86_64-linux-gnu
-    x86_64-linux-musl
-    x86-linux-gnu
-    x86-linux-musl
+  PLATFORMS = [
+    "aarch64-linux-gnu",
+    "aarch64-linux-musl",
+    "arm-linux-gnu",
+    "arm-linux-musl",
+    "arm64-darwin",
+    "x86_64-darwin",
+    "x86_64-linux-gnu",
+    "x86_64-linux-musl",
+    "x86-linux-gnu",
+    "x86-linux-musl"
   ].freeze
 
   exttask = Rake::ExtensionTask.new do |ext|

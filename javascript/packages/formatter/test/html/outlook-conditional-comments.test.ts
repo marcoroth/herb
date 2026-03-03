@@ -1,9 +1,11 @@
-import { describe, test, expect, beforeAll } from "vitest"
+import { describe, test, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("Outlook conditional comments", () => {
   beforeAll(async () => {
@@ -13,20 +15,20 @@ describe("Outlook conditional comments", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves conditional comment syntax on same line - issue #877", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <!--[if mso]>
       <center>
       <![endif]-->
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("handles conditional comment with content", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <!--[if mso]>
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
@@ -34,23 +36,19 @@ describe("Outlook conditional comments", () => {
         </tr>
       </table>
       <![endif]-->
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("handles negated conditional comment", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <!--[if !mso]><!-->
       <div>Not Outlook</div>
       <!--<![endif]-->
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 
   test("handles conditional comment with ERB interpolation", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <!--[if mso]>
       <table width="<%= width %>" cellpadding="0" cellspacing="0">
         <tr>
@@ -58,8 +56,6 @@ describe("Outlook conditional comments", () => {
         </tr>
       </table>
       <![endif]-->
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(source)
+    `)
   })
 })

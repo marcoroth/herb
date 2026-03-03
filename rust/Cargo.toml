@@ -1,6 +1,12 @@
+[workspace]
+members = [
+  ".",
+  "herb-config"
+]
+
 [package]
 name = "herb"
-version = "0.8.7"
+version = "0.8.10"
 edition = "2021"
 authors = ["Marco Roth <marco.roth@intergga.ch>"]
 description = "Rust bindings for Herb"
@@ -21,7 +27,7 @@ include = [
 [lib]
 name = "herb"
 path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [[bin]]
 name = "herb-rust"

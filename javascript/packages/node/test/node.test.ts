@@ -18,7 +18,7 @@ describe("@herb-tools/node", () => {
   test("version() returns a string", async () => {
     const version = Herb.version
     expect(typeof version).toBe("string")
-    expect(version).toBe("@herb-tools/node@0.8.7, @herb-tools/core@0.8.7, libprism@1.8.0, libherb@0.8.7 (Node.js C++ native extension)")
+    expect(version).toBe("@herb-tools/node@0.8.10, @herb-tools/core@0.8.10, libprism@1.9.0, libherb@0.8.10 (Node.js C++ native extension)")
   })
 
   test("parse() can process a simple template", async () => {
@@ -36,6 +36,30 @@ describe("@herb-tools/node", () => {
     const ruby = Herb.extractRuby(simpleHtml)
     expect(ruby).toBeDefined()
     expect(ruby).toBe('         "Hello World"  ;      ')
+  })
+
+  test("extractRuby() with semicolons: false", async () => {
+    const source = "<% x = 1 %> <% y = 2 %>"
+    const ruby = Herb.extractRuby(source, { semicolons: false })
+    expect(ruby).toBe("   x = 1       y = 2   ")
+  })
+
+  test("extractRuby() with comments: true", async () => {
+    const source = "<%# comment %>\n<% code %>"
+    const ruby = Herb.extractRuby(source, { comments: true })
+    expect(ruby).toBe("  # comment   \n   code  ;")
+  })
+
+  test("extractRuby() with preserve_positions: false", async () => {
+    const source = "<% x = 1 %> <% y = 2 %>"
+    const ruby = Herb.extractRuby(source, { preserve_positions: false })
+    expect(ruby).toBe(" x = 1 \n y = 2 ")
+  })
+
+  test("extractRuby() with preserve_positions: false and comments: true", async () => {
+    const source = "<%# comment %><%= something %>"
+    const ruby = Herb.extractRuby(source, { preserve_positions: false, comments: true })
+    expect(ruby).toBe("# comment \n something ")
   })
 
   test("extractHTML() extracts HTML content", async () => {
@@ -56,6 +80,20 @@ describe("@herb-tools/node", () => {
     expect(result.value.inspect()).toContain(
       "@ ERBEndNode (location: (1:17)-(1:26))",
     )
+  })
+
+  test("parse() with analyze: true (default) transforms ERB nodes", async () => {
+    const erb = "<% if true %>true<% end %>"
+    const result = Herb.parse(erb)
+    expect(result.value.inspect()).toContain("@ ERBIfNode")
+    expect(result.value.inspect()).not.toContain("@ ERBContentNode")
+  })
+
+  test("parse() with analyze: false skips ERB node transformation", async () => {
+    const erb = "<% if true %>true<% end %>"
+    const result = Herb.parse(erb, { analyze: false })
+    expect(result.value.inspect()).toContain("@ ERBContentNode")
+    expect(result.value.inspect()).not.toContain("@ ERBIfNode")
   })
 
   test("parse() without track_whitespace option ignores whitespace", async () => {

@@ -3,6 +3,13 @@ source: "Parser::ScriptStyleTest#test_0006_script tag with ERB-like content in s
 input: "<script>console.log(\"<%\");</script>"
 ---
 @ DocumentNode (location: (1:0)-(1:35))
+├── errors: (1 error)
+│   └── @ RubyParseError (location: (1:35)-(1:35))
+│       ├── message: "string_literal_eof: unterminated string meets end of file"
+│       ├── error_message: "unterminated string meets end of file"
+│       ├── diagnostic_id: "string_literal_eof"
+│       └── level: "syntax"
+│
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))
         ├── errors: (1 error)
@@ -24,20 +31,14 @@ input: "<script>console.log(\"<%\");</script>"
         │   │   └── content: "console.log(\""
         │   │
         │   └── @ ERBContentNode (location: (1:21)-(1:35))
-        │       ├── errors: (2 errors)
-        │       │   ├── @ UnexpectedTokenError (location: (1:23)-(1:35))
-        │       │   │   ├── message: "Found `TOKEN_ERROR` when expecting `TOKEN_ERB_CONTENT` at (1:23)."
-        │       │   │   ├── expected_type: "TOKEN_ERB_CONTENT"
-        │       │   │   └── found: "");</script>" (location: (1:23)-(1:35))
-        │       │   │
-        │       │   └── @ UnexpectedTokenError (location: (1:35)-(1:35))
-        │       │       ├── message: "Found `TOKEN_EOF` when expecting `TOKEN_ERB_END` at (1:35)."
-        │       │       ├── expected_type: "TOKEN_ERB_END"
-        │       │       └── found: "" (location: (1:35)-(1:35))
+        │       ├── errors: (1 error)
+        │       │   └── @ UnclosedERBTagError (location: (1:21)-(1:35))
+        │       │       ├── message: "ERB tag `<%` at (1:21) is missing closing `%>`."
+        │       │       └── opening_tag: "<%" (location: (1:21)-(1:23))
         │       │
         │       ├── tag_opening: "<%" (location: (1:21)-(1:23))
         │       ├── content: "");</script>" (location: (1:23)-(1:35))
-        │       ├── tag_closing: "" (location: (1:35)-(1:35))
+        │       ├── tag_closing: ∅
         │       ├── parsed: true
         │       └── valid: false
         │

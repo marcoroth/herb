@@ -20,7 +20,7 @@ class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
 }
 
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
-  name = "html-aria-role-heading-requires-level"
+  static ruleName = "html-aria-role-heading-requires-level"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -30,7 +30,7 @@ export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
-    const visitor = new AriaRoleHeadingRequiresLevel(this.name, context)
+    const visitor = new AriaRoleHeadingRequiresLevel(this.ruleName, context)
 
     visitor.visit(result.value)
 

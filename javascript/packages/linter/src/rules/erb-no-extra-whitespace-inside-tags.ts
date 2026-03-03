@@ -97,7 +97,7 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
 
 export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAutofixContext> {
   static autocorrectable = true
-  name = "erb-no-extra-whitespace-inside-tags"
+  static ruleName = "erb-no-extra-whitespace-inside-tags"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -107,7 +107,7 @@ export class ERBNoExtraWhitespaceRule extends ParserRule<ERBNoExtraWhitespaceAut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<ERBNoExtraWhitespaceAutofixContext>[] {
-    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.name, context)
+    const visitor = new ERBNoExtraWhitespaceInsideTagsVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

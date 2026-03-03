@@ -1,7 +1,7 @@
 #ifndef HERB_PRISM_HELPERS_H
 #define HERB_PRISM_HELPERS_H
 
-#include "analyzed_ruby.h"
+#include "analyze/analyzed_ruby.h"
 #include "ast_nodes.h"
 #include "errors.h"
 #include "location.h"

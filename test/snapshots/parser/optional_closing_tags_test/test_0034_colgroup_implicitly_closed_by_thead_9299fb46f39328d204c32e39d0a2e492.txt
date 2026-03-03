@@ -1,0 +1,159 @@
+---
+source: "Parser::OptionalClosingTagsTest#test_0034_colgroup implicitly closed by thead"
+input: |2-
+<table>
+  <colgroup>
+    <col>
+  <thead>
+    <tr><th>Header</th></tr>
+  </thead>
+</table>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:8))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:7))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   │       ├── tag_closing: ">" (location: (1:6)-(1:7))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "table" (location: (1:1)-(1:6))
+    │   ├── body: (4 items)
+    │   │   ├── @ HTMLTextNode (location: (1:7)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(4:2))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ OmittedClosingTagError (location: (2:2)-(2:12))
+    │   │   │   │       ├── message: "Element `<colgroup>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</colgroup>` closing tag at (4:2) for clarity, or set `strict: false` to allow this."
+    │   │   │   │       ├── opening_tag: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │       └── insertion_point: (4:2)
+    │   │   │   │
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:12))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:11)-(2:12))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (2:12)-(3:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (3:4)-(3:9))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (3:4)-(3:9))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (3:4)-(3:5))
+    │   │   │   │   │   │       ├── tag_name: "col" (location: (3:5)-(3:8))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (3:8)-(3:9))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "col" (location: (3:5)-(3:8))
+    │   │   │   │   │   ├── body: []
+    │   │   │   │   │   ├── close_tag: ∅
+    │   │   │   │   │   ├── is_void: true
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (3:9)-(4:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLOmittedCloseTagNode (location: (4:2)-(4:2))
+    │   │   │   │       └── tag_name: "colgroup" (location: (2:3)-(2:11))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (4:2)-(6:10))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:9))
+    │   │   │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │   │   │       ├── tag_name: "thead" (location: (4:3)-(4:8))
+    │   │   │   │       ├── tag_closing: ">" (location: (4:8)-(4:9))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "thead" (location: (4:3)-(4:8))
+    │   │   │   ├── body: (3 items)
+    │   │   │   │   ├── @ HTMLTextNode (location: (4:9)-(5:4))
+    │   │   │   │   │   └── content: "\n    "
+    │   │   │   │   │
+    │   │   │   │   ├── @ HTMLElementNode (location: (5:4)-(5:28))
+    │   │   │   │   │   ├── open_tag:
+    │   │   │   │   │   │   └── @ HTMLOpenTagNode (location: (5:4)-(5:8))
+    │   │   │   │   │   │       ├── tag_opening: "<" (location: (5:4)-(5:5))
+    │   │   │   │   │   │       ├── tag_name: "tr" (location: (5:5)-(5:7))
+    │   │   │   │   │   │       ├── tag_closing: ">" (location: (5:7)-(5:8))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── is_void: false
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── tag_name: "tr" (location: (5:5)-(5:7))
+    │   │   │   │   │   ├── body: (1 item)
+    │   │   │   │   │   │   └── @ HTMLElementNode (location: (5:8)-(5:23))
+    │   │   │   │   │   │       ├── open_tag:
+    │   │   │   │   │   │       │   └── @ HTMLOpenTagNode (location: (5:8)-(5:12))
+    │   │   │   │   │   │       │       ├── tag_opening: "<" (location: (5:8)-(5:9))
+    │   │   │   │   │   │       │       ├── tag_name: "th" (location: (5:9)-(5:11))
+    │   │   │   │   │   │       │       ├── tag_closing: ">" (location: (5:11)-(5:12))
+    │   │   │   │   │   │       │       ├── children: []
+    │   │   │   │   │   │       │       └── is_void: false
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── tag_name: "th" (location: (5:9)-(5:11))
+    │   │   │   │   │   │       ├── body: (1 item)
+    │   │   │   │   │   │       │   └── @ HTMLTextNode (location: (5:12)-(5:18))
+    │   │   │   │   │   │       │       └── content: "Header"
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── close_tag:
+    │   │   │   │   │   │       │   └── @ HTMLCloseTagNode (location: (5:18)-(5:23))
+    │   │   │   │   │   │       │       ├── tag_opening: "</" (location: (5:18)-(5:20))
+    │   │   │   │   │   │       │       ├── tag_name: "th" (location: (5:20)-(5:22))
+    │   │   │   │   │   │       │       ├── children: []
+    │   │   │   │   │   │       │       └── tag_closing: ">" (location: (5:22)-(5:23))
+    │   │   │   │   │   │       │
+    │   │   │   │   │   │       ├── is_void: false
+    │   │   │   │   │   │       └── source: "HTML"
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── close_tag:
+    │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (5:23)-(5:28))
+    │   │   │   │   │   │       ├── tag_opening: "</" (location: (5:23)-(5:25))
+    │   │   │   │   │   │       ├── tag_name: "tr" (location: (5:25)-(5:27))
+    │   │   │   │   │   │       ├── children: []
+    │   │   │   │   │   │       └── tag_closing: ">" (location: (5:27)-(5:28))
+    │   │   │   │   │   │
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
+    │   │   │   │   │
+    │   │   │   │   └── @ HTMLTextNode (location: (5:28)-(6:2))
+    │   │   │   │       └── content: "\n  "
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (6:2)-(6:10))
+    │   │   │   │       ├── tag_opening: "</" (location: (6:2)-(6:4))
+    │   │   │   │       ├── tag_name: "thead" (location: (6:4)-(6:9))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (6:9)-(6:10))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:10)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:8))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "table" (location: (7:2)-(7:7))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:7)-(7:8))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:8)-(8:0))
+        └── content: "\n"

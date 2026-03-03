@@ -10,6 +10,18 @@ int is_newline(int character) {
   return character == '\n' || character == '\r';
 }
 
+int is_whitespace(int character) {
+  return character == ' ' || character == '\t' || character == '\n' || character == '\r';
+}
+
+const char* skip_whitespace(const char* pointer) {
+  while (is_whitespace(*pointer)) {
+    pointer++;
+  }
+
+  return pointer;
+}
+
 hb_string_T escape_newlines(hb_string_T input) {
   hb_buffer_T buffer;
 

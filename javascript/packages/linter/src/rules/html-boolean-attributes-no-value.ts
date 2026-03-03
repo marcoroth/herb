@@ -34,7 +34,7 @@ class BooleanAttributesNoValueVisitor extends AttributeVisitorMixin<BooleanAttri
 
 export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttributeAutofixContext> {
   static autocorrectable = true
-  name = "html-boolean-attributes-no-value"
+  static ruleName = "html-boolean-attributes-no-value"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -44,7 +44,7 @@ export class HTMLBooleanAttributesNoValueRule extends ParserRule<BooleanAttribut
   }
 
   check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<BooleanAttributeAutofixContext>[] {
-    const visitor = new BooleanAttributesNoValueVisitor(this.name, context)
+    const visitor = new BooleanAttributesNoValueVisitor(this.ruleName, context)
 
     visitor.visit(result.value)
 

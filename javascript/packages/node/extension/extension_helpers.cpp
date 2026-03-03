@@ -170,7 +170,7 @@ napi_value CreateLexResult(napi_env env, hb_array_T* tokens, napi_value source) 
   return result;
 }
 
-napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value source) {
+napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value source, parser_options_T* options) {
   napi_value result, errors_array, warnings_array;
 
   napi_create_object(env, &result);
@@ -189,6 +189,20 @@ napi_value CreateParseResult(napi_env env, AST_DOCUMENT_NODE_T* root, napi_value
   napi_set_named_property(env, result, "source", source);
   napi_set_named_property(env, result, "warnings", warnings_array);
   napi_set_named_property(env, result, "errors", errors_array);
+
+  napi_value options_object;
+  napi_create_object(env, &options_object);
+
+  napi_value strict_value, track_whitespace_value, analyze_value;
+  napi_get_boolean(env, options->strict, &strict_value);
+  napi_get_boolean(env, options->track_whitespace, &track_whitespace_value);
+  napi_get_boolean(env, options->analyze, &analyze_value);
+
+  napi_set_named_property(env, options_object, "strict", strict_value);
+  napi_set_named_property(env, options_object, "track_whitespace", track_whitespace_value);
+  napi_set_named_property(env, options_object, "analyze", analyze_value);
+
+  napi_set_named_property(env, result, "options", options_object);
 
   return result;
 }

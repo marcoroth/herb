@@ -1,0 +1,104 @@
+---
+source: "Parser::AttributesTest#test_0081_begin/rescue/else/ensure/end control flow in attributes (no spaces)"
+input: "<div <%begin%>data-one<%rescue%>data-error<%else%>data-success<%ensure%>data-always<%end%>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:97))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:97))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:91))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:90)-(1:91))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBBeginNode (location: (1:5)-(1:90))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: "begin" (location: (1:7)-(1:12))
+        │       │       ├── tag_closing: "%>" (location: (1:12)-(1:14))
+        │       │       ├── statements: (1 item)
+        │       │       │   └── @ HTMLAttributeNode (location: (1:14)-(1:22))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:14)-(1:22))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:14)-(1:22))
+        │       │       │       │               └── content: "data-one"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: ∅
+        │       │       │       └── value: ∅
+        │       │       │
+        │       │       ├── rescue_clause:
+        │       │       │   └── @ ERBRescueNode (location: (1:22)-(1:42))
+        │       │       │       ├── tag_opening: "<%" (location: (1:22)-(1:24))
+        │       │       │       ├── content: "rescue" (location: (1:24)-(1:30))
+        │       │       │       ├── tag_closing: "%>" (location: (1:30)-(1:32))
+        │       │       │       ├── statements: (1 item)
+        │       │       │       │   └── @ HTMLAttributeNode (location: (1:32)-(1:42))
+        │       │       │       │       ├── name:
+        │       │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:32)-(1:42))
+        │       │       │       │       │       └── children: (1 item)
+        │       │       │       │       │           └── @ LiteralNode (location: (1:32)-(1:42))
+        │       │       │       │       │               └── content: "data-error"
+        │       │       │       │       │
+        │       │       │       │       │
+        │       │       │       │       ├── equals: ∅
+        │       │       │       │       └── value: ∅
+        │       │       │       │
+        │       │       │       └── subsequent: ∅
+        │       │       │
+        │       │       ├── else_clause:
+        │       │       │   └── @ ERBElseNode (location: (1:42)-(1:50))
+        │       │       │       ├── tag_opening: "<%" (location: (1:42)-(1:44))
+        │       │       │       ├── content: "else" (location: (1:44)-(1:48))
+        │       │       │       ├── tag_closing: "%>" (location: (1:48)-(1:50))
+        │       │       │       └── statements: (1 item)
+        │       │       │           └── @ HTMLAttributeNode (location: (1:50)-(1:62))
+        │       │       │               ├── name:
+        │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:50)-(1:62))
+        │       │       │               │       └── children: (1 item)
+        │       │       │               │           └── @ LiteralNode (location: (1:50)-(1:62))
+        │       │       │               │               └── content: "data-success"
+        │       │       │               │
+        │       │       │               │
+        │       │       │               ├── equals: ∅
+        │       │       │               └── value: ∅
+        │       │       │
+        │       │       │
+        │       │       ├── ensure_clause:
+        │       │       │   └── @ ERBEnsureNode (location: (1:62)-(1:72))
+        │       │       │       ├── tag_opening: "<%" (location: (1:62)-(1:64))
+        │       │       │       ├── content: "ensure" (location: (1:64)-(1:70))
+        │       │       │       ├── tag_closing: "%>" (location: (1:70)-(1:72))
+        │       │       │       └── statements: (1 item)
+        │       │       │           └── @ HTMLAttributeNode (location: (1:72)-(1:83))
+        │       │       │               ├── name:
+        │       │       │               │   └── @ HTMLAttributeNameNode (location: (1:72)-(1:83))
+        │       │       │               │       └── children: (1 item)
+        │       │       │               │           └── @ LiteralNode (location: (1:72)-(1:83))
+        │       │       │               │               └── content: "data-always"
+        │       │       │               │
+        │       │       │               │
+        │       │       │               ├── equals: ∅
+        │       │       │               └── value: ∅
+        │       │       │
+        │       │       │
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:83)-(1:90))
+        │       │               ├── tag_opening: "<%" (location: (1:83)-(1:85))
+        │       │               ├── content: "end" (location: (1:85)-(1:88))
+        │       │               └── tag_closing: "%>" (location: (1:88)-(1:90))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:91)-(1:97))
+        │       ├── tag_opening: "</" (location: (1:91)-(1:93))
+        │       ├── tag_name: "div" (location: (1:93)-(1:96))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:96)-(1:97))
+        │
+        ├── is_void: false
+        └── source: "HTML"
