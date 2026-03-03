@@ -6,7 +6,7 @@
 
 <h4 align="center">The HTML+ERB Toolchain</h4>
 
-<div align="center">An ecosystem of powerful and seamless developer tools for HTML+ERB templates.</div><br/>
+<div align="center">An ecosystem of powerful and seamless developer tools for HTML+ERB (HTML + Embedded Ruby) templates.</div><br/>
 
 <p align="center">
   <a href="https://rubygems.org/gems/herb"><img alt="Gem Version" src="https://img.shields.io/gem/v/herb"></a>
