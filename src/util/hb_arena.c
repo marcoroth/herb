@@ -1,11 +1,38 @@
 #include "../include/util/hb_arena.h"
 #include "../include/macros.h"
-#include "../include/util/hb_system.h"
 
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
+#ifdef HERB_USE_MALLOC
+#  include <stdlib.h>
+#else
+#  ifdef __linux__
+#    define _GNU_SOURCE
+#  endif
+#  include <sys/mman.h>
+#endif
+
+static void* hb_arena_allocate_page(size_t size) {
+#ifdef HERB_USE_MALLOC
+  return malloc(size);
+#else
+  void* memory = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if (memory == MAP_FAILED) { return NULL; }
+
+  return memory;
+#endif
+}
+
+static void hb_arena_free_page(void* pointer, size_t size) {
+#ifdef HERB_USE_MALLOC
+  free(pointer);
+#else
+  munmap(pointer, size);
+#endif
+}
 
 #define hb_arena_for_each_page(allocator, page)                                                                        \
   for (hb_arena_page_T* page = (allocator)->head; page != NULL; page = page->next)
@@ -50,7 +77,7 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   assert(page_size <= SIZE_MAX - sizeof(hb_arena_page_T));
   size_t total_size = page_size + sizeof(hb_arena_page_T);
 
-  hb_arena_page_T* page = hb_system_allocate_memory(total_size);
+  hb_arena_page_T* page = hb_arena_allocate_page(total_size);
   if (page == NULL) { return false; }
 
   *page = (hb_arena_page_T) { .next = NULL, .capacity = page_size, .position = 0 };
@@ -168,7 +195,7 @@ void hb_arena_free(hb_arena_T* allocator) {
   for (hb_arena_page_T* current = allocator->head; current != NULL;) {
     hb_arena_page_T* next = current->next;
     size_t total_size = sizeof(hb_arena_page_T) + current->capacity;
-    hb_system_free_memory(current, total_size);
+    hb_arena_free_page(current, total_size);
 
     current = next;
   }

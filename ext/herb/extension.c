@@ -1,5 +1,7 @@
 #include <ruby.h>
 
+#include "../../src/include/util/hb_allocator.h"
+
 #include "error_helpers.h"
 #include "extension.h"
 #include "extension_helpers.h"
@@ -39,7 +41,10 @@ static VALUE parse_convert_body(VALUE arg) {
 static VALUE parse_cleanup(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
 
-  if (args->root != NULL) { ast_node_free((AST_NODE_T*) args->root); }
+  if (args->root != NULL) {
+    hb_allocator_T allocator = hb_allocator_with_malloc();
+    ast_node_free((AST_NODE_T*) args->root, &allocator);
+  }
 
   return Qnil;
 }
@@ -53,7 +58,10 @@ static VALUE lex_convert_body(VALUE arg) {
 static VALUE lex_cleanup(VALUE arg) {
   lex_args_T* args = (lex_args_T*) arg;
 
-  if (args->tokens != NULL) { herb_free_tokens(&args->tokens); }
+  if (args->tokens != NULL) {
+    hb_allocator_T allocator = hb_allocator_with_malloc();
+    herb_free_tokens(&args->tokens, &allocator);
+  }
 
   return Qnil;
 }
@@ -75,7 +83,8 @@ static VALUE buffer_cleanup(VALUE arg) {
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  lex_args_T args = { .tokens = herb_lex(string), .source = source };
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  lex_args_T args = { .tokens = herb_lex(string, &allocator), .source = source };
 
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
@@ -83,8 +92,9 @@ static VALUE Herb_lex(VALUE self, VALUE source) {
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
 
+  hb_allocator_T allocator = hb_allocator_with_malloc();
   VALUE source_value = read_file_to_ruby_string(file_path);
-  lex_args_T args = { .tokens = herb_lex_file(file_path), .source = source_value };
+  lex_args_T args = { .tokens = herb_lex_file(file_path, &allocator), .source = source_value };
 
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
@@ -111,7 +121,8 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options),
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  parse_args_T args = { .root = herb_parse(string, &parser_options, &allocator),
                         .source = source,
                         .parser_options = &parser_options };
 
@@ -143,7 +154,8 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  parse_args_T args = { .root = herb_parse(string, &parser_options),
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+  parse_args_T args = { .root = herb_parse(string, &parser_options, &allocator),
                         .source = source_value,
                         .parser_options = &parser_options };
 

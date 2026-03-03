@@ -4,6 +4,7 @@
 #include "lexer_struct.h"
 #include "position.h"
 #include "token_struct.h"
+#include "util/hb_allocator.h"
 #include "util/hb_string.h"
 
 #include <stdarg.h>
@@ -17,9 +18,9 @@ char* token_types_to_friendly_string_valist(token_type_T first_token, va_list ar
 
 #define token_types_to_friendly_string(...) token_types_to_friendly_string_va(__VA_ARGS__, TOKEN_SENTINEL)
 
-token_T* token_copy(token_T* token);
+token_T* token_copy(token_T* token, hb_allocator_T* allocator);
 
-void token_free(token_T* token);
+void token_free(token_T* token, hb_allocator_T* allocator);
 
 bool token_value_empty(const token_T* token);
 

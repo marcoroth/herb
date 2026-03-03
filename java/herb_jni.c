@@ -3,6 +3,7 @@
 
 #include "../../src/include/extract.h"
 #include "../../src/include/herb.h"
+#include "../../src/include/util/hb_allocator.h"
 #include "../../src/include/util/hb_buffer.h"
 
 #include <stdlib.h>
@@ -61,11 +62,13 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     }
   }
 
-  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+
+  AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
   jobject result = CreateParseResult(env, ast, source);
 
-  ast_node_free((AST_NODE_T*) ast);
+  ast_node_free((AST_NODE_T*) ast, &allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -75,11 +78,13 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  hb_array_T* tokens = herb_lex(src);
+  hb_allocator_T allocator = hb_allocator_with_malloc();
+
+  hb_array_T* tokens = herb_lex(src, &allocator);
 
   jobject result = CreateLexResult(env, tokens, source);
 
-  herb_free_tokens(&tokens);
+  herb_free_tokens(&tokens, &allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
