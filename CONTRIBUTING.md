@@ -80,7 +80,7 @@ The `herb` executable exposes a few commands for interacting with `.html.erb` fi
 ❯ ./herb
 ./herb [command] [options]
 
-Herb 🌿 Powerful and seamless HTML-aware ERB parsing and tooling.
+Herb 🌿 Powerful and seamless HTML-aware ERB toolchain.
 
 ./herb lex [file]      -  Lex a file
 ./herb parse [file]    -  Parse a file
