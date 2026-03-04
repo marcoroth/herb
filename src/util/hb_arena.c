@@ -34,7 +34,6 @@ static void hb_arena_free_page(void* pointer, size_t size) {
 #endif
 }
 
-
 static inline size_t hb_arena_align_size(size_t size, size_t alignment) {
   assert(size <= SIZE_MAX - (alignment - 1));
 
