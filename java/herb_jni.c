@@ -62,13 +62,18 @@ Java_org_herb_Herb_parse(JNIEnv* env, jclass clazz, jstring source, jobject opti
     }
   }
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
   AST_DOCUMENT_NODE_T* ast = herb_parse(src, &parser_options, &allocator);
 
   jobject result = CreateParseResult(env, ast, source);
 
   ast_node_free((AST_NODE_T*) ast, &allocator);
+  hb_allocator_destroy(&allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -78,13 +83,18 @@ JNIEXPORT jobject JNICALL
 Java_org_herb_Herb_lex(JNIEnv* env, jclass clazz, jstring source) {
   const char* src = (*env)->GetStringUTFChars(env, source, 0);
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
 
   hb_array_T* tokens = herb_lex(src, &allocator);
 
   jobject result = CreateLexResult(env, tokens, source);
 
   herb_free_tokens(&tokens, &allocator);
+  hb_allocator_destroy(&allocator);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
   return result;
@@ -126,10 +136,17 @@ Java_org_herb_Herb_extractRuby(JNIEnv* env, jclass clazz, jstring source, jobjec
     }
   }
 
-  herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  herb_extract_ruby_to_buffer_with_options(src, &output, &extract_options, &allocator);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 
@@ -148,10 +165,18 @@ Java_org_herb_Herb_extractHTML(JNIEnv* env, jclass clazz, jstring source) {
     return NULL;
   }
 
-  herb_extract_html_to_buffer(src, &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) {
+    free(output.value);
+    (*env)->ReleaseStringUTFChars(env, source, src);
+    return NULL;
+  }
+
+  herb_extract_html_to_buffer(src, &output, &allocator);
 
   jstring result = (*env)->NewStringUTF(env, output.value);
 
+  hb_allocator_destroy(&allocator);
   free(output.value);
   (*env)->ReleaseStringUTFChars(env, source, src);
 

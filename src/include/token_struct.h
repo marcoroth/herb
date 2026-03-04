@@ -1,6 +1,8 @@
 #ifndef HERB_TOKEN_STRUCT_H
 #define HERB_TOKEN_STRUCT_H
 
+#include <stdbool.h>
+
 #include "location.h"
 #include "range.h"
 

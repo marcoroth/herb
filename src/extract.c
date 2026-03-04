@@ -1,5 +1,4 @@
 #include "include/herb.h"
-#include "include/io.h"
 #include "include/util/hb_allocator.h"
 #include "include/util/hb_array.h"
 #include "include/util/hb_buffer.h"
@@ -16,12 +15,12 @@ const herb_extract_ruby_options_T HERB_EXTRACT_RUBY_DEFAULT_OPTIONS = { .semicol
 void herb_extract_ruby_to_buffer_with_options(
   const char* source,
   hb_buffer_T* output,
-  const herb_extract_ruby_options_T* options
+  const herb_extract_ruby_options_T* options,
+  hb_allocator_T* allocator
 ) {
   herb_extract_ruby_options_T extract_options = options ? *options : HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  hb_array_T* tokens = herb_lex(source, &allocator);
+  hb_array_T* tokens = herb_lex(source, allocator);
   bool skip_erb_content = false;
   bool is_comment_tag = false;
   bool is_erb_comment_tag = false;
@@ -138,16 +137,15 @@ void herb_extract_ruby_to_buffer_with_options(
     }
   }
 
-  herb_free_tokens(&tokens, &allocator);
+  herb_free_tokens(&tokens, allocator);
 }
 
-void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output) {
-  herb_extract_ruby_to_buffer_with_options(source, output, NULL);
+void herb_extract_ruby_to_buffer(const char* source, hb_buffer_T* output, hb_allocator_T* allocator) {
+  herb_extract_ruby_to_buffer_with_options(source, output, NULL, allocator);
 }
 
-void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  hb_array_T* tokens = herb_lex(source, &allocator);
+void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output, hb_allocator_T* allocator) {
+  hb_array_T* tokens = herb_lex(source, allocator);
 
   for (size_t i = 0; i < hb_array_size(tokens); i++) {
     const token_T* token = hb_array_get(tokens, i);
@@ -160,40 +158,31 @@ void herb_extract_html_to_buffer(const char* source, hb_buffer_T* output) {
     }
   }
 
-  herb_free_tokens(&tokens, &allocator);
+  herb_free_tokens(&tokens, allocator);
 }
 
-char* herb_extract_ruby_with_semicolons(const char* source) {
+char* herb_extract_ruby_with_semicolons(const char* source, hb_allocator_T* allocator) {
   if (!source) { return NULL; }
 
   hb_buffer_T output;
   hb_buffer_init(&output, strlen(source));
 
-  herb_extract_ruby_to_buffer(source, &output);
+  herb_extract_ruby_to_buffer(source, &output, allocator);
 
   return output.value;
 }
 
-char* herb_extract(const char* source, const herb_extract_language_T language) {
+char* herb_extract(const char* source, const herb_extract_language_T language, hb_allocator_T* allocator) {
   if (!source) { return NULL; }
 
   hb_buffer_T output;
   hb_buffer_init(&output, strlen(source));
 
   switch (language) {
-    case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output); break;
-    case HERB_EXTRACT_LANGUAGE_HTML: herb_extract_html_to_buffer(source, &output); break;
+    case HERB_EXTRACT_LANGUAGE_RUBY: herb_extract_ruby_to_buffer(source, &output, allocator); break;
+    case HERB_EXTRACT_LANGUAGE_HTML: herb_extract_html_to_buffer(source, &output, allocator); break;
     default: assert(0 && "invalid extract language");
   }
 
   return output.value;
-}
-
-char* herb_extract_from_file(const char* path, const herb_extract_language_T language) {
-  char* source = herb_read_file(path);
-  char* output = herb_extract(source, language);
-
-  free(source);
-
-  return output;
 }

@@ -136,6 +136,7 @@ fn main() {
     .allowlist_var("AST_.*")
     .allowlist_var("ERROR_.*")
     .allowlist_var("ELEMENT_SOURCE_.*")
+    .allowlist_var("HB_ALLOCATOR_.*")
     .allowlist_var("HERB_EXTRACT_.*")
     .derive_debug(true)
     .derive_default(false)

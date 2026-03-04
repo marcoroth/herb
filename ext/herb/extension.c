@@ -21,11 +21,13 @@ typedef struct {
   AST_DOCUMENT_NODE_T* root;
   VALUE source;
   const parser_options_T* parser_options;
+  hb_allocator_T allocator;
 } parse_args_T;
 
 typedef struct {
   hb_array_T* tokens;
   VALUE source;
+  hb_allocator_T allocator;
 } lex_args_T;
 
 typedef struct {
@@ -41,10 +43,9 @@ static VALUE parse_convert_body(VALUE arg) {
 static VALUE parse_cleanup(VALUE arg) {
   parse_args_T* args = (parse_args_T*) arg;
 
-  if (args->root != NULL) {
-    hb_allocator_T allocator = hb_allocator_with_malloc();
-    ast_node_free((AST_NODE_T*) args->root, &allocator);
-  }
+  if (args->root != NULL) { ast_node_free((AST_NODE_T*) args->root, &args->allocator); }
+
+  hb_allocator_destroy(&args->allocator);
 
   return Qnil;
 }
@@ -58,10 +59,9 @@ static VALUE lex_convert_body(VALUE arg) {
 static VALUE lex_cleanup(VALUE arg) {
   lex_args_T* args = (lex_args_T*) arg;
 
-  if (args->tokens != NULL) {
-    hb_allocator_T allocator = hb_allocator_with_malloc();
-    herb_free_tokens(&args->tokens, &allocator);
-  }
+  if (args->tokens != NULL) { herb_free_tokens(&args->tokens, &args->allocator); }
+
+  hb_allocator_destroy(&args->allocator);
 
   return Qnil;
 }
@@ -83,8 +83,12 @@ static VALUE buffer_cleanup(VALUE arg) {
 static VALUE Herb_lex(VALUE self, VALUE source) {
   char* string = (char*) check_string(source);
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  lex_args_T args = { .tokens = herb_lex(string, &allocator), .source = source };
+  lex_args_T args = { 0 };
+  args.source = source;
+
+  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  args.tokens = herb_lex(string, &args.allocator);
 
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
@@ -92,9 +96,12 @@ static VALUE Herb_lex(VALUE self, VALUE source) {
 static VALUE Herb_lex_file(VALUE self, VALUE path) {
   char* file_path = (char*) check_string(path);
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  VALUE source_value = read_file_to_ruby_string(file_path);
-  lex_args_T args = { .tokens = herb_lex_file(file_path, &allocator), .source = source_value };
+  lex_args_T args = { 0 };
+  args.source = read_file_to_ruby_string(file_path);
+
+  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  args.tokens = herb_lex_file(file_path, &args.allocator);
 
   return rb_ensure(lex_convert_body, (VALUE) &args, lex_cleanup, (VALUE) &args);
 }
@@ -121,10 +128,13 @@ static VALUE Herb_parse(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  parse_args_T args = { .root = herb_parse(string, &parser_options, &allocator),
-                        .source = source,
-                        .parser_options = &parser_options };
+  parse_args_T args = { 0 };
+  args.source = source;
+  args.parser_options = &parser_options;
+
+  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  args.root = herb_parse(string, &parser_options, &args.allocator);
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
@@ -154,10 +164,13 @@ static VALUE Herb_parse_file(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(strict)) { parser_options.strict = RTEST(strict); }
   }
 
-  hb_allocator_T allocator = hb_allocator_with_malloc();
-  parse_args_T args = { .root = herb_parse(string, &parser_options, &allocator),
-                        .source = source_value,
-                        .parser_options = &parser_options };
+  parse_args_T args = { 0 };
+  args.source = source_value;
+  args.parser_options = &parser_options;
+
+  if (!hb_allocator_init(&args.allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  args.root = herb_parse(string, &parser_options, &args.allocator);
 
   return rb_ensure(parse_convert_body, (VALUE) &args, parse_cleanup, (VALUE) &args);
 }
@@ -189,7 +202,12 @@ static VALUE Herb_extract_ruby(int argc, VALUE* argv, VALUE self) {
     if (!NIL_P(preserve_positions_value)) { extract_options.preserve_positions = RTEST(preserve_positions_value); }
   }
 
-  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
+
+  hb_allocator_destroy(&allocator);
 
   buffer_args_T args = { .buffer_value = output.value };
 
@@ -202,7 +220,12 @@ static VALUE Herb_extract_html(VALUE self, VALUE source) {
 
   if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
 
-  herb_extract_html_to_buffer(string, &output);
+  hb_allocator_T allocator;
+  if (!hb_allocator_init(&allocator, HB_ALLOCATOR_ARENA)) { return Qnil; }
+
+  herb_extract_html_to_buffer(string, &output, &allocator);
+
+  hb_allocator_destroy(&allocator);
 
   buffer_args_T args = { .buffer_value = output.value };
 

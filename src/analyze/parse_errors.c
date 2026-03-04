@@ -42,7 +42,7 @@ static void parse_erb_content_errors(AST_NODE_T* erb_node, const char* source, h
 }
 
 void herb_analyze_parse_errors(AST_DOCUMENT_NODE_T* document, const char* source, hb_allocator_T* allocator) {
-  char* extracted_ruby = herb_extract_ruby_with_semicolons(source);
+  char* extracted_ruby = herb_extract_ruby_with_semicolons(source, allocator);
 
   if (!extracted_ruby) { return; }
 

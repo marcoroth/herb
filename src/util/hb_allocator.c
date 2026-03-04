@@ -38,12 +38,16 @@ static char* malloc_strndup(hb_allocator_T* _self, const char* string, size_t le
   return copy;
 }
 
+static void malloc_destroy(hb_allocator_T* _self) {
+}
+
 hb_allocator_T hb_allocator_with_malloc(void) {
   return (hb_allocator_T) {
     .alloc = malloc_alloc,
     .dealloc = malloc_dealloc,
     .strdup = malloc_strdup,
     .strndup = malloc_strndup,
+    .destroy = malloc_destroy,
     .context = NULL,
   };
 }
@@ -54,7 +58,6 @@ static void* arena_alloc(hb_allocator_T* self, size_t size) {
   return hb_arena_alloc((hb_arena_T*) self->context, size);
 }
 
-// Arena allocations are freed via hb_arena_free
 static void arena_dealloc(hb_allocator_T* _self, void* _pointer) {
 }
 
@@ -82,12 +85,56 @@ static char* arena_strndup(hb_allocator_T* self, const char* string, size_t leng
   return copy;
 }
 
+static void arena_destroy(hb_allocator_T* self) {
+  hb_arena_T* arena = (hb_arena_T*) self->context;
+  hb_arena_free(arena);
+  free(arena);
+  self->context = NULL;
+}
+
 hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena) {
   return (hb_allocator_T) {
     .alloc = arena_alloc,
     .dealloc = arena_dealloc,
     .strdup = arena_strdup,
     .strndup = arena_strndup,
+    .destroy = arena_destroy,
     .context = arena,
   };
+}
+
+// --- High-level API ---
+
+bool hb_allocator_init(hb_allocator_T* allocator, hb_allocator_type_T type) {
+  return hb_allocator_init_with_size(allocator, type, 0);
+}
+
+bool hb_allocator_init_with_size(hb_allocator_T* allocator, hb_allocator_type_T type, size_t initial_size) {
+  switch (type) {
+    case HB_ALLOCATOR_MALLOC: {
+      *allocator = hb_allocator_with_malloc();
+      return true;
+    }
+
+    case HB_ALLOCATOR_ARENA: {
+      if (initial_size == 0) { initial_size = HB_ALLOCATOR_DEFAULT_ARENA_SIZE; }
+
+      hb_arena_T* arena = malloc(sizeof(hb_arena_T));
+      if (!arena) { return false; }
+
+      if (!hb_arena_init(arena, initial_size)) {
+        free(arena);
+        return false;
+      }
+
+      *allocator = hb_allocator_with_arena(arena);
+      return true;
+    }
+
+    default: return false;
+  }
+}
+
+void hb_allocator_destroy(hb_allocator_T* allocator) {
+  allocator->destroy(allocator);
 }
