@@ -46,7 +46,7 @@ static inline bool hb_arena_page_has_capacity(hb_arena_page_T* page, size_t requ
   return page->position + required_size <= page->capacity;
 }
 
-static inline void* hb_arena_page_alloc_from(hb_arena_page_T* page, size_t size) {
+static inline void* hb_arena_page_alloc(hb_arena_page_T* page, size_t size) {
   assert(size > 0);
   assert(page->position + size <= page->capacity);
 
@@ -56,28 +56,18 @@ static inline void* hb_arena_page_alloc_from(hb_arena_page_T* page, size_t size)
   return result;
 }
 
-static inline void hb_arena_page_reset(hb_arena_page_T* page) {
-  page->position = 0;
-}
+static size_t hb_arena_page_free(hb_arena_page_T* starting_page);
 
-static inline void hb_arena_reset_pages_after(hb_arena_page_T* start_page) {
-  for (hb_arena_page_T* page = start_page; page != NULL; page = page->next) {
-    hb_arena_page_reset(page);
-  }
-}
-
-static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
-  assert(minimum_size > 0);
-
-  size_t page_size = MAX(allocator->default_page_size, minimum_size);
-
+static bool hb_arena_append_page(hb_arena_T* allocator, size_t page_size) {
   assert(page_size <= SIZE_MAX - sizeof(hb_arena_page_T));
-  size_t total_size = page_size + sizeof(hb_arena_page_T);
+  size_t page_size_with_meta_data = page_size + sizeof(hb_arena_page_T);
 
-  hb_arena_page_T* page = hb_arena_allocate_page(total_size);
+  hb_arena_page_T* page = hb_arena_allocate_page(page_size_with_meta_data);
   if (page == NULL) { return false; }
 
-  *page = (hb_arena_page_T) { .next = NULL, .capacity = page_size, .position = 0 };
+  page->next = NULL;
+  page->capacity = page_size;
+  page->position = 0;
 
   if (allocator->head == NULL) {
     allocator->head = page;
@@ -96,15 +86,15 @@ static bool hb_arena_append_page(hb_arena_T* allocator, size_t minimum_size) {
   return true;
 }
 
-bool hb_arena_init(hb_arena_T* allocator, size_t initial_size) {
-  assert(initial_size > 0);
+bool hb_arena_init(hb_arena_T* allocator, size_t default_page_size) {
+  assert(default_page_size > 0);
 
   allocator->head = NULL;
   allocator->tail = NULL;
-  allocator->default_page_size = initial_size;
+  allocator->default_page_size = default_page_size;
   allocator->allocation_count = 0;
 
-  return hb_arena_append_page(allocator, initial_size);
+  return hb_arena_append_page(allocator, default_page_size);
 }
 
 void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
@@ -116,21 +106,22 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
   allocator->allocation_count++;
 
   if (hb_arena_page_has_capacity(allocator->tail, required_size)) {
-    return hb_arena_page_alloc_from(allocator->tail, required_size);
+    return hb_arena_page_alloc(allocator->tail, required_size);
   }
 
   for (hb_arena_page_T* page = allocator->tail->next; page != NULL; page = page->next) {
     if (hb_arena_page_has_capacity(page, required_size)) {
       allocator->tail = page;
-      return hb_arena_page_alloc_from(allocator->tail, required_size);
+      return hb_arena_page_alloc(allocator->tail, required_size);
     }
   }
 
-  bool allocated = hb_arena_append_page(allocator, required_size);
+  size_t page_size = MAX(allocator->default_page_size, required_size);
+  bool allocated = hb_arena_append_page(allocator, page_size);
 
   if (!allocated) { return NULL; }
 
-  return hb_arena_page_alloc_from(allocator->tail, required_size);
+  return hb_arena_page_alloc(allocator->tail, required_size);
 }
 
 size_t hb_arena_position(hb_arena_T* allocator) {
@@ -154,48 +145,58 @@ size_t hb_arena_capacity(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset(hb_arena_T* allocator) {
-  hb_arena_for_each_page(allocator) {
-    hb_arena_page_reset(page);
-  }
-
-  allocator->tail = allocator->head;
+  hb_arena_reset_to(allocator, 0);
   allocator->allocation_count = 0;
 }
 
 void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
-  if (target_position == 0) {
-    hb_arena_reset(allocator);
+  hb_arena_page_T* current_page = allocator->head;
+  size_t current_position = 0;
 
-    return;
-  }
+  while (current_page != NULL) {
+    current_position += current_page->position;
 
-  size_t accumulated = 0;
-
-  hb_arena_for_each_page(allocator) {
-    if (accumulated + page->capacity >= target_position) {
-      page->position = target_position - accumulated;
-      allocator->tail = page;
-
-      hb_arena_reset_pages_after(page->next);
-
-      return;
+    if (current_position >= target_position) {
+      current_page->position -= current_position - target_position;
+      break;
     }
 
-    accumulated += page->capacity;
-    page->position = page->capacity;
+    current_page = current_page->next;
   }
+
+  if (current_page == NULL) { return; }
+
+  allocator->tail = current_page;
+
+  if (current_page->next != NULL) {
+    size_t freed_size = hb_arena_page_free(current_page->next);
+    current_page->next = NULL;
+
+    hb_arena_append_page(allocator, freed_size);
+  }
+}
+
+static size_t hb_arena_page_free(hb_arena_page_T* starting_page) {
+  size_t freed_capacity = 0;
+
+  for (hb_arena_page_T* current_page = starting_page; current_page != NULL;) {
+    hb_arena_page_T* next_page = current_page->next;
+
+    freed_capacity += current_page->capacity;
+
+    size_t total_size = sizeof(hb_arena_page_T) + current_page->capacity;
+    hb_arena_free_page(current_page, total_size);
+
+    current_page = next_page;
+  }
+
+  return freed_capacity;
 }
 
 void hb_arena_free(hb_arena_T* allocator) {
   if (allocator->head == NULL) { return; }
 
-  for (hb_arena_page_T* current = allocator->head; current != NULL;) {
-    hb_arena_page_T* next = current->next;
-    size_t total_size = sizeof(hb_arena_page_T) + current->capacity;
-    hb_arena_free_page(current, total_size);
-
-    current = next;
-  }
+  hb_arena_page_free(allocator->head);
 
   allocator->head = NULL;
   allocator->tail = NULL;
