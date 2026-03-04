@@ -179,6 +179,163 @@ describe("@herb-tools/formatter - inline elements", () => {
     `)
   })
 
+  test("block element with ERB output child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %>
+      </div>
+    `)
+  })
+
+  test("block element with ERB output child on same line stays inline (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %></div>
+    `)
+  })
+
+  test("block element with ERB execution child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <% f.input :password, hint: false %>
+      </div>
+    `)
+  })
+
+  test("block element with ERB execution child on same line stays inline (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs"><% f.input :password, hint: false %></div>
+    `)
+  })
+
+  test("block element with ERB child on separate line preserves format with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg">
+        <% t("registration.policies.edit.title") %>
+      </div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("block element with ERB child on same line stays inline with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg"><% t("registration.policies.edit.title") %></div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("block element with p child on separate line preserves format with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg">
+        <p>Test</p>
+      </div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("preserves inline elements with ERB in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags.
+        <p>It's <em><%= adjective %></em>!</p>
+      </div>
+    `)
+  })
+
+  test("expands inline elements with ERB and block child to multiline (issue #1181)", () => {
+    const source = dedent`
+      <div>I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags. <p>It's <em><%= adjective %></em>!</p></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags.
+        <p>It's <em><%= adjective %></em>!</p>
+      </div>
+    `)
+  })
+
+  test("preserves ERB directly in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <%= verb %> these <%= type %> tags.
+        <p>It's <%= adjective %>!</p>
+      </div>
+    `)
+  })
+
+  test("handles adjacent ERB without spaces in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I<%= verb %>these<%= type %>tags.
+        <p>Hel</p>
+        <p>lo</p>
+      </div>
+    `)
+  })
+
+  test("preserves inline elements in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <strong>like</strong> these <dfn>inline</dfn> tags.
+        <p>It's <em>true</em>!</p>
+      </div>
+    `)
+  })
+
+  test("separates adjacent block elements onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <p>Hel</p><p>lo</p>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <p>Hel</p>
+        <p>lo</p>
+      </div>
+    `)
+  })
+
+  test("separates adjacent li elements with space onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <li>a</li> <li>b</li>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <li>a</li>
+        <li>b</li>
+      </div>
+    `)
+  })
+
+  test("separates adjacent li elements without space onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <li>a</li><li>b</li>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <li>a</li>
+        <li>b</li>
+      </div>
+    `)
+  })
+
   test("block element with ERB children on separate lines preserves format", () => {
     expectFormattedToMatch(dedent`
       <div class="form-inputs">

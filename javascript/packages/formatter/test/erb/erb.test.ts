@@ -98,7 +98,9 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <div>
-        <h1 class="<%= classes %>"><%= title %></h1>
+        <h1 class="<%= classes %>">
+          <%= title %>
+        </h1>
       </div>
     `)
   })
@@ -619,7 +621,9 @@ describe("@herb-tools/formatter", () => {
 
         <body style="font-family: 'DM Sans', Arial, sans-serif;">
           <% if content_for?(:preheader) %>
-            <div class="hidden"><%= yield :preheader %></div>
+            <div class="hidden">
+              <%= yield :preheader %>
+            </div>
           <% end %>
 
           <div
