@@ -126,7 +126,7 @@ hb_arena_stats_T hb_arena_get_stats(const hb_arena_T* arena) {
   stats.default_page_size = arena->default_page_size;
   stats.allocations = arena->allocation_count;
 
-  hb_arena_for_each_page_const(arena, page) {
+  hb_arena_for_each_page_const(arena) {
     stats.pages++;
     stats.total_capacity += page->capacity;
     stats.total_used += page->position;
@@ -202,7 +202,7 @@ void hb_arena_print_stats(const hb_arena_T* allocator) {
 
   size_t page_number = 0;
 
-  hb_arena_for_each_page_const(allocator, page) {
+  hb_arena_for_each_page_const(allocator) {
     double page_usage = (double) page->position / (double) page->capacity * 100.0;
     const char* page_color = get_usage_color(page_usage);
 

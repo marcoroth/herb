@@ -136,7 +136,7 @@ void* hb_arena_alloc(hb_arena_T* allocator, size_t size) {
 size_t hb_arena_position(hb_arena_T* allocator) {
   size_t total = 0;
 
-  hb_arena_for_each_page(allocator, page) {
+  hb_arena_for_each_page(allocator) {
     total += page->position;
   }
 
@@ -146,7 +146,7 @@ size_t hb_arena_position(hb_arena_T* allocator) {
 size_t hb_arena_capacity(hb_arena_T* allocator) {
   size_t total = 0;
 
-  hb_arena_for_each_page(allocator, page) {
+  hb_arena_for_each_page(allocator) {
     total += page->capacity;
   }
 
@@ -154,7 +154,7 @@ size_t hb_arena_capacity(hb_arena_T* allocator) {
 }
 
 void hb_arena_reset(hb_arena_T* allocator) {
-  hb_arena_for_each_page(allocator, page) {
+  hb_arena_for_each_page(allocator) {
     hb_arena_page_reset(page);
   }
 
@@ -171,7 +171,7 @@ void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position) {
 
   size_t accumulated = 0;
 
-  hb_arena_for_each_page(allocator, page) {
+  hb_arena_for_each_page(allocator) {
     if (accumulated + page->capacity >= target_position) {
       page->position = target_position - accumulated;
       allocator->tail = page;
