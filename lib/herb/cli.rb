@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats
 
   def initialize(args)
     @args = args
@@ -158,13 +158,13 @@ class Herb::CLI
                   show_config
                   exit(0)
                 when "parse"
-                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false)
+                  Herb.parse(file_content, strict: strict.nil? || strict, analyze: analyze.nil? || analyze, track_whitespace: track_whitespace || false, arena_stats: arena_stats)
                 when "compile"
                   compile_template
                 when "render"
                   render_template
                 when "lex"
-                  Herb.lex(file_content)
+                  Herb.lex(file_content, arena_stats: arena_stats)
                 when "ruby"
                   puts Herb.extract_ruby(file_content)
                   exit(0)
@@ -298,6 +298,10 @@ class Herb::CLI
 
       parser.on("--tool TOOL", "Show config for specific tool: linter, formatter (for config command)") do |t|
         self.tool = t.to_sym
+      end
+
+      parser.on("--arena-stats", "Print arena memory statistics (for lex/parse commands)") do
+        self.arena_stats = true
       end
     end
   end
