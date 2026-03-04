@@ -13,6 +13,7 @@ import { AutofixService } from "./autofix_service"
 import { CodeActionService } from "./code_action_service"
 import { DocumentSaveService } from "./document_save_service"
 import { DocumentHighlightService } from "./document_highlight_service"
+import { SelectionRangeService } from "./selection_range_service"
 
 import { version } from "../package.json"
 
@@ -32,6 +33,7 @@ export class Service {
   codeActionService: CodeActionService
   documentSaveService: DocumentSaveService
   documentHighlightService: DocumentHighlightService
+  selectionRangeService: SelectionRangeService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -47,6 +49,7 @@ export class Service {
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
+    this.selectionRangeService = new SelectionRangeService(this.parserService)
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings

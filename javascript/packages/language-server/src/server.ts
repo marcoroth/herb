@@ -13,6 +13,7 @@ import {
   CodeActionParams,
   CodeActionKind,
   DocumentHighlightParams,
+  SelectionRangeParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -55,6 +56,7 @@ export class Server {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
           documentHighlightProvider: true,
+          selectionRangeProvider: true,
         },
       }
 
@@ -165,6 +167,14 @@ export class Server {
       if (!document) return []
 
       return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
+    })
+
+    this.connection.onSelectionRanges((params: SelectionRangeParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.selectionRangeService.getSelectionRanges(document, params.positions)
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {
