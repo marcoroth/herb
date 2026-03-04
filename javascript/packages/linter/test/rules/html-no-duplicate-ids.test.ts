@@ -343,4 +343,111 @@ describe("html-no-duplicate-ids", () => {
       <% end %>
     `)
   })
+
+  test("passes for three separate each blocks with same dynamic ID pattern", () => {
+    expectNoOffenses(dedent`
+      <% first.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% second.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% third.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in global scope and same dynamic ID in a block", () => {
+    expectNoOffenses(dedent`
+      <div id="user-<%= user.id %>"></div>
+
+      <% items.each do |item| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in a block and same dynamic ID in global scope", () => {
+    expectNoOffenses(dedent`
+      <% items.each do |item| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+
+      <div id="user-<%= user.id %>"></div>
+    `)
+  })
+
+  test("passes for dynamic ID in an if branch and same dynamic ID in global scope", () => {
+    expectNoOffenses(dedent`
+      <div id="user-<%= user.id %>"></div>
+
+      <% if condition %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for nested each blocks with same dynamic ID pattern", () => {
+    expectNoOffenses(dedent`
+      <% groups.each do |group| %>
+        <% group.items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% end %>
+    `)
+  })
+
+  test("passes for different dynamic ID patterns in separate blocks", () => {
+    expectNoOffenses(dedent`
+      <% users.each do |user| %>
+        <div id="user-<%= user.id %>"></div>
+      <% end %>
+
+      <% posts.each do |post| %>
+        <div id="post-<%= post.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic IDs across map and each blocks", () => {
+    expectNoOffenses(dedent`
+      <% items.map do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+
+      <% items.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for static IDs in separate each blocks", () => {
+    expectError('Duplicate ID `static-id` found. IDs must be unique within a document.')
+    assertOffenses(dedent`
+      <% first.each do |item| %>
+        <div id="static-id"></div>
+      <% end %>
+
+      <% second.each do |item| %>
+        <div id="static-id"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic ID in each block nested inside if/else", () => {
+    expectNoOffenses(dedent`
+      <% if condition %>
+        <% items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% else %>
+        <% items.each do |item| %>
+          <div id="item-<%= item.id %>"></div>
+        <% end %>
+      <% end %>
+    `)
+  })
 })
