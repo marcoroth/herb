@@ -362,7 +362,7 @@ module Herb
       result
     rescue Timeout::Error
       result.merge(status: :timeout, file_content: file_content,
-        log: "⏱️ Parsing #{file_path} timed out after 1 second")
+                   log: "⏱️ Parsing #{file_path} timed out after 1 second")
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -371,7 +371,7 @@ module Herb
       end
 
       result.merge(status: :failed, file_content: file_content,
-        log: "⚠️ Error processing #{file_path}: #{e.message}")
+                   log: "⚠️ Error processing #{file_path}: #{e.message}")
     end
 
     def process_file_isolated(file_path)
@@ -895,51 +895,52 @@ module Herb
         bytes: stats[:total_used],
         allocations: stats[:allocations],
         lines: file_content.count("\n") + 1,
-        length: file_content.bytesize
+        length: file_content.bytesize,
       }
     rescue StandardError
       { pages: 0, bytes: 0, allocations: 0, lines: 0, length: 0 }
     end
 
     def print_arena_summary(file_results)
-      stats = file_results.filter_map { |r|
-        next unless r[:arena_stats] && r[:arena_stats][:bytes] > 0
+      stats = file_results.filter_map { |result|
+        next unless result[:arena_stats] && result[:arena_stats][:bytes].positive?
 
-        { file: r[:file_path], **r[:arena_stats] }
+        { file: result[:file_path], **result[:arena_stats] }
       }
+
       return if stats.empty?
 
-      stats.sort_by! { |s| -s[:bytes] }
+      stats.sort_by! { |stat| -stat[:bytes] }
 
       puts "\n #{separator}"
       puts "\n"
       puts " #{bold("Arena memory usage:")}"
       puts ""
 
-      relatives = stats.map { |s| relative_path(s[:file]) }
-      used_strings = stats.map { |s| format_bytes(s[:bytes]) }
-      length_strings = stats.map { |s| format_bytes(s[:length]) }
+      relatives = stats.map { |stat| relative_path(stat[:file]) }
+      used_strings = stats.map { |stat| format_bytes(stat[:bytes]) }
+      length_strings = stats.map { |stat| format_bytes(stat[:length]) }
       used_width = [used_strings.max_by(&:length).length, 4].max
-      pages_width = [stats.max_by { |s| s[:pages] }[:pages].to_s.length, 5].max
-      allocs_width = [stats.max_by { |s| s[:allocations] }[:allocations].to_s.length, 6].max
-      lines_width = [stats.max_by { |s| s[:lines] }[:lines].to_s.length, 5].max
+      pages_width = [stats.max_by { |stat| stat[:pages] }[:pages].to_s.length, 5].max
+      allocs_width = [stats.max_by { |stat| stat[:allocations] }[:allocations].to_s.length, 6].max
+      lines_width = [stats.max_by { |stat| stat[:lines] }[:lines].to_s.length, 5].max
       length_width = [length_strings.max_by(&:length).length, 4].max
       total_width = pages_width + used_width + allocs_width + lines_width + length_width + 11
 
       puts format("  %#{lines_width}s %#{length_width}s %#{pages_width}s %#{used_width}s %#{allocs_width}s  %s", "Lines", "Size", "Pages", "Used", "Allocs", "File")
       puts "  #{"-" * (total_width + relatives.max_by(&:length).length)}"
 
-      stats.each_with_index do |s, i|
-        relative = relatives[i]
-        used = used_strings[i]
-        length = length_strings[i]
-        color = s[:pages] > 1 ? :yellow : :green
+      stats.each_with_index do |stat, index|
+        relative = relatives[index]
+        used = used_strings[index]
+        length = length_strings[index]
+        color = stat[:pages] > 1 ? :yellow : :green
         colored_used = send(color, used)
         padding = colored_used.length - used.length
-        puts format("  %#{lines_width}d %#{length_width}s %#{pages_width}d %#{used_width + padding}s %#{allocs_width}d  %s", s[:lines], length, s[:pages], colored_used, s[:allocations], relative)
+        puts format("  %#{lines_width}d %#{length_width}s %#{pages_width}d %#{used_width + padding}s %#{allocs_width}d  %s", stat[:lines], length, stat[:pages], colored_used, stat[:allocations], relative)
       end
 
-      total_bytes = stats.sum { |s| s[:bytes] }
+      total_bytes = stats.sum { |stat| stat[:bytes] }
       max = stats.first
 
       puts ""
@@ -950,7 +951,7 @@ module Herb
 
       puts ""
       thresholds.each do |label_text, threshold|
-        count = stats.count { |s| s[:bytes] > threshold }
+        count = stats.count { |stat| stat[:bytes] > threshold }
         puts "  #{label("  > #{label_text}")} #{count} #{pluralize(count, "file")}"
       end
     end
