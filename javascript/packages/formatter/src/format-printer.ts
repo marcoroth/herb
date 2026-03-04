@@ -1288,14 +1288,18 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       if (allChildrenAreERB) return false
     }
 
-    if (!isInlineElement(tagName) && hasMixedTextAndInlineContent(children) && openTagClosing) {
+    if (!isInlineElement(tagName) && openTagClosing) {
       const first = children[0]
       const startsOnNewLine = first.location.start.line > openTagClosing.location.end.line
       const hasLeadingNewline = isNode(first, HTMLTextNode) && /^\s*\n/.test(first.content)
       const contentStartsOnNewLine = startsOnNewLine || hasLeadingNewline
 
       if (contentStartsOnNewLine) {
-        return false
+        const hasERBChildren = children.some(child => isERBNode(child))
+
+        if (hasERBChildren || hasMixedTextAndInlineContent(children)) {
+          return false
+        }
       }
     }
 

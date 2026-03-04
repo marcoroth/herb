@@ -155,7 +155,9 @@ describe("@herb-tools/formatter", () => {
         <% [1, 2].each do %>
           <% return unless @content.present? %>
 
-          <div class="content"><%= @content %></div>
+          <div class="content">
+            <%= @content %>
+          </div>
         <% end %>
       `
 
@@ -234,9 +236,13 @@ describe("@herb-tools/formatter", () => {
           <% next unless item.visible? %>
 
           <% unless item.featured? %>
-            <div class="regular"><%= item.name %></div>
+            <div class="regular">
+              <%= item.name %>
+            </div>
           <% else %>
-            <div class="featured"><%= item.name %></div>
+            <div class="featured">
+              <%= item.name %>
+            </div>
           <% end %>
         <% end %>
       `

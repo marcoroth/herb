@@ -179,6 +179,14 @@ describe("@herb-tools/formatter - inline elements", () => {
     `)
   })
 
+  test("block element with single ERB child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %>
+      </div>
+    `)
+  })
+
   test("block element with ERB children on separate lines preserves format", () => {
     expectFormattedToMatch(dedent`
       <div class="form-inputs">
