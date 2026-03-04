@@ -12,7 +12,7 @@ module Herb
   class Project
     include Colors
 
-    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths
+    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats
 
     # Known error types that indicate issues in the user's template, not bugs in the parser.
     TEMPLATE_ERRORS = [
@@ -256,6 +256,10 @@ module Herb
 
         log_problem_file_details(results, log)
 
+        if arena_stats
+          print_arena_summary(file_results)
+        end
+
         unless no_log_file
           puts "\n #{separator}"
           puts "\n #{dimmed("Results saved to #{output_file}")}"
@@ -339,6 +343,10 @@ module Herb
       file_content = File.read(file_path)
       result = { file_path: file_path }
 
+      if arena_stats
+        result[:arena_stats] = capture_arena_stats(file_content)
+      end
+
       Timeout.timeout(1) do
         parse_result = Herb.parse(file_content)
 
@@ -353,8 +361,8 @@ module Herb
 
       result
     rescue Timeout::Error
-      { file_path: file_path, status: :timeout, file_content: file_content,
-        log: "⏱️ Parsing #{file_path} timed out after 1 second" }
+      result.merge(status: :timeout, file_content: file_content,
+                   log: "⏱️ Parsing #{file_path} timed out after 1 second")
     rescue StandardError => e
       file_content ||= begin
         File.read(file_path)
@@ -362,8 +370,8 @@ module Herb
         nil
       end
 
-      { file_path: file_path, status: :failed, file_content: file_content,
-        log: "⚠️ Error processing #{file_path}: #{e.message}" }
+      result.merge(status: :failed, file_content: file_content,
+                   log: "⚠️ Error processing #{file_path}: #{e.message}")
     end
 
     def process_file_isolated(file_path)
@@ -876,6 +884,85 @@ module Herb
         minutes = (seconds / 60).to_i
         remaining_seconds = seconds % 60
         "#{minutes}m #{remaining_seconds.round(2)}s"
+      end
+    end
+
+    def capture_arena_stats(file_content)
+      stats = Herb.arena_stats(file_content)
+
+      {
+        pages: stats[:pages],
+        bytes: stats[:total_used],
+        allocations: stats[:allocations],
+        lines: file_content.count("\n") + 1,
+        length: file_content.bytesize,
+      }
+    rescue StandardError
+      { pages: 0, bytes: 0, allocations: 0, lines: 0, length: 0 }
+    end
+
+    def print_arena_summary(file_results)
+      stats = file_results.filter_map { |result|
+        next unless result[:arena_stats] && result[:arena_stats][:bytes].positive?
+
+        { file: result[:file_path], **result[:arena_stats] }
+      }
+
+      return if stats.empty?
+
+      stats.sort_by! { |stat| -stat[:bytes] }
+
+      puts "\n #{separator}"
+      puts "\n"
+      puts " #{bold("Arena memory usage:")}"
+      puts ""
+
+      relatives = stats.map { |stat| relative_path(stat[:file]) }
+      used_strings = stats.map { |stat| format_bytes(stat[:bytes]) }
+      length_strings = stats.map { |stat| format_bytes(stat[:length]) }
+      used_width = [used_strings.max_by(&:length).length, 4].max
+      pages_width = [stats.max_by { |stat| stat[:pages] }[:pages].to_s.length, 5].max
+      allocs_width = [stats.max_by { |stat| stat[:allocations] }[:allocations].to_s.length, 6].max
+      lines_width = [stats.max_by { |stat| stat[:lines] }[:lines].to_s.length, 5].max
+      length_width = [length_strings.max_by(&:length).length, 4].max
+      total_width = pages_width + used_width + allocs_width + lines_width + length_width + 11
+
+      puts format("  %#{lines_width}s %#{length_width}s %#{pages_width}s %#{used_width}s %#{allocs_width}s  %s", "Lines", "Size", "Pages", "Used", "Allocs", "File")
+      puts "  #{"-" * (total_width + relatives.max_by(&:length).length)}"
+
+      stats.each_with_index do |stat, index|
+        relative = relatives[index]
+        used = used_strings[index]
+        length = length_strings[index]
+        color = stat[:pages] > 1 ? :yellow : :green
+        colored_used = send(color, used)
+        padding = colored_used.length - used.length
+        puts format("  %#{lines_width}d %#{length_width}s %#{pages_width}d %#{used_width + padding}s %#{allocs_width}d  %s", stat[:lines], length, stat[:pages], colored_used, stat[:allocations], relative)
+      end
+
+      total_bytes = stats.sum { |stat| stat[:bytes] }
+      max = stats.first
+
+      puts ""
+      puts "  #{label("Total")} #{cyan(format_bytes(total_bytes))} across #{cyan("#{stats.size} #{pluralize(stats.size, "file")}")}"
+      puts "  #{label("Largest")} #{cyan(relative_path(max[:file]))} (#{cyan(format_bytes(max[:bytes]))}, #{cyan("#{max[:pages]} #{pluralize(max[:pages], "page")}")})"
+
+      thresholds = { "16 KB" => 16 * 1024, "64 KB" => 64 * 1024, "128 KB" => 128 * 1024, "256 KB" => 256 * 1024, "512 KB" => 512 * 1024 }
+
+      puts ""
+      thresholds.each do |label_text, threshold|
+        count = stats.count { |stat| stat[:bytes] > threshold }
+        puts "  #{label("  > #{label_text}")} #{count} #{pluralize(count, "file")}"
+      end
+    end
+
+    def format_bytes(bytes)
+      if bytes >= 1024 * 1024
+        "#{(bytes / (1024.0 * 1024.0)).round(1)} MB"
+      elsif bytes >= 1024
+        "#{(bytes / 1024.0).round(0)} KB"
+      else
+        "#{bytes} B"
       end
     end
   end

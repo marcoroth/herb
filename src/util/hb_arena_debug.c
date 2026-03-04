@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../include/util/hb_arena.h"
+#include "../include/util/hb_arena_debug.h"
 
 #define ANSI_COLOR_GREEN "\033[32m"
 #define ANSI_COLOR_YELLOW "\033[33m"
@@ -117,6 +118,29 @@ static void print_box_line_with_bullet_and_color(const char* color, const char* 
   printf("║%s%*s║\n", line, BOX_WIDTH - visual_length, "");
 }
 
+hb_arena_stats_T hb_arena_get_stats(const hb_arena_T* arena) {
+  hb_arena_stats_T stats = { 0 };
+
+  if (arena->head == NULL) { return stats; }
+
+  stats.default_page_size = arena->default_page_size;
+  stats.allocations = arena->allocation_count;
+
+  hb_arena_for_each_page_const(arena, page) {
+    stats.pages++;
+    stats.total_capacity += page->capacity;
+    stats.total_used += page->position;
+
+    if (page != arena->tail && page->position < page->capacity) {
+      stats.fragmentation += (page->capacity - page->position);
+    }
+  }
+
+  stats.total_available = stats.total_capacity - stats.total_used;
+
+  return stats;
+}
+
 void hb_arena_print_stats(const hb_arena_T* allocator) {
   if (allocator->head == NULL) {
     print_box_top();
@@ -128,22 +152,13 @@ void hb_arena_print_stats(const hb_arena_T* allocator) {
     return;
   }
 
-  size_t num_pages = 0;
-  size_t total_capacity = 0;
-  size_t total_used = 0;
-  size_t fragmentation = 0;
+  hb_arena_stats_T stats = hb_arena_get_stats(allocator);
 
-  for (const hb_arena_page_T* page = allocator->head; page != NULL; page = page->next) {
-    num_pages++;
-    total_capacity += page->capacity;
-    total_used += page->position;
+  size_t total_capacity = stats.total_capacity;
+  size_t total_used = stats.total_used;
+  size_t total_available = stats.total_available;
+  size_t fragmentation = stats.fragmentation;
 
-    if (page != allocator->tail && page->position < page->capacity) {
-      fragmentation += (page->capacity - page->position);
-    }
-  }
-
-  size_t total_available = total_capacity - total_used;
   double usage_percentage = (double) total_used / (double) total_capacity * 100.0;
   double fragmentation_percentage = (double) fragmentation / (double) total_capacity * 100.0;
   const char* overall_color = get_usage_color(usage_percentage);
@@ -160,7 +175,7 @@ void hb_arena_print_stats(const hb_arena_T* allocator) {
   print_box_separator();
   print_box_line("  Statistics:");
 
-  print_box_line_with_bullet("    • Pages: %zu", num_pages);
+  print_box_line_with_bullet("    • Pages: %zu", stats.pages);
   print_box_line_with_bullet("    • Default Page Size: %s", default_size_string);
   print_box_line_with_bullet("    • Total Capacity: %s", capacity_string);
   print_box_line_with_bullet_and_color(
@@ -178,7 +193,7 @@ void hb_arena_print_stats(const hb_arena_T* allocator) {
     usage_percentage,
     ANSI_COLOR_RESET
   );
-  print_box_line_with_bullet("    • Allocations: %zu", allocator->allocation_count);
+  print_box_line_with_bullet("    • Allocations: %zu", stats.allocations);
   print_box_line_with_bullet("    • Fragmentation: %s", fragmentation_string);
 
   if (fragmentation > 0) { print_box_line("      (%.1f%% skipped in non-tail pages)", fragmentation_percentage); }
@@ -187,7 +202,7 @@ void hb_arena_print_stats(const hb_arena_T* allocator) {
 
   size_t page_number = 0;
 
-  for (const hb_arena_page_T* page = allocator->head; page != NULL; page = page->next) {
+  hb_arena_for_each_page_const(allocator, page) {
     double page_usage = (double) page->position / (double) page->capacity * 100.0;
     const char* page_color = get_usage_color(page_usage);
 

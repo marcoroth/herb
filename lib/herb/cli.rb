@@ -149,6 +149,7 @@ class Herb::CLI
                   project.verbose = verbose || ci?
                   project.isolate = isolate
                   project.validate_ruby = true
+                  project.arena_stats = arena_stats
                   has_issues = project.analyze!
                   exit(has_issues ? 1 : 0)
                 when "report"
@@ -300,7 +301,7 @@ class Herb::CLI
         self.tool = t.to_sym
       end
 
-      parser.on("--arena-stats", "Print arena memory statistics (for lex/parse commands)") do
+      parser.on("--arena-stats", "Print arena memory statistics (for lex/parse/analyze commands)") do
         self.arena_stats = true
       end
     end
