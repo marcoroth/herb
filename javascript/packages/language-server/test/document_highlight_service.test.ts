@@ -67,6 +67,13 @@ describe("DocumentHighlightService", () => {
       expect(highlights[1].range.end).toEqual({ line: 0, character: 4 })
     })
 
+    it("highlights when cursor is on > of open tag with attributes", () => {
+      const content = '<div class="hello">\n  12312\n</div>'
+      const highlights = getHighlights(content, 0, 18)
+
+      expect(highlights).toHaveLength(3)
+    })
+
     it("returns empty when cursor is on content between tags", () => {
       const content = "<div>hello</div>"
       const highlights = getHighlights(content, 0, 7)
@@ -417,6 +424,60 @@ describe("DocumentHighlightService", () => {
       expect(highlights).toHaveLength(2)
       expect(highlights[0].range.start.line).toBe(0)
       expect(highlights[1].range.start.line).toBe(2)
+    })
+  })
+
+  describe("ERB content node", () => {
+    it("highlights tag_opening and tag_closing for ERB content", () => {
+      const content = "<%= hello %>"
+      const highlights = getHighlights(content, 0, 0)
+
+      expect(highlights).toHaveLength(2)
+      expect(highlights[0].range.start).toEqual({ line: 0, character: 0 })
+      expect(highlights[0].range.end).toEqual({ line: 0, character: 3 })
+      expect(highlights[1].range.start).toEqual({ line: 0, character: 10 })
+      expect(highlights[1].range.end).toEqual({ line: 0, character: 12 })
+    })
+
+    it("highlights when cursor is on tag_closing", () => {
+      const content = "<%= hello %>"
+      const highlights = getHighlights(content, 0, 11)
+
+      expect(highlights).toHaveLength(2)
+    })
+
+    it("returns empty when cursor is on content", () => {
+      const content = "<%= hello %>"
+      const highlights = getHighlights(content, 0, 5)
+
+      expect(highlights).toHaveLength(0)
+    })
+  })
+
+  describe("HTML comments", () => {
+    it("highlights <!-- and --> when cursor is on <!--", () => {
+      const content = "<!-- comment -->"
+      const highlights = getHighlights(content, 0, 0)
+
+      expect(highlights).toHaveLength(2)
+      expect(highlights[0].range.start).toEqual({ line: 0, character: 0 })
+      expect(highlights[0].range.end).toEqual({ line: 0, character: 4 })
+      expect(highlights[1].range.start).toEqual({ line: 0, character: 13 })
+      expect(highlights[1].range.end).toEqual({ line: 0, character: 16 })
+    })
+
+    it("highlights when cursor is on -->", () => {
+      const content = "<!-- comment -->"
+      const highlights = getHighlights(content, 0, 14)
+
+      expect(highlights).toHaveLength(2)
+    })
+
+    it("returns empty when cursor is on comment content", () => {
+      const content = "<!-- comment -->"
+      const highlights = getHighlights(content, 0, 6)
+
+      expect(highlights).toHaveLength(0)
     })
   })
 

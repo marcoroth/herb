@@ -4,6 +4,7 @@ import { Visitor } from "@herb-tools/core"
 
 import type {
   Node,
+  SerializedLocation,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBIfNode,
@@ -26,6 +27,7 @@ import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
 import { ConfigService } from "./config_service"
+import { lspRangeFromLocation } from "./range_utils"
 
 export class Diagnostics {
   private readonly connection: Connection
@@ -253,18 +255,9 @@ export class UnreachableCodeCollector extends Visitor {
     )
   }
 
-  private addDiagnostic(location: { start: { line: number; column: number }, end: { line: number; column: number } }, message: string): void {
+  private addDiagnostic(location: SerializedLocation, message: string): void {
     const diagnostic: Diagnostic = {
-      range: {
-        start: {
-          line: this.toZeroBased(location.start.line),
-          character: location.start.column
-        },
-        end: {
-          line: this.toZeroBased(location.end.line),
-          character: location.end.column
-        }
-      },
+      range: lspRangeFromLocation(location),
       message,
       severity: DiagnosticSeverity.Hint,
       tags: [DiagnosticTag.Unnecessary],
@@ -363,7 +356,4 @@ export class UnreachableCodeCollector extends Visitor {
     return !hasContent
   }
 
-  private toZeroBased(line: number): number {
-    return line - 1
-  }
 }

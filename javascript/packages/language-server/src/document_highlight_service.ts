@@ -1,75 +1,47 @@
 import { DocumentHighlight, DocumentHighlightKind, Range, Position } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
+
 import { Visitor } from "@herb-tools/core"
+import { ParserService } from "./parser_service"
+
+import { isERBIfNode, isERBElseNode, isHTMLOpenTagNode } from "@herb-tools/core"
+import { erbTagToRange, tokenToRange, nodeToRange, openTagRanges } from "./range_utils"
 
 import type {
   Node,
-  Token,
+  ERBNode,
+  ERBContentNode,
   HTMLElementNode,
   HTMLConditionalElementNode,
-  HTMLOpenTagNode,
   HTMLAttributeNode,
+  HTMLCommentNode,
   ERBIfNode,
   ERBUnlessNode,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBBeginNode,
   ERBRescueNode,
-  ERBBlockNode,
-  ERBForNode,
-  ERBWhileNode,
-  ERBUntilNode,
-  ERBWhenNode,
-  ERBInNode,
 } from "@herb-tools/core"
 
-import { isERBIfNode, isERBElseNode, isHTMLOpenTagNode } from "@herb-tools/core"
+export class DocumentHighlightCollector extends Visitor {
+  public groups: Range[][] = []
+  private processedIfNodes: Set<ERBIfNode> = new Set()
 
-import { ParserService } from "./parser_service"
-
-function erbTagToRange(node: { tag_opening: Token | null; tag_closing: Token | null }): Range | null {
-  if (!node.tag_opening || !node.tag_closing) return null
-
-  return Range.create(
-    Position.create(node.tag_opening.location.start.line - 1, node.tag_opening.location.start.column),
-    Position.create(node.tag_closing.location.end.line - 1, node.tag_closing.location.end.column),
-  )
-}
-
-function tokenToRange(token: Token | null): Range | null {
-  if (!token) return null
-
-  return Range.create(
-    Position.create(token.location.start.line - 1, token.location.start.column),
-    Position.create(token.location.end.line - 1, token.location.end.column),
-  )
-}
-
-function nodeToRange(node: { location: { start: { line: number; column: number }; end: { line: number; column: number } } }): Range {
-  return Range.create(
-    Position.create(node.location.start.line - 1, node.location.start.column),
-    Position.create(node.location.end.line - 1, node.location.end.column),
-  )
-}
-
-function openTagRanges(tag: HTMLOpenTagNode): (Range | null)[] {
-  const ranges: (Range | null)[] = []
-
-  if (tag.tag_opening && tag.tag_name) {
-    ranges.push(Range.create(
-      Position.create(tag.tag_opening.location.start.line - 1, tag.tag_opening.location.start.column),
-      Position.create(tag.tag_name.location.end.line - 1, tag.tag_name.location.end.column),
-    ))
+  visitERBNode(node: ERBNode): void {
+    if ('end_node' in node && node.end_node) {
+      this.addGroup([erbTagToRange(node), erbTagToRange(node.end_node)])
+    }
   }
 
-  ranges.push(tokenToRange(tag.tag_closing))
+  visitERBContentNode(node: ERBContentNode): void {
+    this.addGroup([tokenToRange(node.tag_opening), tokenToRange(node.tag_closing)])
+    this.visitChildNodes(node)
+  }
 
-  return ranges
-}
-
-export class DocumentHighlightCollector extends Visitor {
-  groups: Range[][] = []
-  private processedIfNodes: Set<ERBIfNode> = new Set()
+  visitHTMLCommentNode(node: HTMLCommentNode): void {
+    this.addGroup([tokenToRange(node.comment_start), tokenToRange(node.comment_end)])
+    this.visitChildNodes(node)
+  }
 
   visitHTMLElementNode(node: HTMLElementNode): void {
     const ranges: (Range | null)[] = []
@@ -142,6 +114,7 @@ export class DocumentHighlightCollector extends Visitor {
     ranges.push(erbTagToRange(node))
 
     let current: Node | null = node.subsequent
+
     while (current) {
       if (isERBIfNode(current)) {
         ranges.push(erbTagToRange(current))
@@ -179,31 +152,19 @@ export class DocumentHighlightCollector extends Visitor {
   }
 
   visitERBCaseNode(node: ERBCaseNode): void {
-    const ranges: (Range | null)[] = []
-    ranges.push(erbTagToRange(node))
-
-    for (const condition of node.conditions) {
-      ranges.push(erbTagToRange(condition as ERBWhenNode))
-    }
-
-    if (node.else_clause) {
-      ranges.push(erbTagToRange(node.else_clause))
-    }
-
-    if (node.end_node) {
-      ranges.push(erbTagToRange(node.end_node))
-    }
-
-    this.addGroup(ranges)
-    this.visitChildNodes(node)
+    this.visitERBAnyCaseNode(node)
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
+    this.visitERBAnyCaseNode(node)
+  }
+
+  visitERBAnyCaseNode(node: ERBCaseNode | ERBCaseMatchNode): void {
     const ranges: (Range | null)[] = []
     ranges.push(erbTagToRange(node))
 
     for (const condition of node.conditions) {
-      ranges.push(erbTagToRange(condition as ERBInNode))
+      ranges.push(erbTagToRange(condition as ERBNode))
     }
 
     if (node.else_clause) {
@@ -223,6 +184,7 @@ export class DocumentHighlightCollector extends Visitor {
     ranges.push(erbTagToRange(node))
 
     let rescue: ERBRescueNode | null = node.rescue_clause
+
     while (rescue) {
       ranges.push(erbTagToRange(rescue))
       rescue = rescue.subsequent
@@ -235,54 +197,6 @@ export class DocumentHighlightCollector extends Visitor {
     if (node.ensure_clause) {
       ranges.push(erbTagToRange(node.ensure_clause))
     }
-
-    if (node.end_node) {
-      ranges.push(erbTagToRange(node.end_node))
-    }
-
-    this.addGroup(ranges)
-    this.visitChildNodes(node)
-  }
-
-  visitERBBlockNode(node: ERBBlockNode): void {
-    const ranges: (Range | null)[] = []
-    ranges.push(erbTagToRange(node))
-
-    if (node.end_node) {
-      ranges.push(erbTagToRange(node.end_node))
-    }
-
-    this.addGroup(ranges)
-    this.visitChildNodes(node)
-  }
-
-  visitERBForNode(node: ERBForNode): void {
-    const ranges: (Range | null)[] = []
-    ranges.push(erbTagToRange(node))
-
-    if (node.end_node) {
-      ranges.push(erbTagToRange(node.end_node))
-    }
-
-    this.addGroup(ranges)
-    this.visitChildNodes(node)
-  }
-
-  visitERBWhileNode(node: ERBWhileNode): void {
-    const ranges: (Range | null)[] = []
-    ranges.push(erbTagToRange(node))
-
-    if (node.end_node) {
-      ranges.push(erbTagToRange(node.end_node))
-    }
-
-    this.addGroup(ranges)
-    this.visitChildNodes(node)
-  }
-
-  visitERBUntilNode(node: ERBUntilNode): void {
-    const ranges: (Range | null)[] = []
-    ranges.push(erbTagToRange(node))
 
     if (node.end_node) {
       ranges.push(erbTagToRange(node.end_node))
