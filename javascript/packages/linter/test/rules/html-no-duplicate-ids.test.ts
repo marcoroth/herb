@@ -209,9 +209,8 @@ describe("html-no-duplicate-ids", () => {
     `)
   })
 
-  test("passes for output ERB IDs in loops (unique per iteration)", () => {
-    expectError('Duplicate ID `user-<%= user.id %>` found. IDs must be unique within a document.')
-    assertOffenses(dedent`
+  test("passes for output ERB IDs in separate block contexts (unique per iteration)", () => {
+    expectNoOffenses(dedent`
       <% users.each do |user| %>
         <div id="user-<%= user.id %>">User</div>
       <% end %>
@@ -318,6 +317,29 @@ describe("html-no-duplicate-ids", () => {
     expectNoOffenses(dedent`
       <% @users.each do |user| %>
         <div id="<%= user.id %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("passes for dynamic IDs with same pattern in separate each blocks (issue #388)", () => {
+    expectNoOffenses(dedent`
+      <% first_options.each do |opt| %>
+        <div id="option--<%= opt[:id] %>"></div>
+      <% end %>
+
+      <% second_options.each do |opt| %>
+        <div id="option--<%= opt[:id] %>"></div>
+      <% end %>
+    `)
+  })
+
+  test("fails for duplicate dynamic IDs within same block", () => {
+    expectError('Duplicate ID `item-<%= item.id %>` found within the same control flow branch. IDs must be unique within the same control flow branch.')
+
+    assertOffenses(dedent`
+      <% items.each do |item| %>
+        <div id="item-<%= item.id %>"></div>
+        <span id="item-<%= item.id %>"></span>
       <% end %>
     `)
   })

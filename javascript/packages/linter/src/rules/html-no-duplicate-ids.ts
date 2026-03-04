@@ -93,40 +93,41 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     return getStaticAttributeName(attributeNode.name) === "id"
   }
 
-  private extractIdValue(attributeNode: HTMLAttributeNode): { identifier: string; shouldTrackDuplicates: boolean } | null {
+  private extractIdValue(attributeNode: HTMLAttributeNode): { identifier: string; shouldTrackDuplicates: boolean; isDynamic: boolean } | null {
     const valueNodes = attributeNode.value?.children || []
+    const isDynamic = hasERBOutput(valueNodes)
 
-    if (hasERBOutput(valueNodes) && this.isInControlFlow && this.currentControlFlowType === ControlFlowType.LOOP) {
+    if (isDynamic && this.isInControlFlow && this.currentControlFlowType === ControlFlowType.LOOP) {
       return null
     }
 
     const identifier = isEffectivelyStatic(valueNodes) ? getValidatableStaticContent(valueNodes) : OutputPrinter.print(valueNodes)
     if (!identifier) return null
 
-    return { identifier, shouldTrackDuplicates: true }
+    return { identifier, shouldTrackDuplicates: true, isDynamic }
   }
 
   private isWhitespaceOnlyId(identifier: string): boolean {
     return identifier !== '' && identifier.trim() === ''
   }
 
-  private processIdDuplicate(idValue: { identifier: string; shouldTrackDuplicates: boolean }, attributeNode: HTMLAttributeNode): void {
-    const { identifier, shouldTrackDuplicates } = idValue
+  private processIdDuplicate(idValue: { identifier: string; shouldTrackDuplicates: boolean; isDynamic: boolean }, attributeNode: HTMLAttributeNode): void {
+    const { identifier, shouldTrackDuplicates, isDynamic } = idValue
 
     if (!shouldTrackDuplicates) return
 
     if (this.isInControlFlow) {
-      this.handleControlFlowId(identifier, attributeNode)
+      this.handleControlFlowId(identifier, attributeNode, isDynamic)
     } else {
       this.handleGlobalId(identifier, attributeNode)
     }
   }
 
-  private handleControlFlowId(identifier: string, attributeNode: HTMLAttributeNode): void {
+  private handleControlFlowId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
     if (this.currentControlFlowType === ControlFlowType.LOOP) {
       this.handleLoopId(identifier, attributeNode)
     } else {
-      this.handleConditionalId(identifier, attributeNode)
+      this.handleConditionalId(identifier, attributeNode, isDynamic)
     }
 
     this.currentBranchIds.add(identifier)
@@ -145,18 +146,20 @@ class NoDuplicateIdsVisitor extends ControlFlowTrackingVisitor<BaseAutofixContex
     }
   }
 
-  private handleConditionalId(identifier: string, attributeNode: HTMLAttributeNode): void {
+  private handleConditionalId(identifier: string, attributeNode: HTMLAttributeNode, isDynamic: boolean): void {
     if (this.currentBranchIds.has(identifier)) {
       this.addSameBranchOffense(identifier, attributeNode.location)
       return
     }
 
-    if (this.documentIds.has(identifier)) {
+    if (!isDynamic && this.documentIds.has(identifier)) {
       this.addDuplicateIdOffense(identifier, attributeNode.location)
       return
     }
 
-    this.controlFlowIds.add(identifier)
+    if (!isDynamic) {
+      this.controlFlowIds.add(identifier)
+    }
   }
 
   private handleGlobalId(identifier: string, attributeNode: HTMLAttributeNode): void {
