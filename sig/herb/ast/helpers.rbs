@@ -1,0 +1,22 @@
+# Generated from lib/herb/ast/helpers.rb with RBS::Inline
+
+module Herb
+  module AST
+    module Helpers
+      # : (Herb::AST::Node?) -> bool
+      def erb_outputs?: (Herb::AST::Node?) -> bool
+
+      # : (String) -> bool
+      def erb_comment?: (String) -> bool
+
+      # : (String) -> bool
+      def erb_graphql?: (String) -> bool
+
+      # : (String) -> bool
+      def erb_output?: (String) -> bool
+
+      # : (Herb::AST::ERBContentNode) -> bool
+      def inline_ruby_comment?: (Herb::AST::ERBContentNode) -> bool
+    end
+  end
+end

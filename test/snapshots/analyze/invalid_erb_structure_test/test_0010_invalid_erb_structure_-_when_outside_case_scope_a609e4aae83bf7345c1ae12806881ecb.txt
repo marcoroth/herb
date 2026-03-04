@@ -1,0 +1,95 @@
+---
+source: "Analyze::InvalidERBStructureTest#test_0010_invalid erb structure - when outside case scope"
+input: |2-
+<div
+  <% case value %>
+  <% when 1 %>
+    class="a"
+>
+<% end %>
+</div>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(7:6))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(5:1))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (5:0)-(5:1))
+    │   │       ├── children: (1 item)
+    │   │       │   └── @ ERBCaseNode (location: (2:2)-(3:14))
+    │   │       │       ├── errors: (1 error)
+    │   │       │       │   └── @ MissingERBEndTagError (location: (2:2)-(2:18))
+    │   │       │       │       ├── message: "`<% case %>` started here but never closed with an end tag. The end tag may be in a different scope."
+    │   │       │       │       └── keyword: "`<% case %>`"
+    │   │       │       │
+    │   │       │       ├── tag_opening: "<%" (location: (2:2)-(2:4))
+    │   │       │       ├── content: " case value " (location: (2:4)-(2:16))
+    │   │       │       ├── tag_closing: "%>" (location: (2:16)-(2:18))
+    │   │       │       ├── children: []
+    │   │       │       ├── conditions: (1 item)
+    │   │       │       │   └── @ ERBWhenNode (location: (3:2)-(3:14))
+    │   │       │       │       ├── tag_opening: "<%" (location: (3:2)-(3:4))
+    │   │       │       │       ├── content: " when 1 " (location: (3:4)-(3:12))
+    │   │       │       │       ├── tag_closing: "%>" (location: (3:12)-(3:14))
+    │   │       │       │       ├── then_keyword: ∅
+    │   │       │       │       └── statements: (1 item)
+    │   │       │       │           └── @ HTMLAttributeNode (location: (4:4)-(4:13))
+    │   │       │       │               ├── name:
+    │   │       │       │               │   └── @ HTMLAttributeNameNode (location: (4:4)-(4:9))
+    │   │       │       │               │       └── children: (1 item)
+    │   │       │       │               │           └── @ LiteralNode (location: (4:4)-(4:9))
+    │   │       │       │               │               └── content: "class"
+    │   │       │       │               │
+    │   │       │       │               │
+    │   │       │       │               ├── equals: "=" (location: (4:9)-(4:10))
+    │   │       │       │               └── value:
+    │   │       │       │                   └── @ HTMLAttributeValueNode (location: (4:10)-(4:13))
+    │   │       │       │                       ├── open_quote: """ (location: (4:10)-(4:11))
+    │   │       │       │                       ├── children: (1 item)
+    │   │       │       │                       │   └── @ LiteralNode (location: (4:11)-(4:12))
+    │   │       │       │                       │       └── content: "a"
+    │   │       │       │                       │
+    │   │       │       │                       ├── close_quote: """ (location: (4:12)-(4:13))
+    │   │       │       │                       └── quoted: true
+    │   │       │       │
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── else_clause: ∅
+    │   │       │       └── end_node: ∅
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (5:1)-(6:0))
+    │   │   │   └── content: "\n"
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (6:0)-(6:9))
+    │   │   │   ├── errors: (1 error)
+    │   │   │   │   └── @ ERBControlFlowScopeError (location: (6:0)-(6:9))
+    │   │   │   │       ├── message: "`<% end %>` appears outside its control flow block. Keep ERB control flow statements together within the same HTML scope (tag, attribute, or content)."
+    │   │   │   │       └── keyword: "`<% end %>`"
+    │   │   │   │
+    │   │   │   ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │   │   │   ├── content: " end " (location: (6:2)-(6:7))
+    │   │   │   ├── tag_closing: "%>" (location: (6:7)-(6:9))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: false
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (6:9)-(7:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (7:0)-(7:6))
+    │   │       ├── tag_opening: "</" (location: (7:0)-(7:2))
+    │   │       ├── tag_name: "div" (location: (7:2)-(7:5))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (7:5)-(7:6))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (7:6)-(8:0))
+        └── content: "\n"

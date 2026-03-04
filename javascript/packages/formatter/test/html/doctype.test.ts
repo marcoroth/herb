@@ -35,4 +35,18 @@ describe("@herb-tools/formatter", () => {
       <!DoCTyPe <% hello %> hello>
     `)
   })
+
+  test("properly indents doctype", () => {
+    const source = dedent`
+      <div>
+      <!DoCTyPe <% hello %> hello>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <!DoCTyPe <% hello %> hello>
+      </div>
+    `)
+  })
 })

@@ -1,3 +1,11 @@
+---
+source: "Parser::CommentsTest#test_0004_HTML comment followed by html tag with nested comment"
+input: |2-
+
+        <!--Hello World-->
+        <h1><!-- Hello World --></h1>
+      
+---
 @ DocumentNode (location: (1:0)-(4:6))
 └── children: (5 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:8))
@@ -37,9 +45,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (3:32)-(3:37))
     │   │       ├── tag_opening: "</" (location: (3:32)-(3:34))
     │   │       ├── tag_name: "h1" (location: (3:34)-(3:36))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:36)-(3:37))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:37)-(4:6))
         └── content: "\n      "

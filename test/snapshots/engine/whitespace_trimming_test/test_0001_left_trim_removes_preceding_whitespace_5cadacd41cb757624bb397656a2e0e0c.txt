@@ -1,0 +1,5 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0001_left trim removes preceding whitespace"
+input: "{source: \"<%- if true %>\\n  <h1>Content</h1>\\n<%- end %>\\n\", locals: {}, options: {}}"
+---
+  <h1>Content</h1>

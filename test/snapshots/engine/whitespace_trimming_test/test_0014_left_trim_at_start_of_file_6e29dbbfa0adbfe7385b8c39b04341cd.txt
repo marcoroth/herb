@@ -1,0 +1,8 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0014_left trim at start of file"
+input: "{source: \"<%- if true %>\\nContent\\n<%- end %>\", options: {}}"
+---
+_buf = ::String.new; if true 
+ _buf << 'Content
+'.freeze; end 
+_buf.to_s

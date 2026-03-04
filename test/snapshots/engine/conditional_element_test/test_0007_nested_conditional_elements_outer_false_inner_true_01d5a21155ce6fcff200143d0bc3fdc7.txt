@@ -1,0 +1,7 @@
+---
+source: "Engine::ConditionalElementTest#test_0007_nested conditional elements outer false inner true"
+input: "{source: \"<% if @outer %>\\n  <div class=\\\"outer\\\">\\n<% end %>\\n  <% if @inner %>\\n    <section class=\\\"inner\\\">\\n  <% end %>\\n    <span>Nested content</span>\\n  <% if @inner %>\\n    </section>\\n  <% end %>\\n<% if @outer %>\\n  </div>\\n<% end %>\\n\", locals: {\"@outer\": false, \"@inner\": true}, options: {escape: false}}"
+---
+    <section class="inner">
+    <span>Nested content</span>
+    </section>

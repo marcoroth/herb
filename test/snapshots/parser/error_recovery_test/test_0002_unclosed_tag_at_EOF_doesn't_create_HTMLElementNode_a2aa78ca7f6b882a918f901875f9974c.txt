@@ -1,0 +1,29 @@
+---
+source: "Parser::ErrorRecoveryTest#test_0002_unclosed tag at EOF doesn't create HTMLElementNode"
+input: "<div <div"
+---
+@ DocumentNode (location: (1:0)-(1:9))
+└── children: (2 items)
+    ├── @ HTMLOpenTagNode (location: (1:0)-(1:5))
+    │   ├── errors: (1 error)
+    │   │   └── @ UnclosedOpenTagError (location: (1:1)-(1:5))
+    │   │       ├── message: "Opening tag `<div>` at (1:1) is missing closing `>`."
+    │   │       └── tag_name: "div" (location: (1:1)-(1:4))
+    │   │
+    │   ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── tag_closing: ∅
+    │   ├── children: []
+    │   └── is_void: false
+    │
+    └── @ HTMLOpenTagNode (location: (1:5)-(1:9))
+        ├── errors: (1 error)
+        │   └── @ UnclosedOpenTagError (location: (1:6)-(1:9))
+        │       ├── message: "Opening tag `<div>` at (1:6) is missing closing `>`."
+        │       └── tag_name: "div" (location: (1:6)-(1:9))
+        │
+        ├── tag_opening: "<" (location: (1:5)-(1:6))
+        ├── tag_name: "div" (location: (1:6)-(1:9))
+        ├── tag_closing: ∅
+        ├── children: []
+        └── is_void: false

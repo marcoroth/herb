@@ -1,0 +1,53 @@
+name: Java
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Cache junit jar
+        uses: actions/cache@v4
+        with:
+          path: java/lib
+          key: ${{ runner.os }}-junit-${{ hashFiles('java/Makefile') }}
+
+      - name: Ensure junit jar
+        run: make ensure-junit
+        working-directory: java
+
+      - name: Render Templates
+        run: make templates
+        working-directory: java
+
+      - name: Compile Herb
+        run: make herb
+        working-directory: java
+
+      - name: Build and test
+        run: make test
+        working-directory: java

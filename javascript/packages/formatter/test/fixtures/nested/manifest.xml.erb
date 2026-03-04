@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <application>
+    <activity android:name="MainActivity">
+      <% permissions.each do |permission| %>
+        <uses-permission android:name="<%= permission %>" />
+      <% end %>
+    </activity>
+  </application>
+</manifest>

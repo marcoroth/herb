@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("ERB Formatter Additional Tests", () => {
   beforeAll(async () => {
@@ -13,6 +15,7 @@ describe("ERB Formatter Additional Tests", () => {
       indentWidth: 2,
       maxLineLength: 80,
     })
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   describe("Basic formatting edge cases", () => {
@@ -44,11 +47,10 @@ describe("ERB Formatter Additional Tests", () => {
           Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
           tempor incididunt ut labore et dolore magna aliqua. 🍰🍰🍰🍰🍰🍰🍰🍰🍰🍰Ut
           enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-          aliquip ex ea commodo
-          <span>co<strong>nse</strong>quat.</span>
-          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
-          eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt
-          in culpa qui officia deserunt mollit anim id est laborum.
+          aliquip ex ea commodo <span>co<strong>nse</strong>quat.</span> Duis aute irure
+          dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
+          officia deserunt mollit anim id est laborum.
         </p>
       `)
     })
@@ -70,7 +72,8 @@ describe("ERB Formatter Additional Tests", () => {
 
     test("handles complex ERB with vite and stylesheet tags", () => {
       const source = dedent`
-        <%- vite_client_tag %> <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
+        <%- vite_client_tag %>
+        <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
         <%= stylesheet_link_tag "tailwind",
         "inter-font",
         "data-turbo-track": "reload",
@@ -85,7 +88,6 @@ describe("ERB Formatter Additional Tests", () => {
 
       expect(result).toBe(dedent`
         <%- vite_client_tag %>
-
         <%= vite_typescript_tag "application", "data-turbo-track": "reload", defer: true %>
 
         <%= stylesheet_link_tag "tailwind",
@@ -159,6 +161,7 @@ describe("ERB Formatter Additional Tests", () => {
           <div>
             <div>
               <span>Short text</span>
+
               <p>
                 In the event we decide to issue a refund, we will reimburse you no later
                 than fourteen (14) days from the date on which we make that
@@ -174,17 +177,13 @@ describe("ERB Formatter Additional Tests", () => {
 
   describe("Error handling", () => {
     test("handles unmatched ERB tags gracefully", () => {
-      const source = dedent`
+      expectFormattedToMatch(dedent`
         <% if true %>
           <h1>
             <%= link_to 'New Order', new_order_path, class: "btn btn-success" %>
             <% end %>
           </h1>
-      `
-
-      const result = formatter.format(source)
-
-      expect(result).toBe(source)
+      `)
     })
   })
 

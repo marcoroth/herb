@@ -1,0 +1,16 @@
+---
+source: "Engine::DebugModeTest#test_0048_svg with defs and style erb expressions do NOT get debug spans"
+input: "{source: \"<svg xmlns=\\\"http://www.w3.org/2000/svg\\\" viewBox=\\\"0 0 29 29\\\">\\n  <defs>\\n    <style>\\n      .cls-1 {fill:none;stroke:<%= @stroke_color %>}\\n    </style>\\n  </defs>\\n  <g transform=\\\"rotate(<%= @angle %> 50 50)\\\">\\n    <line x1=\\\"50\\\" y1=\\\"10\\\" x2=\\\"50\\\" y2=\\\"50\\\" stroke=\\\"red\\\" />\\n  </g>\\n</svg>\\n\", options: {debug: true}}"
+---
+_buf = ::String.new; _buf << '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 29 29" data-herb-debug-outline-type="view" data-herb-debug-file-name="unknown" data-herb-debug-file-relative-path="unknown" data-herb-debug-file-full-path="unknown">
+  <defs>
+    <style>
+      .cls-1 {fill:none;stroke:'.freeze; _buf << ::Herb::Engine.css((@stroke_color)); _buf << '}
+    </style>
+  </defs>
+  <g transform="rotate('.freeze; _buf << ::Herb::Engine.attr((@angle)); _buf << ' 50 50)">
+    <line x1="50" y1="10" x2="50" y2="50" stroke="red" />
+  </g>
+</svg>
+'.freeze;
+_buf.to_s

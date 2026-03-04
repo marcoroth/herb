@@ -1,3 +1,11 @@
+---
+source: "Lexer::CommentsTest#test_0004_HTML comment followed by html tag with nested comment"
+input: |2-
+
+        <!--Hello World-->
+        <h1><!-- Hello World --></h1>
+      
+---
 #<Herb::Token type="TOKEN_NEWLINE" value="\n" range=[0, 1] start=(1:0) end=(2:0)>
 #<Herb::Token type="TOKEN_WHITESPACE" value="        " range=[1, 9] start=(2:0) end=(2:8)>
 #<Herb::Token type="TOKEN_HTML_COMMENT_START" value="<!--" range=[9, 13] start=(2:8) end=(2:12)>

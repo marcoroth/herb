@@ -1,66 +1,132 @@
-import { BaseRuleVisitor } from "./rule-utils.js"
+import { ParserRule, BaseAutofixContext, Mutable } from "../types.js"
+import { BaseRuleVisitor, findParent } from "./rule-utils.js"
+import { isNode, getTagName, getTagLocalName, HTMLOpenTagNode, isHTMLElementNode, isHTMLCloseTagNode, getOpenTag } from "@herb-tools/core"
 
-import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLElementNode, HTMLOpenTagNode, HTMLCloseTagNode, HTMLSelfCloseTagNode, ParseResult } from "@herb-tools/core"
+import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLElementNode, HTMLCloseTagNode, ParseResult, XMLDeclarationNode, Node } from "@herb-tools/core"
 
-class TagNameLowercaseVisitor extends BaseRuleVisitor {
+interface TagNameAutofixContext extends BaseAutofixContext {
+  node: Mutable<HTMLOpenTagNode | HTMLCloseTagNode>
+  tagName: string
+  correctedTagName: string
+}
+
+class XMLDeclarationChecker extends BaseRuleVisitor {
+  hasXMLDeclaration: boolean = false
+
+  visitXMLDeclarationNode(_node: XMLDeclarationNode): void {
+    this.hasXMLDeclaration = true
+  }
+
+  visitChildNodes(node: Node): void {
+    if (this.hasXMLDeclaration) return
+    super.visitChildNodes(node)
+  }
+}
+
+class TagNameLowercaseVisitor extends BaseRuleVisitor<TagNameAutofixContext> {
   visitHTMLElementNode(node: HTMLElementNode): void {
-    const tagName = node.tag_name?.value
+    if (getTagLocalName(node) === "svg") {
+      this.checkTagName(getOpenTag(node))
 
-    if (node.open_tag) {
-      this.checkTagName(node.open_tag as HTMLOpenTagNode)
-    }
-
-    if (tagName && ["svg"].includes(tagName.toLowerCase())) {
-      if (node.close_tag) {
-        this.checkTagName(node.close_tag as HTMLCloseTagNode)
+      if (node.close_tag && isHTMLCloseTagNode(node.close_tag)) {
+        this.checkTagName(node.close_tag)
       }
-
-      return
-    }
-
-    this.visitChildNodes(node)
-
-    if (node.close_tag) {
-      this.checkTagName(node.close_tag as HTMLCloseTagNode)
+    } else {
+      super.visitHTMLElementNode(node)
     }
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode) {
     this.checkTagName(node)
-    this.visitChildNodes(node)
   }
 
-  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | HTMLSelfCloseTagNode): void {
-    const tagName = node.tag_name?.value
+  visitHTMLCloseTagNode(node: HTMLCloseTagNode) {
+    this.checkTagName(node)
+  }
+
+  private checkTagName(node: HTMLOpenTagNode | HTMLCloseTagNode | null): void {
+    if (!node) return
+
+    const tagName = getTagName(node)
 
     if (!tagName) return
 
     const lowercaseTagName = tagName.toLowerCase()
 
+    const type = isNode(node, HTMLOpenTagNode) ? "Opening" : "Closing"
+    const open = isNode(node, HTMLOpenTagNode) ? "<" : "</"
+
     if (tagName !== lowercaseTagName) {
-      let type: string = node.type
-
-      if (node.type == "AST_HTML_OPEN_TAG_NODE") type = "Opening"
-      if (node.type == "AST_HTML_CLOSE_TAG_NODE") type = "Closing"
-      if (node.type == "AST_HTML_SELF_CLOSE_TAG_NODE") type = "Self-closing"
-
       this.addOffense(
-        `${type} tag name \`${tagName}\` should be lowercase. Use \`${lowercaseTagName}\` instead.`,
+        `${type} tag name \`${open}${tagName}>\` should be lowercase. Use \`${open}${lowercaseTagName}>\` instead.`,
         node.tag_name!.location,
-        "error"
+        {
+          node,
+          tagName,
+          correctedTagName: lowercaseTagName
+        }
       )
     }
   }
 }
 
-export class HTMLTagNameLowercaseRule extends ParserRule {
-  name = "html-tag-name-lowercase"
+export class HTMLTagNameLowercaseRule extends ParserRule<TagNameAutofixContext> {
+  static autocorrectable = true
+  static ruleName = "html-tag-name-lowercase"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new TagNameLowercaseVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error",
+      exclude: ["**/*.xml", "**/*.xml.erb"]
+    }
+  }
+
+  isEnabled(result: ParseResult, _context?: Partial<LintContext>): boolean {
+    const checker = new XMLDeclarationChecker(this.ruleName)
+
+    checker.visit(result.value)
+
+    return !checker.hasXMLDeclaration
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TagNameAutofixContext>[] {
+    const visitor = new TagNameLowercaseVisitor(this.ruleName, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
+  }
+
+  autofix(offense: LintOffense<TagNameAutofixContext>, result: ParseResult, _context?: Partial<LintContext>): ParseResult | null {
+    if (!offense.autofixContext) return null
+
+    const { node, correctedTagName } = offense.autofixContext
+    if (!node.tag_name) return null
+
+    node.tag_name.value = correctedTagName
+
+    const parentElement = findParent(result.value, node as any as Node)
+    if (!parentElement || !isHTMLElementNode(parentElement)) return result
+
+    switch (node.type) {
+      case "AST_HTML_OPEN_TAG_NODE":
+        if (!parentElement.close_tag) break
+
+        const closeTag = parentElement.close_tag as Mutable<HTMLCloseTagNode>
+        closeTag.tag_name!.value = correctedTagName
+        break
+      case "AST_HTML_CLOSE_TAG_NODE":
+        const openTag = getOpenTag(parentElement) as Mutable<HTMLOpenTagNode> | null
+        if (openTag?.tag_name) {
+          openTag.tag_name.value = correctedTagName
+        }
+        break
+      default:
+        break
+    }
+
+    return result
   }
 }

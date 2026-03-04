@@ -1,0 +1,10 @@
+---
+source: "Engine::WhitespaceTrimmingTest#test_0005_right trim with whitespace on following line"
+input: "{source: \"before\\n  <% if true -%>\\nafter\\n  <% end -%>\\nfinal\", options: {}}"
+---
+_buf = ::String.new; _buf << 'before
+'.freeze;   if true 
+ _buf << 'after
+'.freeze;   end 
+ _buf << 'final'.freeze;
+_buf.to_s

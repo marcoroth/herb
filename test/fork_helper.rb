@@ -3,7 +3,7 @@
 require "timeout"
 
 class Minitest::Spec
-  TIMEOUT_THRESHOLD = ENV["UPDATE_SNAPSHOTS"].nil? ? 0.1 : 5 # seconds
+  TIMEOUT_THRESHOLD = ENV["UPDATE_SNAPSHOTS"].nil? ? 5 : 60 # seconds
 
   puts "Using fork_helper with timeout: #{TIMEOUT_THRESHOLD} seconds"
 

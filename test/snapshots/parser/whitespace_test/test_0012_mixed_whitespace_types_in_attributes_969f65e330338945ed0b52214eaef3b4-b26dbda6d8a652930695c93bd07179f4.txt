@@ -1,0 +1,65 @@
+---
+source: "Parser::WhitespaceTest#test_0012_mixed whitespace types in attributes"
+input: |2-
+<div 	
+  class="test">content</div>
+options: {track_whitespace: true}
+---
+@ DocumentNode (location: (1:0)-(3:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(2:28))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(2:15))
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (2:14)-(2:15))
+    │   │       ├── children: (4 items)
+    │   │       │   ├── @ WhitespaceNode (location: (1:4)-(1:6))
+    │   │       │   │   └── value: " 	" (location: (1:4)-(1:6))
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (1:6)-(2:0))
+    │   │       │   │   └── value: "
+    │   │       │   │   " (location: (1:6)-(2:0))
+    │   │       │   │
+    │   │       │   ├── @ WhitespaceNode (location: (2:0)-(2:2))
+    │   │       │   │   └── value: "  " (location: (2:0)-(2:2))
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (2:2)-(2:14))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:2)-(2:7))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (2:2)-(2:7))
+    │   │       │       │               └── content: "class"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (2:7)-(2:8))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (2:8)-(2:14))
+    │   │       │               ├── open_quote: """ (location: (2:8)-(2:9))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (2:9)-(2:13))
+    │   │       │               │       └── content: "test"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (2:13)-(2:14))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (2:15)-(2:22))
+    │   │       └── content: "content"
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (2:22)-(2:28))
+    │   │       ├── tag_opening: "</" (location: (2:22)-(2:24))
+    │   │       ├── tag_name: "div" (location: (2:24)-(2:27))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (2:27)-(2:28))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (2:28)-(3:0))
+        └── content: "\n"

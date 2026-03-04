@@ -1,3 +1,8 @@
+---
+source: "Parser::UTF8Test#test_0007_multiple utf8 characters in html content"
+input: |2-
+<div>▌🌿▌</div>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:14))
@@ -18,9 +23,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:8)-(1:14))
     │   │       ├── tag_opening: "</" (location: (1:8)-(1:10))
     │   │       ├── tag_name: "div" (location: (1:10)-(1:13))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:13)-(1:14))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:14)-(2:0))
         └── content: "\n"

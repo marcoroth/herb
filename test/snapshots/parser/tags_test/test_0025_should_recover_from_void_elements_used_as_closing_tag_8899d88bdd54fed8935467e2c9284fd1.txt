@@ -1,3 +1,16 @@
+---
+source: "Parser::TagsTest#test_0025_should recover from void elements used as closing tag"
+input: |2-
+
+        <main>
+          <div>
+            </br>
+            <span>Hello</span>
+            <p>World</p>
+          </div>
+        </main>
+      
+---
 @ DocumentNode (location: (1:0)-(9:6))
 └── children: (3 items)
     ├── @ HTMLTextNode (location: (1:0)-(2:8))
@@ -41,6 +54,7 @@
     │   │   │   │   │   │
     │   │   │   │   │   ├── tag_opening: "</" (location: (4:12)-(4:14))
     │   │   │   │   │   ├── tag_name: "br" (location: (4:14)-(4:16))
+    │   │   │   │   │   ├── children: []
     │   │   │   │   │   └── tag_closing: ">" (location: (4:16)-(4:17))
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (4:17)-(5:12))
@@ -64,9 +78,11 @@
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (5:23)-(5:30))
     │   │   │   │   │   │       ├── tag_opening: "</" (location: (5:23)-(5:25))
     │   │   │   │   │   │       ├── tag_name: "span" (location: (5:25)-(5:29))
+    │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (5:29)-(5:30))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (5:30)-(6:12))
     │   │   │   │   │   └── content: "\n            "
@@ -89,9 +105,11 @@
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (6:20)-(6:24))
     │   │   │   │   │   │       ├── tag_opening: "</" (location: (6:20)-(6:22))
     │   │   │   │   │   │       ├── tag_name: "p" (location: (6:22)-(6:23))
+    │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (6:23)-(6:24))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (6:24)-(7:10))
     │   │   │   │       └── content: "\n          "
@@ -100,9 +118,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (7:10)-(7:16))
     │   │   │   │       ├── tag_opening: "</" (location: (7:10)-(7:12))
     │   │   │   │       ├── tag_name: "div" (location: (7:12)-(7:15))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (7:15)-(7:16))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (7:16)-(8:8))
     │   │       └── content: "\n        "
@@ -111,9 +131,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (8:8)-(8:15))
     │   │       ├── tag_opening: "</" (location: (8:8)-(8:10))
     │   │       ├── tag_name: "main" (location: (8:10)-(8:14))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (8:14)-(8:15))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (8:15)-(9:6))
         └── content: "\n      "

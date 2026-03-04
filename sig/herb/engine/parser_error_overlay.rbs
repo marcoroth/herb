@@ -1,0 +1,41 @@
+# Generated from lib/herb/engine/parser_error_overlay.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ParserErrorOverlay
+      CONTEXT_LINES: ::Integer
+
+      ERROR_CLASS_PRIORITRY: untyped
+
+      def initialize: (untyped source, untyped errors, ?filename: untyped) -> untyped
+
+      def generate_html: () -> untyped
+
+      private
+
+      def generate_error_sections: () -> untyped
+
+      def generate_code_section: (untyped error, untyped index) -> untyped
+
+      def generate_code_lines: (untyped error, untyped line_num, untyped col_num) -> untyped
+
+      def generate_suggestions_section: (untyped suggestions) -> untyped
+
+      def syntax_highlight: (untyped code) -> untyped
+
+      def highlight_with_tokens: (untyped tokens, untyped code) -> untyped
+
+      def get_character_offset: (untyped code, untyped line, untyped column) -> untyped
+
+      def update_highlighting_state: (untyped state, untyped token, untyped token_text, untyped _next_token, untyped _prev_token) -> untyped
+
+      def get_token_css_class: (untyped state, untyped token, untyped token_text) -> untyped
+
+      def get_error_suggestion: (untyped error) -> untyped
+
+      def get_inline_hint: (untyped error) -> untyped
+
+      def escape_html: (untyped text) -> untyped
+    end
+  end
+end

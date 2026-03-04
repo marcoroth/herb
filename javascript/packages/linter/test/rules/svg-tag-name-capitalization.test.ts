@@ -1,15 +1,12 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { describe, test } from "vitest"
 import { SVGTagNameCapitalizationRule } from "../../src/rules/svg-tag-name-capitalization.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(SVGTagNameCapitalizationRule)
 
 describe("svg-tag-name-capitalization", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for correctly cased SVG elements", () => {
-    const html = `
+    expectNoOffenses(`
       <svg>
         <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" style="stop-color:rgb(255,255,0);stop-opacity:1" />
@@ -29,18 +26,11 @@ describe("svg-tag-name-capitalization", () => {
           <textPath href="#path">Text along a path</textPath>
         </text>
       </svg>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("passes for SVG filter elements with correct camelCase", () => {
-    const html = `
+    expectNoOffenses(`
       <svg>
         <filter id="blur">
           <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
@@ -52,17 +42,18 @@ describe("svg-tag-name-capitalization", () => {
           </feMerge>
         </filter>
       </svg>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    `)
   })
 
   test("fails for incorrectly cased SVG elements", () => {
-    const html = `
+    expectError('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('Closing SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('Opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('Closing SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('Opening SVG tag name `CLIPPATH` should use proper capitalization. Use `clipPath` instead.')
+    expectError('Closing SVG tag name `CLIPPATH` should use proper capitalization. Use `clipPath` instead.')
+
+    assertOffenses(`
       <svg>
         <LINEARGRADIENT id="grad1">
           <stop offset="0%" />
@@ -74,22 +65,11 @@ describe("svg-tag-name-capitalization", () => {
           <rect x="0" y="0" width="100" height="100" />
         </CLIPPATH>
       </svg>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(6) // 3 opening + 3 closing tags
-    expect(lintResult.offenses[0].message).toBe('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
-    expect(lintResult.offenses[1].message).toBe('Closing SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
-    expect(lintResult.offenses[2].message).toBe('Opening SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
-    expect(lintResult.offenses[3].message).toBe('Closing SVG tag name `lineargradient` should use proper capitalization. Use `linearGradient` instead.')
-    expect(lintResult.offenses[4].message).toBe('Opening SVG tag name `CLIPPATH` should use proper capitalization. Use `clipPath` instead.')
-    expect(lintResult.offenses[5].message).toBe('Closing SVG tag name `CLIPPATH` should use proper capitalization. Use `clipPath` instead.')
+    `)
   })
 
   test("passes for animateMotion and animateTransform", () => {
-    const html = `
+    expectNoOffenses(`
       <svg>
         <animateMotion dur="10s" repeatCount="indefinite">
           <mpath href="#path1" />
@@ -102,17 +82,11 @@ describe("svg-tag-name-capitalization", () => {
           dur="10s"
           repeatCount="indefinite" />
       </svg>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    `)
   })
 
   test("ignores non-SVG elements", () => {
-    const html = `
+    expectNoOffenses(`
       <div>
         <LINEARGRADIENT id="grad1">
           <stop offset="0%" />
@@ -121,18 +95,14 @@ describe("svg-tag-name-capitalization", () => {
           <rect x="0" y="0" width="100" height="100" />
         </clipPath>
       </div>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    `)
   })
 
   test("only checks elements within SVG context", () => {
-    const html = `
+    expectError('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
+    expectError('Closing SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
+
+    assertOffenses(`
       <div>
         <P>Outside SVG</P>
         <svg>
@@ -141,12 +111,6 @@ describe("svg-tag-name-capitalization", () => {
         </svg>
         <P>Outside SVG again</P>
       </div>
-    `
-    
-    const linter = new Linter(Herb, [SVGTagNameCapitalizationRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(2) // 1 opening + 1 closing tag
-    expect(lintResult.offenses[0].message).toBe('Opening SVG tag name `LINEARGRADIENT` should use proper capitalization. Use `linearGradient` instead.')
+    `)
   })
 })

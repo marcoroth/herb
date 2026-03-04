@@ -1,8 +1,9 @@
-import { BaseRuleVisitor, getTagName, hasAttribute } from "./rule-utils.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { hasAttribute, getTagLocalName } from "@herb-tools/core"
 
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
-import type { HTMLOpenTagNode, HTMLSelfCloseTagNode, ParseResult } from "@herb-tools/core"
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
 
 class ImgRequireAltVisitor extends BaseRuleVisitor {
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
@@ -10,13 +11,8 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
     super.visitHTMLOpenTagNode(node)
   }
 
-  visitHTMLSelfCloseTagNode(node: HTMLSelfCloseTagNode): void {
-    this.checkImgTag(node)
-    super.visitHTMLSelfCloseTagNode(node)
-  }
-
-  private checkImgTag(node: HTMLOpenTagNode | HTMLSelfCloseTagNode): void {
-    const tagName = getTagName(node)
+  private checkImgTag(node: HTMLOpenTagNode): void {
+    const tagName = getTagLocalName(node)
 
     if (tagName !== "img") {
       return
@@ -25,18 +21,24 @@ class ImgRequireAltVisitor extends BaseRuleVisitor {
     if (!hasAttribute(node, "alt")) {
       this.addOffense(
         'Missing required `alt` attribute on `<img>` tag. Add `alt=""` for decorative images or `alt="description"` for informative images.',
-        node.tag_name!.location,
-        "error"
+        node.tag_name!.location
       )
     }
   }
 }
 
 export class HTMLImgRequireAltRule extends ParserRule {
-  name = "html-img-require-alt"
+  static ruleName = "html-img-require-alt"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new ImgRequireAltVisitor(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new ImgRequireAltVisitor(this.ruleName, context)
     visitor.visit(result.value)
     return visitor.offenses
   }

@@ -3,9 +3,9 @@ import type { ProcessedFile } from "../file-processor.js"
 
 export abstract class BaseFormatter {
   abstract format(
-    allDiagnostics: ProcessedFile[],
+    allOffenses: ProcessedFile[],
     isSingleFile?: boolean
   ): Promise<void>
 
-  abstract formatFile(filename: string, diagnostics: Diagnostic[]): void
+  abstract formatFile(filename: string, offenses: Diagnostic[]): void
 }

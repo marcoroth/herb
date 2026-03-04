@@ -1,0 +1,7 @@
+---
+source: "Engine::ERBCommentsTest#test_0001_inline ruby comment on same line"
+input: "{source: \"<% if true %><% # Comment here %><% end %>\", options: {}}"
+---
+_buf = ::String.new; if true 
+ end 
+_buf.to_s

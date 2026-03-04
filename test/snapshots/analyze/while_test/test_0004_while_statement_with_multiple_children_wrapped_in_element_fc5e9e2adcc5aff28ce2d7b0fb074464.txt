@@ -1,3 +1,13 @@
+---
+source: "Analyze::WhileTest#test_0004_while statement with multiple children wrapped in element"
+input: |2-
+<h1>
+  <% while true %>
+    <h2>true</h2>
+    <h3>true</h3>
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(7:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(6:5))
@@ -40,9 +50,11 @@
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (3:12)-(3:17))
     │   │   │   │   │   │       ├── tag_opening: "</" (location: (3:12)-(3:14))
     │   │   │   │   │   │       ├── tag_name: "h2" (location: (3:14)-(3:16))
+    │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (3:16)-(3:17))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   ├── @ HTMLTextNode (location: (3:17)-(4:4))
     │   │   │   │   │   └── content: "\n    "
@@ -65,9 +77,11 @@
     │   │   │   │   │   │   └── @ HTMLCloseTagNode (location: (4:12)-(4:17))
     │   │   │   │   │   │       ├── tag_opening: "</" (location: (4:12)-(4:14))
     │   │   │   │   │   │       ├── tag_name: "h3" (location: (4:14)-(4:16))
+    │   │   │   │   │   │       ├── children: []
     │   │   │   │   │   │       └── tag_closing: ">" (location: (4:16)-(4:17))
     │   │   │   │   │   │
-    │   │   │   │   │   └── is_void: false
+    │   │   │   │   │   ├── is_void: false
+    │   │   │   │   │   └── source: "HTML"
     │   │   │   │   │
     │   │   │   │   └── @ HTMLTextNode (location: (4:17)-(5:2))
     │   │   │   │       └── content: "\n  "
@@ -86,9 +100,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (6:0)-(6:5))
     │   │       ├── tag_opening: "</" (location: (6:0)-(6:2))
     │   │       ├── tag_name: "h1" (location: (6:2)-(6:4))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (6:4)-(6:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (6:5)-(7:0))
         └── content: "\n"

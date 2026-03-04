@@ -1,3 +1,7 @@
+---
+source: "Analyze::EscapeTest#test_0002_escaped erb output tag"
+input: "<%%= 'Test' %%>"
+---
 @ DocumentNode (location: (1:0)-(1:15))
 └── children: (1 item)
     └── @ ERBContentNode (location: (1:0)-(1:15))

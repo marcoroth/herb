@@ -1,0 +1,26 @@
+---
+source: "Analyze::BlockTest#test_0027_lambda keyword with do block"
+input: |2-
+<% content = lambda do %>
+  Content
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(4:0))
+└── children: (2 items)
+    ├── @ ERBBlockNode (location: (1:0)-(3:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " content = lambda do " (location: (1:2)-(1:23))
+    │   ├── tag_closing: "%>" (location: (1:23)-(1:25))
+    │   ├── body: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:25)-(3:0))
+    │   │       └── content: "\n  Content\n"
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (3:0)-(3:9))
+    │           ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │           ├── content: " end " (location: (3:2)-(3:7))
+    │           └── tag_closing: "%>" (location: (3:7)-(3:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (3:9)-(4:0))
+        └── content: "\n"

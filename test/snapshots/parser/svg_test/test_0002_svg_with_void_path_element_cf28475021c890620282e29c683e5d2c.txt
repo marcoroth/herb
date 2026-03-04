@@ -1,3 +1,10 @@
+---
+source: "Parser::SVGTest#test_0002_svg with void path element"
+input: |2-
+<svg>
+  <path />
+</svg>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(3:6))
@@ -26,7 +33,8 @@
     │   │   │   ├── tag_name: "path" (location: (2:3)-(2:7))
     │   │   │   ├── body: []
     │   │   │   ├── close_tag: ∅
-    │   │   │   └── is_void: true
+    │   │   │   ├── is_void: true
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (2:10)-(3:0))
     │   │       └── content: "\n"
@@ -35,9 +43,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (3:0)-(3:6))
     │   │       ├── tag_opening: "</" (location: (3:0)-(3:2))
     │   │       ├── tag_name: "svg" (location: (3:2)-(3:5))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (3:5)-(3:6))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (3:6)-(4:0))
         └── content: "\n"

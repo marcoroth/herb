@@ -10,6 +10,8 @@ import { THEME_NAMES, DEFAULT_THEME } from "./themes.js"
 
 import { name, version } from "../package.json"
 
+import type { Diagnostic } from "@herb-tools/core"
+
 export class CLI {
   private usage = dedent`
     Usage: herb-highlight [file] [options]
@@ -28,6 +30,8 @@ export class CLI {
       --no-wrap-lines  disable line wrapping
       --truncate-lines enable line truncation (mutually exclusive with --wrap-lines)
       --max-width      maximum width for line wrapping/truncation [default: terminal width]
+      --diagnostics    JSON string or file path containing diagnostics to render
+      --split-diagnostics  render each diagnostic individually (requires --diagnostics)
       `
 
   private parseArguments() {
@@ -44,6 +48,8 @@ export class CLI {
         "no-wrap-lines": { type: "boolean" },
         "truncate-lines": { type: "boolean" },
         "max-width": { type: "string" },
+        "diagnostics": { type: "string" },
+        "split-diagnostics": { type: "boolean" },
       },
       allowPositionals: true,
     })
@@ -121,6 +127,44 @@ export class CLI {
       maxWidth = parsed
     }
 
+    let diagnostics: Diagnostic[] = []
+    let splitDiagnostics = false
+
+    if (values["diagnostics"]) {
+      try {
+        let diagnosticsData: string
+
+        if (values["diagnostics"].startsWith("{") || values["diagnostics"].startsWith("[")) {
+          diagnosticsData = values["diagnostics"]
+        } else {
+          diagnosticsData = readFileSync(resolve(values["diagnostics"]), "utf-8")
+        }
+
+        const parsed = JSON.parse(diagnosticsData)
+        diagnostics = Array.isArray(parsed) ? parsed : [parsed]
+
+        for (const diagnostic of diagnostics) {
+          if (!diagnostic.message || !diagnostic.location || !diagnostic.severity) {
+            throw new Error("Invalid diagnostic format: each diagnostic must have message, location, and severity")
+          }
+        }
+
+      } catch (error) {
+        console.error(`Error parsing diagnostics: ${error instanceof Error ? error.message : error}`)
+        process.exit(1)
+      }
+    }
+
+    if (values["split-diagnostics"]) {
+      if (diagnostics.length === 0) {
+        console.error("Error: --split-diagnostics requires --diagnostics to be specified")
+
+        process.exit(1)
+      }
+
+      splitDiagnostics = true
+    }
+
     return {
       values,
       positionals,
@@ -131,11 +175,13 @@ export class CLI {
       wrapLines,
       truncateLines,
       maxWidth,
+      diagnostics,
+      splitDiagnostics,
     }
   }
 
   async run() {
-    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth } =
+    const { positionals, theme, focusLine, contextLines, showLineNumbers, wrapLines, truncateLines, maxWidth, diagnostics, splitDiagnostics } =
       this.parseArguments()
 
     if (positionals.length === 0) {
@@ -154,11 +200,13 @@ export class CLI {
 
       const highlighted = highlighter.highlight(filePath, content, {
         focusLine,
-        contextLines: focusLine ? contextLines : 0,
+        contextLines: focusLine ? contextLines : (diagnostics.length > 0 ? contextLines : 0),
         showLineNumbers,
         wrapLines,
         truncateLines,
         maxWidth,
+        diagnostics,
+        splitDiagnostics,
       })
 
       console.log(highlighted)

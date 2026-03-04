@@ -1,8 +1,8 @@
-import { colorize } from "./color.js"
+import { colorize, hyperlink, severityColor } from "./color.js"
 import { TextFormatter } from "./text-formatter.js"
 import { LineWrapper } from "./line-wrapper.js"
 import { GUTTER_WIDTH, MIN_CONTENT_WIDTH } from "./gutter-config.js"
-import type { Diagnostic } from "@herb-tools/core"
+import type { Diagnostic, DiagnosticSeverity } from "@herb-tools/core"
 import type { SyntaxRenderer } from "./syntax-renderer.js"
 
 export class InlineDiagnosticRenderer {
@@ -10,6 +10,22 @@ export class InlineDiagnosticRenderer {
 
   constructor(syntaxRenderer: SyntaxRenderer) {
     this.syntaxRenderer = syntaxRenderer
+  }
+
+  private getSeverityText(severity: DiagnosticSeverity): string {
+    return colorize(colorize(severity, severityColor(severity)), "bold")
+  }
+
+  private getHighestSeverity(diagnostics: Diagnostic[]): DiagnosticSeverity {
+    const severityOrder: DiagnosticSeverity[] = ["error", "warning", "info", "hint"]
+
+    for (const severity of severityOrder) {
+      if (diagnostics.some(diagnostic => diagnostic.severity === severity)) {
+        return severity
+      }
+    }
+
+    return "warning"
   }
 
   render(
@@ -21,6 +37,7 @@ export class InlineDiagnosticRenderer {
     wrapLines = false,
     maxWidth = LineWrapper.getTerminalWidth(),
     truncateLines = false,
+    codeUrlBuilder?: (code: string) => string,
   ): string {
     const highlightedContent = this.syntaxRenderer.highlight(content)
 
@@ -35,12 +52,18 @@ export class InlineDiagnosticRenderer {
       diagnosticsByLine.get(lineNumber)!.push(diagnostic)
     }
 
+    const severityOrder: Record<DiagnosticSeverity, number> = {
+      "error": 0,
+      "warning": 1,
+      "info": 2,
+      "hint": 3
+    }
+
     for (const lineDiagnostics of diagnosticsByLine.values()) {
       lineDiagnostics.sort((a, b) => {
-        if (a.severity === "error" && b.severity === "warning") return -1
-        if (a.severity === "warning" && b.severity === "error") return 1
-
-        return 0
+        const orderA = severityOrder[a.severity] ?? 99
+        const orderB = severityOrder[b.severity] ?? 99
+        return orderA - orderB
       })
     }
 
@@ -57,9 +80,10 @@ export class InlineDiagnosticRenderer {
         output += "\n"
       }
 
-      const hasErrors = lineDiagnostics.some((diagnostic) => diagnostic.severity === "error")
+      const highestSeverity = this.getHighestSeverity(lineDiagnostics)
+      const lineColor = severityColor(highestSeverity)
 
-      let displayLine = line
+      const displayLine = line
       let availableWidth = maxWidth
 
       if (wrapLines && showLineNumbers) {
@@ -68,7 +92,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -90,7 +114,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -105,7 +129,7 @@ export class InlineDiagnosticRenderer {
           : colorize(i.toString().padStart(3, " "), "gray")
 
         const prefix = hasDiagnostics
-          ? colorize("  → ", hasErrors ? "brightRed" : "brightYellow")
+          ? colorize("  → ", lineColor)
           : "    "
 
         const separator = colorize("│", "gray")
@@ -131,22 +155,20 @@ export class InlineDiagnosticRenderer {
             1,
             diagnostic.location.end.column - diagnostic.location.start.column,
           )
-          const isError = diagnostic.severity === "error"
 
           if (showLineNumbers) {
             const pointerPrefix = `        ${colorize("│", "gray")}`
             const pointerSpacing = " ".repeat(column + 2)
             const pointer = colorize(
               "~".repeat(pointerLength),
-              isError ? "brightRed" : "brightYellow",
+              severityColor(diagnostic.severity),
             )
 
             output += `${pointerPrefix}${pointerSpacing}${pointer}\n`
 
-            const severityText = isError
-              ? colorize("error", "brightRed")
-              : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
+            const severityText = this.getSeverityText(diagnostic.severity)
+            const diagnosticIdText = diagnostic.code || "-"
+            const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText =
@@ -157,15 +179,14 @@ export class InlineDiagnosticRenderer {
             const pointerSpacing = " ".repeat(column)
             const pointer = colorize(
               "~".repeat(pointerLength),
-              isError ? "brightRed" : "brightYellow",
+              severityColor(diagnostic.severity),
             )
 
             output += `${pointerSpacing}${pointer}\n`
 
-            const severityText = isError
-              ? colorize("error", "brightRed")
-              : colorize("warning", "brightYellow")
-            const diagnosticId = colorize(diagnostic.code || "-", "gray")
+            const severityText = this.getSeverityText(diagnostic.severity)
+            const diagnosticIdText = diagnostic.code || "-"
+            const diagnosticId = codeUrlBuilder && diagnostic.code ? hyperlink(diagnosticIdText, codeUrlBuilder(diagnostic.code)) : diagnosticIdText
             const highlightedMessage = TextFormatter.highlightBackticks(diagnostic.message)
             const diagnosticText = `[${severityText}] ${highlightedMessage} (${diagnosticId})`
             const dimmedDiagnosticText =

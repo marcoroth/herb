@@ -1,0 +1,6 @@
+---
+source: "Engine::EvaluationTest#test_0024_comment before content"
+input: "{source: \"<% # This file contains a comment before other content %>\\n<div>Hey there</div>\\n\", locals: {}, options: {escape: false}}"
+---
+
+<div>Hey there</div>

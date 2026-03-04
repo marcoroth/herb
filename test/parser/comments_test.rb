@@ -24,5 +24,27 @@ module Parser
         <h1><!-- Hello World --></h1>
       ))
     end
+
+    test "HTML comment with if" do
+      assert_parsed_snapshot(<<~HTML)
+        <!--
+          <% if Rails.env.development? %>
+            Debug info: <%= current_user&.email %>
+          <% end %>
+        -->
+      HTML
+    end
+
+    test "HTML comment with invalid closing tag --!>" do
+      assert_parsed_snapshot(%(<!-- Hello World --!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> no whitespace" do
+      assert_parsed_snapshot(%(<!--Hello World--!>))
+    end
+
+    test "HTML comment with invalid closing tag --!> followed by html tag" do
+      assert_parsed_snapshot(%(<!--Hello World--!><h1>Hello</h1>))
+    end
   end
 end

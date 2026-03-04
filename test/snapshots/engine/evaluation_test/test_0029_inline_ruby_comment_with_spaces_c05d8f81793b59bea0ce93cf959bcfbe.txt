@@ -1,0 +1,5 @@
+---
+source: "Engine::EvaluationTest#test_0029_inline ruby comment with spaces"
+input: "{source: \"<%  # Comment %> <% code = \\\"test\\\" %><%= code %>\", locals: {}, options: {escape: false}}"
+---
+test

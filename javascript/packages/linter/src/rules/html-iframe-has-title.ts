@@ -1,0 +1,64 @@
+import { ParserRule } from "../types.js"
+import { BaseRuleVisitor } from "./rule-utils.js"
+import { getStaticAttributeValue, getAttribute, getAttributeValue, getTagLocalName } from "@herb-tools/core"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { HTMLOpenTagNode, ParseResult } from "@herb-tools/core"
+
+class IframeHasTitleVisitor extends BaseRuleVisitor {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.checkIframeElement(node)
+    super.visitHTMLOpenTagNode(node)
+  }
+
+  private checkIframeElement(node: HTMLOpenTagNode): void {
+    const tagName = getTagLocalName(node)
+
+    if (tagName !== "iframe") {
+      return
+    }
+
+    if (getStaticAttributeValue(node, "aria-hidden") === "true") {
+      return
+    }
+
+    const attribute = getAttribute(node, "title")
+
+    if (!attribute) {
+      this.addOffense(
+        "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
+        node.location,
+      )
+
+      return
+    }
+
+    const value = getAttributeValue(attribute)
+
+    if (!value || value.trim() === "") {
+      this.addOffense(
+        "`<iframe>` elements must have a `title` attribute that describes the content of the frame for screen reader users.",
+        node.location,
+      )
+    }
+  }
+}
+
+export class HTMLIframeHasTitleRule extends ParserRule {
+  static ruleName = "html-iframe-has-title"
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new IframeHasTitleVisitor(this.ruleName, context)
+
+    visitor.visit(result.value)
+
+    return visitor.offenses
+  }
+}

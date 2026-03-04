@@ -1,0 +1,31 @@
+{
+  "name": "@herb-tools/printer",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "javascript/packages/printer/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "build"
+      },
+      "dependsOn": [
+        "@herb-tools/core:build",
+        "@herb-tools/node-wasm:build"
+      ]
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "test"
+      }
+    },
+    "clean": {
+      "executor": "nx:run-script",
+      "options": {
+        "script": "clean"
+      }
+    }
+  },
+  "tags": []
+}

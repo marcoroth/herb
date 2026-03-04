@@ -1,3 +1,7 @@
+---
+source: "Parser::TagsTest#test_0018_element has a self-closing tag for a void element at the position where closing tag of parent is expected"
+input: "<div></br></div>"
+---
 @ DocumentNode (location: (1:0)-(1:16))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:16))
@@ -21,12 +25,15 @@
         │       │
         │       ├── tag_opening: "</" (location: (1:5)-(1:7))
         │       ├── tag_name: "br" (location: (1:7)-(1:9))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:9)-(1:10))
         │
         ├── close_tag:
         │   └── @ HTMLCloseTagNode (location: (1:10)-(1:16))
         │       ├── tag_opening: "</" (location: (1:10)-(1:12))
         │       ├── tag_name: "div" (location: (1:12)-(1:15))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:15)-(1:16))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

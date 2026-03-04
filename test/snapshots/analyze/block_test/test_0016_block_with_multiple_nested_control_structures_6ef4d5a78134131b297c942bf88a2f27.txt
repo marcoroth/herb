@@ -1,3 +1,12 @@
+---
+source: "Analyze::BlockTest#test_0016_block with multiple nested control structures"
+input: |2-
+<%= items.select { |item| item.valid? }.map do |item| %>
+  <div class="<%= item.active? ? 'active' : 'inactive' %>">
+    <%= item.name %>
+  </div>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ ERBBlockNode (location: (1:0)-(5:9))
@@ -18,7 +27,10 @@
     │   │   │   │       │   └── @ HTMLAttributeNode (location: (2:7)-(2:58))
     │   │   │   │       │       ├── name:
     │   │   │   │       │       │   └── @ HTMLAttributeNameNode (location: (2:7)-(2:12))
-    │   │   │   │       │       │       └── name: "class" (location: (2:7)-(2:12))
+    │   │   │   │       │       │       └── children: (1 item)
+    │   │   │   │       │       │           └── @ LiteralNode (location: (2:7)-(2:12))
+    │   │   │   │       │       │               └── content: "class"
+    │   │   │   │       │       │
     │   │   │   │       │       │
     │   │   │   │       │       ├── equals: "=" (location: (2:12)-(2:13))
     │   │   │   │       │       └── value:
@@ -57,9 +69,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (4:2)-(4:8))
     │   │   │   │       ├── tag_opening: "</" (location: (4:2)-(4:4))
     │   │   │   │       ├── tag_name: "div" (location: (4:4)-(4:7))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (4:7)-(4:8))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (4:8)-(5:0))
     │   │       └── content: "\n"

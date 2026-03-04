@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
 
 export class HerbCodeActionProvider implements vscode.CodeActionProvider {
   provideCodeActions(
@@ -7,18 +8,21 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
     context: vscode.CodeActionContext,
     _token: vscode.CancellationToken
   ): vscode.CodeAction[] {
+    if (context.diagnostics.length === 0) {
+      return []
+    }
+
     const actions: vscode.CodeAction[] = []
 
-    if (!document.fileName.endsWith('.html.erb')) {
-      return actions
-    }
+    this.addFormattingActions(actions, document)
 
-    const diagnostics = context.diagnostics
-    if (diagnostics.length === 0) {
-      return actions
-    }
+    for (const diagnostic of context.diagnostics) {
+      const source = typeof diagnostic.source === 'string' ? diagnostic.source.trim() : undefined
 
-    for (const diagnostic of diagnostics) {
+      if (!source || !source.includes('Herb')) {
+        continue
+      }
+
       let errorType = 'UNKNOWN_ERROR'
       if (typeof diagnostic.code === 'string' && diagnostic.code) {
         errorType = diagnostic.code
@@ -41,9 +45,49 @@ export class HerbCodeActionProvider implements vscode.CodeActionProvider {
       }
 
       action.isPreferred = false
-      actions.push(action)
+
+      // TODO: disabled for now
+      // actions.push(action)
     }
 
     return actions
+  }
+
+  // TODO: disabled for now
+  private addFormattingActions(_actions: vscode.CodeAction[], document: vscode.TextDocument) {
+    const excludeAction = new vscode.CodeAction(
+      'Herb: Exclude this file from formatting',
+      vscode.CodeActionKind.Source
+    )
+
+    excludeAction.command = {
+      command: 'herb.excludeFileFromFormatting',
+      title: 'Exclude this file from formatting',
+      arguments: [document.uri]
+    }
+
+    excludeAction.isPreferred = false
+    // actions.push(excludeAction)
+
+    const folderPath = path.dirname(document.fileName)
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
+
+    if (workspaceRoot && folderPath !== workspaceRoot) {
+      const relativeFolderPath = path.relative(workspaceRoot, folderPath)
+
+      const excludeFolderAction = new vscode.CodeAction(
+        `Herb: Exclude folder "${relativeFolderPath}" from formatting`,
+        vscode.CodeActionKind.Source
+      )
+
+      excludeFolderAction.command = {
+        command: 'herb.excludeFolderFromFormatting',
+        title: 'Exclude folder from formatting',
+        arguments: [document.uri]
+      }
+
+      excludeFolderAction.isPreferred = false
+      // actions.push(excludeFolderAction)
+    }
   }
 }

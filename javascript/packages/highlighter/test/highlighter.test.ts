@@ -11,6 +11,7 @@ import {
 } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
+import { ANSI_REGEX } from "../src/color.js"
 import { Highlighter, highlightContent, highlightFile } from "../src/highlighter.js"
 
 describe("Highlighter", () => {
@@ -31,8 +32,7 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should contain ANSI color codes for tags
-    expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m") // red "<"
+    expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m")  // red "<"
     expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m") // red "h1"
   })
 
@@ -42,11 +42,9 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should contain purple keywords without ANSI corruption
-    expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m") // purple "if"
+    expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m")   // purple "if"
     expect(result).toContain("\x1b[38;2;198;120;221mtrue\x1b[0m") // purple "true"
 
-    // Should NOT contain corrupted ANSI codes
     expect(result).not.toContain("[38;2;209;154;102m38") // corrupted pattern
   })
 
@@ -63,13 +61,11 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // All Ruby keywords should be properly colored
     expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m")
     expect(result).toContain("\x1b[38;2;198;120;221melsif\x1b[0m")
     expect(result).toContain("\x1b[38;2;198;120;221melse\x1b[0m")
     expect(result).toContain("\x1b[38;2;198;120;221mend\x1b[0m")
 
-    // Should not contain any corrupted ANSI sequences
     expect(result).not.toMatch(/\[38;2;\d+;\d+;\d+m\d+/)
   })
 
@@ -79,10 +75,9 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should contain colored attributes
-    expect(result).toContain("\x1b[38;2;209;154;102mclass\x1b[0m") // orange attribute name
+    expect(result).toContain("\x1b[38;2;209;154;102mclass\x1b[0m")   // orange attribute name
     expect(result).toContain("\x1b[38;2;152;195;121mexample\x1b[0m") // green string content
-    expect(result).toContain("\x1b[38;2;152;195;121mtest\x1b[0m") // green string content
+    expect(result).toContain("\x1b[38;2;152;195;121mtest\x1b[0m")    // green string content
   })
 
   test("should handle ERB output tags", () => {
@@ -91,9 +86,8 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should contain ERB tag colors
     expect(result).toContain("\x1b[38;2;190;80;70m<%=\x1b[0m") // ERB start
-    expect(result).toContain("\x1b[38;2;190;80;70m%>\x1b[0m") // ERB end
+    expect(result).toContain("\x1b[38;2;190;80;70m%>\x1b[0m")  // ERB end
   })
 
   test("should not add colors when NO_COLOR is set", async () => {
@@ -106,7 +100,6 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should return plain text without ANSI codes
     expect(result).toBe(input)
     expect(result).not.toContain("\x1b[")
 
@@ -119,9 +112,8 @@ describe("Highlighter", () => {
       showLineNumbers: false,
     })
 
-    // Should highlight both HTML and ERB parts correctly
-    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m") // HTML tag
-    expect(result).toContain("\x1b[38;2;190;80;70m<%=\x1b[0m") // ERB start
+    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m")    // HTML tag
+    expect(result).toContain("\x1b[38;2;190;80;70m<%=\x1b[0m")     // ERB start
     expect(result).toContain("\x1b[38;2;171;178;191mTitle\x1b[0m") // Text content
   })
 
@@ -191,7 +183,7 @@ describe("Highlighter", () => {
     afterEach(() => {
       try {
         unlinkSync(testFile)
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     })
@@ -199,10 +191,9 @@ describe("Highlighter", () => {
     test("should highlight a file", () => {
       const result = highlighter.highlightFileFromPath(testFile)
 
-      // Should contain ANSI color codes
-      expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m") // HTML tags
+      expect(result).toContain("\x1b[38;2;224;108;117m<\x1b[0m")  // HTML tags
       expect(result).toContain("\x1b[38;2;198;120;221mif\x1b[0m") // Ruby keywords
-      expect(result).toContain("\x1b[38;2;190;80;70m<%\x1b[0m") // ERB tags
+      expect(result).toContain("\x1b[38;2;190;80;70m<%\x1b[0m")   // ERB tags
     })
 
     test("should throw error for non-existent file", () => {
@@ -232,7 +223,7 @@ describe("Standalone utility functions", () => {
   afterAll(() => {
     try {
       unlinkSync(testFile)
-    } catch (e) {
+    } catch {
       // Ignore cleanup errors
     }
   })
@@ -241,7 +232,7 @@ describe("Standalone utility functions", () => {
     const content = `<% def hello %><span>Hi</span><% end %>`
     const result = await highlightContent(content)
 
-    expect(result).toContain("\x1b[38;2;198;120;221mdef\x1b[0m") // Ruby keyword
+    expect(result).toContain("\x1b[38;2;198;120;221mdef\x1b[0m")  // Ruby keyword
     expect(result).toContain("\x1b[38;2;224;108;117mspan\x1b[0m") // HTML tag
   })
 
@@ -255,14 +246,14 @@ describe("Standalone utility functions", () => {
   test("highlightFile should work with default theme", async () => {
     const result = await highlightFile(testFile)
 
-    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m") // HTML tag
+    expect(result).toContain("\x1b[38;2;224;108;117mh1\x1b[0m")     // HTML tag
     expect(result).toContain("\x1b[38;2;198;120;221munless\x1b[0m") // Ruby keyword
   })
 
   test("highlightFile should work with simple theme", async () => {
     const result = await highlightFile(testFile, "simple")
 
-    expect(result).toContain("h1") // Should contain the HTML tag
+    expect(result).toContain("h1")     // Should contain the HTML tag
     expect(result).toContain("unless") // Should contain the Ruby keyword
   })
 
@@ -288,14 +279,11 @@ describe("Standalone utility functions", () => {
       contextLines: 1,
     })
 
-    // Should contain the focused line with arrow and bold
     expect(result).toContain("  → ")
     expect(result).toContain("\x1b[1m  3") // Bold line number for focus line
 
-    // Should contain dimmed context lines
     expect(result).toContain("\x1b[2;") // Dim ANSI code added to existing colors
 
-    // Should not show all lines (only focus + context)
     const lines = result.split("\n")
     const lineNumberCount = lines.filter((line) => line.includes("│")).length
     expect(lineNumberCount).toBe(3) // Lines 2, 3, 4 only
@@ -314,12 +302,10 @@ describe("Standalone utility functions", () => {
       maxWidth: 60,
     })
 
-    // Should contain ellipsis for truncated line
     expect(result).toContain("…")
-    // Should not contain the end of the long line
     expect(result).not.toContain("maximum-width")
-    // Should still contain the short line completely
-    const strippedResult = result.replace(/\x1b\[[0-9;]*m/g, "")
+
+    const strippedResult = result.replace(ANSI_REGEX, "")
     expect(strippedResult).toContain("Short line")
   })
 })

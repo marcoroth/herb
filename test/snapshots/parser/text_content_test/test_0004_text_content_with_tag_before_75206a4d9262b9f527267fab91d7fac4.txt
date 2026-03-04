@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0004_text content with tag before"
+input: "<span>Hello</span>World"
+---
 @ DocumentNode (location: (1:0)-(1:23))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(1:18))
@@ -18,9 +22,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (1:11)-(1:18))
     │   │       ├── tag_opening: "</" (location: (1:11)-(1:13))
     │   │       ├── tag_name: "span" (location: (1:13)-(1:17))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (1:17)-(1:18))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (1:18)-(1:23))
         └── content: "World"

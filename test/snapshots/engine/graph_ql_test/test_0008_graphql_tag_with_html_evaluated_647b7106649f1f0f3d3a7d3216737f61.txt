@@ -1,0 +1,6 @@
+---
+source: "Engine::GraphQLTest#test_0008_graphql tag with html evaluated"
+input: "{source: \"<%graphql\\n  fragment UserFragment on User {\\n    name\\n  }\\n%>\\n<p>Hello World</p>\\n\", locals: {}, options: {}}"
+---
+
+<p>Hello World</p>

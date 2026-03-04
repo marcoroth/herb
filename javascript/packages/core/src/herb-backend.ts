@@ -3,8 +3,12 @@ import packageJSON from "../package.json" with { type: "json" }
 import { ensureString } from "./util.js"
 import { LexResult } from "./lex-result.js"
 import { ParseResult } from "./parse-result.js"
+import { DEFAULT_PARSER_OPTIONS } from "./parser-options.js"
+import { DEFAULT_EXTRACT_RUBY_OPTIONS } from "./extract-ruby-options.js"
 
 import type { LibHerbBackend, BackendPromise } from "./backend.js"
+import type { ParseOptions } from "./parser-options.js"
+import type { ExtractRubyOptions } from "./extract-ruby-options.js"
 
 /**
  * The main Herb parser interface, providing methods to lex and parse input.
@@ -64,13 +68,16 @@ export abstract class HerbBackend {
   /**
    * Parses the given source string into a `ParseResult`.
    * @param source - The source code to parse.
+   * @param options - Optional parsing options.
    * @returns A `ParseResult` instance.
    * @throws Error if the backend is not loaded.
    */
-  parse(source: string): ParseResult {
+  parse(source: string, options?: ParseOptions): ParseResult {
     this.ensureBackend()
 
-    return ParseResult.from(this.backend.parse(ensureString(source)))
+    const mergedOptions = { ...DEFAULT_PARSER_OPTIONS, ...options }
+
+    return ParseResult.from(this.backend.parse(ensureString(source), mergedOptions))
   }
 
   /**
@@ -88,13 +95,16 @@ export abstract class HerbBackend {
   /**
    * Extracts embedded Ruby code from the given source.
    * @param source - The source code to extract Ruby from.
+   * @param options - Optional extraction options.
    * @returns The extracted Ruby code as a string.
    * @throws Error if the backend is not loaded.
    */
-  extractRuby(source: string): string {
+  extractRuby(source: string, options?: ExtractRubyOptions): string {
     this.ensureBackend()
 
-    return this.backend.extractRuby(ensureString(source))
+    const mergedOptions = { ...DEFAULT_EXTRACT_RUBY_OPTIONS, ...options }
+
+    return this.backend.extractRuby(ensureString(source), mergedOptions)
   }
 
   /**

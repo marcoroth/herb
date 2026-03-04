@@ -12,8 +12,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Marco Roth"]
   spec.email = ["marco.roth@intergga.ch"]
 
-  spec.summary = "Powerful and seamless HTML-aware ERB parsing and tooling."
-  spec.description = spec.summary
+  spec.summary = "The HTML+ERB Toolchain"
+  spec.description = "A collection of powerful and seamless developer tools for HTML+ERB templates."
   spec.homepage = "https://herb-tools.dev"
   spec.license = "MIT"
 
@@ -26,10 +26,14 @@ Gem::Specification.new do |spec|
     "Makefile",
     "Rakefile",
     "README.md",
+    "config.yml",
     "lib/**/*.rb",
+    "lib/**/*.yml",
     "sig/**/*.rbs",
     "src/**/*.{c,h}",
     "ext/**/*.{c,h}",
+    "templates/**/*.{rb,erb}",
+    "vendor/prism/**/*",
     "exe/*"
   ]
 
@@ -45,6 +49,4 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://github.com/marcoroth/herb"
   spec.metadata["bug_tracker_uri"] = "https://github.com/marcoroth/herb/issues"
   spec.metadata["documentation_uri"] = "https://docs.herb-tools.dev"
-
-  # spec.add_dependency "ffi"
 end

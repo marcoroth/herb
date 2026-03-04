@@ -1,45 +1,40 @@
-import { AttributeVisitorMixin, getAttributeName, getAttributes } from "./rule-utils.js"
-
 import { ParserRule } from "../types.js"
-import type { LintOffense, LintContext } from "../types.js"
-import type { ParseResult, HTMLAttributeNode, HTMLOpenTagNode, HTMLSelfCloseTagNode } from "@herb-tools/core"
+import { AttributeVisitorMixin, StaticAttributeStaticValueParams } from "./rule-utils.js"
+import { getAttributeName, getAttributes } from "@herb-tools/core"
+
+import type { UnboundLintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { ParseResult } from "@herb-tools/core"
 
 class AriaRoleHeadingRequiresLevel extends AttributeVisitorMixin {
+  protected checkStaticAttributeStaticValue({ attributeName, attributeValue, attributeNode, parentNode }: StaticAttributeStaticValueParams): void {
+    if (!(attributeName === "role" && attributeValue === "heading")) return
 
-  // We want to check 2 attributes here:
-  // 1. role="heading"
-  // 2. aria-level (which must be present if role="heading")
-  checkAttribute(
-    attributeName: string,
-    attributeValue: string | null,
-    attributeNode: HTMLAttributeNode,
-    parentNode: HTMLOpenTagNode | HTMLSelfCloseTagNode
-  ): void {
+    const ariaLevelAttributes = getAttributes(parentNode).find(attribute => getAttributeName(attribute) === "aria-level")
 
-    if (!(attributeName === "role" && attributeValue === "heading")) {
-      return
-    }
+    if (ariaLevelAttributes) return
 
-    const allAttributes = getAttributes(parentNode)
-
-    // If we have a role="heading", we must check for aria-level
-    const ariaLevelAttr = allAttributes.find(attr => getAttributeName(attr) === "aria-level")
-    if (!ariaLevelAttr) {
-      this.addOffense(
-        `Element with \`role="heading"\` must have an \`aria-level\` attribute.`,
-        attributeNode.location,
-        "error"
-      )
-    }
+    this.addOffense(
+      `Element with \`role="heading"\` must have an \`aria-level\` attribute.`,
+      attributeNode.location,
+    )
   }
 }
 
 export class HTMLAriaRoleHeadingRequiresLevelRule extends ParserRule {
-  name = "html-aria-role-heading-requires-level"
+  static ruleName = "html-aria-role-heading-requires-level"
 
-  check(result: ParseResult, context?: Partial<LintContext>): LintOffense[] {
-    const visitor = new AriaRoleHeadingRequiresLevel(this.name, context)
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: "error"
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense[] {
+    const visitor = new AriaRoleHeadingRequiresLevel(this.ruleName, context)
+
     visitor.visit(result.value)
+
     return visitor.offenses
   }
 }

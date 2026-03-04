@@ -1,4 +1,4 @@
-# Herb Minifier
+# Herb Minifier <Badge type="info" text="coming soon" />
 
 **Package:** [`@herb-tools/minifier`](https://www.npmjs.com/package/@herb-tools/minifier)
 
@@ -6,7 +6,7 @@
 
 HTML+ERB template minification.
 
-### Installation
+## Installation
 
 :::code-group
 ```shell [npm]

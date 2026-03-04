@@ -28,4 +28,65 @@ describe("@herb-tools/formatter", () => {
       <% end %>
     `)
   })
+
+  test("formats ERB until with complex condition", () => {
+    const input = dedent`
+      <% until queue.empty? || max_attempts_reached? %>
+      <p>Processing item: <%= queue.peek.name %></p>
+      <% process_queue_item %>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% until queue.empty? || max_attempts_reached? %>
+        <p>Processing item: <%= queue.peek.name %></p>
+        <% process_queue_item %>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
+
+  test("formats nested until loops", () => {
+    const input = dedent`
+      <% until outer_condition_met? %>
+      <div>Outer loop iteration</div>
+      <% until inner_condition_met? %>
+      <span>Inner loop iteration</span>
+      <% inner_increment %>
+      <% end %>
+      <% outer_increment %>
+      <% end %>
+    `
+
+    const expected = dedent`
+      <% until outer_condition_met? %>
+        <div>Outer loop iteration</div>
+        <% until inner_condition_met? %>
+          <span>Inner loop iteration</span>
+          <% inner_increment %>
+        <% end %>
+        <% outer_increment %>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
+
+  test("until without surrounding spaces", () => {
+    const input = dedent`
+      <%until condition%>
+      <%end%>
+    `
+
+    const expected = dedent`
+      <% until condition %>
+      <% end %>
+    `
+
+    const output = formatter.format(input)
+    expect(output).toEqual(expected)
+  })
 })

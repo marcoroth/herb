@@ -25,6 +25,13 @@ describe("Settings", () => {
       expect(settings.defaultSettings.linter?.enabled).toBe(true)
     })
 
+    test("includes linter.fixOnSave configuration with default: true", () => {
+      const settings = new Settings(mockParams, mockConnection)
+
+      expect(settings.defaultSettings.linter).toBeDefined()
+      expect(settings.defaultSettings.linter?.fixOnSave).toBe(true)
+    })
+
     test("includes formatter configuration", () => {
       const settings = new Settings(mockParams, mockConnection)
 
@@ -66,7 +73,15 @@ describe("Settings", () => {
       const settings = new Settings(paramsWithConfig, mockConnection)
       const result = await settings.getDocumentSettings("file:///test.erb")
 
-      expect(result).toEqual(customSettings)
+      expect(result).toEqual({
+        trace: undefined,
+        linter: { enabled: false, fixOnSave: true },
+        formatter: {
+          enabled: true,
+          indentWidth: 2,
+          maxLineLength: 80
+        }
+      })
       expect(mockConnection.workspace.getConfiguration).toHaveBeenCalledWith({
         scopeUri: "file:///test.erb",
         section: "languageServerHerb"
@@ -88,7 +103,38 @@ describe("Settings", () => {
       const settings = new Settings(paramsWithConfig, mockConnection)
       const result = await settings.getDocumentSettings("file:///test.erb")
 
-      expect(result).toBeNull()
+      expect(result).toEqual({
+        trace: undefined,
+        linter: { enabled: true, fixOnSave: true },
+        formatter: {
+          enabled: false,
+          indentWidth: 2,
+          maxLineLength: 80
+        }
+      })
+    })
+
+    test("includes fixOnSave in merged settings", async () => {
+      const paramsWithConfig: InitializeParams = {
+        ...mockParams,
+        capabilities: {
+          workspace: {
+            configuration: true
+          }
+        }
+      }
+
+      const customSettings = {
+        linter: { enabled: true, fixOnSave: false },
+        formatter: { enabled: false }
+      }
+
+      mockConnection.workspace.getConfiguration = vi.fn().mockResolvedValue(customSettings)
+
+      const settings = new Settings(paramsWithConfig, mockConnection)
+      const result = await settings.getDocumentSettings("file:///test.erb")
+
+      expect(result.linter?.fixOnSave).toBe(false)
     })
   })
 })

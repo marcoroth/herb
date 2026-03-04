@@ -1,0 +1,128 @@
+import { StimulusRuleVisitor, HerbParserRule } from './rule-utils.js'
+import { getAttributeName, getStaticAttributeValue, hasStaticAttributeValue, forEachAttribute, didyoumean } from "@herb-tools/core"
+
+import type { UnboundLintOffense, StimulusLintContext, FullRuleConfig } from '../types.js'
+import type { ParseResult, HTMLOpenTagNode, HTMLAttributeNode } from '@herb-tools/core'
+
+export class DataValueValidVisitor extends StimulusRuleVisitor {
+  visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
+    this.checkDataValues(node)
+    super.visitHTMLOpenTagNode(node)
+  }
+
+  private checkDataValues(node: HTMLOpenTagNode): void {
+    forEachAttribute(node, (attribute) => {
+      const name = getAttributeName(attribute)
+      if (!name) return
+
+      const valueMatch = name.match(/^data-(.+?)-(.+?)-value$/)
+      if (!valueMatch) return
+
+      const [, identifier, valueName] = valueMatch
+
+      if (hasStaticAttributeValue(attribute)) {
+        const value = getStaticAttributeValue(attribute)
+
+        this.validateStaticValue(identifier, valueName, value, attribute)
+      }
+    })
+  }
+
+  private validateStaticValue(identifier: string, valueName: string, value: string | null, attributeNode: HTMLAttributeNode): void {
+    if (!this.isControllerAvailable(identifier)) {
+      this.addOffense(
+        `Unknown Stimulus controller \`${identifier}\` in value attribute. Make sure the controller is defined in your project.`,
+        attributeNode.location
+      )
+      return
+    }
+
+    if (/[A-Z]/.test(valueName)) {
+      const dasherized = valueName.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)
+
+      this.addOffense(
+        `Value name \`${valueName}\` should be dasherized. Did you mean \`${dasherized}\`?`,
+        attributeNode.location
+      )
+
+      return
+    }
+
+    if (this.stimulusProject) {
+      const controller = this.stimulusProject.registeredControllers.find(controller => controller.identifier === identifier)
+
+      if (controller && controller.controllerDefinition.values) {
+        const valueDefinition = controller.controllerDefinition.values.find(value => value.name === valueName)
+
+        if (!valueDefinition) {
+          const match = didyoumean(valueName, controller.controllerDefinition.values.map((v: any) => v.name), 2)
+          const suggestion = match ? ` Did you mean \`${match}\`?` : ""
+
+          this.addOffense(
+            `Unknown value \`${valueName}\` on controller \`${identifier}\`.${suggestion}`,
+            attributeNode.location
+          )
+          return
+        }
+
+        if (value !== null && valueDefinition.type) {
+          this.validateValueType(identifier, valueName, value, valueDefinition.type, attributeNode)
+        }
+      }
+    }
+  }
+
+  private validateValueType(
+    identifier: string,
+    valueName: string,
+    value: string,
+    expectedType: string,
+    attributeNode: HTMLAttributeNode
+  ): void {
+    let actualType: string | null = null
+
+    try {
+      const parsedValue = JSON.parse(value)
+
+      if (Array.isArray(parsedValue)) {
+        actualType = 'Array'
+      } else if (typeof parsedValue === 'boolean') {
+        actualType = 'Boolean'
+      } else if (typeof parsedValue === 'number') {
+        actualType = 'Number'
+      } else if (typeof parsedValue === 'object' && parsedValue !== null) {
+        actualType = 'Object'
+      } else if (typeof parsedValue === 'string') {
+        actualType = 'String'
+      }
+    } catch {
+      actualType = 'String'
+    }
+
+    if (actualType && actualType !== expectedType) {
+      this.addOffense(
+        `Value \`${valueName}\` on controller \`${identifier}\` expects type \`${expectedType}\` but received \`${actualType}\`.`,
+        attributeNode.location
+      )
+    }
+  }
+}
+
+export class StimulusDataValueValidRule extends HerbParserRule {
+  static ruleName = 'stimulus-data-value-valid'
+
+  get defaultConfig(): FullRuleConfig {
+    return {
+      enabled: true,
+      severity: 'error'
+    }
+  }
+
+  check(result: ParseResult, context?: Partial<StimulusLintContext>): UnboundLintOffense[] {
+    const visitor = new DataValueValidVisitor(this.ruleName, context)
+
+    visitor.visit(result.value)
+
+    return visitor.offenses
+  }
+}

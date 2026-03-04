@@ -1,3 +1,7 @@
+---
+source: "Parser::TextContentTest#test_0010_dollar sign as only content"
+input: "<b>$</b>"
+---
 @ DocumentNode (location: (1:0)-(1:8))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:8))
@@ -18,6 +22,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:4)-(1:8))
         │       ├── tag_opening: "</" (location: (1:4)-(1:6))
         │       ├── tag_name: "b" (location: (1:6)-(1:7))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:7)-(1:8))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

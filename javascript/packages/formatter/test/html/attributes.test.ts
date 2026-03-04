@@ -182,9 +182,7 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div <% if condition %> class="active" <% end %>>
-        Content
-      </div>
+      <div <% if condition %> class="active" <% end %>>Content</div>
     `)
   })
 
@@ -194,9 +192,7 @@ describe("@herb-tools/formatter", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <div id="test" <% if show_class %> class="visible" <% end %> data-value="123">
-        Content
-      </div>
+      <div id="test" <% if show_class %> class="visible" <% end %> data-value="123">Content</div>
     `)
   })
 
@@ -257,6 +253,26 @@ describe("@herb-tools/formatter", () => {
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
       <input type="text" value="<%= @user.name %>">
+    `)
+  })
+
+  test("formats ERB tags in attribute values with proper whitespace (issue #482)", () => {
+    const source = dedent`
+      <a href="<%=""%>"></a>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <a href="<%= "" %>"></a>
+    `)
+  })
+
+  test("formats ERB tags in attribute values with content", () => {
+    const source = dedent`
+      <a href="<%=@post.url%>"></a>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <a href="<%= @post.url %>"></a>
     `)
   })
 })

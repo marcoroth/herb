@@ -1,0 +1,59 @@
+---
+source: "Analyze::CaseTest#test_0008_case with block inside when"
+input: |2-
+<% case 1 %>
+<% when 1 %>
+  <%= content_tag(:p) do %>
+    Yep
+  <% end %>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(7:0))
+└── children: (2 items)
+    ├── @ ERBCaseNode (location: (1:0)-(6:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case 1 " (location: (1:2)-(1:10))
+    │   ├── tag_closing: "%>" (location: (1:10)-(1:12))
+    │   ├── children: (1 item)
+    │   │   └── @ HTMLTextNode (location: (1:12)-(2:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBWhenNode (location: (2:0)-(2:12))
+    │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
+    │   │       ├── content: " when 1 " (location: (2:2)-(2:10))
+    │   │       ├── tag_closing: "%>" (location: (2:10)-(2:12))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (2:12)-(3:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ ERBBlockNode (location: (3:2)-(5:11))
+    │   │           │   ├── tag_opening: "<%=" (location: (3:2)-(3:5))
+    │   │           │   ├── content: " content_tag(:p) do " (location: (3:5)-(3:25))
+    │   │           │   ├── tag_closing: "%>" (location: (3:25)-(3:27))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (3:27)-(5:2))
+    │   │           │   │       └── content: "\n    Yep\n  "
+    │   │           │   │
+    │   │           │   └── end_node:
+    │   │           │       └── @ ERBEndNode (location: (5:2)-(5:11))
+    │   │           │           ├── tag_opening: "<%" (location: (5:2)-(5:4))
+    │   │           │           ├── content: " end " (location: (5:4)-(5:9))
+    │   │           │           └── tag_closing: "%>" (location: (5:9)-(5:11))
+    │   │           │
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (5:11)-(6:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause: ∅
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (6:0)-(6:9))
+    │           ├── tag_opening: "<%" (location: (6:0)-(6:2))
+    │           ├── content: " end " (location: (6:2)-(6:7))
+    │           └── tag_closing: "%>" (location: (6:7)-(6:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (6:9)-(7:0))
+        └── content: "\n"

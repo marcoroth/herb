@@ -3,11 +3,11 @@ import { resolve } from "path"
 
 import type { Color } from "./color.js"
 
-import onedarkTheme from "../themes/onedark.json" assert { type: "json" }
-import githubLightTheme from "../themes/github-light.json" assert { type: "json" }
-import draculaTheme from "../themes/dracula.json" assert { type: "json" }
-import tokyoNightTheme from "../themes/tokyo-night.json" assert { type: "json" }
-import simpleTheme from "../themes/simple.json" assert { type: "json" }
+import onedarkTheme from "../themes/onedark.json" with { type: "json" }
+import githubLightTheme from "../themes/github-light.json" with { type: "json" }
+import draculaTheme from "../themes/dracula.json" with { type: "json" }
+import tokyoNightTheme from "../themes/tokyo-night.json" with { type: "json" }
+import simpleTheme from "../themes/simple.json" with { type: "json" }
 
 export type Theme = "onedark" | "github-light" | "dracula" | "tokyo-night" | "simple"
 export type ThemeInput = Theme | string

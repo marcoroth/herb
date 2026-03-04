@@ -1,0 +1,83 @@
+---
+source: "Parser::GraphQLTest#test_0002_graphql tag with comment and html"
+input: |2-
+<%# app/views/humans/human.html.erb %>
+<%graphql
+  fragment HumanFragment on Human {
+    name
+    homePlanet
+  }
+%>
+
+<p><%= human.name %> lives on <%= human.home_planet %>.</p>
+---
+@ DocumentNode (location: (1:0)-(10:0))
+└── children: (6 items)
+    ├── @ ERBContentNode (location: (1:0)-(1:38))
+    │   ├── tag_opening: "<%#" (location: (1:0)-(1:3))
+    │   ├── content: " app/views/humans/human.html.erb " (location: (1:3)-(1:36))
+    │   ├── tag_closing: "%>" (location: (1:36)-(1:38))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (1:38)-(2:0))
+    │   └── content: "\n"
+    │
+    ├── @ ERBContentNode (location: (2:0)-(7:2))
+    │   ├── tag_opening: "<%graphql" (location: (2:0)-(2:9))
+    │   ├── content: "
+    │     fragment HumanFragment on Human {
+    │       name
+    │       homePlanet
+    │     }
+    │   " (location: (2:9)-(7:0))
+    │   ├── tag_closing: "%>" (location: (7:0)-(7:2))
+    │   ├── parsed: false
+    │   └── valid: true
+    │
+    ├── @ HTMLTextNode (location: (7:2)-(9:0))
+    │   └── content: "\n\n"
+    │
+    ├── @ HTMLElementNode (location: (9:0)-(9:59))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (9:0)-(9:3))
+    │   │       ├── tag_opening: "<" (location: (9:0)-(9:1))
+    │   │       ├── tag_name: "p" (location: (9:1)-(9:2))
+    │   │       ├── tag_closing: ">" (location: (9:2)-(9:3))
+    │   │       ├── children: []
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "p" (location: (9:1)-(9:2))
+    │   ├── body: (4 items)
+    │   │   ├── @ ERBContentNode (location: (9:3)-(9:20))
+    │   │   │   ├── tag_opening: "<%=" (location: (9:3)-(9:6))
+    │   │   │   ├── content: " human.name " (location: (9:6)-(9:18))
+    │   │   │   ├── tag_closing: "%>" (location: (9:18)-(9:20))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   ├── @ HTMLTextNode (location: (9:20)-(9:30))
+    │   │   │   └── content: " lives on "
+    │   │   │
+    │   │   ├── @ ERBContentNode (location: (9:30)-(9:54))
+    │   │   │   ├── tag_opening: "<%=" (location: (9:30)-(9:33))
+    │   │   │   ├── content: " human.home_planet " (location: (9:33)-(9:52))
+    │   │   │   ├── tag_closing: "%>" (location: (9:52)-(9:54))
+    │   │   │   ├── parsed: true
+    │   │   │   └── valid: true
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (9:54)-(9:55))
+    │   │       └── content: "."
+    │   │
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (9:55)-(9:59))
+    │   │       ├── tag_opening: "</" (location: (9:55)-(9:57))
+    │   │       ├── tag_name: "p" (location: (9:57)-(9:58))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (9:58)-(9:59))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (9:59)-(10:0))
+        └── content: "\n"

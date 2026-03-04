@@ -1,81 +1,82 @@
-import { describe, test, expect, beforeAll } from "vitest"
-import { Herb } from "@herb-tools/node-wasm"
-import { Linter } from "../../src/linter.js"
+import { describe, test } from "vitest"
 import { HTMLAnchorRequireHrefRule } from "../../src/rules/html-anchor-require-href.js"
+import { createLinterTest } from "../helpers/linter-test-helper.js"
+
+const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(HTMLAnchorRequireHrefRule)
+
+const MESSAGE = "Add an `href` attribute to `<a>` to ensure it is focusable and accessible. Links should go somewhere, you probably want to use a `<button>` instead."
 
 describe("html-anchor-require-href", () => {
-  beforeAll(async () => {
-    await Herb.load()
-  })
-
   test("passes for a with href attribute", () => {
-    const html = '<a href="http://example.com">My link</a>'
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(0)
+    expectNoOffenses('<a href="http://example.com">My link</a>')
   })
 
   test("fails for a without href attribute", () => {
-    const html = "<a>My link</a>"
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
+    expectError(MESSAGE)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(1)
-
-    expect(lintResult.offenses[0].rule).toBe("html-anchor-require-href")
-    expect(lintResult.offenses[0].message).toBe(
-      "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
-    )
-    expect(lintResult.offenses[0].severity).toBe("error")
+    assertOffenses("<a>My link</a>")
   })
 
   test("fails for multiple a tags without href", () => {
-    const html = "<a>My link</a><a>My other link</a>"
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
+    expectError(MESSAGE)
+    expectError(MESSAGE)
 
-    expect(lintResult.errors).toBe(2)
-    expect(lintResult.warnings).toBe(0)
-    expect(lintResult.offenses).toHaveLength(2)
+    assertOffenses("<a>My link</a><a>My other link</a>")
   })
 
-  test("passes for img with ERB alt attribute", () => {
-    const html = '<a href="<%= user.home_page_url %>">My Link</a>'
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
+  test("fails for a with href='#'", () => {
+    expectError(MESSAGE)
 
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    assertOffenses('<a href="#">My link</a>')
+  })
+
+  test("fails for a with name attribute and no href", () => {
+    expectError(MESSAGE)
+
+    assertOffenses('<a name="section1"></a>')
+  })
+
+  test("fails for a with id attribute and no href", () => {
+    expectError(MESSAGE)
+
+    assertOffenses('<a id="content">anchor target</a>')
+  })
+
+  test("passes for a with ERB href attribute", () => {
+    expectNoOffenses('<a href="<%= user.home_page_url %>">My Link</a>')
+  })
+
+  test("passes for a with fragment href", () => {
+    expectNoOffenses('<a href="#section">Jump to section</a>')
+  })
+
+  test("passes for a with empty href", () => {
+    expectNoOffenses('<a href="">Self link</a>')
+  })
+
+  test("passes for a with both name and href", () => {
+    expectNoOffenses('<a name="top" href="http://example.com">My link</a>')
+  })
+
+  test("fails for a with other attributes but no href", () => {
+    expectError(MESSAGE)
+
+    assertOffenses('<a class="btn">My link</a>')
+  })
+
+  test("fails for a with href='#' and other attributes", () => {
+    expectError(MESSAGE)
+
+    assertOffenses('<a href="#" data-action="click->doSomething">My link</a>')
   })
 
   test("ignores non-a tags", () => {
-    const html = "<div>My div</div>"
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
-
-    expect(lintResult.errors).toBe(0)
-    expect(lintResult.warnings).toBe(0)
+    expectNoOffenses("<div>My div</div>")
   })
 
   test("handles mixed case a tags", () => {
-    const html = "<A>My link</A>"
-    
-    const linter = new Linter(Herb, [HTMLAnchorRequireHrefRule])
-    const lintResult = linter.lint(html)
+    expectError(MESSAGE)
 
-    expect(lintResult.errors).toBe(1)
-    expect(lintResult.offenses[0].message).toBe(
-      "Add an `href` attribute to `<a>` to ensure it is focusable and accessible.",
-    )
+    assertOffenses("<A>My link</A>")
   })
 })

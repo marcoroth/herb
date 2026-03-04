@@ -1,9 +1,18 @@
+---
+source: "Analyze::UnlessTest#test_0003_unless statement with multiple children"
+input: |2-
+<% unless true %>
+  <h1>true</h1>
+  <h2>true</h2>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(5:0))
 └── children: (2 items)
     ├── @ ERBUnlessNode (location: (1:0)-(4:9))
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " unless true " (location: (1:2)-(1:15))
     │   ├── tag_closing: "%>" (location: (1:15)-(1:17))
+    │   ├── then_keyword: ∅
     │   ├── statements: (5 items)
     │   │   ├── @ HTMLTextNode (location: (1:17)-(2:2))
     │   │   │   └── content: "\n  "
@@ -26,9 +35,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (2:10)-(2:15))
     │   │   │   │       ├── tag_opening: "</" (location: (2:10)-(2:12))
     │   │   │   │       ├── tag_name: "h1" (location: (2:12)-(2:14))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (2:14)-(2:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   ├── @ HTMLTextNode (location: (2:15)-(3:2))
     │   │   │   └── content: "\n  "
@@ -51,9 +62,11 @@
     │   │   │   │   └── @ HTMLCloseTagNode (location: (3:10)-(3:15))
     │   │   │   │       ├── tag_opening: "</" (location: (3:10)-(3:12))
     │   │   │   │       ├── tag_name: "h2" (location: (3:12)-(3:14))
+    │   │   │   │       ├── children: []
     │   │   │   │       └── tag_closing: ">" (location: (3:14)-(3:15))
     │   │   │   │
-    │   │   │   └── is_void: false
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
     │   │   │
     │   │   └── @ HTMLTextNode (location: (3:15)-(4:0))
     │   │       └── content: "\n"

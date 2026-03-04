@@ -1,0 +1,45 @@
+# Generated from lib/herb/engine/validation_errors.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class SecurityError < StandardError
+      attr_reader line: untyped
+
+      attr_reader column: untyped
+
+      attr_reader filename: untyped
+
+      attr_reader suggestion: untyped
+
+      def initialize: (untyped message, ?line: untyped, ?column: untyped, ?filename: untyped, ?suggestion: untyped) -> untyped
+
+      private
+
+      def build_error_message: (untyped message) -> untyped
+    end
+
+    module ValidationErrors
+      class ValidationError
+        attr_reader type: untyped
+
+        attr_reader location: untyped
+
+        attr_reader message: untyped
+
+        def initialize: (untyped type, untyped location, untyped message) -> untyped
+      end
+
+      class SecurityValidationError
+        attr_reader type: untyped
+
+        attr_reader location: untyped
+
+        attr_reader message: untyped
+
+        attr_reader suggestion: untyped
+
+        def initialize: (untyped location, untyped message, untyped suggestion) -> untyped
+      end
+    end
+  end
+end

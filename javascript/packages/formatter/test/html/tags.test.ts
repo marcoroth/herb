@@ -45,4 +45,72 @@ describe("@herb-tools/formatter", () => {
       <div id="hello"></div>
     `)
   })
+
+  test("<br>", () => {
+    const source = dedent`
+      One<br> Two<br> Three<br> Four<br>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      One<br>
+      Two<br>
+      Three<br>
+      Four<br>
+    `)
+  })
+
+  test("<br> in <p>", () => {
+    const source = dedent`
+      <p>
+        One<br> Two<br> Three<br> Four<br>
+      </p>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>
+        One
+        <br>
+        Two
+        <br>
+        Three
+        <br>
+        Four
+        <br>
+      </p>
+    `)
+  })
+
+  test("<hr>", () => {
+    const source = dedent`
+      One<hr> Two<hr> Three<hr> Four<hr>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      One<hr>
+      Two<hr>
+      Three<hr>
+      Four<hr>
+    `)
+  })
+
+  test("<hr> in <p>", () => {
+    const source = dedent`
+      <p>
+        One<hr> Two<hr> Three<hr> Four<hr>
+      </p>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <p>
+        One
+        <hr>
+        Two
+        <hr>
+        Three
+        <hr>
+        Four
+        <hr>
+      </p>
+    `)
+  })
 })

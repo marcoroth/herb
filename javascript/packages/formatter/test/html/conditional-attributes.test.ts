@@ -33,9 +33,7 @@ describe("conditional attributes", () => {
     `
 
     const expected = dedent`
-      <button class="btn <%= "active" if is_active %> primary">
-        Click me
-      </button>
+      <button class="btn <%= "active" if is_active %> primary">Click me</button>
     `
 
     expect(formatter.format(source)).toBe(expected)
@@ -59,13 +57,13 @@ describe("conditional attributes", () => {
 
   it("should preserve inline conditional ERB in div class", () => {
     const source = dedent`
-      <div class="container #{"hidden" if should_hide} flex">
+      <div class="container <%= "hidden" if should_hide %> flex">
         Content here
       </div>
     `
 
     const expected = dedent`
-      <div class="container #{"hidden" if should_hide} flex">
+      <div class="container <%= "hidden" if should_hide %> flex">
         Content here
       </div>
     `

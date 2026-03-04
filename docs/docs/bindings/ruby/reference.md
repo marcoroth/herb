@@ -118,7 +118,7 @@ Herb.parse_file("./index.html.erb").value
 
 ## Extracting Code
 
-### `Herb.extract_ruby(source)`
+### `Herb.extract_ruby(source, **options)`
 
 The `Herb.extract_ruby` method allows you to extract only the Ruby parts of an HTML document with embedded Ruby.
 
@@ -127,9 +127,57 @@ The `Herb.extract_ruby` method allows you to extract only the Ruby parts of an H
 source = %(<p>Hello <%= user.name %></p>)
 
 Herb.extract_ruby(source)
-# => "             user.name       "
+# => "             user.name  ;    "
 ```
 :::
+
+#### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `semicolons` | `Boolean` | `true` | Add ` ;` at the end of each ERB tag to separate statements |
+| `comments` | `Boolean` | `false` | Include ERB comments (`<%# %>`) in the output |
+| `preserve_positions` | `Boolean` | `true` | Maintain character positions by padding with whitespace |
+
+#### Examples
+
+**Default behavior** (position-preserving with semicolons):
+
+```ruby
+source = "<% x = 1 %> <% y = 2 %>"
+
+Herb.extract_ruby(source)
+# => "   x = 1  ;    y = 2  ;"
+```
+
+**Without semicolons:**
+
+```ruby
+Herb.extract_ruby(source, semicolons: false)
+# => "   x = 1       y = 2   "
+```
+
+**Including ERB comments:**
+
+```ruby
+source = "<%# comment %>\n<% code %>"
+
+Herb.extract_ruby(source, comments: true)
+# => "  # comment   \n   code  ;"
+```
+
+**Without position preservation** (readable output, each tag on its own line):
+
+```ruby
+source = "<%# comment %><%= something %>"
+
+Herb.extract_ruby(source, preserve_positions: false, comments: true)
+# => "# comment \n something "
+```
+
+> [!TIP]
+> Use `preserve_positions: false` when you need readable Ruby output.
+> Use `preserve_positions: true` (default) when you need accurate error position mapping.
 
 ### `Herb.extract_html(source)`
 

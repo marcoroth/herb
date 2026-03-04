@@ -12,11 +12,23 @@ const external = [
   "module",
 ]
 
+// Enable sourcemaps for local builds and release builds
+// Disable for CI non-release builds (PR previews, etc.)
+const isCI = process.env.CI === "true"
+const isReleaseBuild = process.env.RELEASE_BUILD === "true"
+const enableSourcemaps = !isCI || isReleaseBuild
+
 function isExternal(id) {
   return (
     external.includes(id) ||
     external.some((pkg) => id === pkg || id.startsWith(pkg + "/"))
   )
+}
+
+function allExternal(id) {
+  if (id.includes(".")) return false
+
+  return true
 }
 
 export default [
@@ -26,7 +38,7 @@ export default [
     output: {
       file: "dist/herb-language-server.js",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: enableSourcemaps,
     },
     external: isExternal,
     plugins: [
@@ -47,9 +59,9 @@ export default [
     output: {
       file: "dist/index.cjs",
       format: "cjs",
-      sourcemap: true,
+      sourcemap: enableSourcemaps,
     },
-    external: isExternal,
+    external: allExternal,
     plugins: [
       nodeResolve(),
       commonjs(),

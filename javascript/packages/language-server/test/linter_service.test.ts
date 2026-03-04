@@ -4,7 +4,9 @@ import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { LinterService } from "../src/linter_service"
 import { Settings } from "../src/settings"
+import { Project } from "../src/project"
 import { Herb } from "@herb-tools/node-wasm"
+import { Config } from "@herb-tools/config"
 
 import type { Connection, InitializeParams } from "vscode-languageserver/node"
 
@@ -16,6 +18,11 @@ describe("LinterService", () => {
   const mockConnection = {
     workspace: {
       getConfiguration: vi.fn()
+    },
+    console: {
+      log: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn()
     }
   } as unknown as Connection
 
@@ -26,6 +33,10 @@ describe("LinterService", () => {
     workspaceFolders: null
   }
 
+  const mockProject = {
+    projectPath: process.cwd()
+  } as Project
+
   const createTestDocument = (content: string) => {
     return TextDocument.create("file:///test.html.erb", "erb", 1, content)
   }
@@ -35,7 +46,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue(null)
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -51,7 +62,7 @@ describe("LinterService", () => {
         // linter is undefined
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<div>Test</div>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -66,7 +77,7 @@ describe("LinterService", () => {
         linter: { enabled: false }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<DIV>Test</DIV>\n")
 
       const result = await linterService.lintDocument(textDocument)
@@ -80,7 +91,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<DIV><SPAN>Hello</SPAN></DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -92,7 +103,7 @@ describe("LinterService", () => {
       const settings = new Settings(mockParams, mockConnection)
       settings.hasConfigurationCapability = false
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<DIV>Test</DIV>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -106,7 +117,7 @@ describe("LinterService", () => {
         linter: { enabled: true }
       })
 
-      const linterService = new LinterService(settings)
+      const linterService = new LinterService(mockConnection, settings, mockProject)
       const textDocument = createTestDocument("<h2>Content<h3>")
 
       const result = await linterService.lintDocument(textDocument)
@@ -120,18 +131,121 @@ describe("LinterService", () => {
       expect(parserErrorDiagnostics).toHaveLength(0)
     })
 
-    test("respects custom excludedRules configuration", async () => {
+    test("respects files.exclude patterns from config", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
       const settings = new Settings(mockParams, mockConnection)
       settings.getDocumentSettings = vi.fn().mockResolvedValue({
-        linter: {
-          enabled: true,
-          excludedRules: ["html-tag-name-lowercase", "parser-no-errors"]
-        }
+        linter: { enabled: true }
       })
 
-      const linterService = new LinterService(settings)
-      const textDocument = createTestDocument("<DIV>Content</DIV>")
+      settings.projectConfig = Config.fromObject({
+        files: {
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
 
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/vendor/cache/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics).toEqual([])
+
+      vi.restoreAllMocks()
+    })
+
+    test("respects linter.exclude patterns from config", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = Config.fromObject({
+        linter: {
+          enabled: true,
+          exclude: ["something/**/*"],
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
+
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/something/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics).toEqual([])
+
+      vi.restoreAllMocks()
+    })
+
+    test("lints files not matching exclude patterns", async () => {
+      vi.spyOn(Config, "exists").mockReturnValue(true)
+
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = Config.fromObject({
+        files: {
+          exclude: ["vendor/**/*"]
+        },
+        linter: {
+          enabled: true,
+          rules: {}
+        }
+      }, { projectPath: "/test/project" })
+
+      const mockProjectWithPath = {
+        projectPath: "/test/project"
+      } as Project
+
+      const linterService = new LinterService(mockConnection, settings, mockProjectWithPath)
+      const textDocument = TextDocument.create("file:///test/project/app/views/file.html.erb", "erb", 1, "<DIV>Content</DIV>")
+      const result = await linterService.lintDocument(textDocument)
+
+      expect(result.diagnostics.length).toBeGreaterThan(0)
+
+      vi.restoreAllMocks()
+    })
+
+    test("respects custom disabled rules configuration", async () => {
+      const settings = new Settings(mockParams, mockConnection)
+      settings.getDocumentSettings = vi.fn().mockResolvedValue({
+        linter: { enabled: true }
+      })
+
+      settings.projectConfig = {
+        path: "/test/.herb.yml",
+        config: {
+          version: "0.8.10",
+          linter: {
+            enabled: true,
+            rules: {
+              "html-tag-name-lowercase": { enabled: false }
+            }
+          }
+        },
+        toJSON: () => "{}",
+        getConfiguredSeverity: () => "error",
+        applySeverityOverrides: (offenses: any) => offenses
+      } as any
+
+      const linterService = new LinterService(mockConnection, settings, mockProject)
+      const textDocument = createTestDocument("<DIV>Content</DIV>")
       const result = await linterService.lintDocument(textDocument)
 
       const lowercaseDiagnostics = result.diagnostics.filter(

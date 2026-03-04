@@ -99,7 +99,7 @@ export function replaceTextareaWithMonaco(
         [/"/, { token: "string.double", next: "@string_double" }],
         [/'/, { token: "string.single", next: "@string_single" }],
         [/\d+/, "number"],
-        [/[{}()\[\]]/, "@brackets"],
+        [/[{}()[\]]/, "@brackets"],
         [/@|@@|$/, "variable"],
       ],
       string_double: [
@@ -264,6 +264,12 @@ export function replaceTextareaWithMonaco(
       })
       editor._clickHandlers = []
     }
+  }
+
+  editor.setCursorPosition = function (line, column) {
+    const position = { lineNumber: line, column: column + 1 }
+    editor.setPosition(position)
+    editor.revealPositionInCenter(position)
   }
 
   editor.dispose = function () {

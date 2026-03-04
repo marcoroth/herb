@@ -1,7 +1,11 @@
 #ifndef HERB_LEXER_STRUCT_H
 #define HERB_LEXER_STRUCT_H
 
+#include "util/hb_allocator.h"
+#include "util/hb_string.h"
+
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 typedef enum {
@@ -11,21 +15,21 @@ typedef enum {
 } lexer_state_T;
 
 typedef struct LEXER_STRUCT {
-  const char* source;
-  size_t source_length;
+  hb_allocator_T* allocator;
+  hb_string_T source;
 
-  size_t current_line;
-  size_t current_column;
-  size_t current_position;
+  uint32_t current_line;
+  uint32_t current_column;
+  uint32_t current_position;
 
-  size_t previous_line;
-  size_t previous_column;
-  size_t previous_position;
+  uint32_t previous_line;
+  uint32_t previous_column;
+  uint32_t previous_position;
 
   char current_character;
   lexer_state_T state;
-  size_t stall_counter;
-  size_t last_position;
+  uint32_t stall_counter;
+  uint32_t last_position;
   bool stalled;
 } lexer_T;
 

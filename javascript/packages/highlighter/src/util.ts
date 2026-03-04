@@ -1,20 +1,23 @@
+import { colors, ANSI_REGEX_START, ANSI_REGEX_CAPTURE } from "./color.js"
+
 export function applyDimToStyledText(text: string): string {
   const isColorEnabled = process.env.NO_COLOR === undefined
+
   if (!isColorEnabled) return text
 
-  const parts = text.split(/(\x1b\[[0-9;]*m)/g)
+  const parts = text.split(ANSI_REGEX_CAPTURE)
+
   let result = ""
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i]
 
-    if (part.match(/^\x1b\[[0-9;]*m$/)) {
-      // This is an ANSI code - modify it to add dimming
-      if (part === "\x1b[0m") {
-        result += part // Keep reset codes as-is
+    if (part.match(ANSI_REGEX_START)) {
+      if (part === colors.reset) {
+        result += part
       } else {
-        // Add dim (2;) to existing color codes
-        const codes = part.match(/\x1b\[([0-9;]*)m/)?.[1]
+        const codes = part.slice(2, -1)
+
         if (codes && codes !== "0" && codes !== "") {
           result += `\x1b[2;${codes}m`
         } else {
@@ -22,8 +25,7 @@ export function applyDimToStyledText(text: string): string {
         }
       }
     } else if (part.length > 0) {
-      // This is plain text - wrap it with dim formatting
-      result += `\x1b[2m${part}\x1b[22m`
+      result += `${colors.dim}${part}\x1b[22m`
     }
   }
 

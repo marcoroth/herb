@@ -12,6 +12,7 @@ export class InitializationManager {
     if (this.herb) {
       await this.herb.load()
     }
+
     this._initialized = true
   }
 

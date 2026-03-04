@@ -1,3 +1,12 @@
+---
+source: "Analyze::UnlessTest#test_0002_unless statement wrapped in element"
+input: |2-
+<h1>
+  <% unless true %>
+    true
+  <% end %>
+</h1>
+---
 @ DocumentNode (location: (1:0)-(6:0))
 └── children: (2 items)
     ├── @ HTMLElementNode (location: (1:0)-(5:5))
@@ -18,6 +27,7 @@
     │   │   │   ├── tag_opening: "<%" (location: (2:2)-(2:4))
     │   │   │   ├── content: " unless true " (location: (2:4)-(2:17))
     │   │   │   ├── tag_closing: "%>" (location: (2:17)-(2:19))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   ├── statements: (1 item)
     │   │   │   │   └── @ HTMLTextNode (location: (2:19)-(4:2))
     │   │   │   │       └── content: "\n    true\n  "
@@ -37,9 +47,11 @@
     │   │   └── @ HTMLCloseTagNode (location: (5:0)-(5:5))
     │   │       ├── tag_opening: "</" (location: (5:0)-(5:2))
     │   │       ├── tag_name: "h1" (location: (5:2)-(5:4))
+    │   │       ├── children: []
     │   │       └── tag_closing: ">" (location: (5:4)-(5:5))
     │   │
-    │   └── is_void: false
+    │   ├── is_void: false
+    │   └── source: "HTML"
     │
     └── @ HTMLTextNode (location: (5:5)-(6:0))
         └── content: "\n"

@@ -1,0 +1,132 @@
+---
+source: "Parser::CaseMatchTest#test_0001_case/in"
+input: |2-
+<% case { hash: { nested: '4' } } %>
+  <span>children</span>
+<% in { hash: { nested: } } %>
+  <span>nested</span>
+<% else %>
+  <span>else</span>
+<% end %>
+---
+@ DocumentNode (location: (1:0)-(8:0))
+└── children: (2 items)
+    ├── @ ERBCaseMatchNode (location: (1:0)-(7:9))
+    │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
+    │   ├── content: " case { hash: { nested: '4' } } " (location: (1:2)-(1:34))
+    │   ├── tag_closing: "%>" (location: (1:34)-(1:36))
+    │   ├── children: (3 items)
+    │   │   ├── @ HTMLTextNode (location: (1:36)-(2:2))
+    │   │   │   └── content: "\n  "
+    │   │   │
+    │   │   ├── @ HTMLElementNode (location: (2:2)-(2:23))
+    │   │   │   ├── open_tag:
+    │   │   │   │   └── @ HTMLOpenTagNode (location: (2:2)-(2:8))
+    │   │   │   │       ├── tag_opening: "<" (location: (2:2)-(2:3))
+    │   │   │   │       ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   │       ├── tag_closing: ">" (location: (2:7)-(2:8))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── is_void: false
+    │   │   │   │
+    │   │   │   ├── tag_name: "span" (location: (2:3)-(2:7))
+    │   │   │   ├── body: (1 item)
+    │   │   │   │   └── @ HTMLTextNode (location: (2:8)-(2:16))
+    │   │   │   │       └── content: "children"
+    │   │   │   │
+    │   │   │   ├── close_tag:
+    │   │   │   │   └── @ HTMLCloseTagNode (location: (2:16)-(2:23))
+    │   │   │   │       ├── tag_opening: "</" (location: (2:16)-(2:18))
+    │   │   │   │       ├── tag_name: "span" (location: (2:18)-(2:22))
+    │   │   │   │       ├── children: []
+    │   │   │   │       └── tag_closing: ">" (location: (2:22)-(2:23))
+    │   │   │   │
+    │   │   │   ├── is_void: false
+    │   │   │   └── source: "HTML"
+    │   │   │
+    │   │   └── @ HTMLTextNode (location: (2:23)-(3:0))
+    │   │       └── content: "\n"
+    │   │
+    │   ├── conditions: (1 item)
+    │   │   └── @ ERBInNode (location: (3:0)-(3:30))
+    │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
+    │   │       ├── content: " in { hash: { nested: } } " (location: (3:2)-(3:28))
+    │   │       ├── tag_closing: "%>" (location: (3:28)-(3:30))
+    │   │       ├── then_keyword: ∅
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (3:30)-(4:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (4:2)-(4:21))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (4:2)-(4:8))
+    │   │           │   │       ├── tag_opening: "<" (location: (4:2)-(4:3))
+    │   │           │   │       ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │           │   │       ├── tag_closing: ">" (location: (4:7)-(4:8))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "span" (location: (4:3)-(4:7))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (4:8)-(4:14))
+    │   │           │   │       └── content: "nested"
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (4:14)-(4:21))
+    │   │           │   │       ├── tag_opening: "</" (location: (4:14)-(4:16))
+    │   │           │   │       ├── tag_name: "span" (location: (4:16)-(4:20))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (4:20)-(4:21))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (4:21)-(5:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   ├── else_clause:
+    │   │   └── @ ERBElseNode (location: (5:0)-(5:10))
+    │   │       ├── tag_opening: "<%" (location: (5:0)-(5:2))
+    │   │       ├── content: " else " (location: (5:2)-(5:8))
+    │   │       ├── tag_closing: "%>" (location: (5:8)-(5:10))
+    │   │       └── statements: (3 items)
+    │   │           ├── @ HTMLTextNode (location: (5:10)-(6:2))
+    │   │           │   └── content: "\n  "
+    │   │           │
+    │   │           ├── @ HTMLElementNode (location: (6:2)-(6:19))
+    │   │           │   ├── open_tag:
+    │   │           │   │   └── @ HTMLOpenTagNode (location: (6:2)-(6:8))
+    │   │           │   │       ├── tag_opening: "<" (location: (6:2)-(6:3))
+    │   │           │   │       ├── tag_name: "span" (location: (6:3)-(6:7))
+    │   │           │   │       ├── tag_closing: ">" (location: (6:7)-(6:8))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── is_void: false
+    │   │           │   │
+    │   │           │   ├── tag_name: "span" (location: (6:3)-(6:7))
+    │   │           │   ├── body: (1 item)
+    │   │           │   │   └── @ HTMLTextNode (location: (6:8)-(6:12))
+    │   │           │   │       └── content: "else"
+    │   │           │   │
+    │   │           │   ├── close_tag:
+    │   │           │   │   └── @ HTMLCloseTagNode (location: (6:12)-(6:19))
+    │   │           │   │       ├── tag_opening: "</" (location: (6:12)-(6:14))
+    │   │           │   │       ├── tag_name: "span" (location: (6:14)-(6:18))
+    │   │           │   │       ├── children: []
+    │   │           │   │       └── tag_closing: ">" (location: (6:18)-(6:19))
+    │   │           │   │
+    │   │           │   ├── is_void: false
+    │   │           │   └── source: "HTML"
+    │   │           │
+    │   │           └── @ HTMLTextNode (location: (6:19)-(7:0))
+    │   │               └── content: "\n"
+    │   │
+    │   │
+    │   └── end_node:
+    │       └── @ ERBEndNode (location: (7:0)-(7:9))
+    │           ├── tag_opening: "<%" (location: (7:0)-(7:2))
+    │           ├── content: " end " (location: (7:2)-(7:7))
+    │           └── tag_closing: "%>" (location: (7:7)-(7:9))
+    │
+    │
+    └── @ HTMLTextNode (location: (7:9)-(8:0))
+        └── content: "\n"

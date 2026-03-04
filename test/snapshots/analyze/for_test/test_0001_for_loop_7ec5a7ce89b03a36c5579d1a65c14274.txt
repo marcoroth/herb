@@ -1,3 +1,10 @@
+---
+source: "Analyze::ForTest#test_0001_for loop"
+input: |2-
+<% for i in 1..5 %>
+  <%= i %>
+<% end %>
+---
 @ DocumentNode (location: (1:0)-(4:0))
 └── children: (2 items)
     ├── @ ERBForNode (location: (1:0)-(3:9))

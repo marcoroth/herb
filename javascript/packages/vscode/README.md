@@ -1,6 +1,6 @@
 # Using Herb with Visual Studio Code
 
-A Visual Studio Code extension for connecting with the [Herb Language Server](https://github.com/marcoroth/herb/tree/main/javascript/packages/language-server#readme) and Language Tools for HTML+ERB files using the [Herb](https://herb-tools.dev) HTML-aware ERB parser.
+A Visual Studio Code extension that provides HTML+ERB language support with linting, formatting, and intelligent code analysis using the [Herb](https://herb-tools.dev) HTML-aware ERB parser.
 
 [![Herb + Visual Studio Code](https://github.com/marcoroth/herb/raw/main/javascript/packages/vscode/assets/herb-vscode.png)](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp)
 
@@ -10,7 +10,7 @@ A Visual Studio Code extension for connecting with the [Herb Language Server](ht
 
 #### Visual Studio Code
 
-Install the [Herb LSP extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace, or [**click here to open it directly in VS Code**](vscode:extension/marcoroth.herb-lsp).
+Install the [Herb extension](https://marketplace.visualstudio.com/items?itemName=marcoroth.herb-lsp) from the Visual Studio Marketplace, or [**click here to open it directly in VS Code**](vscode:extension/marcoroth.herb-lsp).
 
 #### Other editors
 
@@ -18,26 +18,23 @@ If you are looking to use Herb in another editor, check out the instructions on 
 
 ## Configuration
 
-### Linter Settings
+The extension can be configured through VS Code settings or a `.herb.yml` file in your project root. Project configuration in `.herb.yml` takes precedence over VS Code settings.
 
-You can configure the linter behavior through VS Code settings:
+See the [Configuration documentation](https://herb-tools.dev/configuration) for full details.
+
+### VS Code Settings
 
 * `languageServerHerb.linter.enabled` (boolean, default: `true`) - Enable/disable the linter
-* `languageServerHerb.linter.excludedRules` (string[], default: `["parser-no-errors"]`) - Array of linter rule names to exclude from diagnostics
+* `languageServerHerb.formatter.enabled` (boolean, default: `false`) - Enable/disable the formatter
 
 #### Example configuration in `settings.json`:
 
 ```json
 {
   "languageServerHerb.linter.enabled": true,
-  "languageServerHerb.linter.excludedRules": [
-    "parser-no-errors",
-    "html-tag-name-lowercase"
-  ]
+  "languageServerHerb.formatter.enabled": true
 }
 ```
-
-**Note:** The `parser-no-errors` rule is excluded by default to prevent duplicate error reporting, since parser errors are already displayed through the language server's built-in diagnostics.
 
 ## Functionality
 
@@ -45,7 +42,7 @@ You can configure the linter behavior through VS Code settings:
 
 * Missing HTML opening tags (`MissingOpeningTagError`)
 * Missing HTML closing tags (`MissingClosingTagError`)
-* Mismatched HTML attribute quotes (`QuotesMismatchError`)
+* Unclosed quote errors (`UnclosedQuoteError`)
 * Ruby syntax errors (`Ruby Syntax Error`) (via [Prism](https://github.com/ruby/prism)) (`RubyParseError`)
 * Mismatched HTML tag names (`TagNamesMismatchError`)
 * Unclosed elements at the end of the document (`UnclosedElementError`)

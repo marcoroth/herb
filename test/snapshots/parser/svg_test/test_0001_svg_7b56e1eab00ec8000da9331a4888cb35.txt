@@ -1,3 +1,7 @@
+---
+source: "Parser::SVGTest#test_0001_svg"
+input: "<svg></svg>"
+---
 @ DocumentNode (location: (1:0)-(1:11))
 └── children: (1 item)
     └── @ HTMLElementNode (location: (1:0)-(1:11))
@@ -15,6 +19,8 @@
         │   └── @ HTMLCloseTagNode (location: (1:5)-(1:11))
         │       ├── tag_opening: "</" (location: (1:5)-(1:7))
         │       ├── tag_name: "svg" (location: (1:7)-(1:10))
+        │       ├── children: []
         │       └── tag_closing: ">" (location: (1:10)-(1:11))
         │
-        └── is_void: false
+        ├── is_void: false
+        └── source: "HTML"

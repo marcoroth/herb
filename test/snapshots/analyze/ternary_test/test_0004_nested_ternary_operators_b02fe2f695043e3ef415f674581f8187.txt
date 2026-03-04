@@ -1,3 +1,8 @@
+---
+source: "Analyze::TernaryTest#test_0004_nested ternary operators"
+input: |2-
+<%= status == :active ? "Active" : (status == :pending ? "Pending" : "Inactive") %>
+---
 @ DocumentNode (location: (1:0)-(2:0))
 └── children: (2 items)
     ├── @ ERBContentNode (location: (1:0)-(1:83))

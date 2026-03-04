@@ -1,0 +1,35 @@
+# Generated from lib/herb/engine/validation_error_overlay.rb with RBS::Inline
+
+module Herb
+  class Engine
+    class ValidationErrorOverlay
+      CONTEXT_LINES: ::Integer
+
+      VALIDATOR_BADGES: untyped
+
+      SEVERITY_COLORS: untyped
+
+      def initialize: (untyped source, untyped error, ?filename: untyped) -> untyped
+
+      def generate_fragment: () -> untyped
+
+      private
+
+      def generate_code_snippet: (untyped line_num, untyped col_num) -> untyped
+
+      def generate_suggestion_html: () -> untyped
+
+      def syntax_highlight: (untyped code) -> untyped
+
+      def highlight_with_tokens: (untyped tokens, untyped code) -> untyped
+
+      def get_character_offset: (untyped _content, untyped line, untyped column) -> untyped
+
+      def apply_token_style: (untyped token, untyped text) -> untyped
+
+      def escape_html: (untyped text) -> untyped
+
+      def escape_attr: (untyped text) -> untyped
+    end
+  end
+end
