@@ -1,4 +1,4 @@
-import { Diagnostic, Range, Position, CodeDescription, Connection } from "vscode-languageserver/node"
+import { Diagnostic, CodeDescription, Connection } from "vscode-languageserver/node"
 import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { Linter, rules, ruleDocumentationUrl, type RuleClass } from "@herb-tools/linter"
@@ -9,6 +9,7 @@ import { Config } from "@herb-tools/config"
 import { Settings } from "./settings"
 import { Project } from "./project"
 import { lintToDignosticSeverity } from "./utils"
+import { lspRangeFromLocation } from "./range_utils"
 
 const OPEN_CONFIG_ACTION = 'Open .herb.yml'
 
@@ -169,10 +170,7 @@ export class LinterService {
     const lintResult = this.linter.lint(content, { fileName: textDocument.uri })
 
     const diagnostics: Diagnostic[] = lintResult.offenses.map(offense => {
-      const range = Range.create(
-        Position.create(offense.location.start.line - 1, offense.location.start.column),
-        Position.create(offense.location.end.line - 1, offense.location.end.column),
-      )
+      const range = lspRangeFromLocation(offense.location)
 
       const customRulePath = this.customRulePaths.get(offense.rule)
       const codeDescription: CodeDescription = {
