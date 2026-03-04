@@ -51,6 +51,10 @@ bool lexer_peek_for_html_comment_end(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("-->"), false);
 }
 
+bool lexer_peek_for_html_comment_invalid_end(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string("--!>"), false);
+}
+
 bool lexer_peek_erb_close_tag(const lexer_T* lexer, uint32_t offset) {
   return lexer_peek_for(lexer, offset, hb_string("%>"), false);
 }
@@ -74,6 +78,10 @@ bool lexer_peek_erb_end(const lexer_T* lexer, uint32_t offset) {
   );
 }
 
+bool lexer_peek_erb_start(const lexer_T* lexer, uint32_t offset) {
+  return lexer_peek_for(lexer, offset, hb_string("<%"), false);
+}
+
 bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T token_type) {
   uint32_t saved_position = lexer->current_position;
   uint32_t saved_line = lexer->current_line;
@@ -84,13 +92,13 @@ bool lexer_peek_for_token_type_after_whitespace(lexer_T* lexer, token_type_T tok
   token_T* token = lexer_next_token(lexer);
 
   while (token && (token->type == TOKEN_WHITESPACE || token->type == TOKEN_NEWLINE)) {
-    token_free(token);
+    token_free(token, lexer->allocator);
     token = lexer_next_token(lexer);
   }
 
   bool result = (token && token->type == token_type);
 
-  if (token) { token_free(token); }
+  if (token) { token_free(token, lexer->allocator); }
 
   lexer->current_position = saved_position;
   lexer->current_line = saved_line;

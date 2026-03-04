@@ -4,9 +4,10 @@ import { themes } from "../src/themes.js"
 import { Range } from "@herb-tools/core"
 import { Herb } from "@herb-tools/node-wasm"
 import { SyntaxRenderer } from "../src/syntax-renderer.js"
+import { ANSI_REGEX } from "../src/color.js"
 
 function stripAnsiColors(text: string): string {
-  return text.replace(/\x1b\[[0-9;]*m/g, '')
+  return text.replace(ANSI_REGEX, '')
 }
 
 describe("SyntaxRenderer", () => {
@@ -136,7 +137,7 @@ describe("SyntaxRenderer", () => {
         const content = "<div>test</div>"
         const result = noColorRenderer.highlight(content)
 
-        expect(result).not.toMatch(/\x1b\\[[0-9;]*m/)
+        expect(result).not.toMatch(ANSI_REGEX)
       } finally {
         if (originalNoColor === undefined) {
           delete process.env.NO_COLOR

@@ -2,7 +2,7 @@
 source: "Engine::DebugModeTest#test_0037_non HTML-element top-level node should be wrapped in type=view div"
 input: "{source: \"<%= content_tag :div do %>\\n  Content\\n<% end %>\\n\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << content_tag :div do; _buf << '
+_buf = ::String.new; _buf << (content_tag :div do; _buf << '
   Content
-'.freeze; end 
+'.freeze; end )
 _buf.to_s

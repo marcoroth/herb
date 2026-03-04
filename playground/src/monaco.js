@@ -99,7 +99,7 @@ export function replaceTextareaWithMonaco(
         [/"/, { token: "string.double", next: "@string_double" }],
         [/'/, { token: "string.single", next: "@string_single" }],
         [/\d+/, "number"],
-        [/[{}()\[\]]/, "@brackets"],
+        [/[{}()[\]]/, "@brackets"],
         [/@|@@|$/, "variable"],
       ],
       string_double: [

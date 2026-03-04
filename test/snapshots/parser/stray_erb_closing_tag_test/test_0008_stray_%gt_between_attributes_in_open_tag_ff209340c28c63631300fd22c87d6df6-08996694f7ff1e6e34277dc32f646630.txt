@@ -1,0 +1,78 @@
+---
+source: "Parser::StrayERBClosingTagTest#test_0008_stray %> between attributes in open tag"
+input: |2-
+<div class="foo" %> id="bar"></div>
+options: {strict: true}
+---
+@ DocumentNode (location: (1:0)-(2:0))
+└── children: (2 items)
+    ├── @ HTMLElementNode (location: (1:0)-(1:35))
+    │   ├── open_tag:
+    │   │   └── @ HTMLOpenTagNode (location: (1:0)-(1:29))
+    │   │       ├── errors: (1 error)
+    │   │       │   └── @ StrayERBClosingTagError (location: (1:17)-(1:19))
+    │   │       │       └── message: "Stray `%>` found at (1:17). This closing delimiter is not part of an ERB tag and will be treated as plain text. If you want a literal `%>`, use the HTML entities `&percnt;&gt;` instead."
+    │   │       │
+    │   │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+    │   │       ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   │       ├── tag_closing: ">" (location: (1:28)-(1:29))
+    │   │       ├── children: (3 items)
+    │   │       │   ├── @ HTMLAttributeNode (location: (1:5)-(1:16))
+    │   │       │   │   ├── name:
+    │   │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:5)-(1:10))
+    │   │       │   │   │       └── children: (1 item)
+    │   │       │   │   │           └── @ LiteralNode (location: (1:5)-(1:10))
+    │   │       │   │   │               └── content: "class"
+    │   │       │   │   │
+    │   │       │   │   │
+    │   │       │   │   ├── equals: "=" (location: (1:10)-(1:11))
+    │   │       │   │   └── value:
+    │   │       │   │       └── @ HTMLAttributeValueNode (location: (1:11)-(1:16))
+    │   │       │   │           ├── open_quote: """ (location: (1:11)-(1:12))
+    │   │       │   │           ├── children: (1 item)
+    │   │       │   │           │   └── @ LiteralNode (location: (1:12)-(1:15))
+    │   │       │   │           │       └── content: "foo"
+    │   │       │   │           │
+    │   │       │   │           ├── close_quote: """ (location: (1:15)-(1:16))
+    │   │       │   │           └── quoted: true
+    │   │       │   │
+    │   │       │   │
+    │   │       │   ├── @ LiteralNode (location: (1:17)-(1:19))
+    │   │       │   │   └── content: "%>"
+    │   │       │   │
+    │   │       │   └── @ HTMLAttributeNode (location: (1:20)-(1:28))
+    │   │       │       ├── name:
+    │   │       │       │   └── @ HTMLAttributeNameNode (location: (1:20)-(1:22))
+    │   │       │       │       └── children: (1 item)
+    │   │       │       │           └── @ LiteralNode (location: (1:20)-(1:22))
+    │   │       │       │               └── content: "id"
+    │   │       │       │
+    │   │       │       │
+    │   │       │       ├── equals: "=" (location: (1:22)-(1:23))
+    │   │       │       └── value:
+    │   │       │           └── @ HTMLAttributeValueNode (location: (1:23)-(1:28))
+    │   │       │               ├── open_quote: """ (location: (1:23)-(1:24))
+    │   │       │               ├── children: (1 item)
+    │   │       │               │   └── @ LiteralNode (location: (1:24)-(1:27))
+    │   │       │               │       └── content: "bar"
+    │   │       │               │
+    │   │       │               ├── close_quote: """ (location: (1:27)-(1:28))
+    │   │       │               └── quoted: true
+    │   │       │
+    │   │       │
+    │   │       └── is_void: false
+    │   │
+    │   ├── tag_name: "div" (location: (1:1)-(1:4))
+    │   ├── body: []
+    │   ├── close_tag:
+    │   │   └── @ HTMLCloseTagNode (location: (1:29)-(1:35))
+    │   │       ├── tag_opening: "</" (location: (1:29)-(1:31))
+    │   │       ├── tag_name: "div" (location: (1:31)-(1:34))
+    │   │       ├── children: []
+    │   │       └── tag_closing: ">" (location: (1:34)-(1:35))
+    │   │
+    │   ├── is_void: false
+    │   └── source: "HTML"
+    │
+    └── @ HTMLTextNode (location: (1:35)-(2:0))
+        └── content: "\n"

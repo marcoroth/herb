@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/node",
-  "version": "0.8.5",
+  "version": "0.8.10",
   "description": "Native Node.js addon for HTML-aware ERB parsing using Herb.",
   "type": "module",
   "license": "MIT",
@@ -14,14 +14,18 @@
   "gypfile": true,
   "main": "./dist/herb-node.cjs",
   "module": "./dist/herb-node.esm.js",
-  "types": "./dist/types/index-esm.d.mts",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./dist/types/index-esm.d.mts",
-      "import": "./dist/herb-node.esm.js",
-      "require": "./dist/herb-node.cjs",
-      "default": "./dist/herb-node.esm.js"
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/herb-node.esm.js"
+      },
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/herb-node.cjs"
+      }
     }
   },
   "scripts": {
@@ -48,7 +52,7 @@
     "host": "https://github.com/marcoroth/herb/releases/download/"
   },
   "dependencies": {
-    "@herb-tools/core": "0.8.5",
+    "@herb-tools/core": "0.8.10",
     "@mapbox/node-pre-gyp": "^2.0.3",
     "node-addon-api": "^8.5.0",
     "node-pre-gyp-github": "^2.0.0"

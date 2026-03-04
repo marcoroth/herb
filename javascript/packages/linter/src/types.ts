@@ -1,7 +1,7 @@
 import { Diagnostic, LexResult, ParseResult } from "@herb-tools/core"
 
 import type { rules } from "./rules.js"
-import type { Node } from "@herb-tools/core"
+import type { Node, ParserOptions } from "@herb-tools/core"
 import type { RuleConfig } from "@herb-tools/config"
 import type { Mutable } from "@herb-tools/rewriter"
 
@@ -9,13 +9,17 @@ export type { Mutable } from "@herb-tools/rewriter"
 
 export type LintSeverity = "error" | "warning" | "info" | "hint"
 
+export const DEFAULT_LINTER_PARSER_OPTIONS: Partial<ParserOptions> = {
+  track_whitespace: true,
+}
+
 export type FullRuleConfig = Required<Pick<RuleConfig, 'enabled' | 'severity'>> & Omit<RuleConfig, 'enabled' | 'severity'>
 
 /**
  * Automatically inferred union type of all available linter rule names.
- * This type extracts the 'name' property from each rule class instance.
+ * This type extracts the 'ruleName' property from each rule class.
  */
-export type LinterRule = InstanceType<typeof rules[number]>['name']
+export type LinterRule = (typeof rules[number])['ruleName']
 
 
 /**
@@ -83,13 +87,24 @@ export const DEFAULT_RULE_CONFIG: FullRuleConfig = {
  */
 export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "parser" as const
+  static ruleName: string
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
-  abstract name: string
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
+
+  get ruleName(): string {
+    return (this.constructor as typeof ParserRule).ruleName
+  }
 
   get defaultConfig(): FullRuleConfig {
     return DEFAULT_RULE_CONFIG
   }
+
+  get parserOptions(): Partial<ParserOptions> {
+    return DEFAULT_LINTER_PARSER_OPTIONS
+  }
+
   abstract check(result: ParseResult, context?: Partial<LintContext>): UnboundLintOffense<TAutofixContext>[]
 
   /**
@@ -117,9 +132,15 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
  */
 export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "lexer" as const
+  static ruleName: string
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
-  abstract name: string
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
+
+  get ruleName(): string {
+    return (this.constructor as typeof LexerRule).ruleName
+  }
 
   get defaultConfig(): FullRuleConfig {
     return DEFAULT_RULE_CONFIG
@@ -149,6 +170,7 @@ export abstract class LexerRule<TAutofixContext extends BaseAutofixContext = Bas
 export interface LexerRuleConstructor {
   type: "lexer"
   new (): LexerRule
+  ruleName: string
 }
 
 /**
@@ -174,9 +196,15 @@ export const DEFAULT_LINT_CONTEXT: LintContext = {
 
 export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = BaseAutofixContext> {
   static type = "source" as const
+  static ruleName: string
   /** Indicates whether this rule supports autofix. Defaults to false. */
   static autocorrectable = false
-  abstract name: string
+  /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
+  static unsafeAutocorrectable = false
+
+  get ruleName(): string {
+    return (this.constructor as typeof SourceRule).ruleName
+  }
 
   get defaultConfig(): FullRuleConfig {
     return DEFAULT_RULE_CONFIG
@@ -206,6 +234,7 @@ export abstract class SourceRule<TAutofixContext extends BaseAutofixContext = Ba
 export interface SourceRuleConstructor {
   type: "source"
   new (): SourceRule
+  ruleName: string
 }
 
 /**
@@ -215,6 +244,7 @@ export interface SourceRuleConstructor {
  */
 export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
+  ruleName: string
 }
 
 export type LexerRuleClass = LexerRuleConstructor

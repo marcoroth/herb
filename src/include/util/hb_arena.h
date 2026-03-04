@@ -20,12 +20,18 @@ typedef struct HB_ARENA_STRUCT {
   size_t allocation_count;
 } hb_arena_T;
 
+#define hb_arena_for_each_page(arena) \
+  for (hb_arena_page_T* page = (arena)->head; page != NULL; page = page->next)
+
+#define hb_arena_for_each_page_const(arena) \
+  for (const hb_arena_page_T* page = (arena)->head; page != NULL; page = page->next)
+
 bool hb_arena_init(hb_arena_T* allocator, size_t initial_size);
 void* hb_arena_alloc(hb_arena_T* allocator, size_t size);
 size_t hb_arena_position(hb_arena_T* allocator);
 size_t hb_arena_capacity(hb_arena_T* allocator);
 void hb_arena_reset(hb_arena_T* allocator);
-void hb_arena_reset_to(hb_arena_T* allocator, size_t new_position);
+void hb_arena_reset_to(hb_arena_T* allocator, size_t target_position);
 void hb_arena_free(hb_arena_T* allocator);
 
 #endif

@@ -1,14 +1,17 @@
 # frozen_string_literal: true
+# typed: true
 
 require "json"
 
 module Herb
   class ParseResult < Result
     attr_reader :value #: Herb::AST::DocumentNode
+    attr_reader :options #: Herb::ParserOptions
 
-    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error]) -> void
-    def initialize(value, source, warnings, errors)
+    #: (Herb::AST::DocumentNode, String, Array[Herb::Warnings::Warning], Array[Herb::Errors::Error], Herb::ParserOptions) -> void
+    def initialize(value, source, warnings, errors, options)
       @value = value
+      @options = options
       super(source, warnings, errors)
     end
 

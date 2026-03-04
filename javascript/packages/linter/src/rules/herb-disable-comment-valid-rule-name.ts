@@ -34,7 +34,7 @@ class HerbDisableCommentValidRuleNameVisitor extends HerbDisableCommentParsedVis
 }
 
 export class HerbDisableCommentValidRuleNameRule extends ParserRule {
-  name = "herb-disable-comment-valid-rule-name"
+  static ruleName = "herb-disable-comment-valid-rule-name"
 
   get defaultConfig(): FullRuleConfig {
     return {
@@ -50,7 +50,7 @@ export class HerbDisableCommentValidRuleNameRule extends ParserRule {
     if (validRuleNames.length === 0) return []
 
     const visitor = new HerbDisableCommentValidRuleNameVisitor(
-      this.name,
+      this.ruleName,
       validRuleNames,
       context
     )

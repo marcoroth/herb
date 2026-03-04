@@ -72,6 +72,10 @@ export class IdentityPrinter extends Printer {
     }
   }
 
+  visitHTMLOmittedCloseTagNode(_node: Nodes.HTMLOmittedCloseTagNode): void {
+    // Omitted closing tags don't print anything
+  }
+
   visitHTMLElementNode(node: Nodes.HTMLElementNode): void {
     const tagName = node.tag_name?.value
 
@@ -89,6 +93,30 @@ export class IdentityPrinter extends Printer {
 
     if (node.close_tag) {
       this.visit(node.close_tag)
+    }
+
+    if (tagName) {
+      this.context.exitTag()
+    }
+  }
+
+  visitHTMLConditionalElementNode(node: Nodes.HTMLConditionalElementNode): void {
+    const tagName = node.tag_name?.value
+
+    if (tagName) {
+      this.context.enterTag(tagName)
+    }
+
+    if (node.open_conditional) {
+      this.visit(node.open_conditional)
+    }
+
+    if (node.body) {
+      node.body.forEach(child => this.visit(child))
+    }
+
+    if (node.close_conditional) {
+      this.visit(node.close_conditional)
     }
 
     if (tagName) {

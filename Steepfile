@@ -10,6 +10,8 @@ target :lib do
   library "json"
   library "pathname"
   library "tempfile"
+  library "yaml"
+  library "prism"
 
   ignore "lib/herb/cli.rb"
   ignore "lib/herb/project.rb"

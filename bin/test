@@ -4,6 +4,6 @@ set -e  # Exit on error
 
 make all
 ./run_herb_tests
-bundle exec rake test
+bundle exec rake test:all
 
 echo "Tests successful!"

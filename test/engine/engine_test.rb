@@ -158,5 +158,84 @@ module Engine
 
       assert_compiled_snapshot(template, escape: false)
     end
+
+    test "conditional html element compilation" do
+      template = File.read(File.expand_path("../../examples/conditional_html_element.html.erb", __dir__))
+
+      assert_compiled_snapshot(template, escape: false)
+    end
+
+    test "heredoc with trailing arguments compiles to valid Ruby" do
+      template = <<~ERB
+        <%= method_call <<~GRAPHQL, variables
+          query {
+            field
+          }
+        GRAPHQL
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc in code tag compiles to valid Ruby" do
+      template = <<~ERB
+        <%
+          text = <<~TEXT
+            Hello, world!
+          TEXT
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc in code tag inline compiles to valid Ruby" do
+      template = <<~ERB
+        <div><% text = <<~TEXT
+            Hello, world!
+          TEXT
+        %></div>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc with dash syntax in code tag compiles to valid Ruby" do
+      template = <<~ERB
+        <%
+          text = <<-TEXT
+            Hello, world!
+          TEXT
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc with quoted identifier in code tag compiles to valid Ruby" do
+      template = <<~ERB
+        <%
+          text = <<~'TEXT'
+            Hello, world!
+          TEXT
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
+
+    test "heredoc in escaped expression tag compiles to valid Ruby" do
+      template = <<~ERB
+        <%== method_call <<~GRAPHQL, variables
+          query {
+            field
+          }
+        GRAPHQL
+        %>
+      ERB
+
+      assert_compiled_snapshot(template)
+    end
   end
 end

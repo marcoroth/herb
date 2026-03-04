@@ -25,6 +25,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │       ├── content: " when :admin " (location: (2:2)-(2:15))
     │   │       ├── tag_closing: "%>" (location: (2:15)-(2:17))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (2:17)-(3:2))
     │   │           │   └── content: "\n  "
@@ -70,6 +71,7 @@ input: |2-
     │   │           │   ├── tag_opening: "<%" (location: (5:2)-(5:4))
     │   │           │   ├── content: " unless guest? " (location: (5:4)-(5:19))
     │   │           │   ├── tag_closing: "%>" (location: (5:19)-(5:21))
+    │   │           │   ├── then_keyword: ∅
     │   │           │   ├── statements: (3 items)
     │   │           │   │   ├── @ HTMLTextNode (location: (5:21)-(6:4))
     │   │           │   │   │   └── content: "\n    "

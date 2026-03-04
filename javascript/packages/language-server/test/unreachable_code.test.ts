@@ -502,6 +502,70 @@ describe("Unreachable Code Diagnostics", () => {
         expect(collector.diagnostics.length).toBe(1)
         expect(collector.diagnostics[0].message).toContain("Empty when block")
       })
+
+      it("does not flag when block with then keyword as empty", () => {
+        const content = dedent`
+          <% header_error = case %>
+          <% when header.blank? then t(".required") %>
+          <% when @form.headers.count(header) > 1 then t(".duplicate") %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const collector = new UnreachableCodeCollector()
+        collector.visit(parseResult.value)
+
+        const whenDiagnostics = collector.diagnostics.filter(d => d.message.includes("Empty when block"))
+
+        expect(whenDiagnostics.length).toBe(0)
+      })
+
+      it("does not flag inline when with then as empty", () => {
+        const content = dedent`
+          <% case variable %>
+          <% when String then "string" %>
+          <% when Integer then "integer" %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const collector = new UnreachableCodeCollector()
+        collector.visit(parseResult.value)
+
+        const whenDiagnostics = collector.diagnostics.filter(d => d.message.includes("Empty when block"))
+        expect(whenDiagnostics.length).toBe(0)
+      })
+
+      it("correctly parses then_keyword location for when clauses", () => {
+        const content = dedent`
+          <% case value %>
+          <% when String then "string" %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const caseNode = parseResult.value.children[0] as any
+        const whenNode = caseNode.conditions[0]
+
+        expect(whenNode.then_keyword).not.toBeNull()
+        expect(whenNode.then_keyword.start.line).toBe(2)
+        expect(whenNode.then_keyword.start.column).toBe(15)
+      })
+
+      it("does not flag when with then even if then appears in a string", () => {
+        const content = dedent`
+          <% case value %>
+          <% when "then" then "matched then" %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const collector = new UnreachableCodeCollector()
+        collector.visit(parseResult.value)
+
+        const whenDiagnostics = collector.diagnostics.filter(d => d.message.includes("Empty when block"))
+        expect(whenDiagnostics.length).toBe(0)
+      })
     })
 
     describe("begin/rescue/ensure blocks", () => {
@@ -568,6 +632,53 @@ describe("Unreachable Code Diagnostics", () => {
 
         expect(collector.diagnostics.length).toBe(1)
         expect(collector.diagnostics[0].message).toContain("Empty in block")
+      })
+
+      it("does not flag in block with then keyword as empty", () => {
+        const content = dedent`
+          <% case value %>
+          <% in String then "string" %>
+          <% in Integer then "integer" %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const collector = new UnreachableCodeCollector()
+        collector.visit(parseResult.value)
+
+        const inDiagnostics = collector.diagnostics.filter(d => d.message.includes("Empty in block"))
+        expect(inDiagnostics.length).toBe(0)
+      })
+
+      it("correctly parses then_keyword location for in clauses", () => {
+        const content = dedent`
+          <% case value %>
+          <% in String then "string" %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const caseNode = parseResult.value.children[0] as any
+        const inNode = caseNode.conditions[0]
+
+        expect(inNode.then_keyword).not.toBeNull()
+        expect(inNode.then_keyword.start.line).toBe(2)
+        expect(inNode.then_keyword.start.column).toBe(13)
+      })
+
+      it("does not flag in with then even if then appears in pattern", () => {
+        const content = dedent`
+          <% case value %>
+          <% in { then: x } then x %>
+          <% end %>
+        `
+
+        const parseResult = Herb.parse(content)
+        const collector = new UnreachableCodeCollector()
+        collector.visit(parseResult.value)
+
+        const inDiagnostics = collector.diagnostics.filter(d => d.message.includes("Empty in block"))
+        expect(inDiagnostics.length).toBe(0)
       })
     })
 

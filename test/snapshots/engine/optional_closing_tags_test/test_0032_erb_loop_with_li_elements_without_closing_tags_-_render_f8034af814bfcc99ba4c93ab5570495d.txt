@@ -1,0 +1,14 @@
+---
+source: "Engine::OptionalClosingTagsTest#test_0032_erb loop with li elements without closing tags - render"
+input: "{source: \"<nav>\\n  <ul>\\n    <% items.each do |item| %>\\n      <li>\\n        <a href=\\\"<%= item[:url] %>\\\"><%= item[:name] %></a>\\n    <% end %>\\n  </ul>\\n</nav>\\n\", locals: {items: [{name: \"Home\", url: \"/\"}, {name: \"About\", url: \"/about\"}, {name: \"Contact\", url: \"/contact\"}]}, options: {escape: false, strict: false}}"
+---
+<nav>
+  <ul>
+      <li>
+        <a href="/">Home</a>
+      <li>
+        <a href="/about">About</a>
+      <li>
+        <a href="/contact">Contact</a>
+  </ul>
+</nav>

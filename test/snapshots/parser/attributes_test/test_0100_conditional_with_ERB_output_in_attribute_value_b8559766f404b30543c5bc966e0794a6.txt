@@ -1,0 +1,88 @@
+---
+source: "Parser::AttributesTest#test_0100_conditional with ERB output in attribute value"
+input: "<div <% if user? %>data-user-id=\"<%= user.id %>\" data-user-name=\"<%= user.name %>\"<% end %>></div>"
+---
+@ DocumentNode (location: (1:0)-(1:98))
+└── children: (1 item)
+    └── @ HTMLElementNode (location: (1:0)-(1:98))
+        ├── open_tag:
+        │   └── @ HTMLOpenTagNode (location: (1:0)-(1:92))
+        │       ├── tag_opening: "<" (location: (1:0)-(1:1))
+        │       ├── tag_name: "div" (location: (1:1)-(1:4))
+        │       ├── tag_closing: ">" (location: (1:91)-(1:92))
+        │       ├── children: (1 item)
+        │       │   └── @ ERBIfNode (location: (1:5)-(1:91))
+        │       │       ├── tag_opening: "<%" (location: (1:5)-(1:7))
+        │       │       ├── content: " if user? " (location: (1:7)-(1:17))
+        │       │       ├── tag_closing: "%>" (location: (1:17)-(1:19))
+        │       │       ├── then_keyword: ∅
+        │       │       ├── statements: (2 items)
+        │       │       │   ├── @ HTMLAttributeNode (location: (1:19)-(1:48))
+        │       │       │   │   ├── name:
+        │       │       │   │   │   └── @ HTMLAttributeNameNode (location: (1:19)-(1:31))
+        │       │       │   │   │       └── children: (1 item)
+        │       │       │   │   │           └── @ LiteralNode (location: (1:19)-(1:31))
+        │       │       │   │   │               └── content: "data-user-id"
+        │       │       │   │   │
+        │       │       │   │   │
+        │       │       │   │   ├── equals: "=" (location: (1:31)-(1:32))
+        │       │       │   │   └── value:
+        │       │       │   │       └── @ HTMLAttributeValueNode (location: (1:32)-(1:48))
+        │       │       │   │           ├── open_quote: """ (location: (1:32)-(1:33))
+        │       │       │   │           ├── children: (1 item)
+        │       │       │   │           │   └── @ ERBContentNode (location: (1:33)-(1:47))
+        │       │       │   │           │       ├── tag_opening: "<%=" (location: (1:33)-(1:36))
+        │       │       │   │           │       ├── content: " user.id " (location: (1:36)-(1:45))
+        │       │       │   │           │       ├── tag_closing: "%>" (location: (1:45)-(1:47))
+        │       │       │   │           │       ├── parsed: true
+        │       │       │   │           │       └── valid: true
+        │       │       │   │           │
+        │       │       │   │           ├── close_quote: """ (location: (1:47)-(1:48))
+        │       │       │   │           └── quoted: true
+        │       │       │   │
+        │       │       │   │
+        │       │       │   └── @ HTMLAttributeNode (location: (1:49)-(1:82))
+        │       │       │       ├── name:
+        │       │       │       │   └── @ HTMLAttributeNameNode (location: (1:49)-(1:63))
+        │       │       │       │       └── children: (1 item)
+        │       │       │       │           └── @ LiteralNode (location: (1:49)-(1:63))
+        │       │       │       │               └── content: "data-user-name"
+        │       │       │       │
+        │       │       │       │
+        │       │       │       ├── equals: "=" (location: (1:63)-(1:64))
+        │       │       │       └── value:
+        │       │       │           └── @ HTMLAttributeValueNode (location: (1:64)-(1:82))
+        │       │       │               ├── open_quote: """ (location: (1:64)-(1:65))
+        │       │       │               ├── children: (1 item)
+        │       │       │               │   └── @ ERBContentNode (location: (1:65)-(1:81))
+        │       │       │               │       ├── tag_opening: "<%=" (location: (1:65)-(1:68))
+        │       │       │               │       ├── content: " user.name " (location: (1:68)-(1:79))
+        │       │       │               │       ├── tag_closing: "%>" (location: (1:79)-(1:81))
+        │       │       │               │       ├── parsed: true
+        │       │       │               │       └── valid: true
+        │       │       │               │
+        │       │       │               ├── close_quote: """ (location: (1:81)-(1:82))
+        │       │       │               └── quoted: true
+        │       │       │
+        │       │       │
+        │       │       ├── subsequent: ∅
+        │       │       └── end_node:
+        │       │           └── @ ERBEndNode (location: (1:82)-(1:91))
+        │       │               ├── tag_opening: "<%" (location: (1:82)-(1:84))
+        │       │               ├── content: " end " (location: (1:84)-(1:89))
+        │       │               └── tag_closing: "%>" (location: (1:89)-(1:91))
+        │       │
+        │       │
+        │       └── is_void: false
+        │
+        ├── tag_name: "div" (location: (1:1)-(1:4))
+        ├── body: []
+        ├── close_tag:
+        │   └── @ HTMLCloseTagNode (location: (1:92)-(1:98))
+        │       ├── tag_opening: "</" (location: (1:92)-(1:94))
+        │       ├── tag_name: "div" (location: (1:94)-(1:97))
+        │       ├── children: []
+        │       └── tag_closing: ">" (location: (1:97)-(1:98))
+        │
+        ├── is_void: false
+        └── source: "HTML"

@@ -361,5 +361,59 @@ module Parser
         %>
       ERB
     end
+
+    test "case and when in same ERB tag" do
+      template = <<~ERB
+        <% case variable when "a" %>
+          A
+        <% when "b" %>
+          B
+        <% end %>
+      ERB
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
+    end
+
+    test "case in pattern in same ERB tag" do
+      template = <<~ERB
+        <% case value in 1 %>
+          One
+        <% in 2 %>
+          Two
+        <% end %>
+      ERB
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
+    end
+
+    test "case and when on newline in same ERB tag" do
+      template = <<~ERB
+        <% case variable
+           when "a" %>
+          A
+        <% when "b" %>
+          B
+        <% end %>
+      ERB
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
+    end
+
+    test "case in pattern on newline in same ERB tag" do
+      template = <<~ERB
+        <% case value
+           in 1 %>
+          One
+        <% in 2 %>
+          Two
+        <% end %>
+      ERB
+
+      assert_parsed_snapshot(template, strict: true)
+      assert_parsed_snapshot(template, strict: false)
+    end
   end
 end

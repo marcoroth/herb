@@ -27,6 +27,7 @@ input: |2-
     │   │   │   ├── tag_opening: "<%" (location: (2:0)-(2:2))
     │   │   │   ├── content: " when :a " (location: (2:2)-(2:11))
     │   │   │   ├── tag_closing: "%>" (location: (2:11)-(2:13))
+    │   │   │   ├── then_keyword: ∅
     │   │   │   └── statements: (3 items)
     │   │   │       ├── @ HTMLTextNode (location: (2:13)-(3:2))
     │   │   │       │   └── content: "\n  "
@@ -54,6 +55,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (6:0)-(6:2))
     │   │       ├── content: " when :b " (location: (6:2)-(6:11))
     │   │       ├── tag_closing: "%>" (location: (6:11)-(6:13))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (6:13)-(7:2))
     │   │           │   └── content: "\n  "

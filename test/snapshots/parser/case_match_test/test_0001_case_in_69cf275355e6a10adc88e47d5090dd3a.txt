@@ -51,6 +51,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " in { hash: { nested: } } " (location: (3:2)-(3:28))
     │   │       ├── tag_closing: "%>" (location: (3:28)-(3:30))
+    │   │       ├── then_keyword: ∅
     │   │       └── statements: (3 items)
     │   │           ├── @ HTMLTextNode (location: (3:30)-(4:2))
     │   │           │   └── content: "\n  "

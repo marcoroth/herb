@@ -1,7 +1,6 @@
 import typescript from "@rollup/plugin-typescript"
 import json from "@rollup/plugin-json"
 import { nodeResolve } from "@rollup/plugin-node-resolve"
-import { readFileSync } from "fs"
 import { yaml } from "./yaml-plugin.mjs"
 
 export default [
@@ -12,7 +11,7 @@ export default [
       format: "esm",
       sourcemap: true,
     },
-    external: ["yaml", "fs", "path"],
+    external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       json(),
@@ -33,7 +32,7 @@ export default [
       format: "cjs",
       sourcemap: true,
     },
-    external: ["yaml", "fs", "path"],
+    external: ["yaml", "fs", "path", "picomatch", "tinyglobby"],
     plugins: [
       nodeResolve(),
       json(),

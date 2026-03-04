@@ -1,12 +1,16 @@
 #ifndef HERB_PRETTY_PRINT_H
 #define HERB_PRETTY_PRINT_H
 
-#include "analyzed_ruby.h"
-#include "ast_nodes.h"
-#include "location.h"
-#include "util/hb_buffer.h"
+#ifdef HERB_EXCLUDE_PRETTYPRINT
+// Pretty print support excluded
+#else
 
-#include <stdbool.h>
+#  include "analyze/analyzed_ruby.h"
+#  include "ast_nodes.h"
+#  include "location.h"
+#  include "util/hb_buffer.h"
+
+#  include <stdbool.h>
 
 void pretty_print_indent(hb_buffer_T* buffer, size_t indent);
 void pretty_print_newline(size_t indent, size_t relative_indent, hb_buffer_T* buffer);
@@ -100,4 +104,5 @@ void pretty_print_errors(
   hb_buffer_T* buffer
 );
 
+#endif
 #endif

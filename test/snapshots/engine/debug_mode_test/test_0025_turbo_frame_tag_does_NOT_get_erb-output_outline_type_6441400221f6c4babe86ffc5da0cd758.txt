@@ -2,5 +2,5 @@
 source: "Engine::DebugModeTest#test_0025_turbo_frame_tag does NOT get erb-output outline type"
 input: "{source: \"<%= turbo_frame_tag \\\"posts\\\" do %><p>Content</p><% end %>\", options: {debug: true, filename: \"test.html.erb\"}}"
 ---
-_buf = ::String.new; _buf << turbo_frame_tag "posts" do; _buf << '<p>Content</p>'.freeze; end;
+_buf = ::String.new; _buf << (turbo_frame_tag "posts" do; _buf << '<p>Content</p>'.freeze; end);
 _buf.to_s

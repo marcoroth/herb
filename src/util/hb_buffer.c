@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "../include/macros.h"
-#include "../include/util.h"
 #include "../include/util/hb_buffer.h"
 
 static bool hb_buffer_has_capacity(hb_buffer_T* buffer, const size_t required_length) {
@@ -99,6 +98,10 @@ char* hb_buffer_value(const hb_buffer_T* buffer) {
 
 size_t hb_buffer_length(const hb_buffer_T* buffer) {
   return buffer->length;
+}
+
+bool hb_buffer_is_empty(const hb_buffer_T* buffer) {
+  return buffer->length == 0;
 }
 
 size_t hb_buffer_capacity(const hb_buffer_T* buffer) {

@@ -15,6 +15,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " unless skip; items.each do |item| " (location: (1:2)-(1:37))
     │   ├── tag_closing: "%>" (location: (1:37)-(1:39))
+    │   ├── then_keyword: ∅
     │   ├── statements: (3 items)
     │   │   ├── @ HTMLTextNode (location: (1:39)-(2:2))
     │   │   │   └── content: "\n  "

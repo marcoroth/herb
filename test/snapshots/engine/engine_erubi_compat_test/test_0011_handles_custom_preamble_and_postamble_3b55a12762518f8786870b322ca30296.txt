@@ -2,5 +2,5 @@
 source: "Engine::EngineErubiCompatTest#test_0011_handles custom preamble and postamble"
 input: "{source: \"<div>Test</div>\", options: {preamble: \"@buf = []\", postamble: \"@buf.join\"}}"
 ---
-@buf = [] _buf << '<div>Test</div>'.freeze;
+@buf = [];  _buf << '<div>Test</div>'.freeze;
 @buf.join

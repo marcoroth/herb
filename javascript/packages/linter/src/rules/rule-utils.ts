@@ -1,24 +1,24 @@
 import {
   Visitor,
   Location,
-  getStaticAttributeName,
-  hasDynamicAttributeName as hasNodeDynamicAttributeName,
-  getCombinedAttributeName,
+  Position,
   hasERBOutput,
-  getStaticContentFromNodes,
-  hasStaticContent,
   isEffectivelyStatic,
-  getValidatableStaticContent
+  getValidatableStaticContent,
+  getAttributeName,
+  getStaticAttributeValue,
+  hasDynamicAttributeNameOnAttribute as hasDynamicAttributeName,
+  getCombinedAttributeNameString,
+  getAttributeValueNodes,
+  getAttributeValue,
+  forEachAttribute,
 } from "@herb-tools/core"
 
 import type {
-  ERBContentNode,
   HTMLAttributeNameNode,
   HTMLAttributeNode,
-  HTMLAttributeValueNode,
   HTMLElementNode,
   HTMLOpenTagNode,
-  LiteralNode,
   LexResult,
   Token,
   Node
@@ -162,236 +162,6 @@ export abstract class ControlFlowTrackingVisitor<TAutofixContext extends BaseAut
   protected abstract onExitBranch(stateToRestore: TBranchState): void
 }
 
-/**
- * Gets attributes from an HTMLOpenTagNode
- */
-export function getAttributes(node: HTMLOpenTagNode): HTMLAttributeNode[] {
-  return node.children.filter(node => node.type === "AST_HTML_ATTRIBUTE_NODE") as HTMLAttributeNode[]
-}
-
-/**
- * Gets the tag name from an HTML tag node (lowercased)
- */
-export function getTagName(node: HTMLElementNode | HTMLOpenTagNode | null | undefined): string | null {
-  if (!node) return null
-
-  return node.tag_name?.value.toLowerCase() || null
-}
-
-/**
- * Gets the attribute name from an HTMLAttributeNode (lowercased)
- * Returns null if the attribute name contains dynamic content (ERB)
- */
-export function getAttributeName(attributeNode: HTMLAttributeNode, lowercase = true): string | null {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    const staticName = getStaticAttributeName(nameNode)
-
-    if (!lowercase) return staticName
-
-    return staticName ? staticName.toLowerCase() : null
-  }
-
-  return null
-}
-
-/**
- * Checks if an attribute has a dynamic (ERB-containing) name
- */
-export function hasDynamicAttributeName(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-    return hasNodeDynamicAttributeName(nameNode)
-  }
-
-  return false
-}
-
-/**
- * Gets the combined string representation of an attribute name (for debugging)
- * This includes both static content and ERB syntax
- */
-export function getCombinedAttributeNameString(attributeNode: HTMLAttributeNode): string {
-  if (attributeNode.name?.type === "AST_HTML_ATTRIBUTE_NAME_NODE") {
-    const nameNode = attributeNode.name as HTMLAttributeNameNode
-
-    return getCombinedAttributeName(nameNode)
-  }
-
-  return ""
-}
-
-/**
- * Checks if an attribute value contains only static content (no ERB)
- */
-export function hasStaticAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
-
-  if (!valueNode?.children) return false
-
-  return valueNode.children.every(child => child.type === "AST_LITERAL_NODE")
-}
-
-/**
- * Checks if an attribute value contains dynamic content (ERB)
- */
-export function hasDynamicAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
-
-  if (!valueNode?.children) return false
-
-  return valueNode.children.some(child => child.type === "AST_ERB_CONTENT_NODE")
-}
-
-/**
- * Gets the static string value of an attribute (returns null if it contains ERB)
- */
-export function getStaticAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  if (!hasStaticAttributeValue(attributeNode)) return null
-
-  const valueNode = attributeNode.value as HTMLAttributeValueNode
-
-  const result = valueNode.children
-    ?.filter(child => child.type === "AST_LITERAL_NODE")
-    .map(child => (child as LiteralNode).content)
-    .join("") || ""
-
-  return result
-}
-
-/**
- * Gets the value nodes array for dynamic inspection
- */
-export function getAttributeValueNodes(attributeNode: HTMLAttributeNode): Node[] {
-  const valueNode = attributeNode.value as HTMLAttributeValueNode | null
-
-  return valueNode?.children || []
-}
-
-/**
- * Checks if an attribute value contains any static content (for validation purposes)
- */
-export function hasStaticAttributeValueContent(attributeNode: HTMLAttributeNode): boolean {
-  const valueNodes = getAttributeValueNodes(attributeNode)
-
-  return hasStaticContent(valueNodes)
-}
-
-/**
- * Gets the static content of an attribute value (all literal parts combined)
- * Returns the concatenated literal content, or null if no literal nodes exist
- */
-export function getStaticAttributeValueContent(attributeNode: HTMLAttributeNode): string | null {
-  const valueNodes = getAttributeValueNodes(attributeNode)
-
-  return getStaticContentFromNodes(valueNodes)
-}
-
-/**
- * Gets the attribute value content from an HTMLAttributeValueNode
- */
-export function getAttributeValue(attributeNode: HTMLAttributeNode): string | null {
-  const valueNode: HTMLAttributeValueNode | null = attributeNode.value as HTMLAttributeValueNode
-
-  if (valueNode === null) return null
-
-  if (valueNode.type !== "AST_HTML_ATTRIBUTE_VALUE_NODE" || !valueNode.children?.length) {
-    return null
-  }
-
-  let result = ""
-
-  for (const child of valueNode.children) {
-    switch (child.type) {
-      case "AST_ERB_CONTENT_NODE": {
-        const erbNode = child as ERBContentNode
-
-        if (erbNode.content) {
-          result += `${erbNode.tag_opening?.value}${erbNode.content.value}${erbNode.tag_closing?.value}`
-        }
-
-        break
-      }
-
-      case "AST_LITERAL_NODE": {
-        result += (child as LiteralNode).content
-        break
-      }
-    }
-  }
-
-  return result
-}
-
-/**
- * Checks if an attribute has a value
- */
-export function hasAttributeValue(attributeNode: HTMLAttributeNode): boolean {
-  return attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE"
-}
-
-/**
- * Gets the quote type used for an attribute value
- */
-export function getAttributeValueQuoteType(nodeOrAttribute: HTMLAttributeNode | HTMLAttributeValueNode): "single" | "double" | "none" | null {
-  let valueNode: HTMLAttributeValueNode | undefined
-
-  if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_NODE") {
-    const attributeNode = nodeOrAttribute as HTMLAttributeNode
-
-    if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-      valueNode = attributeNode.value as HTMLAttributeValueNode
-    }
-  } else if (nodeOrAttribute.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    valueNode = nodeOrAttribute as HTMLAttributeValueNode
-  }
-
-  if (valueNode) {
-    if (valueNode.quoted && valueNode.open_quote) {
-      return valueNode.open_quote.value === '"' ? "double" : "single"
-    }
-
-    return "none"
-  }
-
-  return null
-}
-
-/**
- * Finds an attribute by name in a list of attributes
- */
-export function findAttributeByName(attributes: Node[], attributeName: string): HTMLAttributeNode | null {
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      const attributeNode = child as HTMLAttributeNode
-      const name = getAttributeName(attributeNode)
-
-      if (name === attributeName.toLowerCase()) {
-        return attributeNode
-      }
-    }
-  }
-
-  return null
-}
-
-/**
- * Checks if a tag has a specific attribute
- */
-export function hasAttribute(node: HTMLOpenTagNode | null | undefined, attributeName: string): boolean {
-  if (!node) return false
-
-  return getAttribute(node, attributeName) !== null
-}
-
-/**
- * Checks if a tag has a specific attribute
- */
-export function getAttribute(node: HTMLOpenTagNode, attributeName: string): HTMLAttributeNode | null {
-  const attributes = getAttributes(node)
-
-  return findAttributeByName(attributes, attributeName)
-}
 
 /**
  * Common HTML element categorization
@@ -483,6 +253,26 @@ export const VALID_ARIA_ROLES = new Set([
   "status", "switch", "tab", "tablist", "tabpanel", "textbox", "timer", "toolbar", "tree",
   "treegrid", "treeitem",
   "log", "marquee"
+]);
+
+/**
+ * Abstract ARIA roles used to support the WAI-ARIA Roles Model.
+ * Authors MUST NOT use abstract roles in content.
+ * @see https://www.w3.org/TR/wai-aria-1.0/roles#abstract_roles
+ */
+export const ABSTRACT_ARIA_ROLES = new Set([
+  "command",
+  "composite",
+  "input",
+  "landmark",
+  "range",
+  "roletype",
+  "section",
+  "sectionhead",
+  "select",
+  "structure",
+  "widget",
+  "window"
 ]);
 
 /**
@@ -638,7 +428,7 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
   private checkAttributesOnNode(node: HTMLOpenTagNode): void {
     forEachAttribute(node, (attributeNode) => {
       const staticAttributeName = getAttributeName(attributeNode)
-      const originalAttributeName = getAttributeName(attributeNode, false) || ""
+      const originalAttributeName = getAttributeName(attributeNode, false) || ""
       const isDynamicName = hasDynamicAttributeName(attributeNode)
       const staticAttributeValue = getStaticAttributeValue(attributeNode)
       const valueNodes = getAttributeValueNodes(attributeNode)
@@ -704,35 +494,6 @@ export abstract class AttributeVisitorMixin<TAutofixContext extends BaseAutofixC
    */
   protected checkDynamicAttributeDynamicValue(_params: DynamicAttributeDynamicValueParams): void {
     // Default implementation does nothing
-  }
-}
-
-/**
- * Checks if an attribute value is quoted
- */
-export function isAttributeValueQuoted(attributeNode: HTMLAttributeNode): boolean {
-  if (attributeNode.value?.type === "AST_HTML_ATTRIBUTE_VALUE_NODE") {
-    const valueNode = attributeNode.value as HTMLAttributeValueNode
-
-    return !!valueNode.quoted
-  }
-
-  return false
-}
-
-/**
- * Iterates over all attributes of a tag node, calling the callback for each attribute
- */
-export function forEachAttribute(
-  node: HTMLOpenTagNode,
-  callback: (attributeNode: HTMLAttributeNode) => void
-): void {
-  const attributes = getAttributes(node)
-
-  for (const child of attributes) {
-    if (child.type === "AST_HTML_ATTRIBUTE_NODE") {
-      callback(child as HTMLAttributeNode)
-    }
   }
 }
 
@@ -1064,4 +825,114 @@ export function isHeadTag(tagName: string): boolean {
     !isHtmlOnlyTag(tag) &&
     (isHeadOnlyTag(tag) || isHeadAndBodyTag(tag))
   )
+}
+
+/**
+ * Converts a character offset in a source string to a Position (line, column).
+ * Lines are 1-based, columns are 0-based.
+ */
+export function positionFromOffset(source: string, offset: number): Position {
+  let line = 1
+  let column = 0
+  let currentOffset = 0
+
+  for (let i = 0; i < source.length && currentOffset < offset; i++) {
+    const char = source[i]
+    currentOffset++
+    if (char === "\n") {
+      line++
+      column = 0
+    } else {
+      column++
+    }
+  }
+
+  return new Position(line, column)
+}
+
+/**
+ * Checks if a position (line, column) is within a node's location range.
+ * @param node - The node to check
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @returns true if the position is within the node's location
+ */
+function isPositionInNode(node: Node, line: number, column: number): boolean {
+  if (!node.location) return false
+
+  const { start, end } = node.location
+
+  if (line < start.line) return false
+  if (line === start.line && column < start.column) return false
+
+  if (line > end.line) return false
+  if (line === end.line && column >= end.column) return false
+
+  return true
+}
+
+/**
+ * Finds a node in the AST that contains a specific position.
+ * Returns the deepest (most specific) node that matches the position and optional predicate.
+ *
+ * @param root - The root node to search from
+ * @param line - Line number (1-based)
+ * @param column - Column number (0-based)
+ * @param predicate - Optional predicate function to filter nodes
+ * @returns The matching node or null if not found
+ */
+export function findNodeAtPosition(root: Node, line: number, column: number, predicate?: (node: Node) => boolean): Node | null {
+  let bestMatch: Node | null = null
+  const visited = new Set<Node>()
+
+  function search(node: Node): void {
+    if (!node || visited.has(node)) return
+    visited.add(node)
+
+    if (isPositionInNode(node, line, column)) {
+      if (!predicate || predicate(node)) {
+        if (!bestMatch || isMoreSpecific(node, bestMatch)) {
+          bestMatch = node
+        }
+      }
+    }
+
+    const nodeAny = node as any
+
+    if (typeof nodeAny.compactChildNodes === 'function') {
+      for (const child of nodeAny.compactChildNodes()) {
+        search(child)
+      }
+    } else {
+      if (nodeAny.children && Array.isArray(nodeAny.children)) {
+        for (const child of nodeAny.children) {
+          if (child) search(child)
+        }
+      }
+
+      if (nodeAny.body && Array.isArray(nodeAny.body)) {
+        for (const child of nodeAny.body) {
+          if (child) search(child)
+        }
+      }
+    }
+  }
+
+  function isMoreSpecific(nodeA: Node, nodeB: Node): boolean {
+    if (!nodeA.location || !nodeB.location) return false
+
+    const aStart = nodeA.location.start
+    const aEnd = nodeA.location.end
+    const bStart = nodeB.location.start
+    const bEnd = nodeB.location.end
+
+    const startsAtOrAfter = aStart.line > bStart.line || (aStart.line === bStart.line && aStart.column >= bStart.column)
+    const endsAtOrBefore = aEnd.line < bEnd.line || (aEnd.line === bEnd.line && aEnd.column <= bEnd.column)
+
+    return startsAtOrAfter && endsAtOrBefore
+  }
+
+  search(root)
+
+  return bestMatch
 }

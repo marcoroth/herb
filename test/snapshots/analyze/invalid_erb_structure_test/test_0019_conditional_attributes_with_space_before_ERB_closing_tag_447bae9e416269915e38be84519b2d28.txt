@@ -41,6 +41,7 @@ input: |2-
     │   │       │   │   ├── tag_opening: "<%" (location: (3:2)-(3:4))
     │   │       │   │   ├── content: " if false " (location: (3:4)-(3:14))
     │   │       │   │   ├── tag_closing: "%>" (location: (3:14)-(3:16))
+    │   │       │   │   ├── then_keyword: ∅
     │   │       │   │   ├── statements: (1 item)
     │   │       │   │   │   └── @ HTMLAttributeNode (location: (3:17)-(3:25))
     │   │       │   │   │       ├── name:
@@ -65,6 +66,7 @@ input: |2-
     │   │       │   │   ├── tag_opening: "<%" (location: (4:2)-(4:4))
     │   │       │   │   ├── content: " if false " (location: (4:4)-(4:14))
     │   │       │   │   ├── tag_closing: "%>" (location: (4:14)-(4:16))
+    │   │       │   │   ├── then_keyword: ∅
     │   │       │   │   ├── statements: (1 item)
     │   │       │   │   │   └── @ HTMLAttributeNode (location: (4:17)-(4:33))
     │   │       │   │   │       ├── name:

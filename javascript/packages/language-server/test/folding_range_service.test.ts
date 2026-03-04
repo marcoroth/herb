@@ -231,8 +231,27 @@ describe("FoldingRangeService", () => {
       const ranges = service.getFoldingRanges(parseResult.value)
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
-        [0, 4]
+        [0, 4],
+        [2, 4],
       ])
+    })
+
+    it("creates folding ranges for case/when blocks", () => {
+      const content = dedent`
+        <% case role %>
+        <% when "admin" %>
+          <p>Admin</p>
+        <% when "user" %>
+          <p>User</p>
+        <% else %>
+          <p>Guest</p>
+        <% end %>
+      `
+
+      const parseResult = Herb.parse(content)
+      const ranges = service.getFoldingRanges(parseResult.value)
+
+      expect(ranges.map(range => [range.startLine, range.endLine])).toContainEqual([0, 7])
     })
   })
 
@@ -400,10 +419,12 @@ describe("FoldingRangeService", () => {
         [13, 16],
         [19, 21],
         [23, 25],
+        [27, 40],
         [29, 31],
         [33, 35],
         [37, 39],
         [42, 48],
+        [44, 46],
         [50, 52],
         [54, 56],
       ])

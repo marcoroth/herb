@@ -1,0 +1,15 @@
+---
+source: "Engine::ExamplesCompilationTest#test_0017_if else compilation"
+input: "{source: \"<h1>\\n  <% if true %>\\n    <div>Text1</div>\\n  <% elsif false %>\\n    <div>Text2</div>\\n  <% else %>\\n    <div>Text3</div>\\n  <% end %>\\n</h1>\\n\", options: {escape: false}}"
+---
+_buf = ::String.new; _buf << '<h1>
+'.freeze;   if true 
+ _buf << '    <div>Text1</div>
+'.freeze;   elsif false 
+ _buf << '    <div>Text2</div>
+'.freeze;   else 
+ _buf << '    <div>Text3</div>
+'.freeze;   end 
+ _buf << '</h1>
+'.freeze;
+_buf.to_s

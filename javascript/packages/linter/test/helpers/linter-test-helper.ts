@@ -2,8 +2,10 @@ import { beforeAll, afterEach, expect } from "vitest"
 
 import { Herb } from "@herb-tools/node-wasm"
 import { Linter } from "../../src/linter.js"
+import { ParseCache } from "../../src/parse-cache.js"
 import { Config } from "@herb-tools/config"
 
+import { ParserRule } from "../../src/types.js"
 import type { RuleClass } from "../../src/types.js"
 
 interface ExpectedLocation {
@@ -61,7 +63,7 @@ interface LinterTestHelpers {
  * })
  * ```
  */
-export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelpers {
+export function createLinterTest(rules: RuleClass | RuleClass[], configOverride?: Record<string, any>): LinterTestHelpers {
   const expectedWarnings: ExpectedOffense[] = []
   const expectedErrors: ExpectedOffense[] = []
   let hasAsserted = false
@@ -69,7 +71,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
   const ruleClasses = Array.isArray(rules) ? rules : [rules]
   const primaryRuleClass = ruleClasses[0]
   const ruleInstance = new primaryRuleClass()
-  const isParserNoErrorsRule = ruleInstance.name === "parser-no-errors"
+  const isParserNoErrorsRule = primaryRuleClass.ruleName === "parser-no-errors"
+  const ruleParserOptions = ruleInstance instanceof ParserRule ? ruleInstance.parserOptions : {}
+  const parseCache = new ParseCache(Herb)
+  const ruleConfigOverride = configOverride
 
   beforeAll(async () => {
     await Herb.load()
@@ -88,6 +93,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     expectedWarnings.length = 0
     expectedErrors.length = 0
     hasAsserted = false
+    parseCache.clear()
   })
 
   const expectNoOffenses = (html: string, options?: any | TestOptions) => {
@@ -103,7 +109,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = parseCache.get(html, ruleParserOptions)
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -129,7 +135,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({
@@ -141,7 +150,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
 
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
     const primaryOffenses = lintResult.offenses.filter(offense => offense.rule === ruleName)
 
     expect(primaryOffenses).toHaveLength(0)
@@ -179,7 +188,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
     const allowInvalidSyntax = options?.allowInvalidSyntax ?? false
 
     if (!isParserNoErrorsRule) {
-      const parseResult = Herb.parse(html, { track_whitespace: true })
+      const parseResult = parseCache.get(html, ruleParserOptions)
       const parserErrors = parseResult.recursiveErrors()
 
       if (allowInvalidSyntax && parserErrors.length === 0) {
@@ -205,7 +214,10 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     ruleClasses.forEach(ruleClass => {
       const instance = new ruleClass()
-      rulesConfig[instance.name] = instance.defaultConfig
+      const isPrimary = ruleClass.ruleName === primaryRuleClass.ruleName
+      rulesConfig[ruleClass.ruleName] = isPrimary && ruleConfigOverride
+        ? { ...instance.defaultConfig, ...ruleConfigOverride }
+        : instance.defaultConfig
     })
 
     const config = Config.fromObject({
@@ -216,7 +228,7 @@ export function createLinterTest(rules: RuleClass | RuleClass[]): LinterTestHelp
 
     const linter = new Linter(Herb, ruleClasses, config)
     const lintResult = linter.lint(html, context)
-    const ruleName = ruleInstance.name
+    const ruleName = primaryRuleClass.ruleName
 
     const primaryOffenses = lintResult.offenses.filter(o => o.rule === ruleName)
     const primaryErrors = primaryOffenses.filter(o => o.severity === "error")

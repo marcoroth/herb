@@ -1,6 +1,6 @@
 {
   "name": "@herb-tools/linter",
-  "version": "0.8.5",
+  "version": "0.8.10",
   "description": "HTML+ERB linter for validating HTML structure and enforcing best practices",
   "license": "MIT",
   "homepage": "https://herb-tools.dev",
@@ -33,9 +33,10 @@
       "default": "./dist/index.js"
     },
     "./cli": {
-      "types": "./dist/types/src/cli.d.ts",
-      "require": "./dist/src/cli.js",
-      "default": "./dist/src/cli.js"
+      "types": "./dist/types/cli.d.ts",
+      "import": "./dist/cli.js",
+      "require": "./dist/cli.js",
+      "default": "./dist/cli.js"
     },
     "./loader": {
       "types": "./dist/types/loader.d.ts",
@@ -45,13 +46,14 @@
     }
   },
   "dependencies": {
-    "@herb-tools/config": "0.8.5",
-    "@herb-tools/core": "0.8.5",
-    "@herb-tools/highlighter": "0.8.5",
-    "@herb-tools/node-wasm": "0.8.5",
-    "@herb-tools/printer": "0.8.5",
-    "@herb-tools/rewriter": "0.8.5",
-    "glob": "^13.0.0"
+    "@herb-tools/config": "0.8.10",
+    "@herb-tools/core": "0.8.10",
+    "@herb-tools/highlighter": "0.8.10",
+    "@herb-tools/node-wasm": "0.8.10",
+    "@herb-tools/printer": "0.8.10",
+    "@herb-tools/rewriter": "0.8.10",
+    "picomatch": "^4.0.2",
+    "tinyglobby": "^0.2.15"
   },
   "files": [
     "package.json",

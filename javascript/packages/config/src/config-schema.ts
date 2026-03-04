@@ -19,6 +19,7 @@ export const RuleConfigSchema = RuleConfigBaseSchema.optional()
 
 export const LinterConfigSchema = z.object({
   enabled: z.boolean().optional().describe("Whether the linter is enabled"),
+  failLevel: SeveritySchema.optional().describe("Exit with error code when diagnostics of this severity or higher are present (e.g., 'warning' will fail on warnings and errors)"),
   include: z.array(z.string()).optional().describe("Additional glob patterns to include beyond defaults (e.g., ['**/*.xml.erb', 'custom/**/*.html'])"),
   exclude: z.array(z.string()).optional().describe("Glob patterns to exclude from linting"),
   rules: z.record(z.string(), RuleConfigBaseSchema).optional().describe("Per-rule configuration"),

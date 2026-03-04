@@ -1,10 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest"
 import { Herb } from "@herb-tools/node-wasm"
 import { Formatter } from "../../src"
+import { createExpectFormattedToMatch } from "../helpers"
 
 import dedent from "dedent"
 
 let formatter: Formatter
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("@herb-tools/formatter - inline elements", () => {
   beforeAll(async () => {
@@ -14,74 +16,48 @@ describe("@herb-tools/formatter - inline elements", () => {
       indentWidth: 2,
       maxLineLength: 80
     })
+
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   test("preserves inline elements in text flow (issue #251)", () => {
-    const source = dedent`
-      <p>Em<em>pha</em>sis</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Em<em>pha</em>sis</p>
     `)
   })
 
   test("preserves strong elements inline", () => {
-    const source = dedent`
-      <p>This is <strong>important</strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This is <strong>important</strong> text.</p>
     `)
   })
 
   test("preserves span elements inline", () => {
-    const source = dedent`
-      <div>Some <span>inline</span> content</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <div>Some <span>inline</span> content</div>
     `)
   })
 
   test("preserves links with attributes inline", () => {
-    const source = dedent`
-      <p>A <a href="/link">link</a> in text</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>A <a href="/link">link</a> in text</p>
     `)
   })
 
   test("preserves multiple inline elements", () => {
-    const source = dedent`
-      <p>This has <em>emphasis</em> and <strong>strong</strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This has <em>emphasis</em> and <strong>strong</strong> text.</p>
     `)
   })
 
   test("preserves nested inline elements", () => {
-    const source = dedent`
-      <p>This is <strong>very <em>important</em></strong> text.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>This is <strong>very <em>important</em></strong> text.</p>
     `)
   })
 
   test("preserves code elements inline", () => {
-    const source = dedent`
-      <p>Use the <code>foo()</code> function.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Use the <code>foo()</code> function.</p>
     `)
   })
@@ -99,11 +75,7 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("preserves del and ins elements inline", () => {
-    const source = dedent`
-      <p>The price is <del>$50</del> <ins>$40</ins>.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>The price is <del>$50</del> <ins>$40</ins>.</p>
     `)
   })
@@ -123,13 +95,13 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("preserves inline elements with multiple attributes", () => {
-    const source = dedent`
-      <p>Visit <a href="/page" class="link" target="_blank">our page</a> today.</p>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p>Visit <a href="/page" class="link" target="_blank">our page</a> today.</p>
     `)
+  })
+
+  test("preserves inline elements when content starts on same line", () => {
+    expectFormattedToMatch(`<p>Em<em>pha</em>sis</p>`)
   })
 
   test("normalizes malformed closing tag placement", () => {
@@ -139,7 +111,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
@@ -151,7 +125,9 @@ describe("@herb-tools/formatter - inline elements", () => {
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <p>Em<em>pha</em>sis</p>
+      <p>
+        Em<em>pha</em>sis
+      </p>
     `)
   })
 
@@ -198,12 +174,333 @@ describe("@herb-tools/formatter - inline elements", () => {
   })
 
   test("Element with ERB interpolation in text content", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <h2 class="title">Posts (<%= @posts.count %>)</h2>
+    `)
+  })
+
+  test("block element with ERB output child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %>
+      </div>
+    `)
+  })
+
+  test("block element with ERB output child on same line stays inline (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %></div>
+    `)
+  })
+
+  test("block element with ERB execution child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <% f.input :password, hint: false %>
+      </div>
+    `)
+  })
+
+  test("block element with ERB execution child on same line stays inline (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs"><% f.input :password, hint: false %></div>
+    `)
+  })
+
+  test("block element with ERB child on separate line preserves format with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg">
+        <% t("registration.policies.edit.title") %>
+      </div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("block element with ERB child on same line stays inline with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg"><% t("registration.policies.edit.title") %></div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("block element with p child on separate line preserves format with maxLineLength 100 (issue #1181)", () => {
+    const wideFormatter = new Formatter(Herb, { indentWidth: 2, maxLineLength: 100 })
+
+    const source = dedent`
+      <div class="abcdefg abcdefg abcdefg abcdefg">
+        <p>Test</p>
+      </div>
+    `
+
+    expect(wideFormatter.format(source)).toEqual(source)
+  })
+
+  test("preserves inline elements with ERB in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags.
+        <p>It's <em><%= adjective %></em>!</p>
+      </div>
+    `)
+  })
+
+  test("expands inline elements with ERB and block child to multiline (issue #1181)", () => {
+    const source = dedent`
+      <div>I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags. <p>It's <em><%= adjective %></em>!</p></div>
     `
     const result = formatter.format(source)
     expect(result).toEqual(dedent`
-      <h2 class="title">Posts (<%= @posts.count %>)</h2>
+      <div>
+        I <strong><%= verb %></strong> these <dfn><%= type %></dfn> tags.
+        <p>It's <em><%= adjective %></em>!</p>
+      </div>
+    `)
+  })
+
+  test("preserves ERB directly in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <%= verb %> these <%= type %> tags.
+        <p>It's <%= adjective %>!</p>
+      </div>
+    `)
+  })
+
+  test("handles adjacent ERB without spaces in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I<%= verb %>these<%= type %>tags.
+        <p>Hel</p>
+        <p>lo</p>
+      </div>
+    `)
+  })
+
+  test("preserves inline elements in text flow (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        I <strong>like</strong> these <dfn>inline</dfn> tags.
+        <p>It's <em>true</em>!</p>
+      </div>
+    `)
+  })
+
+  test("separates adjacent block elements onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <p>Hel</p><p>lo</p>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <p>Hel</p>
+        <p>lo</p>
+      </div>
+    `)
+  })
+
+  test("separates adjacent li elements with space onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <li>a</li> <li>b</li>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <li>a</li>
+        <li>b</li>
+      </div>
+    `)
+  })
+
+  test("separates adjacent li elements without space onto new lines (issue #1181)", () => {
+    const source = dedent`
+      <div>
+        <li>a</li><li>b</li>
+      </div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div>
+        <li>a</li>
+        <li>b</li>
+      </div>
+    `)
+  })
+
+  test("block element with ERB children on separate lines preserves format", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %>
+        <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("adjacent ERB tags on same line as block element expand to multiline", () => {
+    const source = dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %><%= f.input :password_confirmation %></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %><%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("spaced ERB tags on same line as block element expand to multiline", () => {
+    const source = dedent`
+      <div class="form-inputs"><%= f.input :password, hint: false %> <%= f.input :password_confirmation %></div>
+    `
+    const result = formatter.format(source)
+    expect(result).toEqual(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("spaced ERB tags on separate line from block element preserves format", () => {
+    expectFormattedToMatch(dedent`
+      <div class="form-inputs">
+        <%= f.input :password, hint: false %> <%= f.input :password_confirmation %>
+      </div>
+    `)
+  })
+
+  test("preserves content of element with whitespace-pre-line class (issue #1095)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line"><%= option[:value] %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("preserves content of element with whitespace-pre-line class and multiline body (issue #1095)", () => {
+    expectFormattedToMatch(dedent`
+      <div>
+        <div>
+          <div>
+            <div>
+              <div>
+                <span class="truncate whitespace-pre-line">
+                  <%= option[:value] %>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `)
+  })
+
+  test("preserves content of element with whitespace-pre class", () => {
+    expectFormattedToMatch(`<span class="whitespace-pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with whitespace-pre-wrap class", () => {
+    expectFormattedToMatch(`<span class="whitespace-pre-wrap">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with whitespace-break-spaces class", () => {
+    expectFormattedToMatch(`<span class="whitespace-break-spaces">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space: pre", () => {
+    expectFormattedToMatch(`<span style="white-space: pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space: pre-line", () => {
+    expectFormattedToMatch(`<span style="white-space: pre-line">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of element with inline style white-space:pre (no space)", () => {
+    expectFormattedToMatch(`<span style="white-space:pre">  some   spaced   text  </span>`)
+  })
+
+  test("does not treat whitespace-normal class as content preserving", () => {
+    expectFormattedToMatch(`<span class="whitespace-normal">some text</span>`)
+  })
+
+  test("does not treat whitespace-nowrap class as content preserving", () => {
+    expectFormattedToMatch(`<span class="whitespace-nowrap">some text</span>`)
+  })
+
+  test("does not treat inline style white-space: normal as content preserving", () => {
+    expectFormattedToMatch(`<span style="white-space: normal">some text</span>`)
+  })
+
+  test("does not treat inline style white-space: nowrap as content preserving", () => {
+    expectFormattedToMatch(`<span style="white-space: nowrap">some text</span>`)
+  })
+
+  test("preserves content with Tailwind responsive prefix md:whitespace-pre-line", () => {
+    expectFormattedToMatch(`<span class="md:whitespace-pre-line">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with Tailwind state prefix hover:whitespace-pre", () => {
+    expectFormattedToMatch(`<span class="hover:whitespace-pre">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with chained Tailwind prefix lg:hover:whitespace-pre-wrap", () => {
+    expectFormattedToMatch(`<span class="lg:hover:whitespace-pre-wrap">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with inline style white-space: pre !important", () => {
+    expectFormattedToMatch(`<span style="white-space: pre !important">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content with white-space among other style properties", () => {
+    expectFormattedToMatch(`<span style="color: red; white-space: pre-wrap; font-size: 12px">  some   spaced   text  </span>`)
+  })
+
+  test("preserves content of block element with whitespace-preserving class", () => {
+    expectFormattedToMatch(dedent`
+      <div class="whitespace-pre">  some   spaced
+        text  with
+        newlines  </div>
+    `)
+  })
+
+  test("preserves content when whitespace-preserving class is among many classes", () => {
+    expectFormattedToMatch(`<span class="flex items-center whitespace-pre-line text-sm truncate">  some   spaced   text  </span>`)
+  })
+
+  test("preserves nested elements inside whitespace-preserving parent", () => {
+    expectFormattedToMatch(dedent`
+      <div class="whitespace-pre-line">
+        <span>  some   text  </span>
+        <strong>  more   text  </strong>
+      </div>
+    `)
+  })
+
+  test("preserves content with white-space as last style property without trailing semicolon", () => {
+    expectFormattedToMatch(`<span style="color: red; white-space: pre">  some   spaced   text  </span>`)
+    expectFormattedToMatch(`<span style="color: red; white-space: pre;">  some   spaced   text  </span>`)
+    expectFormattedToMatch(`<span style="white-space: pre; color: red; ">  some   spaced   text  </span>`)
+  })
+
+  test("preserves ERB interpolation in attributes", () => {
+    expectFormattedToMatch(dedent`
+      <div class="<%= some_var %> style="<%= some_other_var" %>"></div>
     `)
   })
 })

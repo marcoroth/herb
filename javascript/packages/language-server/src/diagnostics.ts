@@ -4,6 +4,7 @@ import { Visitor } from "@herb-tools/core"
 
 import type {
   Node,
+  SerializedLocation,
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBIfNode,
@@ -20,12 +21,13 @@ import type {
   ERBInNode,
 } from "@herb-tools/core"
 
-import { isHTMLTextNode } from "@herb-tools/core"
+import { isHTMLTextNode, isERBIfNode, isERBElseNode } from "@herb-tools/core"
 
 import { ParserService } from "./parser_service"
 import { LinterService } from "./linter_service"
 import { DocumentService } from "./document_service"
 import { ConfigService } from "./config_service"
+import { lspRangeFromLocation } from "./range_utils"
 
 export class Diagnostics {
   private readonly connection: Connection
@@ -185,7 +187,10 @@ export class UnreachableCodeCollector extends Visitor {
   }
 
   visitERBWhenNode(node: ERBWhenNode): void {
-    this.checkEmptyStatements(node, node.statements, "when")
+    if (!node.then_keyword) {
+      this.checkEmptyStatements(node, node.statements, "when")
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -210,7 +215,10 @@ export class UnreachableCodeCollector extends Visitor {
   }
 
   visitERBInNode(node: ERBInNode): void {
-    this.checkEmptyStatements(node, node.statements, "in")
+    if (!node.then_keyword) {
+      this.checkEmptyStatements(node, node.statements, "in")
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -247,18 +255,9 @@ export class UnreachableCodeCollector extends Visitor {
     )
   }
 
-  private addDiagnostic(location: { start: { line: number; column: number }, end: { line: number; column: number } }, message: string): void {
+  private addDiagnostic(location: SerializedLocation, message: string): void {
     const diagnostic: Diagnostic = {
-      range: {
-        start: {
-          line: this.toZeroBased(location.start.line),
-          character: location.start.column
-        },
-        end: {
-          line: this.toZeroBased(location.end.line),
-          character: location.end.column
-        }
-      },
+      range: lspRangeFromLocation(location),
       message,
       severity: DiagnosticSeverity.Hint,
       tags: [DiagnosticTag.Unnecessary],
@@ -292,27 +291,29 @@ export class UnreachableCodeCollector extends Visitor {
   private markIfChainAsProcessed(node: ERBIfNode): void {
     this.processedIfNodes.add(node)
     this.traverseSubsequentNodes(node.subsequent, (current) => {
-      if (current.type === 'AST_ERB_IF_NODE') {
-        this.processedIfNodes.add(current as ERBIfNode)
+      if (isERBIfNode(current)) {
+        this.processedIfNodes.add(current)
       }
     })
   }
 
   private markElseNodesInIfChain(node: ERBIfNode): void {
     this.traverseSubsequentNodes(node.subsequent, (current) => {
-      if (current.type === 'AST_ERB_ELSE_NODE') {
-        this.processedElseNodes.add(current as ERBElseNode)
+      if (isERBElseNode(current)) {
+        this.processedElseNodes.add(current)
       }
     })
   }
 
-  private traverseSubsequentNodes(startNode: Node | null, callback: (node: Node) => void): void {
-    let current = startNode
+  private traverseSubsequentNodes(startNode: Node | null, callback: (node: ERBIfNode | ERBElseNode) => void): void {
+    let current: Node | null = startNode
     while (current) {
-      callback(current)
-
-      if ('subsequent' in current) {
-        current = (current as any).subsequent
+      if (isERBIfNode(current)) {
+        callback(current)
+        current = current.subsequent
+      } else if (isERBElseNode(current)) {
+        callback(current)
+        break
       } else {
         break
       }
@@ -325,21 +326,17 @@ export class UnreachableCodeCollector extends Visitor {
     }
 
     this.traverseSubsequentNodes(node.subsequent, (current) => {
-      if (!('statements' in current) || !Array.isArray((current as any).statements)) {
+      if (this.statementsHaveContent(current.statements)) {
         return
       }
 
-      if (this.statementsHaveContent((current as any).statements)) {
-        return
-      }
-
-      const blockType = current.type === 'AST_ERB_IF_NODE' ? 'elsif' : 'else'
-      const nextSubsequent = 'subsequent' in current ? (current as any).subsequent : null
+      const blockType = isERBIfNode(current) ? 'elsif' : 'else'
+      const nextSubsequent = isERBIfNode(current) ? current.subsequent : null
 
       if (nextSubsequent) {
-        this.checkEmptyStatementsWithEndLocation(current, (current as any).statements, blockType, nextSubsequent)
+        this.checkEmptyStatementsWithEndLocation(current, current.statements, blockType, nextSubsequent)
       } else {
-        this.checkEmptyStatements(current, (current as any).statements, blockType)
+        this.checkEmptyStatements(current, current.statements, blockType)
       }
     })
   }
@@ -351,17 +348,12 @@ export class UnreachableCodeCollector extends Visitor {
 
     let hasContent = false
     this.traverseSubsequentNodes(node.subsequent, (current) => {
-      if ('statements' in current && Array.isArray((current as any).statements)) {
-        if (this.statementsHaveContent((current as any).statements)) {
-          hasContent = true
-        }
+      if (this.statementsHaveContent(current.statements)) {
+        hasContent = true
       }
     })
 
     return !hasContent
   }
 
-  private toZeroBased(line: number): number {
-    return line - 1
-  }
 }

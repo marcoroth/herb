@@ -15,6 +15,7 @@ input: |2-
     │   ├── tag_opening: "<%" (location: (1:0)-(1:2))
     │   ├── content: " if f.object.errors.any? { |e| e.type == :blank } " (location: (1:2)-(1:52))
     │   ├── tag_closing: "%>" (location: (1:52)-(1:54))
+    │   ├── then_keyword: ∅
     │   ├── statements: (1 item)
     │   │   └── @ HTMLTextNode (location: (1:54)-(3:0))
     │   │       └── content: "\n  Name is required.\n"
@@ -24,6 +25,7 @@ input: |2-
     │   │       ├── tag_opening: "<%" (location: (3:0)-(3:2))
     │   │       ├── content: " elsif f.object.errors.any? { |e| e.type == :taken } " (location: (3:2)-(3:55))
     │   │       ├── tag_closing: "%>" (location: (3:55)-(3:57))
+    │   │       ├── then_keyword: ∅
     │   │       ├── statements: (1 item)
     │   │       │   └── @ HTMLTextNode (location: (3:57)-(5:0))
     │   │       │       └── content: "\n  Coffee bag with this name and roast date already exists on this roaster.\n"

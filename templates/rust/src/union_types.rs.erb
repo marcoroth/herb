@@ -1,0 +1,60 @@
+use crate::nodes::*;
+use crate::errors::ErrorNode;
+use crate::Location;
+
+<%- union_kinds.each do |kinds| -%>
+<%-
+  enum_name = kinds.sort.join("Or")
+  snake_name = enum_name.gsub(/([a-z])([A-Z])/, '\1_\2').downcase
+-%>
+/// Union type for <%= kinds.join(" | ") %>
+#[derive(Debug, Clone)]
+pub enum <%= enum_name %> {
+  <%- kinds.each do |kind| -%>
+  <%= kind %>(Box<<%= kind %>>),
+  <%- end -%>
+}
+
+impl <%= enum_name %> {
+  pub fn node_type(&self) -> &str {
+    match self {
+      <%- kinds.each do |kind| -%>
+      <%= enum_name %>::<%= kind %>(n) => &n.node_type,
+      <%- end -%>
+    }
+  }
+
+  pub fn location(&self) -> &Location {
+    match self {
+      <%- kinds.each do |kind| -%>
+      <%= enum_name %>::<%= kind %>(n) => &n.location,
+      <%- end -%>
+    }
+  }
+
+  pub fn as_node(&self) -> &dyn Node {
+    match self {
+      <%- kinds.each do |kind| -%>
+      <%= enum_name %>::<%= kind %>(n) => n.as_ref(),
+      <%- end -%>
+    }
+  }
+
+  pub fn tree_inspect(&self) -> String {
+    match self {
+      <%- kinds.each do |kind| -%>
+      <%= enum_name %>::<%= kind %>(n) => n.tree_inspect(),
+      <%- end -%>
+    }
+  }
+
+  pub fn recursive_errors(&self) -> Vec<&dyn ErrorNode> {
+    match self {
+      <%- kinds.each do |kind| -%>
+      <%= enum_name %>::<%= kind %>(n) => n.recursive_errors(),
+      <%- end -%>
+    }
+  }
+}
+
+<%- end -%>

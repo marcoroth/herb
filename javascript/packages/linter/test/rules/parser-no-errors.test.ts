@@ -27,7 +27,8 @@ describe("ParserNoErrorsRule", () => {
   })
 
   test("should report errors for unclosed elements", () => {
-    expectError("Opening tag `<p>` at (2:3) doesn't have a matching closing tag `</p>` in the same scope. (`MISSING_CLOSING_TAG_ERROR`)")
+    expectError("Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (3:0) for clarity, or set `strict: false` to allow this. (`OMITTED_CLOSING_TAG_ERROR`)")
+
     assertOffenses(dedent`
       <div>
         <p>Some content
@@ -49,9 +50,7 @@ describe("ParserNoErrorsRule", () => {
   })
 
   test("should report errors for mismatched quotes in attributes", () => {
-    expectError("Found `TOKEN_EOF` when expecting `TOKEN_HTML_TAG_SELF_CLOSE` at (1:24). (`UNEXPECTED_TOKEN_ERROR`)")
-    expectError("Found `TOKEN_EOF` when expecting `TOKEN_QUOTE` at (1:24). (`UNEXPECTED_TOKEN_ERROR`)")
-    expectError("String opened with \" but closed with  at (1:24). (`QUOTES_MISMATCH_ERROR`)")
+    expectError("Attribute value opened with \" at (1:11) was never closed. (`UNCLOSED_QUOTE_ERROR`)")
     assertOffenses(`<div class="test'></div>`)
   })
 
@@ -62,9 +61,10 @@ describe("ParserNoErrorsRule", () => {
 
   test("should report multiple parser errors", () => {
     expectError("Opening tag `<h2>` at (1:1) doesn't have a matching closing tag `</h2>` in the same scope. (`MISSING_CLOSING_TAG_ERROR`)")
-    expectError("Opening tag `<p>` at (2:3) doesn't have a matching closing tag `</p>` in the same scope. (`MISSING_CLOSING_TAG_ERROR`)")
+    expectError("Element `<p>` at (2:3) has its closing tag omitted. While valid HTML, consider adding an explicit `</p>` closing tag at (4:0) for clarity, or set `strict: false` to allow this. (`OMITTED_CLOSING_TAG_ERROR`)")
     expectError("Found closing tag `</h3>` at (3:2) without a matching opening tag in the same scope. (`MISSING_OPENING_TAG_ERROR`)")
     expectError("Found closing tag `</div>` at (4:2) without a matching opening tag in the same scope. (`MISSING_OPENING_TAG_ERROR`)")
+
     assertOffenses(dedent`
       <h2>
         <p>Unclosed paragraph

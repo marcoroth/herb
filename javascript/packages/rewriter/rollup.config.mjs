@@ -8,15 +8,9 @@ const external = [
   "url",
   "fs",
   "module",
-  "@herb-tools/tailwind-class-sorter"
+  "@herb-tools/tailwind-class-sorter",
+  "tinyglobby"
 ]
-
-function isExternal(id) {
-  return (
-    external.includes(id) ||
-    external.some((pkg) => id === pkg || id.startsWith(pkg + "/"))
-  )
-}
 
 export default [
   // Browser-compatible entry point (core APIs only)

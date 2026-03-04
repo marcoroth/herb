@@ -12,8 +12,8 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
-  TextEdit,
   FoldingRangeParams,
+  DocumentHighlightParams,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -56,6 +56,7 @@ export class Server {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
           foldingRangeProvider: true,
+          documentHighlightProvider: true,
         },
       }
 
@@ -158,6 +159,14 @@ export class Server {
 
     this.connection.onDocumentRangeFormatting((params: DocumentRangeFormattingParams) => {
       return this.service.formattingService.formatRange(params)
+    })
+
+    this.connection.onDocumentHighlight((params: DocumentHighlightParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.documentHighlightService.getDocumentHighlights(document, params.position)
     })
 
     this.connection.onCodeAction((params: CodeActionParams) => {

@@ -66,6 +66,8 @@ char* hb_string_to_c_string_using_malloc(hb_string_T string) {
   size_t string_length_in_bytes = sizeof(char) * (string.length);
   char* buffer = malloc(string_length_in_bytes + sizeof(char) * 1);
 
+  if (!buffer) { return NULL; }
+
   if (!hb_string_is_empty(string)) { memcpy(buffer, string.data, string_length_in_bytes); }
 
   buffer[string_length_in_bytes] = '\0';
