@@ -19,11 +19,11 @@
     "./package.json": "./package.json",
     ".": {
       "import": {
-        "types": "./dist/types/index-esm.d.mts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/herb-node.esm.js"
       },
       "require": {
-        "types": "./dist/types/index-cjs.d.cts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/herb-node.cjs"
       }
     }

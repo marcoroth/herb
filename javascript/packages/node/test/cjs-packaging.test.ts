@@ -10,8 +10,7 @@ const distDir = path.resolve(__dirname, "../dist")
 const typesDir = path.join(distDir, "types")
 const cjsPath = path.join(distDir, "herb-node.cjs")
 const esmPath = path.join(distDir, "herb-node.esm.js")
-const cjsTypesPath = path.join(typesDir, "index-cjs.d.cts")
-const esmTypesPath = path.join(typesDir, "index-esm.d.mts")
+const typesPath = path.join(typesDir, "index.d.ts")
 const packageJsonPath = path.resolve(__dirname, "../package.json")
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"))
 
@@ -90,40 +89,11 @@ describe("CJS and ESM parity", () => {
   })
 })
 
-describe("CJS type declarations", () => {
-  const content = fs.readFileSync(cjsTypesPath, "utf-8")
+describe("type declarations", () => {
+  const content = fs.readFileSync(typesPath, "utf-8")
 
   test("file exists", () => {
-    expect(fs.existsSync(cjsTypesPath)).toBe(true)
-  })
-
-  test("is not empty or stub export", () => {
-    expect(content.trim()).not.toBe("")
-    expect(content.trim()).not.toBe("export {};")
-  })
-
-  test("has full expected content", () => {
-    expect(content).toBe(
-      [
-        'export * from "@herb-tools/core";',
-        'export { HerbBackendNode } from "./node-backend.js";',
-        'import { HerbBackendNode } from "./node-backend.js";',
-        "/**",
-        " * An instance of the `Herb` class using a Node.js backend.",
-        " * This loads `libherb` in a Node.js C++ native extension.",
-        " */",
-        "export declare const Herb: HerbBackendNode;",
-        "",
-      ].join("\n"),
-    )
-  })
-})
-
-describe("ESM type declarations", () => {
-  const content = fs.readFileSync(esmTypesPath, "utf-8")
-
-  test("file exists", () => {
-    expect(fs.existsSync(esmTypesPath)).toBe(true)
+    expect(fs.existsSync(typesPath)).toBe(true)
   })
 
   test("is not empty or stub export", () => {
@@ -152,11 +122,11 @@ describe("package.json exports map", () => {
   test("'.' export has nested import/require conditions", () => {
     expect(packageJson.exports["."]).toEqual({
       import: {
-        types: "./dist/types/index-esm.d.mts",
+        types: "./dist/types/index.d.ts",
         default: "./dist/herb-node.esm.js",
       },
       require: {
-        types: "./dist/types/index-cjs.d.cts",
+        types: "./dist/types/index.d.ts",
         default: "./dist/herb-node.cjs",
       },
     })
@@ -171,7 +141,7 @@ describe("package.json exports map", () => {
   })
 
   test("types field points to ESM type declarations", () => {
-    expect(packageJson.types).toBe("./dist/types/index-esm.d.mts")
+    expect(packageJson.types).toBe("./dist/types/index.d.ts")
   })
 
   test("all exported files exist on disk", () => {
