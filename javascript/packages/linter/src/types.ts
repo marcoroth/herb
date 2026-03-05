@@ -92,6 +92,8 @@ export abstract class ParserRule<TAutofixContext extends BaseAutofixContext = Ba
   static autocorrectable = false
   /** Indicates whether this rule supports unsafe autofix (requires --fix-unsafely). Defaults to false. */
   static unsafeAutocorrectable = false
+  /** Indicates whether the source should be re-indented after autofix. Defaults to false. */
+  static reindentAfterAutofix = false
 
   get ruleName(): string {
     return (this.constructor as typeof ParserRule).ruleName

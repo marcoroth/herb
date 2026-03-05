@@ -1,7 +1,7 @@
 import picomatch from "picomatch"
 
 import { Location } from "@herb-tools/core"
-import { IdentityPrinter } from "@herb-tools/printer"
+import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -507,6 +507,7 @@ export class Linter {
 
     if (parserOffenses.length > 0) {
       const parseResult = this.parseCache.get(currentSource)
+      let needsReindent = false
 
       for (const offense of parserOffenses) {
         const ruleClass = this.findRuleClass(offense.rule)
@@ -555,14 +556,21 @@ export class Linter {
 
         if (fixedResult) {
           fixed.push(offense)
+
+          if ((RuleClass as any).reindentAfterAutofix === true) {
+            needsReindent = true
+          }
         } else {
           unfixed.push(offense)
         }
       }
 
       if (fixed.length > 0) {
-        const printer = new IdentityPrinter()
-        currentSource = printer.print(parseResult.value)
+        if (needsReindent) {
+          currentSource = new IndentPrinter().print(parseResult.value)
+        } else {
+          currentSource = new IdentityPrinter().print(parseResult.value)
+        }
       }
     }
 
