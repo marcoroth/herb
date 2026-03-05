@@ -193,9 +193,7 @@ export class Server {
 
       if (!document) return []
 
-      const parseResult = this.service.parserService.parseDocument(document)
-
-      return this.service.foldingRangeService.getFoldingRanges(parseResult.document)
+      return this.service.foldingRangeService.getFoldingRanges(document)
     })
   }
 

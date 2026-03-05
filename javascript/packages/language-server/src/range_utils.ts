@@ -6,6 +6,10 @@ export function lspPosition(herbPosition: SerializedPosition): Position {
   return Position.create(herbPosition.line - 1, herbPosition.column)
 }
 
+export function lspLine(herbPosition: SerializedPosition): number {
+  return herbPosition.line - 1
+}
+
 export function lspRangeFromLocation(herbLocation: SerializedLocation): Range {
   return Range.create(lspPosition(herbLocation.start), lspPosition(herbLocation.end))
 }

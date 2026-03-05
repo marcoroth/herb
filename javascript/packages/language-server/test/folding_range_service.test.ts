@@ -2,17 +2,25 @@ import dedent from "dedent"
 
 import { describe, it, expect, beforeAll } from "vitest"
 import { FoldingRangeKind } from "vscode-languageserver/node"
+import { TextDocument } from "vscode-languageserver-textdocument"
 
 import { FoldingRangeService } from "../src/folding_range_service"
+import { ParserService } from "../src/parser_service"
 import { Herb } from "@herb-tools/node-wasm"
 
 describe("FoldingRangeService", () => {
+  let parserService: ParserService
   let service: FoldingRangeService
 
   beforeAll(async () => {
     await Herb.load()
-    service = new FoldingRangeService()
+    parserService = new ParserService()
+    service = new FoldingRangeService(parserService)
   })
+
+  function createDocument(content: string): TextDocument {
+    return TextDocument.create("file:///test.html.erb", "erb", 1, content)
+  }
 
   describe("HTML elements", () => {
     it("creates folding ranges for multi-line HTML elements", () => {
@@ -24,8 +32,7 @@ describe("FoldingRangeService", () => {
         </div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 4],
@@ -41,8 +48,7 @@ describe("FoldingRangeService", () => {
         </div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 3]
@@ -63,8 +69,7 @@ describe("FoldingRangeService", () => {
         </div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 9],
@@ -84,8 +89,7 @@ describe("FoldingRangeService", () => {
         <div>Content</div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine, range.kind])).toEqual([
         [0, 2, FoldingRangeKind.Comment]
@@ -98,8 +102,7 @@ describe("FoldingRangeService", () => {
         <div>Content</div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges).toEqual([])
     })
@@ -113,8 +116,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 2],
@@ -131,8 +133,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 4],
@@ -152,8 +153,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.length).toBeGreaterThanOrEqual(3)
     })
@@ -165,8 +165,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 2]
@@ -180,8 +179,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 2]
@@ -195,8 +193,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 2]
@@ -210,8 +207,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 2]
@@ -227,8 +223,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 4],
@@ -248,8 +243,7 @@ describe("FoldingRangeService", () => {
         <% end %>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toContainEqual([0, 7])
     })
@@ -273,8 +267,7 @@ describe("FoldingRangeService", () => {
         </div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 12],
@@ -299,8 +292,7 @@ describe("FoldingRangeService", () => {
         </div>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [0, 5],
@@ -313,8 +305,7 @@ describe("FoldingRangeService", () => {
     it("handles empty document", () => {
       const content = ""
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges).toEqual([])
     })
@@ -322,8 +313,7 @@ describe("FoldingRangeService", () => {
     it("handles document with only text", () => {
       const content = "Just plain text"
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges).toEqual([])
     })
@@ -331,8 +321,7 @@ describe("FoldingRangeService", () => {
     it("does not create ranges for single-line elements", () => {
       const content = "<div>Single line</div>"
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges).toEqual([])
     })
@@ -403,8 +392,7 @@ describe("FoldingRangeService", () => {
         </html>
       `
 
-      const parseResult = Herb.parse(content)
-      const ranges = service.getFoldingRanges(parseResult.value)
+      const ranges = service.getFoldingRanges(createDocument(content))
 
       expect(ranges.map(range => [range.startLine, range.endLine])).toEqual([
         [1, 59],

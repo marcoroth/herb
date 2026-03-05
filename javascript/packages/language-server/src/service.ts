@@ -48,7 +48,7 @@ export class Service {
     this.codeActionService = new CodeActionService(this.project, this.config)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
-    this.foldingRangeService = new FoldingRangeService()
+    this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
 
     if (params.initializationOptions) {
