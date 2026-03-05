@@ -121,7 +121,7 @@ static bool search_then_keyword_location(const pm_node_t* node, void* data) {
   return false;
 }
 
-location_T* get_then_keyword_location(analyzed_ruby_T* analyzed, const char* source) {
+location_T* get_then_keyword_location(analyzed_ruby_T* analyzed, const char* source, hb_allocator_T* allocator) {
   if (analyzed == NULL || analyzed->root == NULL || source == NULL) { return NULL; }
 
   then_keyword_search_context_T context = { .then_keyword_loc = { .start = NULL, .end = NULL }, .found = false };
@@ -136,7 +136,7 @@ location_T* get_then_keyword_location(analyzed_ruby_T* analyzed, const char* sou
   position_T start_position = position_from_source_with_offset(source, start_offset);
   position_T end_position = position_from_source_with_offset(source, end_offset);
 
-  return location_create(start_position, end_position);
+  return location_create(start_position, end_position, allocator);
 }
 
 static location_T* parse_wrapped_and_find_then_keyword(
@@ -145,7 +145,8 @@ static location_T* parse_wrapped_and_find_then_keyword(
   size_t source_length,
   size_t prefix_length,
   size_t adjustment_threshold,
-  size_t adjustment_amount
+  size_t adjustment_amount,
+  hb_allocator_T* allocator
 ) {
   pm_parser_t parser;
   pm_parser_init(&parser, (const uint8_t*) hb_buffer_value(buffer), hb_buffer_length(buffer), NULL);
@@ -180,7 +181,7 @@ static location_T* parse_wrapped_and_find_then_keyword(
         position_T start_position = position_from_source_with_offset(source, start_offset);
         position_T end_position = position_from_source_with_offset(source, end_offset);
 
-        location = location_create(start_position, end_position);
+        location = location_create(start_position, end_position, allocator);
       }
     }
   }
@@ -191,7 +192,7 @@ static location_T* parse_wrapped_and_find_then_keyword(
   return location;
 }
 
-location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_clause) {
+location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_clause, hb_allocator_T* allocator) {
   if (source == NULL) { return NULL; }
 
   size_t source_length = strlen(source);
@@ -206,14 +207,14 @@ location_T* get_then_keyword_location_wrapped(const char* source, bool is_in_cla
   hb_buffer_append(&buffer, "\nend");
 
   location_T* location =
-    parse_wrapped_and_find_then_keyword(&buffer, source, source_length, prefix_length, SIZE_MAX, 0);
+    parse_wrapped_and_find_then_keyword(&buffer, source, source_length, prefix_length, SIZE_MAX, 0, allocator);
 
   free(buffer.value);
 
   return location;
 }
 
-location_T* get_then_keyword_location_elsif_wrapped(const char* source) {
+location_T* get_then_keyword_location_elsif_wrapped(const char* source, hb_allocator_T* allocator) {
   if (source == NULL) { return NULL; }
 
   const char* elsif_position = strstr(source, "elsif");
@@ -235,7 +236,7 @@ location_T* get_then_keyword_location_elsif_wrapped(const char* source) {
   hb_buffer_append(&buffer, "\nend");
 
   location_T* location =
-    parse_wrapped_and_find_then_keyword(&buffer, source, source_length, 0, if_end_offset, replacement_diff);
+    parse_wrapped_and_find_then_keyword(&buffer, source, source_length, 0, if_end_offset, replacement_diff, allocator);
 
   free(buffer.value);
 

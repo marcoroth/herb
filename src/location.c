@@ -17,8 +17,8 @@ void location_from_positions(location_T* location, position_T start, position_T 
   location->end = end;
 }
 
-location_T* location_create(position_T start, position_T end) {
-  location_T* location = malloc(sizeof(location_T));
+location_T* location_create(position_T start, position_T end, hb_allocator_T* allocator) {
+  location_T* location = hb_allocator_alloc(allocator, sizeof(location_T));
 
   if (location != NULL) {
     location->start = start;

@@ -21,7 +21,7 @@ position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   }
 }
 
-location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_t control_type) {
+location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_t control_type, hb_allocator_T* allocator) {
   if (control_type != CONTROL_TYPE_IF && control_type != CONTROL_TYPE_ELSIF && control_type != CONTROL_TYPE_UNLESS
       && control_type != CONTROL_TYPE_WHEN && control_type != CONTROL_TYPE_IN) {
     return NULL;
@@ -33,14 +33,14 @@ location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_
 
   if (control_type == CONTROL_TYPE_WHEN || control_type == CONTROL_TYPE_IN) {
     if (source != NULL && strstr(source, "then") != NULL) {
-      then_keyword = get_then_keyword_location_wrapped(source, control_type == CONTROL_TYPE_IN);
+      then_keyword = get_then_keyword_location_wrapped(source, control_type == CONTROL_TYPE_IN, allocator);
     }
   } else if (control_type == CONTROL_TYPE_ELSIF) {
     if (source != NULL && strstr(source, "then") != NULL) {
-      then_keyword = get_then_keyword_location_elsif_wrapped(source);
+      then_keyword = get_then_keyword_location_elsif_wrapped(source, allocator);
     }
   } else {
-    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source);
+    then_keyword = get_then_keyword_location(erb_node->analyzed_ruby, source, allocator);
   }
 
   if (then_keyword != NULL && content != NULL) {
@@ -124,7 +124,7 @@ AST_NODE_T* create_control_node(
                                         .tag_opening = erb_node->tag_opening,
                                         .content = erb_node->content,
                                         .tag_closing = erb_node->tag_closing,
-                                        .then_keyword = compute_then_keyword(erb_node, control_type),
+                                        .then_keyword = compute_then_keyword(erb_node, control_type, allocator),
                                         .start_position = erb_node->tag_opening->location.start,
                                         .end_position = erb_content_end_position(erb_node),
                                         .errors = erb_node->base.errors,
