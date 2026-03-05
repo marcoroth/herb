@@ -315,6 +315,98 @@ static VALUE Herb_arena_stats(int argc, VALUE* argv, VALUE self) {
   return hash;
 }
 
+static VALUE make_tracking_hash(hb_allocator_tracking_stats_T* stats) {
+  VALUE hash = rb_hash_new();
+  rb_hash_aset(hash, ID2SYM(rb_intern("allocations")), SIZET2NUM(stats->allocation_count));
+  rb_hash_aset(hash, ID2SYM(rb_intern("deallocations")), SIZET2NUM(stats->deallocation_count));
+  rb_hash_aset(hash, ID2SYM(rb_intern("bytes_allocated")), SIZET2NUM(stats->bytes_allocated));
+  rb_hash_aset(hash, ID2SYM(rb_intern("bytes_deallocated")), SIZET2NUM(stats->bytes_deallocated));
+  rb_hash_aset(hash, ID2SYM(rb_intern("untracked_deallocations")), SIZET2NUM(stats->untracked_deallocation_count));
+
+  VALUE leaks = rb_ary_new();
+  for (size_t i = 0; i < stats->buckets_capacity; i++) {
+    if (stats->buckets[i].pointer != NULL && stats->buckets[i].pointer != (void*) 1) {
+      rb_ary_push(leaks, SIZET2NUM(stats->buckets[i].size));
+    }
+  }
+  rb_hash_aset(hash, ID2SYM(rb_intern("leaks")), leaks);
+
+  VALUE untracked = rb_ary_new_capa((long) stats->untracked_pointers_size);
+  for (size_t i = 0; i < stats->untracked_pointers_size; i++) {
+    rb_ary_push(untracked, rb_sprintf("%p", stats->untracked_pointers[i]));
+  }
+  rb_hash_aset(hash, ID2SYM(rb_intern("untracked_pointers")), untracked);
+
+  return hash;
+}
+
+static VALUE Herb_leak_check(VALUE self, VALUE source) {
+  char* string = (char*) check_string(source);
+  VALUE result = rb_hash_new();
+
+  {
+    hb_allocator_T allocator;
+    if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    hb_array_T* tokens = herb_lex(string, &allocator);
+    if (tokens != NULL) { herb_free_tokens(&tokens, &allocator); }
+
+    hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+    rb_hash_aset(result, ID2SYM(rb_intern("lex")), make_tracking_hash(stats));
+
+    hb_allocator_destroy(&allocator);
+  }
+
+  {
+    hb_allocator_T allocator;
+    if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    parser_options_T parser_options = HERB_DEFAULT_PARSER_OPTIONS;
+    AST_DOCUMENT_NODE_T* root = herb_parse(string, &parser_options, &allocator);
+    if (root != NULL) { ast_node_free((AST_NODE_T*) root, &allocator); }
+
+    hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+    rb_hash_aset(result, ID2SYM(rb_intern("parse")), make_tracking_hash(stats));
+
+    hb_allocator_destroy(&allocator);
+  }
+
+  {
+    hb_buffer_T output;
+    if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
+
+    hb_allocator_T allocator;
+    if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    herb_extract_ruby_options_T extract_options = HERB_EXTRACT_RUBY_DEFAULT_OPTIONS;
+    herb_extract_ruby_to_buffer_with_options(string, &output, &extract_options, &allocator);
+
+    hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+    rb_hash_aset(result, ID2SYM(rb_intern("extract_ruby")), make_tracking_hash(stats));
+
+    hb_allocator_destroy(&allocator);
+    free(output.value);
+  }
+
+  {
+    hb_buffer_T output;
+    if (!hb_buffer_init(&output, strlen(string))) { return Qnil; }
+
+    hb_allocator_T allocator;
+    if (!hb_allocator_init(&allocator, HB_ALLOCATOR_TRACKING)) { return Qnil; }
+
+    herb_extract_html_to_buffer(string, &output, &allocator);
+
+    hb_allocator_tracking_stats_T* stats = hb_allocator_tracking_stats(&allocator);
+    rb_hash_aset(result, ID2SYM(rb_intern("extract_html")), make_tracking_hash(stats));
+
+    hb_allocator_destroy(&allocator);
+    free(output.value);
+  }
+
+  return result;
+}
+
 static VALUE Herb_version(VALUE self) {
   VALUE gem_version = rb_const_get(self, rb_intern("VERSION"));
   VALUE libherb_version = rb_utf8_str_new_cstr(herb_version());
@@ -345,5 +437,6 @@ __attribute__((__visibility__("default"))) void Init_herb(void) {
   rb_define_singleton_method(mHerb, "extract_ruby", Herb_extract_ruby, -1);
   rb_define_singleton_method(mHerb, "extract_html", Herb_extract_html, 1);
   rb_define_singleton_method(mHerb, "arena_stats", Herb_arena_stats, -1);
+  rb_define_singleton_method(mHerb, "leak_check", Herb_leak_check, 1);
   rb_define_singleton_method(mHerb, "version", Herb_version, 0);
 }

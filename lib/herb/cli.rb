@@ -8,7 +8,7 @@ require "optparse"
 class Herb::CLI
   include Herb::Colors
 
-  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats
+  attr_accessor :json, :silent, :log_file, :no_timing, :local, :escape, :no_escape, :freeze, :debug, :tool, :strict, :analyze, :track_whitespace, :verbose, :isolate, :arena_stats, :leak_check
 
   def initialize(args)
     @args = args
@@ -150,6 +150,7 @@ class Herb::CLI
                   project.isolate = isolate
                   project.validate_ruby = true
                   project.arena_stats = arena_stats
+                  project.leak_check = leak_check
                   has_issues = project.analyze!
                   exit(has_issues ? 1 : 0)
                 when "report"
@@ -303,6 +304,10 @@ class Herb::CLI
 
       parser.on("--arena-stats", "Print arena memory statistics (for lex/parse/analyze commands)") do
         self.arena_stats = true
+      end
+
+      parser.on("--leak-check", "Check for memory leaks in lex/parse/extract operations (for analyze command)") do
+        self.leak_check = true
       end
     end
   end
