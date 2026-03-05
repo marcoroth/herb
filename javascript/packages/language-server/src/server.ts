@@ -12,6 +12,7 @@ import {
   DocumentRangeFormattingParams,
   CodeActionParams,
   CodeActionKind,
+  FoldingRangeParams,
   DocumentHighlightParams,
 } from "vscode-languageserver/node"
 
@@ -54,6 +55,7 @@ export class Server {
           codeActionProvider: {
             codeActionKinds: [CodeActionKind.QuickFix, CodeActionKind.SourceFixAll]
           },
+          foldingRangeProvider: true,
           documentHighlightProvider: true,
         },
       }
@@ -184,6 +186,14 @@ export class Server {
       const autofixCodeActions = this.service.codeActionService.autofixCodeActions(params, document)
 
       return autofixCodeActions.concat(linterDisableCodeActions)
+    })
+
+    this.connection.onFoldingRanges((params: FoldingRangeParams) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.foldingRangeService.getFoldingRanges(document)
     })
   }
 

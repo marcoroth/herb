@@ -12,6 +12,7 @@ import { ConfigService } from "./config_service"
 import { AutofixService } from "./autofix_service"
 import { CodeActionService } from "./code_action_service"
 import { DocumentSaveService } from "./document_save_service"
+import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
 
 import { version } from "../package.json"
@@ -31,6 +32,7 @@ export class Service {
   configService: ConfigService
   codeActionService: CodeActionService
   documentSaveService: DocumentSaveService
+  foldingRangeService: FoldingRangeService
   documentHighlightService: DocumentHighlightService
 
   constructor(connection: Connection, params: InitializeParams) {
@@ -46,6 +48,7 @@ export class Service {
     this.codeActionService = new CodeActionService(this.project, this.config)
     this.diagnostics = new Diagnostics(this.connection, this.documentService, this.parserService, this.linterService, this.configService)
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
+    this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
 
     if (params.initializationOptions) {
