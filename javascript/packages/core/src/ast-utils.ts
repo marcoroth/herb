@@ -688,3 +688,41 @@ export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Posi
     node.location && isPositionAfter(node.location.start, position, inclusive)
   )
 }
+
+/**
+ * Checks if two attributes are structurally equivalent (same name and value),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentAttribute(first: HTMLAttributeNode, second: HTMLAttributeNode): boolean {
+  return (
+    getAttributeName(first) === getAttributeName(second) &&
+    getAttributeValue(first) === getAttributeValue(second)
+  )
+}
+
+/**
+ * Checks if two open tags are structurally equivalent (same tag name and attributes),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentOpenTag(first: HTMLOpenTagNode, second: HTMLOpenTagNode): boolean {
+  if (first.tag_name?.value !== second.tag_name?.value) return false
+
+  const firstAttributes = getAttributes(first)
+  const secondAttributes = getAttributes(second)
+
+  if (firstAttributes.length !== secondAttributes.length) return false
+
+  return firstAttributes.every((attribute) =>
+    secondAttributes.some((other) => isEquivalentAttribute(attribute, other))
+  )
+}
+
+/**
+ * Checks if two elements have structurally equivalent open tags (same tag name and attributes),
+ * ignoring positional data like location and range. Does not compare body or close tag.
+ */
+export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementNode): boolean {
+  if (!isHTMLOpenTagNode(first.open_tag) || !isHTMLOpenTagNode(second.open_tag)) return false
+
+  return isEquivalentOpenTag(first.open_tag, second.open_tag)
+}
