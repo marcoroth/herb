@@ -22,6 +22,11 @@ import type {
   ERBCaseNode,
   ERBCaseMatchNode,
   ERBBeginNode,
+  ERBRescueNode,
+  ERBEnsureNode,
+  ERBElseNode,
+  ERBWhenNode,
+  ERBInNode,
   SerializedPosition,
 } from "@herb-tools/core"
 
@@ -47,22 +52,37 @@ export class FoldingRangeCollector extends Visitor {
   private processedIfNodes: Set<ERBIfNode> = new Set()
 
   visitHTMLElementNode(node: HTMLElementNode): void {
-    this.addRangeForNode(node, node.body)
+    if (node.body.length > 0 && node.open_tag && node.close_tag) {
+      this.addRange(node.open_tag.location.end, node.close_tag.location.start)
+    }
+
     this.visitChildNodes(node)
   }
 
   visitHTMLOpenTagNode(node: HTMLOpenTagNode): void {
-    this.addRangeForNode(node, node.children)
+    if (node.children.length > 0 && node.tag_opening && node.tag_closing) {
+      this.addRange(node.tag_opening.location.end, node.tag_closing.location.start)
+    }
+
     this.visitChildNodes(node)
   }
 
   visitHTMLCommentNode(node: HTMLCommentNode): void {
-    this.addRange(node.location.start, node.location.end, FoldingRangeKind.Comment)
+    if (node.comment_start && node.comment_end) {
+      this.addRange(node.comment_start.location.end, node.comment_end.location.start, FoldingRangeKind.Comment)
+    }
+
     this.visitChildNodes(node)
   }
 
   visitHTMLAttributeValueNode(node: HTMLAttributeValueNode): void {
-    this.addRangeForNode(node, node.children)
+    if (node.children.length > 0) {
+      const first = node.children[0]
+      const last = node.children[node.children.length - 1]
+
+      this.addRange(first.location.start, last.location.end)
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -77,11 +97,18 @@ export class FoldingRangeCollector extends Visitor {
   }
 
   visitERBNode(node: ERBNode): void {
-    this.addRange(node.location.start, node.location.end)
+    if (node.tag_closing && 'end_node' in node && node.end_node?.tag_opening) {
+      this.addRange(node.tag_closing.location.end, node.end_node.tag_opening.location.start)
+    } else {
+      this.addRange(node.location.start, node.location.end)
+    }
   }
 
   visitERBContentNode(node: ERBContentNode): void {
-    this.addRange(node.location.start, node.location.end)
+    if (node.tag_opening && node.tag_closing) {
+      this.addRange(node.tag_opening.location.end, node.tag_closing.location.start)
+    }
+
     this.visitChildNodes(node)
   }
 
@@ -92,23 +119,21 @@ export class FoldingRangeCollector extends Visitor {
     }
 
     this.markIfChainAsProcessed(node)
-    this.addRange(node.location.start, node.location.end)
 
-    if (node.statements.length > 0) {
-      const firstStatement = node.statements[0]
-      const lastStatement = node.statements[node.statements.length - 1]
+    const nextAfterIf = node.subsequent ?? node.end_node
 
-      this.addRange(firstStatement.location.start, lastStatement.location.end)
+    if (node.tag_closing && nextAfterIf?.tag_opening) {
+      this.addRange(node.tag_closing.location.end, nextAfterIf.tag_opening.location.start)
     }
 
-    let current: Node | null = node.subsequent
+    let current: ERBIfNode | ERBElseNode | null = node.subsequent
 
     while (current) {
       if (isERBIfNode(current)) {
-        if (current.statements.length > 0) {
-          const firstStatement = current.statements[0]
-          const lastStatement = current.statements[current.statements.length - 1]
-          this.addRange(firstStatement.location.start, lastStatement.location.end)
+        const nextAfterElsif = current.subsequent ?? node.end_node
+
+        if (current.tag_closing && nextAfterElsif?.tag_opening) {
+          this.addRange(current.tag_closing.location.end, nextAfterElsif.tag_opening.location.start)
         }
 
         current = current.subsequent
@@ -121,22 +146,85 @@ export class FoldingRangeCollector extends Visitor {
   }
 
   visitERBUnlessNode(node: ERBUnlessNode): void {
-    this.addRange(node.location.start, node.location.end)
+    const nextAfterUnless = node.else_clause ?? node.end_node
+
+    if (node.tag_closing && nextAfterUnless?.tag_opening) {
+      this.addRange(node.tag_closing.location.end, nextAfterUnless.tag_opening.location.start)
+    }
+
+    if (node.else_clause) {
+      if (node.else_clause.tag_closing && node.end_node?.tag_opening) {
+        this.addRange(node.else_clause.tag_closing.location.end, node.end_node.tag_opening.location.start)
+      }
+    }
+
     this.visitChildNodes(node)
   }
 
   visitERBCaseNode(node: ERBCaseNode): void {
-    this.addRange(node.location.start, node.location.end)
+    this.addCaseFoldingRanges(node)
     this.visitChildNodes(node)
   }
 
   visitERBCaseMatchNode(node: ERBCaseMatchNode): void {
-    this.addRange(node.location.start, node.location.end)
+    this.addCaseFoldingRanges(node)
+    this.visitChildNodes(node)
+  }
+
+  visitERBWhenNode(node: ERBWhenNode): void {
+    this.visitChildNodes(node)
+  }
+
+  visitERBInNode(node: ERBInNode): void {
     this.visitChildNodes(node)
   }
 
   visitERBBeginNode(node: ERBBeginNode): void {
+    const nextAfterBegin = node.rescue_clause ?? node.else_clause ?? node.ensure_clause ?? node.end_node
+
+    if (node.tag_closing && nextAfterBegin?.tag_opening) {
+      this.addRange(node.tag_closing.location.end, nextAfterBegin.tag_opening.location.start)
+    }
+
+    let rescue: ERBRescueNode | null = node.rescue_clause
+
+    while (rescue) {
+      const nextAfterRescue = rescue.subsequent ?? node.else_clause ?? node.ensure_clause ?? node.end_node
+
+      if (rescue.tag_closing && nextAfterRescue?.tag_opening) {
+        this.addRange(rescue.tag_closing.location.end, nextAfterRescue.tag_opening.location.start)
+      }
+
+      rescue = rescue.subsequent
+    }
+
+    if (node.else_clause) {
+      const nextAfterElse = node.ensure_clause ?? node.end_node
+
+      if (node.else_clause.tag_closing && nextAfterElse?.tag_opening) {
+        this.addRange(node.else_clause.tag_closing.location.end, nextAfterElse.tag_opening.location.start)
+      }
+    }
+
+    if (node.ensure_clause) {
+      if (node.ensure_clause.tag_closing && node.end_node?.tag_opening) {
+        this.addRange(node.ensure_clause.tag_closing.location.end, node.end_node.tag_opening.location.start)
+      }
+    }
+
+    this.visitChildNodes(node)
+  }
+
+  visitERBRescueNode(node: ERBRescueNode): void {
+    this.visitChildNodes(node)
+  }
+
+  visitERBElseNode(node: ERBElseNode): void {
     this.addRange(node.location.start, node.location.end)
+    this.visitChildNodes(node)
+  }
+
+  visitERBEnsureNode(node: ERBEnsureNode): void {
     this.visitChildNodes(node)
   }
 
@@ -155,18 +243,45 @@ export class FoldingRangeCollector extends Visitor {
     }
   }
 
-  private addRange(start: SerializedPosition, end: SerializedPosition, kind?: FoldingRangeKind): void {
-    const startLine = lspLine(start)
-    const endLine = lspLine(end)
+  private addCaseFoldingRanges(node: ERBCaseNode | ERBCaseMatchNode): void {
+    type ConditionNode = ERBWhenNode | ERBInNode
+    const conditions = node.conditions as ConditionNode[]
 
-    if (endLine > startLine) {
-      this.ranges.push({ startLine, endLine, kind })
+    const firstCondition = conditions[0]
+    const nextAfterCase = firstCondition ?? node.else_clause ?? node.end_node
+
+    if (node.tag_closing && nextAfterCase?.tag_opening) {
+      this.addRange(node.tag_closing.location.end, nextAfterCase.tag_opening.location.start)
+    }
+
+    for (let i = 0; i < conditions.length; i++) {
+      const condition = conditions[i]
+      const nextCondition = conditions[i + 1] ?? node.else_clause ?? node.end_node
+
+      if (condition.tag_closing && nextCondition?.tag_opening) {
+        this.addRange(condition.tag_closing.location.end, nextCondition.tag_opening.location.start)
+      }
+    }
+
+    if (node.else_clause) {
+      if (node.else_clause.tag_closing && node.end_node?.tag_opening) {
+        this.addRange(node.else_clause.tag_closing.location.end, node.end_node.tag_opening.location.start)
+      }
     }
   }
 
-  private addRangeForNode(node: Node, children: Node[]) {
-    if (children.length > 0) {
-      this.addRange(node.location.start, node.location.end)
+  private addRange(start: SerializedPosition, end: SerializedPosition, kind?: FoldingRangeKind): void {
+    const startLine = lspLine(start)
+    const endLine = lspLine(end) - 1
+
+    if (endLine > startLine) {
+      this.ranges.push({
+        startLine,
+        startCharacter: start.column,
+        endLine,
+        endCharacter: end.column,
+        kind,
+      })
     }
   }
 }
