@@ -465,7 +465,7 @@ export class Linter {
 
     return unboundOffenses.map(offense => ({
       ...offense,
-      severity
+      severity: offense.severity ?? severity
     }))
   }
 
@@ -519,7 +519,7 @@ export class Linter {
         }
 
         const rule = new ruleClass() as ParserRule
-        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true
+        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
           unfixed.push(offense)
@@ -592,7 +592,7 @@ export class Linter {
         }
 
         const rule = new ruleClass() as SourceRule
-        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true
+        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true || offense.autofixContext?.unsafe === true
 
         if (!rule.autofix) {
           unfixed.push(offense)

@@ -14,6 +14,8 @@ import {
   CodeActionKind,
   FoldingRangeParams,
   DocumentHighlightParams,
+  TextDocumentIdentifier,
+  Range,
 } from "vscode-languageserver/node"
 
 import { Service } from "./service"
@@ -194,6 +196,22 @@ export class Server {
       if (!document) return []
 
       return this.service.foldingRangeService.getFoldingRanges(document)
+    })
+
+    this.connection.onRequest('herb/toggleLineComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleLineComment(document, params.range)
+    })
+
+    this.connection.onRequest('herb/toggleBlockComment', (params: { textDocument: TextDocumentIdentifier, range: Range }) => {
+      const document = this.service.documentService.get(params.textDocument.uri)
+
+      if (!document) return []
+
+      return this.service.commentService.toggleBlockComment(document, params.range)
     })
   }
 

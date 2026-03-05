@@ -27,7 +27,7 @@ import type {
 import { DEFAULT_LINT_CONTEXT } from "../types.js"
 
 import type * as Nodes from "@herb-tools/core"
-import type { UnboundLintOffense, LintContext, BaseAutofixContext } from "../types.js"
+import type { UnboundLintOffense, LintContext, LintSeverity, BaseAutofixContext } from "../types.js"
 
 export enum ControlFlowType {
   CONDITIONAL,
@@ -53,7 +53,7 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -61,14 +61,15 @@ export abstract class BaseRuleVisitor<TAutofixContext extends BaseAutofixContext
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 }
 
@@ -514,7 +515,7 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -522,14 +523,15 @@ export abstract class BaseLexerRuleVisitor<TAutofixContext extends BaseAutofixCo
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 
   /**
@@ -576,7 +578,7 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
    * Helper method to create an unbound lint offense (without severity).
    * The Linter will bind severity based on the rule's config.
    */
-  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext): UnboundLintOffense<TAutofixContext> {
+  protected createOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): UnboundLintOffense<TAutofixContext> {
     return {
       rule: this.ruleName,
       code: this.ruleName,
@@ -584,14 +586,15 @@ export abstract class BaseSourceRuleVisitor<TAutofixContext extends BaseAutofixC
       message,
       location,
       autofixContext,
+      severity,
     }
   }
 
   /**
    * Helper method to add an offense to the offenses array
    */
-  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext): void {
-    this.offenses.push(this.createOffense(message, location, autofixContext))
+  protected addOffense(message: string, location: Location, autofixContext?: TAutofixContext, severity?: LintSeverity): void {
+    this.offenses.push(this.createOffense(message, location, autofixContext, severity))
   }
 
   /**

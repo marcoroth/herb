@@ -48,15 +48,17 @@ class RequireWhitespaceInsideTags extends BaseRuleVisitor<ERBRequireWhitespaceAu
       )
     } else if (content.startsWith("=") && content.length > 1 && !content[1].match(/\s/)) {
       this.addOffense(
-        `Add whitespace after \`<%#=\`.`,
+        `Add whitespace after \`<%#=\`. This looks like a temporarily commented ERB output tag.`,
         openTag.location,
         {
           node,
           openTag,
           closeTag,
           content,
-          fixType: "after-comment-equals"
-        }
+          fixType: "after-comment-equals",
+          unsafe: true,
+        },
+        "info"
       )
     }
 

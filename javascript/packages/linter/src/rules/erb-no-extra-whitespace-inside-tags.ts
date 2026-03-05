@@ -3,7 +3,7 @@ import { BaseRuleVisitor } from "./rule-utils.js"
 
 import type { ParseResult, Token, ERBNode } from "@herb-tools/core"
 import { Location } from "@herb-tools/core"
-import type { UnboundLintOffense, LintOffense, LintContext, FullRuleConfig } from "../types.js"
+import type { UnboundLintOffense, LintOffense, LintContext, LintSeverity, FullRuleConfig } from "../types.js"
 
 interface ERBNoExtraWhitespaceAutofixContext extends BaseAutofixContext {
   node: Mutable<ERBNode>
@@ -30,7 +30,7 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
       const afterEquals = value.substring(1)
 
       if (afterEquals.match(/^\s{2,}/) && !afterEquals.startsWith("  \n") && !afterEquals.startsWith("\n")) {
-        this.reportWhitespace(node, openTag, closeTag, value, "start", 1, `Remove extra whitespace after \`<%#=\`.`, "after-comment-equals")
+        this.reportWhitespace(node, openTag, closeTag, value, "start", 1, `Remove extra whitespace after \`<%#=\`. This looks like a temporarily commented ERB output tag.`, "after-comment-equals", "info", true)
       }
     }
 
@@ -82,7 +82,9 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
     position: "start" | "end",
     offset: number,
     message: string,
-    fixType: "after-open" | "before-close" | "after-comment-equals"
+    fixType: "after-open" | "before-close" | "after-comment-equals",
+    severity?: LintSeverity,
+    unsafe?: boolean,
   ): void {
     const location = this.getWhitespaceLocation(node, content, position, offset)
     this.addOffense(message, location, {
@@ -90,8 +92,9 @@ class ERBNoExtraWhitespaceInsideTagsVisitor extends BaseRuleVisitor<ERBNoExtraWh
       openTag,
       closeTag,
       content,
-      fixType
-    })
+      fixType,
+      unsafe,
+    }, severity)
   }
 }
 

@@ -4,7 +4,7 @@ import dedent from "dedent";
 import { ERBRequireWhitespaceRule } from "../../src/rules/erb-require-whitespace-inside-tags";
 import { createLinterTest } from "../helpers/linter-test-helper.js"
 
-const { expectNoOffenses, expectError, assertOffenses } = createLinterTest(ERBRequireWhitespaceRule)
+const { expectNoOffenses, expectError, expectInfo, assertOffenses } = createLinterTest(ERBRequireWhitespaceRule)
 
 describe("erb-require-whitespace-inside-tags", () => {
 
@@ -142,7 +142,7 @@ describe("erb-require-whitespace-inside-tags", () => {
       <%#=link_to "New watch list", new_watch_list_path, class: "btn btn-ghost"%>
     `
 
-    expectError("Add whitespace after `<%#=`.")
+    expectInfo("Add whitespace after `<%#=`. This looks like a temporarily commented ERB output tag.")
     expectError("Add whitespace before `%>`.")
     assertOffenses(html)
   })
