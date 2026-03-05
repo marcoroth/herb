@@ -196,23 +196,13 @@ describe("Document-level formatting", () => {
   })
 
   test("handles ERB loops with proper spacing", () => {
-    const source = dedent`
+    expectFormattedToMatch(dedent`
       <% items = [1, 2, 3] %>
 
       <% items.each do |item| %>
         <div class="item">
           <span><%= item %></span>
         </div>
-      <% end %>
-
-      <div class="footer">Done</div>
-    `
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
-      <% items = [1, 2, 3] %>
-
-      <% items.each do |item| %>
-        <div class="item"><span><%= item %></span></div>
       <% end %>
 
       <div class="footer">Done</div>

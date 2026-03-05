@@ -1295,11 +1295,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const contentStartsOnNewLine = startsOnNewLine || hasLeadingNewline
 
       if (contentStartsOnNewLine) {
-        const hasERBChildren = children.some(child => isERBNode(child))
-
-        if (hasERBChildren || hasMixedTextAndInlineContent(children)) {
-          return false
-        }
+        return false
       }
     }
 

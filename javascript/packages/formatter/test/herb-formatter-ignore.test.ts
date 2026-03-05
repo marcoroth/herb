@@ -61,24 +61,34 @@ describe("herb:formatter ignore directive", () => {
     const source = dedent`
       <%# herb:formatter ignore some-rule %>
       <div>
-        <span>content</span>
+            <span>content</span>
       </div>
     `
 
     const result = formatter.format(source)
-    expect(result).not.toBe(source)
+    expect(result).toBe(dedent`
+      <%# herb:formatter ignore some-rule %>
+      <div>
+        <span>content</span>
+      </div>
+    `)
   })
 
   test("should not match herb:disable all", () => {
     const source = dedent`
       <%# herb:disable all %>
       <DIV>
-        <SPAN>content</SPAN>
+            <SPAN>content</SPAN>
       </DIV>
     `
 
     const result = formatter.format(source)
-    expect(result).not.toBe(source)
+    expect(result).toBe(dedent`
+      <%# herb:disable all %>
+      <DIV>
+        <SPAN>content</SPAN>
+      </DIV>
+    `)
   })
 
   test("should ignore formatting when directive is at end of file", () => {
