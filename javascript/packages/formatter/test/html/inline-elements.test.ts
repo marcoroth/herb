@@ -179,6 +179,18 @@ describe("@herb-tools/formatter - inline elements", () => {
     `)
   })
 
+  test("block element with inline child on separate line preserves format (issue #1181)", () => {
+    expectFormattedToMatch(dedent`
+      <div id="one" class="card">
+        <span>Hello</span>
+      </div>
+    `)
+  })
+
+  test("block element with inline child on same line stays inline (issue #1181)", () => {
+    expectFormattedToMatch(`<div id="one" class="card"><span>Hello</span></div>`)
+  })
+
   test("block element with ERB output child on separate line preserves format (issue #1181)", () => {
     expectFormattedToMatch(dedent`
       <div class="form-inputs">

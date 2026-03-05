@@ -324,4 +324,23 @@ describe("@herb-tools/formatter", () => {
     const result100 = formatter.format(source100)
     expect(result100).toEqual(source100)
   })
+
+  test("preserve newline after ERB comment", () => {
+    const source = dedent`
+      <div>
+        <%# just a regular comment %>
+        Some text that should wrap normally when it gets very long and exceeds the maximum line length limit.
+      </div>
+    `
+
+    const result = formatter.format(source)
+
+    expect(result).toBe(dedent`
+      <div>
+        <%# just a regular comment %>
+        Some text that should wrap normally when it gets very long and exceeds the
+        maximum line length limit.
+      </div>
+    `)
+  })
 })

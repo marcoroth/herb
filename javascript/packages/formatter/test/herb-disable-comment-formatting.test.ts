@@ -133,8 +133,9 @@ describe("herb:disable comment formatting", () => {
 
     const result = formatter.format(source)
 
-    expect(result).not.toBe(dedent`
-      <div> <%# just a regular comment %>
+    expect(result).toBe(dedent`
+      <div>
+        <%# just a regular comment %>
         Some text that should wrap normally when it gets very long and exceeds the
         maximum line length limit.
       </div>
