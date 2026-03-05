@@ -21,7 +21,11 @@ position_T erb_content_end_position(const AST_ERB_CONTENT_NODE_T* erb_node) {
   }
 }
 
-location_T* compute_then_keyword(AST_ERB_CONTENT_NODE_T* erb_node, control_type_t control_type, hb_allocator_T* allocator) {
+location_T* compute_then_keyword(
+  AST_ERB_CONTENT_NODE_T* erb_node,
+  control_type_t control_type,
+  hb_allocator_T* allocator
+) {
   if (control_type != CONTROL_TYPE_IF && control_type != CONTROL_TYPE_ELSIF && control_type != CONTROL_TYPE_UNLESS
       && control_type != CONTROL_TYPE_WHEN && control_type != CONTROL_TYPE_IN) {
     return NULL;
