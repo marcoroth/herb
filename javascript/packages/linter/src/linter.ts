@@ -221,33 +221,39 @@ export class Linter {
     let ruleOffenses: UnboundLintOffense[]
 
     if (this.isLexerRuleClass(ruleClass)) {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(lexResult, context)
+      const lexerRule = rule as LexerRule
+
+      if (lexerRule.isEnabled) {
+        isEnabled = lexerRule.isEnabled(lexResult, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as LexerRule).check(lexResult, context)
+        ruleOffenses = lexerRule.check(lexResult, context)
       } else {
         ruleOffenses = []
       }
 
     } else if (this.isSourceRuleClass(ruleClass)) {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(source, context)
+      const sourceRule = rule as SourceRule
+
+      if (sourceRule.isEnabled) {
+        isEnabled = sourceRule.isEnabled(source, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as SourceRule).check(source, context)
+        ruleOffenses = sourceRule.check(source, context)
       } else {
         ruleOffenses = []
       }
     } else {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(parseResult, context)
+      const parserRule = rule as ParserRule
+
+      if (parserRule.isEnabled) {
+        isEnabled = parserRule.isEnabled(parseResult, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as ParserRule).check(parseResult, context)
+        ruleOffenses = parserRule.check(parseResult, context)
       } else {
         ruleOffenses = []
       }
