@@ -13,7 +13,27 @@
 typedef enum {
   HB_ALLOCATOR_MALLOC,
   HB_ALLOCATOR_ARENA,
+  HB_ALLOCATOR_TRACKING,
 } hb_allocator_type_T;
+
+typedef struct {
+  void* pointer;
+  size_t size;
+} hb_allocator_tracking_entry_T;
+
+typedef struct {
+  size_t allocation_count;
+  size_t deallocation_count;
+  size_t untracked_deallocation_count;
+  size_t bytes_allocated;
+  size_t bytes_deallocated;
+  hb_allocator_tracking_entry_T* buckets;
+  size_t buckets_capacity;
+  size_t buckets_used;
+  void** untracked_pointers;
+  size_t untracked_pointers_size;
+  size_t untracked_pointers_capacity;
+} hb_allocator_tracking_stats_T;
 
 typedef struct hb_allocator {
   void* (*alloc)(struct hb_allocator* self, size_t size);
@@ -30,6 +50,9 @@ void hb_allocator_destroy(hb_allocator_T* allocator);
 
 hb_allocator_T hb_allocator_with_malloc(void);
 hb_allocator_T hb_allocator_with_arena(hb_arena_T* arena);
+hb_allocator_T hb_allocator_with_tracking(void);
+
+hb_allocator_tracking_stats_T* hb_allocator_tracking_stats(hb_allocator_T* allocator);
 
 static inline void* hb_allocator_alloc(hb_allocator_T* allocator, size_t size) {
   return allocator->alloc(allocator, size);

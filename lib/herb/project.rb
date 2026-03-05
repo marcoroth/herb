@@ -12,7 +12,7 @@ module Herb
   class Project
     include Colors
 
-    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats
+    attr_accessor :project_path, :output_file, :no_log_file, :no_timing, :silent, :verbose, :isolate, :validate_ruby, :file_paths, :arena_stats, :leak_check
 
     # Known error types that indicate issues in the user's template, not bugs in the parser.
     TEMPLATE_ERRORS = [
@@ -260,6 +260,10 @@ module Herb
           print_arena_summary(file_results)
         end
 
+        if leak_check
+          print_leak_check_summary(file_results)
+        end
+
         unless no_log_file
           puts "\n #{separator}"
           puts "\n #{dimmed("Results saved to #{output_file}")}"
@@ -345,6 +349,10 @@ module Herb
 
       if arena_stats
         result[:arena_stats] = capture_arena_stats(file_content)
+      end
+
+      if leak_check
+        result[:leak_check] = capture_leak_check(file_content)
       end
 
       Timeout.timeout(1) do
@@ -884,6 +892,90 @@ module Herb
         minutes = (seconds / 60).to_i
         remaining_seconds = seconds % 60
         "#{minutes}m #{remaining_seconds.round(2)}s"
+      end
+    end
+
+    def capture_leak_check(file_content)
+      Herb.leak_check(file_content)
+    rescue StandardError
+      { lex: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        parse: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        extract_ruby: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 },
+        extract_html: { allocations: 0, deallocations: 0, bytes_allocated: 0, bytes_deallocated: 0 } }
+    end
+
+    def print_leak_check_summary(file_results)
+      leaky_files = file_results.filter_map { |result|
+        next unless result[:leak_check]
+
+        ops = result[:leak_check]
+        leaks = ops.select { |_op, stats| stats[:leaks]&.any? || stats[:allocations] != stats[:deallocations] || stats[:untracked_deallocations]&.positive? }
+        next if leaks.empty?
+
+        { file: result[:file_path], leaks: leaks, all: ops }
+      }
+
+      puts "\n #{separator}"
+      puts "\n"
+      puts " #{bold("Leak check:")}"
+
+      if leaky_files.empty?
+        puts ""
+        puts "  #{bold(green("✓"))} #{green("No leaks detected across all files.")}"
+        return
+      end
+
+      puts "  #{red("#{leaky_files.size} #{pluralize(leaky_files.size, "file")} with potential leaks:")}"
+      puts ""
+
+      leaky_files.each do |entry|
+        relative = relative_path(entry[:file])
+        puts "  #{cyan(relative)}:"
+
+        entry[:all].each do |op, stats|
+          leaks = stats[:leaks] || []
+          untracked_count = stats[:untracked_deallocations] || 0
+          untracked_ptrs = stats[:untracked_pointers] || []
+          leaked_bytes = stats[:bytes_allocated] - stats[:bytes_deallocated]
+
+          if leaks.any?
+            puts "    #{red("✗")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs (#{bold(red("#{leaks.size} unfreed, #{format_bytes(leaked_bytes)}"))})"
+            leaks.each_with_index do |size, i|
+              puts "      #{dimmed("#{i + 1}.")} #{format_bytes(size)}"
+            end
+          elsif untracked_count.positive?
+            puts "    #{yellow("~")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs"
+          else
+            puts "    #{green("✓")} #{op}: #{stats[:allocations]} allocs, #{stats[:deallocations]} deallocs"
+          end
+
+          next unless untracked_count.positive?
+
+          puts "      #{yellow("#{untracked_count} untracked #{pluralize(untracked_count, "deallocation")}")} #{dimmed("(freed through allocator but not allocated through it)")}"
+          untracked_ptrs.each_with_index do |ptr, i|
+            puts "      #{dimmed("#{i + 1}.")} #{ptr}"
+          end
+        end
+
+        puts ""
+      end
+
+      op_to_command = { lex: "lex", parse: "parse", extract_ruby: "ruby", extract_html: "html" }
+
+      commands = leaky_files.flat_map { |entry|
+        entry[:leaks].keys.map { |op| { command: op_to_command[op] || op.to_s, file: entry[:file] } }
+      }
+
+      puts "  #{dimmed("To debug, run the following from the herb repo root (build with `make` first):")}"
+      puts ""
+      puts "  #{dimmed("# macOS")}"
+      commands.each do |cmd|
+        puts "  leaks --atExit -- ./herb #{cmd[:command]} #{cmd[:file]}"
+      end
+      puts ""
+      puts "  #{dimmed("# Linux")}"
+      commands.each do |cmd|
+        puts "  valgrind --leak-check=full ./herb #{cmd[:command]} #{cmd[:file]}"
       end
     end
 

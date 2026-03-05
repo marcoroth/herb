@@ -456,8 +456,8 @@ describe("@herb-tools/formatter", () => {
     `)
   })
 
-  test("inline bold with ERB collapses when alone but preserves when adjacent", () => {
-    const source = dedent`
+  test("inline bold with ERB preserves user newlines", () => {
+    expectFormattedToMatch(dedent`
       <p>
         <b><%= a_thing %> <%= another_thing %></b>
       </p>
@@ -470,20 +470,12 @@ describe("@herb-tools/formatter", () => {
         <b><%= a_thing %> <%= another_thing %></b>
         <b><%= a_thing %> <%= another_thing %></b>a
       </p>
-    `
+    `)
 
-    const result = formatter.format(source)
-    expect(result).toEqual(dedent`
+    expectFormattedToMatch(dedent`
       <p><b><%= a_thing %> <%= another_thing %></b></p>
 
-      <p>
-        <b><%= a_thing %> <%= another_thing %></b>a
-      </p>
-
-      <p>
-        <b><%= a_thing %> <%= another_thing %></b>
-        <b><%= a_thing %> <%= another_thing %></b>a
-      </p>
+      <p><b><%= a_thing %> <%= another_thing %></b>a</p>
     `)
   })
 })
