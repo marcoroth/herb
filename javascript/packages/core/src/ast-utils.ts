@@ -319,6 +319,13 @@ export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
 }
 
 /**
+ * Attributes whose values are space-separated token lists.
+ */
+export const TOKEN_LIST_ATTRIBUTES = new Set([
+  "class", "data-controller", "data-action",
+])
+
+/**
  * Splits a space-separated attribute value into individual tokens.
  * Accepts a string, or an element/open tag + attribute name to look up.
  * Returns an empty array for null/undefined/empty input.
@@ -687,4 +694,56 @@ export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Posi
   return nodes.filter(node =>
     node.location && isPositionAfter(node.location.start, position, inclusive)
   )
+}
+
+/**
+ * Checks if two attributes are structurally equivalent (same name and value),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentAttribute(first: HTMLAttributeNode, second: HTMLAttributeNode): boolean {
+  const firstName = getAttributeName(first)
+  const secondName = getAttributeName(second)
+
+  if (firstName !== secondName) return false
+
+  if (firstName && TOKEN_LIST_ATTRIBUTES.has(firstName)) {
+    const firstTokens = getTokenList(getAttributeValue(first))
+    const secondTokens = getTokenList(getAttributeValue(second))
+
+    if (firstTokens.length !== secondTokens.length) return false
+
+    const sortedFirst = [...firstTokens].sort()
+    const sortedSecond = [...secondTokens].sort()
+
+    return sortedFirst.every((token, index) => token === sortedSecond[index])
+  }
+
+  return getAttributeValue(first) === getAttributeValue(second)
+}
+
+/**
+ * Checks if two open tags are structurally equivalent (same tag name and attributes),
+ * ignoring positional data like location and range.
+ */
+export function isEquivalentOpenTag(first: HTMLOpenTagNode, second: HTMLOpenTagNode): boolean {
+  if (first.tag_name?.value !== second.tag_name?.value) return false
+
+  const firstAttributes = getAttributes(first)
+  const secondAttributes = getAttributes(second)
+
+  if (firstAttributes.length !== secondAttributes.length) return false
+
+  return firstAttributes.every((attribute) =>
+    secondAttributes.some((other) => isEquivalentAttribute(attribute, other))
+  )
+}
+
+/**
+ * Checks if two elements have structurally equivalent open tags (same tag name and attributes),
+ * ignoring positional data like location and range. Does not compare body or close tag.
+ */
+export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementNode): boolean {
+  if (!isHTMLOpenTagNode(first.open_tag) || !isHTMLOpenTagNode(second.open_tag)) return false
+
+  return isEquivalentOpenTag(first.open_tag, second.open_tag)
 }
