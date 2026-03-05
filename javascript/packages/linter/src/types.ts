@@ -247,6 +247,7 @@ export interface SourceRuleConstructor {
 export type ParserRuleClass = (new () => ParserRule) & {
   type?: "parser"
   ruleName: string
+  reindentAfterAutofix?: boolean
 }
 
 export type LexerRuleClass = LexerRuleConstructor

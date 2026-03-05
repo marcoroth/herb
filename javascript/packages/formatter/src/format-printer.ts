@@ -28,6 +28,7 @@ import {
   isERBControlFlowNode,
   isERBCommentNode,
   isHTMLOpenTagNode,
+  isPureWhitespaceNode,
   filterNodes,
 } from "@herb-tools/core"
 
@@ -44,7 +45,6 @@ import {
   isHerbDisableComment,
   isInlineElement,
   isNonWhitespaceNode,
-  isPureWhitespaceNode,
   shouldAppendToLastLine,
   shouldPreserveUserSpacing,
 } from "./format-helpers.js"
@@ -711,9 +711,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
       const child = body[index]
 
       if (isNode(child, HTMLTextNode)) {
-        const isWhitespaceOnly = child.content.trim() === ""
-
-        if (isWhitespaceOnly) {
+        if (isPureWhitespaceNode(child)) {
           const hasPreviousNonWhitespace = index > 0 && isNonWhitespaceNode(body[index - 1])
           const hasNextNonWhitespace = index < body.length - 1 && isNonWhitespaceNode(body[index + 1])
           const hasMultipleNewlines = child.content.includes('\n\n')
@@ -1550,9 +1548,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
       }
 
-      const isWhitespace = isNode(child, WhitespaceNode) || (isNode(child, HTMLTextNode) && child.content.trim() === "")
-
-      if (isWhitespace && !result.endsWith(' ')) {
+      if (isPureWhitespaceNode(child) && !result.endsWith(' ')) {
         if (!result && hasHerbDisable && !addedLeadingSpace) {
           result += ' '
           addedLeadingSpace = true
@@ -1578,7 +1574,7 @@ export class FormatPrinter extends Printer implements TextFlowDelegate, Attribut
         }
 
         result += childInline
-      } else if (!isNode(child, HTMLTextNode) && !isWhitespace) {
+      } else if (!isNode(child, HTMLTextNode) && !isPureWhitespaceNode(child)) {
         const captured = this.withInlineMode(() => this.capture(() => this.visit(child)).join(""))
         result += captured
       }

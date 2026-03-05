@@ -28,6 +28,8 @@ import {
   isHTMLCommentNode,
   isHTMLElementNode,
   isHTMLOpenTagNode,
+  isHTMLTextNode,
+  isWhitespaceNode,
   isHTMLAttributeNameNode,
   isHTMLAttributeValueNode,
   areAllOfType,
@@ -35,7 +37,7 @@ import {
   filterHTMLAttributeNodes
 } from "./node-type-guards.js"
 
-import type { Location } from "./location.js"
+import { Location } from "./location.js"
 import type { Position } from "./position.js"
 
 export type ERBOutputNode = ERBNode & {
@@ -497,10 +499,14 @@ export function forEachAttribute(node: HTMLElementNode | HTMLOpenTagNode, callba
 // --- Class Name Grouping Utilities ---
 
 /**
- * Checks if a node is a whitespace-only literal (no visible content)
+ * Checks if a node is a whitespace-only literal or text node (no visible content)
  */
-export function isWhitespaceLiteral(node: Node): boolean {
-  return isLiteralNode(node) && !node.content.trim()
+export function isPureWhitespaceNode(node: Node): boolean {
+  if (isWhitespaceNode(node)) return true
+  if (isLiteralNode(node)) return !node.content.trim()
+  if (isHTMLTextNode(node)) return !(node.content ?? "").trim()
+
+  return false
 }
 
 /**
@@ -566,7 +572,7 @@ export function groupNodesByClass(nodes: Node[]): Node[][] {
         startNewGroup = false
       } else if (previousNode && !isLiteralNode(previousNode)) {
         startNewGroup = true
-      } else if (currentGroup.every(member => isWhitespaceLiteral(member))) {
+      } else if (currentGroup.every(member => isPureWhitespaceNode(member))) {
         startNewGroup = true
       }
     } else {
@@ -746,4 +752,107 @@ export function isEquivalentElement(first: HTMLElementNode, second: HTMLElementN
   if (!isHTMLOpenTagNode(first.open_tag) || !isHTMLOpenTagNode(second.open_tag)) return false
 
   return isEquivalentOpenTag(first.open_tag, second.open_tag)
+}
+
+// --- AST Mutation Utilities ---
+
+const CHILD_ARRAY_PROPS = ["children", "body", "statements", "conditions"]
+const LINKED_NODE_PROPS = ["subsequent", "else_clause"]
+
+/**
+ * Finds the array containing a target node in the AST, along with its index.
+ * Traverses child arrays and linked node properties (e.g., `subsequent`, `else_clause`).
+ *
+ * Useful for autofix operations that need to splice nodes in/out of their parent array.
+ *
+ * @param root - The root node to search from
+ * @param target - The node to find
+ * @returns The containing array and the target's index, or null if not found
+ */
+export function findParentArray(root: Node, target: Node): { array: Node[], index: number } | null {
+  const search = (node: Node): { array: Node[], index: number } | null => {
+    const record = node as Record<string, any>
+
+    for (const prop of CHILD_ARRAY_PROPS) {
+      const array = record[prop]
+
+      if (Array.isArray(array)) {
+        const index = array.indexOf(target)
+
+        if (index !== -1) {
+          return { array, index }
+        }
+      }
+    }
+
+    for (const prop of CHILD_ARRAY_PROPS) {
+      const array = record[prop]
+
+      if (Array.isArray(array)) {
+        for (const child of array) {
+          if (child && typeof child === 'object' && 'type' in child) {
+            const result = search(child)
+
+            if (result) {
+              return result
+            }
+          }
+        }
+      }
+    }
+
+    for (const prop of LINKED_NODE_PROPS) {
+      const value = record[prop]
+
+      if (value && typeof value === 'object' && 'type' in value) {
+        const result = search(value)
+
+        if (result) {
+          return result
+        }
+      }
+    }
+
+    return null
+  }
+
+  return search(root)
+}
+
+/**
+ * Removes a node from an array, also removing an adjacent preceding
+ * whitespace-only literal if present.
+ */
+export function removeNodeFromArray(array: Node[], node: Node): void {
+  const index = array.indexOf(node)
+  if (index === -1) return
+
+  if (index > 0 && isPureWhitespaceNode(array[index - 1])) {
+    array.splice(index - 1, 2)
+  } else {
+    array.splice(index, 1)
+  }
+}
+
+/**
+ * Replaces an element in an array with its body (children), effectively unwrapping it.
+ */
+export function replaceNodeWithBody(array: Node[], element: HTMLElementNode): void {
+  const index = array.indexOf(element)
+  if (index === -1) return
+
+  array.splice(index, 1, ...element.body)
+}
+
+/**
+ * Creates a synthetic LiteralNode with the given content and zero location.
+ * Useful for inserting whitespace or newlines during AST mutations.
+ */
+export function createLiteral(content: string): LiteralNode {
+  return new LiteralNode({
+    type: "AST_LITERAL_NODE",
+    content,
+    location: Location.zero,
+    errors: [],
+  })
 }

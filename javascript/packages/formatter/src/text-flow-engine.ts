@@ -1,4 +1,4 @@
-import { isNode, getTagName } from "@herb-tools/core"
+import { isNode, getTagName, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -10,7 +10,6 @@ import {
   isClosingPunctuation,
   isInlineElement,
   isLineBreakingElement,
-  isPureWhitespaceNode,
   needsSpaceBetween,
 } from "./format-helpers.js"
 
