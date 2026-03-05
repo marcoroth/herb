@@ -368,7 +368,8 @@ export class Linter {
     context = {
       ...context,
       validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
-      ignoredOffensesByLine
+      ignoredOffensesByLine,
+      config: this.config
     }
 
     const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
