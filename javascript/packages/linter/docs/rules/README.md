@@ -24,6 +24,7 @@ This page contains documentation for all Herb Linter rules.
 - [`herb-disable-comment-no-redundant-all`](./herb-disable-comment-no-redundant-all.md) - Disallow redundant use of `all` in `herb:disable` comments.
 - [`herb-disable-comment-unnecessary`](./herb-disable-comment-unnecessary.md) - Detect unnecessary `herb:disable` comments.
 - [`herb-disable-comment-valid-rule-name`](./herb-disable-comment-valid-rule-name.md) - Validate rule names in `herb:disable` comments.
+- [`herb-formatter-well-formatted`](./herb-formatter-well-formatted.md) - Check source is well-formatted.
 - [`html-anchor-require-href`](./html-anchor-require-href.md) - Requires an href attribute on anchor tags
 - [`html-aria-attribute-must-be-valid`](./html-aria-attribute-must-be-valid.md) - Disallow invalid or unknown `aria-*` attributes.
 - [`html-aria-label-is-well-formatted`](./html-aria-label-is-well-formatted.md) - `aria-label` must be well-formatted

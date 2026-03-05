@@ -22,6 +22,7 @@ import { HerbDisableCommentNoDuplicateRulesRule } from "./rules/herb-disable-com
 import { HerbDisableCommentMissingRulesRule } from "./rules/herb-disable-comment-missing-rules.js"
 import { HerbDisableCommentMalformedRule } from "./rules/herb-disable-comment-malformed.js"
 import { HerbDisableCommentUnnecessaryRule } from "./rules/herb-disable-comment-unnecessary.js"
+import { HerbFormatterWellFormattedRule } from "./rules/herb-formatter-well-formatted.js"
 
 import { HTMLAnchorRequireHrefRule } from "./rules/html-anchor-require-href.js"
 import { HTMLAriaAttributeMustBeValid } from "./rules/html-aria-attribute-must-be-valid.js"
@@ -84,6 +85,7 @@ export const rules: RuleClass[] = [
   HerbDisableCommentMissingRulesRule,
   HerbDisableCommentMalformedRule,
   HerbDisableCommentUnnecessaryRule,
+  HerbFormatterWellFormattedRule,
 
   HTMLAnchorRequireHrefRule,
   HTMLAriaAttributeMustBeValid,

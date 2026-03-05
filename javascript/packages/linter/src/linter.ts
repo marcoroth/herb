@@ -353,7 +353,8 @@ export class Linter {
     context = {
       ...context,
       validRuleNames: this.getAvailableRules().map(RuleClass => new RuleClass().name),
-      ignoredOffensesByLine
+      ignoredOffensesByLine,
+      config: this.config
     }
 
     const regularRules = this.rules.filter(RuleClass => {
