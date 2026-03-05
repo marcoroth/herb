@@ -413,10 +413,9 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
     position_T start_position = matched_open->open_conditional->location.start;
     position_T end_position = node->location.end;
     hb_array_T* errors = hb_array_init(8);
-    char* condition_copy = hb_string_to_c_string_using_malloc(hb_string(matched_open->condition));
 
     AST_HTML_CONDITIONAL_ELEMENT_NODE_T* conditional_element = ast_html_conditional_element_node_init(
-      condition_copy,
+      matched_open->condition,
       matched_open->open_conditional,
       matched_open->open_tag,
       body,
@@ -429,8 +428,6 @@ static void rewrite_conditional_elements(hb_array_T* nodes, hb_array_T* document
       errors,
       allocator
     );
-
-    free(condition_copy);
 
     for (size_t body_index = matched_open->open_index + 1; body_index < node_index; body_index++) {
       size_t* consumed_index = malloc(sizeof(size_t));

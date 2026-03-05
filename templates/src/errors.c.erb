@@ -39,36 +39,29 @@ void error_init(ERROR_T* error, const error_type_T type, position_T start, posit
   <%- if error.message_arguments.any? -%>
   const char* message_template = "<%= error.message_template %>";
 
-  size_t message_size = <%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>;
-  char* message = (char*) malloc(message_size);
+  <%- error.message_arguments.each_with_index do |argument, i| -%>
+  <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
+  char truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH + 1];
+  strncpy(truncated_argument_<%= i %>, <%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
+  truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH] = '\0';
 
-  if (message) {
-    <%- error.message_arguments.each_with_index do |argument, i| -%>
-    <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[i] == "%s" -%>
-    char truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH + 1];
-    strncpy(truncated_argument_<%= i %>, <%= argument %>, ERROR_MESSAGES_TRUNCATED_LENGTH);
-    truncated_argument_<%= i %>[ERROR_MESSAGES_TRUNCATED_LENGTH] = '\0';
-
+  <%- end -%>
+  <%- end -%>
+  char message[<%= Herb::Template::PrintfMessageTemplate.estimate_buffer_size(error.message_template) %>];
+  snprintf(
+    message,
+    sizeof(message),
+    message_template,
+    <%- error.message_arguments.each_with_index do |argument, index| -%>
+    <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[index] == "%s" -%>
+    truncated_argument_<%= index %><% if index != error.message_arguments.length - 1 %>,<% end %>
+    <%- else -%>
+    <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
     <%- end -%>
     <%- end -%>
-    snprintf(
-      message,
-      message_size,
-      message_template,
-      <%- error.message_arguments.each_with_index do |argument, index| -%>
-      <%- if error.message_template.scan(/%(?:zu|llu|lf|ld|[sdulf])/)[index] == "%s" -%>
-      truncated_argument_<%= index %><% if index != error.message_arguments.length - 1 %>,<% end %>
-      <%- else -%>
-      <%= argument %><% if index != error.message_arguments.length - 1 %>,<% end %>
-      <%- end -%>
-      <%- end -%>
-    );
+  );
 
-    <%= error.human %>->base.message = hb_allocator_strdup(allocator, message);
-    free(message);
-  } else {
-    <%= error.human %>->base.message = hb_allocator_strdup(allocator, "<%= error.message_template %>");
-  }
+  <%= error.human %>->base.message = hb_allocator_strdup(allocator, message);
   <%- else -%>
   <%= error.human %>->base.message = hb_allocator_strdup(allocator, "<%= error.message_template %>");
   <%- end -%>
