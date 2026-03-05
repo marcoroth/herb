@@ -36,6 +36,16 @@ describe("erb-no-duplicate-branch-elements", () => {
       `)
     })
 
+    it("branches with same tag name but different class tokens", () => {
+      expectNoOffenses(dedent`
+        <% if condition %>
+          <div class="a b">Hello</div>
+        <% else %>
+          <div class="a c">World</div>
+        <% end %>
+      `)
+    })
+
     it("only some branches match (not all)", () => {
       expectNoOffenses(dedent`
         <% if condition %>
@@ -112,8 +122,44 @@ describe("erb-no-duplicate-branch-elements", () => {
       `)
     })
 
+    it("case with same classes in different order", () => {
+      expectWarning("The `<div class=\"b a\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<div class=\"a b\">` element is duplicated across all branches of this conditional and can be moved outside.")
+
+      assertOffenses(dedent`
+        <% if condition %>
+          <div class="b a">Hello</div>
+        <% else %>
+          <div class="a b">World</div>
+        <% end %>
+      `)
+    })
+
+    it("case with same data-controller tokens in different order", () => {
+      expectWarning("The `<div data-controller=\"b a\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<div data-controller=\"a b\">` element is duplicated across all branches of this conditional and can be moved outside.")
+
+      assertOffenses(dedent`
+        <% if condition %>
+          <div data-controller="b a">Hello</div>
+        <% else %>
+          <div data-controller="a b">World</div>
+        <% end %>
+      `)
+    })
+
+    it("non-token-list attributes with different order are not equivalent", () => {
+      expectNoOffenses(dedent`
+        <% if condition %>
+          <div style="color: red; font-size: 12px">Hello</div>
+        <% else %>
+          <div style="font-size: 12px; color: red">World</div>
+        <% end %>
+      `)
+    })
+
     it("case with same wrapping div but differnt attribute formatting", () => {
-      expectWarning("The `<div class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
+      expectWarning("The `<div class=\"\n    card\n  \">` element is duplicated across all branches of this conditional and can be moved outside.")
       expectWarning("The `<div class=\"card\">` element is duplicated across all branches of this conditional and can be moved outside.")
 
       assertOffenses(dedent`

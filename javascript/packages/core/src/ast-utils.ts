@@ -319,6 +319,13 @@ export function getStaticAttributeValue(nodeOrAttribute: HTMLAttributeNode | HTM
 }
 
 /**
+ * Attributes whose values are space-separated token lists.
+ */
+export const TOKEN_LIST_ATTRIBUTES = new Set([
+  "class", "data-controller", "data-action",
+])
+
+/**
  * Splits a space-separated attribute value into individual tokens.
  * Accepts a string, or an element/open tag + attribute name to look up.
  * Returns an empty array for null/undefined/empty input.
@@ -694,10 +701,24 @@ export function getNodesAfterPosition<T extends Node>(nodes: T[], position: Posi
  * ignoring positional data like location and range.
  */
 export function isEquivalentAttribute(first: HTMLAttributeNode, second: HTMLAttributeNode): boolean {
-  return (
-    getAttributeName(first) === getAttributeName(second) &&
-    getAttributeValue(first) === getAttributeValue(second)
-  )
+  const firstName = getAttributeName(first)
+  const secondName = getAttributeName(second)
+
+  if (firstName !== secondName) return false
+
+  if (firstName && TOKEN_LIST_ATTRIBUTES.has(firstName)) {
+    const firstTokens = getTokenList(getAttributeValue(first))
+    const secondTokens = getTokenList(getAttributeValue(second))
+
+    if (firstTokens.length !== secondTokens.length) return false
+
+    const sortedFirst = [...firstTokens].sort()
+    const sortedSecond = [...secondTokens].sort()
+
+    return sortedFirst.every((token, index) => token === sortedSecond[index])
+  }
+
+  return getAttributeValue(first) === getAttributeValue(second)
 }
 
 /**
