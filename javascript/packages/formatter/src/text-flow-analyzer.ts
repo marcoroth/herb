@@ -1,4 +1,4 @@
-import { isNode, getTagName, isERBCommentNode } from "@herb-tools/core"
+import { isNode, getTagName, isERBCommentNode, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -8,7 +8,6 @@ import {
   isHerbDisableComment,
   isInlineElement,
   isLineBreakingElement,
-  isPureWhitespaceNode,
 } from "./format-helpers.js"
 
 import {

@@ -1,7 +1,7 @@
 import picomatch from "picomatch"
 
 import { Location } from "@herb-tools/core"
-import { IdentityPrinter } from "@herb-tools/printer"
+import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -13,7 +13,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
@@ -167,21 +167,21 @@ export class Linter {
   /**
    * Type guard to check if a rule class is a LexerRule class
    */
-  protected isLexerRuleClass(ruleClass: RuleClass): boolean {
+  protected isLexerRuleClass(ruleClass: RuleClass): ruleClass is LexerRuleClass {
     return ruleClass.type === "lexer"
   }
 
   /**
    * Type guard to check if a rule class is a SourceRule class
    */
-  protected isSourceRuleClass(ruleClass: RuleClass): boolean {
+  protected isSourceRuleClass(ruleClass: RuleClass): ruleClass is SourceRuleClass {
     return ruleClass.type === "source"
   }
 
   /**
    * Type guard to check if a rule class is a ParserRule class
    */
-  protected isParserRuleClass(ruleClass: RuleClass): boolean {
+  protected isParserRuleClass(ruleClass: RuleClass): ruleClass is ParserRuleClass {
     return ruleClass.type === "parser" || ruleClass.type === undefined
   }
 
@@ -507,6 +507,7 @@ export class Linter {
 
     if (parserOffenses.length > 0) {
       const parseResult = this.parseCache.get(currentSource)
+      let needsReindent = false
 
       for (const offense of parserOffenses) {
         const ruleClass = this.findRuleClass(offense.rule)
@@ -555,14 +556,21 @@ export class Linter {
 
         if (fixedResult) {
           fixed.push(offense)
+
+          if (this.isParserRuleClass(ruleClass) && ruleClass.reindentAfterAutofix === true) {
+            needsReindent = true
+          }
         } else {
           unfixed.push(offense)
         }
       }
 
       if (fixed.length > 0) {
-        const printer = new IdentityPrinter()
-        currentSource = printer.print(parseResult.value)
+        if (needsReindent) {
+          currentSource = new IndentPrinter().print(parseResult.value)
+        } else {
+          currentSource = new IdentityPrinter().print(parseResult.value)
+        }
       }
     }
 

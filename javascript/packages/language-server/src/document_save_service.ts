@@ -11,6 +11,15 @@ export class DocumentSaveService {
   private autofixService: AutofixService
   private formattingService: FormattingService
 
+  /**
+   * Tracks documents that were recently autofixed via applyFixesAndFormatting
+   * (triggered by onDocumentFormatting). When editor.formatOnSave is enabled,
+   * onDocumentFormatting fires BEFORE willSaveWaitUntil. If applyFixesAndFormatting
+   * already applied autofix, applyFixes must skip to avoid conflicting edits
+   * (since this.documents hasn't been updated between the two events).
+   */
+  private recentlyAutofixedViaFormatting = new Set<string>()
+
   constructor(connection: Connection, settings: Settings, autofixService: AutofixService, formattingService: FormattingService) {
     this.connection = connection
     this.settings = settings
@@ -30,6 +39,11 @@ export class DocumentSaveService {
 
     if (!fixOnSave) return []
 
+    if (this.recentlyAutofixedViaFormatting.delete(document.uri)) {
+      this.connection.console.log(`[DocumentSave] applyFixes skipping: already autofixed via formatting`)
+      return []
+    }
+
     return this.autofixService.autofix(document)
   }
 
@@ -48,6 +62,10 @@ export class DocumentSaveService {
 
     if (fixOnSave) {
       autofixEdits = await this.autofixService.autofix(document)
+
+      if (autofixEdits.length > 0) {
+        this.recentlyAutofixedViaFormatting.add(document.uri)
+      }
     }
 
     if (!formatterEnabled) return autofixEdits
@@ -56,12 +74,6 @@ export class DocumentSaveService {
       return this.formattingService.formatOnSave(document, reason)
     }
 
-    const autofixedDocument: TextDocument = {
-      ...document,
-      uri: document.uri,
-      getText: () => autofixEdits[0].newText,
-    }
-
-    return this.formattingService.formatOnSave(autofixedDocument, reason)
+    return this.formattingService.formatOnSave(document, reason, autofixEdits[0].newText)
   }
 }
