@@ -78,14 +78,6 @@ export const SPACEABLE_CONTAINERS = new Set([
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
 
-/**
- * Token list attributes that contain space-separated values and benefit from
- * spacing around ERB content for readability
- */
-export const TOKEN_LIST_ATTRIBUTES = new Set([
-  'class', 'data-controller', 'data-action'
-])
-
 
 // --- Node Utility Functions ---
 

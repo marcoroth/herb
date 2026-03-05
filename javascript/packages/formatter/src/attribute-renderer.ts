@@ -1,9 +1,9 @@
 import { IdentityPrinter } from "@herb-tools/printer"
 import { HTMLAttributeNode, HTMLAttributeValueNode, HTMLTextNode, LiteralNode, ERBContentNode } from "@herb-tools/core"
 
-import { getCombinedAttributeName, getCombinedStringFromNodes, isNode } from "@herb-tools/core"
+import { getCombinedAttributeName, getCombinedStringFromNodes, isNode, TOKEN_LIST_ATTRIBUTES } from "@herb-tools/core"
 
-import { ASCII_WHITESPACE, FORMATTABLE_ATTRIBUTES, TOKEN_LIST_ATTRIBUTES } from "./format-helpers.js"
+import { ASCII_WHITESPACE, FORMATTABLE_ATTRIBUTES } from "./format-helpers.js"
 
 import type { Node, ERBNode } from "@herb-tools/core"
 
