@@ -374,7 +374,7 @@ static size_t process_case_structure(
       hb_array_T* cond_errors = next_erb->base.errors;
       next_erb->base.errors = NULL;
 
-      location_T* then_keyword = compute_then_keyword(next_erb, next_type);
+      location_T* then_keyword = compute_then_keyword(next_erb, next_type, allocator);
       position_T cond_start = next_erb->tag_opening->location.start;
       position_T cond_end = erb_content_end_position(next_erb);
 
