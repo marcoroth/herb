@@ -5,7 +5,7 @@ import { createExpectFormattedToMatch } from "../helpers"
 import dedent from "dedent"
 
 let formatter: Formatter
-let expectFormattedTotMatch: ReturnType<typeof createExpectFormattedToMatch>
+let expectFormattedToMatch: ReturnType<typeof createExpectFormattedToMatch>
 
 describe("ERB Formatter Compatibility Tests", () => {
   beforeAll(async () => {
@@ -16,7 +16,7 @@ describe("ERB Formatter Compatibility Tests", () => {
       maxLineLength: 80,
     })
 
-    expectFormattedTotMatch = createExpectFormattedToMatch(formatter)
+    expectFormattedToMatch = createExpectFormattedToMatch(formatter)
   })
 
   describe("Attributes handling", () => {
@@ -115,20 +115,20 @@ describe("ERB Formatter Compatibility Tests", () => {
 
   describe("ERB control structures", () => {
     test("formats simple if-then-else expressions", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <% if eeee then "b" else c end %>
         <% if eeee then a else c end %>
       `)
     })
 
     test("formats long if-then-else to multiline", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <% if longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong then a else c end %>
       `)
     })
 
     test("handles ERB in tag attributes", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <div <% if eeee then "b" else c end %>></div>
         <div <% if eeee then a else c end %>></div>
       `)
@@ -227,7 +227,7 @@ describe("ERB Formatter Compatibility Tests", () => {
 
   describe("UTF-8 handling", () => {
     test("properly handles UTF-8 characters", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <div>🍰 UTF-8 content with émojis and special characters ñ</div>
       `)
     })
@@ -235,19 +235,19 @@ describe("ERB Formatter Compatibility Tests", () => {
 
   describe("Yield statements", () => {
     test("formats yield statements correctly", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <div>
           <%= yield %>
         </div>
       `)
 
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <div><%= yield %></div>
       `)
     })
 
     test("formats yield with arguments", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <div>
           <%= yield(:header) %>
           <%= yield :footer, class: "mt-4" %>
@@ -258,7 +258,7 @@ describe("ERB Formatter Compatibility Tests", () => {
 
   describe("Case statements", () => {
     test("formats case/when statements", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <% case status
            when 'active' %>
           <span class="badge-active">Active</span>
@@ -292,7 +292,7 @@ describe("ERB Formatter Compatibility Tests", () => {
 
   describe("Block statements", () => {
     test("formats blocks correctly", () => {
-      expectFormattedTotMatch(dedent`
+      expectFormattedToMatch(dedent`
         <% items.each do |item| %>
           <div><%= item.name %></div>
         <% end %>

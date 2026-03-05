@@ -1,4 +1,4 @@
-import { isNode, getTagName } from "@herb-tools/core"
+import { isNode, getTagName, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLTextNode, HTMLElementNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 import type { ContentUnitWithNode } from "./format-helpers.js"
@@ -10,7 +10,6 @@ import {
   isClosingPunctuation,
   isInlineElement,
   isLineBreakingElement,
-  isPureWhitespaceNode,
   needsSpaceBetween,
 } from "./format-helpers.js"
 
@@ -297,7 +296,7 @@ export class TextFlowEngine {
       }
 
       if (currentLine && !isClosingPunctuation(word) && nextEffectiveLength > wrapWidth) {
-        lines.push(this.delegate.indent + currentLine.trimEnd())
+        lines.push(this.delegate.indent + currentLine.trim())
 
         currentLine = word
         effectiveLength = isHerbDisable ? 0 : word.length
@@ -308,7 +307,7 @@ export class TextFlowEngine {
     }
 
     if (currentLine) {
-      lines.push(this.delegate.indent + currentLine.trimEnd())
+      lines.push(this.delegate.indent + currentLine.trim())
     }
 
     lines.forEach(line => this.delegate.push(line))

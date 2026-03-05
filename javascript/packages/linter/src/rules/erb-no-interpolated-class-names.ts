@@ -1,4 +1,4 @@
-import { isLiteralNode, isWhitespaceLiteral, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
+import { isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { IdentityPrinter } from "@herb-tools/printer"
 
 import { ParserRule } from "../types.js"
@@ -27,7 +27,7 @@ class ERBNoInterpolatedClassNamesVisitor extends AttributeVisitorMixin {
     const groups = groupNodesByClass(splitNodes)
 
     for (const group of groups) {
-      if (group.every(node => isWhitespaceLiteral(node))) continue
+      if (group.every(node => isPureWhitespaceNode(node))) continue
 
       const isInterpolated = group.some(node => !isLiteralNode(node))
       if (!isInterpolated) continue

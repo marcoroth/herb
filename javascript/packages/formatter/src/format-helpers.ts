@@ -1,4 +1,4 @@
-import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList } from "@herb-tools/core"
+import { isNode, isERBNode, getTagName, isAnyOf, isERBControlFlowNode, hasERBOutput, getStaticAttributeValue, getTokenList, isPureWhitespaceNode } from "@herb-tools/core"
 import { Node, HTMLDoctypeNode, HTMLTextNode, HTMLElementNode, HTMLCommentNode, HTMLOpenTagNode, HTMLCloseTagNode, ERBIfNode, ERBContentNode, WhitespaceNode } from "@herb-tools/core"
 
 // --- Types ---
@@ -78,32 +78,14 @@ export const SPACEABLE_CONTAINERS = new Set([
   'figure', 'details', 'summary', 'dialog', 'fieldset'
 ])
 
-/**
- * Token list attributes that contain space-separated values and benefit from
- * spacing around ERB content for readability
- */
-export const TOKEN_LIST_ATTRIBUTES = new Set([
-  'class', 'data-controller', 'data-action'
-])
-
 
 // --- Node Utility Functions ---
-
-/**
- * Check if a node is pure whitespace (empty text node with only whitespace)
- */
-export function isPureWhitespaceNode(node: Node): boolean {
-  return isNode(node, HTMLTextNode) && node.content.trim() === ""
-}
 
 /**
  * Check if a node is non-whitespace (has meaningful content)
  */
 export function isNonWhitespaceNode(node: Node): boolean {
-  if (isNode(node, WhitespaceNode)) return false
-  if (isNode(node, HTMLTextNode)) return node.content.trim() !== ""
-
-  return true
+  return !isPureWhitespaceNode(node)
 }
 
 /**
@@ -158,10 +140,9 @@ export function filterEmptyNodesForHerbDisable(nodes: Node[]): Node[] {
   let pendingWhitespace: Node | null = null
 
   for (const node of nodes) {
-    const isWhitespace = isNode(node, WhitespaceNode) || (isNode(node, HTMLTextNode) && node.content.trim() === "")
     const isHerbDisable = isNode(node, ERBContentNode) && isHerbDisableComment(node)
 
-    if (isWhitespace) {
+    if (isPureWhitespaceNode(node)) {
       if (!pendingWhitespace) {
         pendingWhitespace = node
       }

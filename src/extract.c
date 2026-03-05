@@ -45,8 +45,23 @@ void herb_extract_ruby_to_buffer_with_options(
             is_comment_tag = false;
 
             if (extract_options.preserve_positions) {
-              hb_buffer_append_whitespace(output, 2);
-              hb_buffer_append_char(output, '#');
+              bool is_multiline = false;
+
+              if (i + 1 < hb_array_size(tokens)) {
+                const token_T* next = hb_array_get(tokens, i + 1);
+
+                if (next->type == TOKEN_ERB_CONTENT && next->value != NULL && strchr(next->value, '\n') != NULL) {
+                  is_multiline = true;
+                }
+              }
+
+              if (is_multiline) {
+                hb_buffer_append_char(output, '#');
+                hb_buffer_append_whitespace(output, 2);
+              } else {
+                hb_buffer_append_whitespace(output, 2);
+                hb_buffer_append_char(output, '#');
+              }
             } else {
               if (need_newline) { hb_buffer_append_char(output, '\n'); }
               hb_buffer_append_char(output, '#');
@@ -96,12 +111,45 @@ void herb_extract_ruby_to_buffer_with_options(
 
           if (is_inline_comment) {
             if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
+          } else if (is_erb_comment_tag && token->value != NULL) {
+            const char* content = token->value;
+
+            while (*content != '\0') {
+              if (*content == '\n') {
+                hb_buffer_append_char(output, '\n');
+                content++;
+
+                if (extract_options.preserve_positions && *content == ' ') { content++; }
+
+                hb_buffer_append_char(output, '#');
+              } else {
+                hb_buffer_append_char(output, *content);
+                content++;
+              }
+            }
+
+            if (!extract_options.preserve_positions) { need_newline = true; }
           } else {
             hb_buffer_append(output, token->value);
+
             if (!extract_options.preserve_positions) { need_newline = true; }
           }
         } else {
-          if (extract_options.preserve_positions) { hb_buffer_append_whitespace(output, range_length(token->range)); }
+          if (is_erb_comment_tag && extract_options.preserve_positions && token->value != NULL) {
+            const char* content = token->value;
+
+            while (*content != '\0') {
+              if (*content == '\n') {
+                hb_buffer_append_char(output, '\n');
+              } else {
+                hb_buffer_append_char(output, ' ');
+              }
+
+              content++;
+            }
+          } else if (extract_options.preserve_positions) {
+            hb_buffer_append_whitespace(output, range_length(token->range));
+          }
         }
 
         break;

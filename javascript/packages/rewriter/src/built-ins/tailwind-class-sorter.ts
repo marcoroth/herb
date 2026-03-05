@@ -1,4 +1,4 @@
-import { getStaticAttributeName, isLiteralNode, isWhitespaceLiteral, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
+import { getStaticAttributeName, isLiteralNode, isPureWhitespaceNode, splitLiteralsAtWhitespace, groupNodesByClass } from "@herb-tools/core"
 import { LiteralNode, Location, Visitor } from "@herb-tools/core"
 
 import { TailwindClassSorter } from "@herb-tools/tailwind-class-sorter"
@@ -148,7 +148,7 @@ class ClassAttributeSorter extends Visitor {
   }
 
   private isWhitespaceGroup(group: Node[]): boolean {
-    return group.every(node => isWhitespaceLiteral(node))
+    return group.every(node => isPureWhitespaceNode(node))
   }
 
   private getStaticClassContent(group: Node[]): string {
@@ -201,7 +201,7 @@ class ClassAttributeSorter extends Visitor {
 
   private formatNodes(nodes: Node[], isNested: boolean): Node[] {
     if (nodes.length === 0) return nodes
-    if (nodes.every(child => isWhitespaceLiteral(child))) return nodes
+    if (nodes.every(child => isPureWhitespaceNode(child))) return nodes
 
     const splitNodes = splitLiteralsAtWhitespace(nodes)
     const groups = groupNodesByClass(splitNodes)

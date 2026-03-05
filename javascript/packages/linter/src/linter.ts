@@ -1,7 +1,7 @@
 import picomatch from "picomatch"
 
 import { Location } from "@herb-tools/core"
-import { IdentityPrinter } from "@herb-tools/printer"
+import { IdentityPrinter, IndentPrinter } from "@herb-tools/printer"
 
 import { rules } from "./rules.js"
 import { findNodeByLocation } from "./rules/rule-utils.js"
@@ -13,7 +13,7 @@ import { ParserNoErrorsRule } from "./rules/parser-no-errors.js"
 
 import { DEFAULT_RULE_CONFIG } from "./types.js"
 
-import type { RuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
+import type { RuleClass, ParserRuleClass, LexerRuleClass, SourceRuleClass, Rule, ParserRule, LexerRule, SourceRule, LintResult, LintOffense, UnboundLintOffense, LintContext, AutofixResult } from "./types.js"
 import type { ParseResult, LexResult, HerbBackend } from "@herb-tools/core"
 import type { RuleConfig, Config } from "@herb-tools/config"
 
@@ -160,25 +160,29 @@ export class Linter {
     return this.rules.length
   }
 
-  /**
-   * Type guard to check if a rule is a LexerRule
-   */
-  protected isLexerRule(rule: Rule): rule is LexerRule {
-    return (rule.constructor as any).type === "lexer"
+  protected findRuleClass(ruleName: string): RuleClass | undefined {
+    return this.rules.find(ruleClass => ruleClass.ruleName === ruleName)
   }
 
   /**
-   * Type guard to check if a rule is a SourceRule
+   * Type guard to check if a rule class is a LexerRule class
    */
-  protected isSourceRule(rule: Rule): rule is SourceRule {
-    return (rule.constructor as any).type === "source"
+  protected isLexerRuleClass(ruleClass: RuleClass): ruleClass is LexerRuleClass {
+    return ruleClass.type === "lexer"
   }
 
   /**
-   * Type guard to check if a rule is a ParserRule
+   * Type guard to check if a rule class is a SourceRule class
    */
-  protected isParserRule(rule: Rule): rule is ParserRule {
-    return (rule.constructor as any).type === "parser"
+  protected isSourceRuleClass(ruleClass: RuleClass): ruleClass is SourceRuleClass {
+    return ruleClass.type === "source"
+  }
+
+  /**
+   * Type guard to check if a rule class is a ParserRule class
+   */
+  protected isParserRuleClass(ruleClass: RuleClass): ruleClass is ParserRuleClass {
+    return ruleClass.type === "parser" || ruleClass.type === undefined
   }
 
   /**
@@ -186,6 +190,7 @@ export class Linter {
    * Handles rule type checking (Lexer/Parser/Source) and isEnabled checks.
    */
   private executeRule(
+    ruleClass: RuleClass,
     rule: Rule,
     parseResult: ParseResult,
     lexResult: LexResult,
@@ -215,34 +220,40 @@ export class Linter {
     let isEnabled = true
     let ruleOffenses: UnboundLintOffense[]
 
-    if (this.isLexerRule(rule)) {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(lexResult, context)
+    if (this.isLexerRuleClass(ruleClass)) {
+      const lexerRule = rule as LexerRule
+
+      if (lexerRule.isEnabled) {
+        isEnabled = lexerRule.isEnabled(lexResult, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as LexerRule).check(lexResult, context)
+        ruleOffenses = lexerRule.check(lexResult, context)
       } else {
         ruleOffenses = []
       }
 
-    } else if (this.isSourceRule(rule)) {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(source, context)
+    } else if (this.isSourceRuleClass(ruleClass)) {
+      const sourceRule = rule as SourceRule
+
+      if (sourceRule.isEnabled) {
+        isEnabled = sourceRule.isEnabled(source, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as SourceRule).check(source, context)
+        ruleOffenses = sourceRule.check(source, context)
       } else {
         ruleOffenses = []
       }
     } else {
-      if (rule.isEnabled) {
-        isEnabled = rule.isEnabled(parseResult, context)
+      const parserRule = rule as ParserRule
+
+      if (parserRule.isEnabled) {
+        isEnabled = parserRule.isEnabled(parseResult, context)
       }
 
       if (isEnabled) {
-        ruleOffenses = (rule as ParserRule).check(parseResult, context)
+        ruleOffenses = parserRule.check(parseResult, context)
       } else {
         ruleOffenses = []
       }
@@ -336,7 +347,7 @@ export class Linter {
     const herbDisableCache = new Map<number, string[]>()
 
     if (hasParserErrors) {
-      const hasParserRule = this.rules.find(RuleClass => RuleClass.ruleName === "parser-no-errors")
+      const hasParserRule = this.findRuleClass("parser-no-errors")
 
       if (hasParserRule) {
         const rule = new ParserNoErrorsRule()
@@ -356,31 +367,31 @@ export class Linter {
 
     context = {
       ...context,
-      validRuleNames: this.getAvailableRules().map(RuleClass => RuleClass.ruleName),
+      validRuleNames: this.getAvailableRules().map(ruleClass => ruleClass.ruleName),
       ignoredOffensesByLine
     }
 
-    const regularRules = this.rules.filter(RuleClass => RuleClass.ruleName !== "herb-disable-comment-unnecessary")
+    const regularRules = this.rules.filter(ruleClass => ruleClass.ruleName !== "herb-disable-comment-unnecessary")
 
-    for (const RuleClass of regularRules) {
-      const rule = new RuleClass()
-      const parserOptions = this.isParserRule(rule) ? rule.parserOptions : {}
+    for (const ruleClass of regularRules) {
+      const rule = new ruleClass()
+      const parserOptions = this.isParserRuleClass(ruleClass) ? (rule as ParserRule).parserOptions : {}
       const parseResult = this.parseCache.get(source, parserOptions)
 
       // Skip parser rules whose parse result has errors (parser-no-errors handled above)
       // Skip lexer/source rules when the default parse has errors
-      if (this.isParserRule(rule)) {
+      if (this.isParserRuleClass(ruleClass)) {
         if (parseResult.recursiveErrors().length > 0) continue
       } else if (hasParserErrors) {
         continue
       }
 
-      const unboundOffenses = this.executeRule(rule, parseResult, lexResult, source, context)
-      const boundOffenses = this.bindSeverity(unboundOffenses, RuleClass.ruleName)
+      const unboundOffenses = this.executeRule(ruleClass, rule, parseResult, lexResult, source, context)
+      const boundOffenses = this.bindSeverity(unboundOffenses, ruleClass.ruleName)
 
       const { kept, ignored, wouldBeIgnored } = this.filterOffenses(
         boundOffenses,
-        RuleClass.ruleName,
+        ruleClass.ruleName,
         ignoredOffensesByLine,
         herbDisableCache,
         context?.ignoreDisableComments
@@ -391,7 +402,7 @@ export class Linter {
       this.offenses.push(...kept)
     }
 
-    const unnecessaryRuleClass = this.rules.find(RuleClass => RuleClass.ruleName === "herb-disable-comment-unnecessary")
+    const unnecessaryRuleClass = this.findRuleClass("herb-disable-comment-unnecessary")
 
     if (unnecessaryRuleClass) {
       const unnecessaryRule = new unnecessaryRuleClass() as ParserRule
@@ -437,16 +448,16 @@ export class Linter {
    * @returns Array of offenses with severity bound
    */
   protected bindSeverity(unboundOffenses: UnboundLintOffense[], ruleName: string): LintOffense[] {
-    const RuleClass = this.rules.find(rule => rule.ruleName === ruleName)
+    const ruleClass = this.findRuleClass(ruleName)
 
-    if (!RuleClass) {
+    if (!ruleClass) {
       return unboundOffenses.map(offense => ({
         ...offense,
         severity: "error" as const
       }))
     }
 
-    const ruleInstance = new RuleClass()
+    const ruleInstance = new ruleClass()
     const defaultSeverity = ruleInstance.defaultConfig?.severity ?? DEFAULT_RULE_CONFIG.severity
 
     const userRuleConfig = this.config?.linter?.rules?.[ruleName]
@@ -477,13 +488,13 @@ export class Linter {
     const sourceOffenses: LintOffense[] = []
 
     for (const offense of lintResult.offenses) {
-      const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
+      const ruleClass = this.findRuleClass(offense.rule)
 
-      if (!RuleClass) continue
+      if (!ruleClass) continue
 
-      if ((RuleClass as any).type === "lexer") {
+      if (this.isLexerRuleClass(ruleClass)) {
         lexerOffenses.push(offense)
-      } else if ((RuleClass as any).type === "source") {
+      } else if (this.isSourceRuleClass(ruleClass)) {
         sourceOffenses.push(offense)
       } else {
         parserOffenses.push(offense)
@@ -496,18 +507,19 @@ export class Linter {
 
     if (parserOffenses.length > 0) {
       const parseResult = this.parseCache.get(currentSource)
+      let needsReindent = false
 
       for (const offense of parserOffenses) {
-        const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
+        const ruleClass = this.findRuleClass(offense.rule)
 
-        if (!RuleClass) {
+        if (!ruleClass) {
           unfixed.push(offense)
 
           continue
         }
 
-        const rule = new RuleClass() as ParserRule
-        const isUnsafe = (RuleClass as any).unsafeAutocorrectable === true
+        const rule = new ruleClass() as ParserRule
+        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true
 
         if (!rule.autofix) {
           unfixed.push(offense)
@@ -544,14 +556,21 @@ export class Linter {
 
         if (fixedResult) {
           fixed.push(offense)
+
+          if (this.isParserRuleClass(ruleClass) && ruleClass.reindentAfterAutofix === true) {
+            needsReindent = true
+          }
         } else {
           unfixed.push(offense)
         }
       }
 
       if (fixed.length > 0) {
-        const printer = new IdentityPrinter()
-        currentSource = printer.print(parseResult.value)
+        if (needsReindent) {
+          currentSource = new IndentPrinter().print(parseResult.value)
+        } else {
+          currentSource = new IdentityPrinter().print(parseResult.value)
+        }
       }
     }
 
@@ -565,15 +584,15 @@ export class Linter {
       })
 
       for (const offense of sortedSourceOffenses) {
-        const RuleClass = this.rules.find(rule => rule.ruleName === offense.rule)
+        const ruleClass = this.findRuleClass(offense.rule)
 
-        if (!RuleClass) {
+        if (!ruleClass) {
           unfixed.push(offense)
           continue
         }
 
-        const rule = new RuleClass() as SourceRule
-        const isUnsafe = (RuleClass as any).unsafeAutocorrectable === true
+        const rule = new ruleClass() as SourceRule
+        const isUnsafe = (ruleClass as any).unsafeAutocorrectable === true
 
         if (!rule.autofix) {
           unfixed.push(offense)
