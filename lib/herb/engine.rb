@@ -18,7 +18,7 @@ require_relative "engine/validators/accessibility_validator"
 module Herb
   class Engine
     attr_reader :src, :filename, :project_path, :relative_file_path, :bufvar, :debug, :content_for_head,
-                :validation_error_template, :visitors
+                :validation_error_template, :visitors, :security_mode
 
     ESCAPE_TABLE = {
       "&" => "&amp;",
@@ -55,6 +55,9 @@ module Herb
       @content_for_head = properties[:content_for_head]
       @validation_error_template = nil
       @validation_mode = properties.fetch(:validation_mode, :raise)
+      @security_mode = properties.fetch(:security) {
+        Herb.configuration.dig("engine", "security") || "error"
+      }
       @strict = properties.fetch(:strict, true)
       @visitors = properties.fetch(:visitors, default_visitors)
 
@@ -70,6 +73,11 @@ module Herb
       unless [:raise, :overlay, :none].include?(@validation_mode)
         raise ArgumentError,
               "validation_mode must be one of :raise, :overlay, or :none, got #{@validation_mode.inspect}"
+      end
+
+      unless ["error", "warn", "ignore"].include?(@security_mode)
+        raise ArgumentError,
+              "security must be one of \"error\", \"warn\", or \"ignore\", got #{@security_mode.inspect}"
       end
 
       @freeze = properties[:freeze]
@@ -357,27 +365,48 @@ module Herb
     def handle_validation_errors(errors, input)
       return unless errors.any?
 
-      security_error = errors.find { |error|
+      security_errors = errors.select { |error|
         error.is_a?(Hash) && error[:source] == "SecurityValidator"
       }
 
-      if security_error
-        line = security_error[:location]&.start&.line
-        column = security_error[:location]&.start&.column
-        suggestion = security_error[:suggestion]
+      non_security_errors = errors.reject { |error|
+        error.is_a?(Hash) && error[:source] == "SecurityValidator"
+      }
 
-        raise SecurityError.new(
-          security_error[:message],
-          line: line,
-          column: column,
-          filename: @filename,
-          suggestion: suggestion
-        )
+      if security_errors.any?
+        case @security_mode
+        when "error"
+          security_error = security_errors.first
+          line = security_error[:location]&.start&.line
+          column = security_error[:location]&.start&.column
+          suggestion = security_error[:suggestion]
+
+          raise SecurityError.new(
+            security_error[:message],
+            line: line,
+            column: column,
+            filename: @filename,
+            suggestion: suggestion
+          )
+        when "warn"
+          security_errors.each do |security_error|
+            line = security_error[:location]&.start&.line
+            column = security_error[:location]&.start&.column
+            location_str = @filename ? "#{@filename}:#{line}:#{column}" : "#{line}:#{column}"
+            
+            $stderr.puts "WARNING: Security issue at #{location_str}: #{security_error[:message]}"
+            $stderr.puts "  Suggestion: #{security_error[:suggestion]}" if security_error[:suggestion]
+          end
+        when "ignore"
+          # Skip security errors silently
+        end
       end
 
-      formatter = ErrorFormatter.new(input, errors, filename: @filename)
-      message = formatter.format_all
-      raise CompilationError, "\n#{message}"
+      if non_security_errors.any?
+        formatter = ErrorFormatter.new(input, non_security_errors, filename: @filename)
+        message = formatter.format_all
+        raise CompilationError, "\n#{message}"
+      end
     end
 
     def add_validation_overlay(errors, input = nil)

@@ -39,9 +39,16 @@ export const FormatterConfigSchema = z.object({
   rewriter: RewriterConfigSchema.describe("Rewriter configuration for pre and post-format transformations"),
 }).strict().optional()
 
+export const SecurityModeSchema = z.enum(["error", "warn", "ignore"])
+
+export const EngineConfigSchema = z.object({
+  security: SecurityModeSchema.optional().describe("Security mode for ERB output in HTML attributes. 'error' raises immediately, 'warn' logs a warning, 'ignore' skips validation"),
+}).strict().optional()
+
 export const HerbConfigSchema = z.object({
   version: z.string().describe("Configuration file version"),
   files: FilesConfigSchema.describe("Top-level file configuration"),
+  engine: EngineConfigSchema.describe("Engine configuration"),
   linter: LinterConfigSchema,
   formatter: FormatterConfigSchema,
 }).strict()
