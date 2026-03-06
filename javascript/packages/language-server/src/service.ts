@@ -14,6 +14,7 @@ import { CodeActionService } from "./code_action_service"
 import { DocumentSaveService } from "./document_save_service"
 import { FoldingRangeService } from "./folding_range_service"
 import { DocumentHighlightService } from "./document_highlight_service"
+import { CommentService } from "./comment_service"
 
 import { version } from "../package.json"
 
@@ -34,6 +35,7 @@ export class Service {
   documentSaveService: DocumentSaveService
   foldingRangeService: FoldingRangeService
   documentHighlightService: DocumentHighlightService
+  commentService: CommentService
 
   constructor(connection: Connection, params: InitializeParams) {
     this.connection = connection
@@ -50,6 +52,7 @@ export class Service {
     this.documentSaveService = new DocumentSaveService(this.connection, this.settings, this.autofixService, this.formattingService)
     this.foldingRangeService = new FoldingRangeService(this.parserService)
     this.documentHighlightService = new DocumentHighlightService(this.parserService)
+    this.commentService = new CommentService(this.parserService)
 
     if (params.initializationOptions) {
       this.settings.globalSettings = params.initializationOptions as PersonalHerbSettings

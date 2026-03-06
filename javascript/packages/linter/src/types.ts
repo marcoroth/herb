@@ -30,6 +30,8 @@ export type LinterRule = (typeof rules[number])['ruleName']
 export interface BaseAutofixContext {
   /** The AST node, token, or data structure that caused the offense (mutable) */
   node: Mutable<Node>
+  /** If true, this fix requires --fix-unsafely to be applied */
+  unsafe?: boolean
 }
 
 /**
@@ -40,6 +42,8 @@ export interface UnboundLintOffense<TAutofixContext extends BaseAutofixContext =
   rule: LinterRule
   /** Context data for autofix, including the offending node and rule-specific data */
   autofixContext?: TAutofixContext
+  /** If set, overrides rule-level severity for this specific offense */
+  severity?: LintSeverity
 }
 
 /**
